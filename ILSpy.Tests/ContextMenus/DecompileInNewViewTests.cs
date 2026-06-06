@@ -287,6 +287,50 @@ public class DecompileInNewViewTests
 	}
 
 	[AvaloniaTest]
+	public async Task Middle_Clicking_A_Row_Opens_It_In_A_New_Tab()
+	{
+		// Middle mouse button on a tree row opens that node in a fresh document tab (mirrors the
+		// "Decompile to new tab" gesture without going through the context menu).
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+
+		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+		vm.AssemblyTreeModel.SelectNode(nodeA);
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			grid.UpdateLayout();
+			await Task.Delay(25);
+		}
+
+		var rowB = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+			.First(r => RowNodeEquals(r, nodeB));
+		int tabsBefore = vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
+
+		var clickX = System.Math.Min(rowB.Bounds.Width, grid.Bounds.Width) / 2;
+		var point = rowB.TranslatePoint(new Point(clickX, rowB.Bounds.Height / 2), window)!.Value;
+		HeadlessWindowExtensions.MouseDown(window, point, MouseButton.Middle);
+		HeadlessWindowExtensions.MouseUp(window, point, MouseButton.Middle);
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			grid.UpdateLayout();
+			await Task.Delay(20);
+		}
+
+		vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count()
+			.Should().BeGreaterThan(tabsBefore, "middle-clicking a row must open it in a new document tab");
+		// Activating the new tab pulls the tree selection across to its node.
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeB).Should().BeTrue(
+			"the new tab opened by middle-click must be sourced from the middle-clicked node");
+	}
+
+	[AvaloniaTest]
 	public async Task Opening_A_Node_In_A_New_Tab_Syncs_The_Tree_Selection_To_It()
 	{
 		// Activating the new tab must pull the tree selection over to its node -- both the model

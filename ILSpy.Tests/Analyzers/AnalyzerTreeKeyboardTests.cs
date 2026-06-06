@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
@@ -67,5 +68,37 @@ public class AnalyzerTreeKeyboardTests
 		window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
 		await Waiters.WaitForAsync(() => analyzed.IsExpanded,
 			description: "Right must expand the node via the shared TreeKeyboardController on the analyzer tree");
+	}
+
+	[AvaloniaTest]
+	public async Task Ctrl_R_Analyzes_The_Selected_Member()
+	{
+		// Ctrl+R on the assembly tree analyzes the selected member(s) -- the keyboard equivalent of the
+		// Analyze context-menu entry. Here a selected type lands as a node in the analyzer pane.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+		var pane = await window.WaitForComponent<global::ILSpy.AssemblyTree.AssemblyListPane>();
+		var tree = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		for (int i = 0; i < 6; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			tree.UpdateLayout();
+			await Task.Delay(20);
+		}
+		tree.Focus();
+		Dispatcher.UIThread.RunJobs();
+
+		int before = analyzerVm.Root.Children.Count;
+		window.KeyPress(Key.R, RawInputModifiers.Control, PhysicalKey.R, null);
+		await Waiters.WaitForAsync(() => analyzerVm.Root.Children.Count > before,
+			description: "Ctrl+R must add an analyzer node for the selected member");
+
+		analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>()
+			.Any(n => n.Member is { } m && m.MetadataToken == ((ITypeDefinition)typeNode.Member!).MetadataToken)
+			.Should().BeTrue("the analyzer pane must hold a node for the type that Ctrl+R analyzed");
 	}
 }
