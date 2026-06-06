@@ -11,14 +11,10 @@
     <DockVersion>12.0.0.1</DockVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
     <!-- Avalonia (ILSpy port) -->
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Themes.Simple" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Avalonia.Diagnostics" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Headless.NUnit" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.5" />
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
@@ -26,19 +22,15 @@
     <PackageVersion Include="Avalonia.Xaml.Behaviors" Version="11.3.0.6" />
     <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1" />
     <PackageVersion Include="Dock.Avalonia" Version="$(DockVersion)" />
-    <PackageVersion Include="Dock.Avalonia.Themes.Fluent" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Avalonia.Themes.Simple" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Controls.Recycling" Version="$(DockVersion)" />
-    <PackageVersion Include="Dock.Model" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="$(DockVersion)" />
     <PackageVersion Include="ProDataGrid" Version="12.0.0" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
     <PackageVersion Include="CliWrap" Version="3.10.1" />
-    <PackageVersion Include="DataGridExtensions" Version="2.9.1" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
-    <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
     <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="10.0.0-rtm.25531.102" />
     <PackageVersion Include="Iced" Version="1.21.0" />
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
@@ -53,17 +45,14 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
-    <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
-    <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="NUnit" Version="4.6.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
@@ -78,14 +67,7 @@
     <PackageVersion Include="System.Formats.Nrbf" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="$(TomsToolboxVersion)" />
     <PackageVersion Include="coverlet.MTP" Version="10.0.0" />
-    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
-    <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
-    <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="$(TomsToolboxVersion)" />
