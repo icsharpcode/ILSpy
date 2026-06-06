@@ -23,6 +23,8 @@ using Avalonia.Controls;
 
 using Dock.Avalonia.Controls;
 
+using ICSharpCode.ILSpy.Properties;
+
 using ILSpy.AppEnv;
 using ILSpy.Docking;
 using ILSpy.ViewModels;
@@ -30,12 +32,14 @@ using ILSpy.ViewModels;
 namespace ILSpy.Themes
 {
 	/// <summary>
-	/// Attached property that wires a per-instance <see cref="ContextMenu"/> onto every
-	/// <see cref="DocumentTabStripItem"/>. The menu hosts a single "Freeze tab" entry whose
-	/// <see cref="MenuItem.IsVisible"/> tracks <see cref="ContentTabPage.IsPreview"/> on
-	/// the tab's underlying viewmodel — invoking it routes to
-	/// <see cref="DockWorkspace.FreezeCurrentTab"/>. Each tab gets a fresh ContextMenu so
-	/// the popup has a unique parent (Avalonia visuals must have at most one parent).
+	/// Attached property that wires a per-instance context menu onto every
+	/// <see cref="DocumentTabStripItem"/> via Dock's <c>DocumentContextMenu</c> (the property Dock
+	/// actually shows on a document-tab right-click — it overrides the standard
+	/// <see cref="Control.ContextMenu"/>). The menu carries Close / Close all but this / Close all
+	/// (routing to the tab's commands) plus a "Freeze tab" entry shown only while the tab is a
+	/// preview (<see cref="ContentTabPage.IsPreview"/>); invoking Freeze routes to
+	/// <see cref="DockWorkspace.FreezeCurrentTab"/>. Each tab gets a fresh ContextMenu so the popup
+	/// has a unique parent (Avalonia visuals must have at most one parent).
 	/// </summary>
 	public static class PreviewTabContextMenuBehavior
 	{
@@ -74,24 +78,49 @@ namespace ILSpy.Themes
 				item.DocumentContextMenu = null;
 				return;
 			}
+			item.DocumentContextMenu = BuildDocumentContextMenu(tab);
+		}
 
+		/// <summary>
+		/// Builds the document-tab context menu for <paramref name="tab"/>: Close / Close all but
+		/// this / Close all, plus a "Freeze tab" entry (and its separator) shown only while the tab
+		/// is a preview. Exposed for tests so the menu's composition can be verified without the
+		/// realised tab-strip visual.
+		/// </summary>
+		internal static ContextMenu BuildDocumentContextMenu(ContentTabPage tab)
+		{
+			var close = new MenuItem { Header = Resources.Close, Command = tab.CloseCommand };
+			var closeAllButThis = new MenuItem { Header = Resources.CloseAllButThisTab, Command = tab.CloseAllButThisCommand };
+			var closeAll = new MenuItem { Header = Resources.CloseAllTabs, Command = tab.CloseAllCommand };
+
+			var freezeSeparator = new Separator { IsVisible = tab.IsPreview };
 			var freezeItem = new MenuItem {
 				Header = "Freeze tab",
 				IsVisible = tab.IsPreview,
 			};
 			freezeItem.Click += (_, _) => TryGetDockWorkspace()?.FreezeCurrentTab();
 
-			// Keep IsVisible in sync with IsPreview so the entry hides once the tab is
-			// frozen (freeze is one-way — there's no matching unfreeze entry).
+			// Keep the Freeze entry (and its separator) in sync with IsPreview so they hide once the
+			// tab is frozen (freeze is one-way — there's no matching unfreeze entry).
 			tab.PropertyChanged += OnTabPropertyChanged;
 			void OnTabPropertyChanged(object? _, PropertyChangedEventArgs args)
 			{
 				if (args.PropertyName == nameof(ContentTabPage.IsPreview))
+				{
 					freezeItem.IsVisible = tab.IsPreview;
+					freezeSeparator.IsVisible = tab.IsPreview;
+				}
 			}
 
-			item.DocumentContextMenu = new ContextMenu {
-				ItemsSource = new[] { freezeItem },
+			return new ContextMenu {
+				ItemsSource = new Control[] {
+					close,
+					new Separator(),
+					closeAllButThis,
+					closeAll,
+					freezeSeparator,
+					freezeItem,
+				},
 			};
 		}
 

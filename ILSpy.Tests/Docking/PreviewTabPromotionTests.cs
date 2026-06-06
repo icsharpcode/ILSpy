@@ -415,11 +415,13 @@ public class PreviewTabPromotionTests
 		var carveOutItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
 			.Single(item => item.DataContext is ContentTabPage t && t.SourceNode == typeNode);
 
-		var mainFreezeEntry = mainTabItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>().Single();
-		mainFreezeEntry.Header.Should().Be("Freeze tab");
+		// The menu now also carries Close / Close all but this / Close all; pick the Freeze entry.
+		var mainFreezeEntry = mainTabItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>()
+			.Single(m => (string?)m.Header == "Freeze tab");
 		mainFreezeEntry.IsVisible.Should().BeTrue("MainTab is preview — Freeze tab entry must be visible");
 
-		var carveFreezeEntry = carveOutItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>().Single();
+		var carveFreezeEntry = carveOutItem.DocumentContextMenu!.Items.OfType<global::Avalonia.Controls.MenuItem>()
+			.Single(m => (string?)m.Header == "Freeze tab");
 		carveFreezeEntry.IsVisible.Should().BeFalse(
 			"carve-out tabs are already frozen — the Freeze entry must hide");
 	}

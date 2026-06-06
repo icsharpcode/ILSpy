@@ -52,6 +52,34 @@ public class DocumentTabContextMenuTests
 	}
 
 	[AvaloniaTest]
+	public async Task Menu_Carries_The_Close_Entries_Bound_To_The_Tab_Commands()
+	{
+		// Regression: the per-tab DocumentContextMenu (which Dock shows, overriding the standard
+		// ContextMenu) once held only "Freeze tab", so the Close / Close all entries went missing
+		// (and the whole menu was empty on a frozen tab). It must carry all three close entries.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (a, _, _) = OpenThreeTabs(vm.DockWorkspace);
+
+		var menu = global::ILSpy.Themes.PreviewTabContextMenuBehavior.BuildDocumentContextMenu(a);
+		var items = menu.ItemsSource!.OfType<global::Avalonia.Controls.MenuItem>().ToList();
+
+		items.Select(m => m.Header).Should().Contain(new object[] {
+			ICSharpCode.ILSpy.Properties.Resources.Close,
+			ICSharpCode.ILSpy.Properties.Resources.CloseAllButThisTab,
+			ICSharpCode.ILSpy.Properties.Resources.CloseAllTabs,
+		});
+		items.Single(m => Equals(m.Header, ICSharpCode.ILSpy.Properties.Resources.Close)).Command
+			.Should().BeSameAs(a.CloseCommand);
+		items.Single(m => Equals(m.Header, ICSharpCode.ILSpy.Properties.Resources.CloseAllButThisTab)).Command
+			.Should().BeSameAs(a.CloseAllButThisCommand);
+		items.Single(m => Equals(m.Header, ICSharpCode.ILSpy.Properties.Resources.CloseAllTabs)).Command
+			.Should().BeSameAs(a.CloseAllCommand);
+	}
+
+	[AvaloniaTest]
 	public async Task Close_All_But_This_Leaves_Only_The_Target_Tab()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
