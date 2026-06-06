@@ -17,40 +17,71 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Composition;
+using System.Linq;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy.Docking;
+using ILSpy.Languages;
 using ILSpy.TreeNodes;
 
 namespace ILSpy.Commands
 {
 	/// <summary>
-	/// Right-click → "Save Code". Delegates to the selected node's
-	/// <see cref="ILSpyTreeNode.Save"/> override so the context-menu entry and File →
-	/// Save Code take exactly the same path: <c>AssemblyTreeNode</c> drives project /
-	/// single-file selection, <c>ResourceTreeNode</c> writes raw bytes, every other
-	/// node falls through to the generic single-file decompile in the existing
-	/// <c>FileCommands.SaveCommand</c>.
+	/// Right-click → "Save Code". Mirrors the WPF entry's two modes:
+	/// <list type="bullet">
+	/// <item>A single node delegates to its <see cref="ILSpyTreeNode.Save"/> override —
+	/// <c>AssemblyTreeNode</c> drives project / single-file selection, <c>ResourceTreeNode</c>
+	/// writes raw bytes, every other node falls through to the generic single-file decompile.</item>
+	/// <item>Several selected assemblies export a Visual Studio solution (one decompiled project
+	/// each) via <see cref="SolutionWriter"/>.</item>
+	/// </list>
 	/// </summary>
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save", Order = 300)]
 	[Shared]
 	public sealed class SaveCodeContextMenuEntry : IContextMenuEntry
 	{
-		public bool IsVisible(TextViewContext context) => GetTarget(context) != null;
+		readonly LanguageService languageService;
+		readonly DockWorkspace dockWorkspace;
 
-		public bool IsEnabled(TextViewContext context) => GetTarget(context) != null;
+		[ImportingConstructor]
+		public SaveCodeContextMenuEntry(LanguageService languageService, DockWorkspace dockWorkspace)
+		{
+			this.languageService = languageService;
+			this.dockWorkspace = dockWorkspace;
+		}
+
+		public bool IsVisible(TextViewContext context) => CanExecute(context.SelectedTreeNodes);
+
+		public bool IsEnabled(TextViewContext context) => CanExecute(context.SelectedTreeNodes);
 
 		public void Execute(TextViewContext context)
 		{
-			GetTarget(context)?.Save();
+			var nodes = context.SelectedTreeNodes;
+			if (nodes is not { Length: > 0 })
+				return;
+
+			if (SolutionExport.TryGetAssemblies(nodes, out var assemblies))
+			{
+				_ = SolutionExport.PromptAndExportAsync(assemblies, languageService.CurrentLanguage, dockWorkspace);
+				return;
+			}
+
+			if (nodes.Length == 1)
+				(nodes[0] as ILSpyTreeNode)?.Save();
 		}
 
-		static ILSpyTreeNode? GetTarget(TextViewContext context)
+		// Visible when exactly one ILSpyTreeNode is selected (the single-node save path), or when
+		// several valid assemblies are selected (the solution-export path). Mixed or other
+		// multi-selections have no well-defined "save code" meaning.
+		static bool CanExecute(SharpTreeNode[]? selectedNodes)
 		{
-			if (context.SelectedTreeNodes is not { Length: 1 } nodes)
-				return null;
-			return nodes[0] as ILSpyTreeNode;
+			if (selectedNodes is not { Length: > 0 })
+				return false;
+			if (selectedNodes.Length == 1)
+				return selectedNodes[0] is ILSpyTreeNode;
+			return SolutionExport.TryGetAssemblies(selectedNodes, out _);
 		}
 	}
 }

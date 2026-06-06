@@ -202,13 +202,22 @@ namespace ILSpy.Commands
 	[method: ImportingConstructor]
 	internal sealed class SaveCommand(
 		AssemblyTreeModel assemblyTreeModel,
-		LanguageService languageService) : SimpleCommand
+		LanguageService languageService,
+		DockWorkspace dockWorkspace) : SimpleCommand
 	{
 		public override bool CanExecute(object? parameter)
 			=> assemblyTreeModel.SelectedItem is ILSpyTreeNode;
 
 		public override async void Execute(object? parameter)
 		{
+			// Several selected assemblies export a Visual Studio solution (one project each),
+			// matching the Save Code context-menu entry.
+			if (SolutionExport.TryGetAssemblies(assemblyTreeModel.SelectedItems, out var assemblies))
+			{
+				await SolutionExport.PromptAndExportAsync(assemblies, languageService.CurrentLanguage, dockWorkspace);
+				return;
+			}
+
 			if (assemblyTreeModel.SelectedItem is not ILSpyTreeNode node)
 				return;
 			// Resource nodes (and any future override) handle their own save format and dialog;
