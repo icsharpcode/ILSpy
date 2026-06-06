@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
 
@@ -82,7 +83,7 @@ public class SingletonDocumentTabTests
 	}
 
 	[AvaloniaTest]
-	public void Reopening_About_Reuses_The_Same_Tab()
+	public async Task Reopening_About_Reuses_The_Same_Tab()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -90,9 +91,16 @@ public class SingletonDocumentTabTests
 		var dock = vm.DockWorkspace;
 		TestCapture.Step("booted");
 
+		// Dismiss the startup welcome page first: while it is visible Help > About activates it
+		// rather than opening the static singleton this test pins. Selecting a node replaces the
+		// welcome content in the main tab, so About then takes the singleton path deterministically.
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		vm.AssemblyTreeModel.SelectNode(vm.AssemblyTreeModel.Root!.Children[0]);
+		await Waiters.WaitForAsync(() => !dock.IsWelcomePageVisible,
+			description: "the welcome page must be dismissed so Help > About opens the static singleton");
+
 		// Match the singleton menu-About tab specifically (IsStaticContent), NOT the transient boot
-		// "welcome" page, which also carries Title == About but is a non-static main-tab page. The
-		// welcome page's presence races with boot, so matching it too made this a ~50% flake.
+		// "welcome" page, which also carries Title == About but is a non-static main-tab page.
 		bool IsAbout(ContentTabPage t) => t.Content is DecompilerTabPageModel { Title: var title, IsStaticContent: true } && title == Resources.About;
 
 		Invoke(window, nameof(Resources._About));

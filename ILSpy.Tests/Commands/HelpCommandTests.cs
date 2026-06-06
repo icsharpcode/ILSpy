@@ -58,6 +58,13 @@ public class HelpCommandTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
+		// Dismiss the startup welcome page first: it renders the same About content in the reusable
+		// main tab, and while it is visible Help > About activates it rather than opening a tab.
+		// Selecting a node replaces the welcome content so About then opens its own tab as asserted.
+		vm.AssemblyTreeModel.SelectNode(vm.AssemblyTreeModel.Root!.Children[0]);
+		await Waiters.WaitForAsync(() => !vm.DockWorkspace.IsWelcomePageVisible,
+			description: "the welcome page must be dismissed so Help > About opens a fresh tab");
+
 		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
 		var aboutCmd = registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._About))

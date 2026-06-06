@@ -16,16 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
+using Avalonia.Threading;
 
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.AppEnv;
+using ILSpy.Commands;
 using ILSpy.Docking;
+using ILSpy.TextView;
 using ILSpy.ViewModels;
 using ILSpy.Views;
 
@@ -62,5 +66,35 @@ public class StartupAboutWelcomeTests
 		active.Should().NotBeNull();
 		((object?)active!.Title).Should().Be(Resources.About);
 		active.Text.Should().NotBeNullOrWhiteSpace("the About page must have rendered its content");
+	}
+
+	[AvaloniaTest]
+	public async Task Help_About_While_Welcome_Page_Is_Visible_Activates_It_Without_Opening_A_Second_Tab()
+	{
+		// The welcome page renders the same About content in the reusable main tab. Invoking Help >
+		// About while it is on screen must just activate it, not spawn a duplicate static About tab.
+
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var dock = AppComposition.Current.GetExport<DockWorkspace>();
+		await Waiters.WaitForAsync(
+			() => dock.IsWelcomePageVisible,
+			description: "the welcome (About) page must be showing before we invoke Help > About");
+
+		int tabsBefore = dock.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
+
+		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._About)).Execute(null);
+		Dispatcher.UIThread.RunJobs();
+
+		dock.Documents!.VisibleDockables!.OfType<ContentTabPage>()
+			.Any(t => t.Content is DecompilerTabPageModel { IsStaticContent: true, Title: var title } && Equals(title, Resources.About))
+			.Should().BeFalse("invoking About while the welcome page is visible must not open a static About tab");
+		dock.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count().Should().Be(tabsBefore,
+			"no new tab should be added when the welcome page already shows the About content");
+		dock.IsWelcomePageVisible.Should().BeTrue("the welcome page must remain the live main-tab content");
 	}
 }

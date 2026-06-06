@@ -58,6 +58,11 @@ namespace ILSpy.Commands
 
 		public override void Execute(object? parameter)
 		{
+			// The startup welcome page already shows this exact About content in the reusable main
+			// tab. While it is still on screen, just activate it rather than opening a second, static
+			// About tab next to it.
+			if (dockWorkspace.TryActivateWelcomePage())
+				return;
 			// Singleton: one retained About tab, reused across close/reopen rather than rebuilt.
 			dockWorkspace.OpenSingletonTab("resource:aboutpage", () => {
 				var output = BuildAboutOutput();

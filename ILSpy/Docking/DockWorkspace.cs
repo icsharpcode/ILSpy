@@ -686,6 +686,12 @@ namespace ILSpy.Docking
 		// Created lazily on first need.
 		DecompilerTabPageModel? decompilerContent;
 
+		// The startup welcome page (About content in the reusable MainTab, non-static). Tracked so
+		// Help > About can activate it instead of spawning a duplicate static About tab while it is
+		// still on screen. Self-correcting: once a tree-node selection swaps MainTab.Content to the
+		// decompiler content, this reference no longer equals MainTab.Content (see IsWelcomePageVisible).
+		DecompilerTabPageModel? welcomeContent;
+
 		// Retained static-content singleton tabs (Options, About, embedded resource pages).
 		// Keeping the ContentTabPage instance across close/reopen preserves its owned view and
 		// content state (e.g. the selected options page) instead of rebuilding the tab each time.
@@ -1160,7 +1166,35 @@ namespace ILSpy.Docking
 			if (factory.Documents is { } docs && !ReferenceEquals(docs.ActiveDockable, main))
 				return;
 			main.Content = content;
+			welcomeContent = content;
 			ActivateMainTabIfNeeded(main);
+		}
+
+		/// <summary>
+		/// True while the startup welcome page is still the live MainTab content (it has not been
+		/// replaced by a tree-node selection). The welcome page renders the same About text as
+		/// Help &gt; About, so callers use this to avoid opening a duplicate About tab on top of it.
+		/// </summary>
+		public bool IsWelcomePageVisible
+			=> welcomeContent is { } w && factory.MainTab is { } main && ReferenceEquals(main.Content, w);
+
+		/// <summary>
+		/// If the welcome page is still showing, bring its MainTab to the front and report success.
+		/// Help &gt; About calls this first so that, while the welcome page (identical About content)
+		/// is visible, the menu just activates it instead of spawning a second, static About tab.
+		/// </summary>
+		public bool TryActivateWelcomePage()
+		{
+			if (!IsWelcomePageVisible || factory.MainTab is not { } main)
+				return false;
+			if (factory.Documents is { } docs)
+			{
+				if (docs.VisibleDockables?.Contains(main) != true)
+					return false;
+				factory.SetActiveDockable(main);
+				factory.SetFocusedDockable(docs, main);
+			}
+			return true;
 		}
 
 		/// <summary>
