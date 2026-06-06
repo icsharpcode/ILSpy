@@ -57,7 +57,7 @@ public class TypedMetadataTableTreeTests
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 		TestCapture.Step("assemblyref-grid");
 
-		tab.Title.Should().StartWith("AssemblyRef");
+		tab.Title.Should().Contain("AssemblyRef"); // title now leads with the token-kind byte
 		tab.Items.Should().HaveCount(assemblyRefNode.RowCount);
 		var names = tab.Items.Cast<AssemblyRefTableTreeNode.AssemblyRefEntry>()
 			.Select(e => e.Name)
@@ -82,7 +82,7 @@ public class TypedMetadataTableTreeTests
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 		TestCapture.Step("typedef-grid");
 
-		tab.Title.Should().StartWith("TypeDef");
+		tab.Title.Should().Contain("TypeDef"); // title now leads with the token-kind byte
 		tab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
 			.Should().Contain(e => e.Name == "Object");
 	}
@@ -112,7 +112,7 @@ public class TypedMetadataTableTreeTests
 		vm.AssemblyTreeModel.SelectNode(methodNode);
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 		TestCapture.Step("methoddef-grid");
-		tab.Title.Should().StartWith("MethodDef");
+		tab.Title.Should().Contain("MethodDef"); // title now leads with the token-kind byte
 		tab.Columns.Select(c => c.Tag).Should().Contain("RID");
 	}
 
@@ -132,7 +132,7 @@ public class TypedMetadataTableTreeTests
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 		TestCapture.Step("module-grid");
 
-		tab.Title.Should().StartWith("Module");
+		tab.Title.Should().Contain("Module"); // title now leads with the token-kind byte
 		tab.Items.Should().HaveCount(1);
 		var row = (ModuleTableTreeNode.ModuleEntry)tab.Items[0];
 		row.Name.Should().EndWith(".dll");

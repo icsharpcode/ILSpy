@@ -82,7 +82,9 @@ namespace ILSpy.Metadata
 			// + ReflectionHelper.GetNestedPropertyValue, which return null for every row when
 			// the source's element type is object.
 			var page = new MetadataTablePageModel {
-				Title = $"{Kind} ({RowCount})",
+				// Lead with the token-kind byte, mirroring the tree node's Text so the tab header
+				// reads e.g. "02 TypeDef (1234)".
+				Title = $"{(byte)Kind:X2} {Kind} ({RowCount})",
 				Items = cached ??= LoadTable(),
 			};
 			MetadataColumnBuilder.Populate<TEntry>(page);

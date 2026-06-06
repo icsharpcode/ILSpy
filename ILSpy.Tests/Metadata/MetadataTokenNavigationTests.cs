@@ -75,7 +75,7 @@ public class MetadataTokenNavigationTests
 		// and a fresh metadata page is showing.
 		var factory = (global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var landed = (MetadataTablePageModel)factory.MainTab!.Content!;
-		landed.Title.Should().StartWith(expectedTableIndex.ToString());
+		landed.Title.Should().Contain(expectedTableIndex.ToString()); // title leads with the kind byte
 		landed.Items.Should().HaveCountGreaterThan((int)(expectedRowNumber - 1),
 			"the target row index must be in range for the destination table");
 	}
