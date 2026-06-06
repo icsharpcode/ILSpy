@@ -43,6 +43,15 @@ namespace ILSpy
 		public bool EscapeInvalidIdentifiers { get; set; }
 
 		/// <summary>
+		/// Path to a strong-name key (<c>.snk</c>) for the exported project. When set, the project
+		/// export copies the key next to the project file and emits an
+		/// <c>&lt;AssemblyOriginatorKeyFile&gt;</c>. Honoured only on the project-export path
+		/// (<see cref="SaveAsProjectDirectory"/> set); ignored otherwise. The key file itself
+		/// lives on <see cref="ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler.StrongNameKeyFile"/>.
+		/// </summary>
+		public string? StrongNameKeyFile { get; set; }
+
+		/// <summary>
 		/// Stop the IL-transform pipeline after this many steps. <see cref="int.MaxValue"/>
 		/// means "run all transforms". The Debug Steps pane sets this to the index of a
 		/// chosen step so it can show the partial state at that point. Honoured by

@@ -284,7 +284,28 @@ namespace ILSpy.Commands
 		}
 	}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save), MenuOrder = 21)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.ExportProjectSolution), MenuIcon = "Images/Save", MenuCategory = nameof(Resources.Save), MenuOrder = 21)]
+	[Shared]
+	[method: ImportingConstructor]
+	internal sealed class ExportProjectSolutionCommand(
+		AssemblyTreeModel assemblyTreeModel,
+		LanguageService languageService,
+		DockWorkspace dockWorkspace,
+		SettingsService settingsService) : SimpleCommand
+	{
+		public override bool CanExecute(object? parameter)
+			=> ProjectExport.TryGetExportableAssemblies(assemblyTreeModel.SelectedItems, out _, out _);
+
+		public override void Execute(object? parameter)
+		{
+			if (!ProjectExport.TryGetExportableAssemblies(assemblyTreeModel.SelectedItems, out var assemblies, out var solutionMode))
+				return;
+			_ = ProjectExport.PromptAndExportAsync(assemblies, solutionMode,
+				languageService.CurrentLanguage, dockWorkspace, settingsService);
+		}
+	}
+
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save), MenuOrder = 22)]
 	[Shared]
 	sealed class GeneratePdbCommand : SimpleCommand
 	{

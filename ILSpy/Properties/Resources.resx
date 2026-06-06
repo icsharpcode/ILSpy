@@ -675,6 +675,9 @@ Are you sure you want to continue?</value>
   <data name="Forward" xml:space="preserve">
     <value>Forward</value>
   </data>
+  <data name="ExportProjectSolution" xml:space="preserve">
+    <value>Export Project/Solution...</value>
+  </data>
   <data name="GeneratePortable" xml:space="preserve">
     <value>Generate portable PDB</value>
   </data>

@@ -567,6 +567,10 @@ namespace ILSpy.Languages
 				projectWriter: null,
 				assemblyReferenceClassifier: null,
 				debugInfoProvider: debugInfo);
+			// Strong-name signing is a project-writer concern carried on the WholeProjectDecompiler;
+			// surface the export dialog's choice here (null = unsigned, the default).
+			if (!string.IsNullOrEmpty(options.StrongNameKeyFile))
+				decompiler.StrongNameKeyFile = options.StrongNameKeyFile;
 			var projectFileName = System.IO.Path.Combine(
 				targetDirectory,
 				WholeProjectDecompiler.CleanUpFileName(module.Name, ProjectFileExtension));

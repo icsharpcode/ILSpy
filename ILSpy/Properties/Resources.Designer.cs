@@ -1957,6 +1957,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Export Project/Solution....
+        /// </summary>
+        public static string ExportProjectSolution {
+            get {
+                return ResourceManager.GetString("ExportProjectSolution", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Generate portable PDB.
         /// </summary>
         public static string GeneratePortable {

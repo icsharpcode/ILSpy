@@ -1,0 +1,58 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:ILSpy.Views"
+        x:Class="ILSpy.Views.ExportProjectDialog"
+        Width="560" Height="580" MinWidth="460" MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        Title="Export Project">
+	<DockPanel Margin="12">
+		<StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right"
+		            Spacing="6" Margin="0,12,0,0">
+			<Button Name="ExportButton" Content="Export" IsDefault="True" MinWidth="80" />
+			<Button Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="80" />
+		</StackPanel>
+		<ScrollViewer HorizontalScrollBarVisibility="Disabled">
+			<StackPanel Spacing="6">
+				<TextBlock Text="Output location:" />
+				<Grid ColumnDefinitions="*,Auto">
+					<TextBox Grid.Column="0" Name="OutputBox" IsReadOnly="True" />
+					<Button Grid.Column="1" Name="BrowseOutputButton" Content="Browse..." Margin="6,0,0,0" />
+				</Grid>
+
+				<TextBlock Text="Projects to export:" Margin="0,6,0,0" />
+				<Border BorderBrush="#80808080" BorderThickness="1" Height="150">
+					<ListBox Name="PreviewList">
+						<ListBox.ItemTemplate>
+							<DataTemplate x:DataType="views:ProjectPreviewRow">
+								<Grid ColumnDefinitions="*,Auto">
+									<TextBlock Grid.Column="0" Text="{Binding Display}" VerticalAlignment="Center" />
+									<TextBlock Grid.Column="1" Text="{Binding BadgeText}" Foreground="Gray"
+									           VerticalAlignment="Center" Margin="8,0,0,0" />
+								</Grid>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</Border>
+				<TextBlock Name="ConflictWarning" Foreground="#C0392B" TextWrapping="Wrap"
+				           IsVisible="False"
+				           Text="Two or more selected assemblies share a name; a solution cannot be generated. Deselect the duplicates." />
+
+				<TextBlock Text="Options" FontWeight="Bold" Margin="0,8,0,0" />
+				<CheckBox Name="SdkStyleCheck" Content="Use SDK-style project format (*.csproj)" />
+				<CheckBox Name="NestedDirsCheck" Content="Use nested directories for namespaces" />
+				<CheckBox Name="RemoveDeadCodeCheck" Content="Remove dead code" />
+				<CheckBox Name="RemoveDeadStoresCheck" Content="Remove dead stores" />
+				<CheckBox Name="UseDebugSymbolsCheck" Content="Use variable names from debug symbols" />
+
+				<TextBlock Text="Strong-name key file:" Margin="0,8,0,0" />
+				<Grid ColumnDefinitions="*,Auto">
+					<TextBox Grid.Column="0" Name="KeyFileBox" IsReadOnly="True" />
+					<Button Grid.Column="1" Name="BrowseKeyButton" Content="Browse..." Margin="6,0,0,0" />
+				</Grid>
+
+				<CheckBox Name="GeneratePdbCheck" Content="Generate portable PDB" Margin="0,8,0,0" />
+				<CheckBox Name="EmbedSourceCheck" Content="Embed source files in PDB" Margin="20,0,0,0" IsEnabled="False" />
+			</StackPanel>
+		</ScrollViewer>
+	</DockPanel>
+</Window>
