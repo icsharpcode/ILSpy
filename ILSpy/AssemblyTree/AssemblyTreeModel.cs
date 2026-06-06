@@ -179,7 +179,16 @@ namespace ILSpy.AssemblyTree
 			var resolved = FindTreeNode(entity);
 			if (resolved == null)
 				return;
-			SelectedItem = resolved;
+			if (e.InNewTabPage)
+			{
+				// Open the definition in a fresh carve-out tab instead of replacing the current view
+				// (e.g. "Decompile to new tab" on a symbol in the code).
+				TryGetExport<Docking.DockWorkspace>()?.OpenNodeInNewTab(resolved);
+			}
+			else
+			{
+				SelectedItem = resolved;
+			}
 			// Source is the originally-analysed entity (set by AnalyzerEntityTreeNode.ActivateItem).
 			// Push it onto the active decompiler tab's HighlightedReference so the editor view
 			// paints local-reference marks on every match once the new Text lands.

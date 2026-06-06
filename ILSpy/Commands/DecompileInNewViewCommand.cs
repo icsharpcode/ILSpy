@@ -54,26 +54,34 @@ namespace ILSpy.Commands
 		}
 
 		public bool IsVisible(TextViewContext context)
-			=> SelectedNodes(context).Any();
+			=> SelectedNodes(context).Any() || ReferencedEntity(context) is not null;
 
-		public bool IsEnabled(TextViewContext context)
-			=> SelectedNodes(context).Any();
+		public bool IsEnabled(TextViewContext context) => IsVisible(context);
 
 		public void Execute(TextViewContext context)
 		{
 			var nodes = SelectedNodes(context).ToArray();
-			if (nodes.Length == 0)
+			if (nodes.Length > 0)
+			{
+				var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
+				// Single-node selection carries a SourceNode so the tab/tree stay in lockstep
+				// when the user flips tabs. Multi-node selections leave SourceNode null —
+				// no single tree row represents the union.
+				dockWorkspace.OpenNewTab(content, sourceNode: nodes.Length == 1 ? nodes[0] : null);
+				content.CurrentNodes = nodes;
 				return;
-			var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
-			// Single-node selection carries a SourceNode so the tab/tree stay in lockstep
-			// when the user flips tabs. Multi-node selections leave SourceNode null —
-			// no single tree row represents the union.
-			dockWorkspace.OpenNewTab(content, sourceNode: nodes.Length == 1 ? nodes[0] : null);
-			content.CurrentNodes = nodes;
+			}
+			// Right-click on a symbol in the decompiled code: open its definition in a new tab. The
+			// navigate handler resolves the entity to its tree node and opens it via OpenNodeInNewTab.
+			if (ReferencedEntity(context) is { } entity)
+				Util.MessageBus.Send(this, new Util.NavigateToReferenceEventArgs(entity, inNewTabPage: true));
 		}
 
 		static System.Collections.Generic.IEnumerable<ILSpyTreeNode> SelectedNodes(TextViewContext context)
 			=> context.SelectedTreeNodes?.OfType<ILSpyTreeNode>()
 				?? System.Linq.Enumerable.Empty<ILSpyTreeNode>();
+
+		static ICSharpCode.Decompiler.TypeSystem.IEntity? ReferencedEntity(TextViewContext context)
+			=> context.Reference?.Reference as ICSharpCode.Decompiler.TypeSystem.IEntity;
 	}
 }

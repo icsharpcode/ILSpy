@@ -19,6 +19,7 @@
 using System.Composition;
 using System.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.TreeNodes;
@@ -43,24 +44,24 @@ namespace ILSpy.Search
 			this.searchPane = searchPane;
 		}
 
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
-				return false;
-			return nodes.All(n => n is NamespaceTreeNode);
-		}
+		public bool IsVisible(TextViewContext context) => !string.IsNullOrEmpty(Namespace(context));
 
 		public bool IsEnabled(TextViewContext context) => IsVisible(context);
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
-				return;
-			var ns = nodes.OfType<NamespaceTreeNode>().FirstOrDefault();
-			if (ns == null || string.IsNullOrEmpty(ns.Name))
-				return;
-			searchPane.SearchTerm = ScopeSearchToAssemblyContextMenuEntry.MergeScopePrefix(
-				searchPane.SearchTerm, "innamespace", ns.Name);
+			if (Namespace(context) is { Length: > 0 } ns)
+				searchPane.SearchTerm = ScopeSearchToAssemblyContextMenuEntry.MergeScopePrefix(
+					searchPane.SearchTerm, "innamespace", ns);
+		}
+
+		// The namespace to scope to: a selected NamespaceTreeNode in the tree, or the namespace of the
+		// symbol under a right-clicked code reference. The empty (global) namespace doesn't scope.
+		static string? Namespace(TextViewContext context)
+		{
+			if (context.SelectedTreeNodes is { Length: > 0 } nodes && nodes.All(n => n is NamespaceTreeNode))
+				return nodes.OfType<NamespaceTreeNode>().FirstOrDefault()?.Name;
+			return (context.Reference?.Reference as IEntity)?.Namespace;
 		}
 	}
 }

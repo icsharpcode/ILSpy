@@ -19,6 +19,7 @@
 using System.Composition;
 using System.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.TreeNodes;
@@ -44,24 +45,24 @@ namespace ILSpy.Search
 			this.searchPane = searchPane;
 		}
 
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
-				return false;
-			return nodes.All(n => n is AssemblyTreeNode);
-		}
+		public bool IsVisible(TextViewContext context) => AssemblyName(context) is not null;
 
 		public bool IsEnabled(TextViewContext context) => IsVisible(context);
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
+			if (AssemblyName(context) is not { } name)
 				return;
-			var asm = nodes.OfType<AssemblyTreeNode>().FirstOrDefault();
-			if (asm == null)
-				return;
-			var name = asm.LoadedAssembly.ShortName;
 			searchPane.SearchTerm = MergeScopePrefix(searchPane.SearchTerm, "inassembly", name);
+		}
+
+		// The assembly to scope to: a selected AssemblyTreeNode in the tree, or the assembly that owns
+		// the symbol under a right-clicked code reference.
+		static string? AssemblyName(TextViewContext context)
+		{
+			if (context.SelectedTreeNodes is { Length: > 0 } nodes && nodes.All(n => n is AssemblyTreeNode))
+				return nodes.OfType<AssemblyTreeNode>().FirstOrDefault()?.LoadedAssembly.ShortName;
+			return (context.Reference?.Reference as IEntity)?.ParentModule?.AssemblyName;
 		}
 
 		internal static string MergeScopePrefix(string current, string prefix, string value)
