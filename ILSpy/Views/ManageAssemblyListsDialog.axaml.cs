@@ -24,7 +24,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Markup.Xaml;
+using Avalonia.VisualTree;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
@@ -73,6 +75,18 @@ namespace ILSpy.Views
 			addPreconfigured.Click += (_, _) => ShowPreconfiguredMenu(addPreconfigured);
 			this.FindControl<Button>("SelectButton")!.Click += (_, _) => SelectAndClose();
 			this.FindControl<Button>("CloseButton")!.Click += (_, _) => Close();
+			// Double-clicking an entry is a shortcut for the Select button: activate that list and
+			// close. Guarded to a real entry so a double-click on empty list space does nothing.
+			listsBox.DoubleTapped += OnListDoubleTapped;
+		}
+
+		void OnListDoubleTapped(object? sender, TappedEventArgs e)
+		{
+			var visual = e.Source as global::Avalonia.Visual;
+			while (visual is not null and not ListBoxItem)
+				visual = visual.GetVisualParent();
+			if (visual is ListBoxItem)
+				SelectAndClose();
 		}
 
 		void ShowPreconfiguredMenu(Button anchor)
@@ -89,6 +103,9 @@ namespace ILSpy.Views
 		}
 
 		string? SelectedListName => listsBox.SelectedItem as string;
+
+		/// <summary>The lists control, exposed for tests to drive the selection.</summary>
+		internal ListBox ListsControl => listsBox;
 
 		async Task<string?> PromptAsync(string title, string? initialText = null)
 		{
@@ -151,9 +168,22 @@ namespace ILSpy.Views
 
 		void SelectAndClose()
 		{
-			if (SelectedListName is { } selected)
-				settingsService.SessionSettings.ActiveAssemblyList = selected;
+			ActivateSelectedList();
 			Close();
+		}
+
+		/// <summary>
+		/// Switches the live active assembly list to the selected one. Goes through
+		/// <see cref="AssemblyTree.AssemblyTreeModel.ActiveListName"/> rather than poking the
+		/// session setting directly, because that setter is what reloads the tree
+		/// (<c>OnActiveListNameChanged</c> -> <c>ShowAssemblyList</c>) and persists the choice.
+		/// Setting the session setting alone only takes effect on the next launch.
+		/// </summary>
+		internal void ActivateSelectedList()
+		{
+			if (SelectedListName is not { } selected)
+				return;
+			AppEnv.AppComposition.Current.GetExport<AssemblyTree.AssemblyTreeModel>().ActiveListName = selected;
 		}
 
 		/// <summary>
