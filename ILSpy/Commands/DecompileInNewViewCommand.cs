@@ -61,13 +61,21 @@ namespace ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			var nodes = SelectedNodes(context).ToArray();
-			if (nodes.Length > 0)
+			if (nodes.Length == 1)
 			{
+				// Route a single node through OpenNodeInNewTab so nodes with custom content
+				// (metadata tables, resource viewers) open their own page-type instead of being
+				// force-decompiled into an empty code tab. Plain nodes still get a decompiler tab,
+				// sourced from the node so the tab/tree stay in lockstep when flipping tabs.
+				dockWorkspace.OpenNodeInNewTab(nodes[0]);
+				return;
+			}
+			if (nodes.Length > 1)
+			{
+				// Multi-node selections leave SourceNode null — no single tree row represents the
+				// union — and always decompile (there is no custom-content union page).
 				var content = new DecompilerTabPageModel { Language = languageService.CurrentLanguage };
-				// Single-node selection carries a SourceNode so the tab/tree stay in lockstep
-				// when the user flips tabs. Multi-node selections leave SourceNode null —
-				// no single tree row represents the union.
-				dockWorkspace.OpenNewTab(content, sourceNode: nodes.Length == 1 ? nodes[0] : null);
+				dockWorkspace.OpenNewTab(content, sourceNode: null);
 				content.CurrentNodes = nodes;
 				return;
 			}

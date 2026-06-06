@@ -485,6 +485,42 @@ public class DecompileInNewViewTests
 			"the grid must visually highlight every restored node");
 	}
 
+	[AvaloniaTest]
+	public async Task DecompileInNewView_On_A_Metadata_Table_Opens_Its_Grid_Not_A_Code_Tab()
+	{
+		// "Decompile to new tab" on a node with custom content (a metadata table) must open that
+		// node's own page-type — the metadata grid — not force-decompile it into an empty code tab.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
+
+		var tableNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<global::ILSpy.Metadata.MetadataTreeNode>()
+			.GetChild<global::ILSpy.Metadata.MetadataTablesTreeNode>()
+			.GetChild<global::ILSpy.Metadata.CorTables.TypeDefTableTreeNode>();
+
+		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
+		int before = documents.VisibleDockables?.OfType<ContentTabPage>().Count() ?? 0;
+
+		var menu = pane.BuildContextMenuForCurrentState(registry.Entries, rightClickedNode: tableNode);
+		menu.Should().NotBeNull();
+		menu!.ClickItem(Resources.DecompileToNewPanel);
+
+		await Waiters.WaitForAsync(
+			() => documents.VisibleDockables!.OfType<ContentTabPage>()
+				.Any(t => t.Content is global::ILSpy.ViewModels.MetadataTablePageModel));
+
+		documents.VisibleDockables!.OfType<ContentTabPage>().Count()
+			.Should().BeGreaterThan(before, "a new tab must open");
+		var newTab = documents.VisibleDockables!.OfType<ContentTabPage>()
+			.First(t => t.Content is global::ILSpy.ViewModels.MetadataTablePageModel);
+		newTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>(
+			"the metadata-table node must open its grid page, not a decompiler tab");
+	}
+
 	static bool RowNodeEquals(global::ILSpy.Controls.TreeView.SharpTreeViewItem row, SharpTreeNode node)
 		=> ReferenceEquals(row.DataContext, node);
 
