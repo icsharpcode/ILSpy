@@ -79,8 +79,13 @@ namespace ILSpy.Views
 			// in OnGridPointerPressed.
 			if (DataContext is not MetadataTablePageModel page)
 				return;
-			var grid = this.FindControl<DataGrid>("Grid");
-			if (grid?.SelectedItem is { } row)
+			// Resolve the row from the double-tapped element rather than grid.SelectedItem: a
+			// double-click on a column header (e.g. rapidly toggling its sort button) must NOT
+			// navigate to the currently-selected row — only a double-click on a data row does.
+			var visual = e.Source as Visual;
+			while (visual is not null and not DataGridRow)
+				visual = visual.GetVisualParent();
+			if (visual is DataGridRow { DataContext: { } row })
 				page.RaiseRowActivated(row);
 		}
 
