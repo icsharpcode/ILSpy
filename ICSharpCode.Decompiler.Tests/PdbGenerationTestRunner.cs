@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -64,7 +65,8 @@ namespace ICSharpCode.Decompiler.Tests
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, pdbId: expectedPdbId);
+				new PortablePdbWriter { NoLogo = true, PdbId = expectedPdbId }
+					.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream);
 
 				pdbStream.Position = 0;
 				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
@@ -73,6 +75,68 @@ namespace ICSharpCode.Decompiler.Tests
 				Assert.That(generatedPdbId.Guid, Is.EqualTo(expectedPdbId.Guid));
 				Assert.That(generatedPdbId.Stamp, Is.EqualTo(expectedPdbId.Stamp));
 			}
+		}
+
+		[Test]
+		public void EmbedSourceFiles_False_Omits_Embedded_Source()
+		{
+			// Generating a PDB alongside a project export (where the .cs are already on disk) should be
+			// able to skip embedding the source again. EmbedSourceFiles = false must drop the
+			// EmbeddedSource custom debug info (smaller PDB, no embeddedSourceLength) while keeping the
+			// document checksum/hash intact.
+
+			// Compile HelloWorld's source into a uniquely-named assembly so this test never collides
+			// with the HelloWorld fixture's .expected files under the fixture's parallel scope.
+			string sourceXml = Path.Combine(TestCasePath, nameof(HelloWorld) + ".xml");
+			var files = XDocument.Parse(File.ReadAllText(sourceXml))
+				.Descendants("file").ToDictionary(f => f.Attribute("name").Value, f => f.Value);
+			string outputBase = Path.Combine(TestCasePath, nameof(EmbedSourceFiles_False_Omits_Embedded_Source) + ".expected");
+			Tester.CompileCSharpWithPdb(outputBase, files);
+			string peFileName = outputBase + ".dll";
+
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+
+			byte[] WritePdbBytes(bool embedSources)
+			{
+				var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+				using var ms = new MemoryStream();
+				new PortablePdbWriter { NoLogo = true, EmbedSourceFiles = embedSources }
+					.WritePdb(module, decompiler, new DecompilerSettings(), ms);
+				return ms.ToArray();
+			}
+
+			// Inspect the portable PDB metadata directly (environment-independent): count the
+			// EmbeddedSource custom-debug-information rows and the source documents.
+			(int EmbeddedSources, int Documents) Inspect(byte[] pdb)
+			{
+				using var ms = new MemoryStream(pdb);
+				var reader = MetadataReaderProvider.FromPortablePdbStream(ms).GetMetadataReader();
+				int embedded = 0;
+				foreach (var handle in reader.CustomDebugInformation)
+				{
+					var cdi = reader.GetCustomDebugInformation(handle);
+					if (reader.GetGuid(cdi.Kind) == KnownGuids.EmbeddedSource)
+						embedded++;
+				}
+				return (embedded, reader.Documents.Count);
+			}
+
+			var withEmbed = WritePdbBytes(embedSources: true);
+			var withoutEmbed = WritePdbBytes(embedSources: false);
+
+			var embedInfo = Inspect(withEmbed);
+			var noEmbedInfo = Inspect(withoutEmbed);
+
+			Assert.That(embedInfo.EmbeddedSources, Is.GreaterThan(0),
+				"the default (embed = true) keeps the embedded-source blobs");
+			Assert.That(noEmbedInfo.EmbeddedSources, Is.EqualTo(0),
+				"embed = false must omit every embedded-source blob");
+			Assert.That(noEmbedInfo.Documents, Is.EqualTo(embedInfo.Documents).And.GreaterThan(0),
+				"the source documents (with their checksum/hash) must remain even without embedded source");
+			Assert.That(withoutEmbed.Length, Is.LessThan(withEmbed.Length),
+				"omitting embedded source must produce a strictly smaller PDB");
 		}
 
 		[Test]
@@ -104,7 +168,8 @@ namespace ICSharpCode.Decompiler.Tests
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(ProgressReporting) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true, progress: new TestProgressReporter(reportFunc));
+				new PortablePdbWriter { NoLogo = true, Progress = new TestProgressReporter(reportFunc) }
+					.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream);
 
 				pdbStream.Position = 0;
 				var metadataReader = MetadataReaderProvider.FromPortablePdbStream(pdbStream).GetMetadataReader();
@@ -142,7 +207,8 @@ namespace ICSharpCode.Decompiler.Tests
 			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, testName + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
 			{
 				pdbStream.SetLength(0);
-				PortablePdbWriter.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream, noLogo: true);
+				new PortablePdbWriter { NoLogo = true }
+					.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream);
 				pdbStream.Position = 0;
 				using (Stream peStream = File.OpenRead(peFileName))
 				using (Stream expectedPdbStream = File.OpenRead(pdbFileName))

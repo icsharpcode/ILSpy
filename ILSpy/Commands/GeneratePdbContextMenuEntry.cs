@@ -125,7 +125,7 @@ namespace ILSpy.Commands
 							var decompiler = new CSharpDecompiler(file, resolver, settings) {
 								CancellationToken = token,
 							};
-							PortablePdbWriter.WritePdb(file, decompiler, settings, stream);
+							new PortablePdbWriter().WritePdb(file, decompiler, settings, stream);
 							output.Write(string.Format(Resources.GeneratedPDBFile, pdbFileName));
 							output.WriteLine();
 						}

@@ -613,7 +613,7 @@ Examples:
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.Create, FileAccess.Write))
 			{
 				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
+				new PortablePdbWriter().WritePdb(module, decompiler, GetSettings(module), stream);
 			}
 
 			return 0;
