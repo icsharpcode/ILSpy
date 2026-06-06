@@ -88,6 +88,13 @@ namespace ILSpy.Navigation
 		/// </summary>
 		public FoldingsViewState.Snapshot? Foldings { get; set; }
 
+		/// <summary>
+		/// For a metadata-table node reached via "Go to token", the 0-based row the grid was
+		/// scrolled to. Restored on Back/Forward so returning to this entry lands on the exact
+		/// token, not just the top of the table. <c>null</c> for ordinary tree-node selections.
+		/// </summary>
+		public int? MetadataRow { get; set; }
+
 		public TreeNodeEntry(TabPageModel tab, SharpTreeNode node)
 			: base(tab)
 		{

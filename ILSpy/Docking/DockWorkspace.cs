@@ -608,6 +608,9 @@ namespace ILSpy.Docking
 							treeNode.Foldings);
 					}
 					assemblyTreeModel.SelectedItem = treeNode.Node;
+					// Restore the metadata-table row for entries created by "Go to token".
+					if (treeNode.MetadataRow is { } metadataRow && factory.MainTab?.Content is MetadataTablePageModel pm)
+						pm.ScrollToRow = metadataRow;
 				}
 				// StaticPageEntry: just reactivating the tab is enough — its content was
 				// preserved because IsStaticContent kept tree-node selections from targeting it.
@@ -996,20 +999,20 @@ namespace ILSpy.Docking
 			if (tableNode == null)
 				return;
 
-			suppressHistoryRecording = true;
-			try
-			{
-				assemblyTreeModel.SelectedItem = tableNode;
-			}
-			finally
-			{
-				suppressHistoryRecording = false;
-			}
+			// Let the selection record a history entry so Back returns the user here from wherever
+			// the token jump originated (a code view or another metadata table).
+			assemblyTreeModel.SelectedItem = tableNode;
 
 			// ShowSelectedNode just settled MainTab.Content to the table's MetadataTablePageModel.
-			// Set ScrollToRow to the handle's row number (1-based → 0-based).
+			// Set ScrollToRow to the handle's row number (1-based → 0-based), and stamp that row onto
+			// the just-recorded history entry so Back/Forward restores the exact token, not the table top.
 			if (factory.MainTab?.Content is MetadataTablePageModel pm)
-				pm.ScrollToRow = MetadataTokens.GetRowNumber((EntityHandle)reference.Handle) - 1;
+			{
+				int row = MetadataTokens.GetRowNumber((EntityHandle)reference.Handle) - 1;
+				pm.ScrollToRow = row;
+				if (history.Current is TreeNodeEntry current && ReferenceEquals(current.Node, tableNode))
+					current.MetadataRow = row;
+			}
 		}
 
 		DecompilerTabPageModel CreateDecompilerContent()
