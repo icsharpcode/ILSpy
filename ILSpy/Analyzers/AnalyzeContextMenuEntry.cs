@@ -53,33 +53,46 @@ namespace ILSpy.Analyzers
 
 		public bool IsVisible(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
-				return false;
-			return nodes.All(n => n is IMemberTreeNode);
+			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
+				return nodes.All(n => n is IMemberTreeNode);
+			// Right-clicking a resolved symbol in the decompiled code: the reference carries the entity.
+			return context.Reference?.Reference is IEntity;
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
-				return false;
-			return nodes.OfType<IMemberTreeNode>().All(n => IsAnalysable(n.Member));
+			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
+				return nodes.OfType<IMemberTreeNode>().All(n => IsAnalysable(n.Member));
+			return context.Reference?.Reference is IEntity entity && IsAnalysable(entity);
 		}
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
-				return;
-			var analysable = nodes.OfType<IMemberTreeNode>()
-				.Select(n => n.Member)
-				.Where(IsAnalysable)
-				.ToList();
+			var analysable = MembersToAnalyse(context);
 			foreach (var member in analysable)
-				analyzerTreeViewModel.Analyze(member!);
+				analyzerTreeViewModel.Analyze(member);
 			// Bring the analyzer pane to the front so the user can see the entity they just
 			// added. AnalyzerTreeViewModel.Analyze deliberately leaves dock-activation to its
 			// caller — that's this entry's job.
 			if (analysable.Count > 0)
 				dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
+		}
+
+		// The analysable entities for this invocation: a tree-node selection (assembly/analyzer tree),
+		// or the single resolved entity under a right-clicked code reference (decompiler text view).
+		static System.Collections.Generic.List<IEntity> MembersToAnalyse(TextViewContext context)
+		{
+			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
+			{
+				return nodes.OfType<IMemberTreeNode>()
+					.Select(n => n.Member)
+					.Where(IsAnalysable)
+					.Select(m => m!)
+					.ToList();
+			}
+			if (context.Reference?.Reference is IEntity entity && IsAnalysable(entity))
+				return new System.Collections.Generic.List<IEntity> { entity };
+			return new System.Collections.Generic.List<IEntity>();
 		}
 
 		/// <summary>

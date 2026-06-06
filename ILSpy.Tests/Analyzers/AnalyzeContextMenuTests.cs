@@ -23,12 +23,14 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy;
 using ILSpy.Analyzers;
 using ILSpy.AppEnv;
+using ILSpy.TextView;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 using ILSpy.Views;
@@ -74,6 +76,30 @@ public class AnalyzeContextMenuTests
 			.Should().BeFalse("no selection means no entity to analyse");
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = System.Array.Empty<SharpTreeNode>() })
 			.Should().BeFalse("an empty selection must hide the entry");
+	}
+
+	[AvaloniaTest]
+	public async Task Analyze_Is_Visible_And_Works_For_A_Clicked_Code_Reference()
+	{
+		// Right-clicking a resolved symbol (IEntity) in the decompiled code -- not a tree node --
+		// must also surface Analyze and push that entity into the analyzer pane.
+		var (_, vm) = await TestHarness.BootAsync();
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.Analyze));
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var entity = (IEntity)typeNode.Member!;
+		var context = new TextViewContext { Reference = new ReferenceSegment { Reference = entity } };
+
+		entry.IsVisible(context).Should().BeTrue("a clicked code reference to an entity must surface Analyze");
+		entry.IsEnabled(context).Should().BeTrue();
+
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+		var before = analyzerVm.Root.Children.Count;
+		entry.Execute(context);
+		analyzerVm.Root.Children.Count.Should().Be(before + 1,
+			"analyzing a clicked code reference must add it to the analyzer pane");
 	}
 
 	[AvaloniaTest]
