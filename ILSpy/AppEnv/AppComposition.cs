@@ -107,7 +107,9 @@ namespace ILSpy.AppEnv
 				}
 				catch (Exception ex)
 				{
-					StartupExceptions.Items.Add(new ExceptionData(ex) { PluginName = name });
+					// Non-fatal: a plugin that won't load is skipped and reported to the user,
+					// rather than aborting startup into the error window.
+					CompositionErrors.Report($"Plugin '{name}'", ex);
 				}
 				if (assembly != null)
 					yield return assembly;

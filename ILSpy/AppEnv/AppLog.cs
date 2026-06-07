@@ -67,6 +67,14 @@ namespace ILSpy.AppEnv
 			/// default; opt in with <c>ILSPY_LOG=DBUSDEBUG</c> (matched case-insensitively).
 			/// </summary>
 			public const string DBusDebug = "DBusDebug";
+
+			/// <summary>
+			/// Non-fatal MEF composition failures collected by <see cref="CompositionErrors"/> — a
+			/// plugin assembly that won't load, or an exported command whose constructor throws when
+			/// the menu/toolbar builder materialises it. Errors are always shown to the user in a
+			/// document tab; opt in with <c>ILSPY_LOG=Composition</c> to also log them to file.
+			/// </summary>
+			public const string Composition = "Composition";
 		}
 
 		static readonly Stopwatch sw = Stopwatch.StartNew();

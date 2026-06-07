@@ -68,8 +68,32 @@ namespace ILSpy.Views
 				AppLog.Mark("MainWindow.Opened handler returning");
 				if (App.CommandLineArguments is { } args)
 					await viewModel.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+				// Surface any non-fatal composition failures (failed plugins, uninstantiable menu/
+				// toolbar commands) once the menu and toolbar have finished building. Deferred to a
+				// later dispatcher turn so those builders' own Loaded handlers have run first.
+				Avalonia.Threading.Dispatcher.UIThread.Post(SurfaceCompositionErrors,
+					Avalonia.Threading.DispatcherPriority.Background);
 			};
 			AppLog.Mark("MainWindow ctor exited");
+		}
+
+		static void SurfaceCompositionErrors()
+		{
+			if (!AppEnv.CompositionErrors.Any)
+				return;
+			try
+			{
+				var output = new TextView.AvaloniaEditTextOutput { Title = "Composition Errors" };
+				AppEnv.CompositionErrors.WriteTo(output);
+				AppEnv.AppComposition.Current
+					.GetExport<ILSpy.Docking.DockWorkspace>()
+					.ShowTextInNewTab("Composition Errors", output);
+			}
+			catch (System.Exception ex)
+			{
+				// Surfacing the report must never itself crash startup.
+				System.Diagnostics.Debug.WriteLine($"[MainWindow] SurfaceCompositionErrors failed: {ex}");
+			}
 		}
 
 		void ApplySessionSettings(SessionSettings session)

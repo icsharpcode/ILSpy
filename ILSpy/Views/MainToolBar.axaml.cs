@@ -194,7 +194,18 @@ public partial class MainToolBar : UserControl
 
 	static Button? BuildButton(ExportFactory<System.Windows.Input.ICommand, ToolbarCommandMetadata> entry)
 	{
-		var command = entry.CreateExport().Value;
+		System.Windows.Input.ICommand command;
+		try
+		{
+			// Isolate each entry: a misbehaving plugin command (e.g. a DI ctor without
+			// [ImportingConstructor]) must not take down the whole toolbar.
+			command = entry.CreateExport().Value;
+		}
+		catch (System.Exception ex)
+		{
+			ILSpy.AppEnv.CompositionErrors.Report($"Toolbar command '{entry.Metadata.ToolTip}'", ex);
+			return null;
+		}
 		var button = new Button {
 			Tag = entry.Metadata.ToolTip,
 			Command = command,

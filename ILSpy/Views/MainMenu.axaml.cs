@@ -22,12 +22,12 @@ using System.Composition;
 using System.Linq;
 using System.Windows.Input;
 
+using CommunityToolkit.Mvvm.Input;
+
 using global::Avalonia;
 using global::Avalonia.Controls;
 using global::Avalonia.Data;
 using global::Avalonia.Input;
-
-using CommunityToolkit.Mvvm.Input;
 
 using ICSharpCode.ILSpy.Properties;
 
@@ -232,7 +232,19 @@ public static class MainMenu
 					}
 					else
 					{
-						var command = entry.CreateExport().Value;
+						ICommand command;
+						try
+						{
+							// Isolate each entry: instantiating a command export can throw for a
+							// misbehaving plugin (e.g. a DI ctor without [ImportingConstructor]); one
+							// bad command must not take down the whole menu bar.
+							command = entry.CreateExport().Value;
+						}
+						catch (Exception ex)
+						{
+							AppEnv.CompositionErrors.Report($"Main-menu command '{entry.Metadata?.Header}'", ex);
+							continue;
+						}
 						// No explicit IsEnabled: assigning Command lets NativeMenuItem track the
 						// command's CanExecute, so OS-gated commands (e.g. Open from GAC, which is
 						// Windows-only) grey out correctly. A hard-coded IsEnabled would override

@@ -1111,6 +1111,21 @@ namespace ILSpy.Docking
 		/// </summary>
 		public void ShowToolPane(string contentId) => factory.ShowToolPane(contentId);
 
+		/// <summary>
+		/// Opens a fresh frozen tab showing the supplied pre-rendered text output. Used to surface
+		/// reports that aren't tied to a tree node (e.g. composition-error listings).
+		/// </summary>
+		public void ShowTextInNewTab(string title, TextView.AvaloniaEditTextOutput output)
+		{
+			ArgumentNullException.ThrowIfNull(output);
+			var content = new TextView.DecompilerTabPageModel {
+				Language = languageService.CurrentLanguage,
+				Title = title,
+			};
+			OpenNewTab(content);
+			content.ShowText(output);
+		}
+
 		void ExecuteShowSearch()
 		{
 			ShowToolPane(ILSpy.Search.SearchPaneModel.PaneContentId);
