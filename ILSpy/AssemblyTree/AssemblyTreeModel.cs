@@ -620,9 +620,69 @@ namespace ILSpy.AssemblyTree
 				case IMember member:
 					return FindMemberNode(assemblyListTreeNode, member);
 
+				case LoadedAssembly lasm:
+					return FindAssemblyNode(lasm);
+
+				case MetadataFile metadataFile:
+					return assemblyListTreeNode.Children.OfType<AssemblyTreeNode>()
+						.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == metadataFile);
+
+				case Resource resource:
+					return FindResourceNode(assemblyListTreeNode, resource, null);
+
+				case ValueTuple<Resource, string> resourceWithName:
+					return FindResourceNode(assemblyListTreeNode, resourceWithName.Item1, resourceWithName.Item2);
+
+				case INamespace ns:
+					return FindNamespaceNode(assemblyListTreeNode, ns);
+
 				default:
 					return null;
 			}
+		}
+
+		// Resolves a resource (optionally a named sub-entry) to its tree node. Mirrors the previous
+		// version's AssemblyListTreeNode.FindResourceNode so resource search results / links navigate.
+		static ILSpyTreeNode? FindResourceNode(AssemblyListTreeNode root, Resource resource, string? name)
+		{
+			if (resource == null)
+				return null;
+			ILSpyTreeNode? resourceNode = null;
+			foreach (var node in root.Children.OfType<AssemblyTreeNode>())
+			{
+				if (!node.LoadedAssembly.IsLoaded)
+					continue;
+				node.EnsureLazyChildren();
+				foreach (var list in node.Children.OfType<ResourceListTreeNode>())
+				{
+					resourceNode = list.Children.OfType<ResourceTreeNode>().FirstOrDefault(x => x.Resource == resource)
+						?? (ILSpyTreeNode?)list.Children.OfType<ResourceEntryNode>().FirstOrDefault(x => resource.Name.Equals(x.Text));
+					if (resourceNode != null)
+						break;
+				}
+				if (resourceNode != null)
+					break;
+			}
+			if (resourceNode == null || name == null || name.Equals(resourceNode.Text))
+				return resourceNode;
+			resourceNode.EnsureLazyChildren();
+			return resourceNode.Children.OfType<ILSpyTreeNode>().FirstOrDefault(x => name.Equals(x.Text)) ?? resourceNode;
+		}
+
+		// Resolves a namespace to its tree node within its contributing assembly. Mirrors the previous
+		// version's AssemblyListTreeNode.FindNamespaceNode.
+		static NamespaceTreeNode? FindNamespaceNode(AssemblyListTreeNode root, INamespace ns)
+		{
+			var module = ns.ContributingModules.FirstOrDefault();
+			if (module?.MetadataFile == null)
+				return null;
+			var assembly = root.Children.OfType<AssemblyTreeNode>()
+				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module.MetadataFile);
+			if (assembly == null)
+				return null;
+			assembly.EnsureLazyChildren();
+			return assembly.Children.OfType<NamespaceTreeNode>()
+				.FirstOrDefault(n => ns.FullName.Length == 0 || ns.FullName.Equals(n.Text));
 		}
 
 		static TypeTreeNode? FindTypeNode(AssemblyListTreeNode root, ITypeDefinition type)
