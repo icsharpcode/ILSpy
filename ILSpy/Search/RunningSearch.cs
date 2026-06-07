@@ -220,6 +220,16 @@ namespace ILSpy.Search
 					// Stop the producer — anything it pushes from here would just be
 					// discarded, so why burn CPU on it.
 					cts.Cancel();
+					// Tell the user the list was truncated (appended after the sorted results; its
+					// null Reference makes it a no-op to click).
+					sink.Add(new SearchResult {
+						Name = ICSharpCode.ILSpy.Properties.Resources.SearchAbortedMoreThan1000ResultsFound,
+						Location = string.Empty,
+						Assembly = string.Empty,
+						Image = null!,
+						LocationImage = null!,
+						AssemblyImage = null!,
+					});
 				}
 				// Drain-discard any items still queued: without this the termination
 				// condition (runTask done + queue empty) never fires and the timer
