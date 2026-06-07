@@ -39,12 +39,27 @@ namespace ILSpy.ViewModels
 		public string? Title => pane.Title;
 
 		public bool IsPaneVisible {
-			get => pane.Owner is not IRootDock;
+			// Visible only when the pane currently sits in a real (non-root) dock's visible
+			// dockables. A pane that is hidden by default and never shown has a null Owner — the
+			// old `Owner is not IRootDock` test reported that as visible, so the Window-menu toggle
+			// thought it was already open and "closed" it (a no-op) instead of showing it.
+			get => pane.Owner is IDock owner
+				&& owner is not IRootDock
+				&& owner.VisibleDockables?.Contains(pane) == true;
 			set {
 				if (value == IsPaneVisible)
 					return;
 				if (value)
-					factory.RestoreDockable(pane);
+				{
+					// RestoreDockable only un-hides a dockable that was previously shown and then
+					// hidden; a pane that is hidden by default (e.g. Debug Steps) was never placed in
+					// the layout, so there is nothing to restore. ShowToolPane materialises the pane
+					// AND (re)creates its home dock, so it works in both cases.
+					if (factory is Docking.ILSpyDockFactory ilspyFactory)
+						ilspyFactory.ShowToolPane(pane.Id);
+					else
+						factory.RestoreDockable(pane);
+				}
 				else
 					factory.HideDockable(pane);
 				OnPropertyChanged();

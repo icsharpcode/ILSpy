@@ -133,6 +133,28 @@ public class DebugStepsTests
 		languageService.Languages.Should().Contain(l => l.Name == "Typed IL");
 		return Task.CompletedTask;
 	}
+	[AvaloniaTest]
+	public async Task Window_Menu_Toggle_Surfaces_The_Default_Hidden_Debug_Steps_Pane()
+	{
+		// Repro of "Window > Debug Steps does nothing": the menu toggles ToolPaneMenuItem.IsPaneVisible,
+		// which used factory.RestoreDockable — a no-op for a pane that is hidden by default (never
+		// placed in the layout, so there's nothing to restore). Toggling it on must actually surface
+		// the pane (ShowToolPane materialises it and creates its home dock).
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var menuItem = vm.DockWorkspace.ToolPaneMenuItems
+			.Single(p => p.Title == "Debug Steps");
+		menuItem.IsPaneVisible.Should().BeFalse("Debug Steps is hidden by default");
+
+		menuItem.IsPaneVisible = true;
+
+		menuItem.IsPaneVisible.Should().BeTrue(
+			"toggling Window > Debug Steps on must make the pane visible in the layout");
+	}
+
 }
 
 #endif
