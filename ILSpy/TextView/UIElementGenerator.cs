@@ -25,33 +25,58 @@ using AvaloniaEdit.Rendering;
 
 namespace ILSpy.TextView
 {
-	using Pair = KeyValuePair<int, Lazy<Control>>;
+	using Pair = KeyValuePair<int, Func<Control>>;
 
 	/// <summary>
 	/// Embeds inline UI elements produced by <see cref="ISmartTextOutput.AddUIElement"/> in
-	/// the rendered text. The element factory is stored as a <see cref="Lazy{Control}"/> so
-	/// the actual control is constructed on the UI thread when the row is first realised.
+	/// the rendered text. Each element is stored as a factory; this generator builds and caches
+	/// one control instance per offset locally, so the control belongs to a single editor. The
+	/// model only carries the factory, never a shared control -- otherwise a reused or reopened
+	/// tab rendering into a different TextView would hit AvaloniaEdit's "already has a visual
+	/// parent" guard.
 	/// </summary>
 	sealed class UIElementGenerator : VisualLineElementGenerator, IComparer<Pair>
 	{
-		public IReadOnlyList<Pair>? UIElements;
+		// Controls realised so far, keyed by document offset, so re-laying out the same line in
+		// THIS editor reuses the instance (preserving its state, and letting AvaloniaEdit's
+		// per-TextView dedup handle it) rather than building a fresh one each time.
+		readonly Dictionary<int, Control> realised = new();
+
+		IReadOnlyList<Pair>? uiElements;
+
+		public IReadOnlyList<Pair>? UIElements {
+			get => uiElements;
+			set {
+				// Rebinding to a new document: drop controls built for the previous one so they
+				// are rebuilt from the new model's factories.
+				realised.Clear();
+				uiElements = value;
+			}
+		}
 
 		public override int GetFirstInterestedOffset(int startOffset)
 		{
-			if (UIElements == null)
+			if (uiElements == null)
 				return -1;
-			int r = BinarySearch(UIElements, new Pair(startOffset, null!));
+			int r = BinarySearch(uiElements, new Pair(startOffset, null!));
 			if (r < 0)
 				r = ~r;
-			return r < UIElements.Count ? UIElements[r].Key : -1;
+			return r < uiElements.Count ? uiElements[r].Key : -1;
 		}
 
 		public override VisualLineElement? ConstructElement(int offset)
 		{
-			if (UIElements == null)
+			if (uiElements == null)
 				return null;
-			int r = BinarySearch(UIElements, new Pair(offset, null!));
-			return r >= 0 ? new InlineObjectElement(0, UIElements[r].Value.Value) : null;
+			int r = BinarySearch(uiElements, new Pair(offset, null!));
+			if (r < 0)
+				return null;
+			if (!realised.TryGetValue(offset, out var control))
+			{
+				control = uiElements[r].Value();
+				realised[offset] = control;
+			}
+			return new InlineObjectElement(0, control);
 		}
 
 		int IComparer<Pair>.Compare(Pair x, Pair y) => x.Key.CompareTo(y.Key);

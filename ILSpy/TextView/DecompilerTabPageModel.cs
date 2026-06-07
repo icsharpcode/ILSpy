@@ -132,7 +132,7 @@ namespace ILSpy.TextView
 		/// Fed to <see cref="UIElementGenerator"/> by the text view.
 		/// </summary>
 		[ObservableProperty]
-		private IReadOnlyList<KeyValuePair<int, Lazy<Control>>>? uIElements;
+		private IReadOnlyList<KeyValuePair<int, Func<Control>>>? uIElements;
 
 		/// <summary>
 		/// Custom <see cref="VisualLineElementGenerator"/>s the writer attached (e.g. a

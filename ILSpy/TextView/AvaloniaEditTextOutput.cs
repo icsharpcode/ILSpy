@@ -83,11 +83,11 @@ namespace ILSpy.TextView
 		/// <summary>Maps reference targets to their definition offsets in the rendered text.</summary>
 		public DefinitionLookup DefinitionLookup { get; } = new();
 
-		readonly List<KeyValuePair<int, Lazy<Control>>> uiElements = new();
+		readonly List<KeyValuePair<int, Func<Control>>> uiElements = new();
 
 		/// <summary>Inline UI elements collected during writing, in offset order. Fed to
 		/// <see cref="UIElementGenerator"/> by the text view.</summary>
-		public IReadOnlyList<KeyValuePair<int, Lazy<Control>>> UIElements => uiElements;
+		public IReadOnlyList<KeyValuePair<int, Func<Control>>> UIElements => uiElements;
 
 		readonly List<VisualLineElementGenerator> elementGenerators = new();
 
@@ -231,7 +231,11 @@ namespace ILSpy.TextView
 				return;
 			if (uiElements.Count > 0 && uiElements[uiElements.Count - 1].Key == builder.Length)
 				throw new InvalidOperationException("Only one UIElement is allowed for each position in the document.");
-			uiElements.Add(new KeyValuePair<int, Lazy<Control>>(builder.Length, new Lazy<Control>(element)));
+			// Store the factory itself (not a cached Lazy): each editor's UIElementGenerator
+			// builds and caches its own control instance, so the same control is never shared
+			// across two editors -- which would make AvaloniaEdit throw "already has a visual
+			// parent" when a reused/reopened tab renders into a different TextView.
+			uiElements.Add(new KeyValuePair<int, Func<Control>>(builder.Length, element));
 		}
 
 		public void AddVisualLineElementGenerator(VisualLineElementGenerator generator)

@@ -131,7 +131,7 @@ public class ResourceFactoryTests
 		// and they all materialise as Avalonia Controls.
 		output.UIElements.Should().HaveCount(3,
 			".resources should render a string table + object table inline alongside the Save button");
-		var realised = output.UIElements.Select(kv => kv.Value.Value).ToList();
+		var realised = output.UIElements.Select(kv => kv.Value()).ToList();
 		realised.Should().ContainItemsAssignableTo<Control>();
 	}
 

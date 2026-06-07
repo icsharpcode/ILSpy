@@ -23,6 +23,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Data;
+using Avalonia.Layout;
+
 using AvaloniaEdit.Rendering;
 
 using ICSharpCode.Decompiler;
@@ -48,12 +53,17 @@ namespace ILSpy.Commands
 
 		readonly DockWorkspace dockWorkspace;
 		readonly IEnumerable<IAboutPageAddition> additions;
+		readonly SettingsService settingsService;
+		readonly UpdatePanelViewModel updatePanel;
 
 		[ImportingConstructor]
-		public AboutCommand(DockWorkspace dockWorkspace, [ImportMany] IEnumerable<IAboutPageAddition> additions)
+		public AboutCommand(DockWorkspace dockWorkspace, [ImportMany] IEnumerable<IAboutPageAddition> additions,
+			SettingsService settingsService, UpdatePanelViewModel updatePanel)
 		{
 			this.dockWorkspace = dockWorkspace;
 			this.additions = additions;
+			this.settingsService = settingsService;
+			this.updatePanel = updatePanel;
 		}
 
 		public override void Execute(object? parameter)
@@ -92,6 +102,9 @@ namespace ILSpy.Commands
 			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersionWithCommitHash);
 			output.WriteLine(Resources.NETFrameworkVersion + GetDotnetProductVersion());
 			output.WriteLine();
+			output.AddUIElement(BuildUpdateSection);
+			output.WriteLine();
+			output.WriteLine();
 
 			foreach (var addition in additions)
 				addition.Write(output);
@@ -112,6 +125,46 @@ namespace ILSpy.Commands
 				output.AddVisualLineElementGenerator(new ResourceLinkGenerator(phrase, uri));
 
 			return output;
+		}
+
+		// The inline update controls the previous version showed on the About page: a Check-for-updates
+		// / Download button + status message (sharing the toolbar banner's UpdatePanelViewModel state),
+		// and the "automatically check for updates every week" toggle bound to UpdateSettings.
+		internal Control BuildUpdateSection()
+		{
+			var button = new Button {
+				Command = updatePanel.DownloadOrCheckUpdateCommand,
+				VerticalAlignment = VerticalAlignment.Center,
+			};
+			button.Bind(ContentControl.ContentProperty,
+				new Binding(nameof(UpdatePanelViewModel.ButtonText)) { Source = updatePanel });
+
+			var message = new TextBlock {
+				VerticalAlignment = VerticalAlignment.Center,
+			};
+			message.Bind(TextBlock.TextProperty,
+				new Binding(nameof(UpdatePanelViewModel.Message)) { Source = updatePanel });
+
+			var row = new StackPanel {
+				Orientation = Orientation.Horizontal,
+				Spacing = 8,
+			};
+			row.Children.Add(button);
+			row.Children.Add(message);
+
+			var autoCheck = new CheckBox {
+				Content = Resources.AutomaticallyCheckUpdatesEveryWeek,
+			};
+			autoCheck.Bind(ToggleButton.IsCheckedProperty,
+				new Binding(nameof(Updates.UpdateSettings.AutomaticUpdateCheckEnabled)) {
+					Source = settingsService.UpdateSettings,
+					Mode = BindingMode.TwoWay,
+				});
+
+			return new StackPanel {
+				Spacing = 4,
+				Children = { row, autoCheck },
+			};
 		}
 
 		DecompilerTabPageModel CreateTabContent(string title, AvaloniaEditTextOutput output, string syntaxExtension, bool isStaticContent)
