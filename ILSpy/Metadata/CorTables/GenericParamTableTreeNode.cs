@@ -66,10 +66,20 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public GenericParameterAttributes Attributes => genericParam.Attributes;
 
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(GenericParameterAttributes), "Variance: ", (int)GenericParameterAttributes.VarianceMask, (int)(genericParam.Attributes & GenericParameterAttributes.VarianceMask), new Flag("None (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(GenericParameterAttributes), "Special Constraint: ", (int)GenericParameterAttributes.SpecialConstraintMask, (int)(genericParam.Attributes & GenericParameterAttributes.SpecialConstraintMask), includeAll: false),
+			};
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParam.Parent);
 
+			string? ownerTooltip;
+			public string? OwnerTooltip => GenerateTooltip(ref ownerTooltip, metadataFile, genericParam.Parent);
+
 			public string Name => metadataFile.Metadata.GetString(genericParam.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(genericParam.Name):X} \"{Name}\"";
 
 			public GenericParamEntry(MetadataFile metadataFile, GenericParameterHandle handle)
 			{

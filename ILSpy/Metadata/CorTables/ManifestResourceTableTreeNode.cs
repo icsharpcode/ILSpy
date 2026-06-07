@@ -65,10 +65,17 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public ManifestResourceAttributes Attributes => manifestResource.Attributes;
 
+			public object AttributesTooltip => manifestResource.Attributes.ToString();
+
 			public string Name => metadataFile.Metadata.GetString(manifestResource.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(manifestResource.Name):X} \"{Name}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Implementation => MetadataTokens.GetToken(manifestResource.Implementation);
+
+			string? implementationTooltip;
+			public string? ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, manifestResource.Implementation);
 
 			public ManifestResourceEntry(MetadataFile metadataFile, ManifestResourceHandle handle)
 			{

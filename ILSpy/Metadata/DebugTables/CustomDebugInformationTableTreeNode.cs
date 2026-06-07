@@ -60,11 +60,22 @@ namespace ILSpy.Metadata.DebugTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(debugInfo.Parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, debugInfo.Parent);
+
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Kind => MetadataTokens.GetHeapOffset(debugInfo.Kind);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(debugInfo.Value);
+
+			public string ValueTooltip {
+				get {
+					if (debugInfo.Value.IsNil)
+						return "<nil>";
+					return metadataFile.Metadata.GetBlobReader(debugInfo.Value).ToHexString();
+				}
+			}
 
 			public CustomDebugInformationEntry(MetadataFile metadataFile, CustomDebugInformationHandle handle)
 			{

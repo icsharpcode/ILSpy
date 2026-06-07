@@ -22,6 +22,8 @@ using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ILSpy.Metadata.CorTables
@@ -66,18 +68,76 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public TypeAttributes Attributes => typeDef.Attributes;
 
+			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
+
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Visibility: ", (int)TypeAttributes.VisibilityMask, (int)(typeDef.Attributes & TypeAttributes.VisibilityMask), new Flag("NotPublic (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class layout: ", (int)TypeAttributes.LayoutMask, (int)(typeDef.Attributes & TypeAttributes.LayoutMask), new Flag("AutoLayout (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class semantics: ", (int)TypeAttributes.ClassSemanticsMask, (int)(typeDef.Attributes & TypeAttributes.ClassSemanticsMask), new Flag("Class (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "String format: ", (int)TypeAttributes.StringFormatMask, (int)(typeDef.Attributes & TypeAttributes.StringFormatMask), new Flag("AnsiClass (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Custom format: ", (int)TypeAttributes.CustomFormatMask, (int)(typeDef.Attributes & TypeAttributes.CustomFormatMask), new Flag("Value0 (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(TypeAttributes), "Flags:", (int)otherFlagsMask, (int)(typeDef.Attributes & otherFlagsMask), includeAll: false),
+			};
+
 			public string Name => metadataFile.Metadata.GetString(typeDef.Name);
 
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Name):X} \"{Name}\"";
+
 			public string Namespace => metadataFile.Metadata.GetString(typeDef.Namespace);
+
+			public string NamespaceTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Namespace):X} \"{Namespace}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int BaseType => MetadataTokens.GetToken(typeDef.BaseType);
 
+			public string? BaseTypeTooltip {
+				get {
+					var output = new PlainTextOutput();
+					var provider = new DisassemblerSignatureTypeProvider(metadataFile, output);
+					if (typeDef.BaseType.IsNil)
+						return null;
+					switch (typeDef.BaseType.Kind)
+					{
+						case HandleKind.TypeDefinition:
+							provider.GetTypeFromDefinition(metadataFile.Metadata, (TypeDefinitionHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
+							return output.ToString();
+						case HandleKind.TypeReference:
+							provider.GetTypeFromReference(metadataFile.Metadata, (TypeReferenceHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
+							return output.ToString();
+						case HandleKind.TypeSpecification:
+							provider.GetTypeFromSpecification(metadataFile.Metadata, new MetadataGenericContext(default(TypeDefinitionHandle), metadataFile.Metadata), (TypeSpecificationHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
+							return output.ToString();
+						default:
+							return null;
+					}
+				}
+			}
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
 
+			string? fieldListTooltip;
+			public string? FieldListTooltip {
+				get {
+					var @field = typeDef.GetFields().FirstOrDefault();
+					if (@field.IsNil)
+						return null;
+					return GenerateTooltip(ref fieldListTooltip, metadataFile, @field);
+				}
+			}
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
+
+			string? methodListTooltip;
+			public string? MethodListTooltip {
+				get {
+					var method = typeDef.GetMethods().FirstOrDefault();
+					if (method.IsNil)
+						return null;
+					return GenerateTooltip(ref methodListTooltip, metadataFile, method);
+				}
+			}
 
 			public TypeDefEntry(MetadataFile metadataFile, TypeDefinitionHandle handle)
 			{

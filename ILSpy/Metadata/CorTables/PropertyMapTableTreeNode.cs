@@ -48,7 +48,7 @@ namespace ILSpy.Metadata.CorTables
 			{
 				int parentRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
 				int propertyListRow = propertyDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new PropertyMapEntry(rid, MetadataTokens.TypeDefinitionHandle(parentRow), MetadataTokens.PropertyDefinitionHandle(propertyListRow)));
+				list.Add(new PropertyMapEntry(metadataFile, rid, MetadataTokens.TypeDefinitionHandle(parentRow), MetadataTokens.PropertyDefinitionHandle(propertyListRow)));
 			}
 			return list;
 		}
@@ -63,14 +63,22 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, parent);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int PropertyList => MetadataTokens.GetToken(propertyList);
 
+			string? propertyListTooltip;
+			public string? PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, metadataFile, propertyList);
+
+			readonly MetadataFile metadataFile;
 			readonly TypeDefinitionHandle parent;
 			readonly PropertyDefinitionHandle propertyList;
 
-			public PropertyMapEntry(int rid, TypeDefinitionHandle parent, PropertyDefinitionHandle propertyList)
+			public PropertyMapEntry(MetadataFile metadataFile, int rid, TypeDefinitionHandle parent, PropertyDefinitionHandle propertyList)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				this.parent = parent;
 				this.propertyList = propertyList;

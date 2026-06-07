@@ -20,6 +20,8 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ILSpy.Metadata.CorTables
@@ -63,8 +65,28 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(methodSpec.Method);
 
+			string? methodTooltip;
+			public string? MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, methodSpec.Method);
+
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(methodSpec.Signature);
+
+			public string? SignatureTooltip {
+				get {
+					ITextOutput output = new PlainTextOutput();
+					var signature = methodSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(metadataFile, output), default);
+					bool first = true;
+					foreach (var type in signature)
+					{
+						if (first)
+							first = false;
+						else
+							output.Write(", ");
+						type(ILNameSyntax.TypeName);
+					}
+					return output.ToString();
+				}
+			}
 
 			public MethodSpecEntry(MetadataFile metadataFile, MethodSpecificationHandle handle)
 			{

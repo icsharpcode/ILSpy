@@ -59,7 +59,7 @@ namespace ILSpy.Metadata.CorTables
 			for (int rid = 1; rid <= length; rid++)
 			{
 				int handleRow = handleSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new PtrEntry(rid, Kind, MetadataTokens.EntityHandle(((int)referencedTableKind << 24) | handleRow)));
+				list.Add(new PtrEntry(metadataFile, rid, Kind, MetadataTokens.EntityHandle(((int)referencedTableKind << 24) | handleRow)));
 			}
 			return list;
 		}
@@ -74,11 +74,16 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Handle => MetadataTokens.GetToken(handle);
 
+			string? handleTooltip;
+			public string? HandleTooltip => GenerateTooltip(ref handleTooltip, metadataFile, handle);
+
+			readonly MetadataFile metadataFile;
 			readonly TableIndex kind;
 			readonly EntityHandle handle;
 
-			public PtrEntry(int rid, TableIndex kind, EntityHandle handle)
+			public PtrEntry(MetadataFile metadataFile, int rid, TableIndex kind, EntityHandle handle)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				this.kind = kind;
 				this.handle = handle;

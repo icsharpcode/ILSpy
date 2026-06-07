@@ -63,11 +63,22 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public ConstantTypeCode Type => constant.TypeCode;
 
+			public string TypeTooltip => constant.TypeCode.ToString();
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(constant.Parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, constant.Parent);
+
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(constant.Value);
+
+			public string? ValueTooltip {
+				get {
+					return null;
+				}
+			}
 
 			public ConstantEntry(MetadataFile metadataFile, ConstantHandle handle)
 			{

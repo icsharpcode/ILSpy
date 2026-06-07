@@ -64,10 +64,19 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public EventAttributes Attributes => eventDef.Attributes;
 
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(EventAttributes), selectedValue: (int)eventDef.Attributes, includeAll: false),
+			};
+
 			public string Name => metadataFile.Metadata.GetString(eventDef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(eventDef.Name):X} \"{Name}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(eventDef.Type);
+
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, eventDef.Type);
 
 			public EventDefEntry(MetadataFile metadataFile, EventDefinitionHandle handle)
 			{

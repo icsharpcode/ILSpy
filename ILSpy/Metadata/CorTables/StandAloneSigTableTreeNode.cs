@@ -63,6 +63,9 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(standaloneSig.Signature);
 
+			string? signatureTooltip;
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
+
 			public StandAloneSigEntry(MetadataFile metadataFile, StandaloneSignatureHandle handle)
 			{
 				this.metadataFile = metadataFile;

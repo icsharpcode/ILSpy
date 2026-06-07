@@ -62,12 +62,24 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X4")]
 			public AssemblyHashAlgorithm HashAlgorithm => assembly.HashAlgorithm;
 
+			public object HashAlgorithmTooltip => new FlagsTooltip() {
+				FlagGroup.CreateSingleChoiceGroup(typeof(AssemblyHashAlgorithm), selectedValue: (int)assembly.HashAlgorithm, defaultFlag: new Flag("None (0000)", 0, false), includeAny: false)
+			};
+
 			[ColumnInfo("X4")]
 			public AssemblyFlags Flags => assembly.Flags;
 
+			public object FlagsTooltip => new FlagsTooltip() {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(AssemblyFlags), selectedValue: (int)assembly.Flags, includeAll: false)
+			};
+
 			public Version Version => assembly.Version;
 
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assembly.Name):X} \"{Name}\"";
+
 			public string Name => metadata.GetString(assembly.Name);
+
+			public string CultureTooltip => $"{MetadataTokens.GetHeapOffset(assembly.Culture):X} \"{Culture}\"";
 
 			public string Culture => metadata.GetString(assembly.Culture);
 

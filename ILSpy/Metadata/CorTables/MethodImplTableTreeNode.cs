@@ -58,11 +58,20 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(methodImpl.Type);
 
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, methodImpl.Type);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodDeclaration => MetadataTokens.GetToken(methodImpl.MethodDeclaration);
 
+			string? methodDeclarationTooltip;
+			public string? MethodDeclarationTooltip => GenerateTooltip(ref methodDeclarationTooltip, metadataFile, methodImpl.MethodDeclaration);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodBody => MetadataTokens.GetToken(methodImpl.MethodBody);
+
+			string? methodBodyTooltip;
+			public string? MethodBodyTooltip => GenerateTooltip(ref methodBodyTooltip, metadataFile, methodImpl.MethodBody);
 
 			public MethodImplEntry(MetadataFile metadataFile, MethodImplementationHandle handle)
 			{

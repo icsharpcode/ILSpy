@@ -62,10 +62,23 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public int Attributes => assemblyFile.ContainsMetadata ? 1 : 0;
 
+			public string AttributesTooltip => assemblyFile.ContainsMetadata ? "ContainsMetaData" : "ContainsNoMetaData";
+
 			public string Name => metadataFile.Metadata.GetString(assemblyFile.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assemblyFile.Name):X} \"{Name}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int HashValue => MetadataTokens.GetHeapOffset(assemblyFile.HashValue);
+
+			public string? HashValueTooltip {
+				get {
+					if (assemblyFile.HashValue.IsNil)
+						return null;
+					System.Collections.Immutable.ImmutableArray<byte> token = metadataFile.Metadata.GetBlobContent(assemblyFile.HashValue);
+					return token.ToHexString(token.Length);
+				}
+			}
 
 			public FileEntry(MetadataFile metadataFile, AssemblyFileHandle handle)
 			{

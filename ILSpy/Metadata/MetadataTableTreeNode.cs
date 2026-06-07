@@ -19,8 +19,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 using ILSpy.TreeNodes;
@@ -49,6 +52,77 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Icon => Images.Images.MetadataTable;
+
+		/// <summary>
+		/// Builds (and caches into <paramref name="tooltip"/>) a human-readable description of the
+		/// entity a token column points at, e.g. <c>(AssemblyReference) System.Runtime, ...</c>.
+		/// Entries expose this from their <c>{Column}Tooltip</c> properties so hovering a token cell
+		/// shows what it refers to. Returns <see langword="null"/> for a nil handle.
+		/// </summary>
+		protected static string? GenerateTooltip(ref string? tooltip, MetadataFile module, EntityHandle handle)
+		{
+			if (tooltip == null)
+			{
+				if (handle.IsNil)
+					return null;
+				ITextOutput output = new PlainTextOutput();
+				var context = new MetadataGenericContext(default(TypeDefinitionHandle), module.Metadata);
+				var metadata = module.Metadata;
+				switch (handle.Kind)
+				{
+					case HandleKind.ModuleDefinition:
+						output.Write(metadata.GetString(metadata.GetModuleDefinition().Name));
+						output.Write(" (this module)");
+						break;
+					case HandleKind.ModuleReference:
+						ModuleReference moduleReference = metadata.GetModuleReference((ModuleReferenceHandle)handle);
+						output.Write(metadata.GetString(moduleReference.Name));
+						break;
+					case HandleKind.AssemblyReference:
+						var asmRef = new ICSharpCode.Decompiler.Metadata.AssemblyReference(metadata, (AssemblyReferenceHandle)handle);
+						output.Write(asmRef.ToString());
+						break;
+					case HandleKind.Parameter:
+						var param = metadata.GetParameter((ParameterHandle)handle);
+						output.Write(param.SequenceNumber + " - " + metadata.GetString(param.Name));
+						break;
+					case HandleKind.EventDefinition:
+						var @event = metadata.GetEventDefinition((EventDefinitionHandle)handle);
+						output.Write(metadata.GetString(@event.Name));
+						break;
+					case HandleKind.PropertyDefinition:
+						var prop = metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle);
+						output.Write(metadata.GetString(prop.Name));
+						break;
+					case HandleKind.AssemblyDefinition:
+						var ad = metadata.GetAssemblyDefinition();
+						output.Write(metadata.GetString(ad.Name));
+						output.Write(" (this assembly)");
+						break;
+					case HandleKind.AssemblyFile:
+						var af = metadata.GetAssemblyFile((AssemblyFileHandle)handle);
+						output.Write(metadata.GetString(af.Name));
+						break;
+					case HandleKind.GenericParameter:
+						var gp = metadata.GetGenericParameter((GenericParameterHandle)handle);
+						output.Write(metadata.GetString(gp.Name));
+						break;
+					case HandleKind.ManifestResource:
+						var mfr = metadata.GetManifestResource((ManifestResourceHandle)handle);
+						output.Write(metadata.GetString(mfr.Name));
+						break;
+					case HandleKind.Document:
+						var doc = metadata.GetDocument((DocumentHandle)handle);
+						output.Write(metadata.GetString(doc.Name));
+						break;
+					default:
+						handle.WriteTo(module, output, context);
+						break;
+				}
+				tooltip = "(" + handle.Kind + ") " + output.ToString();
+			}
+			return tooltip;
+		}
 	}
 
 	/// <summary>

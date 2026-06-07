@@ -47,7 +47,7 @@ namespace ILSpy.Metadata.CorTables
 			{
 				int offset = reader.ReadInt32();
 				int fieldRow = fieldDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new FieldLayoutEntry(rid, offset, MetadataTokens.FieldDefinitionHandle(fieldRow)));
+				list.Add(new FieldLayoutEntry(metadataFile, rid, offset, MetadataTokens.FieldDefinitionHandle(fieldRow)));
 			}
 			return list;
 		}
@@ -57,6 +57,7 @@ namespace ILSpy.Metadata.CorTables
 			// Use a verbatim fieldHandle local because C# 14 made `field` contextual inside property
 			// accessors — referencing it without `@` would name the auto-property's hidden
 			// backing field instead of this member.
+			readonly MetadataFile metadataFile;
 			readonly FieldDefinitionHandle fieldHandle;
 
 			public int RID { get; }
@@ -67,11 +68,15 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Field => MetadataTokens.GetToken(fieldHandle);
 
+			string? fieldTooltip;
+			public string? FieldTooltip => GenerateTooltip(ref fieldTooltip, metadataFile, fieldHandle);
+
 			[ColumnInfo("X8")]
 			public int FieldOffset { get; }
 
-			public FieldLayoutEntry(int rid, int fieldOffset, FieldDefinitionHandle field)
+			public FieldLayoutEntry(MetadataFile metadataFile, int rid, int fieldOffset, FieldDefinitionHandle field)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				FieldOffset = fieldOffset;
 				fieldHandle = field;

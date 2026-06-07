@@ -49,7 +49,7 @@ namespace ILSpy.Metadata.CorTables
 			{
 				uint parentTag = (uint)(hasFieldMarshalRefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32());
 				int blobOffset = blobHeapSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new FieldMarshalEntry(rid,
+				list.Add(new FieldMarshalEntry(metadataFile, rid,
 					MetadataReaderHelpers.FromHasFieldMarshalTag(parentTag),
 					MetadataTokens.BlobHandle(blobOffset)));
 			}
@@ -66,14 +66,19 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, parent);
+
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int NativeType => MetadataTokens.GetHeapOffset(nativeType);
 
+			readonly MetadataFile metadataFile;
 			readonly EntityHandle parent;
 			readonly BlobHandle nativeType;
 
-			public FieldMarshalEntry(int rid, EntityHandle parent, BlobHandle nativeType)
+			public FieldMarshalEntry(MetadataFile metadataFile, int rid, EntityHandle parent, BlobHandle nativeType)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				this.parent = parent;
 				this.nativeType = nativeType;

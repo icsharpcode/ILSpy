@@ -41,7 +41,7 @@ namespace ILSpy.Metadata.CorTables
 		{
 			var list = new List<MethodSemanticsEntry>();
 			foreach (var row in metadataFile.Metadata.GetMethodSemantics())
-				list.Add(new MethodSemanticsEntry(row.Handle, row.Semantics, row.Method, row.Association));
+				list.Add(new MethodSemanticsEntry(metadataFile, row.Handle, row.Semantics, row.Method, row.Association));
 			return list;
 		}
 
@@ -55,18 +55,28 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public MethodSemanticsAttributes Semantics { get; }
 
+			public string SemanticsTooltip => Semantics.ToString();
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(method);
+
+			string? methodTooltip;
+			public string? MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Association => MetadataTokens.GetToken(association);
 
+			string? associationTooltip;
+			public string? AssociationTooltip => GenerateTooltip(ref associationTooltip, metadataFile, association);
+
+			readonly MetadataFile metadataFile;
 			readonly Handle handle;
 			readonly MethodDefinitionHandle method;
 			readonly EntityHandle association;
 
-			public MethodSemanticsEntry(Handle handle, MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
+			public MethodSemanticsEntry(MetadataFile metadataFile, Handle handle, MethodSemanticsAttributes semantics, MethodDefinitionHandle method, EntityHandle association)
 			{
+				this.metadataFile = metadataFile;
 				this.handle = handle;
 				Semantics = semantics;
 				this.method = method;

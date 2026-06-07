@@ -61,6 +61,8 @@ namespace ILSpy.Metadata.CorTables
 
 			public string Name => metadataFile.Metadata.GetString(moduleRef.Name);
 
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(moduleRef.Name):X} \"{Name}\"";
+
 			public ModuleRefEntry(MetadataFile metadataFile, ModuleReferenceHandle handle)
 			{
 				this.metadataFile = metadataFile;

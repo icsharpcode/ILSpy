@@ -64,11 +64,26 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(declSecAttr.Parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, declSecAttr.Parent);
+
 			[ColumnInfo("X8")]
 			public DeclarativeSecurityAction Action => declSecAttr.Action;
 
+			public string ActionTooltip {
+				get {
+					return declSecAttr.Action.ToString();
+				}
+			}
+
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
+
+			public string? PermissionSetTooltip {
+				get {
+					return null;
+				}
+			}
 
 			public DeclSecurityEntry(MetadataFile metadataFile, DeclarativeSecurityAttributeHandle handle)
 			{

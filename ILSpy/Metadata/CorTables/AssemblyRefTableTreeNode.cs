@@ -67,10 +67,27 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public AssemblyFlags Flags => assemblyRef.Flags;
 
+			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags, null) {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(AssemblyFlags), selectedValue: (int)assemblyRef.Flags, includeAll: false)
+			};
+
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PublicKeyOrToken => MetadataTokens.GetHeapOffset(assemblyRef.PublicKeyOrToken);
 
+			public string? PublicKeyOrTokenTooltip {
+				get {
+					if (assemblyRef.PublicKeyOrToken.IsNil)
+						return null;
+					System.Collections.Immutable.ImmutableArray<byte> token = metadataFile.Metadata.GetBlobContent(assemblyRef.PublicKeyOrToken);
+					return token.ToHexString(token.Length);
+				}
+			}
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(assemblyRef.Name):X} \"{Name}\"";
+
 			public string Name => metadataFile.Metadata.GetString(assemblyRef.Name);
+
+			public string CultureTooltip => $"{MetadataTokens.GetHeapOffset(assemblyRef.Culture):X} \"{Culture}\"";
 
 			public string Culture => metadataFile.Metadata.GetString(assemblyRef.Culture);
 

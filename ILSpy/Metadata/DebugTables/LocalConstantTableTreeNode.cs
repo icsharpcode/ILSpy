@@ -57,6 +57,8 @@ namespace ILSpy.Metadata.DebugTables
 
 			public string Name => metadataFile.Metadata.GetString(localConst.Name);
 
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(localConst.Name):X} \"{Name}\"";
+
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(localConst.Signature);
 

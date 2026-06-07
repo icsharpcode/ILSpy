@@ -50,7 +50,7 @@ namespace ILSpy.Metadata.CorTables
 				ushort packingSize = reader.ReadUInt16();
 				uint classSize = reader.ReadUInt32();
 				int parentRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new ClassLayoutEntry(rid, packingSize, classSize, MetadataTokens.TypeDefinitionHandle(parentRow)));
+				list.Add(new ClassLayoutEntry(metadataFile, rid, packingSize, classSize, MetadataTokens.TypeDefinitionHandle(parentRow)));
 			}
 			return list;
 		}
@@ -65,14 +65,19 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, parent);
+
 			public ushort PackingSize { get; }
 
 			public uint ClassSize { get; }
 
+			readonly MetadataFile metadataFile;
 			readonly TypeDefinitionHandle parent;
 
-			public ClassLayoutEntry(int rid, ushort packingSize, uint classSize, TypeDefinitionHandle parent)
+			public ClassLayoutEntry(MetadataFile metadataFile, int rid, ushort packingSize, uint classSize, TypeDefinitionHandle parent)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				PackingSize = packingSize;
 				ClassSize = classSize;

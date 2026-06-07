@@ -48,7 +48,7 @@ namespace ILSpy.Metadata.CorTables
 			{
 				int parentRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
 				int eventListRow = eventDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new EventMapEntry(rid, MetadataTokens.TypeDefinitionHandle(parentRow), MetadataTokens.EventDefinitionHandle(eventListRow)));
+				list.Add(new EventMapEntry(metadataFile, rid, MetadataTokens.TypeDefinitionHandle(parentRow), MetadataTokens.EventDefinitionHandle(eventListRow)));
 			}
 			return list;
 		}
@@ -63,14 +63,22 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, parent);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int EventList => MetadataTokens.GetToken(eventList);
 
+			string? eventListTooltip;
+			public string? EventListTooltip => GenerateTooltip(ref eventListTooltip, metadataFile, eventList);
+
+			readonly MetadataFile metadataFile;
 			readonly TypeDefinitionHandle parent;
 			readonly EventDefinitionHandle eventList;
 
-			public EventMapEntry(int rid, TypeDefinitionHandle parent, EventDefinitionHandle eventList)
+			public EventMapEntry(MetadataFile metadataFile, int rid, TypeDefinitionHandle parent, EventDefinitionHandle eventList)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				this.parent = parent;
 				this.eventList = eventList;

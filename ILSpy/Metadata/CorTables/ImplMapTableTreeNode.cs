@@ -53,9 +53,9 @@ namespace ILSpy.Metadata.CorTables
 				uint memberForwardedTag = (uint)(memberForwardedTagSize == 2 ? reader.ReadUInt16() : reader.ReadInt32());
 				int importNameOffset = stringHandleSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
 				int importScopeRow = moduleRefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new ImplMapEntry(rid, mappingFlags,
+				list.Add(new ImplMapEntry(metadataFile, rid, mappingFlags,
 					MetadataReaderHelpers.FromMemberForwardedTag(memberForwardedTag),
-					metadata.GetString(MetadataTokens.StringHandle(importNameOffset)),
+					MetadataTokens.StringHandle(importNameOffset),
 					MetadataTokens.ModuleReferenceHandle(importScopeRow)));
 			}
 			return list;
@@ -71,23 +71,43 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public MethodImportAttributes MappingFlags { get; }
 
+			const MethodImportAttributes otherFlagsMask = ~(MethodImportAttributes.CallingConventionMask | MethodImportAttributes.CharSetMask);
+
+			public object MappingFlagsTooltip => new FlagsTooltip {
+				FlagGroup.CreateSingleChoiceGroup(typeof(MethodImportAttributes), "Character set: ", (int)MethodImportAttributes.CharSetMask, (int)(MappingFlags & MethodImportAttributes.CharSetMask), new Flag("CharSetNotSpec (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateSingleChoiceGroup(typeof(MethodImportAttributes), "Calling convention: ", (int)MethodImportAttributes.CallingConventionMask, (int)(MappingFlags & MethodImportAttributes.CallingConventionMask), new Flag("Invalid (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(MethodImportAttributes), "Flags:", (int)otherFlagsMask, (int)(MappingFlags & otherFlagsMask), includeAll: false),
+			};
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MemberForwarded => MetadataTokens.GetToken(memberForwarded);
 
+			string? memberForwardedTooltip;
+			public string? MemberForwardedTooltip => GenerateTooltip(ref memberForwardedTooltip, metadataFile, memberForwarded);
+
 			public string ImportName { get; }
+
+			public string ImportNameTooltip => $"{MetadataTokens.GetHeapOffset(importNameHandle):X} \"{ImportName}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(importScope);
 
+			string? importScopeTooltip;
+			public string? ImportScopeTooltip => GenerateTooltip(ref importScopeTooltip, metadataFile, importScope);
+
+			readonly MetadataFile metadataFile;
 			readonly EntityHandle memberForwarded;
+			readonly StringHandle importNameHandle;
 			readonly ModuleReferenceHandle importScope;
 
-			public ImplMapEntry(int rid, MethodImportAttributes mappingFlags, EntityHandle memberForwarded, string importName, ModuleReferenceHandle importScope)
+			public ImplMapEntry(MetadataFile metadataFile, int rid, MethodImportAttributes mappingFlags, EntityHandle memberForwarded, StringHandle importNameHandle, ModuleReferenceHandle importScope)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				MappingFlags = mappingFlags;
 				this.memberForwarded = memberForwarded;
-				ImportName = importName;
+				this.importNameHandle = importNameHandle;
+				ImportName = metadataFile.Metadata.GetString(importNameHandle);
 				this.importScope = importScope;
 			}
 		}

@@ -64,10 +64,19 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public PropertyAttributes Attributes => propertyDef.Attributes;
 
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(PropertyAttributes), selectedValue: (int)propertyDef.Attributes, includeAll: false),
+			};
+
 			public string Name => metadataFile.Metadata.GetString(propertyDef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(propertyDef.Name):X} \"{Name}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(propertyDef.Signature);
+
+			string? signatureTooltip;
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			public PropertyDefEntry(MetadataFile metadataFile, PropertyDefinitionHandle handle)
 			{

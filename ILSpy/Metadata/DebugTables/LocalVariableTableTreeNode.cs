@@ -58,9 +58,15 @@ namespace ILSpy.Metadata.DebugTables
 			[ColumnInfo("X8")]
 			public LocalVariableAttributes Attributes => localVar.Attributes;
 
+			public object AttributesTooltip => new FlagsTooltip() {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(LocalVariableAttributes)),
+			};
+
 			public int Index => localVar.Index;
 
 			public string Name => metadataFile.Metadata.GetString(localVar.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(localVar.Name):X} \"{Name}\"";
 
 			public LocalVariableEntry(MetadataFile metadataFile, LocalVariableHandle handle)
 			{

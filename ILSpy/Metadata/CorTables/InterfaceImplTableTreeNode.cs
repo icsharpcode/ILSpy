@@ -48,7 +48,7 @@ namespace ILSpy.Metadata.CorTables
 			{
 				int classRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
 				uint interfaceTag = (uint)(interfaceTagSize == 2 ? reader.ReadUInt16() : reader.ReadInt32());
-				list.Add(new InterfaceImplEntry(rid,
+				list.Add(new InterfaceImplEntry(metadataFile, rid,
 					MetadataTokens.TypeDefinitionHandle(classRow),
 					MetadataReaderHelpers.FromTypeDefOrRefTag(interfaceTag)));
 			}
@@ -65,14 +65,22 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Class => MetadataTokens.GetToken(@class);
 
+			string? classTooltip;
+			public string? ClassTooltip => GenerateTooltip(ref classTooltip, metadataFile, @class);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Interface => MetadataTokens.GetToken(@interface);
 
+			string? interfaceTooltip;
+			public string? InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, metadataFile, @interface);
+
+			readonly MetadataFile metadataFile;
 			readonly TypeDefinitionHandle @class;
 			readonly EntityHandle @interface;
 
-			public InterfaceImplEntry(int rid, TypeDefinitionHandle @class, EntityHandle @interface)
+			public InterfaceImplEntry(MetadataFile metadataFile, int rid, TypeDefinitionHandle @class, EntityHandle @interface)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				this.@class = @class;
 				this.@interface = @interface;

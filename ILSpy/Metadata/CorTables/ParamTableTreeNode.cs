@@ -63,9 +63,15 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public ParameterAttributes Attributes => param.Attributes;
 
+			public object AttributesTooltip => new FlagsTooltip {
+				FlagGroup.CreateMultipleChoiceGroup(typeof(ParameterAttributes), selectedValue: (int)param.Attributes, includeAll: false)
+			};
+
 			public int Sequence => param.SequenceNumber;
 
 			public string Name => metadataFile.Metadata.GetString(param.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(param.Name):X} \"{Name}\"";
 
 			public ParamEntry(MetadataFile metadataFile, ParameterHandle handle)
 			{

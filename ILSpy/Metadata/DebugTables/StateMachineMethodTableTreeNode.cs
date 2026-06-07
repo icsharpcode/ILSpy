@@ -49,29 +49,40 @@ namespace ILSpy.Metadata.DebugTables
 			{
 				var moveNext = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
 				var kickoff = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
-				list.Add(new StateMachineMethodEntry(rid, moveNext, kickoff));
+				list.Add(new StateMachineMethodEntry(metadataFile, rid, moveNext, kickoff));
 			}
 			return list;
 		}
 
 		public sealed class StateMachineMethodEntry
 		{
+			readonly MetadataFile metadataFile;
+			readonly MethodDefinitionHandle moveNextMethod;
+			readonly MethodDefinitionHandle kickoffMethod;
+
 			public int RID { get; }
 
 			[ColumnInfo("X8")]
 			public int Token => 0x36000000 + RID;
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int MoveNextMethod { get; }
+			public int MoveNextMethod => MetadataTokens.GetToken(moveNextMethod);
+
+			string? moveNextMethodTooltip;
+			public string? MoveNextMethodTooltip => GenerateTooltip(ref moveNextMethodTooltip, metadataFile, moveNextMethod);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int KickoffMethod { get; }
+			public int KickoffMethod => MetadataTokens.GetToken(kickoffMethod);
 
-			public StateMachineMethodEntry(int rid, MethodDefinitionHandle moveNext, MethodDefinitionHandle kickoff)
+			string? kickoffMethodTooltip;
+			public string? KickoffMethodTooltip => GenerateTooltip(ref kickoffMethodTooltip, metadataFile, kickoffMethod);
+
+			public StateMachineMethodEntry(MetadataFile metadataFile, int rid, MethodDefinitionHandle moveNext, MethodDefinitionHandle kickoff)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
-				MoveNextMethod = MetadataTokens.GetToken(moveNext);
-				KickoffMethod = MetadataTokens.GetToken(kickoff);
+				moveNextMethod = moveNext;
+				kickoffMethod = kickoff;
 			}
 		}
 	}

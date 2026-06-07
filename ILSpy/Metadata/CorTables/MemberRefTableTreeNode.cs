@@ -63,10 +63,18 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(memberRef.Parent);
 
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, memberRef.Parent);
+
 			public string Name => metadataFile.Metadata.GetString(memberRef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(memberRef.Name):X} \"{Name}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
+
+			string? signatureTooltip;
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			public MemberRefEntry(MetadataFile metadataFile, MemberReferenceHandle handle)
 			{

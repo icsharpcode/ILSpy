@@ -64,10 +64,22 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8")]
 			public FieldAttributes Attributes => fieldDef.Attributes;
 
+			const FieldAttributes otherFlagsMask = ~(FieldAttributes.FieldAccessMask);
+
+			public object AttributesTooltip => new FlagsTooltip() {
+				FlagGroup.CreateSingleChoiceGroup(typeof(FieldAttributes), "Field access: ", (int)FieldAttributes.FieldAccessMask, (int)(fieldDef.Attributes & FieldAttributes.FieldAccessMask), new Flag("CompilerControlled (0000)", 0, false), includeAny: false),
+				FlagGroup.CreateMultipleChoiceGroup(typeof(FieldAttributes), "Flags:", (int)otherFlagsMask, (int)(fieldDef.Attributes & otherFlagsMask), includeAll: false),
+			};
+
 			public string Name => metadataFile.Metadata.GetString(fieldDef.Name);
+
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(fieldDef.Name):X} \"{Name}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(fieldDef.Signature);
+
+			string? signatureTooltip;
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			public FieldDefEntry(MetadataFile metadataFile, FieldDefinitionHandle handle)
 			{

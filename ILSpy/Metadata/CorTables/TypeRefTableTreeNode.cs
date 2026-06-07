@@ -63,9 +63,16 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ResolutionScope => MetadataTokens.GetToken(typeRef.ResolutionScope);
 
+			string? resolutionScopeTooltip;
+			public string? ResolutionScopeTooltip => GenerateTooltip(ref resolutionScopeTooltip, metadataFile, typeRef.ResolutionScope);
+
 			public string Name => metadataFile.Metadata.GetString(typeRef.Name);
 
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeRef.Name):X} \"{Name}\"";
+
 			public string Namespace => metadataFile.Metadata.GetString(typeRef.Namespace);
+
+			public string NamespaceTooltip => $"{MetadataTokens.GetHeapOffset(typeRef.Namespace):X} \"{Namespace}\"";
 
 			public TypeRefEntry(MetadataFile metadataFile, TypeReferenceHandle handle)
 			{

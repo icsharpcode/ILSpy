@@ -20,6 +20,8 @@ using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
 namespace ILSpy.Metadata.CorTables
@@ -64,8 +66,26 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
 
+			string? ownerTooltip;
+			public string? OwnerTooltip {
+				get {
+					if (ownerTooltip == null)
+					{
+						ITextOutput output = new PlainTextOutput();
+						var p = metadataFile.Metadata.GetGenericParameter(genericParamConstraint.Parameter);
+						output.Write("parameter " + p.Index + (p.Name.IsNil ? "" : " (" + metadataFile.Metadata.GetString(p.Name) + ")") + " of ");
+						p.Parent.WriteTo(metadataFile, output, default);
+						ownerTooltip = output.ToString();
+					}
+					return ownerTooltip;
+				}
+			}
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(genericParamConstraint.Type);
+
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, genericParamConstraint.Type);
 
 			public GenericParamConstraintEntry(MetadataFile metadataFile, GenericParameterConstraintHandle handle)
 			{

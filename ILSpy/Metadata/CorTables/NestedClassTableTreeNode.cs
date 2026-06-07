@@ -48,7 +48,7 @@ namespace ILSpy.Metadata.CorTables
 			{
 				int nestedRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
 				int enclosingRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new NestedClassEntry(rid, MetadataTokens.TypeDefinitionHandle(nestedRow), MetadataTokens.TypeDefinitionHandle(enclosingRow)));
+				list.Add(new NestedClassEntry(metadataFile, rid, MetadataTokens.TypeDefinitionHandle(nestedRow), MetadataTokens.TypeDefinitionHandle(enclosingRow)));
 			}
 			return list;
 		}
@@ -63,14 +63,22 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int NestedClass => MetadataTokens.GetToken(nested);
 
+			string? nestedClassTooltip;
+			public string? NestedClassTooltip => GenerateTooltip(ref nestedClassTooltip, metadataFile, nested);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int EnclosingClass => MetadataTokens.GetToken(enclosing);
 
+			string? enclosingClassTooltip;
+			public string? EnclosingClassTooltip => GenerateTooltip(ref enclosingClassTooltip, metadataFile, enclosing);
+
+			readonly MetadataFile metadataFile;
 			readonly TypeDefinitionHandle nested;
 			readonly TypeDefinitionHandle enclosing;
 
-			public NestedClassEntry(int rid, TypeDefinitionHandle nested, TypeDefinitionHandle enclosing)
+			public NestedClassEntry(MetadataFile metadataFile, int rid, TypeDefinitionHandle nested, TypeDefinitionHandle enclosing)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				this.nested = nested;
 				this.enclosing = enclosing;

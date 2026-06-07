@@ -48,7 +48,7 @@ namespace ILSpy.Metadata.CorTables
 			{
 				int rva = reader.ReadInt32();
 				int fieldRow = fieldDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new FieldRVAEntry(rid, rva, MetadataTokens.FieldDefinitionHandle(fieldRow)));
+				list.Add(new FieldRVAEntry(metadataFile, rid, rva, MetadataTokens.FieldDefinitionHandle(fieldRow)));
 			}
 			return list;
 		}
@@ -56,6 +56,7 @@ namespace ILSpy.Metadata.CorTables
 		public sealed class FieldRVAEntry
 		{
 			// Verbatim fieldHandle — see FieldLayoutTableTreeNode for the C# 14 keyword note.
+			readonly MetadataFile metadataFile;
 			readonly FieldDefinitionHandle fieldHandle;
 
 			public int RID { get; }
@@ -66,11 +67,15 @@ namespace ILSpy.Metadata.CorTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Field => MetadataTokens.GetToken(fieldHandle);
 
+			string? fieldTooltip;
+			public string? FieldTooltip => GenerateTooltip(ref fieldTooltip, metadataFile, fieldHandle);
+
 			[ColumnInfo("X8")]
 			public int RVA { get; }
 
-			public FieldRVAEntry(int rid, int rva, FieldDefinitionHandle field)
+			public FieldRVAEntry(MetadataFile metadataFile, int rid, int rva, FieldDefinitionHandle field)
 			{
+				this.metadataFile = metadataFile;
 				RID = rid;
 				RVA = rva;
 				fieldHandle = field;

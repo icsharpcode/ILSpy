@@ -59,6 +59,9 @@ namespace ILSpy.Metadata.DebugTables
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(localScope.Method);
 
+			string? methodTooltip;
+			public string? MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, localScope.Method);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(localScope.ImportScope);
 

@@ -25,8 +25,9 @@ namespace ILSpy.Metadata
 	/// <summary>
 	/// Resolves per-cell tooltips for a metadata-table row. Entry classes opt in by exposing
 	/// a public <c>{ColumnName}Tooltip</c> property — <c>NameTooltip</c>, <c>FlagsTooltip</c>,
-	/// <c>BaseTypeTooltip</c>, and so on. The resolver returns a stringified rendering, so
-	/// callers can flow it straight into <c>ToolTip.SetTip</c>.
+	/// <c>BaseTypeTooltip</c>, and so on. A <see cref="FlagsTooltip"/> value renders as the rich
+	/// per-bit breakdown control; anything else is stringified, so callers can flow the result
+	/// straight into <c>ToolTip.SetTip</c>.
 	/// </summary>
 	public static class MetadataCellTooltip
 	{
@@ -34,10 +35,11 @@ namespace ILSpy.Metadata
 
 		/// <summary>
 		/// Looks up <paramref name="columnName"/><c>Tooltip</c> on <paramref name="item"/>'s
-		/// runtime type. Returns the property's stringified value, or <see langword="null"/>
-		/// if the item is null, the tooltip property is absent, or the value is null / blank.
+		/// runtime type. Returns a rich control for a <see cref="FlagsTooltip"/> value, the
+		/// stringified value otherwise, or <see langword="null"/> if the item is null, the tooltip
+		/// property is absent, or the value is null / blank.
 		/// </summary>
-		public static string? Resolve(object item, string columnName)
+		public static object? Resolve(object item, string columnName)
 		{
 			if (item is null)
 				return null;
@@ -50,6 +52,8 @@ namespace ILSpy.Metadata
 			try
 			{ value = prop.GetValue(item); }
 			catch { return null; }
+			if (value is FlagsTooltip flags)
+				return flags.Build();
 			var s = value?.ToString();
 			return string.IsNullOrWhiteSpace(s) ? null : s;
 		}

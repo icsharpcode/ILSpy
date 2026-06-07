@@ -59,14 +59,22 @@ namespace ILSpy.Metadata.CorTables
 
 			public string Name => metadataFile.Metadata.GetString(moduleDef.Name);
 
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(moduleDef.Name):X} \"{Name}\"";
+
 			[ColumnInfo("X8")]
 			public int Mvid => MetadataTokens.GetHeapOffset(moduleDef.Mvid);
+
+			public string MvidTooltip => metadataFile.Metadata.GetGuid(moduleDef.Mvid).ToString();
 
 			[ColumnInfo("X8")]
 			public int GenerationId => MetadataTokens.GetHeapOffset(moduleDef.GenerationId);
 
+			public string? GenerationIdTooltip => moduleDef.GenerationId.IsNil ? null : metadataFile.Metadata.GetGuid(moduleDef.GenerationId).ToString();
+
 			[ColumnInfo("X8")]
 			public int BaseGenerationId => MetadataTokens.GetHeapOffset(moduleDef.BaseGenerationId);
+
+			public string? BaseGenerationIdTooltip => moduleDef.BaseGenerationId.IsNil ? null : metadataFile.Metadata.GetGuid(moduleDef.BaseGenerationId).ToString();
 
 			public ModuleEntry(MetadataFile metadataFile, ModuleDefinitionHandle handle)
 			{
