@@ -285,6 +285,10 @@
         <Style Selector="dockControls|DocumentTabStrip, dockControls|ToolTabStrip">
             <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabStripBackground}" />
         </Style>
+        <!-- PROTOTYPE: lay document tabs out on multiple rows instead of a single scrolling row. -->
+        <Style Selector="dockControls|DocumentTabStrip">
+            <Setter Property="themes:MultiRowTabStripBehavior.Enable" Value="True" />
+        </Style>
         <!-- The full-width accent line under the document tab strip is the DocumentControl
              template's Panel#PART_DocumentSeperator. The Simple theme fills it with the blue
              active-indicator brush whenever the dock is :active; re-assert it at app level (app
