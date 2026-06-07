@@ -45,6 +45,14 @@ namespace ILSpy.TextView
 	public sealed class AvaloniaEditTextOutput : ISmartTextOutput
 	{
 		readonly StringBuilder builder = new();
+
+		/// <summary>
+		/// When the accumulated text exceeds this many characters, the next write throws
+		/// <see cref="OutputLengthExceededException"/> so a runaway decompile is stopped before it
+		/// hangs/OOMs the UI thread. Defaults to unlimited; the decompiler tab sets a real limit.
+		/// </summary>
+		public int LengthLimit { get; set; } = int.MaxValue;
+
 		readonly Stack<(int Offset, HighlightingColor Color)> openSpans = new();
 		readonly Stack<(NewFolding Folding, int StartLine)> openFoldings = new();
 		readonly List<NewFolding> foldings = new();
@@ -127,12 +135,14 @@ namespace ILSpy.TextView
 		{
 			WriteIndentIfNeeded();
 			builder.Append(ch);
+			CheckLength();
 		}
 
 		public void Write(string text)
 		{
 			WriteIndentIfNeeded();
 			builder.Append(text);
+			CheckLength();
 		}
 
 		public void WriteLine()
@@ -140,6 +150,13 @@ namespace ILSpy.TextView
 			builder.Append('\n');
 			lineNumber++;
 			needsIndent = true;
+			CheckLength();
+		}
+
+		void CheckLength()
+		{
+			if (builder.Length > LengthLimit)
+				throw new OutputLengthExceededException();
 		}
 
 		public void WriteReference(OpCodeInfo opCode, bool omitSuffix = false)

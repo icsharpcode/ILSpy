@@ -37,6 +37,7 @@ using CommunityToolkit.Mvvm.Input;
 using ICSharpCode.Decompiler;
 
 using ILSpy.Languages;
+using ILSpy.Options;
 using ILSpy.TreeNodes;
 using ILSpy.ViewModels;
 
@@ -300,6 +301,15 @@ namespace ILSpy.TextView
 		bool pendingIsDebug;
 
 		/// <summary>
+		/// Output-length safety limits (characters): a decompile that produces more than the active
+		/// limit is stopped and replaced with a "too much code" message rather than hanging/OOMing the
+		/// UI. The user can re-run at the extended limit or save to disk. Mirrors the previous version.
+		/// </summary>
+		public const int DefaultOutputLengthLimit = 5_000_000;
+		public const int ExtendedOutputLengthLimit = 75_000_000;
+		int pendingOutputLengthLimit = DefaultOutputLengthLimit;
+
+		/// <summary>
 		/// Force a fresh decompile of the same nodes with the IL-transform pipeline halted
 		/// after <paramref name="stepLimit"/> steps. Used by the Debug Steps pane to render
 		/// the partial IL after a chosen step (or full pipeline when <paramref name="stepLimit"/>
@@ -311,6 +321,53 @@ namespace ILSpy.TextView
 			pendingStepLimit = stepLimit;
 			pendingIsDebug = isDebug;
 			StartDecompile();
+		}
+
+		/// <summary>Re-runs the current decompile with a larger output-length limit (the "Display code
+		/// anyway" button on the too-much-code message).</summary>
+		public void RestartDecompileWithOutputLimit(int outputLengthLimit)
+		{
+			pendingOutputLengthLimit = outputLengthLimit;
+			StartDecompile();
+		}
+
+		// Built (off the UI thread) when a decompile blows past its output limit: a short message plus
+		// a "Display code anyway" button (retry at the extended limit, only offered for the normal
+		// limit) and a "Save code" button. The button click handlers run back on the UI thread.
+		AvaloniaEditTextOutput BuildOutputLengthExceededMessage(int outputLengthLimit)
+		{
+			var output = new AvaloniaEditTextOutput();
+			bool wasNormalLimit = outputLengthLimit == DefaultOutputLengthLimit;
+			output.WriteLine(wasNormalLimit
+				? "You have selected too much code for it to be displayed automatically."
+				: "You have selected too much code; it cannot be displayed here.");
+			output.WriteLine();
+			if (wasNormalLimit)
+			{
+				output.AddButton(Images.Images.ViewCode, ICSharpCode.ILSpy.Properties.Resources.DisplayCode,
+					(_, _) => RestartDecompileWithOutputLimit(ExtendedOutputLengthLimit));
+				output.WriteLine();
+			}
+			output.AddButton(Images.Images.Save, ICSharpCode.ILSpy.Properties.Resources.SaveCode,
+				(_, _) => SaveCurrentNode());
+			output.WriteLine();
+			return output;
+		}
+
+		void SaveCurrentNode()
+		{
+			if (CurrentNode is not { } node)
+				return;
+			try
+			{
+				var languageService = AppEnv.AppComposition.Current.GetExport<Languages.LanguageService>();
+				var dockWorkspace = AppEnv.AppComposition.Current.GetExport<Docking.DockWorkspace>();
+				ILSpy.Commands.SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).HandleExceptions();
+			}
+			catch
+			{
+				// Best-effort: no save path available (minimal host).
+			}
 		}
 
 		// Fire-and-forget wrapper around DecompileAsync that observes the resulting Task.
@@ -394,11 +451,13 @@ namespace ILSpy.TextView
 				var isDebug = pendingIsDebug;
 				pendingStepLimit = int.MaxValue;
 				pendingIsDebug = false;
+				var outputLengthLimit = pendingOutputLengthLimit;
+				pendingOutputLengthLimit = DefaultOutputLengthLimit;
 				AvaloniaEditTextOutput output;
 				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Task.Run decompile body ({nodes.Count} node(s), language={language.Name})"))
 				{
 					(output, _) = await Task.Run(() => {
-						var output = new AvaloniaEditTextOutput();
+						var output = new AvaloniaEditTextOutput { LengthLimit = outputLengthLimit };
 						var options = decompilerSettings != null
 							? new DecompilationOptions(decompilerSettings) {
 								CancellationToken = cts.Token,
@@ -424,6 +483,12 @@ namespace ILSpy.TextView
 						catch (OperationCanceledException)
 						{
 							// expected on cancel — just return whatever we got
+						}
+						catch (OutputLengthExceededException)
+						{
+							// The decompile produced more text than the limit allows -- replace it with
+							// a message offering to display anyway (extended limit) or save to disk.
+							output = BuildOutputLengthExceededMessage(outputLengthLimit);
 						}
 						catch (Exception ex)
 						{
@@ -597,13 +662,7 @@ namespace ILSpy.TextView
 			{
 				var settingsService = AppEnv.AppComposition.Current.GetExport<SettingsService>();
 				var settings = settingsService.DecompilerSettings.Clone();
-				// Bridge the Display-options fold-expansion flags into the decompiler settings:
-				// TextTokenWriter reads settings.ExpandUsingDeclarations / ExpandMemberDefinitions
-				// to set each fold's DefaultClosed. Without this the "Expand using declarations /
-				// member definitions after decompilation" options would have no effect.
-				var display = settingsService.DisplaySettings;
-				settings.ExpandUsingDeclarations = display.ExpandUsingDeclarations;
-				settings.ExpandMemberDefinitions = display.ExpandMemberDefinitions;
+				ApplyDisplaySettings(settings, settingsService.DisplaySettings);
 				try
 				{
 					var version = AppEnv.AppComposition.Current.GetExport<Languages.LanguageService>().CurrentVersion;
@@ -623,6 +682,32 @@ namespace ILSpy.TextView
 			{
 				return null;
 			}
+		}
+
+		/// <summary>
+		/// Bridges the Display options that affect decompiler output into <paramref name="settings"/>:
+		/// the fold-expansion flags (TextTokenWriter reads them to set each fold's DefaultClosed),
+		/// brace folding, debug-symbol info, and the indentation string. Without this these Display
+		/// options would have no effect on the produced source.
+		/// </summary>
+		internal static void ApplyDisplaySettings(ICSharpCode.Decompiler.DecompilerSettings settings, DisplaySettings display)
+		{
+			settings.ExpandUsingDeclarations = display.ExpandUsingDeclarations;
+			settings.ExpandMemberDefinitions = display.ExpandMemberDefinitions;
+			settings.FoldBraces = display.FoldBraces;
+			settings.ShowDebugInfo = display.ShowDebugInfo;
+			settings.CSharpFormattingOptions.IndentationString = GetIndentationString(display);
+		}
+
+		static string GetIndentationString(DisplaySettings display)
+		{
+			if (display.IndentationUseTabs)
+			{
+				int tabs = display.IndentationSize / display.IndentationTabSize;
+				int spaces = display.IndentationSize % display.IndentationTabSize;
+				return new string('\t', tabs) + new string(' ', spaces);
+			}
+			return new string(' ', display.IndentationSize);
 		}
 	}
 }
