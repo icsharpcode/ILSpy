@@ -75,17 +75,9 @@ namespace ILSpy.Commands
 			if (string.IsNullOrEmpty(outputFolder))
 				return;
 
-			try
-			{
-				var output = await dockWorkspace.RunWithCancellation(
-					token => Task.Run(() => RunGenerator(assemblyFile, outputFolder), token),
-					Resources.CreatingDiagram);
-				dockWorkspace.ShowText(output);
-			}
-			catch (OperationCanceledException)
-			{
-				// User cancelled — leave the previous tab content visible.
-			}
+			// Run in a dedicated frozen tab so browsing the tree while the diagram generates can't cancel it.
+			await dockWorkspace.RunInNewTabAsync(Resources.CreatingDiagram,
+				token => Task.Run(() => RunGenerator(assemblyFile, outputFolder), token)).ConfigureAwait(true);
 		}
 
 		static AvaloniaEditTextOutput RunGenerator(string assemblyFile, string outputFolder)

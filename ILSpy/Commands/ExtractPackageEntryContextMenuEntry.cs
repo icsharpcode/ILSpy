@@ -110,40 +110,33 @@ namespace ILSpy.Commands
 
 		internal static async Task SaveAsync(DockWorkspace dockWorkspace, IReadOnlyList<SharpTreeNode> nodes, string path, bool isFile)
 		{
-			try
-			{
-				var output = await dockWorkspace.RunWithCancellation(token => Task.Run(() => {
-					var output = new AvaloniaEditTextOutput { Title = "Extract package entry" };
-					var stopwatch = Stopwatch.StartNew();
-					var fileNameCounts = new Dictionary<string, int>(Platform.FileNameComparer);
-					foreach (var (entry, fileName) in CollectAllFiles(nodes))
+			// Run in a dedicated frozen tab so browsing the tree while extraction runs can't cancel it.
+			await dockWorkspace.RunInNewTabAsync("Extracting…", token => Task.Run(() => {
+				var output = new AvaloniaEditTextOutput { Title = "Extract package entry" };
+				var stopwatch = Stopwatch.StartNew();
+				var fileNameCounts = new Dictionary<string, int>(Platform.FileNameComparer);
+				foreach (var (entry, fileName) in CollectAllFiles(nodes))
+				{
+					var actualFileName = WholeProjectDecompiler.SanitizeFileName(fileName);
+					while (fileNameCounts.TryGetValue(actualFileName, out var index))
 					{
-						var actualFileName = WholeProjectDecompiler.SanitizeFileName(fileName);
-						while (fileNameCounts.TryGetValue(actualFileName, out var index))
-						{
-							index++;
-							fileNameCounts[actualFileName] = index;
-							actualFileName = Path.ChangeExtension(actualFileName, index + Path.GetExtension(actualFileName));
-						}
-						if (!fileNameCounts.ContainsKey(actualFileName))
-							fileNameCounts[actualFileName] = 1;
-						SaveEntry(output, entry, isFile ? path : Path.Combine(path, actualFileName));
+						index++;
+						fileNameCounts[actualFileName] = index;
+						actualFileName = Path.ChangeExtension(actualFileName, index + Path.GetExtension(actualFileName));
 					}
-					stopwatch.Stop();
-					output.Write(string.Format(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1")));
-					output.WriteLine();
-					output.WriteLine();
-					var openTarget = isFile ? path : path;
-					output.AddButton(null, Resources.OpenExplorer, (_, _) => OpenInShell(openTarget, isFile));
-					output.WriteLine();
-					return output;
-				}, token), "Extracting…");
-				dockWorkspace.ShowText(output);
-			}
-			catch (OperationCanceledException)
-			{
-				// User cancelled — leave the previous tab content visible.
-			}
+					if (!fileNameCounts.ContainsKey(actualFileName))
+						fileNameCounts[actualFileName] = 1;
+					SaveEntry(output, entry, isFile ? path : Path.Combine(path, actualFileName));
+				}
+				stopwatch.Stop();
+				output.Write(string.Format(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1")));
+				output.WriteLine();
+				output.WriteLine();
+				var openTarget = isFile ? path : path;
+				output.AddButton(null, Resources.OpenExplorer, (_, _) => OpenInShell(openTarget, isFile));
+				output.WriteLine();
+				return output;
+			}, token)).ConfigureAwait(true);
 		}
 
 		static IEnumerable<(PackageEntry Entry, string TargetFileName)> CollectAllFiles(IReadOnlyList<SharpTreeNode> nodes)

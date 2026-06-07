@@ -76,28 +76,21 @@ namespace ILSpy.Commands
 				return;
 
 			var settingsClone = settingsService.DecompilerSettings.Clone();
-			try
-			{
-				var output = await dockWorkspace.RunWithCancellation(async token => {
-					var result = await ProjectExporter.ExportAsync(assemblies, solutionMode, options, settingsClone, language, token)
-						.ConfigureAwait(false);
-					var o = new AvaloniaEditTextOutput { Title = ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution };
-					o.Write(result.StatusText);
+			// Run in a dedicated frozen tab so browsing the tree while the export runs can't cancel it.
+			await dockWorkspace.RunInNewTabAsync(ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution, async token => {
+				var result = await ProjectExporter.ExportAsync(assemblies, solutionMode, options, settingsClone, language, token)
+					.ConfigureAwait(false);
+				var o = new AvaloniaEditTextOutput { Title = ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution };
+				o.Write(result.StatusText);
+				o.WriteLine();
+				if (result.Success && Directory.Exists(options.OutputDirectory))
+				{
+					o.AddButton(null, ICSharpCode.ILSpy.Properties.Resources.OpenExplorer,
+						(_, _) => OpenFolder(options.OutputDirectory));
 					o.WriteLine();
-					if (result.Success && Directory.Exists(options.OutputDirectory))
-					{
-						o.AddButton(null, ICSharpCode.ILSpy.Properties.Resources.OpenExplorer,
-							(_, _) => OpenFolder(options.OutputDirectory));
-						o.WriteLine();
-					}
-					return o;
-				}, ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution);
-				dockWorkspace.ShowText(output);
-			}
-			catch (OperationCanceledException)
-			{
-				// User cancelled — leave the previous tab content visible.
-			}
+				}
+				return o;
+			});
 		}
 
 		static void OpenFolder(string path)

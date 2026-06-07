@@ -109,54 +109,47 @@ namespace ILSpy.Commands
 			if (string.IsNullOrEmpty(folder))
 				return;
 
-			try
-			{
-				var output = await dockWorkspace.RunWithCancellation(token => Task.Run(() => {
-					var output = new AvaloniaEditTextOutput { Title = "Generate Portable PDB" };
-					var totalWatch = Stopwatch.StartNew();
-					foreach (var (assembly, file) in supported)
+			// Run in a dedicated frozen tab so browsing the tree while PDBs generate can't cancel it.
+			await dockWorkspace.RunInNewTabAsync(Resources.GeneratingPortablePDB, token => Task.Run(() => {
+				var output = new AvaloniaEditTextOutput { Title = "Generate Portable PDB" };
+				var totalWatch = Stopwatch.StartNew();
+				foreach (var (assembly, file) in supported)
+				{
+					var pdbFileName = Path.Combine(folder, WholeProjectDecompiler.CleanUpFileName(assembly.ShortName, ".pdb"));
+					try
 					{
-						var pdbFileName = Path.Combine(folder, WholeProjectDecompiler.CleanUpFileName(assembly.ShortName, ".pdb"));
-						try
-						{
-							using var stream = new FileStream(pdbFileName, FileMode.Create, FileAccess.Write);
-							var resolver = assembly.GetAssemblyResolver();
-							var settings = new ICSharpCode.Decompiler.DecompilerSettings();
-							var decompiler = new CSharpDecompiler(file, resolver, settings) {
-								CancellationToken = token,
-							};
-							new PortablePdbWriter().WritePdb(file, decompiler, settings, stream);
-							output.Write(string.Format(Resources.GeneratedPDBFile, pdbFileName));
-							output.WriteLine();
-						}
-						catch (OperationCanceledException)
-						{
-							output.WriteLine();
-							output.Write(Resources.GenerationWasCancelled);
-							output.WriteLine();
-							throw;
-						}
-						catch (Exception ex)
-						{
-							output.Write(string.Format(Resources.GenerationFailedForAssembly, assembly.FileName, ex.Message));
-							output.WriteLine();
-						}
+						using var stream = new FileStream(pdbFileName, FileMode.Create, FileAccess.Write);
+						var resolver = assembly.GetAssemblyResolver();
+						var settings = new ICSharpCode.Decompiler.DecompilerSettings();
+						var decompiler = new CSharpDecompiler(file, resolver, settings) {
+							CancellationToken = token,
+						};
+						new PortablePdbWriter().WritePdb(file, decompiler, settings, stream);
+						output.Write(string.Format(Resources.GeneratedPDBFile, pdbFileName));
+						output.WriteLine();
 					}
-					totalWatch.Stop();
-					output.WriteLine();
-					output.Write(string.Format(Resources.GenerationCompleteInSeconds, totalWatch.Elapsed.TotalSeconds.ToString("F1")));
-					output.WriteLine();
-					output.WriteLine();
-					output.AddButton(null, Resources.OpenExplorer, (_, _) => OpenFolder(folder));
-					output.WriteLine();
-					return output;
-				}, token), Resources.GeneratingPortablePDB);
-				dockWorkspace.ShowText(output);
-			}
-			catch (OperationCanceledException)
-			{
-				// User cancelled — leave previous tab content visible.
-			}
+					catch (OperationCanceledException)
+					{
+						output.WriteLine();
+						output.Write(Resources.GenerationWasCancelled);
+						output.WriteLine();
+						throw;
+					}
+					catch (Exception ex)
+					{
+						output.Write(string.Format(Resources.GenerationFailedForAssembly, assembly.FileName, ex.Message));
+						output.WriteLine();
+					}
+				}
+				totalWatch.Stop();
+				output.WriteLine();
+				output.Write(string.Format(Resources.GenerationCompleteInSeconds, totalWatch.Elapsed.TotalSeconds.ToString("F1")));
+				output.WriteLine();
+				output.WriteLine();
+				output.AddButton(null, Resources.OpenExplorer, (_, _) => OpenFolder(folder));
+				output.WriteLine();
+				return output;
+			}, token)).ConfigureAwait(true);
 		}
 
 		static void OpenFolder(string path)

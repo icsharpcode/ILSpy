@@ -60,8 +60,8 @@ namespace ILSpy.Commands
 
 		/// <summary>
 		/// Prompts for a target <c>.sln</c> file and exports <paramref name="assemblies"/> into it,
-		/// one decompiled project each. The status report lands in the active decompiler tab, where
-		/// the user is already looking. Does nothing if the user cancels the picker.
+		/// one decompiled project each. The export runs in its own frozen tab so browsing the tree
+		/// can't cancel it, and the status report lands there. Does nothing if the user cancels the picker.
 		/// </summary>
 		public static async Task PromptAndExportAsync(IReadOnlyList<LoadedAssembly> assemblies,
 			Language language, DockWorkspace dockWorkspace)
@@ -72,27 +72,20 @@ namespace ILSpy.Commands
 			if (string.IsNullOrEmpty(path))
 				return;
 
-			try
-			{
-				var output = await dockWorkspace.RunWithCancellation(async token => {
-					var result = await SolutionWriter.CreateSolutionAsync(path, language, assemblies, token)
-						.ConfigureAwait(false);
-					var o = new AvaloniaEditTextOutput { Title = Resources._SaveCode };
-					o.Write(result.StatusText);
+			// Run in a dedicated frozen tab so browsing the tree while the export runs can't cancel it.
+			await dockWorkspace.RunInNewTabAsync("Exporting solution", async token => {
+				var result = await SolutionWriter.CreateSolutionAsync(path, language, assemblies, token)
+					.ConfigureAwait(false);
+				var o = new AvaloniaEditTextOutput { Title = Resources._SaveCode };
+				o.Write(result.StatusText);
+				o.WriteLine();
+				if (result.Success && Path.GetDirectoryName(path) is { Length: > 0 } directory)
+				{
+					o.AddButton(null, Resources.OpenExplorer, (_, _) => OpenFolder(directory));
 					o.WriteLine();
-					if (result.Success && Path.GetDirectoryName(path) is { Length: > 0 } directory)
-					{
-						o.AddButton(null, Resources.OpenExplorer, (_, _) => OpenFolder(directory));
-						o.WriteLine();
-					}
-					return o;
-				}, "Exporting solution");
-				dockWorkspace.ShowText(output);
-			}
-			catch (OperationCanceledException)
-			{
-				// User cancelled — leave the previous tab content visible.
-			}
+				}
+				return o;
+			}).ConfigureAwait(true);
 		}
 
 		static void OpenFolder(string path)

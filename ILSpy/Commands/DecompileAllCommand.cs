@@ -65,46 +65,42 @@ namespace ILSpy.Commands
 
 		async Task ExecuteAsync()
 		{
-			try
-			{
-				var report = await dockWorkspace.RunWithCancellation(token => Task.Run(() => {
-					var output = new AvaloniaEditTextOutput { Title = "Decompile All" };
-					var bag = new ConcurrentBag<string>();
-					Parallel.ForEach(
-						Partitioner.Create(assemblyTreeModel.AssemblyList!.GetAssemblies(), loadBalance: true),
-						new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = token },
-						asm => {
-							if (asm.HasLoadError)
-								return;
-							var watch = Stopwatch.StartNew();
-							Exception? ex = null;
-							var path = Path.Combine(OutputDir, asm.ShortName + ".cs");
-							try
-							{
-								using var writer = new StreamWriter(path);
-								var options = new DecompilationOptions {
-									CancellationToken = token,
-									FullDecompilation = true,
-								};
-								new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
-							}
-							catch (Exception caught)
-							{
-								ex = caught;
-							}
-							watch.Stop();
-							bag.Add(asm.ShortName + " - " + watch.Elapsed + (ex != null ? " - " + ex.GetType().Name : ""));
-						});
-					foreach (var line in bag.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
-					{
-						output.Write(line);
-						output.WriteLine();
-					}
-					return output;
-				}, token), "Decompiling all assemblies…");
-				dockWorkspace.ShowText(report);
-			}
-			catch (OperationCanceledException) { }
+			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
+			await dockWorkspace.RunInNewTabAsync("Decompiling all assemblies…", token => Task.Run(() => {
+				var output = new AvaloniaEditTextOutput { Title = "Decompile All" };
+				var bag = new ConcurrentBag<string>();
+				Parallel.ForEach(
+					Partitioner.Create(assemblyTreeModel.AssemblyList!.GetAssemblies(), loadBalance: true),
+					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = token },
+					asm => {
+						if (asm.HasLoadError)
+							return;
+						var watch = Stopwatch.StartNew();
+						Exception? ex = null;
+						var path = Path.Combine(OutputDir, asm.ShortName + ".cs");
+						try
+						{
+							using var writer = new StreamWriter(path);
+							var options = new DecompilationOptions {
+								CancellationToken = token,
+								FullDecompilation = true,
+							};
+							new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
+						}
+						catch (Exception caught)
+						{
+							ex = caught;
+						}
+						watch.Stop();
+						bag.Add(asm.ShortName + " - " + watch.Elapsed + (ex != null ? " - " + ex.GetType().Name : ""));
+					});
+				foreach (var line in bag.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
+				{
+					output.Write(line);
+					output.WriteLine();
+				}
+				return output;
+			}, token));
 		}
 	}
 
@@ -136,47 +132,43 @@ namespace ILSpy.Commands
 
 		async Task ExecuteAsync()
 		{
-			try
-			{
-				var report = await dockWorkspace.RunWithCancellation(token => Task.Run(() => {
-					var output = new AvaloniaEditTextOutput { Title = "Disassemble All" };
-					var bag = new ConcurrentBag<string>();
-					Parallel.ForEach(
-						Partitioner.Create(assemblyTreeModel.AssemblyList!.GetAssemblies(), loadBalance: true),
-						new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = token },
-						asm => {
-							if (asm.HasLoadError)
-								return;
-							var watch = Stopwatch.StartNew();
-							Exception? ex = null;
-							var safeName = (asm.Text?.ToString() ?? asm.ShortName).Replace("(", "").Replace(")", "").Replace(' ', '_');
-							var path = Path.Combine(OutputDir, safeName + ".il");
-							try
-							{
-								using var writer = new StreamWriter(path);
-								var options = new DecompilationOptions {
-									CancellationToken = token,
-									FullDecompilation = true,
-								};
-								new ILLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
-							}
-							catch (Exception caught)
-							{
-								ex = caught;
-							}
-							watch.Stop();
-							bag.Add(asm.ShortName + " - " + watch.Elapsed + (ex != null ? " - " + ex.GetType().Name : ""));
-						});
-					foreach (var line in bag.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
-					{
-						output.Write(line);
-						output.WriteLine();
-					}
-					return output;
-				}, token), "Disassembling all assemblies…");
-				dockWorkspace.ShowText(report);
-			}
-			catch (OperationCanceledException) { }
+			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
+			await dockWorkspace.RunInNewTabAsync("Disassembling all assemblies…", token => Task.Run(() => {
+				var output = new AvaloniaEditTextOutput { Title = "Disassemble All" };
+				var bag = new ConcurrentBag<string>();
+				Parallel.ForEach(
+					Partitioner.Create(assemblyTreeModel.AssemblyList!.GetAssemblies(), loadBalance: true),
+					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = token },
+					asm => {
+						if (asm.HasLoadError)
+							return;
+						var watch = Stopwatch.StartNew();
+						Exception? ex = null;
+						var safeName = (asm.Text?.ToString() ?? asm.ShortName).Replace("(", "").Replace(")", "").Replace(' ', '_');
+						var path = Path.Combine(OutputDir, safeName + ".il");
+						try
+						{
+							using var writer = new StreamWriter(path);
+							var options = new DecompilationOptions {
+								CancellationToken = token,
+								FullDecompilation = true,
+							};
+							new ILLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
+						}
+						catch (Exception caught)
+						{
+							ex = caught;
+						}
+						watch.Stop();
+						bag.Add(asm.ShortName + " - " + watch.Elapsed + (ex != null ? " - " + ex.GetType().Name : ""));
+					});
+				foreach (var line in bag.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
+				{
+					output.Write(line);
+					output.WriteLine();
+				}
+				return output;
+			}, token));
 		}
 	}
 
@@ -211,26 +203,22 @@ namespace ILSpy.Commands
 			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
 			if (nodes.Length == 0)
 				return;
-			try
-			{
-				var report = await dockWorkspace.RunWithCancellation(token => Task.Run(() => {
-					var watch = Stopwatch.StartNew();
-					var options = new DecompilationOptions { CancellationToken = token };
-					for (int i = 0; i < NumRuns; i++)
-					{
-						foreach (var node in nodes)
-							node.Decompile(language, new PlainTextOutput(), options);
-					}
-					watch.Stop();
-					var output = new AvaloniaEditTextOutput { Title = "Decompile 100×" };
-					var msPerRun = watch.Elapsed.TotalMilliseconds / NumRuns;
-					output.Write($"Average time: {msPerRun:f1}ms");
-					output.WriteLine();
-					return output;
-				}, token), "Decompiling 100×…");
-				dockWorkspace.ShowText(report);
-			}
-			catch (OperationCanceledException) { }
+			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
+			await dockWorkspace.RunInNewTabAsync("Decompiling 100×…", token => Task.Run(() => {
+				var watch = Stopwatch.StartNew();
+				var options = new DecompilationOptions { CancellationToken = token };
+				for (int i = 0; i < NumRuns; i++)
+				{
+					foreach (var node in nodes)
+						node.Decompile(language, new PlainTextOutput(), options);
+				}
+				watch.Stop();
+				var output = new AvaloniaEditTextOutput { Title = "Decompile 100×" };
+				var msPerRun = watch.Elapsed.TotalMilliseconds / NumRuns;
+				output.Write($"Average time: {msPerRun:f1}ms");
+				output.WriteLine();
+				return output;
+			}, token));
 		}
 	}
 }

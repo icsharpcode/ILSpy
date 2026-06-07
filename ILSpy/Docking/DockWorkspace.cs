@@ -1064,6 +1064,35 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
+		/// Runs a long-running operation in a NEW, frozen document tab with its own
+		/// decompile/cancellation scope, then shows the operation's report in that tab. Unlike
+		/// <see cref="RunWithCancellation"/> (which runs on the active preview tab, whose
+		/// cancellation token tree-node navigation cancels), a frozen tab is never the navigation
+		/// target — so selecting another node while the operation runs cannot cancel it. Use this
+		/// for project/solution export, PDB generation, and similar work the user may want to keep
+		/// running while they browse. Cancellation (the tab's Cancel overlay) is honoured.
+		/// </summary>
+		public async Task RunInNewTabAsync(string title,
+			Func<CancellationToken, Task<TextView.AvaloniaEditTextOutput>> work)
+		{
+			ArgumentNullException.ThrowIfNull(work);
+			var content = new TextView.DecompilerTabPageModel {
+				Language = languageService.CurrentLanguage,
+				Title = title,
+			};
+			OpenNewTab(content);
+			try
+			{
+				var output = await content.RunWithCancellation(work, title).ConfigureAwait(true);
+				content.ShowText(output);
+			}
+			catch (OperationCanceledException)
+			{
+				// User cancelled — leave the (empty) report tab; they can close it.
+			}
+		}
+
+		/// <summary>
 		/// Opens a fresh sibling tab whose <see cref="ContentTabPage.Content"/> is the
 		/// supplied viewmodel. Used by explicit "Open in new tab" gestures and by static
 		/// pages (About, License) that must not be overwritten by tree-node selections.

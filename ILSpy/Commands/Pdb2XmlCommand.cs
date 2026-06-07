@@ -71,28 +71,24 @@ namespace ILSpy.Commands
 
 		async Task ExecuteAsync(AssemblyTreeNode[] nodes)
 		{
-			try
-			{
-				var options = PdbToXmlOptions.IncludeEmbeddedSources
-					| PdbToXmlOptions.IncludeMethodSpans
-					| PdbToXmlOptions.IncludeTokens;
-				var output = await dockWorkspace.RunWithCancellation(token => Task.Run(() => {
-					var output = new AvaloniaEditTextOutput { Title = "PDB as XML", SyntaxExtensionOverride = ".xml" };
-					var writer = new TextOutputWriter(output);
-					foreach (var node in nodes)
-					{
-						var pdbFileName = Path.ChangeExtension(node.LoadedAssembly.FileName, ".pdb");
-						if (!File.Exists(pdbFileName))
-							continue;
-						using var pdbStream = File.OpenRead(pdbFileName);
-						using var peStream = File.OpenRead(node.LoadedAssembly.FileName);
-						PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
-					}
-					return output;
-				}, token), "Dumping PDB as XML…");
-				dockWorkspace.ShowText(output);
-			}
-			catch (System.OperationCanceledException) { }
+			var options = PdbToXmlOptions.IncludeEmbeddedSources
+				| PdbToXmlOptions.IncludeMethodSpans
+				| PdbToXmlOptions.IncludeTokens;
+			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
+			await dockWorkspace.RunInNewTabAsync("Dumping PDB as XML…", token => Task.Run(() => {
+				var output = new AvaloniaEditTextOutput { Title = "PDB as XML", SyntaxExtensionOverride = ".xml" };
+				var writer = new TextOutputWriter(output);
+				foreach (var node in nodes)
+				{
+					var pdbFileName = Path.ChangeExtension(node.LoadedAssembly.FileName, ".pdb");
+					if (!File.Exists(pdbFileName))
+						continue;
+					using var pdbStream = File.OpenRead(pdbFileName);
+					using var peStream = File.OpenRead(node.LoadedAssembly.FileName);
+					PdbToXmlConverter.ToXml(writer, pdbStream, peStream, options);
+				}
+				return output;
+			}, token));
 		}
 	}
 
