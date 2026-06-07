@@ -40,6 +40,13 @@ namespace ILSpy.Options
 		[ObservableProperty]
 		DisplaySettings settings = null!;
 
+		// Session settings carry the active Theme. The theme ComboBox binds two-way to
+		// SessionSettings.Theme; ThemeManager already applies the change live on that property.
+		[ObservableProperty]
+		SessionSettings sessionSettings = null!;
+
+		public System.Collections.Generic.IReadOnlyCollection<string> AllThemes => Themes.ThemeManager.AllThemes;
+
 		// Avalonia equivalent of WPF's Fonts.SystemFontFamilies. FontManager.Current populates
 		// from the platform font enumerator (DirectWrite on Windows, FontConfig on Linux,
 		// CoreText on macOS), so the list is realistic on every supported target.
@@ -66,6 +73,7 @@ namespace ILSpy.Options
 				Settings.PropertyChanged -= OnSettingsPropertyChanged;
 			Settings = service.DisplaySettings;
 			Settings.PropertyChanged += OnSettingsPropertyChanged;
+			SessionSettings = service.SessionSettings;
 			OnPropertyChanged(nameof(CurrentFontFamily));
 		}
 
@@ -80,6 +88,7 @@ namespace ILSpy.Options
 			// Reset by replaying LoadFromXml against an empty element — every attribute is
 			// absent so each property falls back to its built-in default.
 			Settings.LoadFromXml(new XElement("DisplaySettings"));
+			SessionSettings.Theme = Themes.ThemeManager.Current.DefaultTheme;
 		}
 	}
 }

@@ -15,6 +15,11 @@
 	<ScrollViewer>
 		<Border Padding="6,6,6,12">
 			<StackPanel Spacing="10">
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<TextBlock VerticalAlignment="Center" Text="{x:Static res:Resources.DisplaySettingsPanel_Theme}" />
+				<ComboBox MinWidth="120" ItemsSource="{Binding AllThemes}"
+				          SelectedItem="{Binding SessionSettings.Theme, Mode=TwoWay}" />
+			</StackPanel>
 			<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
 				<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
 				           Text="{x:Static res:Resources.Font}" />
