@@ -38,7 +38,11 @@ namespace ILSpy.TextView
 			=> context.TextView is { } view && view.Editor.SelectionLength > 0;
 
 		public void Execute(TextViewContext context)
-			=> context.TextView?.Editor.Copy();
+		{
+			// Copy as text + syntax/semantic-coloured HTML; fall back to plain copy if nothing selected.
+			if (context.TextView is { } view && !HtmlClipboardCopy.Copy(view.Editor, view.SemanticHighlightingModel))
+				view.Editor.Copy();
+		}
 	}
 
 	/// <summary>

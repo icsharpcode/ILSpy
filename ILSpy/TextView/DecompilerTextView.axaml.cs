@@ -202,7 +202,26 @@ namespace ILSpy.TextView
 				RoutingStrategies.Tunnel,
 				handledEventsToo: false);
 			Editor.KeyDown += OnEditorKeyDownForZoom;
+
+			// Ctrl+C copies as text + syntax-coloured HTML so a paste into an HTML target keeps the
+			// highlighting. Tunnel so we run before AvaloniaEdit's plain-text copy keybinding and can
+			// suppress it; falls through (Handled stays false) when there's no selection.
+			Editor.AddHandler(InputElement.KeyDownEvent, OnEditorKeyDownForCopy,
+				RoutingStrategies.Tunnel, handledEventsToo: false);
 		}
+
+		void OnEditorKeyDownForCopy(object? sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.C && e.KeyModifiers == KeyModifiers.Control
+				&& HtmlClipboardCopy.Copy(Editor, SemanticHighlightingModel))
+			{
+				e.Handled = true;
+			}
+		}
+
+		/// <summary>ILSpy's semantic highlighting (decompiler reference / theme colours) for the current
+		/// document, so an HTML copy can include it on top of the xshd syntax colours.</summary>
+		internal RichTextModel? SemanticHighlightingModel => boundModel?.HighlightingModel;
 
 		// ThemeManager.Current is a process-lived singleton, so subscribing to its ThemeChanged in
 		// the constructor and never detaching would root every DecompilerTextView for the lifetime of
