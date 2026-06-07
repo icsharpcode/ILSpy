@@ -41,6 +41,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy.Tests.Windows", "ILSp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy.ReadyToRun", "ILSpy.ReadyToRun\ILSpy.ReadyToRun.csproj", "{AF43A431-AAF7-4758-A180-42C378AE0FB2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestPlugin", "TestPlugin\TestPlugin.csproj", "{62B21FB3-2A55-4F51-8892-9D6B9864BC22}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -183,6 +185,18 @@ Global
 		{AF43A431-AAF7-4758-A180-42C378AE0FB2}.Release|x64.Build.0 = Release|Any CPU
 		{AF43A431-AAF7-4758-A180-42C378AE0FB2}.Release|x86.ActiveCfg = Release|Any CPU
 		{AF43A431-AAF7-4758-A180-42C378AE0FB2}.Release|x86.Build.0 = Release|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Debug|x64.Build.0 = Debug|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Debug|x86.Build.0 = Debug|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Release|x64.ActiveCfg = Release|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Release|x64.Build.0 = Release|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Release|x86.ActiveCfg = Release|Any CPU
+		{62B21FB3-2A55-4F51-8892-9D6B9864BC22}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

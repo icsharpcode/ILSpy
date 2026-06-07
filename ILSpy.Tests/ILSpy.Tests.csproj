@@ -29,6 +29,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
+    <!-- Build the sample plugin so the composition test has something to load, but DON'T copy
+         Test.Plugin.dll into the test output: AppComposition scans *.Plugin.dll next to the test
+         assembly, and an auto-loaded plugin would add a language / menu items to every headless test. -->
+    <ProjectReference Include="..\TestPlugin\TestPlugin.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
 </Project>

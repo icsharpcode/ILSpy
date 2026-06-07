@@ -4,41 +4,30 @@
 using System.Composition;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.Util;
+using CommunityToolkit.Mvvm.ComponentModel;
+
 using ICSharpCode.ILSpyX.Settings;
 
-using TomsToolbox.Wpf;
-using TomsToolbox.Wpf.Composition.AttributedModel;
+using ILSpy;
+using ILSpy.Options;
 
 namespace TestPlugin
 {
-	[DataTemplate(typeof(CustomOptionsViewModel))]
-	[NonShared]
-	partial class CustomOptionPage
-	{
-		public CustomOptionPage()
-		{
-			InitializeComponent();
-		}
-	}
-
+	// The Options host renders an [ExportOptionPage] viewmodel by resolving its view through the
+	// app-wide ViewLocator (SomeViewModel -> SomeView, searched across every loaded assembly,
+	// including plugins). So this viewmodel pairs with CustomOptionsView.axaml by name.
 	[ExportOptionPage(Order = 0)]
-	[NonShared]
-	class CustomOptionsViewModel : ObservableObjectBase, IOptionPage
+	[Shared]
+	public sealed partial class CustomOptionsViewModel : ObservableObject, IOptionPage
 	{
-		private Options options;
-
 		public string Title => "TestPlugin";
 
-		public Options Options {
-			get => options;
-			set => SetProperty(ref options, value);
-		}
+		[ObservableProperty]
+		private Options options = null!;
 
-		public void Load(SettingsSnapshot snapshot)
+		public void Load(SettingsService settings)
 		{
-			this.Options = snapshot.GetSettings<Options>();
+			Options = settings.GetSettings<Options>();
 		}
 
 		public void LoadDefaults()
@@ -47,23 +36,15 @@ namespace TestPlugin
 		}
 	}
 
-	class Options : ObservableObjectBase, ISettingsSection
+	public sealed partial class Options : ObservableObject, ISettingsSection
 	{
 		static readonly XNamespace ns = "http://www.ilspy.net/testplugin";
 
-		bool uselessOption1;
+		[ObservableProperty]
+		private bool uselessOption1;
 
-		public bool UselessOption1 {
-			get => uselessOption1;
-			set => SetProperty(ref uselessOption1, value);
-		}
-
-		double uselessOption2;
-
-		public double UselessOption2 {
-			get => uselessOption2;
-			set => SetProperty(ref uselessOption2, value);
-		}
+		[ObservableProperty]
+		private double uselessOption2;
 
 		public XName SectionName { get; } = ns + "CustomOptions";
 
@@ -76,10 +57,8 @@ namespace TestPlugin
 		public XElement SaveToXml()
 		{
 			var section = new XElement(SectionName);
-
 			section.SetAttributeValue("useless1", UselessOption1);
 			section.SetAttributeValue("useless2", UselessOption2);
-
 			return section;
 		}
 	}
