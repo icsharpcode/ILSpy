@@ -642,5 +642,34 @@ namespace ILSpy.TreeNodes
 				await assemblyTreeModel.LoadDependenciesAsync(context.SelectedTreeNodes);
 			}
 		}
+
+		// Promotes an auto-loaded (on-demand resolved) dependency into a permanent member of the
+		// assembly list, so it survives a list reload. Visible only when an auto-loaded assembly is
+		// selected. Mirrors the previous version's "Add to main list".
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._AddMainList), Category = nameof(ICSharpCode.ILSpy.Properties.Resources.Dependencies), Order = 710)]
+		[System.Composition.Shared]
+		[method: System.Composition.ImportingConstructor]
+		sealed class AddToMainList(AssemblyTree.AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+				=> context.SelectedTreeNodes?.OfType<AssemblyTreeNode>().Any(n => n.IsAutoLoaded) == true;
+
+			public bool IsEnabled(TextViewContext context)
+				=> context.SelectedTreeNodes?.OfType<AssemblyTreeNode>().Any() == true;
+
+			public void Execute(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes == null)
+					return;
+				foreach (var node in context.SelectedTreeNodes.OfType<AssemblyTreeNode>())
+				{
+					if (node.LoadedAssembly.HasLoadError)
+						continue;
+					node.LoadedAssembly.IsAutoLoaded = false;
+					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
+				}
+				assemblyTreeModel.AssemblyList?.RefreshSave();
+			}
+		}
 	}
 }
