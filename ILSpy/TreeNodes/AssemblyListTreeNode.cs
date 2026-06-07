@@ -58,6 +58,19 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => assemblyList.ListName;
 
+		// Decompiling the list root dumps every assembly in the list, each under a comment rule.
+		public override void Decompile(Languages.Language language, ICSharpCode.Decompiler.ITextOutput output, DecompilationOptions options)
+		{
+			language.WriteCommentLine(output, "List: " + assemblyList.ListName);
+			output.WriteLine();
+			foreach (var asm in Children.OfType<AssemblyTreeNode>())
+			{
+				language.WriteCommentLine(output, new string('-', 60));
+				output.WriteLine();
+				asm.Decompile(language, output, options);
+			}
+		}
+
 		public AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
 			=> Children.OfType<AssemblyTreeNode>().FirstOrDefault(n => n.LoadedAssembly == asm);
 
