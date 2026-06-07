@@ -79,7 +79,7 @@
     <!-- Editor, docking, grid, behaviors -->
     <PackageReference Include="Avalonia.AvaloniaEdit" />
     <PackageReference Include="AvaloniaEdit.TextMate" />
-    <PackageReference Include="Avalonia.Xaml.Behaviors" />
+    <PackageReference Include="Xaml.Behaviors.Avalonia" />
     <PackageReference Include="Dock.Avalonia" />
     <PackageReference Include="Dock.Avalonia.Themes.Simple" />
     <PackageReference Include="Dock.Controls.Recycling" />
