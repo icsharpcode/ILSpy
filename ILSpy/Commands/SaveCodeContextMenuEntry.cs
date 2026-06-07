@@ -68,8 +68,11 @@ namespace ILSpy.Commands
 				return;
 			}
 
-			if (nodes.Length == 1)
-				(nodes[0] as ILSpyTreeNode)?.Save();
+			// Single node: let it claim its own save (resources, the assembly project/single-file
+			// picker), else fall through to decompile-to-file -- the same path as Ctrl+S. Without
+			// the fallback, Save Code on a type/namespace/member node (no Save override) did nothing.
+			if (nodes[0] is ILSpyTreeNode node)
+				SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).HandleExceptions();
 		}
 
 		// Visible when exactly one ILSpyTreeNode is selected (the single-node save path), or when

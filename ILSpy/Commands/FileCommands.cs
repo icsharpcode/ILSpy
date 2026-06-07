@@ -220,67 +220,21 @@ namespace ILSpy.Commands
 
 			if (assemblyTreeModel.SelectedItem is not ILSpyTreeNode node)
 				return;
-			// Resource nodes (and any future override) handle their own save format and dialog;
-			// only fall through to the generic "save code" path when the node says it didn't
-			// claim the request.
-			if (node.Save())
-				return;
-
-			var language = languageService.CurrentLanguage;
-			var defaultName = "output" + language.FileExtension;
-			var path = await FilePickers.SaveAsync(
-				$"{language.Name} (*{language.FileExtension})|*{language.FileExtension}|All files|*.*",
-				defaultName).ConfigureAwait(false);
-			if (path == null)
-				return;
-			await SaveCodeAsync(path).ConfigureAwait(false);
+			// Shared with the context-menu entry: the node handles its own save (resources, the
+			// assembly project/single-file picker), else fall through to decompile-to-file.
+			await SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).ConfigureAwait(false);
 		}
 
 		/// <summary>
 		/// Public for tests + scripted callers: re-decompiles the currently selected node with
 		/// <see cref="DecompilationOptions.FullDecompilation"/> on and writes the output to
-		/// <paramref name="path"/> as plain text. Drives the taskbar progress while running so
-		/// long saves give visual feedback.
+		/// <paramref name="path"/> as plain text, bypassing the file picker.
 		/// </summary>
-		public async Task SaveCodeAsync(string path)
+		public Task SaveCodeAsync(string path)
 		{
 			if (assemblyTreeModel.SelectedItem is not ILSpyTreeNode node)
-				return;
-
-			var taskbar = TryGetExport<TaskbarProgressService>();
-			var language = languageService.CurrentLanguage;
-			var options = new DecompilationOptions {
-				FullDecompilation = true,
-				EscapeInvalidIdentifiers = true,
-			};
-			taskbar?.SetState(TaskbarProgressState.Indeterminate);
-			try
-			{
-				await Task.Run(() => {
-					using var writer = new StreamWriter(path);
-					var output = new ICSharpCode.Decompiler.PlainTextOutput(writer);
-					try
-					{
-						node.Decompile(language, output, options);
-					}
-					catch (System.OperationCanceledException)
-					{
-						writer.WriteLine();
-						writer.WriteLine("// Decompilation was cancelled.");
-					}
-				}).ConfigureAwait(false);
-			}
-			finally
-			{
-				taskbar?.SetState(TaskbarProgressState.None);
-			}
-		}
-
-		static T? TryGetExport<T>() where T : class
-		{
-			try
-			{ return AppComposition.Current.GetExport<T>(); }
-			catch { return null; }
+				return Task.CompletedTask;
+			return SaveCodeHelper.WriteNodeToFileAsync(node, languageService.CurrentLanguage, path);
 		}
 	}
 
