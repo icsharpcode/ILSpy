@@ -16,26 +16,33 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.ComponentModel;
 using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
 
 using Dock.Avalonia.Controls;
 
+using ILSpy.AppEnv;
+
 namespace ILSpy.Themes
 {
 	/// <summary>
-	/// PROTOTYPE: makes the document tab strip lay its tabs out on multiple rows instead of a single
-	/// scrolling row. Dock's <see cref="DocumentTabStrip"/> hardcodes a horizontal StackPanel inside a
-	/// PART_ScrollViewer in its theme template and ignores an ItemsPanel set via a Style, so this
-	/// behaviour sets the WrapPanel ItemsPanel directly and disables the scroll-viewer's horizontal
-	/// scrolling (so the WrapPanel gets a bounded width and actually wraps). Toggle via the attached
-	/// Enable property in App.axaml.
+	/// Switches the document tab strip between single-line (a single horizontally scrolling row, the
+	/// default) and multi-line (tabs wrapped onto several rows) layout. The mode is read from and
+	/// written to <see cref="SessionSettings.MultiLineDocumentTabs"/>, so it persists across sessions,
+	/// and the mouse wheel over the strip flips it: wheel up expands to multiple rows, wheel down
+	/// collapses back to a single row. Dock's <see cref="DocumentTabStrip"/> hardcodes a horizontal
+	/// StackPanel inside a PART_ScrollViewer in its theme template and ignores an ItemsPanel set via a
+	/// Style, so this behaviour swaps the ItemsPanel directly and toggles the scroll-viewer's scroll
+	/// directions to match. Toggle via the attached Enable property in App.axaml.
 	/// </summary>
 	public static class MultiRowTabStripBehavior
 	{
@@ -60,25 +67,71 @@ namespace ILSpy.Themes
 			if (e.NewValue is not true)
 				return;
 
-			// The presenter builds its panel from ItemsPanel; setting it here (before/at styling time)
-			// makes the tabs flow through a WrapPanel.
-			strip.ItemsPanel = new FuncTemplate<Panel?>(
-				() => new WrapPanel { Orientation = Orientation.Horizontal });
+			// The wheel toggles the persisted mode. Handle it so it doesn't also scroll the tabs.
+			strip.AddHandler(InputElement.PointerWheelChangedEvent, OnPointerWheel,
+				RoutingStrategies.Tunnel);
 
-			// The PART_ScrollViewer only exists once the template is applied. Disabling its horizontal
-			// scroll constrains the WrapPanel to the strip width so it wraps onto new rows.
-			strip.TemplateApplied += (_, _) => ConstrainScroller(strip);
-			ConstrainScroller(strip);
+			var settings = TryGetSessionSettings();
+			PropertyChangedEventHandler? settingsHandler = null;
+			if (settings is not null)
+			{
+				settingsHandler = (_, args) => {
+					if (args.PropertyName == nameof(SessionSettings.MultiLineDocumentTabs))
+						ApplyMode(strip, settings.MultiLineDocumentTabs);
+				};
+				settings.PropertyChanged += settingsHandler;
+				strip.DetachedFromVisualTree += (_, _) => {
+					if (settingsHandler is not null)
+						settings.PropertyChanged -= settingsHandler;
+				};
+			}
+
+			strip.TemplateApplied += (_, _) => ApplyMode(strip, CurrentMultiLine());
+			ApplyMode(strip, CurrentMultiLine());
 		}
 
-		static void ConstrainScroller(DocumentTabStrip strip)
+		static void OnPointerWheel(object? sender, PointerWheelEventArgs e)
 		{
+			var settings = TryGetSessionSettings();
+			if (settings is null || e.Delta.Y == 0)
+				return;
+			// Idempotent set: rolling further in the same direction keeps the same mode rather than
+			// flip-flopping, so a multi-detent gesture settles cleanly.
+			settings.MultiLineDocumentTabs = e.Delta.Y > 0;
+			e.Handled = true;
+		}
+
+		static void ApplyMode(DocumentTabStrip strip, bool multiLine)
+		{
+			// The presenter builds its panel from ItemsPanel; swapping it re-flows the tabs.
+			strip.ItemsPanel = multiLine
+				? new FuncTemplate<Panel?>(() => new WrapPanel { Orientation = Orientation.Horizontal })
+				: new FuncTemplate<Panel?>(() => new StackPanel { Orientation = Orientation.Horizontal });
+
 			var scroller = strip.GetVisualDescendants().OfType<ScrollViewer>()
 				.FirstOrDefault(s => s.Name == "PART_ScrollViewer");
 			if (scroller is null)
 				return;
-			scroller.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
-			scroller.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+			if (multiLine)
+			{
+				// Disabling horizontal scroll constrains the WrapPanel to the strip width so it wraps.
+				scroller.HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled;
+				scroller.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+			}
+			else
+			{
+				scroller.HorizontalScrollBarVisibility = ScrollBarVisibility.Auto;
+				scroller.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+			}
+		}
+
+		static bool CurrentMultiLine() => TryGetSessionSettings()?.MultiLineDocumentTabs ?? false;
+
+		static SessionSettings? TryGetSessionSettings()
+		{
+			try
+			{ return AppComposition.Current.GetExport<SettingsService>().SessionSettings; }
+			catch { return null; }
 		}
 	}
 }

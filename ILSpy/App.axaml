@@ -285,9 +285,12 @@
         <Style Selector="dockControls|DocumentTabStrip, dockControls|ToolTabStrip">
             <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabStripBackground}" />
         </Style>
-        <!-- PROTOTYPE: lay document tabs out on multiple rows instead of a single scrolling row. -->
+        <!-- Single-line (scrolling) vs multi-line (wrapped) document tabs; the mouse wheel over the
+             strip toggles the mode and it persists. In single-line mode an overflow dropdown lists
+             every open document for quick switching. -->
         <Style Selector="dockControls|DocumentTabStrip">
             <Setter Property="themes:MultiRowTabStripBehavior.Enable" Value="True" />
+            <Setter Property="themes:DocumentSwitcherDropdownBehavior.Enable" Value="True" />
         </Style>
         <!-- The full-width accent line under the document tab strip is the DocumentControl
              template's Panel#PART_DocumentSeperator. The Simple theme fills it with the blue

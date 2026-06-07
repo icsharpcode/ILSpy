@@ -57,6 +57,14 @@ namespace ILSpy
 		private string? currentCulture;
 
 		/// <summary>
+		/// When true the document tab strip flows its tabs onto multiple rows; when false (the
+		/// default) it stays a single scrolling row with an overflow dropdown. Toggled by the mouse
+		/// wheel over the strip and persisted so the choice survives across sessions.
+		/// </summary>
+		[ObservableProperty]
+		private bool multiLineDocumentTabs;
+
+		/// <summary>
 		/// Path to the previously-selected tree node (one ToString() per ancestor, root-first).
 		/// Used to restore the selection on the next launch.
 		/// </summary>
@@ -91,6 +99,7 @@ namespace ILSpy
 			Theme = (string?)section.Element(nameof(Theme));
 			var culture = (string?)section.Element(nameof(CurrentCulture));
 			CurrentCulture = string.IsNullOrEmpty(culture) ? null : culture;
+			MultiLineDocumentTabs = (bool?)section.Element(nameof(MultiLineDocumentTabs)) ?? false;
 
 			var bounds = section.Element("WindowBounds");
 			if (bounds != null)
@@ -141,6 +150,7 @@ namespace ILSpy
 				section.Add(new XElement(nameof(Theme), Theme));
 			if (!string.IsNullOrEmpty(CurrentCulture))
 				section.Add(new XElement(nameof(CurrentCulture), CurrentCulture));
+			section.Add(new XElement(nameof(MultiLineDocumentTabs), MultiLineDocumentTabs));
 
 			if (FilterStates.Count > 0)
 			{

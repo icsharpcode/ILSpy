@@ -28,6 +28,7 @@ using AwesomeAssertions;
 
 using Dock.Avalonia.Controls;
 
+using ILSpy;
 using ILSpy.AppEnv;
 using ILSpy.TextView;
 using ILSpy.ViewModels;
@@ -38,8 +39,8 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.Docking;
 
 /// <summary>
-/// PROTOTYPE check: with MultiRowTabStripBehavior enabled (App.axaml), many document tabs flow onto
-/// multiple rows (a WrapPanel) instead of a single scrolling row.
+/// With multi-line mode enabled (<see cref="SessionSettings.MultiLineDocumentTabs"/>), many document
+/// tabs flow onto multiple rows (a WrapPanel) instead of a single scrolling row.
 /// </summary>
 [TestFixture]
 public class MultiRowTabStripTests
@@ -47,32 +48,40 @@ public class MultiRowTabStripTests
 	[AvaloniaTest]
 	public async Task Many_Document_Tabs_Wrap_To_Multiple_Rows()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
-
-		for (int i = 0; i < 40; i++)
-			vm.DockWorkspace.OpenNewTab(new DecompilerTabPageModel { Title = $"Tab number {i:00}" });
-
-		for (int i = 0; i < 12; i++)
+		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings;
+		var saved = settings.MultiLineDocumentTabs;
+		try
 		{
-			Dispatcher.UIThread.RunJobs();
-			window.UpdateLayout();
-			await Task.Delay(20);
+			var window = AppComposition.Current.GetExport<MainWindow>();
+			window.Show();
+			var vm = (MainWindowViewModel)window.DataContext!;
+			await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+			settings.MultiLineDocumentTabs = true;
+			for (int i = 0; i < 40; i++)
+				vm.DockWorkspace.OpenNewTab(new DecompilerTabPageModel { Title = $"Tab number {i:00}" });
+
+			for (int i = 0; i < 12; i++)
+			{
+				Dispatcher.UIThread.RunJobs();
+				window.UpdateLayout();
+				await Task.Delay(20);
+			}
+
+			var strip = window.GetVisualDescendants().OfType<DocumentTabStrip>().FirstOrDefault();
+			strip.Should().NotBeNull("the document tab strip must be realised");
+
+			strip!.GetVisualDescendants().OfType<WrapPanel>().Should().NotBeEmpty(
+				"the behaviour must swap the strip's ItemsPanel to a WrapPanel");
+
+			var rows = strip.GetVisualDescendants().OfType<DocumentTabStripItem>()
+				.Where(it => it.Bounds.Width > 0)
+				.Select(it => System.Math.Round(it.Bounds.Y))
+				.Distinct().ToList();
+
+			rows.Count.Should().BeGreaterThan(1, "40 tabs must wrap onto more than one row");
 		}
-
-		var strip = window.GetVisualDescendants().OfType<DocumentTabStrip>().FirstOrDefault();
-		strip.Should().NotBeNull("the document tab strip must be realised");
-
-		strip!.GetVisualDescendants().OfType<WrapPanel>().Should().NotBeEmpty(
-			"the behaviour must swap the strip's ItemsPanel to a WrapPanel");
-
-		var rows = strip.GetVisualDescendants().OfType<DocumentTabStripItem>()
-			.Where(it => it.Bounds.Width > 0)
-			.Select(it => System.Math.Round(it.Bounds.Y))
-			.Distinct().ToList();
-
-		rows.Count.Should().BeGreaterThan(1, "40 tabs must wrap onto more than one row");
+		finally
+		{ settings.MultiLineDocumentTabs = saved; }
 	}
 }

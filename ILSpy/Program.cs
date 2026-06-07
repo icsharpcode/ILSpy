@@ -35,7 +35,12 @@ namespace ILSpy
 		public static AppBuilder BuildAvaloniaApp()
 		{
 			var builder = AppBuilder.Configure<App>()
-				.UsePlatformDetect();
+				.UsePlatformDetect()
+				// Render popups (menus, flyouts, tooltips) in the window's own overlay layer instead of
+				// separate native child windows. On X11/XWayland native popups can lose focus and
+				// self-dismiss within ~100ms of opening (observed on the document-strip overflow
+				// dropdown: it opened and closed before becoming visible).
+				.With(new X11PlatformOptions { OverlayPopups = true });
 #if DEBUG
 			// Enables and attaches the Avalonia 12 DevTools bridge (it calls AttachDeveloperTools
 			// internally, so no separate App-level attach is needed -- a second call throws
