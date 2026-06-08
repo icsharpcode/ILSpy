@@ -69,10 +69,13 @@ public class RunInNewTabTests
 		dock.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count()
 			.Should().BeGreaterThan(tabsBefore, "the long op opens its own tab");
 
-		// Navigate while the op is running: select a type -> the preview tab decompiles.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
+		// Navigate while the op is running: select a node -> the preview tab decompiles. A C#
+		// namespace node decompiles to just its "// Some.Name.Space" comment line, which keeps
+		// this inside the headless decompile-wait budget on slow CI runners (a full type decompile
+		// would not).
+		var navNode = vm.AssemblyTreeModel.FindNode<NamespaceTreeNode>(
+			TreeNavigation.CoreLibName, "System.Runtime.Versioning");
+		vm.AssemblyTreeModel.SelectNode(navNode);
 		await dock.WaitForDecompiledTextAsync();
 		for (int i = 0; i < 6; i++)
 		{

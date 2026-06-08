@@ -23,6 +23,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ILSpy.AssemblyTree;
 using ILSpy.Navigation;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
@@ -41,6 +42,18 @@ namespace ICSharpCode.ILSpy.Tests.Navigation;
 [TestFixture]
 public class ViewStateRoundTripTests
 {
+	// These tests only exercise the navigation pipeline; what gets decompiled is irrelevant.
+	// Decompiling a CoreLib type in full is the slowest thing the suite does and overruns the
+	// headless 15s wait on slower CI runners. A namespace node in C# decompiles to just its
+	// "// Some.Name.Space" comment line (Language.DecompileNamespace) -- the cheapest possible
+	// target -- so navigate between two of those. Both namespaces are always present in CoreLib.
+	static (NamespaceTreeNode A, NamespaceTreeNode B) CheapNodes(AssemblyTreeModel atm)
+	{
+		var a = atm.FindNode<NamespaceTreeNode>(TreeNavigation.CoreLibName, "System.Runtime.Versioning");
+		var b = atm.FindNode<NamespaceTreeNode>(TreeNavigation.CoreLibName, "System.Text");
+		return (a, b);
+	}
+
 	[AvaloniaTest]
 	public async Task Back_Restores_Caret_Position_The_User_Left_On_The_Previous_Node()
 	{
@@ -48,16 +61,13 @@ public class ViewStateRoundTripTests
 
 		var dockWorkspace = vm.DockWorkspace;
 
-		// Pick two distinct decompiler targets so the navigation actually moves between
-		// them. CoreLib's System.Object and System.String are both always present.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
+		// Two distinct, cheap navigation targets so the navigation actually moves between them.
+		var (nodeA, nodeB) = CheapNodes(vm.AssemblyTreeModel);
 
-		vm.AssemblyTreeModel.SelectNode(objectNode);
+		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await dockWorkspace.WaitForDecompiledTextAsync();
 		var tab = dockWorkspace.ActiveDecompilerTab!;
-		TestCapture.Step("object-decompiled");
+		TestCapture.Step("node-a-decompiled");
 
 		// State is pulled from the editor on demand (CaptureViewState) when DockWorkspace records
 		// a navigation away -- not pushed per caret/scroll event. Headless has no laid-out editor,
@@ -66,16 +76,16 @@ public class ViewStateRoundTripTests
 
 		// Navigate to a different node — DockWorkspace pulls A's state into the current history
 		// entry and records B as the new current.
-		vm.AssemblyTreeModel.SelectNode(stringNode);
+		vm.AssemblyTreeModel.SelectNode(nodeB);
 		await dockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("string-decompiled");
+		TestCapture.Step("node-b-decompiled");
 
 		// Verify the capture: the back stack's most recent entry should be A's, with the pulled
 		// caret + scroll values.
 		var backEntries = dockWorkspace.BackHistory.OfType<TreeNodeEntry>().ToList();
 		backEntries.Should().NotBeEmpty("Select(B) must push A onto the back stack");
 		var captured = backEntries.Last();
-		ReferenceEquals(captured.Node, objectNode).Should().BeTrue(
+		ReferenceEquals(captured.Node, nodeA).Should().BeTrue(
 			"captured back-stack entry must reference node A");
 		captured.CaretOffset.Should().Be(500);
 		captured.VerticalOffset.Should().Be(120.5);
@@ -111,14 +121,12 @@ public class ViewStateRoundTripTests
 		var (_, vm) = await TestHarness.BootAsync();
 
 		var dockWorkspace = vm.DockWorkspace;
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
+		var (nodeA, nodeB) = CheapNodes(vm.AssemblyTreeModel);
 
-		vm.AssemblyTreeModel.SelectNode(objectNode);
+		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await dockWorkspace.WaitForDecompiledTextAsync();
 		var tab = dockWorkspace.ActiveDecompilerTab!;
-		TestCapture.Step("object-decompiled");
+		TestCapture.Step("node-a-decompiled");
 
 		// Deterministic foldings snapshot — two expanded regions over a four-folding layout.
 		// Compute via the helper to keep the checksum honest. (The snapshot itself is exercised
@@ -133,13 +141,13 @@ public class ViewStateRoundTripTests
 
 		// Navigate to a different node — DockWorkspace pulls the state and stamps the foldings
 		// onto the OUTGOING entry on the back stack.
-		vm.AssemblyTreeModel.SelectNode(stringNode);
+		vm.AssemblyTreeModel.SelectNode(nodeB);
 		await dockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("string-decompiled");
+		TestCapture.Step("node-b-decompiled");
 
 		// Verify the capture: the back-stack entry for node A carries the snapshot.
 		var captured = dockWorkspace.BackHistory.OfType<TreeNodeEntry>().Last();
-		ReferenceEquals(captured.Node, objectNode).Should().BeTrue(
+		ReferenceEquals(captured.Node, nodeA).Should().BeTrue(
 			"captured back-stack entry must reference node A");
 		captured.Foldings.Should().NotBeNull("Select(B) must record A's foldings into the back stack");
 		captured.Foldings!.Value.Checksum.Should().Be(seeded.Checksum);
@@ -168,14 +176,12 @@ public class ViewStateRoundTripTests
 		((object?)vm.DockWorkspace.NavigateBackCommand).Should().NotBeNull();
 
 		// Build up history: A → B, then go Back so Forward is enabled.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		vm.AssemblyTreeModel.SelectNode(objectNode);
+		var (nodeA, nodeB) = CheapNodes(vm.AssemblyTreeModel);
+		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		vm.AssemblyTreeModel.SelectNode(stringNode);
+		vm.AssemblyTreeModel.SelectNode(nodeB);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("string-decompiled");
+		TestCapture.Step("node-b-decompiled");
 
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
@@ -188,7 +194,7 @@ public class ViewStateRoundTripTests
 		TestCapture.Step("navigated-forward");
 
 		// Back through Forward should land on B again.
-		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, stringNode).Should().BeTrue(
+		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeB).Should().BeTrue(
 			"NavigateForward must restore the tree selection to the entry that was just popped from forward");
 	}
 }

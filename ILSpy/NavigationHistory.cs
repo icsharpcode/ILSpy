@@ -22,10 +22,11 @@ using System.Collections.Generic;
 namespace ILSpy.Navigation
 {
 	/// <summary>
-	/// Two-stack browser-style history. Rapid successive <see cref="Record"/> calls (within
-	/// 0.5 s) replace the current entry instead of pushing, so a tree refresh that re-selects
-	/// the same node doesn't pollute the back stack with duplicates. Equality is delegated
-	/// to the entry's own <see cref="IEquatable{T}.Equals"/> implementation.
+	/// Two-stack browser-style history. A rapid successive <see cref="Record"/> of the SAME entry
+	/// (within 0.5 s) replaces the current entry instead of pushing, so the double-fire a single
+	/// click produces -- and tree refreshes that re-select the same node -- don't pollute the back
+	/// stack with duplicates. A rapid selection of a DIFFERENT entry still records normally.
+	/// Equality is delegated to the entry's own <see cref="IEquatable{T}.Equals"/> implementation.
 	/// </summary>
 	internal sealed class NavigationHistory<T> where T : class, IEquatable<T?>
 	{
@@ -120,10 +121,15 @@ namespace ILSpy.Navigation
 			var navigationTime = DateTime.Now;
 			var period = navigationTime - lastNavigationTime;
 
-			if (period.TotalSeconds < NavigationSecondsBeforeNewEntry)
+			if (period.TotalSeconds < NavigationSecondsBeforeNewEntry && current != null && current.Equals(entry))
 			{
-				// Rapid successive selections collapse into a single entry — protects against
-				// tree refreshes that re-issue SelectedItem.
+				// A rapid RE-SELECTION of the SAME target collapses into the current entry. This
+				// swallows the double-fire a single click produces (SelectedItems.CollectionChanged
+				// and SelectedItem PropertyChanged both fan in) and tree refreshes that re-issue the
+				// same SelectedItem. A rapid selection of a DIFFERENT node is a genuine navigation
+				// and must fall through to push the old current onto the back stack -- gating only on
+				// elapsed time (the previous behaviour) silently dropped fast navigations whenever
+				// the decompile finished inside the window (cheap targets, fast machines).
 				current = entry;
 			}
 			else
