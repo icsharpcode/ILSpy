@@ -133,8 +133,17 @@ namespace ICSharpCode.Decompiler.Documentation
 			var dotnetRoot = Path.GetDirectoryName(sharedDir);
 			if (dotnetRoot == null)
 				return null;
-			var version = Path.GetFileName(versionDir);
-			var refPackRoot = Path.Combine(dotnetRoot, "packs", "Microsoft.NETCore.App.Ref", version, "ref");
+			var packRoot = Path.Combine(dotnetRoot, "packs", "Microsoft.NETCore.App.Ref");
+			if (!Directory.Exists(packRoot))
+				return null;
+			// The targeting (ref) pack version usually differs from the installed runtime patch
+			// version -- e.g. runtime shared/.../10.0.8 against pack .../10.0.0, or a relocated CI
+			// install whose only ref pack is a different feature band. Prefer an exact match, then
+			// the newest pack sharing the runtime's major.minor, then the newest pack present.
+			var packVersionDir = SelectRefPackVersionDirectory(packRoot, Path.GetFileName(versionDir));
+			if (packVersionDir == null)
+				return null;
+			var refPackRoot = Path.Combine(packVersionDir, "ref");
 			if (!Directory.Exists(refPackRoot))
 				return null;
 			// One tfm folder per pack version (e.g. "net10.0"). Sort by parsed
@@ -143,6 +152,53 @@ namespace ICSharpCode.Decompiler.Documentation
 			return Directory.GetDirectories(refPackRoot)
 				.OrderByDescending(d => ParseTfm(Path.GetFileName(d)))
 				.FirstOrDefault();
+		}
+
+		// Picks the ref-pack version directory most appropriate for the running runtime: an exact
+		// version match wins; otherwise the newest pack sharing the runtime's major.minor, then the
+		// newest pack of the same major, then the newest pack present. Pre-release suffixes are
+		// ignored when comparing.
+		static string SelectRefPackVersionDirectory(string packRoot, string runtimeVersion)
+		{
+			var exact = Path.Combine(packRoot, runtimeVersion);
+			if (Directory.Exists(exact))
+				return exact;
+			var rt = ParseVersionPrefix(runtimeVersion);
+			string best = null;
+			(int Major, int Minor, int Patch) bestVer = (-1, -1, -1);
+			int bestRank = -1;
+			foreach (var dir in Directory.GetDirectories(packRoot))
+			{
+				var v = ParseVersionPrefix(Path.GetFileName(dir));
+				int rank = (v.Major == rt.Major && v.Minor == rt.Minor) ? 2 : (v.Major == rt.Major ? 1 : 0);
+				if (rank > bestRank || (rank == bestRank && CompareVersion(v, bestVer) > 0))
+				{
+					best = dir;
+					bestVer = v;
+					bestRank = rank;
+				}
+			}
+			return best;
+		}
+
+		static (int Major, int Minor, int Patch) ParseVersionPrefix(string version)
+		{
+			if (string.IsNullOrEmpty(version))
+				return (-1, -1, -1);
+			int dash = version.IndexOf('-');
+			var core = dash >= 0 ? version.Substring(0, dash) : version;
+			var parts = core.Split('.');
+			int Part(int i) => i < parts.Length && int.TryParse(parts[i], out int n) ? n : 0;
+			return (Part(0), Part(1), Part(2));
+		}
+
+		static int CompareVersion((int Major, int Minor, int Patch) a, (int Major, int Minor, int Patch) b)
+		{
+			if (a.Major != b.Major)
+				return a.Major.CompareTo(b.Major);
+			if (a.Minor != b.Minor)
+				return a.Minor.CompareTo(b.Minor);
+			return a.Patch.CompareTo(b.Patch);
 		}
 
 		static (int Major, int Minor) ParseTfm(string tfm)
