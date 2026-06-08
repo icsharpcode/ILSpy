@@ -17,13 +17,12 @@
          with whatever <Version> resolves to in the project, defeating the dynamic
          version injection. -->
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <!-- ILSpy is committed to System.Composition with attribute-driven discovery
-         (matching the WPF host); MEF002 nudges toward code-based DI which doesn't apply.
-         CA1001/CA2213 are suppressed in the WPF csproj for the same reason — tab page
-         models hold a CancellationTokenSource that lives as long as the document dock.
-         MEF004 wants an explicit Shared/NonShared marker; System.Composition has no
-         [NonShared] attribute (the absence of [Shared] *is* the non-shared semantic), so
-         the warning is a false positive on every Options panel viewmodel. -->
+    <!-- ILSpy uses System.Composition with attribute-driven discovery; MEF002 nudges toward
+         code-based DI which doesn't apply. MEF004 wants an explicit Shared/NonShared marker, but
+         System.Composition has no [NonShared] attribute (the absence of [Shared] *is* the
+         non-shared semantic), so it is a false positive on every Options panel viewmodel.
+         CA1001/CA2213 fire because tab-page models hold a CancellationTokenSource that lives as
+         long as the document dock, which is intentional. -->
     <NoWarn>$(NoWarn);MEF002;MEF004;CA1001;CA2213</NoWarn>
     <!-- Server GC: spawns one GC heap per CPU core and runs collections on dedicated
          GC threads, which keeps the UI thread responsive when background work
@@ -115,8 +114,7 @@
        interop and is Windows-only. The PackageReference is gated on the build host
        being Windows AND the configuration being Debug; the consuming command file is
        additionally `#if DEBUG && WINDOWS` so the symbols only resolve when both
-       conditions are true. Matches WPF's `#if DEBUG && WINDOWS` gating of the same
-       feature. -->
+       conditions are true. -->
   <ItemGroup Condition="'$(Configuration)' == 'Debug' AND $([MSBuild]::IsOSPlatform('Windows'))">
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
     <PackageReference Include="Microsoft.DiaSymReader" />

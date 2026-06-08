@@ -41,9 +41,8 @@ namespace ILSpy.Options
 	/// groups them by their [Category] attribute, and surfaces each as an
 	/// <see cref="DecompilerSettingsItemViewModel"/> with a localised description.
 	/// </summary>
-	// No [Shared] — each Options tab open gets a fresh viewmodel instance bound to a fresh
-	// snapshot. WPF's [NonShared] from TomsToolbox; in System.Composition the absence of
-	// [Shared] gives the same per-call instantiation.
+	// No [Shared]: each Options tab open gets a fresh viewmodel instance bound to a fresh
+	// snapshot. In System.Composition the absence of [Shared] gives per-call instantiation.
 	[ExportOptionPage(Order = 10)]
 	public sealed partial class DecompilerSettingsViewModel : ObservableObject, IOptionPage
 	{
