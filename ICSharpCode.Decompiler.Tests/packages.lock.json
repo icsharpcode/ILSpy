@@ -74,6 +74,12 @@
           "System.Reflection.Metadata": "5.0.0"
         }
       },
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Microsoft.Extensions.Configuration": {
         "type": "Direct",
         "requested": "[10.0.8, )",
@@ -1289,12 +1295,6 @@
         "resolved": "1.3.8",
         "contentHash": "LhwlPa7c1zs1OV2XadMtAWdImjLIsqFJPoRcIWAadSRn0Ri1DepK65UbWLPmt4riLqx2d40xjXRk0ogpqNtK7g=="
       },
-      "Microsoft.DiaSymReader.Native": {
-        "type": "CentralTransitive",
-        "requested": "[17.0.0-beta1.21524.1, )",
-        "resolved": "17.0.0-beta1.21524.1",
-        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
-      },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.0.8, )",
@@ -1327,6 +1327,12 @@
       }
     },
     "net11.0/linux-x64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Microsoft.NETCore.ILAsm": {
         "type": "Direct",
         "requested": "[10.0.8, )",
@@ -2214,12 +2220,6 @@
           "runtime.any.System.Threading.Timer": "4.3.0"
         }
       },
-      "Microsoft.DiaSymReader.Native": {
-        "type": "CentralTransitive",
-        "requested": "[17.0.0-beta1.21524.1, )",
-        "resolved": "17.0.0-beta1.21524.1",
-        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
-      },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",
         "requested": "[10.0.8, )",
@@ -2228,6 +2228,12 @@
       }
     },
     "net11.0/osx-arm64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Microsoft.NETCore.ILAsm": {
         "type": "Direct",
         "requested": "[10.0.8, )",
@@ -3115,12 +3121,6 @@
           "runtime.any.System.Threading.Timer": "4.3.0"
         }
       },
-      "Microsoft.DiaSymReader.Native": {
-        "type": "CentralTransitive",
-        "requested": "[17.0.0-beta1.21524.1, )",
-        "resolved": "17.0.0-beta1.21524.1",
-        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
-      },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",
         "requested": "[10.0.8, )",
@@ -3129,6 +3129,12 @@
       }
     },
     "net11.0/win-arm64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Microsoft.NETCore.ILAsm": {
         "type": "Direct",
         "requested": "[10.0.8, )",
@@ -3999,12 +4005,6 @@
           "runtime.any.System.Threading.Timer": "4.3.0"
         }
       },
-      "Microsoft.DiaSymReader.Native": {
-        "type": "CentralTransitive",
-        "requested": "[17.0.0-beta1.21524.1, )",
-        "resolved": "17.0.0-beta1.21524.1",
-        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
-      },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",
         "requested": "[10.0.8, )",
@@ -4013,6 +4013,12 @@
       }
     },
     "net11.0/win-x64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Microsoft.NETCore.ILAsm": {
         "type": "Direct",
         "requested": "[10.0.8, )",
@@ -4882,12 +4888,6 @@
           "System.Runtime": "4.3.0",
           "runtime.any.System.Threading.Timer": "4.3.0"
         }
-      },
-      "Microsoft.DiaSymReader.Native": {
-        "type": "CentralTransitive",
-        "requested": "[17.0.0-beta1.21524.1, )",
-        "resolved": "17.0.0-beta1.21524.1",
-        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
       },
       "System.Security.Cryptography.Pkcs": {
         "type": "CentralTransitive",

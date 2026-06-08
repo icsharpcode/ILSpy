@@ -111,11 +111,12 @@
   </ItemGroup>
 
   <!-- DEBUG-only Pdb2Xml command requires Microsoft.DiaSymReader, which uses native COM
-       interop and is Windows-only. The PackageReference is gated on the build host
-       being Windows AND the configuration being Debug; the consuming command file is
-       additionally `#if DEBUG && WINDOWS` so the symbols only resolve when both
-       conditions are true. -->
-  <ItemGroup Condition="'$(Configuration)' == 'Debug' AND $([MSBuild]::IsOSPlatform('Windows'))">
+       interop and is Windows-only AT RUNTIME. The packages are referenced on every build host
+       (Debug only) so that restore produces an identical packages.lock.json regardless of OS;
+       a Windows-host-gated reference makes the lock diverge between Windows and Linux restores.
+       The consuming command file is still gated by DEBUG and WINDOWS, so on non-Windows the
+       packages are restored but unused. -->
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
     <PackageReference Include="Microsoft.DiaSymReader" />
     <PackageReference Include="Microsoft.DiaSymReader.Native" />

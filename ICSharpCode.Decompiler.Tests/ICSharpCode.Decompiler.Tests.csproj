@@ -67,7 +67,10 @@
     <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
     <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
     <PackageReference Include="Microsoft.DiaSymReader" />
-    <PackageReference Include="Microsoft.DiaSymReader.Native" Condition="$([MSBuild]::IsOsPlatform('Windows'))" />
+    <!-- Referenced unconditionally so restore yields the same packages.lock.json on every OS.
+         The native asset only resolves for win-* RIDs; non-Windows builds ignore it, and the
+         tests that use it are gated by OperatingSystem.IsWindows() + Assert.Ignore at runtime. -->
+    <PackageReference Include="Microsoft.DiaSymReader.Native" />
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="coverlet.MTP" />
     <PackageReference Include="NUnit" />

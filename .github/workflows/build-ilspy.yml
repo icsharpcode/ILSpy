@@ -148,7 +148,7 @@ jobs:
       shell: pwsh
       run: |
         .\BuildTools\create-filelists.ps1
-        git diff --exit-code -- '*.filelist'
+        git diff --exit-code
 
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
