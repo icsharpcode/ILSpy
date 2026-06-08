@@ -110,12 +110,12 @@ jobs:
     - name: Zip ILSpy (framework-dependent)
       run: >
         7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.dll
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.exe
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.config
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*.json
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*\ILSpy.resources.dll
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0-windows\*\ILSpy.ReadyToRun.Plugin.resources.dll
+        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.dll
+        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.exe
+        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.config
+        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.json
+        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*\ILSpy.resources.dll
+        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*\ILSpy.ReadyToRun.Plugin.resources.dll
 
     - name: Publish x64/arm64 framework-dependent/self-contained
       shell: pwsh
