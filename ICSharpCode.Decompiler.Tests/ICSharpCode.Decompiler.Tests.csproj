@@ -4,7 +4,11 @@
   <PropertyGroup>
     <TargetFramework>net11.0</TargetFramework>
     <LangVersion>preview</LangVersion>
+    <!-- A single (host) RID makes the build copy the native DiaSymReader.Native assets the
+         Windows PDB tests need; the explicit RID list makes packages.lock.json carry every RID
+         (host-independent), so the lock does not drift between Linux and Windows restores. -->
     <RuntimeIdentifier>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</RuntimeIdentifier>
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
 
     <IsPackable>false</IsPackable>
 
