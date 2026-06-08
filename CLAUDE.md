@@ -17,14 +17,14 @@ ILSpy is a cross-platform .NET assembly browser / decompiler built on **Avalonia
 - **Microsoft.Extensions.DependencyInjection** + **System.Composition** MEF directly, with a small bridge. Do **not** use TomsToolbox.
 - **AvaloniaEdit theme** must be registered in `Application.Styles` via the StyleInclude or `TextEditor` renders 0×0.
 - Central package management is enabled — every `PackageReference` needs a matching `PackageVersion` in `Directory.Packages.props`.
-- Target framework: `net10.0` (cross-platform) for the main app and tests. `net10.0-windows` only for tests that intentionally exercise Windows-only behaviour.
+- Target framework: `net10.0` (cross-platform) for the main app. The test projects target `net11.0` (and `net11.0-windows` for tests that intentionally exercise Windows-only behaviour) so they run on the runtime the `net11.0` preview build SDK ships, without installing a separate `net10.0` runtime in CI. `TestPlugin` stays `net10.0` (it is loaded as a library by the net11 test host, so its TFM need not track the test projects').
 
 ## Project structure
 
 Avalonia UI:
 - `ILSpy/` — the Avalonia UI app
 - `ILSpy.Tests/` — headless Avalonia UI tests (Avalonia.Headless.NUnit)
-- `ILSpy.Tests.Windows/` — Windows-only UI tests (OS-gated; `net10.0-windows`)
+- `ILSpy.Tests.Windows/` — Windows-only UI tests (OS-gated; `net11.0-windows`)
 - `ILSpy.ReadyToRun/` — ReadyToRun-viewer plugin, **ported to Avalonia** (`net10.0`; part of `ILSpy.Desktop.slnf`). Not legacy.
 
 Cross-platform core (decompiler engine + shared support):
@@ -36,7 +36,7 @@ Cross-platform core (decompiler engine + shared support):
 - `ICSharpCode.Decompiler.PowerShell/` — PowerShell cmdlets (`netstandard2.0`)
 
 Test support:
-- `TestPlugin/` — sample plugin exercising the plugin-loading system (`net10.0-windows`)
+- `TestPlugin/` — sample plugin exercising the plugin-loading system (`net10.0`)
 - `TestFixtures.Resources/` — generates resource fixtures consumed by the decompiler tests
 
 Legacy / Windows-tied (porting backlog; do **not** modify unless explicitly asked to port them):
@@ -59,7 +59,8 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 ## Build / restore
 
 - After adding or bumping a `PackageReference`, regenerate lock files with `dotnet restore /p:RestoreEnablePackagePruning=false` so the lock files stay complete.
-- The pre-commit hook runs `dotnet format` on the **whole solution**. New files must be CRLF (`unix2dos` after `Write`) or the hook rewrites them and breaks staging.
+- The pre-commit hook runs `dotnet format` on the **whole solution** -- it IS the formatter. **Always let the hook run; never commit `.cs` with `--no-verify`.** Bypassing it lands unformatted code and forces history-wide reformat rebases later. `--no-verify` is acceptable only for commits that touch no `.cs` (e.g. `.yml`/`.md`-only).
+- **Line endings are a Windows-only concern.** The repo is `* text=auto`, so blobs are stored LF and git renormalizes on commit. On **Windows**, save new files CRLF so the hook's `git add -u` doesn't churn EOLs. On **Linux/macOS**, leave new files LF and do **not** `unix2dos` -- forcing CRLF there makes the whole working tree show as phantom-modified in `git status` (and is normalized back to LF on commit anyway).
 - **Partial commits need stash-and-pop.** The format hook only auto-formats when the staged set equals the working tree. Stash unstaged remainder before committing a subset.
 
 ## Commit workflow
@@ -70,11 +71,10 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 - **Small follow-up fixes against a commit still on the branch get squashed back** via `git commit --fixup` + `git rebase --autosquash`, not appended as "fix X" commits.
 - **en-US English** in subject and body. ASCII-only unless a non-ASCII character is genuinely required for what the message describes.
 - **AI attribution: use `Assisted-by:`, not `Co-Authored-By:`.** Following the Linux kernel's coding-assistants guidance (https://docs.kernel.org/process/coding-assistants.html#attribution), an AI-assisted commit ends with a trailer of the form `Assisted-by: AGENT_NAME:MODEL_VERSION:HARNESS` — agent, model id, and the harness that ran it, colon-separated, e.g. `Assisted-by: Claude:claude-opus-4-8:Claude Code`. Use the session's actual model id and harness. Don't list analysis/build tools. Do **not** add a `Co-Authored-By:` line for the AI, and an AI agent **must not** add a `Signed-off-by:` (only a human can certify the DCO).
-- The parity trackers (`AVALONIA_PARITY_TODO.html`, `AVALONIA_PORT_TASKS.md`, `AVALONIA_PORT_TASKS.html`) are **intentionally untracked** -- never `git add` them.
 
 ## Test discipline
 
-- Always run the test suite with `--report-trx` so failures survive: `dotnet test ILSpy.sln --report-trx`. Don't dismiss failures as flaky without first reproducing in isolation, then running repeatedly.
+- Always run the test suite with `--report-trx` so failures survive: `dotnet test --solution ILSpy.sln --report-trx` (the repo pins Microsoft.Testing.Platform in `global.json`; the bare `dotnet test <sln>` form is the old VSTest syntax). Don't dismiss failures as flaky without first reproducing in isolation, then running repeatedly.
 - After matcher / rewriter edits, **run the relevant tests, not just the build.** `dotnet build` green ≠ behaviour correct.
 
 ## Framework-specific gotchas
