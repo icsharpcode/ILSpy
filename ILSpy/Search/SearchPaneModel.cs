@@ -159,7 +159,16 @@ namespace ILSpy.Search
 		/// (resource and assembly results have non-entity references that the assembly tree
 		/// doesn't index — a follow-up commit can extend FindTreeNode to cover them).
 		/// </summary>
-		public void Activate(SearchResult result)
+		public void Activate(SearchResult result) => Activate(result, inNewTabPage: false);
+
+		/// <summary>
+		/// Navigates to <paramref name="result"/>. When <paramref name="inNewTabPage"/> is
+		/// false the assembly-tree selection moves to the matching node (reusing the active
+		/// document tab); when true the node is opened in a fresh document tab via
+		/// <see cref="Docking.DockWorkspace.OpenNodeInNewTab"/> -- wired to Ctrl+Enter and a
+		/// middle-click on a result row.
+		/// </summary>
+		public void Activate(SearchResult result, bool inNewTabPage)
 		{
 			ArgumentNullException.ThrowIfNull(result);
 			if (result.Reference is null)
@@ -168,8 +177,24 @@ namespace ILSpy.Search
 			if (atm == null)
 				return;
 			var node = atm.FindTreeNode(result.Reference);
-			if (node != null)
+			if (node == null)
+				return;
+			if (inNewTabPage)
+				TryGetDockWorkspace()?.OpenNodeInNewTab(node);
+			else
 				atm.SelectedItem = node;
+		}
+
+		/// <summary>
+		/// Selects the picker entry carrying <paramref name="mode"/>, if any. Backs the
+		/// Ctrl+T / Ctrl+M / Ctrl+S accelerators in the pane's view; a no-op when no entry
+		/// exposes the requested mode.
+		/// </summary>
+		public void SelectMode(SearchMode mode)
+		{
+			var entry = SearchModes.FirstOrDefault(m => m.Mode == mode);
+			if (entry != null)
+				SelectedSearchMode = entry;
 		}
 
 		RunningSearch? currentSearch;
@@ -254,6 +279,18 @@ namespace ILSpy.Search
 			try
 			{
 				return AppComposition.Current.GetExport<SettingsService>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		static Docking.DockWorkspace? TryGetDockWorkspace()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<Docking.DockWorkspace>();
 			}
 			catch
 			{

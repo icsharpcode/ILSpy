@@ -36,19 +36,63 @@ namespace ILSpy.Search
 			InitializeComponent();
 			SearchResults.DoubleTapped += OnResultDoubleTapped;
 			SearchResults.KeyDown += OnResultKeyDown;
+			SearchResults.AddHandler(PointerPressedEvent, OnResultsPointerPressed, RoutingStrategies.Tunnel);
+			SearchResults.AddHandler(PointerReleasedEvent, OnResultsPointerReleased, RoutingStrategies.Tunnel);
 			SearchInput.KeyDown += OnSearchInputKeyDown;
+		}
+
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+
+			// Mode accelerators: Ctrl+T/M/S jump the picker to Type / Member / Constant. These
+			// mirror the previous app's shortcuts and work from anywhere in the pane (the search
+			// box doesn't consume bare Ctrl+letter chords, so the event bubbles up to here).
+			if (e.Handled || e.KeyModifiers != KeyModifiers.Control)
+				return;
+			if (DataContext is not SearchPaneModel vm)
+				return;
+			switch (e.Key)
+			{
+				case Key.T:
+					vm.SelectMode(SearchMode.Type);
+					e.Handled = true;
+					break;
+				case Key.M:
+					vm.SelectMode(SearchMode.Member);
+					e.Handled = true;
+					break;
+				case Key.S:
+					vm.SelectMode(SearchMode.Literal);
+					e.Handled = true;
+					break;
+			}
 		}
 
 		void OnSearchInputKeyDown(object? sender, KeyEventArgs e)
 		{
+			// Down arrow drops into the result list, selecting the first row and moving
+			// keyboard focus there so the user can keep arrowing through hits without the
+			// mouse. No-op when there are no results to step into.
+			if (e.Key == Key.Down)
+			{
+				if (DataContext is SearchPaneModel vm && vm.Results.Count > 0)
+				{
+					SearchResults.SelectedIndex = 0;
+					SearchResults.Focus();
+					e.Handled = true;
+				}
+				return;
+			}
+
 			// Escape mirrors the clear-X button. Goes through the bound view-model so the
 			// orchestrator's cancel-and-restart path fires the same way it does when the
 			// user backspaces the box empty by hand.
 			if (e.Key != Key.Escape)
 				return;
-			if (DataContext is SearchPaneModel vm && vm.SearchTerm.Length > 0)
+			if (DataContext is SearchPaneModel vmEsc && vmEsc.SearchTerm.Length > 0)
 			{
-				vm.SearchTerm = string.Empty;
+				vmEsc.SearchTerm = string.Empty;
 				e.Handled = true;
 			}
 		}
@@ -94,13 +138,46 @@ namespace ILSpy.Search
 
 		void OnResultKeyDown(object? sender, KeyEventArgs e)
 		{
+			// Up from the top of the list hands focus back to the search box (and clears the
+			// selection on the way out) so the box and the list feel like one continuous strip.
+			if (e.Key == Key.Up && SearchResults.SelectedIndex == 0)
+			{
+				SearchResults.SelectedIndex = -1;
+				SearchInput.Focus();
+				e.Handled = true;
+				return;
+			}
+
 			// Enter as the keyboard equivalent of double-tap so users navigating the list
-			// with arrow keys can activate without reaching for the mouse.
+			// with arrow keys can activate without reaching for the mouse. Ctrl+Enter opens
+			// the result in a new tab instead of reusing the active one.
 			if (e.Key != Key.Enter)
 				return;
 			if (SearchResults.SelectedItem is SearchResult result && DataContext is SearchPaneModel vm)
 			{
-				vm.Activate(result);
+				vm.Activate(result, e.KeyModifiers.HasFlag(KeyModifiers.Control));
+				e.Handled = true;
+			}
+		}
+
+		void OnResultsPointerPressed(object? sender, PointerPressedEventArgs e)
+		{
+			// Middle-click doesn't select a row on its own, so claim the row under the cursor
+			// here; the matching release then activates it in a new tab.
+			if (!e.GetCurrentPoint(SearchResults).Properties.IsMiddleButtonPressed)
+				return;
+			if ((e.Source as Control)?.DataContext is SearchResult result)
+				SearchResults.SelectedItem = result;
+		}
+
+		void OnResultsPointerReleased(object? sender, PointerReleasedEventArgs e)
+		{
+			// Middle-click opens the result in a new tab, matching the tree's open-in-new-tab gesture.
+			if (e.InitialPressMouseButton != MouseButton.Middle)
+				return;
+			if (SearchResults.SelectedItem is SearchResult result && DataContext is SearchPaneModel vm)
+			{
+				vm.Activate(result, inNewTabPage: true);
 				e.Handled = true;
 			}
 		}
