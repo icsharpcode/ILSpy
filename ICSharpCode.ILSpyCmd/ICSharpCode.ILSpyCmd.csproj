@@ -40,7 +40,6 @@
   
   <!-- https://devblogs.microsoft.com/nuget/enable-repeatable-package-restores-using-a-lock-file/ -->
   <PropertyGroup>
-    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 	<RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
 

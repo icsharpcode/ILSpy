@@ -37,6 +37,8 @@ jobs:
       with:
         dotnet-version: '11.0.x'
         dotnet-quality: 'preview'
+        cache: true
+        cache-dependency-path: '**/packages.lock.json'
       env:
         DOTNET_INSTALL_DIR: ${{ runner.temp }}/.dotnet
         DOTNET_ROOT: ${{ runner.temp }}/.dotnet
@@ -105,7 +107,9 @@ jobs:
       shell: pwsh
       run: |
         .\BuildTools\create-filelists.ps1
-        git diff --exit-code
+        # Only the *.filelist outputs of the script are under verification here; restore may
+        # legitimately rewrite OS-specific packages.lock.json files, which must not fail this step.
+        git diff --exit-code -- '*.filelist'
     
     - name: Zip ILSpy (framework-dependent)
       run: >
@@ -208,7 +212,7 @@ jobs:
         path: ICSharpCode.BamlDecompiler\bin\Release\ICSharpCode.BamlDecompiler*.nupkg
         if-no-files-found: error
 
-    - name: Publish DecomBamlDecompilerpiler NuGet
+    - name: Publish BamlDecompiler NuGet
       if: github.ref == 'refs/heads/master' && matrix.configuration == 'release'
       run: |
         dotnet nuget push "ICSharpCode.BamlDecompiler\bin\Release\ICSharpCode.BamlDecompiler*.nupkg" `

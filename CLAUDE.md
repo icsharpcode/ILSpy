@@ -58,7 +58,8 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 
 ## Build / restore
 
-- After adding or bumping a `PackageReference`, regenerate lock files with `dotnet restore /p:RestoreEnablePackagePruning=false` so the lock files stay complete.
+- Common actions have repo-root pwsh scripts: `restore.ps1`, `build.ps1` (`-Configuration Debug|Release`), `clean.ps1`, `updatedeps.ps1`, `publish.ps1`, and `BuildTools/format.ps1`. They target `ILSpy.sln`.
+- **Every project generates a `packages.lock.json`** (`RestorePackagesWithLockFile` is set in the root `Directory.Build.props`); CI NuGet caching keys off these. After adding or bumping a `PackageReference`/`PackageVersion`, regenerate the lock files with `updatedeps.ps1` (i.e. `dotnet restore ILSpy.sln --force-evaluate -p:RestoreEnablePackagePruning=false`) and commit them. The core libraries additionally set `RestoreLockedMode`, so a plain restore there fails until the lock file is refreshed.
 - The pre-commit hook runs `dotnet format` on the **whole solution** -- it IS the formatter. **Always let the hook run; never commit `.cs` with `--no-verify`.** Bypassing it lands unformatted code and forces history-wide reformat rebases later. `--no-verify` is acceptable only for commits that touch no `.cs` (e.g. `.yml`/`.md`-only).
 - **Line endings are a Windows-only concern.** The repo is `* text=auto`, so blobs are stored LF and git renormalizes on commit. On **Windows**, save new files CRLF so the hook's `git add -u` doesn't churn EOLs. On **Linux/macOS**, leave new files LF and do **not** `unix2dos` -- forcing CRLF there makes the whole working tree show as phantom-modified in `git status` (and is normalized back to LF on commit anyway).
 - **Partial commits need stash-and-pop.** The format hook only auto-formats when the staged set equals the working tree. Stash unstaged remainder before committing a subset.

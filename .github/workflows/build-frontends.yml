@@ -23,6 +23,8 @@ jobs:
       with:
         dotnet-version: '11.0.x'
         dotnet-quality: 'preview'
+        cache: true
+        cache-dependency-path: '**/packages.lock.json'
 
     - name: Install dependencies
       run: dotnet restore ILSpy.XPlat.slnf -p:RestoreEnablePackagePruning=false
