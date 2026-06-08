@@ -34,7 +34,10 @@ namespace ICSharpCode.ILSpy.Tests;
 
 public static class Waiters
 {
-	static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(15);
+	// Generous so the slow Windows CI runner can finish a cold first decompile (JIT + building a
+	// CoreLib-scale type system) or a large/whole-assembly decompile. A fast machine completes well
+	// under this and never waits the full window; only a genuine hang pays the price.
+	static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(60);
 	static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(25);
 
 	public static async Task WaitForAsync(

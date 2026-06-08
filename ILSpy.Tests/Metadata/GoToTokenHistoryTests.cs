@@ -46,8 +46,11 @@ public class GoToTokenHistoryTests
 		var ws = vm.DockWorkspace;
 
 		// Start somewhere concrete: a decompiled type. This becomes the entry Back should return to.
-		var startNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		// A small CoreLib type keeps the decompile inside the headless 15s wait on slow CI runners
+		// (a full System.Linq.Enumerable decompile overruns it); the token jump below lands on the
+		// metadata table, a distinct node either way.
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var startNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
 		Assert.That(startNode, Is.Not.Null);
 		vm.AssemblyTreeModel.SelectNode(startNode);
 		await ws.WaitForDecompiledTextAsync();
