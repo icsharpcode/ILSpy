@@ -57,9 +57,10 @@ public class SaveCodeFallbackTests
 	[AvaloniaTest]
 	public async Task SaveCode_Writes_A_Clicked_Type_Node_To_A_File()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
+		var (_, vm) = await TestHarness.BootAsync();
+		var fixture = await vm.OpenFixtureAsync();
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+			fixture.ShortName, fixture.ShortName, $"{fixture.ShortName}.{FixtureAssembly.TypeName}");
 		Assert.That(typeNode, Is.Not.Null);
 
 		var language = AppComposition.Current.GetExport<LanguageService>()
@@ -72,8 +73,8 @@ public class SaveCodeFallbackTests
 
 			File.Exists(path).Should().BeTrue();
 			var contents = await File.ReadAllTextAsync(path);
-			contents.Should().Contain("Enumerable", "the decompiled type's name must be present");
-			contents.Should().Contain("AsEnumerable", "the type's members must be decompiled (FullDecompilation)");
+			contents.Should().Contain(FixtureAssembly.TypeName, "the decompiled type's name must be present");
+			contents.Should().Contain(FixtureAssembly.MemberName, "the type's members must be decompiled (FullDecompilation)");
 		}
 		finally
 		{

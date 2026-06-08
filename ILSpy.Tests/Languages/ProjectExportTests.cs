@@ -66,19 +66,14 @@ public class ProjectExportTests
 	[AvaloniaTest]
 	public async Task DecompileAssembly_With_SaveAsProjectDirectory_Writes_Csproj_And_Cs_Files()
 	{
-		// Drives the project-export path end-to-end against an already-loaded assembly in
-		// the headless composition. CoreLib is too big for a smoke test (multi-second
-		// decompile); System.Linq is a manageable subset and is loaded by the existing
-		// test fixture.
+		// Drives the project-export path end-to-end against a tiny emitted fixture assembly, so the
+		// smoke test isn't dominated by decompiling a multi-hundred-type framework assembly.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
-		var node = vm.AssemblyTreeModel.FindNode<global::ILSpy.TreeNodes.AssemblyTreeNode>("System.Linq");
-		Assert.That(node, Is.Not.Null, "System.Linq must be discoverable in the headless test fixture");
-		var loaded = node!.LoadedAssembly;
-		await loaded.GetLoadResultAsync();
+		var loaded = await vm.OpenFixtureAsync();
 
 		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpyExport_" + System.Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempDir);

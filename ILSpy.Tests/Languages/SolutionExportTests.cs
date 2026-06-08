@@ -43,18 +43,14 @@ public class SolutionExportTests
 	[AvaloniaTest]
 	public async Task CreateSolution_Writes_Sln_And_Per_Assembly_Projects()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		// CoreLib is too big for a smoke test; the Uri and System.Linq reference assemblies
-		// the headless fixture seeds are both manageable full-project decompiles.
-		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.Where(a => a.IsLoadedAsValidAssembly && a.ShortName != TreeNavigation.CoreLibName)
-			.GroupBy(a => a.ShortName).Select(g => g.First())
-			.Take(2).ToList();
-		assemblies.Should().HaveCountGreaterThanOrEqualTo(2, "a solution needs at least two distinct assemblies");
-
-		foreach (var a in assemblies)
-			await a.GetLoadResultAsync();
+		// Two tiny emitted fixtures keep the full-solution decompile fast; what this exercises is the
+		// writer's per-assembly project layout, not decompile breadth.
+		var assemblies = new[] {
+			await vm.OpenFixtureAsync("FixtureA"),
+			await vm.OpenFixtureAsync("FixtureB"),
+		};
 
 		var language = AppComposition.Current.GetExport<LanguageService>()
 			.Languages.OfType<CSharpLanguage>().First();

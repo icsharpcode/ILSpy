@@ -50,11 +50,16 @@ public class ProjectExportRunnerTests
 	static CSharpLanguage Language()
 		=> AppComposition.Current.GetExport<LanguageService>().Languages.OfType<CSharpLanguage>().First();
 
-	static List<LoadedAssembly> NonCoreLibAssemblies(MainWindowViewModel vm, int count)
-		=> vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.Where(a => a.IsLoadedAsValidAssembly && a.ShortName != TreeNavigation.CoreLibName)
-			.GroupBy(a => a.ShortName).Select(g => g.First())
-			.Take(count).ToList();
+	// Emit and open `count` distinct tiny fixture assemblies. Exporting these instead of the
+	// multi-hundred-type framework assemblies the default list carries keeps each test near ~1s
+	// while still exercising the full project/solution writer end to end.
+	static async Task<List<LoadedAssembly>> OpenFixtures(MainWindowViewModel vm, int count)
+	{
+		var result = new List<LoadedAssembly>();
+		for (int i = 0; i < count; i++)
+			result.Add(await vm.OpenFixtureAsync($"Fixture{(char)('A' + i)}"));
+		return result;
+	}
 
 	static ProjectExportOptions Options(string outputDir, bool generatePdb = false,
 		bool embedSourceFilesInPdb = false, string? strongNameKeyFile = null)
@@ -77,9 +82,8 @@ public class ProjectExportRunnerTests
 	[AvaloniaTest]
 	public async Task Project_Mode_Writes_Csproj_And_Cs()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
-		var assembly = NonCoreLibAssemblies(vm, 1).Single();
-		await assembly.GetLoadResultAsync();
+		var (_, vm) = await TestHarness.BootAsync();
+		var assembly = await vm.OpenFixtureAsync();
 
 		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpyProj_" + System.Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempDir);
@@ -102,11 +106,8 @@ public class ProjectExportRunnerTests
 	[AvaloniaTest]
 	public async Task Solution_Mode_Writes_Sln_And_Projects()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
-		var assemblies = NonCoreLibAssemblies(vm, 2);
-		assemblies.Should().HaveCountGreaterThanOrEqualTo(2);
-		foreach (var a in assemblies)
-			await a.GetLoadResultAsync();
+		var (_, vm) = await TestHarness.BootAsync();
+		var assemblies = await OpenFixtures(vm, 2);
 
 		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpyProjSln_" + System.Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempDir);
@@ -133,9 +134,8 @@ public class ProjectExportRunnerTests
 	[AvaloniaTest]
 	public async Task StrongNameKeyFile_Is_Copied_Into_Project()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
-		var assembly = NonCoreLibAssemblies(vm, 1).Single();
-		await assembly.GetLoadResultAsync();
+		var (_, vm) = await TestHarness.BootAsync();
+		var assembly = await vm.OpenFixtureAsync();
 
 		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpyProjSnk_" + System.Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(tempDir);
@@ -161,9 +161,8 @@ public class ProjectExportRunnerTests
 	[AvaloniaTest]
 	public async Task Runner_Does_Not_Mutate_Persisted_Settings()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
-		var assembly = NonCoreLibAssemblies(vm, 1).Single();
-		await assembly.GetLoadResultAsync();
+		var (_, vm) = await TestHarness.BootAsync();
+		var assembly = await vm.OpenFixtureAsync();
 
 		var settingsService = AppComposition.Current.GetExport<SettingsService>();
 		bool originalSdk = settingsService.DecompilerSettings.UseSdkStyleProjectFormat;

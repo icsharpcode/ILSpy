@@ -58,8 +58,10 @@ public class CompareViewRenderTests
 
 		var entry = AppComposition.Current.GetExport<global::ILSpy.ContextMenuEntryRegistry>()
 			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
-		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.Where(a => a.IsLoadedAsValidAssembly).Take(2).ToList();
+		var assemblies = new[] {
+			await vm.OpenFixtureAsync("FixtureA"),
+			await vm.OpenFixtureAsync("FixtureB"),
+		};
 		var nodes = assemblies.Select(a =>
 			(SharpTreeNode)vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(a.ShortName)).ToArray();
 
@@ -84,8 +86,10 @@ public class CompareViewRenderTests
 
 		var entry = AppComposition.Current.GetExport<global::ILSpy.ContextMenuEntryRegistry>()
 			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
-		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.Where(a => a.IsLoadedAsValidAssembly).Take(2).ToList();
+		var assemblies = new[] {
+			await vm.OpenFixtureAsync("FixtureA"),
+			await vm.OpenFixtureAsync("FixtureB"),
+		};
 		var nodes = assemblies.Select(a =>
 			(SharpTreeNode)vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(a.ShortName)).ToArray();
 
@@ -120,8 +124,7 @@ public class CompareViewRenderTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
-		var assembly = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
-			.First(a => a.IsLoadedAsValidAssembly);
+		var assembly = await vm.OpenFixtureAsync();
 
 		// Construct the compare model directly with the same assembly on both sides so every
 		// entry collapses to DiffKind.None. The View renders via the standard OpenNewTab path.
