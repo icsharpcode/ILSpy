@@ -4,6 +4,11 @@
   <PropertyGroup>
     <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
     <TargetFramework>net10.0</TargetFramework>
+    <!-- This plugin is published RID-specifically alongside the app (e.g. publish.ps1 does so
+         without restoring again), so the per-RID targets must already be in the restored assets.
+         Mirror ILSpy.csproj's RuntimeIdentifiers so the plugin can ship on every platform the host
+         supports, not just the Windows ones publish.ps1 currently exercises. -->
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <NeutralResourcesLanguage>en-US</NeutralResourcesLanguage>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
