@@ -101,41 +101,27 @@ jobs:
       with:
         paths: "test-results/${{ matrix.configuration }}/*.trx"
         folded: true
-      
-    - name: Verify package contents
-      if: matrix.configuration == 'debug'
+
+    - name: Publish x64/arm64 framework-dependent/self-contained
       shell: pwsh
-      run: |
-        .\BuildTools\create-filelists.ps1
-        # Only the *.filelist outputs of the script are under verification here; restore may
-        # legitimately rewrite OS-specific packages.lock.json files, which must not fail this step.
-        git diff --exit-code -- '*.filelist'
+      run: .\publish.ps1 -Configuration ${{ matrix.configuration }}
     
     - name: Zip ILSpy (framework-dependent)
       run: >
         7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.dll
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.exe
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.config
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*.json
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*\ILSpy.resources.dll
-        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\*\ILSpy.ReadyToRun.Plugin.resources.dll
-
-    - name: Publish x64/arm64 framework-dependent/self-contained
-      shell: pwsh
-      run: .\publish.ps1
+        .\ILSpy\bin\${{ matrix.configuration }}\net10.0\win-x64\publish\fwdependent\*
 
     - name: Zip ILSpy Release (x64 self-contained)
       if: matrix.configuration == 'release'
       run: >
         7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip
-        .\ILSpy\bin\Release\net10.0-windows\win-x64\publish\selfcontained\*
+        .\ILSpy\bin\Release\net10.0\win-x64\publish\selfcontained\*
 
     - name: Zip ILSpy Release (arm64 framework-dependent)
       if: matrix.configuration == 'release'
       run: >
         7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip
-        .\ILSpy\bin\Release\net10.0-windows\win-arm64\publish\fwdependent\*
+        .\ILSpy\bin\Release\net10.0\win-arm64\publish\fwdependent\*
 
     - name: Pack NuGets
       if: matrix.configuration == 'release'
@@ -156,6 +142,13 @@ jobs:
       run: |
         msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
         msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
+      
+    - name: Verify package contents
+      if: matrix.configuration == 'debug'
+      shell: pwsh
+      run: |
+        .\BuildTools\create-filelists.ps1
+        git diff --exit-code -- '*.filelist'
 
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2019) release build artifacts
