@@ -3,9 +3,7 @@ $ErrorActionPreference = "Stop";
 $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
 
 gci -Include *.vsix, *.msi -recurse | foreach ($_) {
-	if (-not ($_.FullName -contains "\bin\Debug\")) {
-		continue;
-	}
+	Write-Host $_.FullName
 	$idx=-1;
 	$body=$false;
 	$outputFileName = ".\BuildTools\$($_.Name -replace '-\d+\.\d+\.\d+\.\d+', '').filelist";
