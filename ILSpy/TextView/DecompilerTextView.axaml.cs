@@ -981,16 +981,7 @@ namespace ILSpy.TextView
 					if (DataContext is not DecompilerTabPageModel m || m.CurrentNode is not { } node)
 						return null;
 					var list = node.AncestorsAndSelf().OfType<TreeNodes.AssemblyListTreeNode>().FirstOrDefault()?.AssemblyList;
-					if (list == null)
-						return null;
-					var resolvedModule = unresolved.ResolveAssembly(list);
-					if (resolvedModule == null)
-						return null;
-					var token = MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolved.Handle));
-					if (token == null)
-						return null;
-					var typeSystem = new DecompilerTypeSystem(resolvedModule, resolvedModule.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-					return typeSystem.MainModule.ResolveEntity(token.Value);
+					return list == null ? null : unresolved.Resolve(list);
 				default:
 					return null;
 			}

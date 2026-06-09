@@ -598,14 +598,7 @@ namespace ILSpy.AssemblyTree
 			switch (reference)
 			{
 				case EntityReference unresolved:
-					var module = unresolved.ResolveAssembly(AssemblyList!);
-					if (module == null)
-						return null;
-					var token = MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolved.Handle));
-					if (token == null)
-						return null;
-					var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(), TypeSystemOptions.Default | TypeSystemOptions.Uncached);
-					return FindTreeNode(typeSystem.MainModule.ResolveEntity(token.Value));
+					return FindTreeNode(unresolved.Resolve(AssemblyList!));
 
 				case ITypeDefinition type:
 					return FindTypeNode(assemblyListTreeNode, type);

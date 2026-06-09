@@ -18,8 +18,10 @@
 
 using System.Diagnostics;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
 namespace ILSpy
@@ -53,5 +55,24 @@ namespace ILSpy
 
 		public MetadataFile? ResolveAssembly(AssemblyList context)
 			=> metadataFile ?? context.FindAssembly(Module)?.GetMetadataFileOrNull();
+
+		/// <summary>
+		/// Resolves this reference to a live <see cref="IEntity"/> within <paramref name="context"/>,
+		/// or null when the module, the handle, or the entity can't be resolved. Builds a fresh
+		/// uncached <see cref="DecompilerTypeSystem"/> per call -- the caller is resolving a single
+		/// handle, not walking the whole module.
+		/// </summary>
+		public IEntity? Resolve(AssemblyList context)
+		{
+			var module = ResolveAssembly(context);
+			if (module == null)
+				return null;
+			var token = MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(Handle));
+			if (token == null)
+				return null;
+			var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),
+				TypeSystemOptions.Default | TypeSystemOptions.Uncached);
+			return typeSystem.MainModule.ResolveEntity(token.Value);
+		}
 	}
 }
