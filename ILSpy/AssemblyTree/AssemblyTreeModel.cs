@@ -264,15 +264,9 @@ namespace ILSpy.AssemblyTree
 					break;
 				case nameof(Options.DisplaySettings.UseNestedNamespaceNodes):
 					// Tree shape changes — every loaded AssemblyTreeNode's namespace subtree
-					// needs rebuilding. Reset Children + LazyLoading and re-trigger the load.
+					// needs rebuilding.
 					foreach (var asm in Root.Children.OfType<TreeNodes.AssemblyTreeNode>())
-					{
-						if (asm.LazyLoading)
-							continue;
-						asm.Children.Clear();
-						asm.LazyLoading = true;
-						asm.EnsureLazyChildren();
-					}
+						asm.ReloadChildren();
 					// AssemblyListPane caches a snapshot of each expanded node's children via
 					// the HierarchicalOptions.ChildrenSelector — mid-expand mutations of
 					// node.Children aren't observed. Re-raising Root forces BindTree to fire,
@@ -294,12 +288,7 @@ namespace ILSpy.AssemblyTree
 		{
 			if (node is Metadata.MetadataTablesTreeNode tables)
 			{
-				if (!tables.LazyLoading)
-				{
-					tables.Children.Clear();
-					tables.LazyLoading = true;
-					tables.EnsureLazyChildren();
-				}
+				tables.ReloadChildren();
 				return;
 			}
 			if (node.LazyLoading)

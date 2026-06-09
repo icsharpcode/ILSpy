@@ -374,6 +374,23 @@ namespace ICSharpCode.ILSpyX.TreeView
 			}
 		}
 
+		/// <summary>
+		/// Rebuilds the children of an already-loaded node in place: clears them, re-arms lazy
+		/// loading, and re-runs <see cref="LoadChildren"/>. A no-op for a node that is still lazy
+		/// (it will build fresh on first expand anyway). Use this when external state that
+		/// <see cref="LoadChildren"/> reads has changed and the materialized subtree must be
+		/// regenerated -- e.g. a display setting that alters the tree's shape. Like setting
+		/// <see cref="LazyLoading"/>, this collapses the node.
+		/// </summary>
+		public void ReloadChildren()
+		{
+			if (LazyLoading)
+				return;
+			Children.Clear();
+			LazyLoading = true;
+			EnsureLazyChildren();
+		}
+
 		#endregion
 
 		#region Ancestors / Descendants
