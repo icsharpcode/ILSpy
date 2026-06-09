@@ -496,27 +496,14 @@ namespace ILSpy.TextView
 				string rendered;
 				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: collect output (GetText + collateral)"))
 					rendered = output.GetText();
-				var model = output.HighlightingModel;
-				var collectedSpans = output.HighlightingSpans;
-				var collectedFoldings = output.Foldings;
-				var collectedReferences = output.References;
-				var collectedLookup = output.DefinitionLookup;
-				var collectedUIElements = output.UIElements;
 				// Resource nodes (XML/XAML/…) override the highlighter so their content reads as
 				// the embedded format, not as the active language.
 				var effectiveSyntaxExtension = output.SyntaxExtensionOverride ?? newSyntaxExtension;
-				ILSpy.AppEnv.AppLog.Mark($"DecompileAsync #{callNumber}: {rendered.Length} chars, {(collectedFoldings?.Count ?? 0)} foldings, {(collectedReferences?.Count ?? 0)} refs");
+				ILSpy.AppEnv.AppLog.Mark($"DecompileAsync #{callNumber}: {rendered.Length} chars, {(output.Foldings?.Count ?? 0)} foldings, {(output.References?.Count ?? 0)} refs");
 				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Dispatcher.InvokeAsync (apply Text + props, triggers ApplyDocument)"))
 					await Dispatcher.UIThread.InvokeAsync(() => {
 						Title = cachedBaseTitle;
-						SyntaxExtension = effectiveSyntaxExtension;
-						HighlightingModel = model;
-						HighlightingSpans = collectedSpans;
-						Foldings = collectedFoldings;
-						References = collectedReferences;
-						DefinitionLookup = collectedLookup;
-						UIElements = collectedUIElements;
-						Text = rendered;
+						ApplyOutput(output, effectiveSyntaxExtension, rendered);
 					});
 			}
 			catch (OperationCanceledException)
@@ -627,16 +614,29 @@ namespace ILSpy.TextView
 			ArgumentNullException.ThrowIfNull(output);
 			activeCts?.Cancel();
 			activeCts = null;
-			SyntaxExtension = output.SyntaxExtensionOverride ?? Language?.FileExtension ?? string.Empty;
+			ApplyOutput(output,
+				output.SyntaxExtensionOverride ?? Language?.FileExtension ?? string.Empty,
+				output.GetText());
+			currentNodes = System.Array.Empty<ILSpyTreeNode>();
+			Title = string.IsNullOrEmpty(output.Title) ? "(report)" : output.Title;
+		}
+
+		// Push a finished output's text and its collateral (semantic highlighting, foldings,
+		// references, definition lookup, embedded UI elements) onto this page. Text is assigned LAST
+		// because setting it triggers the view's ApplyDocument, which reads the other properties --
+		// they must already be in place. The syntax extension and text are passed in so the decompile
+		// path can compute the (possibly expensive) GetText off the UI thread; everything else is read
+		// straight off the now-immutable output. Shared by ShowText and the decompile apply step.
+		void ApplyOutput(AvaloniaEditTextOutput output, string syntaxExtension, string text)
+		{
+			SyntaxExtension = syntaxExtension;
 			HighlightingModel = output.HighlightingModel;
 			HighlightingSpans = output.HighlightingSpans;
 			Foldings = output.Foldings;
 			References = output.References;
 			DefinitionLookup = output.DefinitionLookup;
 			UIElements = output.UIElements;
-			Text = output.GetText();
-			currentNodes = System.Array.Empty<ILSpyTreeNode>();
-			Title = string.IsNullOrEmpty(output.Title) ? "(report)" : output.Title;
+			Text = text;
 		}
 
 		// Pulls the live DecompilerSettings via MEF and returns a clone for this run. Also
