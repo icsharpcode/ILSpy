@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -25,11 +27,15 @@ using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.Search;
 
+using ILSpy.AppEnv;
+using ILSpy.TextView;
+
 namespace ILSpy.Search
 {
 	public partial class SearchPane : UserControl
 	{
 		SearchPaneModel? boundModel;
+		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
 		public SearchPane()
 		{
@@ -39,6 +45,53 @@ namespace ILSpy.Search
 			SearchResults.AddHandler(PointerPressedEvent, OnResultsPointerPressed, RoutingStrategies.Tunnel);
 			SearchResults.AddHandler(PointerReleasedEvent, OnResultsPointerReleased, RoutingStrategies.Tunnel);
 			SearchInput.KeyDown += OnSearchInputKeyDown;
+			AttachContextMenu(AppComposition.TryGetExport<ContextMenuEntryRegistry>()?.Entries
+				?? Array.Empty<IContextMenuEntryExport>());
+		}
+
+		// Right-click a result for the same registry-driven menu the trees use (Analyze, scope
+		// search to namespace/assembly, ...). The selected result is exposed to the entries as
+		// context.Reference, the channel they read for the entity under the cursor.
+		internal void AttachContextMenu(IReadOnlyList<IContextMenuEntryExport> entries)
+		{
+			contextMenuEntries = entries;
+			var menu = new ContextMenu();
+			menu.Opening += OnContextMenuOpening;
+			SearchResults.ContextMenu = menu;
+		}
+
+		void OnContextMenuOpening(object? sender, System.ComponentModel.CancelEventArgs e)
+		{
+			if (sender is not ContextMenu menu)
+				return;
+			var built = BuildContextMenuForCurrentState(contextMenuEntries);
+			if (built == null)
+			{
+				e.Cancel = true;
+				return;
+			}
+			menu.Items.Clear();
+			foreach (var item in built.Items.OfType<Control>().ToArray())
+			{
+				built.Items.Remove(item);
+				menu.Items.Add(item);
+			}
+		}
+
+		internal ContextMenu? BuildContextMenuForCurrentState(IReadOnlyList<IContextMenuEntryExport> entries)
+			=> ContextMenuProvider.Build(entries, CreateContextMenuContext());
+
+		TextViewContext CreateContextMenuContext()
+		{
+			// Search results aren't tree nodes, so the entities are surfaced via Reference (what
+			// the search/analyze entries read), not SelectedTreeNodes.
+			var reference = SearchResults.SelectedItem is SearchResult { Reference: { } r }
+				? new ReferenceSegment { Reference = r }
+				: null;
+			return new TextViewContext {
+				DataGrid = SearchResults,
+				Reference = reference,
+			};
 		}
 
 		protected override void OnKeyDown(KeyEventArgs e)
@@ -162,9 +215,11 @@ namespace ILSpy.Search
 
 		void OnResultsPointerPressed(object? sender, PointerPressedEventArgs e)
 		{
-			// Middle-click doesn't select a row on its own, so claim the row under the cursor
-			// here; the matching release then activates it in a new tab.
-			if (!e.GetCurrentPoint(SearchResults).Properties.IsMiddleButtonPressed)
+			// Neither middle- nor right-click selects a row on its own. Middle-click's release
+			// activates the row in a new tab; right-click needs the row selected so the context
+			// menu (built from SelectedItem) targets the result under the cursor.
+			var props = e.GetCurrentPoint(SearchResults).Properties;
+			if (!props.IsMiddleButtonPressed && !props.IsRightButtonPressed)
 				return;
 			if ((e.Source as Control)?.DataContext is SearchResult result)
 				SearchResults.SelectedItem = result;

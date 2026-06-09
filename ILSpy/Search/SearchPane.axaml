@@ -97,6 +97,7 @@
 								<Image Grid.Column="0" Source="{Binding LocationImage}" Width="16" Height="16"
 								       VerticalAlignment="Center" />
 								<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
+								           ToolTip.Tip="{Binding Location}"
 								           VerticalAlignment="Center"
 								           TextTrimming="CharacterEllipsis" />
 							</Grid>
@@ -111,6 +112,7 @@
 								<Image Grid.Column="0" Source="{Binding AssemblyImage}" Width="16" Height="16"
 								       VerticalAlignment="Center" />
 								<TextBlock Grid.Column="2" Text="{Binding Assembly}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
+								           ToolTip.Tip="{Binding Assembly}"
 								           VerticalAlignment="Center"
 								           TextTrimming="CharacterEllipsis" />
 							</Grid>
