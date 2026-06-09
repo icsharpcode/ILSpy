@@ -86,9 +86,7 @@ namespace ILSpy.Commands
 				o.WriteLine();
 				if (result.Success && Directory.Exists(options.OutputDirectory))
 				{
-					o.AddButton(null, ICSharpCode.ILSpy.Properties.Resources.OpenExplorer,
-						(_, _) => ShellHelper.OpenFolder(options.OutputDirectory));
-					o.WriteLine();
+					o.AddOpenFolderButton(options.OutputDirectory);
 				}
 				return o;
 			});

@@ -82,8 +82,7 @@ namespace ILSpy.Commands
 				o.WriteLine();
 				if (result.Success && Path.GetDirectoryName(path) is { Length: > 0 } directory)
 				{
-					o.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.OpenFolder(directory));
-					o.WriteLine();
+					o.AddOpenFolderButton(directory);
 				}
 				return o;
 			}).ConfigureAwait(true);

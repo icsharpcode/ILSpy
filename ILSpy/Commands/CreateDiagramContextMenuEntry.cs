@@ -99,8 +99,7 @@ namespace ILSpy.Commands
 			output.WriteLine();
 			output.WriteLine();
 			var diagramHtml = Path.Combine(outputFolder, "index.html");
-			output.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.RevealFile(diagramHtml));
-			output.WriteLine();
+			output.AddRevealFileButton(diagramHtml);
 			return output;
 		}
 

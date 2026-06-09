@@ -133,9 +133,10 @@ namespace ILSpy.Commands
 				output.Write(string.Format(Resources.GenerationCompleteInSeconds, stopwatch.Elapsed.TotalSeconds.ToString("F1")));
 				output.WriteLine();
 				output.WriteLine();
-				var openTarget = isFile ? path : path;
-				output.AddButton(null, Resources.OpenExplorer, (_, _) => { if (isFile) ShellHelper.RevealFile(openTarget); else ShellHelper.OpenFolder(openTarget); });
-				output.WriteLine();
+				if (isFile)
+					output.AddRevealFileButton(path);
+				else
+					output.AddOpenFolderButton(path);
 				return output;
 			}, token)).ConfigureAwait(true);
 		}

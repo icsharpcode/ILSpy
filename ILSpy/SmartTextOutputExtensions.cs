@@ -25,12 +25,35 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 
+using ICSharpCode.ILSpy.Properties;
+
 using ILSpy.TextView;
+using ILSpy.Util;
 
 namespace ILSpy
 {
 	public static class SmartTextOutputExtensions
 	{
+		/// <summary>
+		/// Appends the standard "Open Explorer" result button that opens <paramref name="folder"/> in
+		/// the OS file manager, followed by a blank line. Shared tail of the export / save / PDB outputs.
+		/// </summary>
+		public static void AddOpenFolderButton(this ISmartTextOutput output, string folder)
+		{
+			output.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.OpenFolder(folder));
+			output.WriteLine();
+		}
+
+		/// <summary>
+		/// Appends an "Open Explorer" result button that reveals <paramref name="file"/> in the OS file
+		/// manager (selecting it where supported), followed by a blank line.
+		/// </summary>
+		public static void AddRevealFileButton(this ISmartTextOutput output, string file)
+		{
+			output.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.RevealFile(file));
+			output.WriteLine();
+		}
+
 		public static void AddButton(this ISmartTextOutput output, IImage? icon, string text, EventHandler<RoutedEventArgs> click)
 		{
 			ArgumentNullException.ThrowIfNull(output);

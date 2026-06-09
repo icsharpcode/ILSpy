@@ -136,8 +136,7 @@ namespace ILSpy.Commands
 				output.Write(string.Format(Resources.GenerationCompleteInSeconds, totalWatch.Elapsed.TotalSeconds.ToString("F1")));
 				output.WriteLine();
 				output.WriteLine();
-				output.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.OpenFolder(folder));
-				output.WriteLine();
+				output.AddOpenFolderButton(folder);
 				return output;
 			}, token)).ConfigureAwait(true);
 		}
