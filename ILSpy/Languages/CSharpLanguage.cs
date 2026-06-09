@@ -340,13 +340,22 @@ namespace ILSpy.Languages
 			return decompiler;
 		}
 
-		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
+		// Standard preamble shared by every DecompileX overload: resolve the module, build the
+		// decompiler, emit the reference warnings and the assembly-name comment. Callers add their
+		// own type-header comment (the one line that varies) and then decompile.
+		CSharpDecompiler BeginDecompile(IEntity entity, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = method.ParentModule!.MetadataFile!;
+			MetadataFile assembly = entity.ParentModule!.MetadataFile!;
 			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
 			AddReferenceAssemblyWarningMessage(assembly, output);
 			AddReferenceWarningMessage(assembly, output);
 			WriteCommentLine(output, assembly.FullName);
+			return decompiler;
+		}
+
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
+		{
+			CSharpDecompiler decompiler = BeginDecompile(method, output, options);
 			WriteCommentLine(output, TypeToString(method.DeclaringType));
 			var methodDefinition = decompiler.TypeSystem.MainModule.ResolveEntity(method.MetadataToken) as IMethod;
 			if (methodDefinition!.IsConstructor && methodDefinition.DeclaringType.IsReferenceType != false)
@@ -363,22 +372,14 @@ namespace ILSpy.Languages
 
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = property.ParentModule!.MetadataFile!;
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			AddReferenceAssemblyWarningMessage(assembly, output);
-			AddReferenceWarningMessage(assembly, output);
-			WriteCommentLine(output, assembly.FullName);
+			CSharpDecompiler decompiler = BeginDecompile(property, output, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property.MetadataToken), decompiler.TypeSystem);
 		}
 
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = field.ParentModule!.MetadataFile!;
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			AddReferenceAssemblyWarningMessage(assembly, output);
-			AddReferenceWarningMessage(assembly, output);
-			WriteCommentLine(output, assembly.FullName);
+			CSharpDecompiler decompiler = BeginDecompile(field, output, options);
 			WriteCommentLine(output, TypeToString(field.DeclaringType));
 			if (field.IsConst)
 			{
@@ -401,59 +402,35 @@ namespace ILSpy.Languages
 		/// isolation (e.g. when navigated to by analyzer results in a future commit).
 		/// </summary>
 		public void DecompileExtension(ITypeDefinition extension, ITextOutput output, DecompilationOptions options)
-		{
-			MetadataFile assembly = extension.ParentModule!.MetadataFile!;
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			AddReferenceAssemblyWarningMessage(assembly, output);
-			AddReferenceWarningMessage(assembly, output);
-			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(extension,
-				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
-		}
+			=> DecompileExtensionCore(extension, extension, output, options);
 
 		public void DecompileExtension(IMethod extension, ITextOutput output, DecompilationOptions options)
-		{
-			MetadataFile assembly = extension.ParentModule!.MetadataFile!;
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			AddReferenceAssemblyWarningMessage(assembly, output);
-			AddReferenceWarningMessage(assembly, output);
-			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(extension.DeclaringType,
-				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
-		}
+			=> DecompileExtensionCore(extension, extension.DeclaringType, output, options);
 
 		public void DecompileExtension(IProperty extension, ITextOutput output, DecompilationOptions options)
+			=> DecompileExtensionCore(extension, extension.DeclaringType, output, options);
+
+		// Shared body for the extension overloads: a normal decompile whose header comment is rendered
+		// with SupportExtensionDeclarations and whose body goes through DecompileExtension. commentType
+		// is the extension type itself (type overload) or the member's declaring type.
+		void DecompileExtensionCore(IEntity extension, IType commentType, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = extension.ParentModule!.MetadataFile!;
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			AddReferenceAssemblyWarningMessage(assembly, output);
-			AddReferenceWarningMessage(assembly, output);
-			WriteCommentLine(output, assembly.FullName);
-			WriteCommentLine(output, TypeToString(extension.DeclaringType,
+			CSharpDecompiler decompiler = BeginDecompile(extension, output, options);
+			WriteCommentLine(output, TypeToString(commentType,
 				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
 			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
 		}
 
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = ev.ParentModule!.MetadataFile!;
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			AddReferenceAssemblyWarningMessage(assembly, output);
-			AddReferenceWarningMessage(assembly, output);
-			WriteCommentLine(output, assembly.FullName);
+			CSharpDecompiler decompiler = BeginDecompile(ev, output, options);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(ev.MetadataToken), decompiler.TypeSystem);
 		}
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			MetadataFile assembly = type.ParentModule!.MetadataFile!;
-			CSharpDecompiler decompiler = CreateDecompiler(assembly, options);
-			AddReferenceAssemblyWarningMessage(assembly, output);
-			AddReferenceWarningMessage(assembly, output);
-			WriteCommentLine(output, assembly.FullName);
+			CSharpDecompiler decompiler = BeginDecompile(type, output, options);
 			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
 		}
