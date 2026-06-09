@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -32,42 +31,23 @@ namespace ILSpy.Metadata
 	/// instruction. Distinct from #Strings (which carries identifier names); user strings
 	/// are referenced by metadata tokens, not by member-name resolution.
 	/// </summary>
-	public sealed class UserStringHeapTreeNode : MetadataHeapTreeNode
+	public sealed class UserStringHeapTreeNode : MetadataHeapTreeNode<UserStringHeapTreeNode.UserStringHeapEntry>
 	{
-		List<UserStringHeapEntry>? entries;
-
 		public UserStringHeapTreeNode(MetadataFile metadataFile)
 			: base(HandleKind.UserString, metadataFile)
 		{
 		}
 
-		public override object Text => $"UserString Heap ({EnsureEntries().Count})";
-		public override string ToString() => "UserString Heap";
+		protected override string HeapName => "UserString Heap";
 
-		public override ContentPageModel CreateTab()
+		protected override void LoadEntries(MetadataReader metadata, List<UserStringHeapEntry> list)
 		{
-			var page = new MetadataTablePageModel {
-				Title = "UserString Heap",
-				Items = EnsureEntries(),
-			};
-			MetadataColumnBuilder.Populate<UserStringHeapEntry>(page);
-			return page;
-		}
-
-		List<UserStringHeapEntry> EnsureEntries()
-		{
-			if (entries is { } cached)
-				return cached;
-			var list = new List<UserStringHeapEntry>();
-			var metadata = metadataFile.Metadata;
 			var handle = MetadataTokens.UserStringHandle(0);
 			do
 			{
 				list.Add(new UserStringHeapEntry(metadata, handle));
 				handle = metadata.GetNextHandle(handle);
 			} while (!handle.IsNil);
-			entries = list;
-			return list;
 		}
 
 		public sealed class UserStringHeapEntry

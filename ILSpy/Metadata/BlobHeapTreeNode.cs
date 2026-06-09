@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -33,42 +32,23 @@ namespace ILSpy.Metadata
 	/// dump; full structural decoding (e.g. parsed type signatures) is out of scope for
 	/// the metadata viewer.
 	/// </summary>
-	public sealed class BlobHeapTreeNode : MetadataHeapTreeNode
+	public sealed class BlobHeapTreeNode : MetadataHeapTreeNode<BlobHeapTreeNode.BlobHeapEntry>
 	{
-		List<BlobHeapEntry>? entries;
-
 		public BlobHeapTreeNode(MetadataFile metadataFile)
 			: base(HandleKind.Blob, metadataFile)
 		{
 		}
 
-		public override object Text => $"Blob Heap ({EnsureEntries().Count})";
-		public override string ToString() => "Blob Heap";
+		protected override string HeapName => "Blob Heap";
 
-		public override ContentPageModel CreateTab()
+		protected override void LoadEntries(MetadataReader metadata, List<BlobHeapEntry> list)
 		{
-			var page = new MetadataTablePageModel {
-				Title = "Blob Heap",
-				Items = EnsureEntries(),
-			};
-			MetadataColumnBuilder.Populate<BlobHeapEntry>(page);
-			return page;
-		}
-
-		List<BlobHeapEntry> EnsureEntries()
-		{
-			if (entries is { } cached)
-				return cached;
-			var list = new List<BlobHeapEntry>();
-			var metadata = metadataFile.Metadata;
 			var handle = MetadataTokens.BlobHandle(0);
 			do
 			{
 				list.Add(new BlobHeapEntry(metadata, handle));
 				handle = metadata.GetNextHandle(handle);
 			} while (!handle.IsNil);
-			entries = list;
-			return list;
 		}
 
 		public sealed class BlobHeapEntry

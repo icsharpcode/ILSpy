@@ -17,11 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 
 using ILSpy.TreeNodes;
+using ILSpy.ViewModels;
 
 namespace ILSpy.Metadata
 {
@@ -45,5 +47,50 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Icon => Images.Images.Heap;
+	}
+
+	/// <summary>
+	/// Typed companion that owns the lazy row cache, the "{name} Heap (count)" header, and the
+	/// DataGrid tab. Subclasses supply the heap's display name and materialise its rows, which is
+	/// all that differs between the four heaps.
+	/// </summary>
+	public abstract class MetadataHeapTreeNode<TEntry> : MetadataHeapTreeNode
+		where TEntry : class
+	{
+		List<TEntry>? entries;
+
+		protected MetadataHeapTreeNode(HandleKind kind, MetadataFile metadataFile)
+			: base(kind, metadataFile)
+		{
+		}
+
+		/// <summary>The heap's display name, e.g. "Blob Heap".</summary>
+		protected abstract string HeapName { get; }
+
+		public override object Text => $"{HeapName} ({EnsureEntries().Count})";
+		public override string ToString() => HeapName;
+
+		public override ContentPageModel CreateTab()
+		{
+			var page = new MetadataTablePageModel {
+				Title = HeapName,
+				Items = EnsureEntries(),
+			};
+			MetadataColumnBuilder.Populate<TEntry>(page);
+			return page;
+		}
+
+		protected List<TEntry> EnsureEntries()
+		{
+			if (entries is { } cached)
+				return cached;
+			var list = new List<TEntry>();
+			LoadEntries(metadataFile.Metadata, list);
+			entries = list;
+			return list;
+		}
+
+		/// <summary>Materialises every heap row into <paramref name="list"/>.</summary>
+		protected abstract void LoadEntries(MetadataReader metadata, List<TEntry> list);
 	}
 }

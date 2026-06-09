@@ -55,9 +55,7 @@ namespace ILSpy.Metadata.CorTables
 			public int Token => MetadataTokens.GetToken(EntityHandle.AssemblyDefinition);
 
 			[ColumnInfo("X8")]
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.Assembly)
-				+ metadata.GetTableRowSize(TableIndex.Assembly) * (RID - 1);
+			public int Offset => GetRowOffset(metadata, metadataOffset, TableIndex.Assembly, RID);
 
 			[ColumnInfo("X4")]
 			public AssemblyHashAlgorithm HashAlgorithm => assembly.HashAlgorithm;

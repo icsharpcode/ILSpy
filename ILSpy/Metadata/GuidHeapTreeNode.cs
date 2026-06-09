@@ -17,13 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
-
-using ILSpy.ViewModels;
 
 namespace ILSpy.Metadata
 {
@@ -32,39 +29,20 @@ namespace ILSpy.Metadata
 	/// rows and a handful of other tables. Indexing starts at 1 because index 0 is reserved
 	/// for "no GUID".
 	/// </summary>
-	public sealed class GuidHeapTreeNode : MetadataHeapTreeNode
+	public sealed class GuidHeapTreeNode : MetadataHeapTreeNode<GuidHeapTreeNode.GuidHeapEntry>
 	{
-		List<GuidHeapEntry>? entries;
-
 		public GuidHeapTreeNode(MetadataFile metadataFile)
 			: base(HandleKind.Guid, metadataFile)
 		{
 		}
 
-		public override object Text => $"Guid Heap ({EnsureEntries().Count})";
-		public override string ToString() => "Guid Heap";
+		protected override string HeapName => "Guid Heap";
 
-		public override ContentPageModel CreateTab()
+		protected override void LoadEntries(MetadataReader metadata, List<GuidHeapEntry> list)
 		{
-			var page = new MetadataTablePageModel {
-				Title = "Guid Heap",
-				Items = EnsureEntries(),
-			};
-			MetadataColumnBuilder.Populate<GuidHeapEntry>(page);
-			return page;
-		}
-
-		List<GuidHeapEntry> EnsureEntries()
-		{
-			if (entries is { } cached)
-				return cached;
-			var list = new List<GuidHeapEntry>();
-			var metadata = metadataFile.Metadata;
 			int count = metadata.GetHeapSize(HeapIndex.Guid) >> 4;
 			for (int i = 1; i <= count; i++)
 				list.Add(new GuidHeapEntry(metadata, MetadataTokens.GuidHandle(i)));
-			entries = list;
-			return list;
 		}
 
 		public sealed class GuidHeapEntry

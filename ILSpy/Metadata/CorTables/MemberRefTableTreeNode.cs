@@ -56,9 +56,7 @@ namespace ILSpy.Metadata.CorTables
 			public int Token => MetadataTokens.GetToken(handle);
 
 			[ColumnInfo("X8")]
-			public int Offset => metadataFile.MetadataOffset
-				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.MemberRef)
-				+ metadataFile.Metadata.GetTableRowSize(TableIndex.MemberRef) * (RID - 1);
+			public int Offset => GetRowOffset(metadataFile, TableIndex.MemberRef, RID);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(memberRef.Parent);

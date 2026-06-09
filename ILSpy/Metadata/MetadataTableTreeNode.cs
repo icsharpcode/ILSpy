@@ -54,6 +54,21 @@ namespace ILSpy.Metadata
 		public override object Icon => Images.Images.MetadataTable;
 
 		/// <summary>
+		/// Byte offset of row <paramref name="rid"/> (1-based) in <paramref name="table"/>, relative to
+		/// the start of the PE file. Every typed row viewmodel exposes this from its <c>Offset</c>
+		/// property so the hex view can jump to the raw bytes.
+		/// </summary>
+		protected static int GetRowOffset(MetadataFile file, TableIndex table, int rid)
+			=> GetRowOffset(file.Metadata, file.MetadataOffset, table, rid);
+
+		/// <summary>
+		/// Overload for the few entries that hold a raw <see cref="MetadataReader"/> + offset rather
+		/// than a <see cref="MetadataFile"/>.
+		/// </summary>
+		protected static int GetRowOffset(MetadataReader metadata, int metadataOffset, TableIndex table, int rid)
+			=> metadataOffset + metadata.GetTableMetadataOffset(table) + metadata.GetTableRowSize(table) * (rid - 1);
+
+		/// <summary>
 		/// Builds (and caches into <paramref name="tooltip"/>) a human-readable description of the
 		/// entity a token column points at, e.g. <c>(AssemblyReference) System.Runtime, ...</c>.
 		/// Entries expose this from their <c>{Column}Tooltip</c> properties so hovering a token cell

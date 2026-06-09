@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
@@ -33,42 +32,23 @@ namespace ILSpy.Metadata
 	/// demand via <see cref="MetadataReader.GetNextHandle(StringHandle)"/> the first time a
 	/// caller asks for the count or a preview row.
 	/// </summary>
-	public sealed class StringHeapTreeNode : MetadataHeapTreeNode
+	public sealed class StringHeapTreeNode : MetadataHeapTreeNode<StringHeapTreeNode.StringHeapEntry>
 	{
-		List<StringHeapEntry>? entries;
-
 		public StringHeapTreeNode(MetadataFile metadataFile)
 			: base(HandleKind.String, metadataFile)
 		{
 		}
 
-		public override object Text => $"String Heap ({EnsureEntries().Count})";
-		public override string ToString() => "String Heap";
+		protected override string HeapName => "String Heap";
 
-		public override ContentPageModel CreateTab()
+		protected override void LoadEntries(MetadataReader metadata, List<StringHeapEntry> list)
 		{
-			var page = new MetadataTablePageModel {
-				Title = "String Heap",
-				Items = EnsureEntries(),
-			};
-			MetadataColumnBuilder.Populate<StringHeapEntry>(page);
-			return page;
-		}
-
-		List<StringHeapEntry> EnsureEntries()
-		{
-			if (entries is { } cached)
-				return cached;
-			var list = new List<StringHeapEntry>();
-			var metadata = metadataFile.Metadata;
 			var handle = MetadataTokens.StringHandle(0);
 			do
 			{
 				list.Add(new StringHeapEntry(metadata, handle));
 				handle = metadata.GetNextHandle(handle);
 			} while (!handle.IsNil);
-			entries = list;
-			return list;
 		}
 
 		public sealed class StringHeapEntry
