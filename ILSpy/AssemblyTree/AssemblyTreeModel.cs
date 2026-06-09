@@ -550,38 +550,13 @@ namespace ILSpy.AssemblyTree
 		/// <see cref="object.ToString"/>, expanding lazy children along the way.
 		/// </summary>
 		public SharpTreeNode? FindNodeByPath(string[]? path, bool returnBestMatch)
-		{
-			if (path == null || Root == null)
-				return null;
-			SharpTreeNode? node = Root;
-			SharpTreeNode? bestMatch = node;
-			foreach (var element in path)
-			{
-				if (node == null)
-					break;
-				bestMatch = node;
-				node.EnsureLazyChildren();
-				node = node.Children.FirstOrDefault(c => c.ToString() == element);
-			}
-			return returnBestMatch ? node ?? bestMatch : node;
-		}
+			=> TreeNodeLocator.FindNodeByPath(Root, path, returnBestMatch);
 
 		/// <summary>
 		/// The path of <paramref name="node"/>'s ancestors (root excluded), in root-first order.
 		/// </summary>
 		public static string[]? GetPathForNode(SharpTreeNode? node)
-		{
-			if (node == null)
-				return null;
-			var path = new List<string>();
-			while (node.Parent != null)
-			{
-				path.Add(node.ToString()!);
-				node = node.Parent;
-			}
-			path.Reverse();
-			return path.ToArray();
-		}
+			=> TreeNodeLocator.GetPathForNode(node);
 
 		internal AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
 			=> assemblyListTreeNode?.FindAssemblyNode(asm);
@@ -592,158 +567,7 @@ namespace ILSpy.AssemblyTree
 		/// only covers the reference kinds the tree knows how to model.
 		/// </summary>
 		public ILSpyTreeNode? FindTreeNode(object? reference)
-		{
-			if (assemblyListTreeNode == null)
-				return null;
-
-			switch (reference)
-			{
-				case EntityReference unresolved:
-					return FindTreeNode(unresolved.Resolve(AssemblyList!));
-
-				case ITypeDefinition type:
-					return FindTypeNode(assemblyListTreeNode, type);
-
-				case IMember member:
-					return FindMemberNode(assemblyListTreeNode, member);
-
-				case LoadedAssembly lasm:
-					return FindAssemblyNode(lasm);
-
-				case MetadataFile metadataFile:
-					return assemblyListTreeNode.Children.OfType<AssemblyTreeNode>()
-						.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == metadataFile);
-
-				case Resource resource:
-					return FindResourceNode(assemblyListTreeNode, resource, null);
-
-				case ValueTuple<Resource, string> resourceWithName:
-					return FindResourceNode(assemblyListTreeNode, resourceWithName.Item1, resourceWithName.Item2);
-
-				case INamespace ns:
-					return FindNamespaceNode(assemblyListTreeNode, ns);
-
-				default:
-					return null;
-			}
-		}
-
-		// Resolves a resource (optionally a named sub-entry) to its tree node. Mirrors the previous
-		// version's AssemblyListTreeNode.FindResourceNode so resource search results / links navigate.
-		static ILSpyTreeNode? FindResourceNode(AssemblyListTreeNode root, Resource resource, string? name)
-		{
-			if (resource == null)
-				return null;
-			ILSpyTreeNode? resourceNode = null;
-			foreach (var node in root.Children.OfType<AssemblyTreeNode>())
-			{
-				if (!node.LoadedAssembly.IsLoaded)
-					continue;
-				node.EnsureLazyChildren();
-				foreach (var list in node.Children.OfType<ResourceListTreeNode>())
-				{
-					resourceNode = list.Children.OfType<ResourceTreeNode>().FirstOrDefault(x => x.Resource == resource)
-						?? (ILSpyTreeNode?)list.Children.OfType<ResourceEntryNode>().FirstOrDefault(x => resource.Name.Equals(x.Text));
-					if (resourceNode != null)
-						break;
-				}
-				if (resourceNode != null)
-					break;
-			}
-			if (resourceNode == null || name == null || name.Equals(resourceNode.Text))
-				return resourceNode;
-			resourceNode.EnsureLazyChildren();
-			return resourceNode.Children.OfType<ILSpyTreeNode>().FirstOrDefault(x => name.Equals(x.Text)) ?? resourceNode;
-		}
-
-		// Resolves a namespace to its tree node within its contributing assembly. Mirrors the previous
-		// version's AssemblyListTreeNode.FindNamespaceNode.
-		static NamespaceTreeNode? FindNamespaceNode(AssemblyListTreeNode root, INamespace ns)
-		{
-			var module = ns.ContributingModules.FirstOrDefault();
-			if (module?.MetadataFile == null)
-				return null;
-			var assembly = root.Children.OfType<AssemblyTreeNode>()
-				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module.MetadataFile);
-			if (assembly == null)
-				return null;
-			assembly.EnsureLazyChildren();
-			return assembly.Children.OfType<NamespaceTreeNode>()
-				.FirstOrDefault(n => ns.FullName.Length == 0 || ns.FullName.Equals(n.Text));
-		}
-
-		static TypeTreeNode? FindTypeNode(AssemblyListTreeNode root, ITypeDefinition type)
-		{
-			var module = type.ParentModule?.MetadataFile;
-			if (module == null)
-				return null;
-			var assembly = root.Children.OfType<AssemblyTreeNode>()
-				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module);
-			if (assembly == null)
-				return null;
-			assembly.EnsureLazyChildren();
-
-			var nesting = new Stack<ITypeDefinition>();
-			for (var current = type; current != null; current = current.DeclaringTypeDefinition)
-				nesting.Push(current);
-
-			var top = nesting.Pop();
-			var ns = assembly.Children.OfType<NamespaceTreeNode>()
-				.FirstOrDefault(n => n.Name == (top.Namespace ?? string.Empty));
-			if (ns == null)
-				return null;
-			ns.EnsureLazyChildren();
-			var typeNode = ns.Children.OfType<TypeTreeNode>()
-				.FirstOrDefault(t => t.Handle == top.MetadataToken);
-			while (typeNode != null && nesting.Count > 0)
-			{
-				typeNode.EnsureLazyChildren();
-				var nested = nesting.Pop();
-				typeNode = typeNode.Children.OfType<TypeTreeNode>()
-					.FirstOrDefault(t => t.Handle == nested.MetadataToken);
-			}
-			return typeNode;
-		}
-
-		static ILSpyTreeNode? FindMemberNode(AssemblyListTreeNode root, IMember member)
-		{
-			var typeNode = member.DeclaringTypeDefinition is { } declaring ? FindTypeNode(root, declaring) : null;
-			if (typeNode == null)
-				return null;
-			typeNode.EnsureLazyChildren();
-			return member switch {
-				IField f => typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(n => n.FieldDefinition.MetadataToken == f.MetadataToken),
-				IMethod m => FindMethodNode(typeNode, m),
-				IProperty p => typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(n => n.PropertyDefinition.MetadataToken == p.MetadataToken),
-				IEvent e => typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(n => n.EventDefinition.MetadataToken == e.MetadataToken),
-				_ => null,
-			};
-		}
-
-		static ILSpyTreeNode? FindMethodNode(TypeTreeNode typeNode, IMethod method)
-		{
-			// Accessor methods (get_X / set_X / add_X / remove_X / invoke_X) live as children
-			// of their owning PropertyTreeNode / EventTreeNode, not directly under the type.
-			// Route through the owner so MMB on a metadata-grid accessor row finds its node.
-			if (method.AccessorOwner is IProperty owningProperty)
-			{
-				var propNode = typeNode.Children.OfType<PropertyTreeNode>()
-					.FirstOrDefault(n => n.PropertyDefinition.MetadataToken == owningProperty.MetadataToken);
-				if (propNode != null)
-					return propNode.Children.OfType<MethodTreeNode>()
-						.FirstOrDefault(n => n.MethodDefinition.MetadataToken == method.MetadataToken);
-			}
-			if (method.AccessorOwner is IEvent owningEvent)
-			{
-				var eventNode = typeNode.Children.OfType<EventTreeNode>()
-					.FirstOrDefault(n => n.EventDefinition.MetadataToken == owningEvent.MetadataToken);
-				if (eventNode != null)
-					return eventNode.Children.OfType<MethodTreeNode>()
-						.FirstOrDefault(n => n.MethodDefinition.MetadataToken == method.MetadataToken);
-			}
-			return typeNode.Children.OfType<MethodTreeNode>()
-				.FirstOrDefault(n => n.MethodDefinition.MetadataToken == method.MetadataToken);
-		}
+			=> TreeNodeLocator.FindTreeNode(assemblyListTreeNode, AssemblyList, reference);
 
 		static void LoadInitialAssemblies(AssemblyList assemblyList, AssemblyListManager? manager)
 		{
@@ -796,7 +620,7 @@ namespace ILSpy.AssemblyTree
 		{
 			if (type == null || assemblyListTreeNode == null)
 				return false;
-			var node = FindTypeNode(assemblyListTreeNode, type);
+			var node = TreeNodeLocator.FindTypeNode(assemblyListTreeNode, type);
 			if (node == null)
 				return false;
 			SelectNode(node);
