@@ -322,6 +322,9 @@ namespace ILSpy.Languages
 				case "ushort":
 				case "ulong":
 				case "unmanaged":
+				// The C# 13 'allows ref struct' anti-constraint is emitted as a single PrimitiveType
+				// token (TypeSystemAstBuilder), so it is coloured here as one unit rather than per word.
+				case "allows ref struct":
 				case "nint":
 				case "nuint":
 					color = valueTypeKeywordsColor;
