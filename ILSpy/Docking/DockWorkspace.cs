@@ -1084,16 +1084,6 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
-		/// Opens a fresh sibling tab whose <see cref="ContentTabPage.Content"/> is the
-		/// supplied viewmodel. Used by explicit "Open in new tab" gestures and by static
-		/// pages (About, License) that must not be overwritten by tree-node selections.
-		/// </summary>
-		/// <param name="sourceNode">
-		/// Optional assembly-tree node this tab represents. Set BEFORE the tab is activated
-		/// so <see cref="OnActiveDockableChanged"/> can pick it up and pull the tree's
-		/// selection across — setting it after-the-fact misses the activation event.
-		/// </param>
-		/// <summary>
 		/// Brings the tool pane with the given <paramref name="contentId"/> into view and
 		/// activates it. Delegates to <see cref="ILSpyDockFactory.ShowToolPane"/>, which
 		/// re-materialises the pane (and recreates its home dock) when it was closed or is hidden
@@ -1129,6 +1119,16 @@ namespace ILSpy.Docking
 			AppEnv.AppComposition.TryGetExport<ILSpy.Search.SearchPaneModel>()?.RequestFocus();
 		}
 
+		/// <summary>
+		/// Opens a fresh sibling tab whose <see cref="ContentTabPage.Content"/> is the
+		/// supplied viewmodel. Used by explicit "Open in new tab" gestures and by static
+		/// pages (About, License) that must not be overwritten by tree-node selections.
+		/// </summary>
+		/// <param name="sourceNode">
+		/// Optional assembly-tree node this tab represents. Set BEFORE the tab is activated
+		/// so <see cref="OnDocumentsPropertyChanged"/> can pick it up and pull the tree's
+		/// selection across — setting it after-the-fact misses the activation event.
+		/// </param>
 		public ContentTabPage OpenNewTab(ContentPageModel content, SharpTreeNode? sourceNode = null)
 		{
 			// Carve-outs are born frozen — they survive tree-node selections instead of
@@ -1225,14 +1225,6 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
-		/// VS-style "freeze tab" gesture. The current <c>factory.MainTab</c> keeps its position,
-		/// content, and active state but flips to frozen
-		/// (<see cref="ContentTabPage.IsPreview"/> = false). No new tab spawns at freeze time:
-		/// the next tree-node selection that finds the active tab frozen will lazily spawn
-		/// a fresh preview tab inside <see cref="ShowSelectedNode"/>. Re-clicking the same
-		/// node after freeze is a no-op (the dedupe activates the frozen tab).
-		/// </summary>
-		/// <summary>
 		/// Pump dispatcher jobs so synchronously-set selection state (SourceNode, IsPreview,
 		/// tab count, Content reference) finishes propagating, without awaiting the
 		/// fire-and-forget DecompileAsync. Tests that assert on dock structure can use this
@@ -1243,6 +1235,14 @@ namespace ILSpy.Docking
 			Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 		}
 
+		/// <summary>
+		/// VS-style "freeze tab" gesture. The current <c>factory.MainTab</c> keeps its position,
+		/// content, and active state but flips to frozen
+		/// (<see cref="ContentTabPage.IsPreview"/> = false). No new tab spawns at freeze time:
+		/// the next tree-node selection that finds the active tab frozen will lazily spawn
+		/// a fresh preview tab inside <see cref="ShowSelectedNode"/>. Re-clicking the same
+		/// node after freeze is a no-op (the dedupe activates the frozen tab).
+		/// </summary>
 		public void FreezeCurrentTab()
 		{
 			if (factory.FreezeCurrentMainTab() is null)
