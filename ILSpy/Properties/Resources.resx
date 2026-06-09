@@ -660,6 +660,9 @@ Are you sure you want to continue?</value>
   <data name="ExpandUsingDeclarationsAfterDecompilation" xml:space="preserve">
     <value>Expand using declarations after decompilation</value>
   </data>
+  <data name="ExportProjectSolution" xml:space="preserve">
+    <value>Export Project/Solution...</value>
+  </data>
   <data name="ExtractAllPackageEntries" xml:space="preserve">
     <value>Extract all package entries</value>
   </data>
@@ -674,9 +677,6 @@ Are you sure you want to continue?</value>
   </data>
   <data name="Forward" xml:space="preserve">
     <value>Forward</value>
-  </data>
-  <data name="ExportProjectSolution" xml:space="preserve">
-    <value>Export Project/Solution...</value>
   </data>
   <data name="GeneratePortable" xml:space="preserve">
     <value>Generate portable PDB</value>
