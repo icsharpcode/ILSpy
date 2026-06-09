@@ -291,15 +291,8 @@ namespace ILSpy.Languages
 			}
 			if (nodeStack.PeekOrDefault() is AttributeSection)
 				color = attributeKeywordsColor;
-			if (color != null)
-			{
-				BeginSpan(color);
-			}
-			base.WriteKeyword(role, keyword);
-			if (color != null)
-			{
-				EndSpan();
-			}
+			using (Colored(color))
+				base.WriteKeyword(role, keyword);
 		}
 
 		public override void WritePrimitiveType(string type)
@@ -340,15 +333,8 @@ namespace ILSpy.Languages
 					color = referenceTypeKeywordsColor;
 					break;
 			}
-			if (color != null)
-			{
-				BeginSpan(color);
-			}
-			base.WritePrimitiveType(type);
-			if (color != null)
-			{
-				EndSpan();
-			}
+			using (Colored(color))
+				base.WritePrimitiveType(type);
 		}
 
 		public override void WriteIdentifier(Identifier identifier)
@@ -424,15 +410,8 @@ namespace ILSpy.Languages
 					color = eventAccessColor;
 					break;
 			}
-			if (color != null)
-			{
-				BeginSpan(color);
-			}
-			base.WriteIdentifier(identifier);
-			if (color != null)
-			{
-				EndSpan();
-			}
+			using (Colored(color))
+				base.WriteIdentifier(identifier);
 		}
 
 		void ApplyTypeColor(IType? type, ref HighlightingColor? color)
@@ -468,15 +447,8 @@ namespace ILSpy.Languages
 			{
 				color = trueKeywordColor;
 			}
-			if (color != null)
-			{
-				BeginSpan(color);
-			}
-			base.WritePrimitiveValue(value, format);
-			if (color != null)
-			{
-				EndSpan();
-			}
+			using (Colored(color))
+				base.WritePrimitiveValue(value, format);
 		}
 
 		ISymbol? GetCurrentDefinition()
@@ -538,6 +510,22 @@ namespace ILSpy.Languages
 		int currentColorBegin = -1;
 		readonly ILocatable? locatable;
 		readonly ISmartTextOutput? textOutput;
+
+		// Wraps a base WriteX call so its output lands inside a highlighting span for the given colour
+		// (or no span when null) -- replacing the begin/end guard each WriteX override used to repeat.
+		// A ref struct + the using pattern keeps this allocation-free on the per-token hot path.
+		ColorScope Colored(HighlightingColor? color)
+		{
+			if (color == null)
+				return default;
+			BeginSpan(color);
+			return new ColorScope(this);
+		}
+
+		ref struct ColorScope(CSharpHighlightingTokenWriter? writer)
+		{
+			public void Dispose() => writer?.EndSpan();
+		}
 
 		private void BeginSpan(HighlightingColor highlightingColor)
 		{
