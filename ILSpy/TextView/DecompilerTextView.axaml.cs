@@ -247,18 +247,29 @@ namespace ILSpy.TextView
 		{
 			if (boundModel?.HighlightingSpans is not { Count: > 0 } spans)
 				return;
+			var model = new RichTextModel();
+			foreach (var (start, length, color) in spans)
+				model.SetHighlighting(start, length, color);
+			SetColorizer(model);
+			Editor.TextArea.TextView.Redraw();
+		}
+
+		// Swap the semantic-highlighting colorizer to one for <paramref name="model"/>, or remove it
+		// when null. AvaloniaEdit only exposes Add/Remove on LineTransformers, so we hold a reference
+		// to the live one. Shared by ApplyDocument (per-document model) and the theme-change rebuild.
+		void SetColorizer(RichTextModel? model)
+		{
 			var transformers = Editor.TextArea.TextView.LineTransformers;
 			if (activeColorizer != null)
 			{
 				transformers.Remove(activeColorizer);
 				activeColorizer = null;
 			}
-			var model = new RichTextModel();
-			foreach (var (start, length, color) in spans)
-				model.SetHighlighting(start, length, color);
-			activeColorizer = new RichTextColorizer(model);
-			transformers.Add(activeColorizer);
-			Editor.TextArea.TextView.Redraw();
+			if (model != null)
+			{
+				activeColorizer = new RichTextColorizer(model);
+				transformers.Add(activeColorizer);
+			}
 		}
 
 		void OnEditorPointerWheelChanged(object? sender, PointerWheelEventArgs e)
@@ -590,19 +601,8 @@ namespace ILSpy.TextView
 			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
 			Editor.Document.Text = model.Text;
 
-			// Swap the semantic-highlighting colorizer. AvaloniaEdit only exposes Add/Remove on
-			// LineTransformers, so we keep a reference to the previous one.
-			var transformers = Editor.TextArea.TextView.LineTransformers;
-			if (activeColorizer != null)
-			{
-				transformers.Remove(activeColorizer);
-				activeColorizer = null;
-			}
-			if (model.HighlightingModel is { } richModel)
-			{
-				activeColorizer = new RichTextColorizer(richModel);
-				transformers.Add(activeColorizer);
-			}
+			// Swap the semantic-highlighting colorizer for this document's model (null clears it).
+			SetColorizer(model.HighlightingModel);
 
 			// Folding markers in the gutter: install lazily so editors with no foldings stay
 			// chrome-free. UpdateFoldings expects offsets sorted ascending.
