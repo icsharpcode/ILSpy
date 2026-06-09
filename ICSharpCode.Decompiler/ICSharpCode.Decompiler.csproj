@@ -3,6 +3,10 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- Carry every distribution RID in the lock file so a RID-specific `dotnet publish -r <rid>` of a
+         consuming app (ILSpy) restores in locked mode (RestoreLockedMode below) on any host OS, with no
+         per-publish restore escape hatch. Must match ILSpy.csproj's RuntimeIdentifiers. -->
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
 
     <PackageId>ICSharpCode.Decompiler</PackageId>
     <PackageVersion>8.0.0.0-noversion</PackageVersion>
