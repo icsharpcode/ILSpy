@@ -69,25 +69,14 @@ namespace ILSpy.AssemblyTree
 			Tree.AddHandler(ContextRequestedEvent, OnTreeContextRequested, RoutingStrategies.Bubble, handledEventsToo: true);
 			Tree.KeyDown += OnTreeKeyDown;
 
-			var registry = TryGetContextMenuRegistry();
+			var registry = AppComposition.TryGetExport<ContextMenuEntryRegistry>();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
 
-			languageSettings = TryGetLanguageSettings();
+			languageSettings = AppComposition.TryGetExport<SettingsService>()?.SessionSettings.LanguageSettings;
 			if (languageSettings != null)
 				languageSettings.PropertyChanged += OnLanguageSettingsChanged;
 		}
 
-		static LanguageSettings? TryGetLanguageSettings()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
-			}
-			catch
-			{
-				return null;
-			}
-		}
 
 		void OnLanguageSettingsChanged(object? sender, PropertyChangedEventArgs e)
 		{
@@ -98,29 +87,7 @@ namespace ILSpy.AssemblyTree
 				root.RefreshRealizedFilter();
 		}
 
-		static ContextMenuEntryRegistry? TryGetContextMenuRegistry()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-			}
-			catch
-			{
-				return null;
-			}
-		}
 
-		static ILSpy.Analyzers.AnalyzerTreeViewModel? TryGetAnalyzerTreeViewModel()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<ILSpy.Analyzers.AnalyzerTreeViewModel>();
-			}
-			catch
-			{
-				return null;
-			}
-		}
 
 		#region Context menu
 
@@ -293,7 +260,7 @@ namespace ILSpy.AssemblyTree
 					.ToList();
 				if (members.Count == 0)
 					return;
-				var analyzerVm = TryGetAnalyzerTreeViewModel();
+				var analyzerVm = AppComposition.TryGetExport<ILSpy.Analyzers.AnalyzerTreeViewModel>();
 				if (analyzerVm == null)
 					return;
 				foreach (var member in members)
@@ -378,14 +345,8 @@ namespace ILSpy.AssemblyTree
 
 		internal void OpenNodeInNewTab(ILSpyTreeNode node)
 		{
-			try
-			{
-				AppComposition.Current.GetExport<ILSpy.Docking.DockWorkspace>().OpenNodeInNewTab(node);
-			}
-			catch
-			{
-				// Composition unavailable in design-time previews.
-			}
+			// Composition unavailable in design-time previews -> no-op.
+			AppComposition.TryGetExport<ILSpy.Docking.DockWorkspace>()?.OpenNodeInNewTab(node);
 		}
 	}
 }

@@ -38,21 +38,10 @@ namespace ILSpy.Analyzers
 		public AnalyzerTreeView()
 		{
 			InitializeComponent();
-			var registry = TryGetContextMenuRegistry();
+			var registry = AppComposition.TryGetExport<ContextMenuEntryRegistry>();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
 		}
 
-		static ContextMenuEntryRegistry? TryGetContextMenuRegistry()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-			}
-			catch
-			{
-				return null;
-			}
-		}
 
 		internal void AttachContextMenu(IReadOnlyList<IContextMenuEntryExport> entries)
 		{
