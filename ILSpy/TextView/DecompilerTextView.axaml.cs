@@ -85,7 +85,6 @@ namespace ILSpy.TextView
 		// TODO: drop this field and use Editor.ScrollToVerticalOffset once #594 ships and we bump the package.
 		ScrollViewer? editorScrollViewer;
 		DisplaySettings? currentDisplaySettings;
-		ReferenceSegment? lastTooltipSegment;
 		ReferenceSegment? lastRightClickedSegment;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 		readonly Popup richPopup;
@@ -809,7 +808,6 @@ namespace ILSpy.TextView
 			var content = BuildHoverContent(model, segment);
 			if (content == null)
 				return;
-			lastTooltipSegment = segment;
 			if (content.Value.IsRich)
 				OpenRichPopup(content.Value.Control);
 			else
@@ -904,7 +902,6 @@ namespace ILSpy.TextView
 
 		void CloseTooltip()
 		{
-			lastTooltipSegment = null;
 			ToolTip.SetIsOpen(Editor.TextArea.TextView, false);
 		}
 
@@ -916,7 +913,6 @@ namespace ILSpy.TextView
 
 		void OnRichPopupClosed(object? sender, EventArgs e)
 		{
-			lastTooltipSegment = null;
 			distanceToPopupLimit = double.PositiveInfinity;
 		}
 
