@@ -58,7 +58,7 @@ namespace ILSpy.Commands
 			var dirs = new List<string>(nodes.Length);
 			foreach (var node in nodes)
 			{
-				var assembly = FindEnclosingAssemblyNode(node);
+				var assembly = AssemblyTreeNode.FindEnclosing(node);
 				if (assembly is null)
 					return Array.Empty<string>();
 				var dir = Path.GetDirectoryName(assembly.LoadedAssembly.FileName);
@@ -69,16 +69,6 @@ namespace ILSpy.Commands
 			return dirs;
 		}
 
-		static AssemblyTreeNode? FindEnclosingAssemblyNode(SharpTreeNode? node)
-		{
-			while (node != null)
-			{
-				if (node is AssemblyTreeNode a)
-					return a;
-				node = node.Parent;
-			}
-			return null;
-		}
 
 		static void OpenTerminalAt(string directory)
 		{

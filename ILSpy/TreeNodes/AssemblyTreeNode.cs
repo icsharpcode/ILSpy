@@ -75,6 +75,21 @@ namespace ILSpy.TreeNodes
 		{
 		}
 
+		/// <summary>
+		/// Walks up from <paramref name="node"/> (inclusive) to the nearest enclosing assembly node,
+		/// or null when the node sits outside any assembly.
+		/// </summary>
+		public static AssemblyTreeNode? FindEnclosing(SharpTreeNode? node)
+		{
+			while (node != null)
+			{
+				if (node is AssemblyTreeNode a)
+					return a;
+				node = node.Parent;
+			}
+			return null;
+		}
+
 		// Drag-drop (handled generically by SharpTreeView, which delegates to these). The drag
 		// payload is the assemblies' file paths so a reorder and an external file drop unify through
 		// AssemblyListTreeNode.Drop -> OpenAssembly (which dedupes) + Move.

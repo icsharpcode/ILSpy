@@ -60,7 +60,7 @@ namespace ILSpy.Commands
 			var paths = new List<string>(nodes.Length);
 			foreach (var node in nodes)
 			{
-				var assembly = FindEnclosingAssemblyNode(node);
+				var assembly = AssemblyTreeNode.FindEnclosing(node);
 				if (assembly is null)
 					return System.Array.Empty<string>();
 				var path = assembly.LoadedAssembly.FileName;
@@ -71,16 +71,6 @@ namespace ILSpy.Commands
 			return paths;
 		}
 
-		static AssemblyTreeNode? FindEnclosingAssemblyNode(SharpTreeNode? node)
-		{
-			while (node != null)
-			{
-				if (node is AssemblyTreeNode a)
-					return a;
-				node = node.Parent;
-			}
-			return null;
-		}
 
 	}
 }
