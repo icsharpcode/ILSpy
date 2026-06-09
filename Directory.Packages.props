@@ -1,7 +1,11 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <!-- Enabled so the security overrides below pin the vulnerable transitive packages (dragged in by
+         the old Microsoft.DiaSymReader chain) to patched versions without a per-project PackageReference.
+         As a side effect it also aligns other transitive packages that have a PackageVersion entry to
+         their central versions. -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
     <RoslynVersion>5.7.0-1.26230.115</RoslynVersion>
@@ -41,6 +45,13 @@
     <PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
     <PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
     <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
+    <!-- Security overrides: the Microsoft.DiaSymReader / .PortablePdb chain pulls NETStandard.Library
+         1.6.1, which drags in vulnerable 4.3.0 builds of these. They are framework-provided at runtime
+         on net10.0; transitive pinning (above) applies these patched versions so NuGet audit
+         (NU1902/NU1903) passes. -->
+    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
+    <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
+    <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
