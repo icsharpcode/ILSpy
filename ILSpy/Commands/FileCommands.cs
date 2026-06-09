@@ -261,9 +261,18 @@ namespace ILSpy.Commands
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.GeneratePortable), MenuCategory = nameof(Resources.Save), MenuOrder = 22)]
 	[Shared]
-	sealed class GeneratePdbCommand : SimpleCommand
+	[method: ImportingConstructor]
+	sealed class GeneratePdbCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace) : SimpleCommand
 	{
-		public override void Execute(object? parameter) => NotImplementedDialog.Show(Resources.GeneratePortable);
+		public override bool CanExecute(object? parameter)
+			=> PdbGenerator.TryGetAssemblies(assemblyTreeModel.SelectedItems, out _);
+
+		public override void Execute(object? parameter)
+		{
+			if (!PdbGenerator.TryGetAssemblies(assemblyTreeModel.SelectedItems, out var assemblies))
+				return;
+			PdbGenerator.GenerateAsync(assemblies, dockWorkspace).HandleExceptions();
+		}
 	}
 
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.E_xit), MenuOrder = 99999, MenuCategory = nameof(Resources.Exit))]
