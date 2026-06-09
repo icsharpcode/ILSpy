@@ -1257,17 +1257,20 @@ namespace ILSpy.Docking
 		}
 
 		public void CloseAllTabs()
+			// Close every carve-out tab but keep the One (the persistent preview/home tab that the
+			// rest of the app relies on always existing -- ShowSelectedNode reuses it). This also keeps
+			// the document area non-empty, sidestepping Dock's "can't close the last dockable" veto.
+			=> CloseTabsWhere(doc => !ReferenceEquals(doc, factory.MainTab));
+
+		// Snapshot first -- CloseTab -> CloseDockable mutates the visible-dockables list.
+		void CloseTabsWhere(Func<ContentTabPage, bool> shouldClose)
 		{
 			var docs = factory.Documents?.VisibleDockables;
 			if (docs == null)
 				return;
-			// Close every carve-out tab but keep the One (the persistent preview/home tab that the
-			// rest of the app relies on always existing -- ShowSelectedNode reuses it). This also keeps
-			// the document area non-empty, sidestepping Dock's "can't close the last dockable" veto.
-			// Snapshot first -- CloseDockable mutates the list.
 			foreach (var doc in docs.OfType<ContentTabPage>().ToArray())
 			{
-				if (!ReferenceEquals(doc, factory.MainTab))
+				if (shouldClose(doc))
 					CloseTab(doc);
 			}
 		}
@@ -1288,14 +1291,7 @@ namespace ILSpy.Docking
 		public void CloseAllTabsExcept(ContentTabPage keep)
 		{
 			ArgumentNullException.ThrowIfNull(keep);
-			var docs = factory.Documents?.VisibleDockables;
-			if (docs == null)
-				return;
-			foreach (var doc in docs.OfType<ContentTabPage>().ToArray())
-			{
-				if (!ReferenceEquals(doc, keep))
-					CloseTab(doc);
-			}
+			CloseTabsWhere(doc => !ReferenceEquals(doc, keep));
 		}
 
 		/// <summary>Closes the active document tab (Ctrl+W). The documents dock only holds
