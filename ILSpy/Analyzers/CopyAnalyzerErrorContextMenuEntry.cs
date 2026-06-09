@@ -26,6 +26,8 @@ using Avalonia.Input.Platform;
 
 using ICSharpCode.ILSpy.Properties;
 
+using ILSpy.AppEnv;
+
 namespace ILSpy.Analyzers
 {
 	/// <summary>
@@ -65,8 +67,7 @@ namespace ILSpy.Analyzers
 
 		static void TryWriteToClipboard(string payload)
 		{
-			if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime
-				|| lifetime.MainWindow?.Clipboard is not { } clipboard)
+			if (UiContext.Clipboard is not { } clipboard)
 				return;
 			_ = clipboard.SetTextAsync(payload);
 		}

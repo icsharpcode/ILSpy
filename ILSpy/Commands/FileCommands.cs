@@ -58,8 +58,7 @@ namespace ILSpy.Commands
 				return;
 			}
 
-			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
-				as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return;
 
@@ -106,8 +105,7 @@ namespace ILSpy.Commands
 		{
 			if (!CanExecute(parameter))
 				return;
-			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
-				as global::Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return;
 			ShowAsync(owner).HandleExceptions();
@@ -138,8 +136,7 @@ namespace ILSpy.Commands
 
 		public override void Execute(object? parameter)
 		{
-			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
-				as global::Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return;
 			var dlg = new Views.ManageAssemblyListsDialog(settingsService);
@@ -281,8 +278,7 @@ namespace ILSpy.Commands
 	{
 		public override void Execute(object? parameter)
 		{
-			(global::Avalonia.Application.Current?.ApplicationLifetime
-				as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+			UiContext.Shutdown();
 		}
 	}
 }

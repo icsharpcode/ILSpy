@@ -27,6 +27,7 @@ using Avalonia.Platform.Storage;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpy.Properties;
 
+using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.TreeNodes;
 
@@ -66,8 +67,7 @@ namespace ILSpy.Commands
 
 		async Task ExecuteAsync(ICSharpCode.ILSpyX.LoadedAssembly assembly)
 		{
-			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
-				as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return;
 			var initialDir = Path.GetDirectoryName(assembly.FileName);

@@ -23,6 +23,8 @@ using System.Threading.Tasks;
 using global::Avalonia.Controls.ApplicationLifetimes;
 using global::Avalonia.Platform.Storage;
 
+using ILSpy.AppEnv;
+
 namespace ILSpy.Commands
 {
 	/// <summary>
@@ -43,8 +45,7 @@ namespace ILSpy.Commands
 			string? defaultFileName = null,
 			string? title = null)
 		{
-			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
-				as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return null;
 
@@ -71,8 +72,7 @@ namespace ILSpy.Commands
 		/// </summary>
 		public static async Task<string?> PickFolderAsync(string? title = null)
 		{
-			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
-				as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return null;
 

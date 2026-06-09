@@ -28,6 +28,7 @@ using global::Avalonia.Controls.ApplicationLifetimes;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
+using ILSpy.AppEnv;
 using ILSpy.Docking;
 using ILSpy.Languages;
 using ILSpy.TextView;
@@ -66,8 +67,7 @@ namespace ILSpy.Commands
 		public static async Task PromptAndExportAsync(IReadOnlyList<LoadedAssembly> assemblies,
 			bool solutionMode, Language language, DockWorkspace dockWorkspace, SettingsService settingsService)
 		{
-			var owner = (global::Avalonia.Application.Current?.ApplicationLifetime
-				as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return;
 

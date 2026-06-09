@@ -69,7 +69,7 @@ namespace ILSpy
 
 		static IntPtr TryGetMainWindowHandle()
 		{
-			var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+			var window = AppEnv.UiContext.MainWindow;
 			return window?.TryGetPlatformHandle()?.Handle ?? IntPtr.Zero;
 		}
 

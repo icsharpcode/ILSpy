@@ -24,6 +24,8 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 
+using ILSpy.AppEnv;
+
 namespace ILSpy.Analyzers
 {
 	/// <summary>
@@ -65,8 +67,7 @@ namespace ILSpy.Analyzers
 
 		static void TryWriteToClipboard(string payload)
 		{
-			if (Application.Current?.ApplicationLifetime is not IClassicDesktopStyleApplicationLifetime lifetime
-				|| lifetime.MainWindow?.Clipboard is not { } clipboard)
+			if (UiContext.Clipboard is not { } clipboard)
 				return;
 			// SetTextAsync is the extension method on IClipboard — needs Avalonia.Input.Platform.
 			_ = clipboard.SetTextAsync(payload);
