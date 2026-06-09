@@ -165,4 +165,46 @@
           Condition="!$([MSBuild]::IsOSPlatform('Windows'))" />
     <Message Importance="high" Text="macOS bundle written to $(_MacBundleRoot)" />
   </Target>
+
+  <!-- Locate the installed MSVC tools so ApplyStackExtension below can find editbin.exe. The props
+       file the import pulls in defines $(VCToolsVersion); it only exists when building under VS /
+       a Developer environment on Windows, so $(VCToolsVersion) stays empty everywhere else and the
+       stack-extension target is skipped. -->
+  <PropertyGroup>
+    <VCToolsVersionPropsFileNameDefault>Microsoft.VCToolsVersion.default.props</VCToolsVersionPropsFileNameDefault>
+    <VCBasePath>$(MSBuildToolsPath)\..\..\..\VC\</VCBasePath>
+    <!-- In VS 2022 there is an extra directory level that's why we need to add one more '..' -->
+    <VCBasePath Condition="!Exists('$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)')">$(MSBuildToolsPath)\..\..\..\..\VC\</VCBasePath>
+    <VCToolsVersionPropsFile>$(VCBasePath)Auxiliary\Build\$(VCToolsVersionPropsFileNameDefault)</VCToolsVersionPropsFile>
+  </PropertyGroup>
+
+  <Import Project="$(VCToolsVersionPropsFile)" Condition="Exists('$(VCToolsVersionPropsFile)')" />
+
+  <ItemGroup>
+    <SortResXInput Include="Properties\*.resx" />
+    <SortResXInput Include="..\ILSpy.AddIn\*.resx" />
+    <SortResXInput Include="..\ILSpy.ReadyToRun\Properties\*.resx" />
+    <SortResXStamp Include="obj\sort-resx.stamp" />
+  </ItemGroup>
+
+  <!-- Keep .resx entries sorted by name so localisation diffs stay clean. Local Windows builds
+       only (the command is empty otherwise) and skipped on CI; the stamp makes it incremental. -->
+  <Target Name="SortResX" BeforeTargets="BeforeBuild" Inputs="@(SortResXInput)" Outputs="@(SortResXStamp)" Condition="'$(GITHUB_ACTIONS)' != 'true'">
+    <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
+      <SortResX>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/sort-resx.ps1</SortResX>
+    </PropertyGroup>
+    <Exec WorkingDirectory=".." Command="$(SortResX)" Timeout="60000" Condition="'$(SortResX)' != ''" />
+    <Touch Files="@(SortResXStamp)" AlwaysCreate="true" Condition="'$(SortResX)' != ''" />
+  </Target>
+
+  <!-- Deeply nested types / expressions can drive the IL+AST transforms into recursion deep
+       enough to overflow the default 1 MB main-thread stack. On Windows the managed runtime
+       can't grow the main thread's stack at run time, so (as in the WPF build) editbin rewrites
+       the apphost's PE stack-reserve header to 16 MB. Gated on the MSVC tools being present
+       ($(VCToolsVersion) is empty outside a VS / Developer environment), so it is a no-op on
+       Linux/macOS CI and any non-MSVC Windows build. EXIT 0 keeps editbin warnings from failing
+       the build. -->
+  <Target Name="ApplyStackExtension" AfterTargets="PostBuildEvent" Condition="'$(VCToolsVersion)'!=''">
+    <Exec Command="&quot;$(VCBasePath)Tools\MSVC\$(VCToolsVersion)\bin\Hostx64\x64\editbin.exe&quot; /stack:16777216 &quot;$(TargetDir)$(TargetName).exe&quot;&#xD;&#xA;EXIT 0" />
+  </Target>
 </Project>
