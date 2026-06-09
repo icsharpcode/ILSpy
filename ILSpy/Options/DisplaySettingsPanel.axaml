@@ -81,8 +81,6 @@
 					          Content="{x:Static res:Resources.ShowRawOffsetsAndBytesBeforeInstruction}" />
 					<CheckBox IsChecked="{Binding Settings.DecodeCustomAttributeBlobs, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.DecodeCustomAttributeBlobs}" />
-					<CheckBox IsChecked="{Binding Settings.EnableSmoothScrolling, Mode=TwoWay}"
-					          Content="{x:Static res:Resources.EnableSmoothScrolling}" />
 				</StackPanel>
 			</HeaderedContentControl>
 

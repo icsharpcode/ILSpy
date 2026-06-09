@@ -94,9 +94,6 @@ namespace ILSpy.Options
 		bool showRawOffsetsAndBytesBeforeInstruction;
 
 		[ObservableProperty]
-		bool enableSmoothScrolling = true;
-
-		[ObservableProperty]
 		bool decodeCustomAttributeBlobs;
 
 		public XName SectionName => "DisplaySettings";
@@ -123,7 +120,6 @@ namespace ILSpy.Options
 			UseNestedNamespaceNodes = (bool?)section.Attribute(nameof(UseNestedNamespaceNodes)) ?? false;
 			ShowRawOffsetsAndBytesBeforeInstruction = (bool?)section.Attribute(nameof(ShowRawOffsetsAndBytesBeforeInstruction)) ?? false;
 			StyleWindowTitleBar = (bool?)section.Attribute(nameof(StyleWindowTitleBar)) ?? false;
-			EnableSmoothScrolling = (bool?)section.Attribute(nameof(EnableSmoothScrolling)) ?? true;
 			DecodeCustomAttributeBlobs = (bool?)section.Attribute(nameof(DecodeCustomAttributeBlobs)) ?? false;
 		}
 
@@ -150,7 +146,6 @@ namespace ILSpy.Options
 			section.SetAttributeValue(nameof(UseNestedNamespaceNodes), UseNestedNamespaceNodes);
 			section.SetAttributeValue(nameof(ShowRawOffsetsAndBytesBeforeInstruction), ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue(nameof(StyleWindowTitleBar), StyleWindowTitleBar);
-			section.SetAttributeValue(nameof(EnableSmoothScrolling), EnableSmoothScrolling);
 			section.SetAttributeValue(nameof(DecodeCustomAttributeBlobs), DecodeCustomAttributeBlobs);
 			return section;
 		}

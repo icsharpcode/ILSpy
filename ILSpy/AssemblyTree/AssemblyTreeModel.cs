@@ -254,33 +254,45 @@ namespace ILSpy.AssemblyTree
 				return;
 			if (Root == null)
 				return;
-			switch (e.Inner.PropertyName)
+			// One classification table (DisplaySettingReactions) drives every reaction, so a
+			// newly-added setting can't silently fall through -- the coverage test fails until it's
+			// listed. The Options page is non-modal/live-apply, so there is no full-refresh-on-close
+			// fallback the way the WPF host had; each bucket must do its own update.
+			var name = e.Inner.PropertyName;
+			switch (Options.DisplaySettingReactions.For(name))
 			{
-				case nameof(Options.DisplaySettings.ShowMetadataTokens):
-				case nameof(Options.DisplaySettings.ShowMetadataTokensInBase10):
+				case Options.DisplaySettingReaction.TreeText:
 					// Text suffix on member nodes is computed at read time — just fire the
 					// notification so bound cell templates re-pull.
 					NotifyTextChanged(Root);
 					break;
-				case nameof(Options.DisplaySettings.UseNestedNamespaceNodes):
-					// Tree shape changes — every loaded AssemblyTreeNode's namespace subtree
-					// needs rebuilding.
-					foreach (var asm in Root.Children.OfType<TreeNodes.AssemblyTreeNode>())
-						asm.ReloadChildren();
-					// AssemblyListPane caches a snapshot of each expanded node's children via
-					// the HierarchicalOptions.ChildrenSelector — mid-expand mutations of
-					// node.Children aren't observed. Re-raising Root forces BindTree to fire,
-					// which creates a fresh HierarchicalModel that re-reads children on demand.
+				case Options.DisplaySettingReaction.TreeShape:
+					if (name == nameof(Options.DisplaySettings.UseNestedNamespaceNodes))
+					{
+						// Every loaded AssemblyTreeNode's namespace subtree needs rebuilding.
+						foreach (var asm in Root.Children.OfType<TreeNodes.AssemblyTreeNode>())
+							asm.ReloadChildren();
+					}
+					else
+					{
+						// Visible MetadataTablesTreeNode instances get their children regenerated;
+						// untouched (lazy) ones already pick up the new value on first expand.
+						RebuildMetadataTablesIn(Root);
+					}
+					// AssemblyListPane caches a snapshot of each expanded node's children via the
+					// HierarchicalOptions.ChildrenSelector — mid-expand mutations of node.Children
+					// aren't observed. Re-raising Root forces BindTree to fire, which creates a fresh
+					// HierarchicalModel that re-reads children on demand.
 					OnPropertyChanged(nameof(Root));
 					break;
-				case nameof(Options.DisplaySettings.HideEmptyMetadataTables):
-					// Visible MetadataTablesTreeNode instances get their children regenerated;
-					// untouched (lazy) ones already pick up the new value on first expand.
-					RebuildMetadataTablesIn(Root);
-					// Same DataGrid-snapshot problem as the UseNestedNamespaceNodes branch —
-					// force a re-bind so the rebuilt children make it into the visible grid.
-					OnPropertyChanged(nameof(Root));
+				case Options.DisplaySettingReaction.Redecompile:
+					// Baked into the decompiler/disassembler output (folding, member/using
+					// expansion, debug info, IL detail, indentation), so it only shows after a
+					// re-decompile of the active tab.
+					RefreshDecompiledView();
 					break;
+					// EditorLive / None: the text view applies editor settings to AvaloniaEdit itself,
+					// and the rest have no model-side reaction.
 			}
 		}
 

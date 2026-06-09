@@ -707,6 +707,11 @@ namespace ILSpy.Docking
 		{
 			lastShownNodes = null;
 			ShowSelectedNode();
+			// ShowSelectedNode re-projects the selection, but DecompilerTabPageModel.CurrentNodes
+			// dedups an unchanged node -- so a same-node refresh (a decompiler-output display setting,
+			// or freshly resolved dependencies) wouldn't actually re-run. Force the active decompiler
+			// tab to re-decompile so its output reflects the new state.
+			ActiveDecompilerTab?.Redecompile();
 		}
 
 		void ShowSelectedNode()

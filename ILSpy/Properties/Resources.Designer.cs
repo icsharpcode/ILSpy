@@ -1849,15 +1849,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enable smooth scrolling.
-        /// </summary>
-        public static string EnableSmoothScrolling {
-            get {
-                return ResourceManager.GetString("EnableSmoothScrolling", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Enable word wrap.
         /// </summary>
         public static string EnableWordWrap {

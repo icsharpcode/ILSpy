@@ -324,6 +324,17 @@ namespace ILSpy.TextView
 			StartDecompile();
 		}
 
+		/// <summary>
+		/// Forces a fresh decompilation of the current nodes, bypassing the <see cref="CurrentNodes"/>
+		/// dedup. Used by <c>ForceRefreshActiveTab</c> when a display setting or freshly resolved
+		/// dependencies changed but the selected node did not. No-op when nothing is being decompiled.
+		/// </summary>
+		public void Redecompile()
+		{
+			if (CurrentNodes.Count > 0)
+				StartDecompile();
+		}
+
 		// Built (off the UI thread) when a decompile blows past its output limit: a short message plus
 		// a "Display code anyway" button (retry at the extended limit, only offered for the normal
 		// limit) and a "Save code" button. The button click handlers run back on the UI thread.
