@@ -68,6 +68,7 @@ namespace ILSpy.Docking
 		readonly ILSpyDockFactory factory;
 		readonly AssemblyTreeModel assemblyTreeModel;
 		readonly LanguageService languageService;
+		readonly Metadata.MetadataNavigator metadataNavigator;
 		readonly NavigationHistory<NavigationEntry> history = new();
 		// Set true while a Back/Forward navigation is rewriting state (SelectedItem,
 		// active dockable) so the change notifications don't push fresh entries onto the
@@ -160,11 +161,13 @@ namespace ILSpy.Docking
 		public DockWorkspace(
 			AssemblyTreeModel assemblyTreeModel,
 			ToolPaneRegistry toolPaneRegistry,
-			LanguageService languageService)
+			LanguageService languageService,
+			Metadata.MetadataNavigator metadataNavigator)
 		{
 			ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor entered");
 			this.assemblyTreeModel = assemblyTreeModel;
 			this.languageService = languageService;
+			this.metadataNavigator = metadataNavigator;
 			NavigateBackCommand = new RelayCommand(NavigateBack, () => history.CanNavigateBack);
 			NavigateForwardCommand = new RelayCommand(NavigateForward, () => history.CanNavigateForward);
 			NavigateToHistoryCommand = new RelayCommand<NavigationEntry>(NavigateToHistory,
@@ -853,24 +856,16 @@ namespace ILSpy.Docking
 
 		void OnMetadataCellClicked(MetadataCellNavigationEventArgs e)
 		{
-			// (row, columnName) → metadata token + module → matching table tree node + row index.
-			// Resolved via reflection because each entry struct buries its MetadataFile in a
-			// private readonly field with the same name across all 43 typed table viewmodels.
-			var prop = e.Row.GetType().GetProperty(e.ColumnName);
-			if (prop?.GetValue(e.Row) is not int token || token == 0)
-				return;
-			var fileField = e.Row.GetType().GetField("metadataFile", BindingFlags.Instance | BindingFlags.NonPublic);
-			if (fileField?.GetValue(e.Row) is not MetadataFile metadataFile)
-				return;
-			NavigateToToken(new MetadataTokenReference(metadataFile, MetadataTokens.EntityHandle(token)));
+			// A clicked token cell -> the metadata table + row the token points at.
+			if (metadataNavigator.ReadCellToken(e.Row, e.ColumnName) is { } reference)
+				NavigateToToken(reference);
 		}
 
 		internal void OnMetadataRowActivated(MetadataRowActivationEventArgs e)
 		{
-			// Row double-click: resolve the row's Token + metadataFile to an IEntity, then
-			// either select the matching tree node (single-tab reuse) or open it in a fresh
-			// tab (MMB / context-menu carve-out).
-			var node = TryResolveRowToTreeNode(e.Row);
+			// Row double-click: resolve the row to its tree node, then either select it (single-tab
+			// reuse) or open it in a fresh tab (MMB / context-menu carve-out).
+			var node = metadataNavigator.ResolveRowToTreeNode(e.Row);
 			if (node is null)
 				return;
 			if (e.OpenInNewTab)
@@ -912,86 +907,18 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
-		/// Reflection-based resolution of a metadata-grid row to the matching assembly-tree
-		/// node, sharing the path between row double-click and the "Decompile to new tab"
-		/// context-menu entry. Returns <see langword="null"/> when the row's token doesn't
-		/// resolve to an <see cref="IEntity"/> the tree knows how to model (heap rows,
-		/// AssemblyRef rows pointing at unloaded assemblies, etc.).
+		/// Resolves a metadata-grid row to the matching assembly-tree node, shared between row
+		/// double-click and the "Decompile to new tab" context-menu entry. Returns
+		/// <see langword="null"/> when the row's token doesn't resolve to an entity the tree models.
 		/// </summary>
 		internal ILSpyTreeNode? TryResolveRowToTreeNode(object row)
-		{
-			var fileField = row.GetType().GetField("metadataFile", BindingFlags.Instance | BindingFlags.NonPublic);
-			if (fileField?.GetValue(row) is not MetadataFile metadataFile)
-				return null;
-			var tokenProp = row.GetType().GetProperty("Token");
-			if (tokenProp?.GetValue(row) is not int token || token == 0)
-				return null;
-			var handle = MetadataTokens.EntityHandle(token);
-			if (handle.IsNil)
-				return null;
-
-			var assemblies = assemblyTreeModel.AssemblyList?.GetAssemblies();
-			if (assemblies is null)
-				return null;
-			LoadedAssembly? owningAssembly = null;
-			foreach (var a in assemblies)
-			{
-				if (ReferenceEquals(a.GetMetadataFileOrNull(), metadataFile))
-				{
-					owningAssembly = a;
-					break;
-				}
-			}
-			if (owningAssembly is null)
-				return null;
-			var ts = owningAssembly.GetTypeSystemOrNull();
-			if (ts?.MainModule is not MetadataModule metadataModule)
-				return null;
-			IEntity? entity;
-			try
-			{ entity = metadataModule.ResolveEntity(handle); }
-			catch { return null; }
-			if (entity is null)
-				return null;
-			return assemblyTreeModel.FindTreeNode(entity);
-		}
+			=> metadataNavigator.ResolveRowToTreeNode(row);
 
 		public void NavigateToToken(MetadataTokenReference reference)
 		{
 			if (reference.Handle.IsNil)
 				return;
-			// Find the MetadataTreeNode for the referenced module, drill down to its
-			// Tables container, and pick the table whose Kind matches the handle's runtime
-			// kind — HandleKind values for table-backed entities double as TableIndex.
-			var assemblies = assemblyTreeModel.AssemblyList?.GetAssemblies();
-			if (assemblies == null)
-				return;
-			AssemblyTreeNode? targetAssembly = null;
-			if (assemblyTreeModel.Root != null)
-			{
-				foreach (var child in assemblyTreeModel.Root.Children.OfType<AssemblyTreeNode>())
-				{
-					if (ReferenceEquals(child.LoadedAssembly.GetMetadataFileOrNull(), reference.MetadataFile))
-					{
-						targetAssembly = child;
-						break;
-					}
-				}
-			}
-			if (targetAssembly == null)
-				return;
-			targetAssembly.EnsureLazyChildren();
-			var metaNode = targetAssembly.Children.OfType<MetadataTreeNode>().FirstOrDefault();
-			if (metaNode == null)
-				return;
-			metaNode.EnsureLazyChildren();
-			var tablesNode = metaNode.Children.OfType<MetadataTablesTreeNode>().FirstOrDefault();
-			if (tablesNode == null)
-				return;
-			tablesNode.EnsureLazyChildren();
-			var tableIndex = (TableIndex)(int)reference.Handle.Kind;
-			var tableNode = tablesNode.Children.OfType<MetadataTableTreeNode>()
-				.FirstOrDefault(t => t.Kind == tableIndex);
+			var tableNode = metadataNavigator.FindTableNode(reference);
 			if (tableNode == null)
 				return;
 
