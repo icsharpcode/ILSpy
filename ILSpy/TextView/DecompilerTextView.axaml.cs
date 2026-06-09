@@ -66,10 +66,12 @@ namespace ILSpy.TextView
 		// has room to "reach for" the popup but can't drift away from it.
 		const double MaxMovementAwayFromPopup = 5;
 
-		readonly ReferenceElementGenerator referenceElementGenerator;
-		readonly UIElementGenerator uiElementGenerator;
-		readonly TextMarkerService textMarkerService;
-		readonly BracketHighlightRenderer bracketHighlightRenderer;
+		// Assigned once in the ctor's Setup* helpers (so not readonly -- the compiler can't prove
+		// single-assignment across methods); never reassigned afterwards.
+		ReferenceElementGenerator referenceElementGenerator = null!;
+		UIElementGenerator uiElementGenerator = null!;
+		TextMarkerService textMarkerService = null!;
+		BracketHighlightRenderer bracketHighlightRenderer = null!;
 		readonly List<TextMarker> localReferenceMarks = new();
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
@@ -87,7 +89,7 @@ namespace ILSpy.TextView
 		DisplaySettings? currentDisplaySettings;
 		ReferenceSegment? lastRightClickedSegment;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
-		readonly Popup richPopup;
+		Popup richPopup = null!;
 		double distanceToPopupLimit;
 
 		/// <summary>
@@ -112,30 +114,50 @@ namespace ILSpy.TextView
 			// extensively for in-app navigation — a plain click is the expected affordance.
 			Editor.Options.RequireControlModifierForHyperlinkClick = false;
 
-			// One generator lives for the lifetime of the view; we only swap its References
-			// collection per document. The predicate filters out anything that should not be
-			// clickable — references with a null target slip through unconditionally otherwise.
+			SetupElementGenerators();
+			SetupBackgroundRenderers();
+			SetupHoverHandlers();
+			SetupContextMenuAndHyperlinks();
+			SetupRichPopup();
+			WireUpDisplaySettings();
+
+			// Caret-position changes drive the bracket-pair highlight. View state (caret + scroll
+			// + foldings) is NOT pushed onto the model here -- DockWorkspace pulls it on demand via
+			// the model's CaptureViewState delegate when it records a navigation away, so a
+			// programmatic caret move (AvaloniaEdit jumps the caret to the end on a text replace)
+			// is never mistaken for the user's position.
+			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
+
+			SetupZoomAndCopy();
+		}
+
+		// One generator lives for the lifetime of the view; we only swap its References collection
+		// per document. The predicate filters out anything that should not be clickable -- references
+		// with a null target slip through unconditionally otherwise.
+		void SetupElementGenerators()
+		{
 			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null);
 			referenceElementGenerator.ReferenceClicked += OnReferenceClicked;
 			Editor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 
 			uiElementGenerator = new UIElementGenerator();
 			Editor.TextArea.TextView.ElementGenerators.Add(uiElementGenerator);
+		}
 
-			// Background renderer that paints local-reference highlights. Lives once for the
-			// lifetime of the view; the marks themselves are cleared and rebuilt per click.
+		// Background renderers that live for the view's lifetime: the local-reference highlight (marks
+		// cleared/rebuilt per click) and the bracket-pair outline (repainted on every caret move).
+		void SetupBackgroundRenderers()
+		{
 			textMarkerService = new TextMarkerService(Editor.TextArea.TextView);
 			Editor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
-
-			// Bracket-pair highlight: also a BackgroundRenderer; paints a soft outline
-			// around the (.../[.../{... matching its pair when the caret sits next to one.
-			// SetHighlight runs on every caret-position-changed event below.
 			bracketHighlightRenderer = new BracketHighlightRenderer(Editor.TextArea.TextView);
+		}
 
-			// Subscribe to AvaloniaEdit's built-in PointerHover routed event (fires after the
-			// cursor settles inside a small box for ~400 ms) and resolve the segment fresh at
-			// hover-time using the live pointer position. PointerMoved still drives the rich
-			// popup's distance corridor.
+		// Subscribe to AvaloniaEdit's built-in PointerHover routed event (fires after the cursor
+		// settles inside a small box for ~400 ms) and resolve the segment fresh at hover-time using
+		// the live pointer position. PointerMoved still drives the rich popup's distance corridor.
+		void SetupHoverHandlers()
+		{
 			ToolTip.SetPlacement(Editor.TextArea.TextView, PlacementMode.Pointer);
 			ToolTip.SetBetweenShowDelay(Editor.TextArea.TextView, 0);
 			Editor.TextArea.TextView.AddHandler(
@@ -150,52 +172,51 @@ namespace ILSpy.TextView
 				handledEventsToo: true);
 			Editor.TextArea.TextView.PointerMoved += OnTextViewPointerMoved;
 			Editor.TextArea.TextView.PointerExited += OnTextViewPointerExited;
+		}
 
-			// Context menu — captures the segment under the pointer at right-click time so
-			// entries like "Show in metadata" can dispatch through the same Reference field
-			// the assembly-tree's right-click already populates.
+		void SetupContextMenuAndHyperlinks()
+		{
+			// Context menu -- captures the segment under the pointer at right-click time so entries
+			// like "Show in metadata" can dispatch through the same Reference field the assembly
+			// tree's right-click already populates.
 			Editor.TextArea.TextView.AddHandler(InputElement.PointerPressedEvent,
 				OnTextViewPointerPressedForContextMenu,
 				RoutingStrategies.Tunnel,
 				handledEventsToo: true);
 			AttachContextMenu(TryGetContextMenuEntries());
 
-			// AvaloniaEdit's hyperlinks raise OpenUriEvent (bubbling); the default class handler
-			// on Window passes the URI to Process.Start. Intercept first so internal schemes
-			// (the About page's "resource:" URIs) route through the tab model instead.
+			// AvaloniaEdit's hyperlinks raise OpenUriEvent (bubbling); the default class handler on
+			// Window passes the URI to Process.Start. Intercept first so internal schemes (the About
+			// page's "resource:" URIs) route through the tab model instead.
 			Editor.TextArea.TextView.AddHandler(
 				AvaloniaEdit.Rendering.VisualLineLinkText.OpenUriEvent,
 				OnHyperlinkOpenUri,
 				RoutingStrategies.Bubble,
 				handledEventsToo: false);
+		}
 
+		void SetupRichPopup()
+		{
 			richPopup = new Popup {
 				PlacementTarget = Editor.TextArea.TextView,
-				// Pointer placement: Avalonia anchors the popup at the current cursor location
-				// when Open() is called, with a small offset below to avoid covering the token.
+				// Pointer placement: Avalonia anchors the popup at the current cursor location when
+				// Open() is called, with a small offset below to avoid covering the token.
 				Placement = PlacementMode.Pointer,
 				HorizontalOffset = 0,
 				VerticalOffset = 16,
 				IsLightDismissEnabled = false,
 			};
 			richPopup.Closed += OnRichPopupClosed;
-			// Popup.Open uses PlacementTarget to find its TopLevel, so the popup itself doesn't
-			// need to be in any visual tree of ours.
+			// Popup.Open uses PlacementTarget to find its TopLevel, so the popup itself doesn't need
+			// to be in any visual tree of ours.
+		}
 
-			WireUpDisplaySettings();
-
-			// Caret-position changes drive the bracket-pair highlight. View state (caret + scroll
-			// + foldings) is NOT pushed onto the model here -- DockWorkspace pulls it on demand via
-			// the model's CaptureViewState delegate when it records a navigation away, so a
-			// programmatic caret move (AvaloniaEdit jumps the caret to the end on a text replace)
-			// is never mistaken for the user's position.
-			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
-
-			// Ctrl+Wheel zoom (matches WPF's ZoomScrollViewer.OnPreviewMouseWheel). Tunnel
-			// routing so we see it before AvaloniaEdit's scroll handler; Handled=true on
-			// hit suppresses the scroll. Ctrl+0/Plus/Minus are Avalonia-side extras —
-			// keyboard zoom is a standard modern-editor expectation that WPF ILSpy doesn't
-			// happen to ship.
+		void SetupZoomAndCopy()
+		{
+			// Ctrl+Wheel zoom (matches WPF's ZoomScrollViewer.OnPreviewMouseWheel). Tunnel routing so
+			// we see it before AvaloniaEdit's scroll handler; Handled=true on hit suppresses the
+			// scroll. Ctrl+0/Plus/Minus are Avalonia-side extras -- keyboard zoom is a standard
+			// modern-editor expectation that WPF ILSpy doesn't happen to ship.
 			Editor.AddHandler(InputElement.PointerWheelChangedEvent,
 				OnEditorPointerWheelChanged,
 				RoutingStrategies.Tunnel,
@@ -604,13 +625,6 @@ namespace ILSpy.TextView
 			// Swap the semantic-highlighting colorizer for this document's model (null clears it).
 			SetColorizer(model.HighlightingModel);
 
-			// Folding markers in the gutter: install lazily so editors with no foldings stay
-			// chrome-free. UpdateFoldings expects offsets sorted ascending.
-			if (activeFoldingManager != null)
-			{
-				FoldingManager.Uninstall(activeFoldingManager);
-				activeFoldingManager = null;
-			}
 			// Consume the pending view state up-front so it can't bleed into a later refresh even
 			// when the new document has zero foldings to apply it to (e.g. a namespace summary page
 			// that follows a method-body navigation). PendingViewState is set by Back/Forward/GoTo
@@ -619,14 +633,44 @@ namespace ILSpy.TextView
 			var pendingState = restoreViewState ? model.PendingViewState : null;
 			if (restoreViewState)
 				model.PendingViewState = null;
-			var pendingFoldings = pendingState?.Foldings;
+
+			RebuildFoldings(model, pendingState);
+
+			referenceElementGenerator.References = model.References;
+			uiElementGenerator.UIElements = model.UIElements;
+
+			// Re-apply any pending reference highlight against the fresh References collection.
+			// The analyzer-result-activation path sets HighlightedReference before the navigated
+			// node's decompile finishes; this is where the marks finally land on the new text.
+			if (model.HighlightedReference != null)
+				HighlightLocalReferences(model, model.HighlightedReference);
+
+			if (restoreViewState)
+				RestoreOrResetViewState(pendingState);
+
+			SwapCustomElementGenerators(model.CustomElementGenerators);
+
+			Editor.TextArea.TextView.Redraw();
+		}
+
+		// Folding markers in the gutter: uninstall the previous manager, then install fresh foldings
+		// from the model -- clamped to the document, ordered, with the pending snapshot's open/closed
+		// state projected on -- or fall back to the XML folding strategy for XML resources. Installing
+		// lazily keeps editors with no foldings chrome-free.
+		void RebuildFoldings(DecompilerTabPageModel model, DecompilerTextViewState? pendingState)
+		{
+			if (activeFoldingManager != null)
+			{
+				FoldingManager.Uninstall(activeFoldingManager);
+				activeFoldingManager = null;
+			}
 			if (model.Foldings is { Count: > 0 } foldings)
 			{
-				// Defensive clamp: drop foldings that fall outside [0, TextLength]. Without
-				// this, a stale Foldings collection from an earlier decompile combined with a
-				// shorter (or empty) document — see DecompilerTabPageModel.DecompileAsync's
-				// empty-nodes short-circuit — would trip AvaloniaEdit's
-				// "Folding must be within document boundary" guard inside CreateFolding.
+				// Defensive clamp: drop foldings that fall outside [0, TextLength]. Without this, a
+				// stale Foldings collection from an earlier decompile combined with a shorter (or
+				// empty) document -- see DecompilerTabPageModel.DecompileAsync's empty-nodes
+				// short-circuit -- would trip AvaloniaEdit's "Folding must be within document
+				// boundary" guard inside CreateFolding.
 				int textLength = Editor.Document.TextLength;
 				var ordered = foldings
 					.Where(f => f.StartOffset >= 0 && f.EndOffset <= textLength && f.StartOffset < f.EndOffset)
@@ -637,9 +681,9 @@ namespace ILSpy.TextView
 					activeFoldingManager = FoldingManager.Install(Editor.TextArea);
 					// Project the saved snapshot onto the freshly-built list so each NewFolding's
 					// DefaultClosed reflects the previous state BEFORE UpdateFoldings installs them.
-					// The checksum inside Restore guards against the document having shifted under
-					// our feet (Refresh / settings change / etc).
-					if (pendingFoldings is { } pending)
+					// The checksum inside Restore guards against the document having shifted under our
+					// feet (Refresh / settings change / etc).
+					if (pendingState?.Foldings is { } pending)
 						FoldingsViewState.Restore(ordered, pending);
 					activeFoldingManager.UpdateFoldings(ordered, -1);
 				}
@@ -652,52 +696,41 @@ namespace ILSpy.TextView
 				activeFoldingManager = FoldingManager.Install(Editor.TextArea);
 				new XmlFoldingStrategy().UpdateFoldings(activeFoldingManager, Editor.Document);
 			}
+		}
 
-			referenceElementGenerator.References = model.References;
-			uiElementGenerator.UIElements = model.UIElements;
-
-			// Re-apply any pending reference highlight against the fresh References collection.
-			// The analyzer-result-activation path sets HighlightedReference before the navigated
-			// node's decompile finishes; this is where the marks finally land on the new text.
-			if (model.HighlightedReference != null)
-				HighlightLocalReferences(model, model.HighlightedReference);
-
-			// Restore caret + scroll for Back/Forward/GoTo (PendingViewState carries the position
-			// captured when the user left this node). On a fresh navigation there's no pending
-			// state, so reset to the top: the editor is reused across navigations and AvaloniaEdit
-			// keeps the previous document's caret/scroll when the text is replaced, which would
-			// otherwise leave a new node scrolled to wherever the previous one was. Clamp the caret
-			// to the new document length (text may have changed since capture, e.g. Refresh).
-			// AvaloniaEdit's ScrollToVerticalOffset/ScrollToHorizontalOffset are no-ops in 12.0.0
-			// (fixed upstream in AvaloniaUI/AvaloniaEdit#594), so set the ScrollViewer's Offset
-			// directly. Avalonia re-coerces Offset against the scroll extent on the next layout,
-			// so this sticks even though the freshly-set document isn't measured yet.
-			if (restoreViewState)
+		// Restore caret + scroll for Back/Forward/GoTo (pendingState carries the position captured
+		// when the user left this node), or reset to the top on a fresh navigation: the editor is
+		// reused across navigations and AvaloniaEdit keeps the previous document's caret/scroll when
+		// the text is replaced. Caret is clamped to the new document length (the text may have changed
+		// since capture, e.g. Refresh). AvaloniaEdit's ScrollTo*Offset are no-ops in 12.0.0
+		// (AvaloniaUI/AvaloniaEdit#594), so set the ScrollViewer's Offset directly; Avalonia re-coerces
+		// it against the scroll extent on the next layout, so it sticks before the document is measured.
+		void RestoreOrResetViewState(DecompilerTextViewState? pendingState)
+		{
+			if (pendingState is { } state)
 			{
-				if (pendingState is { } state)
-				{
-					Editor.TextArea.Caret.Offset = Math.Clamp(state.CaretOffset, 0, Editor.Document.TextLength);
-					if (EditorScrollViewer is { } scrollViewer)
-						scrollViewer.Offset = new Vector(state.HorizontalOffset, state.VerticalOffset);
-				}
-				else
-				{
-					// Fresh navigation: reset caret + scroll to the top. The reused editor keeps the
-					// previous document's position when the text is replaced, so reset explicitly.
-					Editor.TextArea.Caret.Offset = 0;
-					if (EditorScrollViewer is { } scrollViewer)
-						scrollViewer.Offset = default;
-				}
+				Editor.TextArea.Caret.Offset = Math.Clamp(state.CaretOffset, 0, Editor.Document.TextLength);
+				if (EditorScrollViewer is { } scrollViewer)
+					scrollViewer.Offset = new Vector(state.HorizontalOffset, state.VerticalOffset);
 			}
+			else
+			{
+				Editor.TextArea.Caret.Offset = 0;
+				if (EditorScrollViewer is { } scrollViewer)
+					scrollViewer.Offset = default;
+			}
+		}
 
-			// Swap any tab-contributed visual-line element generators (e.g. About-page hyperlink
-			// generators). Tracked separately from the always-on referenceElementGenerator and
-			// uiElementGenerator so the two sets don't collide on tab change.
+		// Swap any tab-contributed visual-line element generators (e.g. About-page hyperlink
+		// generators). Tracked separately from the always-on referenceElementGenerator and
+		// uiElementGenerator so the two sets don't collide on tab change.
+		void SwapCustomElementGenerators(IReadOnlyList<AvaloniaEdit.Rendering.VisualLineElementGenerator>? modelGenerators)
+		{
 			var generators = Editor.TextArea.TextView.ElementGenerators;
 			foreach (var g in activeCustomGenerators)
 				generators.Remove(g);
 			activeCustomGenerators.Clear();
-			if (model.CustomElementGenerators is { Count: > 0 } modelGenerators)
+			if (modelGenerators is { Count: > 0 })
 			{
 				foreach (var g in modelGenerators)
 				{
@@ -705,8 +738,6 @@ namespace ILSpy.TextView
 					activeCustomGenerators.Add(g);
 				}
 			}
-
-			Editor.TextArea.TextView.Redraw();
 		}
 
 		void OnHyperlinkOpenUri(object? sender, AvaloniaEdit.Rendering.OpenUriRoutedEventArgs e)
