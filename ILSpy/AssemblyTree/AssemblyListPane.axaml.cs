@@ -334,9 +334,10 @@ namespace ILSpy.AssemblyTree
 					.ToList();
 				if (nodes.Count == 0)
 					return;
-				model.SelectedItems.Clear();
-				foreach (var node in nodes)
-					model.SelectedItems.Add(node);
+				// Go through the batched setter, not a raw Clear()+Add(): the latter flashes a
+				// transient empty selection that poisons the grid-sync deferred guard (the tree
+				// stops following tab activation).
+				model.SelectNodes(nodes);
 			};
 		}
 
