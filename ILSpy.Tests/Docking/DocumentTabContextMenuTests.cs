@@ -80,6 +80,32 @@ public class DocumentTabContextMenuTests
 	}
 
 	[AvaloniaTest]
+	public async Task Close_Entry_Is_Disabled_When_The_Tab_Cannot_Be_Closed()
+	{
+		// The last remaining document is made un-closeable (DockWorkspace.UpdateLastDocumentCanClose
+		// flips CanClose to false so the user can't empty the document area). The context-menu Close
+		// entry must honour that the same way Dock's own close button does, so it binds IsEnabled to
+		// the tab's CanClose.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var (a, _, _) = OpenThreeTabs(vm.DockWorkspace);
+
+		var menu = global::ILSpy.Themes.PreviewTabContextMenuBehavior.BuildDocumentContextMenu(a);
+		var close = menu.ItemsSource!.OfType<global::Avalonia.Controls.MenuItem>()
+			.Single(m => Equals(m.Header, ICSharpCode.ILSpy.Properties.Resources.Close));
+
+		a.CanClose = true;
+		Dispatcher.UIThread.RunJobs();
+		close.IsEnabled.Should().BeTrue("a closeable tab's Close entry is enabled");
+
+		a.CanClose = false;
+		Dispatcher.UIThread.RunJobs();
+		close.IsEnabled.Should().BeFalse("an un-closeable tab's Close entry is disabled");
+	}
+
+	[AvaloniaTest]
 	public async Task Close_All_But_This_Leaves_Only_The_Target_Tab()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

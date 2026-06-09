@@ -20,6 +20,8 @@ using System.ComponentModel;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
+using Avalonia.Input;
 
 using Dock.Avalonia.Controls;
 
@@ -90,6 +92,12 @@ namespace ILSpy.Themes
 		internal static ContextMenu BuildDocumentContextMenu(ContentTabPage tab)
 		{
 			var close = new MenuItem { Header = Resources.Close, Command = tab.CloseCommand };
+			// The last remaining document is made un-closeable (DockWorkspace keeps CanClose false so
+			// the document area can't be emptied). Mirror that on the Close entry, the way Dock's own
+			// close button does -- CanClose is observable (DockableBase : ReactiveBase), so this stays
+			// in sync as tabs open and close.
+			close.Bind(InputElement.IsEnabledProperty,
+				new Binding(nameof(ContentTabPage.CanClose)) { Source = tab });
 			var closeAllButThis = new MenuItem { Header = Resources.CloseAllButThisTab, Command = tab.CloseAllButThisCommand };
 			var closeAll = new MenuItem { Header = Resources.CloseAllTabs, Command = tab.CloseAllCommand };
 
