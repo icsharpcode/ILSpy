@@ -11,6 +11,8 @@
     <Version>1.7.1.0</Version>
     <FileVersion>1.7.1.0</FileVersion>
     <LangVersion>9.0</LangVersion>
+    <!-- Legacy net472 add-in: opt out of the repo-wide warnings-as-errors (Directory.Build.props). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 
     <EnableDefaultItems>False</EnableDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
