@@ -627,19 +627,10 @@ namespace ILSpy.Languages
 			}
 
 			static IReadOnlyList<IResourceFileHandler> TryDiscoverHandlers()
-			{
-				try
-				{
-					return AppEnv.AppComposition.Current.GetExports<IResourceFileHandler>().ToArray();
-				}
-				catch
-				{
-					// Composition isn't available in tests that bypass the host (e.g. invoking
-					// DecompileAsProject directly with a self-built LoadedAssembly). Fall back
-					// to the raw-bytes behaviour from the base class.
-					return System.Array.Empty<IResourceFileHandler>();
-				}
-			}
+				// Composition isn't available in tests that bypass the host (e.g. invoking
+				// DecompileAsProject directly with a self-built LoadedAssembly); TryGetExports then
+				// yields nothing, falling back to the raw-bytes behaviour from the base class.
+				=> AppEnv.AppComposition.TryGetExports<IResourceFileHandler>().ToArray();
 		}
 
 		static List<EntityHandle> CollectFieldsAndCtors(ITypeDefinition type, bool isStatic)
@@ -820,17 +811,11 @@ namespace ILSpy.Languages
 
 		static bool HasReferenceErrors(MetadataFile module)
 		{
-			try
-			{
-				var atm = AppEnv.AppComposition.Current.GetExport<AssemblyTree.AssemblyTreeModel>();
-				var loadedAssembly = atm.AssemblyList?.GetAssemblies()
-					.FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
-				return loadedAssembly?.LoadedAssemblyReferencesInfo.HasErrors == true;
-			}
-			catch
-			{
-				return false;
-			}
+			// No AssemblyTreeModel without a composition host (tests / minimal hosts) -> no errors.
+			var atm = AppEnv.AppComposition.TryGetExport<AssemblyTree.AssemblyTreeModel>();
+			var loadedAssembly = atm?.AssemblyList?.GetAssemblies()
+				.FirstOrDefault(la => la.GetMetadataFileOrNull() == module);
+			return loadedAssembly?.LoadedAssemblyReferencesInfo.HasErrors == true;
 		}
 	}
 }

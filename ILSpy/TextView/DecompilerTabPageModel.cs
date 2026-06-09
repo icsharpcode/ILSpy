@@ -278,14 +278,7 @@ namespace ILSpy.TextView
 		// still construct cleanly.
 		TaskbarProgressService? taskbarProgress;
 		TaskbarProgressService? TaskbarProgress
-			=> taskbarProgress ??= TryGetExport<TaskbarProgressService>();
-
-		static T? TryGetExport<T>() where T : class
-		{
-			try
-			{ return AppEnv.AppComposition.Current.GetExport<T>(); }
-			catch { return null; }
-		}
+			=> taskbarProgress ??= AppEnv.AppComposition.TryGetExport<TaskbarProgressService>();
 
 		public DecompilerTabPageModel()
 		{
@@ -358,16 +351,12 @@ namespace ILSpy.TextView
 		{
 			if (CurrentNode is not { } node)
 				return;
-			try
-			{
-				var languageService = AppEnv.AppComposition.Current.GetExport<Languages.LanguageService>();
-				var dockWorkspace = AppEnv.AppComposition.Current.GetExport<Docking.DockWorkspace>();
-				ILSpy.Commands.SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).HandleExceptions();
-			}
-			catch
-			{
-				// Best-effort: no save path available (minimal host).
-			}
+			// Best-effort: no save path available without a composition host (minimal/design-time host).
+			var languageService = AppEnv.AppComposition.TryGetExport<Languages.LanguageService>();
+			var dockWorkspace = AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>();
+			if (languageService is null || dockWorkspace is null)
+				return;
+			ILSpy.Commands.SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).HandleExceptions();
 		}
 
 		// Fire-and-forget wrapper around DecompileAsync that observes the resulting Task.
@@ -653,35 +642,23 @@ namespace ILSpy.TextView
 		// Pulls the live DecompilerSettings via MEF and returns a clone for this run. Also
 		// bakes the active LanguageService.CurrentVersion into the clone — without this the
 		// toolbar's Language-Version dropdown writes-through to LanguageSettings but never
-		// reaches the decompiler. MEF resolves are wrapped in try/catch so design-time /
-		// minimal test hosts that bypass composition fall back to default settings rather
-		// than throwing.
+		// reaches the decompiler. Resolves go through TryGetExport so design-time / minimal test
+		// hosts that bypass composition fall back to default settings rather than throwing.
 		static ICSharpCode.Decompiler.DecompilerSettings? TryGetLiveDecompilerSettings()
 		{
-			try
-			{
-				var settingsService = AppEnv.AppComposition.Current.GetExport<SettingsService>();
-				var settings = settingsService.DecompilerSettings.Clone();
-				ApplyDisplaySettings(settings, settingsService.DisplaySettings);
-				try
-				{
-					var version = AppEnv.AppComposition.Current.GetExport<Languages.LanguageService>().CurrentVersion;
-					if (Enum.TryParse<ICSharpCode.Decompiler.CSharp.LanguageVersion>(version?.Version, out var languageVersion))
-						settings.SetLanguageVersion(languageVersion);
-					else
-						settings.SetLanguageVersion(ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest);
-				}
-				catch
-				{
-					// No LanguageService available (non-C# language or minimal host) — leave the
-					// settings at whatever default the source DecompilerSettings carried.
-				}
-				return settings;
-			}
-			catch
-			{
+			var settingsService = AppEnv.AppComposition.TryGetExport<SettingsService>();
+			if (settingsService is null)
 				return null;
-			}
+			var settings = settingsService.DecompilerSettings.Clone();
+			ApplyDisplaySettings(settings, settingsService.DisplaySettings);
+			// No LanguageService (non-C# language or minimal host) leaves version null, so the
+			// language version falls back to Latest below.
+			var version = AppEnv.AppComposition.TryGetExport<Languages.LanguageService>()?.CurrentVersion;
+			if (Enum.TryParse<ICSharpCode.Decompiler.CSharp.LanguageVersion>(version?.Version, out var languageVersion))
+				settings.SetLanguageVersion(languageVersion);
+			else
+				settings.SetLanguageVersion(ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest);
+			return settings;
 		}
 
 		/// <summary>

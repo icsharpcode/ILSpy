@@ -205,17 +205,9 @@ namespace ILSpy.ViewModels
 		void RequestRedecompile(int stepLimit, bool isDebug)
 		{
 			lastSelectedStep = stepLimit;
-			DockWorkspace? dock;
-			try
-			{
-				dock = AppComposition.Current.GetExport<DockWorkspace>();
-			}
-			catch
-			{
-				// Composition unavailable in design-time previews; the gesture is a no-op there.
-				return;
-			}
-			dock.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug);
+			// Composition unavailable in design-time previews; the gesture is a no-op there.
+			var dock = AppComposition.TryGetExport<DockWorkspace>();
+			dock?.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug);
 		}
 	}
 }

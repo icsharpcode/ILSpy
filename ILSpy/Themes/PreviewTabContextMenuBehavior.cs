@@ -106,7 +106,7 @@ namespace ILSpy.Themes
 				Header = "Freeze tab",
 				IsVisible = tab.IsPreview,
 			};
-			freezeItem.Click += (_, _) => TryGetDockWorkspace()?.FreezeCurrentTab();
+			freezeItem.Click += (_, _) => AppComposition.TryGetExport<DockWorkspace>()?.FreezeCurrentTab();
 
 			// Keep the Freeze entry (and its separator) in sync with IsPreview so they hide once the
 			// tab is frozen (freeze is one-way — there's no matching unfreeze entry).
@@ -130,13 +130,6 @@ namespace ILSpy.Themes
 					freezeItem,
 				},
 			};
-		}
-
-		static DockWorkspace? TryGetDockWorkspace()
-		{
-			try
-			{ return AppComposition.Current.GetExport<DockWorkspace>(); }
-			catch { return null; }
 		}
 	}
 }

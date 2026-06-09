@@ -18,8 +18,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Composition;
 using System.Composition.Hosting;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 
@@ -44,6 +46,23 @@ namespace ILSpy.AppEnv
 
 		public static CompositionHost Current
 			=> current ?? throw new InvalidOperationException("Composition host is not yet initialized.");
+
+		/// <summary>
+		/// Resolves a single MEF export, or returns <see langword="null"/> when the composition host
+		/// isn't initialized yet (design-time previewer, headless pre-boot) or no such export exists.
+		/// Unlike a blanket try/catch this does NOT swallow composition/activation errors: host
+		/// absence is checked explicitly and the built-in <c>TryGetExport</c> reports a missing export
+		/// as <see langword="false"/>, so a genuinely broken export still surfaces its exception.
+		/// </summary>
+		public static T? TryGetExport<T>() where T : class
+			=> current is { } host && host.TryGetExport(out T? export) ? export : null;
+
+		/// <summary>
+		/// Resolves all MEF exports of <typeparamref name="T"/>, or an empty sequence when the host
+		/// isn't initialized yet. <see cref="TryGetExport{T}"/> for the single-export case.
+		/// </summary>
+		public static IEnumerable<T> TryGetExports<T>() where T : class
+			=> current?.GetExports<T>() ?? Enumerable.Empty<T>();
 
 		public static CompositionHost Initialize()
 		{

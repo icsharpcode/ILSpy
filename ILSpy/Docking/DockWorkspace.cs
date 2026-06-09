@@ -673,16 +673,7 @@ namespace ILSpy.Docking
 		}
 
 		static IEnumerable<Commands.IProtocolHandler> TryGetProtocolHandlers()
-		{
-			try
-			{
-				return AppEnv.AppComposition.Current.GetExports<Commands.IProtocolHandler>();
-			}
-			catch
-			{
-				return System.Array.Empty<Commands.IProtocolHandler>();
-			}
-		}
+			=> AppEnv.AppComposition.TryGetExports<Commands.IProtocolHandler>();
 
 		// Long-lived decompiler viewmodel — kept alive across metadata interludes so going
 		// back to text doesn't lose the previous decompile until a fresh one supersedes it.
@@ -1133,17 +1124,9 @@ namespace ILSpy.Docking
 			// code-behind subscribes to FocusRequested and posts the focus shift onto the
 			// dispatcher so the freshly-active pane has a frame to surface in the layout
 			// first. Resolving the pane through AppComposition (instead of injecting it)
-			// keeps the dock-workspace decoupled from the search namespace.
-			try
-			{
-				var search = AppEnv.AppComposition.Current.GetExport<ILSpy.Search.SearchPaneModel>();
-				search.RequestFocus();
-			}
-			catch
-			{
-				// Composition isn't available in design-time previews / minimal tests; the
-				// activation alone is enough to be useful there.
-			}
+			// keeps the dock-workspace decoupled from the search namespace. TryGetExport is
+			// null in design-time previews / minimal tests, where the activation alone suffices.
+			AppEnv.AppComposition.TryGetExport<ILSpy.Search.SearchPaneModel>()?.RequestFocus();
 		}
 
 		public ContentTabPage OpenNewTab(ContentPageModel content, SharpTreeNode? sourceNode = null)

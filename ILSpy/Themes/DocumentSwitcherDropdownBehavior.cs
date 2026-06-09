@@ -69,7 +69,7 @@ namespace ILSpy.Themes
 			if (e.NewValue is not true)
 				return;
 
-			var settings = TryGetSessionSettings();
+			var settings = AppComposition.TryGetExport<SettingsService>()?.SessionSettings;
 			if (settings is not null)
 			{
 				System.ComponentModel.PropertyChangedEventHandler handler = (_, args) => {
@@ -138,7 +138,8 @@ namespace ILSpy.Themes
 			DockPanel.SetDock(button, Avalonia.Controls.Dock.Right);
 			dockPanel.Children.Insert(0, button);
 
-			UpdateVisibility(strip, TryGetSessionSettings()?.MultiLineDocumentTabs ?? false);
+			UpdateVisibility(strip,
+				AppComposition.TryGetExport<SettingsService>()?.SessionSettings?.MultiLineDocumentTabs ?? false);
 		}
 
 		static void PopulateMenu(DocumentTabStrip strip, ContextMenu menu)
@@ -166,14 +167,5 @@ namespace ILSpy.Themes
 		static Button? FindButton(DocumentTabStrip strip)
 			=> strip.GetVisualDescendants().OfType<Button>()
 				.FirstOrDefault(b => (b.Tag as string) == DropdownTag);
-
-		static SettingsService? TryGetSettingsService()
-		{
-			try
-			{ return AppComposition.Current.GetExport<SettingsService>(); }
-			catch { return null; }
-		}
-
-		static SessionSettings? TryGetSessionSettings() => TryGetSettingsService()?.SessionSettings;
 	}
 }

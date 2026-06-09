@@ -183,7 +183,7 @@ namespace ILSpy.AssemblyTree
 			{
 				// Open the definition in a fresh carve-out tab instead of replacing the current view
 				// (e.g. "Decompile to new tab" on a symbol in the code).
-				TryGetExport<Docking.DockWorkspace>()?.OpenNodeInNewTab(resolved);
+				AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.OpenNodeInNewTab(resolved);
 			}
 			else
 			{
@@ -194,16 +194,9 @@ namespace ILSpy.AssemblyTree
 			// paints local-reference marks on every match once the new Text lands.
 			if (e.Source is null)
 				return;
-			var dockWorkspace = TryGetExport<Docking.DockWorkspace>();
+			var dockWorkspace = AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>();
 			if (dockWorkspace?.ActiveDecompilerTab is { } decompTab)
 				decompTab.HighlightedReference = e.Source;
-		}
-
-		static T? TryGetExport<T>() where T : class
-		{
-			try
-			{ return AppEnv.AppComposition.Current.GetExport<T>(); }
-			catch { return null; }
 		}
 
 		// True while the SelectedItem setter is replacing the collection via Clear()+Add();
@@ -455,7 +448,7 @@ namespace ILSpy.AssemblyTree
 		// and its instance IS the AboutCommand, so we can drive its welcome path directly.
 		void ShowAboutWelcomePage()
 		{
-			var registry = TryGetExport<MainMenuCommandRegistry>();
+			var registry = AppEnv.AppComposition.TryGetExport<MainMenuCommandRegistry>();
 			var export = registry?.Commands
 				.FirstOrDefault(c => c.Metadata.Header == nameof(ICSharpCode.ILSpy.Properties.Resources._About))
 				?.CreateExport();
@@ -1050,7 +1043,7 @@ namespace ILSpy.AssemblyTree
 				var removed = new HashSet<LoadedAssembly>(oldItems.OfType<LoadedAssembly>());
 				if (removed.Count > 0)
 				{
-					TryGetExport<Docking.DockWorkspace>()?.PruneHistory(node =>
+					AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.PruneHistory(node =>
 						node.AncestorsAndSelf()
 							.OfType<AssemblyTreeNode>()
 							.Any(a => removed.Contains(a.LoadedAssembly)));
@@ -1092,7 +1085,7 @@ namespace ILSpy.AssemblyTree
 		/// (e.g. the ones <see cref="LoadDependenciesAsync"/> just resolved).
 		/// </summary>
 		public void RefreshDecompiledView()
-			=> TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
+			=> AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
 
 		/// <summary>
 		/// Resolves every assembly reference of each supplied assembly node through that
@@ -1154,7 +1147,7 @@ namespace ILSpy.AssemblyTree
 			// SelectedItem setter early-outs, and DockWorkspace.ShowSelectedNode's
 			// dedup short-circuits — leaving stale decompiled text. Force a fresh
 			// render. Mirrors WPF's RefreshDecompiledView() call.
-			TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
+			AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
 		}
 	}
 }

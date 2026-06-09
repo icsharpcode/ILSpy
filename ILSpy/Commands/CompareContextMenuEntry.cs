@@ -51,7 +51,7 @@ namespace ILSpy.Commands
 				[AssemblyTreeNode left, AssemblyTreeNode right])
 				return;
 
-			var dockWorkspace = TryGetExport<DockWorkspace>();
+			var dockWorkspace = AppComposition.TryGetExport<DockWorkspace>();
 			if (dockWorkspace == null)
 				return;
 			var pane = new CompareTabPageModel(left.LoadedAssembly, right.LoadedAssembly);
@@ -60,13 +60,6 @@ namespace ILSpy.Commands
 			// so the new tab isn't anchored to either assembly's tree node — the compare
 			// view is a pair, not a single-node decompile result.
 			dockWorkspace.OpenNewTab(pane);
-		}
-
-		static T? TryGetExport<T>() where T : class
-		{
-			try
-			{ return AppComposition.Current.GetExport<T>(); }
-			catch { return null; }
 		}
 	}
 }

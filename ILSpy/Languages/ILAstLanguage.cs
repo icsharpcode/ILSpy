@@ -130,17 +130,6 @@ namespace ILSpy.Languages
 			this.transforms = CSharpDecompiler.GetILTransforms();
 		}
 
-		// DockWorkspace is resolved lazily — taking it as an [ImportingConstructor] argument
-		// creates a composition cycle (DockWorkspace already imports LanguageService, which
-		// imports the registered Languages). Lazy lookup at decompile time breaks the cycle
-		// and Costs only one MEF GetExport call per "Show Steps" button click.
-		DockWorkspace? TryGetDockWorkspace()
-		{
-			try
-			{ return AppComposition.Current.GetExport<DockWorkspace>(); }
-			catch { return null; }
-		}
-
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			base.DecompileMethod(method, output, options);
@@ -188,8 +177,11 @@ namespace ILSpy.Languages
 					OnStepperUpdated();
 				}
 			}
+			// DockWorkspace is resolved lazily here, not via [ImportingConstructor]: it imports
+			// LanguageService, which imports the registered Languages, so a constructor import would
+			// form a composition cycle. The lazy lookup costs one MEF resolve per "Show Steps" click.
 			(output as ISmartTextOutput)?.AddButton(Images.Images.ViewCode, "Show Steps", delegate {
-				TryGetDockWorkspace()?.ShowToolPane(DebugStepsPaneModel.PaneContentId);
+				AppComposition.TryGetExport<DockWorkspace>()?.ShowToolPane(DebugStepsPaneModel.PaneContentId);
 			});
 			output.WriteLine();
 			il.WriteTo(output, DebugStepsPaneModel.WritingOptions);

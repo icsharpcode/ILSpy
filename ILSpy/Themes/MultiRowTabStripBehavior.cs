@@ -71,7 +71,7 @@ namespace ILSpy.Themes
 			strip.AddHandler(InputElement.PointerWheelChangedEvent, OnPointerWheel,
 				RoutingStrategies.Tunnel);
 
-			var settings = TryGetSessionSettings();
+			var settings = AppComposition.TryGetExport<SettingsService>()?.SessionSettings;
 			PropertyChangedEventHandler? settingsHandler = null;
 			if (settings is not null)
 			{
@@ -92,7 +92,7 @@ namespace ILSpy.Themes
 
 		static void OnPointerWheel(object? sender, PointerWheelEventArgs e)
 		{
-			var settings = TryGetSessionSettings();
+			var settings = AppComposition.TryGetExport<SettingsService>()?.SessionSettings;
 			if (settings is null || e.Delta.Y == 0 || !settings.MouseWheelTogglesTabStripRows)
 				return;
 			// Idempotent set: rolling further in the same direction keeps the same mode rather than
@@ -125,13 +125,7 @@ namespace ILSpy.Themes
 			}
 		}
 
-		static bool CurrentMultiLine() => TryGetSessionSettings()?.MultiLineDocumentTabs ?? false;
-
-		static SessionSettings? TryGetSessionSettings()
-		{
-			try
-			{ return AppComposition.Current.GetExport<SettingsService>().SessionSettings; }
-			catch { return null; }
-		}
+		static bool CurrentMultiLine()
+			=> AppComposition.TryGetExport<SettingsService>()?.SessionSettings?.MultiLineDocumentTabs ?? false;
 	}
 }

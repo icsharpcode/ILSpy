@@ -170,7 +170,7 @@ namespace ILSpy.Themes
 				Mode = BindingMode.OneWay,
 			});
 
-			freezeButton.Click += (_, _) => TryGetDockWorkspace()?.FreezeCurrentTab();
+			freezeButton.Click += (_, _) => AppComposition.TryGetExport<DockWorkspace>()?.FreezeCurrentTab();
 
 			// Insert a new Auto-sized column right before the last (close) column, bump any
 			// existing children at or past that index by +1, and dock the freeze button there.
@@ -185,13 +185,6 @@ namespace ILSpy.Themes
 			}
 			Grid.SetColumn(freezeButton, newColIndex);
 			grid.Children.Add(freezeButton);
-		}
-
-		static DockWorkspace? TryGetDockWorkspace()
-		{
-			try
-			{ return AppComposition.Current.GetExport<DockWorkspace>(); }
-			catch { return null; }
 		}
 	}
 }
