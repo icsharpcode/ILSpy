@@ -23,6 +23,10 @@ jobs:
       StagingDirectory: buildartifacts
       BuildAndPublishVsix: true
 
+    defaults:
+      run:
+        shell: pwsh
+
     steps:
     - run: mkdir -p $env:StagingDirectory
       
@@ -60,7 +64,6 @@ jobs:
 
     - name: Get Version
       id: version
-      shell: pwsh
       run: |
         .\BuildTools\ghactions-install.ps1
         Get-ChildItem Env: | Where-Object {$_.Name -Match "^ILSPY_"} | %{ echo "$($_.Name)=$($_.Value)" } | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
@@ -103,24 +106,23 @@ jobs:
         folded: true
 
     - name: Publish x64/arm64 framework-dependent/self-contained
-      shell: pwsh
       run: .\publish.ps1 -Configuration ${{ matrix.configuration }}
     
     - name: Zip ILSpy (framework-dependent)
       run: >
-        7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip ${{ matrix.configuration == 'release' && '-xr!*.pdb' || '' }}
+        7z a -tzip $env:StagingDirectory\ILSpy_binaries.zip ${{ matrix.configuration == 'release' && '''-xr!*.pdb''' || '' }}
         .\ILSpy\bin\${{ matrix.configuration }}\net10.0\win-x64\publish\fwdependent\*
 
     - name: Zip ILSpy Release (x64 self-contained)
       if: matrix.configuration == 'release'
       run: >
-        7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip -xr!*.pdb
+        7z a -tzip $env:StagingDirectory\ILSpy_selfcontained_x64.zip '-xr!*.pdb'
         .\ILSpy\bin\Release\net10.0\win-x64\publish\selfcontained\*
 
     - name: Zip ILSpy Release (arm64 framework-dependent)
       if: matrix.configuration == 'release'
       run: >
-        7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip -xr!*.pdb
+        7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip '-xr!*.pdb'
         .\ILSpy\bin\Release\net10.0\win-arm64\publish\fwdependent\*
 
     - name: Pack NuGets
@@ -145,7 +147,6 @@ jobs:
       
     - name: Verify package contents
       if: matrix.configuration == 'debug'
-      shell: pwsh
       run: |
         .\BuildTools\create-filelists.ps1
         git diff --exit-code
