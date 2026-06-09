@@ -89,6 +89,25 @@ public class MetadataColumnBuilderTests
 		page.ColumnFilters.Select(f => f.ColumnName).Should().Equal("RID", "Token", "Name");
 	}
 
+	sealed class SampleEntryWithTooltip
+	{
+		public int RID { get; set; }
+		public string Name { get; set; } = "";
+		public string NameTooltip => $"heap-offset for {Name}";
+	}
+
+	[AvaloniaTest]
+	public void For_Skips_Tooltip_Companion_Properties()
+	{
+		// {Column}Tooltip properties are the hover text for their sibling column (surfaced by
+		// MetadataCellTooltip on cell hover), not data in their own right. They must not become
+		// their own columns -- otherwise the grid shows a raw "NameTooltip" column beside "Name".
+		var columns = MetadataColumnBuilder.For<SampleEntryWithTooltip>();
+
+		columns.Select(c => c.Tag).Should().Equal("RID", "Name");
+		columns.Select(c => c.Tag).Should().NotContain("NameTooltip");
+	}
+
 	sealed class SampleEntryWithToken
 	{
 		public int RID { get; set; }

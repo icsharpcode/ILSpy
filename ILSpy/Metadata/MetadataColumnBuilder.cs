@@ -104,6 +104,11 @@ namespace ILSpy.Metadata
 					continue;
 				if (prop.PropertyType == typeof(IList<BitEntry>))
 					continue;
+				// {Column}Tooltip properties are the hover text for their sibling column
+				// (MetadataCellTooltip resolves them on cell hover), not data in their own
+				// right -- they must not surface as standalone columns.
+				if (prop.Name.EndsWith("Tooltip", StringComparison.Ordinal))
+					continue;
 				list.Add(new ColumnDescriptor(prop, prop.GetCustomAttribute<ColumnInfoAttribute>()));
 			}
 			return list.ToArray();
