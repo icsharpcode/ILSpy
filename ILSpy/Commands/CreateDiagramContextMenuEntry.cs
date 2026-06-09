@@ -30,6 +30,7 @@ using ICSharpCode.ILSpyX.TreeView;
 using ILSpy.Docking;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
+using ILSpy.Util;
 
 namespace ILSpy.Commands
 {
@@ -98,35 +99,10 @@ namespace ILSpy.Commands
 			output.WriteLine();
 			output.WriteLine();
 			var diagramHtml = Path.Combine(outputFolder, "index.html");
-			output.AddButton(null, Resources.OpenExplorer, (_, _) => OpenInShell(diagramHtml));
+			output.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.RevealFile(diagramHtml));
 			output.WriteLine();
 			return output;
 		}
 
-		static void OpenInShell(string path)
-		{
-			try
-			{
-				if (OperatingSystem.IsWindows())
-				{
-					Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = false });
-				}
-				else if (OperatingSystem.IsMacOS())
-				{
-					Process.Start(new ProcessStartInfo("open", $"-R \"{path}\"") { UseShellExecute = false });
-				}
-				else
-				{
-					// Linux: no universal "select item" command; open the parent directory instead.
-					var parent = Path.GetDirectoryName(path);
-					if (!string.IsNullOrEmpty(parent))
-						Process.Start(new ProcessStartInfo("xdg-open", parent) { UseShellExecute = false });
-				}
-			}
-			catch
-			{
-				// Best-effort: the user can navigate to the folder manually if the shell call fails.
-			}
-		}
 	}
 }

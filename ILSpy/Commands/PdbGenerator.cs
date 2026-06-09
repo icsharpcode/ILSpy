@@ -35,6 +35,7 @@ using ICSharpCode.ILSpyX.TreeView;
 using ILSpy.Docking;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
+using ILSpy.Util;
 
 namespace ILSpy.Commands
 {
@@ -135,27 +136,11 @@ namespace ILSpy.Commands
 				output.Write(string.Format(Resources.GenerationCompleteInSeconds, totalWatch.Elapsed.TotalSeconds.ToString("F1")));
 				output.WriteLine();
 				output.WriteLine();
-				output.AddButton(null, Resources.OpenExplorer, (_, _) => OpenFolder(folder));
+				output.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.OpenFolder(folder));
 				output.WriteLine();
 				return output;
 			}, token)).ConfigureAwait(true);
 		}
 
-		static void OpenFolder(string path)
-		{
-			try
-			{
-				if (OperatingSystem.IsWindows())
-					Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = false });
-				else if (OperatingSystem.IsMacOS())
-					Process.Start(new ProcessStartInfo("open", $"\"{path}\"") { UseShellExecute = false });
-				else
-					Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
-			}
-			catch
-			{
-				// Best-effort.
-			}
-		}
 	}
 }

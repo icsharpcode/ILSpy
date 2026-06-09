@@ -27,6 +27,7 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ILSpy.TreeNodes;
+using ILSpy.Util;
 
 namespace ILSpy.Commands
 {
@@ -46,7 +47,7 @@ namespace ILSpy.Commands
 		public void Execute(TextViewContext context)
 		{
 			foreach (var path in GetPathsToReveal(context))
-				RevealInFileManager(path);
+				ShellHelper.RevealFile(path);
 		}
 
 		/// <summary>Public for tests: returns the on-disk file paths the reveal would target,
@@ -81,39 +82,5 @@ namespace ILSpy.Commands
 			return null;
 		}
 
-		static void RevealInFileManager(string path)
-		{
-			try
-			{
-				if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				{
-					// Windows: explorer.exe /select highlights the file inside the folder.
-					Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") {
-						UseShellExecute = false,
-					});
-				}
-				else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-				{
-					// macOS: -R reveals the file in Finder.
-					Process.Start(new ProcessStartInfo("open", $"-R \"{path}\"") {
-						UseShellExecute = false,
-					});
-				}
-				else
-				{
-					// Linux + others: open the parent directory; most file managers don't
-					// have a stable cross-distro "select-file" hook.
-					var dir = Path.GetDirectoryName(path);
-					if (!string.IsNullOrEmpty(dir))
-						Process.Start(new ProcessStartInfo("xdg-open", $"\"{dir}\"") {
-							UseShellExecute = false,
-						});
-				}
-			}
-			catch
-			{
-				// Failure to launch the shell is non-fatal — the menu item already returned.
-			}
-		}
 	}
 }

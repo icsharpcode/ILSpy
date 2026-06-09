@@ -34,6 +34,7 @@ using ICSharpCode.ILSpyX.TreeView;
 using ILSpy.Docking;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
+using ILSpy.Util;
 
 using static ICSharpCode.ILSpyX.LoadedPackage;
 
@@ -133,7 +134,7 @@ namespace ILSpy.Commands
 				output.WriteLine();
 				output.WriteLine();
 				var openTarget = isFile ? path : path;
-				output.AddButton(null, Resources.OpenExplorer, (_, _) => OpenInShell(openTarget, isFile));
+				output.AddButton(null, Resources.OpenExplorer, (_, _) => { if (isFile) ShellHelper.RevealFile(openTarget); else ShellHelper.OpenFolder(openTarget); });
 				output.WriteLine();
 				return output;
 			}, token)).ConfigureAwait(true);
@@ -196,31 +197,6 @@ namespace ILSpy.Commands
 			output.WriteLine();
 		}
 
-		static void OpenInShell(string path, bool selectItem)
-		{
-			try
-			{
-				if (OperatingSystem.IsWindows())
-				{
-					var args = selectItem ? $"/select,\"{path}\"" : $"\"{path}\"";
-					Process.Start(new ProcessStartInfo("explorer.exe", args) { UseShellExecute = false });
-				}
-				else if (OperatingSystem.IsMacOS())
-				{
-					var args = selectItem ? $"-R \"{path}\"" : $"\"{path}\"";
-					Process.Start(new ProcessStartInfo("open", args) { UseShellExecute = false });
-				}
-				else
-				{
-					var target = selectItem ? Path.GetDirectoryName(path)! : path;
-					Process.Start(new ProcessStartInfo("xdg-open", target) { UseShellExecute = false });
-				}
-			}
-			catch
-			{
-				// Best-effort: user can navigate manually if the shell call fails.
-			}
-		}
 
 		static bool IsBundleItem(SharpTreeNode node)
 		{

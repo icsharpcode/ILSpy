@@ -66,20 +66,9 @@ namespace ILSpy.Util
 			Process.Start("dot", $"\"{fileName}.gv\" -Tpng -o \"{fileName}.png\"")?.WaitForExit();
 			// Cross-platform "open file with default app": Process.Start with
 			// UseShellExecute=true works on Windows and Mac; on Linux fall back to xdg-open.
-			OpenWithDefaultApplication(fileName + ".png");
+			ShellHelper.OpenWithDefaultApplication(fileName + ".png");
 		}
 
-		static void OpenWithDefaultApplication(string path)
-		{
-			if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
-			{
-				Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-			}
-			else
-			{
-				Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
-			}
-		}
 
 		static string Escape(string text)
 		{

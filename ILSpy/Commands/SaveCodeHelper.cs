@@ -29,6 +29,7 @@ using ILSpy.Docking;
 using ILSpy.Languages;
 using ILSpy.TextView;
 using ILSpy.TreeNodes;
+using ILSpy.Util;
 
 namespace ILSpy.Commands
 {
@@ -80,7 +81,7 @@ namespace ILSpy.Commands
 					o.WriteLine();
 					if (Path.GetDirectoryName(path) is { Length: > 0 } directory)
 					{
-						o.AddButton(null, Resources.OpenExplorer, (_, _) => OpenFolder(directory));
+						o.AddButton(null, Resources.OpenExplorer, (_, _) => ShellHelper.OpenFolder(directory));
 						o.WriteLine();
 					}
 					return o;
@@ -139,21 +140,5 @@ namespace ILSpy.Commands
 			return string.IsNullOrEmpty(clean) ? "output" : clean;
 		}
 
-		static void OpenFolder(string path)
-		{
-			try
-			{
-				if (OperatingSystem.IsWindows())
-					Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = false });
-				else if (OperatingSystem.IsMacOS())
-					Process.Start(new ProcessStartInfo("open", $"\"{path}\"") { UseShellExecute = false });
-				else
-					Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
-			}
-			catch
-			{
-				// Best-effort.
-			}
-		}
 	}
 }
