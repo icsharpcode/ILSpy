@@ -41,7 +41,7 @@ public class SearchPaneViewTests
 		// The pane's contract — used by every downstream commit in this series — is
 		// that the view exposes three named controls bound to the view-model: a TextBox
 		// for the query (SearchInput), a ComboBox for the mode picker (SearchModePicker),
-		// and a ListBox that renders incoming results (SearchResults).
+		// and a DataGrid that renders incoming results (SearchResults).
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -59,7 +59,7 @@ public class SearchPaneViewTests
 		modePicker!.ItemCount.Should().Be(12,
 			"the picker must populate from SearchPaneModel.SearchModes — twelve entries");
 
-		var results = pane.FindControl<ListBox>("SearchResults");
+		var results = pane.FindControl<DataGrid>("SearchResults");
 		((object?)results).Should().NotBeNull("the results list is the binding sink for the streaming orchestrator");
 	}
 

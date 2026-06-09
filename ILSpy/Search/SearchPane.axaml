@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:search="using:ILSpy.Search"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
              x:Class="ILSpy.Search.SearchPane"
              x:DataType="search:SearchPaneModel">
@@ -55,40 +56,68 @@
 		             Height="2" Margin="0,0,0,1"
 		             BorderThickness="0"
 		             MinHeight="2" />
-		<ListBox Grid.Row="2" Name="SearchResults"
-		         ItemsSource="{Binding Results}"
-		         x:CompileBindings="False">
-			<ListBox.ItemTemplate>
-				<DataTemplate>
-					<!-- Three icon+text cells: Name | Location | Assembly. Each cell is a
-					     two-column Grid so the icon doesn't compress when the text gets
-					     ellipsised. -->
-					<Grid ColumnDefinitions="*,8,Auto,8,Auto" Margin="2,1">
-						<Grid Grid.Column="0" ColumnDefinitions="Auto,4,*">
-							<Image Grid.Column="0" Source="{Binding Image}" Width="16" Height="16"
-							       VerticalAlignment="Center" />
-							<TextBlock Grid.Column="2" Text="{Binding Name}"
-							           ToolTip.Tip="{Binding ToolTip}"
-							           VerticalAlignment="Center"
-							           TextTrimming="CharacterEllipsis" />
-						</Grid>
-						<Grid Grid.Column="2" ColumnDefinitions="Auto,4,*">
-							<Image Grid.Column="0" Source="{Binding LocationImage}" Width="16" Height="16"
-							       VerticalAlignment="Center" />
-							<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
-							           VerticalAlignment="Center"
-							           TextTrimming="CharacterEllipsis" />
-						</Grid>
-						<Grid Grid.Column="4" ColumnDefinitions="Auto,4,*">
-							<Image Grid.Column="0" Source="{Binding AssemblyImage}" Width="16" Height="16"
-							       VerticalAlignment="Center" />
-							<TextBlock Grid.Column="2" Text="{Binding Assembly}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
-							           VerticalAlignment="Center"
-							           TextTrimming="CharacterEllipsis" />
-						</Grid>
-					</Grid>
-				</DataTemplate>
-			</ListBox.ItemTemplate>
-		</ListBox>
+		<!-- Results grid: clickable, sortable column headers (Name | Location | Assembly). Template
+		     columns keep the per-field icons; SortMemberPath ties each header to the SearchResult
+		     property it shows. No initial column sort, so rows stay in the fitness/name streaming
+		     order until the user clicks a header. -->
+		<DataGrid Grid.Row="2" Name="SearchResults"
+		          ItemsSource="{Binding Results}"
+		          x:CompileBindings="False"
+		          AutoGenerateColumns="False"
+		          CanUserSortColumns="True"
+		          CanUserResizeColumns="True"
+		          IsReadOnly="True"
+		          HeadersVisibility="Column"
+		          GridLinesVisibility="None"
+		          SelectionMode="Single">
+			<DataGrid.Columns>
+				<!-- Star widths (never Auto): an Auto column re-measures to the widest realised cell,
+				     so it visibly jumps as rows virtualise in/out on scroll. Resizable if needed. -->
+				<DataGridTemplateColumn Header="{x:Static res:Resources.Name}" Width="2*"
+				                        CanUserSort="True" SortMemberPath="Name">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<!-- Two-column cell so the icon doesn't compress when the text ellipsises. -->
+							<Grid ColumnDefinitions="Auto,4,*" Margin="2,1">
+								<Image Grid.Column="0" Source="{Binding Image}" Width="16" Height="16"
+								       VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="{Binding Name}"
+								           ToolTip.Tip="{Binding ToolTip}"
+								           VerticalAlignment="Center"
+								           TextTrimming="CharacterEllipsis" />
+							</Grid>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="{x:Static res:Resources.Location}" Width="*"
+				                        CanUserSort="True" SortMemberPath="Location">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Grid ColumnDefinitions="Auto,4,*" Margin="2,1">
+								<Image Grid.Column="0" Source="{Binding LocationImage}" Width="16" Height="16"
+								       VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="{Binding Location}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
+								           VerticalAlignment="Center"
+								           TextTrimming="CharacterEllipsis" />
+							</Grid>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="{x:Static res:Resources.Assembly}" Width="*"
+				                        CanUserSort="True" SortMemberPath="Assembly">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate>
+							<Grid ColumnDefinitions="Auto,4,*" Margin="2,1">
+								<Image Grid.Column="0" Source="{Binding AssemblyImage}" Width="16" Height="16"
+								       VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="{Binding Assembly}" Foreground="{DynamicResource ILSpy.SecondaryForeground}"
+								           VerticalAlignment="Center"
+								           TextTrimming="CharacterEllipsis" />
+							</Grid>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+			</DataGrid.Columns>
+		</DataGrid>
 	</Grid>
 </UserControl>

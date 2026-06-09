@@ -116,7 +116,7 @@ public class SearchPaneNicetiesTests
 		vm.Results.Add(Dummy("Alpha"));
 		vm.Results.Add(Dummy("Beta"));
 		var input = pane.FindControl<TextBox>("SearchInput")!;
-		var results = pane.FindControl<ListBox>("SearchResults")!;
+		var results = pane.FindControl<DataGrid>("SearchResults")!;
 
 		RaiseKey(input, Key.Down, KeyModifiers.None);
 		Dispatcher.UIThread.RunJobs();
@@ -130,7 +130,7 @@ public class SearchPaneNicetiesTests
 		var (_, pane, vm) = await ShowPaneAsync();
 		vm.Results.Add(Dummy("Alpha"));
 		var input = pane.FindControl<TextBox>("SearchInput")!;
-		var results = pane.FindControl<ListBox>("SearchResults")!;
+		var results = pane.FindControl<DataGrid>("SearchResults")!;
 		results.SelectedIndex = 0;
 
 		RaiseKey(results, Key.Up, KeyModifiers.None);
@@ -151,7 +151,7 @@ public class SearchPaneNicetiesTests
 		await Waiters.WaitForAsync(() => vm.Results.Any(r => r is MemberSearchResult),
 			timeout: TimeSpan.FromSeconds(30));
 
-		var results = pane.FindControl<ListBox>("SearchResults")!;
+		var results = pane.FindControl<DataGrid>("SearchResults")!;
 		results.SelectedItem = vm.Results.First(r => r is MemberSearchResult);
 		int before = workspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
 
