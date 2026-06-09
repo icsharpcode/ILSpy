@@ -461,6 +461,18 @@ namespace ILSpy.Docking
 			};
 
 		/// <summary>
+		/// Makes <paramref name="dockable"/> both the active and the focused dockable within
+		/// <paramref name="owner"/>. The two always go together -- surfacing a dockable without
+		/// focusing it (or vice versa) is a half-done activation -- so they're paired here and
+		/// callers do the (varying) "add it to the dock first" step themselves.
+		/// </summary>
+		public void ActivateAndFocus(IDock owner, IDockable dockable)
+		{
+			SetActiveDockable(dockable);
+			SetFocusedDockable(owner, dockable);
+		}
+
+		/// <summary>
 		/// Brings a tool pane into view: activates it if it is already shown, otherwise
 		/// materialises it -- (re)creating its home <see cref="ToolDock"/> at the pane's
 		/// alignment and splicing that dock back into the layout if it was never built or was
@@ -477,8 +489,7 @@ namespace ILSpy.Docking
 			// Already live in the layout -> just activate it where it sits.
 			if (pane.Owner is IDock current && current.VisibleDockables?.Contains(pane) == true)
 			{
-				SetActiveDockable(pane);
-				SetFocusedDockable(current, pane);
+				ActivateAndFocus(current, pane);
 				return pane;
 			}
 
@@ -486,8 +497,7 @@ namespace ILSpy.Docking
 			if (dock is null)
 				return pane;
 			AddDockable(dock, pane);
-			SetActiveDockable(pane);
-			SetFocusedDockable(dock, pane);
+			ActivateAndFocus(dock, pane);
 			return pane;
 		}
 

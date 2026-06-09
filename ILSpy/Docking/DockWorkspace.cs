@@ -1137,8 +1137,7 @@ namespace ILSpy.Docking
 			if (factory.Documents != null)
 			{
 				factory.AddDockable(factory.Documents, tab);
-				factory.SetActiveDockable(tab);
-				factory.SetFocusedDockable(factory.Documents, tab);
+				factory.ActivateAndFocus(factory.Documents, tab);
 			}
 			return tab;
 		}
@@ -1169,8 +1168,7 @@ namespace ILSpy.Docking
 				return;
 			if (docs.VisibleDockables?.Contains(tab) != true)
 				factory.AddDockable(docs, tab);
-			factory.SetActiveDockable(tab);
-			factory.SetFocusedDockable(docs, tab);
+			factory.ActivateAndFocus(docs, tab);
 		}
 
 		/// <summary>
@@ -1221,8 +1219,7 @@ namespace ILSpy.Docking
 			{
 				if (docs.VisibleDockables?.Contains(main) != true)
 					return false;
-				factory.SetActiveDockable(main);
-				factory.SetFocusedDockable(docs, main);
+				factory.ActivateAndFocus(docs, main);
 			}
 			return true;
 		}
