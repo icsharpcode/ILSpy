@@ -223,6 +223,7 @@ namespace ILSpy.Languages
 				case "volatile":
 				case "async":
 				case "partial":
+				case "required":
 					color = modifiersColor;
 					break;
 				case "readonly":
