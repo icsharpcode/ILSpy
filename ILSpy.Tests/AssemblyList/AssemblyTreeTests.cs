@@ -753,6 +753,62 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Expanding_A_Node_Does_Not_Scroll_The_Selection_Back_Into_View()
+	{
+		// Rule: when the user mutates the tree directly -- here, expanding an unrelated node -- the
+		// app must not chase the selection; the viewport follows the user's action, not the selected
+		// row. Regression: the ListBox's AutoScrollToSelectedItem yanked the (now off-screen)
+		// selection back into view on every expand, fighting the expand's own reveal ("weird
+		// scrolling"). Cross-control navigation still reveals (that path goes through the model).
+
+		var (window, vm) = await TestHarness.BootAsync(3);
+
+		// Tall tree: fully expand System.Linq so the list is taller than the viewport.
+		var enumerable = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		enumerable.Expand();
+		var ns = (NamespaceTreeNode)enumerable.Parent!;
+		ns.Expand();
+		((AssemblyTreeNode)ns.Parent!).IsExpanded = true;
+		foreach (var t in ns.Children.OfType<TypeTreeNode>())
+			t.Expand();
+
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var scrollViewer = await grid.WaitForComponent<ScrollViewer>();
+
+		// Select + reveal the type, then let it settle on screen.
+		vm.AssemblyTreeModel.SelectNode(enumerable);
+		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+		grid.UpdateLayout();
+
+		(scrollViewer.Extent.Height - scrollViewer.Viewport.Height).Should().BeGreaterThan(50,
+			"the tree must be taller than the viewport for this test to be meaningful");
+		grid.IsNodeFullyVisible(enumerable).Should().BeTrue("the selected type is revealed before the expand");
+
+		// Act: the user expands an unrelated, earlier node (CoreLib, at the top), inserting many
+		// rows above the selection and pushing it off-screen.
+		var coreLib = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(typeof(object).Assembly.GetName().Name!);
+		coreLib.IsExpanded = true;
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+		grid.UpdateLayout();
+
+		// Assert: the app did not chase the selection. The expand reveals the opened node's children;
+		// the off-screen selection stays off-screen.
+		grid.IsNodeFullyVisible(enumerable).Should().BeFalse(
+			"expanding a node the user opened must not auto-scroll the off-screen selection back into view");
+	}
+
+	[AvaloniaTest]
 	public async Task Save_Code_Command_Dispatches_Single_Selected_Node_Save_Override()
 	{
 		// SaveCommand on a single ILSpyTreeNode selection must call the node's own Save()

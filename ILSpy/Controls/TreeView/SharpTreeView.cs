@@ -75,6 +75,12 @@ namespace ILSpy.Controls.TreeView
 			// Take keyboard focus directly so gestures like Ctrl+A work the moment the user tabs
 			// or clicks into the pane, before any row becomes the current item.
 			Focusable = true;
+			// The app reveals the selection explicitly on cross-control navigation (search results,
+			// code/metadata links, analyzer nodes) via TreeSelectionBinder -> CenterNodeInView. The
+			// ListBox's own AutoScrollToSelectedItem additionally chases the selected row whenever its
+			// index shifts -- e.g. when the user expands an unrelated node -- yanking the viewport away
+			// from what the user is doing. Disable it so in-tree gestures never move the view.
+			AutoScrollToSelectedItem = false;
 			SelectionChanged += OnSelectionChanged;
 			DoubleTapped += OnDoubleTapped;
 			// Drag-drop is handled generically here and delegated to SharpTreeNode.CanDrop/Drop.
