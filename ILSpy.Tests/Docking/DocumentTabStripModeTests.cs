@@ -135,6 +135,31 @@ public class DocumentTabStripModeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Mouse_Wheel_Does_Not_Toggle_The_Mode_When_The_Setting_Is_Off()
+	{
+		var savedMode = Settings.MultiLineDocumentTabs;
+		var savedGate = Settings.MouseWheelTogglesTabStripRows;
+		try
+		{
+			var (window, strip) = await BootWithTabsAsync(multiLine: false);
+			Settings.MouseWheelTogglesTabStripRows = false;
+			await Pump(window);
+			var point = strip.TranslatePoint(new Point(8, 8), window) ?? new Point(8, 8);
+
+			window.MouseWheel(point, new Vector(0, 1));
+			await Pump(window);
+
+			Settings.MultiLineDocumentTabs.Should().BeFalse(
+				"with the 'mouse wheel toggles' setting off, the wheel must not flip the tab-strip mode");
+		}
+		finally
+		{
+			Settings.MultiLineDocumentTabs = savedMode;
+			Settings.MouseWheelTogglesTabStripRows = savedGate;
+		}
+	}
+
+	[AvaloniaTest]
 	public async Task Clicking_The_Dropdown_Opens_A_Populated_Menu()
 	{
 		var saved = Settings.MultiLineDocumentTabs;

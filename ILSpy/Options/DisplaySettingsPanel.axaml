@@ -99,6 +99,15 @@
 				</StackPanel>
 			</HeaderedContentControl>
 
+			<HeaderedContentControl Header="Tab options">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding SessionSettings.MultiLineDocumentTabs, Mode=TwoWay}"
+					          Content="Enable multiple rows in tab strip" />
+					<CheckBox IsChecked="{Binding SessionSettings.MouseWheelTogglesTabStripRows, Mode=TwoWay}"
+					          Content="Mouse wheel scroll toggles single/multiple row tab strip" />
+				</StackPanel>
+			</HeaderedContentControl>
+
 			<HeaderedContentControl Header="{x:Static res:Resources.Other}">
 				<StackPanel Spacing="2" Margin="12,4,0,0">
 					<CheckBox IsChecked="{Binding Settings.SortResults, Mode=TwoWay}"

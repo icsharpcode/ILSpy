@@ -65,6 +65,14 @@ namespace ILSpy
 		private bool multiLineDocumentTabs;
 
 		/// <summary>
+		/// When true (the default) the mouse wheel over the document tab strip toggles
+		/// <see cref="MultiLineDocumentTabs"/> (wheel up flows to multiple rows, wheel down collapses
+		/// to one). When false the wheel gesture is ignored. Persisted across sessions.
+		/// </summary>
+		[ObservableProperty]
+		private bool mouseWheelTogglesTabStripRows = true;
+
+		/// <summary>
 		/// Path to the previously-selected tree node (one ToString() per ancestor, root-first).
 		/// Used to restore the selection on the next launch.
 		/// </summary>
@@ -100,6 +108,7 @@ namespace ILSpy
 			var culture = (string?)section.Element(nameof(CurrentCulture));
 			CurrentCulture = string.IsNullOrEmpty(culture) ? null : culture;
 			MultiLineDocumentTabs = (bool?)section.Element(nameof(MultiLineDocumentTabs)) ?? false;
+			MouseWheelTogglesTabStripRows = (bool?)section.Element(nameof(MouseWheelTogglesTabStripRows)) ?? true;
 
 			var bounds = section.Element("WindowBounds");
 			if (bounds != null)
@@ -151,6 +160,7 @@ namespace ILSpy
 			if (!string.IsNullOrEmpty(CurrentCulture))
 				section.Add(new XElement(nameof(CurrentCulture), CurrentCulture));
 			section.Add(new XElement(nameof(MultiLineDocumentTabs), MultiLineDocumentTabs));
+			section.Add(new XElement(nameof(MouseWheelTogglesTabStripRows), MouseWheelTogglesTabStripRows));
 
 			if (FilterStates.Count > 0)
 			{

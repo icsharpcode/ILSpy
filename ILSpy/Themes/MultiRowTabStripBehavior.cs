@@ -93,7 +93,7 @@ namespace ILSpy.Themes
 		static void OnPointerWheel(object? sender, PointerWheelEventArgs e)
 		{
 			var settings = TryGetSessionSettings();
-			if (settings is null || e.Delta.Y == 0)
+			if (settings is null || e.Delta.Y == 0 || !settings.MouseWheelTogglesTabStripRows)
 				return;
 			// Idempotent set: rolling further in the same direction keeps the same mode rather than
 			// flip-flopping, so a multi-detent gesture settles cleanly.
