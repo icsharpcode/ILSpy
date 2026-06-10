@@ -99,8 +99,15 @@ namespace ILSpy.Commands
 			if (string.IsNullOrEmpty(folder))
 				return;
 
+			// GeneratingPortablePDB is a "...for {0}..." format string; fill the placeholder with the
+			// single assembly's name, or a count when several were selected, so the tab title isn't a
+			// literal "{0}".
+			string title = supported.Count == 1
+				? string.Format(Resources.GeneratingPortablePDB, supported.Keys.First().ShortName)
+				: string.Format(Resources.GeneratingPortablePDB, supported.Count + " assemblies");
+
 			// Run in a dedicated frozen tab so browsing the tree while PDBs generate can't cancel it.
-			await dockWorkspace.RunInNewTabAsync(Resources.GeneratingPortablePDB, token => Task.Run(() => {
+			await dockWorkspace.RunInNewTabAsync(title, token => Task.Run(() => {
 				var output = new AvaloniaEditTextOutput { Title = "Generate Portable PDB" };
 				var totalWatch = Stopwatch.StartNew();
 				foreach (var (assembly, file) in supported)
@@ -129,6 +136,7 @@ namespace ILSpy.Commands
 					{
 						output.Write(string.Format(Resources.GenerationFailedForAssembly, assembly.FileName, ex.Message));
 						output.WriteLine();
+						output.WriteExceptionDetails(ex);
 					}
 				}
 				totalWatch.Stop();

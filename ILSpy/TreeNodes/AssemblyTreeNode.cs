@@ -468,9 +468,7 @@ namespace ILSpy.TreeNodes
 			{
 				language.WriteCommentLine(output, message);
 				output.WriteLine();
-				output.MarkFoldStart("Exception details", true);
-				output.Write(ex.ToString());
-				output.MarkFoldEnd();
+				output.WriteExceptionDetails(ex);
 			}
 
 			try

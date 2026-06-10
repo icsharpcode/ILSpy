@@ -25,6 +25,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 
 using ILSpy.TextView;
@@ -34,6 +35,34 @@ namespace ILSpy
 {
 	public static class SmartTextOutputExtensions
 	{
+		/// <summary>
+		/// Writes the full exception (type, message, stack trace, inner exceptions) inside a
+		/// default-collapsed "Exception details" fold. Callers write their own header line first; this
+		/// keeps a failure report scannable while leaving the trace one click away when a failure is not
+		/// self-explanatory.
+		/// </summary>
+		public static void WriteExceptionDetails(this ITextOutput output, Exception ex)
+		{
+			ArgumentNullException.ThrowIfNull(output);
+			ArgumentNullException.ThrowIfNull(ex);
+			// Blank line between the caller's header and the fold so the collapsed "Exception details"
+			// marker is visually separated from the message above it.
+			output.WriteLine();
+			output.MarkFoldStart("Exception details", true);
+			// The fold span is counted in WriteLine() calls, not in the '\n' characters embedded in a
+			// single Write(). Emit the trace one line per WriteLine() so the fold genuinely spans
+			// multiple lines; otherwise it collapses to a single line and is dropped as noise.
+			var lines = ex.ToString().Split('\n');
+			for (int i = 0; i < lines.Length; i++)
+			{
+				if (i > 0)
+					output.WriteLine();
+				output.Write(lines[i].TrimEnd('\r'));
+			}
+			output.MarkFoldEnd();
+			output.WriteLine();
+		}
+
 		/// <summary>
 		/// Appends the standard "Open Explorer" result button that opens <paramref name="folder"/> in
 		/// the OS file manager, followed by a blank line. Shared tail of the export / save / PDB outputs.
