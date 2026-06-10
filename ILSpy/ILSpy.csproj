@@ -116,6 +116,10 @@
 
     <!-- CLI parsing -->
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" />
+
+    <!-- NuGet V3 feed client for the "Open from NuGet feed" dialog: search, version
+         enumeration, and download into the global packages folder. -->
+    <PackageReference Include="NuGet.Protocol" />
   </ItemGroup>
 
   <ItemGroup>
