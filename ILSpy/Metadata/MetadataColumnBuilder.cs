@@ -135,8 +135,7 @@ namespace ILSpy.Metadata
 			// asks for it — clicking the funnel focuses the textbox, after which it stays
 			// visible while focused or while a filter is set — so brushing the cursor
 			// across the column name does not swap the label out. For [Flags] columns the
-			// input is just the dropdown trigger; the popup is parked invisibly so it can
-			// remain anchored to the trigger button.
+			// funnel is just the trigger for the filter flyout attached to it.
 			var label = new TextBlock {
 				Text = columnName,
 				FontWeight = FontWeight.SemiBold,
@@ -182,16 +181,17 @@ namespace ILSpy.Metadata
 			bool isFlagsColumn = propertyType.IsEnum
 				&& Attribute.IsDefined(propertyType, typeof(FlagsAttribute));
 
-			Popup? popup = null;
+			Flyout? flyout = null;
 			TextBox? textBox = null;
 			Control headerContent;
 			if (isFlagsColumn)
 			{
 				// Flags columns: label stays visible always — the funnel icon alone is the
-				// popup trigger, no separate dropdown chevron needed since the popup carries
-				// the entire filter UI. PlacementTarget is the funnel itself so the popup
+				// flyout trigger, no separate dropdown chevron needed since the flyout
+				// carries the entire filter UI. Attached to the funnel itself so the flyout
 				// drops below the icon's hit area.
-				popup = BuildFlagsPopup(filter, propertyType, filterIconHost, pageKey, columnName);
+				flyout = BuildFlagsFlyout(filter, propertyType, pageKey, columnName);
+				FlyoutBase.SetAttachedFlyout(filterIconHost, flyout);
 				headerContent = label;
 			}
 			else
@@ -217,14 +217,14 @@ namespace ILSpy.Metadata
 			headerRow.Children.Add(headerContent);
 
 			filterIconHost.PointerPressed += (_, e) => {
-				if (popup != null)
+				if (flyout != null)
 				{
-					// Flag columns: the funnel always opens the popup. Modifying the filter
-					// requires the chip UI inside the popup, and clearing is owned by the
-					// popup's own Clear button — calling FlagsState.Clear() from out here
+					// Flag columns: the funnel always opens the flyout. Modifying the filter
+					// requires the chip UI inside the flyout, and clearing is owned by the
+					// flyout's own Clear button — calling FlagsState.Clear() from out here
 					// would leave the chip IsChecked state stale because we'd skip the
 					// SyncFromState() pass that FlagsFilterPopup.Clear() does.
-					popup.IsOpen = true;
+					FlyoutBase.ShowAttachedFlyout(filterIconHost);
 				}
 				else
 				{
@@ -240,13 +240,8 @@ namespace ILSpy.Metadata
 				e.Handled = true;
 			};
 
-			// The popup needs to live inside the visual tree but doesn't contribute layout.
-			// Park it in a Panel sibling so the header row's height stays driven solely by
-			// label / input.
 			var root = new StackPanel { Orientation = Orientation.Vertical };
 			root.Children.Add(headerRow);
-			if (popup != null)
-				root.Children.Add(popup);
 
 			bool popupOpen = false;
 			bool focusInside = false;
@@ -269,9 +264,9 @@ namespace ILSpy.Metadata
 
 				// Icon affordance: the X form indicates "click to clear". That only matches
 				// the click behaviour on text columns (where clicking when active does clear);
-				// for flag columns the click always opens the popup, so we keep the funnel
+				// for flag columns the click always opens the flyout, so we keep the funnel
 				// shape and just tint it SteelBlue to signal the filter is active.
-				bool useXForm = active && popup is null;
+				bool useXForm = active && flyout is null;
 				if (useXForm)
 				{
 					filterIcon.Data = xGeometry;
@@ -296,10 +291,10 @@ namespace ILSpy.Metadata
 				textBox.LostFocus += (_, _) => { focusInside = false; Update(); };
 			}
 			filter.PropertyChanged += (_, _) => Update();
-			if (popup != null)
+			if (flyout != null)
 			{
-				popup.Opened += (_, _) => { popupOpen = true; Update(); };
-				popup.Closed += (_, _) => { popupOpen = false; Update(); };
+				flyout.Opened += (_, _) => { popupOpen = true; Update(); };
+				flyout.Closed += (_, _) => { popupOpen = false; Update(); };
 			}
 			Update();
 
@@ -331,62 +326,54 @@ namespace ILSpy.Metadata
 			return box;
 		}
 
-		static Popup BuildFlagsPopup(ColumnFilter filter, Type enumType, Control placementTarget, string? pageKey, string columnName)
+		static Flyout BuildFlagsFlyout(ColumnFilter filter, Type enumType, string? pageKey, string columnName)
 		{
-			// Schema-driven popup: FlagsFilterPopup distinguishes mutex sub-ranges
+			// Schema-driven flyout: FlagsFilterPopup distinguishes mutex sub-ranges
 			// (multi-select chips) from independent flags (tri-state pills) and drives
-			// ColumnFilter.FlagsState. The funnel icon owns the open gesture, so this
-			// helper only assembles the Popup itself — no separate trigger button needed.
+			// ColumnFilter.FlagsState. A Flyout (not a raw Popup) supplies light dismiss,
+			// Escape-to-close, focus handling, and theme-correct presenter chrome.
 			var schema = ILSpy.Metadata.Filters.FlagsSchemaInferer.For(enumType);
 			bool freshlyCreated = filter.FlagsState is null;
 			filter.FlagsState ??= new ILSpy.Metadata.Filters.FilterState(schema);
-			// On first-popup-open, restore any persisted state for this (table, column).
+			// On first build, restore any persisted state for this (table, column).
 			// Subsequent opens already carry the live state in-memory. Then subscribe so
 			// later mutations write back to SessionSettings.
 			if (freshlyCreated && pageKey != null)
 				ApplyPersistedFilterState(filter.FlagsState, pageKey, columnName);
 			var popupContent = new ILSpy.Views.Filters.FlagsFilterPopup(filter.FlagsState);
 
-			var popupRoot = new Border {
-				BorderBrush = Brushes.Gray,
-				BorderThickness = new Thickness(1),
-				Background = Brushes.White,
-				// Force the arrow cursor on the popup surface — without this, the
+			var flyoutContent = new ScrollViewer {
+				MaxHeight = 400,
+				Content = popupContent,
+				// Force the arrow cursor on the flyout surface — without this, the
 				// EW-resize cursor set on the DataGrid column header's drag-grip can
-				// leak into the popup if the pointer enters from there before Avalonia
+				// leak into the flyout if the pointer enters from there before Avalonia
 				// recomputes the cursor for the new hit-test target.
 				Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Arrow),
-				Child = new ScrollViewer {
-					MaxHeight = 400,
-					Content = popupContent,
-				},
 			};
-			// Stop wheel events from bubbling out of the popup. Without this, scrolling
+			// Stop wheel events from bubbling out of the flyout. Without this, scrolling
 			// inside the dropdown also scrolls the underlying DataGrid because the
 			// PointerWheelChanged event keeps bubbling up the routed-event tree once the
 			// inner ScrollViewer has consumed (or ignored) it.
-			popupRoot.AddHandler(global::Avalonia.Input.InputElement.PointerWheelChangedEvent,
+			flyoutContent.AddHandler(global::Avalonia.Input.InputElement.PointerWheelChangedEvent,
 				(_, e) => e.Handled = true,
 				handledEventsToo: true);
-			var popup = new Popup {
-				PlacementTarget = placementTarget,
+			// Likewise for pointer clicks: the flyout's internal popup is logically
+			// parented to the funnel inside the column header, so its routed events bubble
+			// on into the DataGridColumnHeader, which treats an unhandled left-button
+			// press/release pair as a sort click. Interactive children (chips, the Clear
+			// button) handle their own pointer events; swallow whatever reaches the
+			// content root unhandled — clicks on padding, hint, and summary text.
+			flyoutContent.AddHandler(global::Avalonia.Input.InputElement.PointerPressedEvent,
+				(_, e) => e.Handled = true);
+			flyoutContent.AddHandler(global::Avalonia.Input.InputElement.PointerReleasedEvent,
+				(_, e) => e.Handled = true);
+
+			return new Flyout {
+				Content = flyoutContent,
 				Placement = PlacementMode.BottomEdgeAlignedLeft,
-				IsLightDismissEnabled = true,
-				Child = popupRoot,
+				ShowMode = FlyoutShowMode.Transient,
 			};
-			// Escape closes the popup — matches the standard popup convention. Tunnel
-			// routing on the popup root so the key is intercepted before any inner control
-			// (e.g. the TextBox in a flag-name search field) tries to consume it.
-			popupRoot.AddHandler(global::Avalonia.Input.InputElement.KeyDownEvent,
-				(_, e) => {
-					if (e.Key == global::Avalonia.Input.Key.Escape)
-					{
-						popup.IsOpen = false;
-						e.Handled = true;
-					}
-				},
-				global::Avalonia.Interactivity.RoutingStrategies.Tunnel);
-			return popup;
 		}
 
 		/// <summary>
