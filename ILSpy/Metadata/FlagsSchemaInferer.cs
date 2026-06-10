@@ -59,13 +59,26 @@ namespace ILSpy.Metadata.Filters
 			var fields = enumType.GetFields(BindingFlags.Public | BindingFlags.Static);
 			var maskFields = new List<(string Name, uint Mask)>();
 			var valueFields = new List<(string Name, uint Value)>();
+			// A zero-valued member fits every mask, so value alone cannot attribute it to a
+			// group. ECMA-335 and the reflection enums declare each mask followed directly by
+			// its members (VisibilityMask, NotPublic, Public, ...), so a zero member is
+			// claimed as the zero label of the most recently declared mask. First wins.
+			var zeroNames = new Dictionary<uint, string>();
+			uint? currentMask = null;
 			foreach (var f in fields)
 			{
 				uint v = ToUInt32(f.GetRawConstantValue());
 				if (f.Name.EndsWith("Mask", StringComparison.Ordinal))
+				{
 					maskFields.Add((f.Name, v));
+					currentMask = v;
+				}
 				else
+				{
 					valueFields.Add((f.Name, v));
+					if (v == 0 && currentMask is uint mask && !zeroNames.ContainsKey(mask))
+						zeroNames[mask] = f.Name;
+				}
 			}
 
 			// Sort masks ascending by mask value so that when a value fits in more than one
@@ -74,9 +87,8 @@ namespace ILSpy.Metadata.Filters
 			maskFields.Sort((a, b) => a.Mask.CompareTo(b.Mask));
 
 			// First pass: bucket every non-zero value into the first mask it fits inside.
-			// Zero-value fields are handled separately — they fit in *every* mask and don't
-			// need a uniqueness rule, since each mutex group always carries an implicit
-			// "(none)" zero option.
+			// Zero-value fields were already claimed (or not) as group zero labels above;
+			// each mutex group always carries a zero option regardless.
 			var groupBuckets = maskFields.ToDictionary(m => m.Mask,
 				m => new List<MutexValue>());
 			var independentFlags = new List<IndependentFlag>();
@@ -105,8 +117,9 @@ namespace ILSpy.Metadata.Filters
 
 			// Build the final mutex groups. Drop empty buckets — a *Mask field whose
 			// values weren't named in the enum (or were aliased away) doesn't earn a
-			// dropdown section. Each group always leads with a synthesised "(none)" entry
-			// for the zero-bit state.
+			// dropdown section. Each group leads with its zero entry: the enum's declared
+			// zero member (NotPublic, AutoLayout, ...) when one was claimed for the mask,
+			// a synthesised "(none)" otherwise.
 			var groups = new List<MutexGroup>();
 			foreach (var (maskName, mask) in maskFields)
 			{
@@ -116,7 +129,9 @@ namespace ILSpy.Metadata.Filters
 				var groupName = maskName.EndsWith("Mask", StringComparison.Ordinal)
 					? maskName[..^"Mask".Length]
 					: maskName;
-				values.Insert(0, new MutexValue("(none)", 0));
+				values.Insert(0, zeroNames.TryGetValue(mask, out var zeroName)
+					? new MutexValue($"{zeroName} (0000)", 0)
+					: new MutexValue("(none)", 0));
 				groups.Add(new MutexGroup(groupName, mask, values));
 			}
 

@@ -65,13 +65,56 @@ public class FlagsSchemaInfererTests
 		colour.Name.Should().Be("Colour");
 		colour.Mask.Should().Be(0x03u);
 		colour.Values.Select(v => (v.Label, v.Value)).Should().Equal(
-			("(none)", 0u),
+			("Black (0000)", 0u),
 			("Red (0001)", 0x01u),
 			("Green (0002)", 0x02u),
 			("Blue (0003)", 0x03u));
 
 		schema.IndependentFlags.Select(f => (f.Name, f.Bit)).Should().Equal(
 			("Sparkly", 0x10u));
+	}
+
+	[Flags]
+	enum ZeroNamedBeforeMask
+	{
+		Nothing = 0x00,
+		ColourMask = 0x03,
+		Red = 0x01,
+		Green = 0x02,
+	}
+
+	[Test]
+	public void Zero_Member_Declared_Before_The_Mask_Does_Not_Name_The_Zero_Entry()
+	{
+		// Zero fits every mask, so a zero-valued member can only be attributed to a group
+		// by declaration order (mask first, its members after — the layout ECMA-335 and
+		// the reflection enums use). A zero member declared before any mask stays
+		// unclaimed and the group keeps the synthesised "(none)".
+		var schema = FlagsSchemaInferer.For(typeof(ZeroNamedBeforeMask));
+
+		var colour = schema.MutexGroups.Single();
+		colour.Values.Select(v => (v.Label, v.Value)).Should().Equal(
+			("(none)", 0u),
+			("Red (0001)", 0x01u),
+			("Green (0002)", 0x02u));
+	}
+
+	[Test]
+	public void TypeAttributes_Groups_Lead_With_Their_ECMA_Zero_Names()
+	{
+		// ECMA-335 II.23.1.15 names the zero state of each sub-range (NotPublic,
+		// AutoLayout, Class, AnsiClass) and the runtime enum declares those members; the
+		// filter dropdowns should show them instead of a synthesised "(none)".
+		var schema = FlagsSchemaInferer.For(typeof(TypeAttributes));
+
+		schema.MutexGroups.Single(g => g.Name == "Visibility")
+			.Values[0].Label.Should().Be("NotPublic (0000)");
+		schema.MutexGroups.Single(g => g.Name == "Layout")
+			.Values[0].Label.Should().Be("AutoLayout (0000)");
+		schema.MutexGroups.Single(g => g.Name == "ClassSemantics")
+			.Values[0].Label.Should().Be("Class (0000)");
+		schema.MutexGroups.Single(g => g.Name == "StringFormat")
+			.Values[0].Label.Should().Be("AnsiClass (0000)");
 	}
 
 	[Test]
