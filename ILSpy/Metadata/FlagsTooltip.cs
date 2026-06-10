@@ -74,13 +74,22 @@ namespace ILSpy.Metadata
 		public static FlagsTooltip ForTypeAttributes(TypeAttributes attributes)
 		{
 			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
+			// ECMA-335 II.23.1.15 Forwarder: set on ExportedType rows that forward the type to
+			// another assembly. System.Reflection.TypeAttributes has no member for the bit, so
+			// the enum-driven GetFlags enumeration cannot surface it; inject it explicitly.
+			const TypeAttributes isTypeForwarder = (TypeAttributes)0x00200000;
 			return new FlagsTooltip {
 				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Visibility: ", (int)TypeAttributes.VisibilityMask, (int)(attributes & TypeAttributes.VisibilityMask), new Flag("NotPublic (0000)", 0, false), includeAny: false),
 				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class layout: ", (int)TypeAttributes.LayoutMask, (int)(attributes & TypeAttributes.LayoutMask), new Flag("AutoLayout (0000)", 0, false), includeAny: false),
 				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Class semantics: ", (int)TypeAttributes.ClassSemanticsMask, (int)(attributes & TypeAttributes.ClassSemanticsMask), new Flag("Class (0000)", 0, false), includeAny: false),
 				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "String format: ", (int)TypeAttributes.StringFormatMask, (int)(attributes & TypeAttributes.StringFormatMask), new Flag("AnsiClass (0000)", 0, false), includeAny: false),
 				FlagGroup.CreateSingleChoiceGroup(typeof(TypeAttributes), "Custom format: ", (int)TypeAttributes.CustomFormatMask, (int)(attributes & TypeAttributes.CustomFormatMask), new Flag("Value0 (0000)", 0, false), includeAny: false),
-				FlagGroup.CreateMultipleChoiceGroup(typeof(TypeAttributes), "Flags:", (int)otherFlagsMask, (int)(attributes & otherFlagsMask), includeAll: false),
+				new MultipleChoiceGroup(
+					FlagGroup.GetFlags(typeof(TypeAttributes), (int)otherFlagsMask, (int)(attributes & otherFlagsMask))
+						.Append(new Flag($"IsTypeForwarder ({(int)isTypeForwarder:X4})", (int)isTypeForwarder, (attributes & isTypeForwarder) != 0))) {
+					Header = "Flags:",
+					SelectedFlags = (int)(attributes & otherFlagsMask),
+				},
 			};
 		}
 	}
