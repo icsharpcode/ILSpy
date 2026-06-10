@@ -52,6 +52,7 @@ namespace ILSpy.Metadata
 				Items = BuildEntries(),
 			};
 			MetadataColumnBuilder.Populate<Entry>(page);
+			MetadataRowDetails.ConfigureEntryFlagsDetails(page);
 			return page;
 		}
 

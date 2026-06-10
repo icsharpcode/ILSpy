@@ -177,7 +177,17 @@ namespace ILSpy.Metadata
 				Items = cached ??= LoadTable(),
 			};
 			MetadataColumnBuilder.Populate<TEntry>(page);
+			ConfigurePage(page);
 			return page;
+		}
+
+		/// <summary>
+		/// Per-table hook for page settings beyond the reflected columns — e.g. the
+		/// CustomDebugInformation table attaches a row-details template here. The default
+		/// leaves the page as the column builder produced it.
+		/// </summary>
+		protected virtual void ConfigurePage(MetadataTablePageModel page)
+		{
 		}
 	}
 }

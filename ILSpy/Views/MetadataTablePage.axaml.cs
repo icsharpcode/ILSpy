@@ -60,6 +60,7 @@ namespace ILSpy.Views
 			if (grid is not null)
 			{
 				grid.DoubleTapped += OnGridDoubleTapped;
+				grid.LoadingRow += OnGridLoadingRow;
 				// Bubble + handledEventsToo: ProDataGrid's row-level pointer handlers mark
 				// PointerPressed handled before bubble reaches our subscription, so we have to
 				// opt into "see handled events too" to react. Tunnel was tried first but
@@ -82,11 +83,37 @@ namespace ILSpy.Views
 			// Resolve the row from the double-tapped element rather than grid.SelectedItem: a
 			// double-click on a column header (e.g. rapidly toggling its sort button) must NOT
 			// navigate to the currently-selected row — only a double-click on a data row does.
-			var visual = e.Source as Visual;
-			while (visual is not null and not DataGridRow)
-				visual = visual.GetVisualParent();
-			if (visual is DataGridRow { DataContext: { } row })
+			if (FindActivatableRow(e.Source as Visual) is { DataContext: { } row })
 				page.RaiseRowActivated(row);
+		}
+
+		/// <summary>
+		/// Walks up from <paramref name="source"/> to the data row a click gesture may
+		/// activate. Returns <see langword="null"/> when the gesture landed outside any row,
+		/// or inside the row's details area — interacting with details content (selecting
+		/// text in an embedded-source blob, scrolling a flags sub-grid) must not navigate
+		/// away from the metadata view.
+		/// </summary>
+		internal static DataGridRow? FindActivatableRow(Visual? source)
+		{
+			var visual = source;
+			while (visual is not null and not DataGridRow)
+			{
+				if (visual is global::Avalonia.Controls.Primitives.DataGridDetailsPresenter)
+					return null;
+				visual = visual.GetVisualParent();
+			}
+			return visual as DataGridRow;
+		}
+
+		void OnGridLoadingRow(object? sender, DataGridRowEventArgs e)
+		{
+			// Row containers are recycled with AreDetailsVisible reset to false, so the
+			// per-item visibility has to be re-derived every time a container materialises.
+			if (boundModel?.IsRowDetailsVisible is not { } isVisible)
+				return;
+			if (e.Row.DataContext is { } item)
+				e.Row.AreDetailsVisible = isVisible(item);
 		}
 
 		void OnGridPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -99,10 +126,7 @@ namespace ILSpy.Views
 			if (e.Source is not Visual hit
 				|| !e.GetCurrentPoint(hit).Properties.IsMiddleButtonPressed)
 				return;
-			var visual = hit;
-			while (visual is not null and not DataGridRow)
-				visual = visual.GetVisualParent();
-			if (visual is not DataGridRow row || row.DataContext is null)
+			if (FindActivatableRow(hit) is not { } row || row.DataContext is null)
 				return;
 			page.RaiseRowActivated(row.DataContext, openInNewTab: true);
 			e.Handled = true;
@@ -344,6 +368,12 @@ namespace ILSpy.Views
 			grid.ItemsSource = Array.Empty<object>();
 			grid.Columns.Clear();
 			itemsView = null;
+			// Apply the row-details schema before the new items attach so the first row
+			// materialisation already sees the right template and visibility mode. The grid's
+			// property is annotated non-nullable but null is its documented "no details" value.
+			grid.RowDetailsTemplate = boundModel?.RowDetailsTemplate!;
+			grid.RowDetailsVisibilityMode = boundModel?.RowDetailsVisibilityMode
+				?? DataGridRowDetailsVisibilityMode.Collapsed;
 			if (boundModel == null)
 				return;
 			foreach (var c in boundModel.Columns)

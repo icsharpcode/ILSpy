@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -54,6 +55,28 @@ namespace ILSpy.ViewModels
 		/// </summary>
 		[ObservableProperty]
 		private int? scrollToRow;
+
+		/// <summary>
+		/// Optional template for the expandable details area beneath each row (flag-bit
+		/// breakdowns, decoded blob content). The view copies it onto the DataGrid whenever
+		/// the schema rebinds; <see langword="null"/> leaves the table without row details.
+		/// </summary>
+		public IDataTemplate? RowDetailsTemplate { get; set; }
+
+		/// <summary>
+		/// When the details area shows: <c>Collapsed</c> tables expand rows individually via
+		/// <see cref="IsRowDetailsVisible"/>; <c>VisibleWhenSelected</c> previews the selected
+		/// row's details as the user moves through the table.
+		/// </summary>
+		public DataGridRowDetailsVisibilityMode RowDetailsVisibilityMode { get; set; }
+			= DataGridRowDetailsVisibilityMode.Collapsed;
+
+		/// <summary>
+		/// Per-row initial details visibility, applied by the view each time a row container
+		/// materialises (rows are recycled with their visibility reset). Only consulted when
+		/// non-null; rows without details should yield <see langword="false"/>.
+		/// </summary>
+		public Func<object, bool>? IsRowDetailsVisible { get; set; }
 
 		/// <summary>
 		/// One filter input per column, in the same order as <see cref="Columns"/>. The view
