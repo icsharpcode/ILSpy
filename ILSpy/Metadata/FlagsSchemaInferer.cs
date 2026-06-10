@@ -36,6 +36,16 @@ namespace ILSpy.Metadata.Filters
 	{
 		static readonly ConcurrentDictionary<Type, FlagsSchema> cache = new();
 
+		/// <summary>
+		/// Bits that exist in ECMA-335 but have no member in the runtime's enum, so the
+		/// field walk cannot surface them. Appended to the inferred independent flags.
+		/// </summary>
+		static readonly Dictionary<Type, IndependentFlag[]> extraFlags = new() {
+			// ECMA-335 II.23.1.15 Forwarder: set on ExportedType rows that forward the
+			// type to another assembly.
+			[typeof(TypeAttributes)] = [new IndependentFlag("IsTypeForwarder", 0x00200000)],
+		};
+
 		public static FlagsSchema For(Type enumType)
 		{
 			ArgumentNullException.ThrowIfNull(enumType);
@@ -89,6 +99,9 @@ namespace ILSpy.Metadata.Filters
 				if (!placed)
 					independentFlags.Add(new IndependentFlag(name, value));
 			}
+
+			if (extraFlags.TryGetValue(enumType, out var extras))
+				independentFlags.AddRange(extras);
 
 			// Build the final mutex groups. Drop empty buckets — a *Mask field whose
 			// values weren't named in the enum (or were aliased away) doesn't earn a

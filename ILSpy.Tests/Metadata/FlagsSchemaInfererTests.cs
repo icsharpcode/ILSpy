@@ -113,6 +113,18 @@ public class FlagsSchemaInfererTests
 	}
 
 	[Test]
+	public void TypeAttributes_Includes_The_Type_Forwarder_Bit()
+	{
+		// 0x00200000 is the ECMA-335 Forwarder bit (II.23.1.15), set on type-forwarder
+		// ExportedType rows. System.Reflection.TypeAttributes has no member for it, so the
+		// enum field walk alone would leave forwarders unfilterable in the flags filter.
+		var schema = FlagsSchemaInferer.For(typeof(TypeAttributes));
+
+		schema.IndependentFlags.Should().ContainSingle(f => f.Name == "IsTypeForwarder")
+			.Which.Bit.Should().Be(0x00200000u);
+	}
+
+	[Test]
 	public void MethodAttributes_Has_Member_Access_Mutex_Plus_Independent_Modifiers()
 	{
 		var schema = FlagsSchemaInferer.For(typeof(MethodAttributes));
