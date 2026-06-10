@@ -173,14 +173,14 @@ namespace ILSpy.Search
 			ArgumentNullException.ThrowIfNull(result);
 			if (result.Reference is null)
 				return;
-			var atm = TryGetAssemblyTreeModel();
+			var atm = AppComposition.TryGetExport<AssemblyTreeModel>();
 			if (atm == null)
 				return;
 			var node = atm.FindTreeNode(result.Reference);
 			if (node == null)
 				return;
 			if (inNewTabPage)
-				TryGetDockWorkspace()?.OpenNodeInNewTab(node);
+				AppComposition.TryGetExport<Docking.DockWorkspace>()?.OpenNodeInNewTab(node);
 			else
 				atm.SelectedItem = node;
 		}
@@ -210,21 +210,21 @@ namespace ILSpy.Search
 			if (string.IsNullOrWhiteSpace(term))
 				return;
 
-			var assemblyTreeModel = TryGetAssemblyTreeModel();
+			var assemblyTreeModel = AppComposition.TryGetExport<AssemblyTreeModel>();
 			var assemblyList = assemblyTreeModel?.AssemblyList;
 			if (assemblyList == null)
 				return;
-			var language = TryGetLanguage();
+			var language = AppComposition.TryGetExport<LanguageService>()?.CurrentLanguage;
 			if (language == null)
 				return;
-			var apiVisibility = TryGetSettings()?.SessionSettings?.LanguageSettings?.ShowApiLevel
+			var apiVisibility = AppComposition.TryGetExport<SettingsService>()?.SessionSettings?.LanguageSettings?.ShowApiLevel
 				?? ApiVisibility.PublicOnly;
 
 			var factory = new AvaloniaSearchResultFactory(language);
 			// Capture the comparer at start-of-search (matches WPF SearchPane.xaml.cs:288).
 			// Toggling "Sort results by fitness" mid-run won't reshuffle results already on
 			// screen — it only takes effect on the next search.
-			var sortComparer = (TryGetSettings()?.DisplaySettings.SortResults ?? true)
+			var sortComparer = (AppComposition.TryGetExport<SettingsService>()?.DisplaySettings.SortResults ?? true)
 				? SearchResult.ComparerByFitness
 				: SearchResult.ComparerByName;
 			var run = new RunningSearch(
@@ -250,52 +250,5 @@ namespace ILSpy.Search
 			IsSearching = false;
 		}
 
-		static AssemblyTreeModel? TryGetAssemblyTreeModel()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<AssemblyTreeModel>();
-			}
-			catch
-			{
-				return null;
-			}
-		}
-
-		static Language? TryGetLanguage()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
-			}
-			catch
-			{
-				return null;
-			}
-		}
-
-		static SettingsService? TryGetSettings()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<SettingsService>();
-			}
-			catch
-			{
-				return null;
-			}
-		}
-
-		static Docking.DockWorkspace? TryGetDockWorkspace()
-		{
-			try
-			{
-				return AppComposition.Current.GetExport<Docking.DockWorkspace>();
-			}
-			catch
-			{
-				return null;
-			}
-		}
 	}
 }
