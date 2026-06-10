@@ -195,5 +195,20 @@ namespace ILSpy.Metadata
 
 		public static int ComputeCodedTokenSize(this MetadataReader metadata, int largeRowSize, TableMask mask)
 			=> (int)computeCodedTokenSizeMethod!.Invoke(metadata, [largeRowSize, rowCountsField!.GetValue(metadata)!, (ulong)mask])!;
+
+		/// <summary>
+		/// Reads a null-terminated UTF-8 string and advances the reader past the terminator.
+		/// Throws <see cref="BadImageFormatException"/> when no terminator remains, so callers
+		/// parsing structured blobs can degrade to a hex dump on malformed input.
+		/// </summary>
+		public static string ReadUTF8StringNullTerminated(this ref BlobReader reader)
+		{
+			int length = reader.IndexOf(0);
+			if (length < 0)
+				throw new BadImageFormatException("Missing null terminator in blob.");
+			string s = reader.ReadUTF8(length);
+			reader.ReadByte();
+			return s;
+		}
 	}
 }

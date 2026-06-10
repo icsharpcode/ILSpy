@@ -92,5 +92,24 @@ namespace ILSpy.Metadata
 
 		/// <summary>Materialises every heap row into <paramref name="list"/>.</summary>
 		protected abstract void LoadEntries(MetadataReader metadata, List<TEntry> list);
+
+		/// <summary>
+		/// Shared walk for the offset-chained heaps (#Strings, #US, #Blob). Handle 0 is a
+		/// real first entry (the heap's empty/zero slot) even though it is the nil handle,
+		/// so each entry is added before <paramref name="getNextHandle"/> is consulted; the
+		/// walk ends when the returned handle is nil.
+		/// </summary>
+		protected static void WalkHeap<THandle>(List<TEntry> list, THandle firstHandle,
+			Func<THandle, TEntry> createEntry, Func<THandle, THandle> getNextHandle,
+			Predicate<THandle> isNil)
+			where THandle : struct
+		{
+			var handle = firstHandle;
+			do
+			{
+				list.Add(createEntry(handle));
+				handle = getNextHandle(handle);
+			} while (!isNil(handle));
+		}
 	}
 }

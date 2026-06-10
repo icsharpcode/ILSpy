@@ -57,17 +57,6 @@ namespace ILSpy.Analyzers.TreeNodes
 				method.IsExtensionMethod);
 		}
 
-		protected override void LoadChildren()
-		{
-			foreach (var factory in Analyzers)
-			{
-				var analyzer = factory.CreateExport().Value;
-				if (analyzer.Show(analyzedMethod))
-				{
-					this.Children.Add(
-						new AnalyzerSearchTreeNode(analyzedMethod, analyzer, factory.Metadata?.Header));
-				}
-			}
-		}
+		protected override void LoadChildren() => AddAnalyzerChildren(analyzedMethod);
 	}
 }

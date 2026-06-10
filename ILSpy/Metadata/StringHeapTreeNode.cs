@@ -43,12 +43,8 @@ namespace ILSpy.Metadata
 
 		protected override void LoadEntries(MetadataReader metadata, List<StringHeapEntry> list)
 		{
-			var handle = MetadataTokens.StringHandle(0);
-			do
-			{
-				list.Add(new StringHeapEntry(metadata, handle));
-				handle = metadata.GetNextHandle(handle);
-			} while (!handle.IsNil);
+			WalkHeap(list, MetadataTokens.StringHandle(0),
+				h => new StringHeapEntry(metadata, h), metadata.GetNextHandle, h => h.IsNil);
 		}
 
 		public sealed class StringHeapEntry

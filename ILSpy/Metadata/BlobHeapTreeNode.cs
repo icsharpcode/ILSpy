@@ -43,12 +43,8 @@ namespace ILSpy.Metadata
 
 		protected override void LoadEntries(MetadataReader metadata, List<BlobHeapEntry> list)
 		{
-			var handle = MetadataTokens.BlobHandle(0);
-			do
-			{
-				list.Add(new BlobHeapEntry(metadata, handle));
-				handle = metadata.GetNextHandle(handle);
-			} while (!handle.IsNil);
+			WalkHeap(list, MetadataTokens.BlobHandle(0),
+				h => new BlobHeapEntry(metadata, h), metadata.GetNextHandle, h => h.IsNil);
 		}
 
 		public sealed class BlobHeapEntry

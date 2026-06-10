@@ -67,6 +67,24 @@ namespace ILSpy.Analyzers
 
 		public override object? ToolTip => Member?.ParentModule?.MetadataFile?.FileName;
 
+		/// <summary>
+		/// Appends one <see cref="AnalyzerSearchTreeNode"/> per registered analyzer that
+		/// applies to <paramref name="analyzedSymbol"/>. Subclasses with extra rows
+		/// (accessors, backing fields) add those first, then call this.
+		/// </summary>
+		protected void AddAnalyzerChildren(ISymbol analyzedSymbol)
+		{
+			foreach (var factory in Analyzers)
+			{
+				var analyzer = factory.CreateExport().Value;
+				if (analyzer.Show(analyzedSymbol))
+				{
+					this.Children.Add(
+						new AnalyzerSearchTreeNode(analyzedSymbol, analyzer, factory.Metadata?.Header));
+				}
+			}
+		}
+
 		public override bool HandleAssemblyListChanged(
 			ICollection<LoadedAssembly> removedAssemblies,
 			ICollection<LoadedAssembly> addedAssemblies)

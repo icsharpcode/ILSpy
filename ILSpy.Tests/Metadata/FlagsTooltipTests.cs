@@ -60,6 +60,29 @@ public class FlagsTooltipTests
 	}
 
 	[AvaloniaTest]
+	public void ForTypeAttributes_Includes_The_Type_Forwarder_Bit()
+	{
+		// 0x00200000 is the ECMA-335 Forwarder bit (II.23.1.15), set on type-forwarder
+		// ExportedType rows. System.Reflection.TypeAttributes has no member for it, so the
+		// enum-driven flag enumeration alone would leave it invisible in the tooltip.
+		var tooltip = FlagsTooltip.ForTypeAttributes((TypeAttributes)0x00200000);
+
+		var flags = tooltip.Groups.OfType<MultipleChoiceGroup>().Single().Flags;
+		var forwarder = flags.Single(f => f.Name.StartsWith("IsTypeForwarder"));
+		forwarder.IsSelected.Should().BeTrue("the Forwarder bit is set in the value");
+	}
+
+	[AvaloniaTest]
+	public void ForTypeAttributes_Leaves_The_Type_Forwarder_Bit_Unchecked_When_Clear()
+	{
+		var tooltip = FlagsTooltip.ForTypeAttributes(TypeAttributes.Public | TypeAttributes.Sealed);
+
+		var flags = tooltip.Groups.OfType<MultipleChoiceGroup>().Single().Flags;
+		var forwarder = flags.Single(f => f.Name.StartsWith("IsTypeForwarder"));
+		forwarder.IsSelected.Should().BeFalse("the Forwarder bit is not set in the value");
+	}
+
+	[AvaloniaTest]
 	public void MetadataCellTooltip_Renders_A_FlagsTooltip_As_A_Control()
 	{
 		var entry = new EntryWithFlags();

@@ -42,17 +42,6 @@ namespace ILSpy.Analyzers.TreeNodes
 		public override object Icon => Images.Images.GetIcon(Images.Images.Field,
 			Images.Images.GetOverlay(analyzedField.Accessibility), analyzedField.IsStatic);
 
-		protected override void LoadChildren()
-		{
-			foreach (var factory in Analyzers)
-			{
-				var analyzer = factory.CreateExport().Value;
-				if (analyzer.Show(analyzedField))
-				{
-					this.Children.Add(
-						new AnalyzerSearchTreeNode(analyzedField, analyzer, factory.Metadata?.Header));
-				}
-			}
-		}
+		protected override void LoadChildren() => AddAnalyzerChildren(analyzedField);
 	}
 }

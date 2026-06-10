@@ -51,15 +51,7 @@ namespace ILSpy.Analyzers.TreeNodes
 			if (analyzedProperty.CanSet)
 				this.Children.Add(new AnalyzedAccessorTreeNode(analyzedProperty.Setter!, this.SourceMember, "set"));
 
-			foreach (var factory in Analyzers)
-			{
-				var analyzer = factory.CreateExport().Value;
-				if (analyzer.Show(analyzedProperty))
-				{
-					this.Children.Add(
-						new AnalyzerSearchTreeNode(analyzedProperty, analyzer, factory.Metadata?.Header));
-				}
-			}
+			AddAnalyzerChildren(analyzedProperty);
 		}
 	}
 }
