@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
@@ -65,6 +66,14 @@ namespace ILSpy
 		/// it on the "Debug this step" context-menu action.
 		/// </summary>
 		public bool IsDebug { get; set; }
+
+		/// <summary>
+		/// Optional sink for whole-project decompilation progress. Wired onto
+		/// <see cref="ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler.ProgressIndicator"/>
+		/// on the project-export path so the export tab can show a determinate progress bar and the
+		/// file currently being written; ignored on single-member decompiles.
+		/// </summary>
+		public IProgress<DecompilationProgress>? ProgressIndicator { get; set; }
 
 		public DecompilationOptions(DecompilerSettings settings)
 		{

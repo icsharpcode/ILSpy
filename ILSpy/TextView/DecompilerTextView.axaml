@@ -46,8 +46,28 @@
 					           TextAlignment="Center"
 					           Text="{Binding ProgressTitle}" />
 					<ProgressBar Name="ProgressBar"
-					             IsIndeterminate="True"
-					             Height="16" />
+					             x:CompileBindings="False"
+					             IsIndeterminate="{Binding ProgressIsIndeterminate}"
+					             Minimum="0"
+					             Maximum="{Binding ProgressMaximum}"
+					             Value="{Binding ProgressValue}"
+					             Height="16">
+						<!-- Determinate bar gets a stable width (75% of the overlay) so it doesn't jitter
+						     with the status text; indeterminate falls back to its natural width. -->
+						<ProgressBar.Width>
+							<MultiBinding Converter="{x:Static textView:DeterminateProgressWidthConverter.Instance}">
+								<Binding Path="Bounds.Width" ElementName="WaitAdorner" />
+								<Binding Path="ProgressIsIndeterminate" />
+							</MultiBinding>
+						</ProgressBar.Width>
+					</ProgressBar>
+					<TextBlock Name="ProgressStatus"
+					           Margin="3,2,3,0"
+					           TextWrapping="Wrap"
+					           HorizontalAlignment="Center"
+					           TextAlignment="Center"
+					           IsVisible="{Binding ProgressStatus, Converter={x:Static ObjectConverters.IsNotNull}}"
+					           Text="{Binding ProgressStatus}" />
 					<Button HorizontalAlignment="Center"
 					        Margin="3"
 					        Content="Cancel"

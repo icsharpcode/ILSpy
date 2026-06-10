@@ -74,8 +74,9 @@ namespace ILSpy.Commands
 				return;
 
 			// Run in a dedicated frozen tab so browsing the tree while the export runs can't cancel it.
-			await dockWorkspace.RunInNewTabAsync("Exporting solution", async token => {
-				var result = await SolutionWriter.CreateSolutionAsync(path, language, assemblies, token)
+			await dockWorkspace.RunInNewTabAsync("Exporting solution", async (token, progress) => {
+				var result = await SolutionWriter.CreateSolutionAsync(path, language, assemblies, token,
+						settings: null, strongNameKeyFile: null, progress: progress)
 					.ConfigureAwait(false);
 				var o = new AvaloniaEditTextOutput { Title = Resources._SaveCode };
 				o.Write(result.StatusText);

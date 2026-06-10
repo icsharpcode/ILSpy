@@ -78,8 +78,8 @@ namespace ILSpy.Commands
 
 			var settingsClone = settingsService.DecompilerSettings.Clone();
 			// Run in a dedicated frozen tab so browsing the tree while the export runs can't cancel it.
-			await dockWorkspace.RunInNewTabAsync(ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution, async token => {
-				var result = await ProjectExporter.ExportAsync(assemblies, solutionMode, options, settingsClone, language, token)
+			await dockWorkspace.RunInNewTabAsync(ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution, async (token, progress) => {
+				var result = await ProjectExporter.ExportAsync(assemblies, solutionMode, options, settingsClone, language, progress, token)
 					.ConfigureAwait(false);
 				var o = new AvaloniaEditTextOutput { Title = ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution };
 				o.Write(result.StatusText);

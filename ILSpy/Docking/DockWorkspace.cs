@@ -32,6 +32,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using Dock.Model.Controls;
+
+using ICSharpCode.Decompiler;
 using Dock.Model.Core;
 using Dock.Model.Core.Events;
 
@@ -1007,6 +1009,35 @@ namespace ILSpy.Docking
 			try
 			{
 				var output = await content.RunWithCancellation(work, title).ConfigureAwait(true);
+				content.ShowText(output);
+			}
+			catch (OperationCanceledException)
+			{
+				// User cancelled — leave the (empty) report tab; they can close it.
+			}
+		}
+
+		/// <summary>
+		/// Like <see cref="RunInNewTabAsync(string, Func{CancellationToken, Task{TextView.AvaloniaEditTextOutput}})"/>,
+		/// but also hands the work an <see cref="IProgress{T}"/> it can report
+		/// <see cref="DecompilationProgress"/> through. The tab turns those reports into a determinate
+		/// progress bar and the name of the file currently being written. Used by project/solution export.
+		/// </summary>
+		public async Task RunInNewTabAsync(string title,
+			Func<CancellationToken, IProgress<DecompilationProgress>, Task<TextView.AvaloniaEditTextOutput>> work)
+		{
+			ArgumentNullException.ThrowIfNull(work);
+			var content = new TextView.DecompilerTabPageModel {
+				Language = languageService.CurrentLanguage,
+				Title = title,
+			};
+			OpenNewTab(content);
+			// Progress<T> captures this (UI) thread's SynchronizationContext, so reports raised from the
+			// background export marshal back here before touching the observable progress properties.
+			var progress = new Progress<DecompilationProgress>(content.ReportProgress);
+			try
+			{
+				var output = await content.RunWithCancellation(token => work(token, progress), title).ConfigureAwait(true);
 				content.ShowText(output);
 			}
 			catch (OperationCanceledException)

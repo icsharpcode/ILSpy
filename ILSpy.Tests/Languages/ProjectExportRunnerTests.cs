@@ -89,13 +89,16 @@ public class ProjectExportRunnerTests
 		Directory.CreateDirectory(tempDir);
 		try
 		{
+			var progress = new RecordingProgress();
 			var result = await ProjectExporter.ExportAsync(
 				new[] { assembly }, solutionMode: false, Options(tempDir),
-				new DecompilerSettings(), Language(), CancellationToken.None);
+				new DecompilerSettings(), Language(), progress, CancellationToken.None);
 
 			result.Success.Should().BeTrue(result.StatusText);
 			Directory.EnumerateFiles(tempDir, "*.csproj").Should().HaveCount(1);
 			Directory.EnumerateFiles(tempDir, "*.cs", SearchOption.AllDirectories).Should().NotBeEmpty();
+			progress.Reports.Should().Contain(p => p.TotalUnits > 0,
+				"project export reports a determinate per-file unit count to the progress sink");
 		}
 		finally
 		{
@@ -115,7 +118,7 @@ public class ProjectExportRunnerTests
 		{
 			var result = await ProjectExporter.ExportAsync(
 				assemblies, solutionMode: true, Options(tempDir),
-				new DecompilerSettings(), Language(), CancellationToken.None);
+				new DecompilerSettings(), Language(), progress: null, CancellationToken.None);
 
 			result.Success.Should().BeTrue(result.StatusText);
 			Directory.EnumerateFiles(tempDir, "*.sln").Should().HaveCount(1);
@@ -145,7 +148,7 @@ public class ProjectExportRunnerTests
 		{
 			var result = await ProjectExporter.ExportAsync(
 				new[] { assembly }, solutionMode: false, Options(tempDir, strongNameKeyFile: keyFile),
-				new DecompilerSettings(), Language(), CancellationToken.None);
+				new DecompilerSettings(), Language(), progress: null, CancellationToken.None);
 
 			result.Success.Should().BeTrue(result.StatusText);
 			File.Exists(Path.Combine(tempDir, Path.GetFileName(keyFile))).Should().BeTrue(
@@ -175,7 +178,7 @@ public class ProjectExportRunnerTests
 			var options = Options(tempDir) with { UseSdkStyleProjectFormat = !originalSdk };
 			await ProjectExporter.ExportAsync(
 				new[] { assembly }, solutionMode: false, options,
-				settingsService.DecompilerSettings.Clone(), Language(), CancellationToken.None);
+				settingsService.DecompilerSettings.Clone(), Language(), progress: null, CancellationToken.None);
 
 			settingsService.DecompilerSettings.UseSdkStyleProjectFormat.Should().Be(originalSdk,
 				"exporting must apply overrides to a clone, never the persisted settings");
@@ -198,5 +201,16 @@ public class ProjectExportRunnerTests
 		try
 		{ File.Delete(file); }
 		catch { /* best-effort */ }
+	}
+
+	sealed class RecordingProgress : System.IProgress<DecompilationProgress>
+	{
+		public List<DecompilationProgress> Reports { get; } = new();
+
+		public void Report(DecompilationProgress value)
+		{
+			lock (Reports)
+				Reports.Add(value);
+		}
 	}
 }

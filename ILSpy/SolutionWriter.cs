@@ -63,14 +63,15 @@ namespace ILSpy
 		public static Task<SolutionExportResult> CreateSolutionAsync(string solutionFilePath,
 			Language language, IReadOnlyList<LoadedAssembly> assemblies,
 			CancellationToken cancellationToken = default,
-			DecompilerSettings? settings = null, string? strongNameKeyFile = null)
+			DecompilerSettings? settings = null, string? strongNameKeyFile = null,
+			IProgress<DecompilationProgress>? progress = null)
 		{
 			if (string.IsNullOrWhiteSpace(solutionFilePath))
 				throw new ArgumentException("The solution file path cannot be null or empty.", nameof(solutionFilePath));
 			ArgumentNullException.ThrowIfNull(language);
 			ArgumentNullException.ThrowIfNull(assemblies);
 
-			return new SolutionWriter(solutionFilePath, settings, strongNameKeyFile)
+			return new SolutionWriter(solutionFilePath, settings, strongNameKeyFile, progress)
 				.CreateSolutionAsync(assemblies, language, cancellationToken);
 		}
 
@@ -78,14 +79,18 @@ namespace ILSpy
 		readonly string solutionDirectory;
 		readonly DecompilerSettings? settings;
 		readonly string? strongNameKeyFile;
+		readonly IProgress<DecompilationProgress>? progress;
 		readonly ConcurrentBag<ProjectItem> projects;
 		readonly ConcurrentBag<string> statusOutput;
+		int completedAssemblies;
 
-		SolutionWriter(string solutionFilePath, DecompilerSettings? settings, string? strongNameKeyFile)
+		SolutionWriter(string solutionFilePath, DecompilerSettings? settings, string? strongNameKeyFile,
+			IProgress<DecompilationProgress>? progress)
 		{
 			this.solutionFilePath = solutionFilePath;
 			this.settings = settings;
 			this.strongNameKeyFile = strongNameKeyFile;
+			this.progress = progress;
 			solutionDirectory = Path.GetDirectoryName(solutionFilePath)!;
 			statusOutput = new ConcurrentBag<string>();
 			projects = new ConcurrentBag<ProjectItem>();
@@ -124,7 +129,7 @@ namespace ILSpy
 				// whose static partitioning is inefficient when assemblies decompile at different speeds.
 				await Task.Run(() => System.Threading.Tasks.Parallel.ForEach(Partitioner.Create(allAssemblies),
 					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
-					item => WriteProject(item, language, solutionDirectory, ct)))
+					item => WriteProject(item, language, solutionDirectory, allAssemblies.Count, ct)))
 					.ConfigureAwait(false);
 
 				if (projects.Count == 0)
@@ -178,8 +183,15 @@ namespace ILSpy
 			return new SolutionExportResult(true, report.ToString());
 		}
 
-		void WriteProject(LoadedAssembly loadedAssembly, Language language, string targetDirectory, CancellationToken ct)
+		void WriteProject(LoadedAssembly loadedAssembly, Language language, string targetDirectory, int totalAssemblies, CancellationToken ct)
 		{
+			// Solution export decompiles assemblies in parallel, so per-file progress would race; report
+			// at the coarser assembly granularity instead -- a determinate bar over the assembly count.
+			void ReportDone() => progress?.Report(new DecompilationProgress {
+				TotalUnits = totalAssemblies,
+				UnitsCompleted = System.Threading.Interlocked.Increment(ref completedAssemblies),
+				Status = loadedAssembly.ShortName,
+			});
 			targetDirectory = Path.Combine(targetDirectory, loadedAssembly.ShortName);
 
 			if (language.ProjectFileExtension == null)
@@ -248,6 +260,7 @@ namespace ILSpy
 				statusOutput.Add("-------------");
 				statusOutput.Add($"Failed to decompile the assembly '{loadedAssembly.FileName}':{Environment.NewLine}{e}");
 			}
+			ReportDone();
 		}
 	}
 }

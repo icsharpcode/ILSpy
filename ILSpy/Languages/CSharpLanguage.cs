@@ -507,6 +507,7 @@ namespace ILSpy.Languages
 			// surface the export dialog's choice here (null = unsigned, the default).
 			if (!string.IsNullOrEmpty(options.StrongNameKeyFile))
 				decompiler.StrongNameKeyFile = options.StrongNameKeyFile;
+			decompiler.ProgressIndicator = options.ProgressIndicator;
 			var projectFileName = System.IO.Path.Combine(
 				targetDirectory,
 				WholeProjectDecompiler.CleanUpFileName(module.Name, ProjectFileExtension));

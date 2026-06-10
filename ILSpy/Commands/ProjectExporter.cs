@@ -45,7 +45,8 @@ namespace ILSpy.Commands
 	{
 		public static async Task<SolutionExportResult> ExportAsync(
 			IReadOnlyList<LoadedAssembly> assemblies, bool solutionMode, ProjectExportOptions options,
-			DecompilerSettings settingsClone, Language language, CancellationToken ct)
+			DecompilerSettings settingsClone, Language language, IProgress<DecompilationProgress>? progress,
+			CancellationToken ct)
 		{
 			ArgumentNullException.ThrowIfNull(assemblies);
 			ArgumentNullException.ThrowIfNull(options);
@@ -58,7 +59,7 @@ namespace ILSpy.Commands
 			{
 				var solutionFilePath = Path.Combine(options.OutputDirectory, SolutionFileName(options.OutputDirectory));
 				var solution = await SolutionWriter.CreateSolutionAsync(
-					solutionFilePath, language, assemblies, ct, settingsClone, options.StrongNameKeyFile)
+					solutionFilePath, language, assemblies, ct, settingsClone, options.StrongNameKeyFile, progress)
 					.ConfigureAwait(false);
 
 				var report = new StringBuilder(solution.StatusText);
@@ -71,12 +72,12 @@ namespace ILSpy.Commands
 				return new SolutionExportResult(solution.Success, report.ToString());
 			}
 
-			return await Task.Run(() => ExportProject(assemblies[0], options, settingsClone, language, ct), ct)
+			return await Task.Run(() => ExportProject(assemblies[0], options, settingsClone, language, progress, ct), ct)
 				.ConfigureAwait(false);
 		}
 
 		static SolutionExportResult ExportProject(LoadedAssembly assembly, ProjectExportOptions options,
-			DecompilerSettings settingsClone, Language language, CancellationToken ct)
+			DecompilerSettings settingsClone, Language language, IProgress<DecompilationProgress>? progress, CancellationToken ct)
 		{
 			var report = new StringBuilder();
 			bool success;
@@ -88,6 +89,7 @@ namespace ILSpy.Commands
 					CancellationToken = ct,
 					SaveAsProjectDirectory = options.OutputDirectory,
 					StrongNameKeyFile = options.StrongNameKeyFile,
+					ProgressIndicator = progress,
 				};
 				language.DecompileAssembly(assembly, new PlainTextOutput(new StringWriter()), decompileOptions);
 				report.AppendLine("Project written to " + options.OutputDirectory);

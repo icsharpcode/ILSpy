@@ -115,6 +115,62 @@ namespace ILSpy.TextView
 		private string progressTitle = ICSharpCode.ILSpy.Properties.Resources.Decompiling;
 
 		/// <summary>
+		/// True while the progress bar is indeterminate. A long-running operation that reports
+		/// <see cref="DecompilationProgress"/> with a positive unit count (project export) flips this
+		/// off so the bar becomes determinate; an in-place decompile leaves it on.
+		/// </summary>
+		[ObservableProperty]
+		private bool progressIsIndeterminate = true;
+
+		/// <summary>Total units to process (the project's file count) for the determinate bar.</summary>
+		[ObservableProperty]
+		private double progressMaximum;
+
+		/// <summary>Units completed so far.</summary>
+		[ObservableProperty]
+		private double progressValue;
+
+		/// <summary>
+		/// The unit currently being processed (e.g. the file being written) plus an "N of M" count,
+		/// shown under the progress bar.
+		/// </summary>
+		[ObservableProperty]
+		private string? progressStatus;
+
+		/// <summary>
+		/// Applies a <see cref="DecompilationProgress"/> report from a long-running operation (wired
+		/// via <see cref="Docking.DockWorkspace.RunInNewTabAsync"/>). Marshaled to the UI thread by the
+		/// <see cref="System.Progress{T}"/> that produced it.
+		/// </summary>
+		public void ReportProgress(DecompilationProgress progress)
+		{
+			if (progress.Title is { Length: > 0 } title)
+				ProgressTitle = title;
+			if (progress.TotalUnits > 0)
+			{
+				ProgressIsIndeterminate = false;
+				ProgressMaximum = progress.TotalUnits;
+				ProgressValue = progress.UnitsCompleted;
+				ProgressStatus = progress.Status is { Length: > 0 } status
+					? $"{status} ({progress.UnitsCompleted} of {progress.TotalUnits})"
+					: $"{progress.UnitsCompleted} of {progress.TotalUnits}";
+			}
+			else
+			{
+				ProgressIsIndeterminate = true;
+				ProgressStatus = progress.Status;
+			}
+		}
+
+		void ResetProgress()
+		{
+			ProgressIsIndeterminate = true;
+			ProgressMaximum = 0;
+			ProgressValue = 0;
+			ProgressStatus = null;
+		}
+
+		/// <summary>
 		/// Hyperlink targets emitted alongside the decompiled text. Cleared between decompiles.
 		/// </summary>
 		[ObservableProperty]
@@ -589,8 +645,14 @@ namespace ILSpy.TextView
 			activeCts?.Cancel();
 			var cts = activeCts = new CancellationTokenSource();
 			ProgressTitle = progressTitle ?? ICSharpCode.ILSpy.Properties.Resources.Decompiling;
+			ResetProgress();
 			IsDecompiling = true;
 			TaskbarProgress?.SetState(TaskbarProgressState.Indeterminate);
+			// Animate the braille spinner over the tab's own title (the operation name) so the tab
+			// strip advertises the running work, exactly like an in-place decompile does.
+			cachedBaseTitle = Title;
+			Title = ComposeSpinnerTitle(0, cachedBaseTitle);
+			_ = RunSpinnerAsync(cts.Token);
 			try
 			{
 				return await taskCreation(cts.Token).ConfigureAwait(true);
@@ -602,6 +664,8 @@ namespace ILSpy.TextView
 					void StopSpinner()
 					{
 						IsDecompiling = false;
+						Title = cachedBaseTitle;
+						ResetProgress();
 						TaskbarProgress?.SetState(TaskbarProgressState.None);
 						ProgressTitle = ICSharpCode.ILSpy.Properties.Resources.Decompiling;
 					}
