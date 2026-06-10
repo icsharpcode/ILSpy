@@ -54,15 +54,7 @@ namespace ILSpy.Analyzers.TreeNodes
 			if (TryFindBackingField(analyzedEvent, out var backingField))
 				this.Children.Add(new AnalyzedFieldTreeNode(backingField, this.SourceMember));
 
-			foreach (var factory in Analyzers)
-			{
-				var analyzer = factory.CreateExport().Value;
-				if (analyzer.Show(analyzedEvent))
-				{
-					this.Children.Add(
-						new AnalyzerSearchTreeNode(analyzedEvent, analyzer, factory.Metadata?.Header));
-				}
-			}
+			AddAnalyzerChildren(analyzedEvent);
 		}
 
 		static bool TryFindBackingField(IEvent analyzedEvent, [NotNullWhen(true)] out IField? backingField)

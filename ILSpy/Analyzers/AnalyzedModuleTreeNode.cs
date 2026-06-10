@@ -82,18 +82,7 @@ namespace ILSpy.Analyzers.TreeNodes
 			}
 		}
 
-		protected override void LoadChildren()
-		{
-			foreach (var factory in Analyzers)
-			{
-				var analyzer = factory.CreateExport().Value;
-				if (analyzer.Show(analyzedModule))
-				{
-					this.Children.Add(
-						new AnalyzerSearchTreeNode(analyzedModule, analyzer, factory.Metadata?.Header));
-				}
-			}
-		}
+		protected override void LoadChildren() => AddAnalyzerChildren(analyzedModule);
 
 		public override bool HandleAssemblyListChanged(
 			ICollection<LoadedAssembly> removedAssemblies,
