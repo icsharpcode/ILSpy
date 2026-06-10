@@ -16,14 +16,32 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
+using Avalonia.Controls;
+
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+
+using ILSpy.ViewModels;
 
 namespace ILSpy.Metadata.DebugTables
 {
+	/// <summary>One hoisted-local scope (IL offset range) of a state-machine method.</summary>
+	public sealed record HoistedLocalScopeDetail(uint StartOffset, uint Length);
+
+	/// <summary>One name/value pair from a compilation-options blob.</summary>
+	public sealed record CompilationOptionDetail(string Name, string Value);
+
+	/// <summary>One reference from a compilation-metadata-references blob.</summary>
+	public sealed record MetadataReferenceDetail(string FileName, string Aliases, byte Flags, uint Timestamp, uint FileSize, Guid Mvid);
+
+	/// <summary>One element name from a tuple-element-names blob.</summary>
+	public sealed record TupleElementNameDetail(string ElementName);
+
 	/// <summary>
 	/// View of the CustomDebugInformation table — extensible per-entity payloads used for
 	/// async/iterator state-machine info, embedded source, source-link JSON, and similar
@@ -44,6 +62,37 @@ namespace ILSpy.Metadata.DebugTables
 			foreach (var row in metadataFile.Metadata.CustomDebugInformation)
 				list.Add(new CustomDebugInformationEntry(metadataFile, row));
 			return list;
+		}
+
+		protected override void ConfigurePage(MetadataTablePageModel page)
+		{
+			// Selecting a row previews its Value blob beneath it: structured kinds as a typed
+			// sub-grid, source-link JSON decoded, everything else as a hex dump.
+			page.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.VisibleWhenSelected;
+			page.RowDetailsTemplate = MetadataRowDetails.CreateTemplate(BuildRowDetailsContent);
+		}
+
+		static Control? BuildRowDetailsContent(object? item)
+		{
+			return (item as CustomDebugInformationEntry)?.RowDetails switch {
+				string text => MetadataRowDetails.BuildTextBlob(text),
+				IReadOnlyList<HoistedLocalScopeDetail> rows => MetadataRowDetails.BuildDetailsGrid(rows,
+					("Start Offset", nameof(HoistedLocalScopeDetail.StartOffset)),
+					("Length", nameof(HoistedLocalScopeDetail.Length))),
+				IReadOnlyList<CompilationOptionDetail> rows => MetadataRowDetails.BuildDetailsGrid(rows,
+					("Name", nameof(CompilationOptionDetail.Name)),
+					("Value", nameof(CompilationOptionDetail.Value))),
+				IReadOnlyList<MetadataReferenceDetail> rows => MetadataRowDetails.BuildDetailsGrid(rows,
+					("File Name", nameof(MetadataReferenceDetail.FileName)),
+					("Aliases", nameof(MetadataReferenceDetail.Aliases)),
+					("Flags", nameof(MetadataReferenceDetail.Flags)),
+					("Timestamp", nameof(MetadataReferenceDetail.Timestamp)),
+					("File Size", nameof(MetadataReferenceDetail.FileSize)),
+					("MVID", nameof(MetadataReferenceDetail.Mvid))),
+				IReadOnlyList<TupleElementNameDetail> rows => MetadataRowDetails.BuildDetailsGrid(rows,
+					("Element Name", nameof(TupleElementNameDetail.ElementName))),
+				_ => null,
+			};
 		}
 
 		public sealed class CustomDebugInformationEntry
@@ -75,6 +124,81 @@ namespace ILSpy.Metadata.DebugTables
 						return "<nil>";
 					return metadataFile.Metadata.GetBlobReader(debugInfo.Value).ToHexString();
 				}
+			}
+
+			object? rowDetails;
+
+			/// <summary>
+			/// Parsed view of the Value blob for the row-details area. Structured kinds become
+			/// typed row lists, source-link blobs the decoded JSON text, everything else
+			/// (including malformed structured blobs) a hex dump. Cached — the details area
+			/// re-requests it on every selection change.
+			/// </summary>
+			public object? RowDetails {
+				get {
+					if (rowDetails != null)
+						return rowDetails;
+					if (debugInfo.Value.IsNil || debugInfo.Kind.IsNil)
+						return null;
+
+					var reader = metadataFile.Metadata.GetBlobReader(debugInfo.Value);
+					try
+					{
+						return rowDetails = ParseRowDetails(ref reader);
+					}
+					catch (BadImageFormatException)
+					{
+						return rowDetails = metadataFile.Metadata.GetBlobReader(debugInfo.Value).ToHexString();
+					}
+				}
+			}
+
+			object ParseRowDetails(ref BlobReader reader)
+			{
+				var kind = metadataFile.Metadata.GetGuid(debugInfo.Kind);
+				if (kind == KnownGuids.StateMachineHoistedLocalScopes)
+				{
+					var list = new List<HoistedLocalScopeDetail>();
+					while (reader.RemainingBytes > 0)
+						list.Add(new HoistedLocalScopeDetail(reader.ReadUInt32(), reader.ReadUInt32()));
+					return list;
+				}
+				if (kind == KnownGuids.SourceLink)
+					return reader.ReadUTF8(reader.RemainingBytes);
+				if (kind == KnownGuids.CompilationOptions)
+				{
+					var list = new List<CompilationOptionDetail>();
+					while (reader.RemainingBytes > 0)
+					{
+						string name = reader.ReadUTF8StringNullTerminated();
+						string value = reader.ReadUTF8StringNullTerminated();
+						list.Add(new CompilationOptionDetail(name, value));
+					}
+					return list;
+				}
+				if (kind == KnownGuids.CompilationMetadataReferences)
+				{
+					var list = new List<MetadataReferenceDetail>();
+					while (reader.RemainingBytes > 0)
+					{
+						string fileName = reader.ReadUTF8StringNullTerminated();
+						string aliases = reader.ReadUTF8StringNullTerminated();
+						byte flags = reader.ReadByte();
+						uint timestamp = reader.ReadUInt32();
+						uint fileSize = reader.ReadUInt32();
+						Guid mvid = reader.ReadGuid();
+						list.Add(new MetadataReferenceDetail(fileName, aliases, flags, timestamp, fileSize, mvid));
+					}
+					return list;
+				}
+				if (kind == KnownGuids.TupleElementNames)
+				{
+					var list = new List<TupleElementNameDetail>();
+					while (reader.RemainingBytes > 0)
+						list.Add(new TupleElementNameDetail(reader.ReadUTF8StringNullTerminated()));
+					return list;
+				}
+				return reader.ToHexString();
 			}
 
 			public CustomDebugInformationEntry(MetadataFile metadataFile, CustomDebugInformationHandle handle)
