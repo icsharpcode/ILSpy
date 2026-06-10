@@ -772,6 +772,51 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   <data name="NewTab" xml:space="preserve">
     <value>New Tab</value>
   </data>
+  <data name="NuGetFeedAuthors" xml:space="preserve">
+    <value>Author(s):</value>
+  </data>
+  <data name="NuGetFeedDescription" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="NuGetFeedDownloading" xml:space="preserve">
+    <value>Downloading package...</value>
+  </data>
+  <data name="NuGetFeedDownloads" xml:space="preserve">
+    <value>Downloads:</value>
+  </data>
+  <data name="NuGetFeedLicense" xml:space="preserve">
+    <value>License:</value>
+  </data>
+  <data name="NuGetFeedLoadMore" xml:space="preserve">
+    <value>Load more</value>
+  </data>
+  <data name="NuGetFeedPackageSource" xml:space="preserve">
+    <value>_Package source:</value>
+  </data>
+  <data name="NuGetFeedProjectUrl" xml:space="preserve">
+    <value>Project URL:</value>
+  </data>
+  <data name="NuGetFeedPublished" xml:space="preserve">
+    <value>Date published:</value>
+  </data>
+  <data name="NuGetFeedRefresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="NuGetFeedSearchWatermark" xml:space="preserve">
+    <value>Search packages</value>
+  </data>
+  <data name="NuGetFeedSelectPackage" xml:space="preserve">
+    <value>Select Package</value>
+  </data>
+  <data name="NuGetFeedShowPrerelease" xml:space="preserve">
+    <value>Show pre-release packages</value>
+  </data>
+  <data name="NuGetFeedTags" xml:space="preserve">
+    <value>Tags:</value>
+  </data>
+  <data name="NuGetFeedVersion" xml:space="preserve">
+    <value>_Version:</value>
+  </data>
   <data name="NugetPackageBrowser" xml:space="preserve">
     <value>Nuget Package Browser</value>
   </data>
@@ -789,6 +834,9 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   </data>
   <data name="OpenFrom_GAC" xml:space="preserve">
     <value>Open from _GAC...</value>
+  </data>
+  <data name="OpenFrom_NuGetFeed" xml:space="preserve">
+    <value>Open from _NuGet feed...</value>
   </data>
   <data name="OpenListDialog__Delete" xml:space="preserve">
     <value>_Delete</value>

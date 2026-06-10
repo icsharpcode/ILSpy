@@ -52,6 +52,33 @@ public class MainMenuTests
 	}
 
 	[AvaloniaTest]
+	public void OpenFromNuGetFeed_item_sits_between_GAC_and_Reload_and_works_on_every_OS()
+	{
+		var window = new Window();
+		MainMenu.Attach(window);
+
+		var menu = NativeMenu.GetMenu(window);
+		menu.Should().NotBeNull();
+
+		var nuget = Find(menu!, i => i.Header?.Contains("NuGet feed", StringComparison.OrdinalIgnoreCase) == true);
+		nuget.Should().NotBeNull("the File menu must contain an 'Open from NuGet feed' item");
+		nuget!.IsEnabled.Should().BeTrue("NuGet feeds are reachable from every OS, unlike the GAC");
+
+		var fileSubmenu = menu!.Items.OfType<NativeMenuItem>()
+			.Select(i => i.Menu)
+			.First(m => m != null && m.Items.OfType<NativeMenuItem>()
+				.Any(i => i.Header?.Contains("GAC", StringComparison.OrdinalIgnoreCase) == true));
+		var items = fileSubmenu!.Items.OfType<NativeMenuItem>().ToList();
+		int gacIndex = items.FindIndex(i => i.Header?.Contains("GAC", StringComparison.OrdinalIgnoreCase) == true);
+		int nugetIndex = items.FindIndex(i => i.Header?.Contains("NuGet feed", StringComparison.OrdinalIgnoreCase) == true);
+		int reloadIndex = items.FindIndex(i => i.Header?.Contains("Reload", StringComparison.OrdinalIgnoreCase) == true);
+
+		nugetIndex.Should().BeGreaterThan(gacIndex,
+			"the WPF File menu groups the open-from sources right below Open, GAC first");
+		nugetIndex.Should().BeLessThan(reloadIndex, "Reload ends the open group");
+	}
+
+	[AvaloniaTest]
 	public void OpenFromGac_item_enabled_state_follows_the_command()
 	{
 		var window = new Window();

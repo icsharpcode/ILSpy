@@ -33,6 +33,7 @@ using ILSpy.AppEnv;
 using ILSpy.AssemblyTree;
 using ILSpy.Docking;
 using ILSpy.Languages;
+using ILSpy.NuGetFeeds;
 using ILSpy.TreeNodes;
 using ILSpy.Views;
 
@@ -119,6 +120,34 @@ namespace ILSpy.Commands
 				return;
 			foreach (var name in fileNames)
 				assemblyTreeModel.AssemblyList?.OpenAssembly(name);
+		}
+	}
+
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.OpenFrom_NuGetFeed), MenuIcon = "Images/NuGet", MenuCategory = nameof(Resources.Open), MenuOrder = 1.5)]
+	[Shared]
+	[method: ImportingConstructor]
+	sealed class OpenFromNuGetFeedCommand(AssemblyTreeModel assemblyTreeModel, SettingsService settingsService) : SimpleCommand
+	{
+		// One client for the command's lifetime so the per-feed service-index discovery
+		// and the NuGet HTTP cache survive across dialog invocations.
+		readonly NuGetFeedClient feedClient = new();
+
+		public override void Execute(object? parameter)
+		{
+			var owner = UiContext.MainWindow;
+			if (owner == null)
+				return;
+			ShowAsync(owner).HandleExceptions();
+		}
+
+		async Task ShowAsync(global::Avalonia.Controls.Window owner)
+		{
+			var dlg = new Views.OpenFromNuGetFeedDialog(settingsService, feedClient);
+			// The dialog result is the absolute path of the .nupkg in the global packages
+			// folder; ILSpy opens .nupkg natively (ArchiveFileLoader/LoadedPackage).
+			var path = await dlg.ShowDialog<string?>(owner);
+			if (!string.IsNullOrEmpty(path))
+				assemblyTreeModel.OpenFiles(new[] { path });
 		}
 	}
 

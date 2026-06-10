@@ -1,0 +1,160 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:img="using:ILSpy.Images"
+        xmlns:nf="using:ILSpy.NuGetFeeds"
+        xmlns:vm="using:ILSpy.ViewModels"
+        x:Class="ILSpy.Views.OpenFromNuGetFeedDialog"
+        x:DataType="vm:OpenFromNuGetFeedDialogViewModel"
+        Width="1000" Height="650" MinWidth="700" MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True">
+	<Grid Margin="12,8" RowDefinitions="Auto,*,Auto,Auto" RowSpacing="8">
+
+		<!-- Top bar: search + refresh + prerelease toggle, package source on the right. -->
+		<Grid Grid.Row="0" ColumnDefinitions="2*,Auto,Auto,Auto,Auto,3*" ColumnSpacing="8">
+			<TextBox Grid.Column="0" Name="SearchBox" Text="{Binding SearchText, Mode=TwoWay}">
+				<TextBox.InnerRightContent>
+					<!-- Inline clear affordance, mirroring SearchPane's: borderless, transparent,
+					     and only visible while there is something to clear. -->
+					<Button Name="ClearSearchButton"
+					        IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+					        Background="Transparent" BorderThickness="0"
+					        Padding="4,0" Margin="0"
+					        Command="{Binding ClearSearchCommand}">
+						<TextBlock Text="✕" FontSize="11" VerticalAlignment="Center" />
+					</Button>
+				</TextBox.InnerRightContent>
+			</TextBox>
+			<Button Grid.Column="1" Name="RefreshButton" Command="{Binding RefreshCommand}">
+				<Image Width="16" Height="16" Source="{x:Static img:Images.Refresh}" />
+			</Button>
+			<CheckBox Grid.Column="2" Name="PrereleaseCheckBox"
+			          IsChecked="{Binding IncludePrerelease, Mode=TwoWay}" />
+			<Label Grid.Column="4" Name="PackageSourceLabel" Target="{Binding #FeedCombo}"
+			       VerticalAlignment="Center" />
+			<ComboBox Grid.Column="5" Name="FeedCombo" IsEditable="True"
+			          HorizontalAlignment="Stretch"
+			          ItemsSource="{Binding FeedUrls}"
+			          Text="{Binding SelectedFeedUrl, Mode=TwoWay}" />
+		</Grid>
+
+		<!-- Main area: results list left, detail pane right. -->
+		<Grid Grid.Row="1" ColumnDefinitions="3*,2*" ColumnSpacing="12">
+			<Grid Grid.Column="0" RowDefinitions="*">
+				<ListBox Grid.Row="0" Name="PackagesList"
+				         ItemsSource="{Binding Packages}"
+				         SelectedItem="{Binding SelectedPackage, Mode=TwoWay}">
+					<ListBox.ItemTemplate>
+						<DataTemplate x:DataType="nf:NuGetPackageInfo">
+							<!-- MinHeight reserves the two description lines (MaxLines below caps
+							     them), so rows stay uniform whether a package has a long, short,
+							     or missing description. -->
+							<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="2"
+							      MinHeight="52">
+								<Image Grid.Column="0" Width="32" Height="32" VerticalAlignment="Top"
+								       Source="{x:Static img:Images.NuGet}" />
+								<StackPanel Grid.Column="1" Spacing="2">
+									<StackPanel Orientation="Horizontal" Spacing="4">
+										<TextBlock FontWeight="Bold" Text="{Binding Id}" />
+										<TextBlock Opacity="0.75"
+										           IsVisible="{Binding Authors, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+										           Text="{Binding Authors, StringFormat='by {0}'}" />
+									</StackPanel>
+									<TextBlock Opacity="0.75" TextWrapping="Wrap" MaxLines="2"
+									           TextTrimming="CharacterEllipsis"
+									           Text="{Binding Description}" />
+								</StackPanel>
+								<TextBlock Grid.Column="2" VerticalAlignment="Top"
+								           Text="{Binding LatestVersion, StringFormat='v{0}'}" />
+							</Grid>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+				<ProgressBar Grid.Row="0" Name="SearchProgressBar" Height="6"
+				             VerticalAlignment="Bottom" IsIndeterminate="True"
+				             IsVisible="{Binding IsSearching}" />
+			</Grid>
+
+			<ScrollViewer Grid.Column="1"
+			              IsVisible="{Binding SelectedPackage, Converter={x:Static ObjectConverters.IsNotNull}}">
+				<StackPanel Name="DetailPane" Spacing="8" Margin="0,0,4,0">
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<Image Width="32" Height="32" Source="{x:Static img:Images.NuGet}" />
+						<TextBlock FontSize="20" FontWeight="Bold" VerticalAlignment="Center"
+						           Text="{Binding SelectedPackage.Id}" />
+					</StackPanel>
+
+					<StackPanel Orientation="Horizontal" Spacing="6">
+						<Label Name="VersionLabel" Target="{Binding #VersionsCombo}"
+						       VerticalAlignment="Center" />
+						<ComboBox Name="VersionsCombo" MinWidth="150"
+						          ItemsSource="{Binding Versions}"
+						          SelectedItem="{Binding SelectedVersion, Mode=TwoWay}" />
+						<Button Name="OpenButton" IsDefault="True" MinWidth="72"
+						        Command="{Binding OpenPackageCommand}" />
+					</StackPanel>
+
+					<StackPanel Orientation="Horizontal" Spacing="6"
+					            IsVisible="{Binding IsDownloading}">
+						<TextBlock Name="DownloadingLabel" VerticalAlignment="Center" />
+						<ProgressBar Name="DownloadProgressBar" Width="160" Height="8"
+						             IsIndeterminate="True" />
+						<Button Name="CancelDownloadButton"
+						        Command="{Binding CancelDownloadCommand}" />
+					</StackPanel>
+
+					<TextBlock Name="DescriptionHeaderLabel" FontWeight="Bold" />
+					<TextBlock TextWrapping="Wrap" Text="{Binding SelectedPackage.Description}" />
+
+					<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"
+					      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
+						<TextBlock Grid.Row="0" Grid.Column="0" Name="AuthorsLabel" FontWeight="Bold" />
+						<TextBlock Grid.Row="0" Grid.Column="1" TextWrapping="Wrap"
+						           Text="{Binding SelectedPackage.Authors}" />
+
+						<TextBlock Grid.Row="1" Grid.Column="0" Name="LicenseLabel" FontWeight="Bold" />
+						<TextBlock Grid.Row="1" Grid.Column="1" Name="LicenseLink"
+						           TextDecorations="Underline" Foreground="#1B6EC2" Cursor="Hand"
+						           TextWrapping="Wrap"
+						           Text="{Binding SelectedPackage.LicenseUrl}" />
+
+						<TextBlock Grid.Row="2" Grid.Column="0" Name="PublishedLabel" FontWeight="Bold" />
+						<TextBlock Grid.Row="2" Grid.Column="1"
+						           Text="{Binding SelectedPackage.Published, StringFormat='{}{0:D}'}" />
+
+						<TextBlock Grid.Row="3" Grid.Column="0" Name="ProjectUrlLabel" FontWeight="Bold" />
+						<TextBlock Grid.Row="3" Grid.Column="1" Name="ProjectUrlLink"
+						           TextDecorations="Underline" Foreground="#1B6EC2" Cursor="Hand"
+						           TextWrapping="Wrap"
+						           Text="{Binding SelectedPackage.ProjectUrl}" />
+
+						<TextBlock Grid.Row="4" Grid.Column="0" Name="DownloadsLabel" FontWeight="Bold" />
+						<TextBlock Grid.Row="4" Grid.Column="1"
+						           Text="{Binding SelectedPackage.DownloadCount, StringFormat='{}{0:N0}'}" />
+
+						<TextBlock Grid.Row="5" Grid.Column="0" Name="TagsLabel" FontWeight="Bold" />
+						<TextBlock Grid.Row="5" Grid.Column="1" TextWrapping="Wrap"
+						           Text="{Binding SelectedPackage.Tags}" />
+					</Grid>
+				</StackPanel>
+			</ScrollViewer>
+		</Grid>
+
+		<!-- Error bar: status strip for feed/download failures. Fixed beige
+		     background with explicit black text so it stays readable in dark themes. -->
+		<Border Grid.Row="2" Name="ErrorBar" Background="#FFF4CE" CornerRadius="2" Padding="8,4"
+		        IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+			<TextBlock Name="ErrorText" Foreground="Black" TextWrapping="Wrap"
+			           Text="{Binding ErrorMessage}" />
+		</Border>
+
+		<!-- Bottom row: "Load more" hugs the left edge of the results list above it;
+		     Cancel stays at the dialog's right edge on the same row. -->
+		<Grid Grid.Row="3" ColumnDefinitions="*,Auto">
+			<Button Grid.Column="0" Name="LoadMoreButton" HorizontalAlignment="Left"
+			        Command="{Binding LoadMoreCommand}"
+			        IsVisible="{Binding CanLoadMore}" />
+			<Button Grid.Column="1" Name="CancelButton" IsCancel="True" MinWidth="72" />
+		</Grid>
+	</Grid>
+</Window>
