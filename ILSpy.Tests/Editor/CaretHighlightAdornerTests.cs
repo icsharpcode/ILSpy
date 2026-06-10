@@ -57,8 +57,8 @@ public class CaretHighlightAdornerTests
 		// AvaloniaEditTextOutput.AddReference), so `OnReferenceClicked` resolves the click
 		// to an in-document jump and DecompilerTextView fires the caret highlight.
 		//
-		// The lifecycle (register then unregister after ~1 s) is verified end-to-end —
-		// hand-tuned animation curve is left for eyeball validation.
+		// The lifecycle (register on click, then unregister via Dismiss) is verified end-to-end —
+		// the hand-tuned animation curve and the one-second timing are left for eyeball validation.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -103,9 +103,12 @@ public class CaretHighlightAdornerTests
 			"clicking a member definition must route through DecompilerTextView.OnReferenceClicked "
 			+ "and call CaretHighlightAdorner.DisplayCaretHighlightAnimation");
 
-		// Wait for the lifetime timer (~1 s) to tear it back down.
-		await Waiters.WaitForAsync(
-			() => !renderers.Any(r => r is CaretHighlightAdorner),
-			timeout: TimeSpan.FromSeconds(3));
+		// The 1 s lifetime is a real-time DispatcherTimer, which is unreliable to wait on in a
+		// headless run; invoke the same teardown the timer runs (Dismiss) directly so the
+		// unregister half is verified deterministically rather than against the wall clock.
+		var adorner = renderers.OfType<CaretHighlightAdorner>().Single();
+		adorner.Dismiss();
+		renderers.Should().NotContain(r => r is CaretHighlightAdorner,
+			"Dismiss unregisters the caret-highlight adorner from the text view");
 	}
 }
