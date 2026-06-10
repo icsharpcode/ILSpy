@@ -382,6 +382,21 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithRR(new ConversionResolveResult(currentResultType, expr.ResolveResult, Conversion.IdentityConversion)).WithoutILInstruction();
 					}
 					return new ReturnStatement(expr).WithILInstruction(inst);
+
+					static bool IsPossibleLossOfTypeInformation(IType givenType, IType expectedType)
+					{
+						if (expectedType.ContainsAnonymousType())
+							return false;
+						if (NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(givenType, expectedType))
+							return false;
+						if (expectedType is TupleType { ElementNames.IsEmpty: false })
+							return true;
+						if (expectedType == SpecialType.Dynamic)
+							return true;
+						if (givenType == SpecialType.NullType)
+							return true;
+						return false;
+					}
 				}
 				else
 					return new ReturnStatement().WithILInstruction(inst);
@@ -401,19 +416,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				endContainerLabels.Add(inst.TargetContainer, label);
 			}
 			return new GotoStatement(label).WithILInstruction(inst);
-		}
-
-		private bool IsPossibleLossOfTypeInformation(IType givenType, IType expectedType)
-		{
-			if (NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(givenType, expectedType))
-				return false;
-			if (expectedType is TupleType { ElementNames.IsEmpty: false })
-				return true;
-			if (expectedType == SpecialType.Dynamic)
-				return true;
-			if (givenType == SpecialType.NullType)
-				return true;
-			return false;
 		}
 
 		protected internal override TranslatedStatement VisitThrow(Throw inst)
