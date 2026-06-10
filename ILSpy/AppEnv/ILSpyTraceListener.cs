@@ -24,13 +24,10 @@ using System.Linq;
 namespace ILSpy.AppEnv
 {
 	/// <summary>
-	/// Trace listener that downgrades <c>Debug.Assert</c> failures from process-killing
-	/// fail-fasts to a regular surfaced exception. The decompiler ships a number of asserts
-	/// that fire on real-world (but unusual) IL — without this, hovering or decompiling such
-	/// a method would terminate the process.
-	///
-	/// We route through <see cref="GlobalExceptionHandler.Show"/> so asserts land in the same
-	/// dialog as any other unhandled exception.
+	/// Trace listener that intercepts <c>Debug.Assert</c> failures and shows a developer dialog
+	/// (Throw / Debug / Ignore / Ignore All) instead of the process-killing default fail-fast.
+	/// The decompiler ships a number of asserts that fire on real-world (but unusual) IL — without
+	/// this, hovering or decompiling such a method would terminate the process.
 	/// </summary>
 	sealed class ILSpyTraceListener : DefaultTraceListener
 	{
@@ -46,9 +43,11 @@ namespace ILSpy.AppEnv
 			AssertUiEnabled = false;
 		}
 
-		// Dedup repeated asserts by call site so a decompile that hits the same assert in 200
-		// methods only opens one dialog.
-		readonly HashSet<string> seenTopFrames = new();
+		// Call sites the developer chose "Ignore All" for; further asserts from these are dropped.
+		readonly HashSet<string> ignoredTopFrames = new();
+		// Guards against a second assert (e.g. raised while the dispatcher pumps during the dialog)
+		// stacking another dialog on top of the open one.
+		bool dialogIsOpen;
 
 		public override void Fail(string? message)
 			=> Fail(message, null);
@@ -68,13 +67,33 @@ namespace ILSpy.AppEnv
 			if (frames.Length == 0)
 				return;
 			var topFrame = frames[0];
-			lock (seenTopFrames)
+			lock (ignoredTopFrames)
 			{
-				if (!seenTopFrames.Add(topFrame))
+				if (ignoredTopFrames.Contains(topFrame) || dialogIsOpen)
 					return;
+				dialogIsOpen = true;
 			}
-			var trimmedStack = string.Join(Environment.NewLine, frames);
-			GlobalExceptionHandler.Show(new AssertionFailedException(message ?? "(no message)", detailMessage, trimmedStack));
+			try
+			{
+				var trimmedStack = string.Join(Environment.NewLine, frames);
+				switch (AssertionFailedDialog.Show(message ?? "(no message)", detailMessage, trimmedStack))
+				{
+					case AssertionAction.Throw:
+						throw new AssertionFailedException(message ?? "(no message)", detailMessage, trimmedStack);
+					case AssertionAction.Debug:
+						Debugger.Break();
+						break;
+					case AssertionAction.IgnoreAll:
+						lock (ignoredTopFrames)
+							ignoredTopFrames.Add(topFrame);
+						break;
+				}
+			}
+			finally
+			{
+				lock (ignoredTopFrames)
+					dialogIsOpen = false;
+			}
 		}
 	}
 

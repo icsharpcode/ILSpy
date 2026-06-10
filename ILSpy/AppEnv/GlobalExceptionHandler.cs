@@ -52,8 +52,8 @@ namespace ILSpy.AppEnv
 
 		/// <summary>
 		/// Surfaces <paramref name="exception"/> through the same UI as an unhandled exception.
-		/// Used by <see cref="AssertSuppressor"/> to route <c>Debug.Assert</c> failures to the
-		/// regular exception dialog instead of letting them fail-fast the process.
+		/// Lets call sites that swallow exceptions in a fire-and-forget continuation still report
+		/// them through the standard dialog.
 		/// </summary>
 		public static void Show(Exception exception) => Report(exception);
 

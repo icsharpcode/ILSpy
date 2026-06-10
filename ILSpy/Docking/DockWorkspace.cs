@@ -1023,7 +1023,7 @@ namespace ILSpy.Docking
 			}
 			catch (OperationCanceledException)
 			{
-				// User cancelled — leave the (empty) report tab; they can close it.
+				content.ShowText(CreateCancelledOutput(title));
 			}
 		}
 
@@ -1052,8 +1052,21 @@ namespace ILSpy.Docking
 			}
 			catch (OperationCanceledException)
 			{
-				// User cancelled — leave the (empty) report tab; they can close it.
+				content.ShowText(CreateCancelledOutput(title));
 			}
+		}
+
+		/// <summary>
+		/// Builds the report shown in a frozen operation tab when the user cancels it: the tab keeps
+		/// its title but its body is replaced with a short "Operation was cancelled." note so the tab
+		/// is not left blank.
+		/// </summary>
+		static TextView.AvaloniaEditTextOutput CreateCancelledOutput(string title)
+		{
+			var output = new TextView.AvaloniaEditTextOutput { Title = title };
+			output.Write(ICSharpCode.ILSpy.Properties.Resources.OperationWasCancelled);
+			output.WriteLine();
+			return output;
 		}
 
 		/// <summary>
