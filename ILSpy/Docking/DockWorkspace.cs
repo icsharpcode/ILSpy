@@ -440,15 +440,26 @@ namespace ILSpy.Docking
 		/// </summary>
 		internal Task CancelPendingOperationsAsync()
 		{
-			if (Layout is not IDockable root)
-				return Task.CompletedTask;
-			var pending = FlattenDocumentDocks(root)
-				.SelectMany(dock => dock.VisibleDockables?.OfType<ContentTabPage>() ?? Enumerable.Empty<ContentTabPage>())
-				.Select(tab => tab.Content)
-				.OfType<TextView.DecompilerTabPageModel>()
+			var pending = AllDecompilerTabs()
 				.Select(tab => tab.CancelPendingAsync())
 				.ToArray();
 			return pending.Length == 0 ? Task.CompletedTask : Task.WhenAll(pending);
+		}
+
+		/// <summary>
+		/// Every decompiler tab model across all document docks, including docks in floating
+		/// windows: the preview tab, frozen tabs, and static-content pages alike. Callers
+		/// that must skip static content (e.g. output refreshes) filter on
+		/// <see cref="TextView.DecompilerTabPageModel.IsStaticContent"/> themselves.
+		/// </summary>
+		IEnumerable<TextView.DecompilerTabPageModel> AllDecompilerTabs()
+		{
+			if (Layout is not IDockable root)
+				return [];
+			return FlattenDocumentDocks(root)
+				.SelectMany(dock => dock.VisibleDockables?.OfType<ContentTabPage>() ?? Enumerable.Empty<ContentTabPage>())
+				.Select(tab => tab.Content)
+				.OfType<TextView.DecompilerTabPageModel>();
 		}
 
 		// Set true while syncing the tree's selection FROM the active tab so the
@@ -632,15 +643,16 @@ namespace ILSpy.Docking
 		{
 			if (e.PropertyName is nameof(LanguageService.CurrentLanguage) or nameof(LanguageService.CurrentVersion))
 			{
-				if (ActiveDecompilerTab is { } tab)
+				// Every decompiler tab caches its own output, so every one re-decompiles —
+				// frozen tabs included, not just the active preview tab. The language
+				// version is read per-run inside TryGetLiveDecompilerSettings, so assigning
+				// the language and re-running covers both combo boxes.
+				foreach (var tab in AllDecompilerTabs())
 				{
+					if (tab.IsStaticContent)
+						continue;
 					tab.Language = languageService.CurrentLanguage;
-					// Re-decompile by re-assigning the same node so the tab refreshes for the new
-					// language or language version (the version is read inside
-					// TryGetLiveDecompilerSettings, which builds the per-run DecompilerSettings).
-					var node = tab.CurrentNode;
-					tab.CurrentNode = null;
-					tab.CurrentNode = node;
+					tab.Redecompile();
 				}
 			}
 		}
@@ -720,14 +732,21 @@ namespace ILSpy.Docking
 		}
 
 		/// <summary>
-		/// Re-decompile the decompiler tab's content in place so an output-affecting display setting
-		/// takes effect, WITHOUT activating or navigating to it. Unlike <see cref="ForceRefreshActiveTab"/>
-		/// (which re-projects the tree selection via <c>ShowSelectedNode</c> and so activates the preview
-		/// tab), changing an option must not steal the user's current tab. Refreshes the cached
-		/// decompiler content directly, so it is up to date even when another tab is showing.
+		/// Re-decompiles every decompiler tab's content in place so an output-affecting display
+		/// setting takes effect, WITHOUT activating or navigating to any of them. Unlike
+		/// <see cref="ForceRefreshActiveTab"/> (which re-projects the tree selection via
+		/// <c>ShowSelectedNode</c> and so activates the preview tab), changing an option must not
+		/// steal the user's current tab. Covers frozen tabs and floated tabs, whose models each
+		/// cache their own output.
 		/// </summary>
 		public void RefreshDecompilerOutputInPlace()
-			=> decompilerContent?.Redecompile();
+		{
+			foreach (var tab in AllDecompilerTabs())
+			{
+				if (!tab.IsStaticContent)
+					tab.Redecompile();
+			}
+		}
 
 		void ShowSelectedNode()
 		{
