@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,50 +16,57 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections;
+using System;
 using System.Composition;
-using System.Linq;
 using System.Windows.Input;
 
-using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Properties;
 
-namespace ICSharpCode.ILSpy
+using ILSpy.Docking;
+
+namespace ILSpy.Commands
 {
-	[ExportToolbarCommand(ToolTip = nameof(Resources.Back), ToolbarIcon = "Images/Back", ToolbarCategory = nameof(Resources.Navigation), ToolbarOrder = 0)]
+	[ExportMainMenuCommand(
+		ParentMenuID = nameof(Resources._View),
+		Header = nameof(Resources.Back),
+		MenuIcon = "Images/Back",
+		MenuCategory = nameof(Resources.Navigation),
+		InputGestureText = "Alt+Left",
+		MenuOrder = 0)]
 	[Shared]
-	sealed class BrowseBackCommand : CommandWrapper, IProvideParameterList
+	[method: ImportingConstructor]
+	sealed class BrowseBackCommand(DockWorkspace dockWorkspace) : ICommand
 	{
-		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly ICommand inner = dockWorkspace.NavigateBackCommand;
 
-		public BrowseBackCommand(AssemblyTreeModel assemblyTreeModel)
-			: base(NavigationCommands.BrowseBack)
-		{
-			this.assemblyTreeModel = assemblyTreeModel;
+		public event EventHandler? CanExecuteChanged {
+			add => inner.CanExecuteChanged += value;
+			remove => inner.CanExecuteChanged -= value;
 		}
 
-		protected override void OnCanExecute(object sender, CanExecuteRoutedEventArgs e)
-		{
-			base.OnCanExecute(sender, e);
+		public bool CanExecute(object? parameter) => inner.CanExecute(parameter);
+		public void Execute(object? parameter) => inner.Execute(parameter);
+	}
 
-			e.Handled = true;
-			e.CanExecute = assemblyTreeModel.CanNavigateBack;
+	[ExportMainMenuCommand(
+		ParentMenuID = nameof(Resources._View),
+		Header = nameof(Resources.Forward),
+		MenuIcon = "Images/Forward",
+		MenuCategory = nameof(Resources.Navigation),
+		InputGestureText = "Alt+Right",
+		MenuOrder = 1)]
+	[Shared]
+	[method: ImportingConstructor]
+	sealed class BrowseForwardCommand(DockWorkspace dockWorkspace) : ICommand
+	{
+		readonly ICommand inner = dockWorkspace.NavigateForwardCommand;
+
+		public event EventHandler? CanExecuteChanged {
+			add => inner.CanExecuteChanged += value;
+			remove => inner.CanExecuteChanged -= value;
 		}
 
-		protected override void OnExecute(object sender, ExecutedRoutedEventArgs e)
-		{
-			if (assemblyTreeModel.CanNavigateBack)
-			{
-				e.Handled = true;
-				assemblyTreeModel.NavigateHistory(false, e.Parameter as NavigationState);
-			}
-		}
-
-		public IEnumerable ParameterList => assemblyTreeModel.GetNavigateHistory(false).Reverse();
-
-		public object GetParameterText(object parameter)
-		{
-			return (parameter as NavigationState)?.NavigationText;
-		}
+		public bool CanExecute(object? parameter) => inner.CanExecute(parameter);
+		public void Execute(object? parameter) => inner.Execute(parameter);
 	}
 }

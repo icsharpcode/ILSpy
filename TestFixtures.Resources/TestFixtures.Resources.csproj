@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>TestFixtures.Resources</AssemblyName>
+    <RootNamespace>TestFixtures.Resources</RootNamespace>
+    <Nullable>enable</Nullable>
+    <!-- Standalone fixture for manual ILSpy testing — keep build artifacts entirely
+         under this directory so the parent solution doesn't try to compile it. -->
+    <BaseOutputPath>$(MSBuildThisFileDirectory)bin\</BaseOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Each resource keeps its file name as the manifest name so it ends up routed to the
+         right specialised resource node by extension. -->
+    <EmbeddedResource Include="fixtures\sample.xml"     LogicalName="sample.xml" />
+    <EmbeddedResource Include="fixtures\schema.xsd"     LogicalName="schema.xsd" />
+    <EmbeddedResource Include="fixtures\transform.xslt" LogicalName="transform.xslt" />
+    <EmbeddedResource Include="fixtures\Window.xaml"    LogicalName="Window.xaml" />
+    <EmbeddedResource Include="fixtures\logo.png"       LogicalName="logo.png" />
+    <EmbeddedResource Include="fixtures\logo.bmp"       LogicalName="logo.bmp" />
+    <EmbeddedResource Include="fixtures\logo.jpg"       LogicalName="logo.jpg" />
+    <EmbeddedResource Include="fixtures\logo.gif"       LogicalName="logo.gif" />
+    <EmbeddedResource Include="fixtures\favicon.ico"    LogicalName="favicon.ico" />
+    <EmbeddedResource Include="fixtures\pointer.cur"    LogicalName="pointer.cur" />
+    <EmbeddedResource Include="fixtures\Strings.resources" LogicalName="Strings.resources" />
+    <EmbeddedResource Include="fixtures\blob.bin"       LogicalName="blob.bin" />
+  </ItemGroup>
+
+  <!-- Generate.cs is for the Generate.csproj only; exclude from compilation here. -->
+  <ItemGroup>
+    <Compile Remove="Generate.cs" />
+    <None Remove="Generate.cs" />
+  </ItemGroup>
+</Project>

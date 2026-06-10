@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="ILSpy.Views.ContentTabPageView"
+             x:DataType="vm:ContentTabPage">
+
+	<!-- The active Content (a TabPageModel: decompiler text, metadata grid, compare, or
+	     Options page) is hosted in one ContentControl; the application-wide ViewLocator
+	     (App.axaml DataTemplates) resolves it to the matching view. Only the active
+	     content's view is realised, so each tab carries exactly one inner view instead of
+	     one of every kind. Content is assigned from code-behind (not bound) so Dock's
+	     transient-null / same-page DataContext churn on a tab switch doesn't rebuild it. -->
+	<ContentControl Name="ContentHost" />
+
+</UserControl>

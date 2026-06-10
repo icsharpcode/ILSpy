@@ -52,24 +52,28 @@ namespace ICSharpCode.ILSpyX.TreeView
 			CollectionChanged?.Invoke(this, e);
 		}
 
+		// A node plus its visible descendants form one contiguous run in the flattened list, and the
+		// underlying tree's Count is updated by the WHOLE run before these fire. Raise a single ranged
+		// event so the notification matches the tree: Count and indices stay in agreement for a
+		// consumer that reconciles the change in one step. Per-node events instead leave the source
+		// already fully resized while the consumer is still mid-sequence, so one that re-indexes during
+		// reconciliation (Avalonia's SelectionModel re-reading SelectedItems) reads past the end.
 		public void NodesInserted(int index, IEnumerable<SharpTreeNode> nodes)
 		{
 			if (!includeRoot)
 				index--;
-			foreach (SharpTreeNode node in nodes)
-			{
-				RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, node, index++));
-			}
+			IList list = nodes as IList ?? new List<SharpTreeNode>(nodes);
+			if (list.Count > 0)
+				RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, list, index));
 		}
 
 		public void NodesRemoved(int index, IEnumerable<SharpTreeNode> nodes)
 		{
 			if (!includeRoot)
 				index--;
-			foreach (SharpTreeNode node in nodes)
-			{
-				RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, node, index));
-			}
+			IList list = nodes as IList ?? new List<SharpTreeNode>(nodes);
+			if (list.Count > 0)
+				RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, list, index));
 		}
 
 		public void Stop()

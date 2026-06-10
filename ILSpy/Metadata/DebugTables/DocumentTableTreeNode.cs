@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -24,9 +24,14 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.DebugTables
 {
-	internal class DocumentTableTreeNode : DebugMetadataTableTreeNode<DocumentTableTreeNode.DocumentEntry>
+	/// <summary>
+	/// View of the Document table — every source file referenced by debug info. Each row
+	/// carries the path string, plus heap-offsets for hash algorithm, hash bytes, and
+	/// language GUID.
+	/// </summary>
+	public sealed class DocumentTableTreeNode : MetadataTableTreeNode<DocumentTableTreeNode.DocumentEntry>
 	{
 		public DocumentTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.Document, metadataFile)
@@ -37,25 +42,20 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var list = new List<DocumentEntry>();
 			foreach (var row in metadataFile.Metadata.Documents)
-			{
 				list.Add(new DocumentEntry(metadataFile, row));
-			}
-
 			return list;
 		}
 
-		internal readonly struct DocumentEntry
+		public sealed class DocumentEntry
 		{
-			readonly int? offset;
 			readonly MetadataFile metadataFile;
 			readonly DocumentHandle handle;
 			readonly Document document;
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
-
-			public object Offset => offset == null ? "n/a" : offset;
 
 			public string Name => metadataFile.Metadata.GetString(document.Name);
 
@@ -64,7 +64,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int HashAlgorithm => MetadataTokens.GetHeapOffset(document.HashAlgorithm);
 
-			public string HashAlgorithmTooltip {
+			public string? HashAlgorithmTooltip {
 				get {
 					if (document.HashAlgorithm.IsNil)
 						return null;
@@ -80,7 +80,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Hash => MetadataTokens.GetHeapOffset(document.Hash);
 
-			public string HashTooltip {
+			public string? HashTooltip {
 				get {
 					if (document.Hash.IsNil)
 						return null;
@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Language => MetadataTokens.GetHeapOffset(document.Language);
 
-			public string LanguageTooltip {
+			public string? LanguageTooltip {
 				get {
 					if (document.Language.IsNil)
 						return null;
@@ -110,10 +110,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			public DocumentEntry(MetadataFile metadataFile, DocumentHandle handle)
 			{
 				this.metadataFile = metadataFile;
-				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.Document)
-					+ metadataFile.Metadata.GetTableRowSize(TableIndex.Document) * (MetadataTokens.GetRowNumber(handle) - 1);
 				this.handle = handle;
-				this.document = metadataFile.Metadata.GetDocument(handle);
+				document = metadataFile.Metadata.GetDocument(handle);
 			}
 		}
 	}

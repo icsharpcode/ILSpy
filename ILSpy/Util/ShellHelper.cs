@@ -1,14 +1,14 @@
-// Copyright (c) 2025 sonyps5201314
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,129 +17,73 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
 
-#pragma warning disable CA1060 // Move pinvokes to native methods class
-
-namespace ICSharpCode.ILSpy.Util
+namespace ILSpy.Util
 {
-	static class ShellHelper
+	/// <summary>
+	/// Cross-platform helpers for handing a path to the OS shell: open a folder, reveal a file in
+	/// the file manager, or open a file with its default application. All calls are best-effort --
+	/// a failed launch is swallowed, since the user can navigate manually and the gesture has
+	/// already returned. Consolidates the explorer.exe / open / xdg-open switch that was copied
+	/// across the export, save, PDB, diagram and package-extraction commands.
+	/// </summary>
+	public static class ShellHelper
 	{
-		[DllImport("shell32.dll", CharSet = CharSet.Unicode)]
-		static extern int SHParseDisplayName([MarshalAs(UnmanagedType.LPWStr)] string pszName, IntPtr pbc, out IntPtr ppidl, uint sfgaoIn, out uint psfgaoOut);
+		/// <summary>Opens <paramref name="path"/> (a directory) in the OS file manager.</summary>
+		public static void OpenFolder(string path) => Launch(path, selectItem: false);
 
-		[DllImport("shell32.dll")]
-		static extern int SHOpenFolderAndSelectItems(IntPtr pidlFolder, uint cidl, [MarshalAs(UnmanagedType.LPArray)] IntPtr[] apidl, uint dwFlags);
+		/// <summary>
+		/// Reveals <paramref name="path"/> (a file) in the OS file manager, selecting it where the
+		/// platform supports it (Windows <c>/select,</c>, macOS <c>-R</c>). On Linux there is no
+		/// stable cross-distro "select file" hook, so the parent directory is opened instead.
+		/// </summary>
+		public static void RevealFile(string path) => Launch(path, selectItem: true);
 
-		[DllImport("shell32.dll")]
-		static extern IntPtr ILFindLastID(IntPtr pidl);
-
-		[DllImport("ole32.dll")]
-		static extern void CoTaskMemFree(IntPtr pv);
-
-		public static void OpenFolder(string folderPath)
+		/// <summary>Opens <paramref name="path"/> with its default application (image viewer,
+		/// browser, ...).</summary>
+		public static void OpenWithDefaultApplication(string path)
 		{
 			try
 			{
-				Process.Start(new ProcessStartInfo { FileName = folderPath, UseShellExecute = true });
+				// UseShellExecute resolves the default app on Windows and macOS; Linux needs xdg-open.
+				if (OperatingSystem.IsWindows() || OperatingSystem.IsMacOS())
+					Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+				else
+					Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
 			}
-			catch (Exception)
+			catch
 			{
-				// Process.Start can throw several errors (not all of them documented),
-				// just ignore all of them.
+				// Best-effort: the user can open the file manually if the shell call fails.
 			}
 		}
 
-		public static void OpenFolderAndSelectItem(string path)
+		static void Launch(string path, bool selectItem)
 		{
-			// Reuse the multi-item implementation for single item selection to avoid duplication.
-			if (string.IsNullOrEmpty(path))
-				return;
-			if (Directory.Exists(path))
+			try
 			{
-				OpenFolder(path);
-				return;
+				if (OperatingSystem.IsWindows())
+				{
+					var args = selectItem ? $"/select,\"{path}\"" : $"\"{path}\"";
+					Process.Start(new ProcessStartInfo("explorer.exe", args) { UseShellExecute = false });
+				}
+				else if (OperatingSystem.IsMacOS())
+				{
+					var args = selectItem ? $"-R \"{path}\"" : $"\"{path}\"";
+					Process.Start(new ProcessStartInfo("open", args) { UseShellExecute = false });
+				}
+				else
+				{
+					// Linux + others: no universal "select item" command, so revealing a file opens
+					// its parent directory.
+					var target = selectItem ? (Path.GetDirectoryName(path) ?? path) : path;
+					Process.Start(new ProcessStartInfo("xdg-open", target) { UseShellExecute = false });
+				}
 			}
-
-			if (!File.Exists(path))
-				return;
-
-			OpenFolderAndSelectItems(path);
-		}
-
-		public static void OpenFolderAndSelectItems(params IEnumerable<string> paths)
-		{
-			if (paths == null)
-				return;
-			// Group by containing folder
-			var files = paths.Distinct(StringComparer.OrdinalIgnoreCase).Where(p => !string.IsNullOrEmpty(p) && File.Exists(p)).ToList();
-			if (files.Count == 0)
-				return;
-
-			var itemPidlAllocs = new List<IntPtr>();
-			var relativePidls = new List<IntPtr>();
-
-			foreach (var group in files.GroupBy(Path.GetDirectoryName))
+			catch
 			{
-				string folder = group.Key;
-				if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
-					continue;
-
-				IntPtr folderPidl = IntPtr.Zero;
-
-				try
-				{
-					int hrFolder = SHParseDisplayName(folder, IntPtr.Zero, out folderPidl, 0, out uint attrs);
-					Marshal.ThrowExceptionForHR(hrFolder);
-
-					foreach (var file in group)
-					{
-						int hrItem = SHParseDisplayName(file, IntPtr.Zero, out var itemPidl, 0, out attrs);
-						if (hrItem == 0 && itemPidl != IntPtr.Zero)
-						{
-							IntPtr relative = ILFindLastID(itemPidl);
-							if (relative != IntPtr.Zero)
-							{
-								relativePidls.Add(relative);
-								itemPidlAllocs.Add(itemPidl);
-								continue;
-							}
-						}
-						if (itemPidl != IntPtr.Zero)
-							CoTaskMemFree(itemPidl);
-					}
-
-					if (relativePidls.Count > 0)
-					{
-						int hr = SHOpenFolderAndSelectItems(folderPidl, (uint)relativePidls.Count, relativePidls.ToArray(), 0);
-						Marshal.ThrowExceptionForHR(hr);
-					}
-					else
-					{
-						// nothing to select - open folder
-						OpenFolder(folder);
-					}
-				}
-				catch (Exception ex) when (ex is COMException or Win32Exception)
-				{
-					// fall back to Process.Start
-					OpenFolder(folder);
-				}
-				finally
-				{
-					foreach (var p in itemPidlAllocs)
-						CoTaskMemFree(p);
-					if (folderPidl != IntPtr.Zero)
-						CoTaskMemFree(folderPidl);
-
-					itemPidlAllocs.Clear();
-					relativePidls.Clear();
-				}
+				// Best-effort: the user can navigate manually if the shell call fails.
 			}
 		}
 	}

@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -22,9 +22,15 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.DebugTables
 {
-	internal class StateMachineMethodTableTreeNode : DebugMetadataTableTreeNode<StateMachineMethodTableTreeNode.StateMachineMethodEntry>
+	/// <summary>
+	/// View of the StateMachineMethod table — pairs each compiler-generated state-machine
+	/// MoveNext method with the user-written kickoff method (the original async / iterator
+	/// declaration). Read directly from the metadata table because System.Reflection.Metadata
+	/// doesn't surface these rows through a typed enumeration.
+	/// </summary>
+	public sealed class StateMachineMethodTableTreeNode : MetadataTableTreeNode<StateMachineMethodTableTreeNode.StateMachineMethodEntry>
 	{
 		public StateMachineMethodTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.StateMachineMethod, metadataFile)
@@ -34,65 +40,49 @@ namespace ICSharpCode.ILSpy.Metadata
 		protected override IReadOnlyList<StateMachineMethodEntry> LoadTable()
 		{
 			var list = new List<StateMachineMethodEntry>();
-			var length = metadataFile.Metadata.GetTableRowCount(TableIndex.StateMachineMethod);
-			var reader = metadataFile.Metadata.AsBlobReader();
-			reader.Offset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
-
+			var metadata = metadataFile.Metadata;
+			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
+			var reader = metadata.AsBlobReader();
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
+			int methodDefSize = metadata.GetTableRowCount(TableIndex.MethodDef) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				list.Add(new StateMachineMethodEntry(metadataFile, ref reader, rid));
+				var moveNext = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
+				var kickoff = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
+				list.Add(new StateMachineMethodEntry(metadataFile, rid, moveNext, kickoff));
 			}
 			return list;
 		}
 
-		internal struct StateMachineMethodEntry
+		public sealed class StateMachineMethodEntry
 		{
-			readonly int? offset;
 			readonly MetadataFile metadataFile;
 			readonly MethodDefinitionHandle moveNextMethod;
 			readonly MethodDefinitionHandle kickoffMethod;
 
 			public int RID { get; }
 
+			[ColumnInfo("X8")]
 			public int Token => 0x36000000 + RID;
-
-			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MoveNextMethod => MetadataTokens.GetToken(moveNextMethod);
 
-			public void OnMoveNextMethodClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, moveNextMethod, protocol: "metadata")));
-			}
-
-			string moveNextMethodTooltip;
-			public string MoveNextMethodTooltip => GenerateTooltip(ref moveNextMethodTooltip, metadataFile, moveNextMethod);
+			string? moveNextMethodTooltip;
+			public string? MoveNextMethodTooltip => GenerateTooltip(ref moveNextMethodTooltip, metadataFile, moveNextMethod);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int KickoffMethod => MetadataTokens.GetToken(kickoffMethod);
 
-			public void OnKickofMethodClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, kickoffMethod, protocol: "metadata")));
-			}
+			string? kickoffMethodTooltip;
+			public string? KickoffMethodTooltip => GenerateTooltip(ref kickoffMethodTooltip, metadataFile, kickoffMethod);
 
-			string kickoffMethodTooltip;
-			public string KickoffMethodTooltip => GenerateTooltip(ref kickoffMethodTooltip, metadataFile, kickoffMethod);
-
-			public StateMachineMethodEntry(MetadataFile metadataFile, ref BlobReader reader, int row)
+			public StateMachineMethodEntry(MetadataFile metadataFile, int rid, MethodDefinitionHandle moveNext, MethodDefinitionHandle kickoff)
 			{
 				this.metadataFile = metadataFile;
-				this.RID = row;
-				int rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod)
-					+ metadataFile.Metadata.GetTableRowSize(TableIndex.StateMachineMethod) * (row - 1);
-				this.offset = metadataFile.IsEmbedded ? null : (int?)rowOffset;
-
-				int methodDefSize = metadataFile.Metadata.GetTableRowCount(TableIndex.MethodDef) < ushort.MaxValue ? 2 : 4;
-				this.moveNextMethod = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
-				this.kickoffMethod = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
-				this.kickoffMethodTooltip = null;
-				this.moveNextMethodTooltip = null;
+				RID = rid;
+				moveNextMethod = moveNext;
+				kickoffMethod = kickoff;
 			}
 		}
 	}

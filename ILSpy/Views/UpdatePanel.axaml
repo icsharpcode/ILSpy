@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ILSpy.ViewModels"
+             x:Class="ILSpy.Views.UpdatePanel"
+             x:DataType="vm:UpdatePanelViewModel"
+             IsVisible="{Binding IsPanelVisible}">
+	<UserControl.Styles>
+		<!-- The banner colours itself by state: green when ILSpy is up to date (default, no
+		     class), amber when an update is available (the .updateAvailable class, toggled from
+		     UpdatePanelViewModel.UpdateAvailable). -->
+		<Style Selector="Border#PanelBorder">
+			<Setter Property="Background" Value="#FFDFF0D8" />
+			<Setter Property="BorderBrush" Value="#FF4F8A10" />
+		</Style>
+		<Style Selector="Border#PanelBorder.updateAvailable">
+			<Setter Property="Background" Value="#FFFFE08A" />
+			<Setter Property="BorderBrush" Value="#FFCC8800" />
+		</Style>
+	</UserControl.Styles>
+	<Border Name="PanelBorder" Classes.updateAvailable="{Binding UpdateAvailable}"
+	        BorderThickness="0,0,0,1" Padding="8,4">
+		<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+			<!-- Fixed dark foreground: the banner stays a light colour in both themes, so the
+			     dark theme's near-white default foreground would be unreadable on it. -->
+			<TextBlock Grid.Column="0" VerticalAlignment="Center" Foreground="Black" Text="{Binding Message}" />
+			<Button Grid.Column="1" Content="{Binding ButtonText}"
+			        Command="{Binding DownloadOrCheckUpdateCommand}" />
+			<Button Grid.Column="2" Content="&#x2715;" Width="24" Padding="0"
+			        ToolTip.Tip="Close" Command="{Binding CloseCommand}" />
+		</Grid>
+	</Border>
+</UserControl>

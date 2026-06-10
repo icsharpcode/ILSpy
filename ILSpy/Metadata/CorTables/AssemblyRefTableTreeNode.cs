@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -24,9 +24,14 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	internal class AssemblyRefTableTreeNode : MetadataTableTreeNode<AssemblyRefTableTreeNode.AssemblyRefEntry>
+	/// <summary>
+	/// View of the AssemblyRef table — every external assembly the module imports. Each row
+	/// carries the reference's name, version, culture, and the public-key-or-token blob
+	/// that pins it to a specific signing identity.
+	/// </summary>
+	public sealed class AssemblyRefTableTreeNode : MetadataTableTreeNode<AssemblyRefTableTreeNode.AssemblyRefEntry>
 	{
 		public AssemblyRefTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.AssemblyRef, metadataFile)
@@ -37,13 +42,11 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var list = new List<AssemblyRefEntry>();
 			foreach (var row in metadataFile.Metadata.AssemblyReferences)
-			{
 				list.Add(new AssemblyRefEntry(metadataFile, row));
-			}
 			return list;
 		}
 
-		internal struct AssemblyRefEntry
+		public sealed class AssemblyRefEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly AssemblyReferenceHandle handle;
@@ -51,15 +54,15 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataFile.MetadataOffset
-				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.AssemblyRef)
-				+ metadataFile.Metadata.GetTableRowSize(TableIndex.AssemblyRef) * (RID - 1);
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.AssemblyRef, RID);
 
 			public Version Version => assemblyRef.Version;
 
-			[ColumnInfo("X8", Kind = ColumnKind.Other)]
+			[ColumnInfo("X8")]
 			public AssemblyFlags Flags => assemblyRef.Flags;
 
 			public object FlagsTooltip => new FlagsTooltip((int)assemblyRef.Flags, null) {
@@ -69,7 +72,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PublicKeyOrToken => MetadataTokens.GetHeapOffset(assemblyRef.PublicKeyOrToken);
 
-			public string PublicKeyOrTokenTooltip {
+			public string? PublicKeyOrTokenTooltip {
 				get {
 					if (assemblyRef.PublicKeyOrToken.IsNil)
 						return null;
@@ -90,7 +93,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			{
 				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.assemblyRef = metadataFile.Metadata.GetAssemblyReference(handle);
+				assemblyRef = metadataFile.Metadata.GetAssemblyReference(handle);
 			}
 		}
 	}

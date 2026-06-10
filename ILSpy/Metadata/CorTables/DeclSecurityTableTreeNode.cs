@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -23,9 +23,14 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	class DeclSecurityTableTreeNode : MetadataTableTreeNode<DeclSecurityTableTreeNode.DeclSecurityEntry>
+	/// <summary>
+	/// View of the DeclSecurity table — declarative security attributes (CAS-era
+	/// <c>[SecurityPermission(...)]</c>) attached to assemblies, types, or methods. The
+	/// PermissionSet blob holds a serialised XML / binary permission descriptor.
+	/// </summary>
+	public sealed class DeclSecurityTableTreeNode : MetadataTableTreeNode<DeclSecurityTableTreeNode.DeclSecurityEntry>
 	{
 		public DeclSecurityTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.DeclSecurity, metadataFile)
@@ -36,13 +41,11 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var list = new List<DeclSecurityEntry>();
 			foreach (var row in metadataFile.Metadata.DeclarativeSecurityAttributes)
-			{
 				list.Add(new DeclSecurityEntry(metadataFile, row));
-			}
 			return list;
 		}
 
-		internal struct DeclSecurityEntry
+		public sealed class DeclSecurityEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly DeclarativeSecurityAttributeHandle handle;
@@ -50,24 +53,19 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataFile.MetadataOffset
-				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.DeclSecurity)
-				+ metadataFile.Metadata.GetTableRowSize(TableIndex.DeclSecurity) * (RID - 1);
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.DeclSecurity, RID);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(declSecAttr.Parent);
 
-			public void OnParentClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, declSecAttr.Parent, protocol: "metadata")));
-			}
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, declSecAttr.Parent);
 
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, declSecAttr.Parent);
-
-			[ColumnInfo("X8", Kind = ColumnKind.Other)]
+			[ColumnInfo("X8")]
 			public DeclarativeSecurityAction Action => declSecAttr.Action;
 
 			public string ActionTooltip {
@@ -79,7 +77,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int PermissionSet => MetadataTokens.GetHeapOffset(declSecAttr.PermissionSet);
 
-			public string PermissionSetTooltip {
+			public string? PermissionSetTooltip {
 				get {
 					return null;
 				}
@@ -89,8 +87,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			{
 				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.declSecAttr = metadataFile.Metadata.GetDeclarativeSecurityAttribute(handle);
-				this.parentTooltip = null;
+				declSecAttr = metadataFile.Metadata.GetDeclarativeSecurityAttribute(handle);
 			}
 		}
 	}

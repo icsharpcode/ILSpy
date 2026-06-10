@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -23,9 +23,14 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.DebugTables
 {
-	internal class LocalScopeTableTreeNode : DebugMetadataTableTreeNode<LocalScopeTableTreeNode.LocalScopeEntry>
+	/// <summary>
+	/// View of the LocalScope table — every lexical scope inside every method body's
+	/// debug info. Each row points back at the MethodDef + import-scope + local-variable
+	/// list and carries the scope's IL start offset and length.
+	/// </summary>
+	public sealed class LocalScopeTableTreeNode : MetadataTableTreeNode<LocalScopeTableTreeNode.LocalScopeEntry>
 	{
 		public LocalScopeTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.LocalScope, metadataFile)
@@ -35,62 +40,36 @@ namespace ICSharpCode.ILSpy.Metadata
 		protected override IReadOnlyList<LocalScopeEntry> LoadTable()
 		{
 			var list = new List<LocalScopeEntry>();
-
 			foreach (var row in metadataFile.Metadata.LocalScopes)
-			{
 				list.Add(new LocalScopeEntry(metadataFile, row));
-			}
-
 			return list;
 		}
 
-		internal struct LocalScopeEntry
+		public sealed class LocalScopeEntry
 		{
-			readonly int? offset;
 			readonly MetadataFile metadataFile;
 			readonly LocalScopeHandle handle;
 			readonly LocalScope localScope;
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
-
-			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Method => MetadataTokens.GetToken(localScope.Method);
 
-			public void OnMethodClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.Method, protocol: "metadata")));
-			}
-
-			string methodTooltip;
-			public string MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, localScope.Method);
+			string? methodTooltip;
+			public string? MethodTooltip => GenerateTooltip(ref methodTooltip, metadataFile, localScope.Method);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ImportScope => MetadataTokens.GetToken(localScope.ImportScope);
 
-			public void OnImportScopeClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.ImportScope, protocol: "metadata")));
-			}
-
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int VariableList => MetadataTokens.GetToken(localScope.GetLocalVariables().FirstOrDefault());
 
-			public void OnVariableListClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.GetLocalVariables().FirstOrDefault(), protocol: "metadata")));
-			}
-
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int ConstantList => MetadataTokens.GetToken(localScope.GetLocalConstants().FirstOrDefault());
-
-			public void OnConstantListClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, localScope.GetLocalConstants().FirstOrDefault(), protocol: "metadata")));
-			}
 
 			public int StartOffset => localScope.StartOffset;
 
@@ -99,11 +78,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			public LocalScopeEntry(MetadataFile metadataFile, LocalScopeHandle handle)
 			{
 				this.metadataFile = metadataFile;
-				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.LocalScope)
-					+ metadataFile.Metadata.GetTableRowSize(TableIndex.LocalScope) * (MetadataTokens.GetRowNumber(handle) - 1);
 				this.handle = handle;
-				this.localScope = metadataFile.Metadata.GetLocalScope(handle);
-				this.methodTooltip = null;
+				localScope = metadataFile.Metadata.GetLocalScope(handle);
 			}
 		}
 	}

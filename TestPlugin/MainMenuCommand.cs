@@ -3,28 +3,33 @@
 
 using System.Composition;
 
-using ICSharpCode.ILSpy;
-using ICSharpCode.ILSpy.AssemblyTree;
+using ILSpy.AssemblyTree;
+using ILSpy.Commands;
 
 namespace TestPlugin
 {
-	// Menu: menu into which the item is added
-	// MenuIcon: optional, icon to use for the menu item. Must be embedded as "Resource" (WPF-style resource) in the same assembly as the command type.
+	// ParentMenuID: menu into which the item is added
+	// MenuIcon: optional, icon to use for the menu item. Embedded as an AvaloniaResource in this assembly.
 	// Header: text on the menu item
 	// MenuCategory: optional, used for grouping related menu items together. A separator is added between different groups.
 	// MenuOrder: controls the order in which the items appear (items are sorted by this value)
 	[ExportMainMenuCommand(ParentMenuID = "_File", MenuIcon = "Clear.png", Header = "_Clear List", MenuCategory = "Open", MenuOrder = 1.5)]
 	// ToolTip: the tool tip
-	// ToolbarIcon: The icon. Must be embedded as "Resource" (WPF-style resource) in the same assembly as the command type.
+	// ToolbarIcon: the icon, embedded as an AvaloniaResource in this assembly.
 	// ToolbarCategory: optional, used for grouping related toolbar items together. A separator is added between different groups.
 	// ToolbarOrder: controls the order in which the items appear (items are sorted by this value)
 	[ExportToolbarCommand(ToolTip = "Clears the current assembly list", ToolbarIcon = "Clear.png", ToolbarCategory = "Open", ToolbarOrder = 1.5)]
 	[Shared]
+	// System.Composition needs the importing constructor marked explicitly; without this the menu/
+	// toolbar builder can't instantiate the command and the whole menu build fails.
+	[method: ImportingConstructor]
 	public class UnloadAllAssembliesCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		public override void Execute(object? parameter)
 		{
-			foreach (var loadedAssembly in assemblyTreeModel.AssemblyList.GetAssemblies())
+			if (assemblyTreeModel.AssemblyList is not { } assemblyList)
+				return;
+			foreach (var loadedAssembly in assemblyList.GetAssemblies())
 			{
 				loadedAssembly.AssemblyList.Unload(loadedAssembly);
 			}

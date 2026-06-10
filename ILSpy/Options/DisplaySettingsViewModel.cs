@@ -1,94 +1,94 @@
-using ICSharpCode.ILSpyX.Settings;
-using System.Windows.Media;
-using System.Xml.Linq;
-using System;
-using System.Composition;
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+using System.Xml.Linq;
 
-using TomsToolbox.Wpf;
-using ICSharpCode.ILSpy.Themes;
+using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace ICSharpCode.ILSpy.Options
+using global::Avalonia.Media;
+
+using ICSharpCode.ILSpy.Properties;
+
+namespace ILSpy.Options
 {
+	/// <summary>Viewmodel for the Display panel. Exposes the snapshot's
+	/// <see cref="DisplaySettings"/> through <see cref="Settings"/> for direct two-way
+	/// binding in the panel view, plus the list of system font families for the picker.</summary>
 	[ExportOptionPage(Order = 20)]
-	[NonShared]
-	public class DisplaySettingsViewModel : ObservableObjectBase, IOptionPage
+	public sealed partial class DisplaySettingsViewModel : ObservableObject, IOptionPage
 	{
-		private DisplaySettings settings = new();
-		private FontFamily[] fontFamilies;
-		private SessionSettings sessionSettings;
+		public string Title => Resources.Display;
 
-		public DisplaySettingsViewModel()
+		[ObservableProperty]
+		DisplaySettings settings = null!;
+
+		// Session settings carry the active Theme. The theme ComboBox binds two-way to
+		// SessionSettings.Theme; ThemeManager already applies the change live on that property.
+		[ObservableProperty]
+		SessionSettings sessionSettings = null!;
+
+		public System.Collections.Generic.IReadOnlyCollection<string> AllThemes => Themes.ThemeManager.AllThemes;
+
+		// Avalonia equivalent of WPF's Fonts.SystemFontFamilies. FontManager.Current populates
+		// from the platform font enumerator (DirectWrite on Windows, FontConfig on Linux,
+		// CoreText on macOS), so the list is realistic on every supported target.
+		public IReadOnlyList<string> AvailableFonts { get; } = FontManager.Current.SystemFonts
+			.Select(t => t.Name)
+			.OrderBy(n => n, System.StringComparer.OrdinalIgnoreCase)
+			.ToArray();
+
+		/// <summary>
+		/// Derived FontFamily for the preview TextBlock. Avalonia's runtime binding pipeline
+		/// doesn't auto-coerce a <c>string</c> source to <see cref="FontFamily"/> (the implicit
+		/// conversion fires at XAML parse time, not on binding evaluation), so the preview
+		/// goes through this property — recomputed on every <see cref="DisplaySettings.SelectedFont"/>
+		/// change via the PropertyChanged subscription in <see cref="Load"/>.
+		/// </summary>
+		public FontFamily CurrentFontFamily =>
+			Settings != null && !string.IsNullOrEmpty(Settings.SelectedFont)
+				? new FontFamily(Settings.SelectedFont)
+				: FontFamily.Default;
+
+		public void Load(SettingsService service)
 		{
-			fontFamilies = [settings.SelectedFont];
-
-			Task.Run(FontLoader).ContinueWith(continuation => {
-				FontFamilies = continuation.Result;
-				if (continuation.Exception == null)
-					return;
-				foreach (var ex in continuation.Exception.InnerExceptions)
-				{
-					MessageBox.Show(ex.ToString());
-				}
-			});
+			if (Settings != null)
+				Settings.PropertyChanged -= OnSettingsPropertyChanged;
+			Settings = service.DisplaySettings;
+			Settings.PropertyChanged += OnSettingsPropertyChanged;
+			SessionSettings = service.SessionSettings;
+			OnPropertyChanged(nameof(CurrentFontFamily));
 		}
 
-		public string Title => Properties.Resources.Display;
-
-		public DisplaySettings Settings {
-			get => settings;
-			set => SetProperty(ref settings, value);
-		}
-
-		public SessionSettings SessionSettings {
-			get => sessionSettings;
-			set => SetProperty(ref sessionSettings, value);
-		}
-
-		public FontFamily[] FontFamilies {
-			get => fontFamilies;
-			set => SetProperty(ref fontFamilies, value);
-		}
-
-		public int[] FontSizes { get; } = Enumerable.Range(6, 24 - 6 + 1).ToArray();
-
-		public void Load(SettingsSnapshot snapshot)
+		void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			Settings = snapshot.GetSettings<DisplaySettings>();
-			SessionSettings = snapshot.GetSettings<SessionSettings>();
-		}
-
-		static bool IsSymbolFont(FontFamily fontFamily)
-		{
-			foreach (var tf in fontFamily.GetTypefaces())
-			{
-				try
-				{
-					if (tf.TryGetGlyphTypeface(out GlyphTypeface glyph))
-						return glyph.Symbol;
-				}
-				catch (Exception)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		static FontFamily[] FontLoader()
-		{
-			return Fonts.SystemFontFamilies
-				.Where(ff => !IsSymbolFont(ff))
-				.OrderBy(ff => ff.Source)
-				.ToArray();
+			if (e.PropertyName == nameof(DisplaySettings.SelectedFont))
+				OnPropertyChanged(nameof(CurrentFontFamily));
 		}
 
 		public void LoadDefaults()
 		{
-			Settings.LoadFromXml(new XElement("empty"));
-			SessionSettings.Theme = ThemeManager.Current.DefaultTheme;
+			// Reset by replaying LoadFromXml against an empty element — every attribute is
+			// absent so each property falls back to its built-in default.
+			Settings.LoadFromXml(new XElement("DisplaySettings"));
+			SessionSettings.Theme = Themes.ThemeManager.Current.DefaultTheme;
 		}
 	}
 }

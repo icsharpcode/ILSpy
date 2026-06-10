@@ -521,7 +521,25 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("Close", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close all but this.
+        /// </summary>
+        public static string CloseAllButThisTab {
+            get {
+                return ResourceManager.GetString("CloseAllButThisTab", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Close all.
+        /// </summary>
+        public static string CloseAllTabs {
+            get {
+                return ResourceManager.GetString("CloseAllTabs", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Collapse all tree nodes.
         /// </summary>
@@ -1831,15 +1849,6 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Enable smooth scrolling.
-        /// </summary>
-        public static string EnableSmoothScrolling {
-            get {
-                return ResourceManager.GetString("EnableSmoothScrolling", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Enable word wrap.
         /// </summary>
         public static string EnableWordWrap {
@@ -1938,6 +1947,15 @@ namespace ICSharpCode.ILSpy.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Export Project/Solution....
+        /// </summary>
+        public static string ExportProjectSolution {
+            get {
+                return ResourceManager.GetString("ExportProjectSolution", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Generate portable PDB.
         /// </summary>
@@ -3159,7 +3177,7 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("Window_CloseAllDocuments", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to _Reset layout.
         /// </summary>

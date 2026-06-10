@@ -3,14 +3,18 @@
 
   <PropertyGroup>
     <AssemblyName>ILSpy.ReadyToRun.Plugin</AssemblyName>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- This plugin is published RID-specifically alongside the app (e.g. publish.ps1 does so
+         without restoring again), so the per-RID targets must already be in the restored assets.
+         Mirror ILSpy.csproj's RuntimeIdentifiers so the plugin can ship on every platform the host
+         supports, not just the Windows ones publish.ps1 currently exercises. -->
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <NeutralResourcesLanguage>en-US</NeutralResourcesLanguage>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <UseWpf>true</UseWpf>
     <IsPackable>false</IsPackable>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>disable</Nullable>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -31,16 +35,18 @@
   <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="Iced" />
     <PackageReference Include="ILCompiler.Reflection.ReadyToRun.Experimental" />
     <!-- ILCompiler.Reflection.ReadyToRun has dependencies on System.Reflection.Metadata and
-         System.Runtime.CompilerServices.Unsafe. Because the AddIn compiles into ILSpy's output
+         System.Runtime.CompilerServices.Unsafe. Because the plugin compiles into ILSpy's output
          directory, we're at risk of overwriting our dependencies with different versions.
-         So ensure NuGet uses consistent versions (from our packages.props) for these.
-         -->
+         So ensure NuGet uses consistent versions (from Directory.Packages.props) for these. -->
     <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
   </ItemGroup>

@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -20,95 +20,66 @@ using System;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpyX;
 
-using DecompilerSettings = ICSharpCode.ILSpyX.Settings.DecompilerSettings;
-
-namespace ICSharpCode.ILSpy
+namespace ILSpy
 {
 	/// <summary>
-	/// Options passed to the decompiler.
+	/// Options passed to <see cref="Languages.Language"/>'s Decompile* methods. Just enough
+	/// to drive a single decompilation into a text view — project-export and view-state
+	/// restoration aren't wired up yet.
 	/// </summary>
-	public class DecompilationOptions
+	public sealed class DecompilationOptions
 	{
-		/// <summary>
-		/// Gets whether a full decompilation (all members recursively) is desired.
-		/// If this option is false, language bindings are allowed to show the only headers of the decompiled element's children.
-		/// </summary>
+		public DecompilerSettings DecompilerSettings { get; }
+		public CancellationToken CancellationToken { get; set; }
+
+		/// <summary>Decompile the whole module rather than just the selected member.</summary>
 		public bool FullDecompilation { get; set; }
 
-		/// <summary>
-		/// Gets/Sets the directory into which the project is saved.
-		/// </summary>
-		public string SaveAsProjectDirectory { get; set; }
+		/// <summary>Target directory for project export. Always null today since no save
+		/// dialog is wired up; kept on the signature for future use.</summary>
+		public string? SaveAsProjectDirectory { get; set; }
 
-		/// <summary>
-		/// Gets/sets whether invalid identifiers should be escaped (and therefore the code be made compilable).
-		/// This setting is ignored in case <see cref="SaveAsProjectDirectory"/> is set.
-		/// </summary>
+		/// <summary>Escape invalid C# identifiers so the output compiles.</summary>
 		public bool EscapeInvalidIdentifiers { get; set; }
 
 		/// <summary>
-		/// Gets the cancellation token that is used to abort the decompiler.
+		/// Path to a strong-name key (<c>.snk</c>) for the exported project. When set, the project
+		/// export copies the key next to the project file and emits an
+		/// <c>&lt;AssemblyOriginatorKeyFile&gt;</c>. Honoured only on the project-export path
+		/// (<see cref="SaveAsProjectDirectory"/> set); ignored otherwise. The key file itself
+		/// lives on <see cref="ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler.StrongNameKeyFile"/>.
 		/// </summary>
-		/// <remarks>
-		/// Decompilers should regularly call <c>options.CancellationToken.ThrowIfCancellationRequested();</c>
-		/// to allow for cooperative cancellation of the decompilation task.
-		/// </remarks>
-		public CancellationToken CancellationToken { get; set; }
+		public string? StrongNameKeyFile { get; set; }
 
 		/// <summary>
-		/// Gets the progress reporter.
+		/// Stop the IL-transform pipeline after this many steps. <see cref="int.MaxValue"/>
+		/// means "run all transforms". The Debug Steps pane sets this to the index of a
+		/// chosen step so it can show the partial state at that point. Honoured by
+		/// <see cref="Languages.BlockILLanguage"/>; ignored by every other language.
 		/// </summary>
-		/// <remarks>
-		/// If decompilers do not implement progress reporting, an indeterminate wait bar is displayed.
-		/// </remarks>
-		public IProgress<DecompilationProgress> Progress { get; set; }
+		public int StepLimit { get; set; } = int.MaxValue;
 
 		/// <summary>
-		/// Gets the settings for the decompiler.
+		/// When true, transforms emit verbose debug information about their behaviour. Only
+		/// meaningful in combination with <see cref="StepLimit"/> — the Debug Steps pane sets
+		/// it on the "Debug this step" context-menu action.
 		/// </summary>
-		public DecompilerSettings DecompilerSettings { get; private set; }
+		public bool IsDebug { get; set; }
 
 		/// <summary>
-		/// Gets/sets an optional state of a decompiler text view.
+		/// Optional sink for whole-project decompilation progress. Wired onto
+		/// <see cref="ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler.ProgressIndicator"/>
+		/// on the project-export path so the export tab can show a determinate progress bar and the
+		/// file currently being written; ignored on single-member decompiles.
 		/// </summary>
-		/// <remarks>
-		/// This state is used to restore test view's state when decompilation is started by Go Back/Forward action.
-		/// </remarks>
-		public TextView.DecompilerTextViewState TextViewState { get; set; }
+		public IProgress<DecompilationProgress>? ProgressIndicator { get; set; }
 
-		/// <summary>
-		/// Used internally for debugging.
-		/// </summary>
-		internal int StepLimit = int.MaxValue;
-		internal bool IsDebug = false;
-
-		public DecompilationOptions(LanguageVersion version, DecompilerSettings settings, DisplaySettings displaySettings)
+		public DecompilationOptions(DecompilerSettings settings)
 		{
-			if (!Enum.TryParse(version?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
-				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
-
-			var newSettings = this.DecompilerSettings = settings.Clone();
-
-			newSettings.SetLanguageVersion(languageVersion);
-			newSettings.ExpandMemberDefinitions = displaySettings.ExpandMemberDefinitions;
-			newSettings.ExpandUsingDeclarations = displaySettings.ExpandUsingDeclarations;
-			newSettings.FoldBraces = displaySettings.FoldBraces;
-			newSettings.ShowDebugInfo = displaySettings.ShowDebugInfo;
-			newSettings.CSharpFormattingOptions.IndentationString = GetIndentationString(displaySettings);
+			DecompilerSettings = settings;
 		}
 
-		private string GetIndentationString(DisplaySettings displaySettings)
-		{
-			if (displaySettings.IndentationUseTabs)
-			{
-				int numberOfTabs = displaySettings.IndentationSize / displaySettings.IndentationTabSize;
-				int numberOfSpaces = displaySettings.IndentationSize % displaySettings.IndentationTabSize;
-				return new string('\t', numberOfTabs) + new string(' ', numberOfSpaces);
-			}
-			return new string(' ', displaySettings.IndentationSize);
-		}
+		public DecompilationOptions() : this(new DecompilerSettings()) { }
 	}
 }

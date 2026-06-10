@@ -112,6 +112,10 @@
         "resolved": "6.1.2",
         "contentHash": "2hBr6zdbIBTDE3EhK7NSVNdX58uTK6iHW/P/Axmm9sl1xoGSLqDvMtpecn226TNwHByFokYwJmt/aQQNlO5CRw=="
       }
-    }
+    },
+    ".NETStandard,Version=v2.0/linux-x64": {},
+    ".NETStandard,Version=v2.0/osx-arm64": {},
+    ".NETStandard,Version=v2.0/win-arm64": {},
+    ".NETStandard,Version=v2.0/win-x64": {}
   }
 }

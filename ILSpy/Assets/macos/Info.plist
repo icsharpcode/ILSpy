@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleName</key>
+  <string>ILSpy</string>
+  <key>CFBundleDisplayName</key>
+  <string>ILSpy</string>
+  <key>CFBundleIdentifier</key>
+  <string>net.sharpdevelop.ilspy</string>
+  <key>CFBundleVersion</key>
+  <string>10.1.0</string>
+  <key>CFBundleShortVersionString</key>
+  <string>10.1</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleSignature</key>
+  <string>????</string>
+  <key>CFBundleExecutable</key>
+  <string>ILSpy</string>
+  <key>CFBundleIconFile</key>
+  <string>ILSpy</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>11.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSHumanReadableCopyright</key>
+  <string>Copyright (c) ic#code. Licensed under the MIT license.</string>
+</dict>
+</plist>

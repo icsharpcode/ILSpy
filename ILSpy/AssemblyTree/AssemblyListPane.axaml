@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:tree="using:ILSpy.AssemblyTree"
+             xmlns:tv="using:ILSpy.Controls.TreeView"
+             mc:Ignorable="d" d:DesignWidth="300" d:DesignHeight="450"
+             x:Class="ILSpy.AssemblyTree.AssemblyListPane"
+             x:DataType="tree:AssemblyTreeModel">
+	<UserControl.Styles>
+		<!-- Thunderbird-style context-menu target highlight: a right-click marks its target row
+		     with this class WITHOUT moving the selection, so the menu's target is visible while the
+		     real selection (and the decompiled document) stays put. Reveals the ContextTargetVisual
+		     rectangle (selection-blue fill + dotted border), matching the keyboard-focus adorner so
+		     the menu's target reads identically to a focused row. Applied/cleared from
+		     SetContextTargetItem. -->
+		<Style Selector="tv|SharpTreeViewItem.contextTarget /template/ Rectangle#ContextTargetVisual">
+			<Setter Property="IsVisible" Value="True" />
+		</Style>
+		<!-- Dim auto-loaded assemblies / non-public API, but never let the dim colour bleed
+		     through a selected row's highlight (mirrors the old DataGridRow:not(:selected) rule). -->
+		<Style Selector="tv|SharpTreeViewItem:not(:selected) TextBlock.autoloaded">
+			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeAutoloadedForeground}" />
+		</Style>
+		<Style Selector="tv|SharpTreeViewItem:not(:selected) TextBlock.nonPublicAPI">
+			<Setter Property="Foreground" Value="{DynamicResource ILSpy.TreeNonPublicForeground}" />
+		</Style>
+	</UserControl.Styles>
+
+	<tv:SharpTreeView Name="Tree" ShowRoot="False" ShowLines="True" />
+</UserControl>

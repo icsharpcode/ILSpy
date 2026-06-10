@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -22,41 +22,50 @@ using System.Composition;
 using System.Linq;
 using System.Reflection;
 
+using CommunityToolkit.Mvvm.ComponentModel;
+
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX.Settings;
 
-using TomsToolbox.Wpf;
+using ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.Options
+// `Decompiler` short-form alias keeps the reflection-walk over `Decompiler.DecompilerSettings`
+// terse and disambiguates from the ILSpyX `DecompilerSettings` wrapper imported just below.
+using Decompiler = ICSharpCode.Decompiler;
+
+namespace ILSpy.Options
 {
+	/// <summary>
+	/// Reflection-driven viewmodel for the Decompiler-settings panel. Walks every
+	/// non-[Browsable(false)] property on <see cref="Decompiler.DecompilerSettings"/>,
+	/// groups them by their [Category] attribute, and surfaces each as an
+	/// <see cref="DecompilerSettingsItemViewModel"/> with a localised description.
+	/// </summary>
+	// No [Shared]: each Options tab open gets a fresh viewmodel instance bound to a fresh
+	// snapshot. In System.Composition the absence of [Shared] gives per-call instantiation.
 	[ExportOptionPage(Order = 10)]
-	[NonShared]
-	public sealed class DecompilerSettingsViewModel : ObservableObjectBase, IOptionPage
+	public sealed partial class DecompilerSettingsViewModel : ObservableObject, IOptionPage
 	{
-		private static readonly PropertyInfo[] propertyInfos = typeof(Decompiler.DecompilerSettings).GetProperties()
+		static readonly PropertyInfo[] propertyInfos = typeof(Decompiler.DecompilerSettings).GetProperties()
 			.Where(p => p.GetCustomAttribute<BrowsableAttribute>()?.Browsable != false)
 			.ToArray();
 
 		public string Title => Resources.Decompiler;
 
-		private DecompilerSettingsGroupViewModel[] settings;
-		public DecompilerSettingsGroupViewModel[] Settings {
-			get => settings;
-			set => SetProperty(ref settings, value);
-		}
+		[ObservableProperty]
+		DecompilerSettingsGroupViewModel[] settings = System.Array.Empty<DecompilerSettingsGroupViewModel>();
 
-		private DecompilerSettings decompilerSettings;
+		DecompilerSettings decompilerSettings = null!;
 
-		public void Load(SettingsSnapshot snapshot)
+		public void Load(SettingsService settings)
 		{
-			decompilerSettings = snapshot.GetSettings<DecompilerSettings>();
+			decompilerSettings = settings.DecompilerSettings;
 			LoadSettings();
 		}
 
-		private void LoadSettings()
+		void LoadSettings()
 		{
-			this.Settings = propertyInfos
+			Settings = propertyInfos
 				.Select(p => new DecompilerSettingsItemViewModel(p, decompilerSettings))
 				.OrderBy(item => item.Category, NaturalStringComparer.Instance)
 				.GroupBy(p => p.Category)
@@ -67,98 +76,93 @@ namespace ICSharpCode.ILSpy.Options
 		public void LoadDefaults()
 		{
 			var defaults = new Decompiler.DecompilerSettings();
-
-			foreach (var propertyInfo in propertyInfos)
-			{
-				propertyInfo.SetValue(decompilerSettings, propertyInfo.GetValue(defaults));
-			}
-
+			foreach (var p in propertyInfos)
+				p.SetValue(decompilerSettings, p.GetValue(defaults));
 			LoadSettings();
 		}
 	}
 
-	public sealed class DecompilerSettingsGroupViewModel : ObservableObjectBase
+	/// <summary>One Category section in the Decompiler panel. Surfaces a tri-state header
+	/// checkbox (all/none/some) that bulk-toggles every item under it.</summary>
+	public sealed partial class DecompilerSettingsGroupViewModel : ObservableObject
 	{
-		private bool? areAllItemsChecked;
+		[ObservableProperty]
+		bool? areAllItemsChecked;
 
 		public DecompilerSettingsGroupViewModel(string category, DecompilerSettingsItemViewModel[] settings)
 		{
 			Settings = settings;
 			Category = category;
-
 			areAllItemsChecked = GetAreAllItemsChecked(Settings);
-
-			foreach (DecompilerSettingsItemViewModel viewModel in settings)
-			{
-				viewModel.PropertyChanged += Item_PropertyChanged;
-			}
-		}
-
-		public bool? AreAllItemsChecked {
-			get => areAllItemsChecked;
-			set {
-				SetProperty(ref areAllItemsChecked, value);
-
-				if (!value.HasValue)
-					return;
-
-				foreach (var setting in Settings)
-				{
-					setting.IsEnabled = value.Value;
-				}
-			}
+			foreach (var s in settings)
+				s.PropertyChanged += ItemPropertyChanged;
 		}
 
 		public string Category { get; }
 
 		public DecompilerSettingsItemViewModel[] Settings { get; }
 
-		private void Item_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		partial void OnAreAllItemsCheckedChanged(bool? value)
 		{
-			if (e.PropertyName == nameof(DecompilerSettingsItemViewModel.IsEnabled))
-			{
-				AreAllItemsChecked = GetAreAllItemsChecked(Settings);
-			}
+			if (!value.HasValue)
+				return;
+			foreach (var s in Settings)
+				s.IsEnabled = value.Value;
 		}
 
-		private static bool? GetAreAllItemsChecked(ICollection<DecompilerSettingsItemViewModel> settings)
+		void ItemPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			var numberOfEnabledItems = settings.Count(item => item.IsEnabled);
+			if (e.PropertyName == nameof(DecompilerSettingsItemViewModel.IsEnabled))
+				AreAllItemsChecked = GetAreAllItemsChecked(Settings);
+		}
 
-			if (numberOfEnabledItems == settings.Count)
+		static bool? GetAreAllItemsChecked(ICollection<DecompilerSettingsItemViewModel> settings)
+		{
+			var enabled = settings.Count(i => i.IsEnabled);
+			if (enabled == settings.Count)
 				return true;
-
-			if (numberOfEnabledItems == 0)
+			if (enabled == 0)
 				return false;
-
 			return null;
 		}
 	}
 
-	public sealed class DecompilerSettingsItemViewModel(PropertyInfo property, DecompilerSettings decompilerSettings) : ObservableObjectBase
+	/// <summary>One reflection-discovered boolean setting in the Decompiler panel.</summary>
+	public sealed partial class DecompilerSettingsItemViewModel : ObservableObject
 	{
-		private bool isEnabled = property.GetValue(decompilerSettings) is true;
+		readonly PropertyInfo property;
+		readonly DecompilerSettings settings;
 
-		public PropertyInfo Property => property;
-
-		public bool IsEnabled {
-			get => isEnabled;
-			set {
-				if (SetProperty(ref isEnabled, value))
-				{
-					property.SetValue(decompilerSettings, value);
-				}
-			}
+		public DecompilerSettingsItemViewModel(PropertyInfo property, DecompilerSettings settings)
+		{
+			this.property = property;
+			this.settings = settings;
+			isEnabled = property.GetValue(settings) is true;
+			Description = GetResourceString(property.GetCustomAttribute<DescriptionAttribute>()?.Description ?? property.Name);
+			Category = GetResourceString(property.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
 		}
 
-		public string Description { get; set; } = GetResourceString(property.GetCustomAttribute<DescriptionAttribute>()?.Description ?? property.Name);
+		[ObservableProperty]
+		bool isEnabled;
 
-		public string Category { get; set; } = GetResourceString(property.GetCustomAttribute<CategoryAttribute>()?.Category ?? Resources.Other);
+		/// <summary>The <see cref="Decompiler.DecompilerSettings"/> property this item
+		/// reflects. Exposed for tests that need to look up an item by name.</summary>
+		public PropertyInfo Property => property;
 
-		private static string GetResourceString(string key)
+		public string Description { get; }
+
+		public string Category { get; }
+
+		partial void OnIsEnabledChanged(bool value)
+		{
+			property.SetValue(settings, value);
+		}
+
+		static string GetResourceString(string key)
 		{
 			var str = !string.IsNullOrEmpty(key) ? Resources.ResourceManager.GetString(key) : null;
 			return string.IsNullOrEmpty(key) || string.IsNullOrEmpty(str) ? key : str;
 		}
 	}
+
 }

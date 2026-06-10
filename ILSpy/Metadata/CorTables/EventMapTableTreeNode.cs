@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,16 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	class EventMapTableTreeNode : MetadataTableTreeNode<EventMapTableTreeNode.EventMapEntry>
+	/// <summary>
+	/// View of the EventMap table — pairs each TypeDef that declares events with the first
+	/// row of its event list (later rows belong to the same type until the next EventMap row).
+	/// </summary>
+	public sealed class EventMapTableTreeNode : MetadataTableTreeNode<EventMapTableTreeNode.EventMapEntry>
 	{
 		public EventMapTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.EventMap, metadataFile)
@@ -35,72 +38,50 @@ namespace ICSharpCode.ILSpy.Metadata
 		protected override IReadOnlyList<EventMapEntry> LoadTable()
 		{
 			var list = new List<EventMapEntry>();
-
 			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(TableIndex.EventMap);
-			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
+			var reader = metadata.AsBlobReader();
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.EventMap);
 			int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
 			int eventDefSize = metadata.GetTableRowCount(TableIndex.Event) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				list.Add(new EventMapEntry(metadataFile, ptr, rid, typeDefSize, eventDefSize));
+				int parentRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				int eventListRow = eventDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				list.Add(new EventMapEntry(metadataFile, rid, MetadataTokens.TypeDefinitionHandle(parentRow), MetadataTokens.EventDefinitionHandle(eventListRow)));
 			}
 			return list;
 		}
 
-		readonly struct EventMap
+		public sealed class EventMapEntry
 		{
-			public readonly TypeDefinitionHandle Parent;
-			public readonly EventDefinitionHandle EventList;
-
-			public EventMap(ReadOnlySpan<byte> ptr, int typeDefSize, int eventDefSize)
-			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(0, typeDefSize)));
-				EventList = MetadataTokens.EventDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(typeDefSize, eventDefSize)));
-			}
-		}
-
-		internal struct EventMapEntry
-		{
-			readonly MetadataFile metadataFile;
-			readonly EventMap eventMap;
-
 			public int RID { get; }
+
+			[ColumnInfo("X8")]
 			public int Token => 0x12000000 | RID;
-			public int Offset { get; }
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int Parent => MetadataTokens.GetToken(eventMap.Parent);
+			public int Parent => MetadataTokens.GetToken(parent);
 
-			public void OnParentClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, eventMap.Parent, protocol: "metadata")));
-			}
-
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, eventMap.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int EventList => MetadataTokens.GetToken(eventMap.EventList);
+			public int EventList => MetadataTokens.GetToken(eventList);
 
-			public void OnEventListClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, eventMap.EventList, protocol: "metadata")));
-			}
+			string? eventListTooltip;
+			public string? EventListTooltip => GenerateTooltip(ref eventListTooltip, metadataFile, eventList);
 
-			string eventListTooltip;
-			public string EventListTooltip => GenerateTooltip(ref eventListTooltip, metadataFile, eventMap.EventList);
+			readonly MetadataFile metadataFile;
+			readonly TypeDefinitionHandle parent;
+			readonly EventDefinitionHandle eventList;
 
-			public EventMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row, int typeDefSize, int eventDefSize)
+			public EventMapEntry(MetadataFile metadataFile, int rid, TypeDefinitionHandle parent, EventDefinitionHandle eventList)
 			{
 				this.metadataFile = metadataFile;
-				this.RID = row;
-				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.EventMap)
-					+ metadataFile.Metadata.GetTableRowSize(TableIndex.EventMap) * (row - 1);
-				this.Offset = metadataFile.MetadataOffset + rowOffset;
-				this.eventMap = new EventMap(ptr.Slice(rowOffset), typeDefSize, eventDefSize);
-				this.parentTooltip = null;
-				this.eventListTooltip = null;
+				RID = rid;
+				this.parent = parent;
+				this.eventList = eventList;
 			}
 		}
 	}

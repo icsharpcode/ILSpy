@@ -30,8 +30,9 @@ namespace ICSharpCode.ILSpyX.Analyzers
 	{
 		/// <summary>
 		/// Returns true, if the analyzer should be shown for a symbol, otherwise false.
+		/// Implementations must tolerate a null argument and return false.
 		/// </summary>
-		bool Show(ISymbol symbol);
+		bool Show(ISymbol? symbol);
 
 		/// <summary>
 		/// Returns all symbols found by this analyzer.

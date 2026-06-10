@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,16 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	internal class InterfaceImplTableTreeNode : MetadataTableTreeNode<InterfaceImplTableTreeNode.InterfaceImplEntry>
+	/// <summary>
+	/// View of the InterfaceImpl table — every type/interface implementation pair. Class is
+	/// a TypeDef row; Interface is a TypeDefOrRef coded token (TypeDef / TypeRef / TypeSpec).
+	/// </summary>
+	public sealed class InterfaceImplTableTreeNode : MetadataTableTreeNode<InterfaceImplTableTreeNode.InterfaceImplEntry>
 	{
 		public InterfaceImplTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.InterfaceImpl, metadataFile)
@@ -35,70 +38,52 @@ namespace ICSharpCode.ILSpy.Metadata
 		protected override IReadOnlyList<InterfaceImplEntry> LoadTable()
 		{
 			var list = new List<InterfaceImplEntry>();
-			var length = metadataFile.Metadata.GetTableRowCount(TableIndex.InterfaceImpl);
-			ReadOnlySpan<byte> ptr = metadataFile.Metadata.AsReadOnlySpan();
+			var metadata = metadataFile.Metadata;
+			var length = metadata.GetTableRowCount(TableIndex.InterfaceImpl);
+			var reader = metadata.AsBlobReader();
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.InterfaceImpl);
+			int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
+			int interfaceTagSize = metadata.ComputeCodedTokenSize(32768, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec);
 			for (int rid = 1; rid <= length; rid++)
 			{
-				list.Add(new InterfaceImplEntry(metadataFile, ptr, rid));
+				int classRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				uint interfaceTag = (uint)(interfaceTagSize == 2 ? reader.ReadUInt16() : reader.ReadInt32());
+				list.Add(new InterfaceImplEntry(metadataFile, rid,
+					MetadataTokens.TypeDefinitionHandle(classRow),
+					MetadataReaderHelpers.FromTypeDefOrRefTag(interfaceTag)));
 			}
 			return list;
 		}
 
-		readonly struct InterfaceImpl
+		public sealed class InterfaceImplEntry
 		{
-			public readonly EntityHandle Class;
-			public readonly EntityHandle Interface;
-
-			public InterfaceImpl(ReadOnlySpan<byte> ptr, int classSize, int interfaceSize)
-			{
-				Class = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr, classSize));
-				Interface = Helpers.FromTypeDefOrRefTag((uint)Helpers.GetValueLittleEndian(ptr.Slice(classSize, interfaceSize)));
-			}
-		}
-
-		internal struct InterfaceImplEntry
-		{
-			readonly MetadataFile metadataFile;
-			readonly InterfaceImpl interfaceImpl;
-
 			public int RID { get; }
 
+			[ColumnInfo("X8")]
 			public int Token => 0x09000000 | RID;
 
-			public int Offset { get; }
+			[ColumnInfo("X8", Kind = ColumnKind.Token)]
+			public int Class => MetadataTokens.GetToken(@class);
+
+			string? classTooltip;
+			public string? ClassTooltip => GenerateTooltip(ref classTooltip, metadataFile, @class);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int Class => MetadataTokens.GetToken(interfaceImpl.Class);
+			public int Interface => MetadataTokens.GetToken(@interface);
 
-			public void OnClassClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, interfaceImpl.Class, protocol: "metadata")));
-			}
+			string? interfaceTooltip;
+			public string? InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, metadataFile, @interface);
 
-			string classTooltip;
-			public string ClassTooltip => GenerateTooltip(ref classTooltip, metadataFile, interfaceImpl.Class);
+			readonly MetadataFile metadataFile;
+			readonly TypeDefinitionHandle @class;
+			readonly EntityHandle @interface;
 
-			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int Interface => MetadataTokens.GetToken(interfaceImpl.Interface);
-
-			public void OnInterfaceClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, interfaceImpl.Interface, protocol: "metadata")));
-			}
-
-			string interfaceTooltip;
-			public string InterfaceTooltip => GenerateTooltip(ref interfaceTooltip, metadataFile, interfaceImpl.Interface);
-
-			public InterfaceImplEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row)
+			public InterfaceImplEntry(MetadataFile metadataFile, int rid, TypeDefinitionHandle @class, EntityHandle @interface)
 			{
 				this.metadataFile = metadataFile;
-				this.RID = row;
-				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.InterfaceImpl)
-					+ metadataFile.Metadata.GetTableRowSize(TableIndex.InterfaceImpl) * (row - 1);
-				this.Offset = metadataFile.MetadataOffset + rowOffset;
-				this.interfaceImpl = new InterfaceImpl(ptr.Slice(rowOffset), metadataFile.Metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4, metadataFile.Metadata.ComputeCodedTokenSize(16384, TableMask.TypeDef | TableMask.TypeRef | TableMask.TypeSpec));
-				this.interfaceTooltip = null;
-				this.classTooltip = null;
+				RID = rid;
+				this.@class = @class;
+				this.@interface = @interface;
 			}
 		}
 	}

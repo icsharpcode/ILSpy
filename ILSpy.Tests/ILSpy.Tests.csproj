@@ -1,91 +1,38 @@
-<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <IsWindowsX64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == X64">true</IsWindowsX64>
-    <IsWindowsARM64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == ARM64">true</IsWindowsARM64>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net11.0-windows</TargetFramework>
-    <IsPackable>false</IsPackable>
-    <RuntimeIdentifier Condition="$(IsWindowsX64) == true">win-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="$(IsWindowsARM64) == true">win-arm64</RuntimeIdentifier>
+    <TargetFramework>net11.0</TargetFramework>
     <OutputType>Exe</OutputType>
-
-    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-
-    <NoWarn>$(NoWarn);1701;1702;1705,67,169,1058,728,1720,649,168,251</NoWarn>
-
-    <EnableDefaultItems>false</EnableDefaultItems>
-
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
     <RootNamespace>ICSharpCode.ILSpy.Tests</RootNamespace>
-    <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
 
+    <!-- Strong-named with the shared snk so ICSharpCode.ILSpyX can grant
+         InternalsVisibleTo for the analyzer-library tests (mirrors ILSpy.Tests). -->
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <DebugType>pdbonly</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DefineConstants>TRACE;DEBUG;NET46;ROSLYN;CS60;CS70</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup>
-    <Compile Include="Analyzers\ExportAnalyzerAttributeTests.cs" />
-    <Compile Include="Analyzers\AnalyzerScopeTests.cs" />
-    <Compile Include="Analyzers\MemberImplementsInterfaceAnalyzerTests.cs" />
-    <Compile Include="Analyzers\MethodUsesAnalyzerTests.cs" />
-    <Compile Include="Analyzers\TestCases\MainAssembly.cs" />
-    <Compile Include="Analyzers\TypeUsedByAnalyzerTests.cs" />
-    <Compile Include="CommandLineArgumentsTests.cs" />
-    <Compile Include="ResourceReaderWriterTests.cs" />
-    <Compile Include="UpdateServiceTests.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="Icon.ico" />
-    <EmbeddedResource Include="Test.resources" />
-    <EmbeddedResource Include="IconContainer.resx">
-      <Generator>ResXCodeGenerator</Generator>
-    </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="BitmapContainer.resources" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="DiffLib" />
-    <PackageReference Include="NSubstitute" />
-    <PackageReference Include="NSubstitute.Analyzers.CSharp">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="System.Collections.Immutable" />
-    <PackageReference Include="System.Reflection.Metadata" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-    <PackageReference Include="Microsoft.CodeAnalysis.VisualBasic" />
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Headless.NUnit" />
+    <PackageReference Include="Avalonia.Themes.Simple" />
+    <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
     <PackageReference Include="coverlet.MTP" />
-    <PackageReference Include="NUnit" />
-    <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
     <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="NSubstitute" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
+    <!-- Build the sample plugin so the composition test has something to load, but DON'T copy
+         Test.Plugin.dll into the test output: AppComposition scans *.Plugin.dll next to the test
+         assembly, and an auto-loaded plugin would add a language / menu items to every headless test. -->
+    <ProjectReference Include="..\TestPlugin\TestPlugin.csproj" ReferenceOutputAssembly="false" Private="false" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,15 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ILSpy.Views.CreateListDialog"
+        Width="320" Height="160" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="ILSpy">
+	<Grid Margin="12,8" RowDefinitions="Auto,Auto,*,Auto">
+		<TextBlock Grid.Row="0" Text="Enter the name of the list:" Margin="0,0,0,6" />
+		<TextBox Grid.Row="1" Name="ListNameBox" Margin="0,4" />
+		<StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+			<Button Name="OkButton" Content="OK" IsDefault="True" IsEnabled="False" MinWidth="72" />
+			<Button Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="72" />
+		</StackPanel>
+	</Grid>
+</Window>

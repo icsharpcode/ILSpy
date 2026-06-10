@@ -1,0 +1,282 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.ViewModels"
+             xmlns:images="using:ILSpy.Images"
+             xmlns:controls="using:ILSpy.Views.Controls"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="26"
+             x:Class="ILSpy.MainToolBar"
+             x:DataType="vm:MainWindowViewModel">
+	<UserControl.Resources>
+		<!-- Re-template the SplitButton entirely so the chevron is a flat 8×4 filled
+		     downward-triangle Path instead of the upstream chevron-style PathIcon. The
+		     PathIcon's Width=12 / Height=12 / Data are set as local values in the upstream
+		     Simple template, which beat plain Style setters at local-value precedence;
+		     a wholesale template replacement is the cleanest override. -->
+		<ControlTheme x:Key="ToolbarSplitButton" TargetType="SplitButton">
+			<Setter Property="MinHeight" Value="22" />
+			<Setter Property="HorizontalAlignment" Value="Left" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+			<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Grid ColumnDefinitions="*,Auto">
+						<Button Name="PART_PrimaryButton" Grid.Column="0"
+						        Background="{TemplateBinding Background}"
+						        BorderThickness="{TemplateBinding BorderThickness}"
+						        Content="{TemplateBinding Content}"
+						        ContentTemplate="{TemplateBinding ContentTemplate}"
+						        Command="{TemplateBinding Command}"
+						        CommandParameter="{TemplateBinding CommandParameter}"
+						        Padding="{TemplateBinding Padding}"
+						        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+						        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+						        Focusable="False" />
+						<Button Name="PART_SecondaryButton" Grid.Column="1"
+						        Background="{TemplateBinding Background}"
+						        BorderThickness="{TemplateBinding BorderThickness}"
+						        Padding="4,0"
+						        HorizontalContentAlignment="Center"
+						        VerticalContentAlignment="Center"
+						        Focusable="False">
+							<Path Width="8" Height="4" Stretch="Uniform" Fill="Black"
+							      Data="M 0 0 L 8 0 L 4 4 Z" />
+						</Button>
+					</Grid>
+				</ControlTemplate>
+			</Setter>
+		</ControlTheme>
+	</UserControl.Resources>
+	<UserControl.Styles>
+		<!-- Flat toolbar buttons: transparent until hover, then translucent accent fill +
+		     thin accent border. Pressed deepens the fill. ToggleButton derives from Button
+		     but Avalonia type selectors are exact-match, so each rule lists both types so
+		     unchecked ToggleButtons read identically to plain toolbar Buttons. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button, StackPanel#ToolbarRoot > ToggleButton">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="MinHeight" Value="22" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<!-- Reserve the 1 px border + corner radius on every state so hovering doesn't grow
+		     the button (which would shove neighbours sideways). Brushes are transparent in
+		     the resting state and gain colour on hover / pressed / disabled. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton /template/ ContentPresenter">
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="BorderBrush" Value="Transparent" />
+			<Setter Property="CornerRadius" Value="2" />
+		</Style>
+		<!-- :not(:disabled) so disabled buttons don't get the accent fill on hover. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pointerover /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:not(:disabled):pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#330078D7" />
+			<Setter Property="BorderBrush" Value="#FF0078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot > Button:not(:disabled):pressed /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:not(:disabled):pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<!-- Active (selected) state for radio-style ToggleButtons — use the deeper pressed
+		     palette so the active option reads as "held down" against its peers. -->
+		<Style Selector="StackPanel#ToolbarRoot > ToggleButton:checked /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+
+		<!-- Disabled buttons: paint a grayed-out box behind the content (so the button reads
+		     as a "filled-but-inactive" cell rather than just a faint icon on the toolbar
+		     gradient) and force the arrow cursor so the user doesn't get a click hint. The
+		     icon itself desaturates via GrayscaleAwareImage observing IsEffectivelyEnabled,
+		     so no Opacity setter is needed here. -->
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled, StackPanel#ToolbarRoot > ToggleButton:disabled">
+			<Setter Property="Cursor" Value="Arrow" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot > Button:disabled /template/ ContentPresenter, StackPanel#ToolbarRoot > ToggleButton:disabled /template/ ContentPresenter">
+			<Setter Property="Background" Value="{DynamicResource ILSpy.ToolbarDisabledFill}" />
+			<Setter Property="BorderBrush" Value="{DynamicResource ILSpy.ToolbarDisabledBorder}" />
+		</Style>
+		<!-- Default Fluent SplitButton paints both halves with an opaque dark fill on press
+		     (looks black against our white toolbar). Replace with the toolbar accent palette
+		     for both hover and pressed, on both primary and secondary halves. -->
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton /template/ Button:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#330078D7" />
+			<Setter Property="BorderBrush" Value="#FF0078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton /template/ Button:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<!-- While the flyout is open, the default Fluent style holds the secondary button in a
+		     dark "active" fill. Match the pressed-accent palette so it reads as a continuation
+		     of the click rather than a black box. -->
+		<Style Selector="StackPanel#ToolbarRoot > SplitButton:flyout-open /template/ Button /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+
+		<!-- Vertical hairline between button groups. Avalonia's default Separator inside a
+		     horizontal StackPanel renders as a thin horizontal line; force a vertical rule. -->
+		<Style Selector="StackPanel#ToolbarRoot > Separator">
+			<Setter Property="Width" Value="1" />
+			<Setter Property="Height" Value="18" />
+			<Setter Property="Margin" Value="4,3" />
+			<Setter Property="Background" Value="{DynamicResource ILSpy.ToolbarSeparator}" />
+		</Style>
+
+		<!-- Keep the combos flush with the buttons; soften the default border so it sits
+		     quietly on the white toolbar bar. Descendant selector (not direct child) since
+		     each combo lives inside an auto-sizing Grid. -->
+		<Style Selector="StackPanel#ToolbarRoot ComboBox">
+			<Setter Property="Height" Value="22" />
+			<Setter Property="MinHeight" Value="22" />
+			<Setter Property="Padding" Value="6,1" />
+			<Setter Property="VerticalContentAlignment" Value="Center" />
+			<Setter Property="BorderBrush" Value="{DynamicResource ILSpy.ToolbarComboBoxBorder}" />
+		</Style>
+		<!-- The Simple theme's ComboBox template (this project uses Avalonia.Themes.Simple,
+		     not Fluent) places a separate ToggleButton named "toggle" in the chevron column
+		     for the dropdown affordance. Its default :pressed / :checked background is dark,
+		     which is the "dark dropdown button" we kept seeing — neither the ComboBox.Background
+		     setter nor a Border#Background override reaches it because it's its own button.
+		     Style its inner Border directly (the ToggleButton's template uses ContentPresenter
+		     for backgrounds, hence /template/ ContentPresenter). -->
+		<Style Selector="StackPanel#ToolbarRoot ComboBox:pointerover">
+			<Setter Property="Background" Value="#330078D7" />
+			<Setter Property="BorderBrush" Value="#FF0078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox:pressed">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox:dropdownopen">
+			<Setter Property="Background" Value="#660078D7" />
+			<Setter Property="BorderBrush" Value="#FF005A9E" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox /template/ ToggleButton#toggle:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="#330078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox /template/ ToggleButton#toggle:pressed /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+		</Style>
+		<Style Selector="StackPanel#ToolbarRoot ComboBox /template/ ToggleButton#toggle:checked /template/ ContentPresenter">
+			<Setter Property="Background" Value="#660078D7" />
+		</Style>
+	</UserControl.Styles>
+
+	<Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource ILSpy.ToolbarBorder}"
+	        MinHeight="29" Padding="3"
+	        Background="{DynamicResource ILSpy.ToolbarBackground}">
+		<StackPanel Name="ToolbarRoot" Orientation="Horizontal">
+			<!-- Navigation: Back / Forward as web-browser-style split buttons. The primary half
+			     navigates one step; the chevron drops a menu of recent history entries built on
+			     demand by MainToolBar.axaml.cs. -->
+			<SplitButton Name="BackSplitButton"
+			             Theme="{StaticResource ToolbarSplitButton}"
+			             ToolTip.Tip="Back (Alt+Left)"
+			             Command="{Binding DockWorkspace.NavigateBackCommand}">
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.Back}" Width="16" Height="16" />
+				<SplitButton.Flyout>
+					<MenuFlyout Placement="BottomEdgeAlignedLeft" />
+				</SplitButton.Flyout>
+			</SplitButton>
+			<SplitButton Name="ForwardSplitButton"
+			             Theme="{StaticResource ToolbarSplitButton}"
+			             ToolTip.Tip="Forward (Alt+Right)"
+			             Command="{Binding DockWorkspace.NavigateForwardCommand}">
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.Forward}" Width="16" Height="16" />
+				<SplitButton.Flyout>
+					<MenuFlyout Placement="BottomEdgeAlignedLeft" />
+				</SplitButton.Flyout>
+			</SplitButton>
+			<Separator />
+			<!-- Anchor for MEF "Open" category buttons (Open, Refresh). The anchor itself is
+			     removed when buttons are inserted; if no buttons exist for this category, the
+			     anchor remains as a visible separator (matches WPF's behaviour). -->
+			<Separator Name="OpenCategoryAnchor" />
+			<Separator />
+			<!-- The invisible ItemsControl ghost behind each ComboBox forces the grid cell
+			     to size to the widest item so the closed combo's width doesn't change as
+			     the user picks different entries. Margin=15,0 reserves space for the
+			     ComboBox's dropdown chevron on the right. -->
+			<Grid Margin="2,0">
+				<ItemsControl ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
+				              Height="0" Margin="15,0" />
+				<ComboBox Name="AssemblyListComboBox" MinWidth="160"
+				          ToolTip.Tip="Select an assembly list"
+				          ItemsSource="{Binding AssemblyTreeModel.AssemblyLists}"
+				          SelectedItem="{Binding AssemblyTreeModel.ActiveListName, Mode=TwoWay}" />
+			</Grid>
+			<!-- Inline manage-lists icon button — mirrors WPF MainToolBar.xaml:44-49. The Command
+			     is assigned in code-behind from the MEF main-menu registry so the button reuses
+			     the same handler as File > Manage Assembly Lists. -->
+			<Button Name="ManageAssemblyListsButton">
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.AssemblyList}" Width="16" Height="16" />
+			</Button>
+			<Separator />
+			<!-- Three radio-style ToggleButtons for ShowApiLevel, mirroring the View menu radios.
+			     Each binds to a mutually-exclusive bool projection on LanguageSettings; flipping
+			     one to true clears the others through the property-change cascade. -->
+			<ToggleButton Name="ShowPublicOnlyButton"
+			              ToolTip.Tip="Show only public types and members"
+			              IsChecked="{Binding LanguageSettings.ApiVisPublicOnly, Mode=TwoWay}">
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.ShowPublicOnly}" Width="16" Height="16" />
+			</ToggleButton>
+			<ToggleButton Name="ShowPrivateInternalButton"
+			              ToolTip.Tip="Show public, private and internal"
+			              IsChecked="{Binding LanguageSettings.ApiVisPublicAndInternal, Mode=TwoWay}">
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.ShowPrivateInternal}" Width="16" Height="16" />
+			</ToggleButton>
+			<ToggleButton Name="ShowAllButton"
+			              ToolTip.Tip="Show all types and members"
+			              IsChecked="{Binding LanguageSettings.ApiVisAll, Mode=TwoWay}">
+				<controls:GrayscaleAwareImage Source="{x:Static images:Images.ShowAll}" Width="16" Height="16" />
+			</ToggleButton>
+			<Separator />
+			<Grid Margin="2,0">
+				<ItemsControl ItemsSource="{Binding LanguageService.Languages}"
+				              Height="0" Margin="15,0" />
+				<ComboBox Name="LanguageComboBox" MinWidth="100"
+				          ToolTip.Tip="Select output language"
+				          ItemsSource="{Binding LanguageService.Languages}"
+				          SelectedItem="{Binding LanguageService.CurrentLanguage, Mode=TwoWay}"
+				          IsEnabled="{Binding DockWorkspace.ActiveContentTabPage.SupportsLanguageSwitching, FallbackValue=True, TargetNullValue=True}" />
+			</Grid>
+			<!-- Hidden when the active language doesn't differentiate versions (e.g. IL).
+			     Avalonia's IsVisible binding stands in for WPF's BooleanToVisibilityConverter.
+			     Bound on both the wrapper Grid (collapses the layout slot when hidden) and the
+			     ComboBox itself (so accessibility / focus-skipping / .IsVisible queries see
+			     the right state — Grid IsVisible doesn't propagate to its children). -->
+			<Grid Margin="2,0" IsVisible="{Binding LanguageService.CurrentLanguage.HasLanguageVersions}">
+				<ItemsControl ItemsSource="{Binding LanguageService.CurrentLanguage.LanguageVersions}"
+				              Height="0" Margin="15,0">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding DisplayName}" />
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+				<ComboBox Name="LanguageVersionComboBox" MinWidth="120"
+				          ToolTip.Tip="Select C# language version"
+				          ItemsSource="{Binding LanguageService.CurrentLanguage.LanguageVersions}"
+				          SelectedItem="{Binding LanguageService.CurrentVersion, Mode=TwoWay}"
+				          IsVisible="{Binding LanguageService.CurrentLanguage.HasLanguageVersions}"
+				          IsEnabled="{Binding DockWorkspace.ActiveContentTabPage.SupportsLanguageSwitching, FallbackValue=True, TargetNullValue=True}">
+					<ComboBox.ItemTemplate>
+						<DataTemplate>
+							<TextBlock Text="{Binding DisplayName}" />
+						</DataTemplate>
+					</ComboBox.ItemTemplate>
+				</ComboBox>
+			</Grid>
+			<!-- Anchor for MEF "View" category buttons (Sort, CollapseAll, Search). WPF prepends
+			     a Separator before this group (MainToolBar.xaml.cs:83); the code-behind inserts
+			     it dynamically only when there are View buttons to render. -->
+			<Separator Name="ViewCategoryAnchor" />
+		</StackPanel>
+	</Border>
+</UserControl>

@@ -1,14 +1,14 @@
-// Copyright (c) 2021 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -22,148 +22,116 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
 
-namespace ICSharpCode.ILSpy.Metadata
+using ILSpy.AppEnv;
+using ILSpy.Languages;
+using ILSpy.Metadata.CorTables;
+using ILSpy.Metadata.DebugTables;
+using ILSpy.TreeNodes;
+
+namespace ILSpy.Metadata
 {
-	class MetadataTablesTreeNode : ILSpyTreeNode
+	/// <summary>
+	/// Synthetic "Tables" container nested under each MetadataTreeNode. Lazily expands into
+	/// one leaf per non-empty CLI metadata table so users can drill into rows without
+	/// scrolling past 50 zero-row entries (#Strings &amp; co. live as siblings, not children).
+	/// </summary>
+	public sealed class MetadataTablesTreeNode : ILSpyTreeNode
 	{
 		readonly MetadataFile metadataFile;
 
 		public MetadataTablesTreeNode(MetadataFile metadataFile)
 		{
-			this.metadataFile = metadataFile;
-			this.LazyLoading = true;
+			this.metadataFile = metadataFile ?? throw new ArgumentNullException(nameof(metadataFile));
+			LazyLoading = true;
 		}
 
 		public override object Text => "Tables";
-
-		public override object NavigationText => $"{Text} ({metadataFile.Name})";
-
-		public override object Icon => Images.MetadataTableGroup;
-
-		protected override void LoadChildren()
-		{
-			foreach (var table in Enum.GetValues<TableIndex>())
-			{
-				if (ShowTable(table, metadataFile.Metadata))
-					this.Children.Add(CreateTableTreeNode(table, metadataFile));
-			}
-		}
-
-		internal static bool ShowTable(TableIndex table, MetadataReader metadata) => !SettingsService.DisplaySettings.HideEmptyMetadataTables || metadata.GetTableRowCount(table) > 0;
-
-		internal static MetadataTableTreeNode CreateTableTreeNode(TableIndex table, MetadataFile metadataFile)
-		{
-			switch (table)
-			{
-				case TableIndex.Module:
-					return new ModuleTableTreeNode(metadataFile);
-				case TableIndex.TypeRef:
-					return new TypeRefTableTreeNode(metadataFile);
-				case TableIndex.TypeDef:
-					return new TypeDefTableTreeNode(metadataFile);
-				case TableIndex.Field:
-					return new FieldTableTreeNode(metadataFile);
-				case TableIndex.MethodDef:
-					return new MethodTableTreeNode(metadataFile);
-				case TableIndex.Param:
-					return new ParamTableTreeNode(metadataFile);
-				case TableIndex.InterfaceImpl:
-					return new InterfaceImplTableTreeNode(metadataFile);
-				case TableIndex.MemberRef:
-					return new MemberRefTableTreeNode(metadataFile);
-				case TableIndex.Constant:
-					return new ConstantTableTreeNode(metadataFile);
-				case TableIndex.CustomAttribute:
-					return new CustomAttributeTableTreeNode(metadataFile);
-				case TableIndex.FieldMarshal:
-					return new FieldMarshalTableTreeNode(metadataFile);
-				case TableIndex.DeclSecurity:
-					return new DeclSecurityTableTreeNode(metadataFile);
-				case TableIndex.ClassLayout:
-					return new ClassLayoutTableTreeNode(metadataFile);
-				case TableIndex.FieldLayout:
-					return new FieldLayoutTableTreeNode(metadataFile);
-				case TableIndex.StandAloneSig:
-					return new StandAloneSigTableTreeNode(metadataFile);
-				case TableIndex.EventMap:
-					return new EventMapTableTreeNode(metadataFile);
-				case TableIndex.Event:
-					return new EventTableTreeNode(metadataFile);
-				case TableIndex.PropertyMap:
-					return new PropertyMapTableTreeNode(metadataFile);
-				case TableIndex.Property:
-					return new PropertyTableTreeNode(metadataFile);
-				case TableIndex.MethodSemantics:
-					return new MethodSemanticsTableTreeNode(metadataFile);
-				case TableIndex.MethodImpl:
-					return new MethodImplTableTreeNode(metadataFile);
-				case TableIndex.ModuleRef:
-					return new ModuleRefTableTreeNode(metadataFile);
-				case TableIndex.TypeSpec:
-					return new TypeSpecTableTreeNode(metadataFile);
-				case TableIndex.ImplMap:
-					return new ImplMapTableTreeNode(metadataFile);
-				case TableIndex.FieldRva:
-					return new FieldRVATableTreeNode(metadataFile);
-				case TableIndex.Assembly:
-					return new AssemblyTableTreeNode(metadataFile);
-				case TableIndex.AssemblyRef:
-					return new AssemblyRefTableTreeNode(metadataFile);
-				case TableIndex.File:
-					return new FileTableTreeNode(metadataFile);
-				case TableIndex.ExportedType:
-					return new ExportedTypeTableTreeNode(metadataFile);
-				case TableIndex.ManifestResource:
-					return new ManifestResourceTableTreeNode(metadataFile);
-				case TableIndex.NestedClass:
-					return new NestedClassTableTreeNode(metadataFile);
-				case TableIndex.GenericParam:
-					return new GenericParamTableTreeNode(metadataFile);
-				case TableIndex.MethodSpec:
-					return new MethodSpecTableTreeNode(metadataFile);
-				case TableIndex.GenericParamConstraint:
-					return new GenericParamConstraintTableTreeNode(metadataFile);
-				case TableIndex.Document:
-					return new DocumentTableTreeNode(metadataFile);
-				case TableIndex.MethodDebugInformation:
-					return new MethodDebugInformationTableTreeNode(metadataFile);
-				case TableIndex.LocalScope:
-					return new LocalScopeTableTreeNode(metadataFile);
-				case TableIndex.LocalVariable:
-					return new LocalVariableTableTreeNode(metadataFile);
-				case TableIndex.LocalConstant:
-					return new LocalConstantTableTreeNode(metadataFile);
-				case TableIndex.ImportScope:
-					return new ImportScopeTableTreeNode(metadataFile);
-				case TableIndex.StateMachineMethod:
-					return new StateMachineMethodTableTreeNode(metadataFile);
-				case TableIndex.CustomDebugInformation:
-					return new CustomDebugInformationTableTreeNode(metadataFile);
-				case TableIndex.FieldPtr:
-				case TableIndex.EventPtr:
-				case TableIndex.MethodPtr:
-				case TableIndex.ParamPtr:
-				case TableIndex.PropertyPtr:
-					return new PtrTableTreeNode(table, metadataFile);
-				default:
-					return new UnsupportedMetadataTableTreeNode(table, metadataFile);
-			}
-		}
-
-		public override bool View(TabPageModel tabPage)
-		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			return false;
-		}
+		public override object Icon => Images.Images.MetadataTableGroup;
+		public override string ToString() => "Tables";
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.WriteCommentLine(output, "Metadata Tables");
+			language.WriteCommentLine(output, "Tables");
+			var metadata = metadataFile.Metadata;
+			foreach (var table in Enum.GetValues<TableIndex>())
+			{
+				int count = metadata.GetTableRowCount(table);
+				if (count > 0)
+					language.WriteCommentLine(output, $"{(byte)table:X2} {table}: {count} rows");
+			}
 		}
+
+		protected override void LoadChildren()
+		{
+			var metadata = metadataFile.Metadata;
+			bool hideEmpty = TryGetHideEmptyMetadataTables();
+			foreach (var table in Enum.GetValues<TableIndex>())
+			{
+				if (!hideEmpty || metadata.GetTableRowCount(table) > 0)
+					Children.Add(CreateTableTreeNode(table, metadataFile));
+			}
+		}
+
+		static bool TryGetHideEmptyMetadataTables()
+		{
+			// Composition isn't always available (design-time previews, isolated tests that
+			// build the tree directly without booting the app); fall back to the same default
+			// DisplaySettings exposes — keep empty tables hidden to match decade-old WPF UX.
+			try
+			{ return AppComposition.Current.GetExport<SettingsService>().DisplaySettings.HideEmptyMetadataTables; }
+			catch { return true; }
+		}
+
+		// Typed leaves are added in passes (1e-i, 1e-ii, 1e-iii); any table not yet ported
+		// falls through to the universal placeholder so the navigation surface stays whole.
+		internal static MetadataTableTreeNode CreateTableTreeNode(TableIndex table, MetadataFile metadataFile)
+			=> table switch {
+				TableIndex.Module => new ModuleTableTreeNode(metadataFile),
+				TableIndex.TypeRef => new TypeRefTableTreeNode(metadataFile),
+				TableIndex.TypeDef => new TypeDefTableTreeNode(metadataFile),
+				TableIndex.Field => new FieldTableTreeNode(metadataFile),
+				TableIndex.MethodDef => new MethodTableTreeNode(metadataFile),
+				TableIndex.Param => new ParamTableTreeNode(metadataFile),
+				TableIndex.MemberRef => new MemberRefTableTreeNode(metadataFile),
+				TableIndex.Constant => new ConstantTableTreeNode(metadataFile),
+				TableIndex.CustomAttribute => new CustomAttributeTableTreeNode(metadataFile),
+				TableIndex.Event => new EventTableTreeNode(metadataFile),
+				TableIndex.Property => new PropertyTableTreeNode(metadataFile),
+				TableIndex.ModuleRef => new ModuleRefTableTreeNode(metadataFile),
+				TableIndex.TypeSpec => new TypeSpecTableTreeNode(metadataFile),
+				TableIndex.Assembly => new AssemblyTableTreeNode(metadataFile),
+				TableIndex.AssemblyRef => new AssemblyRefTableTreeNode(metadataFile),
+				TableIndex.ExportedType => new ExportedTypeTableTreeNode(metadataFile),
+				TableIndex.ManifestResource => new ManifestResourceTableTreeNode(metadataFile),
+				TableIndex.GenericParam => new GenericParamTableTreeNode(metadataFile),
+				TableIndex.MethodSpec => new MethodSpecTableTreeNode(metadataFile),
+				TableIndex.GenericParamConstraint => new GenericParamConstraintTableTreeNode(metadataFile),
+				TableIndex.StandAloneSig => new StandAloneSigTableTreeNode(metadataFile),
+				TableIndex.DeclSecurity => new DeclSecurityTableTreeNode(metadataFile),
+				TableIndex.File => new FileTableTreeNode(metadataFile),
+				TableIndex.Document => new DocumentTableTreeNode(metadataFile),
+				TableIndex.MethodDebugInformation => new MethodDebugInformationTableTreeNode(metadataFile),
+				TableIndex.LocalScope => new LocalScopeTableTreeNode(metadataFile),
+				TableIndex.LocalVariable => new LocalVariableTableTreeNode(metadataFile),
+				TableIndex.LocalConstant => new LocalConstantTableTreeNode(metadataFile),
+				TableIndex.ImportScope => new ImportScopeTableTreeNode(metadataFile),
+				TableIndex.StateMachineMethod => new StateMachineMethodTableTreeNode(metadataFile),
+				TableIndex.CustomDebugInformation => new CustomDebugInformationTableTreeNode(metadataFile),
+				TableIndex.MethodImpl => new MethodImplTableTreeNode(metadataFile),
+				TableIndex.MethodSemantics => new MethodSemanticsTableTreeNode(metadataFile),
+				TableIndex.ClassLayout => new ClassLayoutTableTreeNode(metadataFile),
+				TableIndex.FieldLayout => new FieldLayoutTableTreeNode(metadataFile),
+				TableIndex.FieldRva => new FieldRVATableTreeNode(metadataFile),
+				TableIndex.NestedClass => new NestedClassTableTreeNode(metadataFile),
+				TableIndex.EventMap => new EventMapTableTreeNode(metadataFile),
+				TableIndex.PropertyMap => new PropertyMapTableTreeNode(metadataFile),
+				TableIndex.InterfaceImpl => new InterfaceImplTableTreeNode(metadataFile),
+				TableIndex.FieldMarshal => new FieldMarshalTableTreeNode(metadataFile),
+				TableIndex.ImplMap => new ImplMapTableTreeNode(metadataFile),
+				TableIndex.FieldPtr or TableIndex.MethodPtr or TableIndex.ParamPtr
+					or TableIndex.EventPtr or TableIndex.PropertyPtr => new PtrTableTreeNode(table, metadataFile),
+				_ => new UnsupportedMetadataTableTreeNode(table, metadataFile),
+			};
 	}
 }

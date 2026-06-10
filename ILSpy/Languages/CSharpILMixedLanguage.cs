@@ -1,14 +1,14 @@
 // Copyright (c) 2018 Siegfried Pammer
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -23,9 +23,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
-using System.Windows.Media;
 
-using ICSharpCode.AvalonEdit.Highlighting;
+using Avalonia.Media;
+
+using AvaloniaEdit.Highlighting;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -34,17 +36,23 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
 
-namespace ICSharpCode.ILSpy
+using ILSpy.TextView;
+
+namespace ILSpy.Languages
 {
 	using SequencePoint = ICSharpCode.Decompiler.DebugInfo.SequencePoint;
 
+	/// <summary>
+	/// Disassembles IL with the decompiled C# source interleaved above each instruction (mapped via
+	/// sequence points) as gray comments.
+	/// </summary>
 	[Export(typeof(Language))]
 	[Shared]
-	class CSharpILMixedLanguage(SettingsService settingsService, DockWorkspace dockWorkspace) : ILLanguage(dockWorkspace)
+	[method: ImportingConstructor]
+	class CSharpILMixedLanguage(SettingsService settingsService) : ILLanguage
 	{
 		public override string Name => "IL with C#";
 
@@ -83,10 +91,10 @@ namespace ICSharpCode.ILSpy
 		class MixedMethodBodyDisassembler : MethodBodyDisassembler
 		{
 			readonly DecompilationOptions options;
-			// list sorted by IL offset
-			IList<SequencePoint> sequencePoints;
-			// lines of raw c# source code
-			string[] codeLines;
+			// list sorted by IL offset; non-null only for the duration of a Disassemble pass
+			IList<SequencePoint>? sequencePoints;
+			// lines of raw c# source code; non-null only for the duration of a Disassemble pass
+			string[]? codeLines;
 
 			public MixedMethodBodyDisassembler(ITextOutput output, DecompilationOptions options)
 				: base(output, options.CancellationToken)
@@ -116,6 +124,11 @@ namespace ICSharpCode.ILSpy
 
 			protected override void WriteInstruction(ITextOutput output, MetadataFile metadata, MethodDefinitionHandle methodHandle, ref BlobReader blob, int methodRva)
 			{
+				if (sequencePoints is null || codeLines is null)
+				{
+					base.WriteInstruction(output, metadata, methodHandle, ref blob, methodRva);
+					return;
+				}
 				int index = sequencePoints.BinarySearch(blob.Offset, seq => seq.Offset);
 				if (index >= 0)
 				{

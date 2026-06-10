@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,106 +17,209 @@
 // DEALINGS IN THE SOFTWARE.
 
 #if DEBUG
-
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Composition;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
-namespace ICSharpCode.ILSpy
+using ILSpy.AssemblyTree;
+using ILSpy.Docking;
+using ILSpy.Languages;
+using ILSpy.TextView;
+using ILSpy.TreeNodes;
+
+namespace ILSpy.Commands
 {
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = nameof(Resources.Open), MenuOrder = 2.5)]
+	/// <summary>
+	/// DEBUG-only File-menu stress test: decompile every loaded assembly to
+	/// <c>c:\temp\decompiled\&lt;ShortName&gt;.cs</c> in parallel and report per-assembly
+	/// timing in a results tab. Hard-coded output path matches WPF — the command's
+	/// CanExecute gates on that directory existing so it's effectively opt-in.
+	/// </summary>
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile), MenuCategory = "Debug", MenuOrder = 30)]
 	[Shared]
-	sealed class DecompileAllCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace) : SimpleCommand
+	sealed class DecompileAllCommand : SimpleCommand
 	{
-		public override bool CanExecute(object parameter)
+		const string OutputDir = @"c:\temp\decompiled";
+
+		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly DockWorkspace dockWorkspace;
+
+		[ImportingConstructor]
+		public DecompileAllCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
 		{
-			return System.IO.Directory.Exists("c:\\temp\\decompiled");
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.dockWorkspace = dockWorkspace;
 		}
 
-		public override void Execute(object parameter)
+		public override bool CanExecute(object? parameter) => Directory.Exists(OutputDir);
+
+		public override void Execute(object? parameter) => ExecuteAsync().HandleExceptions();
+
+		async Task ExecuteAsync()
 		{
-			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
+			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
+			await dockWorkspace.RunInNewTabAsync("Decompiling all assemblies…", token => Task.Run(() => {
+				var output = new AvaloniaEditTextOutput { Title = "Decompile All" };
+				var bag = new ConcurrentBag<string>();
 				Parallel.ForEach(
-					Partitioner.Create(assemblyTreeModel.AssemblyList.GetAssemblies(), loadBalance: true),
-					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct },
-					delegate (LoadedAssembly asm) {
-						if (!asm.HasLoadError)
+					Partitioner.Create(assemblyTreeModel.AssemblyList!.GetAssemblies(), loadBalance: true),
+					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = token },
+					asm => {
+						if (asm.HasLoadError)
+							return;
+						var watch = Stopwatch.StartNew();
+						Exception? ex = null;
+						var path = Path.Combine(OutputDir, asm.ShortName + ".cs");
+						try
 						{
-							Stopwatch w = Stopwatch.StartNew();
-							Exception exception = null;
-							using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs"))
-							{
-								try
-								{
-									var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
-									options.CancellationToken = ct;
-									options.FullDecompilation = true;
-									new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
-								}
-								catch (Exception ex)
-								{
-									writer.WriteLine(ex.ToString());
-									exception = ex;
-								}
-							}
-							lock (output)
-							{
-								output.Write(asm.ShortName + " - " + w.Elapsed);
-								if (exception != null)
-								{
-									output.Write(" - ");
-									output.Write(exception.GetType().Name);
-								}
-								output.WriteLine();
-							}
+							using var writer = new StreamWriter(path);
+							var options = new DecompilationOptions {
+								CancellationToken = token,
+								FullDecompilation = true,
+							};
+							new CSharpLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
 						}
+						catch (Exception caught)
+						{
+							ex = caught;
+						}
+						watch.Stop();
+						bag.Add(asm.ShortName + " - " + watch.Elapsed + (ex != null ? " - " + ex.GetType().Name : ""));
 					});
+				foreach (var line in bag.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
+				{
+					output.Write(line);
+					output.WriteLine();
+				}
 				return output;
-			}, ct)).Then(dockWorkspace.ShowText).HandleExceptions();
+			}, token));
 		}
 	}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = nameof(Resources.Open), MenuOrder = 2.6)]
+	/// <summary>
+	/// DEBUG-only File-menu stress test: disassemble every loaded assembly to
+	/// <c>c:\temp\disassembled\&lt;Name&gt;.il</c> in parallel. Same shape as
+	/// <see cref="DecompileAllCommand"/> but routes through <see cref="ILLanguage"/>.
+	/// CanExecute gates on the output directory existing.
+	/// </summary>
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDisassemble), MenuCategory = "Debug", MenuOrder = 31)]
 	[Shared]
-	sealed class Decompile100TimesCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace) : SimpleCommand
+	sealed class DisassembleAllCommand : SimpleCommand
 	{
-		public override void Execute(object parameter)
+		const string OutputDir = @"c:\temp\disassembled";
+
+		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly DockWorkspace dockWorkspace;
+
+		[ImportingConstructor]
+		public DisassembleAllCommand(AssemblyTreeModel assemblyTreeModel, DockWorkspace dockWorkspace)
 		{
-			const int numRuns = 100;
-			var language = languageService.Language;
-			var nodes = assemblyTreeModel.SelectedNodes.ToArray();
-			var options = dockWorkspace.ActiveTabPage.CreateDecompilationOptions();
-			dockWorkspace.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
-				options.CancellationToken = ct;
-				Stopwatch w = Stopwatch.StartNew();
-				for (int i = 0; i < numRuns; ++i)
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.dockWorkspace = dockWorkspace;
+		}
+
+		public override bool CanExecute(object? parameter) => Directory.Exists(OutputDir);
+
+		public override void Execute(object? parameter) => ExecuteAsync().HandleExceptions();
+
+		async Task ExecuteAsync()
+		{
+			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
+			await dockWorkspace.RunInNewTabAsync("Disassembling all assemblies…", token => Task.Run(() => {
+				var output = new AvaloniaEditTextOutput { Title = "Disassemble All" };
+				var bag = new ConcurrentBag<string>();
+				Parallel.ForEach(
+					Partitioner.Create(assemblyTreeModel.AssemblyList!.GetAssemblies(), loadBalance: true),
+					new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = token },
+					asm => {
+						if (asm.HasLoadError)
+							return;
+						var watch = Stopwatch.StartNew();
+						Exception? ex = null;
+						var safeName = (asm.Text?.ToString() ?? asm.ShortName).Replace("(", "").Replace(")", "").Replace(' ', '_');
+						var path = Path.Combine(OutputDir, safeName + ".il");
+						try
+						{
+							using var writer = new StreamWriter(path);
+							var options = new DecompilationOptions {
+								CancellationToken = token,
+								FullDecompilation = true,
+							};
+							new ILLanguage().DecompileAssembly(asm, new PlainTextOutput(writer), options);
+						}
+						catch (Exception caught)
+						{
+							ex = caught;
+						}
+						watch.Stop();
+						bag.Add(asm.ShortName + " - " + watch.Elapsed + (ex != null ? " - " + ex.GetType().Name : ""));
+					});
+				foreach (var line in bag.OrderBy(s => s, StringComparer.OrdinalIgnoreCase))
+				{
+					output.Write(line);
+					output.WriteLine();
+				}
+				return output;
+			}, token));
+		}
+	}
+
+	/// <summary>
+	/// DEBUG-only stress test: re-decompile the current selection 100 times in series
+	/// and report average wall-clock time. Used for tracking decompilation perf
+	/// regressions across changes.
+	/// </summary>
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.DEBUGDecompile100x), MenuCategory = "Debug", MenuOrder = 32)]
+	[Shared]
+	sealed class Decompile100TimesCommand : SimpleCommand
+	{
+		const int NumRuns = 100;
+
+		readonly AssemblyTreeModel assemblyTreeModel;
+		readonly LanguageService languageService;
+		readonly DockWorkspace dockWorkspace;
+
+		[ImportingConstructor]
+		public Decompile100TimesCommand(AssemblyTreeModel assemblyTreeModel, LanguageService languageService, DockWorkspace dockWorkspace)
+		{
+			this.assemblyTreeModel = assemblyTreeModel;
+			this.languageService = languageService;
+			this.dockWorkspace = dockWorkspace;
+		}
+
+		public override void Execute(object? parameter) => ExecuteAsync().HandleExceptions();
+
+		async Task ExecuteAsync()
+		{
+			var language = languageService.CurrentLanguage;
+			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
+			if (nodes.Length == 0)
+				return;
+			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
+			await dockWorkspace.RunInNewTabAsync("Decompiling 100×…", token => Task.Run(() => {
+				var watch = Stopwatch.StartNew();
+				var options = new DecompilationOptions { CancellationToken = token };
+				for (int i = 0; i < NumRuns; i++)
 				{
 					foreach (var node in nodes)
-					{
 						node.Decompile(language, new PlainTextOutput(), options);
-					}
 				}
-				w.Stop();
-				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				double msPerRun = w.Elapsed.TotalMilliseconds / numRuns;
-				output.Write($"Average time: {msPerRun.ToString("f1")}ms\n");
+				watch.Stop();
+				var output = new AvaloniaEditTextOutput { Title = "Decompile 100×" };
+				var msPerRun = watch.Elapsed.TotalMilliseconds / NumRuns;
+				output.Write($"Average time: {msPerRun:f1}ms");
+				output.WriteLine();
 				return output;
-			}, ct)).Then(output => dockWorkspace.ShowText(output)).HandleExceptions();
+			}, token));
 		}
 	}
 }
-
 #endif

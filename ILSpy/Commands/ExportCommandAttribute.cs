@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -20,94 +20,79 @@ using System;
 using System.Composition;
 using System.Windows.Input;
 
-namespace ICSharpCode.ILSpy
+namespace ILSpy.Commands
 {
-	#region Toolbar
-	public interface IToolbarCommandMetadata
+	/// <summary>
+	/// Concrete metadata view for main-menu commands. System.Composition (lightweight MEF)
+	/// requires metadata views to be a concrete class with a parameterless or
+	/// IDictionary-typed constructor — interfaces aren't supported as views like they are in
+	/// the full <c>System.ComponentModel.Composition</c>. The runtime auto-populates these
+	/// properties from the matching properties on the export's <see cref="MetadataAttribute"/>.
+	/// </summary>
+	public class MainMenuCommandMetadata
 	{
-		string ToolbarIcon { get; }
-		string ToolTip { get; }
-		string ToolbarCategory { get; }
-		object Tag { get; }
-		double ToolbarOrder { get; }
+		public string? MenuID { get; set; }
+		public string? MenuIcon { get; set; }
+		public string? Header { get; set; }
+		public string? ParentMenuID { get; set; }
+		public string? MenuCategory { get; set; }
+		public string? InputGestureText { get; set; }
+		public bool IsEnabled { get; set; } = true;
+		public double MenuOrder { get; set; }
 	}
 
+	/// <summary>
+	/// Marks a command for inclusion in the main menu. The metadata drives where in the
+	/// menu hierarchy the entry appears, what icon / accelerator it carries, and which
+	/// command instance is invoked.
+	/// </summary>
 	[MetadataAttribute]
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportToolbarCommandAttribute : ExportAttribute, IToolbarCommandMetadata
+	public class ExportMainMenuCommandAttribute : ExportAttribute
+	{
+		public ExportMainMenuCommandAttribute()
+			: base("MainMenuCommand", typeof(ICommand))
+		{
+		}
+
+		public string? MenuID { get; set; }
+		public string? MenuIcon { get; set; }
+		public string? Header { get; set; }
+		public string? ParentMenuID { get; set; }
+		public string? MenuCategory { get; set; }
+		public string? InputGestureText { get; set; }
+		public bool IsEnabled { get; set; } = true;
+		public double MenuOrder { get; set; }
+	}
+
+	/// <summary>
+	/// Metadata view for toolbar commands.
+	/// </summary>
+	public class ToolbarCommandMetadata
+	{
+		public string? ToolbarIcon { get; set; }
+		public string? ToolTip { get; set; }
+		public string? ToolbarCategory { get; set; }
+		public double ToolbarOrder { get; set; }
+	}
+
+	/// <summary>
+	/// Marks a command for inclusion in the main toolbar. A single command class can carry
+	/// both this attribute and <see cref="ExportMainMenuCommandAttribute"/>, surfacing the
+	/// same handler in the menu and the toolbar.
+	/// </summary>
+	[MetadataAttribute]
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	public class ExportToolbarCommandAttribute : ExportAttribute
 	{
 		public ExportToolbarCommandAttribute()
 			: base("ToolbarCommand", typeof(ICommand))
 		{
 		}
 
-		public string ToolTip { get; set; }
-		public string ToolbarIcon { get; set; }
-		public string ToolbarCategory { get; set; }
+		public string? ToolbarIcon { get; set; }
+		public string? ToolTip { get; set; }
+		public string? ToolbarCategory { get; set; }
 		public double ToolbarOrder { get; set; }
-		public object Tag { get; set; }
 	}
-	#endregion
-
-	#region Main Menu
-	public interface IMainMenuCommandMetadata
-	{
-		string MenuID { get; }
-		string MenuIcon { get; }
-		string Header { get; }
-		string ParentMenuID { get; }
-		string MenuCategory { get; }
-		string InputGestureText { get; }
-		bool IsEnabled { get; }
-		double MenuOrder { get; }
-	}
-
-	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class ExportMainMenuCommandAttribute : ExportAttribute, IMainMenuCommandMetadata
-	{
-		public ExportMainMenuCommandAttribute()
-			: base("MainMenuCommand", typeof(ICommand))
-		{
-		}
-		/// <summary>
-		/// Gets/Sets the ID of this menu item. Menu entries are not required to have an ID,
-		/// however, setting it allows to declare nested menu structures.
-		/// The built-in menus have the IDs "_File", "_View", "_Window" and "_Help".
-		/// Plugin authors are advised to use GUIDs as identifiers to prevent conflicts.
-		/// <para/>
-		/// NOTE: Defining cycles (for example by accidentally setting <see cref="MenuID"/> equal to <see cref="ParentMenuID"/>)
-		/// will lead to a stack-overflow and crash of ILSpy at startup.
-		/// </summary>
-		public string MenuID { get; set; }
-		public string MenuIcon { get; set; }
-		public string Header { get; set; }
-		/// <summary>
-		/// Gets/Sets the parent of this menu item. All menu items sharing the same parent will be displayed as sub-menu items.
-		/// If this property is set to <see langword="null"/>, the menu item is displayed in the top-level menu.
-		/// The built-in menus have the IDs "_File", "_View", "_Window" and "_Help".
-		/// <para/>
-		/// NOTE: Defining cycles (for example by accidentally setting <see cref="MenuID"/> equal to <see cref="ParentMenuID"/>)
-		/// will lead to a stack-overflow and crash of ILSpy at startup.
-		/// </summary>
-		public string ParentMenuID { get; set; }
-		public string MenuCategory { get; set; }
-		public string InputGestureText { get; set; }
-		public bool IsEnabled { get; set; } = true;
-		public double MenuOrder { get; set; }
-	}
-	#endregion
-
-	#region Tool Panes
-
-	[MetadataAttribute]
-	[AttributeUsage(AttributeTargets.Class)]
-	public class ExportToolPaneAttribute : ExportAttribute
-	{
-		public ExportToolPaneAttribute()
-			: base("ToolPane", typeof(ViewModels.ToolPaneModel))
-		{
-		}
-	}
-	#endregion
 }

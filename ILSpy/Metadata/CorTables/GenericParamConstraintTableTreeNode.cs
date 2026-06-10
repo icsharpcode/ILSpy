@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -24,9 +24,14 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	internal class GenericParamConstraintTableTreeNode : MetadataTableTreeNode<GenericParamConstraintTableTreeNode.GenericParamConstraintEntry>
+	/// <summary>
+	/// View of the GenericParamConstraint table — bounds applied to generic parameters
+	/// (<c>where T : SomeBase, IEnumerable&lt;X&gt;</c>). Each row pairs a GenericParam
+	/// owner with a TypeDefOrRef coded token naming the constraining type.
+	/// </summary>
+	public sealed class GenericParamConstraintTableTreeNode : MetadataTableTreeNode<GenericParamConstraintTableTreeNode.GenericParamConstraintEntry>
 	{
 		public GenericParamConstraintTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.GenericParamConstraint, metadataFile)
@@ -38,13 +43,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<GenericParamConstraintEntry>();
 			var metadata = metadataFile.Metadata;
 			for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.GenericParamConstraint); row++)
-			{
 				list.Add(new GenericParamConstraintEntry(metadataFile, MetadataTokens.GenericParameterConstraintHandle(row)));
-			}
 			return list;
 		}
 
-		internal struct GenericParamConstraintEntry
+		public sealed class GenericParamConstraintEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly GenericParameterConstraintHandle handle;
@@ -52,23 +55,17 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataFile.MetadataOffset
-				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.GenericParamConstraint)
-				+ metadataFile.Metadata.GetTableRowSize(TableIndex.GenericParamConstraint) * (RID - 1);
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.GenericParamConstraint, RID);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Owner => MetadataTokens.GetToken(genericParamConstraint.Parameter);
 
-			public void OnOwnerClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, genericParamConstraint.Parameter, protocol: "metadata")));
-			}
-
-			string ownerTooltip;
-
-			public string OwnerTooltip {
+			string? ownerTooltip;
+			public string? OwnerTooltip {
 				get {
 					if (ownerTooltip == null)
 					{
@@ -85,21 +82,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Type => MetadataTokens.GetToken(genericParamConstraint.Type);
 
-			public void OnTypeClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, genericParamConstraint.Type, protocol: "metadata")));
-			}
-
-			string typeTooltip;
-			public string TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, genericParamConstraint.Type);
+			string? typeTooltip;
+			public string? TypeTooltip => GenerateTooltip(ref typeTooltip, metadataFile, genericParamConstraint.Type);
 
 			public GenericParamConstraintEntry(MetadataFile metadataFile, GenericParameterConstraintHandle handle)
 			{
 				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.genericParamConstraint = metadataFile.Metadata.GetGenericParameterConstraint(handle);
-				this.ownerTooltip = null;
-				this.typeTooltip = null;
+				genericParamConstraint = metadataFile.Metadata.GetGenericParameterConstraint(handle);
 			}
 		}
 	}

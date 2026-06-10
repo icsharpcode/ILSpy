@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.Options"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+             x:Class="ILSpy.Options.Panels.DecompilerSettingsPanel"
+             x:DataType="vm:DecompilerSettingsViewModel">
+	<!-- ScrollViewer Padding is collapsed on the vertical axis by the Simple-theme
+	     ScrollContentPresenter when a vertical scrollbar is present, and the outer
+	     StackPanel's measure also under-counts a trailing HeaderedContentControl's
+	     content. Wrapping in a Border with explicit Padding makes the padding part
+	     of the measured content so the last child stays reachable at max scroll. -->
+	<ScrollViewer>
+		<Border Padding="6,6,6,12">
+			<ItemsControl ItemsSource="{Binding Settings}">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate x:DataType="vm:DecompilerSettingsGroupViewModel">
+						<Expander IsExpanded="True" Margin="0,2">
+							<!-- The header is a tri-state checkbox (all/none/some) that bulk-toggles
+							     every item in the group, not just a label. AreAllItemsChecked drives
+							     it; OnAreAllItemsCheckedChanged cascades to the items. -->
+							<Expander.Header>
+								<CheckBox FontWeight="Bold"
+								          VerticalContentAlignment="Center"
+								          Content="{Binding Category}"
+								          IsChecked="{Binding AreAllItemsChecked, Mode=TwoWay}" />
+							</Expander.Header>
+							<ItemsControl ItemsSource="{Binding Settings}" Margin="12,4,0,0">
+								<ItemsControl.ItemTemplate>
+									<DataTemplate x:DataType="vm:DecompilerSettingsItemViewModel">
+										<CheckBox IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+										          Content="{Binding Description}"
+										          Margin="0,1" />
+									</DataTemplate>
+								</ItemsControl.ItemTemplate>
+							</ItemsControl>
+						</Expander>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</Border>
+	</ScrollViewer>
+</UserControl>

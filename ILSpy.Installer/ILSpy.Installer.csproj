@@ -4,6 +4,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net472</TargetFramework>
     <StartupObject>ILSpy.Installer.Builder</StartupObject>
+    <!-- Legacy net472 installer builder: opt out of the repo-wide warnings-as-errors (Directory.Build.props). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
   <PropertyGroup>

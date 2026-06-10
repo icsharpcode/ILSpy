@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			}
 		}
 
-		public bool Show(ISymbol symbol)
+		public bool Show(ISymbol? symbol)
 		{
 			return symbol is IProperty entity && entity.DeclaringType.Kind == TypeKind.Interface;
 		}

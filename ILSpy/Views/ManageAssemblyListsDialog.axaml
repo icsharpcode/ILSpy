@@ -1,0 +1,31 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ILSpy.Views.ManageAssemblyListsDialog"
+        Width="480" Height="350" MinWidth="480" MinHeight="250"
+        WindowStartupLocation="CenterOwner"
+        Title="Manage Assembly Lists">
+	<Grid Margin="12,8" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
+		<ListBox Grid.Row="0" Grid.Column="0" Name="ListsBox" Margin="0,8,8,8" SelectionMode="Single" />
+		<StackPanel Grid.Row="0" Grid.Column="1" Margin="4,8" Spacing="4" MinWidth="100">
+			<!-- Clone/Rename/Delete act on the selected list, so they're disabled until one is picked.
+			     New/Reset don't depend on a selection. -->
+			<Button Name="NewButton" Content="_New" />
+			<Button Name="CloneButton" Content="C_lone"
+			        IsEnabled="{Binding #ListsBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+			<Button Name="RenameButton" Content="R_ename"
+			        IsEnabled="{Binding #ListsBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+			<Button Name="DeleteButton" Content="_Delete"
+			        IsEnabled="{Binding #ListsBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+			<Button Name="ResetButton" Margin="0,12,0,0" Content="_Reset" />
+		</StackPanel>
+		<Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto">
+			<Button Grid.Column="0" Name="AddPreconfiguredButton" HorizontalAlignment="Left"
+			        Content="Add preconfigured list..." />
+			<StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+				<Button Name="SelectButton" Content="Select" IsDefault="True" MinWidth="72"
+				        IsEnabled="{Binding #ListsBox.SelectedItem, Converter={x:Static ObjectConverters.IsNotNull}}" />
+				<Button Name="CloseButton" Content="Close" IsCancel="True" MinWidth="72" />
+			</StackPanel>
+		</Grid>
+	</Grid>
+</Window>

@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -18,66 +18,93 @@
 
 using System;
 using System.Linq;
-using System.Windows.Media;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
-using SRM = System.Reflection.Metadata;
+using ILSpy;
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
+using ILSpy.Languages;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+namespace ILSpy.TreeNodes
 {
-	using ICSharpCode.Decompiler.Output;
-	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.ILSpyX;
-
-	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
+	sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		public TypeTreeNode(ITypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
+		readonly TypeDefinitionHandle handle;
+		readonly MetadataFile module;
+
+		public TypeDefinitionHandle Handle => handle;
+		public MetadataFile Module => module;
+
+		// IEntity for the wrapped type. Resolution is lazy and may return null when the
+		// type system can't be built (e.g. broken assemblies); callers must handle null.
+		public IEntity? Member => ResolveTypeDefinition();
+
+		public TypeTreeNode(TypeDefinitionHandle handle, MetadataFile module)
 		{
-			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
-			this.TypeDefinition = typeDefinition ?? throw new ArgumentNullException(nameof(typeDefinition));
-			this.LazyLoading = true;
+			this.handle = handle;
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			LazyLoading = true;
 		}
 
-		public ITypeDefinition TypeDefinition { get; }
-
-		public AssemblyTreeNode ParentAssemblyNode { get; }
-
-		public override object Text => this.Language.TypeToString(GetTypeDefinition(), ConversionFlags.None)
-			+ GetSuffixString(TypeDefinition.MetadataToken);
-
-		public override object NavigationText => this.Language.TypeToString(GetTypeDefinition())
-			+ GetSuffixString(TypeDefinition.MetadataToken);
-
-		private ITypeDefinition GetTypeDefinition()
-		{
-			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly
-				.GetMetadataFileOrNull()
-				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
-				?.MainModule)?.GetDefinition((SRM.TypeDefinitionHandle)TypeDefinition.MetadataToken);
-		}
-
-		public override bool IsPublicAPI {
+		public override object Text {
 			get {
-				switch (GetTypeDefinition().Accessibility)
-				{
-					case Accessibility.Public:
-					case Accessibility.Protected:
-					case Accessibility.ProtectedOrInternal:
-						return true;
-					default:
-						return false;
-				}
+				var typeDef = ResolveTypeDefinition();
+				string baseText = typeDef != null
+					? Language.TypeToString(typeDef, ConversionFlags.None)
+					: module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
+				return baseText + GetSuffixString(handle);
 			}
 		}
+
+		public override object Icon {
+			get {
+				var typeDef = ResolveTypeDefinition();
+				if (typeDef == null)
+					return Images.Images.Class;
+				var baseImage = typeDef.Kind switch {
+					TypeKind.Interface => Images.Images.Interface,
+					TypeKind.Struct or TypeKind.Void => Images.Images.Struct,
+					TypeKind.Delegate => Images.Images.Delegate,
+					TypeKind.Enum => Images.Images.Enum,
+					_ => Images.Images.Class,
+				};
+				return Images.Images.GetIcon(baseImage,
+					Images.Images.GetOverlay(typeDef.Accessibility), typeDef.IsStatic);
+			}
+		}
+
+		public override bool CanExpandRecursively => true;
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			var typeDef = ResolveTypeDefinition();
+			if (typeDef != null)
+				language.DecompileType(typeDef, output, options);
+			else
+				language.WriteCommentLine(output, "(could not resolve type)");
+		}
+
+		public override bool IsPublicAPI => ResolveTypeDefinition()?.Accessibility switch {
+			Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+			_ => false,
+		};
 
 		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(TypeDefinition.Name))
+			var typeDef = ResolveTypeDefinition();
+			if (typeDef == null)
+				return FilterResult.Match;
+			if (settings.SearchTermMatches(typeDef.Name))
 			{
-				if (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Language.ShowMember(TypeDefinition))
+				if (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(typeDef))
 					return FilterResult.Match;
 				else
 					return FilterResult.Hidden;
@@ -88,114 +115,93 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected override void LoadChildren()
-		{
-			if (TypeDefinition.DirectBaseTypes.Any())
-				this.Children.Add(new BaseTypesTreeNode(ParentAssemblyNode.LoadedAssembly.GetMetadataFileOrNull(), TypeDefinition));
-			if (!TypeDefinition.IsSealed)
-				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
-			var extensionInfo = TypeDefinition.ExtensionInfo;
-			if (extensionInfo != null)
-			{
-				foreach (var extensionGroup in extensionInfo.ExtensionGroups)
-				{
-					this.Children.Add(new ExtensionTreeNode(TypeDefinition, extensionGroup, ParentAssemblyNode));
-				}
-			}
-			foreach (var nestedType in TypeDefinition.NestedTypes.OrderBy(t => t.Name, NaturalStringComparer.Instance))
-			{
-				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
-			}
-			if (TypeDefinition.Kind == TypeKind.Enum)
-			{
-				// if the type is an enum, it's better to not sort by field name.
-				foreach (var field in TypeDefinition.Fields)
-				{
-					this.Children.Add(new FieldTreeNode(field));
-				}
-			}
-			else
-			{
-				foreach (var field in TypeDefinition.Fields.OrderBy(f => f.Name, NaturalStringComparer.Instance))
-				{
-					this.Children.Add(new FieldTreeNode(field));
-				}
-			}
-			foreach (var property in TypeDefinition.Properties.OrderBy(p => p.Name, NaturalStringComparer.Instance))
-			{
-				this.Children.Add(new PropertyTreeNode(property));
-			}
-			foreach (var ev in TypeDefinition.Events.OrderBy(e => e.Name, NaturalStringComparer.Instance))
-			{
-				this.Children.Add(new EventTreeNode(ev));
-			}
-			foreach (var method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance))
-			{
-				if (method.MetadataToken.IsNil)
-					continue;
-				this.Children.Add(new MethodTreeNode(method));
-			}
-		}
-
-		public override bool CanExpandRecursively => true;
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.DecompileType(GetTypeDefinition(), output, options);
-		}
-
-		public override object Icon => GetIcon(TypeDefinition);
-
-		public static ImageSource GetIcon(ITypeDefinition type)
-		{
-			return Images.GetIcon(GetTypeIcon(type, out bool isStatic), GetOverlayIcon(type), isStatic, false);
-		}
-
-		internal static TypeIcon GetTypeIcon(IType type, out bool isStatic)
-		{
-			isStatic = false;
-			switch (type.Kind)
-			{
-				case TypeKind.Interface:
-					return TypeIcon.Interface;
-				case TypeKind.Struct:
-				case TypeKind.Void:
-					return TypeIcon.Struct;
-				case TypeKind.Delegate:
-					return TypeIcon.Delegate;
-				case TypeKind.Enum:
-					return TypeIcon.Enum;
-				default:
-					isStatic = type.GetDefinition()?.IsStatic == true;
-					return TypeIcon.Class;
-			}
-		}
-
-		internal static AccessOverlayIcon GetOverlayIcon(ITypeDefinition type)
-		{
-			switch (type.Accessibility)
-			{
-				case Accessibility.Public:
-					return AccessOverlayIcon.Public;
-				case Accessibility.Internal:
-					return AccessOverlayIcon.Internal;
-				case Accessibility.ProtectedAndInternal:
-					return AccessOverlayIcon.PrivateProtected;
-				case Accessibility.Protected:
-				case Accessibility.ProtectedOrInternal:
-					return AccessOverlayIcon.Protected;
-				case Accessibility.Private:
-					return AccessOverlayIcon.Private;
-				default:
-					return AccessOverlayIcon.CompilerControlled;
-			}
-		}
-
-		IEntity IMemberTreeNode.Member => TypeDefinition;
-
+		// Stable identity for SessionSettings.ActiveTreeViewPath. ReflectionName is
+		// language-independent.
 		public override string ToString()
 		{
-			return TypeDefinition.ReflectionName;
+			var typeDef = ResolveTypeDefinition();
+			return typeDef?.ReflectionName ?? module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
+		}
+
+		// Sealed / static / value-type / enum / delegate cannot be the base of another class,
+		// so a DerivedTypes child would always show up empty. Suppress it for those kinds.
+		static bool CanHaveDerivedTypes(ITypeDefinition typeDef)
+		{
+			if (typeDef.IsSealed)
+				return false;
+			return typeDef.Kind switch {
+				TypeKind.Class or TypeKind.Interface => true,
+				_ => false,
+			};
+		}
+
+		ITypeDefinition? ResolveTypeDefinition()
+		{
+			var typeSystem = module.GetTypeSystemOrNull();
+			if (typeSystem == null)
+				return null;
+			return ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
+		}
+
+		protected override void LoadChildren()
+		{
+			var typeDef = ResolveTypeDefinition();
+			if (typeDef == null)
+				return;
+
+			// Inheritance-relation siblings come first so they sit above the type's own members.
+			// BaseTypes is skipped for System.Object (no upstream chain) and for value types'
+			// implicit System.ValueType base when there's nothing else to show — the AddBaseTypes
+			// pass produces an empty set, which collapses the node.
+			if (typeDef.DirectBaseTypes.Any())
+				Children.Add(new BaseTypesTreeNode(module, typeDef));
+
+			// DerivedTypes is meaningful only for non-sealed reference types (and abstract
+			// classes / interfaces). Sealed classes can't be derived from; static classes are
+			// implicitly sealed.
+			var assemblyList = AppComposition.Current.GetExport<AssemblyTreeModel>().AssemblyList;
+			if (assemblyList != null && CanHaveDerivedTypes(typeDef))
+				Children.Add(new DerivedTypesTreeNode(assemblyList, typeDef));
+
+			foreach (var nestedType in typeDef.NestedTypes
+				.OrderBy(t => t.Name, NaturalStringComparer.Instance))
+			{
+				Children.Add(new TypeTreeNode((TypeDefinitionHandle)nestedType.MetadataToken, module));
+			}
+
+			// C# 14 explicit-extension declaration blocks surface as their own container nodes
+			// — one per (marker, type-params) tuple inside this static class. Filter()-hidden
+			// when the user runs an older C# language version that doesn't recognise them, or
+			// when DecompilerSettings.ExtensionMembers is off.
+			if (typeDef.ExtensionInfo is { } ext)
+			{
+				var parentAssemblyNode = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault();
+				if (parentAssemblyNode != null)
+				{
+					foreach (var group in ext.ExtensionGroups)
+						Children.Add(new ExtensionTreeNode(typeDef, group, parentAssemblyNode));
+				}
+			}
+
+			// Enums look more useful in declaration order than alphabetical.
+			var fields = typeDef.Kind == TypeKind.Enum
+				? typeDef.Fields
+				: typeDef.Fields.OrderBy(f => f.Name, NaturalStringComparer.Instance);
+			foreach (var field in fields)
+				Children.Add(new FieldTreeNode(field));
+
+			foreach (var prop in typeDef.Properties.OrderBy(p => p.Name, NaturalStringComparer.Instance))
+				Children.Add(new PropertyTreeNode(prop));
+
+			foreach (var ev in typeDef.Events.OrderBy(e => e.Name, NaturalStringComparer.Instance))
+				Children.Add(new EventTreeNode(ev));
+
+			foreach (var method in typeDef.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance))
+			{
+				if (method.MetadataToken.IsNil || method.IsAccessor)
+					continue;
+				Children.Add(new MethodTreeNode(method));
+			}
 		}
 	}
 }

@@ -1,14 +1,14 @@
-// Copyright (c) 2024 Tom Englert for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,118 +17,98 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.ObjectModel;
 using System.Composition;
 using System.Linq;
-using System.Windows;
-using System.Windows.Input;
 
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Analyzers.TreeNodes;
-using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.TreeView;
 
-using TomsToolbox.Wpf;
+using ILSpy.Analyzers.TreeNodes;
+using ILSpy.Commands;
+using ILSpy.ViewModels;
 
-namespace ICSharpCode.ILSpy.Analyzers
+namespace ILSpy.Analyzers
 {
-	[ExportToolPane]
-	[Shared]
 	[Export]
+	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 0, IsVisibleByDefault = false)]
+	[Shared]
 	public class AnalyzerTreeViewModel : ToolPaneModel
 	{
-		public const string PaneContentId = "analyzerPane";
+		public const string PaneContentId = "Analyzer";
 
-		public AnalyzerTreeViewModel(AssemblyTreeModel assemblyTreeModel)
+		public AnalyzerTreeViewModel()
 		{
-			ContentId = PaneContentId;
-			Title = Properties.Resources.Analyze;
-			ShortcutKey = new(Key.R, ModifierKeys.Control);
-			AssociatedCommand = new AnalyzeCommand(assemblyTreeModel, this);
+			Id = PaneContentId;
+			Title = "Analyzer";
+			// IsRoot is computed (Parent == null) — the node is the root because we never
+			// add it to another node's Children collection.
+			Root = new AnalyzerRootNode();
 		}
 
-		public AnalyzerRootNode Root { get; } = new();
+		/// <summary>
+		/// Root of the analyzer pane's tree. Pre-populated as a child-less node; entries are
+		/// added through <see cref="Analyze(IEntity)"/>.
+		/// </summary>
+		public AnalyzerRootNode Root { get; }
 
-		public ICommand AnalyzeCommand => new DelegateCommand(AnalyzeSelected);
+		/// <summary>
+		/// Two-way binding sink for the tree grid's selection. Drives the context-menu's
+		/// <c>TextViewContext.SelectedTreeNodes</c> so menu entries see the live selection.
+		/// </summary>
+		public ObservableCollection<SharpTreeNode> SelectedItems { get; } = new();
 
-		private SharpTreeNode[] selectedItems = [];
-
-		public SharpTreeNode[] SelectedItems {
-			get => selectedItems ?? [];
-			set {
-				if (SelectedItems.SequenceEqual(value))
-					return;
-
-				selectedItems = value;
-				OnPropertyChanged();
+		/// <summary>
+		/// Adds <paramref name="entity"/> to the analyzer pane (reusing the existing row if
+		/// the entity is already analysed) and selects it. The pane's focus / dock-activation
+		/// is the caller's responsibility — typically the context-menu entry that triggered
+		/// the analysis.
+		/// </summary>
+		public AnalyzerEntityTreeNode Analyze(IEntity entity)
+		{
+			ArgumentNullException.ThrowIfNull(entity);
+			var existing = Root.Children
+				.OfType<AnalyzerEntityTreeNode>()
+				.FirstOrDefault(n => IsSameEntity(n.Member, entity));
+			if (existing != null)
+			{
+				SyncSelection(existing);
+				return existing;
 			}
+			var node = Wrap(entity);
+			Root.Children.Add(node);
+			// Auto-expand the freshly-added node so its analyzers (Used By, Uses, ...) are visible
+			// immediately, instead of leaving the user to expand it by hand after every Analyze.
+			node.IsExpanded = true;
+			SyncSelection(node);
+			return node;
 		}
 
-		private void AnalyzeSelected()
+		static bool IsSameEntity(IEntity? a, IEntity b)
 		{
-			foreach (var node in SelectedItems.OfType<IMemberTreeNode>())
-			{
-				Analyze(node.Member);
-			}
+			if (a == null)
+				return false;
+			return a.MetadataToken == b.MetadataToken
+				&& ReferenceEquals(a.ParentModule, b.ParentModule);
 		}
 
-		void AddOrSelect(AnalyzerTreeNode node)
+		void SyncSelection(SharpTreeNode node)
 		{
-			Show();
-
-			AnalyzerTreeNode target = default;
-
-			if (node is AnalyzerEntityTreeNode { Member: { } member })
-			{
-				target = this.Root.Children.OfType<AnalyzerEntityTreeNode>().FirstOrDefault(item => item.Member == member);
-			}
-
-			if (target == null)
-			{
-				this.Root.Children.Add(node);
-				target = node;
-			}
-
-			target.IsExpanded = true;
-			this.SelectedItems = [target];
+			SelectedItems.Clear();
+			SelectedItems.Add(node);
 		}
 
-		public void Analyze(IEntity entity)
+		static AnalyzerEntityTreeNode Wrap(IEntity entity)
 		{
-			if (entity == null)
-			{
-				throw new ArgumentNullException(nameof(entity));
-			}
-
-			if (entity.MetadataToken.IsNil)
-			{
-				MessageBox.Show(Properties.Resources.CannotAnalyzeMissingRef, "ILSpy");
-				return;
-			}
-
-			switch (entity)
-			{
-				case ITypeDefinition td:
-					AddOrSelect(new AnalyzedTypeTreeNode(td, null));
-					break;
-				case IField fd:
-					if (!fd.IsConst)
-						AddOrSelect(new AnalyzedFieldTreeNode(fd, null));
-					break;
-				case IMethod md:
-					AddOrSelect(new AnalyzedMethodTreeNode(md, null));
-					break;
-				case IProperty pd:
-					AddOrSelect(new AnalyzedPropertyTreeNode(pd, null));
-					break;
-				case IEvent ed:
-					AddOrSelect(new AnalyzedEventTreeNode(ed, null));
-					break;
-				default:
-					throw new ArgumentOutOfRangeException(nameof(entity), $@"Entity {entity.GetType().FullName} is not supported.");
-			}
+			return entity switch {
+				ITypeDefinition type => new AnalyzedTypeTreeNode(type, source: entity),
+				IMethod method => new AnalyzedMethodTreeNode(method, source: entity),
+				IField field => new AnalyzedFieldTreeNode(field, source: entity),
+				IProperty property => new AnalyzedPropertyTreeNode(property, source: entity),
+				IEvent ev => new AnalyzedEventTreeNode(ev, source: entity),
+				_ => throw new ArgumentOutOfRangeException(nameof(entity),
+					$"Entity {entity.GetType().FullName} is not supported by the analyzer pane.")
+			};
 		}
 	}
 }
-

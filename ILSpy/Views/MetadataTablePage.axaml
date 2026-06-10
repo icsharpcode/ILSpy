@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="ILSpy.Views.MetadataTablePage"
+             x:DataType="vm:MetadataTablePageModel">
+
+	<!-- ItemsSource and Columns are wired imperatively in code-behind so the (clear-cols /
+	     add-cols / set-items) sequence runs as a single transaction. Binding ItemsSource
+	     declaratively crashes the DataGrid's measure pass when the view is reused across
+	     content types whose schemas have a different column count, because Avalonia's
+	     binding-system rebind happens after the imperative column rewrite. Per-column
+	     filter inputs live inside each column's Header (built by MetadataColumnBuilder),
+	     not in a separate row above the grid. -->
+	<DataGrid Name="Grid"
+	          CanUserResizeColumns="True"
+	          CanUserSortColumns="True"
+	          CanUserReorderColumns="False"
+	          IsReadOnly="True"
+	          GridLinesVisibility="None"
+	          HeadersVisibility="Column"
+	          SelectionMode="Single"
+	          AutoGenerateColumns="False" />
+
+</UserControl>

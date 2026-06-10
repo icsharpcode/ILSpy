@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -18,23 +18,14 @@
 
 using System;
 
-namespace ICSharpCode.ILSpy.TextView
+namespace ILSpy.TextView
 {
 	/// <summary>
-	/// This exception gets used when the text output is longer than the specified limit.
+	/// Thrown by <see cref="AvaloniaEditTextOutput"/> once its accumulated text exceeds
+	/// <see cref="AvaloniaEditTextOutput.LengthLimit"/>, so a runaway decompile (a huge type or
+	/// namespace) is stopped before it can hang or exhaust memory on the UI thread.
 	/// </summary>
-	class OutputLengthExceededException : Exception
+	public sealed class OutputLengthExceededException : Exception
 	{
-		public OutputLengthExceededException()
-		{
-		}
-
-		public OutputLengthExceededException(string message) : base(message)
-		{
-		}
-
-		public OutputLengthExceededException(string message, Exception innerException) : base(message, innerException)
-		{
-		}
 	}
 }

@@ -1,14 +1,14 @@
-// Copyright (c) 2019 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,72 +16,286 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Composition;
-using System.Windows.Input;
-using System.Windows.Media;
+using System.Linq;
 
-using ICSharpCode.ILSpy.ViewModels;
+using Avalonia.Media;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Search;
 
-namespace ICSharpCode.ILSpy.Search
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
+using ILSpy.Commands;
+using ILSpy.Languages;
+using ILSpy.ViewModels;
+
+namespace ILSpy.Search
 {
-	public class SearchModeModel
+	/// <summary>
+	/// One entry in the search-mode picker. The <see cref="Mode"/> determines which
+	/// <c>ICSharpCode.ILSpyX.Search</c> strategy runs when the user types a query;
+	/// <see cref="Name"/> is the label rendered in the ComboBox and <see cref="Image"/>
+	/// is the icon shown alongside it (both in the dropdown and in the closed selector).
+	/// </summary>
+	public sealed class SearchModeEntry
 	{
-		public SearchMode Mode { get; init; }
-		public string Name { get; init; }
-		public ImageSource Image { get; init; }
+		public required SearchMode Mode { get; init; }
+		public required string Name { get; init; }
+		public required IImage Image { get; init; }
 	}
 
-	[ExportToolPane]
+	[Export]
+	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Top, Order = 0, IsVisibleByDefault = false)]
 	[Shared]
 	public partial class SearchPaneModel : ToolPaneModel
 	{
-		public const string PaneContentId = "searchPane";
+		public const string PaneContentId = "Search";
 
-		private readonly SettingsService settingsService;
-		private string searchTerm;
-
-		public SearchPaneModel(SettingsService settingsService)
+		public SearchPaneModel()
 		{
-			this.settingsService = settingsService;
-			ContentId = PaneContentId;
-			Title = Properties.Resources.SearchPane_Search;
-			Icon = "Images/Search";
-			ShortcutKey = new(Key.F, ModifierKeys.Control | ModifierKeys.Shift);
-			IsCloseable = true;
-
-			MessageBus<ShowSearchPageEventArgs>.Subscribers += (_, e) => {
-				SearchTerm = e.SearchTerm;
-				Show();
-			};
-			MessageBus<ApplySessionSettingsEventArgs>.Subscribers += ApplySessionSettings;
+			Id = PaneContentId;
+			Title = "Search";
+			SelectedSearchMode = SearchModes[0];
+			PropertyChanged += OnPropertyChangedDispatch;
+			// Refresh search results when the active assembly list mutates. Skip the
+			// restart when ONLY auto-loaded (dependency) assemblies are added — those
+			// fire from navigating through results in a large assembly and would cause
+			// a tight feedback loop / flicker. Mirrors WPF's #3734 fix.
+			Util.MessageBus<Util.CurrentAssemblyListChangedEventArgs>.Subscribers += OnAssemblyListChanged;
 		}
 
-		private void ApplySessionSettings(object sender, ApplySessionSettingsEventArgs e)
+		void OnAssemblyListChanged(object? sender, Util.CurrentAssemblyListChangedEventArgs e)
 		{
-			e.SessionSettings.SelectedSearchMode = SessionSettings.SelectedSearchMode;
+			var inner = e.Inner;
+			if (inner.Action == NotifyCollectionChangedAction.Add
+				&& inner.NewItems?.Cast<LoadedAssembly>().All(asm => asm.IsAutoLoaded) == true)
+			{
+				return;
+			}
+			if (string.IsNullOrEmpty(SearchTerm))
+				return;
+			RestartSearch();
 		}
 
-		public SearchModeModel[] SearchModes { get; } = [
-			new() { Mode = SearchMode.TypeAndMember, Image = Images.Library, Name = "Types and Members" },
-			new() { Mode = SearchMode.Type, Image = Images.Class, Name = "Type" },
-			new() { Mode = SearchMode.Member, Image = Images.Property, Name = "Member" },
-			new() { Mode = SearchMode.Method, Image = Images.Method, Name = "Method" },
-			new() { Mode = SearchMode.Field, Image = Images.Field, Name = "Field" },
-			new() { Mode = SearchMode.Property, Image = Images.Property, Name = "Property" },
-			new() { Mode = SearchMode.Event, Image = Images.Event, Name = "Event" },
-			new() { Mode = SearchMode.Literal, Image = Images.Literal, Name = "Constant" },
-			new() { Mode = SearchMode.Token, Image = Images.Library, Name = "Metadata Token" },
-			new() { Mode = SearchMode.Resource, Image = Images.Resource, Name = "Resource" },
-			new() { Mode = SearchMode.Assembly, Image = Images.Assembly, Name = "Assembly" },
-			new() { Mode = SearchMode.Namespace, Image = Images.Namespace, Name = "Namespace" }
-		];
+		void OnPropertyChangedDispatch(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName is nameof(SearchTerm) or nameof(SelectedSearchMode))
+				RestartSearch();
+		}
 
-		public SessionSettings SessionSettings => settingsService.SessionSettings;
+		/// <summary>
+		/// All twelve modes from <see cref="ICSharpCode.ILSpyX.Search.SearchMode"/>, in the
+		/// order the WPF pane uses (most inclusive first). Display names mirror the WPF
+		/// strings so users moving between builds see the same labels.
+		/// </summary>
+		public SearchModeEntry[] SearchModes { get; } = new[] {
+			new SearchModeEntry { Mode = SearchMode.TypeAndMember, Name = "Types and Members", Image = Images.Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Type, Name = "Type", Image = Images.Images.Class },
+			new SearchModeEntry { Mode = SearchMode.Member, Name = "Member", Image = Images.Images.Property },
+			new SearchModeEntry { Mode = SearchMode.Method, Name = "Method", Image = Images.Images.Method },
+			new SearchModeEntry { Mode = SearchMode.Field, Name = "Field", Image = Images.Images.Field },
+			new SearchModeEntry { Mode = SearchMode.Property, Name = "Property", Image = Images.Images.Property },
+			new SearchModeEntry { Mode = SearchMode.Event, Name = "Event", Image = Images.Images.Event },
+			new SearchModeEntry { Mode = SearchMode.Literal, Name = "Constant", Image = Images.Images.Literal },
+			new SearchModeEntry { Mode = SearchMode.Token, Name = "Metadata Token", Image = Images.Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Resource, Name = "Resource", Image = Images.Images.Resource },
+			new SearchModeEntry { Mode = SearchMode.Assembly, Name = "Assembly", Image = Images.Images.Assembly },
+			new SearchModeEntry { Mode = SearchMode.Namespace, Name = "Namespace", Image = Images.Images.Namespace },
+		};
 
-		public string SearchTerm {
-			get => searchTerm;
-			set => SetProperty(ref searchTerm, value);
+		/// <summary>
+		/// Current query string. Bound two-way to the TextBox in the pane's view. The
+		/// setter raises <see cref="ObservableObject.PropertyChanged"/> so the background
+		/// streaming orchestrator and the filter cascade through
+		/// <c>LanguageSettings.SearchTerm</c> react on every keystroke.
+		/// </summary>
+		[ObservableProperty]
+		public partial string SearchTerm { get; set; } = string.Empty;
+
+		/// <summary>
+		/// Active mode in the picker. Defaults to <see cref="SearchMode.TypeAndMember"/>.
+		/// </summary>
+		[ObservableProperty]
+		public partial SearchModeEntry SelectedSearchMode { get; set; }
+
+		/// <summary>
+		/// Streaming sink for results from the current search run. The view's ListBox binds
+		/// here directly; the background orchestrator inserts rows via
+		/// <c>Dispatcher.UIThread.Post</c> as the strategies emit them.
+		/// </summary>
+		public ObservableCollection<SearchResult> Results { get; } = new();
+
+		/// <summary>
+		/// True while the background search is in flight. Bound to the pane's
+		/// <c>ProgressBar.IsIndeterminate</c> so the user sees activity for long-running
+		/// scans (large assembly lists can take a few seconds). Flips to true at
+		/// <see cref="RunningSearch.Start"/> and back to false when
+		/// <see cref="RunningSearch.Completed"/> fires.
+		/// </summary>
+		[ObservableProperty]
+		public partial bool IsSearching { get; set; }
+
+		/// <summary>
+		/// Raised when the pane should hand keyboard focus to its search input. The view's
+		/// code-behind subscribes and calls <c>SearchInput.Focus()</c> on the dispatcher;
+		/// the VM stays UI-framework-agnostic. Fires from <see cref="RequestFocus"/>, which
+		/// <see cref="Docking.DockWorkspace.ShowSearchCommand"/> calls after bringing the
+		/// pane to active.
+		/// </summary>
+		public event Action? FocusRequested;
+
+		public void RequestFocus() => FocusRequested?.Invoke();
+
+		/// <summary>
+		/// User clicked (or double-tapped) a result row. Walks the result's <c>Reference</c>
+		/// to the matching assembly-tree node via <see cref="AssemblyTreeModel.FindTreeNode"/>
+		/// and moves selection there. Silently no-ops when the reference can't be resolved
+		/// (resource and assembly results have non-entity references that the assembly tree
+		/// doesn't index — a follow-up commit can extend FindTreeNode to cover them).
+		/// </summary>
+		public void Activate(SearchResult result) => Activate(result, inNewTabPage: false);
+
+		/// <summary>
+		/// Navigates to <paramref name="result"/>. When <paramref name="inNewTabPage"/> is
+		/// false the assembly-tree selection moves to the matching node (reusing the active
+		/// document tab); when true the node is opened in a fresh document tab via
+		/// <see cref="Docking.DockWorkspace.OpenNodeInNewTab"/> -- wired to Ctrl+Enter and a
+		/// middle-click on a result row.
+		/// </summary>
+		public void Activate(SearchResult result, bool inNewTabPage)
+		{
+			ArgumentNullException.ThrowIfNull(result);
+			if (result.Reference is null)
+				return;
+			var atm = TryGetAssemblyTreeModel();
+			if (atm == null)
+				return;
+			var node = atm.FindTreeNode(result.Reference);
+			if (node == null)
+				return;
+			if (inNewTabPage)
+				TryGetDockWorkspace()?.OpenNodeInNewTab(node);
+			else
+				atm.SelectedItem = node;
+		}
+
+		/// <summary>
+		/// Selects the picker entry carrying <paramref name="mode"/>, if any. Backs the
+		/// Ctrl+T / Ctrl+M / Ctrl+S accelerators in the pane's view; a no-op when no entry
+		/// exposes the requested mode.
+		/// </summary>
+		public void SelectMode(SearchMode mode)
+		{
+			var entry = SearchModes.FirstOrDefault(m => m.Mode == mode);
+			if (entry != null)
+				SelectedSearchMode = entry;
+		}
+
+		RunningSearch? currentSearch;
+
+		void RestartSearch()
+		{
+			currentSearch?.Cancel();
+			currentSearch = null;
+			Results.Clear();
+			IsSearching = false;
+
+			var term = SearchTerm ?? string.Empty;
+			if (string.IsNullOrWhiteSpace(term))
+				return;
+
+			var assemblyTreeModel = TryGetAssemblyTreeModel();
+			var assemblyList = assemblyTreeModel?.AssemblyList;
+			if (assemblyList == null)
+				return;
+			var language = TryGetLanguage();
+			if (language == null)
+				return;
+			var apiVisibility = TryGetSettings()?.SessionSettings?.LanguageSettings?.ShowApiLevel
+				?? ApiVisibility.PublicOnly;
+
+			var factory = new AvaloniaSearchResultFactory(language);
+			// Capture the comparer at start-of-search (matches WPF SearchPane.xaml.cs:288).
+			// Toggling "Sort results by fitness" mid-run won't reshuffle results already on
+			// screen — it only takes effect on the next search.
+			var sortComparer = (TryGetSettings()?.DisplaySettings.SortResults ?? true)
+				? SearchResult.ComparerByFitness
+				: SearchResult.ComparerByName;
+			var run = new RunningSearch(
+				assemblyList.GetAssemblies(),
+				term,
+				SelectedSearchMode.Mode,
+				language,
+				apiVisibility,
+				factory,
+				Results,
+				sortComparer);
+			run.Completed += OnRunCompleted;
+			currentSearch = run;
+			IsSearching = true;
+			run.Start();
+		}
+
+		void OnRunCompleted(RunningSearch sender)
+		{
+			// Ignore late completions from cancelled runs — those are noise.
+			if (!ReferenceEquals(sender, currentSearch))
+				return;
+			IsSearching = false;
+		}
+
+		static AssemblyTreeModel? TryGetAssemblyTreeModel()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<AssemblyTreeModel>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		static Language? TryGetLanguage()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		static SettingsService? TryGetSettings()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<SettingsService>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		static Docking.DockWorkspace? TryGetDockWorkspace()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<Docking.DockWorkspace>();
+			}
+			catch
+			{
+				return null;
+			}
 		}
 	}
 }

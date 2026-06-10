@@ -1,0 +1,120 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:tv="using:ILSpy.Controls.TreeView"
+                    xmlns:ctrl="using:ILSpy.Controls"
+                    xmlns:ilspyx="using:ICSharpCode.ILSpyX.TreeView">
+
+	<!-- The exact WPF SharpTreeView expander: a 9x9 white->beige gradient box whose Path is a
+	     filled "+" when collapsed and morphs to a "-" bar when expanded (IsChecked). -->
+	<ControlTheme x:Key="TreeExpanderToggleTheme" TargetType="ToggleButton">
+		<Setter Property="Width" Value="13" />
+		<Setter Property="Height" Value="16" />
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Focusable" Value="False" />
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Border Background="Transparent" Width="13" Height="16">
+					<Border Width="9" Height="9" BorderThickness="1" CornerRadius="1"
+					        BorderBrush="#FFB0B0B0"
+					        HorizontalAlignment="Center" VerticalAlignment="Center">
+						<Border.Background>
+							<LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+								<GradientStop Color="White" Offset="0.2" />
+								<GradientStop Color="#FFC0B7A6" Offset="1" />
+							</LinearGradientBrush>
+						</Border.Background>
+						<Path Name="ExpandPath" Margin="1" Fill="Black"
+						      Data="M 0 2 L 0 3 L 2 3 L 2 5 L 3 5 L 3 3 L 5 3 L 5 2 L 3 2 L 3 0 L 2 0 L 2 2 Z" />
+					</Border>
+				</Border>
+			</ControlTemplate>
+		</Setter>
+		<!-- Expanded: the "+" geometry collapses to a "-" bar. -->
+		<Style Selector="^:checked /template/ Path#ExpandPath">
+			<Setter Property="Data" Value="M 0 2 L 0 3 L 5 3 L 5 2 Z" />
+		</Style>
+	</ControlTheme>
+
+	<!-- SharpTreeView inherits the Simple-theme ListBox chrome, but drops the theme's default
+	     padding + border so the rows sit flush to the pane edge (no white gutter around the list). -->
+	<ControlTheme x:Key="{x:Type tv:SharpTreeView}" TargetType="tv:SharpTreeView"
+	              BasedOn="{StaticResource {x:Type ListBox}}">
+		<Setter Property="Padding" Value="0" />
+		<Setter Property="BorderThickness" Value="0" />
+	</ControlTheme>
+
+	<!-- Each row: the ListBoxItem selection chrome (from BasedOn) wraps our node content. -->
+	<ControlTheme x:Key="{x:Type tv:SharpTreeViewItem}" TargetType="tv:SharpTreeViewItem"
+	              BasedOn="{StaticResource {x:Type ListBoxItem}}">
+		<Setter Property="Padding" Value="4,0" />
+		<Setter Property="Margin" Value="0" />
+		<Setter Property="MinHeight" Value="20" />
+		<Setter Property="HorizontalContentAlignment" Value="Stretch" />
+		<!-- Replace the framework's default focus adorner (a dotted, fill-less rectangle) with one that
+		     fills the row in the selection colour and keeps the dotted, darker-blue border. Rendered on
+		     the adorner layer on keyboard focus only, exactly where the default appeared. -->
+		<Setter Property="FocusAdorner">
+			<FocusAdornerTemplate>
+				<Rectangle Fill="{DynamicResource ILSpy.TreeFocusFill}"
+				           Stroke="{DynamicResource ILSpy.TreeFocusBorder}"
+				           StrokeThickness="1" StrokeDashArray="1,2" Margin="1" />
+			</FocusAdornerTemplate>
+		</Setter>
+		<!-- Override the item template (the Simple theme's is a bare ContentPresenter) to add the
+		     ContextTargetVisual overlay as a sibling template part. It cannot live in the ContentTemplate:
+		     a descendant style selector does not cross the ContentPresenter into its templated content, so
+		     a .contextTarget rule there never reaches it. As a template part, the .contextTarget /template/
+		     rule below does reach it. The ContentPresenter keeps its name so the inherited :selected /
+		     :pointerover background rules still match. -->
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Panel>
+					<ContentPresenter Name="PART_ContentPresenter"
+					                  Padding="{TemplateBinding Padding}"
+					                  HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+					                  VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+					                  Background="{TemplateBinding Background}"
+					                  BorderBrush="{TemplateBinding BorderBrush}"
+					                  BorderThickness="{TemplateBinding BorderThickness}"
+					                  Content="{TemplateBinding Content}"
+					                  ContentTemplate="{TemplateBinding ContentTemplate}"
+					                  CornerRadius="{TemplateBinding CornerRadius}" />
+					<!-- Right-click context-menu target visual: the same selection-coloured fill and
+					     dotted, darker-blue border as the keyboard-focus adorner, so a right-clicked row
+					     reads identically to a focused one. Hidden until the .contextTarget rule flips it;
+					     drawn over the content (translucent) like the adorner; never hit-testable. -->
+					<Rectangle Name="ContextTargetVisual" IsVisible="False" IsHitTestVisible="False"
+					           Fill="{DynamicResource ILSpy.TreeFocusFill}"
+					           Stroke="{DynamicResource ILSpy.TreeFocusBorder}"
+					           StrokeThickness="1" StrokeDashArray="1,2" Margin="1" />
+				</Panel>
+			</ControlTemplate>
+		</Setter>
+		<Setter Property="ContentTemplate">
+			<DataTemplate x:CompileBindings="False">
+				<Panel Background="Transparent" ToolTip.Tip="{Binding ToolTip}">
+					<!-- Classic tree connector lines, behind the content. -->
+					<ctrl:TreeLines Node="{Binding}" Level="{Binding Level}"
+					                IsVisible="{Binding ShowLines, RelativeSource={RelativeSource AncestorType=tv:SharpTreeView}}" />
+					<StackPanel Orientation="Horizontal" Height="20">
+						<!-- Indent spacer = (Level - 1) * step (top level sits flush left). -->
+						<Border Width="{Binding Level, Converter={x:Static tv:TreeIndentConverter.Instance}}" />
+						<ToggleButton Name="PART_Expander"
+						              Theme="{StaticResource TreeExpanderToggleTheme}"
+						              VerticalAlignment="Center"
+						              IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+						              IsVisible="{Binding ShowExpander}" />
+						<!-- Reserve the expander column even when there is no expander. -->
+						<Border Width="13" IsVisible="{Binding !ShowExpander}" />
+						<Image Source="{Binding Icon}" Width="16" Height="16"
+						       Margin="4,0,6,0" VerticalAlignment="Center" />
+						<TextBlock Text="{Binding Text}" VerticalAlignment="Center"
+						           Classes.autoloaded="{Binding IsAutoLoaded}"
+						           Classes.nonPublicAPI="{Binding IsNonPublicAPI}" />
+					</StackPanel>
+				</Panel>
+			</DataTemplate>
+		</Setter>
+	</ControlTheme>
+
+</ResourceDictionary>

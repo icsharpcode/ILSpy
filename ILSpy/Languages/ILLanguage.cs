@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -22,60 +22,50 @@ using System.Composition;
 using System.Linq;
 using System.Reflection.Metadata;
 
-using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 
-namespace ICSharpCode.ILSpy
+namespace ILSpy.Languages
 {
-	/// <summary>
-	/// IL language support.
-	/// </summary>
-	/// <remarks>
-	/// Currently comes in two versions:
-	/// flat IL (detectControlStructure=false) and structured IL (detectControlStructure=true).
-	/// </remarks>
 	[Export(typeof(Language))]
 	[Shared]
-	public class ILLanguage(DockWorkspace dockWorkspace) : Language
+	public class ILLanguage : Language
 	{
 		protected bool detectControlStructure = true;
 
-		public override string Name {
-			get { return "IL"; }
-		}
+		public override string Name => "IL";
 
-		public override string FileExtension {
-			get { return ".il"; }
-		}
+		public override string FileExtension => ".il";
 
+		// Disassembled IL uses the same `{}/()/[]` bracket conventions plus C#-style
+		// `//` comments and `"..."` strings — reuse CSharpBracketSearcher's logic.
+		public override ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
+
+		// DisplaySettings (ShowMetadataTokens / ShowRawRVAOffsetAndBytes /
+		// DecodeCustomAttributeBlobs / ShowMetadataTokensInBase10) aren't wired yet — once
+		// they are, plumb them in here. All four default to false.
 		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			var displaySettings = SettingsService.DisplaySettings;
 			output.IndentationString = options.DecompilerSettings.CSharpFormattingOptions.IndentationString;
 			return new ReflectionDisassembler(output, options.CancellationToken) {
 				DetectControlStructure = detectControlStructure,
 				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo,
-				ShowMetadataTokens = displaySettings.ShowMetadataTokens,
-				ShowMetadataTokensInBase10 = displaySettings.ShowMetadataTokensInBase10,
-				ShowRawRVAOffsetAndBytes = displaySettings.ShowRawOffsetsAndBytesBeforeInstruction,
+				ShowMetadataTokens = false,
+				ShowMetadataTokensInBase10 = false,
+				ShowRawRVAOffsetAndBytes = false,
 				ExpandMemberDefinitions = options.DecompilerSettings.ExpandMemberDefinitions,
-				DecodeCustomAttributeBlobs = displaySettings.DecodeCustomAttributeBlobs
+				DecodeCustomAttributeBlobs = false,
 			};
 		}
 
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = method.ParentModule.MetadataFile;
+			MetadataFile module = method.ParentModule!.MetadataFile!;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleMethod(module, (MethodDefinitionHandle)method.MetadataToken);
@@ -84,7 +74,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = field.ParentModule.MetadataFile;
+			MetadataFile module = field.ParentModule!.MetadataFile!;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleField(module, (FieldDefinitionHandle)field.MetadataToken);
@@ -93,7 +83,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = property.ParentModule.MetadataFile;
+			MetadataFile module = property.ParentModule!.MetadataFile!;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
@@ -110,21 +100,17 @@ namespace ICSharpCode.ILSpy
 				output.WriteLine();
 				dis.DisassembleMethod(module, accessors.Setter);
 			}
-			/*foreach (var m in property.OtherMethods) {
-				output.WriteLine();
-				dis.DisassembleMethod(m);
-			}*/
 		}
 
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = ev.ParentModule.MetadataFile;
+			MetadataFile module = ev.ParentModule!.MetadataFile!;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
 
-			var ed = ((MetadataReader)module.Metadata).GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
+			var ed = module.Metadata.GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
 			var accessors = ed.GetAccessors();
 			if (!accessors.Adder.IsNil)
 			{
@@ -141,16 +127,12 @@ namespace ICSharpCode.ILSpy
 				output.WriteLine();
 				dis.DisassembleMethod(module, accessors.Raiser);
 			}
-			/*foreach (var m in ev.OtherMethods) {
-				output.WriteLine();
-				dis.DisassembleMethod(m);
-			}*/
 		}
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = type.ParentModule.MetadataFile;
+			MetadataFile module = type.ParentModule!.MetadataFile!;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
@@ -159,27 +141,26 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = types.FirstOrDefault()?.ParentModule.MetadataFile;
+			MetadataFile module = types.FirstOrDefault()?.ParentModule!.MetadataFile!;
+			if (module == null)
+				return;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 
-		public override ProjectId DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
 			var module = assembly.GetMetadataFileOrNull();
-
+			if (module == null)
+				return null;
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null)
-			{
 				throw new NotSupportedException($"Language '{Name}' does not support exporting assemblies as projects!");
-			}
 
 			var metadata = module.Metadata;
 			var dis = CreateDisassembler(output, options);
-
-			// don't automatically load additional assemblies when an assembly node is selected in the tree view
 			dis.AssemblyResolver = module.GetAssemblyResolver(loadOnDemand: options.FullDecompilation);
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			if (options.FullDecompilation)
@@ -195,47 +176,6 @@ namespace ICSharpCode.ILSpy
 				dis.WriteModuleContents(module);
 			}
 			return null;
-		}
-
-		public override RichText GetRichTextTooltip(IEntity entity)
-		{
-			var output = new AvalonEditTextOutput() { IgnoreNewLineAndIndent = true };
-
-			var disasm = CreateDisassembler(output, dockWorkspace.ActiveTabPage.CreateDecompilationOptions());
-			MetadataFile module = entity.ParentModule?.MetadataFile;
-			if (module == null)
-			{
-				return null;
-			}
-
-			switch (entity.SymbolKind)
-			{
-				case SymbolKind.TypeDefinition:
-					disasm.DisassembleTypeHeader(module, (TypeDefinitionHandle)entity.MetadataToken);
-					break;
-				case SymbolKind.Field:
-					disasm.DisassembleFieldHeader(module, (FieldDefinitionHandle)entity.MetadataToken);
-					break;
-				case SymbolKind.Property:
-				case SymbolKind.Indexer:
-					disasm.DisassemblePropertyHeader(module, (PropertyDefinitionHandle)entity.MetadataToken);
-					break;
-				case SymbolKind.Event:
-					disasm.DisassembleEventHeader(module, (EventDefinitionHandle)entity.MetadataToken);
-					break;
-				case SymbolKind.Method:
-				case SymbolKind.Operator:
-				case SymbolKind.Constructor:
-				case SymbolKind.Destructor:
-				case SymbolKind.Accessor:
-					disasm.DisassembleMethodHeader(module, (MethodDefinitionHandle)entity.MetadataToken);
-					break;
-				default:
-					output.Write(GetDisplayName(entity, true, true, true));
-					break;
-			}
-
-			return new DocumentHighlighter(output.GetDocument(), base.SyntaxHighlighting).HighlightLine(1).ToRichText();
 		}
 	}
 }

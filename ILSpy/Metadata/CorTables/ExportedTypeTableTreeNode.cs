@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -23,9 +23,14 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	internal class ExportedTypeTableTreeNode : MetadataTableTreeNode<ExportedTypeTableTreeNode.ExportedTypeEntry>
+	/// <summary>
+	/// View of the ExportedType table — types this assembly forwards to (or re-exports
+	/// from) another assembly. Common in type-forwarding scenarios where mscorlib.dll
+	/// exposes types that physically live in System.Runtime.dll.
+	/// </summary>
+	public sealed class ExportedTypeTableTreeNode : MetadataTableTreeNode<ExportedTypeTableTreeNode.ExportedTypeEntry>
 	{
 		public ExportedTypeTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.ExportedType, metadataFile)
@@ -37,13 +42,11 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<ExportedTypeEntry>();
 			var metadata = metadataFile.Metadata;
 			foreach (var row in metadata.ExportedTypes)
-			{
 				list.Add(new ExportedTypeEntry(metadataFile, row, metadata.GetExportedType(row)));
-			}
 			return list;
 		}
 
-		internal struct ExportedTypeEntry
+		public sealed class ExportedTypeEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly ExportedTypeHandle handle;
@@ -51,13 +54,13 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataFile.MetadataOffset
-				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.ExportedType)
-				+ metadataFile.Metadata.GetTableRowSize(TableIndex.ExportedType) * (RID - 1);
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.ExportedType, RID);
 
-			[ColumnInfo("X8", Kind = ColumnKind.Other)]
+			[ColumnInfo("X8")]
 			public TypeAttributes Attributes => type.Attributes;
 
 			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
@@ -71,6 +74,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				FlagGroup.CreateMultipleChoiceGroup(typeof(TypeAttributes), "Flags:", (int)otherFlagsMask, (int)(type.Attributes & otherFlagsMask), includeAll: false),
 			};
 
+			[ColumnInfo("X8")]
 			public int TypeDefId => type.GetTypeDefinitionId();
 
 			public string TypeNameTooltip => $"{MetadataTokens.GetHeapOffset(type.Name):X} \"{TypeName}\"";
@@ -84,20 +88,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Implementation => MetadataTokens.GetToken(type.Implementation);
 
-			public void OnImplementationClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, type.Implementation, protocol: "metadata")));
-			}
-
-			string implementationTooltip;
-			public string ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, type.Implementation);
+			string? implementationTooltip;
+			public string? ImplementationTooltip => GenerateTooltip(ref implementationTooltip, metadataFile, type.Implementation);
 
 			public ExportedTypeEntry(MetadataFile metadataFile, ExportedTypeHandle handle, ExportedType type)
 			{
 				this.metadataFile = metadataFile;
 				this.handle = handle;
 				this.type = type;
-				this.implementationTooltip = null;
 			}
 		}
 	}

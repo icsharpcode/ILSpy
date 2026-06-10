@@ -109,6 +109,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		static readonly VsWhereToolset vswhereToolset;
 		internal static readonly RefAssembliesToolset RefAssembliesToolset;
 
+		// ilasm/ildasm ship as `ilasm[.exe]` inside the Microsoft.NETCore.IL{,D}Asm
+		// per-RID runtime packages, picked up by NuGet's RID graph from the project's
+		// RuntimeIdentifier. The umbrella package drops the binary alongside the test
+		// assembly, but only Windows uses the .exe suffix.
+		static readonly string ExecutableExtension = OperatingSystem.IsWindows() ? ".exe" : "";
+
+		static string ResolveToolPath(string toolName) =>
+			Path.Combine(TesterPath, toolName + ExecutableExtension);
+
 		static Tester()
 		{
 			TesterPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
@@ -145,18 +154,23 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			await RefAssembliesToolset.Fetch("9.0.0", sourcePath: "ref/net9.0").ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch(CurrentNetCoreRefAsmVersion, sourcePath: $"ref/net{CurrentNetCoreVersion}").ConfigureAwait(false);
 
+			// The self-contained TestRunner builds only target Windows RIDs; the fixtures that
+			// consume them (UseTestRunner) are themselves gated to Windows at runtime.
+			if (OperatingSystem.IsWindows())
+			{
 #if DEBUG
-			await BuildTestRunner("win-x86", "Debug").ConfigureAwait(false);
-			await BuildTestRunner("win-x64", "Debug").ConfigureAwait(false);
+				await BuildTestRunner("win-x86", "Debug").ConfigureAwait(false);
+				await BuildTestRunner("win-x64", "Debug").ConfigureAwait(false);
 #else
-			await BuildTestRunner("win-x86", "Release").ConfigureAwait(false);
-			await BuildTestRunner("win-x64", "Release").ConfigureAwait(false);
+				await BuildTestRunner("win-x86", "Release").ConfigureAwait(false);
+				await BuildTestRunner("win-x64", "Release").ConfigureAwait(false);
 #endif
+			}
 		}
 
 		static async Task BuildTestRunner(string runtime, string config)
 		{
-			await Cli.Wrap("dotnet.exe")
+			await Cli.Wrap("dotnet")
 				.WithArguments(new[] { "build", Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj"), "-r", runtime, "-c", config, "--self-contained" })
 				.ExecuteAsync();
 		}
@@ -166,13 +180,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string ilasmPath;
 			if (options.HasFlag(AssemblerOptions.UseLegacyAssembler))
 			{
+				if (!OperatingSystem.IsWindows())
+					Assert.Ignore("UseLegacyAssembler requires the .NET Framework ilasm.exe, which only exists on Windows.");
 				ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
 			}
 			else
 			{
-				ilasmPath = Path.Combine(
-					Path.GetDirectoryName(typeof(Tester).Assembly.Location),
-					"ilasm.exe");
+				ilasmPath = ResolveToolPath("ilasm");
 			}
 			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
@@ -246,9 +260,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return outputFile;
 			}
 
-			string ildasmPath = Path.Combine(
-				Path.GetDirectoryName(typeof(Tester).Assembly.Location),
-				"ildasm.exe");
+			string ildasmPath = ResolveToolPath("ildasm");
 
 			var command = Cli.Wrap(ildasmPath)
 				.WithArguments($"/utf8 /out=\"{outputFile}\" \"{sourceFileName}\"")
@@ -869,6 +881,8 @@ namespace System.Runtime.CompilerServices
 
 		public static async Task<(int ExitCode, string Output, string Error)> RunWithTestRunner(string assemblyFileName, bool force32Bit)
 		{
+			if (!OperatingSystem.IsWindows())
+				Assert.Ignore("RunWithTestRunner uses a self-contained Windows test-runner build (win-x86/win-x64); not available on this platform.");
 			string testRunner = Path.Combine(testRunnerBasePath, force32Bit ? "win-x86" : "win-x64", "ICSharpCode.Decompiler.TestRunner.exe");
 			var command = Cli.Wrap(testRunner)
 				.WithArguments(assemblyFileName)
@@ -1023,6 +1037,8 @@ namespace System.Runtime.CompilerServices
 
 		public static async Task SignAssembly(string assemblyPath, string keyFilePath)
 		{
+			if (!OperatingSystem.IsWindows())
+				Assert.Ignore("SignAssembly uses sn.exe from the Windows .NET Framework SDK; not available on this platform.");
 			string snPath = SdkUtility.GetSdkPath("sn.exe");
 
 			var command = Cli.Wrap(snPath)
@@ -1044,6 +1060,8 @@ namespace System.Runtime.CompilerServices
 
 		public static async Task<string> FindMSBuild()
 		{
+			if (!OperatingSystem.IsWindows())
+				Assert.Ignore("FindMSBuild uses vswhere.exe to locate Visual Studio's MSBuild; not available on this platform.");
 			string path = vswhereToolset.GetVsWhere();
 
 			var result = await Cli.Wrap(path)

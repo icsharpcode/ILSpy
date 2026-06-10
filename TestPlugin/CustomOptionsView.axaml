@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:TestPlugin"
+             x:Class="TestPlugin.CustomOptionsView"
+             x:DataType="vm:CustomOptionsViewModel">
+	<StackPanel Spacing="6" Margin="6">
+		<CheckBox IsChecked="{Binding Options.UselessOption1, Mode=TwoWay}"
+		          Content="A completely useless option" />
+		<StackPanel Orientation="Horizontal" Spacing="6">
+			<TextBlock Text="Another useless option:" VerticalAlignment="Center" />
+			<Slider Minimum="0" Maximum="100" Width="200"
+			        Value="{Binding Options.UselessOption2, Mode=TwoWay}" />
+		</StackPanel>
+	</StackPanel>
+</UserControl>

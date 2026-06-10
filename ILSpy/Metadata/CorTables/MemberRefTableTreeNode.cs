@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -22,9 +22,14 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	internal class MemberRefTableTreeNode : MetadataTableTreeNode<MemberRefTableTreeNode.MemberRefEntry>
+	/// <summary>
+	/// View of the MemberRef table — every external method or field the module references.
+	/// Parent is a MemberRefParent coded token (TypeRef / ModuleRef / MethodDef / TypeSpec /
+	/// TypeDef) carrying the owner of the referenced member.
+	/// </summary>
+	public sealed class MemberRefTableTreeNode : MetadataTableTreeNode<MemberRefTableTreeNode.MemberRefEntry>
 	{
 		public MemberRefTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.MemberRef, metadataFile)
@@ -35,13 +40,11 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var list = new List<MemberRefEntry>();
 			foreach (var row in metadataFile.Metadata.MemberReferences)
-			{
 				list.Add(new MemberRefEntry(metadataFile, row));
-			}
 			return list;
 		}
 
-		internal struct MemberRefEntry
+		public sealed class MemberRefEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly MemberReferenceHandle handle;
@@ -49,22 +52,17 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataFile.MetadataOffset
-				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.MemberRef)
-				+ metadataFile.Metadata.GetTableRowSize(TableIndex.MemberRef) * (RID - 1);
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.MemberRef, RID);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(memberRef.Parent);
 
-			public void OnParentClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, memberRef.Parent, protocol: "metadata")));
-			}
-
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, memberRef.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, memberRef.Parent);
 
 			public string Name => metadataFile.Metadata.GetString(memberRef.Name);
 
@@ -73,16 +71,14 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(memberRef.Signature);
 
-			string signatureTooltip;
-			public string SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
+			string? signatureTooltip;
+			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			public MemberRefEntry(MetadataFile metadataFile, MemberReferenceHandle handle)
 			{
 				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.memberRef = metadataFile.Metadata.GetMemberReference(handle);
-				this.signatureTooltip = null;
-				this.parentTooltip = null;
+				memberRef = metadataFile.Metadata.GetMemberReference(handle);
 			}
 		}
 	}

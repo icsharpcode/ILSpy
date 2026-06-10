@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -24,9 +24,14 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	internal class TypeSpecTableTreeNode : MetadataTableTreeNode<TypeSpecTableTreeNode.TypeSpecEntry>
+	/// <summary>
+	/// View of the TypeSpec table — instantiated generic types and other constructed type
+	/// shapes (arrays, pointers, modreq/modopt) referenced from instructions and signatures.
+	/// Each row points at a blob signature describing the constructed type.
+	/// </summary>
+	public sealed class TypeSpecTableTreeNode : MetadataTableTreeNode<TypeSpecTableTreeNode.TypeSpecEntry>
 	{
 		public TypeSpecTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.TypeSpec, metadataFile)
@@ -37,46 +42,40 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var list = new List<TypeSpecEntry>();
 			foreach (var row in metadataFile.Metadata.GetTypeSpecifications())
-			{
 				list.Add(new TypeSpecEntry(metadataFile, row));
-			}
 			return list;
 		}
 
-		internal struct TypeSpecEntry
+		public sealed class TypeSpecEntry
 		{
-			readonly int metadataOffset;
-			readonly MetadataFile module;
-			readonly MetadataReader metadata;
+			readonly MetadataFile metadataFile;
 			readonly TypeSpecificationHandle handle;
 			readonly TypeSpecification typeSpec;
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataOffset
-				+ metadata.GetTableMetadataOffset(TableIndex.TypeSpec)
-				+ metadata.GetTableRowSize(TableIndex.TypeSpec) * (RID - 1);
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.TypeSpec, RID);
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Signature => MetadataTokens.GetHeapOffset(typeSpec.Signature);
 
-			public string SignatureTooltip {
+			public string? SignatureTooltip {
 				get {
 					ITextOutput output = new PlainTextOutput();
-					typeSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), default)(ILNameSyntax.Signature);
+					typeSpec.DecodeSignature(new DisassemblerSignatureTypeProvider(metadataFile, output), default)(ILNameSyntax.Signature);
 					return output.ToString();
 				}
 			}
 
 			public TypeSpecEntry(MetadataFile metadataFile, TypeSpecificationHandle handle)
 			{
-				this.module = metadataFile;
-				this.metadataOffset = metadataFile.MetadataOffset;
-				this.metadata = metadataFile.Metadata;
+				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.typeSpec = metadata.GetTypeSpecification(handle);
+				typeSpec = metadataFile.Metadata.GetTypeSpecification(handle);
 			}
 		}
 	}

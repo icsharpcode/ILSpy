@@ -11,6 +11,8 @@
     <Version>1.7.1.0</Version>
     <FileVersion>1.7.1.0</FileVersion>
     <LangVersion>9.0</LangVersion>
+    <!-- Legacy net472 add-in: opt out of the repo-wide warnings-as-errors (Directory.Build.props). -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
 
     <EnableDefaultItems>False</EnableDefaultItems>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -81,7 +83,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net10.0-windows\win-x64\publish\fwdependent\</ILSpyBuildPath>
+    <ILSpyBuildPath>..\ILSpy\bin\$(Configuration)\net10.0\win-x64\publish\fwdependent\</ILSpyBuildPath>
   </PropertyGroup>
 
   <Target Name="IncludeILSpyDistributionInVSIXSubFolder" AfterTargets="ResolveProjectReferences">

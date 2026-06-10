@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,66 +16,54 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.PortableExecutable;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpyX.Extensions;
 
-using TomsToolbox.Essentials;
+using ILSpy.TreeNodes;
+using ILSpy.ViewModels;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata
 {
-	class OptionalHeaderTreeNode : ILSpyTreeNode
+	/// <summary>
+	/// PE Optional Header — image base, sizes, alignments, subsystem. Field widths flex
+	/// between PE32 and PE32+ (Image Base / Stack &amp; Heap reserves go from 4 → 8 bytes,
+	/// Base Of Data drops out on PE32+).
+	/// </summary>
+	public sealed class OptionalHeaderTreeNode : ILSpyTreeNode
 	{
-		private PEFile module;
+		readonly PEFile module;
 
 		public OptionalHeaderTreeNode(PEFile module)
 		{
-			this.module = module;
+			this.module = module ?? throw new ArgumentNullException(nameof(module));
 		}
 
 		public override object Text => "Optional Header";
+		public override object Icon => Images.Images.Header;
+		public override string ToString() => "Optional Header";
 
-		public override object NavigationText => $"{Text} ({module.Name})";
-
-		public override object Icon => Images.Header;
-
-		public override bool View(ViewModels.TabPageModel tabPage)
+		public override ContentPageModel CreateTab()
 		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
+			var page = new MetadataTablePageModel {
+				Title = "Optional Header",
+				Items = BuildEntries(),
+			};
+			MetadataColumnBuilder.Populate<Entry>(page);
+			return page;
+		}
 
-			var dataGrid = Helpers.PrepareDataGrid(tabPage, this);
-
-			dataGrid.RowDetailsTemplateSelector = new CharacteristicsDataTemplateSelector("DLL Characteristics");
-			dataGrid.RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Collapsed;
-
-			dataGrid.Columns.Clear();
-			dataGrid.AutoGenerateColumns = false;
-			dataGrid.Columns.AddRange(
-				new[] {
-					new DataGridTextColumn { IsReadOnly = true, Header = "Member", Binding = new Binding("Member") },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Offset", Binding = new Binding("Offset") { StringFormat = "X8" } },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Size", Binding = new Binding("Size") },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Value", Binding = new Binding(".") { Converter = ByteWidthConverter.Instance } },
-					new DataGridTextColumn { IsReadOnly = true, Header = "Meaning", Binding = new Binding("Meaning") }
-				}
-			);
-
+		IReadOnlyList<Entry> BuildEntries()
+		{
 			var headers = module.Reader.PEHeaders;
 			var reader = module.Reader.GetEntireImage().GetReader(headers.PEHeaderStartOffset, 128);
-			var header = headers.PEHeader;
-			var isPE32Plus = (header.Magic == PEMagic.PE32Plus);
+			var header = headers.PEHeader!;
+			bool isPE32Plus = header.Magic == PEMagic.PE32Plus;
 
 			var entries = new List<Entry>();
-			ushort dllCharacteristics;
-			Entry characteristics;
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadUInt16(), 2, "Magic", header.Magic.ToString()));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadByte(), 1, "Major Linker Version", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadByte(), 1, "Minor Linker Version", ""));
@@ -99,41 +87,32 @@ namespace ICSharpCode.ILSpy.Metadata
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadInt32(), 4, "Header Size", "Combined size of MS-DOS Header, PE Header, PE Optional Header and padding; shall be a multiple of the file alignment."));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadInt32(), 4, "File Checksum", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadUInt16(), 2, "Subsystem", header.Subsystem.ToString()));
-			entries.Add(characteristics = new Entry(headers.PEHeaderStartOffset + reader.Offset, dllCharacteristics = reader.ReadUInt16(), 2, "DLL Characteristics", header.DllCharacteristics.ToString(), new[] {
-					new BitEntry((dllCharacteristics & 0x0001) != 0, "<0001> Process Init (Reserved)"),
-					new BitEntry((dllCharacteristics & 0x0002) != 0, "<0002> Process Term (Reserved)"),
-					new BitEntry((dllCharacteristics & 0x0004) != 0, "<0004> Thread Init (Reserved)"),
-					new BitEntry((dllCharacteristics & 0x0008) != 0, "<0008> Thread Term (Reserved)"),
-					new BitEntry((dllCharacteristics & 0x0010) != 0, "<0010> Unused"),
-					new BitEntry((dllCharacteristics & 0x0020) != 0, "<0020> Image can handle a high entropy 64-bit virtual address space (ASLR)"),
-					new BitEntry((dllCharacteristics & 0x0040) != 0, "<0040> DLL can be relocated at load time"),
-					new BitEntry((dllCharacteristics & 0x0080) != 0, "<0080> Code integrity checks are enforced"),
-					new BitEntry((dllCharacteristics & 0x0100) != 0, "<0100> Image is NX compatible"),
-					new BitEntry((dllCharacteristics & 0x0200) != 0, "<0200> Isolation aware, but do not isolate the image"),
-					new BitEntry((dllCharacteristics & 0x0400) != 0, "<0400> Does not use structured exception handling (SEH)"),
-					new BitEntry((dllCharacteristics & 0x0800) != 0, "<0800> Do not bind the image"),
-					new BitEntry((dllCharacteristics & 0x1000) != 0, "<1000> Image must execute in an AppContainer"),
-					new BitEntry((dllCharacteristics & 0x2000) != 0, "<2000> Driver is a WDM Driver"),
-					new BitEntry((dllCharacteristics & 0x4000) != 0, "<4000> Image supports Control Flow Guard"),
-					new BitEntry((dllCharacteristics & 0x8000) != 0, "<8000> Image is Terminal Server aware"),
-				}));
+			ushort dllCharacteristics = reader.ReadUInt16();
+			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset - 2, dllCharacteristics, 2, "DLL Characteristics", header.DllCharacteristics.ToString(), new BitEntry[] {
+				new((dllCharacteristics & 0x0001) != 0, "<0001> Process Init (Reserved)"),
+				new((dllCharacteristics & 0x0002) != 0, "<0002> Process Term (Reserved)"),
+				new((dllCharacteristics & 0x0004) != 0, "<0004> Thread Init (Reserved)"),
+				new((dllCharacteristics & 0x0008) != 0, "<0008> Thread Term (Reserved)"),
+				new((dllCharacteristics & 0x0010) != 0, "<0010> Unused"),
+				new((dllCharacteristics & 0x0020) != 0, "<0020> Image can handle a high entropy 64-bit virtual address space (ASLR)"),
+				new((dllCharacteristics & 0x0040) != 0, "<0040> DLL can be relocated at load time"),
+				new((dllCharacteristics & 0x0080) != 0, "<0080> Code integrity checks are enforced"),
+				new((dllCharacteristics & 0x0100) != 0, "<0100> Image is NX compatible"),
+				new((dllCharacteristics & 0x0200) != 0, "<0200> Isolation aware, but do not isolate the image"),
+				new((dllCharacteristics & 0x0400) != 0, "<0400> Does not use structured exception handling (SEH)"),
+				new((dllCharacteristics & 0x0800) != 0, "<0800> Do not bind the image"),
+				new((dllCharacteristics & 0x1000) != 0, "<1000> Image must execute in an AppContainer"),
+				new((dllCharacteristics & 0x2000) != 0, "<2000> Driver is a WDM Driver"),
+				new((dllCharacteristics & 0x4000) != 0, "<4000> Image supports Control Flow Guard"),
+				new((dllCharacteristics & 0x8000) != 0, "<8000> Image is Terminal Server aware"),
+			}));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, isPE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), isPE32Plus ? 8 : 4, "Stack Reserve Size", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, isPE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), isPE32Plus ? 8 : 4, "Stack Commit Size", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, isPE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), isPE32Plus ? 8 : 4, "Heap Reserve Size", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, isPE32Plus ? reader.ReadUInt64() : reader.ReadUInt32(), isPE32Plus ? 8 : 4, "Heap Commit Size", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadUInt32(), 4, "Loader Flags", ""));
 			entries.Add(new Entry(headers.PEHeaderStartOffset + reader.Offset, reader.ReadInt32(), 4, "Number of Data Directories", ""));
-
-			dataGrid.ItemsSource = entries;
-			dataGrid.SetDetailsVisibilityForItem(characteristics, Visibility.Visible);
-
-			tabPage.Content = dataGrid;
-			return true;
-		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.WriteCommentLine(output, "Optional Header");
+			return entries;
 		}
 	}
 }

@@ -2,42 +2,31 @@
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System.Composition;
-using System.Linq;
 
-using ICSharpCode.ILSpy;
-using ICSharpCode.ILSpy.TreeNodes;
+using ILSpy;
 
 namespace TestPlugin
 {
-	[ExportContextMenuEntryAttribute(Header = "_Save Assembly")]
+	// Demonstrates contributing an entry to the tree's context menu. (The real "Save Assembly"
+	// command ships with the app; the concrete assembly-node types are internal to ILSpy, so this
+	// sample only shows the extension point and operates on the selected nodes generically.)
+	[ExportContextMenuEntry(Header = "_Test Plugin Command")]
 	[Shared]
-	public class SaveAssembly : IContextMenuEntry
+	public class TestPluginContextCommand : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
-			return context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
+			return context.SelectedTreeNodes is { Length: > 0 };
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			return context.SelectedTreeNodes != null && context.SelectedTreeNodes.Length == 1;
+			return context.SelectedTreeNodes is { Length: 1 };
 		}
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes == null)
-				return;
-			AssemblyTreeNode node = (AssemblyTreeNode)context.SelectedTreeNodes[0];
-			var asm = node.LoadedAssembly.GetMetadataFileOrNull();
-			if (asm != null)
-			{
-				/*SaveFileDialog dlg = new SaveFileDialog();
-				dlg.FileName = node.LoadedAssembly.FileName;
-				dlg.Filter = "Assembly|*.dll;*.exe";
-				if (dlg.ShowDialog(MainWindow.Instance) == true) {
-					asm.MainModule.Write(dlg.FileName);
-				}*/
-			}
+			// A real plugin would act on context.SelectedTreeNodes here.
 		}
 	}
 }

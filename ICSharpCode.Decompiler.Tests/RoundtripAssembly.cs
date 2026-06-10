@@ -36,7 +36,7 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Roundtrip
 {
-	[TestFixture, Parallelizable(ParallelScope.All)]
+	[TestFixture, Parallelizable(ParallelScope.All), Platform("Win")]
 	public class RoundtripAssembly
 	{
 		public static readonly string TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));

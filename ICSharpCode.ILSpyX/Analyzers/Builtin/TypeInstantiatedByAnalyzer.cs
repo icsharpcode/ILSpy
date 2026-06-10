@@ -166,6 +166,6 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			return false;
 		}
 
-		public bool Show(ISymbol symbol) => symbol is ITypeDefinition entity && !entity.IsAbstract && !entity.IsStatic;
+		public bool Show(ISymbol? symbol) => symbol is ITypeDefinition entity && !entity.IsAbstract && !entity.IsStatic;
 	}
 }

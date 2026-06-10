@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,94 +17,59 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Reflection.Metadata;
-using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+using ILSpy;
+using ILSpy.Languages;
+
+namespace ILSpy.TreeNodes
 {
-	using ICSharpCode.Decompiler.Output;
-	using ICSharpCode.Decompiler.TypeSystem;
-	using ICSharpCode.ILSpyX;
-
-	/// <summary>
-	/// Represents an event in the TreeView.
-	/// </summary>
-	public sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
+	sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		public EventTreeNode(IEvent @event)
-		{
-			this.EventDefinition = @event ?? throw new ArgumentNullException(nameof(@event));
-			if (@event.CanAdd)
-				this.Children.Add(new MethodTreeNode(@event.AddAccessor));
-			if (@event.CanRemove)
-				this.Children.Add(new MethodTreeNode(@event.RemoveAccessor));
-			if (@event.CanInvoke)
-				this.Children.Add(new MethodTreeNode(@event.InvokeAccessor));
-			//foreach (var m in ev.OtherMethods)
-			//	this.Children.Add(new MethodTreeNode(m));
-		}
-
 		public IEvent EventDefinition { get; }
 
-		public override object Text => GetText(GetEventDefinition(), this.Language) + GetSuffixString(EventDefinition);
+		public IEntity? Member => EventDefinition;
 
-		public override object NavigationText => GetText(GetEventDefinition(), Language, includeDeclaringTypeName: true);
-
-		private IEvent GetEventDefinition()
+		public EventTreeNode(IEvent ev)
 		{
-			return ((MetadataModule)EventDefinition.ParentModule?.MetadataFile
-				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
-				?.MainModule)?.GetDefinition((EventDefinitionHandle)EventDefinition.MetadataToken) ?? EventDefinition;
+			EventDefinition = ev ?? throw new ArgumentNullException(nameof(ev));
+			if (ev.CanAdd)
+				Children.Add(new MethodTreeNode(ev.AddAccessor));
+			if (ev.CanRemove)
+				Children.Add(new MethodTreeNode(ev.RemoveAccessor));
+			if (ev.CanInvoke)
+				Children.Add(new MethodTreeNode(ev.InvokeAccessor));
 		}
 
-		public static object GetText(IEvent ev, Language language, bool includeDeclaringTypeName = false)
-		{
-			return language.EntityToString(ev, includeDeclaringTypeName ? ConversionFlags.ShowDeclaringType : ConversionFlags.None);
-		}
+		public override object Text => Language.EntityToString(EventDefinition, ConversionFlags.None) + GetSuffixString(EventDefinition);
 
-		public override object Icon => GetIcon(GetEventDefinition());
+		public override object NavigationText => Language.EntityToString(EventDefinition, ConversionFlags.ShowDeclaringType);
 
-		public static ImageSource GetIcon(IEvent @event)
-		{
-			return Images.GetIcon(MemberIcon.Event, Images.GetOverlayIcon(@event.Accessibility), @event.IsStatic, false);
-		}
+		public override object Icon => Images.Images.GetIcon(Images.Images.Event,
+			Images.Images.GetOverlay(EventDefinition.Accessibility), EventDefinition.IsStatic);
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+			=> language.DecompileEvent(EventDefinition, output, options);
+
+		public override bool IsPublicAPI => EventDefinition.Accessibility switch {
+			Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
+			_ => false,
+		};
 
 		public override FilterResult Filter(LanguageSettings settings)
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(EventDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.Language.ShowMember(EventDefinition)))
+			if (settings.SearchTermMatches(EventDefinition.Name) && (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(EventDefinition)))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
 		}
 
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			language.DecompileEvent(EventDefinition, output, options);
-		}
-
-		public override bool IsPublicAPI {
-			get {
-				switch (GetEventDefinition().Accessibility)
-				{
-					case Accessibility.Public:
-					case Accessibility.ProtectedOrInternal:
-					case Accessibility.Protected:
-						return true;
-					default:
-						return false;
-				}
-			}
-		}
-
-		IEntity IMemberTreeNode.Member => EventDefinition;
-
-		public override string ToString()
-		{
-			return "Event " + EventDefinition.Name;
-		}
+		public override string ToString() => "Event " + EventDefinition.Name;
 	}
 }

@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,72 +16,56 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Text;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy
+namespace ILSpy.Views
 {
-	public partial class OpenFromGacDialog
+	/// <summary>
+	/// One row in the GAC browser. Wraps an <see cref="AssemblyNameReference"/> + the
+	/// resolved on-disk path, exposing each WPF column's bound property (ShortName,
+	/// Version, Culture, PublicKeyToken, FileName) so the DataGrid can sort by any of
+	/// them independently. <see cref="FullName"/> + <see cref="FormattedVersion"/> back
+	/// the filter, mirroring the WPF dialog.
+	/// </summary>
+	public sealed class GacEntry
 	{
-		sealed class GacEntry
+		readonly AssemblyNameReference reference;
+		string? formattedVersion;
+		string? publicKeyToken;
+
+		public GacEntry(AssemblyNameReference reference, string fileName)
 		{
-			readonly AssemblyNameReference r;
-			readonly string fileName;
-			string formattedVersion;
-
-			public GacEntry(AssemblyNameReference r, string fileName)
-			{
-				this.r = r;
-				this.fileName = fileName;
-			}
-
-			public string FullName {
-				get { return r.FullName; }
-			}
-
-			public string ShortName {
-				get { return r.Name; }
-			}
-
-			public string FileName {
-				get { return fileName; }
-			}
-
-			public Version Version {
-				get { return r.Version; }
-			}
-
-			public string FormattedVersion {
-				get {
-					if (formattedVersion == null)
-						formattedVersion = Version.ToString();
-					return formattedVersion;
-				}
-			}
-
-			public string Culture {
-				get {
-					if (string.IsNullOrEmpty(r.Culture))
-						return "neutral";
-					return r.Culture;
-				}
-			}
-
-			public string PublicKeyToken {
-				get {
-					StringBuilder s = new StringBuilder();
-					foreach (byte b in r.PublicKeyToken)
-						s.Append(b.ToString("x2"));
-					return s.ToString();
-				}
-			}
-
-			public override string ToString()
-			{
-				return r.FullName;
-			}
+			this.reference = reference;
+			FileName = fileName;
 		}
+
+		public string FileName { get; }
+
+		public string FullName => reference.FullName;
+
+		public string ShortName => reference.Name;
+
+		public System.Version? Version => reference.Version;
+
+		public string FormattedVersion => formattedVersion ??= (Version?.ToString() ?? string.Empty);
+
+		public string Culture
+			=> string.IsNullOrEmpty(reference.Culture) ? "neutral" : reference.Culture!;
+
+		public string PublicKeyToken => publicKeyToken ??= FormatPublicKeyToken(reference.PublicKeyToken);
+
+		static string FormatPublicKeyToken(byte[]? token)
+		{
+			if (token == null || token.Length == 0)
+				return "null";
+			var sb = new StringBuilder(token.Length * 2);
+			foreach (var b in token)
+				sb.AppendFormat("{0:x2}", b);
+			return sb.ToString();
+		}
+
+		public override string ToString() => FullName;
 	}
 }

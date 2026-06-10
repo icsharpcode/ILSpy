@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/ILSpy/bin/Debug/net10.0-windows/ILSpy.exe",
+            "program": "${workspaceFolder}/ILSpy/bin/Debug/net10.0/ILSpy.exe",
             "args": ["--newinstance"],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",

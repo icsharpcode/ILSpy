@@ -43,6 +43,13 @@ namespace ICSharpCode.ILSpyX.Search
 			if (apiVisibility == ApiVisibility.All)
 				return true;
 
+			// The query parser sets IncludePrivateApi when the user types `<` or `>` —
+			// characteristic of compiler-generated names (state-machines, display classes,
+			// anonymous closures). Bypass the public-only filter so those names actually
+			// surface as results when the user is hunting for them specifically.
+			if (searchRequest.IncludePrivateApi)
+				return true;
+
 			while (entity != null)
 			{
 				if (apiVisibility == ApiVisibility.PublicOnly)

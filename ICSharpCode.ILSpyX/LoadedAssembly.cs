@@ -60,7 +60,25 @@ namespace ICSharpCode.ILSpyX
 		/// </summary>
 		internal static readonly ConditionalWeakTable<MetadataFile, LoadedAssembly> loadedAssemblies = new ConditionalWeakTable<MetadataFile, LoadedAssembly>();
 
-		readonly Task<LoadResult> loadingTask;
+		readonly Lazy<Task<LoadResult>> lazyLoadingTask;
+		// Routes through Lazy so the actual Task.Run(LoadAsync) only kicks off on first
+		// demand (any caller that awaits or reads .Result). Status checks below use
+		// IsValueCreated so they don't accidentally trigger the load just by polling.
+		Task<LoadResult> loadingTask => lazyLoadingTask.Value;
+
+		/// <summary>
+		/// Fires once when the lazy load task transitions to a completed state (success
+		/// or failure). Subscribers use it to refresh derived state (tree-node icons,
+		/// cached metadata pointers) without themselves calling
+		/// <see cref="GetLoadResultAsync"/>, which would trigger the load.
+		///
+		/// If the load has already finished by the time you subscribe, the event will
+		/// not fire retroactively — check <see cref="IsLoaded"/> after subscribing and
+		/// invoke your handler manually if it returns true.
+		/// </summary>
+		public event Action? Loaded;
+
+		void RaiseLoaded() => Loaded?.Invoke();
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
@@ -86,7 +104,23 @@ namespace ICSharpCode.ILSpyX
 			this.applyWinRTProjections = applyWinRTProjections;
 			this.useDebugSymbols = useDebugSymbols;
 
-			this.loadingTask = Task.Run(() => LoadAsync(stream)); // requires that this.fileName is set
+			// Lazy: the first GetLoadResultAsync / await / .Result kicks off the work. Lets
+			// callers (e.g. AssemblyListTreeNode) construct LoadedAssembly entries en masse
+			// without flooding the thread pool with metadata-loading tasks; the active
+			// assembly's path-restore awaits first and gets a clean run.
+			//
+			// Continuation hooks the Loaded event so subscribers can refresh their display
+			// (icon / tooltip / lazy children) without themselves triggering the load — they
+			// observe completion rather than start it.
+			var localStream = stream;
+			this.lazyLoadingTask = new Lazy<Task<LoadResult>>(
+				() => {
+					var task = Task.Run(() => LoadAsync(localStream));
+					task.ContinueWith(static (_, state) => ((LoadedAssembly)state!).RaiseLoaded(),
+						this, TaskScheduler.Default);
+					return task;
+				},
+				LazyThreadSafetyMode.ExecutionAndPublication); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 
@@ -249,13 +283,25 @@ namespace ICSharpCode.ILSpyX
 
 		public string ShortName => shortName;
 
+		// Cached once a successful Text computation completes. Reads after Dispose return
+		// this value (or ShortName fallback) instead of re-walking the metadata, whose
+		// MemoryMappedFile may have been unmapped -- a dereference AVs and the CLR fails
+		// fast on the resulting CorruptingStateException.
+		string? cachedText;
+		volatile bool isDisposed;
+
 		public string Text {
 			get {
+				if (cachedText is not null)
+					return cachedText;
+				if (isDisposed)
+					return ShortName;
 				if (IsLoaded && !HasLoadError)
 				{
 					var result = GetLoadResultAsync().GetAwaiter().GetResult();
 					if (result.MetadataFile != null)
 					{
+						string computed;
 						switch (result.MetadataFile.Kind)
 						{
 							case MetadataFile.MetadataFileKind.PortableExecutable:
@@ -272,16 +318,22 @@ namespace ICSharpCode.ILSpyX
 								{
 									versionOrInfo = ".netmodule";
 								}
-								if (versionOrInfo == null)
-									return ShortName;
-								return string.Format("{0} ({1})", ShortName, versionOrInfo);
+								computed = versionOrInfo == null
+									? ShortName
+									: string.Format("{0} ({1})", ShortName, versionOrInfo);
+								break;
 							case MetadataFile.MetadataFileKind.ProgramDebugDatabase:
-								return ShortName + " (Debug Metadata)";
+								computed = ShortName + " (Debug Metadata)";
+								break;
 							case MetadataFile.MetadataFileKind.Metadata:
-								return ShortName + " (Metadata)";
+								computed = ShortName + " (Metadata)";
+								break;
 							default:
-								return ShortName;
+								computed = ShortName;
+								break;
 						}
+						cachedText = computed;
+						return computed;
 					}
 				}
 				return ShortName;
@@ -290,15 +342,21 @@ namespace ICSharpCode.ILSpyX
 
 		/// <summary>
 		/// Gets whether loading finished for this file (either successfully or unsuccessfully).
+		/// Reading this property must NOT trigger the lazy load — callers poll it as a status
+		/// check (e.g. tree-icon overlays) and would deadlock if every poll started another
+		/// metadata load.
 		/// </summary>
-		public bool IsLoaded => loadingTask.IsCompleted;
+		public bool IsLoaded => lazyLoadingTask.IsValueCreated && lazyLoadingTask.Value.IsCompleted;
 
 		/// <summary>
 		/// Gets whether this file was loaded successfully as an assembly (not as a bundle).
 		/// </summary>
 		public bool IsLoadedAsValidAssembly {
 			get {
-				return loadingTask.Status == TaskStatus.RanToCompletion && loadingTask.Result.MetadataFile is { IsMetadataOnly: false };
+				if (!lazyLoadingTask.IsValueCreated)
+					return false;
+				var task = lazyLoadingTask.Value;
+				return task.Status == TaskStatus.RanToCompletion && task.Result.MetadataFile is { IsMetadataOnly: false };
 			}
 		}
 
@@ -306,7 +364,7 @@ namespace ICSharpCode.ILSpyX
 		/// Gets whether loading failed (file does not exist, unknown file format).
 		/// Returns false for valid assemblies and valid bundles.
 		/// </summary>
-		public bool HasLoadError => loadingTask.IsFaulted;
+		public bool HasLoadError => lazyLoadingTask.IsValueCreated && lazyLoadingTask.Value.IsFaulted;
 
 		public bool IsAutoLoaded { get; set; }
 
@@ -655,9 +713,18 @@ namespace ICSharpCode.ILSpyX
 
 		public void Dispose()
 		{
-			if (loadingTask.Status == TaskStatus.RanToCompletion)
+			// Order matters: set the flag BEFORE unmapping the metadata, so any concurrent
+			// Text reader that hasn't yet cached a value bails to ShortName instead of
+			// dereferencing the about-to-be-freed MemoryMappedFile pages. Once set, the flag
+			// also short-circuits future Text getter walks even if cachedText is still null
+			// (load never completed).
+			isDisposed = true;
+			// Only inspect the load task if it's been started. Disposing a never-loaded
+			// LoadedAssembly must not synchronously kick off the load just to dispose its
+			// (still-non-existent) MetadataFile.
+			if (lazyLoadingTask.IsValueCreated && lazyLoadingTask.Value.Status == TaskStatus.RanToCompletion)
 			{
-				loadingTask.Result.MetadataFile?.Dispose();
+				lazyLoadingTask.Value.Result.MetadataFile?.Dispose();
 			}
 			(debugInfoProvider as IDisposable)?.Dispose();
 		}

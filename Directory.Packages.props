@@ -1,20 +1,40 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <!-- Enabled so the security overrides below pin the vulnerable transitive packages (dragged in by
+         the old Microsoft.DiaSymReader chain) to patched versions without a per-project PackageReference.
+         As a side effect it also aligns other transitive packages that have a PackageVersion entry to
+         their central versions. -->
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
     <RoslynVersion>5.7.0-1.26230.115</RoslynVersion>
     <NetPackageVersion>10.0.8</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
+    <AvaloniaVersion>12.0.4</AvaloniaVersion>
+    <DockVersion>12.0.0.2</DockVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
+    <!-- Avalonia (ILSpy port) -->
+    <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Themes.Simple" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Avalonia.Headless.NUnit" Version="$(AvaloniaVersion)" />
+    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.11" />
+    <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+    <PackageVersion Include="AvaloniaEdit.TextMate" Version="12.0.0" />
+    <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="12.0.0.1" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.2" />
+    <PackageVersion Include="Dock.Avalonia" Version="$(DockVersion)" />
+    <PackageVersion Include="Dock.Avalonia.Themes.Simple" Version="$(DockVersion)" />
+    <PackageVersion Include="Dock.Controls.Recycling" Version="$(DockVersion)" />
+    <PackageVersion Include="Dock.Model.Mvvm" Version="$(DockVersion)" />
+    <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="$(DockVersion)" />
+    <PackageVersion Include="ProDataGrid" Version="12.0.0" />
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
-    <PackageVersion Include="CliWrap" Version="3.10.1" />
-    <PackageVersion Include="DataGridExtensions" Version="2.9.1" />
+    <PackageVersion Include="CliWrap" Version="3.10.2" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
-    <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
     <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="10.0.0-rtm.25531.102" />
     <PackageVersion Include="Iced" Version="1.21.0" />
     <PackageVersion Include="K4os.Compression.LZ4" Version="1.3.8" />
@@ -25,40 +45,40 @@
     <PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
     <PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
     <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
+    <!-- Security overrides: the Microsoft.DiaSymReader / .PortablePdb chain pulls NETStandard.Library
+         1.6.1, which drags in vulnerable 4.3.0 builds of these. They are framework-provided at runtime
+         on net10.0; transitive pinning (above) applies these patched versions so NuGet audit
+         (NU1902/NU1903) passes. -->
+    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
+    <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
+    <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
-    <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
-    <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
-    <PackageVersion Include="NUnit" Version="4.6.0" />
+    <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Composition.Hosting" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Composition.TypedParts" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Collections.Immutable" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Memory" Version="4.6.3" />
     <PackageVersion Include="System.Reflection.Metadata" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Resources.Extensions" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="System.Formats.Nrbf" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="TomsToolbox.Composition.MicrosoftExtensions" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="coverlet.MTP" Version="10.0.0" />
-    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
-    <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
-    <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
+    <PackageVersion Include="coverlet.MTP" Version="10.0.1" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="$(TomsToolboxVersion)" />

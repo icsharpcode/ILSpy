@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <appSettings>
+    <add key="environment" value="staging" />
+    <add key="timeoutSeconds" value="30" />
+  </appSettings>
+  <connectionStrings>
+    <add name="default"
+         connectionString="Data Source=.;Initial Catalog=Demo;Integrated Security=True"
+         providerName="System.Data.SqlClient" />
+  </connectionStrings>
+  <runtime>
+    <gcServer enabled="true" />
+  </runtime>
+</configuration>

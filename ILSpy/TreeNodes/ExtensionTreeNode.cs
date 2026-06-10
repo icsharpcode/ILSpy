@@ -1,14 +1,14 @@
-// Copyright (c) 2026 Siegfried Pammer
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,23 +17,35 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.TypeSystem;
+
+using ILSpy.AppEnv;
+using ILSpy.Images;
+using ILSpy.Languages;
 
 using SRM = System.Reflection.Metadata;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+namespace ILSpy.TreeNodes
 {
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Linq;
-
-	using ICSharpCode.Decompiler.Output;
-	using ICSharpCode.Decompiler.TypeSystem;
-
-	public sealed class ExtensionTreeNode : ILSpyTreeNode
+	/// <summary>
+	/// Tree-node container for a single C# 14 explicit-extension declaration block
+	/// — the new <c>extension&lt;T&gt;(ReceiverType source) { ... }</c> syntax. Each
+	/// block surfaces under its containing static class as a sibling of the regular
+	/// methods/properties; the block's own members (methods + properties) appear as
+	/// children of this node when expanded.
+	/// </summary>
+	internal sealed class ExtensionTreeNode : ILSpyTreeNode
 	{
-		public ExtensionTreeNode(ITypeDefinition typeDefinition, (IMethod Marker, IReadOnlyList<ITypeParameter> TypeParameters) extensionGroup, AssemblyTreeNode parentAssemblyNode)
+		public ExtensionTreeNode(
+			ITypeDefinition typeDefinition,
+			(IMethod Marker, IReadOnlyList<ITypeParameter> TypeParameters) extensionGroup,
+			AssemblyTreeNode parentAssemblyNode)
 		{
 			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
 			this.ContainerTypeDefinition = typeDefinition ?? throw new ArgumentNullException(nameof(typeDefinition));
@@ -43,37 +55,34 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public ITypeDefinition ContainerTypeDefinition { get; }
-
 		public IMethod MarkerMethod { get; }
-
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
-
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Icon => Images.GetIcon(TypeIcon.Class, AccessOverlayIcon.Public, false, true);
+		public override object Icon => Images.Images.GetIcon(Images.Images.Class, AccessOverlayIcon.Public, isStatic: false, isExtension: true);
 
-		public override object Text => this.Language.TypeToString(GetTypeDefinition(), ConversionFlags.SupportExtensionDeclarations);
+		public override object Text
+			=> Language.TypeToString(GetTypeDefinition(), ConversionFlags.SupportExtensionDeclarations);
 
-		public override object NavigationText => this.Language.TypeToString(GetTypeDefinition(), ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations);
+		public override object NavigationText
+			=> Language.TypeToString(GetTypeDefinition(),
+				ConversionFlags.UseFullyQualifiedTypeNames
+				| ConversionFlags.UseFullyQualifiedEntityNames
+				| ConversionFlags.SupportExtensionDeclarations);
 
-		private ITypeDefinition GetTypeDefinition()
-		{
-			return ((MetadataModule)ParentAssemblyNode.LoadedAssembly
-				.GetMetadataFileOrNull()
-				?.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)
-				?.MainModule)?.GetDefinition((SRM.TypeDefinitionHandle)MarkerMethod.DeclaringTypeDefinition.MetadataToken)
-				?? MarkerMethod.DeclaringTypeDefinition;
-		}
+		// Avalonia uses the constructor-time marker reference directly. WPF re-resolves
+		// through GetTypeSystemWithCurrentOptionsOrNull so language-version flips refresh
+		// the display string immediately; the Avalonia port doesn't yet expose that helper
+		// (see `extension-methods-tree` follow-ups in the tracker).
+		ITypeDefinition GetTypeDefinition() => MarkerMethod.DeclaringTypeDefinition!;
 
 		protected override void LoadChildren()
 		{
-			var extensionInfo = ContainerTypeDefinition.ExtensionInfo;
+			var extensionInfo = ContainerTypeDefinition.ExtensionInfo!;
 			var members = extensionInfo.GetMembersOfGroup(MarkerMethod).ToList();
 
 			foreach (var property in members.OfType<IProperty>().OrderBy(p => p.Name, NaturalStringComparer.Instance))
-			{
 				this.Children.Add(new PropertyTreeNode(property));
-			}
 			foreach (var method in members.OfType<IMethod>().OrderBy(m => m.Name, NaturalStringComparer.Instance))
 			{
 				if (method.MetadataToken.IsNil)
@@ -84,18 +93,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override FilterResult Filter(LanguageSettings settings)
 		{
-			if (LanguageService.Language is not CSharpLanguage)
+			if (Language is not CSharpLanguage)
 				return FilterResult.Hidden;
 
-			var decompilerSettings = SettingsService.DecompilerSettings.Clone();
-			if (!Enum.TryParse(AssemblyTreeModel.CurrentLanguageVersion?.Version, out Decompiler.CSharp.LanguageVersion languageVersion))
-				languageVersion = Decompiler.CSharp.LanguageVersion.Latest;
-			decompilerSettings.SetLanguageVersion(languageVersion);
-
-			if (!decompilerSettings.ExtensionMembers)
+			var decompilerSettings = TryGetDecompilerSettings();
+			if (decompilerSettings != null && !decompilerSettings.ExtensionMembers)
 				return FilterResult.Hidden;
 
 			return base.Filter(settings);
+		}
+
+		static ICSharpCode.Decompiler.DecompilerSettings? TryGetDecompilerSettings()
+		{
+			try
+			{
+				return AppComposition.Current.GetExport<global::ILSpy.SettingsService>().DecompilerSettings.Clone();
+			}
+			catch
+			{
+				return null;
+			}
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

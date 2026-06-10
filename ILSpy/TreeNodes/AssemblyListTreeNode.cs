@@ -1,4 +1,4 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -20,110 +20,50 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Windows;
 
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
-using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.TreeView;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+namespace ILSpy.TreeNodes
 {
-	/// <summary>
-	/// Represents a list of assemblies.
-	/// This is used as (invisible) root node of the tree view.
-	/// </summary>
 	sealed class AssemblyListTreeNode : ILSpyTreeNode
 	{
 		readonly AssemblyList assemblyList;
 
-		public AssemblyList AssemblyList {
-			get { return assemblyList; }
-		}
+		public AssemblyList AssemblyList => assemblyList;
 
 		public AssemblyListTreeNode(AssemblyList assemblyList)
 		{
 			ArgumentNullException.ThrowIfNull(assemblyList);
-
 			this.assemblyList = assemblyList;
 
-			BindToObservableCollection(assemblyList);
-		}
+			Children.AddRange(assemblyList.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
 
-		public override object Text {
-			get { return assemblyList.ListName; }
-		}
-
-		void BindToObservableCollection(AssemblyList collection)
-		{
-			this.Children.Clear();
-			this.Children.AddRange(collection.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
-			collection.CollectionChanged += delegate (object sender, NotifyCollectionChangedEventArgs e) {
+			assemblyList.CollectionChanged += (_, e) => {
 				switch (e.Action)
 				{
 					case NotifyCollectionChangedAction.Add:
-						this.Children.InsertRange(e.NewStartingIndex, e.NewItems.Cast<LoadedAssembly>().Select(a => new AssemblyTreeNode(a)));
+						Children.InsertRange(e.NewStartingIndex, e.NewItems!.Cast<LoadedAssembly>().Select(a => new AssemblyTreeNode(a)));
 						break;
 					case NotifyCollectionChangedAction.Remove:
-						this.Children.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
+						Children.RemoveRange(e.OldStartingIndex, e.OldItems!.Count);
 						break;
-					case NotifyCollectionChangedAction.Replace:
-						this.Children.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
-						this.Children.InsertRange(e.NewStartingIndex, e.NewItems.Cast<LoadedAssembly>().Select(a => new AssemblyTreeNode(a)));
-						break;
-					case NotifyCollectionChangedAction.Move:
-						throw new NotImplementedException();
 					case NotifyCollectionChangedAction.Reset:
-						this.Children.Clear();
-						this.Children.AddRange(collection.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
+						Children.Clear();
+						Children.AddRange(assemblyList.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
 						break;
-					default:
-						throw new NotSupportedException("Invalid value for NotifyCollectionChangedAction");
 				}
 			};
 		}
 
-		public override bool CanDrop(IPlatformDragEventArgs e, int index)
-		{
-			e.Effects = XPlatDragDropEffects.Move | XPlatDragDropEffects.Copy | XPlatDragDropEffects.Link;
-			if (e.Data.GetDataPresent(AssemblyTreeNode.DataFormat))
-				return true;
-			if (e.Data.GetDataPresent(DataFormats.FileDrop))
-				return true;
-			e.Effects = XPlatDragDropEffects.None;
-			return false;
-		}
+		public override object Text => assemblyList.ListName;
 
-		public override void Drop(IPlatformDragEventArgs e, int index)
-		{
-			string[] files = e.Data.GetData(AssemblyTreeNode.DataFormat) as string[];
-			if (files == null)
-				files = e.Data.GetData(DataFormats.FileDrop) as string[];
-			if (files != null)
-			{
-				var assemblies = files
-					.Where(file => file != null)
-					.Select(file => assemblyList.OpenAssembly(file))
-					.Where(asm => asm != null)
-					.Distinct()
-					.ToArray();
-				assemblyList.Move(assemblies, index);
-				var nodes = assemblies.SelectArray(AssemblyTreeModel.FindTreeNode);
-				AssemblyTreeModel.SelectNodes(nodes);
-			}
-		}
-
-		public Action<SharpTreeNode> Select = delegate { };
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		// Decompiling the list root dumps every assembly in the list, each under a comment rule.
+		public override void Decompile(Languages.Language language, ICSharpCode.Decompiler.ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, "List: " + assemblyList.ListName);
 			output.WriteLine();
-			foreach (AssemblyTreeNode asm in this.Children)
+			foreach (var asm in Children.OfType<AssemblyTreeNode>())
 			{
 				language.WriteCommentLine(output, new string('-', 60));
 				output.WriteLine();
@@ -131,215 +71,49 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		#region Find*Node
-		public ILSpyTreeNode FindResourceNode(Resource resource)
+		public AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
+			=> Children.OfType<AssemblyTreeNode>().FirstOrDefault(n => n.LoadedAssembly == asm);
+
+		public AssemblyTreeNode? FindAssemblyNode(MetadataFile? module)
+			=> module == null ? null : FindAssemblyNode(module.GetLoadedAssembly());
+
+		// Drop target for top-level assemblies (handled generically by SharpTreeView). The payload is
+		// always a set of file paths -- from a reorder drag (AssemblyTreeNode.Copy) or an external
+		// file drop -- so both unify: open each (OpenAssembly dedupes already-loaded ones) then Move
+		// to the drop index. View-level selection of the result is delegated back via the seam below.
+		internal Action<IReadOnlyList<LoadedAssembly>>? SelectAssembliesAfterDrop;
+
+		// Set by SharpTreeView for an external Explorer file drop (the internal reorder payload uses
+		// AssemblyTreeNode.DataFormat); both carry a string[] of file paths.
+		internal const string FileDropFormat = "FileDrop";
+
+		public override bool CanDrop(
+			ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.IPlatformDragEventArgs e, int index)
 		{
-			if (resource == null)
-				return null;
-			foreach (AssemblyTreeNode node in this.Children)
+			if (e.Data.GetDataPresent(AssemblyTreeNode.DataFormat) || e.Data.GetDataPresent(FileDropFormat))
 			{
-				if (node.LoadedAssembly.IsLoaded)
-				{
-					node.EnsureLazyChildren();
-					foreach (var item in node.Children.OfType<ResourceListTreeNode>())
-					{
-						var founded = item.Children.OfType<ResourceTreeNode>().Where(x => x.Resource == resource).FirstOrDefault();
-						if (founded != null)
-							return founded;
-
-						var foundedResEntry = item.Children.OfType<ResourceEntryNode>().Where(x => resource.Name.Equals(x.Text)).FirstOrDefault();
-						if (foundedResEntry != null)
-							return foundedResEntry;
-					}
-				}
+				e.Effects = ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.Move;
+				return true;
 			}
-			return null;
+			e.Effects = ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.None;
+			return false;
 		}
 
-		public ILSpyTreeNode FindResourceNode(Resource resource, string name)
+		public override void Drop(
+			ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.IPlatformDragEventArgs e, int index)
 		{
-			var resourceNode = FindResourceNode(resource);
-			if (resourceNode == null || name == null || name.Equals(resourceNode.Text))
-				return resourceNode;
-
-			resourceNode.EnsureLazyChildren();
-			return resourceNode.Children.OfType<ILSpyTreeNode>().Where(x => name.Equals(x.Text)).FirstOrDefault() ?? resourceNode;
+			if ((e.Data.GetData(AssemblyTreeNode.DataFormat) ?? e.Data.GetData(FileDropFormat)) is not string[] files)
+				return;
+			var opened = files
+				.Where(f => !string.IsNullOrEmpty(f))
+				.Select(f => assemblyList.OpenAssembly(f))
+				.Where(a => a != null)
+				.Distinct()
+				.ToArray();
+			if (opened.Length == 0)
+				return;
+			assemblyList.Move(opened, index);
+			SelectAssembliesAfterDrop?.Invoke(opened);
 		}
-
-		public AssemblyTreeNode FindAssemblyNode(IModule module)
-		{
-			return FindAssemblyNode(module.MetadataFile);
-		}
-
-		public AssemblyTreeNode FindAssemblyNode(MetadataFile module)
-		{
-			if (module == null)
-				return null;
-			return FindAssemblyNode(module.GetLoadedAssembly());
-		}
-
-		public AssemblyTreeNode FindAssemblyNode(LoadedAssembly asm)
-		{
-			if (asm == null)
-				return null;
-			App.Current.Dispatcher.VerifyAccess();
-			if (asm.ParentBundle != null)
-			{
-				var bundle = FindAssemblyNode(asm.ParentBundle);
-				if (bundle == null)
-					return null;
-				bundle.EnsureLazyChildren();
-				foreach (var node in TreeTraversal.PreOrder(bundle.Children, ExpandAndGetChildren).OfType<AssemblyTreeNode>())
-				{
-					if (node.LoadedAssembly == asm)
-						return node;
-				}
-			}
-			else
-			{
-				foreach (AssemblyTreeNode node in this.Children)
-				{
-					if (node.LoadedAssembly == asm)
-						return node;
-				}
-			}
-			return null;
-
-			static SharpTreeNodeCollection ExpandAndGetChildren(SharpTreeNode node)
-			{
-				if (node is not PackageFolderTreeNode)
-					return null;
-				node.EnsureLazyChildren();
-				return node.Children;
-			}
-		}
-
-		/// <summary>
-		/// Looks up the type node corresponding to the type definition.
-		/// Returns null if no matching node is found.
-		/// </summary>
-		public TypeTreeNode FindTypeNode(ITypeDefinition def)
-		{
-			if (def == null)
-				return null;
-			var declaringType = def.DeclaringTypeDefinition;
-			if (declaringType != null)
-			{
-				TypeTreeNode decl = FindTypeNode(declaringType);
-				if (decl != null)
-				{
-					decl.EnsureLazyChildren();
-					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition.MetadataToken == def.MetadataToken && !t.IsHidden);
-				}
-			}
-			else
-			{
-				AssemblyTreeNode asm = FindAssemblyNode(def.ParentModule);
-				if (asm != null)
-				{
-					return asm.FindTypeNode(def);
-				}
-			}
-			return null;
-		}
-
-		/// <summary>
-		/// Looks up the method node corresponding to the method definition.
-		/// Returns null if no matching node is found.
-		/// </summary>
-		public ILSpyTreeNode FindMethodNode(IMethod def)
-		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
-			if (typeNode == null)
-				return null;
-			// method might be an accessor, must look for parent node
-			ILSpyTreeNode parentNode = typeNode;
-			MethodTreeNode methodNode;
-			parentNode.EnsureLazyChildren();
-			switch (def.AccessorOwner)
-			{
-				case IProperty p:
-					parentNode = parentNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.MetadataToken == p.MetadataToken && !m.IsHidden);
-					if (parentNode == null)
-						return null;
-					parentNode.EnsureLazyChildren();
-					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
-					if (methodNode == null || methodNode.IsHidden)
-						return parentNode;
-					return methodNode;
-				case IEvent e:
-					parentNode = parentNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.MetadataToken == e.MetadataToken && !m.IsHidden);
-					if (parentNode == null)
-						return null;
-					parentNode.EnsureLazyChildren();
-					methodNode = parentNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
-					if (methodNode == null || methodNode.IsHidden)
-						return parentNode;
-					return methodNode;
-				default:
-					methodNode = typeNode.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
-					if (methodNode != null)
-						return methodNode;
-					return null;
-			}
-		}
-
-		/// <summary>
-		/// Looks up the field node corresponding to the field definition.
-		/// Returns null if no matching node is found.
-		/// </summary>
-		public FieldTreeNode FindFieldNode(IField def)
-		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
-			if (typeNode == null)
-				return null;
-			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<FieldTreeNode>().FirstOrDefault(m => m.FieldDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
-		}
-
-		/// <summary>
-		/// Looks up the property node corresponding to the property definition.
-		/// Returns null if no matching node is found.
-		/// </summary>
-		public PropertyTreeNode FindPropertyNode(IProperty def)
-		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
-			if (typeNode == null)
-				return null;
-			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<PropertyTreeNode>().FirstOrDefault(m => m.PropertyDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
-		}
-
-		/// <summary>
-		/// Looks up the event node corresponding to the event definition.
-		/// Returns null if no matching node is found.
-		/// </summary>
-		public EventTreeNode FindEventNode(IEvent def)
-		{
-			TypeTreeNode typeNode = FindTypeNode(def.DeclaringTypeDefinition);
-			if (typeNode == null)
-				return null;
-			typeNode.EnsureLazyChildren();
-			return typeNode.Children.OfType<EventTreeNode>().FirstOrDefault(m => m.EventDefinition.MetadataToken == def.MetadataToken && !m.IsHidden);
-		}
-
-		/// <summary>
-		/// Looks up the event node corresponding to the namespace definition.
-		/// Returns null if no matching node is found.
-		/// </summary>
-		public NamespaceTreeNode FindNamespaceNode(INamespace def)
-		{
-			var module = def.ContributingModules.FirstOrDefault();
-			if (module == null)
-				return null;
-
-			AssemblyTreeNode assemblyNode = FindAssemblyNode(module);
-			if (assemblyNode == null)
-				return null;
-
-			assemblyNode.EnsureLazyChildren();
-			return assemblyNode.Children.OfType<NamespaceTreeNode>().FirstOrDefault(n => def.FullName.Length == 0 || def.FullName.Equals(n.Text));
-		}
-		#endregion
 	}
 }

@@ -340,7 +340,6 @@ namespace ICSharpCode.ILSpyX
 		{
 			VerifyAccess();
 			file = Path.GetFullPath(file);
-			LoadedAssembly evicted;
 			LoadedAssembly newAsm;
 			lock (lockObj)
 			{
@@ -358,9 +357,11 @@ namespace ICSharpCode.ILSpyX
 				Debug.Assert(newAsm.FileName == file);
 				byFilename[file] = newAsm;
 				this.assemblies[index] = newAsm;
-				evicted = target;
 			}
-			evicted.Dispose();
+			// The replaced assembly is intentionally NOT disposed: its MetadataFile may still be
+			// referenced by open document tabs / tree nodes, and there is no safe point at which
+			// the list can know those references are gone. Dropping it lets the GC reclaim it
+			// once nothing holds it, rather than risk a use-after-dispose.
 			return newAsm;
 		}
 
@@ -391,7 +392,8 @@ namespace ICSharpCode.ILSpyX
 				this.assemblies.Remove(target);
 				this.assemblies.Insert(index, newAsm);
 			}
-			target.Dispose();
+			// Not disposed on purpose -- see HotReplaceAssembly. The old MetadataFile may still be
+			// live in the UI; let the GC reclaim it instead of risking a use-after-dispose.
 			return newAsm;
 		}
 
@@ -403,21 +405,21 @@ namespace ICSharpCode.ILSpyX
 				assemblies.Remove(assembly);
 				byFilename.Remove(assembly.FileName);
 			}
-			assembly.Dispose();
+			// Removed from the list but NOT disposed: open tabs / tree nodes may still hold its
+			// MetadataFile and there's no safe point to know they don't. The GC reclaims it once
+			// the last reference is gone.
 		}
 
 		public void Clear()
 		{
 			VerifyAccess();
-			LoadedAssembly[] removed;
 			lock (lockObj)
 			{
-				removed = assemblies.ToArray();
 				assemblies.Clear();
 				byFilename.Clear();
 			}
-			foreach (var asm in removed)
-				asm.Dispose();
+			// Cleared but not disposed -- see Unload. Lingering references in the UI must not see
+			// a disposed MetadataFile.
 		}
 		public void Sort(IComparer<LoadedAssembly> comparer)
 		{

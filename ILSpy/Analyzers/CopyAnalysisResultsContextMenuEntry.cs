@@ -1,14 +1,14 @@
-// Copyright (c) 2022 Siegfried Pammer
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -19,40 +19,58 @@
 using System.Composition;
 using System.Linq;
 using System.Text;
-using System.Windows;
 
-namespace ICSharpCode.ILSpy.Analyzers
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input.Platform;
+
+using ILSpy.AppEnv;
+
+namespace ILSpy.Analyzers
 {
-	[ExportContextMenuEntry(Header = "Copy results", Category = "Analyze", Order = 200)]
+	/// <summary>
+	/// Right-click on an analyser-result row → "Copy results" — puts each child node's
+	/// Text on the clipboard, one per line. Visible only when the selection is an
+	/// <see cref="AnalyzerSearchTreeNode"/> (the headers under an analysed entity).
+	/// </summary>
+	[ExportContextMenuEntry(Header = "Copy results", Order = 9100)]
 	[Shared]
-	internal sealed class CopyAnalysisResultsContextMenuEntry : IContextMenuEntry
+	public sealed class CopyAnalysisResultsContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
-			if (context.TreeView is AnalyzerTreeView && context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n is AnalyzerSearchTreeNode))
-				return true;
-			return false;
+			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
+				return false;
+			return nodes.All(n => n is AnalyzerSearchTreeNode);
 		}
 
-		public bool IsEnabled(TextViewContext context)
-		{
-			return true;
-		}
+		public bool IsEnabled(TextViewContext context) => IsVisible(context);
 
 		public void Execute(TextViewContext context)
 		{
-			StringBuilder sb = new StringBuilder();
-			if (context.SelectedTreeNodes != null)
+			if (context.SelectedTreeNodes is not { Length: > 0 } nodes)
+				return;
+			var builder = new StringBuilder();
+			foreach (var node in nodes.OfType<AnalyzerSearchTreeNode>())
 			{
-				foreach (var node in context.SelectedTreeNodes)
+				foreach (var child in node.Children)
 				{
-					foreach (var item in node.Children)
-					{
-						sb.AppendLine(item.Text.ToString());
-					}
+					var text = child.Text?.ToString();
+					if (!string.IsNullOrEmpty(text))
+						builder.AppendLine(text);
 				}
 			}
-			Clipboard.SetText(sb.ToString());
+			if (builder.Length == 0)
+				return;
+			TryWriteToClipboard(builder.ToString());
+		}
+
+		static void TryWriteToClipboard(string payload)
+		{
+			if (UiContext.Clipboard is not { } clipboard)
+				return;
+			// SetTextAsync is the extension method on IClipboard — needs Avalonia.Input.Platform.
+			_ = clipboard.SetTextAsync(payload);
 		}
 	}
 }

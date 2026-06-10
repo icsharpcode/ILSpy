@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -24,10 +24,17 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
+using ILSpy.Languages;
+
+namespace ILSpy.TreeNodes
 {
 	/// <summary>
-	/// Module reference in ReferenceFolderTreeNode.
+	/// Module reference inside <see cref="ReferenceFolderTreeNode"/>. Modern .NET assemblies
+	/// almost never have module references (multi-file assemblies were a .NET Framework
+	/// feature) — the node is here so non-PE / multi-module edge cases still render
+	/// correctly.
 	/// </summary>
 	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{
@@ -36,8 +43,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly MetadataReader metadata;
 		readonly ModuleReferenceHandle handle;
 		readonly ModuleReference reference;
-		readonly AssemblyFileHandle fileHandle;
-		readonly AssemblyFile file;
 		readonly string moduleName;
 		readonly bool containsMetadata;
 
@@ -57,35 +62,34 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var file = metadata.GetAssemblyFile(h);
 				if (metadata.StringComparer.Equals(file.Name, moduleName))
 				{
-					this.file = file;
-					this.fileHandle = h;
 					this.containsMetadata = file.ContainsMetadata;
 					break;
 				}
 			}
 		}
 
-		public override object Text {
-			get { return moduleName + GetSuffixString(handle); }
-		}
+		public override object Text => moduleName;
 
-		public override object NavigationText => $"{Text} ({Properties.Resources.References})";
+		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.References})";
 
-		public override object Icon => Images.Library;
+		public override object Icon => Images.Images.Library;
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
-			var assemblyListNode = parentAssembly.Parent as AssemblyListTreeNode;
-			if (assemblyListNode != null && containsMetadata)
-			{
-				var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
-				var mainModule = parentAssembly.LoadedAssembly.GetMetadataFileOrNull();
-				if (mainModule != null)
-				{
-					assemblyListNode.Select(assemblyListNode.FindAssemblyNode(resolver.ResolveModule(mainModule, metadata.GetString(reference.Name))));
-					e.Handled = true;
-				}
-			}
+			if (parentAssembly.Parent is not AssemblyListTreeNode listNode || !containsMetadata)
+				return;
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+			var mainModule = parentAssembly.LoadedAssembly.GetMetadataFileOrNull();
+			if (mainModule == null)
+				return;
+			var resolved = resolver.ResolveModule(mainModule, metadata.GetString(reference.Name));
+			if (resolved == null)
+				return;
+			var node = listNode.FindAssemblyNode(resolved);
+			if (node == null)
+				return;
+			AppComposition.Current.GetExport<AssemblyTreeModel>().SelectedItem = node;
+			e.Handled = true;
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

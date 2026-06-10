@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,57 +17,52 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Windows.Input;
 
-using ICSharpCode.AvalonEdit.Document;
-using ICSharpCode.AvalonEdit.Rendering;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Rendering;
 
-namespace ICSharpCode.ILSpy.TextView
+namespace ILSpy.TextView
 {
 	/// <summary>
-	/// Creates hyperlinks in the text view.
+	/// Creates clickable hyperlink elements in the text view from a
+	/// <see cref="TextSegmentCollection{ReferenceSegment}"/> emitted by the decompiler.
 	/// </summary>
 	sealed class ReferenceElementGenerator : VisualLineElementGenerator
 	{
 		readonly Predicate<ReferenceSegment> isLink;
 
-		/// <summary>
-		/// The collection of references (hyperlinks).
-		/// </summary>
-		public TextSegmentCollection<ReferenceSegment> References { get; set; }
+		public TextSegmentCollection<ReferenceSegment>? References { get; set; }
+
+		/// <summary>Raised when a clickable reference span is activated.</summary>
+		public event Action<ReferenceSegment>? ReferenceClicked;
+
+		internal void OnReferenceClicked(ReferenceSegment segment) => ReferenceClicked?.Invoke(segment);
 
 		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{
-			if (isLink == null)
-				throw new ArgumentNullException(nameof(isLink));
-			this.isLink = isLink;
+			this.isLink = isLink ?? throw new ArgumentNullException(nameof(isLink));
 		}
 
 		public override int GetFirstInterestedOffset(int startOffset)
 		{
-			if (this.References == null)
+			if (References == null)
 				return -1;
-			// inform AvalonEdit about the next position where we want to build a hyperlink
-			var segment = this.References.FindFirstSegmentWithStartAfter(startOffset);
+			var segment = References.FindFirstSegmentWithStartAfter(startOffset);
 			return segment != null ? segment.StartOffset : -1;
 		}
 
-		public override VisualLineElement ConstructElement(int offset)
+		public override VisualLineElement? ConstructElement(int offset)
 		{
-			if (this.References == null)
+			if (References == null)
 				return null;
-			foreach (var segment in this.References.FindSegmentsContaining(offset))
+			foreach (var segment in References.FindSegmentsContaining(offset))
 			{
-				// skip all non-links
 				if (!isLink(segment))
 					continue;
-				// ensure that hyperlinks don't span several lines (VisualLineElements can't contain line breaks)
+				// Hyperlinks can't span line breaks — clamp to the current line.
 				int endOffset = Math.Min(segment.EndOffset, CurrentContext.VisualLine.LastDocumentLine.EndOffset);
-				// don't create hyperlinks with length 0
 				if (offset < endOffset)
-				{
 					return new VisualLineReferenceText(CurrentContext.VisualLine, endOffset - offset, this, segment);
-				}
 			}
 			return null;
 		}

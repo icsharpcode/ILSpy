@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,16 +16,19 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	class PropertyMapTableTreeNode : MetadataTableTreeNode<PropertyMapTableTreeNode.PropertyMapEntry>
+	/// <summary>
+	/// View of the PropertyMap table — pairs each TypeDef that declares properties with the
+	/// first row of its property list. Same shape as EventMap but for properties.
+	/// </summary>
+	public sealed class PropertyMapTableTreeNode : MetadataTableTreeNode<PropertyMapTableTreeNode.PropertyMapEntry>
 	{
 		public PropertyMapTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.PropertyMap, metadataFile)
@@ -37,69 +40,48 @@ namespace ICSharpCode.ILSpy.Metadata
 			var list = new List<PropertyMapEntry>();
 			var metadata = metadataFile.Metadata;
 			var length = metadata.GetTableRowCount(TableIndex.PropertyMap);
-			ReadOnlySpan<byte> ptr = metadata.AsReadOnlySpan();
+			var reader = metadata.AsBlobReader();
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.PropertyMap);
 			int typeDefSize = metadata.GetTableRowCount(TableIndex.TypeDef) < ushort.MaxValue ? 2 : 4;
 			int propertyDefSize = metadata.GetTableRowCount(TableIndex.Property) < ushort.MaxValue ? 2 : 4;
 			for (int rid = 1; rid <= length; rid++)
 			{
-				list.Add(new PropertyMapEntry(metadataFile, ptr, rid, typeDefSize, propertyDefSize));
+				int parentRow = typeDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				int propertyListRow = propertyDefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				list.Add(new PropertyMapEntry(metadataFile, rid, MetadataTokens.TypeDefinitionHandle(parentRow), MetadataTokens.PropertyDefinitionHandle(propertyListRow)));
 			}
 			return list;
 		}
 
-		readonly struct PropertyMap
+		public sealed class PropertyMapEntry
 		{
-			public readonly TypeDefinitionHandle Parent;
-			public readonly PropertyDefinitionHandle PropertyList;
-
-			public PropertyMap(ReadOnlySpan<byte> ptr, int typeDefSize, int propertyDefSize)
-			{
-				Parent = MetadataTokens.TypeDefinitionHandle(Helpers.GetValueLittleEndian(ptr, typeDefSize));
-				PropertyList = MetadataTokens.PropertyDefinitionHandle(Helpers.GetValueLittleEndian(ptr.Slice(typeDefSize, propertyDefSize)));
-			}
-		}
-
-		internal struct PropertyMapEntry
-		{
-			readonly MetadataFile metadataFile;
-			readonly PropertyMap propertyMap;
-
 			public int RID { get; }
+
+			[ColumnInfo("X8")]
 			public int Token => 0x15000000 | RID;
-			public int Offset { get; }
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int Parent => MetadataTokens.GetToken(propertyMap.Parent);
+			public int Parent => MetadataTokens.GetToken(parent);
 
-			public void OnParentClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, propertyMap.Parent, protocol: "metadata")));
-			}
-
-			string parentTooltip;
-			public string ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, propertyMap.Parent);
+			string? parentTooltip;
+			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, parent);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int PropertyList => MetadataTokens.GetToken(propertyMap.PropertyList);
+			public int PropertyList => MetadataTokens.GetToken(propertyList);
 
-			public void OnPropertyListClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, propertyMap.PropertyList, protocol: "metadata")));
-			}
+			string? propertyListTooltip;
+			public string? PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, metadataFile, propertyList);
 
-			string propertyListTooltip;
-			public string PropertyListTooltip => GenerateTooltip(ref propertyListTooltip, metadataFile, propertyMap.PropertyList);
+			readonly MetadataFile metadataFile;
+			readonly TypeDefinitionHandle parent;
+			readonly PropertyDefinitionHandle propertyList;
 
-			public PropertyMapEntry(MetadataFile metadataFile, ReadOnlySpan<byte> ptr, int row, int typeDefSize, int propertyDefSize)
+			public PropertyMapEntry(MetadataFile metadataFile, int rid, TypeDefinitionHandle parent, PropertyDefinitionHandle propertyList)
 			{
 				this.metadataFile = metadataFile;
-				this.RID = row;
-				var rowOffset = metadataFile.Metadata.GetTableMetadataOffset(TableIndex.PropertyMap)
-					+ metadataFile.Metadata.GetTableRowSize(TableIndex.PropertyMap) * (row - 1);
-				this.Offset = metadataFile.MetadataOffset + rowOffset;
-				this.propertyMap = new PropertyMap(ptr.Slice(rowOffset), typeDefSize, propertyDefSize);
-				this.propertyListTooltip = null;
-				this.parentTooltip = null;
+				RID = rid;
+				this.parent = parent;
+				this.propertyList = propertyList;
 			}
 		}
 	}

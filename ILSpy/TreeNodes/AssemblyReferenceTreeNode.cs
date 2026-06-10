@@ -1,4 +1,4 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,135 +17,121 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Threading;
 
-using ICSharpCode.AvalonEdit.Highlighting;
+using Avalonia.Threading;
+
+using AvaloniaEdit.Highlighting;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-namespace ICSharpCode.ILSpy.TreeNodes
+using ILSpy.AppEnv;
+using ILSpy.AssemblyTree;
+using ILSpy.Languages;
+using ILSpy.TextView;
+
+namespace ILSpy.TreeNodes
 {
 	/// <summary>
-	/// Node within assembly reference list.
+	/// Single entry in the references folder. Minimal port: shows the reference name
+	/// using ILAmbience escaping plus a generic assembly icon. Children (the
+	/// per-reference type list and transitive references) are not yet implemented.
 	/// </summary>
-	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
+	sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
-		private enum LoadState
-		{
-			Unloaded,
-			Loading,
-			Loadded,
-			Failed
-		}
+		enum LoadState { Unloaded, Loading, Loaded, Failed }
 
-		readonly MetadataModule module;
-		readonly AssemblyReference r;
+		readonly AssemblyReference reference;
 		readonly AssemblyTreeNode parentAssembly;
-		MetadataFile referencedModule;
 		LoadState state;
 
-		public AssemblyReferenceTreeNode(MetadataModule module, AssemblyReference r, AssemblyTreeNode parentAssembly)
+		public AssemblyReferenceTreeNode(AssemblyReference reference, AssemblyTreeNode parentAssembly)
 		{
-			this.module = module ?? throw new ArgumentNullException(nameof(module));
-			this.r = r ?? throw new ArgumentNullException(nameof(r));
+			this.reference = reference ?? throw new ArgumentNullException(nameof(reference));
 			this.parentAssembly = parentAssembly ?? throw new ArgumentNullException(nameof(parentAssembly));
-			this.LazyLoading = true;
+			LazyLoading = true;
 		}
 
-		public AssemblyReference AssemblyReference => r;
+		public AssemblyReference AssemblyReference => reference;
 
-		public override object Text {
-			get { return ILAmbience.EscapeName(r.Name) + GetSuffixString(r.Handle); }
-		}
+		public override object Text => ILAmbience.EscapeName(reference.Name);
 
-		public override object NavigationText => $"{Text} ({Properties.Resources.References})";
+		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.References})";
 
 		public override object Icon {
 			get {
 				if (state == LoadState.Unloaded)
 				{
 					state = LoadState.Loading;
-					Dispatcher.CurrentDispatcher.BeginInvoke(() => {
-						var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver(SettingsService.DecompilerSettings.AutoLoadAssemblyReferences);
-						referencedModule = resolver.Resolve(r);
-						state = referencedModule is null
-							? LoadState.Failed
-							: LoadState.Loadded;
+					Dispatcher.UIThread.Post(() => {
+						var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+						var resolved = resolver.Resolve(reference);
+						state = resolved == null ? LoadState.Failed : LoadState.Loaded;
 						RaisePropertyChanged(nameof(Icon));
 					}, DispatcherPriority.Background);
 				}
 				return state switch {
-					LoadState.Loadded => Images.Assembly,
-					LoadState.Failed => Images.AssemblyWarning,
-					_ => Images.AssemblyLoading,
+					LoadState.Loaded => Images.Images.Assembly,
+					LoadState.Failed => Images.Images.AssemblyWarning,
+					_ => Images.Images.AssemblyLoading,
 				};
-			}
-		}
-
-		public override bool ShowExpander {
-			get {
-				// Special case for mscorlib: It likely doesn't have any children so call EnsureLazyChildren to
-				// remove the expander from the node.
-				if (r.Name == "mscorlib")
-				{
-					// See https://github.com/icsharpcode/ILSpy/issues/2548: Adding assemblies to the tree view
-					// while the list of references is updated causes problems with WPF's ListView rendering.
-					// Moving the assembly resolving out of the "add assembly reference"-loop by using the
-					// dispatcher fixes the issue.
-					Dispatcher.CurrentDispatcher.BeginInvoke(EnsureLazyChildren, DispatcherPriority.Normal);
-				}
-				return base.ShowExpander;
-			}
-		}
-
-		public override void ActivateItem(IPlatformRoutedEventArgs e)
-		{
-			if (parentAssembly.Parent is AssemblyListTreeNode assemblyListNode)
-			{
-				var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
-				assemblyListNode.Select(assemblyListNode.FindAssemblyNode(resolver.Resolve(r)));
-				e.Handled = true;
 			}
 		}
 
 		protected override void LoadChildren()
 		{
-			this.Children.Add(new AssemblyReferenceReferencedTypesTreeNode(module, r));
-
-			if (referencedModule != null)
+			// Always emit the "Referenced Types (N)" subnode keyed on the *parent* module's
+			// metadata — this lists what the parent uses, regardless of whether the referenced
+			// assembly itself resolves. Then, if the reference resolves, surface its own
+			// AssemblyRefs as transitive children.
+			var parentModule = parentAssembly.LoadedAssembly.GetMetadataFileOrNull();
+			if (parentModule != null)
 			{
-				var module = (MetadataModule)referencedModule.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)?.MainModule;
-				foreach (var childRef in referencedModule.AssemblyReferences)
-					this.Children.Add(new AssemblyReferenceTreeNode(module, childRef, parentAssembly));
+				var parentTypeSystem = (MetadataModule?)parentModule.GetTypeSystemOrNull()?.MainModule;
+				if (parentTypeSystem != null)
+					Children.Add(new AssemblyReferenceReferencedTypesTreeNode(parentTypeSystem, reference));
 			}
+
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+			var resolved = resolver.Resolve(reference);
+			if (resolved == null)
+				return;
+			foreach (var childRef in resolved.AssemblyReferences)
+				Children.Add(new AssemblyReferenceTreeNode(childRef, parentAssembly));
+		}
+
+		public override void ActivateItem(IPlatformRoutedEventArgs e)
+		{
+			if (parentAssembly.Parent is not AssemblyListTreeNode listNode)
+				return;
+			var resolver = parentAssembly.LoadedAssembly.GetAssemblyResolver();
+			var resolved = resolver.Resolve(reference);
+			if (resolved == null)
+				return;
+			var loaded = listNode.FindAssemblyNode(resolved);
+			if (loaded == null)
+				return;
+			AppComposition.Current.GetExport<AssemblyTreeModel>().SelectedItem = loaded;
+			e.Handled = true;
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(r.FullName, out var info);
-			if (r.IsWindowsRuntime)
-			{
-				output.WriteLine(r.FullName + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
-			}
+			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(reference.FullName, out var info);
+			if (reference.IsWindowsRuntime)
+				output.WriteLine(reference.FullName + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
 			else
-			{
-				output.WriteLine(r.FullName + (!loaded ? " (unresolved)" : ""));
-			}
+				output.WriteLine(reference.FullName + (!loaded ? " (unresolved)" : ""));
 			if (loaded)
 			{
 				output.Indent();
 				output.WriteLine("Assembly reference loading information:");
-				if (info.HasErrors)
-				{
+				if (info!.HasErrors)
 					output.WriteLine("There were some problems during assembly reference load, see below for more information!");
-					state = LoadState.Failed;
-				}
 				PrintAssemblyLoadLogMessages(output, info);
 				output.Unindent();
 				output.WriteLine();
@@ -154,9 +140,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		internal static void PrintAssemblyLoadLogMessages(ITextOutput output, UnresolvedAssemblyNameReference asm)
 		{
-			HighlightingColor red = GetColor(Colors.Red);
-			HighlightingColor yellow = GetColor(Colors.Yellow);
-
 			var smartOutput = output as ISmartTextOutput;
 
 			foreach (var item in asm.Messages)
@@ -164,12 +147,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				switch (item.Item1)
 				{
 					case MessageKind.Error:
-						smartOutput?.BeginSpan(red);
+						smartOutput?.BeginSpan(ErrorColor);
 						output.Write("Error: ");
 						smartOutput?.EndSpan();
 						break;
 					case MessageKind.Warning:
-						smartOutput?.BeginSpan(yellow);
+						smartOutput?.BeginSpan(WarningColor);
 						output.Write("Warning: ");
 						smartOutput?.EndSpan();
 						break;
@@ -179,19 +162,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 				output.WriteLine(item.Item2);
 			}
-
-			static HighlightingColor GetColor(Color color)
-			{
-				var hc = new HighlightingColor {
-					Foreground = new SimpleHighlightingBrush(color),
-					FontWeight = FontWeights.Bold
-				};
-				if (ThemeManager.Current.IsDarkTheme)
-				{
-					return ThemeManager.GetColorForDarkTheme(hc);
-				}
-				return hc;
-			}
 		}
+
+		static readonly HighlightingColor ErrorColor = new() {
+			Foreground = new SimpleHighlightingBrush(global::Avalonia.Media.Colors.Red),
+			FontWeight = global::Avalonia.Media.FontWeight.Bold,
+		};
+
+		static readonly HighlightingColor WarningColor = new() {
+			Foreground = new SimpleHighlightingBrush(global::Avalonia.Media.Colors.Goldenrod),
+			FontWeight = global::Avalonia.Media.FontWeight.Bold,
+		};
 	}
 }

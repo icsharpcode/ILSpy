@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,52 +16,70 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows.Controls;
-using System.Windows.Threading;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
 
-namespace ICSharpCode.ILSpy.Metadata
+using ILSpy.TreeNodes;
+using ILSpy.ViewModels;
+
+namespace ILSpy.Metadata
 {
-	internal abstract partial class MetadataTableTreeNode : ILSpyTreeNode
+	/// <summary>
+	/// Common parent for the per-table leaves under "Tables". Each subclass corresponds to
+	/// one CLI <see cref="TableIndex"/> and surfaces its rows. Phase 1 emits a fixed-width
+	/// text dump via <see cref="ILSpyTreeNode.Decompile"/>; Phase 2 swaps to a DataGrid tab
+	/// via the per-node <c>CreateTab</c> override added in that phase.
+	/// </summary>
+	public abstract class MetadataTableTreeNode : ILSpyTreeNode
 	{
 		protected readonly MetadataFile metadataFile;
-		protected int scrollTarget;
 
 		public TableIndex Kind { get; }
 
-		public override object Text => $"{(int)Kind:X2} {Kind} ({metadataFile.Metadata.GetTableRowCount(Kind)})";
+		public int RowCount => metadataFile.Metadata.GetTableRowCount(Kind);
 
-		public override object NavigationText => $"{(int)Kind:X2} {Kind} ({metadataFile.Name})";
-
-		public override object Icon => Images.MetadataTable;
-
-		public MetadataTableTreeNode(TableIndex table, MetadataFile metadataFile)
+		protected MetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
 		{
-			this.Kind = table;
-			this.metadataFile = metadataFile;
+			Kind = kind;
+			this.metadataFile = metadataFile ?? throw new ArgumentNullException(nameof(metadataFile));
 		}
 
-		internal void ScrollTo(Handle handle)
-		{
-			this.scrollTarget = metadataFile.Metadata.GetRowNumber((EntityHandle)handle);
-		}
+		public override object Icon => Images.Images.MetadataTable;
 
-		protected static string GenerateTooltip(ref string tooltip, MetadataFile module, EntityHandle handle)
+		/// <summary>
+		/// Byte offset of row <paramref name="rid"/> (1-based) in <paramref name="table"/>, relative to
+		/// the start of the PE file. Every typed row viewmodel exposes this from its <c>Offset</c>
+		/// property so the hex view can jump to the raw bytes.
+		/// </summary>
+		protected static int GetRowOffset(MetadataFile file, TableIndex table, int rid)
+			=> GetRowOffset(file.Metadata, file.MetadataOffset, table, rid);
+
+		/// <summary>
+		/// Overload for the few entries that hold a raw <see cref="MetadataReader"/> + offset rather
+		/// than a <see cref="MetadataFile"/>.
+		/// </summary>
+		protected static int GetRowOffset(MetadataReader metadata, int metadataOffset, TableIndex table, int rid)
+			=> metadataOffset + metadata.GetTableMetadataOffset(table) + metadata.GetTableRowSize(table) * (rid - 1);
+
+		/// <summary>
+		/// Builds (and caches into <paramref name="tooltip"/>) a human-readable description of the
+		/// entity a token column points at, e.g. <c>(AssemblyReference) System.Runtime, ...</c>.
+		/// Entries expose this from their <c>{Column}Tooltip</c> properties so hovering a token cell
+		/// shows what it refers to. Returns <see langword="null"/> for a nil handle.
+		/// </summary>
+		protected static string? GenerateTooltip(ref string? tooltip, MetadataFile module, EntityHandle handle)
 		{
 			if (tooltip == null)
 			{
 				if (handle.IsNil)
-				{
 					return null;
-				}
 				ITextOutput output = new PlainTextOutput();
 				var context = new MetadataGenericContext(default(TypeDefinitionHandle), module.Metadata);
 				var metadata = module.Metadata;
@@ -76,7 +94,7 @@ namespace ICSharpCode.ILSpy.Metadata
 						output.Write(metadata.GetString(moduleReference.Name));
 						break;
 					case HandleKind.AssemblyReference:
-						var asmRef = new Decompiler.Metadata.AssemblyReference(metadata, (AssemblyReferenceHandle)handle);
+						var asmRef = new ICSharpCode.Decompiler.Metadata.AssemblyReference(metadata, (AssemblyReferenceHandle)handle);
 						output.Write(asmRef.ToString());
 						break;
 					case HandleKind.Parameter:
@@ -120,63 +138,46 @@ namespace ICSharpCode.ILSpy.Metadata
 			}
 			return tooltip;
 		}
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-		}
 	}
 
-	internal abstract class MetadataTableTreeNode<TEntry> : MetadataTableTreeNode
-		where TEntry : struct
+	/// <summary>
+	/// Typed companion: holds the row materialiser and routes selection to the DataGrid
+	/// view. Rows are loaded lazily and cached so repeated activations don't re-walk the
+	/// metadata. Token-bearing columns surface the runtime hex value here; Phase 3b makes
+	/// them clickable hyperlinks via <see cref="MetadataColumnBuilder"/>.
+	/// </summary>
+	public abstract class MetadataTableTreeNode<TEntry> : MetadataTableTreeNode
+		where TEntry : class
 	{
-		public MetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
+		IReadOnlyList<TEntry>? cached;
+
+		protected MetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
 			: base(kind, metadataFile)
 		{
 		}
+
+		public override object Text => $"{(byte)Kind:X2} {Kind} ({RowCount})";
+		public override string ToString() => Kind.ToString();
 
 		protected abstract IReadOnlyList<TEntry> LoadTable();
 
-		protected virtual void ConfigureDataGrid(DataGrid view)
+		public override ContentPageModel CreateTab()
 		{
-		}
-
-		public override bool View(TabPageModel tabPage)
-		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			var view = Helpers.PrepareDataGrid(tabPage, this);
-			ConfigureDataGrid(view);
-
-			view.ItemsSource = LoadTable();
-			tabPage.Content = view;
-
-			ScrollRowIntoView(view, scrollTarget);
-
-			return true;
-		}
-	}
-
-	internal abstract class DebugMetadataTableTreeNode<TEntry> : MetadataTableTreeNode<TEntry>
-		where TEntry : struct
-	{
-		public DebugMetadataTableTreeNode(TableIndex kind, MetadataFile metadataFile)
-			: base(kind, metadataFile)
-		{
-		}
-	}
-
-	internal class UnsupportedMetadataTableTreeNode : MetadataTableTreeNode
-	{
-		public UnsupportedMetadataTableTreeNode(TableIndex kind, MetadataFile file)
-			: base(kind, file)
-		{
-		}
-		public override object Text => $"{(int)Kind:X2} {Kind.ToString()} [unsupported] ({metadataFile.Metadata.GetTableRowCount(Kind)})";
-
-		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			output.WriteLine($"Unsupported table '{(int)Kind:X2} {Kind}' contains {metadataFile.Metadata.GetTableRowCount(Kind)} rows.");
+			// IReadOnlyList<T> is covariant on T, so a strongly-typed list passes through to
+			// MetadataTablePageModel.Items (declared as IReadOnlyList<object>) without a
+			// reflective copy. The runtime type stays IReadOnlyList<TEntry>, which lets
+			// DataGridCollectionView.GetItemType find the IEnumerable<TEntry> interface and
+			// resolve property-path sorts correctly — see DataGridSortDescription.Initialize
+			// + ReflectionHelper.GetNestedPropertyValue, which return null for every row when
+			// the source's element type is object.
+			var page = new MetadataTablePageModel {
+				// Lead with the token-kind byte, mirroring the tree node's Text so the tab header
+				// reads e.g. "02 TypeDef (1234)".
+				Title = $"{(byte)Kind:X2} {Kind} ({RowCount})",
+				Items = cached ??= LoadTable(),
+			};
+			MetadataColumnBuilder.Populate<TEntry>(page);
+			return page;
 		}
 	}
 }

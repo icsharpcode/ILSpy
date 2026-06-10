@@ -371,7 +371,7 @@ Examples:
 			{
 				try
 				{
-					ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider = new ILSpyX.Settings.DefaultSettingsFilePathProvider(ILSpySettingsFile);
+					ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider = () => ILSpySettingsFile;
 					var settingsService = new ILSpyX.Settings.SettingsServiceBase(ILSpyX.Settings.ILSpySettings.Load());
 					decompilerSettings = settingsService.GetSettings<ILSpyX.Settings.DecompilerSettings>();
 				}
@@ -613,7 +613,7 @@ Examples:
 			using (FileStream stream = new FileStream(pdbFileName, FileMode.Create, FileAccess.Write))
 			{
 				var decompiler = GetDecompiler(assemblyFileName);
-				PortablePdbWriter.WritePdb(module, decompiler, GetSettings(module), stream);
+				new PortablePdbWriter().WritePdb(module, decompiler, GetSettings(module), stream);
 			}
 
 			return 0;

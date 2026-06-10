@@ -1,0 +1,66 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Windows-targeted TFM unlocks Microsoft.DiaSymReader (native COM) + System.Windows
+         registry APIs without conditional package gates. EnableWindowsTargeting lets the
+         build satisfy the -windows reference assemblies on non-Windows OSes via the
+         cross-targeting pack, so `dotnet build ILSpy.sln` succeeds on Linux/macOS; the
+         tests still only execute on Windows because the binaries P/Invoke into Win32. -->
+    <TargetFramework>net11.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>ICSharpCode.ILSpy.Tests.Windows</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+
+    <!-- Avalonia tests don't need WPF on the -windows TFM. WinForms IS needed
+         though — the ImageList decoder tests use real
+         System.Windows.Forms.ImageList to generate reference fixtures at runtime,
+         then compare against the Avalonia decoder's output pixel-by-pixel. -->
+    <UseWPF>false</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+
+    <!-- Strong-named with the shared snk so ICSharpCode.ILSpyX can grant
+         InternalsVisibleTo for the analyzer-library tests, mirroring the main
+         test project. -->
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+
+    <!-- Microsoft.DiaSymReader.Converter.Xml/.Native transitively pull System.Net.Http
+         4.3.0 and System.Text.RegularExpressions 4.3.0 which carry known vulnerabilities
+         (NU1903). These transitive references are outside our control and not exploitable
+         in the test process. Audit only direct deps. -->
+    <NuGetAuditMode>direct</NuGetAuditMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Headless.NUnit" />
+    <PackageReference Include="Avalonia.Themes.Simple" />
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="coverlet.MTP" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
+    <PackageReference Include="AwesomeAssertions" />
+    <PackageReference Include="NSubstitute" />
+    <!-- PreserializedResourceWriter — required by the ImageList integration tests to
+         build .resources fixtures with typed serialized-object entries (NRBF-wrapped
+         ImageListStreamer blobs) without depending on the obsolete BinaryFormatter. -->
+    <PackageReference Include="System.Resources.Extensions" />
+
+    <!-- Windows-only native packages that the matching ILSpy commands gate
+         behind `Debug + IsOSPlatform(Windows)`. Available unconditionally here because
+         the project itself only builds on Windows. -->
+    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
+    <PackageReference Include="Microsoft.DiaSymReader" />
+    <PackageReference Include="Microsoft.DiaSymReader.Native" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ILSpy.Tests\ILSpy.Tests.csproj" />
+    <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
+  </ItemGroup>
+
+</Project>

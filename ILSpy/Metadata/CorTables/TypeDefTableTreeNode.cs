@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -25,12 +25,16 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.CorTables
 {
-	internal class TypeDefTableTreeNode : MetadataTableTreeNode<TypeDefTableTreeNode.TypeDefEntry>
+	/// <summary>
+	/// View of the TypeDef table — every type the module defines. The first row is the
+	/// pseudo-type &lt;Module&gt;, owning module-scoped fields and methods. Each row carries
+	/// attributes (visibility, layout, semantics), the optional base type, and pointers
+	/// into the FieldList / MethodList for the type's members.
+	/// </summary>
+	public sealed class TypeDefTableTreeNode : MetadataTableTreeNode<TypeDefTableTreeNode.TypeDefEntry>
 	{
 		public TypeDefTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.TypeDef, metadataFile)
@@ -41,13 +45,11 @@ namespace ICSharpCode.ILSpy.Metadata
 		{
 			var list = new List<TypeDefEntry>();
 			foreach (var row in metadataFile.Metadata.TypeDefinitions)
-			{
 				list.Add(new TypeDefEntry(metadataFile, row));
-			}
 			return list;
 		}
 
-		internal struct TypeDefEntry : IMemberTreeNode
+		public sealed class TypeDefEntry
 		{
 			readonly MetadataFile metadataFile;
 			readonly TypeDefinitionHandle handle;
@@ -55,13 +57,13 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
-			public int Offset => metadataFile.MetadataOffset
-				+ metadataFile.Metadata.GetTableMetadataOffset(TableIndex.TypeDef)
-				+ metadataFile.Metadata.GetTableRowSize(TableIndex.TypeDef) * (RID - 1);
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.TypeDef, RID);
 
-			[ColumnInfo("X8", Kind = ColumnKind.Other)]
+			[ColumnInfo("X8")]
 			public TypeAttributes Attributes => typeDef.Attributes;
 
 			const TypeAttributes otherFlagsMask = ~(TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.ClassSemanticsMask | TypeAttributes.StringFormatMask | TypeAttributes.CustomFormatMask);
@@ -75,23 +77,18 @@ namespace ICSharpCode.ILSpy.Metadata
 				FlagGroup.CreateMultipleChoiceGroup(typeof(TypeAttributes), "Flags:", (int)otherFlagsMask, (int)(typeDef.Attributes & otherFlagsMask), includeAll: false),
 			};
 
-			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Name):X} \"{Name}\"";
-
 			public string Name => metadataFile.Metadata.GetString(typeDef.Name);
 
-			public string NamespaceTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Namespace):X} \"{Namespace}\"";
+			public string NameTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Name):X} \"{Name}\"";
 
 			public string Namespace => metadataFile.Metadata.GetString(typeDef.Namespace);
+
+			public string NamespaceTooltip => $"{MetadataTokens.GetHeapOffset(typeDef.Namespace):X} \"{Namespace}\"";
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int BaseType => MetadataTokens.GetToken(typeDef.BaseType);
 
-			public void OnBaseTypeClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.BaseType, protocol: "metadata")));
-			}
-
-			public string BaseTypeTooltip {
+			public string? BaseTypeTooltip {
 				get {
 					var output = new PlainTextOutput();
 					var provider = new DisassemblerSignatureTypeProvider(metadataFile, output);
@@ -106,7 +103,7 @@ namespace ICSharpCode.ILSpy.Metadata
 							provider.GetTypeFromReference(metadataFile.Metadata, (TypeReferenceHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
 							return output.ToString();
 						case HandleKind.TypeSpecification:
-							provider.GetTypeFromSpecification(metadataFile.Metadata, new Decompiler.Metadata.MetadataGenericContext(default(TypeDefinitionHandle), metadataFile.Metadata), (TypeSpecificationHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
+							provider.GetTypeFromSpecification(metadataFile.Metadata, new MetadataGenericContext(default(TypeDefinitionHandle), metadataFile.Metadata), (TypeSpecificationHandle)typeDef.BaseType, 0)(ILNameSyntax.Signature);
 							return output.ToString();
 						default:
 							return null;
@@ -117,13 +114,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
 
-			public void OnFieldListClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetFields().FirstOrDefault(), protocol: "metadata")));
-			}
-
-			string fieldListTooltip;
-			public string FieldListTooltip {
+			string? fieldListTooltip;
+			public string? FieldListTooltip {
 				get {
 					var @field = typeDef.GetFields().FirstOrDefault();
 					if (@field.IsNil)
@@ -135,13 +127,8 @@ namespace ICSharpCode.ILSpy.Metadata
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
 
-			public void OnMethodListClick()
-			{
-				MessageBus.Send(this, new NavigateToReferenceEventArgs(new EntityReference(metadataFile, typeDef.GetMethods().FirstOrDefault(), protocol: "metadata")));
-			}
-
-			string methodListTooltip;
-			public string MethodListTooltip {
+			string? methodListTooltip;
+			public string? MethodListTooltip {
 				get {
 					var method = typeDef.GetMethods().FirstOrDefault();
 					if (method.IsNil)
@@ -150,15 +137,11 @@ namespace ICSharpCode.ILSpy.Metadata
 				}
 			}
 
-			IEntity IMemberTreeNode.Member => ((MetadataModule)metadataFile.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion)?.MainModule)?.GetDefinition(handle);
-
 			public TypeDefEntry(MetadataFile metadataFile, TypeDefinitionHandle handle)
 			{
 				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.typeDef = metadataFile.Metadata.GetTypeDefinition(handle);
-				this.methodListTooltip = null;
-				this.fieldListTooltip = null;
+				typeDef = metadataFile.Metadata.GetTypeDefinition(handle);
 			}
 		}
 	}

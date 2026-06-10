@@ -1,1 +1,0 @@
-msbuild --restore /p:RestoreForceEvaluate=true /p:RestoreEnablePackagePruning=false ILSpy.sln

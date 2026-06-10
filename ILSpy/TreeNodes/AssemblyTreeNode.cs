@@ -1,14 +1,15 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -18,75 +19,48 @@
 
 using System;
 using System.Collections.Generic;
-using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Documents;
+
+using Avalonia.Controls;
+using Avalonia.Controls.Documents;
+using Avalonia.Media;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
-using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.Controls.TreeView;
-using ICSharpCode.ILSpy.Docking;
-using ICSharpCode.ILSpy.Metadata;
-using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.FileLoaders;
 using ICSharpCode.ILSpyX.PdbProvider;
 using ICSharpCode.ILSpyX.TreeView;
-using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using Microsoft.Win32;
+using ILSpy;
+using ILSpy.AppEnv;
+using ILSpy.Languages;
 
-using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
-
-namespace ICSharpCode.ILSpy.TreeNodes
+namespace ILSpy.TreeNodes
 {
-	/// <summary>
-	/// Tree node representing an assembly.
-	/// This class is responsible for loading both namespace and type nodes.
-	/// </summary>
-	public sealed class AssemblyTreeNode : ILSpyTreeNode
+	sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
-		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
-		readonly Dictionary<TypeDefinitionHandle, TypeTreeNode> typeDict = new Dictionary<TypeDefinitionHandle, TypeTreeNode>();
-		ICompilation typeSystem;
+		readonly LoadedAssembly assembly;
+		string? loadError;
+		MetadataFile? cachedModule;
 
-		public AssemblyTreeNode(LoadedAssembly assembly) : this(assembly, null)
-		{
-		}
-
-		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry packageEntry)
-		{
-			this.LoadedAssembly = assembly ?? throw new ArgumentNullException(nameof(assembly));
-			this.LazyLoading = true;
-			this.PackageEntry = packageEntry;
-			Init();
-		}
-
-		public AssemblyList AssemblyList {
-			get { return LoadedAssembly.AssemblyList; }
-		}
-
-		public LoadedAssembly LoadedAssembly { get; }
+		public LoadedAssembly LoadedAssembly => assembly;
 
 		/// <summary>
-		/// If this assembly was loaded from a bundle; this property returns the bundle entry that the
-		/// assembly was loaded from.
+		/// When this node represents a .dll/.exe entry inside a <see cref="LoadedPackage"/>
+		/// (zip or .NET bundle), this is the package entry it was created from. Null for
+		/// stand-alone assemblies.
 		/// </summary>
-		public PackageEntry PackageEntry { get; }
+		public PackageEntry? PackageEntry { get; }
 
 		/// <summary>
-		/// If this assembly is a bundle or package, returns the <see cref="LoadedAssembly.PackageKind"/>,
-		/// otherwise returns <see langword="null"/>.
-		/// Returns <see langword="null"/> if this assembly was not yet loaded or an error occurred.
+		/// If this assembly is itself a bundle/package (nuget .zip or .NET single-file
+		/// bundle), returns the package kind. Returns <see langword="null"/> for plain
+		/// stand-alone assemblies and for any assembly that hasn't finished loading yet
+		/// or failed to load.
 		/// </summary>
 		public LoadedPackage.PackageKind? PackageKind {
 			get {
@@ -97,131 +71,271 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public override bool IsAutoLoaded {
-			get {
-				return LoadedAssembly.IsAutoLoaded;
-			}
-		}
-
-		public override object Text => LoadedAssembly.Text;
-
-		public override object Icon {
-			get {
-				if (LoadedAssembly.IsLoaded)
-				{
-					if (LoadedAssembly.HasLoadError)
-						return Images.AssemblyWarning;
-					var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
-					if (loadResult.Package != null)
-					{
-						return loadResult.Package.Kind switch {
-							LoadedPackage.PackageKind.Zip => Images.NuGet,
-							_ => Images.Library,
-						};
-					}
-					if (loadResult.MetadataFile != null)
-					{
-						return loadResult.MetadataFile.Kind switch {
-							MetadataFile.MetadataFileKind.PortableExecutable => Images.Assembly,
-							MetadataFile.MetadataFileKind.ProgramDebugDatabase => Images.ProgramDebugDatabase,
-							MetadataFile.MetadataFileKind.WebCIL => Images.WebAssemblyFile,
-							_ => Images.MetadataFile,
-						};
-					}
-					else
-					{
-						return Images.Assembly;
-					}
-				}
-				else
-				{
-					return Images.FindAssembly;
-				}
-			}
-		}
-
-		TextBlock tooltip;
-
-		public override object ToolTip {
-			get {
-				if (LoadedAssembly.HasLoadError)
-					return "Assembly could not be loaded. Click here for details.";
-
-				if (tooltip == null && LoadedAssembly.IsLoaded)
-				{
-					tooltip = new TextBlock();
-					var module = LoadedAssembly.GetMetadataFileOrNull();
-					var metadata = module?.Metadata;
-					if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
-					{
-						tooltip.Inlines.Add(CreateBoldRun("Name: "));
-						tooltip.Inlines.Add(new Run(assemblyName));
-						tooltip.Inlines.Add(new LineBreak());
-					}
-
-					tooltip.Inlines.Add(CreateBoldRun("Location: "));
-					tooltip.Inlines.Add(new Run(LoadedAssembly.FileName));
-
-					if (module != null)
-					{
-						if (module is PEFile peFile)
-						{
-							tooltip.Inlines.Add(new LineBreak());
-							tooltip.Inlines.Add(CreateBoldRun("Architecture: "));
-							tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(peFile)));
-						}
-						string runtimeName = Language.GetRuntimeDisplayName(module);
-						if (runtimeName != null)
-						{
-							tooltip.Inlines.Add(new LineBreak());
-							tooltip.Inlines.Add(CreateBoldRun("Runtime: "));
-							tooltip.Inlines.Add(new Run(runtimeName));
-						}
-						var debugInfo = LoadedAssembly.GetDebugInfoOrNull();
-						tooltip.Inlines.Add(new LineBreak());
-						tooltip.Inlines.Add(CreateBoldRun("Debug info: "));
-						tooltip.Inlines.Add(new Run(debugInfo?.Description ?? "none"));
-					}
-				}
-
-				return tooltip;
-			}
-		}
-
-		private static Bold CreateBoldRun(string text)
+		public AssemblyTreeNode(LoadedAssembly assembly) : this(assembly, null)
 		{
-#if CROSS_PLATFORM
-			return new Bold().Add(new Run(text));
-#else
-			return new Bold(new Run(text));
-#endif
 		}
 
-		public void UpdateToolTip()
+		/// <summary>
+		/// Walks up from <paramref name="node"/> (inclusive) to the nearest enclosing assembly node,
+		/// or null when the node sits outside any assembly.
+		/// </summary>
+		public static AssemblyTreeNode? FindEnclosing(SharpTreeNode? node)
 		{
-			tooltip = null;
-			RaisePropertyChanged(nameof(ToolTip));
+			while (node != null)
+			{
+				if (node is AssemblyTreeNode a)
+					return a;
+				node = node.Parent;
+			}
+			return null;
 		}
 
-		public override bool ShowExpander {
-			get { return !LoadedAssembly.HasLoadError; }
+		// Drag-drop (handled generically by SharpTreeView, which delegates to these). The drag
+		// payload is the assemblies' file paths so a reorder and an external file drop unify through
+		// AssemblyListTreeNode.Drop -> OpenAssembly (which dedupes) + Move.
+		internal const string DataFormat = "ILSpyAssemblies";
+
+		public override bool CanDrag(SharpTreeNode[] nodes)
+			=> nodes.All(n => n is AssemblyTreeNode { PackageEntry: null });
+
+		public override ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.IPlatformDataObject Copy(SharpTreeNode[] nodes)
+		{
+			var data = new ILSpy.Controls.TreeView.AvaloniaDataObject();
+			data.SetData(DataFormat, nodes.OfType<AssemblyTreeNode>().Select(n => n.LoadedAssembly.FileName).ToArray());
+			return data;
 		}
 
-		async void Init()
+		internal AssemblyTreeNode(LoadedAssembly assembly, PackageEntry? packageEntry)
+		{
+			ArgumentNullException.ThrowIfNull(assembly);
+			this.assembly = assembly;
+			this.PackageEntry = packageEntry;
+			LazyLoading = true;
+			// Observe the load OUTCOME without triggering it — the cooldown sweep and
+			// explicit user actions (path-restore, expand) are what start the load.
+			// If we called GetLoadResultAsync here we'd flatten the lazy strategy and
+			// every assembly in the list would load the moment its tree node is built.
+			assembly.Loaded += OnAssemblyLoaded;
+			if (assembly.IsLoaded)
+				OnAssemblyLoaded(); // already finished before we subscribed — catch up
+		}
+
+		void OnAssemblyLoaded()
+		{
+			// The Loaded event fires from a thread-pool ContinueWith. Marshal to the UI
+			// thread before mutating tree-node state and raising change notifications;
+			// SharpTreeNode's RaisePropertyChanged is not thread-safe.
+			global::Avalonia.Threading.Dispatcher.UIThread.Post(InitFromLoadResult,
+				global::Avalonia.Threading.DispatcherPriority.Background);
+		}
+
+		void InitFromLoadResult()
 		{
 			try
 			{
-				await this.LoadedAssembly.GetLoadResultAsync();
-				RaisePropertyChanged(nameof(Text)); // shortname might have changed
+				// GetLoadResultAsync is a no-op now — the load is already complete.
+				var loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				cachedModule = loadResult.MetadataFile;
+				if (cachedModule == null && loadResult.Package == null)
+				{
+					loadError = File.Exists(assembly.FileName)
+						? $"Failed to load '{assembly.FileName}'."
+						: $"File not found:\n{assembly.FileName}";
+				}
 			}
-			catch
+			catch (Exception ex)
 			{
-				RaisePropertyChanged(nameof(ShowExpander)); // cannot expand assemblies with load error
+				loadError = $"Failed to load '{assembly.FileName}':\n{ex.GetBaseException().Message}";
 			}
-			// change from "Loading" icon to final icon
+			RaisePropertyChanged(nameof(Text));
 			RaisePropertyChanged(nameof(Icon));
-			RaisePropertyChanged(nameof(ExpandedIcon));
 			RaisePropertyChanged(nameof(ToolTip));
+			RaisePropertyChanged(nameof(ShowExpander));
+		}
+
+		// Assemblies nested in NuGet packages can't be unloaded individually — the parent
+		// package entry owns them.
+		public override bool CanDelete() => PackageEntry == null;
+
+		public override void Delete() => DeleteCore();
+
+		public override void DeleteCore() => assembly.AssemblyList.Unload(assembly);
+
+		public override bool Save()
+		{
+			// Intercept the File → Save Code flow for valid managed assemblies whose active
+			// language supports project export (e.g. C#). Offers both the .csproj and the
+			// single-file filter; the picked extension drives the export mode. Languages
+			// without a ProjectFileExtension (the IL disassembler) fall through to the base
+			// single-file path.
+			if (!assembly.IsLoadedAsValidAssembly)
+				return false;
+			var languageService = TryGetLanguageService();
+			if (languageService == null)
+				return false;
+			var language = languageService.CurrentLanguage;
+			if (string.IsNullOrEmpty(language.ProjectFileExtension))
+				return false;
+			SaveAsProjectOrSingleFileAsync(language).HandleExceptions();
+			return true;
+		}
+
+		async Task SaveAsProjectOrSingleFileAsync(Language language)
+		{
+			var shortName = CleanSuggestedFileName(assembly.ShortName);
+			var filter = $"{language.Name} project (*{language.ProjectFileExtension})|*{language.ProjectFileExtension}"
+				+ $"|{language.Name} (*{language.FileExtension})|*{language.FileExtension}"
+				+ "|All files (*.*)|*.*";
+			var defaultName = shortName + language.ProjectFileExtension;
+			var path = await Commands.FilePickers.SaveAsync(filter, defaultName, "Save Code").ConfigureAwait(false);
+			if (string.IsNullOrEmpty(path))
+				return;
+
+			var ext = Path.GetExtension(path);
+			var isProject = string.Equals(ext, language.ProjectFileExtension, StringComparison.OrdinalIgnoreCase);
+
+			await Task.Run(() => {
+				var options = new DecompilationOptions {
+					FullDecompilation = true,
+					EscapeInvalidIdentifiers = true,
+				};
+				if (isProject)
+					options.SaveAsProjectDirectory = Path.GetDirectoryName(path);
+				using var writer = new StreamWriter(path);
+				var output = new PlainTextOutput(writer);
+				try
+				{
+					language.DecompileAssembly(assembly, output, options);
+				}
+				catch (Exception ex)
+				{
+					output.WriteLine();
+					output.WriteLine("/* Save failed:");
+					output.WriteLine(ex.ToString());
+					output.WriteLine("*/");
+				}
+			}).ConfigureAwait(false);
+		}
+
+		static string CleanSuggestedFileName(string name)
+		{
+			var invalid = Path.GetInvalidFileNameChars();
+			var clean = name;
+			foreach (var c in invalid)
+				clean = clean.Replace(c, '_');
+			return clean;
+		}
+
+		static LanguageService? TryGetLanguageService()
+		{
+			try
+			{ return AppEnv.AppComposition.Current.GetExport<LanguageService>(); }
+			catch { return null; }
+		}
+
+		public override object Text => assembly.Text;
+
+		// ToString is the stable identity used by SessionSettings.ActiveTreeViewPath — must not
+		// depend on the active language. The full file path uniquely identifies the assembly.
+		public override string ToString() => assembly.FileName;
+
+		public override object Icon {
+			get {
+				if (assembly.HasLoadError || loadError != null)
+					return Images.Images.AssemblyWarning;
+				if (!assembly.IsLoaded)
+					return Images.Images.AssemblyLoading;
+
+				var loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				if (loadResult.Package != null)
+				{
+					return loadResult.Package.Kind switch {
+						LoadedPackage.PackageKind.Zip => Images.Images.NuGet,
+						_ => Images.Images.Library,
+					};
+				}
+				if (loadResult.MetadataFile != null)
+				{
+					return loadResult.MetadataFile.Kind switch {
+						MetadataFile.MetadataFileKind.PortableExecutable => Images.Images.Assembly,
+						MetadataFile.MetadataFileKind.ProgramDebugDatabase => Images.Images.ProgramDebugDatabase,
+						MetadataFile.MetadataFileKind.WebCIL => Images.Images.WebAssemblyFile,
+						_ => Images.Images.MetadataFile,
+					};
+				}
+				return Images.Images.Assembly;
+			}
+		}
+
+		public override object? ToolTip {
+			get {
+				if (assembly.HasLoadError || loadError != null)
+					return loadError ?? "Assembly could not be loaded.";
+				if (!assembly.IsLoaded || cachedModule == null)
+					return assembly.FileName;
+
+				var tb = new TextBlock { TextWrapping = TextWrapping.Wrap };
+
+				var metadata = cachedModule.Metadata;
+				if (metadata?.IsAssembly == true && metadata.TryGetFullAssemblyName(out var assemblyName))
+				{
+					tb.Inlines!.Add(BoldRun("Name: "));
+					tb.Inlines.Add(new Run(assemblyName));
+					tb.Inlines.Add(new LineBreak());
+				}
+
+				tb.Inlines!.Add(BoldRun("Location: "));
+				tb.Inlines.Add(new Run(assembly.FileName));
+
+				if (cachedModule is PEFile peFile)
+				{
+					tb.Inlines.Add(new LineBreak());
+					tb.Inlines.Add(BoldRun("Architecture: "));
+					tb.Inlines.Add(new Run(GetPlatformDisplayName(peFile)));
+				}
+
+				string? runtime = GetRuntimeDisplayName(cachedModule);
+				if (runtime != null)
+				{
+					tb.Inlines.Add(new LineBreak());
+					tb.Inlines.Add(BoldRun("Runtime: "));
+					tb.Inlines.Add(new Run(runtime));
+				}
+
+				return tb;
+			}
+		}
+
+		public override bool ShowExpander => !assembly.HasLoadError && loadError == null && base.ShowExpander;
+
+		public override bool IsAutoLoaded => assembly.IsAutoLoaded;
+
+		/// <summary>
+		/// Finds the <see cref="NamespaceTreeNode"/> for the given namespace string, or
+		/// <c>null</c> if no children are loaded yet or the namespace has no top-level types
+		/// in this assembly.
+		/// </summary>
+		public NamespaceTreeNode? FindNamespaceNode(string namespaceName)
+		{
+			ArgumentNullException.ThrowIfNull(namespaceName);
+			EnsureLazyChildren();
+			return Children.OfType<NamespaceTreeNode>().FirstOrDefault(ns => ns.Name == namespaceName);
+		}
+
+		/// <summary>
+		/// Finds the <see cref="TypeTreeNode"/> for the given top-level type definition.
+		/// Walks the assembly's namespaces (loading them as needed) and matches by
+		/// <see cref="TypeTreeNode.Handle"/>.
+		/// </summary>
+		public TypeTreeNode? FindTypeNode(ITypeDefinition type)
+		{
+			ArgumentNullException.ThrowIfNull(type);
+			var ns = FindNamespaceNode(type.Namespace);
+			if (ns == null)
+				return null;
+			ns.EnsureLazyChildren();
+			var handle = (System.Reflection.Metadata.TypeDefinitionHandle)type.MetadataToken;
+			return ns.Children.OfType<TypeTreeNode>().FirstOrDefault(n => n.Handle == handle);
 		}
 
 		protected override void LoadChildren()
@@ -229,184 +343,115 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			LoadResult loadResult;
 			try
 			{
-				loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
 			}
 			catch
 			{
-				// if we crashed on loading, then we don't have any children
 				return;
 			}
+
+			// Zip / .NET-bundle packages: surface their folder structure instead of trying to
+			// decompile the package itself.
+			if (loadResult.Package != null)
+			{
+				foreach (var child in PackageFolderTreeNode.LoadChildrenForFolder(loadResult.Package.RootFolder))
+					Children.Add(child);
+				return;
+			}
+
+			var module = loadResult.MetadataFile ?? cachedModule;
+			if (module == null)
+				return;
+
+			if (module.Kind != MetadataFile.MetadataFileKind.PortableExecutable
+				&& module.Kind != MetadataFile.MetadataFileKind.WebCIL)
+			{
+				return;
+			}
+
+			Children.Add(new ILSpy.Metadata.MetadataTreeNode(module, ICSharpCode.ILSpy.Properties.Resources.Metadata));
+
+			// Surface portable PDB metadata (embedded or side-by-side) as a top-level sibling
+			// of the host Metadata folder so PDB browsing is one click away instead of buried
+			// under Metadata → Debug Directory. Reuses the cached PdbProvider that the rest of
+			// the app already opened for decompilation — no second parse of the PDB blob.
+			var debugInfo = assembly.GetDebugInfoOrNull();
+			if (debugInfo is PortableDebugInfoProvider ppdb
+				&& ppdb.GetMetadataReader() is not null)
+			{
+				var label = $"Debug Metadata ({(ppdb.IsEmbedded ? "Embedded" : "From portable PDB")})";
+				Children.Add(new ILSpy.Metadata.MetadataTreeNode(ppdb.ToMetadataFile(), label));
+			}
+
+			Children.Add(new ReferenceFolderTreeNode(module, this));
+
+			if (module.Resources.Any())
+				Children.Add(new ResourceListTreeNode(module));
+
+			var metadata = module.Metadata;
+			// Every top-level namespace string in the module — INCLUDING the empty string for
+			// types declared at module scope. The empty namespace becomes a NamespaceTreeNode
+			// whose Text renders as "-"; without that path, global-namespace types (every PE's
+			// <Module> pseudo-type plus any user-declared ones) would have no parent node to
+			// live under, and the long-standing tree shape would break.
+			var namespaces = metadata.TypeDefinitions
+				.Where(t => metadata.GetTypeDefinition(t).GetDeclaringType().IsNil)
+				.Select(t => metadata.GetString(metadata.GetTypeDefinition(t).Namespace))
+				.Distinct()
+				.OrderBy(ns => ns, NaturalStringComparer.Instance);
+
+			if (TryGetUseNestedNamespaceNodes())
+			{
+				// Build the nested chain: every dotted namespace string becomes a node whose
+				// parent is the namespace one segment shorter. Intermediate ancestors that
+				// don't appear in the namespaces list themselves (e.g. an assembly that has
+				// "System.Collections.Generic" but no types directly in "System") still get
+				// created — EnsureNested walks the parent chain.
+				var byFullName = new Dictionary<string, NamespaceTreeNode>(StringComparer.Ordinal);
+				foreach (var ns in namespaces)
+					EnsureNested(ns, byFullName);
+			}
+			else
+			{
+				foreach (var ns in namespaces)
+					Children.Add(new NamespaceTreeNode(ns, module));
+			}
+
+			NamespaceTreeNode EnsureNested(string fullNs, Dictionary<string, NamespaceTreeNode> byFullName)
+			{
+				if (byFullName.TryGetValue(fullNs, out var existing))
+					return existing;
+				int dot = fullNs.LastIndexOf('.');
+				NamespaceTreeNode node;
+				if (dot < 0)
+				{
+					// Top-level: display equals full name. The empty-namespace case lands here
+					// too, mapping to the "-" display.
+					node = new NamespaceTreeNode(fullNs, module);
+					Children.Add(node);
+				}
+				else
+				{
+					var parent = EnsureNested(fullNs.Substring(0, dot), byFullName);
+					var displayName = fullNs.Substring(dot + 1);
+					node = new NamespaceTreeNode(displayName, fullNs, module);
+					parent.Children.Add(node);
+				}
+				byFullName[fullNs] = node;
+				return node;
+			}
+		}
+
+		static bool TryGetUseNestedNamespaceNodes()
+		{
 			try
 			{
-				if (loadResult.MetadataFile != null)
-				{
-					switch (loadResult.MetadataFile.Kind)
-					{
-						case MetadataFile.MetadataFileKind.PortableExecutable:
-						case MetadataFile.MetadataFileKind.WebCIL:
-							LoadChildrenForExecutableFile(loadResult.MetadataFile);
-							break;
-						default:
-							var metadata = loadResult.MetadataFile;
-							this.Children.Add(new MetadataTablesTreeNode(metadata));
-							this.Children.Add(new StringHeapTreeNode(metadata));
-							this.Children.Add(new UserStringHeapTreeNode(metadata));
-							this.Children.Add(new GuidHeapTreeNode(metadata));
-							this.Children.Add(new BlobHeapTreeNode(metadata));
-							break;
-					}
-				}
-				else if (loadResult.Package != null)
-				{
-					var package = loadResult.Package;
-					this.Children.AddRange(PackageFolderTreeNode.LoadChildrenForFolder(package.RootFolder));
-				}
+				return AppComposition.Current.GetExport<SettingsService>().DisplaySettings.UseNestedNamespaceNodes;
 			}
-			catch (Exception ex)
+			catch
 			{
-				App.UnhandledException(ex);
+				return false;
 			}
-		}
-
-		void LoadChildrenForExecutableFile(MetadataFile module)
-		{
-			typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull(SettingsService, AssemblyTreeModel.CurrentLanguageVersion);
-			var assembly = (MetadataModule)typeSystem.MainModule;
-			this.Children.Add(new MetadataTreeNode(module, Resources.Metadata));
-			Decompiler.DebugInfo.IDebugInfoProvider debugInfo = LoadedAssembly.GetDebugInfoOrNull();
-			if (debugInfo is PortableDebugInfoProvider ppdb
-				&& ppdb.GetMetadataReader() is System.Reflection.Metadata.MetadataReader reader)
-			{
-				this.Children.Add(new MetadataTreeNode(ppdb.ToMetadataFile(), $"Debug Metadata ({(ppdb.IsEmbedded ? "Embedded" : "From portable PDB")})"));
-			}
-			this.Children.Add(new ReferenceFolderTreeNode(module, this));
-			if (module.Resources.Any())
-				this.Children.Add(new ResourceListTreeNode(module));
-			foreach (NamespaceTreeNode ns in namespaces.Values)
-			{
-				ns.Children.Clear();
-			}
-			namespaces.Clear();
-			bool useNestedStructure = SettingsService.DisplaySettings.UseNestedNamespaceNodes;
-			foreach (var type in assembly.TopLevelTypeDefinitions.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
-			{
-				var ns = GetOrCreateNamespaceTreeNode(type.Namespace);
-				TypeTreeNode node = new TypeTreeNode(type, this);
-				typeDict[(TypeDefinitionHandle)type.MetadataToken] = node;
-				ns.Children.Add(node);
-			}
-			foreach (NamespaceTreeNode ns in namespaces.Values
-				.Where(ns => ns.Children.Count > 0 && ns.Parent == null)
-				.OrderBy(n => n.Name, NaturalStringComparer.Instance))
-			{
-				this.Children.Add(ns);
-				SetPublicAPI(ns);
-			}
-
-			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string @namespace)
-			{
-				if (!namespaces.TryGetValue(@namespace, out NamespaceTreeNode ns))
-				{
-					if (useNestedStructure)
-					{
-						int decimalIndex = @namespace.LastIndexOf('.');
-						if (decimalIndex < 0)
-						{
-							var escapedNamespace = ILAmbience.EscapeName(@namespace);
-							ns = new NamespaceTreeNode(escapedNamespace);
-						}
-						else
-						{
-							var parentNamespaceTreeNode = GetOrCreateNamespaceTreeNode(@namespace.Substring(0, decimalIndex));
-							var escapedInnerNamespace = ILAmbience.EscapeName(@namespace.Substring(decimalIndex + 1));
-							ns = new NamespaceTreeNode(escapedInnerNamespace);
-							parentNamespaceTreeNode.Children.Add(ns);
-						}
-					}
-					else
-					{
-						var escapedNamespace = ILAmbience.EscapeName(@namespace);
-						ns = new NamespaceTreeNode(escapedNamespace);
-					}
-					namespaces.Add(@namespace, ns);
-				}
-				return ns;
-			}
-		}
-
-		private static void SetPublicAPI(NamespaceTreeNode ns)
-		{
-			foreach (NamespaceTreeNode innerNamespace in ns.Children.OfType<NamespaceTreeNode>())
-			{
-				SetPublicAPI(innerNamespace);
-			}
-			ns.SetPublicAPI(ns.Children.OfType<ILSpyTreeNode>().Any(n => n.IsPublicAPI));
-		}
-
-		/// <summary>
-		/// Finds the node for a top-level type.
-		/// </summary>
-		public TypeTreeNode FindTypeNode(ITypeDefinition type)
-		{
-			if (type == null)
-				return null;
-			EnsureLazyChildren();
-			TypeTreeNode node;
-			if (typeDict.TryGetValue((TypeDefinitionHandle)type.MetadataToken, out node))
-				return node;
-			else
-				return null;
-		}
-
-		/// <summary>
-		/// Finds the node for a namespace.
-		/// </summary>
-		public NamespaceTreeNode FindNamespaceNode(string namespaceName)
-		{
-			if (string.IsNullOrEmpty(namespaceName))
-				return null;
-			EnsureLazyChildren();
-			NamespaceTreeNode node;
-			if (namespaces.TryGetValue(namespaceName, out node))
-				return node;
-			else
-				return null;
-		}
-
-		public override bool CanDrag(SharpTreeNode[] nodes)
-		{
-			// prohibit dragging assemblies nested in nuget packages
-			return nodes.All(n => n is AssemblyTreeNode { PackageEntry: null });
-		}
-
-		public override void StartDrag(object dragSource, SharpTreeNode[] nodes, IPlatformDragDrop dragdropManager)
-		{
-			dragdropManager.DoDragDrop(dragSource, Copy(nodes), XPlatDragDropEffects.All);
-		}
-
-		public override bool CanDelete()
-		{
-			// prohibit deleting assemblies nested in nuget packages
-			return PackageEntry == null;
-		}
-
-		public override void Delete()
-		{
-			DeleteCore();
-		}
-
-		public override void DeleteCore()
-		{
-			LoadedAssembly.AssemblyList.Unload(LoadedAssembly);
-		}
-
-		internal const string DataFormat = "ILSpyAssemblies";
-
-		public override IPlatformDataObject Copy(SharpTreeNode[] nodes)
-		{
-			var dataObject = new WpfWindowsDataObject(new DataObject());
-			dataObject.SetData(DataFormat, nodes.OfType<AssemblyTreeNode>().Select(n => n.LoadedAssembly.FileName).ToArray());
-			return dataObject;
 		}
 
 		public override FilterResult Filter(LanguageSettings settings)
@@ -422,32 +467,29 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			void HandleException(Exception ex, string message)
 			{
 				language.WriteCommentLine(output, message);
-
 				output.WriteLine();
-				output.MarkFoldStart("Exception details", true);
-				output.Write(ex.ToString());
-				output.MarkFoldEnd();
+				output.WriteExceptionDetails(ex);
 			}
 
 			try
 			{
-				var loadResult = LoadedAssembly.GetLoadResultAsync().GetAwaiter().GetResult();
+				var loadResult = assembly.GetLoadResultAsync().GetAwaiter().GetResult();
 				if (loadResult.MetadataFile != null)
 				{
 					switch (loadResult.MetadataFile.Kind)
 					{
 						case MetadataFile.MetadataFileKind.ProgramDebugDatabase:
 						case MetadataFile.MetadataFileKind.Metadata:
-							output.WriteLine("// " + LoadedAssembly.FileName);
+							output.WriteLine("// " + assembly.FileName);
 							break;
 						default:
-							language.DecompileAssembly(LoadedAssembly, output, options);
+							language.DecompileAssembly(assembly, output, options);
 							break;
 					}
 				}
 				else if (loadResult.Package != null)
 				{
-					output.WriteLine("// " + LoadedAssembly.FileName);
+					output.WriteLine("// " + assembly.FileName);
 					DecompilePackage(loadResult.Package, output);
 				}
 				else if (loadResult.FileLoadException != null)
@@ -473,7 +515,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		private void DecompilePackage(LoadedPackage package, ITextOutput output)
+		static void DecompilePackage(LoadedPackage package, ITextOutput output)
 		{
 			switch (package.Kind)
 			{
@@ -493,284 +535,154 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public override bool Save(TabPageModel tabPage)
+		static Run BoldRun(string text) => new(text) { FontWeight = FontWeight.Bold };
+
+		static string GetPlatformDisplayName(PEFile file)
 		{
-			if (!LoadedAssembly.IsLoadedAsValidAssembly)
-				return false;
-			Language language = this.Language;
-			if (string.IsNullOrEmpty(language.ProjectFileExtension))
-				return false;
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = WholeProjectDecompiler.CleanUpFileName(LoadedAssembly.ShortName, language.ProjectFileExtension);
-			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
-			if (dlg.ShowDialog() == true)
+			return file.Reader.PEHeaders.CoffHeader.Machine switch {
+				System.Reflection.PortableExecutable.Machine.I386 => "x86",
+				System.Reflection.PortableExecutable.Machine.Amd64 => "x64",
+				System.Reflection.PortableExecutable.Machine.IA64 => "Itanium",
+				System.Reflection.PortableExecutable.Machine.Arm => "ARM",
+				System.Reflection.PortableExecutable.Machine.Arm64 => "ARM64",
+				_ => file.Reader.PEHeaders.CoffHeader.Machine.ToString(),
+			};
+		}
+
+		static string? GetRuntimeDisplayName(MetadataFile module)
+		{
+			return module.Metadata.MetadataKind switch {
+				System.Reflection.Metadata.MetadataKind.Ecma335 => module.Metadata.MetadataVersion,
+				System.Reflection.Metadata.MetadataKind.WindowsMetadata => "WinRT",
+				System.Reflection.Metadata.MetadataKind.ManagedWindowsMetadata => "Managed WinRT",
+				_ => null,
+			};
+		}
+
+		// Right-click → "Remove" — unloads every selected assembly from the active list. Only
+		// visible when the entire selection is assembly nodes, so it doesn't pollute right-click
+		// menus opened on member / namespace / resource rows. MEF discovers this via the
+		// [ExportContextMenuEntry] attribute and surfaces it through ContextMenuEntryRegistry.
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Remove), Icon = "Images/Delete", Order = 910)]
+		[System.Composition.Shared]
+		sealed class RemoveAssembly : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
 			{
-				var options = DockWorkspace.ActiveTabPage.CreateDecompilationOptions();
-				options.FullDecompilation = true;
-				if (dlg.FilterIndex == 1)
+				var nodes = context.SelectedTreeNodes;
+				return nodes is { Length: > 0 } && nodes.All(n => n is AssemblyTreeNode);
+			}
+
+			public bool IsEnabled(TextViewContext context) => true;
+
+			public void Execute(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes == null)
+					return;
+				// Snapshot before mutation — Unload reshapes the tree and the live selection.
+				foreach (var node in context.SelectedTreeNodes.OfType<AssemblyTreeNode>().ToArray())
+					node.Delete();
+			}
+		}
+
+		// Right-click → "Reload" — re-reads each selected assembly from disk so the user can
+		// pick up edits made by an external build without restarting ILSpy. Same visibility
+		// shape as Remove (assembly nodes only). The model's existing path-restoration plumbing
+		// handles re-selecting equivalent nodes after the reload churns the tree.
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._Reload), Icon = "Images/Refresh", Order = 900)]
+		[System.Composition.Shared]
+		[method: System.Composition.ImportingConstructor]
+		sealed class ReloadAssembly(AssemblyTree.AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+			{
+				var nodes = context.SelectedTreeNodes;
+				return nodes is { Length: > 0 } && nodes.All(n => n is AssemblyTreeNode);
+			}
+
+			public bool IsEnabled(TextViewContext context) => true;
+
+			public void Execute(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes == null)
+					return;
+				// Snapshot before mutation — ReloadAssembly mutates the AssemblyList and the
+				// live tree selection.
+				var nodes = context.SelectedTreeNodes.OfType<AssemblyTreeNode>().ToArray();
+				var paths = nodes.Select(n => AssemblyTree.AssemblyTreeModel.GetPathForNode(n)).ToArray();
+				foreach (var node in nodes)
 				{
-					options.SaveAsProjectDirectory = Path.GetDirectoryName(dlg.FileName);
-					foreach (string entry in Directory.GetFileSystemEntries(options.SaveAsProjectDirectory))
-					{
-						if (!string.Equals(entry, dlg.FileName, StringComparison.OrdinalIgnoreCase))
-						{
-							var result = MessageBox.Show(
-								Resources.AssemblySaveCodeDirectoryNotEmpty,
-								Resources.AssemblySaveCodeDirectoryNotEmptyTitle,
-								MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-							if (result == MessageBoxResult.No)
-								return true; // don't save, but mark the Save operation as handled
-							break;
-						}
-					}
+					var loaded = node.LoadedAssembly;
+					loaded.AssemblyList.ReloadAssembly(loaded.FileName);
 				}
-				tabPage.ShowTextView(textView => textView.SaveToDisk(language, new[] { this }, options, dlg.FileName));
-			}
-			return true;
-		}
-
-		public override string ToString()
-		{
-			// ToString is used by FindNodeByPath/GetPathForNode
-			// Fixes #821 - Reload All Assemblies Should Point to the Correct Assembly
-			return LoadedAssembly.FileName;
-		}
-	}
-
-	[ExportContextMenuEntry(Header = nameof(Resources._Remove), Icon = "images/Delete")]
-	[Shared]
-	sealed class RemoveAssembly : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			return true;
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return;
-			foreach (var node in context.SelectedTreeNodes)
-			{
-				node.Delete();
-			}
-		}
-	}
-
-	[ExportContextMenuEntry(Header = nameof(Resources._Reload), Icon = "images/Refresh")]
-	[Shared]
-	sealed class ReloadAssembly(AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			return true;
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return;
-			var paths = new List<string[]>();
-			using (context.TreeView.LockUpdates())
-			{
-				foreach (var node in context.SelectedTreeNodes)
+				// Re-select using the saved paths so the user keeps their position after the
+				// LoadedAssembly instances are swapped out.
+				if (paths.Length > 0)
 				{
-					paths.Add(AssemblyTreeModel.GetPathForNode(node));
-					var la = ((AssemblyTreeNode)node).LoadedAssembly;
-					la.AssemblyList.ReloadAssembly(la.FileName);
+					var restored = paths
+						.Select(p => assemblyTreeModel.FindNodeByPath(p, returnBestMatch: true))
+						.OfType<ICSharpCode.ILSpyX.TreeView.SharpTreeNode>()
+						.LastOrDefault();
+					if (restored != null)
+						assemblyTreeModel.SelectNode(restored);
 				}
 			}
-			assemblyTreeModel.SelectNodes(paths.Select(p => assemblyTreeModel.FindNodeByPath(p, true)).ToArray());
-			assemblyTreeModel.RefreshDecompiledView();
-		}
-	}
-
-	[ExportContextMenuEntry(Header = nameof(Resources._LoadDependencies), Category = nameof(Resources.Dependencies))]
-	[Shared]
-	sealed class LoadDependencies(AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode asm && asm.LoadedAssembly.IsLoadedAsValidAssembly);
 		}
 
-		public bool IsEnabled(TextViewContext context)
+		// Right-click → "Load Dependencies" — resolves every AssemblyReference on every
+		// selected assembly through that assembly's resolver, in parallel. Useful when
+		// IL references types from assemblies that haven't been loaded yet; running this
+		// first turns "unresolved type" placeholders into linked, decompilable nodes.
+		// Visible when the selection is exactly one or more valid loaded assemblies.
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._LoadDependencies), Category = nameof(ICSharpCode.ILSpy.Properties.Resources.Dependencies), Order = 700)]
+		[System.Composition.Shared]
+		[method: System.Composition.ImportingConstructor]
+		sealed class LoadDependencies(AssemblyTree.AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
 		{
-			return true;
-		}
-
-		public async void Execute(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return;
-			var tasks = new List<Task>();
-			foreach (var node in context.SelectedTreeNodes)
+			public bool IsVisible(TextViewContext context)
 			{
-				var la = ((AssemblyTreeNode)node).LoadedAssembly;
-				var resolver = la.GetAssemblyResolver();
-				var module = la.GetMetadataFileOrNull();
-				if (module != null)
-				{
-					var metadata = module.Metadata;
-					foreach (var assyRef in metadata.AssemblyReferences)
-					{
-						tasks.Add(resolver.ResolveAsync(new AssemblyReference(module, assyRef)));
-					}
-				}
+				var nodes = context.SelectedTreeNodes;
+				return nodes is { Length: > 0 }
+					&& nodes.All(n => n is AssemblyTreeNode { LoadedAssembly.IsLoadedAsValidAssembly: true });
 			}
-			await Task.WhenAll(tasks);
-			assemblyTreeModel.RefreshDecompiledView();
-		}
-	}
 
-	[ExportContextMenuEntry(Header = nameof(Resources._AddMainList), Category = nameof(Resources.Dependencies))]
-	[Shared]
-	sealed class AddToMainList(AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes.Where(n => n is AssemblyTreeNode).Any(n => ((AssemblyTreeNode)n).IsAutoLoaded);
-		}
+			public bool IsEnabled(TextViewContext context) => true;
 
-		public bool IsEnabled(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes.Any(n => n is AssemblyTreeNode);
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return;
-			foreach (var node in context.SelectedTreeNodes)
+			public async void Execute(TextViewContext context)
 			{
-				var loadedAssm = ((AssemblyTreeNode)node).LoadedAssembly;
-				if (!loadedAssm.HasLoadError)
+				if (context.SelectedTreeNodes == null)
+					return;
+				await assemblyTreeModel.LoadDependenciesAsync(context.SelectedTreeNodes);
+			}
+		}
+
+		// Promotes an auto-loaded (on-demand resolved) dependency into a permanent member of the
+		// assembly list, so it survives a list reload. Visible only when an auto-loaded assembly is
+		// selected. Mirrors the previous version's "Add to main list".
+		[ExportContextMenuEntry(Header = nameof(ICSharpCode.ILSpy.Properties.Resources._AddMainList), Category = nameof(ICSharpCode.ILSpy.Properties.Resources.Dependencies), Order = 710)]
+		[System.Composition.Shared]
+		[method: System.Composition.ImportingConstructor]
+		sealed class AddToMainList(AssemblyTree.AssemblyTreeModel assemblyTreeModel) : IContextMenuEntry
+		{
+			public bool IsVisible(TextViewContext context)
+				=> context.SelectedTreeNodes?.OfType<AssemblyTreeNode>().Any(n => n.IsAutoLoaded) == true;
+
+			public bool IsEnabled(TextViewContext context)
+				=> context.SelectedTreeNodes?.OfType<AssemblyTreeNode>().Any() == true;
+
+			public void Execute(TextViewContext context)
+			{
+				if (context.SelectedTreeNodes == null)
+					return;
+				foreach (var node in context.SelectedTreeNodes.OfType<AssemblyTreeNode>())
 				{
-					loadedAssm.IsAutoLoaded = false;
+					if (node.LoadedAssembly.HasLoadError)
+						continue;
+					node.LoadedAssembly.IsAutoLoaded = false;
 					node.RaisePropertyChanged(nameof(ILSpyTreeNode.IsAutoLoaded));
 				}
-			}
-
-			assemblyTreeModel.AssemblyList.RefreshSave();
-		}
-	}
-
-	[ExportContextMenuEntry(Header = nameof(Resources._OpenContainingFolder), Category = nameof(Resources.Shell))]
-	[Shared]
-	sealed class OpenContainingFolder : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes
-				.All(n => {
-					var a = GetAssemblyTreeNode(n);
-					return a != null && File.Exists(a.LoadedAssembly.FileName);
-				});
-		}
-
-		internal static AssemblyTreeNode GetAssemblyTreeNode(SharpTreeNode node)
-		{
-			while (node != null)
-			{
-				if (node is AssemblyTreeNode a)
-					return a;
-				node = node.Parent;
-			}
-			return null;
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes
-				.All(n => {
-					var a = GetAssemblyTreeNode(n);
-					return a != null && File.Exists(a.LoadedAssembly.FileName);
-				});
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return;
-			var paths = new List<string>();
-			foreach (var n in context.SelectedTreeNodes)
-			{
-				var node = GetAssemblyTreeNode(n);
-				var path = node.LoadedAssembly.FileName;
-				if (File.Exists(path))
-				{
-					paths.Add(path);
-				}
-			}
-			if (paths.Count > 0)
-				ShellHelper.OpenFolderAndSelectItems(paths);
-		}
-	}
-
-	[ExportContextMenuEntry(Header = nameof(Resources._OpenCommandLineHere), Category = nameof(Resources.Shell))]
-	[Shared]
-	sealed class OpenCmdHere : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes
-				.All(n => {
-					var a = OpenContainingFolder.GetAssemblyTreeNode(n);
-					return a != null && File.Exists(a.LoadedAssembly.FileName);
-				});
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return false;
-			return context.SelectedTreeNodes
-				.All(n => {
-					var a = OpenContainingFolder.GetAssemblyTreeNode(n);
-					return a != null && File.Exists(a.LoadedAssembly.FileName);
-				});
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			if (context.SelectedTreeNodes == null)
-				return;
-			foreach (var n in context.SelectedTreeNodes)
-			{
-				var node = OpenContainingFolder.GetAssemblyTreeNode(n);
-				var path = Path.GetDirectoryName(node.LoadedAssembly.FileName);
-				if (Directory.Exists(path))
-				{
-					GlobalUtils.OpenTerminalAt(path);
-				}
+				assemblyTreeModel.AssemblyList?.RefreshSave();
 			}
 		}
 	}
-
 }

@@ -55,6 +55,14 @@ namespace ICSharpCode.ILSpyX.Search
 		public Regex? RegEx;
 		public bool FullNameSearch;
 		public bool OmitGenerics;
+		// When set, CheckVisibility bypasses the api-visibility filter so private /
+		// compiler-generated entities (state-machines, display classes, anonymous
+		// closures — anything with `<...>` segments in its metadata name) become
+		// findable. Set by the query parser when the user types `<` or `>` in
+		// their search term: those characters are characteristically present in
+		// compiler-generated names and rare in everyday API names, so they're a
+		// reliable signal that the user wants the visibility filter relaxed.
+		public bool IncludePrivateApi;
 		public string InNamespace;
 		public string InAssembly;
 	}

@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ILSpy.Options"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
+             x:Class="ILSpy.Options.Panels.DisplaySettingsPanel"
+             x:DataType="vm:DisplaySettingsViewModel">
+	<!-- ScrollViewer Padding is collapsed on the vertical axis by the Simple-theme
+	     ScrollContentPresenter when a vertical scrollbar is present, and the outer
+	     StackPanel's measure also under-counts a trailing HeaderedContentControl's
+	     content. Wrapping in a Border with explicit Padding makes the padding part
+	     of the measured content so the last child stays reachable at max scroll. -->
+	<ScrollViewer>
+		<Border Padding="6,6,6,12">
+			<StackPanel Spacing="10">
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<TextBlock VerticalAlignment="Center" Text="{x:Static res:Resources.DisplaySettingsPanel_Theme}" />
+				<ComboBox MinWidth="120" ItemsSource="{Binding AllThemes}"
+				          SelectedItem="{Binding SessionSettings.Theme, Mode=TwoWay}" />
+			</StackPanel>
+			<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+				<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
+				           Text="{x:Static res:Resources.Font}" />
+				<ComboBox Grid.Row="0" Grid.Column="1" MinWidth="200"
+				          ItemsSource="{Binding AvailableFonts}"
+				          SelectedItem="{Binding Settings.SelectedFont, Mode=TwoWay}" />
+				<NumericUpDown Grid.Row="0" Grid.Column="2" Width="100"
+				               Minimum="6" Maximum="72" Increment="1"
+				               Value="{Binding Settings.SelectedFontSize, Mode=TwoWay}" />
+				<Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+				        BorderBrush="{DynamicResource ILSpy.ChromeBorder}" BorderThickness="1" Padding="6" Margin="0,2,0,0">
+					<!-- FontFamily binds to a derived FontFamily property because Avalonia's
+					     runtime binding pipeline doesn't coerce string → FontFamily (the
+					     implicit conversion only fires at XAML parse time). The viewmodel
+					     projects Settings.SelectedFont through the right type and re-fires
+					     PropertyChanged when the picker selection changes. -->
+					<TextBlock Text="The quick brown fox jumps over the lazy dog"
+					           FontFamily="{Binding CurrentFontFamily}"
+					           FontSize="{Binding Settings.SelectedFontSize}" />
+				</Border>
+			</Grid>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.Indentation}">
+				<StackPanel Spacing="4" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.IndentationUseTabs, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.UseTabsInsteadOfSpaces}" />
+					<Grid ColumnDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="6">
+						<TextBlock Grid.Column="0" VerticalAlignment="Center"
+						           Text="{x:Static res:Resources.IndentSize}" />
+						<NumericUpDown Grid.Column="1" Width="80" Minimum="1" Maximum="16"
+						               Value="{Binding Settings.IndentationSize, Mode=TwoWay}" />
+						<TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="12,0,0,0"
+						           Text="{x:Static res:Resources.TabSize}" />
+						<NumericUpDown Grid.Column="3" Width="80" Minimum="1" Maximum="16"
+						               Value="{Binding Settings.IndentationTabSize, Mode=TwoWay}" />
+					</Grid>
+				</StackPanel>
+			</HeaderedContentControl>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.DecompilationViewOptions}">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.ShowLineNumbers, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowLineNumbers}" />
+					<CheckBox IsChecked="{Binding Settings.EnableWordWrap, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.EnableWordWrap}" />
+					<CheckBox IsChecked="{Binding Settings.FoldBraces, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.EnableFoldingBlocksBraces}" />
+					<CheckBox IsChecked="{Binding Settings.HighlightMatchingBraces, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HighlightMatchingBraces}" />
+					<CheckBox IsChecked="{Binding Settings.HighlightCurrentLine, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HighlightCurrentLine}" />
+					<CheckBox IsChecked="{Binding Settings.ExpandMemberDefinitions, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ExpandMemberDefinitionsAfterDecompilation}" />
+					<CheckBox IsChecked="{Binding Settings.ExpandUsingDeclarations, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ExpandUsingDeclarationsAfterDecompilation}" />
+					<CheckBox IsChecked="{Binding Settings.ShowDebugInfo, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowInfoFromDebugSymbolsAvailable}" />
+					<CheckBox IsChecked="{Binding Settings.ShowRawOffsetsAndBytesBeforeInstruction, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowRawOffsetsAndBytesBeforeInstruction}" />
+					<CheckBox IsChecked="{Binding Settings.DecodeCustomAttributeBlobs, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.DecodeCustomAttributeBlobs}" />
+				</StackPanel>
+			</HeaderedContentControl>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.TreeViewOptions}">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.ShowMetadataTokens, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowMetadataTokens}" />
+					<CheckBox IsChecked="{Binding Settings.ShowMetadataTokensInBase10, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowMetadataTokensInBase10}" />
+					<CheckBox IsChecked="{Binding Settings.HideEmptyMetadataTables, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HideEmptyMetadataTables}" />
+					<CheckBox IsChecked="{Binding Settings.UseNestedNamespaceNodes, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.UseNestedNamespaceNodes}" />
+				</StackPanel>
+			</HeaderedContentControl>
+
+			<HeaderedContentControl Header="Tab options">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding SessionSettings.MultiLineDocumentTabs, Mode=TwoWay}"
+					          Content="Enable multiple rows in tab strip" />
+					<CheckBox IsChecked="{Binding SessionSettings.MouseWheelTogglesTabStripRows, Mode=TwoWay}"
+					          Content="Mouse wheel scroll toggles single/multiple row tab strip" />
+				</StackPanel>
+			</HeaderedContentControl>
+
+			<HeaderedContentControl Header="{x:Static res:Resources.Other}">
+				<StackPanel Spacing="2" Margin="12,4,0,0">
+					<CheckBox IsChecked="{Binding Settings.SortResults, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.SortResultsFitness}" />
+				</StackPanel>
+			</HeaderedContentControl>
+			</StackPanel>
+		</Border>
+	</ScrollViewer>
+</UserControl>

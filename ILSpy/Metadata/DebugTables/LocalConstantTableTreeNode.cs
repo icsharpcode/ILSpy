@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -22,9 +22,14 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ICSharpCode.ILSpy.Metadata
+namespace ILSpy.Metadata.DebugTables
 {
-	internal class LocalConstantTableTreeNode : DebugMetadataTableTreeNode<LocalConstantTableTreeNode.LocalConstantEntry>
+	/// <summary>
+	/// View of the LocalConstant table — named compile-time constants visible inside a
+	/// method body's debug info. Each row carries the constant's name and a blob holding
+	/// its type signature + serialised value.
+	/// </summary>
+	public sealed class LocalConstantTableTreeNode : MetadataTableTreeNode<LocalConstantTableTreeNode.LocalConstantEntry>
 	{
 		public LocalConstantTableTreeNode(MetadataFile metadataFile)
 			: base(TableIndex.LocalConstant, metadataFile)
@@ -34,27 +39,21 @@ namespace ICSharpCode.ILSpy.Metadata
 		protected override IReadOnlyList<LocalConstantEntry> LoadTable()
 		{
 			var list = new List<LocalConstantEntry>();
-
 			foreach (var row in metadataFile.Metadata.LocalConstants)
-			{
 				list.Add(new LocalConstantEntry(metadataFile, row));
-			}
-
 			return list;
 		}
 
-		internal readonly struct LocalConstantEntry
+		public sealed class LocalConstantEntry
 		{
-			readonly int? offset;
 			readonly MetadataFile metadataFile;
 			readonly LocalConstantHandle handle;
 			readonly LocalConstant localConst;
 
 			public int RID => MetadataTokens.GetRowNumber(handle);
 
+			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
-
-			public object Offset => offset == null ? "n/a" : (object)offset;
 
 			public string Name => metadataFile.Metadata.GetString(localConst.Name);
 
@@ -65,11 +64,9 @@ namespace ICSharpCode.ILSpy.Metadata
 
 			public LocalConstantEntry(MetadataFile metadataFile, LocalConstantHandle handle)
 			{
-				this.offset = metadataFile.IsEmbedded ? null : (int?)metadataFile.Metadata.GetTableMetadataOffset(TableIndex.LocalConstant)
-					+ metadataFile.Metadata.GetTableRowSize(TableIndex.LocalConstant) * (MetadataTokens.GetRowNumber(handle) - 1);
 				this.metadataFile = metadataFile;
 				this.handle = handle;
-				this.localConst = metadataFile.Metadata.GetLocalConstant(handle);
+				localConst = metadataFile.Metadata.GetLocalConstant(handle);
 			}
 		}
 	}

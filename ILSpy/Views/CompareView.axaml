@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:compare="using:ILSpy.Compare"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             x:Class="ILSpy.Compare.CompareView"
+             x:DataType="compare:CompareTabPageModel">
+	<DockPanel>
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="4">
+			<CheckBox Content="Show identical entries"
+			          IsChecked="{Binding ShowIdentical, Mode=TwoWay}"
+			          ToolTip.Tip="Reveal rows that are identical on both sides — by default the tree only shows actual differences." />
+			<Button Margin="8,0,0,0" Content="Expand all"
+			        Command="{Binding ExpandAllCommand}"
+			        ToolTip.Tip="Expand every namespace and type in the diff tree." />
+		</StackPanel>
+		<DataGrid Name="DiffGrid"
+		          Classes="hierarchical"
+		          AutoGenerateColumns="False"
+		          HeadersVisibility="None"
+		          HierarchicalRowsEnabled="True"
+		          GridLinesVisibility="None"
+		          CanUserResizeColumns="False"
+		          SelectionMode="Single">
+			<DataGrid.Columns>
+				<DataGridHierarchicalColumn Header="Diff" Width="*"
+				                            IsReadOnly="True"
+				                            x:CompileBindings="False"
+				                            Binding="{Binding Item}">
+					<DataGridHierarchicalColumn.CellTemplate>
+						<DataTemplate>
+							<Border Background="{Binding BackgroundBrush}" Padding="4,1">
+								<Grid ColumnDefinitions="Auto,7,*"
+								      VerticalAlignment="Center">
+									<Image Grid.Column="0" Source="{Binding Icon}"
+									       Width="16" Height="16"
+									       VerticalAlignment="Center" />
+									<TextBlock Grid.Column="2" Text="{Binding Text}"
+									           VerticalAlignment="Center" />
+								</Grid>
+							</Border>
+						</DataTemplate>
+					</DataGridHierarchicalColumn.CellTemplate>
+				</DataGridHierarchicalColumn>
+			</DataGrid.Columns>
+		</DataGrid>
+	</DockPanel>
+</UserControl>

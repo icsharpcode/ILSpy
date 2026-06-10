@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,51 +17,67 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Windows.Data;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
 
-namespace ICSharpCode.ILSpy.Metadata
+using ILSpy.Languages;
+using ILSpy.TreeNodes;
+
+namespace ILSpy.Metadata
 {
-	class MetadataTreeNode : ILSpyTreeNode
+	/// <summary>
+	/// Synthetic container surfaced under each loaded assembly's tree node. Its children
+	/// expose the raw CLI metadata: PE headers (DOS / COFF / Optional / DataDirectories /
+	/// DebugDirectory), the metadata tables, and the four heaps (String / UserString / Guid
+	/// / Blob). Lazy-loaded — children only materialise on first expansion.
+	/// </summary>
+	public sealed class MetadataTreeNode : ILSpyTreeNode
 	{
-		private readonly MetadataFile metadataFile;
-		private readonly string title;
+		readonly MetadataFile metadataFile;
+		readonly string title;
 
-		public MetadataTreeNode(MetadataFile module, string title)
+		public MetadataTreeNode(MetadataFile metadataFile, string title)
 		{
-			this.metadataFile = module;
-			this.title = title;
-			this.LazyLoading = true;
+			this.metadataFile = metadataFile ?? throw new ArgumentNullException(nameof(metadataFile));
+			this.title = title ?? throw new ArgumentNullException(nameof(title));
+			LazyLoading = true;
 		}
 
 		public override object Text => title;
 
-		public override object NavigationText => $"{Text} ({metadataFile.Name})";
+		public override object Icon => Images.Images.Metadata;
 
-		public override object Icon => Images.Metadata;
-
-		public override bool View(TabPageModel tabPage)
-		{
-			tabPage.Title = Text.ToString();
-			tabPage.SupportsLanguageSwitching = false;
-
-			return false;
-		}
+		// Stable identity for SessionSettings.ActiveTreeViewPath.
+		public override string ToString() => "Metadata: " + title;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, title);
+			DumpMetadataInfo(language, output, metadataFile.Metadata);
+		}
 
-			DumpMetadataInfo(language, output, this.metadataFile.Metadata);
+		/// <summary>
+		/// Resolves a <see cref="HandleKind"/> to the per-table tree node under this metadata
+		/// folder, or <c>null</c> when the handle has no table (e.g. heap handles: String /
+		/// UserString / Blob / Guid). Used by <c>MetadataProtocolHandler</c> to drill into
+		/// the right table when navigating a <c>metadata://</c> reference. Cast from
+		/// <see cref="HandleKind"/> to <see cref="TableIndex"/> relies on the two enums sharing
+		/// numeric values for the 0..44 metadata-table range.
+		/// </summary>
+		public MetadataTableTreeNode? FindNodeByHandleKind(HandleKind kind)
+		{
+			EnsureLazyChildren();
+			var tables = Children.OfType<MetadataTablesTreeNode>().FirstOrDefault();
+			if (tables is null)
+				return null;
+			tables.EnsureLazyChildren();
+			return tables.Children
+				.OfType<MetadataTableTreeNode>()
+				.FirstOrDefault(x => x.Kind == (TableIndex)kind);
 		}
 
 		internal static void DumpMetadataInfo(Language language, ITextOutput output, MetadataReader metadata)
@@ -73,7 +89,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			{
 				output.WriteLine();
 				language.WriteCommentLine(output, "Header:");
-				language.WriteCommentLine(output, "Id: " + header.Id.ToHexString(header.Id.Length));
+				language.WriteCommentLine(output, "Id: " + ToHexString(header.Id));
 				language.WriteCommentLine(output, "EntryPoint: " + MetadataTokens.GetToken(header.EntryPoint).ToString("X8"));
 			}
 
@@ -84,84 +100,35 @@ namespace ICSharpCode.ILSpy.Metadata
 			{
 				int count = metadata.GetTableRowCount(table);
 				if (count > 0)
-				{
 					language.WriteCommentLine(output, $"{(byte)table:X2} {table}: {count} rows");
-				}
 			}
+		}
+
+		static string ToHexString(System.Collections.Immutable.ImmutableArray<byte> bytes)
+		{
+			var sb = new System.Text.StringBuilder(bytes.Length * 2);
+			foreach (var b in bytes)
+				sb.Append(b.ToString("x2"));
+			return sb.ToString();
 		}
 
 		protected override void LoadChildren()
 		{
-			if (metadataFile is PEFile module)
+			if (metadataFile is PEFile peFile)
 			{
-				this.Children.Add(new DosHeaderTreeNode(module));
-				this.Children.Add(new CoffHeaderTreeNode(module));
-				this.Children.Add(new OptionalHeaderTreeNode(module));
-				this.Children.Add(new DataDirectoriesTreeNode(module));
-				this.Children.Add(new DebugDirectoryTreeNode(module));
+				Children.Add(new DosHeaderTreeNode(peFile));
+				Children.Add(new CoffHeaderTreeNode(peFile));
+				Children.Add(new OptionalHeaderTreeNode(peFile));
+				Children.Add(new DataDirectoriesTreeNode(peFile));
+				Children.Add(new DebugDirectoryTreeNode(peFile));
 			}
-			this.Children.Add(new MetadataTablesTreeNode(metadataFile));
-			this.Children.Add(new StringHeapTreeNode(metadataFile));
-			this.Children.Add(new UserStringHeapTreeNode(metadataFile));
-			this.Children.Add(new GuidHeapTreeNode(metadataFile));
-			this.Children.Add(new BlobHeapTreeNode(metadataFile));
-		}
 
-		public MetadataTableTreeNode FindNodeByHandleKind(HandleKind kind)
-		{
-			return this.Children.OfType<MetadataTablesTreeNode>().Single()
-				.Children.OfType<MetadataTableTreeNode>().SingleOrDefault(x => x.Kind == (TableIndex)kind);
-		}
-	}
+			Children.Add(new MetadataTablesTreeNode(metadataFile));
 
-	class Entry
-	{
-		public string Member { get; }
-		public int Offset { get; }
-		public int Size { get; }
-		public object Value { get; }
-		public string Meaning { get; }
-
-		public IList<BitEntry> RowDetails { get; }
-
-		public Entry(int offset, object value, int size, string member, string meaning, IList<BitEntry> rowDetails = null)
-		{
-			this.Member = member;
-			this.Offset = offset;
-			this.Size = size;
-			this.Value = value;
-			this.Meaning = meaning;
-			this.RowDetails = rowDetails;
-		}
-	}
-
-	class BitEntry
-	{
-		public bool Value { get; }
-		public string Meaning { get; }
-
-		public BitEntry(bool value, string meaning)
-		{
-			this.Value = value;
-			this.Meaning = meaning;
-		}
-	}
-
-	class ByteWidthConverter : IValueConverter
-	{
-		public static readonly ByteWidthConverter Instance = new ByteWidthConverter();
-
-		public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-		{
-			if (object.ReferenceEquals(value, null))
-				return string.Empty;
-
-			return string.Format("{0:X" + 2 * ((Entry)value).Size + "}", ((Entry)value).Value);
-		}
-
-		public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-		{
-			throw new NotImplementedException();
+			Children.Add(new StringHeapTreeNode(metadataFile));
+			Children.Add(new UserStringHeapTreeNode(metadataFile));
+			Children.Add(new GuidHeapTreeNode(metadataFile));
+			Children.Add(new BlobHeapTreeNode(metadataFile));
 		}
 	}
 }

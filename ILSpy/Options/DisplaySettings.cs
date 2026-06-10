@@ -1,14 +1,14 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,207 +16,137 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Windows.Media;
 using System.Xml.Linq;
+
+using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX.Settings;
 
-using TomsToolbox.Wpf;
-
-namespace ICSharpCode.ILSpy.Options
+namespace ILSpy.Options
 {
 	/// <summary>
-	/// Description of DisplaySettings.
+	/// Editor-and-tree visual preferences. Persisted under the <c>&lt;DisplaySettings/&gt;</c>
+	/// XML section; the schema matches the WPF host so saved settings round-trip across
+	/// platforms. Font family is a string (Avalonia's <see cref="global::Avalonia.Media.FontFamily"/>
+	/// is constructed from a name at consumption sites — no WPF FontFamily here so this type
+	/// stays UI-framework-free).
 	/// </summary>
-	public class DisplaySettings : ObservableObjectBase, ISettingsSection
+	public sealed partial class DisplaySettings : ObservableObject, ISettingsSection
 	{
-		FontFamily selectedFont;
-		public FontFamily SelectedFont {
-			get => selectedFont;
-			set => SetProperty(ref selectedFont, value);
-		}
+		[ObservableProperty]
+		string selectedFont = "Consolas";
 
-		double selectedFontSize;
-		public double SelectedFontSize {
-			get => selectedFontSize;
-			set => SetProperty(ref selectedFontSize, value);
-		}
+		[ObservableProperty]
+		double selectedFontSize = 10.0 * 4 / 3;
 
+		[ObservableProperty]
 		bool showLineNumbers;
-		public bool ShowLineNumbers {
-			get => showLineNumbers;
-			set => SetProperty(ref showLineNumbers, value);
-		}
 
+		[ObservableProperty]
 		bool showMetadataTokens;
-		public bool ShowMetadataTokens {
-			get => showMetadataTokens;
-			set => SetProperty(ref showMetadataTokens, value);
-		}
 
+		[ObservableProperty]
 		bool showMetadataTokensInBase10;
-		public bool ShowMetadataTokensInBase10 {
-			get => showMetadataTokensInBase10;
-			set => SetProperty(ref showMetadataTokensInBase10, value);
-		}
 
+		[ObservableProperty]
 		bool enableWordWrap;
-		public bool EnableWordWrap {
-			get => enableWordWrap;
-			set => SetProperty(ref enableWordWrap, value);
-		}
 
-		bool sortResults;
-		public bool SortResults {
-			get => sortResults;
-			set => SetProperty(ref sortResults, value);
-		}
+		[ObservableProperty]
+		bool sortResults = true;
 
+		[ObservableProperty]
 		bool foldBraces;
-		public bool FoldBraces {
-			get => foldBraces;
-			set => SetProperty(ref foldBraces, value);
-		}
 
+		[ObservableProperty]
 		bool expandMemberDefinitions;
-		public bool ExpandMemberDefinitions {
-			get => expandMemberDefinitions;
-			set => SetProperty(ref expandMemberDefinitions, value);
-		}
 
+		[ObservableProperty]
 		bool expandUsingDeclarations;
-		public bool ExpandUsingDeclarations {
-			get => expandUsingDeclarations;
-			set => SetProperty(ref expandUsingDeclarations, value);
-		}
 
+		[ObservableProperty]
 		bool showDebugInfo;
-		public bool ShowDebugInfo {
-			get => showDebugInfo;
-			set => SetProperty(ref showDebugInfo, value);
-		}
 
-		bool indentationUseTabs;
-		public bool IndentationUseTabs {
-			get => indentationUseTabs;
-			set => SetProperty(ref indentationUseTabs, value);
-		}
+		[ObservableProperty]
+		bool indentationUseTabs = true;
 
-		int indentationTabSize;
-		public int IndentationTabSize {
-			get => indentationTabSize;
-			set => SetProperty(ref indentationTabSize, value);
-		}
+		[ObservableProperty]
+		int indentationTabSize = 4;
 
-		int indentationSize;
-		public int IndentationSize {
-			get => indentationSize;
-			set => SetProperty(ref indentationSize, value);
-		}
+		[ObservableProperty]
+		int indentationSize = 4;
 
-		bool highlightMatchingBraces;
-		public bool HighlightMatchingBraces {
-			get => highlightMatchingBraces;
-			set => SetProperty(ref highlightMatchingBraces, value);
-		}
+		[ObservableProperty]
+		bool highlightMatchingBraces = true;
 
+		[ObservableProperty]
 		bool highlightCurrentLine;
-		public bool HighlightCurrentLine {
-			get => highlightCurrentLine;
-			set => SetProperty(ref highlightCurrentLine, value);
-		}
 
-		bool hideEmptyMetadataTables;
-		public bool HideEmptyMetadataTables {
-			get => hideEmptyMetadataTables;
-			set => SetProperty(ref hideEmptyMetadataTables, value);
-		}
+		[ObservableProperty]
+		bool hideEmptyMetadataTables = true;
 
+		[ObservableProperty]
 		bool useNestedNamespaceNodes;
-		public bool UseNestedNamespaceNodes {
-			get => useNestedNamespaceNodes;
-			set => SetProperty(ref useNestedNamespaceNodes, value);
-		}
 
-		private bool styleWindowTitleBar;
-		public bool StyleWindowTitleBar {
-			get => styleWindowTitleBar;
-			set => SetProperty(ref styleWindowTitleBar, value);
-		}
+		[ObservableProperty]
+		bool styleWindowTitleBar;
 
-		private bool showRawOffsetsAndBytesBeforeInstruction;
-		public bool ShowRawOffsetsAndBytesBeforeInstruction {
-			get => showRawOffsetsAndBytesBeforeInstruction;
-			set => SetProperty(ref showRawOffsetsAndBytesBeforeInstruction, value);
-		}
+		[ObservableProperty]
+		bool showRawOffsetsAndBytesBeforeInstruction;
 
-		private bool enableSmoothScrolling;
-		public bool EnableSmoothScrolling {
-			get => enableSmoothScrolling;
-			set => SetProperty(ref enableSmoothScrolling, value);
-		}
-
-		private bool decodeCustomAttributeBlobs;
-		public bool DecodeCustomAttributeBlobs {
-			get => decodeCustomAttributeBlobs;
-			set => SetProperty(ref decodeCustomAttributeBlobs, value);
-		}
+		[ObservableProperty]
+		bool decodeCustomAttributeBlobs;
 
 		public XName SectionName => "DisplaySettings";
 
 		public void LoadFromXml(XElement section)
 		{
-			SelectedFont = new FontFamily((string)section.Attribute("Font") ?? "Consolas");
+			SelectedFont = (string?)section.Attribute("Font") ?? "Consolas";
 			SelectedFontSize = (double?)section.Attribute("FontSize") ?? 10.0 * 4 / 3;
-			ShowLineNumbers = (bool?)section.Attribute("ShowLineNumbers") ?? false;
-			ShowMetadataTokens = (bool?)section.Attribute("ShowMetadataTokens") ?? false;
-			ShowMetadataTokensInBase10 = (bool?)section.Attribute("ShowMetadataTokensInBase10") ?? false;
-			ShowDebugInfo = (bool?)section.Attribute("ShowDebugInfo") ?? false;
-			EnableWordWrap = (bool?)section.Attribute("EnableWordWrap") ?? false;
-			SortResults = (bool?)section.Attribute("SortResults") ?? true;
-			FoldBraces = (bool?)section.Attribute("FoldBraces") ?? false;
-			ExpandMemberDefinitions = (bool?)section.Attribute("ExpandMemberDefinitions") ?? false;
-			ExpandUsingDeclarations = (bool?)section.Attribute("ExpandUsingDeclarations") ?? false;
-			IndentationUseTabs = (bool?)section.Attribute("IndentationUseTabs") ?? true;
-			IndentationSize = (int?)section.Attribute("IndentationSize") ?? 4;
-			IndentationTabSize = (int?)section.Attribute("IndentationTabSize") ?? 4;
-			HighlightMatchingBraces = (bool?)section.Attribute("HighlightMatchingBraces") ?? true;
-			HighlightCurrentLine = (bool?)section.Attribute("HighlightCurrentLine") ?? false;
-			HideEmptyMetadataTables = (bool?)section.Attribute("HideEmptyMetadataTables") ?? true;
-			UseNestedNamespaceNodes = (bool?)section.Attribute("UseNestedNamespaceNodes") ?? false;
-			ShowRawOffsetsAndBytesBeforeInstruction = (bool?)section.Attribute("ShowRawOffsetsAndBytesBeforeInstruction") ?? false;
-			StyleWindowTitleBar = (bool?)section.Attribute("StyleWindowTitleBar") ?? false;
-			EnableSmoothScrolling = (bool?)section.Attribute("EnableSmoothScrolling") ?? true;
-			DecodeCustomAttributeBlobs = (bool?)section.Attribute("DecodeCustomAttributeBlobs") ?? false;
+			ShowLineNumbers = (bool?)section.Attribute(nameof(ShowLineNumbers)) ?? false;
+			ShowMetadataTokens = (bool?)section.Attribute(nameof(ShowMetadataTokens)) ?? false;
+			ShowMetadataTokensInBase10 = (bool?)section.Attribute(nameof(ShowMetadataTokensInBase10)) ?? false;
+			ShowDebugInfo = (bool?)section.Attribute(nameof(ShowDebugInfo)) ?? false;
+			EnableWordWrap = (bool?)section.Attribute(nameof(EnableWordWrap)) ?? false;
+			SortResults = (bool?)section.Attribute(nameof(SortResults)) ?? true;
+			FoldBraces = (bool?)section.Attribute(nameof(FoldBraces)) ?? false;
+			ExpandMemberDefinitions = (bool?)section.Attribute(nameof(ExpandMemberDefinitions)) ?? false;
+			ExpandUsingDeclarations = (bool?)section.Attribute(nameof(ExpandUsingDeclarations)) ?? false;
+			IndentationUseTabs = (bool?)section.Attribute(nameof(IndentationUseTabs)) ?? true;
+			IndentationSize = (int?)section.Attribute(nameof(IndentationSize)) ?? 4;
+			IndentationTabSize = (int?)section.Attribute(nameof(IndentationTabSize)) ?? 4;
+			HighlightMatchingBraces = (bool?)section.Attribute(nameof(HighlightMatchingBraces)) ?? true;
+			HighlightCurrentLine = (bool?)section.Attribute(nameof(HighlightCurrentLine)) ?? false;
+			HideEmptyMetadataTables = (bool?)section.Attribute(nameof(HideEmptyMetadataTables)) ?? true;
+			UseNestedNamespaceNodes = (bool?)section.Attribute(nameof(UseNestedNamespaceNodes)) ?? false;
+			ShowRawOffsetsAndBytesBeforeInstruction = (bool?)section.Attribute(nameof(ShowRawOffsetsAndBytesBeforeInstruction)) ?? false;
+			StyleWindowTitleBar = (bool?)section.Attribute(nameof(StyleWindowTitleBar)) ?? false;
+			DecodeCustomAttributeBlobs = (bool?)section.Attribute(nameof(DecodeCustomAttributeBlobs)) ?? false;
 		}
 
 		public XElement SaveToXml()
 		{
 			var section = new XElement(SectionName);
-
-			section.SetAttributeValue("Font", SelectedFont.Source);
+			section.SetAttributeValue("Font", SelectedFont);
 			section.SetAttributeValue("FontSize", SelectedFontSize);
-			section.SetAttributeValue("ShowLineNumbers", ShowLineNumbers);
-			section.SetAttributeValue("ShowMetadataTokens", ShowMetadataTokens);
-			section.SetAttributeValue("ShowMetadataTokensInBase10", ShowMetadataTokensInBase10);
-			section.SetAttributeValue("ShowDebugInfo", ShowDebugInfo);
-			section.SetAttributeValue("EnableWordWrap", EnableWordWrap);
-			section.SetAttributeValue("SortResults", SortResults);
-			section.SetAttributeValue("FoldBraces", FoldBraces);
-			section.SetAttributeValue("ExpandMemberDefinitions", ExpandMemberDefinitions);
-			section.SetAttributeValue("ExpandUsingDeclarations", ExpandUsingDeclarations);
-			section.SetAttributeValue("IndentationUseTabs", IndentationUseTabs);
-			section.SetAttributeValue("IndentationSize", IndentationSize);
-			section.SetAttributeValue("IndentationTabSize", IndentationTabSize);
-			section.SetAttributeValue("HighlightMatchingBraces", HighlightMatchingBraces);
-			section.SetAttributeValue("HighlightCurrentLine", HighlightCurrentLine);
-			section.SetAttributeValue("HideEmptyMetadataTables", HideEmptyMetadataTables);
-			section.SetAttributeValue("UseNestedNamespaceNodes", UseNestedNamespaceNodes);
-			section.SetAttributeValue("ShowRawOffsetsAndBytesBeforeInstruction", ShowRawOffsetsAndBytesBeforeInstruction);
-			section.SetAttributeValue("StyleWindowTitleBar", StyleWindowTitleBar);
-			section.SetAttributeValue("EnableSmoothScrolling", EnableSmoothScrolling);
-			section.SetAttributeValue("DecodeCustomAttributeBlobs", DecodeCustomAttributeBlobs);
-
+			section.SetAttributeValue(nameof(ShowLineNumbers), ShowLineNumbers);
+			section.SetAttributeValue(nameof(ShowMetadataTokens), ShowMetadataTokens);
+			section.SetAttributeValue(nameof(ShowMetadataTokensInBase10), ShowMetadataTokensInBase10);
+			section.SetAttributeValue(nameof(ShowDebugInfo), ShowDebugInfo);
+			section.SetAttributeValue(nameof(EnableWordWrap), EnableWordWrap);
+			section.SetAttributeValue(nameof(SortResults), SortResults);
+			section.SetAttributeValue(nameof(FoldBraces), FoldBraces);
+			section.SetAttributeValue(nameof(ExpandMemberDefinitions), ExpandMemberDefinitions);
+			section.SetAttributeValue(nameof(ExpandUsingDeclarations), ExpandUsingDeclarations);
+			section.SetAttributeValue(nameof(IndentationUseTabs), IndentationUseTabs);
+			section.SetAttributeValue(nameof(IndentationSize), IndentationSize);
+			section.SetAttributeValue(nameof(IndentationTabSize), IndentationTabSize);
+			section.SetAttributeValue(nameof(HighlightMatchingBraces), HighlightMatchingBraces);
+			section.SetAttributeValue(nameof(HighlightCurrentLine), HighlightCurrentLine);
+			section.SetAttributeValue(nameof(HideEmptyMetadataTables), HideEmptyMetadataTables);
+			section.SetAttributeValue(nameof(UseNestedNamespaceNodes), UseNestedNamespaceNodes);
+			section.SetAttributeValue(nameof(ShowRawOffsetsAndBytesBeforeInstruction), ShowRawOffsetsAndBytesBeforeInstruction);
+			section.SetAttributeValue(nameof(StyleWindowTitleBar), StyleWindowTitleBar);
+			section.SetAttributeValue(nameof(DecodeCustomAttributeBlobs), DecodeCustomAttributeBlobs);
 			return section;
 		}
 	}

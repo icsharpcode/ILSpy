@@ -1,0 +1,546 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="ILSpy.App"
+             Name="ILSpy"
+             xmlns:local="using:ILSpy"
+             xmlns:tree="using:ILSpy.AssemblyTree"
+             xmlns:search="using:ILSpy.Search"
+             xmlns:analyzers="using:ILSpy.Analyzers"
+             xmlns:compare="using:ILSpy.Compare"
+             xmlns:textView="using:ILSpy.TextView"
+             xmlns:metaViews="using:ILSpy.Views"
+             xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
+             xmlns:dockControls="using:Dock.Avalonia.Controls"
+             xmlns:aeFolding="using:AvaloniaEdit.Folding"
+             xmlns:recycling="using:Avalonia.Controls.Recycling"
+             xmlns:docking="using:ILSpy.Docking"
+             xmlns:controls="using:ILSpy.Controls"
+             xmlns:themes="using:ILSpy.Themes"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
+             RequestedThemeVariant="Default">
+             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+
+    <!-- Empty placeholder for the macOS application menu (the bold app-named menu). Only the
+         Cocoa menu exporter reads this; on Windows / Linux it is inert. It must exist before
+         the exporter samples it at startup, so MainMenu.PromoteHelpToMacAppMenu can populate
+         this same instance in place rather than replacing it (a replacement is never observed). -->
+    <NativeMenu.Menu>
+        <NativeMenu />
+    </NativeMenu.Menu>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <!-- Light / Dark variant brushes for the surfaces ILSpy paints directly
+                     (the editor canvas and the toolbar chrome). The Simple theme itself
+                     ships no Dark resource dictionary, so chrome painted by Simple (menu,
+                     scrollbars, tree, status bar) stays Light regardless of the user's
+                     theme choice. Intentional, partial dark mode targeting only the
+                     surfaces a reader spends most time looking at. -->
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#FFFFE1" />
+                    <!-- Translucent selection so selected text keeps its syntax colours (the
+                         TextArea style leaves SelectionForeground unset). -->
+                    <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#007ACC" Opacity="0.3" />
+                    <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#80FFFFFF" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#FFA9B0B7" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarSeparator" Color="#FFC8CDD3" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarComboBoxBorder" Color="#FFCCCEDB" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledFill" Color="#22000000" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledBorder" Color="#33000000" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBackground" Color="#E0FFFFE1" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBorder" Color="#80808080" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#FFFFE1" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#FF767676" />
+                    <SolidColorBrush x:Key="ILSpy.WindowBackground" Color="#F0F0F0" />
+                    <SolidColorBrush x:Key="ILSpy.WindowForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.TreeAutoloadedForeground" Color="SteelBlue" />
+                    <SolidColorBrush x:Key="ILSpy.TreeNonPublicForeground" Color="Gray" />
+                    <!-- Tree keyboard-focus / context-menu-target visual: a translucent selection-blue
+                         fill with a darker-blue dotted border (see SharpTreeView.axaml FocusVisual). -->
+                    <SolidColorBrush x:Key="ILSpy.TreeFocusFill" Color="#33007ACC" />
+                    <SolidColorBrush x:Key="ILSpy.TreeFocusBorder" Color="#005A9E" />
+                    <SolidColorBrush x:Key="ILSpy.ChromeBorder" Color="#FFC8CDD3" />
+                    <SolidColorBrush x:Key="ILSpy.SecondaryForeground" Color="Gray" />
+                    <SolidColorBrush x:Key="ILSpy.MenuBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.MenuForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.InputBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.InputForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.InputBorder" Color="#ABADB3" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabStripBackground" Color="#ECECEC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemBackground" Color="#ECECEC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemForeground" Color="Black" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemSelectedBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveBackground" Color="#007ACC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveForeground" Color="White" />
+                    <!-- The One (preview tab) identity: purple family. Single values that read on
+                         both themes (mirrored in the Dark dictionary so dark stays an explicit knob).
+                         PreviewTabActiveBackground must match BoolToBrushConverter's purple. -->
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabActiveBackground" Color="#9B59B6" />
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabHoverBackground" Color="#BB8FCE" />
+                    <!-- Focused tool pane: the #007ACC document-active blue at ~70% strength over the
+                         light background (so tools read clearly but stay a step below documents) +
+                         readable title, instead of the theme's saturated system accent. -->
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#4DA2DB" />
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveTitleForeground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#FFFFE1" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#808080" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="White" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedForeground" Color="Black" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#1E1E1E" />
+                    <!-- Brighter, slightly stronger so the translucent selection still reads on the
+                         dark editor background. -->
+                    <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#3794FF" Opacity="0.35" />
+                    <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#A0000000" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarSeparator" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarComboBoxBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledFill" Color="#22FFFFFF" />
+                    <SolidColorBrush x:Key="ILSpy.ToolbarDisabledBorder" Color="#33FFFFFF" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBackground" Color="#E01E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.ZoomButtonsBorder" Color="#80A0A0A0" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#252526" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.WindowBackground" Color="#252526" />
+                    <SolidColorBrush x:Key="ILSpy.WindowForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.TreeAutoloadedForeground" Color="#6FA8DC" />
+                    <SolidColorBrush x:Key="ILSpy.TreeNonPublicForeground" Color="#9AA0A6" />
+                    <!-- On dark a darker shade would vanish, so the border is a brighter accent blue;
+                         the fill stays a translucent selection blue. -->
+                    <SolidColorBrush x:Key="ILSpy.TreeFocusFill" Color="#40007ACC" />
+                    <SolidColorBrush x:Key="ILSpy.TreeFocusBorder" Color="#4A90D9" />
+                    <SolidColorBrush x:Key="ILSpy.ChromeBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.SecondaryForeground" Color="#A0A0A0" />
+                    <SolidColorBrush x:Key="ILSpy.MenuBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.MenuForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.InputBackground" Color="#3C3C3C" />
+                    <SolidColorBrush x:Key="ILSpy.InputForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.InputBorder" Color="#555555" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabStripBackground" Color="#252526" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemSelectedBackground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveBackground" Color="#007ACC" />
+                    <SolidColorBrush x:Key="ILSpy.DockTabItemActiveForeground" Color="White" />
+                    <!-- The One (preview tab): same purple as light; #9B59B6 / #BB8FCE read fine on
+                         the dark chrome. Keep in sync with BoolToBrushConverter's purple. -->
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabActiveBackground" Color="#9B59B6" />
+                    <SolidColorBrush x:Key="ILSpy.PreviewTabHoverBackground" Color="#BB8FCE" />
+                    <!-- Focused tool pane: the #007ACC document-active blue at ~70% strength over the
+                         dark background + readable (light) title for dark. -->
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveHeaderBackground" Color="#0B609A" />
+                    <SolidColorBrush x:Key="ILSpy.ToolChromeActiveTitleForeground" Color="#DCDCDC" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerBackground" Color="#1E1E1E" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#A0A0A0" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedForeground" Color="#DCDCDC" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Custom SharpTreeView control theme (ListBox-based tree). -->
+                <ResourceInclude Source="avares://ILSpy/Controls/TreeView/SharpTreeView.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Every dockable owns its view (IDockableViewOwner): the dock chrome must render one
+                 view per dockable identity, not one per slot, or two panes sharing a ToolDock slot
+                 (e.g. Analyzer + Debug Steps both Bottom-aligned) render each other's content. This
+                 resolver hands back the dockable's own view instead of pinning views in a global,
+                 never-evicting cache (a leak for transient document tabs). Wired to every DockControl
+                 via the style below. -->
+            <docking:DockableViewRecycling x:Key="ControlRecyclingKey" />
+
+            <!-- Override ProDataGrid's hierarchical expander to a classic Windows-Explorer-sized 9x9 box.
+                 13 is the laid-out column footprint (glyph + 4px left padding); the actual click target
+                 is grown to 16x16 in the PART_Expander template below without disturbing this footprint. -->
+            <x:Double x:Key="DataGridHierarchicalExpanderSize">13</x:Double>
+            <x:Double x:Key="DataGridHierarchicalExpanderGlyphSize">5</x:Double>
+
+            <!-- Suppress the cell focus rectangle — selected rows already get the highlight background. -->
+            <SolidColorBrush x:Key="DataGridCellFocusVisualPrimaryBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridCellFocusVisualSecondaryBrush" Color="Transparent" />
+
+            <!-- Suppress the gray pointer-over highlight on rows and cells. -->
+            <SolidColorBrush x:Key="DataGridRowHoveredBackgroundBrush" Color="Transparent" />
+            <SolidColorBrush x:Key="DataGridCellHoveredBackgroundBrush" Color="Transparent" />
+
+            <!-- Replace the Simple theme's saturated dark fill on column-header hover/press
+                 with the toolbar accent palette (#330078D7 hover, #660078D7 pressed). The
+                 default makes header text unreadable while sorting / resizing; the lighter
+                 translucent accent matches MainToolBar.axaml's button hover treatment. -->
+            <SolidColorBrush x:Key="DataGridColumnHeaderHoveredBackgroundBrush" Color="#330078D7" />
+            <SolidColorBrush x:Key="DataGridColumnHeaderPressedBackgroundBrush" Color="#660078D7" />
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.DataTemplates>
+        <!-- ViewLocator handles every dockable VM (tool panes, document tab content,
+             ContentTabPage) plus any ViewModelBase-derived viewmodel, with one IDataTemplate
+             instance for all of them (see ViewLocator.cs). -->
+        <local:ViewLocator/>
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <SimpleTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Simple.v2.xaml" />
+        <StyleInclude Source="avares://AvaloniaEdit/Themes/Simple/AvaloniaEdit.xaml" />
+        <!-- Cache each document tab's content (keep it realized) instead of rebuilding it on
+             every tab switch. Without this, switching documents detaches the inactive tab's view
+             and reattaches it on return, which resets transient control state that doesn't survive
+             reattach (e.g. the Options page's TabControl selection). -->
+        <dockTheme:DockSimpleTheme CacheDocumentTabContent="True" />
+
+        <!-- Hook the ControlRecycling instance onto every DockControl so the dock chrome
+             resolves views per dockable identity instead of caching one view per dock slot. -->
+        <Style Selector="DockControl">
+            <Setter Property="(recycling:ControlRecyclingDataTemplate.ControlRecycling)" Value="{StaticResource ControlRecyclingKey}" />
+        </Style>
+
+        <!-- Tooltips: Simple theme paints them with hardcoded fills that don't respond to
+             RequestedThemeVariant. Restyle ToolTip so background, foreground, and border
+             route through our ILSpy.Tooltip* brushes and swap with the active theme. -->
+        <Style Selector="ToolTip">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.TooltipBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.TooltipForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.TooltipBorder}" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <!-- Window-level chrome: every top-level window picks up these brushes for the
+             canvas behind the menu / toolbar / dock area. Foreground propagates by
+             inheritance so default-styled text inside the window goes light on dark. -->
+        <Style Selector="Window">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.WindowBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.WindowForeground}" />
+        </Style>
+
+        <!-- Pane-level surfaces (assembly tree DataGrid, search results, etc.). The grid's
+             own row fills come from the Simple theme; we override the canvas behind the
+             rows so the dark pane reads as a coherent block rather than a light island. -->
+        <Style Selector="DataGrid">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PaneBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.WindowForeground}" />
+        </Style>
+
+        <!-- Menu surfaces: the inline NativeMenuBar on Linux / Windows, plus every dropdown,
+             flyout, and context menu. macOS uses the native AppKit menu bar so these
+             selectors only affect the in-window menus there. -->
+        <Style Selector="Menu">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+        <!-- Menu items stay transparent so they show whatever surface hosts them: the
+             NativeMenuBar at the top, or the flyout/context-menu background in dropdowns.
+             A solid background here paints lighter rectangles over the menu bar. -->
+        <Style Selector="MenuItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+        <Style Selector="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+        <Style Selector="MenuFlyoutPresenter">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+        </Style>
+
+        <!-- Input controls used across dialogs (Options, Open from GAC, Manage Assembly
+             Lists). The Simple theme paints these with white-on-light fills; route them
+             through theme-aware brushes so dark mode doesn't leave glaring rectangles. -->
+        <Style Selector="TextBox">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.InputBorder}" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.InputBorder}" />
+        </Style>
+        <Style Selector="ComboBoxItem">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+        </Style>
+        <Style Selector="ListBox">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.InputBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.InputForeground}" />
+        </Style>
+
+        <!-- Dock chrome: tab strips for the document area and tool panes, plus the
+             selected-tab content area. Without this Simple paints the strip white,
+             which clashes against a dark document background. -->
+        <Style Selector="dockControls|DocumentTabStrip, dockControls|ToolTabStrip">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabStripBackground}" />
+        </Style>
+        <!-- Single-line (scrolling) vs multi-line (wrapped) document tabs; the mouse wheel over the
+             strip toggles the mode and it persists. In single-line mode an overflow dropdown lists
+             every open document for quick switching. -->
+        <Style Selector="dockControls|DocumentTabStrip">
+            <Setter Property="themes:MultiRowTabStripBehavior.Enable" Value="True" />
+            <Setter Property="themes:DocumentSwitcherDropdownBehavior.Enable" Value="True" />
+        </Style>
+        <!-- The full-width accent line under the document tab strip is the DocumentControl
+             template's Panel#PART_DocumentSeperator. The Simple theme fills it with the blue
+             active-indicator brush whenever the dock is :active; re-assert it at app level (app
+             styles outrank the theme's ControlTheme) so the line follows the active tab: purple
+             when the One is selected, the same blue otherwise. Bound to the DocumentControl
+             DataContext (the IDocumentDock) ActiveDockable.IsPreview. -->
+        <Style Selector="dockControls|DocumentControl:active /template/ Panel#PART_DocumentSeperator">
+            <Setter Property="Background"
+                    Value="{Binding ActiveDockable.IsPreview, Converter={x:Static themes:BoolToBrushConverter.PreviewOrActiveTabBackground}, FallbackValue={DynamicResource ILSpy.DockTabItemActiveBackground}, Mode=OneWay, x:CompileBindings=False}" />
+        </Style>
+        <Style Selector="dockControls|DocumentTabStripItem, dockControls|ToolTabStripItem">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemForeground}" />
+        </Style>
+        <!-- Full title in a tooltip on every document tab. The on-tab ellipsis is applied to the
+             realised title TextBlock by PreviewTabFreezeButtonBehavior, NOT with a descendant
+             selector here: a `DocumentTabStripItem TextBlock` selector also matched the tooltip's
+             own TextBlock and trimmed it to the same ellipsised text. Tool panes have short fixed
+             names, so this is document-only. -->
+        <Style Selector="dockControls|DocumentTabStripItem">
+            <Setter Property="ToolTip.Tip" Value="{Binding Title, Mode=OneWay, x:CompileBindings=False}" />
+            <!-- The document-tab right-click menu (Close / Close all but this / Close all / Freeze tab)
+                 is built per-tab by PreviewTabContextMenuBehavior and assigned to Dock's
+                 DocumentContextMenu, which takes precedence over the standard ContextMenu. -->
+        </Style>
+        <!-- A merely-selected (but not focused) tab gets the seam-matching fill. The active
+             tab keeps Dock's accent highlight (see below). Splitting the two states is
+             required: an application-level Style outranks Dock's DocumentTabStripItem
+             ControlTheme, so a plain :selected setter here would also clobber Dock's
+             ^:active:selected accent fill, flattening the active tab to the seam color. -->
+        <Style Selector="dockControls|DocumentTabStripItem:selected:not(:active), dockControls|ToolTabStripItem:selected:not(:active)">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemSelectedBackground}" />
+        </Style>
+        <!-- Active (focused-dock) selected DOCUMENT tab: the blue accent fill. Tool panes are split
+             out below so they stay neutral. -->
+        <Style Selector="dockControls|DocumentTabStripItem:selected:active">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemActiveBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemActiveForeground}" />
+        </Style>
+        <!-- The One (preview tab) carries the previewTab style class (toggled by
+             PreviewTabClassBehavior from IsPreview). Every visual that distinguishes the One hangs
+             off that class, so these selectors match ONLY the One; frozen tabs never match and keep
+             their blue/theme states untouched. The extra class outranks the plain document selectors
+             above, so purple wins for the One without any ordering or converter tricks. -->
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab:selected:active">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabActiveBackground}" />
+        </Style>
+        <!-- Selecting a tree node moves focus to the tool pane, so the One becomes selected but its
+             dock is not active. The shared :selected:not(:active) rule would flatten it to the neutral
+             seam fill (gray/white), jarring for a tab that should stay recognisably the One. Keep it
+             purple regardless of which pane holds focus; the active/inactive distinction is still
+             carried by the accent line under the strip (which only shows while the dock is active). -->
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab:selected:not(:active)">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabActiveBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemActiveForeground}" />
+        </Style>
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab:pointerover:not(:selected):not(:dragging)">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabHoverBackground}" />
+        </Style>
+        <Style Selector="dockControls|DocumentTabStripItem.previewTab">
+            <Setter Property="FontStyle" Value="Italic" />
+        </Style>
+        <!-- Tool panes stay neutral: a focused tool's selected tab gets the seam fill, not the
+             document accent (split out from the shared :selected:active rule above). -->
+        <Style Selector="dockControls|ToolTabStripItem:selected:active">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.DockTabItemSelectedBackground}" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DockTabItemForeground}" />
+        </Style>
+        <!-- The injected freeze (snowflake) button only exists on the One; give its hover the One's
+             purple instead of the blue it would inherit from the copied close-button ControlTheme. -->
+        <Style Selector="Button.previewFreezeButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.PreviewTabHoverBackground}" />
+        </Style>
+        <!-- Focused tool pane (ToolChromeControl :active): the Simple theme paints the title grip
+             with the saturated system accent and leaves PART_Title's background white even while its
+             active foreground turns light (white-on-white, unreadable). Replace the grip with a
+             subtle neutral tint, force the title background transparent in both states so the grip
+             tint shows through, and give the active title a readable neutral foreground. -->
+        <Style Selector="dockControls|ToolChromeControl:active /template/ Grid#PART_Grip">
+            <Setter Property="Background" Value="{DynamicResource ILSpy.ToolChromeActiveHeaderBackground}" />
+        </Style>
+        <Style Selector="dockControls|ToolChromeControl /template/ TextBlock#PART_Title">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="dockControls|ToolChromeControl:active /template/ TextBlock#PART_Title">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.ToolChromeActiveTitleForeground}" />
+        </Style>
+
+        <!-- AvaloniaEdit folding margin: the +/- toggle squares are painted by FoldingMargin
+             with its own brush properties (Background, Marker, plus selected variants for
+             pointer-over). Default Light values are hardcoded white-on-gray; route them
+             through our theme so the gutter goes dark with the editor. -->
+        <Style Selector="aeFolding|FoldingMargin">
+            <Setter Property="FoldingMarkerBackgroundBrush" Value="{DynamicResource ILSpy.FoldingMarkerBackground}" />
+            <Setter Property="FoldingMarkerBrush" Value="{DynamicResource ILSpy.FoldingMarkerForeground}" />
+            <Setter Property="SelectedFoldingMarkerBackgroundBrush" Value="{DynamicResource ILSpy.FoldingMarkerSelectedBackground}" />
+            <Setter Property="SelectedFoldingMarkerBrush" Value="{DynamicResource ILSpy.FoldingMarkerSelectedForeground}" />
+        </Style>
+
+        <!-- Suppress the column header's hover / pressed fill while the user is interacting
+             with content INSIDE the header (e.g. typing into a per-column filter TextBox).
+             Without this, clicking the TextBox briefly flashes the header background blue —
+             visually claiming the click was on the header itself. :focus-within wins the
+             cascade vs :pointerover/:pressed once focus lands on the descendant. -->
+        <Style Selector="DataGridColumnHeader:focus-within /template/ Grid#PART_ColumnHeaderRoot">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+
+        <!-- Classic Windows-Explorer +/- expander. Colors are hardcoded because the
+             presenter's :checked style forces Background/BorderBrush to Transparent
+             through TemplateBinding. The 4px left margin (Left-aligned, not centred)
+             pins the visible glyph at x=4..13 inside the 16px-wide hit target, i.e.
+             centred at +8.5 — the position TreeLines draws to — regardless of the
+             enlarged button. The presenter overwrites its Padding from Level * Indent
+             in code. -->
+        <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Template">
+                <ControlTemplate TargetType="ToggleButton">
+                    <!-- Transparent surface filling the whole 16x16 button so the entire target
+                         is hit-testable, not just the 9x9 glyph. Disabled (leaf) rows don't
+                         hit-test, so this never steals clicks from non-expandable rows. -->
+                    <Border Background="Transparent">
+                        <Border Width="9" Height="9"
+                                Margin="4,0,0,0"
+                                BorderThickness="1"
+                                BorderBrush="#828790"
+                                CornerRadius="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="White" Offset="0.2" />
+                                    <GradientStop Color="#FFC0B7A6" Offset="1" />
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <Path Name="ExpandPath"
+                                  Margin="1"
+                                  Fill="Black"
+                                  Data="M 0 2 L 0 3 L 2 3 L 2 5 L 3 5 L 3 3 L 5 3 L 5 2 L 3 2 L 3 0 L 2 0 L 2 2 Z" />
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander:checked /template/ Path#ExpandPath">
+            <Setter Property="Data" Value="M 0 2 L 0 3 L 5 3 L 5 2 Z" />
+        </Style>
+        <!-- Hide the +/- on leaves but keep the column width so siblings stay aligned. -->
+        <Style Selector="DataGridHierarchicalPresenter /template/ ToggleButton#PART_Expander:disabled">
+            <Setter Property="Opacity" Value="0" />
+        </Style>
+
+        <!-- Selected row text in white so it reads against the accent-color highlight. -->
+        <Style Selector="DataGridRow:selected">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Menu separators between MenuCategory groups. Simple theme's default is a thin
+             line at very low contrast against the menu background — barely visible. Boost
+             height and use a more contrasting brush so the MEF-injected groups (Save vs
+             Remove vs Exit in File menu, View vs Navigation vs Options in View menu, etc.)
+             read as distinct sections. Scoped to menu-descendant separators so toolbar
+             separators and docking-chrome ones don't get the same treatment. The two
+             selectors cover both surfaces: main-menu submenu separators live inside
+             MenuItem.Items; ContextMenuProvider adds Separator directly to ContextMenu.Items
+             (and to nested MenuItem.Items for sub-menus). -->
+        <Style Selector="MenuItem Separator, ContextMenu Separator">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="0,4" />
+            <Setter Property="Background" Value="Gray" />
+        </Style>
+
+        <!-- Suppress upstream Simple-theme menu scroll chevrons (the two RepeatButtons
+             docked Top/Bottom inside the SimpleMenuScrollViewer template). Their
+             IsVisible binding feeds through MenuScrollingVisibilityConverter, which
+             does an AreClose comparison on Extent vs Viewport; at non-100% DPI
+             scaling the layout-rounding leaves a tiny gap so the converter returns
+             true and the chevrons render even when content fits the popup. Bug
+             tracked upstream as AvaloniaUI/Avalonia#9501. Hiding unconditionally is
+             safe because the popup positioner already clamps menu height to screen
+             bounds, and ILSpy's menus are all small enough to fit without scrolling.
+             Height = 0 collapses the DockPanel slot the buttons would otherwise
+             reserve before the visibility flip propagates. -->
+        <Style Selector="MenuFlyoutPresenter /template/ ScrollViewer /template/ RepeatButton">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+        <Style Selector="ContextMenu /template/ ScrollViewer /template/ RepeatButton">
+            <Setter Property="IsVisible" Value="False" />
+            <Setter Property="Height" Value="0" />
+        </Style>
+
+        <!-- Per-DocumentTabStripItem behaviors that distinguish the One (preview tab). The
+             previewTab style class (toggled by PreviewTabClassBehavior from IsPreview) carries the
+             One's visuals via the .previewTab selectors above (purple fill/hover, italic title); the
+             other two behaviors inject the per-tab "Freeze tab" context-menu entry and the inline
+             snowflake button. -->
+        <Style Selector="DocumentTabStripItem">
+            <Setter Property="themes:PreviewTabClassBehavior.Enable" Value="True" />
+            <!-- Per-tab right-click "Freeze tab" entry. The behavior creates a fresh ContextMenu per
+                 attachment (visuals can have only one parent) and toggles the entry's IsVisible on
+                 the tab's IsPreview. -->
+            <Setter Property="themes:PreviewTabContextMenuBehavior.Enable" Value="True" />
+            <!-- Inline snowflake freeze button. Dock's tab template is compiled into the theme DLL;
+                 the behavior walks the visual tree and injects a Button between the title and the
+                 close button, bound to IsPreview so it hides once the tab is frozen. -->
+            <Setter Property="themes:PreviewTabFreezeButtonBehavior.Enable" Value="True" />
+        </Style>
+
+
+        <!-- Override the presenter template so we can layer classic Windows-Explorer tree
+             lines behind the indent / expander / content. -->
+        <Style Selector="DataGridHierarchicalPresenter">
+            <Setter Property="Template">
+                <ControlTemplate TargetType="DataGridHierarchicalPresenter">
+                    <Panel>
+                        <controls:TreeLines Node="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                            Level="{Binding Level, RelativeSource={RelativeSource TemplatedParent}}" />
+                        <Border Padding="{TemplateBinding Padding}">
+                            <Grid ColumnDefinitions="Auto,*">
+                                <!-- Hit target is 16x16 for reliable tapping, but the negative
+                                     right margin keeps the laid-out width at 13 (16 - 3) so the
+                                     Auto column, content offset, and TreeLines (which assume a
+                                     13px expander column, glyph centred at +8.5) are unchanged.
+                                     The 3px overflow falls into the content-margin gap on the
+                                     right; growing leftwards would land outside the row at level 0.
+                                     The button's own template keeps the visible glyph a 9x9 box. -->
+                                <ToggleButton x:Name="PART_Expander"
+                                              Width="16"
+                                              Height="16"
+                                              Margin="0,0,-3,0"
+                                              Theme="{DynamicResource DataGridHierarchicalExpanderTheme}"
+                                              IsEnabled="{TemplateBinding IsExpandable}"
+                                              HorizontalAlignment="Left"
+                                              VerticalAlignment="Center"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" />
+                                <ContentPresenter Grid.Column="1"
+                                                  Margin="{DynamicResource DataGridHierarchicalPresenterContentMargin}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  Content="{TemplateBinding Content}" />
+                            </Grid>
+                        </Border>
+                    </Panel>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+    </Application.Styles>
+</Application>

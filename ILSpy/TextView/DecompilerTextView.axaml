@@ -1,0 +1,83 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ae="using:AvaloniaEdit"
+             xmlns:aeediting="using:AvaloniaEdit.Editing"
+             xmlns:textView="using:ILSpy.TextView"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
+             Name="self"
+             x:Class="ILSpy.TextView.DecompilerTextView"
+             x:DataType="textView:DecompilerTabPageModel">
+
+	<!-- Selected-text highlighting (ports icsharpcode/ILSpy#2938): keep the syntax colours of
+	     selected text by leaving SelectionForeground unset, and draw a flat, translucent
+	     highlight (square corners, no border) instead of recolouring the run. -->
+	<UserControl.Styles>
+		<Style Selector="aeediting|TextArea">
+			<Setter Property="SelectionCornerRadius" Value="0" />
+			<Setter Property="SelectionBrush" Value="{DynamicResource ILSpy.EditorSelectionBrush}" />
+		</Style>
+	</UserControl.Styles>
+
+	<!-- Wait-adorner: a translucent overlay above the editor with a centred title +
+	     progress bar + cancel button while a decompilation is in flight. -->
+	<Grid>
+		<!-- DecompilerTextEditor subclasses ae:TextEditor to install ThemeAwareHighlightingColorizer
+		     and to redraw the text view when the active theme variant changes. -->
+		<textView:DecompilerTextEditor Name="Editor"
+		                               IsReadOnly="True"
+		                               ShowLineNumbers="True"
+		                               Background="{DynamicResource ILSpy.EditorBackground}"
+		                               FontFamily="Consolas, Menlo, Monospace"
+		                               FontSize="13" />
+		<Border Name="WaitAdorner"
+		        Background="{DynamicResource ILSpy.EditorWaitAdornerBackground}"
+		        IsVisible="{Binding IsDecompiling}">
+			<Grid ColumnDefinitions="*,Auto,*">
+				<StackPanel Grid.Column="1"
+				            VerticalAlignment="Center"
+				            HorizontalAlignment="Center">
+					<TextBlock Name="ProgressTitle"
+					           FontSize="18"
+					           Margin="3"
+					           TextWrapping="Wrap"
+					           HorizontalAlignment="Center"
+					           TextAlignment="Center"
+					           Text="{Binding ProgressTitle}" />
+					<ProgressBar Name="ProgressBar"
+					             x:CompileBindings="False"
+					             IsIndeterminate="{Binding ProgressIsIndeterminate}"
+					             Minimum="0"
+					             Maximum="{Binding ProgressMaximum}"
+					             Value="{Binding ProgressValue}"
+					             Height="16">
+						<!-- Determinate bar gets a stable width (75% of the overlay) so it doesn't jitter
+						     with the status text; indeterminate falls back to its natural width. -->
+						<ProgressBar.Width>
+							<MultiBinding Converter="{x:Static textView:DeterminateProgressWidthConverter.Instance}">
+								<Binding Path="Bounds.Width" ElementName="WaitAdorner" />
+								<Binding Path="ProgressIsIndeterminate" />
+							</MultiBinding>
+						</ProgressBar.Width>
+					</ProgressBar>
+					<TextBlock Name="ProgressStatus"
+					           Margin="3,2,3,0"
+					           TextWrapping="Wrap"
+					           HorizontalAlignment="Center"
+					           TextAlignment="Center"
+					           IsVisible="{Binding ProgressStatus, Converter={x:Static ObjectConverters.IsNotNull}}"
+					           Text="{Binding ProgressStatus}" />
+					<Button HorizontalAlignment="Center"
+					        Margin="3"
+					        Content="Cancel"
+					        Command="{Binding CancelDecompilationCommand}" />
+				</StackPanel>
+			</Grid>
+		</Border>
+		<!-- Zoom-buttons overlay: bottom-right corner of the editor, auto-hides at default
+		     font size unless DisplaySettings.AlwaysShowZoomButtons is on. Bound at code-
+		     behind time once DisplaySettings is resolvable from composition. -->
+		<textView:ZoomButtons Name="ZoomButtons" />
+	</Grid>
+</UserControl>

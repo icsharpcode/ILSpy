@@ -1,32 +1,46 @@
-#nullable enable
+// Copyright (c) 2026 AlphaSierraPapa for the SharpDevelop Team
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
-using System.Windows;
-using System.Windows.Media;
+using Avalonia.Media;
 
-using ICSharpCode.AvalonEdit.Highlighting;
+using AvaloniaEdit.Highlighting;
 
-namespace ICSharpCode.ILSpy.Themes;
-
-public class SyntaxColor
+namespace ILSpy.Themes
 {
-	public Color? Foreground { get; set; }
-	public Color? Background { get; set; }
-	public FontWeight? FontWeight { get; set; }
-	public FontStyle? FontStyle { get; set; }
-
-	public void ApplyTo(HighlightingColor color)
+	/// <summary>
+	/// A theme's colour override for a single named <see cref="HighlightingColor"/> (ported from
+	/// the WPF ILSpy theming model). A theme supplies one per syntax token; <see cref="ApplyTo"/>
+	/// writes it onto the shared HighlightingColor instance, so both the .xshd colorizer and the
+	/// semantic RichTextModel -- which reference the same instance -- pick up the change at once.
+	/// </summary>
+	public sealed class SyntaxColor
 	{
-		color.Foreground = Foreground is { } foreground ? new SimpleHighlightingBrush(foreground) : null;
-		color.Background = Background is { } background ? new SimpleHighlightingBrush(background) : null;
-		color.FontWeight = FontWeight ?? FontWeights.Normal;
-		color.FontStyle = FontStyle ?? FontStyles.Normal;
-	}
+		public Color? Foreground { get; init; }
+		public Color? Background { get; init; }
+		public FontWeight? FontWeight { get; init; }
+		public FontStyle? FontStyle { get; init; }
 
-	public static void ResetColor(HighlightingColor color)
-	{
-		color.Foreground = null;
-		color.Background = null;
-		color.FontWeight = null;
-		color.FontStyle = null;
+		public void ApplyTo(HighlightingColor color)
+		{
+			color.Foreground = Foreground is { } foreground ? new SimpleHighlightingBrush(foreground) : null;
+			color.Background = Background is { } background ? new SimpleHighlightingBrush(background) : null;
+			color.FontWeight = FontWeight;
+			color.FontStyle = FontStyle;
+		}
 	}
 }

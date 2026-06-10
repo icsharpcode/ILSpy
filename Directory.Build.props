@@ -4,6 +4,20 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <!-- Warnings are errors repo-wide so a clean build stays clean; individual projects can opt
+         back out (e.g. ICSharpCode.ILSpyCmd sets TreatWarningsAsErrors=false) since project-level
+         properties override this imported default. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <EnableNUnitRunner>true</EnableNUnitRunner>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Generate and honour a packages.lock.json next to every project. The CI NuGet package
+         cache keys off these lock files; run updatedeps.ps1 to refresh them after changing a
+         PackageVersion in Directory.Packages.props. -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
   </PropertyGroup>
 </Project>

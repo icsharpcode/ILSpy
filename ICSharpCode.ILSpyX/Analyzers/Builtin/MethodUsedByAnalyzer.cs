@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		public bool Show(ISymbol symbol) => symbol is IMethod method && !method.IsVirtual && method.ParentModule is not null;
+		public bool Show(ISymbol? symbol) => symbol is IMethod method && !method.IsVirtual && method.ParentModule is not null;
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
