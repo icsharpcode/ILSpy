@@ -24,6 +24,7 @@ using System.Reflection;
 
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 
 using ILSpy.AppEnv;
 using ILSpy.Commands;
@@ -112,6 +113,26 @@ public partial class MainToolBar : UserControl
 
 		if (menuRegistry != null)
 			WireManageAssemblyListsButton(menuRegistry);
+
+		WireLanguageVersionComboSync();
+	}
+
+	void WireLanguageVersionComboSync()
+	{
+		// The version ComboBox binds ItemsSource to CurrentLanguage.LanguageVersions and SelectedItem
+		// to CurrentVersion. On a language switch the model assigns CurrentVersion (pushing it onto
+		// SelectedItem) before the CurrentLanguage change propagates to ItemsSource, so SelectedItem
+		// is set against the previous language's list, rejected, and left null once ItemsSource
+		// repopulates. Re-assert the selection from the bound CurrentVersion after each ItemsSource
+		// swap has settled so flipping to a version-less language (e.g. IL) and back restores it.
+		LanguageVersionComboBox.PropertyChanged += (_, e) => {
+			if (e.Property != ItemsControl.ItemsSourceProperty)
+				return;
+			Dispatcher.UIThread.Post(() => {
+				if (DataContext is MainWindowViewModel vm)
+					LanguageVersionComboBox.SelectedItem = vm.LanguageService.CurrentVersion;
+			}, DispatcherPriority.Background);
+		};
 	}
 
 	void DispatchToolbarCommands(ToolbarCommandRegistry registry)
