@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public const string CurrentNetCoreVersion = "11.0";
 		public const string CurrentNetCoreAppVersion = ".NETCoreApp,Version=v11.0";
-		public const string CurrentNetCoreRefAsmVersion = "11.0.0-preview.4.26230.115";
+		public const string CurrentNetCoreRefAsmVersion = "11.0.0-preview.5.26302.115";
 
 		public static readonly string TesterPath;
 		public static readonly string TestCasePath;

@@ -8,8 +8,8 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <RoslynVersion>5.7.0-1.26230.115</RoslynVersion>
-    <NetPackageVersion>10.0.8</NetPackageVersion>
+    <RoslynVersion>5.8.0-1.26302.115</RoslynVersion>
+    <NetPackageVersion>10.0.9</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
     <AvaloniaVersion>12.0.4</AvaloniaVersion>
     <DockVersion>12.0.0.2</DockVersion>
