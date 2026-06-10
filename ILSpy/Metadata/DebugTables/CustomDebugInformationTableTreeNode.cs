@@ -45,9 +45,9 @@ namespace ILSpy.Metadata.DebugTables
 	/// <summary>
 	/// View of the CustomDebugInformation table — extensible per-entity payloads used for
 	/// async/iterator state-machine info, embedded source, source-link JSON, and similar
-	/// debug-time data. Each row carries a Parent token, a Kind GUID, and an opaque Value
-	/// blob. The friendly-name decoding of well-known Kind GUIDs (StateMachineHoistedLocalScopes,
-	/// SourceLink, etc.) is deferred until the Phase 4 cell-tooltip work.
+	/// debug-time data. Each row carries a Parent token, a Kind GUID (decoded to a friendly
+	/// name in the Kind column), and an opaque Value blob whose parsed contents show as the
+	/// row's details.
 	/// </summary>
 	public sealed class CustomDebugInformationTableTreeNode : MetadataTableTreeNode<CustomDebugInformationTableTreeNode.CustomDebugInformationEntry>
 	{
@@ -106,14 +106,58 @@ namespace ILSpy.Metadata.DebugTables
 			[ColumnInfo("X8")]
 			public int Token => MetadataTokens.GetToken(handle);
 
+			[ColumnInfo("X8")]
+			public int Offset => GetRowOffset(metadataFile, TableIndex.CustomDebugInformation, RID);
+
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
 			public int Parent => MetadataTokens.GetToken(debugInfo.Parent);
 
 			string? parentTooltip;
 			public string? ParentTooltip => GenerateTooltip(ref parentTooltip, metadataFile, debugInfo.Parent);
 
-			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
-			public int Kind => MetadataTokens.GetHeapOffset(debugInfo.Kind);
+			static readonly (Guid Guid, string Name)[] knownKindNames = {
+				(KnownGuids.StateMachineHoistedLocalScopes, "State Machine Hoisted Local Scopes (C# / VB)"),
+				(KnownGuids.DynamicLocalVariables, "Dynamic Local Variables (C#)"),
+				(KnownGuids.DefaultNamespaces, "Default Namespaces (VB)"),
+				(KnownGuids.EditAndContinueLocalSlotMap, "Edit And Continue Local Slot Map (C# / VB)"),
+				(KnownGuids.EditAndContinueLambdaAndClosureMap, "Edit And Continue Lambda And Closure Map (C# / VB)"),
+				(KnownGuids.EncStateMachineStateMap, "Edit And Continue State Machine State Map (C# / VB)"),
+				(KnownGuids.EmbeddedSource, "Embedded Source (C# / VB)"),
+				(KnownGuids.SourceLink, "Source Link (C# / VB)"),
+				(KnownGuids.MethodSteppingInformation, "Method Stepping Information (C# / VB)"),
+				(KnownGuids.CompilationOptions, "Compilation Options (C# / VB)"),
+				(KnownGuids.CompilationMetadataReferences, "Compilation Metadata References (C# / VB)"),
+				(KnownGuids.TupleElementNames, "Tuple Element Names (C#)"),
+				(KnownGuids.TypeDefinitionDocuments, "Type Definition Documents (C# / VB)"),
+			};
+
+			string? kindString;
+
+			/// <summary>
+			/// One cell carrying the GUID heap offset, the decoded friendly name of well-known
+			/// kind GUIDs, and the raw GUID, e.g.
+			/// <c>0000000B - Source Link (C# / VB) [cc110556-...]</c>. Plain text (instead of a
+			/// bare heap offset plus tooltip) so the column filter matches the friendly names.
+			/// </summary>
+			public string Kind {
+				get {
+					if (kindString != null)
+						return kindString;
+					if (debugInfo.Kind.IsNil)
+						return kindString = "";
+					var guid = metadataFile.Metadata.GetGuid(debugInfo.Kind);
+					string name = "Unknown";
+					foreach (var (knownGuid, knownName) in knownKindNames)
+					{
+						if (guid == knownGuid)
+						{
+							name = knownName;
+							break;
+						}
+					}
+					return kindString = $"{MetadataTokens.GetHeapOffset(debugInfo.Kind):X8} - {name} [{guid}]";
+				}
+			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.HeapOffset)]
 			public int Value => MetadataTokens.GetHeapOffset(debugInfo.Value);

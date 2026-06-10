@@ -139,6 +139,26 @@ public class CustomDebugInformationRowDetailsTests
 			.ToList();
 
 	[Test]
+	public void Offset_And_Friendly_Kind_Columns_Match_The_Tables_Conventions()
+	{
+		// The Kind column carries the GUID heap offset, the decoded friendly name, and the
+		// raw GUID in one cell; Offset positions the row within the metadata stream like
+		// every other table's Offset column.
+		var metadataFile = BuildPdbFixture();
+		var entries = LoadEntries(metadataFile);
+
+		entries[0].Kind.Should().MatchRegex("^[0-9A-F]{8} - Source Link \\(C# / VB\\) \\[cc110556-a091-4d38-9fec-25ab9a351a6a\\]$");
+		entries[1].Kind.Should().EndWith($"- Unknown [{UnknownKindGuid}]");
+		entries[3].Kind.Should().Contain("State Machine Hoisted Local Scopes (C# / VB)");
+
+		int rowSize = metadataFile.Metadata.GetTableRowSize(TableIndex.CustomDebugInformation);
+		entries[0].Offset.Should().BePositive("the table lives at a real offset inside the PDB metadata");
+		entries.Select(e => e.Offset).Should().BeInAscendingOrder()
+			.And.HaveCount(7);
+		(entries[1].Offset - entries[0].Offset).Should().Be(rowSize);
+	}
+
+	[Test]
 	public void RowDetails_Parses_The_Structured_Kinds_Into_Typed_Rows()
 	{
 		var metadataFile = BuildPdbFixture();
