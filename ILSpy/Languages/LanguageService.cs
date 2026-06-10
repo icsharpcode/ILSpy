@@ -56,14 +56,6 @@ namespace ILSpy.Languages
 			List<Language> ordered;
 			using (ILSpy.AppEnv.AppLog.Phase("LanguageService: materialise languages.OrderBy"))
 				ordered = languages.OrderBy(l => l.Name).ToList();
-#if DEBUG
-			// Under DEBUG, append one C# language per AST transform step so the dropdown
-			// surfaces the decompiler's intermediate output. Mirrors WPF's LanguageService —
-			// the variants aren't [Export]-ed because they're factory-built from the live
-			// CSharpDecompiler.GetAstTransforms() list, which only the static helper knows.
-			using (ILSpy.AppEnv.AppLog.Phase("LanguageService: CSharpLanguage.GetDebugLanguages()"))
-				ordered.AddRange(CSharpLanguage.GetDebugLanguages());
-#endif
 			ILSpy.AppEnv.AppLog.Mark($"LanguageService: {ordered.Count} languages resolved");
 			Languages = ordered;
 			var saved = settingsService.SessionSettings.ActiveLanguageName;

@@ -39,11 +39,12 @@ using ILSpy.Util;
 namespace ILSpy.ViewModels
 {
 	/// <summary>
-	/// Bottom-aligned tool pane that surfaces the Stepper output from
-	/// <see cref="Languages.BlockILLanguage"/>. The ViewModel owns the cross-language /
-	/// cross-decompile state (active language, current Stepper.Steps list) so it doesn't
+	/// Bottom-aligned tool pane that surfaces the step tree from the active
+	/// <see cref="Languages.IDebugStepProvider"/> language — ILAst (one step per IL transform) or
+	/// C# (one step per AST transform). The ViewModel owns the cross-language / cross-decompile
+	/// state (active language, current Stepper.Steps list, per-language options) so it doesn't
 	/// matter when the matching View materialises — the View just binds to <see cref="Steps"/>
-	/// and lights up whenever the language switches to ILAst and a decompile finishes.
+	/// and lights up whenever the current language is a step provider and a decompile finishes.
 	///
 	/// Compiled only in Debug builds — Release users don't see the pane or the languages
 	/// that populate it.
@@ -57,7 +58,7 @@ namespace ILSpy.ViewModels
 
 		readonly LanguageService? languageService;
 
-		ILAstLanguage? activeLanguage;
+		IDebugStepProvider? activeLanguage;
 		int lastSelectedStep = int.MaxValue;
 
 		/// <summary>
@@ -71,12 +72,17 @@ namespace ILSpy.ViewModels
 			UseLogicOperationSugar = true,
 		};
 
-		/// <summary>Instance accessor for XAML binding (Avalonia's static-source binding is awkward).</summary>
-		public ILAstWritingOptions Options => WritingOptions;
+		/// <summary>
+		/// Options controls for the active step-provider language (e.g. ILAst's writing options),
+		/// or null when the language has none. The view selects a template by runtime type, so the
+		/// options shown swap with the language.
+		/// </summary>
+		[ObservableProperty]
+		object? options;
 
 		/// <summary>
 		/// Currently displayed list of recorded transform steps. Re-assigned (not mutated)
-		/// whenever the active ILAstLanguage's <see cref="Stepper"/> reports a new run, so
+		/// whenever the active step provider's <see cref="Stepper"/> reports a new run, so
 		/// late-binding views pick up the latest list via the observable change.
 		/// </summary>
 		[ObservableProperty]
@@ -143,13 +149,13 @@ namespace ILSpy.ViewModels
 
 		void TryAttachToCurrentLanguage()
 		{
-			if (languageService?.CurrentLanguage is ILAstLanguage il)
+			if (languageService?.CurrentLanguage is IDebugStepProvider il)
 				AttachToLanguage(il);
 			else
 				DetachFromLanguage();
 		}
 
-		void AttachToLanguage(ILAstLanguage language)
+		void AttachToLanguage(IDebugStepProvider language)
 		{
 			if (ReferenceEquals(activeLanguage, language))
 			{
@@ -162,6 +168,7 @@ namespace ILSpy.ViewModels
 			activeLanguage = language;
 			language.StepperUpdated += OnStepperUpdated;
 			Steps = language.Stepper.Steps;
+			Options = language.StepOptions;
 		}
 
 		void DetachFromLanguage()
@@ -170,6 +177,7 @@ namespace ILSpy.ViewModels
 			{
 				activeLanguage.StepperUpdated -= OnStepperUpdated;
 				activeLanguage = null;
+				Options = null;
 			}
 		}
 

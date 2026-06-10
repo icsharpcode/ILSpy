@@ -48,7 +48,7 @@ namespace ILSpy.Languages
 	/// Compiled only when DEBUG is defined — the language list is identical to Release
 	/// otherwise.
 	/// </summary>
-	public abstract class ILAstLanguage : Language
+	public abstract class ILAstLanguage : Language, IDebugStepProvider
 	{
 		readonly string name;
 
@@ -73,6 +73,9 @@ namespace ILSpy.Languages
 			=> StepperUpdated?.Invoke(this, e ?? EventArgs.Empty);
 
 		public Stepper Stepper { get; set; } = new();
+
+		// ILAst contributes the shared writing-options checkboxes to the Debug Steps pane.
+		public object? StepOptions => DebugStepsPaneModel.WritingOptions;
 
 		public override string Name => name;
 

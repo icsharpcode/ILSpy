@@ -51,20 +51,9 @@ namespace ILSpy.Languages
 {
 	[Export(typeof(Language))]
 	[Shared]
-	public sealed class CSharpLanguage : Language
+	public sealed partial class CSharpLanguage : Language
 	{
-		// Per-instance fields so the DEBUG-only AST-pipeline-step variants (see
-		// GetDebugLanguages below) can each carry their own name, transform-stop point, and
-		// member-visibility override without subclassing. The single MEF-resolved Release
-		// instance keeps the defaults: Name="C#", all transforms run, ShowMember honours
-		// the hide-compiler-generated filter.
-		string name = "C#";
-		int transformCount = int.MaxValue;
-		// Initialiser silences CS0649 in Release builds (where GetDebugLanguages is
-		// excluded by #if DEBUG, leaving no write site).
-		bool showAllMembers = false;
-
-		public override string Name => name;
+		public override string Name => "C#";
 
 		public override string FileExtension => ".cs";
 
@@ -94,42 +83,6 @@ namespace ILSpy.Languages
 			new(CSharpLanguageVersion.CSharp14_0.ToString(), "C# 14.0 / VS 2026"),
 			new(CSharpLanguageVersion.CSharp15_0.ToString(), "C# 15.0 / VS 202x.yy"),
 		};
-
-#if DEBUG
-		/// <summary>
-		/// Generates one additional <see cref="CSharpLanguage"/> per AST transform step in
-		/// the C# decompiler pipeline. The dropdown entries are named "C# - no transforms",
-		/// "C# - after <em>FirstTransformName</em>", … "C# - after <em>LastTransformName</em>".
-		/// Selecting a step makes <see cref="CreateDecompiler"/> stop running AST transforms
-		/// at that point, so the editor renders the AST as it looked mid-pipeline — handy
-		/// for diagnosing transform regressions. Each variant also flips
-		/// <see cref="showAllMembers"/> so compiler-generated members stay visible in the
-		/// tree even when a transform would normally have hidden them by this stage.
-		/// Compiled only under DEBUG; Release builds keep a single "C#" entry.
-		/// </summary>
-		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
-		{
-			string lastTransformName = "no transforms";
-			int transformCount = 0;
-			foreach (var transform in CSharpDecompiler.GetAstTransforms())
-			{
-				yield return new CSharpLanguage {
-					transformCount = transformCount,
-					name = "C# - " + lastTransformName,
-					showAllMembers = true,
-				};
-				lastTransformName = "after " + transform.GetType().Name;
-				transformCount++;
-			}
-			// One final variant whose transformCount equals the full transform list length —
-			// equivalent output to the regular "C#" language but with showAllMembers on, so
-			// the tree exposes everything that lived through the entire pipeline.
-			yield return new CSharpLanguage {
-				name = "C# - " + lastTransformName,
-				showAllMembers = true,
-			};
-		}
-#endif
 
 		static CSharpAmbience CreateAmbience() => new() {
 			ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList,
@@ -304,10 +257,7 @@ namespace ILSpy.Languages
 			var assembly = member.ParentModule?.MetadataFile;
 			if (assembly == null)
 				return true;
-			// showAllMembers is set by the DEBUG pipeline-step variants — bypassing the
-			// hide-compiler-generated filter lets the developer see synthetic members
-			// (closure classes, fixed-buffer helpers, …) the transforms consume.
-			return showAllMembers || !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilerSettings());
+			return !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilerSettings());
 		}
 
 		public override RichText GetRichTextTooltip(IEntity entity)
@@ -329,11 +279,10 @@ namespace ILSpy.Languages
 				CancellationToken = options.CancellationToken,
 				DebugInfoProvider = module.GetDebugInfoOrNull(),
 			};
-			// Pop AST transforms from the end until the count matches transformCount.
-			// transformCount is int.MaxValue for the regular C# language (no pops), but the
-			// DEBUG pipeline-step variants set it to 0, 1, 2 … N to stop the AST mid-pipeline
-			// so the user sees the tree as it looked before/after a specific transform.
-			while (decompiler.AstTransforms.Count > transformCount)
+			// The Debug Steps pane stops the AST pipeline at a chosen step by re-decompiling with
+			// options.StepLimit = number of AST transforms to keep; pop the rest from the end.
+			// StepLimit is int.MaxValue for a normal decompile, so nothing is removed.
+			while (decompiler.AstTransforms.Count > options.StepLimit)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
@@ -368,13 +317,19 @@ namespace ILSpy.Languages
 			{
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method.MetadataToken), decompiler.TypeSystem);
 			}
+			OnCSharpDecompiled(output, options);
 		}
+
+		// Implemented only under DEBUG (CSharpLanguage.DebugSteps.cs) to feed the Debug Steps pane;
+		// a no-op partial in Release.
+		partial void OnCSharpDecompiled(ITextOutput output, DecompilationOptions options);
 
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			CSharpDecompiler decompiler = BeginDecompile(property, output, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property.MetadataToken), decompiler.TypeSystem);
+			OnCSharpDecompiled(output, options);
 		}
 
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
@@ -392,6 +347,7 @@ namespace ILSpy.Languages
 				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
 			}
+			OnCSharpDecompiled(output, options);
 		}
 
 		/// <summary>
@@ -419,6 +375,7 @@ namespace ILSpy.Languages
 			WriteCommentLine(output, TypeToString(commentType,
 				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
 			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
+			OnCSharpDecompiled(output, options);
 		}
 
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
@@ -426,6 +383,7 @@ namespace ILSpy.Languages
 			CSharpDecompiler decompiler = BeginDecompile(ev, output, options);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(ev.MetadataToken), decompiler.TypeSystem);
+			OnCSharpDecompiled(output, options);
 		}
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
@@ -433,6 +391,7 @@ namespace ILSpy.Languages
 			CSharpDecompiler decompiler = BeginDecompile(type, output, options);
 			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
+			OnCSharpDecompiled(output, options);
 		}
 
 		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)

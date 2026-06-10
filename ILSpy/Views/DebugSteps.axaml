@@ -3,20 +3,29 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ILSpy.ViewModels"
+             xmlns:il="using:ICSharpCode.Decompiler.IL"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
              x:Class="ILSpy.Views.DebugSteps"
              x:DataType="vm:DebugStepsPaneModel">
 	<DockPanel>
-		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="2">
-			<CheckBox Margin="3" Content="Field sugar"
-			          IsChecked="{Binding Options.UseFieldSugar, Mode=TwoWay}" />
-			<CheckBox Margin="3" Content="Logic operation sugar"
-			          IsChecked="{Binding Options.UseLogicOperationSugar, Mode=TwoWay}" />
-			<CheckBox Margin="3" Content="Show IL ranges"
-			          IsChecked="{Binding Options.ShowILRanges, Mode=TwoWay}" />
-			<CheckBox Margin="3" Content="Show child index in block"
-			          IsChecked="{Binding Options.ShowChildIndexInBlock, Mode=TwoWay}" />
-		</StackPanel>
+		<!-- Options are contributed by the active step-provider language and selected by type:
+		     ILAst renders its writing-options checkboxes; C# (null Options) renders nothing. -->
+		<ContentControl DockPanel.Dock="Top" Margin="2" Content="{Binding Options}">
+			<ContentControl.DataTemplates>
+				<DataTemplate DataType="il:ILAstWritingOptions">
+					<StackPanel Orientation="Horizontal">
+						<CheckBox Margin="3" Content="Field sugar"
+						          IsChecked="{Binding UseFieldSugar, Mode=TwoWay}" />
+						<CheckBox Margin="3" Content="Logic operation sugar"
+						          IsChecked="{Binding UseLogicOperationSugar, Mode=TwoWay}" />
+						<CheckBox Margin="3" Content="Show IL ranges"
+						          IsChecked="{Binding ShowILRanges, Mode=TwoWay}" />
+						<CheckBox Margin="3" Content="Show child index in block"
+						          IsChecked="{Binding ShowChildIndexInBlock, Mode=TwoWay}" />
+					</StackPanel>
+				</DataTemplate>
+			</ContentControl.DataTemplates>
+		</ContentControl>
 		<TreeView Name="StepsTree"
 		          ItemsSource="{Binding Steps}"
 		          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
