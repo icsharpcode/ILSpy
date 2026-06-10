@@ -48,7 +48,7 @@ How to build
 - Clone the ILSpy repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Install Visual Studio (documented version: 18.0/2026). You need the following workload components:
-  - Workload ".NET Desktop Development". This workload includes the .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET 11.0 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) (ILSpy.csproj targets .NET 11.0, but we have net472 projects too).
+  - Workload ".NET Desktop Development". This workload includes the .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (ILSpy.csproj targets .NET 10.0, but we have net472 projects too). Our unit tests require [.NET 11.0 SDK](https://dotnet.microsoft.com/download/dotnet/11.0).
   - Workload "Visual Studio extension development" (Note: ILSpy.VSExtensions.sln is separate from ILSpy.sln and thus this workload is optional)
   - Individual Component "MSVC v143 - VS 2022 C++ x64/x86 build tools" (or similar)
     - _The VC++ toolset is optional_; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
@@ -67,7 +67,7 @@ If this problem occurs, please manually install the .NET 11.0 SDK from [here](ht
 
 #### Unix / Mac:
 
-- Make sure [.NET 11.0 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) is installed.
+- Make sure [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (for run) and [.NET 11.0 SDK](https://dotnet.microsoft.com/download/dotnet/11.0) (for tests) is installed.
 - Make sure [PowerShell](https://github.com/PowerShell/PowerShell) is installed (formerly known as PowerShell Core)
 - Clone the repository using git.
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).

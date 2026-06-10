@@ -6,6 +6,10 @@
          file stays in sync for these targets without forcing per-RID restore onto
          the ILSpyCmd tool (PackAsTool + GeneratePackageOnBuild) or the test projects. -->
     <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
+    <!-- Framework-dependent publishes target net10.0; roll forward to a newer major runtime when
+         the exact one isn't installed so the app still starts on machines that only have a later
+         .NET. -->
+    <RollForward>major</RollForward>
     <Nullable>enable</Nullable>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/ILSpy-Large.ico</ApplicationIcon>
@@ -33,6 +37,15 @@
          stop-the-world for long. -->
     <ServerGarbageCollection>true</ServerGarbageCollection>
     <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <!-- DATAS: let server GC scale its heap count to the live load instead of pinning one heap
+         per core, trading a little throughput for a much smaller idle working set. -->
+    <GarbageCollectionAdaptationMode>1</GarbageCollectionAdaptationMode>
+  </PropertyGroup>
+
+  <!-- Trap arithmetic overflow/underflow in Debug builds so off-by-one bugs surface as exceptions
+       during development instead of silently wrapping. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
   </PropertyGroup>
 
   <ItemGroup>

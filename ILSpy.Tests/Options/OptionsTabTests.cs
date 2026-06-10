@@ -309,10 +309,15 @@ public class OptionsTabTests
 		// pull focus back to MainTab and yank the user off the Options page they are editing.
 		var (_, vm) = await TestHarness.BootAsync(3);
 
-		// Show some decompiled content first, so there is a decompiler tab to refresh.
+		// Show some decompiled content first, so there is a decompiler tab to refresh. Use a single
+		// small method, not the whole Enumerable type: the full type takes >15 s in headless and
+		// times out WaitForDecompiledTextAsync under CI load.
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty");
+		vm.AssemblyTreeModel.SelectNode(method);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		// Open Options and confirm it is the active document.

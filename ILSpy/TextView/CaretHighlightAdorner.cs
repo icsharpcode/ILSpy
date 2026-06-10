@@ -47,9 +47,14 @@ namespace ILSpy.TextView
 		readonly Rect maxRect;
 		readonly IPen pen;
 		readonly Stopwatch elapsed = Stopwatch.StartNew();
+		readonly TextArea textArea;
+		readonly DispatcherTimer frameTimer;
+		readonly DispatcherTimer lifetimeTimer;
 
 		CaretHighlightAdorner(TextArea textArea)
 		{
+			this.textArea = textArea;
+
 			// Caret rect is in document coordinates; subtracting ScrollOffset converts to the
 			// viewport-relative space IBackgroundRenderer.Draw paints into.
 			var caretRect = textArea.Caret.CalculateCaretRectangle();
@@ -64,6 +69,13 @@ namespace ILSpy.TextView
 			// black when unset (e.g. design-time / standalone-renderer tests).
 			var brush = textArea.TextView.GetValue(TextElement.ForegroundProperty) ?? Brushes.Black;
 			pen = new Pen(brush, 1).ToImmutable();
+
+			// The frame timer ticks at ~60 fps to invalidate the Caret layer so Draw re-runs with
+			// fresh elapsed time; the lifetime timer dismisses the adorner after one second.
+			frameTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
+			frameTimer.Tick += (_, _) => textArea.TextView.InvalidateLayer(KnownLayer.Caret);
+			lifetimeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(LifetimeMs) };
+			lifetimeTimer.Tick += (_, _) => Dismiss();
 		}
 
 		public KnownLayer Layer => KnownLayer.Caret;
@@ -107,7 +119,7 @@ namespace ILSpy.TextView
 		/// <summary>
 		/// Registers a one-shot caret-highlight animation on <paramref name="textArea"/>. Spins
 		/// up two timers: one ticks at ~60 fps to invalidate the Caret layer so <see cref="Draw"/>
-		/// re-runs with fresh elapsed time, the other unregisters the adorner after one second.
+		/// re-runs with fresh elapsed time, the other calls <see cref="Dismiss"/> after one second.
 		/// </summary>
 		public static void DisplayCaretHighlightAnimation(TextArea textArea)
 		{
@@ -115,18 +127,20 @@ namespace ILSpy.TextView
 
 			var adorner = new CaretHighlightAdorner(textArea);
 			textArea.TextView.BackgroundRenderers.Add(adorner);
+			adorner.frameTimer.Start();
+			adorner.lifetimeTimer.Start();
+		}
 
-			var frameTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-			frameTimer.Tick += (_, _) => textArea.TextView.InvalidateLayer(KnownLayer.Caret);
-			frameTimer.Start();
-
-			var lifetimeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(LifetimeMs) };
-			lifetimeTimer.Tick += (_, _) => {
-				lifetimeTimer.Stop();
-				frameTimer.Stop();
-				textArea.TextView.BackgroundRenderers.Remove(adorner);
-			};
-			lifetimeTimer.Start();
+		/// <summary>
+		/// Ends the animation immediately: stops both timers and unregisters the adorner from the
+		/// text view. Invoked by the one-second lifetime timer, and usable to tear the highlight
+		/// down on demand instead of waiting the lifetime out.
+		/// </summary>
+		public void Dismiss()
+		{
+			lifetimeTimer.Stop();
+			frameTimer.Stop();
+			textArea.TextView.BackgroundRenderers.Remove(this);
 		}
 	}
 }
