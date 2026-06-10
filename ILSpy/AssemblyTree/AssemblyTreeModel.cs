@@ -288,8 +288,9 @@ namespace ILSpy.AssemblyTree
 				case Options.DisplaySettingReaction.Redecompile:
 					// Baked into the decompiler/disassembler output (folding, member/using
 					// expansion, debug info, IL detail, indentation), so it only shows after a
-					// re-decompile of the active tab.
-					RefreshDecompiledView();
+					// re-decompile. Refresh in place: changing an option must not switch the
+					// user's current tab.
+					RefreshDecompiledViewInPlace();
 					break;
 					// EditorLive / None: the text view applies editor settings to AvaloniaEdit itself,
 					// and the rest have no model-side reaction.
@@ -904,6 +905,14 @@ namespace ILSpy.AssemblyTree
 		/// </summary>
 		public void RefreshDecompiledView()
 			=> AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
+
+		/// <summary>
+		/// Re-decompiles the decompiler tab's content in place for an output-affecting display setting,
+		/// without activating or navigating to it. Changing an option must not switch the user's current
+		/// tab, so this avoids the selection re-projection that <see cref="RefreshDecompiledView"/> does.
+		/// </summary>
+		public void RefreshDecompiledViewInPlace()
+			=> AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.RefreshDecompilerOutputInPlace();
 
 		/// <summary>
 		/// Resolves every assembly reference of each supplied assembly node through that

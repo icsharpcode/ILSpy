@@ -719,6 +719,16 @@ namespace ILSpy.Docking
 			ActiveDecompilerTab?.Redecompile();
 		}
 
+		/// <summary>
+		/// Re-decompile the decompiler tab's content in place so an output-affecting display setting
+		/// takes effect, WITHOUT activating or navigating to it. Unlike <see cref="ForceRefreshActiveTab"/>
+		/// (which re-projects the tree selection via <c>ShowSelectedNode</c> and so activates the preview
+		/// tab), changing an option must not steal the user's current tab. Refreshes the cached
+		/// decompiler content directly, so it is up to date even when another tab is showing.
+		/// </summary>
+		public void RefreshDecompilerOutputInPlace()
+			=> decompilerContent?.Redecompile();
+
 		void ShowSelectedNode()
 		{
 			using var _ = ILSpy.AppEnv.AppLog.Phase("DockWorkspace.ShowSelectedNode");

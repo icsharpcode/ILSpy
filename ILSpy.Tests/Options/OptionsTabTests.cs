@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
+using Avalonia.Threading;
 
 using AwesomeAssertions;
 
@@ -298,5 +299,37 @@ public class OptionsTabTests
 
 		// Clean-up: restore so later tests see the original.
 		settings.DisplaySettings.SelectedFontSize = originalSize;
+	}
+
+	[AvaloniaTest]
+	public async Task Toggling_A_Display_Setting_Does_Not_Switch_Away_From_The_Focused_Options_Tab()
+	{
+		// Scenario: the user is on the Options tab and toggles a setting that forces a re-decompile
+		// (e.g. DecodeCustomAttributeBlobs). The decompiler output must refresh in place; it must NOT
+		// pull focus back to MainTab and yank the user off the Options page they are editing.
+		var (_, vm) = await TestHarness.BootAsync(3);
+
+		// Show some decompiled content first, so there is a decompiler tab to refresh.
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// Open Options and confirm it is the active document.
+		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
+			.GetCommand(nameof(Resources._Options)).Execute(null);
+		var documents = vm.DockWorkspace.Documents!;
+		var optionsTab = documents.VisibleDockables!.OfType<ContentTabPage>()
+			.Single(t => t.Content is OptionsPageModel);
+		documents.ActiveDockable.Should().BeSameAs(optionsTab, "baseline: Options is the active document");
+
+		// Toggle a re-decompile display setting.
+		var display = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
+		display.DecodeCustomAttributeBlobs = !display.DecodeCustomAttributeBlobs;
+		for (int i = 0; i < 12; i++)
+			Dispatcher.UIThread.RunJobs();
+
+		documents.ActiveDockable.Should().BeSameAs(optionsTab,
+			"an output display setting must re-decompile in place, not switch the user off the focused tab");
 	}
 }
