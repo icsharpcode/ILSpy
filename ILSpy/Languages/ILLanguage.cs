@@ -62,30 +62,36 @@ namespace ILSpy.Languages
 			};
 		}
 
-		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
+		/// <summary>
+		/// Creates a disassembler wired to <paramref name="module"/>'s assembly resolver and
+		/// debug info — the setup shared by every member-level Decompile* entry point.
+		/// </summary>
+		ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options, MetadataFile module)
 		{
 			var dis = CreateDisassembler(output, options);
-			MetadataFile module = method.ParentModule!.MetadataFile!;
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
+			return dis;
+		}
+
+		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)
+		{
+			MetadataFile module = method.ParentModule!.MetadataFile!;
+			var dis = CreateDisassembler(output, options, module);
 			dis.DisassembleMethod(module, (MethodDefinitionHandle)method.MetadataToken);
 		}
 
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
 		{
-			var dis = CreateDisassembler(output, options);
 			MetadataFile module = field.ParentModule!.MetadataFile!;
-			dis.AssemblyResolver = module.GetAssemblyResolver();
-			dis.DebugInfo = module.GetDebugInfoOrNull();
+			var dis = CreateDisassembler(output, options, module);
 			dis.DisassembleField(module, (FieldDefinitionHandle)field.MetadataToken);
 		}
 
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
-			var dis = CreateDisassembler(output, options);
 			MetadataFile module = property.ParentModule!.MetadataFile!;
-			dis.AssemblyResolver = module.GetAssemblyResolver();
-			dis.DebugInfo = module.GetDebugInfoOrNull();
+			var dis = CreateDisassembler(output, options, module);
 			dis.DisassembleProperty(module, (PropertyDefinitionHandle)property.MetadataToken);
 			var pd = module.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)property.MetadataToken);
 			var accessors = pd.GetAccessors();
@@ -104,10 +110,8 @@ namespace ILSpy.Languages
 
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
-			var dis = CreateDisassembler(output, options);
 			MetadataFile module = ev.ParentModule!.MetadataFile!;
-			dis.AssemblyResolver = module.GetAssemblyResolver();
-			dis.DebugInfo = module.GetDebugInfoOrNull();
+			var dis = CreateDisassembler(output, options, module);
 			dis.DisassembleEvent(module, (EventDefinitionHandle)ev.MetadataToken);
 
 			var ed = module.Metadata.GetEventDefinition((EventDefinitionHandle)ev.MetadataToken);
@@ -131,21 +135,17 @@ namespace ILSpy.Languages
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			var dis = CreateDisassembler(output, options);
 			MetadataFile module = type.ParentModule!.MetadataFile!;
-			dis.AssemblyResolver = module.GetAssemblyResolver();
-			dis.DebugInfo = module.GetDebugInfoOrNull();
+			var dis = CreateDisassembler(output, options, module);
 			dis.DisassembleType(module, (TypeDefinitionHandle)type.MetadataToken);
 		}
 
 		public override void DecompileNamespace(string nameSpace, IEnumerable<ITypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{
-			var dis = CreateDisassembler(output, options);
-			MetadataFile module = types.FirstOrDefault()?.ParentModule!.MetadataFile!;
+			MetadataFile? module = types.FirstOrDefault()?.ParentModule!.MetadataFile;
 			if (module == null)
 				return;
-			dis.AssemblyResolver = module.GetAssemblyResolver();
-			dis.DebugInfo = module.GetDebugInfoOrNull();
+			var dis = CreateDisassembler(output, options, module);
 			dis.DisassembleNamespace(nameSpace, module, types.Select(t => (TypeDefinitionHandle)t.MetadataToken));
 		}
 
