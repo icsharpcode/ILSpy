@@ -4,7 +4,7 @@ Guidance for Claude Code (and future Claude sessions) when working on ILSpy.
 
 ## What this codebase is
 
-ILSpy is a cross-platform .NET assembly browser / decompiler built on **Avalonia 12**, on top of the cross-platform `ICSharpCode.ILSpyX` and `ICSharpCode.Decompiler` core libraries. The `ILSpy/` project IS the Avalonia UI — there is no separate "WPF version" in this tree.
+ILSpy is a cross-platform .NET assembly browser / decompiler built on **Avalonia 12**, on top of the cross-platform `ICSharpCode.ILSpyX` and `ICSharpCode.Decompiler` core libraries.
 
 ## Tech stack
 
@@ -13,9 +13,8 @@ ILSpy is a cross-platform .NET assembly browser / decompiler built on **Avalonia
 - **Dock** (wieslawsoltes/Dock) for the panel layout. NuGet id ≠ CLR namespace — `Dock.Controls.Recycling` lives in `Avalonia.Controls.Recycling`; decompile before guessing xmlns.
 - **Avalonia.Xaml.Behaviors** for attached-behaviour glue.
 - **Avalonia.ExtendedToolkit** (mameolan) for controls not in Avalonia core.
-- **Simple** theme (not Fluent). Check `App.axaml` / csproj before assuming Fluent. Note that Simple's ComboBox chevron is `ToggleButton#toggle`, not `Border#HighlightBackground`.
-- **Microsoft.Extensions.DependencyInjection** + **System.Composition** MEF directly, with a small bridge. Do **not** use TomsToolbox.
-- **AvaloniaEdit theme** must be registered in `Application.Styles` via the StyleInclude or `TextEditor` renders 0×0.
+- **Simple** theme (not Fluent). Check `App.axaml` / csproj before assuming Fluent.
+- **Microsoft.Extensions.DependencyInjection** + **System.Composition** MEF directly, with a small bridge.
 - Central package management is enabled — every `PackageReference` needs a matching `PackageVersion` in `Directory.Packages.props`.
 - Target framework: `net10.0` (cross-platform) for the main app. The test projects target `net11.0` (and `net11.0-windows` for tests that intentionally exercise Windows-only behaviour) so they run on the runtime the `net11.0` preview build SDK ships, without installing a separate `net10.0` runtime in CI. `TestPlugin` stays `net10.0` (it is loaded as a library by the net11 test host, so its TFM need not track the test projects').
 
@@ -25,7 +24,7 @@ Avalonia UI:
 - `ILSpy/` — the Avalonia UI app
 - `ILSpy.Tests/` — headless Avalonia UI tests (Avalonia.Headless.NUnit)
 - `ILSpy.Tests.Windows/` — Windows-only UI tests (OS-gated; `net11.0-windows`)
-- `ILSpy.ReadyToRun/` — ReadyToRun-viewer plugin, **ported to Avalonia** (`net10.0`; part of `ILSpy.Desktop.slnf`). Not legacy.
+- `ILSpy.ReadyToRun/` — ReadyToRun-viewer plugin.
 
 Cross-platform core (decompiler engine + shared support):
 - `ICSharpCode.Decompiler/` — core decompiler library (multi-targeted, cross-platform)
@@ -39,17 +38,24 @@ Test support:
 - `TestPlugin/` — sample plugin exercising the plugin-loading system (`net10.0`)
 - `TestFixtures.Resources/` — generates resource fixtures consumed by the decompiler tests
 
-Legacy / Windows-tied (porting backlog; do **not** modify unless explicitly asked to port them):
+Windows-only frontends, packaging, and tests:
 - `ILSpy.AddIn/`, `ILSpy.AddIn.VS2022/` — Visual Studio add-ins (`net472`)
 - `ILSpy.Installer/` — WiX installer (`net472`)
-- `ILSpy.BamlDecompiler.Tests/` — BAML-decompiler tests, still WPF/Windows-bound (`net11.0-windows`); there is **no** `ILSpy.BamlDecompiler/` project, only these tests
+- `ILSpy.BamlDecompiler.Tests/` — BAML-decompiler tests, still WPF/Windows-bound (`net11.0-windows`)
 
 Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the decompiler libs + `ilspycmd` + their tests (no UI — the Linux CI target); `ILSpy.Desktop.slnf` is the UI plus its dependencies and tests; `ILSpy.Installer.sln` / `ILSpy.VSExtensions.sln` cover the legacy packaging.
 
+## ILSpy-tests submodule
+
+- `ILSpy-tests/` is a **git submodule** (`https://github.com/icsharpcode/ILSpy-tests`, branch `master`) holding large real-world assemblies and pre-built fixtures used by the heavyweight decompiler tests — the round-trip suite (`ICSharpCode.Decompiler.Tests/RoundtripAssembly.cs`) and a few IL-pretty cases (e.g. `FSharp/FSharp.Core.dll`).
+- **It is not checked out by default**, because it is large. Tests that need it call `Assert.Ignore` when the directory is absent (see `RoundtripAssembly`/`ILPrettyTestRunner`), so the rest of the suite runs without it — a green local run does **not** mean the round-trip tests ran. To run them, populate it first: `git submodule update --init ILSpy-tests` (or clone it separately to that path).
+- **It opts out of the host build settings on purpose.** The submodule ships its own `ILSpy-tests/Directory.Build.props` that sets `TreatWarningsAsErrors=false`; its mere presence also stops MSBuild's upward `Directory.Build.props` search at the submodule root, so the repo-wide warnings-as-errors (and other root build properties) don't leak into the fixtures, which intentionally contain warning-generating code. Don't delete that file or "fix" warnings inside the fixtures.
+- **Bumping it** is a normal submodule pointer update: check out the desired commit inside `ILSpy-tests/`, then commit the changed submodule gitlink in the host repo (subject like "Bump ILSpy-tests: ...").
+
 ## Code conventions
 
-- **Don't reference "WPF" in source or comments.** Describe what code does, not where it came from. "Mirrors WPF" comments rot once the legacy WPF tree is gone.
-- **Don't invent.** Port what the previous app actually shipped, not every conceivable feature. Don't add Options-page settings that weren't there.
+- **Comments must stand on their own, with no memory of how the code was written.** A comment must make sense to someone reading the file cold -- with no knowledge of the chat, PR, commit, or agent session that produced it. Describe the code as it is now; never reference "the change", "the previous version", "the old approach", "as requested", "we discussed", "now we", a step that was removed, or anything else that only means something inside the conversation that wrote it. If you can't explain it without that context, it isn't a code comment.
+- **Never undo edits you didn't make this session.** If a file carries modifications made outside the session -- by a human, or surfaced by the harness as "modified outside the session / by the user or a linter" -- treat them as intentional. Do not revert, overwrite, "clean up", or discard them, even when they look unrelated, wrong, or in the way of your change, without explicit confirmation first. Work around them or ask; never silently drop someone else's work.
 - **TDD for new features.** Write the failing test, show it red, implement, show it green. Never skip the red step.
 - **Strict pattern matchers.** Decompilation pattern matchers should default to `∀` over the structurally guaranteed shape — loosen only when a legitimate fixture is rejected (capture it as a regression test first).
 - **No silent returns in tests.** When an expected component is missing, assert and fail. Never `return` early to bypass the assertion.
@@ -58,7 +64,13 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 
 ## Build / restore
 
-- Common actions have repo-root pwsh scripts: `restore.ps1`, `build.ps1` (`-Configuration Debug|Release`), `clean.ps1`, `updatedeps.ps1`, `publish.ps1`, and `BuildTools/format.ps1`. They target `ILSpy.sln`.
+- **Use the repo-root pwsh scripts for these tasks, not raw `dotnet` commands** -- they carry the flags that keep the repo consistent and all target `ILSpy.sln` (extra args are forwarded):
+  - **restore** -> `restore.ps1`
+  - **build** -> `build.ps1` (`-Configuration Debug|Release`)
+  - **update deps / regenerate lock files** -> `updatedeps.ps1`
+  - **format** -> `BuildTools/format.ps1`
+  - **clean** -> `clean.ps1`; **publish** -> `publish.ps1`
+- **Why this matters:** `restore.ps1` and `updatedeps.ps1` pass `-p:RestoreEnablePackagePruning=false`, so they keep every `packages.lock.json` whole. A bare `dotnet restore`/`dotnet build` (which restores implicitly) **prunes** the lock files -- silently stripping the transitive/all-RID/DiaSymReader entries the repo deliberately carries -- and surfaces as a spurious `packages.lock.json` diff. Restore with `restore.ps1`, then build with `build.ps1 --no-restore`; if a bare build ever leaves a pruned `packages.lock.json` modified, discard it (`git checkout -- <path>`).
 - **Every project generates a `packages.lock.json`** (`RestorePackagesWithLockFile` is set in the root `Directory.Build.props`); CI NuGet caching keys off these. After adding or bumping a `PackageReference`/`PackageVersion`, regenerate the lock files with `updatedeps.ps1` (i.e. `dotnet restore ILSpy.sln --force-evaluate -p:RestoreEnablePackagePruning=false`) and commit them. The core libraries additionally set `RestoreLockedMode`, so a plain restore there fails until the lock file is refreshed.
 - The pre-commit hook runs `dotnet format` on the **whole solution** -- it IS the formatter. **Always let the hook run; never commit `.cs` with `--no-verify`.** Bypassing it lands unformatted code and forces history-wide reformat rebases later. `--no-verify` is acceptable only for commits that touch no `.cs` (e.g. `.yml`/`.md`-only).
 - **Line endings are a Windows-only concern.** The repo is `* text=auto`, so blobs are stored LF and git renormalizes on commit. On **Windows**, save new files CRLF so the hook's `git add -u` doesn't churn EOLs. On **Linux/macOS**, leave new files LF and do **not** `unix2dos` -- forcing CRLF there makes the whole working tree show as phantom-modified in `git status` (and is normalized back to LF on commit anyway).
@@ -77,20 +89,6 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 
 - Always run the test suite with `--report-trx` so failures survive: `dotnet test --solution ILSpy.sln --report-trx` (the repo pins Microsoft.Testing.Platform in `global.json`; the bare `dotnet test <sln>` form is the old VSTest syntax). Don't dismiss failures as flaky without first reproducing in isolation, then running repeatedly.
 - After matcher / rewriter edits, **run the relevant tests, not just the build.** `dotnet build` green ≠ behaviour correct.
-
-## Framework-specific gotchas
-
-- **AvaloniaEdit hyperlinks.** Flip `Editor.Options.RequireControlModifierForHyperlinkClick=false` once on the editor; don't override `ConstructElementFromMatch` per generator.
-- **AvaloniaEdit hover.** `OnQueryCursor` must **not** set `e.Handled=true`. `PointerHover` args are captured at hover-start, not at fire-time.
-- **AvaloniaEdit TextView coords.** `GetPosition` wants document-visual coords (add `ScrollOffset`). Redraw `IBackgroundRenderer`s via `TextView.InvalidateLayer`.
-- **Avalonia 12 clipboard.** `IClipboard.SetTextAsync` is an extension method — needs `using Avalonia.Input.Platform;` even when the namespace is already imported (`ClipboardExtensions` is a separate static class).
-- **ProDataGrid hierarchical cell layout.** Use `Grid Auto/*` in `DataGridHierarchicalColumn` cell templates, not `StackPanel`. The first child gets clipped otherwise.
-- **ProDataGrid two-way expanded sync.** Bind `HierarchicalOptions.IsExpandedPropertyPath` for model↔grid sync; don't hand-roll `NodeExpanded` / `PropertyChanged` plumbing.
-- **ProDataGrid row drag-drop.** DataGrid-level `IsReadOnly` short-circuits the drag controller. Put `IsReadOnly` on the **column** instead.
-- **Dock setup follows `samples/DockMvvmSample`.** `App.axaml` wiring, factory shape, `DockControl` markup, `ContextLocator` / `DockableLocator` should match the sample. Deviate only with a documented reason.
-- **DockWorkspace tab routing.** Every navigation reuses the active tab (replacing in place if the type changes). Only "Open in new tab" and "Freeze tab" carve out new tabs.
-- **Decompile-progress UI is an overlay.** Never wipe `Text` / `Foldings` / etc. to show a spinner; keep editor state intact so cancel falls back to it.
-- **`ILSpyTraceListener`** surfaces `Debug.Assert` through the global dialog — keep it registered at startup.
 
 ## Investigating dependencies
 
