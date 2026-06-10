@@ -504,6 +504,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.SortCustomAttributes" xml:space="preserve">
     <value>Sort custom attributes</value>
   </data>
+  <data name="DecompilerSettings.SortSwitchSections" xml:space="preserve">
+    <value>Sort switch sections by case label value</value>
+  </data>
   <data name="DecompilerSettings.SparseIntegerSwitch" xml:space="preserve">
     <value>Detect switch on integer even if IL code does not use a jump table</value>
   </data>

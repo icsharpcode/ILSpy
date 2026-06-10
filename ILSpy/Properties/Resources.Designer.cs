@@ -1423,7 +1423,16 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("DecompilerSettings.SortCustomAttributes", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Sort switch sections by case label value.
+        /// </summary>
+        public static string DecompilerSettings_SortSwitchSections {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.SortSwitchSections", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Detect switch on integer even if IL code does not use a jump table.
         /// </summary>
