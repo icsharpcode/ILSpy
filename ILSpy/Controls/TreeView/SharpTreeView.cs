@@ -441,7 +441,7 @@ namespace ILSpy.Controls.TreeView
 		static readonly DataFormat<string> InternalDragFormat =
 			DataFormat.CreateStringApplicationFormat("sharptreeview-drag");
 
-		enum DropPlace { Before, Inside, After }
+		internal enum DropPlace { Before, Inside, After }
 
 		SharpTreeNode[]? draggedNodes;
 		IPlatformDataObject? dragData;
@@ -515,15 +515,8 @@ namespace ILSpy.Controls.TreeView
 
 		void OnDragOver(object? sender, DragEventArgs e)
 		{
-			if (ResolveDropTarget(e) is not { } target)
-			{
-				e.DragEffects = DragDropEffects.None;
-				HideInsertMarker();
-				e.Handled = true;
-				return;
-			}
 			var args = new AvaloniaPlatformDragEventArgs(BuildPlatformData(e));
-			if (target.Node.CanDrop(args, target.Index))
+			if (PickAcceptingTarget(args, ResolveDropTarget(e)) is { } target)
 			{
 				e.DragEffects = args.Effects.ToAvalonia();
 				ShowInsertMarker(target.Item, target.Place);
@@ -539,10 +532,8 @@ namespace ILSpy.Controls.TreeView
 		void OnDrop(object? sender, DragEventArgs e)
 		{
 			HideInsertMarker();
-			if (ResolveDropTarget(e) is not { } target)
-				return;
 			var args = new AvaloniaPlatformDragEventArgs(BuildPlatformData(e));
-			if (target.Node.CanDrop(args, target.Index))
+			if (PickAcceptingTarget(args, ResolveDropTarget(e)) is { } target)
 			{
 				target.Node.InternalDrop(args, target.Index);
 				e.DragEffects = args.Effects.ToAvalonia();
@@ -550,13 +541,33 @@ namespace ILSpy.Controls.TreeView
 			e.Handled = true;
 		}
 
-		readonly record struct DropTarget(SharpTreeNode Node, int Index, DropPlace Place, SharpTreeViewItem Item);
+		// Dropping onto the middle 50% of a row lands DropPlace.Inside on the row's own node. Most
+		// concrete SharpTreeNode subclasses inherit the base CanDrop (returns false), so a literal
+		// "drop onto an assembly row" would otherwise show the no-cursor even though the root happily
+		// accepts the payload. Fall back to the empty-space (root) target in that case -- same
+		// fallback as the empty-space-below-last-row path.
+		internal DropTarget? PickAcceptingTarget(IPlatformDragEventArgs args, DropTarget? initial)
+		{
+			if (initial is { } first && first.Node.CanDrop(args, first.Index))
+				return first;
+			if (ResolveEmptySpaceDropTarget() is { } fallback
+				&& (initial is null || !ReferenceEquals(fallback.Node, initial.Value.Node))
+				&& fallback.Node.CanDrop(args, fallback.Index))
+				return fallback;
+			return null;
+		}
+
+		internal readonly record struct DropTarget(SharpTreeNode Node, int Index, DropPlace Place, SharpTreeViewItem? Item);
 
 		DropTarget? ResolveDropTarget(DragEventArgs e)
 		{
+			// External Explorer drops over the gap below the last row arrive with e.Source pointing at
+			// the ListBox-inner ScrollViewer / ItemsPresenter / the tree itself rather than a row.
+			// Fall back to "target the root, Inside, at the end of its children" so dropping onto an
+			// empty list still calls the root's CanDrop/Drop -- the WPF SharpTreeView did the same.
 			if (e.Source is not Visual hit
 				|| hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true) is not { Node: { } node } item)
-				return null;
+				return ResolveEmptySpaceDropTarget();
 			double h = item.Bounds.Height;
 			double y = e.GetPosition(item).Y;
 			DropPlace place = y < h * 0.25 ? DropPlace.Before : y > h * 0.75 ? DropPlace.After : DropPlace.Inside;
@@ -570,6 +581,13 @@ namespace ILSpy.Controls.TreeView
 					int idx = parent.Children.IndexOf(node);
 					return new DropTarget(parent, place == DropPlace.After ? idx + 1 : idx, place, item);
 			}
+		}
+
+		internal DropTarget? ResolveEmptySpaceDropTarget()
+		{
+			if (Root is not { } root)
+				return null;
+			return new DropTarget(root, root.Children.Count, DropPlace.Inside, Item: null);
 		}
 
 		IPlatformDataObject BuildPlatformData(DragEventArgs e)
@@ -591,9 +609,11 @@ namespace ILSpy.Controls.TreeView
 			return data;
 		}
 
-		void ShowInsertMarker(SharpTreeViewItem item, DropPlace place)
+		void ShowInsertMarker(SharpTreeViewItem? item, DropPlace place)
 		{
-			if (place == DropPlace.Inside || AdornerLayer.GetAdornerLayer(this) is not { } layer)
+			// item is only null for the empty-space fallback target, whose place is always
+			// DropPlace.Inside -- the early return below covers that and the marker stays hidden.
+			if (place == DropPlace.Inside || item is null || AdornerLayer.GetAdornerLayer(this) is not { } layer)
 			{
 				HideInsertMarker();
 				return;
