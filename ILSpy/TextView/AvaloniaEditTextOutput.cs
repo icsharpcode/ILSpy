@@ -110,21 +110,32 @@ namespace ILSpy.TextView
 
 		public string IndentationString { get; set; } = "\t";
 
+		/// <summary>
+		/// When set, newlines are written as single spaces and indentation is suppressed, so
+		/// multi-line writer output (e.g. a disassembled member header) collapses to one
+		/// line. Used for single-line surfaces like the hover tooltip.
+		/// </summary>
+		public bool IgnoreNewLineAndIndent { get; set; }
+
 		public int TextLength => builder.Length;
 
 		public string GetText() => builder.ToString();
 
-		public void Indent() => indent++;
+		public void Indent()
+		{
+			if (!IgnoreNewLineAndIndent)
+				indent++;
+		}
 
 		public void Unindent()
 		{
-			if (indent > 0)
+			if (!IgnoreNewLineAndIndent && indent > 0)
 				indent--;
 		}
 
 		void WriteIndentIfNeeded()
 		{
-			if (!needsIndent)
+			if (IgnoreNewLineAndIndent || !needsIndent)
 				return;
 			needsIndent = false;
 			for (int i = 0; i < indent; i++)
@@ -147,6 +158,12 @@ namespace ILSpy.TextView
 
 		public void WriteLine()
 		{
+			if (IgnoreNewLineAndIndent)
+			{
+				builder.Append(' ');
+				CheckLength();
+				return;
+			}
 			builder.Append('\n');
 			lineNumber++;
 			needsIndent = true;

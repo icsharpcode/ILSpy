@@ -53,7 +53,7 @@ namespace ILSpy.TextView
 	{
 		// Two-track output of BuildHoverContent: rich content opens the sticky Popup with the
 		// pointer-distance corridor; plain content uses Avalonia's ToolTip attached property.
-		readonly record struct HoverContent(Control Control, bool IsRich);
+		internal readonly record struct HoverContent(Control Control, bool IsRich);
 
 		// Local-reference highlight colours: light-yellow "GreenYellow" for matches and a
 		// softer green for the actual definition.
@@ -947,7 +947,7 @@ namespace ILSpy.TextView
 			distanceToPopupLimit = double.PositiveInfinity;
 		}
 
-		HoverContent? BuildHoverContent(DecompilerTabPageModel model, ReferenceSegment segment)
+		internal HoverContent? BuildHoverContent(DecompilerTabPageModel model, ReferenceSegment segment)
 		{
 			var language = model.Language;
 			var resolved = ResolveEntity(model, segment.Reference);
@@ -965,6 +965,20 @@ namespace ILSpy.TextView
 					AppendXmlDocumentation(renderer, entity);
 					return new HoverContent(renderer.CreateView(), IsRich: true);
 				case OpCodeInfo op:
+					// Opcode docs are published as field documentation on
+					// System.Reflection.Emit.OpCodes, so the mscorlib provider serves them.
+					var opDocs = XmlDocLoader.MscorlibDocumentation
+						?.GetDocumentation("F:System.Reflection.Emit.OpCodes." + op.EncodedName);
+					if (opDocs != null)
+					{
+						var opRenderer = new DocumentationRenderer(
+							new CSharpAmbience(),
+							new FontFamily("Consolas, Menlo, Monospace"),
+							12);
+						opRenderer.AddSignatureBlock(new RichText($"{op.Name} (0x{op.Code:x})"));
+						opRenderer.AddXmlDocumentation(opDocs, declaringEntity: null, resolver: null);
+						return new HoverContent(opRenderer.CreateView(), IsRich: true);
+					}
 					var opBlock = new SelectableTextBlock {
 						FontFamily = new FontFamily("Consolas, Menlo, Monospace"),
 						FontSize = 12,
