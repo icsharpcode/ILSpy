@@ -92,6 +92,14 @@ namespace ILSpy.ViewModels
 		[ObservableProperty]
 		Stepper.Node? selectedStep;
 
+		/// <summary>
+		/// True while the current language is an <see cref="IDebugStepProvider"/>. When false,
+		/// the view replaces the step tree with a "not available" note instead of leaving the
+		/// previous language's stale tree (whose commands would trigger pointless re-decompiles).
+		/// </summary>
+		[ObservableProperty]
+		bool isAvailable;
+
 		public IRelayCommand ShowStateBeforeCommand { get; }
 		public IRelayCommand ShowStateAfterCommand { get; }
 		public IRelayCommand DebugStepCommand { get; }
@@ -162,6 +170,7 @@ namespace ILSpy.ViewModels
 				// Same language instance — just refresh the steps in case a decompile happened
 				// while we were detached.
 				Steps = activeLanguage!.Stepper.Steps;
+				IsAvailable = true;
 				return;
 			}
 			DetachFromLanguage();
@@ -169,10 +178,13 @@ namespace ILSpy.ViewModels
 			language.StepperUpdated += OnStepperUpdated;
 			Steps = language.Stepper.Steps;
 			Options = language.StepOptions;
+			IsAvailable = true;
 		}
 
 		void DetachFromLanguage()
 		{
+			IsAvailable = false;
+			Steps = null;
 			if (activeLanguage != null)
 			{
 				activeLanguage.StepperUpdated -= OnStepperUpdated;
