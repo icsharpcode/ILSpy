@@ -850,10 +850,14 @@ namespace ILSpy.TextView
 		{
 			if (richPopup.IsOpen)
 			{
-				// TODO: refuse to close while the popup has keyboard focus (the user is
-				// reading / clicking links inside it). Not tracked yet — for now the popup
-				// is always replaceable.
-				_ = mouseClick;
+				// While the pointer is over the popup or keyboard focus is inside it (the
+				// user is reading, selecting text to copy, or reaching for a link), only a
+				// forced close (document change) may take it down.
+				if (!mouseClick && richPopup.Child is { } child
+					&& (child.IsPointerOver || child.IsKeyboardFocusWithin))
+				{
+					return false;
+				}
 				CloseRichPopup();
 				return true;
 			}
@@ -907,7 +911,7 @@ namespace ILSpy.TextView
 			ToolTip.SetIsOpen(Editor.TextArea.TextView, true);
 		}
 
-		void OpenRichPopup(Control content)
+		internal void OpenRichPopup(Control content)
 		{
 			richPopup.Child = content;
 			// While the pointer is over the popup, the editor no longer receives the moves
@@ -920,6 +924,14 @@ namespace ILSpy.TextView
 
 		void OnRichPopupContentPointerExited(object? sender, PointerEventArgs e)
 		{
+			// A selection drag that sweeps past the popup edge keeps the pointer captured
+			// inside the popup — that's a wide swipe, not a leave. The over/focus vetoes in
+			// TryCloseExistingPopup don't see the capture, so check it here.
+			if (e.Pointer.Captured is Visual captured && richPopup.Child is { } child
+				&& (ReferenceEquals(captured, child) || captured.GetVisualAncestors().Contains(child)))
+			{
+				return;
+			}
 			TryCloseExistingPopup(mouseClick: false);
 		}
 

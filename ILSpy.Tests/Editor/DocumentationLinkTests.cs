@@ -105,6 +105,58 @@ public class DocumentationLinkTests
 	}
 
 	[AvaloniaTest]
+	public async Task Pressing_Inside_The_Popup_To_Select_Does_Not_Close_It()
+	{
+		var (window, vm) = await TestHarness.BootAsync();
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
+		vm.AssemblyTreeModel.SelectNode(stringNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		window.UpdateLayout();
+
+		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
+		var renderer = new DocumentationRenderer(
+			new CSharpAmbience(),
+			new FontFamily("Consolas, Menlo, Monospace"),
+			12);
+		renderer.AddXmlDocumentation(
+			"""<summary>Some text the user may want to select and copy.</summary>""",
+			declaringEntity: null,
+			resolver: _ => null);
+		var content = renderer.CreateView();
+		view.OpenRichPopup(content);
+		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		window.UpdateLayout();
+
+		var popup = view.FindControl<Avalonia.Controls.Primitives.Popup>("RichHoverPopup")!;
+		popup.IsOpen.Should().BeTrue("setup precondition — the popup must be open before the press");
+
+		var paragraph = content.GetVisualDescendants().OfType<SelectableTextBlock>().First();
+		var inside = paragraph.TranslatePoint(
+			new Point(10, paragraph.Bounds.Height / 2), window)!.Value;
+
+		window.MouseDown(inside, MouseButton.Left);
+		popup.IsOpen.Should().BeTrue("holding LMB inside the popup starts a text selection, not a dismiss");
+		window.MouseMove(inside + new Point(25, 0));
+		popup.IsOpen.Should().BeTrue("dragging a selection inside the popup must not close it");
+
+		// Selecting to the end of a line routinely sweeps the pointer past the popup edge
+		// while the button is still held — the popup must survive that.
+		var farOutside = inside + new Point(600, 80);
+		window.MouseMove(farOutside);
+		popup.IsOpen.Should().BeTrue("a selection drag sweeping past the popup edge must not close it");
+
+		// Finish the selection back over the popup and release: the pointer is still over the
+		// popup, so it stays open for the copy. (Releasing far outside the popup is left to
+		// normal leave-to-close behaviour, which differs by platform focus model.)
+		window.MouseMove(inside + new Point(40, 0));
+		window.MouseUp(inside + new Point(40, 0), MouseButton.Left);
+		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		popup.IsOpen.Should().BeTrue("the selection just finished over the popup — it stays for the copy");
+	}
+
+	[AvaloniaTest]
 	public void Unresolvable_Cref_Falls_Back_To_Plain_Text()
 	{
 		var renderer = new DocumentationRenderer(
