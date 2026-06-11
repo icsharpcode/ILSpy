@@ -226,6 +226,10 @@ namespace ILSpy.AssemblyTree
 			// notified, and the saved path must follow the new primary.
 			OnPropertyChanged(nameof(SelectedItem));
 			settingsService.SessionSettings.ActiveTreeViewPath = GetPathForNode(SelectedItem);
+			// Auto-loaded (dependency-resolved) assemblies are not part of the saved list, so
+			// on next launch the tree-path walk would stop at the assembly-list node. Storing
+			// the file lets the restore re-add it before walking the path.
+			settingsService.SessionSettings.ActiveAutoLoadedAssembly = GetAutoLoadedAssemblyPath(SelectedItem);
 
 			// Pub-sub fan-out: panes (e.g. Debug Steps) that need to invalidate their state
 			// when the selection moves listen on this message.
@@ -382,6 +386,14 @@ namespace ILSpy.AssemblyTree
 			if (App.CommandLineArguments?.NavigateTo is { Length: > 0 })
 				return;
 			var savedPath = settingsService.SessionSettings.ActiveTreeViewPath;
+			// Re-open the previously auto-loaded dependency assembly before walking the saved
+			// path -- otherwise the walk stops at the assembly-list root and the selection
+			// silently doesn't restore. File.Exists guards against the user having moved or
+			// deleted the file between sessions; a missing dependency just degrades to "tree
+			// path doesn't resolve" instead of crashing startup.
+			var autoLoaded = settingsService.SessionSettings.ActiveAutoLoadedAssembly;
+			if (!string.IsNullOrEmpty(autoLoaded) && System.IO.File.Exists(autoLoaded))
+				AssemblyList?.OpenAssembly(autoLoaded, isAutoLoaded: true);
 			_ = RestoreSelectedPathAsync(savedPath, isInitial);
 		}
 
@@ -558,6 +570,23 @@ namespace ILSpy.AssemblyTree
 		/// </summary>
 		public static string[]? GetPathForNode(SharpTreeNode? node)
 			=> TreeNodeLocator.GetPathForNode(node);
+
+		/// <summary>
+		/// File path of the auto-loaded assembly under <paramref name="node"/>'s ancestor
+		/// chain, or null when the selection lives in an explicitly-listed assembly. Mirrors
+		/// the WPF host's <c>GetAutoLoadedAssemblyNode</c> contract.
+		/// </summary>
+		static string? GetAutoLoadedAssemblyPath(SharpTreeNode? node)
+		{
+			while (node != null && node is not TreeNodes.AssemblyTreeNode)
+				node = node.Parent;
+			if (node is not TreeNodes.AssemblyTreeNode asmNode)
+				return null;
+			var loaded = asmNode.LoadedAssembly;
+			if (!loaded.IsLoaded || !loaded.IsAutoLoaded)
+				return null;
+			return loaded.FileName;
+		}
 
 		internal AssemblyTreeNode? FindAssemblyNode(LoadedAssembly asm)
 			=> assemblyListTreeNode?.FindAssemblyNode(asm);
