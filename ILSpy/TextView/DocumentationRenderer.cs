@@ -143,7 +143,7 @@ namespace ILSpy.TextView
 			currentPanel.Children.Add(block);
 		}
 
-		public void AddXmlDocumentation(string xmlDocumentation, IEntity declaringEntity, Func<string, IEntity?>? resolver)
+		public void AddXmlDocumentation(string xmlDocumentation, IEntity? declaringEntity, Func<string, IEntity?>? resolver)
 		{
 			if (xmlDocumentation == null)
 				return;

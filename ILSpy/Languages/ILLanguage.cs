@@ -21,6 +21,10 @@ using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Threading;
+
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
@@ -28,6 +32,8 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
+
+using ILSpy.TextView;
 
 namespace ILSpy.Languages
 {
@@ -72,6 +78,57 @@ namespace ILSpy.Languages
 			dis.AssemblyResolver = module.GetAssemblyResolver();
 			dis.DebugInfo = module.GetDebugInfoOrNull();
 			return dis;
+		}
+
+		/// <summary>
+		/// The hover tooltip for an entity in IL view is its disassembled IL header (signature
+		/// only, no body), collapsed to a single line and highlighted with the IL definition.
+		/// </summary>
+		public override RichText GetRichTextTooltip(IEntity entity)
+		{
+			ArgumentNullException.ThrowIfNull(entity);
+			var module = entity.ParentModule?.MetadataFile;
+			if (module == null)
+				return base.GetRichTextTooltip(entity);
+
+			var output = new AvaloniaEditTextOutput { IgnoreNewLineAndIndent = true };
+			// A header never reaches the settings the full Decompile* paths feed into
+			// CreateDisassembler (sequence points, member expansion, ...), so a plain
+			// disassembler suffices here.
+			var disasm = new ReflectionDisassembler(output, CancellationToken.None) {
+				DetectControlStructure = detectControlStructure,
+			};
+			switch (entity.SymbolKind)
+			{
+				case SymbolKind.TypeDefinition:
+					disasm.DisassembleTypeHeader(module, (TypeDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Field:
+					disasm.DisassembleFieldHeader(module, (FieldDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Property:
+				case SymbolKind.Indexer:
+					disasm.DisassemblePropertyHeader(module, (PropertyDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Event:
+					disasm.DisassembleEventHeader(module, (EventDefinitionHandle)entity.MetadataToken);
+					break;
+				case SymbolKind.Method:
+				case SymbolKind.Operator:
+				case SymbolKind.Constructor:
+				case SymbolKind.Destructor:
+				case SymbolKind.Accessor:
+					disasm.DisassembleMethodHeader(module, (MethodDefinitionHandle)entity.MetadataToken);
+					break;
+				default:
+					return base.GetRichTextTooltip(entity);
+			}
+
+			var text = output.GetText().TrimEnd();
+			var highlighting = HighlightingService.GetByExtension(FileExtension);
+			if (highlighting == null)
+				return new RichText(text);
+			return new DocumentHighlighter(new TextDocument(text), highlighting).HighlightLine(1).ToRichText();
 		}
 
 		public override void DecompileMethod(IMethod method, ITextOutput output, DecompilationOptions options)

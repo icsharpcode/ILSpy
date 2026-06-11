@@ -42,8 +42,11 @@ namespace ICSharpCode.Decompiler.Documentation
 				?? FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_2_0);
 			if (xmlDocFile != null)
 				return new XmlDocumentationProvider(xmlDocFile);
-			else
-				return null;
+			// On modern .NET there is no .NET Framework reference-assembly documentation;
+			// fall back to the ref pack parallel to the runtime hosting us (corlib lives in
+			// dotnet/shared/Microsoft.NETCore.App/<version>/, the docs in the matching
+			// dotnet/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/ directory).
+			return TryLoadModernRefPackDocumentation(typeof(object).Assembly.Location);
 		}
 
 		public static XmlDocumentationProvider MscorlibDocumentation {
