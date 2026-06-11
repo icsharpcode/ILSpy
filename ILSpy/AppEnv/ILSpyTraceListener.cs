@@ -36,7 +36,20 @@ namespace ILSpy.AppEnv
 		{
 			Trace.Listeners.Clear();
 			Trace.Listeners.Add(new ILSpyTraceListener());
+			// Don't serialize trace output through TraceInternal's global lock. A decompiler
+			// Debug.Assert runs Fail() under that lock, and Fail() blocks on the UI thread to
+			// show the dialog; meanwhile the UI thread emits its own trace output (Avalonia
+			// logs binding errors during a layout pass) and would block acquiring the same
+			// lock -> deadlock. With the global lock off and the listener declaring itself
+			// thread-safe, TraceInternal calls the listener directly, so the asserting thread
+			// and the UI thread no longer contend on it.
+			Trace.UseGlobalLock = false;
 		}
+
+		// Tells TraceInternal it may invoke this listener without taking the global lock; the
+		// dialog show is marshalled to the UI thread and guarded against re-entrancy, and the
+		// listener's own mutable state is lock-protected below.
+		public override bool IsThreadSafe => true;
 
 		ILSpyTraceListener()
 		{
