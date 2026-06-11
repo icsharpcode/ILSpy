@@ -96,8 +96,8 @@ public class CaretHighlightAdornerTests
 		((object?)memberDef).Should().NotBeNull(
 			"the decompiled Enumerable class contains at least one member-definition reference");
 
-		// Same code path a real pointer-press on the member name routes through.
-		generator.OnReferenceClicked(memberDef!);
+		// Same code path a real stationary click on the member name routes through.
+		view.OnReferenceClicked(memberDef!);
 
 		renderers.Should().Contain(r => r is CaretHighlightAdorner,
 			"clicking a member definition must route through DecompilerTextView.OnReferenceClicked "

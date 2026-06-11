@@ -24,8 +24,9 @@ namespace ILSpy.TextView
 {
 	/// <summary>
 	/// A clickable piece of text that maps back to a <see cref="ReferenceSegment"/>. Sets a hand
-	/// cursor for cross-document references and an arrow for in-document ones. The actual click
-	/// is handled by the parent generator, which routes the segment to the document's navigator.
+	/// cursor for cross-document references and an arrow for in-document ones. Clicks are NOT
+	/// handled here: navigation fires on pointer-release without drag (see the reference-click
+	/// handlers in <see cref="DecompilerTextView"/>), so a press-and-drag can select link text.
 	/// </summary>
 	sealed class VisualLineReferenceText : VisualLineText
 	{
@@ -56,14 +57,6 @@ namespace ILSpy.TextView
 			// OnQueryCursor with the live PointerEventArgs, and marking it handled there
 			// suppresses PointerHoverLogic's tracking of pointer position over reference
 			// segments. Without this, hover events fire with stale args from outside the segment.
-		}
-
-		protected override void OnPointerPressed(PointerPressedEventArgs e)
-		{
-			if (e.Handled || !e.GetCurrentPoint(null).Properties.IsLeftButtonPressed)
-				return;
-			parent.OnReferenceClicked(referenceSegment);
-			e.Handled = true;
 		}
 	}
 }

@@ -137,11 +137,62 @@ namespace ILSpy.TextView
 		void SetupElementGenerators()
 		{
 			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null);
-			referenceElementGenerator.ReferenceClicked += OnReferenceClicked;
 			Editor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 
 			uiElementGenerator = new UIElementGenerator();
 			Editor.TextArea.TextView.ElementGenerators.Add(uiElementGenerator);
+
+			// Reference navigation fires on pointer-RELEASE without drag (WPF parity: the WPF
+			// view used TextArea.PreviewMouseDown/Up the same way), so a press-and-drag over a
+			// link starts a text selection instead of navigating away. Tunnel routing mirrors
+			// WPF's Preview events and sees the gesture before AvaloniaEdit's own handlers.
+			Editor.TextArea.AddHandler(InputElement.PointerPressedEvent,
+				OnTextAreaPointerPressedForReferenceClick,
+				RoutingStrategies.Tunnel,
+				handledEventsToo: true);
+			Editor.TextArea.AddHandler(InputElement.PointerReleasedEvent,
+				OnTextAreaPointerReleasedForReferenceClick,
+				RoutingStrategies.Tunnel,
+				handledEventsToo: true);
+		}
+
+		// Position of the last left-button press, in this control's coordinates; null while no
+		// press is in flight. The release compares against it to tell a click from a drag.
+		Point? referenceClickStart;
+
+		// WPF used SystemParameters.MinimumHorizontal/VerticalDragDistance, which default to 4.
+		const double MinimumDragDistance = 4;
+
+		void OnTextAreaPointerPressedForReferenceClick(object? sender, PointerPressedEventArgs e)
+		{
+			referenceClickStart = e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
+				? e.GetPosition(this)
+				: null;
+		}
+
+		void OnTextAreaPointerReleasedForReferenceClick(object? sender, PointerReleasedEventArgs e)
+		{
+			var start = referenceClickStart;
+			referenceClickStart = null;
+			if (start == null || e.InitialPressMouseButton != MouseButton.Left)
+				return;
+			var delta = e.GetPosition(this) - start.Value;
+			if (Math.Abs(delta.X) >= MinimumDragDistance || Math.Abs(delta.Y) >= MinimumDragDistance)
+				return;
+
+			var segment = GetReferenceSegmentAtPointer(e);
+			if (segment?.Reference == null)
+			{
+				// A click on empty space dismisses the local-reference highlight.
+				ClearLocalReferenceMarks();
+				return;
+			}
+			// Cancel the caret-click selection AvaloniaEdit started on press, and stop its
+			// release processing, so the navigation's caret move doesn't grow a selection
+			// between the old anchor and the new position.
+			Editor.TextArea.ClearSelection();
+			e.Handled = true;
+			OnReferenceClicked(segment);
 		}
 
 		// Background renderers that live for the view's lifetime: the local-reference highlight (marks
@@ -743,7 +794,18 @@ namespace ILSpy.TextView
 				e.Handled = true;
 		}
 
-		void OnReferenceClicked(ReferenceSegment segment)
+		ReferenceSegment? GetReferenceSegmentAtPointer(PointerEventArgs e)
+		{
+			if (DataContext is not DecompilerTabPageModel model || model.References == null)
+				return null;
+			var pos = GetPositionFromPointer(e);
+			if (pos == null)
+				return null;
+			var offset = Editor.Document.GetOffset(pos.Value.Line, pos.Value.Column);
+			return model.References.FindSegmentsContaining(offset).FirstOrDefault();
+		}
+
+		internal void OnReferenceClicked(ReferenceSegment segment)
 		{
 			if (DataContext is not DecompilerTabPageModel model || segment.Reference == null)
 				return;
@@ -823,13 +885,9 @@ namespace ILSpy.TextView
 			// pointer.
 			if (!TryCloseExistingPopup(mouseClick: false))
 				return;
-			if (DataContext is not DecompilerTabPageModel model || model.References == null)
+			if (DataContext is not DecompilerTabPageModel model)
 				return;
-			var pos = GetPositionFromPointer(e);
-			if (pos == null)
-				return;
-			var offset = Editor.Document.GetOffset(pos.Value.Line, pos.Value.Column);
-			var segment = model.References.FindSegmentsContaining(offset).FirstOrDefault();
+			var segment = GetReferenceSegmentAtPointer(e);
 			if (segment?.Reference == null)
 				return;
 
