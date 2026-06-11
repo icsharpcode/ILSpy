@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.Input;
@@ -51,7 +52,22 @@ public class MainMenuTests
 			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
 
 		var headers = nativeMenu.Items.OfType<NativeMenuItem>().Select(i => i.Header).ToList();
-		headers.Should().Equal("_File", "_View", "_Window", "_Help");
+		if (OperatingSystem.IsMacOS())
+		{
+			// PromoteHelpToMacAppMenu relocates the Help items into the application menu
+			// (macOS convention: About lives under the bold app-named menu), so _Help is
+			// not a window-menu top-level there.
+			headers.Should().Equal("_File", "_View", "_Window");
+
+			var appMenu = NativeMenu.GetMenu(Application.Current!);
+			appMenu.Should().NotBeNull("App.axaml declares the NativeMenu the Help items move into");
+			appMenu!.Items.OfType<NativeMenuItem>().Select(i => i.Header)
+				.Should().Contain(Resources._About, "Help content must move to the app menu, not vanish");
+		}
+		else
+		{
+			headers.Should().Equal("_File", "_View", "_Window", "_Help");
+		}
 	}
 
 	[AvaloniaTest]
@@ -60,6 +76,8 @@ public class MainMenuTests
 		// MEF metadata's InputGestureText="Ctrl+O" on File -> Open must flow through
 		// MainMenu.Attach into NativeMenuItem.Gesture. On macOS Avalonia projects this
 		// into the system menu bar; on Windows / Linux NativeMenuBar renders inline.
+		// On macOS, TranslateGesturesForMacOS additionally rewrites Control to Meta so
+		// the shortcut follows the Cmd-key convention.
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -73,7 +91,8 @@ public class MainMenuTests
 			.Single(m => string.Equals(m.Header, Resources._Open, StringComparison.Ordinal));
 
 		openItem.Gesture.Should().NotBeNull();
-		openItem.Gesture!.Should().Be(KeyGesture.Parse("Ctrl+O"));
+		var expected = OperatingSystem.IsMacOS() ? KeyGesture.Parse("Cmd+O") : KeyGesture.Parse("Ctrl+O");
+		openItem.Gesture!.Should().Be(expected);
 	}
 
 	// Avalonia's macOS NativeMenu bridge maps NativeMenuItem to NSMenuItem and sets
