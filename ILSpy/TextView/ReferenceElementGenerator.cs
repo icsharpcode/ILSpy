@@ -33,11 +33,6 @@ namespace ILSpy.TextView
 
 		public TextSegmentCollection<ReferenceSegment>? References { get; set; }
 
-		/// <summary>Raised when a clickable reference span is activated.</summary>
-		public event Action<ReferenceSegment>? ReferenceClicked;
-
-		internal void OnReferenceClicked(ReferenceSegment segment) => ReferenceClicked?.Invoke(segment);
-
 		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{
 			this.isLink = isLink ?? throw new ArgumentNullException(nameof(isLink));
