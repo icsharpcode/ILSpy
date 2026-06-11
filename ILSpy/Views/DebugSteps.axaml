@@ -7,7 +7,12 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
              x:Class="ILSpy.Views.DebugSteps"
              x:DataType="vm:DebugStepsPaneModel">
-	<DockPanel>
+	<Panel>
+	<TextBlock IsVisible="{Binding !IsAvailable}"
+	           HorizontalAlignment="Center" VerticalAlignment="Center"
+	           Margin="8" TextWrapping="Wrap" Opacity="0.7"
+	           Text="Debug steps are not available for the current language." />
+	<DockPanel IsVisible="{Binding IsAvailable}">
 		<!-- Options are contributed by the active step-provider language and selected by type:
 		     ILAst renders its writing-options checkboxes; C# (null Options) renders nothing. -->
 		<ContentControl DockPanel.Dock="Top" Margin="2" Content="{Binding Options}">
@@ -49,4 +54,5 @@
 			</TreeView.ContextMenu>
 		</TreeView>
 	</DockPanel>
+	</Panel>
 </UserControl>

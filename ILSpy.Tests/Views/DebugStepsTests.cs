@@ -134,6 +134,30 @@ public class DebugStepsTests
 		return Task.CompletedTask;
 	}
 	[AvaloniaTest]
+	public Task Pane_Reports_Not_Available_For_Languages_Without_Debug_Steps()
+	{
+		// The step tree only makes sense for IDebugStepProvider languages (C#, ILAst, Typed IL).
+		// For the plain IL disassembler the pane must not keep showing the previous language's
+		// stale step tree (whose commands would trigger pointless re-decompiles); it reports
+		// unavailability so the view swaps in a "not available" message instead.
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+
+		languageService.CurrentLanguage = languageService.Languages.OfType<CSharpLanguage>().First();
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		debugStepsVm.IsAvailable.Should().BeTrue("C# provides debug steps");
+
+		// Simulate a populated tree from the C# run, then flip to the disassembler language.
+		debugStepsVm.Steps = new[] { new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("stale") };
+		languageService.CurrentLanguage = languageService.Languages.OfType<ILLanguage>().First(l => l.Name == "IL");
+		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+		debugStepsVm.IsAvailable.Should().BeFalse("the IL disassembler provides no debug steps");
+		debugStepsVm.Steps.Should().BeNull("the previous language's step tree must not linger");
+		return Task.CompletedTask;
+	}
+
+	[AvaloniaTest]
 	public async Task Window_Menu_Toggle_Surfaces_The_Default_Hidden_Debug_Steps_Pane()
 	{
 		// Repro of "Window > Debug Steps does nothing": the menu toggles ToolPaneMenuItem.IsPaneVisible,
