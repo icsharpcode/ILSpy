@@ -71,6 +71,8 @@ namespace ICSharpCode.Decompiler.Metadata
 				decompilerRuntime = DecompilerRuntime.NETCoreApp;
 			else if (Environment.OSVersion.Platform == PlatformID.Unix)
 				decompilerRuntime = DecompilerRuntime.Mono;
+			else
+				decompilerRuntime = DecompilerRuntime.NETFramework;
 		}
 
 		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
@@ -460,6 +462,20 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (name.Version <= new Version(4, 0, 0, 0))
 			{
 				assembly = SearchDirectory(name, framework_dirs);
+				if (assembly != null)
+					return assembly;
+			}
+
+			if (decompilerRuntime == DecompilerRuntime.NETCoreApp)
+			{
+				// Hosts without a .NET Framework installation (e.g. Linux, macOS) have no GAC;
+				// the only system-wide assembly store there is the shared-framework directory
+				// of the runtime executing the decompiler. Search it as the last resort,
+				// regardless of the requested version (the runtime itself rolls forward in the
+				// same way). Without this, e.g. the type-forwards of a netstandard facade
+				// (pointing to a versioned System.Runtime) are unresolvable on such hosts.
+				string runtimeDir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+				assembly = SearchDirectory(name, runtimeDir);
 				if (assembly != null)
 					return assembly;
 			}
