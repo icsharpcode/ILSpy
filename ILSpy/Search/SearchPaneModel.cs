@@ -61,7 +61,7 @@ namespace ILSpy.Search
 		{
 			Id = PaneContentId;
 			Title = "Search";
-			SelectedSearchMode = SearchModes[0];
+			SelectedSearchMode = ResolvePersistedMode() ?? SearchModes[0];
 			PropertyChanged += OnPropertyChangedDispatch;
 			// Refresh search results when the active assembly list mutates. Skip the
 			// restart when ONLY auto-loaded (dependency) assemblies are added — those
@@ -87,6 +87,29 @@ namespace ILSpy.Search
 		{
 			if (e.PropertyName is nameof(SearchTerm) or nameof(SelectedSearchMode))
 				RestartSearch();
+			if (e.PropertyName == nameof(SelectedSearchMode))
+				PersistSelectedMode();
+		}
+
+		SearchModeEntry? ResolvePersistedMode()
+		{
+			// Lookup is best-effort: during the very first composition pass SettingsService may
+			// not have materialised yet; the default entry from SearchModes[0] is fine in that
+			// case and gets overwritten the first time the user picks a mode.
+			var saved = AppComposition.TryGetExport<SettingsService>()?.SessionSettings?.SelectedSearchMode;
+			if (string.IsNullOrEmpty(saved))
+				return null;
+			if (!Enum.TryParse(saved, ignoreCase: false, out SearchMode mode))
+				return null;
+			return SearchModes.FirstOrDefault(m => m.Mode == mode);
+		}
+
+		void PersistSelectedMode()
+		{
+			var sessionSettings = AppComposition.TryGetExport<SettingsService>()?.SessionSettings;
+			if (sessionSettings == null)
+				return;
+			sessionSettings.SelectedSearchMode = SelectedSearchMode?.Mode.ToString();
 		}
 
 		/// <summary>

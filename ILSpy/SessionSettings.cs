@@ -79,6 +79,24 @@ namespace ILSpy
 		/// </summary>
 		public string[]? ActiveTreeViewPath { get; set; }
 
+		/// <summary>
+		/// File path of the auto-loaded (dependency-resolved) assembly the user last
+		/// selected into. The Avalonia host re-opens this file on startup before the
+		/// <see cref="ActiveTreeViewPath"/> walk so the saved path can still resolve;
+		/// otherwise the selection sits inside an assembly that isn't part of any
+		/// persisted list and the restore silently fails.
+		/// </summary>
+		[ObservableProperty]
+		private string? activeAutoLoadedAssembly;
+
+		/// <summary>
+		/// Last-used entry in the search pane's mode picker, persisted as the
+		/// <see cref="ICSharpCode.ILSpyX.Search.SearchMode"/> name. <see cref="Search.SearchPaneModel"/>
+		/// reads it on construction and writes back on every change.
+		/// </summary>
+		[ObservableProperty]
+		private string? selectedSearchMode;
+
 		public WindowState WindowState { get; set; } = WindowState.Normal;
 
 		public PixelPoint WindowPosition { get; set; } = DefaultWindowPosition;
@@ -95,6 +113,28 @@ namespace ILSpy
 		public Dictionary<(string PageKey, string ColumnName), XElement> FilterStates { get; }
 			= new();
 
+		// Set of child element names LoadFromXml interprets. Children outside this set
+		// (legacy AvalonDock layout, a future ILSpy version's new field, …) are stashed
+		// in <see cref="unknownChildren"/> and re-emitted unchanged by SaveToXml so we
+		// don't strip data we don't understand.
+		static readonly HashSet<string> KnownChildren = new(StringComparer.Ordinal) {
+			"FilterSettings",
+			"ActiveAssemblyList",
+			"ActiveLanguageName",
+			"ActiveTreeViewPath",
+			"ActiveAutoLoadedAssembly",
+			"SelectedSearchMode",
+			"WindowState",
+			nameof(Theme),
+			nameof(CurrentCulture),
+			nameof(MultiLineDocumentTabs),
+			nameof(MouseWheelTogglesTabStripRows),
+			"WindowBounds",
+			"FilterStates",
+		};
+
+		List<XElement> unknownChildren = new();
+
 		public void LoadFromXml(XElement section)
 		{
 			XElement filterSettings = section.Element("FilterSettings") ?? new XElement("FilterSettings");
@@ -104,6 +144,8 @@ namespace ILSpy
 			ActiveAssemblyList = (string?)section.Element("ActiveAssemblyList");
 			ActiveLanguageName = (string?)section.Element("ActiveLanguageName");
 			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => UnescapeNode((string)e)).ToArray();
+			ActiveAutoLoadedAssembly = (string?)section.Element("ActiveAutoLoadedAssembly");
+			SelectedSearchMode = (string?)section.Element("SelectedSearchMode");
 			WindowState = ParseEnum(section.Element("WindowState")?.Value, WindowState.Normal);
 			Theme = (string?)section.Element(nameof(Theme));
 			var culture = (string?)section.Element(nameof(CurrentCulture));
@@ -156,6 +198,11 @@ namespace ILSpy
 					FilterStates[(pageKey, columnName)] = new XElement(stateXml);
 				}
 			}
+
+			unknownChildren = section.Elements()
+				.Where(e => !KnownChildren.Contains(e.Name.LocalName))
+				.Select(e => new XElement(e))
+				.ToList();
 		}
 
 		public XElement SaveToXml()
@@ -168,13 +215,19 @@ namespace ILSpy
 			if (!string.IsNullOrEmpty(ActiveLanguageName))
 				section.Add(new XElement("ActiveLanguageName", ActiveLanguageName));
 			if (ActiveTreeViewPath is { Length: > 0 } path)
-				section.Add(new XElement("ActiveTreeViewPath", path.Select(p => new XElement("Node", p))));
+				section.Add(new XElement("ActiveTreeViewPath", path.Select(p => new XElement("Node", EscapeNode(p)))));
+			if (!string.IsNullOrEmpty(ActiveAutoLoadedAssembly))
+				section.Add(new XElement("ActiveAutoLoadedAssembly", ActiveAutoLoadedAssembly));
+			if (!string.IsNullOrEmpty(SelectedSearchMode))
+				section.Add(new XElement("SelectedSearchMode", SelectedSearchMode));
 			section.Add(new XElement("WindowState", WindowState.ToString()));
-			section.Add(new XElement("WindowBounds",
-				new XAttribute("Left", WindowPosition.X.ToString(CultureInfo.InvariantCulture)),
-				new XAttribute("Top", WindowPosition.Y.ToString(CultureInfo.InvariantCulture)),
-				new XAttribute("Width", WindowSize.Width.ToString(CultureInfo.InvariantCulture)),
-				new XAttribute("Height", WindowSize.Height.ToString(CultureInfo.InvariantCulture))));
+			// Bounds as a CSV body ("L,T,W,H", the Rect TypeConverter format the WPF host used).
+			// Keeping the legacy shape on write means a file written by this Avalonia build
+			// can still be read by an older ILSpy 10.x install, and the file diff stays small
+			// during the WPF -> Avalonia transition.
+			section.Add(new XElement("WindowBounds", string.Format(
+				CultureInfo.InvariantCulture, "{0},{1},{2},{3}",
+				WindowPosition.X, WindowPosition.Y, WindowSize.Width, WindowSize.Height)));
 			if (!string.IsNullOrEmpty(Theme))
 				section.Add(new XElement(nameof(Theme), Theme));
 			if (!string.IsNullOrEmpty(CurrentCulture))
@@ -198,6 +251,12 @@ namespace ILSpy
 				}
 				section.Add(filterStates);
 			}
+
+			// Re-emit children we didn't interpret so unknown / future / retired-but-still-on-disk
+			// elements (e.g. the AvalonDock <DockLayout> blob) survive a load+save cycle untouched.
+			foreach (var unknown in unknownChildren)
+				section.Add(new XElement(unknown));
+
 			return section;
 		}
 
@@ -211,9 +270,10 @@ namespace ILSpy
 			=> double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result) ? result : defaultValue;
 
 		// Legacy WPF host hex-escaped every non-letter-or-digit char in tree-view path nodes
-		// (TomsToolbox.Wpf -> TomsToolbox\x002EWpf). The Avalonia host writes node values raw,
-		// but old ILSpy.xml files still hold the escaped form — decode so a restored path
-		// compares equal to the live tree-node ToString()s.
+		// (TomsToolbox.Wpf -> TomsToolbox\x002EWpf). Both directions of the conversion stay
+		// here so a file written by this build keeps the legacy on-disk shape — an older
+		// ILSpy 10.x install can still read it, and the diff against a pre-existing
+		// ILSpy.xml stays small.
 		static readonly Regex EscapedCharPattern = new(@"\\x(?<num>[0-9A-Fa-f]{4})", RegexOptions.Compiled);
 
 		static string UnescapeNode(string value)
@@ -221,6 +281,21 @@ namespace ILSpy
 			if (string.IsNullOrEmpty(value) || value.IndexOf(@"\x", StringComparison.Ordinal) < 0)
 				return value;
 			return EscapedCharPattern.Replace(value, m => ((char)int.Parse(m.Groups["num"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToString());
+		}
+
+		static string EscapeNode(string value)
+		{
+			if (string.IsNullOrEmpty(value))
+				return value;
+			var sb = new System.Text.StringBuilder(value.Length);
+			foreach (var ch in value)
+			{
+				if (char.IsLetterOrDigit(ch))
+					sb.Append(ch);
+				else
+					sb.AppendFormat(CultureInfo.InvariantCulture, @"\x{0:X4}", (int)ch);
+			}
+			return sb.ToString();
 		}
 	}
 }

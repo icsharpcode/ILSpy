@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
 using System.Xml.Linq;
 
 using Avalonia;
@@ -183,20 +184,82 @@ public class SessionSettingsTests
 	}
 
 	[Test]
-	public void Save_does_not_emit_unknown_children_seen_at_load()
+	public void Save_preserves_unknown_children_seen_at_load()
 	{
+		// Verbatim round-trip of children outside the known set: the AvalonDock layout
+		// blob stays on disk (incompatible with the Avalonia Dock host, but writing zeros
+		// over it would discard the WPF user's saved layout forever), and a future field
+		// added in a newer build survives an older build's load+save cycle.
+		var dockLayout = "<DockLayout><LayoutRoot><RootPanel Orientation=\"Horizontal\" /></LayoutRoot></DockLayout>";
+		var future = "<FutureFeatureFlag value=\"xyz\"><Nested>123</Nested></FutureFeatureFlag>";
 		var loaded = new SessionSettings();
-		loaded.LoadFromXml(XElement.Parse(@"<SessionSettings>
+		loaded.LoadFromXml(XElement.Parse($@"<SessionSettings>
 			<ActiveAssemblyList>my-list</ActiveAssemblyList>
-			<DockLayout><LayoutRoot /></DockLayout>
-			<SelectedSearchMode>TypeAndMember</SelectedSearchMode>
-			<FutureFeatureFlag value=""xyz"" />
+			{dockLayout}
+			{future}
 		</SessionSettings>"));
 
 		var saved = loaded.SaveToXml();
 
-		saved.Element("DockLayout").Should().BeNull();
-		saved.Element("SelectedSearchMode").Should().BeNull();
-		saved.Element("FutureFeatureFlag").Should().BeNull();
+		saved.Element("DockLayout").Should().NotBeNull();
+		saved.Element("DockLayout")!.ToString(SaveOptions.DisableFormatting).Should().Be(dockLayout);
+		saved.Element("FutureFeatureFlag").Should().NotBeNull();
+		saved.Element("FutureFeatureFlag")!.ToString(SaveOptions.DisableFormatting).Should().Be(future);
+	}
+
+	[Test]
+	public void Save_emits_legacy_WindowBounds_csv_body_and_escaped_nodes()
+	{
+		// The Avalonia build writes the file in the legacy shape so a) the diff against
+		// a pre-existing ILSpy.xml stays small, and b) an older WPF ILSpy install can
+		// still read the file (the Rect TypeConverter only understands the CSV form, and
+		// its tree-node Unescape only understands \xNNNN-escaped values).
+		var session = new SessionSettings {
+			WindowPosition = new PixelPoint(882, 342),
+			WindowSize = new Size(750, 550),
+			ActiveTreeViewPath = ["TomsToolbox.Wpf", "DelegateCommand"],
+		};
+
+		var saved = session.SaveToXml();
+
+		var bounds = saved.Element("WindowBounds");
+		bounds.Should().NotBeNull();
+		bounds!.HasAttributes.Should().BeFalse();
+		bounds.Value.Should().Be("882,342,750,550");
+		saved.Element("ActiveTreeViewPath")!.Elements("Node").Select(n => n.Value).Should().Equal(
+			"TomsToolbox\\x002EWpf",
+			"DelegateCommand");
+	}
+
+	[Test]
+	public void Save_then_Load_round_trips_SelectedSearchMode_and_ActiveAutoLoadedAssembly()
+	{
+		var original = new SessionSettings {
+			SelectedSearchMode = "Type",
+			ActiveAutoLoadedAssembly = @"C:\deps\foo.dll",
+		};
+
+		var xml = original.SaveToXml();
+
+		var loaded = new SessionSettings();
+		loaded.LoadFromXml(xml);
+
+		loaded.SelectedSearchMode.Should().Be("Type");
+		loaded.ActiveAutoLoadedAssembly.Should().Be(@"C:\deps\foo.dll");
+	}
+
+	[Test]
+	public void Load_picks_up_legacy_SelectedSearchMode_and_ActiveAutoLoadedAssembly()
+	{
+		var section = XElement.Parse(@"<SessionSettings>
+			<SelectedSearchMode>TypeAndMember</SelectedSearchMode>
+			<ActiveAutoLoadedAssembly>C:\deps\foo.dll</ActiveAutoLoadedAssembly>
+		</SessionSettings>");
+
+		var loaded = new SessionSettings();
+		loaded.LoadFromXml(section);
+
+		loaded.SelectedSearchMode.Should().Be("TypeAndMember");
+		loaded.ActiveAutoLoadedAssembly.Should().Be(@"C:\deps\foo.dll");
 	}
 }
