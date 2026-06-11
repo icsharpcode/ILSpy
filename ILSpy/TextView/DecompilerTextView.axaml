@@ -79,5 +79,12 @@
 		     font size unless DisplaySettings.AlwaysShowZoomButtons is on. Bound at code-
 		     behind time once DisplaySettings is resolvable from composition. -->
 		<textView:ZoomButtons Name="ZoomButtons" />
+		<!-- Hover documentation popup (configured in SetupRichPopup). It must be declared
+		     here rather than constructed detached: with overlay popups (see
+		     X11PlatformOptions.OverlayPopups in Program.cs) the popup host is an
+		     OverlayPopupHost that resolves its control theme through the Popup's LOGICAL
+		     parent. A detached Popup leaves the host template-less, so its content never
+		     materialises and the popup is invisible. Renders nothing while closed. -->
+		<Popup Name="RichHoverPopup" />
 	</Grid>
 </UserControl>

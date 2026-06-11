@@ -197,18 +197,15 @@ namespace ILSpy.TextView
 
 		void SetupRichPopup()
 		{
-			richPopup = new Popup {
-				PlacementTarget = Editor.TextArea.TextView,
-				// Pointer placement: Avalonia anchors the popup at the current cursor location when
-				// Open() is called, with a small offset below to avoid covering the token.
-				Placement = PlacementMode.Pointer,
-				HorizontalOffset = 0,
-				VerticalOffset = 16,
-				IsLightDismissEnabled = false,
-			};
+			richPopup = RichHoverPopup;
+			richPopup.PlacementTarget = Editor.TextArea.TextView;
+			// Pointer placement: Avalonia anchors the popup at the current cursor location when
+			// Open() is called, with a small offset below to avoid covering the token.
+			richPopup.Placement = PlacementMode.Pointer;
+			richPopup.HorizontalOffset = 0;
+			richPopup.VerticalOffset = 16;
+			richPopup.IsLightDismissEnabled = false;
 			richPopup.Closed += OnRichPopupClosed;
-			// Popup.Open uses PlacementTarget to find its TopLevel, so the popup itself doesn't need
-			// to be in any visual tree of ours.
 		}
 
 		void SetupZoomAndCopy()
