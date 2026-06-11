@@ -240,6 +240,18 @@ namespace ICSharpCode.Decompiler
 					return;
 				}
 			}
+			// Make the 'override' modifier a reference to the nearest overridden member,
+			// so that go-to-definition on 'override' navigates to the base member.
+			// Modifier tokens are written without being pushed onto the node stack,
+			// so the top of the stack is the declaration the modifier belongs to.
+			if (role == EntityDeclaration.ModifierRole && keyword == "override"
+				&& nodeStack.Peek() is EntityDeclaration entityDeclaration
+				&& entityDeclaration.GetSymbol() is IMember { IsOverride: true } overrideMember
+				&& InheritanceHelper.GetBaseMember(overrideMember) is IMember baseMember)
+			{
+				output.WriteReference(baseMember, keyword);
+				return;
+			}
 			output.Write(keyword);
 		}
 
