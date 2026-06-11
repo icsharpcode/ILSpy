@@ -27,6 +27,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 
@@ -35,6 +36,8 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
+
+using ILSpy.Util;
 
 namespace ILSpy.TextView
 {
@@ -45,8 +48,6 @@ namespace ILSpy.TextView
 	/// </summary>
 	public sealed class DocumentationRenderer
 	{
-		// Hyperlink colour for non-clickable <see cref> renderings. Plain accent + underline gives
-		// users the visual cue that this is a reference; click navigation is a follow-up change.
 		static readonly IBrush HyperlinkBrush = new SolidColorBrush(Color.FromRgb(0x00, 0x66, 0xCC));
 
 		readonly IAmbience ambience;
@@ -96,6 +97,12 @@ namespace ILSpy.TextView
 		public bool ShowAllParameters { get; set; }
 
 		public string? ParameterName { get; set; }
+
+		/// <summary>
+		/// Raised after the user follows any link in the rendered documentation, so a
+		/// hosting popup can close itself while the navigation takes effect.
+		/// </summary>
+		public event EventHandler? LinkClicked;
 
 		/// <summary>
 		/// Wraps the accumulated content in a chrome border + scroll viewer and returns the
@@ -377,12 +384,70 @@ namespace ILSpy.TextView
 
 		Inline ConvertReference(IEntity referencedEntity)
 		{
-			// First-cut rendering: styled like a hyperlink (accent + underline) but not yet
-			// clickable. Wiring NavigateRequested on the host TabPageModel is a follow-up.
-			return new Run(ambience.ConvertSymbol(referencedEntity)) {
+			var linkText = CreateLinkTextBlock();
+			linkText.Text = ambience.ConvertSymbol(referencedEntity);
+			return CreateLink(linkText, () => MessageBus.Send(this, new NavigateToReferenceEventArgs(referencedEntity)));
+		}
+
+		// Inlines (Run/Span) are not InputElements in Avalonia, so a clickable link is an
+		// embedded TextBlock inside an InlineUIContainer.
+		static TextBlock CreateLinkTextBlock()
+		{
+			return new TextBlock {
 				Foreground = HyperlinkBrush,
 				TextDecorations = TextDecorations.Underline,
+				Cursor = new Cursor(StandardCursorType.Hand),
+				// A null background makes the TextBlock hit-test invisible — clicks would
+				// fall through to the surrounding paragraph.
+				Background = Brushes.Transparent,
+				Classes = { "doc-link" },
 			};
+		}
+
+		Inline CreateLink(TextBlock linkText, Action onClick)
+		{
+			// Press is handled so the surrounding SelectableTextBlock doesn't start a text
+			// selection (its capture would also swallow the release); the click fires on
+			// release over the link, like a button.
+			bool pressed = false;
+			linkText.PointerPressed += (_, e) => {
+				if (!e.GetCurrentPoint(linkText).Properties.IsLeftButtonPressed)
+					return;
+				pressed = true;
+				e.Handled = true;
+			};
+			linkText.PointerReleased += (_, e) => {
+				if (!pressed)
+					return;
+				pressed = false;
+				e.Handled = true;
+				onClick();
+				LinkClicked?.Invoke(this, EventArgs.Empty);
+			};
+			return new InlineUIContainer(linkText) { BaselineAlignment = BaselineAlignment.TextBottom };
+		}
+
+		/// <summary>
+		/// Renders <paramref name="children"/> into a clickable link (used by
+		/// <c>&lt;see&gt;</c> elements that carry their own display text).
+		/// </summary>
+		void AddLinkSpan(Action onClick, IList<XmlDocumentationElement> children)
+		{
+			var linkText = CreateLinkTextBlock();
+			linkText.Inlines = new InlineCollection();
+			AddInline(CreateLink(linkText, onClick));
+			var oldInline = inlineCollection;
+			try
+			{
+				inlineCollection = linkText.Inlines;
+				foreach (var child in children)
+					AddDocumentationElement(child);
+				FlushAddedText(false);
+			}
+			finally
+			{
+				inlineCollection = oldInline;
+			}
 		}
 
 		void AddParam(string? name, IEnumerable<XmlDocumentationElement> children)
@@ -420,11 +485,9 @@ namespace ILSpy.TextView
 			{
 				if (element.Children.Count > 0)
 				{
-					var link = new Span {
-						Foreground = HyperlinkBrush,
-						TextDecorations = TextDecorations.Underline,
-					};
-					AddSpan(link, element.Children);
+					AddLinkSpan(
+						() => MessageBus.Send(this, new NavigateToReferenceEventArgs(referencedEntity)),
+						element.Children);
 				}
 				else
 				{
@@ -437,20 +500,17 @@ namespace ILSpy.TextView
 			}
 			else if (element.GetAttribute("href") is { } href)
 			{
-				if (Uri.TryCreate(href, UriKind.Absolute, out _))
+				if (Uri.TryCreate(href, UriKind.Absolute, out var uri))
 				{
 					if (element.Children.Count > 0)
 					{
-						AddSpan(
-							new Span { Foreground = HyperlinkBrush, TextDecorations = TextDecorations.Underline },
-							element.Children);
+						AddLinkSpan(() => OpenExternalUri(uri), element.Children);
 					}
 					else
 					{
-						AddInline(new Run(href) {
-							Foreground = HyperlinkBrush,
-							TextDecorations = TextDecorations.Underline,
-						});
+						var linkText = CreateLinkTextBlock();
+						linkText.Text = href;
+						AddInline(CreateLink(linkText, () => OpenExternalUri(uri)));
 					}
 				}
 			}
@@ -459,6 +519,14 @@ namespace ILSpy.TextView
 				// Invalid reference: print the cref value
 				AddText(element.GetAttribute("cref") ?? string.Empty);
 			}
+		}
+
+		void OpenExternalUri(Uri uri)
+		{
+			// The rendered view lives in a popup whose root is a TopLevel once shown, so
+			// the launcher is resolvable from any control of the tree.
+			if (TopLevel.GetTopLevel(rootStack) is { } topLevel)
+				topLevel.Launcher.LaunchUriAsync(uri).HandleExceptions();
 		}
 
 		public void AddInline(Inline inline)

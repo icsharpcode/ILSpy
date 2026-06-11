@@ -886,9 +886,15 @@ namespace ILSpy.TextView
 		void OnTextViewPointerExited(object? sender, PointerEventArgs e)
 		{
 			// Don't close the rich popup if the pointer just moved from the editor onto the
-			// popup itself — the user is reaching for it. Plain tooltips always close.
-			if (richPopup.IsOpen && richPopup.Child is { IsPointerOver: true })
+			// popup itself — the user is reaching for it. The overlay popup delivers the
+			// editor's exit BEFORE the popup child's IsPointerOver flips, so the flag alone
+			// would close the popup right under the pointer; the distance check covers that
+			// ordering. Plain tooltips always close.
+			if (richPopup.IsOpen
+				&& (richPopup.Child is { IsPointerOver: true } || GetDistanceToPopup(e) <= MaxMovementAwayFromPopup))
+			{
 				return;
+			}
 			TryCloseExistingPopup(mouseClick: false);
 		}
 
@@ -904,8 +910,17 @@ namespace ILSpy.TextView
 		void OpenRichPopup(Control content)
 		{
 			richPopup.Child = content;
+			// While the pointer is over the popup, the editor no longer receives the moves
+			// that drive the distance corridor — the popup's lifetime is governed by leaving
+			// its own content instead.
+			content.PointerExited += OnRichPopupContentPointerExited;
 			richPopup.Open();
 			distanceToPopupLimit = double.PositiveInfinity;
+		}
+
+		void OnRichPopupContentPointerExited(object? sender, PointerEventArgs e)
+		{
+			TryCloseExistingPopup(mouseClick: false);
 		}
 
 		double GetDistanceToPopup(PointerEventArgs e)
@@ -936,7 +951,11 @@ namespace ILSpy.TextView
 		void CloseRichPopup()
 		{
 			if (richPopup.IsOpen)
+			{
+				if (richPopup.Child is { } child)
+					child.PointerExited -= OnRichPopupContentPointerExited;
 				richPopup.Close();
+			}
 		}
 
 		void OnRichPopupClosed(object? sender, EventArgs e)
@@ -954,10 +973,7 @@ namespace ILSpy.TextView
 					var rich = language.GetRichTextTooltip(entity);
 					if (rich == null || string.IsNullOrEmpty(rich.Text))
 						return null;
-					var renderer = new DocumentationRenderer(
-						new CSharpAmbience(),
-						new FontFamily("Consolas, Menlo, Monospace"),
-						12);
+					var renderer = CreateTooltipRenderer();
 					renderer.AddSignatureBlock(rich);
 					AppendXmlDocumentation(renderer, entity);
 					return new HoverContent(renderer.CreateView(), IsRich: true);
@@ -968,12 +984,9 @@ namespace ILSpy.TextView
 						?.GetDocumentation("F:System.Reflection.Emit.OpCodes." + op.EncodedName);
 					if (opDocs != null)
 					{
-						var opRenderer = new DocumentationRenderer(
-							new CSharpAmbience(),
-							new FontFamily("Consolas, Menlo, Monospace"),
-							12);
+						var opRenderer = CreateTooltipRenderer();
 						opRenderer.AddSignatureBlock(new RichText($"{op.Name} (0x{op.Code:x})"));
-						opRenderer.AddXmlDocumentation(opDocs, declaringEntity: null, resolver: null);
+						opRenderer.AddXmlDocumentation(opDocs, declaringEntity: null, resolver: ResolveDocReference);
 						return new HoverContent(opRenderer.CreateView(), IsRich: true);
 					}
 					var opBlock = new SelectableTextBlock {
@@ -989,7 +1002,19 @@ namespace ILSpy.TextView
 			}
 		}
 
-		static void AppendXmlDocumentation(DocumentationRenderer renderer, IEntity entity)
+		// Hover tooltips share one renderer setup: monospace signature font, and any followed
+		// documentation link closes the popup so the navigation is visible underneath.
+		DocumentationRenderer CreateTooltipRenderer()
+		{
+			var renderer = new DocumentationRenderer(
+				new CSharpAmbience(),
+				new FontFamily("Consolas, Menlo, Monospace"),
+				12);
+			renderer.LinkClicked += (_, _) => CloseRichPopup();
+			return renderer;
+		}
+
+		void AppendXmlDocumentation(DocumentationRenderer renderer, IEntity entity)
 		{
 			try
 			{
@@ -1001,14 +1026,24 @@ namespace ILSpy.TextView
 				var documentation = XmlDocLoader.LoadDocumentation(metadata)?.GetDocumentation(entity.GetIdString());
 				if (documentation == null)
 					return;
-				// First-cut: no cref resolver, so <see cref="..."/> falls back to printing the
-				// raw cref text. Wiring resolution against the visible assembly list is a follow-up.
-				renderer.AddXmlDocumentation(documentation, entity, resolver: null);
+				renderer.AddXmlDocumentation(documentation, entity, resolver: ResolveDocReference);
 			}
 			catch (XmlException)
 			{
 				// Malformed .xml — render signature only.
 			}
+		}
+
+		/// <summary>
+		/// Resolves a doc-comment cref id string (e.g. <c>T:System.String</c>) against the
+		/// assembly list the current tab decompiled from.
+		/// </summary>
+		IEntity? ResolveDocReference(string idString)
+		{
+			if (DataContext is not DecompilerTabPageModel model || model.CurrentNode is not { } node)
+				return null;
+			var list = node.AncestorsAndSelf().OfType<TreeNodes.AssemblyListTreeNode>().FirstOrDefault()?.AssemblyList;
+			return list == null ? null : AssemblyTree.AssemblyTreeModel.FindEntityInRelevantAssemblies(idString, list.GetAssemblies());
 		}
 
 		object? ResolveEntity(DecompilerTabPageModel model, object? reference)

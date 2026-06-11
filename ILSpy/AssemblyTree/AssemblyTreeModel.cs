@@ -733,7 +733,7 @@ namespace ILSpy.AssemblyTree
 			}
 		}
 
-		static IEntity? FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
+		internal static IEntity? FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
 			ITypeReference typeRef;
 			IMemberReference? memberRef = null;
