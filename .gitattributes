@@ -2,3 +2,8 @@
 *.cs text eol=crlf diff=csharp
 *.sln text eol=crlf
 *.csproj text eol=crlf
+# Consumed verbatim by Linux tools (shell-executed rpm spec, dpkg control, desktop entry);
+# CRLF breaks them, so keep them LF even in Windows working trees.
+*.spec text eol=lf
+*.desktop text eol=lf
+control.template text eol=lf

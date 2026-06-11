@@ -1,0 +1,12 @@
+Package: ilspy
+Version: @VERSION@
+Priority: optional
+Section: devel
+Architecture: @ARCH@
+Installed-Size: @INSTALLED_SIZE@
+Depends: libx11-6, libice6, libsm6, libfontconfig1, @ICU_DEPS@, xdg-utils
+Maintainer: ICSharpCode Team <https://github.com/icsharpcode>
+Homepage: https://github.com/icsharpcode/ILSpy
+Description: .NET assembly browser and decompiler
+ ILSpy is the open-source .NET assembly browser and decompiler,
+ built on Avalonia and the ICSharpCode.Decompiler engine.

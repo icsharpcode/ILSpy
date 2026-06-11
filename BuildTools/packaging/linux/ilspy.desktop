@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=ILSpy
+Comment=.NET assembly browser and decompiler
+Exec=/opt/ilspy/ILSpy %F
+Icon=ilspy
+Terminal=false
+Type=Application
+Categories=Development;
+MimeType=application/x-msdownload;application/vnd.microsoft.portable-executable;

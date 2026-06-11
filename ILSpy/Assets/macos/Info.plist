@@ -8,10 +8,13 @@
   <string>ILSpy</string>
   <key>CFBundleIdentifier</key>
   <string>net.sharpdevelop.ilspy</string>
+  <!-- Version placeholders are stamped by BuildTools/package-macos.ps1 at package time.
+       A bare `dotnet publish -r osx-arm64` leaves them in place, which is harmless for
+       local development bundles. -->
   <key>CFBundleVersion</key>
-  <string>10.1.0</string>
+  <string>ILSPY_VERSION</string>
   <key>CFBundleShortVersionString</key>
-  <string>10.1</string>
+  <string>ILSPY_SHORT_VERSION</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleSignature</key>
