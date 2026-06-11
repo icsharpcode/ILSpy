@@ -273,7 +273,7 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run();
 		}
 
-		[Test]
+		[Test, Platform("Win")] // UseLegacyAssembler requires the .NET Framework ilasm
 		public async Task Unsafe()
 		{
 			await Run(assemblerOptions: AssemblerOptions.Library | AssemblerOptions.UseLegacyAssembler);

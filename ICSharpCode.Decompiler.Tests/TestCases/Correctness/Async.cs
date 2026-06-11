@@ -291,7 +291,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			{
 				Console.WriteLine("d");
 				int i = 0;
-				if (Console.CapsLock)
+				// An opaque condition the compiler cannot evaluate; Console.IsInputRedirected
+				// (unlike Console.CapsLock) is supported on all platforms.
+				if (Console.IsInputRedirected)
 				{
 					i++;
 					await Task.Delay(i);

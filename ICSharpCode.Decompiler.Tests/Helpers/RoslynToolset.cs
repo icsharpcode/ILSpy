@@ -147,14 +147,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			installedCompilers.Add(SanitizeVersion(version), path);
 		}
 
+		// In the .NET ("netcore") build of the compiler toolset the executables live in a
+		// "bincore" subfolder of the tasks directory, as .dlls launched through the dotnet host.
 		public string GetCSharpCompiler(string version)
 		{
-			return GetCompiler("csc.exe", version);
+			return GetCompiler(OperatingSystem.IsWindows() ? "csc.exe" : "bincore/csc.dll", version);
 		}
 
 		public string GetVBCompiler(string version)
 		{
-			return GetCompiler("vbc.exe", version);
+			return GetCompiler(OperatingSystem.IsWindows() ? "vbc.exe" : "bincore/vbc.dll", version);
 		}
 
 		string GetCompiler(string compiler, string version)

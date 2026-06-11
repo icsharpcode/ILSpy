@@ -145,27 +145,65 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			await roslynToolset.Fetch("1.3.2", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
 			await roslynToolset.Fetch("2.10.0", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
-			await roslynToolset.Fetch("3.11.0").ConfigureAwait(false);
-			await roslynToolset.Fetch("4.14.0").ConfigureAwait(false);
-			await roslynToolset.Fetch(roslynLatestVersion).ConfigureAwait(false);
+			// On non-Windows hosts the net472 compiler binaries cannot be executed; use the
+			// .NET build of each toolset instead. Its tasks folder is named "netcoreapp3.1"
+			// up to Roslyn 3.x and "netcore" from Roslyn 4.x on.
+			await roslynToolset.Fetch("3.11.0", sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcoreapp3.1").ConfigureAwait(false);
+			await roslynToolset.Fetch("4.14.0", sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcore").ConfigureAwait(false);
+			await roslynToolset.Fetch(roslynLatestVersion, sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcore").ConfigureAwait(false);
 
 			await vswhereToolset.Fetch().ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch("5.0.0", sourcePath: "ref/net5.0").ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch("9.0.0", sourcePath: "ref/net9.0").ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch(CurrentNetCoreRefAsmVersion, sourcePath: $"ref/net{CurrentNetCoreVersion}").ConfigureAwait(false);
 
-			// The self-contained TestRunner builds only target Windows RIDs; the fixtures that
-			// consume them (UseTestRunner) are themselves gated to Windows at runtime.
+#if DEBUG
+			const string testRunnerConfig = "Debug";
+#else
+			const string testRunnerConfig = "Release";
+#endif
 			if (OperatingSystem.IsWindows())
 			{
-#if DEBUG
-				await BuildTestRunner("win-x86", "Debug").ConfigureAwait(false);
-				await BuildTestRunner("win-x64", "Debug").ConfigureAwait(false);
-#else
-				await BuildTestRunner("win-x86", "Release").ConfigureAwait(false);
-				await BuildTestRunner("win-x64", "Release").ConfigureAwait(false);
-#endif
+				await BuildTestRunner("win-x86", testRunnerConfig).ConfigureAwait(false);
+				await BuildTestRunner("win-x64", testRunnerConfig).ConfigureAwait(false);
 			}
+			else
+			{
+				// Self-contained build for the host platform. The RID must be one of the
+				// RuntimeIdentifiers pinned in ICSharpCode.Decompiler.TestRunner.csproj.
+				await BuildTestRunner(OperatingSystem.IsMacOS() ? "osx-arm64" : "linux-x64", testRunnerConfig).ConfigureAwait(false);
+			}
+		}
+
+		/// <summary>
+		/// Reduces a compiler-configuration matrix to the entries usable on the current platform.
+		/// On Windows every configuration is supported. On other platforms, configurations that
+		/// depend on Windows-only tools or runtimes are removed: the legacy (pre-Roslyn) csc/vbc,
+		/// Roslyn 1.x/2.x (their packages only ship .NET Framework binaries), mcs, and Force32Bit
+		/// (requires a 32-bit runtime). When <paramref name="executesCompiledOutput"/> is set
+		/// (correctness-style fixtures), configurations targeting .NET Framework 4.0 are removed
+		/// as well, because their output executables only run on Windows.
+		/// </summary>
+		public static CompilerOptions[] SupportedOnCurrentPlatform(CompilerOptions[] configurations, bool executesCompiledOutput = false)
+		{
+			if (OperatingSystem.IsWindows())
+				return configurations;
+			const CompilerOptions dotnetHostedCompilers = CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.UseRoslynLatest;
+			return configurations.Where(c => (c & dotnetHostedCompilers) != 0
+				&& !c.HasFlag(CompilerOptions.Force32Bit)
+				&& !(executesCompiledOutput && c.HasFlag(CompilerOptions.TargetNet40))).ToArray();
+		}
+
+		/// <summary>
+		/// Wraps an external compiler invocation. The .NET Framework builds of the Roslyn
+		/// compilers (csc.exe/vbc.exe) are directly executable; the .NET builds ship as a
+		/// .dll that must be launched through the 'dotnet' host.
+		/// </summary>
+		static Command WrapCompiler(string compilerPath, string arguments)
+		{
+			if (compilerPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+				return Cli.Wrap("dotnet").WithArguments($"\"{compilerPath}\" {arguments}");
+			return Cli.Wrap(compilerPath).WithArguments(arguments);
 		}
 
 		static async Task BuildTestRunner(string runtime, string config)
@@ -189,30 +227,32 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				ilasmPath = ResolveToolPath("ilasm");
 			}
 			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
+			// Options use the '-' prefix because on Unix the ilasm option parser treats
+			// '/option' as a file path; the Windows builds accept both prefixes.
 			string otherOptions = " ";
 			if (options.HasFlag(AssemblerOptions.Force32Bit))
 			{
 				outputFile += ".32";
-				otherOptions += "/32BitPreferred ";
+				otherOptions += "-32BitPreferred ";
 			}
 			if (options.HasFlag(AssemblerOptions.Library))
 			{
 				outputFile += ".dll";
-				otherOptions += "/dll ";
+				otherOptions += "-dll ";
 			}
 			else
 			{
 				outputFile += ".exe";
-				otherOptions += "/exe ";
+				otherOptions += "-exe ";
 			}
 
 			if (options.HasFlag(AssemblerOptions.UseDebug))
 			{
-				otherOptions += "/debug ";
+				otherOptions += "-debug ";
 			}
 
 			var command = Cli.Wrap(ilasmPath)
-				.WithArguments($"/quiet {otherOptions}/output=\"{outputFile}\" \"{sourceFileName}\"")
+				.WithArguments($"-quiet {otherOptions}-output=\"{outputFile}\" \"{sourceFileName}\"")
 				.WithValidation(CommandResultValidation.None);
 
 			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
@@ -262,8 +302,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			string ildasmPath = ResolveToolPath("ildasm");
 
+			// '-' option prefix: see AssembleIL.
 			var command = Cli.Wrap(ildasmPath)
-				.WithArguments($"/utf8 /out=\"{outputFile}\" \"{sourceFileName}\"")
+				.WithArguments($"-utf8 -out=\"{outputFile}\" \"{sourceFileName}\"")
 				.WithValidation(CommandResultValidation.None);
 
 			var result = await command.ExecuteBufferedAsync().ConfigureAwait(false);
@@ -594,6 +635,13 @@ namespace System.Runtime.CompilerServices
 					refAsmPath = RefAssembliesToolset.GetPath("legacy");
 					libPath = "\"" + refAsmPath + "\"";
 					references = defaultReferences;
+					if (!OperatingSystem.IsWindows())
+					{
+						// The .NET Framework csc.exe implicitly references the mscorlib of its
+						// runtime directory; the dotnet-hosted compiler has no implicit
+						// references, so the target framework's mscorlib must be passed explicitly.
+						references = references.Prepend("mscorlib.dll");
+					}
 					if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 					{
 						references = references.Append("Microsoft.VisualBasic.dll");
@@ -688,8 +736,7 @@ namespace System.Runtime.CompilerServices
 					otherOptions += " -nowarn:" + string.Join(",", noWarn);
 				}
 
-				var command = Cli.Wrap(cscPath)
-					.WithArguments($"{otherOptions} -lib:{libPath} {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+				var command = WrapCompiler(cscPath, $"{otherOptions} -lib:{libPath} {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
 				//Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
@@ -881,9 +928,20 @@ namespace System.Runtime.CompilerServices
 
 		public static async Task<(int ExitCode, string Output, string Error)> RunWithTestRunner(string assemblyFileName, bool force32Bit)
 		{
-			if (!OperatingSystem.IsWindows())
-				Assert.Ignore("RunWithTestRunner uses a self-contained Windows test-runner build (win-x86/win-x64); not available on this platform.");
-			string testRunner = Path.Combine(testRunnerBasePath, force32Bit ? "win-x86" : "win-x64", "ICSharpCode.Decompiler.TestRunner.exe");
+			string runnerRid;
+			if (OperatingSystem.IsWindows())
+			{
+				runnerRid = force32Bit ? "win-x86" : "win-x64";
+			}
+			else
+			{
+				// Safety net: 32-bit runs need a 32-bit runtime, which only exists on Windows.
+				// Configurations using Force32Bit are not enumerated on non-Windows platforms.
+				if (force32Bit)
+					Assert.Ignore("Force32Bit requires a 32-bit .NET runtime, which is only available on Windows.");
+				runnerRid = OperatingSystem.IsMacOS() ? "osx-arm64" : "linux-x64";
+			}
+			string testRunner = Path.Combine(testRunnerBasePath, runnerRid, "ICSharpCode.Decompiler.TestRunner" + ExecutableExtension);
 			var command = Cli.Wrap(testRunner)
 				.WithArguments(assemblyFileName)
 				.WithValidation(CommandResultValidation.None);
