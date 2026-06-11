@@ -252,6 +252,13 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				file.Attribute("checksum").Remove();
 				file.Attribute("embeddedSourceLength")?.Remove();
+				var name = file.Attribute("name");
+				if (name != null)
+				{
+					// Generated document names use the platform's directory separator;
+					// the expected files were produced on Windows.
+					name.Value = name.Value.Replace('/', '\\');
+				}
 				file.ReplaceNodes(new XCData(file.Value.Replace("\uFEFF", "")));
 			}
 			document.Save(fileName, SaveOptions.None);

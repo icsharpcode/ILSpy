@@ -82,7 +82,9 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		}
 		#endregion
 
-		[Test]
+		// IsBaseDirectory/GetRelativePath compare path segments with the platform's
+		// case sensitivity and separator; these expectations encode the Windows behavior.
+		[Test, Platform("Win")]
 		public void TestIsBaseDirectory()
 		{
 			Assert.That(FileUtility.IsBaseDirectory(@"C:\a", @"C:\A\b\hello"));
@@ -106,7 +108,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.That(!FileUtility.IsBaseDirectory(@"C:\", @"D:\a\b\hello"));
 		}
 
-		[Test]
+		[Test, Platform("Win")] // see TestIsBaseDirectory
 		public void TestIsBaseDirectoryRelative()
 		{
 			Assert.That(FileUtility.IsBaseDirectory(@".", @"a\b"));
@@ -131,7 +133,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.That(!FileUtility.IsBaseDirectory(@"\\server2\share", @"\\server\share\dir\subdir"));
 		}
 
-		[Test]
+		[Test, Platform("Win")] // see TestIsBaseDirectory
 		public void TestGetRelativePath()
 		{
 			Assert.That(FileUtility.GetRelativePath(@"C:\hello\.\..\a", @"C:\.\a\blub"), Is.EqualTo(@"blub"));
@@ -149,7 +151,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 			Assert.That(FileUtility.GetRelativePath(@"C:\.\.\.\.\heLLo\A\..", @"C:\.\blub\.\..\.\a\.\blub"), Is.EqualTo(@"..\a\blub"));
 		}
 
-		[Test]
+		[Test, Platform("Win")] // see TestIsBaseDirectory
 		public void RelativeGetRelativePath()
 		{
 			// Relative path
@@ -166,8 +168,9 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		[Test]
 		public void GetRelativePath_Unix()
 		{
+			// The result is joined with the platform's directory separator.
 			Assert.That(FileUtility.GetRelativePath("/", "/a"), Is.EqualTo(@"a"));
-			Assert.That(FileUtility.GetRelativePath("/", "/a/b"), Is.EqualTo(@"a\b"));
+			Assert.That(FileUtility.GetRelativePath("/", "/a/b"), Is.EqualTo($"a{System.IO.Path.DirectorySeparatorChar}b"));
 			Assert.That(FileUtility.GetRelativePath("/a", "/a/b"), Is.EqualTo(@"b"));
 		}
 

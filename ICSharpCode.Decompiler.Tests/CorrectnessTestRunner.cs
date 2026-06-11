@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -48,7 +49,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly CompilerOptions[] noMonoOptions =
+		static readonly CompilerOptions[] noMonoOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
@@ -72,9 +73,9 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-		};
+		}, executesCompiledOutput: true);
 
-		static readonly CompilerOptions[] net40OnlyOptions =
+		static readonly CompilerOptions[] net40OnlyOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
@@ -88,9 +89,9 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
-		};
+		}, executesCompiledOutput: true);
 
-		static readonly CompilerOptions[] defaultOptions =
+		static readonly CompilerOptions[] defaultOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
@@ -118,9 +119,9 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseMcs2_6_4,
 			CompilerOptions.UseMcs5_23,
 			CompilerOptions.Optimize | CompilerOptions.UseMcs5_23
-		};
+		}, executesCompiledOutput: true);
 
-		static readonly CompilerOptions[] roslynOnlyOptions =
+		static readonly CompilerOptions[] roslynOnlyOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn1_3_2 | CompilerOptions.TargetNet40,
@@ -142,9 +143,9 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-		};
+		}, executesCompiledOutput: true);
 
-		static readonly CompilerOptions[] roslyn2OrNewerOptions =
+		static readonly CompilerOptions[] roslyn2OrNewerOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
@@ -162,7 +163,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-		};
+		}, executesCompiledOutput: true);
 
 		[Test]
 		public async Task Comparisons([ValueSource(nameof(defaultOptions))] CompilerOptions options)
@@ -176,8 +177,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunCS(options: options);
 		}
 
+		// 32-bit execution requires a 32-bit runtime, which only exists on Windows.
+		static readonly int[] supportedBitness = OperatingSystem.IsWindows() ? new[] { 32, 64 } : new[] { 64 };
+		static readonly bool[] supportedForce32Bit = OperatingSystem.IsWindows() ? new[] { false, true } : new[] { false };
+
 		[Test]
-		public async Task FloatingPointArithmetic([ValueSource(nameof(noMonoOptions))] CompilerOptions options, [Values(32, 64)] int bits)
+		public async Task FloatingPointArithmetic([ValueSource(nameof(noMonoOptions))] CompilerOptions options, [ValueSource(nameof(supportedBitness))] int bits)
 		{
 			// The behavior of the #1794 incorrect `(float)(double)val` cast only causes test failures
 			// for some runtime+compiler combinations.
@@ -260,7 +265,7 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunCS(options: options);
 		}
 
-		[Test]
+		[Test, Platform("Win")] // uses __arglist; CoreCLR only supports the vararg calling convention on Windows
 		public async Task UndocumentedExpressions([ValueSource(nameof(noMonoOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
@@ -303,7 +308,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task BitNot([Values(false, true)] bool force32Bit)
+		public async Task BitNot([ValueSource(nameof(supportedForce32Bit))] bool force32Bit)
 		{
 			CompilerOptions compiler = CompilerOptions.UseDebug;
 			AssemblerOptions asm = AssemblerOptions.None;
@@ -327,7 +332,7 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunIL("NonGenericConstrainedCallVirt.il", CompilerOptions.UseRoslynLatest);
 		}
 
-		[Test]
+		[Test, Platform("Win")] // 32BITREQUIRED needs the Windows 32-bit runtime
 		public async Task StackTests()
 		{
 			// IL contains .corflags = 32BITREQUIRED
@@ -335,7 +340,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task StackTypes([Values(false, true)] bool force32Bit)
+		public async Task StackTypes([ValueSource(nameof(supportedForce32Bit))] bool force32Bit)
 		{
 			CompilerOptions compiler = CompilerOptions.UseRoslynLatest | CompilerOptions.UseDebug;
 			AssemblerOptions asm = AssemblerOptions.None;
@@ -501,6 +506,12 @@ namespace ICSharpCode.Decompiler.Tests
 			try
 			{
 				options |= CompilerOptions.UseTestRunner;
+				if (!OperatingSystem.IsWindows() && (options & CompilerOptions.UseRoslynMask) == 0)
+				{
+					// The default (legacy csc) recompilation of the decompiled output is only
+					// available on Windows; elsewhere use the current Roslyn instead.
+					options |= CompilerOptions.UseRoslynLatest;
+				}
 				outputFile = await Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions).ConfigureAwait(false);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile, Tester.GetSettings(options)).ConfigureAwait(false);
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);

@@ -69,6 +69,12 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				else
 				{
 					references = defaultReferences.Select(r => "-r:\"" + r + "\"");
+					if (!OperatingSystem.IsWindows())
+					{
+						// The dotnet-hosted compiler has no implicit mscorlib reference
+						// (see CompileCSharp); vbc resolves the bare name via -libpath.
+						references = references.Prepend("-r:\"mscorlib.dll\"");
+					}
 					libPath = RefAssembliesToolset.GetPath("legacy");
 				}
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
@@ -79,6 +85,24 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					"-optioninfer+ -optionexplicit+ " +
 					$"-langversion:{languageVersion} " +
 					$"/optimize{(flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ")}";
+
+				if (!OperatingSystem.IsWindows())
+				{
+					// The dotnet-hosted vbc has no implicit SDK path for resolving the standard
+					// libraries and the VB runtime. The My templates are disabled because they
+					// need ApplicationServices types missing from the .NET build of
+					// Microsoft.VisualBasic (the .NET SDK sets _MYTYPE=Empty for the same
+					// reason); the decompile comparison strips the My namespace anyway.
+					otherOptions += $"-sdkpath:\"{libPath}\" ";
+					otherOptions += "-define:_MYTYPE=\\\"Empty\\\" ";
+					if ((flags & CompilerOptions.UseRoslynMask) != 0 && targetFramework != null)
+					{
+						// In the .NET reference packs Microsoft.VisualBasic.dll is a
+						// type-forwarding facade, and vbc does not follow forwards when binding
+						// its runtime helpers (e.g. ProjectData); point it at the implementation.
+						otherOptions += $"-vbruntime:\"{Path.Combine(libPath, "Microsoft.VisualBasic.Core.dll")}\" ";
+					}
+				}
 
 				// note: the /shared switch is undocumented. It allows us to use the VBCSCompiler.exe compiler
 				// server to speed up testing
@@ -118,8 +142,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					otherOptions += " \"-d:" + string.Join(",", preprocessorSymbols.Select(kv => kv.Key + "=" + kv.Value)) + "\" ";
 				}
 
-				var command = Cli.Wrap(vbcPath)
-					.WithArguments($"{otherOptions}-libpath:\"{libPath}\" {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+				var command = WrapCompiler(vbcPath, $"{otherOptions}-libpath:\"{libPath}\" {string.Join(" ", references)} -out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
 				//Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 

@@ -51,13 +51,13 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static readonly CompilerOptions[] noRoslynOptions =
+		static readonly CompilerOptions[] noRoslynOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize
-		};
+		});
 
-		static readonly CompilerOptions[] roslynOnlyOptions =
+		static readonly CompilerOptions[] roslynOnlyOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.TargetNet40,
@@ -67,9 +67,9 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-		};
+		});
 
-		static readonly CompilerOptions[] defaultOptions =
+		static readonly CompilerOptions[] defaultOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.None,
 			CompilerOptions.Optimize,
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40,
 			CompilerOptions.UseRoslynLatest,
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
-		};
+		});
 
 		[Test]
 		public async Task NoArrayInitializers([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
