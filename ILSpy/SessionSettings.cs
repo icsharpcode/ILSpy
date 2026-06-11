@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Linq;
 
 using Avalonia;
@@ -102,7 +103,7 @@ namespace ILSpy
 
 			ActiveAssemblyList = (string?)section.Element("ActiveAssemblyList");
 			ActiveLanguageName = (string?)section.Element("ActiveLanguageName");
-			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => (string)e).ToArray();
+			ActiveTreeViewPath = section.Element("ActiveTreeViewPath")?.Elements().Select(e => UnescapeNode((string)e)).ToArray();
 			WindowState = ParseEnum(section.Element("WindowState")?.Value, WindowState.Normal);
 			Theme = (string?)section.Element(nameof(Theme));
 			var culture = (string?)section.Element(nameof(CurrentCulture));
@@ -113,12 +114,31 @@ namespace ILSpy
 			var bounds = section.Element("WindowBounds");
 			if (bounds != null)
 			{
-				int left = ParseInt(bounds.Attribute("Left")?.Value, DefaultWindowPosition.X);
-				int top = ParseInt(bounds.Attribute("Top")?.Value, DefaultWindowPosition.Y);
-				double width = ParseDouble(bounds.Attribute("Width")?.Value, DefaultWindowSize.Width);
-				double height = ParseDouble(bounds.Attribute("Height")?.Value, DefaultWindowSize.Height);
-				WindowPosition = new PixelPoint(left, top);
-				WindowSize = new Size(width, height);
+				// Legacy WPF host wrote bounds as a CSV body "Left,Top,Width,Height" (Rect
+				// TypeConverter format). Honour that shape for users upgrading from ILSpy 10.x
+				// so a saved window position survives the move to the Avalonia attribute form.
+				if (bounds.HasAttributes)
+				{
+					int left = ParseInt(bounds.Attribute("Left")?.Value, DefaultWindowPosition.X);
+					int top = ParseInt(bounds.Attribute("Top")?.Value, DefaultWindowPosition.Y);
+					double width = ParseDouble(bounds.Attribute("Width")?.Value, DefaultWindowSize.Width);
+					double height = ParseDouble(bounds.Attribute("Height")?.Value, DefaultWindowSize.Height);
+					WindowPosition = new PixelPoint(left, top);
+					WindowSize = new Size(width, height);
+				}
+				else
+				{
+					var parts = bounds.Value.Split(',');
+					if (parts.Length == 4)
+					{
+						double left = ParseDouble(parts[0], DefaultWindowPosition.X);
+						double top = ParseDouble(parts[1], DefaultWindowPosition.Y);
+						double width = ParseDouble(parts[2], DefaultWindowSize.Width);
+						double height = ParseDouble(parts[3], DefaultWindowSize.Height);
+						WindowPosition = new PixelPoint((int)left, (int)top);
+						WindowSize = new Size(width, height);
+					}
+				}
 			}
 
 			FilterStates.Clear();
@@ -189,5 +209,18 @@ namespace ILSpy
 
 		static double ParseDouble(string? value, double defaultValue)
 			=> double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result) ? result : defaultValue;
+
+		// Legacy WPF host hex-escaped every non-letter-or-digit char in tree-view path nodes
+		// (TomsToolbox.Wpf -> TomsToolbox\x002EWpf). The Avalonia host writes node values raw,
+		// but old ILSpy.xml files still hold the escaped form — decode so a restored path
+		// compares equal to the live tree-node ToString()s.
+		static readonly Regex EscapedCharPattern = new(@"\\x(?<num>[0-9A-Fa-f]{4})", RegexOptions.Compiled);
+
+		static string UnescapeNode(string value)
+		{
+			if (string.IsNullOrEmpty(value) || value.IndexOf(@"\x", StringComparison.Ordinal) < 0)
+				return value;
+			return EscapedCharPattern.Replace(value, m => ((char)int.Parse(m.Groups["num"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture)).ToString());
+		}
 	}
 }
