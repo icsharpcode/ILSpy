@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				.FirstOrDefault(a => ReferenceEquals(a.GetMetadataFileOrNull(), file));
 			if (owningAssembly is null)
 				return null;
-			if (owningAssembly.GetTypeSystemOrNull()?.MainModule is not MetadataModule metadataModule)
+			if (file?.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule is not MetadataModule metadataModule)
 				return null;
 			IEntity? entity;
 			try

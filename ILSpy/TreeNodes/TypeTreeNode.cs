@@ -137,7 +137,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		ITypeDefinition? ResolveTypeDefinition()
 		{
-			var typeSystem = module.GetTypeSystemOrNull();
+			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
 			if (typeSystem == null)
 				return null;
 			return ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);

@@ -69,10 +69,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				| ConversionFlags.UseFullyQualifiedEntityNames
 				| ConversionFlags.SupportExtensionDeclarations);
 
-		// Avalonia uses the constructor-time marker reference directly. WPF re-resolves
-		// through GetTypeSystemWithCurrentOptionsOrNull so language-version flips refresh
-		// the display string immediately; the Avalonia port doesn't yet expose that helper
-		// (see `extension-methods-tree` follow-ups in the tracker).
+		// Uses the constructor-time marker reference directly. The marker comes from the
+		// parent TypeTreeNode, which resolves through GetTypeSystemWithCurrentOptionsOrNull,
+		// so the chain is consistent with the current settings; per-access re-resolution (so
+		// language-version flips refresh the display string without rebuilding the node, as
+		// WPF does) remains a follow-up (see `extension-methods-tree` in the tracker).
 		ITypeDefinition GetTypeDefinition() => MarkerMethod.DeclaringTypeDefinition!;
 
 		protected override void LoadChildren()
