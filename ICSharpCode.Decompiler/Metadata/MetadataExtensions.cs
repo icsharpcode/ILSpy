@@ -24,7 +24,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
-using System.Security.Cryptography;
 using System.Text;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -40,12 +39,10 @@ namespace ICSharpCode.Decompiler.Metadata
 		static string CalculatePublicKeyToken(BlobHandle blob, MetadataReader reader)
 		{
 			// Calculate public key token:
-			// 1. hash the public key (always use SHA1).
-			byte[] publicKeyTokenBytes;
-			using (var hasher = SHA1.Create())
-			{
-				publicKeyTokenBytes = hasher.ComputeHash(reader.GetBlobBytes(blob));
-			}
+			// 1. hash the public key (the strong-name format mandates SHA-1; a managed
+			// implementation is used so this works under restrictive crypto policies).
+			byte[] publicKeyTokenBytes = new byte[20];
+			Sha1ForNonSecretPurposes.HashData(reader.GetBlobBytes(blob), publicKeyTokenBytes);
 
 			// 2. take the last 8 bytes
 			// 3. according to Cecil we need to reverse them, other sources did not mention this.
