@@ -28,7 +28,7 @@ using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
+	public sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IEvent EventDefinition { get; }
 

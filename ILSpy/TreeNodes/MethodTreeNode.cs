@@ -28,7 +28,7 @@ using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
+	public sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IMethod MethodDefinition { get; }
 

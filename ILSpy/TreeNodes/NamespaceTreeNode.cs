@@ -29,7 +29,7 @@ using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class NamespaceTreeNode : ILSpyTreeNode
+	public sealed class NamespaceTreeNode : ILSpyTreeNode
 	{
 		readonly string name;
 		readonly string fullName;

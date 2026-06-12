@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// methods/properties; the block's own members (methods + properties) appear as
 	/// children of this node when expanded.
 	/// </summary>
-	internal sealed class ExtensionTreeNode : ILSpyTreeNode
+	public sealed class ExtensionTreeNode : ILSpyTreeNode
 	{
 		public ExtensionTreeNode(
 			ITypeDefinition typeDefinition,

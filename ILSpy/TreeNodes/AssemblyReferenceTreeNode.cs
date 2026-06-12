@@ -41,7 +41,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// using ILAmbience escaping plus a generic assembly icon. Children (the
 	/// per-reference type list and transitive references) are not yet implemented.
 	/// </summary>
-	sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
+	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
 		enum LoadState { Unloaded, Loading, Loaded, Failed }
 

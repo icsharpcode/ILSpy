@@ -24,7 +24,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// <summary>
 	/// .NET natural string comparison.
 	/// </summary>
-	internal static class NaturalStringComparer
+	public static class NaturalStringComparer
 	{
 		public static readonly IComparer<string> Instance =
 			System.StringComparer.Create(CultureInfo.CurrentCulture, CompareOptions.NumericOrdering);

@@ -42,7 +42,7 @@ using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class AssemblyTreeNode : ILSpyTreeNode
+	public sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
 		readonly LoadedAssembly assembly;
 		string? loadError;

@@ -33,7 +33,7 @@ using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
+	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly TypeDefinitionHandle handle;
 		readonly MetadataFile module;

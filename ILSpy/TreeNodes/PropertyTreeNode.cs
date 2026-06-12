@@ -28,7 +28,7 @@ using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class PropertyTreeNode : ILSpyTreeNode, IMemberTreeNode
+	public sealed class PropertyTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IProperty PropertyDefinition { get; }
 
