@@ -26,6 +26,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 
@@ -77,7 +78,7 @@ namespace ILSpy.Commands
 							return;
 						var watch = Stopwatch.StartNew();
 						Exception? ex = null;
-						var path = Path.Combine(OutputDir, asm.ShortName + ".cs");
+						var path = Path.Combine(OutputDir, WholeProjectDecompiler.CleanUpFileName(asm.ShortName, ".cs"));
 						try
 						{
 							using var writer = new StreamWriter(path);
@@ -144,8 +145,8 @@ namespace ILSpy.Commands
 							return;
 						var watch = Stopwatch.StartNew();
 						Exception? ex = null;
-						var safeName = (asm.Text?.ToString() ?? asm.ShortName).Replace("(", "").Replace(")", "").Replace(' ', '_');
-						var path = Path.Combine(OutputDir, safeName + ".il");
+						var safeName = WholeProjectDecompiler.CleanUpFileName(asm.Text?.ToString() ?? asm.ShortName, ".il");
+						var path = Path.Combine(OutputDir, safeName);
 						try
 						{
 							using var writer = new StreamWriter(path);

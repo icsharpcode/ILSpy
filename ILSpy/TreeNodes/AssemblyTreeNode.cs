@@ -28,6 +28,7 @@ using Avalonia.Controls.Documents;
 using Avalonia.Media;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
@@ -182,11 +183,10 @@ namespace ILSpy.TreeNodes
 
 		async Task SaveAsProjectOrSingleFileAsync(Language language)
 		{
-			var shortName = CleanSuggestedFileName(assembly.ShortName);
 			var filter = $"{language.Name} project (*{language.ProjectFileExtension})|*{language.ProjectFileExtension}"
 				+ $"|{language.Name} (*{language.FileExtension})|*{language.FileExtension}"
 				+ "|All files (*.*)|*.*";
-			var defaultName = shortName + language.ProjectFileExtension;
+			var defaultName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName, language.ProjectFileExtension);
 			var path = await Commands.FilePickers.SaveAsync(filter, defaultName, "Save Code").ConfigureAwait(false);
 			if (string.IsNullOrEmpty(path))
 				return;
@@ -215,15 +215,6 @@ namespace ILSpy.TreeNodes
 					output.WriteLine("*/");
 				}
 			}).ConfigureAwait(false);
-		}
-
-		static string CleanSuggestedFileName(string name)
-		{
-			var invalid = Path.GetInvalidFileNameChars();
-			var clean = name;
-			foreach (var c in invalid)
-				clean = clean.Replace(c, '_');
-			return clean;
 		}
 
 		static LanguageService? TryGetLanguageService()
