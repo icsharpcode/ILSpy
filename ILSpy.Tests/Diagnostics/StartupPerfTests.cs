@@ -125,7 +125,7 @@ public class StartupPerfTests
 			// (proxy for "tree is interactive").
 			var pane = await window.WaitForComponent<AssemblyListPane>();
 			var swGrid = Stopwatch.StartNew();
-			var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+			var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 			swGrid.Stop();
 			TestContext.Out.WriteLine($"SharpTreeView descendant available: {swGrid.ElapsedMilliseconds} ms");
 

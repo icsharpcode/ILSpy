@@ -27,11 +27,11 @@ using Avalonia.Interactivity;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 
-using global::ICSharpCode.ILSpy;
-using global::ICSharpCode.ILSpy.AppEnv;
-using global::ICSharpCode.ILSpy.Commands;
-using global::ICSharpCode.ILSpy.ViewModels;
-using global::ICSharpCode.ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 namespace ICSharpCode.ILSpy.Tests;
 

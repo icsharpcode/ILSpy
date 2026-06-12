@@ -88,10 +88,10 @@ public class AnalyzerPaneVisibilityTests
 		var (_, vm) = await TestHarness.BootAsync(3);
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		var analyzer = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
-		var search = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Search.SearchPaneModel>();
+		var search = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Search.SearchPaneModel>();
 
 		var paneIds = AllDockables(dockWorkspace.Layout)
-			.OfType<global::ICSharpCode.ILSpy.ViewModels.ToolPaneModel>()
+			.OfType<ICSharpCode.ILSpy.ViewModels.ToolPaneModel>()
 			.Select(p => p.Id)
 			.ToList();
 		paneIds.Should().Contain("AssemblyTree", "the assembly-tree pane is visible by default");
@@ -99,7 +99,7 @@ public class AnalyzerPaneVisibilityTests
 		paneIds.Should().NotContain("Analyzer", "Analyzer is hidden until invoked");
 
 		// ...but showing one materialises it into its home location.
-		dockWorkspace.ShowToolPane(global::ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
+		dockWorkspace.ShowToolPane(ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
 		AllDockables(dockWorkspace.Layout).Should().Contain(search,
 			"Show Search must materialise the hidden Search pane");
 		(search.Owner as IDock)!.Id.Should().Be("TopTools",

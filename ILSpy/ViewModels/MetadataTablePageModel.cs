@@ -206,7 +206,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 						Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture)
 							& 0xFFFFFFFFL,
 						System.Globalization.CultureInfo.InvariantCulture);
-					if (!global::ICSharpCode.ILSpy.Metadata.Filters.CompiledFilter.Compile(flagsState).Matches(actual))
+					if (!ICSharpCode.ILSpy.Metadata.Filters.CompiledFilter.Compile(flagsState).Matches(actual))
 						return false;
 				}
 				// Fall through so a free-form substring filter on a [Flags] column still
@@ -328,14 +328,14 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// the text predicate.
 		/// </summary>
 		[ObservableProperty]
-		private global::ICSharpCode.ILSpy.Metadata.Filters.FilterState? flagsState;
+		private ICSharpCode.ILSpy.Metadata.Filters.FilterState? flagsState;
 
 		// Forward inner FilterState mutations as our own PropertyChanged so the page's
 		// CollectionChanged-driven subscription (which only listens for ColumnFilter
 		// property changes) wakes up and refreshes the DataGridCollectionView.
 		partial void OnFlagsStateChanged(
-			global::ICSharpCode.ILSpy.Metadata.Filters.FilterState? oldValue,
-			global::ICSharpCode.ILSpy.Metadata.Filters.FilterState? newValue)
+			ICSharpCode.ILSpy.Metadata.Filters.FilterState? oldValue,
+			ICSharpCode.ILSpy.Metadata.Filters.FilterState? newValue)
 		{
 			if (oldValue is not null)
 				oldValue.PropertyChanged -= OnFlagsStateInnerChanged;

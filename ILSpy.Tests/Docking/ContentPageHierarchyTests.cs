@@ -36,10 +36,10 @@ public class ContentPageHierarchyTests
 	[Test]
 	public void All_Four_Content_Types_Derive_From_ContentPageModel()
 	{
-		typeof(global::ICSharpCode.ILSpy.TextView.DecompilerTabPageModel).Should().BeAssignableTo<ContentPageModel>();
+		typeof(ICSharpCode.ILSpy.TextView.DecompilerTabPageModel).Should().BeAssignableTo<ContentPageModel>();
 		typeof(MetadataTablePageModel).Should().BeAssignableTo<ContentPageModel>();
-		typeof(global::ICSharpCode.ILSpy.Compare.CompareTabPageModel).Should().BeAssignableTo<ContentPageModel>();
-		typeof(global::ICSharpCode.ILSpy.Options.OptionsPageModel).Should().BeAssignableTo<ContentPageModel>(
+		typeof(ICSharpCode.ILSpy.Compare.CompareTabPageModel).Should().BeAssignableTo<ContentPageModel>();
+		typeof(ICSharpCode.ILSpy.Options.OptionsPageModel).Should().BeAssignableTo<ContentPageModel>(
 			"OptionsPageModel must join the content hierarchy, not stay a bare ObservableObject");
 	}
 
@@ -56,7 +56,7 @@ public class ContentPageHierarchyTests
 		// One IsStaticContent, declared on the base -- not duck-typed across unrelated classes.
 		typeof(ContentPageModel).GetProperty(nameof(ContentPageModel.IsStaticContent))
 			.Should().NotBeNull("IsStaticContent lives on ContentPageModel");
-		typeof(global::ICSharpCode.ILSpy.Options.OptionsPageModel).GetProperty("IsStaticContent")!.DeclaringType
+		typeof(ICSharpCode.ILSpy.Options.OptionsPageModel).GetProperty("IsStaticContent")!.DeclaringType
 			.Should().Be(typeof(ContentPageModel), "OptionsPageModel must inherit IsStaticContent, not redeclare it");
 	}
 }

@@ -63,7 +63,7 @@ public class AssemblyTreeFileDropTests
 		// produce a "no" cursor and never reach our handler.
 		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var tree = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var tree = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		DragDrop.GetAllowDrop(tree).Should().BeTrue();
 	}
@@ -229,7 +229,7 @@ public class AssemblyTreeFileDropTests
 		return path;
 	}
 
-	static void TryUnload(global::ICSharpCode.ILSpyX.AssemblyList list, string path)
+	static void TryUnload(ICSharpCode.ILSpyX.AssemblyList list, string path)
 	{
 		var match = list.GetAssemblies().FirstOrDefault(a =>
 			string.Equals(a.FileName, path, StringComparison.OrdinalIgnoreCase));

@@ -66,7 +66,7 @@ public class SearchInputFocusTests
 
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		// Search is hidden by default; surface it so its view realises.
-		dockWorkspace.ShowToolPane(global::ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
+		dockWorkspace.ShowToolPane(ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 
 		dockWorkspace.ShowSearchCommand.Execute(null);

@@ -66,10 +66,10 @@ public class MetadataRowActivationTests
 
 		await Waiters.WaitForAsync(
 			() => vm.AssemblyTreeModel.SelectedItem is TypeTreeNode tn
-				&& tn.Member is global::ICSharpCode.Decompiler.TypeSystem.ITypeDefinition td
+				&& tn.Member is ICSharpCode.Decompiler.TypeSystem.ITypeDefinition td
 				&& td.FullName == "System.Object");
 		(((TypeTreeNode)vm.AssemblyTreeModel.SelectedItem!).Member
-			as global::ICSharpCode.Decompiler.TypeSystem.ITypeDefinition)!
+			as ICSharpCode.Decompiler.TypeSystem.ITypeDefinition)!
 			.FullName.Should().Be("System.Object");
 	}
 

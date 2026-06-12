@@ -168,8 +168,8 @@ public class MetadataFilterTests
 		public SampleFlags Attributes { get; set; }
 	}
 
-	static global::ICSharpCode.ILSpy.Metadata.Filters.FilterState NewFlagsState() =>
-		new(global::ICSharpCode.ILSpy.Metadata.Filters.FlagsSchemaInferer.For(typeof(SampleFlags)));
+	static ICSharpCode.ILSpy.Metadata.Filters.FilterState NewFlagsState() =>
+		new(ICSharpCode.ILSpy.Metadata.Filters.FlagsSchemaInferer.For(typeof(SampleFlags)));
 
 	[Test]
 	public void Empty_FlagsState_Matches_Every_Row()
@@ -187,7 +187,7 @@ public class MetadataFilterTests
 	public void Required_Independent_Flag_Narrows_To_Rows_With_That_Bit_Set()
 	{
 		var state = NewFlagsState();
-		state.SetFlagState(nameof(SampleFlags.Public), global::ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
+		state.SetFlagState(nameof(SampleFlags.Public), ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
 			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeTrue();
@@ -202,8 +202,8 @@ public class MetadataFilterTests
 		// Without an explicit mode the schema starts in MatchMode.All — every required
 		// flag must be set. Public | Static row passes; Public alone doesn't.
 		var state = NewFlagsState();
-		state.SetFlagState(nameof(SampleFlags.Public), global::ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
-		state.SetFlagState(nameof(SampleFlags.Static), global::ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
+		state.SetFlagState(nameof(SampleFlags.Public), ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
+		state.SetFlagState(nameof(SampleFlags.Static), ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
 			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeTrue();
@@ -216,7 +216,7 @@ public class MetadataFilterTests
 	public void Excluded_Flag_Hides_Rows_With_That_Bit_Set()
 	{
 		var state = NewFlagsState();
-		state.SetFlagState(nameof(SampleFlags.Static), global::ICSharpCode.ILSpy.Metadata.Filters.TriState.Excluded);
+		state.SetFlagState(nameof(SampleFlags.Static), ICSharpCode.ILSpy.Metadata.Filters.TriState.Excluded);
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public },
 			new[] { new ColumnFilter("Attributes") { FlagsState = state } }).Should().BeTrue();
@@ -229,7 +229,7 @@ public class MetadataFilterTests
 	public void FlagsState_And_Text_Filter_AND_Together_On_The_Same_Column()
 	{
 		var state = NewFlagsState();
-		state.SetFlagState(nameof(SampleFlags.Public), global::ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
+		state.SetFlagState(nameof(SampleFlags.Public), ICSharpCode.ILSpy.Metadata.Filters.TriState.Required);
 		MetadataTablePageModel.MatchesFilters(
 			new FlagsEntry { Attributes = SampleFlags.Public | SampleFlags.Static },
 			new[] { new ColumnFilter("Attributes") { FlagsState = state, Text = "Static" } }).Should().BeTrue();

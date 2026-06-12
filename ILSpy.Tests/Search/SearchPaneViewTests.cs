@@ -46,7 +46,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		// Search is hidden by default; surface it so its view realises.
-		AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");
@@ -69,7 +69,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		// Search is hidden by default; surface it so its view realises.
-		AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");
@@ -94,7 +94,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		// Search is hidden by default; surface it so its view realises.
-		AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");

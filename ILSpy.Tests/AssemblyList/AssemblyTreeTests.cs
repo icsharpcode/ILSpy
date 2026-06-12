@@ -89,7 +89,7 @@ public class AssemblyTreeTests
 
 		// Act — locate the realised DataGrid inside the AssemblyListPane.
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var treeGrid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var treeGrid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Assert — SelectionMode is Extended.
 		treeGrid.SelectionMode.Should().Be(global::Avalonia.Controls.SelectionMode.Multiple,
@@ -247,14 +247,14 @@ public class AssemblyTreeTests
 
 		// Act 1 + Assert 1 — first access triggers the loading state.
 		var initialIcon = refNode.Icon;
-		initialIcon.Should().BeSameAs(global::ICSharpCode.ILSpy.Images.AssemblyLoading);
+		initialIcon.Should().BeSameAs(ICSharpCode.ILSpy.Images.AssemblyLoading);
 
 		// Act 2 — wait for resolver to finish.
 		await Waiters.WaitForAsync(() =>
-			!ReferenceEquals(refNode.Icon, global::ICSharpCode.ILSpy.Images.AssemblyLoading));
+			!ReferenceEquals(refNode.Icon, ICSharpCode.ILSpy.Images.AssemblyLoading));
 
 		// Assert 2 — icon settles on the resolved Assembly glyph.
-		refNode.Icon.Should().BeSameAs(global::ICSharpCode.ILSpy.Images.Assembly);
+		refNode.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.Assembly);
 	}
 
 	[AvaloniaTest]
@@ -371,8 +371,8 @@ public class AssemblyTreeTests
 		// Assert — non-null, icon is one of the two ref glyphs, label is non-empty.
 		((object?)memberRefNode).Should().NotBeNull(
 			"at least one TypeRef under System.Linq's references must have member references");
-		memberRefNode!.Icon.Should().BeOneOf(global::ICSharpCode.ILSpy.Images.MethodReference,
-			global::ICSharpCode.ILSpy.Images.FieldReference);
+		memberRefNode!.Icon.Should().BeOneOf(ICSharpCode.ILSpy.Images.MethodReference,
+			ICSharpCode.ILSpy.Images.FieldReference);
 		memberRefNode.Text.ToString().Should().NotBeNullOrWhiteSpace();
 	}
 
@@ -417,7 +417,7 @@ public class AssemblyTreeTests
 		// Assert — non-null, uses the ExportedType glyph, label is non-empty.
 		((object?)exportedNode).Should().NotBeNull(
 			"mscorlib must forward types to System.Private.CoreLib via ExportedType rows");
-		exportedNode!.Icon.Should().BeSameAs(global::ICSharpCode.ILSpy.Images.ExportedType);
+		exportedNode!.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.ExportedType);
 		exportedNode.Text.ToString().Should().NotBeNullOrWhiteSpace();
 	}
 
@@ -630,7 +630,7 @@ public class AssemblyTreeTests
 		}
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		vm.AssemblyTreeModel.SelectNode(enumerable);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
@@ -654,7 +654,7 @@ public class AssemblyTreeTests
 		// Pick the bottom-most visible non-selected row — that's the strictest probe. If the
 		// bug regressed, CenterRowInView would scroll it up to the middle and offset would
 		// change.
-		var candidateRow = grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var candidateRow = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.Where(r => !r.IsSelected
 				&& r.TranslatePoint(new Point(0, 0), scrollViewer) is { } p
 				&& p.Y >= 0 && p.Y + r.Bounds.Height <= scrollViewer.Viewport.Height)
@@ -707,7 +707,7 @@ public class AssemblyTreeTests
 		}
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		vm.AssemblyTreeModel.SelectNode(enumerable);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
@@ -728,7 +728,7 @@ public class AssemblyTreeTests
 			"the test scenario requires the viewport be parked mid-list");
 
 		// Pick the bottom-most fully-visible non-selected row -- the strictest probe for an unwanted recentre.
-		var candidateRow = grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var candidateRow = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.Where(r => !r.IsSelected
 				&& r.TranslatePoint(new Point(0, 0), scrollViewer) is { } p
 				&& p.Y >= 0 && p.Y + r.Bounds.Height <= scrollViewer.Viewport.Height)
@@ -774,7 +774,7 @@ public class AssemblyTreeTests
 			t.Expand();
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		var scrollViewer = await grid.WaitForComponent<ScrollViewer>();
 
 		// Select + reveal the type, then let it settle on screen.
@@ -862,7 +862,7 @@ public class AssemblyTreeTests
 		// Act — invoke SaveCodeAsync with a temp path (bypassing the file picker so the test
 		// is deterministic).
 		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-		var saveCmd = (global::ICSharpCode.ILSpy.Commands.SaveCommand)registry.Commands
+		var saveCmd = (ICSharpCode.ILSpy.Commands.SaveCommand)registry.Commands
 			.Single(c => c.Metadata.Header == nameof(Resources._SaveCode))
 			.CreateExport().Value;
 
@@ -907,7 +907,7 @@ public class AssemblyTreeTests
 		TestCapture.Step("sacrificial-selected");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -956,7 +956,7 @@ public class AssemblyTreeTests
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, firstAssembly));
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -987,7 +987,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -1024,7 +1024,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -1051,7 +1051,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -1083,7 +1083,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -1122,7 +1122,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -1229,7 +1229,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		assemblyNode.IsExpanded.Should().BeFalse("baseline: top-level assembly rows start collapsed");
@@ -1350,7 +1350,7 @@ public class AssemblyTreeTests
 		// Second metadata view via the new-tab carve-out — pick a different table so the
 		// content is unmistakable.
 		var methodTableNode = tablesNode.Children
-			.OfType<global::ICSharpCode.ILSpy.Metadata.CorTables.MethodTableTreeNode>().Single();
+			.OfType<ICSharpCode.ILSpy.Metadata.CorTables.MethodTableTreeNode>().Single();
 		vm.DockWorkspace.OpenNodeInNewTab(methodTableNode);
 
 		await Waiters.WaitForAsync(
@@ -1431,12 +1431,12 @@ public class AssemblyTreeTests
 
 		var settings = AppComposition.Current.GetExport<SettingsService>()
 			.SessionSettings.LanguageSettings;
-		settings.ShowApiLevel = global::ICSharpCode.ILSpyX.ApiVisibility.PublicOnly;
-		((int)getter.Filter(settings)).Should().Be((int)global::ICSharpCode.ILSpy.TreeNodes.FilterResult.Hidden,
+		settings.ShowApiLevel = ICSharpCode.ILSpyX.ApiVisibility.PublicOnly;
+		((int)getter.Filter(settings)).Should().Be((int)ICSharpCode.ILSpy.TreeNodes.FilterResult.Hidden,
 			"property accessors must be hidden by default — only ShowAll surfaces them");
 
-		settings.ShowApiLevel = global::ICSharpCode.ILSpyX.ApiVisibility.All;
-		((int)getter.Filter(settings)).Should().NotBe((int)global::ICSharpCode.ILSpy.TreeNodes.FilterResult.Hidden,
+		settings.ShowApiLevel = ICSharpCode.ILSpyX.ApiVisibility.All;
+		((int)getter.Filter(settings)).Should().NotBe((int)ICSharpCode.ILSpy.TreeNodes.FilterResult.Hidden,
 			"flipping to ShowAll must let accessors through");
 	}
 
@@ -1678,7 +1678,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.UpdateLayout();
 
 		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
@@ -1725,7 +1725,7 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.UpdateLayout();
 
 		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
@@ -1739,7 +1739,7 @@ public class AssemblyTreeTests
 		TestCapture.Step("all-rows-selected");
 
 		// Act — plain left-click on the second visible row.
-		var targetRow = grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var targetRow = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.OrderBy(r => r.TranslatePoint(new Point(0, 0), grid)?.Y ?? double.MaxValue)
 			.Skip(1).First();
 		var targetNode = targetRow.DataContext as SharpTreeNode;

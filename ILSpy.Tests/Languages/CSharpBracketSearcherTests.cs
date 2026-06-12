@@ -38,7 +38,7 @@ public class CSharpBracketSearcherTests
 {
 	// CSharpBracketSearcher is internal; the easiest way to get an instance without
 	// making it public is through CSharpLanguage.BracketSearcher (its public-API path).
-	static IBracketSearcher Searcher() => new global::ICSharpCode.ILSpy.Languages.CSharpLanguage().BracketSearcher;
+	static IBracketSearcher Searcher() => new ICSharpCode.ILSpy.Languages.CSharpLanguage().BracketSearcher;
 
 	static TextDocument Doc(string text) => new(text);
 

@@ -88,7 +88,7 @@ public class MetadataTabSessionRestoreTests
 			.GetChild<DebugDirectoryTreeNode>()
 			.GetChild<MetadataTreeNode>()
 			.GetChild<MetadataTablesTreeNode>()
-			.GetChild<global::ICSharpCode.ILSpy.Metadata.DebugTables.DocumentTableTreeNode>();
+			.GetChild<ICSharpCode.ILSpy.Metadata.DebugTables.DocumentTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(documentTable);
 		TestCapture.Step("selected-document-table");

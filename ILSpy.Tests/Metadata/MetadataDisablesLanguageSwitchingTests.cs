@@ -53,7 +53,7 @@ public class MetadataDisablesLanguageSwitchingTests
 	{
 		// Decompiler tabs ARE the place where Language / Language-Version matter. The
 		// default-true is what enables the toolbar pickers on a fresh decompile tab.
-		var model = new global::ICSharpCode.ILSpy.TextView.DecompilerTabPageModel();
+		var model = new ICSharpCode.ILSpy.TextView.DecompilerTabPageModel();
 		model.SupportsLanguageSwitching.Should().BeTrue();
 	}
 
@@ -72,7 +72,7 @@ public class MetadataDisablesLanguageSwitchingTests
 		tab.SupportsLanguageSwitching.Should().BeFalse(
 			"swapping in a MetadataTablePageModel must propagate its false flag up to the wrapper");
 
-		var dec = new global::ICSharpCode.ILSpy.TextView.DecompilerTabPageModel();
+		var dec = new ICSharpCode.ILSpy.TextView.DecompilerTabPageModel();
 		tab.Content = dec;
 		tab.SupportsLanguageSwitching.Should().BeTrue(
 			"swapping back to a decompiler tab must restore the true flag");

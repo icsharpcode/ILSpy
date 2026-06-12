@@ -233,7 +233,7 @@ public class ApiVisibilityFilterTests
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Selecting each node scrolls it into view; that's how the row's TextBlock realises.
 		vm.AssemblyTreeModel.SelectNode(publicMethod);

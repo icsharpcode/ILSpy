@@ -76,7 +76,7 @@ public class AnalyzerConstructorUsesTests
 		var assemblyList = vm.AssemblyTreeModel.AssemblyList!;
 		var context = new AnalyzerContext {
 			CancellationToken = CancellationToken.None,
-			Language = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage,
+			Language = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage,
 			AssemblyList = assemblyList,
 		};
 		var results = analyzer.Analyze(ctor, context).Take(20).ToList();
@@ -107,7 +107,7 @@ public class AnalyzerConstructorUsesTests
 		var assemblyList = vm.AssemblyTreeModel.AssemblyList!;
 		var context = new AnalyzerContext {
 			CancellationToken = CancellationToken.None,
-			Language = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage,
+			Language = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage,
 			AssemblyList = assemblyList,
 		};
 		var results = analyzer.Analyze(ctor, context).Take(20).ToList();

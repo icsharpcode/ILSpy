@@ -51,11 +51,11 @@ public class SearchPaneStreamingTests
 		var module = await assemblyNode.LoadedAssembly.GetMetadataFileAsync();
 
 		var queue = new System.Collections.Concurrent.ConcurrentQueue<ICSharpCode.ILSpyX.Search.SearchResult>();
-		var language = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage;
+		var language = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage;
 		var request = new ICSharpCode.ILSpyX.Search.SearchRequest {
 			Mode = SearchMode.Type,
 			Keywords = new[] { "Enumerable" },
-			SearchResultFactory = new global::ICSharpCode.ILSpy.Search.AvaloniaSearchResultFactory(language),
+			SearchResultFactory = new ICSharpCode.ILSpy.Search.AvaloniaSearchResultFactory(language),
 			DecompilerSettings = new ICSharpCode.Decompiler.DecompilerSettings(),
 			FullNameSearch = false,
 			OmitGenerics = false,

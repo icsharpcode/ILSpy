@@ -50,7 +50,7 @@ public class SearchPaneSortableColumnsTests
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
-		AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 

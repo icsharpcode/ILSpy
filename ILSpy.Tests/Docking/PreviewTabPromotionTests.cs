@@ -198,7 +198,7 @@ public class PreviewTabPromotionTests
 		// The One's active highlight is purple, every other document tab's is blue. The
 		// :selected:active Background binds to this converter on IsPreview; the (theme-unreliable)
 		// :active state makes a rendered assertion flaky, so verify the converter directly.
-		var conv = global::ICSharpCode.ILSpy.Themes.BoolToBrushConverter.PreviewOrActiveTabBackground;
+		var conv = ICSharpCode.ILSpy.Themes.BoolToBrushConverter.PreviewOrActiveTabBackground;
 		var culture = global::System.Globalization.CultureInfo.InvariantCulture;
 		(conv.Convert(true, typeof(global::Avalonia.Media.IBrush), null, culture)
 			as global::Avalonia.Media.ISolidColorBrush)!.Color

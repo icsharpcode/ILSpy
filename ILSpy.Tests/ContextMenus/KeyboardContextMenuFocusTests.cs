@@ -56,7 +56,7 @@ public class KeyboardContextMenuFocusTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var node = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().First();
 		vm.AssemblyTreeModel.SelectNode(node);
@@ -68,7 +68,7 @@ public class KeyboardContextMenuFocusTests
 		}
 
 		var row = grid.GetVisualDescendants()
-			.OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>().First();
+			.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>().First();
 		row.Focus(NavigationMethod.Tab);
 		Dispatcher.UIThread.RunJobs();
 

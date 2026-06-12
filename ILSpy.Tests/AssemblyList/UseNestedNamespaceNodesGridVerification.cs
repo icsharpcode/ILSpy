@@ -52,7 +52,7 @@ public class UseNestedNamespaceNodesGridVerification
 
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Expand an assembly so its namespace children become visible rows.
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");

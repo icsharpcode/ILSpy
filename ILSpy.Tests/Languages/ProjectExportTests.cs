@@ -79,7 +79,7 @@ public class ProjectExportTests
 		Directory.CreateDirectory(tempDir);
 		try
 		{
-			var options = new global::ICSharpCode.ILSpy.DecompilationOptions {
+			var options = new ICSharpCode.ILSpy.DecompilationOptions {
 				FullDecompilation = true,
 				SaveAsProjectDirectory = tempDir,
 			};

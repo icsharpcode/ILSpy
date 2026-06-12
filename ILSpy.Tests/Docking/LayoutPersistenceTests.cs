@@ -63,7 +63,7 @@ public class LayoutPersistenceTests
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		// Search is hidden by default; surface it so the round-trip covers a tool pane that
 		// lives in a materialised-on-demand dock, not just the assembly tree.
-		dockWorkspace.ShowToolPane(global::ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
+		dockWorkspace.ShowToolPane(ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
 		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.test.{System.Guid.NewGuid():N}.json");
 
 		try
@@ -90,7 +90,7 @@ public class LayoutPersistenceTests
 			// non-null. Specifically: a RootDock with VisibleDockables containing the
 			// proportional dock tree, AND the tool panes resolved as the live singletons
 			// (CreateObject hook should have returned the MEF instances, not fresh ones).
-			var registryForRoundTrip = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
+			var registryForRoundTrip = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
 			var roundTrip = new ILSpyDockFactory(registryForRoundTrip).LoadLayout(path);
 			((object?)roundTrip).Should().NotBeNull("LoadLayout must materialise the saved root dock");
 			var dockables = roundTrip!.VisibleDockables;
@@ -100,12 +100,12 @@ public class LayoutPersistenceTests
 			// Walk every dockable in the loaded tree. Every ToolPaneModel-typed entry
 			// must be reference-equal to the live MEF singleton — that's what proves
 			// the CreateObject hook fired during deserialization, not a fresh ctor.
-			var liveAssemblyTree = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.AssemblyTree.AssemblyTreeModel>();
-			var liveSearch = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Search.SearchPaneModel>();
+			var liveAssemblyTree = AppComposition.Current.GetExport<ICSharpCode.ILSpy.AssemblyTree.AssemblyTreeModel>();
+			var liveSearch = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Search.SearchPaneModel>();
 			var allLoaded = Flatten(roundTrip).ToList();
-			allLoaded.OfType<global::ICSharpCode.ILSpy.AssemblyTree.AssemblyTreeModel>().Should().Contain(liveAssemblyTree,
+			allLoaded.OfType<ICSharpCode.ILSpy.AssemblyTree.AssemblyTreeModel>().Should().Contain(liveAssemblyTree,
 				"loaded AssemblyTreeModel must be the live MEF singleton, not a fresh instance");
-			allLoaded.OfType<global::ICSharpCode.ILSpy.Search.SearchPaneModel>().Should().Contain(liveSearch,
+			allLoaded.OfType<ICSharpCode.ILSpy.Search.SearchPaneModel>().Should().Contain(liveSearch,
 				"loaded SearchPaneModel must be the live MEF singleton, not a fresh instance");
 		}
 		finally
@@ -138,7 +138,7 @@ public class LayoutPersistenceTests
 			// Simulate the second-launch path: a NEW factory loads the saved layout
 			// instead of creating one. The factory MUST still expose MainTab + Documents
 			// so DockWorkspace can populate decompile content into them.
-			var registry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
+			var registry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
 			var factory = new ILSpyDockFactory(registry);
 			var loaded = factory.LoadLayout(path);
 
@@ -187,8 +187,8 @@ public class LayoutPersistenceTests
 		// Open two extra documents on top of the persistent MainTab. Content type is
 		// irrelevant for this test — the bug is structural, about ContentTabPage shells
 		// being persisted at all — so any ContentPageModel will do.
-		dockWorkspace.OpenNewTab(new global::ICSharpCode.ILSpy.TextView.DecompilerTabPageModel());
-		dockWorkspace.OpenNewTab(new global::ICSharpCode.ILSpy.TextView.DecompilerTabPageModel());
+		dockWorkspace.OpenNewTab(new ICSharpCode.ILSpy.TextView.DecompilerTabPageModel());
+		dockWorkspace.OpenNewTab(new ICSharpCode.ILSpy.TextView.DecompilerTabPageModel());
 		TestCapture.Step("three-document-tabs-open");
 		var sourceDocs = dockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>().Count();
@@ -211,7 +211,7 @@ public class LayoutPersistenceTests
 			// Round-trip with a fresh factory. The loaded DocumentDock must contain exactly
 			// one ContentTabPage (the fresh MainTab repopulated by the load path); none of
 			// the extras may resurrect.
-			var registry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
+			var registry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
 			var factory = new ILSpyDockFactory(registry);
 			var loaded = factory.LoadLayout(path);
 			((object?)loaded).Should().NotBeNull();
@@ -238,7 +238,7 @@ public class LayoutPersistenceTests
 	{
 		// The "no saved layout yet" path on first launch. DockWorkspace falls back
 		// to factory.CreateLayout() when this returns null — that's the contract.
-		var registry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
+		var registry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
 		var factory = new ILSpyDockFactory(registry);
 		var nonExistent = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.missing.{System.Guid.NewGuid():N}.json");
 
@@ -252,7 +252,7 @@ public class LayoutPersistenceTests
 	{
 		// A corrupt sidecar (manually edited, version drift, mid-write crash) must
 		// not block startup. DockWorkspace silently falls back to defaults.
-		var registry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
+		var registry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
 		var factory = new ILSpyDockFactory(registry);
 		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.malformed.{System.Guid.NewGuid():N}.json");
 		File.WriteAllText(path, "{ this is not valid JSON");

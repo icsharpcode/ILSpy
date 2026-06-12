@@ -114,7 +114,7 @@ public sealed class ResetAppStateAttribute : Attribute, ITestAction
 		Task quiesce;
 		try
 		{
-			quiesce = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Docking.DockWorkspace>().CancelPendingOperationsAsync();
+			quiesce = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>().CancelPendingOperationsAsync();
 		}
 		catch
 		{

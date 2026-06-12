@@ -56,7 +56,7 @@ public class CompareViewRenderTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
 
-		var entry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
+		var entry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
 			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
 		var assemblies = new[] {
 			await vm.OpenFixtureAsync("FixtureA"),
@@ -84,7 +84,7 @@ public class CompareViewRenderTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
 
-		var entry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
+		var entry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
 			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
 		var assemblies = new[] {
 			await vm.OpenFixtureAsync("FixtureA"),

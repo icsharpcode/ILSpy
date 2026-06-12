@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			try
 			{
-				return AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.SettingsService>().DecompilerSettings.Clone();
+				return AppComposition.Current.GetExport<ICSharpCode.ILSpy.SettingsService>().DecompilerSettings.Clone();
 			}
 			catch
 			{

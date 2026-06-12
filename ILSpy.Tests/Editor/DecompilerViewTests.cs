@@ -486,7 +486,7 @@ public class DecompilerViewTests
 		// without the bridge they default false and every fold comes back collapsed.
 		var (_, vm) = await TestHarness.BootAsync(3);
 
-		var settings = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.SettingsService>();
+		var settings = AppComposition.Current.GetExport<ICSharpCode.ILSpy.SettingsService>();
 		settings.DisplaySettings.ExpandMemberDefinitions = true;
 		settings.DisplaySettings.ExpandUsingDeclarations = true;
 

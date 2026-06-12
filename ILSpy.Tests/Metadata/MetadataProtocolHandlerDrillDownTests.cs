@@ -135,7 +135,7 @@ public class MetadataProtocolHandlerDrillDownTests
 		// The handler is exported as IProtocolHandler, not as itself — fish out the
 		// MetadataProtocolHandler concrete impl from the contract list.
 		var handler = AppComposition.Current
-			.GetExports<global::ICSharpCode.ILSpy.Commands.IProtocolHandler>()
+			.GetExports<ICSharpCode.ILSpy.Commands.IProtocolHandler>()
 			.OfType<MetadataProtocolHandler>()
 			.Single();
 		return (handler, module, metadataNode);

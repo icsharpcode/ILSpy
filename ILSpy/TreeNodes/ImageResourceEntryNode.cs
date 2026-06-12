@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		async System.Threading.Tasks.Task SaveSnapshotAsync(byte[] snapshot)
 		{
-			var defaultName = Path.GetFileName(global::ICSharpCode.Decompiler.CSharp.ProjectDecompiler
+			var defaultName = Path.GetFileName(ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				.WholeProjectDecompiler.SanitizeFileName((string)Text));
 			var path = await Commands.FilePickers.SaveAsync("All files|*.*", defaultName).ConfigureAwait(false);
 			if (path == null)

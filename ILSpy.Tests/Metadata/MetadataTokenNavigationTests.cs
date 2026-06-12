@@ -73,7 +73,7 @@ public class MetadataTokenNavigationTests
 		// ApplyScrollTarget, which clears ScrollToRow synchronously after handling — so
 		// we don't observe the row index here, just that the selection is the right table
 		// and a fresh metadata page is showing.
-		var factory = (global::ICSharpCode.ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var factory = (ICSharpCode.ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var landed = (MetadataTablePageModel)factory.MainTab!.Content!;
 		landed.Title.Should().Contain(expectedTableIndex.ToString()); // title leads with the kind byte
 		landed.Items.Should().HaveCountGreaterThan((int)(expectedRowNumber - 1),

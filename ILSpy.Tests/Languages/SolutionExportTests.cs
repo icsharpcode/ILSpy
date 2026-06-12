@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.Tests.Languages;
 /// <summary>
 /// End-to-end smoke test of the multi-assembly solution (.sln) export path that backs the
 /// "Save Code" entry when several assemblies are selected. Drives
-/// <see cref="global::ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync"/> directly (no file picker)
+/// <see cref="ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync"/> directly (no file picker)
 /// and asserts a solution file plus one project per assembly is produced.
 /// </summary>
 [TestFixture]
@@ -60,7 +60,7 @@ public class SolutionExportTests
 		var slnPath = Path.Combine(tempDir, "Solution.sln");
 		try
 		{
-			var result = await global::ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(slnPath, language, assemblies);
+			var result = await ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(slnPath, language, assemblies);
 
 			result.Success.Should().BeTrue(
 				"the solution export should succeed for valid assemblies. Status:\n" + result.StatusText);
@@ -105,7 +105,7 @@ public class SolutionExportTests
 		{
 			// The same assembly twice collides on ShortName: the writer must refuse rather than
 			// clobber one project directory with another.
-			var result = await global::ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(
+			var result = await ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(
 				slnPath, language, new[] { assembly, assembly });
 
 			result.Success.Should().BeFalse("duplicate assembly names cannot produce a valid solution");

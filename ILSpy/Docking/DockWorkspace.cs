@@ -667,7 +667,7 @@ namespace ICSharpCode.ILSpy.Docking
 			// EntityReferences with a non-"decompile" protocol (e.g. metadata://) get a first
 			// pass through registered IProtocolHandler exports. The first handler returning a
 			// non-null node wins; if none match we fall through to the default resolver.
-			if (segment.Reference is global::ICSharpCode.ILSpy.EntityReference entity
+			if (segment.Reference is ICSharpCode.ILSpy.EntityReference entity
 				&& entity.Protocol != "decompile")
 			{
 				var module = entity.ResolveAssembly(assemblyTreeModel.AssemblyList!);

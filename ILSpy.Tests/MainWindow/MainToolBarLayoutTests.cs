@@ -133,7 +133,7 @@ public class MainToolBarLayoutTests
 			// Icons may be declared as either static-readonly fields (eager) or static
 			// properties with a lazy backing field (post-perf-pass). Look up either shape.
 			var bindingFlags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static;
-			var imagesType = typeof(global::ICSharpCode.ILSpy.Images);
+			var imagesType = typeof(ICSharpCode.ILSpy.Images);
 			var field = imagesType.GetField(name, bindingFlags);
 			var property = field is null ? imagesType.GetProperty(name, bindingFlags) : null;
 			(field is not null || property is not null).Should().BeTrue(
