@@ -91,7 +91,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var parentModule = parentAssembly.LoadedAssembly.GetMetadataFileOrNull();
 			if (parentModule != null)
 			{
-				var parentTypeSystem = (MetadataModule?)parentModule.GetTypeSystemOrNull()?.MainModule;
+				var parentTypeSystem = (MetadataModule?)parentModule.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule;
 				if (parentTypeSystem != null)
 					Children.Add(new AssemblyReferenceReferencedTypesTreeNode(parentTypeSystem, reference));
 			}

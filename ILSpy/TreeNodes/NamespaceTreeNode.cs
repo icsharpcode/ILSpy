@@ -94,7 +94,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			var typeSystem = module.GetTypeSystemOrNull();
+			// Enumerate via the type system matching this run's settings so the namespace
+			// listing agrees with what the per-type decompilation below produces.
+			var typeSystem = module.GetTypeSystemWithDecompilerSettingsOrNull(options.DecompilerSettings);
 			if (typeSystem == null)
 			{
 				language.WriteCommentLine(output, "(type system unavailable)");
