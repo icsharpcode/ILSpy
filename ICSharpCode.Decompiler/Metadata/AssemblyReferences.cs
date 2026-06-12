@@ -24,7 +24,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -273,10 +272,9 @@ namespace ICSharpCode.Decompiler.Metadata
 				var bytes = Metadata.GetBlobBytes(entry.PublicKeyOrToken);
 				if ((entry.Flags & AssemblyFlags.PublicKey) != 0)
 				{
-					using (var hasher = SHA1.Create())
-					{
-						bytes = hasher.ComputeHash(bytes).Skip(12).ToArray();
-					}
+					byte[] hash = new byte[20];
+					Sha1ForNonSecretPurposes.HashData(bytes, hash);
+					bytes = hash.Skip(12).ToArray();
 				}
 
 				publicKeyToken = bytes;
