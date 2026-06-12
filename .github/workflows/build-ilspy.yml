@@ -260,10 +260,13 @@ jobs:
         path: ICSharpCode.ILSpyCmd\bin\Release\ilspycmd*.nupkg
         if-no-files-found: error
 
-  # Linux and macOS build the desktop solution filter, run the headless UI tests on their
-  # own platform, and package self-contained Release bundles. Decompiler tests, NuGet
-  # packing, and all Windows-specific packaging stay in the Windows job above; the
-  # ILSpy-tests submodule only feeds the decompiler tests, so neither job checks it out.
+  # Linux and macOS build the desktop solution filter, run the UI and decompiler tests on
+  # their own platform, and package self-contained Release bundles. NuGet packing and all
+  # Windows-specific packaging stay in the Windows job above. The decompiler tests need the
+  # ILSpy-tests submodule (the TargetNet40 configs compile against its legacy reference
+  # assemblies even on non-Windows); configs that genuinely need Windows (legacy csc, mcs,
+  # 32-bit, roundtrip) self-exclude via Tester.SupportedOnCurrentPlatform and
+  # [Platform("Win")]. ILSpy.Tests.Windows runs only in the Windows job by design.
 
   Linux:
     runs-on: ubuntu-latest
@@ -279,6 +282,7 @@ jobs:
 
     - uses: actions/checkout@v6
       with:
+        submodules: true
         fetch-depth: 0
         persist-credentials: false
 
@@ -314,6 +318,13 @@ jobs:
     - name: Execute UI tests
       run: >
         dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
+    - name: Execute decompiler tests
+      run: >
+        dotnet test --project ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj
         --configuration Release
         --no-build --report-trx
         --results-directory test-results
@@ -373,6 +384,7 @@ jobs:
 
     - uses: actions/checkout@v6
       with:
+        submodules: true
         fetch-depth: 0
         persist-credentials: false
 
@@ -408,6 +420,13 @@ jobs:
     - name: Execute UI tests
       run: >
         dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
+    - name: Execute decompiler tests
+      run: >
+        dotnet test --project ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj
         --configuration Release
         --no-build --report-trx
         --results-directory test-results
