@@ -693,6 +693,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			// Whitelist allowed characters, replace everything else:
 			StringBuilder b = new StringBuilder(text.Length + (extension?.Length ?? 0));
 			bool countBytes = !RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+			int segmentStart = 0;
+			int baseNameEnd = -1;
 			foreach (var c in text)
 			{
 				if (char.IsLetterOrDigit(c) || c == '-' || c == '_')
@@ -709,19 +711,32 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				else if (c == '.' && b.Length > 0 && b[^1] != '.')
 				{
 					currentSegmentLength++;
-					// if the current segment exceeds maxSegmentLength characters,
-					// skip until the end of the segment.
-					if (separateAtDots || currentSegmentLength <= maxSegmentLength)
-						b.Append('.'); // allow dot, but never two in a row
-
-					// Reset length at end of segment.
 					if (separateAtDots)
+					{
+						// The dot ends the current segment.
+						EscapeReservedFileSystemName(b, segmentStart, baseNameEnd);
+						b.Append('.');
+						segmentStart = b.Length;
+						baseNameEnd = -1;
+						// Reset length at end of segment.
 						currentSegmentLength = 0;
+					}
+					else if (currentSegmentLength <= maxSegmentLength)
+					{
+						// The first dot ends the segment's base name, the part Windows
+						// device-name parsing looks at.
+						if (baseNameEnd < 0)
+							baseNameEnd = b.Length;
+						b.Append('.'); // allow dot, but never two in a row
+					}
 				}
 				else if (treatAsPath && (c is '/' or '\\') && currentSegmentLength > 0)
 				{
 					// if we treat this as a file name, we've started a new segment
+					EscapeReservedFileSystemName(b, segmentStart, baseNameEnd);
 					b.Append(Path.DirectorySeparatorChar);
+					segmentStart = b.Length;
+					baseNameEnd = -1;
 					currentSegmentLength = 0;
 				}
 				else
@@ -741,6 +756,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 			if (b.Length == 0)
 				b.Append('-');
+			EscapeReservedFileSystemName(b, segmentStart, baseNameEnd);
 			string name = b.ToString();
 			if (extension != null)
 			{
@@ -752,9 +768,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				name += extension;
 			}
 
-			if (IsReservedFileSystemName(name))
-				return name + "_";
-			else if (name == ".")
+			if (name == ".")
 				return "_";
 			else
 				return name;
@@ -772,6 +786,25 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			return CleanUpName(text, separateAtDots: true, treatAsFileName: false, treatAsPath: true)
 				.Replace('.', Path.DirectorySeparatorChar);
+		}
+
+		/// <summary>
+		/// Appends an underscore to the segment [<paramref name="segmentStart"/>..) of
+		/// <paramref name="b"/> if its base name (the part before <paramref name="baseNameEnd"/>,
+		/// or the whole segment when there was no dot) is a reserved Windows device name
+		/// (CON, PRN, AUX, NUL, COM1-9, LPT1-9): "con" becomes "con_" and "con.txt" becomes
+		/// "con_.txt". Windows device-name parsing ignores everything after the first dot, so the
+		/// underscore must be inserted before it, not appended at the end.
+		/// </summary>
+		static void EscapeReservedFileSystemName(StringBuilder b, int segmentStart, int baseNameEnd)
+		{
+			if (baseNameEnd < 0)
+				baseNameEnd = b.Length;
+			int baseNameLength = baseNameEnd - segmentStart;
+			// All reserved names are 3 or 4 characters long; checking the length first avoids
+			// allocating a substring for segments that cannot be reserved anyway.
+			if (baseNameLength is 3 or 4 && IsReservedFileSystemName(b.ToString(segmentStart, baseNameLength)))
+				b.Insert(baseNameEnd, '_');
 		}
 
 		static bool IsReservedFileSystemName(string name)

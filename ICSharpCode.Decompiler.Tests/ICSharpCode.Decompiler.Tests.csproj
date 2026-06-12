@@ -148,6 +148,7 @@
     <Compile Include="Output\ILAmbienceTests.cs" />
     <Compile Include="Output\InsertParenthesesVisitorTests.cs" />
     <Compile Include="Output\TextTokenWriterTests.cs" />
+    <Compile Include="ProjectDecompiler\ReservedFileSystemNameTests.cs" />
     <Compile Include="ProjectDecompiler\TargetFrameworkTests.cs" />
     <Compile Include="ProjectDecompiler\WholeProjectDecompilerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
