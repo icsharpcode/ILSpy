@@ -20,11 +20,11 @@ using System.Composition;
 
 using Dock.Model.Controls;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	[Export]
 	[Shared]

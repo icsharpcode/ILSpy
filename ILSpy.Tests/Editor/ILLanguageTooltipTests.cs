@@ -30,13 +30,13 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

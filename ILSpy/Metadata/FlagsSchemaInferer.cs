@@ -23,7 +23,7 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 
-namespace ILSpy.Metadata.Filters
+namespace ICSharpCode.ILSpy.Metadata.Filters
 {
 	/// <summary>
 	/// Builds a <see cref="FlagsSchema"/> for a <see cref="FlagsAttribute"/> enum by

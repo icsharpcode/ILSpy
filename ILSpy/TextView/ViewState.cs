@@ -20,9 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Snapshot of the decompiler view's logical state — which tree nodes are currently

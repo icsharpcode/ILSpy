@@ -22,7 +22,7 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata.CorTables
+namespace ICSharpCode.ILSpy.Metadata.CorTables
 {
 	/// <summary>
 	/// View of the TypeRef table — every external type the module mentions. Each row points

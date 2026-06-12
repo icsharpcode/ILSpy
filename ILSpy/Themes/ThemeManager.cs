@@ -26,7 +26,7 @@ using Avalonia.Styling;
 
 using AvaloniaEdit.Highlighting;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// Light/Dark switcher backed by Avalonia's <see cref="Application.RequestedThemeVariant"/>.

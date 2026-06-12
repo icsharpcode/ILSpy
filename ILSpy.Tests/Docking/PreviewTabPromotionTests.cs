@@ -27,11 +27,11 @@ using AwesomeAssertions;
 
 using Dock.Avalonia.Controls;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -198,7 +198,7 @@ public class PreviewTabPromotionTests
 		// The One's active highlight is purple, every other document tab's is blue. The
 		// :selected:active Background binds to this converter on IsPreview; the (theme-unreliable)
 		// :active state makes a rendered assertion flaky, so verify the converter directly.
-		var conv = global::ILSpy.Themes.BoolToBrushConverter.PreviewOrActiveTabBackground;
+		var conv = ICSharpCode.ILSpy.Themes.BoolToBrushConverter.PreviewOrActiveTabBackground;
 		var culture = global::System.Globalization.CultureInfo.InvariantCulture;
 		(conv.Convert(true, typeof(global::Avalonia.Media.IBrush), null, culture)
 			as global::Avalonia.Media.ISolidColorBrush)!.Color

@@ -29,11 +29,11 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 

@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:ILSpy.Options"
+             xmlns:vm="using:ICSharpCode.ILSpy.Options"
              xmlns:res="using:ICSharpCode.ILSpy.Properties"
              mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
-             x:Class="ILSpy.Options.Panels.DisplaySettingsPanel"
+             x:Class="ICSharpCode.ILSpy.Options.Panels.DisplaySettingsPanel"
              x:DataType="vm:DisplaySettingsViewModel">
 	<!-- ScrollViewer Padding is collapsed on the vertical axis by the Simple-theme
 	     ScrollContentPresenter when a vertical scrollbar is present, and the outer

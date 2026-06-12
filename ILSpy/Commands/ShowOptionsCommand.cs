@@ -21,11 +21,11 @@ using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
-using ILSpy.Options;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Opens (or focuses, if already open) the Options document tab. Mounted under the View

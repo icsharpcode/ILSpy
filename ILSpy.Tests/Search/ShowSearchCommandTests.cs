@@ -22,11 +22,11 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.Search;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

@@ -1,6 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="ILSpy.TextView.ZoomButtons"
+             x:Class="ICSharpCode.ILSpy.TextView.ZoomButtons"
              HorizontalAlignment="Right" VerticalAlignment="Bottom"
              Margin="0,0,12,12">
 	<Border Background="{DynamicResource ILSpy.ZoomButtonsBackground}"

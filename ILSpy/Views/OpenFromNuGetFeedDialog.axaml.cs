@@ -23,15 +23,15 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml;
 
-using ILSpy.NuGetFeeds;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.NuGetFeeds;
+using ICSharpCode.ILSpy.ViewModels;
 
 // Alias the WPF-shared Resources class — Window inherits an IResourceDictionary Resources
 // property that would otherwise shadow ICSharpCode.ILSpy.Properties.Resources, turning every
 // `Resources.X` into an IResourceDictionary indexer lookup that doesn't compile.
 using Loc = ICSharpCode.ILSpy.Properties.Resources;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// "Open from NuGet feed" package-chooser dialog:

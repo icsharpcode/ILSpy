@@ -33,8 +33,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AssemblyTree;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -61,7 +61,7 @@ public class AssemblyTreeExpanderHitboxTests
 		TestCapture.Step("system-linq-expanded-and-selected");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Let rows realise and layout settle.
 		for (int i = 0; i < 8; i++)
@@ -72,7 +72,7 @@ public class AssemblyTreeExpanderHitboxTests
 		}
 
 		// Act — locate the expander toggle of the (expandable) assembly row.
-		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var row = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.FirstOrDefault(r => RowMatches(r, assemblyNode));
 		row.Should().NotBeNull("the expanded assembly row must be realised");
 		var expander = row!.GetVisualDescendants().OfType<ToggleButton>()
@@ -110,6 +110,6 @@ public class AssemblyTreeExpanderHitboxTests
 			description: "clicking the enlarged expander area (below the glyph) must toggle the node");
 	}
 
-	static bool RowMatches(global::ILSpy.Controls.TreeView.SharpTreeViewItem row, SharpTreeNode target)
+	static bool RowMatches(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem row, SharpTreeNode target)
 		=> ReferenceEquals(row.DataContext, target);
 }

@@ -21,9 +21,9 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Universal placeholder used until a typed leaf is wired up for a given

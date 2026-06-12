@@ -24,9 +24,9 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

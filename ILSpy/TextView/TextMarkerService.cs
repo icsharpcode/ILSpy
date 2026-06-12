@@ -27,7 +27,7 @@ using Avalonia.Threading;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Rendering;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Manages background-coloured text marks over the editor — used for local-reference

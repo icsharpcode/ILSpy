@@ -29,9 +29,9 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-using ILSpy.Metadata.Filters;
+using ICSharpCode.ILSpy.Metadata.Filters;
 
-namespace ILSpy.Views.Filters
+namespace ICSharpCode.ILSpy.Views.Filters
 {
 	/// <summary>
 	/// One mutex group rendered as a row of toggle chips. Chips drive

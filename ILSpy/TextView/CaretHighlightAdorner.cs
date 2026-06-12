@@ -27,7 +27,7 @@ using global::Avalonia.Controls.Documents;
 using global::Avalonia.Media;
 using global::Avalonia.Threading;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Brief animated rectangle around the caret played after a navigation gesture (clicking

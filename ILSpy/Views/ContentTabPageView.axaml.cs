@@ -21,9 +21,9 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// View for <see cref="ContentTabPage"/>. Hosts the active <see cref="ContentTabPage.Content"/>

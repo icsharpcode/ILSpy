@@ -27,10 +27,10 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.Abstractions;
 
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
 	[Shared]
@@ -57,7 +57,7 @@ namespace ILSpy.TreeNodes
 		}
 
 		// TODO: ship a ResourceImage.svg asset; the generic resource glyph is used for now.
-		public override object Icon => Images.Images.Resource;
+		public override object Icon => Images.Resource;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
@@ -79,13 +79,13 @@ namespace ILSpy.TreeNodes
 			// one-shot, and AddUIElement runs lazily on the UI thread well after Decompile returns.
 			smart.AddUIElement(() => new Image { Source = new Bitmap(new MemoryStream(snapshot)) });
 			smart.WriteLine();
-			smart.AddButton(Images.Images.Save, "Save", async (_, _) => await SaveSnapshotAsync(snapshot).ConfigureAwait(false));
+			smart.AddButton(Images.Save, "Save", async (_, _) => await SaveSnapshotAsync(snapshot).ConfigureAwait(false));
 			smart.WriteLine();
 		}
 
 		async System.Threading.Tasks.Task SaveSnapshotAsync(byte[] snapshot)
 		{
-			var defaultName = Path.GetFileName(global::ICSharpCode.Decompiler.CSharp.ProjectDecompiler
+			var defaultName = Path.GetFileName(ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				.WholeProjectDecompiler.SanitizeFileName((string)Text));
 			var path = await Commands.FilePickers.SaveAsync("All files|*.*", defaultName).ConfigureAwait(false);
 			if (path == null)

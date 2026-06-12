@@ -23,7 +23,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// Window-menu adapter for a single document tab. Forwards <see cref="Title"/> from the

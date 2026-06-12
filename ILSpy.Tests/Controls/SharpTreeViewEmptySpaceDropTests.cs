@@ -25,7 +25,7 @@ using AwesomeAssertions;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.Controls.TreeView;
 
 using NUnit.Framework;
 

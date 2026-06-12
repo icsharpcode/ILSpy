@@ -20,7 +20,7 @@ using System;
 using System.Composition;
 using System.Windows.Input;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Concrete metadata view for main-menu commands. System.Composition (lightweight MEF)

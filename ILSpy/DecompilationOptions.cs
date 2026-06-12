@@ -21,7 +21,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// Options passed to <see cref="Languages.Language"/>'s Decompile* methods. Just enough

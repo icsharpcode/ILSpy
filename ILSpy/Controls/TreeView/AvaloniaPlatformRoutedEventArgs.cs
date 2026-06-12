@@ -20,7 +20,7 @@ using Avalonia.Interactivity;
 
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-namespace ILSpy.Controls.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	/// <summary>
 	/// Adapts an Avalonia <see cref="RoutedEventArgs"/> to the cross-platform

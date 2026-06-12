@@ -32,8 +32,8 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ILSpy.Metadata;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 

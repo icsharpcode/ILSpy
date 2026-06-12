@@ -29,10 +29,10 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Analyzers;
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -58,8 +58,8 @@ public class AnalyzerTreeKeyboardTests
 		analyzed.IsExpanded = false;
 
 		dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
-		var view = await window.WaitForComponent<global::ILSpy.Analyzers.AnalyzerTreeView>();
-		var tree = await view.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var view = await window.WaitForComponent<ICSharpCode.ILSpy.Analyzers.AnalyzerTreeView>();
+		var tree = await view.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		tree.Focus();
 		Dispatcher.UIThread.RunJobs();
 
@@ -77,8 +77,8 @@ public class AnalyzerTreeKeyboardTests
 		// Analyze context-menu entry. Here a selected type lands as a node in the analyzer pane.
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
-		var pane = await window.WaitForComponent<global::ILSpy.AssemblyTree.AssemblyListPane>();
-		var tree = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var pane = await window.WaitForComponent<ICSharpCode.ILSpy.AssemblyTree.AssemblyListPane>();
+		var tree = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");

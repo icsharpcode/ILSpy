@@ -33,10 +33,10 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.AssemblyTree;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 
 using NUnit.Framework;
 

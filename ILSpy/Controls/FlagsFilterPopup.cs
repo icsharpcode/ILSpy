@@ -32,9 +32,9 @@ using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.VisualTree;
 
-using ILSpy.Metadata.Filters;
+using ICSharpCode.ILSpy.Metadata.Filters;
 
-namespace ILSpy.Views.Filters
+namespace ICSharpCode.ILSpy.Views.Filters
 {
 	/// <summary>
 	/// Composes one <see cref="MutexChipGroup"/> per axis plus an

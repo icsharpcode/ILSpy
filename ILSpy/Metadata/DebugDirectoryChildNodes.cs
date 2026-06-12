@@ -22,10 +22,10 @@ using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Per-entry tree node under <see cref="DebugDirectoryTreeNode"/>. Specialised typed
@@ -45,7 +45,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => entry.Type.ToString();
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.MetadataTable;
 		public override string ToString() => entry.Type.ToString();
 
 		protected DebugDirectoryEntry Entry => entry;

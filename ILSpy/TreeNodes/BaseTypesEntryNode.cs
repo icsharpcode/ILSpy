@@ -22,11 +22,11 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Single base-class / interface entry under a <see cref="BaseTypesTreeNode"/>. Activating
@@ -46,8 +46,8 @@ namespace ILSpy.TreeNodes
 		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.BaseTypes})";
 
 		public override object Icon => type.Kind == TypeKind.Interface
-			? Images.Images.Interface
-			: Images.Images.Class;
+			? Images.Interface
+			: Images.Class;
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{

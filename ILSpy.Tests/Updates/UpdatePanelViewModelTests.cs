@@ -23,8 +23,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 

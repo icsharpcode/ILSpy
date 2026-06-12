@@ -20,9 +20,9 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Plug-in contract for resolving non-default reference protocols (e.g.

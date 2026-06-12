@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 using ICSharpCode.ILSpyX;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Sentinel row shown under an <see cref="AnalyzerSearchTreeNode"/> when the analyser
@@ -49,7 +49,7 @@ namespace ILSpy.Analyzers
 
 		public override object Text => summary;
 
-		public override object Icon => Images.Images.AssemblyWarning;
+		public override object Icon => Images.AssemblyWarning;
 
 		public override object? ToolTip => Details;
 

@@ -2,11 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:ILSpy.Options"
-             xmlns:panels="using:ILSpy.Options.Panels"
+             xmlns:vm="using:ICSharpCode.ILSpy.Options"
+             xmlns:panels="using:ICSharpCode.ILSpy.Options.Panels"
              xmlns:res="using:ICSharpCode.ILSpy.Properties"
              mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="500"
-             x:Class="ILSpy.Options.OptionsPageView"
+             x:Class="ICSharpCode.ILSpy.Options.OptionsPageView"
              x:DataType="vm:OptionsPageModel">
 	<DockPanel LastChildFill="True">
 		<!-- Reset rolls the currently-selected panel back to its built-in defaults.

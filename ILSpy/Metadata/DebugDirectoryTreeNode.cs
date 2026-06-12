@@ -23,10 +23,10 @@ using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Lists each entry of the PE debug directory: timestamp, version, type, and the size /
@@ -47,8 +47,8 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Debug Directory";
-		public override object Icon => Images.Images.ListFolder;
-		public override object ExpandedIcon => Images.Images.ListFolderOpen;
+		public override object Icon => Images.ListFolder;
+		public override object ExpandedIcon => Images.ListFolderOpen;
 		public override string ToString() => "Debug Directory";
 
 		public override ContentPageModel CreateTab()

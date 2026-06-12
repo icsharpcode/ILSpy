@@ -24,9 +24,9 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Search;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -46,7 +46,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		// Search is hidden by default; surface it so its view realises.
-		AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");
@@ -69,7 +69,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		// Search is hidden by default; surface it so its view realises.
-		AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");
@@ -94,7 +94,7 @@ public class SearchPaneViewTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		// Search is hidden by default; surface it so its view realises.
-		AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");

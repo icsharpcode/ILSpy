@@ -24,7 +24,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
 	/// MEF-aggregated registry of <see cref="Language"/> exports plus the active selection.
@@ -51,12 +51,12 @@ namespace ILSpy.Languages
 		[ImportingConstructor]
 		public LanguageService([ImportMany] IEnumerable<Language> languages, SettingsService settingsService)
 		{
-			using var _ = ILSpy.AppEnv.AppLog.Phase("LanguageService ctor (enumerate [ImportMany] Language exports)");
+			using var _ = ICSharpCode.ILSpy.AppEnv.AppLog.Phase("LanguageService ctor (enumerate [ImportMany] Language exports)");
 			this.settingsService = settingsService;
 			List<Language> ordered;
-			using (ILSpy.AppEnv.AppLog.Phase("LanguageService: materialise languages.OrderBy"))
+			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("LanguageService: materialise languages.OrderBy"))
 				ordered = languages.OrderBy(l => l.Name).ToList();
-			ILSpy.AppEnv.AppLog.Mark($"LanguageService: {ordered.Count} languages resolved");
+			ICSharpCode.ILSpy.AppEnv.AppLog.Mark($"LanguageService: {ordered.Count} languages resolved");
 			Languages = ordered;
 			var saved = settingsService.SessionSettings.ActiveLanguageName;
 			currentLanguage = Languages.FirstOrDefault(l => l.Name == saved)

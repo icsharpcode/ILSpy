@@ -19,7 +19,7 @@
 using global::Avalonia.Controls;
 using global::Avalonia.Markup.Xaml;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	public partial class OptionsPageView : UserControl
 	{

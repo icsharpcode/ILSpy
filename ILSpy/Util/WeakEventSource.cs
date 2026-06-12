@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace ILSpy.Util
+namespace ICSharpCode.ILSpy.Util
 {
 	/// <summary>
 	/// A bag of event handlers whose target instances are held by <see cref="WeakReference{T}"/>.

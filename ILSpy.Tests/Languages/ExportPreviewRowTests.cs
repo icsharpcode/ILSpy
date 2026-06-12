@@ -23,7 +23,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.Views;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

@@ -25,7 +25,7 @@ using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace ILSpy.Util
+namespace ICSharpCode.ILSpy.Util
 {
 #if DEBUG
 	/// <summary>

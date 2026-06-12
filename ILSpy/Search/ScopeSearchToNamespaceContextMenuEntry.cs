@@ -22,9 +22,9 @@ using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Search
+namespace ICSharpCode.ILSpy.Search
 {
 	/// <summary>
 	/// Right-click a <see cref="NamespaceTreeNode"/> → "Search within this namespace".

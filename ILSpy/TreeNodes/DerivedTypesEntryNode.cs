@@ -26,9 +26,9 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Single derived-type entry under a <see cref="DerivedTypesTreeNode"/>. Activating jumps
@@ -54,8 +54,8 @@ namespace ILSpy.TreeNodes
 		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.DerivedTypes})";
 
 		public override object Icon => type.Kind == TypeKind.Interface
-			? Images.Images.Interface
-			: Images.Images.Class;
+			? Images.Interface
+			: Images.Class;
 
 		protected override void LoadChildren()
 		{

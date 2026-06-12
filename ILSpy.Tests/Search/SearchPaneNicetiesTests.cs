@@ -29,11 +29,11 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.AppEnv;
-using ILSpy.Search;
-using ILSpy.TextView;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -59,7 +59,7 @@ public class SearchPaneNicetiesTests
 	static async Task<(MainWindow window, SearchPane pane, SearchPaneModel vm)> ShowPaneAsync()
 	{
 		var (window, _) = await TestHarness.BootAsync();
-		var dockWorkspace = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>();
+		var dockWorkspace = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>();
 		dockWorkspace.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		var vm = (SearchPaneModel)pane.DataContext!;
@@ -144,7 +144,7 @@ public class SearchPaneNicetiesTests
 	public async Task Ctrl_Enter_On_A_Result_Opens_It_In_A_New_Tab()
 	{
 		var (_, pane, vm) = await ShowPaneAsync();
-		var workspace = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>();
+		var workspace = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>();
 
 		vm.SelectedSearchMode = vm.SearchModes.First(m => m.Mode == SearchMode.Type);
 		vm.SearchTerm = "Enumerable";
@@ -172,7 +172,7 @@ public class SearchPaneNicetiesTests
 	public async Task Activate_With_NewTab_Opens_A_New_Document_Tab()
 	{
 		var (_, _, vm) = await ShowPaneAsync();
-		var workspace = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>();
+		var workspace = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>();
 
 		vm.SelectedSearchMode = vm.SearchModes.First(m => m.Mode == SearchMode.Type);
 		vm.SearchTerm = "Enumerable";

@@ -24,9 +24,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Analyzers;
-using ILSpy.AppEnv;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

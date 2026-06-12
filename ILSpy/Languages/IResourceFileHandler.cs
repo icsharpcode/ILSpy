@@ -22,7 +22,7 @@ using System.IO;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpyX;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
 	/// Plug-in contract for converting a resource entry from its raw byte form into a

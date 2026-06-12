@@ -22,9 +22,9 @@ using System.Windows.Input;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
+using ICSharpCode.ILSpy.Docking;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportMainMenuCommand(
 		ParentMenuID = nameof(Resources._View),

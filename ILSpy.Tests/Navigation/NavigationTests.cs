@@ -25,7 +25,7 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -139,8 +139,8 @@ public class NavigationTests
 		((string)items[1].Header!).Should().Be((string)methodA.NavigationText);
 		((string)items[0].Header!).Should().Contain("Enumerable",
 			"NavigationText must include the declaring type");
-		items[1].CommandParameter.Should().BeOfType<global::ILSpy.Navigation.TreeNodeEntry>();
-		var entry = (global::ILSpy.Navigation.TreeNodeEntry)items[1].CommandParameter!;
+		items[1].CommandParameter.Should().BeOfType<ICSharpCode.ILSpy.Navigation.TreeNodeEntry>();
+		var entry = (ICSharpCode.ILSpy.Navigation.TreeNodeEntry)items[1].CommandParameter!;
 		ReferenceEquals(entry.Node, methodA).Should().BeTrue();
 
 		// Act 3 — multi-step jump: clicking methodA pops two entries off the back stack in one go.

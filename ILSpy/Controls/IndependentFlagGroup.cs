@@ -25,9 +25,9 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-using ILSpy.Metadata.Filters;
+using ICSharpCode.ILSpy.Metadata.Filters;
 
-namespace ILSpy.Views.Filters
+namespace ICSharpCode.ILSpy.Views.Filters
 {
 	/// <summary>
 	/// Tri-state pills (don't care / required ✓ / excluded ✗) for the independent flags

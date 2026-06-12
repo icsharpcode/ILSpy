@@ -19,7 +19,7 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// Toolbar-strip banner shown under the main toolbar when an update is available

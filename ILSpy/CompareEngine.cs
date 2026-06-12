@@ -24,7 +24,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Compare
+namespace ICSharpCode.ILSpy.Compare
 {
 	/// <summary>
 	/// Builds a merged <see cref="Entry"/> tree from two assemblies' type systems. The

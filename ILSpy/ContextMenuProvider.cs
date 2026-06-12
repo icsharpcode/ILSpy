@@ -23,9 +23,9 @@ using System.Linq;
 
 using Avalonia.Controls;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// One discovered context-menu entry: the materialised <see cref="IContextMenuEntry"/>
@@ -127,7 +127,7 @@ namespace ILSpy
 					};
 					// MenuItem.Icon takes any Control here (unlike NativeMenuItem.Icon which
 					// requires Bitmap), so we pass the IImage directly via an Image control.
-					if (Images.Images.ResolveByPath(export.Metadata.Icon) is { } icon)
+					if (Images.ResolveByPath(export.Metadata.Icon) is { } icon)
 					{
 						item.Icon = new Image {
 							Width = 16,

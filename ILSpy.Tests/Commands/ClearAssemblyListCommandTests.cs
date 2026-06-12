@@ -26,8 +26,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
 
 using NUnit.Framework;
 

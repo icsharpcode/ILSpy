@@ -25,11 +25,11 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX;
 
-using ILSpy.AppEnv;
-using ILSpy.Search;
-using ILSpy.Util;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.Util;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

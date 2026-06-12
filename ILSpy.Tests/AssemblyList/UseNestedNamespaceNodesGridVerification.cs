@@ -26,10 +26,10 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -52,7 +52,7 @@ public class UseNestedNamespaceNodesGridVerification
 
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Expand an assembly so its namespace children become visible rows.
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");

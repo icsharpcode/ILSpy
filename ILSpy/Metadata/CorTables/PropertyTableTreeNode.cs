@@ -23,7 +23,7 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata.CorTables
+namespace ICSharpCode.ILSpy.Metadata.CorTables
 {
 	/// <summary>
 	/// View of the Property table — every property the module's types declare. Method-level

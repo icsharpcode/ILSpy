@@ -25,10 +25,10 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

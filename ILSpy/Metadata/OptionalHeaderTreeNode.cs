@@ -23,10 +23,10 @@ using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// PE Optional Header — image base, sizes, alignments, subsystem. Field widths flex
@@ -43,7 +43,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Optional Header";
-		public override object Icon => Images.Images.Header;
+		public override object Icon => Images.Header;
 		public override string ToString() => "Optional Header";
 
 		public override ContentPageModel CreateTab()

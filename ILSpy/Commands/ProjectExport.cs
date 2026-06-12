@@ -28,15 +28,15 @@ using global::Avalonia.Controls.ApplicationLifetimes;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Util;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
+using ICSharpCode.ILSpy.Views;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// The shared launcher behind the dedicated "Export Project/Solution..." entry (File menu +

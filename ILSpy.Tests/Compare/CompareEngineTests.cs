@@ -23,7 +23,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Compare;
+using ICSharpCode.ILSpy.Compare;
 
 using NUnit.Framework;
 

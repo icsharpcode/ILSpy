@@ -30,9 +30,9 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// The UI-agnostic engine behind the Export Project/Solution dialog. Unifies single-assembly

@@ -27,7 +27,7 @@ using global::Avalonia.Media;
 
 using ICSharpCode.ILSpy.Properties;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>Viewmodel for the Display panel. Exposes the snapshot's
 	/// <see cref="DisplaySettings"/> through <see cref="Settings"/> for direct two-way

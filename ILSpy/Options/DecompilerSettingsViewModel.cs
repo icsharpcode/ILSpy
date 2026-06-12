@@ -27,13 +27,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.Settings;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
 // `Decompiler` short-form alias keeps the reflection-walk over `Decompiler.DecompilerSettings`
 // terse and disambiguates from the ILSpyX `DecompilerSettings` wrapper imported just below.
 using Decompiler = ICSharpCode.Decompiler;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Reflection-driven viewmodel for the Decompiler-settings panel. Walks every

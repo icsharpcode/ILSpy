@@ -23,11 +23,11 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

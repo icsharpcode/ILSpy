@@ -27,11 +27,11 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Analyzers;
 
-using ILSpy.Analyzers;
-using ILSpy.AppEnv;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -76,7 +76,7 @@ public class AnalyzerConstructorUsesTests
 		var assemblyList = vm.AssemblyTreeModel.AssemblyList!;
 		var context = new AnalyzerContext {
 			CancellationToken = CancellationToken.None,
-			Language = AppComposition.Current.GetExport<global::ILSpy.Languages.LanguageService>().CurrentLanguage,
+			Language = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage,
 			AssemblyList = assemblyList,
 		};
 		var results = analyzer.Analyze(ctor, context).Take(20).ToList();
@@ -107,7 +107,7 @@ public class AnalyzerConstructorUsesTests
 		var assemblyList = vm.AssemblyTreeModel.AssemblyList!;
 		var context = new AnalyzerContext {
 			CancellationToken = CancellationToken.None,
-			Language = AppComposition.Current.GetExport<global::ILSpy.Languages.LanguageService>().CurrentLanguage,
+			Language = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Languages.LanguageService>().CurrentLanguage,
 			AssemblyList = assemblyList,
 		};
 		var results = analyzer.Analyze(ctor, context).Take(20).ToList();

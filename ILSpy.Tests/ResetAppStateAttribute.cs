@@ -28,7 +28,7 @@ using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.Settings;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
 using NUnit.Framework;
 using NUnit.Framework.Interfaces;
@@ -114,7 +114,7 @@ public sealed class ResetAppStateAttribute : Attribute, ITestAction
 		Task quiesce;
 		try
 		{
-			quiesce = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>().CancelPendingOperationsAsync();
+			quiesce = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>().CancelPendingOperationsAsync();
 		}
 		catch
 		{

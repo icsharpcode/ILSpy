@@ -27,9 +27,9 @@ using AwesomeAssertions;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.AppEnv;
-using ILSpy.Search;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -50,7 +50,7 @@ public class SearchPaneSortableColumnsTests
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
-		AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>()
+		AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 			.ShowToolPane(SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 

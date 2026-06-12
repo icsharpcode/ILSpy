@@ -26,10 +26,10 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.AppEnv;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

@@ -25,7 +25,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	public enum TaskbarProgressState
 	{

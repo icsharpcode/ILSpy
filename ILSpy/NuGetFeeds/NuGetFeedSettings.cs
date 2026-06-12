@@ -25,7 +25,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX.Settings;
 
-namespace ILSpy.NuGetFeeds
+namespace ICSharpCode.ILSpy.NuGetFeeds
 {
 	/// <summary>
 	/// Persisted state of the "Open from NuGet feed" dialog: the MRU list of feed URLs the

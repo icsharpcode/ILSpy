@@ -27,13 +27,13 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Abstractions;
 
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
 
-using IResourceFileHandler = ILSpy.Languages.IResourceFileHandler;
-using ResourceFileHandlerContext = ILSpy.Languages.ResourceFileHandlerContext;
+using IResourceFileHandler = ICSharpCode.ILSpy.Languages.IResourceFileHandler;
+using ResourceFileHandlerContext = ICSharpCode.ILSpy.Languages.ResourceFileHandlerContext;
 
-namespace ILSpy.Baml
+namespace ICSharpCode.ILSpy.Baml
 {
 	/// <summary>
 	/// Tree-node factory that claims <c>.baml</c> resource entries inside an embedded

@@ -27,9 +27,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 

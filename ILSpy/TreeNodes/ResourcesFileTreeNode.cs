@@ -28,12 +28,12 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.Abstractions;
 
-using ILSpy.Commands;
-using ILSpy.Controls;
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Controls;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
 	[Shared]
@@ -66,7 +66,7 @@ namespace ILSpy.TreeNodes
 			LazyLoading = true;
 		}
 
-		public override object Icon => Images.Images.ResourceResourcesFile;
+		public override object Icon => Images.ResourceResourcesFile;
 
 		protected override void LoadChildren()
 		{

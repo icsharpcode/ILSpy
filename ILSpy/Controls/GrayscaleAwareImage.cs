@@ -24,7 +24,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 
-namespace ILSpy.Views.Controls
+namespace ICSharpCode.ILSpy.Views.Controls
 {
 	/// <summary>
 	/// An <see cref="Image"/> that swaps in a desaturated copy of its <see cref="Image.Source"/>

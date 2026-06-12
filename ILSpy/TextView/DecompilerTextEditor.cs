@@ -22,9 +22,9 @@ using AvaloniaEdit;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Rendering;
 
-using ILSpy.Themes;
+using ICSharpCode.ILSpy.Themes;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// <see cref="TextEditor"/> subclass that hooks two theme concerns:

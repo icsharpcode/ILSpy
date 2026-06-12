@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 using global::Avalonia.Controls;
 
-namespace ILSpy.Controls
+namespace ICSharpCode.ILSpy.Controls
 {
 	/// <summary>
 	/// Tabular view of the string entries inside a <c>.resources</c> file. Used as an inline

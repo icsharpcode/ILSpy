@@ -4,10 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ae="using:AvaloniaEdit"
              xmlns:aeediting="using:AvaloniaEdit.Editing"
-             xmlns:textView="using:ILSpy.TextView"
+             xmlns:textView="using:ICSharpCode.ILSpy.TextView"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
              Name="self"
-             x:Class="ILSpy.TextView.DecompilerTextView"
+             x:Class="ICSharpCode.ILSpy.TextView.DecompilerTextView"
              x:DataType="textView:DecompilerTabPageModel">
 
 	<!-- Selected-text highlighting (ports icsharpcode/ILSpy#2938): keep the syntax colours of

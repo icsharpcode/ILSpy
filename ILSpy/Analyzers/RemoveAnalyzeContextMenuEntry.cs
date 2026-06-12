@@ -21,7 +21,7 @@ using System.Linq;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Right-click on a top-level analysed entity → "Remove" — drops the row from the

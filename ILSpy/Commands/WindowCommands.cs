@@ -20,9 +20,9 @@ using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
+using ICSharpCode.ILSpy.Docking;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportMainMenuCommand(Header = nameof(Resources.Window_CloseAllDocuments), ParentMenuID = nameof(Resources._Window), MenuCategory = "Window", MenuOrder = 1)]
 	[Shared]

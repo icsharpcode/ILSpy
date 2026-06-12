@@ -29,9 +29,9 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Extensions;
 
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	class CSharpHighlightingTokenWriter : DecoratingTokenWriter
 	{

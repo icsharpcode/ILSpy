@@ -30,13 +30,13 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -233,7 +233,7 @@ public class ApiVisibilityFilterTests
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Selecting each node scrolls it into view; that's how the row's TextBlock realises.
 		vm.AssemblyTreeModel.SelectNode(publicMethod);

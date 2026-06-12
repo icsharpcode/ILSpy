@@ -29,7 +29,7 @@ using Avalonia.Media;
 
 using ICSharpCode.Decompiler.Util;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Rich cell tooltip for an enum-valued metadata column: it breaks a flags value down into

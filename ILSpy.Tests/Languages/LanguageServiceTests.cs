@@ -22,8 +22,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Languages;
 
 using NUnit.Framework;
 
@@ -43,7 +43,7 @@ public class LanguageServiceTests
 		var svc = AppComposition.Current.GetExport<LanguageService>();
 
 		svc.Languages.Select(l => l.Name).Should().Contain(["C#", "IL"],
-			"CSharpLanguage and ILLanguage are [Export(typeof(Language))] in ILSpy.Languages.");
+			"CSharpLanguage and ILLanguage are [Export(typeof(Language))] in ICSharpCode.ILSpy.Languages.");
 		svc.CurrentLanguage.Name.Should().Be("C#",
 			"LanguageService picks 'C#' over the alphabetical-first language when no SessionSettings preference exists.");
 	}

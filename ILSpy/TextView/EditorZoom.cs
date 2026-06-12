@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Pure-math helper for editor zoom (font-size scaling). The actual editor wiring

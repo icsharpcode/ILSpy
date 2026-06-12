@@ -22,10 +22,10 @@ using Avalonia.Controls;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click on a metadata-grid row whose token resolves to an

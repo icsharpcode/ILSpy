@@ -34,7 +34,7 @@ using ICSharpCode.Decompiler.Metadata;
 // `Resources.X` into an IResourceDictionary indexer lookup that doesn't compile.
 using Loc = ICSharpCode.ILSpy.Properties.Resources;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// "Open from GAC" dialog: enumerates the Global Assembly Cache via the shared

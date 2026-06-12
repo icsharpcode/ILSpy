@@ -19,7 +19,7 @@
 using System;
 using System.Linq;
 
-namespace ILSpy.Metadata.Filters
+namespace ICSharpCode.ILSpy.Metadata.Filters
 {
 	/// <summary>
 	/// Renders a <see cref="FilterState"/> as a one-line predicate summary

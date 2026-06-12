@@ -23,7 +23,7 @@ using AvaloniaEdit.Highlighting;
 
 using AwesomeAssertions;
 
-using ILSpy.Themes;
+using ICSharpCode.ILSpy.Themes;
 
 using NSubstitute;
 

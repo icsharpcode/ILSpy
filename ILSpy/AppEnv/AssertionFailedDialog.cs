@@ -26,7 +26,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	/// <summary>
 	/// The choice a developer makes when a <c>Debug.Assert</c> fires (see <see cref="ILSpyTraceListener"/>).

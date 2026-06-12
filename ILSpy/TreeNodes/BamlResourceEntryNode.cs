@@ -23,11 +23,11 @@ using System.Linq;
 using ICSharpCode.BamlDecompiler;
 using ICSharpCode.Decompiler;
 
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Baml
+namespace ICSharpCode.ILSpy.Baml
 {
 	/// <summary>
 	/// Tree node for a single <c>.baml</c> resource entry inside a WPF/UWP assembly's

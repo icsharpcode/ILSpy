@@ -27,8 +27,8 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ILSpy.Metadata.Filters;
-using ILSpy.Views.Filters;
+using ICSharpCode.ILSpy.Metadata.Filters;
+using ICSharpCode.ILSpy.Views.Filters;
 
 using NUnit.Framework;
 

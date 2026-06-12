@@ -27,11 +27,11 @@ using Avalonia.Markup.Xaml;
 
 using ICSharpCode.ILSpyX.Settings;
 
-using ILSpy.AppEnv;
-using ILSpy.Themes;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpy.Views;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	public partial class App : Application
 	{

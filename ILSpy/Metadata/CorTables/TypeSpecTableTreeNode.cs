@@ -24,7 +24,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata.CorTables
+namespace ICSharpCode.ILSpy.Metadata.CorTables
 {
 	/// <summary>
 	/// View of the TypeSpec table — instantiated generic types and other constructed type

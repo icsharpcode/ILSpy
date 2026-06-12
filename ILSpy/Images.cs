@@ -28,7 +28,7 @@ using Avalonia.Svg.Skia;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Images
+namespace ICSharpCode.ILSpy
 {
 	public enum AccessOverlayIcon
 	{

@@ -24,10 +24,10 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.Abstractions;
 
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
 	[Shared]
@@ -55,7 +55,7 @@ namespace ILSpy.TreeNodes
 
 		// TODO: ship Resource{Xml,Xsd,Xslt}.svg assets and pick by extension. Until then the
 		// generic resource glyph is fine — the file name in the tree disambiguates.
-		public override object Icon => Images.Images.Resource;
+		public override object Icon => Images.Resource;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{

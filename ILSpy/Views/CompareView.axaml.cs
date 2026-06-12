@@ -25,7 +25,7 @@ using Avalonia.Controls.DataGridHierarchical;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-namespace ILSpy.Compare
+namespace ICSharpCode.ILSpy.Compare
 {
 	public partial class CompareView : UserControl
 	{

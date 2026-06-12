@@ -21,8 +21,8 @@ using System.Linq;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using global::ILSpy.AssemblyTree;
-using global::ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy.Tests;
 

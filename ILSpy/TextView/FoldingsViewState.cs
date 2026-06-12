@@ -21,7 +21,7 @@ using System.Linq;
 
 using AvaloniaEdit.Folding;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Captures and restores the set of expanded code-folding regions for a single

@@ -33,9 +33,9 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.Search
+namespace ICSharpCode.ILSpy.Search
 {
 	/// <summary>
 	/// Orchestrates one search across the loaded <see cref="AssemblyList"/>. Walks

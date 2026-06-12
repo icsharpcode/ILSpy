@@ -27,7 +27,7 @@ using global::Avalonia.Media;
 
 using CommunityToolkit.Mvvm.Input;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	/// <summary>
 	/// Shown in place of the main window when startup fails before the dispatcher pump begins.

@@ -22,7 +22,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX.Settings;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Cross-cutting application-level toggles that don't fit Decompiler or Display.

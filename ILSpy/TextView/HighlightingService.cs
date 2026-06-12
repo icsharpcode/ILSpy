@@ -23,9 +23,9 @@ using System.Xml;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Highlighting.Xshd;
 
-using ILSpy.Themes;
+using ICSharpCode.ILSpy.Themes;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Loads our XSHD highlighting definitions (CSharp / IL / Asm / XML) from embedded resources

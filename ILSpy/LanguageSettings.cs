@@ -23,7 +23,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// Holds the API visibility filter and the active output language id. The View menu

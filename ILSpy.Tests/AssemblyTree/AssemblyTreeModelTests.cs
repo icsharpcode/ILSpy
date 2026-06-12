@@ -22,8 +22,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 
 using NUnit.Framework;
 
@@ -41,7 +41,7 @@ public class AssemblyTreeModelTests
 	public void Initialize_populates_AssemblyList_and_Root()
 	{
 		var model = AppComposition.Current.GetExport<AssemblyTreeModel>();
-		model.Should().NotBeNull("AssemblyTreeModel is [Export][Shared] in ILSpy.AssemblyTree.");
+		model.Should().NotBeNull("AssemblyTreeModel is [Export][Shared] in ICSharpCode.ILSpy.AssemblyTree.");
 
 		model.Initialize();
 

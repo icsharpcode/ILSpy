@@ -20,7 +20,7 @@ using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click in the decompiled code → "Toggle folding": folds/unfolds the innermost block at the

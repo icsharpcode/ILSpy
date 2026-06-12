@@ -19,9 +19,9 @@
 using System;
 using System.Composition;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Identifies which dock zone a tool pane belongs to. The dock factory groups exported

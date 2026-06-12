@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// Base for the concrete viewmodels that occupy a <see cref="ContentTabPage"/>'s

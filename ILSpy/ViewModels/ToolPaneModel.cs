@@ -22,9 +22,9 @@ using Dock.Controls.DeferredContentControl;
 using Dock.Model.Core;
 using Dock.Model.Mvvm.Controls;
 
-using ILSpy.Docking;
+using ICSharpCode.ILSpy.Docking;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// Base for our docked tool panes (assembly tree, search results, analyzers, …). Opts

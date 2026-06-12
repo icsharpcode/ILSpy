@@ -24,10 +24,10 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

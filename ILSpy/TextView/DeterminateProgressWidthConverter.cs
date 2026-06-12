@@ -22,7 +22,7 @@ using System.Globalization;
 
 using Avalonia.Data.Converters;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Width for the determinate progress bar in the decompile/operation overlay: a fixed fraction

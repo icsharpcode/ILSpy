@@ -24,7 +24,7 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata.CorTables
+namespace ICSharpCode.ILSpy.Metadata.CorTables
 {
 	/// <summary>
 	/// View of the AssemblyRef table — every external assembly the module imports. Each row

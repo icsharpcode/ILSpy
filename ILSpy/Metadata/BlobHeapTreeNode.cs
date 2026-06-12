@@ -22,9 +22,9 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// View of #Blob — variable-length byte payloads holding signatures, marshalling info,

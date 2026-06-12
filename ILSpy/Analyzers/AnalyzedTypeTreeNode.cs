@@ -20,7 +20,7 @@ using System;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedTypeTreeNode : AnalyzerEntityTreeNode
 	{
@@ -42,14 +42,14 @@ namespace ILSpy.Analyzers.TreeNodes
 		static object ResolveIcon(ITypeDefinition type)
 		{
 			var baseImage = type.Kind switch {
-				TypeKind.Interface => Images.Images.Interface,
-				TypeKind.Struct or TypeKind.Void => Images.Images.Struct,
-				TypeKind.Delegate => Images.Images.Delegate,
-				TypeKind.Enum => Images.Images.Enum,
-				_ => Images.Images.Class,
+				TypeKind.Interface => Images.Interface,
+				TypeKind.Struct or TypeKind.Void => Images.Struct,
+				TypeKind.Delegate => Images.Delegate,
+				TypeKind.Enum => Images.Enum,
+				_ => Images.Class,
 			};
-			return Images.Images.GetIcon(baseImage,
-				Images.Images.GetOverlay(type.Accessibility), type.IsStatic);
+			return Images.GetIcon(baseImage,
+				Images.GetOverlay(type.Accessibility), type.IsStatic);
 		}
 
 		protected override void LoadChildren() => AddAnalyzerChildren(analyzedType);

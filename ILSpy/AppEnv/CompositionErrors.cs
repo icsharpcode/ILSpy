@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 using ICSharpCode.Decompiler;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	/// <summary>A single non-fatal composition failure: which part failed, and why.</summary>
 	public sealed record CompositionError(string Source, Exception Exception);

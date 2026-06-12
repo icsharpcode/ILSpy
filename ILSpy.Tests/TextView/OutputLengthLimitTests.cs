@@ -20,7 +20,7 @@ using System;
 
 using AwesomeAssertions;
 
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.TextView;
 
 using NUnit.Framework;
 

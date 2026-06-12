@@ -25,10 +25,10 @@ using Avalonia;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-using global::ILSpy.AssemblyTree;
-using global::ILSpy.Docking;
-using global::ILSpy.TextView;
-using global::ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Tests;
 

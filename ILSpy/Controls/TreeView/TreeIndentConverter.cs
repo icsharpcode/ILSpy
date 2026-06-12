@@ -21,7 +21,7 @@ using System.Globalization;
 
 using Avalonia.Data.Converters;
 
-namespace ILSpy.Controls.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	/// <summary>Converts a node's <c>Level</c> to the pixel width of its indentation spacer.</summary>
 	public sealed class TreeIndentConverter : IValueConverter

@@ -21,7 +21,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	/// <summary>
 	/// Accessors for the desktop UI context. The classic-desktop lifetime cast was repeated at every

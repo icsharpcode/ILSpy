@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:tv="using:ILSpy.Controls.TreeView"
-                    xmlns:ctrl="using:ILSpy.Controls"
+                    xmlns:tv="using:ICSharpCode.ILSpy.Controls.TreeView"
+                    xmlns:ctrl="using:ICSharpCode.ILSpy.Controls"
                     xmlns:ilspyx="using:ICSharpCode.ILSpyX.TreeView">
 
 	<!-- The exact WPF SharpTreeView expander: a 9x9 white->beige gradient box whose Path is a

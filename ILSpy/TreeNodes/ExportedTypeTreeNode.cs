@@ -22,9 +22,9 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// One <c>ExportedType</c> row inside <see cref="AssemblyReferenceReferencedTypesTreeNode"/>.
@@ -46,7 +46,7 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => Language.TypeToString(resolvedType);
 
-		public override object Icon => Images.Images.ExportedType;
+		public override object Icon => Images.ExportedType;
 
 		protected override void LoadChildren()
 		{

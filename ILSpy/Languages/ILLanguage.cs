@@ -33,9 +33,9 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	[Export(typeof(Language))]
 	[Shared]
@@ -49,7 +49,7 @@ namespace ILSpy.Languages
 
 		// Disassembled IL uses the same `{}/()/[]` bracket conventions plus C#-style
 		// `//` comments and `"..."` strings — reuse CSharpBracketSearcher's logic.
-		public override ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
+		public override ICSharpCode.ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
 
 		// DisplaySettings (ShowMetadataTokens / ShowRawRVAOffsetAndBytes /
 		// DecodeCustomAttributeBlobs / ShowMetadataTokensInBase10) aren't wired yet — once

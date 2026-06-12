@@ -18,7 +18,7 @@
 
 using AvaloniaEdit.Document;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>Language-specific bracket pair search. Returns the matched pair around
 	/// the caret offset (or <see langword="null"/> when no bracket is at the caret).</summary>

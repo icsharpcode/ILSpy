@@ -20,9 +20,9 @@ using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Concrete tool-pane entry returned by <see cref="ToolPaneRegistry"/>. Holds the resolved
@@ -45,18 +45,18 @@ namespace ILSpy.Commands
 		public ToolPaneRegistry(
 			[ImportMany("ToolPane")] IEnumerable<ExportFactory<ToolPaneModel, ToolPaneMetadata>> panes)
 		{
-			using var _ = ILSpy.AppEnv.AppLog.Phase("ToolPaneRegistry ctor (materialise tool panes)");
+			using var _ = ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ToolPaneRegistry ctor (materialise tool panes)");
 			var ordered = panes.OrderBy(p => p.Metadata.Order).ToArray();
 			var entries = new ToolPaneEntry[ordered.Length];
 			for (int i = 0; i < ordered.Length; i++)
 			{
 				var factory = ordered[i];
 				var id = factory.Metadata.ContentId ?? $"#{i}";
-				using (ILSpy.AppEnv.AppLog.Phase($"ToolPane materialise: {id}"))
+				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"ToolPane materialise: {id}"))
 					entries[i] = new ToolPaneEntry(factory.CreateExport().Value, factory.Metadata);
 			}
 			Panes = entries;
-			ILSpy.AppEnv.AppLog.Mark($"ToolPaneRegistry: {Panes.Count} panes resolved");
+			ICSharpCode.ILSpy.AppEnv.AppLog.Mark($"ToolPaneRegistry: {Panes.Count} panes resolved");
 		}
 
 		public IReadOnlyList<ToolPaneEntry> Panes { get; }

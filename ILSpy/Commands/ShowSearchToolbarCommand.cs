@@ -21,9 +21,9 @@ using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
+using ICSharpCode.ILSpy.Docking;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Toolbar-surface adapter for the existing <see cref="DockWorkspace.ShowSearchCommand"/>.

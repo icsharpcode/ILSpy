@@ -25,12 +25,12 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Analyzers;
-using ILSpy.Analyzers.TreeNodes;
-using ILSpy.AppEnv;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

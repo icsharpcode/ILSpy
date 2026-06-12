@@ -24,7 +24,7 @@ using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// Maps a boolean to one of two configured <see cref="IBrush"/>es. The only remaining use is the

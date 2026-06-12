@@ -27,13 +27,13 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy;
-using ILSpy.Analyzers;
-using ILSpy.AppEnv;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -137,7 +137,7 @@ public class AnalyzeContextMenuTests
 
 		var (window, vm) = await TestHarness.BootAsync();
 
-		var pane = await window.WaitForComponent<global::ILSpy.AssemblyTree.AssemblyListPane>();
+		var pane = await window.WaitForComponent<ICSharpCode.ILSpy.AssemblyTree.AssemblyListPane>();
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
@@ -146,7 +146,7 @@ public class AnalyzeContextMenuTests
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var beforeCount = analyzerVm.Root.Children.Count;
 
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		grid.RaiseEvent(new global::Avalonia.Input.KeyEventArgs {
 			Key = global::Avalonia.Input.Key.R,
 			KeyModifiers = global::Avalonia.Input.KeyModifiers.Control,
@@ -168,7 +168,7 @@ public class AnalyzeContextMenuTests
 
 		var (_, vm) = await TestHarness.BootAsync();
 
-		var dockWorkspace = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>();
+		var dockWorkspace = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>();
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
 			.GetEntry(nameof(Resources.Analyze));
@@ -238,7 +238,7 @@ public class AnalyzeContextMenuTests
 		}
 	}
 
-	static AnalyzerTreeViewModel? FindAnalyzerPane(global::ILSpy.Docking.DockWorkspace dockWorkspace)
+	static AnalyzerTreeViewModel? FindAnalyzerPane(ICSharpCode.ILSpy.Docking.DockWorkspace dockWorkspace)
 	{
 		foreach (var dockable in WalkDockables(dockWorkspace.Layout))
 		{

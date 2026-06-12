@@ -30,12 +30,12 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -173,7 +173,7 @@ public class ResourceFactoryTests
 		// up display name with the matching glob pattern correctly.
 
 		// Arrange + Act — feed a two-format filter string through the parser.
-		var types = global::ILSpy.Commands.FilePickers.ParseFilter(
+		var types = ICSharpCode.ILSpy.Commands.FilePickers.ParseFilter(
 			"Resources file (*.resources)|*.resources|Resource XML (*.resx)|*.resx");
 
 		// Assert — two file types come back, each with the right display name and pattern.

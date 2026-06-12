@@ -38,13 +38,13 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy;
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.AssemblyTree
+namespace ICSharpCode.ILSpy.AssemblyTree
 {
 	[Export]
 	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Left, Order = 0)]

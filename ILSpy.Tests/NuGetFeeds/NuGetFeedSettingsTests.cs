@@ -21,7 +21,7 @@ using System.Xml.Linq;
 
 using AwesomeAssertions;
 
-using ILSpy.NuGetFeeds;
+using ICSharpCode.ILSpy.NuGetFeeds;
 
 using NUnit.Framework;
 

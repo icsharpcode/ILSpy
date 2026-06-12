@@ -30,13 +30,13 @@ using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// DEBUG-only File-menu stress test: decompile every loaded assembly to

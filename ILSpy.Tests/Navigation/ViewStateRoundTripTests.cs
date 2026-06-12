@@ -23,14 +23,14 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Navigation;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Navigation;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
-using FoldingSnapshot = ILSpy.TextView.FoldingsViewState.Snapshot;
+using FoldingSnapshot = ICSharpCode.ILSpy.TextView.FoldingsViewState.Snapshot;
 
 namespace ICSharpCode.ILSpy.Tests.Navigation;
 

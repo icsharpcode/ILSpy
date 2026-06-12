@@ -30,11 +30,11 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -56,7 +56,7 @@ public class KeyboardContextMenuFocusTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var node = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().First();
 		vm.AssemblyTreeModel.SelectNode(node);
@@ -68,7 +68,7 @@ public class KeyboardContextMenuFocusTests
 		}
 
 		var row = grid.GetVisualDescendants()
-			.OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>().First();
+			.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>().First();
 		row.Focus(NavigationMethod.Tab);
 		Dispatcher.UIThread.RunJobs();
 

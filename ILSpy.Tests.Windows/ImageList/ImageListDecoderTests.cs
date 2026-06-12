@@ -23,7 +23,7 @@ using System.Windows.Forms;
 
 using AwesomeAssertions;
 
-using ILSpy.ImageList;
+using ICSharpCode.ILSpy.ImageList;
 
 using NUnit.Framework;
 

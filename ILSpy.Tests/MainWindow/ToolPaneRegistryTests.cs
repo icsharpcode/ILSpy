@@ -24,12 +24,12 @@ using AwesomeAssertions;
 
 using Dock.Model.Controls;
 
-using ILSpy.Analyzers;
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Commands;
-using ILSpy.Docking;
-using ILSpy.Search;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Search;
 
 using NUnit.Framework;
 

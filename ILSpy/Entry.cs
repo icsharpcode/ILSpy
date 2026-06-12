@@ -22,7 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Compare
+namespace ICSharpCode.ILSpy.Compare
 {
 	/// <summary>
 	/// How an <see cref="Entry"/> compares between the left and right assemblies. Stored on

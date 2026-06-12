@@ -24,10 +24,10 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.Abstractions;
 
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	[Export(typeof(IResourceNodeFactory))]
 	[Shared]

@@ -18,7 +18,7 @@
 
 using System.Collections.Generic;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Maps reference targets to character offsets where their definitions appear in the

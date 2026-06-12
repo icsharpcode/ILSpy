@@ -20,7 +20,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
 using NUnit.Framework;
 

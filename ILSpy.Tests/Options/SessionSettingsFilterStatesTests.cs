@@ -20,7 +20,7 @@ using System.Xml.Linq;
 
 using AwesomeAssertions;
 
-using ILSpy;
+using ICSharpCode.ILSpy;
 
 using NUnit.Framework;
 
@@ -42,12 +42,12 @@ public class SessionSettingsFilterStatesTests
 		// outer <FilterStates>/<Page>/<Column> nesting AND that the inner FilterState
 		// payload (an opaque XElement to SessionSettings) survives unmolested.
 		var original = new SessionSettings();
-		original.FilterStates[("ILSpy.Metadata.CorTables.TypeDefEntry", "Attributes")] =
+		original.FilterStates[("ICSharpCode.ILSpy.Metadata.CorTables.TypeDefEntry", "Attributes")] =
 			new XElement("FilterState",
 				new XElement("Flag",
 					new XAttribute("name", "Sealed"),
 					new XAttribute("state", "Required")));
-		original.FilterStates[("ILSpy.Metadata.CorTables.MethodDefEntry", "Attributes")] =
+		original.FilterStates[("ICSharpCode.ILSpy.Metadata.CorTables.MethodDefEntry", "Attributes")] =
 			new XElement("FilterState",
 				new XElement("Mutex",
 					new XAttribute("group", "MemberAccess"),
@@ -58,9 +58,9 @@ public class SessionSettingsFilterStatesTests
 		restored.LoadFromXml(xml);
 
 		restored.FilterStates.Should().HaveCount(2);
-		restored.FilterStates[("ILSpy.Metadata.CorTables.TypeDefEntry", "Attributes")]
+		restored.FilterStates[("ICSharpCode.ILSpy.Metadata.CorTables.TypeDefEntry", "Attributes")]
 			.Element("Flag")!.Attribute("name")!.Value.Should().Be("Sealed");
-		restored.FilterStates[("ILSpy.Metadata.CorTables.MethodDefEntry", "Attributes")]
+		restored.FilterStates[("ICSharpCode.ILSpy.Metadata.CorTables.MethodDefEntry", "Attributes")]
 			.Element("Mutex")!.Element("Value")!.Value.Should().Be("6");
 	}
 

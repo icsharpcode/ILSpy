@@ -22,7 +22,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ILSpy.NuGetFeeds;
+using ICSharpCode.ILSpy.NuGetFeeds;
 
 namespace ICSharpCode.ILSpy.Tests.NuGetFeeds;
 

@@ -24,11 +24,11 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	/// <summary>
 	/// Wraps an entire module as an analysable entry. <see cref="Member"/> is
@@ -50,7 +50,7 @@ namespace ILSpy.Analyzers.TreeNodes
 
 		public override object Text => analyzedModule.AssemblyName;
 
-		public override object Icon => Images.Images.Assembly;
+		public override object Icon => Images.Assembly;
 
 		public override object? ToolTip => analyzedModule.MetadataFile?.FileName;
 

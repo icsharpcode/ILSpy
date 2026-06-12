@@ -27,9 +27,9 @@ using Dock.Model.Core;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Docking;
+using ICSharpCode.ILSpy.Docking;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// One Document hosted by the dock workspace. <see cref="Content"/> holds the active
@@ -120,12 +120,12 @@ namespace ILSpy.ViewModels
 		// whose DataContext is this tab). The DockWorkspace owns the dock, so resolve it from the
 		// composition container rather than threading a reference through every tab creation site.
 		[CommunityToolkit.Mvvm.Input.RelayCommand]
-		private void Close() => ILSpy.AppEnv.AppComposition.TryGetExport<DockWorkspace>()?.CloseTab(this);
+		private void Close() => ICSharpCode.ILSpy.AppEnv.AppComposition.TryGetExport<DockWorkspace>()?.CloseTab(this);
 
 		[CommunityToolkit.Mvvm.Input.RelayCommand]
-		private void CloseAllButThis() => ILSpy.AppEnv.AppComposition.TryGetExport<DockWorkspace>()?.CloseAllTabsExcept(this);
+		private void CloseAllButThis() => ICSharpCode.ILSpy.AppEnv.AppComposition.TryGetExport<DockWorkspace>()?.CloseAllTabsExcept(this);
 
 		[CommunityToolkit.Mvvm.Input.RelayCommand]
-		private void CloseAll() => ILSpy.AppEnv.AppComposition.TryGetExport<DockWorkspace>()?.CloseAllTabs();
+		private void CloseAll() => ICSharpCode.ILSpy.AppEnv.AppComposition.TryGetExport<DockWorkspace>()?.CloseAllTabs();
 	}
 }

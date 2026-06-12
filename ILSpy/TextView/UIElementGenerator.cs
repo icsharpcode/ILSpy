@@ -23,7 +23,7 @@ using Avalonia.Controls;
 
 using AvaloniaEdit.Rendering;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	using Pair = KeyValuePair<int, Func<Control>>;
 

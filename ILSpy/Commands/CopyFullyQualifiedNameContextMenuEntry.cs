@@ -24,9 +24,9 @@ using Avalonia.Input.Platform;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click → "Copy fully qualified name". Visible whenever the selection is exactly

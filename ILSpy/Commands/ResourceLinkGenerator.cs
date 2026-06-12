@@ -21,7 +21,7 @@ using System.Text.RegularExpressions;
 
 using AvaloniaEdit.Rendering;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// LinkElementGenerator that matches a single literal phrase and produces a

@@ -24,9 +24,9 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.Metadata;
-using ILSpy.Metadata.CorTables;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata.CorTables;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

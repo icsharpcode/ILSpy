@@ -23,7 +23,7 @@ using Avalonia.Controls.Recycling;
 using Avalonia.Controls.Recycling.Model;
 using Avalonia.VisualTree;
 
-namespace ILSpy.Docking
+namespace ICSharpCode.ILSpy.Docking
 {
 	/// <summary>
 	/// View resolver for the dock chrome. The dock must render one view per dockable identity

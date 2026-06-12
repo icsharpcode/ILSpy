@@ -23,10 +23,10 @@ using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// 15-row table of (RVA, Size, Containing-Section) triples that lives at the tail of the
@@ -43,8 +43,8 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Data Directories";
-		public override object Icon => Images.Images.ListFolder;
-		public override object ExpandedIcon => Images.Images.ListFolderOpen;
+		public override object Icon => Images.ListFolder;
+		public override object ExpandedIcon => Images.ListFolderOpen;
 		public override string ToString() => "Data Directories";
 
 		public override ContentPageModel CreateTab()

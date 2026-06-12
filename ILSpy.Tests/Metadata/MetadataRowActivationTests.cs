@@ -23,15 +23,15 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Docking;
-using ILSpy.Metadata;
-using ILSpy.Metadata.CorTables;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata.CorTables;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -66,10 +66,10 @@ public class MetadataRowActivationTests
 
 		await Waiters.WaitForAsync(
 			() => vm.AssemblyTreeModel.SelectedItem is TypeTreeNode tn
-				&& tn.Member is global::ICSharpCode.Decompiler.TypeSystem.ITypeDefinition td
+				&& tn.Member is ICSharpCode.Decompiler.TypeSystem.ITypeDefinition td
 				&& td.FullName == "System.Object");
 		(((TypeTreeNode)vm.AssemblyTreeModel.SelectedItem!).Member
-			as global::ICSharpCode.Decompiler.TypeSystem.ITypeDefinition)!
+			as ICSharpCode.Decompiler.TypeSystem.ITypeDefinition)!
 			.FullName.Should().Be("System.Object");
 	}
 

@@ -22,7 +22,7 @@ using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
 
-namespace ILSpy.Metadata.Filters
+namespace ICSharpCode.ILSpy.Metadata.Filters
 {
 	/// <summary>
 	/// Round-trips a <see cref="FilterState"/> through an <see cref="XElement"/> so the

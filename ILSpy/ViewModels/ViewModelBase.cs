@@ -18,7 +18,7 @@
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract class ViewModelBase : ObservableObject
 	{

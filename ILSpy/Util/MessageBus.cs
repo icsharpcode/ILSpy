@@ -20,10 +20,10 @@ using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-using ILSpy.TextView;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Util
+namespace ICSharpCode.ILSpy.Util
 {
 	/// <summary>
 	/// Non-generic convenience entry point. <c>MessageBus.Send(this, new XEventArgs(...))</c>

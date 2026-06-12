@@ -22,9 +22,9 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// Thin renderer over <see cref="DebugStepsPaneModel"/>. All cross-language /

@@ -31,14 +31,14 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 
 using static ICSharpCode.ILSpyX.LoadedPackage;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click → "Extract Package Entry". Saves a selection of bundle items

@@ -26,13 +26,13 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// The shared "Save Code" flow for a single tree node, used by both File -> Save Code (Ctrl+S)

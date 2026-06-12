@@ -21,7 +21,7 @@ using System;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedPropertyTreeNode : AnalyzerEntityTreeNode
 	{
@@ -41,8 +41,8 @@ namespace ILSpy.Analyzers.TreeNodes
 		public override object Text => prefix + Language.EntityToString(analyzedProperty,
 			ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
-		public override object Icon => Images.Images.GetIcon(Images.Images.Property,
-			Images.Images.GetOverlay(analyzedProperty.Accessibility), analyzedProperty.IsStatic);
+		public override object Icon => Images.GetIcon(Images.Property,
+			Images.GetOverlay(analyzedProperty.Accessibility), analyzedProperty.IsStatic);
 
 		protected override void LoadChildren()
 		{

@@ -36,12 +36,12 @@ using CommunityToolkit.Mvvm.Input;
 
 using ICSharpCode.Decompiler;
 
-using ILSpy.Languages;
-using ILSpy.Options;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// A document tab that hosts decompiled output for a single tree node. Re-decompiles when
@@ -67,7 +67,7 @@ namespace ILSpy.TextView
 			if (!string.IsNullOrEmpty(newValue)
 				&& System.Threading.Interlocked.Exchange(ref firstTextMarked, 1) == 0)
 			{
-				ILSpy.AppEnv.AppLog.Mark("DecompilerTabPageModel: first non-empty Text set");
+				ICSharpCode.ILSpy.AppEnv.AppLog.Mark("DecompilerTabPageModel: first non-empty Text set");
 			}
 		}
 
@@ -404,11 +404,11 @@ namespace ILSpy.TextView
 			output.WriteLine();
 			if (wasNormalLimit)
 			{
-				output.AddButton(Images.Images.ViewCode, ICSharpCode.ILSpy.Properties.Resources.DisplayCode,
+				output.AddButton(Images.ViewCode, ICSharpCode.ILSpy.Properties.Resources.DisplayCode,
 					(_, _) => RestartDecompileWithOutputLimit(ExtendedOutputLengthLimit));
 				output.WriteLine();
 			}
-			output.AddButton(Images.Images.Save, ICSharpCode.ILSpy.Properties.Resources.SaveCode,
+			output.AddButton(Images.Save, ICSharpCode.ILSpy.Properties.Resources.SaveCode,
 				(_, _) => SaveCurrentNode());
 			output.WriteLine();
 			return output;
@@ -423,7 +423,7 @@ namespace ILSpy.TextView
 			var dockWorkspace = AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>();
 			if (languageService is null || dockWorkspace is null)
 				return;
-			ILSpy.Commands.SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).HandleExceptions();
+			ICSharpCode.ILSpy.Commands.SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).HandleExceptions();
 		}
 
 		// Fire-and-forget wrapper around DecompileAsync that observes the resulting Task.
@@ -460,7 +460,7 @@ namespace ILSpy.TextView
 		async Task DecompileAsync()
 		{
 			var callNumber = System.Threading.Interlocked.Increment(ref decompileInvocationCount);
-			using var _phase = ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}");
+			using var _phase = ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}");
 			activeCts?.Cancel();
 			var cts = activeCts = new CancellationTokenSource();
 			var nodes = currentNodes;
@@ -510,7 +510,7 @@ namespace ILSpy.TextView
 				var outputLengthLimit = pendingOutputLengthLimit;
 				pendingOutputLengthLimit = DefaultOutputLengthLimit;
 				AvaloniaEditTextOutput output;
-				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Task.Run decompile body ({nodes.Count} node(s), language={language.Name})"))
+				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Task.Run decompile body ({nodes.Count} node(s), language={language.Name})"))
 				{
 					(output, _) = await Task.Run(() => {
 						var output = new AvaloniaEditTextOutput { LengthLimit = outputLengthLimit };
@@ -561,13 +561,13 @@ namespace ILSpy.TextView
 					return;
 
 				string rendered;
-				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: collect output (GetText + collateral)"))
+				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: collect output (GetText + collateral)"))
 					rendered = output.GetText();
 				// Resource nodes (XML/XAML/…) override the highlighter so their content reads as
 				// the embedded format, not as the active language.
 				var effectiveSyntaxExtension = output.SyntaxExtensionOverride ?? newSyntaxExtension;
-				ILSpy.AppEnv.AppLog.Mark($"DecompileAsync #{callNumber}: {rendered.Length} chars, {(output.Foldings?.Count ?? 0)} foldings, {(output.References?.Count ?? 0)} refs");
-				using (ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Dispatcher.InvokeAsync (apply Text + props, triggers ApplyDocument)"))
+				ICSharpCode.ILSpy.AppEnv.AppLog.Mark($"DecompileAsync #{callNumber}: {rendered.Length} chars, {(output.Foldings?.Count ?? 0)} foldings, {(output.References?.Count ?? 0)} refs");
+				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Dispatcher.InvokeAsync (apply Text + props, triggers ApplyDocument)"))
 					await Dispatcher.UIThread.InvokeAsync(() => {
 						Title = cachedBaseTitle;
 						ApplyOutput(output, effectiveSyntaxExtension, rendered);

@@ -26,15 +26,15 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Docking;
-using ILSpy.Options;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -216,7 +216,7 @@ public class OptionsTabTests
 		// Flip UsingDeclarations through the panel viewmodel.
 		var usingDecl = decompilerPage.Settings
 			.SelectMany(g => g.Settings)
-			.First(s => s.Property.Name == nameof(global::ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
+			.First(s => s.Property.Name == nameof(ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
 		usingDecl.IsEnabled = !liveBefore;
 		TestCapture.Step("using-declarations-toggled");
 
@@ -248,8 +248,8 @@ public class OptionsTabTests
 		// Flip a known-default-true setting to false.
 		var item = decompilerPage.Settings
 			.SelectMany(g => g.Settings)
-			.First(s => s.Property.Name == nameof(global::ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
-		var defaultValue = (bool)item.Property.GetValue(new global::ICSharpCode.Decompiler.DecompilerSettings())!;
+			.First(s => s.Property.Name == nameof(ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
+		var defaultValue = (bool)item.Property.GetValue(new ICSharpCode.Decompiler.DecompilerSettings())!;
 		item.IsEnabled = !defaultValue;
 		// Sanity: precondition flip took effect.
 		item.IsEnabled.Should().Be(!defaultValue);
@@ -261,7 +261,7 @@ public class OptionsTabTests
 		// After reset, the reflection-rebuilt item list has the snapshot's defaults.
 		var refreshedItem = decompilerPage.Settings
 			.SelectMany(g => g.Settings)
-			.First(s => s.Property.Name == nameof(global::ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
+			.First(s => s.Property.Name == nameof(ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations));
 		// Reset must restore the panel's settings to `new DecompilerSettings()` defaults.
 		refreshedItem.IsEnabled.Should().Be(defaultValue);
 	}

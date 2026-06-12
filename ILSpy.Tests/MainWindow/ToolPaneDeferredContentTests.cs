@@ -20,7 +20,7 @@ using AwesomeAssertions;
 
 using Dock.Controls.DeferredContentControl;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 

@@ -47,7 +47,7 @@ using ConversionFlags = ICSharpCode.Decompiler.Output.ConversionFlags;
 using CSharpLanguageVersion = ICSharpCode.Decompiler.CSharp.LanguageVersion;
 using LanguageVersionDto = ICSharpCode.ILSpyX.LanguageVersion;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	[Export(typeof(Language))]
 	[Shared]
@@ -59,7 +59,7 @@ namespace ILSpy.Languages
 
 		public override string ProjectFileExtension => ".csproj";
 
-		public override ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
+		public override ICSharpCode.ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
 
 		static IReadOnlyList<LanguageVersionDto>? cachedVersions;
 
@@ -702,7 +702,7 @@ namespace ILSpy.Languages
 						new global::Avalonia.Controls.Image {
 							Width = 32,
 							Height = 32,
-							Source = Images.Images.Warning,
+							Source = Images.Warning,
 						},
 						new global::Avalonia.Controls.TextBlock {
 							Margin = new global::Avalonia.Thickness(5, 0, 0, 0),

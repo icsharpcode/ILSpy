@@ -27,9 +27,9 @@ using Avalonia.Controls;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata.DebugTables
+namespace ICSharpCode.ILSpy.Metadata.DebugTables
 {
 	/// <summary>One hoisted-local scope (IL offset range) of a state-machine method.</summary>
 	public sealed record HoistedLocalScopeDetail(uint StartOffset, uint Length);

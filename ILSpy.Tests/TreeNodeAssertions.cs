@@ -28,9 +28,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using global::ILSpy.AppEnv;
-using global::ILSpy.AssemblyTree;
-using global::ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Views;
 
 namespace ICSharpCode.ILSpy.Tests;
 
@@ -83,7 +83,7 @@ public class TreeNodeBeAssertions
 
 		// ScrollIntoView is posted at Background priority — give it time to realise the row.
 		var deadline = DateTime.UtcNow + ScrollPollTimeout;
-		global::ILSpy.Controls.TreeView.SharpTreeViewItem? row = null;
+		ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem? row = null;
 		bool ok = false;
 		while (DateTime.UtcNow < deadline)
 		{
@@ -104,7 +104,7 @@ public class TreeNodeBeAssertions
 		return new AndConstraint<TreeNodeBeAssertions>(this);
 	}
 
-	static global::ILSpy.Controls.TreeView.SharpTreeView? TryFindGrid(out string? failure)
+	static ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView? TryFindGrid(out string? failure)
 	{
 		var window = FindActiveWindow();
 		if (window is null)
@@ -120,7 +120,7 @@ public class TreeNodeBeAssertions
 			return null;
 		}
 
-		var grid = pane.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeView>().FirstOrDefault();
+		var grid = pane.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>().FirstOrDefault();
 		if (grid is null)
 		{
 			failure = "SharpTreeView not found inside AssemblyListPane";
@@ -145,9 +145,9 @@ public class TreeNodeBeAssertions
 		}
 	}
 
-	static global::ILSpy.Controls.TreeView.SharpTreeViewItem? FindRow(global::ILSpy.Controls.TreeView.SharpTreeView grid, SharpTreeNode target)
+	static ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem? FindRow(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView grid, SharpTreeNode target)
 	{
-		foreach (var row in grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>())
+		foreach (var row in grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>())
 		{
 			if (ReferenceEquals(row.DataContext, target))
 				return row;
@@ -155,7 +155,7 @@ public class TreeNodeBeAssertions
 		return null;
 	}
 
-	static bool IsInViewport(global::ILSpy.Controls.TreeView.SharpTreeViewItem row, ScrollViewer scrollViewer)
+	static bool IsInViewport(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem row, ScrollViewer scrollViewer)
 	{
 		var topLeft = row.TranslatePoint(new Point(0, 0), scrollViewer);
 		if (topLeft is null)
@@ -165,7 +165,7 @@ public class TreeNodeBeAssertions
 		return top >= 0 && bottom <= scrollViewer.Viewport.Height + 0.5;
 	}
 
-	static bool IsRoughlyCentered(global::ILSpy.Controls.TreeView.SharpTreeViewItem row, ScrollViewer scrollViewer)
+	static bool IsRoughlyCentered(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem row, ScrollViewer scrollViewer)
 	{
 		var topLeft = row.TranslatePoint(new Point(0, 0), scrollViewer);
 		if (topLeft is null)
@@ -178,7 +178,7 @@ public class TreeNodeBeAssertions
 		return Math.Abs(rowMid - viewportMid) <= row.Bounds.Height || nearTopClamp || nearBottomClamp;
 	}
 
-	string BuildState(ScrollViewer scrollViewer, global::ILSpy.Controls.TreeView.SharpTreeViewItem? row)
+	string BuildState(ScrollViewer scrollViewer, ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem? row)
 	{
 		if (row is null)
 			return $"but no SharpTreeViewItem has been realised for it (offset={scrollViewer.Offset}, viewport={scrollViewer.Viewport}, extent={scrollViewer.Extent})";

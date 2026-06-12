@@ -20,7 +20,6 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.Images;
 
 using NUnit.Framework;
 

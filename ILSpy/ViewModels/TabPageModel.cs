@@ -20,7 +20,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using Dock.Model.Mvvm.Controls;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	public abstract partial class TabPageModel : Document
 	{

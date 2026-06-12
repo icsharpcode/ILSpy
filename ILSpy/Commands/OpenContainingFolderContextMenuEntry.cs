@@ -26,10 +26,10 @@ using System.Runtime.InteropServices;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.TreeNodes;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click → "Open Containing Folder". Walks up the selection's parent chain to the

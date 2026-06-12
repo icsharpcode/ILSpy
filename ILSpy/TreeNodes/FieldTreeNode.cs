@@ -23,12 +23,12 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class FieldTreeNode : ILSpyTreeNode, IMemberTreeNode
+	public sealed class FieldTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IField FieldDefinition { get; }
 
@@ -51,19 +51,19 @@ namespace ILSpy.TreeNodes
 			// EnumValue: declaring type is an enum and the return type is the enum itself --
 			// this excludes the synthesised int32 'value__' backing field.
 			if (field.DeclaringType.Kind == TypeKind.Enum && field.ReturnType.Kind == TypeKind.Enum)
-				return Images.Images.GetIcon(Images.Images.EnumValue,
-					Images.Images.GetOverlay(field.Accessibility));
+				return Images.GetIcon(Images.EnumValue,
+					Images.GetOverlay(field.Accessibility));
 
 			if (field.IsConst)
-				return Images.Images.GetIcon(Images.Images.Literal,
-					Images.Images.GetOverlay(field.Accessibility));
+				return Images.GetIcon(Images.Literal,
+					Images.GetOverlay(field.Accessibility));
 
 			if (field.IsReadOnly)
-				return Images.Images.GetIcon(Images.Images.FieldReadOnly,
-					Images.Images.GetOverlay(field.Accessibility), field.IsStatic);
+				return Images.GetIcon(Images.FieldReadOnly,
+					Images.GetOverlay(field.Accessibility), field.IsStatic);
 
-			return Images.Images.GetIcon(Images.Images.Field,
-				Images.Images.GetOverlay(field.Accessibility), field.IsStatic);
+			return Images.GetIcon(Images.Field,
+				Images.GetOverlay(field.Accessibility), field.IsStatic);
 		}
 		public override bool ShowExpander => false;
 

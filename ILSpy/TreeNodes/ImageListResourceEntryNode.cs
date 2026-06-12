@@ -32,12 +32,12 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.IL;
 
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.ImageList
+namespace ICSharpCode.ILSpy.ImageList
 {
 	/// <summary>
 	/// Tree node for a <c>System.Windows.Forms.ImageListStreamer</c> resource entry. Lazily
@@ -61,7 +61,7 @@ namespace ILSpy.ImageList
 
 		public override object Text => ILAmbience.EscapeName(key);
 
-		public override object Icon => Images.Images.Resource;
+		public override object Icon => Images.Resource;
 
 		// Decode-once cache shared between LoadChildren and Decompile so opening the parent
 		// twice (tree expand + editor render) hits the NRBF parser exactly once.
@@ -140,7 +140,7 @@ namespace ILSpy.ImageList
 			readonly Exception ex;
 			public DecodeErrorNode(Exception ex) { this.ex = ex; }
 			public override object Text => $"<decode failed: {ex.Message}>";
-			public override object Icon => Images.Images.Resource;
+			public override object Icon => Images.Resource;
 		}
 	}
 
@@ -160,7 +160,7 @@ namespace ILSpy.ImageList
 		}
 
 		public override object Text => key;
-		public override object Icon => Images.Images.Resource;
+		public override object Icon => Images.Resource;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
@@ -174,7 +174,7 @@ namespace ILSpy.ImageList
 				Height = frame.Height,
 			});
 			smart.WriteLine();
-			smart.AddButton(Images.Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
+			smart.AddButton(Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
 		}
 
 		public override bool Save()

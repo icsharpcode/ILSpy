@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ILSpy.Navigation
+namespace ICSharpCode.ILSpy.Navigation
 {
 	/// <summary>
 	/// Two-stack browser-style history. A rapid successive <see cref="Record"/> of the SAME entry

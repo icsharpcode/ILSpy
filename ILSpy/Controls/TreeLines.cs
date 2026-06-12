@@ -24,7 +24,7 @@ using Avalonia.Media;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-namespace ILSpy.Controls
+namespace ICSharpCode.ILSpy.Controls
 {
 	// Classic Windows-Explorer tree-lines: drawn as a layer behind the
 	// DataGridHierarchicalPresenter content so it can reach across

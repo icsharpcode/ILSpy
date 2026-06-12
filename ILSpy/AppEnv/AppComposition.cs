@@ -27,7 +27,7 @@ using System.Runtime.Loader;
 
 using ICSharpCode.ILSpyX.Analyzers;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	/// <summary>
 	/// Builds the MEF composition host: ILSpyX + this assembly + every *.Plugin.dll next to us.

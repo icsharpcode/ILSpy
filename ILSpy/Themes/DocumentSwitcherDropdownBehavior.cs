@@ -28,10 +28,10 @@ using Avalonia.VisualTree;
 
 using Dock.Avalonia.Controls;
 
-using ILSpy.AppEnv;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// Injects a single overflow dropdown button at the trailing edge of each

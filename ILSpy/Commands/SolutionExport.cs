@@ -27,13 +27,13 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Docking;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// The shared "export several assemblies as a Visual Studio solution" flow behind both the

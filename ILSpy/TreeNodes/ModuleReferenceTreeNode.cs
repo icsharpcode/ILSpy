@@ -24,11 +24,11 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Module reference inside <see cref="ReferenceFolderTreeNode"/>. Modern .NET assemblies
@@ -72,7 +72,7 @@ namespace ILSpy.TreeNodes
 
 		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.References})";
 
-		public override object Icon => Images.Images.Library;
+		public override object Icon => Images.Library;
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{

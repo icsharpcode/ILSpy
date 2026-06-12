@@ -33,15 +33,15 @@ using AwesomeAssertions;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Commands;
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -172,7 +172,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
@@ -188,7 +188,7 @@ public class DecompileInNewViewTests
 			await Task.Delay(25);
 		}
 
-		var rowB = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var rowB = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.FirstOrDefault(r => RowNodeEquals(r, nodeB));
 		rowB.Should().NotBeNull("the top-level CoreLib row must be realised");
 
@@ -230,7 +230,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
 		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows to click");
@@ -246,8 +246,8 @@ public class DecompileInNewViewTests
 			await Task.Delay(25);
 		}
 
-		global::ILSpy.Controls.TreeView.SharpTreeViewItem Row(SharpTreeNode node) => grid.GetVisualDescendants()
-			.OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem Row(SharpTreeNode node) => grid.GetVisualDescendants()
+			.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => RowNodeEquals(r, node));
 
 		async Task RightClick(SharpTreeNode node)
@@ -296,7 +296,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
@@ -308,7 +308,7 @@ public class DecompileInNewViewTests
 			await Task.Delay(25);
 		}
 
-		var rowB = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var rowB = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => RowNodeEquals(r, nodeB));
 		int tabsBefore = vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
 
@@ -342,7 +342,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
@@ -388,7 +388,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
 		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
@@ -441,7 +441,7 @@ public class DecompileInNewViewTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 
 		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
@@ -498,9 +498,9 @@ public class DecompileInNewViewTests
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 
 		var tableNode = vm.AssemblyTreeModel.FindCoreLib()
-			.GetChild<global::ILSpy.Metadata.MetadataTreeNode>()
-			.GetChild<global::ILSpy.Metadata.MetadataTablesTreeNode>()
-			.GetChild<global::ILSpy.Metadata.CorTables.TypeDefTableTreeNode>();
+			.GetChild<ICSharpCode.ILSpy.Metadata.MetadataTreeNode>()
+			.GetChild<ICSharpCode.ILSpy.Metadata.MetadataTablesTreeNode>()
+			.GetChild<ICSharpCode.ILSpy.Metadata.CorTables.TypeDefTableTreeNode>();
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		int before = documents.VisibleDockables?.OfType<ContentTabPage>().Count() ?? 0;
@@ -511,23 +511,23 @@ public class DecompileInNewViewTests
 
 		await Waiters.WaitForAsync(
 			() => documents.VisibleDockables!.OfType<ContentTabPage>()
-				.Any(t => t.Content is global::ILSpy.ViewModels.MetadataTablePageModel));
+				.Any(t => t.Content is ICSharpCode.ILSpy.ViewModels.MetadataTablePageModel));
 
 		documents.VisibleDockables!.OfType<ContentTabPage>().Count()
 			.Should().BeGreaterThan(before, "a new tab must open");
 		var newTab = documents.VisibleDockables!.OfType<ContentTabPage>()
-			.First(t => t.Content is global::ILSpy.ViewModels.MetadataTablePageModel);
-		newTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>(
+			.First(t => t.Content is ICSharpCode.ILSpy.ViewModels.MetadataTablePageModel);
+		newTab.Content.Should().BeOfType<ICSharpCode.ILSpy.ViewModels.MetadataTablePageModel>(
 			"the metadata-table node must open its grid page, not a decompiler tab");
 	}
 
-	static bool RowNodeEquals(global::ILSpy.Controls.TreeView.SharpTreeViewItem row, SharpTreeNode node)
+	static bool RowNodeEquals(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem row, SharpTreeNode node)
 		=> ReferenceEquals(row.DataContext, node);
 
-	static SharpTreeNode? GridSelectedNode(global::ILSpy.Controls.TreeView.SharpTreeView grid)
+	static SharpTreeNode? GridSelectedNode(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView grid)
 		=> grid.SelectedItem as SharpTreeNode;
 
-	static System.Collections.Generic.List<SharpTreeNode> GridSelectedNodes(global::ILSpy.Controls.TreeView.SharpTreeView grid)
+	static System.Collections.Generic.List<SharpTreeNode> GridSelectedNodes(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView grid)
 		=> grid.SelectedItems!.Cast<object?>()
 			.OfType<SharpTreeNode>()
 			.ToList();

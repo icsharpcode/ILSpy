@@ -20,7 +20,7 @@ using System;
 
 using Avalonia;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	sealed class Program
 	{

@@ -27,11 +27,11 @@ using Avalonia.Platform.Storage;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click an assembly → "Select PDB". File-picks a portable / Windows PDB and

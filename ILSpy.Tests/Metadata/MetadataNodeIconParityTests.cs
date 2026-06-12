@@ -24,7 +24,7 @@ using Avalonia.Media;
 
 using AwesomeAssertions;
 
-using ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata;
 
 using NUnit.Framework;
 
@@ -51,39 +51,39 @@ public class MetadataNodeIconParityTests
 		var children = metadataNode.Children;
 
 		// Assert — root + PE header nodes.
-		metadataNode.Icon.Should().BeSameAs(global::ILSpy.Images.Images.Metadata, "the Metadata root uses the Metadata glyph");
-		children.OfType<DosHeaderTreeNode>().Single().Icon.Should().BeSameAs(global::ILSpy.Images.Images.Header);
-		children.OfType<CoffHeaderTreeNode>().Single().Icon.Should().BeSameAs(global::ILSpy.Images.Images.Header);
-		children.OfType<OptionalHeaderTreeNode>().Single().Icon.Should().BeSameAs(global::ILSpy.Images.Images.Header);
+		metadataNode.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.Metadata, "the Metadata root uses the Metadata glyph");
+		children.OfType<DosHeaderTreeNode>().Single().Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.Header);
+		children.OfType<CoffHeaderTreeNode>().Single().Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.Header);
+		children.OfType<OptionalHeaderTreeNode>().Single().Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.Header);
 
 		// Assert — the directory-container nodes use the list-folder glyphs (closed + open on
 		// expand), as WPF shipped. These are the folder-with-list-lines glyph, distinct from the
 		// generic empty folder; the port had collapsed them onto the plain folder icon.
 		var dataDirs = children.OfType<DataDirectoriesTreeNode>().Single();
-		dataDirs.Icon.Should().BeSameAs(global::ILSpy.Images.Images.ListFolder);
-		dataDirs.ExpandedIcon.Should().BeSameAs(global::ILSpy.Images.Images.ListFolderOpen);
+		dataDirs.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.ListFolder);
+		dataDirs.ExpandedIcon.Should().BeSameAs(ICSharpCode.ILSpy.Images.ListFolderOpen);
 
 		var debugDir = children.OfType<DebugDirectoryTreeNode>().Single();
-		debugDir.Icon.Should().BeSameAs(global::ILSpy.Images.Images.ListFolder);
-		debugDir.ExpandedIcon.Should().BeSameAs(global::ILSpy.Images.Images.ListFolderOpen);
+		debugDir.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.ListFolder);
+		debugDir.ExpandedIcon.Should().BeSameAs(ICSharpCode.ILSpy.Images.ListFolderOpen);
 
 		// Assert — "Tables" uses the table-group glyph, distinct from a single table.
 		var tables = children.OfType<MetadataTablesTreeNode>().Single();
-		tables.Icon.Should().BeSameAs(global::ILSpy.Images.Images.MetadataTableGroup);
-		tables.Icon.Should().NotBeSameAs(global::ILSpy.Images.Images.MetadataTable);
+		tables.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.MetadataTableGroup);
+		tables.Icon.Should().NotBeSameAs(ICSharpCode.ILSpy.Images.MetadataTable);
 
 		// Assert — every heap node (String/UserString/Guid/Blob) uses the Heap glyph.
 		var heaps = children.OfType<MetadataHeapTreeNode>().ToList();
 		heaps.Should().NotBeEmpty("CoreLib exposes the String/UserString/Guid/Blob heaps");
-		heaps.Should().OnlyContain(h => ReferenceEquals(h.Icon, global::ILSpy.Images.Images.Heap));
+		heaps.Should().OnlyContain(h => ReferenceEquals(h.Icon, ICSharpCode.ILSpy.Images.Heap));
 
 		// Assert — the individual table nodes still use the single-table glyph (base unchanged).
 		tables.EnsureLazyChildren();
 		var aTable = tables.Children.OfType<MetadataTableTreeNode>().First();
-		aTable.Icon.Should().BeSameAs(global::ILSpy.Images.Images.MetadataTable);
+		aTable.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.MetadataTable);
 
 		// Assert — the newly ported assets actually load (LoadSvg yields a usable image, not null).
-		foreach (var img in new IImage[] { global::ILSpy.Images.Images.Metadata, global::ILSpy.Images.Images.Header, global::ILSpy.Images.Images.Heap, global::ILSpy.Images.Images.MetadataTableGroup, global::ILSpy.Images.Images.ListFolder, global::ILSpy.Images.Images.ListFolderOpen })
+		foreach (var img in new IImage[] { ICSharpCode.ILSpy.Images.Metadata, ICSharpCode.ILSpy.Images.Header, ICSharpCode.ILSpy.Images.Heap, ICSharpCode.ILSpy.Images.MetadataTableGroup, ICSharpCode.ILSpy.Images.ListFolder, ICSharpCode.ILSpy.Images.ListFolderOpen })
 		{
 			((object?)img).Should().NotBeNull();
 			img.Size.Width.Should().BeGreaterThan(0, "a ported SVG must decode to a non-zero-size image");

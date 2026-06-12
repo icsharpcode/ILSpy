@@ -21,7 +21,7 @@ using System;
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Rendering;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Creates clickable hyperlink elements in the text view from a

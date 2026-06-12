@@ -25,11 +25,11 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Metadata;
-using ILSpy.Metadata.CorTables;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata.CorTables;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -135,7 +135,7 @@ public class MetadataProtocolHandlerDrillDownTests
 		// The handler is exported as IProtocolHandler, not as itself — fish out the
 		// MetadataProtocolHandler concrete impl from the contract list.
 		var handler = AppComposition.Current
-			.GetExports<global::ILSpy.Commands.IProtocolHandler>()
+			.GetExports<ICSharpCode.ILSpy.Commands.IProtocolHandler>()
 			.OfType<MetadataProtocolHandler>()
 			.Single();
 		return (handler, module, metadataNode);

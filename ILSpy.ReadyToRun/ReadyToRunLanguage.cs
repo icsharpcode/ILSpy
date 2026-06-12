@@ -42,8 +42,8 @@ using ICSharpCode.ILSpyX;
 
 using ILCompiler.Reflection.ReadyToRun;
 
-using ILSpy;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Languages;
 
 using MetadataReader = System.Reflection.Metadata.MetadataReader;
 

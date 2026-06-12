@@ -26,8 +26,8 @@ using Avalonia.Threading;
 
 using AwesomeAssertions;
 
-using ILSpy.AssemblyTree;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -46,7 +46,7 @@ public class AssemblyTreeSortTests
 		var model = vm.AssemblyTreeModel;
 		var list = model.AssemblyList!;
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Open extra assemblies whose names are deliberately out of sorted order so the sort moves
 		// real rows around.

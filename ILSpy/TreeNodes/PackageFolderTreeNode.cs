@@ -24,9 +24,9 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Folder inside a <see cref="LoadedPackage"/> (zip / .NET bundle). Lazy-loads to a mix
@@ -49,7 +49,7 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => text;
 
-		public override object Icon => IsExpanded ? Images.Images.FolderOpen : Images.Images.FolderClosed;
+		public override object Icon => IsExpanded ? Images.FolderOpen : Images.FolderClosed;
 
 		protected override void OnExpanding()
 		{

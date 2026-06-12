@@ -27,11 +27,11 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
-using ILSpy.Languages;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	public abstract class ILSpyTreeNode : SharpTreeNode, ITreeNode
 	{

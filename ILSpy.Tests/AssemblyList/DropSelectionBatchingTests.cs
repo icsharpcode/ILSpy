@@ -25,9 +25,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AssemblyTree;
-using ILSpy.TreeNodes;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Views;
 
 using Avalonia.Headless.NUnit;
 

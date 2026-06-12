@@ -23,7 +23,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX.Settings;
 
-namespace ILSpy.Updates
+namespace ICSharpCode.ILSpy.Updates
 {
 	/// <summary>
 	/// Persisted user preferences for the auto-update checker. Default-on so the user

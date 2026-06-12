@@ -43,11 +43,11 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Options;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Options;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	public partial class DecompilerTextView : UserControl
 	{
@@ -299,12 +299,12 @@ namespace ILSpy.TextView
 		protected override void OnAttachedToVisualTree(global::Avalonia.VisualTreeAttachmentEventArgs e)
 		{
 			base.OnAttachedToVisualTree(e);
-			ILSpy.Themes.ThemeManager.Current.ThemeChanged += OnThemeChangedRebuildHighlighting;
+			ICSharpCode.ILSpy.Themes.ThemeManager.Current.ThemeChanged += OnThemeChangedRebuildHighlighting;
 		}
 
 		protected override void OnDetachedFromVisualTree(global::Avalonia.VisualTreeAttachmentEventArgs e)
 		{
-			ILSpy.Themes.ThemeManager.Current.ThemeChanged -= OnThemeChangedRebuildHighlighting;
+			ICSharpCode.ILSpy.Themes.ThemeManager.Current.ThemeChanged -= OnThemeChangedRebuildHighlighting;
 			base.OnDetachedFromVisualTree(e);
 		}
 

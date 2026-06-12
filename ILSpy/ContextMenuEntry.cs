@@ -24,9 +24,9 @@ using Avalonia.Controls;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// MEF-exported entry that contributes a single item to a context menu. Exports are

@@ -25,14 +25,14 @@ using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using Microsoft.DiaSymReader.Tools;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// DEBUG-only main-menu entry: Dump every selected assembly's PDB as XML in the active

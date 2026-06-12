@@ -21,7 +21,7 @@ using System.Composition;
 using System.Linq;
 using System.Windows.Input;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// MEF aggregator for [ExportToolbarCommand]-tagged commands. The toolbar UserControl

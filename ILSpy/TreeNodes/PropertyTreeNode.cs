@@ -23,12 +23,12 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
-	sealed class PropertyTreeNode : ILSpyTreeNode, IMemberTreeNode
+	public sealed class PropertyTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		public IProperty PropertyDefinition { get; }
 
@@ -56,9 +56,9 @@ namespace ILSpy.TreeNodes
 			IMethod? accessor = property.Getter ?? property.Setter;
 			bool isExtension = accessor is not null
 				&& property.ResolveExtensionInfo()?.InfoOfExtensionMember((IMethod)accessor.MemberDefinition) != null;
-			return Images.Images.GetIcon(
-				property.IsIndexer ? Images.Images.Indexer : Images.Images.Property,
-				Images.Images.GetOverlay(property.Accessibility),
+			return Images.GetIcon(
+				property.IsIndexer ? Images.Indexer : Images.Property,
+				Images.GetOverlay(property.Accessibility),
 				property.IsStatic,
 				isExtension);
 		}

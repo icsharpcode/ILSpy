@@ -25,9 +25,9 @@ using System.Text;
 
 using ICSharpCode.Decompiler;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Renders a list of row objects to <see cref="ITextOutput"/> as a fixed-width table —

@@ -22,9 +22,9 @@ using System.Diagnostics;
 
 using AvaloniaEdit.Document;
 
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
 	/// Matches <c>(...)</c>, <c>[...]</c>, and <c>{...}</c> in a C# document, skipping

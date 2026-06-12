@@ -26,9 +26,9 @@ using Avalonia.Input.Platform;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Right-click on an analyser-error row → "Copy error message" — puts the full

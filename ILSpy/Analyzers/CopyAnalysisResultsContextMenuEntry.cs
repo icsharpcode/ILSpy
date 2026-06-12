@@ -24,9 +24,9 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input.Platform;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Right-click on an analyser-result row → "Copy results" — puts each child node's

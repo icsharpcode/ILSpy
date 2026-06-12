@@ -24,7 +24,7 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata.DebugTables
+namespace ICSharpCode.ILSpy.Metadata.DebugTables
 {
 	/// <summary>
 	/// View of the Document table — every source file referenced by debug info. Each row

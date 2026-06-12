@@ -21,12 +21,12 @@ using System.Composition;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
-using ILSpy.Compare;
-using ILSpy.Docking;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Compare;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click → "Compare…" on exactly two valid managed assemblies in the tree.

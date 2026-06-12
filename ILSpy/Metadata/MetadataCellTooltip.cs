@@ -20,7 +20,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Reflection;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Resolves per-cell tooltips for a metadata-table row. Entry classes opt in by exposing

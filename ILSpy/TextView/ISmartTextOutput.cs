@@ -25,7 +25,7 @@ using AvaloniaEdit.Rendering;
 
 using ICSharpCode.Decompiler;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Adds Avalonia-specific output features to <see cref="ITextOutput"/>: span-based

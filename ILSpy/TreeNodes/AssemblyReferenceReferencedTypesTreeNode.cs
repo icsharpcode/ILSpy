@@ -23,9 +23,9 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// "Referenced Types (N)" subnode under <see cref="AssemblyReferenceTreeNode"/>.
@@ -46,7 +46,7 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => $"{Resources.ReferencedTypes} ({r.TypeReferences.Length + r.ExportedTypes.Length})";
 
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.MetadataTable;
 
 		protected override void LoadChildren()
 		{

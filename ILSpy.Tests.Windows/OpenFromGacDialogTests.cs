@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.Tests.Windows;
 
 /// <summary>
 /// Smoke test for the Windows-conditional GAC enumeration path used by
-/// <c>ILSpy.Views.OpenFromGacDialog</c>. The shared
+/// <c>ICSharpCode.ILSpy.Views.OpenFromGacDialog</c>. The shared
 /// <see cref="UniversalAssemblyResolver.EnumerateGac"/> only returns entries when run
 /// on Windows with a populated GAC; this test validates the project plumbing more than
 /// the GAC contents — i.e. the call returns without throwing and the project compiles

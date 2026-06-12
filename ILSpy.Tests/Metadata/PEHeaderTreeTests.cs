@@ -23,7 +23,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata;
 
 using NUnit.Framework;
 
@@ -123,8 +123,8 @@ public class PEHeaderTreeTests
 		TestCapture.Step("decompiler-tab-restored");
 		decompilerTab.Should().NotBeNull();
 
-		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
-		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+		var mainTab = ((ICSharpCode.ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
+		mainTab.Content.Should().BeOfType<ICSharpCode.ILSpy.TextView.DecompilerTabPageModel>();
 	}
 
 	[AvaloniaTest]
@@ -150,8 +150,8 @@ public class PEHeaderTreeTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("decompiler-tab");
 
-		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
-		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+		var mainTab = ((ICSharpCode.ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
+		mainTab.Content.Should().BeOfType<ICSharpCode.ILSpy.TextView.DecompilerTabPageModel>();
 	}
 
 	[AvaloniaTest]
@@ -170,7 +170,7 @@ public class PEHeaderTreeTests
 		var metadataNode = assemblyNode.GetChild<MetadataTreeNode>();
 		var dosNode = metadataNode.GetChild<DosHeaderTreeNode>();
 		var coffNode = metadataNode.GetChild<CoffHeaderTreeNode>();
-		var factoryFactory = (global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory;
+		var factoryFactory = (ICSharpCode.ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var documents = factoryFactory.Documents!;
 		var mainTab = factoryFactory.MainTab!;
 
@@ -178,24 +178,24 @@ public class PEHeaderTreeTests
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
 		TestCapture.Step("dos-header-grid");
 		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
-		mainTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>();
+		mainTab.Content.Should().BeOfType<ICSharpCode.ILSpy.ViewModels.MetadataTablePageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("decompiler-tab");
 		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
-		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+		mainTab.Content.Should().BeOfType<ICSharpCode.ILSpy.TextView.DecompilerTabPageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(coffNode);
 		await vm.DockWorkspace.WaitForMetadataTabAsync();
 		TestCapture.Step("coff-header-grid");
 		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
-		mainTab.Content.Should().BeOfType<global::ILSpy.ViewModels.MetadataTablePageModel>();
+		mainTab.Content.Should().BeOfType<ICSharpCode.ILSpy.ViewModels.MetadataTablePageModel>();
 
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		documents.VisibleDockables!.Should().HaveCount(1).And.Contain(mainTab);
-		mainTab.Content.Should().BeOfType<global::ILSpy.TextView.DecompilerTabPageModel>();
+		mainTab.Content.Should().BeOfType<ICSharpCode.ILSpy.TextView.DecompilerTabPageModel>();
 	}
 
 	[AvaloniaTest]
@@ -230,7 +230,7 @@ public class PEHeaderTreeTests
 		thirdTab.Should().BeSameAs(firstTab);
 		thirdTab.Title.Should().Be("DOS Header");
 
-		var mainTab = ((global::ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
+		var mainTab = ((ICSharpCode.ILSpy.Docking.ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
 		mainTab.Content.Should().BeSameAs(firstTab, "the inner metadata viewmodel is reused in place");
 	}
 

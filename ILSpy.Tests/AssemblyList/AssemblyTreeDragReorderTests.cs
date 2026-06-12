@@ -23,8 +23,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.Controls.TreeView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -92,7 +92,7 @@ public class AssemblyTreeDragReorderTests
 		var root = (AssemblyListTreeNode)vm.AssemblyTreeModel.Root!;
 		var top = root.Children.OfType<AssemblyTreeNode>().ToArray();
 
-		top[0].CanDrag(new global::ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { top[0], top[1] })
+		top[0].CanDrag(new ICSharpCode.ILSpyX.TreeView.SharpTreeNode[] { top[0], top[1] })
 			.Should().BeTrue("top-level non-package assemblies are draggable");
 
 		top[0].IsExpanded = true;

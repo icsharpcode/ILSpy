@@ -20,7 +20,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.Search;
+using ICSharpCode.ILSpy.Search;
 
 using NUnit.Framework;
 
