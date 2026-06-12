@@ -32,6 +32,7 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -106,6 +107,11 @@ namespace ICSharpCode.ILSpy.Commands
 				? string.Format(Resources.GeneratingPortablePDB, supported.Keys.First().ShortName)
 				: string.Format(Resources.GeneratingPortablePDB, supported.Count + " assemblies");
 
+			// The PDB embeds decompiled sources, so honor the user's current decompiler settings
+			// (snapshot once; the generation runs off the UI thread).
+			var settings = AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new DecompilerSettings();
+
 			// Run in a dedicated frozen tab so browsing the tree while PDBs generate can't cancel it.
 			await dockWorkspace.RunInNewTabAsync(title, token => Task.Run(() => {
 				var output = new AvaloniaEditTextOutput { Title = "Generate Portable PDB" };
@@ -117,7 +123,6 @@ namespace ICSharpCode.ILSpy.Commands
 					{
 						using var stream = new FileStream(pdbFileName, FileMode.Create, FileAccess.Write);
 						var resolver = assembly.GetAssemblyResolver();
-						var settings = new DecompilerSettings();
 						var decompiler = new CSharpDecompiler(file, resolver, settings) {
 							CancellationToken = token,
 						};

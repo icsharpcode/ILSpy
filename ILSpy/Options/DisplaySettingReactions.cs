@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpy.Options
 			[nameof(DisplaySettings.UseNestedNamespaceNodes)] = DisplaySettingReaction.TreeShape,
 			[nameof(DisplaySettings.HideEmptyMetadataTables)] = DisplaySettingReaction.TreeShape,
 
-			// Decompiler / disassembler output (see DecompilerTabPageModel.ApplyDisplaySettings +
+			// Decompiler / disassembler output (see SettingsService.ApplyDisplaySettings +
 			// GetIndentationString, and CSharpILMixedLanguage / ILLanguage for the IL-detail ones).
 			[nameof(DisplaySettings.FoldBraces)] = DisplaySettingReaction.Redecompile,
 			[nameof(DisplaySettings.ExpandMemberDefinitions)] = DisplaySettingReaction.Redecompile,

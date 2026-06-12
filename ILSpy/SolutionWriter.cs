@@ -56,20 +56,20 @@ namespace ICSharpCode.ILSpy
 		/// or whitespace.</exception>
 		/// <exception cref="ArgumentNullException">Thrown when <paramref name="language"/> or
 		/// <paramref name="assemblies"/> is null.</exception>
-		/// <param name="settings">Decompiler settings each project is decompiled with. When null,
-		/// each project uses the language's own defaults (preserves the quick "Save Code" path).</param>
+		/// <param name="settings">Decompiler settings each project is decompiled with.</param>
 		/// <param name="strongNameKeyFile">Optional <c>.snk</c> copied into every project and emitted
 		/// as <c>&lt;AssemblyOriginatorKeyFile&gt;</c>.</param>
 		public static Task<SolutionExportResult> CreateSolutionAsync(string solutionFilePath,
 			Language language, IReadOnlyList<LoadedAssembly> assemblies,
-			CancellationToken cancellationToken = default,
-			DecompilerSettings? settings = null, string? strongNameKeyFile = null,
+			CancellationToken cancellationToken,
+			DecompilerSettings settings, string? strongNameKeyFile = null,
 			IProgress<DecompilationProgress>? progress = null)
 		{
 			if (string.IsNullOrWhiteSpace(solutionFilePath))
 				throw new ArgumentException("The solution file path cannot be null or empty.", nameof(solutionFilePath));
 			ArgumentNullException.ThrowIfNull(language);
 			ArgumentNullException.ThrowIfNull(assemblies);
+			ArgumentNullException.ThrowIfNull(settings);
 
 			return new SolutionWriter(solutionFilePath, settings, strongNameKeyFile, progress)
 				.CreateSolutionAsync(assemblies, language, cancellationToken);
@@ -77,14 +77,14 @@ namespace ICSharpCode.ILSpy
 
 		readonly string solutionFilePath;
 		readonly string solutionDirectory;
-		readonly DecompilerSettings? settings;
+		readonly DecompilerSettings settings;
 		readonly string? strongNameKeyFile;
 		readonly IProgress<DecompilationProgress>? progress;
 		readonly ConcurrentBag<ProjectItem> projects;
 		readonly ConcurrentBag<string> statusOutput;
 		int completedAssemblies;
 
-		SolutionWriter(string solutionFilePath, DecompilerSettings? settings, string? strongNameKeyFile,
+		SolutionWriter(string solutionFilePath, DecompilerSettings settings, string? strongNameKeyFile,
 			IProgress<DecompilationProgress>? progress)
 		{
 			this.solutionFilePath = solutionFilePath;
@@ -224,7 +224,7 @@ namespace ICSharpCode.ILSpy
 
 			try
 			{
-				var options = settings != null ? new DecompilationOptions(settings) : new DecompilationOptions();
+				var options = new DecompilationOptions(settings);
 				options.FullDecompilation = true;
 				options.EscapeInvalidIdentifiers = true;
 				options.CancellationToken = ct;

@@ -73,10 +73,15 @@ namespace ICSharpCode.ILSpy.Commands
 			if (string.IsNullOrEmpty(path))
 				return;
 
+			// Snapshot the user's current decompiler settings for the whole export, like the
+			// per-project export path does.
+			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new ICSharpCode.Decompiler.DecompilerSettings();
+
 			// Run in a dedicated frozen tab so browsing the tree while the export runs can't cancel it.
 			await dockWorkspace.RunInNewTabAsync("Exporting solution", async (token, progress) => {
 				var result = await SolutionWriter.CreateSolutionAsync(path, language, assemblies, token,
-						settings: null, strongNameKeyFile: null, progress: progress)
+						settings, strongNameKeyFile: null, progress: progress)
 					.ConfigureAwait(false);
 				var o = new AvaloniaEditTextOutput { Title = Resources._SaveCode };
 				o.Write(result.StatusText);

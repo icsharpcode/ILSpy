@@ -127,7 +127,7 @@ public class ImageListResourceEntryNodeTests
 		var output = new AvaloniaEditTextOutput();
 		var language = AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
 
-		node.Decompile(language, output, new DecompilationOptions());
+		node.Decompile(language, output, new DecompilationOptions(new DecompilerSettings()));
 
 		output.UIElements.Should().HaveCount(1,
 			"the parent's Decompile contributes exactly one inline preview panel");

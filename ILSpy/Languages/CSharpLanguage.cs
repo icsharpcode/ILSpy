@@ -257,7 +257,12 @@ namespace ICSharpCode.ILSpy.Languages
 			var assembly = member.ParentModule?.MetadataFile;
 			if (assembly == null)
 				return true;
-			return !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, new DecompilerSettings());
+			// Use the effective settings, not defaults: which members MemberIsHidden hides
+			// depends on the decompiler options (and language version), and the tree must agree
+			// with what the text view actually elides.
+			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new DecompilerSettings();
+			return !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, settings);
 		}
 
 		public override RichText GetRichTextTooltip(IEntity entity)

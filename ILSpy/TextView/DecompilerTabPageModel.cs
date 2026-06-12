@@ -514,17 +514,14 @@ namespace ICSharpCode.ILSpy.TextView
 				{
 					(output, _) = await Task.Run(() => {
 						var output = new AvaloniaEditTextOutput { LengthLimit = outputLengthLimit };
-						var options = decompilerSettings != null
-							? new DecompilationOptions(decompilerSettings) {
-								CancellationToken = cts.Token,
-								StepLimit = stepLimit,
-								IsDebug = isDebug,
-							}
-							: new DecompilationOptions {
-								CancellationToken = cts.Token,
-								StepLimit = stepLimit,
-								IsDebug = isDebug,
-							};
+						// decompilerSettings is null only in design-time / minimal test hosts
+						// without composition; fall back to defaults there.
+						var options = new DecompilationOptions(
+							decompilerSettings ?? new ICSharpCode.Decompiler.DecompilerSettings()) {
+							CancellationToken = cts.Token,
+							StepLimit = stepLimit,
+							IsDebug = isDebug,
+						};
 						try
 						{
 							for (int i = 0; i < nodes.Count; i++)
@@ -714,52 +711,10 @@ namespace ICSharpCode.ILSpy.TextView
 			Text = text;
 		}
 
-		// Pulls the live DecompilerSettings via MEF and returns a clone for this run. Also
-		// bakes the active LanguageService.CurrentVersion into the clone — without this the
-		// toolbar's Language-Version dropdown writes-through to LanguageSettings but never
-		// reaches the decompiler. Resolves go through TryGetExport so design-time / minimal test
-		// hosts that bypass composition fall back to default settings rather than throwing.
+		// Pulls the effective DecompilerSettings (clone + Display options + toolbar language
+		// version) for this run. Resolves via TryGetExport so design-time / minimal test hosts
+		// that bypass composition fall back to default settings rather than throwing.
 		static ICSharpCode.Decompiler.DecompilerSettings? TryGetLiveDecompilerSettings()
-		{
-			var settingsService = AppEnv.AppComposition.TryGetExport<SettingsService>();
-			if (settingsService is null)
-				return null;
-			var settings = settingsService.DecompilerSettings.Clone();
-			ApplyDisplaySettings(settings, settingsService.DisplaySettings);
-			// No LanguageService (non-C# language or minimal host) leaves version null, so the
-			// language version falls back to Latest below.
-			var version = AppEnv.AppComposition.TryGetExport<Languages.LanguageService>()?.CurrentVersion;
-			if (Enum.TryParse<ICSharpCode.Decompiler.CSharp.LanguageVersion>(version?.Version, out var languageVersion))
-				settings.SetLanguageVersion(languageVersion);
-			else
-				settings.SetLanguageVersion(ICSharpCode.Decompiler.CSharp.LanguageVersion.Latest);
-			return settings;
-		}
-
-		/// <summary>
-		/// Bridges the Display options that affect decompiler output into <paramref name="settings"/>:
-		/// the fold-expansion flags (TextTokenWriter reads them to set each fold's DefaultClosed),
-		/// brace folding, debug-symbol info, and the indentation string. Without this these Display
-		/// options would have no effect on the produced source.
-		/// </summary>
-		internal static void ApplyDisplaySettings(ICSharpCode.Decompiler.DecompilerSettings settings, DisplaySettings display)
-		{
-			settings.ExpandUsingDeclarations = display.ExpandUsingDeclarations;
-			settings.ExpandMemberDefinitions = display.ExpandMemberDefinitions;
-			settings.FoldBraces = display.FoldBraces;
-			settings.ShowDebugInfo = display.ShowDebugInfo;
-			settings.CSharpFormattingOptions.IndentationString = GetIndentationString(display);
-		}
-
-		static string GetIndentationString(DisplaySettings display)
-		{
-			if (display.IndentationUseTabs)
-			{
-				int tabs = display.IndentationSize / display.IndentationTabSize;
-				int spaces = display.IndentationSize % display.IndentationTabSize;
-				return new string('\t', tabs) + new string(' ', spaces);
-			}
-			return new string(' ', display.IndentationSize);
-		}
+			=> AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings();
 	}
 }

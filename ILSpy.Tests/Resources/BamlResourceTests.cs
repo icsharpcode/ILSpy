@@ -94,7 +94,7 @@ public class BamlResourceTests
 		// (the handler doesn't touch the options for CanHandle).
 		EnsureComposition();
 		var handler = new BamlResourceFileHandler();
-		var context = new ResourceFileHandlerContext(new DecompilationOptions());
+		var context = new ResourceFileHandlerContext(new DecompilationOptions(new DecompilerSettings()));
 
 		// Act + Assert — three positive variants and two rejections.
 		handler.CanHandle("MainWindow.baml", context).Should().BeTrue();

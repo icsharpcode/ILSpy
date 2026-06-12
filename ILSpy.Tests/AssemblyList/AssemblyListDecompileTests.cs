@@ -53,7 +53,7 @@ public class AssemblyListDecompileTests
 		var output = new PlainTextOutput();
 		// Decompiling every assembly is far too slow for a test, so cancel up front: the header
 		// and the first rule are written before the first member decompilation observes the token.
-		var options = new DecompilationOptions { CancellationToken = new CancellationToken(true) };
+		var options = new DecompilationOptions(new DecompilerSettings()) { CancellationToken = new CancellationToken(true) };
 
 		try
 		{

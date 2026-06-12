@@ -107,7 +107,9 @@ namespace ICSharpCode.ILSpy.Commands
 			ArgumentNullException.ThrowIfNull(node);
 			ArgumentNullException.ThrowIfNull(language);
 
-			var options = new DecompilationOptions {
+			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new ICSharpCode.Decompiler.DecompilerSettings();
+			var options = new DecompilationOptions(settings) {
 				FullDecompilation = true,
 				EscapeInvalidIdentifiers = true,
 				CancellationToken = ct,
