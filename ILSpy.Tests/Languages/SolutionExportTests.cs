@@ -18,12 +18,14 @@
 
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Languages;
 
@@ -60,7 +62,7 @@ public class SolutionExportTests
 		var slnPath = Path.Combine(tempDir, "Solution.sln");
 		try
 		{
-			var result = await ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(slnPath, language, assemblies);
+			var result = await ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(slnPath, language, assemblies, CancellationToken.None, new DecompilerSettings());
 
 			result.Success.Should().BeTrue(
 				"the solution export should succeed for valid assemblies. Status:\n" + result.StatusText);
@@ -106,7 +108,7 @@ public class SolutionExportTests
 			// The same assembly twice collides on ShortName: the writer must refuse rather than
 			// clobber one project directory with another.
 			var result = await ICSharpCode.ILSpy.SolutionWriter.CreateSolutionAsync(
-				slnPath, language, new[] { assembly, assembly });
+				slnPath, language, new[] { assembly, assembly }, CancellationToken.None, new DecompilerSettings());
 
 			result.Success.Should().BeFalse("duplicate assembly names cannot produce a valid solution");
 			result.StatusText.Should().Contain("Duplicate assembly names");

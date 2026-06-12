@@ -42,7 +42,7 @@ public class DisplaySettingsBridgeTests
 		var display = new DisplaySettings { FoldBraces = true, ShowDebugInfo = true };
 		var settings = new DecompilerSettings { FoldBraces = false, ShowDebugInfo = false };
 
-		DecompilerTabPageModel.ApplyDisplaySettings(settings, display);
+		SettingsService.ApplyDisplaySettings(settings, display);
 
 		settings.FoldBraces.Should().BeTrue();
 		settings.ShowDebugInfo.Should().BeTrue();
@@ -54,7 +54,7 @@ public class DisplaySettingsBridgeTests
 		var display = new DisplaySettings { IndentationUseTabs = false, IndentationSize = 2 };
 		var settings = new DecompilerSettings();
 
-		DecompilerTabPageModel.ApplyDisplaySettings(settings, display);
+		SettingsService.ApplyDisplaySettings(settings, display);
 
 		settings.CSharpFormattingOptions.IndentationString.Should().Be("  ", "two spaces");
 	}
@@ -65,7 +65,7 @@ public class DisplaySettingsBridgeTests
 		var display = new DisplaySettings { IndentationUseTabs = true, IndentationSize = 4, IndentationTabSize = 4 };
 		var settings = new DecompilerSettings();
 
-		DecompilerTabPageModel.ApplyDisplaySettings(settings, display);
+		SettingsService.ApplyDisplaySettings(settings, display);
 
 		settings.CSharpFormattingOptions.IndentationString.Should().Be("\t", "one tab");
 	}
@@ -76,7 +76,7 @@ public class DisplaySettingsBridgeTests
 		var display = new DisplaySettings { ExpandUsingDeclarations = true, ExpandMemberDefinitions = true };
 		var settings = new DecompilerSettings { ExpandUsingDeclarations = false, ExpandMemberDefinitions = false };
 
-		DecompilerTabPageModel.ApplyDisplaySettings(settings, display);
+		SettingsService.ApplyDisplaySettings(settings, display);
 
 		settings.ExpandUsingDeclarations.Should().BeTrue();
 		settings.ExpandMemberDefinitions.Should().BeTrue();

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.ComponentModel;
 using System.Composition;
 
@@ -56,6 +57,52 @@ namespace ICSharpCode.ILSpy
 		public DisplaySettings DisplaySettings => GetSettings<DisplaySettings>();
 
 		public MiscSettings MiscSettings => GetSettings<MiscSettings>();
+
+		/// <summary>
+		/// Returns the effective decompiler settings a decompilation started right now would
+		/// use: a clone of <see cref="DecompilerSettings"/> with the Display options bridged in
+		/// and the language version selected in the toolbar applied. Mutating the returned
+		/// instance does not affect the persisted settings.
+		/// </summary>
+		public Decompiler.DecompilerSettings CreateEffectiveDecompilerSettings()
+		{
+			var settings = DecompilerSettings.Clone();
+			ApplyDisplaySettings(settings, DisplaySettings);
+			// No LanguageService (non-C# language or minimal test host) leaves the version
+			// null, so the language version falls back to Latest below.
+			var version = AppEnv.AppComposition.TryGetExport<Languages.LanguageService>()?.CurrentVersion;
+			if (Enum.TryParse<Decompiler.CSharp.LanguageVersion>(version?.Version, out var languageVersion))
+				settings.SetLanguageVersion(languageVersion);
+			else
+				settings.SetLanguageVersion(Decompiler.CSharp.LanguageVersion.Latest);
+			return settings;
+		}
+
+		/// <summary>
+		/// Bridges the Display options that affect decompiler output into <paramref name="settings"/>:
+		/// the fold-expansion flags (TextTokenWriter reads them to set each fold's DefaultClosed),
+		/// brace folding, debug-symbol info, and the indentation string. Without this these Display
+		/// options would have no effect on the produced source.
+		/// </summary>
+		internal static void ApplyDisplaySettings(Decompiler.DecompilerSettings settings, DisplaySettings display)
+		{
+			settings.ExpandUsingDeclarations = display.ExpandUsingDeclarations;
+			settings.ExpandMemberDefinitions = display.ExpandMemberDefinitions;
+			settings.FoldBraces = display.FoldBraces;
+			settings.ShowDebugInfo = display.ShowDebugInfo;
+			settings.CSharpFormattingOptions.IndentationString = GetIndentationString(display);
+		}
+
+		static string GetIndentationString(DisplaySettings display)
+		{
+			if (display.IndentationUseTabs)
+			{
+				int tabs = display.IndentationSize / display.IndentationTabSize;
+				int spaces = display.IndentationSize % display.IndentationTabSize;
+				return new string('\t', tabs) + new string(' ', spaces);
+			}
+			return new string(' ', display.IndentationSize);
+		}
 
 		public Updates.UpdateSettings UpdateSettings => GetSettings<Updates.UpdateSettings>();
 

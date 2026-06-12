@@ -66,6 +66,8 @@ namespace ICSharpCode.ILSpy.Commands
 
 		async Task ExecuteAsync()
 		{
+			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new ICSharpCode.Decompiler.DecompilerSettings();
 			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
 			await dockWorkspace.RunInNewTabAsync("Decompiling all assemblies…", token => Task.Run(() => {
 				var output = new AvaloniaEditTextOutput { Title = "Decompile All" };
@@ -82,7 +84,7 @@ namespace ICSharpCode.ILSpy.Commands
 						try
 						{
 							using var writer = new StreamWriter(path);
-							var options = new DecompilationOptions {
+							var options = new DecompilationOptions(settings) {
 								CancellationToken = token,
 								FullDecompilation = true,
 							};
@@ -133,6 +135,8 @@ namespace ICSharpCode.ILSpy.Commands
 
 		async Task ExecuteAsync()
 		{
+			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new ICSharpCode.Decompiler.DecompilerSettings();
 			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
 			await dockWorkspace.RunInNewTabAsync("Disassembling all assemblies…", token => Task.Run(() => {
 				var output = new AvaloniaEditTextOutput { Title = "Disassemble All" };
@@ -150,7 +154,7 @@ namespace ICSharpCode.ILSpy.Commands
 						try
 						{
 							using var writer = new StreamWriter(path);
-							var options = new DecompilationOptions {
+							var options = new DecompilationOptions(settings) {
 								CancellationToken = token,
 								FullDecompilation = true,
 							};
@@ -204,10 +208,12 @@ namespace ICSharpCode.ILSpy.Commands
 			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
 			if (nodes.Length == 0)
 				return;
+			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new ICSharpCode.Decompiler.DecompilerSettings();
 			// Run in a dedicated frozen tab so navigation cannot cancel this long run.
 			await dockWorkspace.RunInNewTabAsync("Decompiling 100×…", token => Task.Run(() => {
 				var watch = Stopwatch.StartNew();
-				var options = new DecompilationOptions { CancellationToken = token };
+				var options = new DecompilationOptions(settings) { CancellationToken = token };
 				for (int i = 0; i < NumRuns; i++)
 				{
 					foreach (var node in nodes)

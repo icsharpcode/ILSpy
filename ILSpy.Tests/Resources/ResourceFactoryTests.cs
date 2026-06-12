@@ -125,7 +125,7 @@ public class ResourceFactoryTests
 		var language = AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
 
 		// Act — decompile the resource node into the AvaloniaEdit text output.
-		node.Decompile(language, output, new DecompilationOptions());
+		node.Decompile(language, output, new DecompilationOptions(new DecompilerSettings()));
 
 		// Assert — exactly three UI elements (string grid + object grid + inherited Save button)
 		// and they all materialise as Avalonia Controls.

@@ -194,8 +194,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			var ext = Path.GetExtension(path);
 			var isProject = string.Equals(ext, language.ProjectFileExtension, StringComparison.OrdinalIgnoreCase);
 
+			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new ICSharpCode.Decompiler.DecompilerSettings();
 			await Task.Run(() => {
-				var options = new DecompilationOptions {
+				var options = new DecompilationOptions(settings) {
 					FullDecompilation = true,
 					EscapeInvalidIdentifiers = true,
 				};
