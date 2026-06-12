@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// A poor-man's equivalent of WPF's <c>CommandManager.RequerySuggested</c>. Avalonia has no

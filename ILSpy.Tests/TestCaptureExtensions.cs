@@ -25,8 +25,8 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
 
-using global::ILSpy.AppEnv;
-using global::ILSpy.Views;
+using global::ICSharpCode.ILSpy.AppEnv;
+using global::ICSharpCode.ILSpy.Views;
 
 namespace ICSharpCode.ILSpy.Tests;
 

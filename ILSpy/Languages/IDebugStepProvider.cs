@@ -22,7 +22,7 @@ using System;
 
 using ICSharpCode.Decompiler.IL.Transforms;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
 	/// A language that surfaces a <see cref="Stepper"/> of decompiler-pipeline steps for the

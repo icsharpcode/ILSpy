@@ -9,9 +9,9 @@ using Avalonia.Controls;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy;
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
 namespace TestPlugin
 {

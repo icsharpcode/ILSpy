@@ -27,10 +27,10 @@ using Dock.Model.Core;
 using Dock.Model.Mvvm;
 using Dock.Model.Mvvm.Controls;
 
-using ILSpy.Commands;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Docking
+namespace ICSharpCode.ILSpy.Docking
 {
 	public class ILSpyDockFactory : Factory
 	{

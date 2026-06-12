@@ -20,7 +20,7 @@ using Avalonia.Media;
 
 using AvaloniaEdit.Highlighting;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// A theme's colour override for a single named <see cref="HighlightingColor"/> (ported from

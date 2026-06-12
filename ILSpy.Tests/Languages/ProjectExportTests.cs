@@ -26,11 +26,11 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Languages;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -79,7 +79,7 @@ public class ProjectExportTests
 		Directory.CreateDirectory(tempDir);
 		try
 		{
-			var options = new global::ILSpy.DecompilationOptions {
+			var options = new global::ICSharpCode.ILSpy.DecompilationOptions {
 				FullDecompilation = true,
 				SaveAsProjectDirectory = tempDir,
 			};

@@ -21,7 +21,7 @@ using System.Windows.Input;
 
 using global::Avalonia.Data;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Minimal ICommand base. Avalonia has no global RequerySuggested signal like WPF's CommandManager,

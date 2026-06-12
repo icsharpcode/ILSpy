@@ -29,9 +29,9 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.ILSpyX;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// The outcome of a <see cref="SolutionWriter.CreateSolutionAsync"/> run: whether a complete

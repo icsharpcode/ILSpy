@@ -29,11 +29,11 @@ using Avalonia.VisualTree;
 
 using Dock.Avalonia.Controls;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// Injects an inline "freeze" Button into the tab header of every <see cref="DocumentTabStripItem"/>.

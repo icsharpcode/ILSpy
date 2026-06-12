@@ -25,7 +25,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata.DebugTables
+namespace ICSharpCode.ILSpy.Metadata.DebugTables
 {
 	/// <summary>
 	/// View of the MethodDebugInformation table — sequence-point and local-signature data

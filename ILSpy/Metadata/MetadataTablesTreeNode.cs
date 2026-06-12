@@ -23,13 +23,13 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.AppEnv;
-using ILSpy.Languages;
-using ILSpy.Metadata.CorTables;
-using ILSpy.Metadata.DebugTables;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.Metadata.CorTables;
+using ICSharpCode.ILSpy.Metadata.DebugTables;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Synthetic "Tables" container nested under each MetadataTreeNode. Lazily expands into
@@ -47,7 +47,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "Tables";
-		public override object Icon => Images.Images.MetadataTableGroup;
+		public override object Icon => Images.MetadataTableGroup;
 		public override string ToString() => "Tables";
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

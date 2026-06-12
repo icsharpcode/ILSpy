@@ -2,11 +2,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:vm="using:ILSpy.ViewModels"
-             xmlns:images="using:ILSpy.Images"
-             xmlns:controls="using:ILSpy.Views.Controls"
+             xmlns:vm="using:ICSharpCode.ILSpy.ViewModels"
+             xmlns:images="using:ICSharpCode.ILSpy"
+             xmlns:controls="using:ICSharpCode.ILSpy.Views.Controls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="26"
-             x:Class="ILSpy.MainToolBar"
+             x:Class="ICSharpCode.ILSpy.MainToolBar"
              x:DataType="vm:MainWindowViewModel">
 	<UserControl.Resources>
 		<!-- Re-template the SplitButton entirely so the chevron is a flat 8×4 filled

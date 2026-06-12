@@ -18,7 +18,7 @@
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Contract implemented by every tree node that wraps a TypeSystem entity (types,

@@ -25,9 +25,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.AssemblyTree
+namespace ICSharpCode.ILSpy.AssemblyTree
 {
 	/// <summary>
 	/// Resolves a metadata reference (entity, namespace, resource, assembly, ...) or a saved tree

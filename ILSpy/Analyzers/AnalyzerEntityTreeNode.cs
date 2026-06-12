@@ -23,11 +23,11 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Base for nodes that wrap an <see cref="IEntity"/> in the analyzer pane (the
@@ -54,7 +54,7 @@ namespace ILSpy.Analyzers
 		/// <summary>
 		/// The entity this row analyses (or represents as an analyser result). Subclasses
 		/// return <see langword="null"/> only for non-entity rows such as
-		/// <see cref="ILSpy.Analyzers.TreeNodes.AnalyzedModuleTreeNode"/>.
+		/// <see cref="ICSharpCode.ILSpy.Analyzers.TreeNodes.AnalyzedModuleTreeNode"/>.
 		/// </summary>
 		public abstract IEntity? Member { get; }
 

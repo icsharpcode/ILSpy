@@ -21,7 +21,7 @@ using System;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal class AnalyzedMethodTreeNode : AnalyzerEntityTreeNode
 	{
@@ -47,12 +47,12 @@ namespace ILSpy.Analyzers.TreeNodes
 		internal static object ResolveIcon(IMethod method)
 		{
 			var baseImage = method.IsConstructor
-				? Images.Images.Constructor
+				? Images.Constructor
 				: method.IsOperator
-					? Images.Images.Operator
-					: Images.Images.Method;
-			return Images.Images.GetIcon(baseImage,
-				Images.Images.GetOverlay(method.Accessibility),
+					? Images.Operator
+					: Images.Method;
+			return Images.GetIcon(baseImage,
+				Images.GetOverlay(method.Accessibility),
 				method.IsStatic,
 				method.IsExtensionMethod);
 		}

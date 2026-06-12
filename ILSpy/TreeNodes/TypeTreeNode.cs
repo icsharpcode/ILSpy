@@ -26,12 +26,12 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
@@ -66,16 +66,16 @@ namespace ILSpy.TreeNodes
 			get {
 				var typeDef = ResolveTypeDefinition();
 				if (typeDef == null)
-					return Images.Images.Class;
+					return Images.Class;
 				var baseImage = typeDef.Kind switch {
-					TypeKind.Interface => Images.Images.Interface,
-					TypeKind.Struct or TypeKind.Void => Images.Images.Struct,
-					TypeKind.Delegate => Images.Images.Delegate,
-					TypeKind.Enum => Images.Images.Enum,
-					_ => Images.Images.Class,
+					TypeKind.Interface => Images.Interface,
+					TypeKind.Struct or TypeKind.Void => Images.Struct,
+					TypeKind.Delegate => Images.Delegate,
+					TypeKind.Enum => Images.Enum,
+					_ => Images.Class,
 				};
-				return Images.Images.GetIcon(baseImage,
-					Images.Images.GetOverlay(typeDef.Accessibility), typeDef.IsStatic);
+				return Images.GetIcon(baseImage,
+					Images.GetOverlay(typeDef.Accessibility), typeDef.IsStatic);
 			}
 		}
 

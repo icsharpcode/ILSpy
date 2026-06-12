@@ -20,7 +20,7 @@ using Avalonia.Input;
 
 using AvaloniaEdit.Rendering;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// A clickable piece of text that maps back to a <see cref="ReferenceSegment"/>. Sets a hand

@@ -33,7 +33,7 @@ using Avalonia.VisualTree;
 
 using CommunityToolkit.Mvvm.Input;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	public static class GlobalExceptionHandler
 	{

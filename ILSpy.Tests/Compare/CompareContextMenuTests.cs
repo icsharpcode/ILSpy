@@ -25,13 +25,13 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Compare;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Compare;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -53,7 +53,7 @@ public class CompareContextMenuTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
 
-		var entry = AppComposition.Current.GetExport<global::ILSpy.ContextMenuEntryRegistry>()
+		var entry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
 			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
 		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 			.Where(a => a.IsLoadedAsValidAssembly).Take(2).ToList();
@@ -73,7 +73,7 @@ public class CompareContextMenuTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
-		var entry = AppComposition.Current.GetExport<global::ILSpy.ContextMenuEntryRegistry>()
+		var entry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
 			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(coreLibName);
@@ -91,9 +91,9 @@ public class CompareContextMenuTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
 
-		var entry = AppComposition.Current.GetExport<global::ILSpy.ContextMenuEntryRegistry>()
+		var entry = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
 			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
-		var dockWorkspace = AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>();
+		var dockWorkspace = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Docking.DockWorkspace>();
 		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
 			.Where(a => a.IsLoadedAsValidAssembly).Take(2).ToList();
 		var nodes = assemblies.Select(a =>

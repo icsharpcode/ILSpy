@@ -33,9 +33,9 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Builds DataGrid columns for a metadata-row type by reflecting over its public
@@ -332,15 +332,15 @@ namespace ILSpy.Metadata
 			// (multi-select chips) from independent flags (tri-state pills) and drives
 			// ColumnFilter.FlagsState. A Flyout (not a raw Popup) supplies light dismiss,
 			// Escape-to-close, focus handling, and theme-correct presenter chrome.
-			var schema = ILSpy.Metadata.Filters.FlagsSchemaInferer.For(enumType);
+			var schema = ICSharpCode.ILSpy.Metadata.Filters.FlagsSchemaInferer.For(enumType);
 			bool freshlyCreated = filter.FlagsState is null;
-			filter.FlagsState ??= new ILSpy.Metadata.Filters.FilterState(schema);
+			filter.FlagsState ??= new ICSharpCode.ILSpy.Metadata.Filters.FilterState(schema);
 			// On first build, restore any persisted state for this (table, column).
 			// Subsequent opens already carry the live state in-memory. Then subscribe so
 			// later mutations write back to SessionSettings.
 			if (freshlyCreated && pageKey != null)
 				ApplyPersistedFilterState(filter.FlagsState, pageKey, columnName);
-			var popupContent = new ILSpy.Views.Filters.FlagsFilterPopup(filter.FlagsState);
+			var popupContent = new ICSharpCode.ILSpy.Views.Filters.FlagsFilterPopup(filter.FlagsState);
 
 			var flyoutContent = new ScrollViewer {
 				MaxHeight = 400,
@@ -384,7 +384,7 @@ namespace ILSpy.Metadata
 		/// restore is strictly less bad than failing the popup build entirely.
 		/// </summary>
 		static void ApplyPersistedFilterState(
-			ILSpy.Metadata.Filters.FilterState state,
+			ICSharpCode.ILSpy.Metadata.Filters.FilterState state,
 			string pageKey,
 			string columnName)
 		{
@@ -402,13 +402,13 @@ namespace ILSpy.Metadata
 			var key = (pageKey, columnName);
 			if (settings.FilterStates.TryGetValue(key, out var savedXml))
 			{
-				ILSpy.Metadata.Filters.FilterStatePersistence.ApplyXml(state, savedXml);
+				ICSharpCode.ILSpy.Metadata.Filters.FilterStatePersistence.ApplyXml(state, savedXml);
 			}
 			state.PropertyChanged += (_, _) => {
 				if (state.IsEmpty)
 					settings.FilterStates.Remove(key);
 				else
-					settings.FilterStates[key] = ILSpy.Metadata.Filters.FilterStatePersistence.ToXml(state);
+					settings.FilterStates[key] = ICSharpCode.ILSpy.Metadata.Filters.FilterStatePersistence.ToXml(state);
 			};
 		}
 

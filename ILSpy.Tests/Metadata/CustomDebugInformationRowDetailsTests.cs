@@ -35,13 +35,13 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Metadata;
-using ILSpy.Metadata.DebugTables;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata.DebugTables;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 
-using CustomDebugInformationEntry = ILSpy.Metadata.DebugTables.CustomDebugInformationTableTreeNode.CustomDebugInformationEntry;
+using CustomDebugInformationEntry = ICSharpCode.ILSpy.Metadata.DebugTables.CustomDebugInformationTableTreeNode.CustomDebugInformationEntry;
 
 namespace ICSharpCode.ILSpy.Tests.Metadata;
 

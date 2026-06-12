@@ -26,9 +26,9 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// One <c>MemberRef</c> entry inside <see cref="TypeReferenceTreeNode"/>: a method or
@@ -55,9 +55,9 @@ namespace ILSpy.TreeNodes
 		public override object NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.ReferencedTypes})";
 
 		public override object Icon => r.MemberReferenceKind switch {
-			MemberReferenceKind.Method => Images.Images.MethodReference,
-			MemberReferenceKind.Field => Images.Images.FieldReference,
-			_ => Images.Images.TypeReference,
+			MemberReferenceKind.Method => Images.MethodReference,
+			MemberReferenceKind.Field => Images.FieldReference,
+			_ => Images.TypeReference,
 		};
 
 		public string Signature => Language.EntityToString(resolvedMember, ConversionFlags.None);

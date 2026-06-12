@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.Abstractions;
 
-namespace ILSpy.ImageList
+namespace ICSharpCode.ILSpy.ImageList
 {
 	/// <summary>
 	/// MEF-discovered factory that claims serialized <c>ImageListStreamer</c> entries inside

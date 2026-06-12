@@ -23,10 +23,10 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
@@ -49,8 +49,8 @@ namespace ILSpy.TreeNodes
 
 		public override object NavigationText => Language.EntityToString(EventDefinition, ConversionFlags.ShowDeclaringType);
 
-		public override object Icon => Images.Images.GetIcon(Images.Images.Event,
-			Images.Images.GetOverlay(EventDefinition.Accessibility), EventDefinition.IsStatic);
+		public override object Icon => Images.GetIcon(Images.Event,
+			Images.GetOverlay(EventDefinition.Accessibility), EventDefinition.IsStatic);
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileEvent(EventDefinition, output, options);

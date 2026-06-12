@@ -20,10 +20,10 @@ using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click one or more assemblies -> "Export Project/Solution...". Opens the configuration

@@ -31,9 +31,9 @@ using Dock.Model.Controls;
 using Dock.Model.Core;
 using Dock.Serializer.SystemTextJson;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Docking
+namespace ICSharpCode.ILSpy.Docking
 {
 	/// <summary>
 	/// STJ counterpart of Dock.Serializer.Newtonsoft's DockSerializer. Mirrors the

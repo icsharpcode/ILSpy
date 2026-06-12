@@ -24,10 +24,10 @@ using System.Linq;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Root of the analyzer pane's tree. Holds one <see cref="AnalyzerEntityTreeNode"/>

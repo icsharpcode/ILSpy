@@ -24,9 +24,9 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Lists the embedded resources of an assembly. Children are <see cref="ResourceTreeNode"/>
@@ -46,7 +46,7 @@ namespace ILSpy.TreeNodes
 
 		public override object? NavigationText => $"{Text} ({module.Name})";
 
-		public override object Icon => IsExpanded ? Images.Images.FolderOpen : Images.Images.FolderClosed;
+		public override object Icon => IsExpanded ? Images.FolderOpen : Images.FolderClosed;
 
 		protected override void OnExpanding()
 		{

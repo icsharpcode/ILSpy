@@ -27,10 +27,10 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// One row of the export preview: the project that will be written for an assembly plus the

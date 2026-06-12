@@ -20,7 +20,7 @@ using Avalonia.Controls;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-namespace ILSpy.Controls.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	/// <summary>
 	/// Container for a single <see cref="SharpTreeNode"/> row in a <see cref="SharpTreeView"/>.

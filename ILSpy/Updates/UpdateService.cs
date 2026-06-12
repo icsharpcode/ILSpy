@@ -26,7 +26,7 @@ using System.Xml.Linq;
 
 using ICSharpCode.Decompiler;
 
-namespace ILSpy.Updates
+namespace ICSharpCode.ILSpy.Updates
 {
 	/// <summary>
 	/// Per-build version identity reported to <see cref="UpdateService"/> for comparing

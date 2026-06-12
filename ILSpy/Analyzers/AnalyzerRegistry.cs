@@ -22,7 +22,7 @@ using System.Linq;
 
 using ICSharpCode.ILSpyX.Analyzers;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// MEF aggregator for <see cref="ExportAnalyzerAttribute"/>-tagged analyzers. System.Composition

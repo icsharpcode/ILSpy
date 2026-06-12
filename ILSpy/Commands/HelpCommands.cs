@@ -20,9 +20,9 @@ using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._Help), Header = nameof(Resources._CheckUpdates), MenuCategory = "Help", MenuOrder = 0)]
 	[Shared]

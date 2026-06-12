@@ -24,12 +24,12 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL.Transforms;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
 	/// Debug Steps support for the C# language: coarse, one step per AST transform, shown in the
@@ -67,7 +67,7 @@ namespace ILSpy.Languages
 			// The button always shows so the pane is one click away; mirrors the ILAst language.
 			// DockWorkspace is resolved lazily (an ImportingConstructor import would form a MEF
 			// cycle via LanguageService -> Languages).
-			(output as ISmartTextOutput)?.AddButton(Images.Images.ViewCode, "Show Steps", delegate {
+			(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
 				AppComposition.TryGetExport<DockWorkspace>()?.ShowToolPane(DebugStepsPaneModel.PaneContentId);
 			});
 			// Only a full run refreshes the step list; a step-limited re-decompile (triggered by the

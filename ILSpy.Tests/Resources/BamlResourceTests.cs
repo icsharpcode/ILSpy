@@ -26,17 +26,17 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX.Abstractions;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Baml;
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Baml;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
-using IResourceFileHandler = ILSpy.Languages.IResourceFileHandler;
-using ResourceFileHandlerContext = ILSpy.Languages.ResourceFileHandlerContext;
+using IResourceFileHandler = ICSharpCode.ILSpy.Languages.IResourceFileHandler;
+using ResourceFileHandlerContext = ICSharpCode.ILSpy.Languages.ResourceFileHandlerContext;
 
 namespace ICSharpCode.ILSpy.Tests;
 

@@ -30,7 +30,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ILCompiler.Reflection.ReadyToRun;
 using ILCompiler.Reflection.ReadyToRun.Amd64;
 
-using ILSpy;
+using ICSharpCode.ILSpy;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {

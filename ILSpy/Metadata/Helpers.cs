@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Metadata;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Classifies a column for the DataGrid view (Phase 2+). Heap-offset cells render with a

@@ -21,10 +21,10 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy;
-using ILSpy.Commands;
-using ILSpy.Metadata;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 

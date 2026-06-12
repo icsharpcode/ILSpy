@@ -19,7 +19,7 @@
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// Modal prompt for a single text field — used by ManageAssemblyListsDialog's

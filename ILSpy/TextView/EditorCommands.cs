@@ -20,7 +20,7 @@ using System.Composition;
 
 using ICSharpCode.ILSpy.Properties;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Right-click → Copy. Lives in the editor's context menu only (gated by

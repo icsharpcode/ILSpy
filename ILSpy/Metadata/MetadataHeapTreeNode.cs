@@ -22,10 +22,10 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Common parent for the four heap views (#Strings, #US, #GUID, #Blob). Holds the
@@ -46,7 +46,7 @@ namespace ILSpy.Metadata
 			this.metadataFile = metadataFile ?? throw new ArgumentNullException(nameof(metadataFile));
 		}
 
-		public override object Icon => Images.Images.Heap;
+		public override object Icon => Images.Heap;
 	}
 
 	/// <summary>

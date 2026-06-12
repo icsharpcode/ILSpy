@@ -3,7 +3,7 @@
 
 using System.Composition;
 
-using ILSpy;
+using ICSharpCode.ILSpy;
 
 namespace TestPlugin
 {

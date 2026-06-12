@@ -26,7 +26,7 @@ using Avalonia.Threading;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
 using NUnit.Framework;
 

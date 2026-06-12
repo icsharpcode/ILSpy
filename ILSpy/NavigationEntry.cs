@@ -23,11 +23,11 @@ using Avalonia.Media;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Navigation
+namespace ICSharpCode.ILSpy.Navigation
 {
 	/// <summary>
 	/// One stop on the back/forward stack: a (tab, target) pair where the target is either a

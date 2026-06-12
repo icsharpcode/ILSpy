@@ -23,11 +23,11 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Commands;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Resolves <c>metadata://</c> hyperlinks in the decompiler output to a metadata-tree

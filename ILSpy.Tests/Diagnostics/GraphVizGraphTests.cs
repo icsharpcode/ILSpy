@@ -38,7 +38,7 @@ public class GraphVizGraphTests
 	{
 		// Every GraphVizGraph must start with `digraph G {` + the default `node [fontsize=16];`
 		// preamble. That preamble is what makes the generated DOT readable when dot renders it.
-		var g = new global::ILSpy.Util.GraphVizGraph();
+		var g = new global::ICSharpCode.ILSpy.Util.GraphVizGraph();
 		var sw = new StringWriter();
 		g.Save(sw);
 		var dot = sw.ToString();
@@ -52,8 +52,8 @@ public class GraphVizGraphTests
 	{
 		// A node emits as `<id> [label="...", shape=...]` — the box shape is what the
 		// CFG viewer relies on so every basic block reads as a rectangle.
-		var g = new global::ILSpy.Util.GraphVizGraph();
-		g.AddNode(new global::ILSpy.Util.GraphVizNode(42) { label = "BB.42", shape = "box" });
+		var g = new global::ICSharpCode.ILSpy.Util.GraphVizGraph();
+		g.AddNode(new global::ICSharpCode.ILSpy.Util.GraphVizNode(42) { label = "BB.42", shape = "box" });
 		var sw = new StringWriter();
 		g.Save(sw);
 		var dot = sw.ToString();
@@ -67,9 +67,9 @@ public class GraphVizGraphTests
 	{
 		// Successor edges have no color (rendered as black); dominator edges use green
 		// — that's how the CFG viewer distinguishes the two relationship overlays.
-		var g = new global::ILSpy.Util.GraphVizGraph();
-		g.AddEdge(new global::ILSpy.Util.GraphVizEdge(1, 2));
-		g.AddEdge(new global::ILSpy.Util.GraphVizEdge(1, 2) { color = "green" });
+		var g = new global::ICSharpCode.ILSpy.Util.GraphVizGraph();
+		g.AddEdge(new global::ICSharpCode.ILSpy.Util.GraphVizEdge(1, 2));
+		g.AddEdge(new global::ICSharpCode.ILSpy.Util.GraphVizEdge(1, 2) { color = "green" });
 		var sw = new StringWriter();
 		g.Save(sw);
 		var dot = sw.ToString();
@@ -82,8 +82,8 @@ public class GraphVizGraphTests
 	{
 		// A literal `"` inside a label would otherwise terminate the DOT string token
 		// early. The escaper turns it into `\"` so dot parses the whole label as one token.
-		var g = new global::ILSpy.Util.GraphVizGraph();
-		g.AddNode(new global::ILSpy.Util.GraphVizNode(0) { label = "a \"quoted\" label" });
+		var g = new global::ICSharpCode.ILSpy.Util.GraphVizGraph();
+		g.AddNode(new global::ICSharpCode.ILSpy.Util.GraphVizNode(0) { label = "a \"quoted\" label" });
 		var sw = new StringWriter();
 		g.Save(sw);
 		sw.ToString().Should().Contain("\"a \\\"quoted\\\" label\"");

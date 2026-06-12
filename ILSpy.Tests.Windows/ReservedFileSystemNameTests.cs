@@ -24,7 +24,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 
-using ILSpy.Commands;
+using ICSharpCode.ILSpy.Commands;
 
 using NUnit.Framework;
 

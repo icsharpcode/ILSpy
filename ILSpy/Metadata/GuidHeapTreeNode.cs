@@ -22,7 +22,7 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// View of #GUID — a contiguous array of 16-byte GUIDs indexed (1-based) by ModuleDef

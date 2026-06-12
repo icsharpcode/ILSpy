@@ -24,7 +24,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class AssemblyListTreeNode : ILSpyTreeNode
 	{

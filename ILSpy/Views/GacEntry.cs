@@ -20,7 +20,7 @@ using System.Text;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// One row in the GAC browser. Wraps an <see cref="AssemblyNameReference"/> + the

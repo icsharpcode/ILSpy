@@ -18,7 +18,7 @@
 
 using Avalonia.Controls;
 
-namespace ILSpy.Docking
+namespace ICSharpCode.ILSpy.Docking
 {
 	/// <summary>
 	/// A dockable view-model that owns its realised view instance. The dock chrome must render

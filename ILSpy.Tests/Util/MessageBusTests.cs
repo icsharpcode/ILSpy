@@ -24,7 +24,7 @@ using System.Threading;
 
 using AwesomeAssertions;
 
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Util;
 
 using NUnit.Framework;
 

@@ -24,9 +24,9 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// References folder under an assembly node. Children are one
@@ -48,7 +48,7 @@ namespace ILSpy.TreeNodes
 
 		public override object? NavigationText => $"{Text} ({module.Name})";
 
-		public override object Icon => Images.Images.ReferenceFolder;
+		public override object Icon => Images.ReferenceFolder;
 
 		protected override void LoadChildren()
 		{

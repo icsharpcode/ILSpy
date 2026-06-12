@@ -27,9 +27,9 @@ using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Hosts the per-row details content of a metadata DataGrid. The DataGrid builds its

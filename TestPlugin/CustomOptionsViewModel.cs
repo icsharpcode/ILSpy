@@ -8,8 +8,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX.Settings;
 
-using ILSpy;
-using ILSpy.Options;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Options;
 
 namespace TestPlugin
 {

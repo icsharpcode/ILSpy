@@ -18,7 +18,7 @@
 
 using ICSharpCode.ILSpy.Properties;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	internal static class ResourceHelper
 	{

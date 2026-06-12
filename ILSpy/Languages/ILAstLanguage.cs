@@ -31,14 +31,14 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
 
 using SRM = System.Reflection.Metadata;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
 	/// Debug-only language that surfaces the decompiler pipeline's intermediate state.
@@ -60,7 +60,7 @@ namespace ILSpy.Languages
 		// ILAst output uses the same `{}/()/[]` bracket conventions as C#, plus C#-style
 		// `//` comments and `"..."` strings. Reusing CSharpBracketSearcher gives the
 		// language correct bracket highlighting without a per-grammar implementation.
-		public override ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
+		public override ICSharpCode.ILSpy.TextView.IBracketSearcher BracketSearcher { get; } = new CSharpBracketSearcher();
 
 		/// <summary>
 		/// Fires after a <see cref="DecompileMethod"/> run installs a fresh <see cref="Stepper"/>.
@@ -183,7 +183,7 @@ namespace ILSpy.Languages
 			// DockWorkspace is resolved lazily here, not via [ImportingConstructor]: it imports
 			// LanguageService, which imports the registered Languages, so a constructor import would
 			// form a composition cycle. The lazy lookup costs one MEF resolve per "Show Steps" click.
-			(output as ISmartTextOutput)?.AddButton(Images.Images.ViewCode, "Show Steps", delegate {
+			(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
 				AppComposition.TryGetExport<DockWorkspace>()?.ShowToolPane(DebugStepsPaneModel.PaneContentId);
 			});
 			output.WriteLine();

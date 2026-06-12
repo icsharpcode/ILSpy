@@ -25,9 +25,9 @@ using CommunityToolkit.Mvvm.Input;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Content viewmodel for the Options document tab. Wraps the live

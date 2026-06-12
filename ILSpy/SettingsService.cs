@@ -22,10 +22,10 @@ using System.Composition;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
-using ILSpy.Options;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	[Export]
 	[Shared]

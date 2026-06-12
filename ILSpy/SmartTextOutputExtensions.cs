@@ -28,10 +28,10 @@ using Avalonia.Media;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.TextView;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	public static class SmartTextOutputExtensions
 	{

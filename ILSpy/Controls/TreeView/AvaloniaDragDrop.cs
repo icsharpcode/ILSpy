@@ -22,7 +22,7 @@ using Avalonia.Input;
 
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-namespace ILSpy.Controls.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	/// <summary>
 	/// In-process <see cref="IPlatformDataObject"/> -- a simple format-to-value map. A tree node's

@@ -22,10 +22,10 @@ using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Docking;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Right-click → "Analyze" — pushes every selected member (type, method, field, property,

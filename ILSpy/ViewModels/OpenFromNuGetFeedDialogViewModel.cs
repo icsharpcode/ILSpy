@@ -25,9 +25,9 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using ILSpy.NuGetFeeds;
+using ICSharpCode.ILSpy.NuGetFeeds;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// Drives the "Open from NuGet feed" dialog: debounced search against the selected

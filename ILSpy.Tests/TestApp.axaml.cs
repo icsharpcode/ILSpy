@@ -21,10 +21,10 @@ using System.IO;
 
 using ICSharpCode.ILSpyX.Settings;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-using ProductionApp = ILSpy.App;
-using SettingsService = ILSpy.SettingsService;
+using ProductionApp = ICSharpCode.ILSpy.App;
+using SettingsService = ICSharpCode.ILSpy.SettingsService;
 
 namespace ICSharpCode.ILSpy.Tests;
 

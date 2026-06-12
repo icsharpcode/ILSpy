@@ -31,7 +31,7 @@ using Avalonia.VisualTree;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// Manage Assembly Lists dialog: list of saved assembly-list names with New / Clone /

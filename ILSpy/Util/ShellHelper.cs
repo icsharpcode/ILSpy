@@ -20,7 +20,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace ILSpy.Util
+namespace ICSharpCode.ILSpy.Util
 {
 	/// <summary>
 	/// Cross-platform helpers for handing a path to the OS shell: open a folder, reveal a file in

@@ -18,7 +18,7 @@
 
 using System.Collections.Generic;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// How a live <see cref="DisplaySettings"/> change has to be surfaced. The Options page is

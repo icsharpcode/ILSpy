@@ -28,11 +28,11 @@ using AwesomeAssertions;
 
 using Dock.Avalonia.Controls;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.TextView;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

@@ -22,10 +22,10 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Options;
-using ILSpy.Themes;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Themes;
 
 using NUnit.Framework;
 

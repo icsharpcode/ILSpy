@@ -21,9 +21,9 @@ using System.Collections.Generic;
 using AvaloniaEdit.Highlighting;
 using AvaloniaEdit.Rendering;
 
-using ILSpy.Themes;
+using ICSharpCode.ILSpy.Themes;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Wraps AvaloniaEdit's default colorizer so colours flip when the active theme is

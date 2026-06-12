@@ -19,9 +19,9 @@
 using System;
 using System.Threading.Tasks;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	public static class FireAndForgetExtensions
 	{

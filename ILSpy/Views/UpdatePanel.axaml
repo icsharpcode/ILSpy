@@ -1,7 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:ILSpy.ViewModels"
-             x:Class="ILSpy.Views.UpdatePanel"
+             xmlns:vm="using:ICSharpCode.ILSpy.ViewModels"
+             x:Class="ICSharpCode.ILSpy.Views.UpdatePanel"
              x:DataType="vm:UpdatePanelViewModel"
              IsVisible="{Binding IsPanelVisible}">
 	<UserControl.Styles>

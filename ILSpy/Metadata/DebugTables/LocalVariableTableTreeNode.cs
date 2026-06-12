@@ -22,7 +22,7 @@ using System.Reflection.Metadata.Ecma335;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata.DebugTables
+namespace ICSharpCode.ILSpy.Metadata.DebugTables
 {
 	/// <summary>
 	/// View of the LocalVariable table — debug-info for named local slots inside method

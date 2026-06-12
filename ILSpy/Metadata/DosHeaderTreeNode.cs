@@ -22,10 +22,10 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Renders the 64-byte legacy DOS header sitting at offset 0 of every PE file. Phase 1
@@ -41,7 +41,7 @@ namespace ILSpy.Metadata
 		}
 
 		public override object Text => "DOS Header";
-		public override object Icon => Images.Images.Header;
+		public override object Icon => Images.Header;
 		public override string ToString() => "DOS Header";
 
 		public override ContentPageModel CreateTab()

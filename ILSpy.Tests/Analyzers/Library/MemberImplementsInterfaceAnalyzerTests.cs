@@ -29,7 +29,7 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
 using NSubstitute;
 

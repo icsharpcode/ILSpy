@@ -20,8 +20,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler;
 
-using ILSpy.Options;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.TextView;
 
 using NUnit.Framework;
 

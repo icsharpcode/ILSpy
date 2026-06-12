@@ -26,14 +26,14 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.Analyzers;
-using ILSpy.Analyzers.TreeNodes;
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

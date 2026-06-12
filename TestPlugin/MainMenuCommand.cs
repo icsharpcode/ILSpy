@@ -3,8 +3,8 @@
 
 using System.Composition;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Commands;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Commands;
 
 namespace TestPlugin
 {

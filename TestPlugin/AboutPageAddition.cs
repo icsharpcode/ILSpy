@@ -8,9 +8,9 @@ using Avalonia.Media;
 
 using AvaloniaEdit.Highlighting;
 
-using ILSpy;
-using ILSpy.Commands;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.TextView;
 
 namespace TestPlugin
 {

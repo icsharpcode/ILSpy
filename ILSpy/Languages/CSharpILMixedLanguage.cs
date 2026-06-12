@@ -39,9 +39,9 @@ using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
 
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	using SequencePoint = ICSharpCode.Decompiler.DebugInfo.SequencePoint;
 

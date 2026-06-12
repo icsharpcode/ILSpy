@@ -33,7 +33,7 @@ using NuGet.Protocol;
 using NuGet.Protocol.Core.Types;
 using NuGet.Versioning;
 
-namespace ILSpy.NuGetFeeds
+namespace ICSharpCode.ILSpy.NuGetFeeds
 {
 	/// <summary>
 	/// <see cref="INuGetFeedClient"/> backed by the NuGet client libraries, talking to

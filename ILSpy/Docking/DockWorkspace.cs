@@ -42,16 +42,16 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.Metadata;
-using ILSpy.Navigation;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Navigation;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Docking
+namespace ICSharpCode.ILSpy.Docking
 {
 	[Export]
 	[Shared]
@@ -166,7 +166,7 @@ namespace ILSpy.Docking
 			LanguageService languageService,
 			Metadata.MetadataNavigator metadataNavigator)
 		{
-			ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor entered");
+			ICSharpCode.ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor entered");
 			this.assemblyTreeModel = assemblyTreeModel;
 			this.languageService = languageService;
 			this.metadataNavigator = metadataNavigator;
@@ -176,32 +176,32 @@ namespace ILSpy.Docking
 				entry => entry != null && (history.BackEntries.Contains(entry) || history.ForwardEntries.Contains(entry)));
 			ShowSearchCommand = new RelayCommand(ExecuteShowSearch);
 			CloseActiveDocumentCommand = new RelayCommand(CloseActiveDocument);
-			using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor + CreateLayout + InitLayout"))
+			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor + CreateLayout + InitLayout"))
 			{
-				using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor"))
+				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory ctor"))
 					factory = new ILSpyDockFactory(toolPaneRegistry);
 				// Prefer the user's saved layout (ILSpy.Layout.json sidecar next to
 				// ILSpy.xml); fall back to the default layout if there is no saved one
 				// or it failed to deserialize. The fallback path is the same shape the
 				// app uses on first launch.
 				IRootDock? loaded;
-				using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.LoadLayout"))
+				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.LoadLayout"))
 					loaded = factory.LoadLayout(GetLayoutFilePath());
 				if (loaded != null)
 				{
 					Layout = loaded;
-					ILSpy.AppEnv.AppLog.Mark("ILSpyDockFactory: using LOADED layout");
+					ICSharpCode.ILSpy.AppEnv.AppLog.Mark("ILSpyDockFactory: using LOADED layout");
 				}
 				else
 				{
-					using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.CreateLayout (default)"))
+					using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.CreateLayout (default)"))
 						Layout = factory.CreateLayout();
 				}
 				// Build the layout, then InitLayout BEFORE the chrome ever sees it, rather than
 				// letting the DockControl's InitializeFactory / InitializeLayout flags run it
 				// post-template-apply. Wiring owners/factories/locators up front means the
 				// layout is fully resolvable before the first DeferredContentControl attaches.
-				using (ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.InitLayout"))
+				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ILSpyDockFactory.InitLayout"))
 					factory.InitLayout(Layout);
 			}
 
@@ -237,12 +237,12 @@ namespace ILSpy.Docking
 			// Close orphaned carve-out tabs when their assembly is removed. The persistent
 			// MainTab slot is left alone — its content will swap to whatever the user selects
 			// next via the assembly tree. Mirrors WPF's DockWorkspace.CurrentAssemblyList_Changed.
-			ILSpy.Util.MessageBus<ILSpy.Util.CurrentAssemblyListChangedEventArgs>.Subscribers
+			ICSharpCode.ILSpy.Util.MessageBus<ICSharpCode.ILSpy.Util.CurrentAssemblyListChangedEventArgs>.Subscribers
 				+= OnAssemblyListChanged;
-			ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor exited");
+			ICSharpCode.ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor exited");
 		}
 
-		void OnAssemblyListChanged(object? sender, ILSpy.Util.CurrentAssemblyListChangedEventArgs e)
+		void OnAssemblyListChanged(object? sender, ICSharpCode.ILSpy.Util.CurrentAssemblyListChangedEventArgs e)
 		{
 			var inner = e.Inner;
 
@@ -667,7 +667,7 @@ namespace ILSpy.Docking
 			// EntityReferences with a non-"decompile" protocol (e.g. metadata://) get a first
 			// pass through registered IProtocolHandler exports. The first handler returning a
 			// non-null node wins; if none match we fall through to the default resolver.
-			if (segment.Reference is global::ILSpy.EntityReference entity
+			if (segment.Reference is global::ICSharpCode.ILSpy.EntityReference entity
 				&& entity.Protocol != "decompile")
 			{
 				var module = entity.ResolveAssembly(assemblyTreeModel.AssemblyList!);
@@ -750,7 +750,7 @@ namespace ILSpy.Docking
 
 		void ShowSelectedNode()
 		{
-			using var _ = ILSpy.AppEnv.AppLog.Phase("DockWorkspace.ShowSelectedNode");
+			using var _ = ICSharpCode.ILSpy.AppEnv.AppLog.Phase("DockWorkspace.ShowSelectedNode");
 			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
 			if (nodes.Length == 0)
 			{
@@ -784,7 +784,7 @@ namespace ILSpy.Docking
 			// Carve-outs ("Open in new tab", "Freeze tab") aren't implemented yet and would
 			// branch off this path before the Content swap.
 			ContentPageModel? customContent;
-			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: node.CreateTab"))
+			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: node.CreateTab"))
 				customContent = nodes.Length == 1 ? nodes[0].CreateTab() : null;
 
 			if (customContent != null)
@@ -802,15 +802,15 @@ namespace ILSpy.Docking
 			}
 
 			DecompilerTabPageModel decTab;
-			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: get/create decompilerContent"))
+			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: get/create decompilerContent"))
 				decTab = decompilerContent ??= CreateDecompilerContent();
-			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: main.Content = decTab (Dock view-recycling)"))
+			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: main.Content = decTab (Dock view-recycling)"))
 				main.Content = decTab;
 			decTab.Language = languageService.CurrentLanguage;
-			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: decTab.CurrentNodes = nodes (kicks off DecompileAsync)"))
+			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: decTab.CurrentNodes = nodes (kicks off DecompileAsync)"))
 				decTab.CurrentNodes = nodes;
 			main.SourceNode = nodes.Length == 1 ? nodes[0] : null;
-			using (ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: ActivateMainTabIfNeeded"))
+			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: ActivateMainTabIfNeeded"))
 				ActivateMainTabIfNeeded(main);
 		}
 
@@ -1114,14 +1114,14 @@ namespace ILSpy.Docking
 
 		void ExecuteShowSearch()
 		{
-			ShowToolPane(ILSpy.Search.SearchPaneModel.PaneContentId);
+			ShowToolPane(ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
 			// Hand keyboard focus to the search input AFTER activating the pane — the view's
 			// code-behind subscribes to FocusRequested and posts the focus shift onto the
 			// dispatcher so the freshly-active pane has a frame to surface in the layout
 			// first. Resolving the pane through AppComposition (instead of injecting it)
 			// keeps the dock-workspace decoupled from the search namespace. TryGetExport is
 			// null in design-time previews / minimal tests, where the activation alone suffices.
-			AppEnv.AppComposition.TryGetExport<ILSpy.Search.SearchPaneModel>()?.RequestFocus();
+			AppEnv.AppComposition.TryGetExport<ICSharpCode.ILSpy.Search.SearchPaneModel>()?.RequestFocus();
 		}
 
 		/// <summary>

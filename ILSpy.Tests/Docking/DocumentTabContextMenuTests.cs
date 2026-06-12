@@ -24,11 +24,11 @@ using Avalonia.Threading;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -63,7 +63,7 @@ public class DocumentTabContextMenuTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var (a, _, _) = OpenThreeTabs(vm.DockWorkspace);
 
-		var menu = global::ILSpy.Themes.PreviewTabContextMenuBehavior.BuildDocumentContextMenu(a);
+		var menu = global::ICSharpCode.ILSpy.Themes.PreviewTabContextMenuBehavior.BuildDocumentContextMenu(a);
 		var items = menu.ItemsSource!.OfType<global::Avalonia.Controls.MenuItem>().ToList();
 
 		items.Select(m => m.Header).Should().Contain(new object[] {
@@ -92,7 +92,7 @@ public class DocumentTabContextMenuTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 		var (a, _, _) = OpenThreeTabs(vm.DockWorkspace);
 
-		var menu = global::ILSpy.Themes.PreviewTabContextMenuBehavior.BuildDocumentContextMenu(a);
+		var menu = global::ICSharpCode.ILSpy.Themes.PreviewTabContextMenuBehavior.BuildDocumentContextMenu(a);
 		var close = menu.ItemsSource!.OfType<global::Avalonia.Controls.MenuItem>()
 			.Single(m => Equals(m.Header, ICSharpCode.ILSpy.Properties.Resources.Close));
 

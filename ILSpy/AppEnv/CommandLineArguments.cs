@@ -24,7 +24,7 @@ using System.Linq;
 
 using McMaster.Extensions.CommandLineUtils;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	public sealed class CommandLineArguments
 	{

@@ -25,13 +25,12 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.AppEnv;
-using ILSpy.Images;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Languages;
 
 using SRM = System.Reflection.Metadata;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Tree-node container for a single C# 14 explicit-extension declaration block
@@ -59,7 +58,7 @@ namespace ILSpy.TreeNodes
 		public IReadOnlyList<ITypeParameter> TypeParameters { get; }
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Icon => Images.Images.GetIcon(Images.Images.Class, AccessOverlayIcon.Public, isStatic: false, isExtension: true);
+		public override object Icon => Images.GetIcon(Images.Class, AccessOverlayIcon.Public, isStatic: false, isExtension: true);
 
 		public override object Text
 			=> Language.TypeToString(GetTypeDefinition(), ConversionFlags.SupportExtensionDeclarations);
@@ -107,7 +106,7 @@ namespace ILSpy.TreeNodes
 		{
 			try
 			{
-				return AppComposition.Current.GetExport<global::ILSpy.SettingsService>().DecompilerSettings.Clone();
+				return AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.SettingsService>().DecompilerSettings.Clone();
 			}
 			catch
 			{

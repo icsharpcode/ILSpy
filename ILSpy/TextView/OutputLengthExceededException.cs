@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Thrown by <see cref="AvaloniaEditTextOutput"/> once its accumulated text exceeds

@@ -34,7 +34,7 @@ using Avalonia.VisualTree;
 using ICSharpCode.ILSpyX.TreeView;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-namespace ILSpy.Controls.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	/// <summary>
 	/// A virtualizing tree control built on <see cref="ListBox"/>, mirroring the WPF SharpTreeView.

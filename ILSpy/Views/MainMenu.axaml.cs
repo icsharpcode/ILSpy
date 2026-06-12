@@ -31,13 +31,13 @@ using global::Avalonia.Input;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Docking;
-using ILSpy.Themes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy;
+namespace ICSharpCode.ILSpy;
 
 /// <summary>
 /// Builds the application's main menu as a NativeMenu and attaches it to a window.
@@ -259,7 +259,7 @@ public static class MainMenu
 						// so SVG-backed metadata icons get rasterised at attach-time. Silently
 						// skips when the metadata is empty or the named field isn't registered
 						// in Images.cs - keeps the menu item rendering, just without an icon.
-						if (Images.Images.LoadBitmap(entry.Metadata?.MenuIcon) is { } bitmap)
+						if (Images.LoadBitmap(entry.Metadata?.MenuIcon) is { } bitmap)
 							menuItem.Icon = bitmap;
 
 						if (TryParseGesture(entry.Metadata?.InputGestureText, out var gesture))

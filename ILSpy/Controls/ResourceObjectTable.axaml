@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="240"
-             x:Class="ILSpy.Controls.ResourceObjectTable">
+             x:Class="ICSharpCode.ILSpy.Controls.ResourceObjectTable">
 	<Grid Margin="5,0,0,0" RowDefinitions="Auto,*">
 		<TextBlock Grid.Row="0"
 		           Text="Other entries:"

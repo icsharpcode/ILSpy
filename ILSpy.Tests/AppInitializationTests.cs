@@ -21,7 +21,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy;
+using ICSharpCode.ILSpy;
 
 using NUnit.Framework;
 

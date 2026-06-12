@@ -25,9 +25,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.Search
+namespace ICSharpCode.ILSpy.Search
 {
 	/// <summary>
 	/// Builds the <see cref="SearchResult"/> objects the search strategies stream into the
@@ -57,8 +57,8 @@ namespace ILSpy.Search
 				Assembly = entity.ParentModule?.FullAssemblyName ?? string.Empty,
 				ToolTip = entity.ParentModule?.MetadataFile?.FileName,
 				Image = GetIcon(entity),
-				LocationImage = declaringType != null ? Images.Images.Class : Images.Images.Namespace,
-				AssemblyImage = Images.Images.Assembly,
+				LocationImage = declaringType != null ? Images.Class : Images.Namespace,
+				AssemblyImage = Images.Assembly,
 			};
 		}
 
@@ -67,13 +67,13 @@ namespace ILSpy.Search
 			return new ResourceSearchResult {
 				Resource = resource,
 				Fitness = 1.0f / Math.Max(1, resource.Name.Length),
-				Image = Images.Images.Library,
+				Image = Images.Library,
 				Name = resource.Name,
-				LocationImage = Images.Images.Library,
+				LocationImage = Images.Library,
 				Location = (parent.Text as string) ?? string.Empty,
 				Assembly = module.FullName,
 				ToolTip = module.FileName,
-				AssemblyImage = Images.Images.Assembly,
+				AssemblyImage = Images.Assembly,
 			};
 		}
 
@@ -86,9 +86,9 @@ namespace ILSpy.Search
 				Location = module.FileName,
 				Assembly = module.FullName,
 				ToolTip = module.FileName,
-				Image = Images.Images.Assembly,
-				LocationImage = Images.Images.Library,
-				AssemblyImage = Images.Images.Assembly,
+				Image = Images.Assembly,
+				LocationImage = Images.Library,
+				AssemblyImage = Images.Assembly,
 			};
 		}
 
@@ -101,9 +101,9 @@ namespace ILSpy.Search
 				Fitness = 1.0f / Math.Max(1, name.Length),
 				Location = module.Name,
 				Assembly = module.FullName,
-				Image = Images.Images.Namespace,
-				LocationImage = Images.Images.Assembly,
-				AssemblyImage = Images.Images.Assembly,
+				Image = Images.Namespace,
+				LocationImage = Images.Assembly,
+				AssemblyImage = Images.Assembly,
 			};
 		}
 
@@ -125,12 +125,12 @@ namespace ILSpy.Search
 		};
 
 		static object GetIcon(IEntity member) => member switch {
-			ITypeDefinition => Images.Images.Class,
-			IField => Images.Images.Field,
-			IProperty => Images.Images.Property,
-			IMethod => Images.Images.Method,
-			IEvent => Images.Images.Event,
-			_ => Images.Images.Library,
+			ITypeDefinition => Images.Class,
+			IField => Images.Field,
+			IProperty => Images.Property,
+			IMethod => Images.Method,
+			IEvent => Images.Event,
+			_ => Images.Library,
 		};
 	}
 }

@@ -29,13 +29,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Search
+namespace ICSharpCode.ILSpy.Search
 {
 	/// <summary>
 	/// One entry in the search-mode picker. The <see cref="Mode"/> determines which
@@ -118,18 +118,18 @@ namespace ILSpy.Search
 		/// strings so users moving between builds see the same labels.
 		/// </summary>
 		public SearchModeEntry[] SearchModes { get; } = new[] {
-			new SearchModeEntry { Mode = SearchMode.TypeAndMember, Name = "Types and Members", Image = Images.Images.Library },
-			new SearchModeEntry { Mode = SearchMode.Type, Name = "Type", Image = Images.Images.Class },
-			new SearchModeEntry { Mode = SearchMode.Member, Name = "Member", Image = Images.Images.Property },
-			new SearchModeEntry { Mode = SearchMode.Method, Name = "Method", Image = Images.Images.Method },
-			new SearchModeEntry { Mode = SearchMode.Field, Name = "Field", Image = Images.Images.Field },
-			new SearchModeEntry { Mode = SearchMode.Property, Name = "Property", Image = Images.Images.Property },
-			new SearchModeEntry { Mode = SearchMode.Event, Name = "Event", Image = Images.Images.Event },
-			new SearchModeEntry { Mode = SearchMode.Literal, Name = "Constant", Image = Images.Images.Literal },
-			new SearchModeEntry { Mode = SearchMode.Token, Name = "Metadata Token", Image = Images.Images.Library },
-			new SearchModeEntry { Mode = SearchMode.Resource, Name = "Resource", Image = Images.Images.Resource },
-			new SearchModeEntry { Mode = SearchMode.Assembly, Name = "Assembly", Image = Images.Images.Assembly },
-			new SearchModeEntry { Mode = SearchMode.Namespace, Name = "Namespace", Image = Images.Images.Namespace },
+			new SearchModeEntry { Mode = SearchMode.TypeAndMember, Name = "Types and Members", Image = Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Type, Name = "Type", Image = Images.Class },
+			new SearchModeEntry { Mode = SearchMode.Member, Name = "Member", Image = Images.Property },
+			new SearchModeEntry { Mode = SearchMode.Method, Name = "Method", Image = Images.Method },
+			new SearchModeEntry { Mode = SearchMode.Field, Name = "Field", Image = Images.Field },
+			new SearchModeEntry { Mode = SearchMode.Property, Name = "Property", Image = Images.Property },
+			new SearchModeEntry { Mode = SearchMode.Event, Name = "Event", Image = Images.Event },
+			new SearchModeEntry { Mode = SearchMode.Literal, Name = "Constant", Image = Images.Literal },
+			new SearchModeEntry { Mode = SearchMode.Token, Name = "Metadata Token", Image = Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Resource, Name = "Resource", Image = Images.Resource },
+			new SearchModeEntry { Mode = SearchMode.Assembly, Name = "Assembly", Image = Images.Assembly },
+			new SearchModeEntry { Mode = SearchMode.Namespace, Name = "Namespace", Image = Images.Namespace },
 		};
 
 		/// <summary>

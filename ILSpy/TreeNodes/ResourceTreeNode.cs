@@ -25,11 +25,11 @@ using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Default resource entry node — used when no specialised handler (image, XAML, .resources
@@ -47,7 +47,7 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => ILAmbience.EscapeName(Resource.Name);
 
-		public override object Icon => Images.Images.Resource;
+		public override object Icon => Images.Resource;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
@@ -59,7 +59,7 @@ namespace ILSpy.TreeNodes
 				smart.WriteLine();
 				// Dispatch through the virtual Save() so subclasses (ResourcesFileTreeNode)
 				// can present their own format-specific dialog instead of the generic one.
-				smart.AddButton(Images.Images.Save, "Save", (_, _) => Save());
+				smart.AddButton(Images.Save, "Save", (_, _) => Save());
 				smart.WriteLine();
 			}
 		}

@@ -29,12 +29,12 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Single entry in the references folder. Minimal port: shows the reference name
@@ -75,9 +75,9 @@ namespace ILSpy.TreeNodes
 					}, DispatcherPriority.Background);
 				}
 				return state switch {
-					LoadState.Loaded => Images.Images.Assembly,
-					LoadState.Failed => Images.Images.AssemblyWarning,
-					_ => Images.Images.AssemblyLoading,
+					LoadState.Loaded => Images.Assembly,
+					LoadState.Failed => Images.AssemblyWarning,
+					_ => Images.AssemblyLoading,
 				};
 			}
 		}

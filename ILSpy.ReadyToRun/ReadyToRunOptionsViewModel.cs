@@ -21,8 +21,8 @@ using System.Xml.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using ILSpy;
-using ILSpy.Options;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Options;
 
 namespace ICSharpCode.ILSpy.ReadyToRun
 {

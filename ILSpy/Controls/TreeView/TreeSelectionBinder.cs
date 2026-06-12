@@ -28,7 +28,7 @@ using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-namespace ILSpy.Controls.TreeView
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
 	/// <summary>
 	/// Two-way binds a <see cref="SharpTreeView"/>'s selection to a view-model's

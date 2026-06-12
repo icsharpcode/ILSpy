@@ -18,7 +18,7 @@
 
 using AvaloniaEdit.Document;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// A clickable region in the decompiled text. <see cref="Reference"/> identifies the target;

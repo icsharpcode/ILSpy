@@ -25,8 +25,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.NuGetFeeds;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.NuGetFeeds;
+using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
 

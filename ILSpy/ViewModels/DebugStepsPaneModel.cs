@@ -30,13 +30,13 @@ using CommunityToolkit.Mvvm.Input;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Docking;
-using ILSpy.Languages;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// Bottom-aligned tool pane that surfaces the step tree from the active

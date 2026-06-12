@@ -31,15 +31,15 @@ using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
-using ILSpy.Controls.TreeView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.AssemblyTree
+namespace ICSharpCode.ILSpy.AssemblyTree
 {
 	public partial class AssemblyListPane : UserControl
 	{
-		ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
+		ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
 		LanguageSettings? languageSettings;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
@@ -260,7 +260,7 @@ namespace ILSpy.AssemblyTree
 					.ToList();
 				if (members.Count == 0)
 					return;
-				var analyzerVm = AppComposition.TryGetExport<ILSpy.Analyzers.AnalyzerTreeViewModel>();
+				var analyzerVm = AppComposition.TryGetExport<ICSharpCode.ILSpy.Analyzers.AnalyzerTreeViewModel>();
 				if (analyzerVm == null)
 					return;
 				foreach (var member in members)
@@ -303,7 +303,7 @@ namespace ILSpy.AssemblyTree
 					Tree.Root = model.Root;
 					WireDropSelection(model);
 				}
-				selectionBinder = new ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
+				selectionBinder = new ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
 			}
 		}
 
@@ -347,7 +347,7 @@ namespace ILSpy.AssemblyTree
 		internal void OpenNodeInNewTab(ILSpyTreeNode node)
 		{
 			// Composition unavailable in design-time previews -> no-op.
-			AppComposition.TryGetExport<ILSpy.Docking.DockWorkspace>()?.OpenNodeInNewTab(node);
+			AppComposition.TryGetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()?.OpenNodeInNewTab(node);
 		}
 	}
 }

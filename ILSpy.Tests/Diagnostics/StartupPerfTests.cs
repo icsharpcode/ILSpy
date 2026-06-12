@@ -29,10 +29,10 @@ using Avalonia.Threading;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -125,7 +125,7 @@ public class StartupPerfTests
 			// (proxy for "tree is interactive").
 			var pane = await window.WaitForComponent<AssemblyListPane>();
 			var swGrid = Stopwatch.StartNew();
-			var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+			var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 			swGrid.Stop();
 			TestContext.Out.WriteLine($"SharpTreeView descendant available: {swGrid.ElapsedMilliseconds} ms");
 

@@ -25,9 +25,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Lists the base types of a class — the inheritance chain plus implemented interfaces, in
@@ -50,7 +50,7 @@ namespace ILSpy.TreeNodes
 
 		public override object? NavigationText => $"{Text} ({Language.TypeToString(type)})";
 
-		public override object Icon => Images.Images.SuperTypes;
+		public override object Icon => Images.SuperTypes;
 
 		protected override void LoadChildren()
 		{

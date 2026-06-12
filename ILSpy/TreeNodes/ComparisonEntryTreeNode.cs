@@ -25,10 +25,10 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Compare
+namespace ICSharpCode.ILSpy.Compare
 {
 	/// <summary>
 	/// Tree-node façade over a merged <see cref="Entry"/>. The text combines both sides'
@@ -83,21 +83,21 @@ namespace ILSpy.Compare
 
 		public override object Icon => entry.Entity switch {
 			ITypeDefinition t => TypeIconForKind(t),
-			IMethod => ILSpy.Images.Images.Method,
-			IField => ILSpy.Images.Images.Field,
-			IProperty => ILSpy.Images.Images.Property,
-			IEvent => ILSpy.Images.Images.Event,
-			INamespace => ILSpy.Images.Images.Namespace,
-			IModule => ILSpy.Images.Images.Assembly,
-			_ => ILSpy.Images.Images.Class,
+			IMethod => ICSharpCode.ILSpy.Images.Method,
+			IField => ICSharpCode.ILSpy.Images.Field,
+			IProperty => ICSharpCode.ILSpy.Images.Property,
+			IEvent => ICSharpCode.ILSpy.Images.Event,
+			INamespace => ICSharpCode.ILSpy.Images.Namespace,
+			IModule => ICSharpCode.ILSpy.Images.Assembly,
+			_ => ICSharpCode.ILSpy.Images.Class,
 		};
 
 		static object TypeIconForKind(ITypeDefinition t) => t.Kind switch {
-			TypeKind.Interface => ILSpy.Images.Images.Interface,
-			TypeKind.Struct => ILSpy.Images.Images.Struct,
-			TypeKind.Enum => ILSpy.Images.Images.Enum,
-			TypeKind.Delegate => ILSpy.Images.Images.Delegate,
-			_ => ILSpy.Images.Images.Class,
+			TypeKind.Interface => ICSharpCode.ILSpy.Images.Interface,
+			TypeKind.Struct => ICSharpCode.ILSpy.Images.Struct,
+			TypeKind.Enum => ICSharpCode.ILSpy.Images.Enum,
+			TypeKind.Delegate => ICSharpCode.ILSpy.Images.Delegate,
+			_ => ICSharpCode.ILSpy.Images.Class,
 		};
 
 		public override void Decompile(Language language, ICSharpCode.Decompiler.ITextOutput output, DecompilationOptions options)

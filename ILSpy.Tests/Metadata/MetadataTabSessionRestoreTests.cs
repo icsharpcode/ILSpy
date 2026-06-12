@@ -23,11 +23,11 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy;
-using ILSpy.AppEnv;
-using ILSpy.Metadata;
-using ILSpy.Metadata.CorTables;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata.CorTables;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -88,7 +88,7 @@ public class MetadataTabSessionRestoreTests
 			.GetChild<DebugDirectoryTreeNode>()
 			.GetChild<MetadataTreeNode>()
 			.GetChild<MetadataTablesTreeNode>()
-			.GetChild<global::ILSpy.Metadata.DebugTables.DocumentTableTreeNode>();
+			.GetChild<global::ICSharpCode.ILSpy.Metadata.DebugTables.DocumentTableTreeNode>();
 
 		vm.AssemblyTreeModel.SelectNode(documentTable);
 		TestCapture.Step("selected-document-table");

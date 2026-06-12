@@ -28,7 +28,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.Controls.TreeView;
 
 using NUnit.Framework;
 

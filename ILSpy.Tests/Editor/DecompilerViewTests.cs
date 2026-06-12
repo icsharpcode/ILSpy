@@ -28,13 +28,13 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -486,7 +486,7 @@ public class DecompilerViewTests
 		// without the bridge they default false and every fold comes back collapsed.
 		var (_, vm) = await TestHarness.BootAsync(3);
 
-		var settings = AppComposition.Current.GetExport<global::ILSpy.SettingsService>();
+		var settings = AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.SettingsService>();
 		settings.DisplaySettings.ExpandMemberDefinitions = true;
 		settings.DisplaySettings.ExpandUsingDeclarations = true;
 

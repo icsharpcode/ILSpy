@@ -22,10 +22,10 @@ using System.Composition;
 using Avalonia;
 using Avalonia.Controls;
 
-using ILSpy.AppEnv;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	[Export]
 	[Shared]
@@ -59,7 +59,7 @@ namespace ILSpy.Views
 			// DBus error (which surfaces later on the finalizer thread) can be traced back to the
 			// gesture that triggered the DBus call. No-op unless that category is enabled.
 			InputDiagnostics.Attach(this);
-			ILSpy.MainMenu.Attach(this);
+			ICSharpCode.ILSpy.MainMenu.Attach(this);
 			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += async (_, _) => {
 				AppLog.Mark("MainWindow.Opened fired");
@@ -86,7 +86,7 @@ namespace ILSpy.Views
 				var output = new TextView.AvaloniaEditTextOutput { Title = "Composition Errors" };
 				AppEnv.CompositionErrors.WriteTo(output);
 				AppEnv.AppComposition.Current
-					.GetExport<ILSpy.Docking.DockWorkspace>()
+					.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 					.ShowTextInNewTab("Composition Errors", output);
 			}
 			catch (System.Exception ex)
@@ -123,8 +123,8 @@ namespace ILSpy.Views
 			// window doesn't need to be wired with a direct DockWorkspace reference.
 			try
 			{
-				ILSpy.AppEnv.AppComposition.Current
-					.GetExport<ILSpy.Docking.DockWorkspace>()
+				ICSharpCode.ILSpy.AppEnv.AppComposition.Current
+					.GetExport<ICSharpCode.ILSpy.Docking.DockWorkspace>()
 					.SaveLayout();
 			}
 			catch (System.Exception ex)

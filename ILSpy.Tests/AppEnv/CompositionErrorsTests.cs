@@ -22,7 +22,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
 using NUnit.Framework;
 

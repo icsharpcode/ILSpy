@@ -23,8 +23,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.Controls.TreeView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

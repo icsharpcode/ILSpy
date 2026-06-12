@@ -23,7 +23,7 @@ using System.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace ILSpy.Metadata.Filters
+namespace ICSharpCode.ILSpy.Metadata.Filters
 {
 	public enum TriState { DontCare, Required, Excluded }
 

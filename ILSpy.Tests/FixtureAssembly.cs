@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 
 using ICSharpCode.ILSpyX;
 
-using global::ILSpy.ViewModels;
+using global::ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Tests;
 

@@ -24,9 +24,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Analyzers;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// Lists the derived types of a class — every loaded type whose direct base list contains
@@ -50,7 +50,7 @@ namespace ILSpy.TreeNodes
 
 		public override object? NavigationText => $"{Text} ({Language.TypeToString(type)})";
 
-		public override object Icon => Images.Images.SubTypes;
+		public override object Icon => Images.SubTypes;
 
 		protected override void LoadChildren()
 		{

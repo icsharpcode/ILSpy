@@ -26,9 +26,9 @@ using AvaloniaEdit;
 
 using AwesomeAssertions;
 
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 

@@ -22,9 +22,9 @@ using Avalonia;
 
 using Dock.Avalonia.Controls;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// Attached property that toggles the <c>previewTab</c> style class on a

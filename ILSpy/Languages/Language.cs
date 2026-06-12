@@ -33,7 +33,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Abstractions;
 
-namespace ILSpy.Languages
+namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
 	/// Output language for tree-node labels and decompiled views.
@@ -60,8 +60,8 @@ namespace ILSpy.Languages
 		/// Languages without a matching-bracket concept (IL, IL-AST) return the no-op
 		/// default; <see cref="CSharpLanguage"/> overrides to <see cref="CSharpBracketSearcher"/>.
 		/// </summary>
-		public virtual ILSpy.TextView.IBracketSearcher BracketSearcher
-			=> ILSpy.TextView.DefaultBracketSearcher.DefaultInstance;
+		public virtual ICSharpCode.ILSpy.TextView.IBracketSearcher BracketSearcher
+			=> ICSharpCode.ILSpy.TextView.DefaultBracketSearcher.DefaultInstance;
 
 		/// <summary>
 		/// Versions selectable for this language (e.g. C# 1.0 → C# 14). Default is empty;

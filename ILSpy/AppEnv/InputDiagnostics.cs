@@ -25,7 +25,7 @@ using Avalonia;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	/// <summary>
 	/// Diagnostics for chasing the asynchronous DBus failure on Linux: an unobserved

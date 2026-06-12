@@ -37,9 +37,9 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Renders an entity signature plus its XML documentation into an Avalonia control tree

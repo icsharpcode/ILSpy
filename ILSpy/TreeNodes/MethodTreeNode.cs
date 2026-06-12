@@ -23,10 +23,10 @@ using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
-using ILSpy;
-using ILSpy.Languages;
+using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
@@ -54,26 +54,26 @@ namespace ILSpy.TreeNodes
 				|| (method.ResolveExtensionInfo()?.InfoOfExtensionMember((IMethod)method.MemberDefinition).HasValue == true);
 
 			if (method.IsOperator)
-				return Images.Images.GetIcon(Images.Images.Operator,
-					Images.Images.GetOverlay(method.Accessibility), false, isExtensionMethod);
+				return Images.GetIcon(Images.Operator,
+					Images.GetOverlay(method.Accessibility), false, isExtensionMethod);
 
 			if (isExtensionMethod)
-				return Images.Images.GetIcon(Images.Images.Method,
-					Images.Images.GetOverlay(method.Accessibility), false, true);
+				return Images.GetIcon(Images.Method,
+					Images.GetOverlay(method.Accessibility), false, true);
 
 			if (method.IsConstructor)
-				return Images.Images.GetIcon(Images.Images.Constructor,
-					Images.Images.GetOverlay(method.Accessibility), method.IsStatic);
+				return Images.GetIcon(Images.Constructor,
+					Images.GetOverlay(method.Accessibility), method.IsStatic);
 
 			// P/Invoke: extern method tagged with [DllImport]. !HasBody filters out the
 			// managed wrappers that also carry the attribute via attribute-forwarding.
 			if (!method.HasBody && method.HasAttribute(KnownAttribute.DllImport))
-				return Images.Images.GetIcon(Images.Images.PInvokeMethod,
-					Images.Images.GetOverlay(method.Accessibility), true);
+				return Images.GetIcon(Images.PInvokeMethod,
+					Images.GetOverlay(method.Accessibility), true);
 
-			return Images.Images.GetIcon(
-				method.IsVirtual ? Images.Images.VirtualMethod : Images.Images.Method,
-				Images.Images.GetOverlay(method.Accessibility), method.IsStatic);
+			return Images.GetIcon(
+				method.IsVirtual ? Images.VirtualMethod : Images.Method,
+				Images.GetOverlay(method.Accessibility), method.IsStatic);
 		}
 
 		public override bool ShowExpander => false;

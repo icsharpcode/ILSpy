@@ -28,9 +28,9 @@ using Avalonia.Input;
 
 using AwesomeAssertions;
 
-using ILSpy.AssemblyTree;
-using ILSpy.Controls.TreeView;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -63,7 +63,7 @@ public class AssemblyTreeFileDropTests
 		// produce a "no" cursor and never reach our handler.
 		var (window, vm) = await TestHarness.BootAsync();
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var tree = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var tree = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		DragDrop.GetAllowDrop(tree).Should().BeTrue();
 	}

@@ -26,10 +26,10 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Common parent for the per-table leaves under "Tables". Each subclass corresponds to
@@ -51,7 +51,7 @@ namespace ILSpy.Metadata
 			this.metadataFile = metadataFile ?? throw new ArgumentNullException(nameof(metadataFile));
 		}
 
-		public override object Icon => Images.Images.MetadataTable;
+		public override object Icon => Images.MetadataTable;
 
 		/// <summary>
 		/// Byte offset of row <paramref name="rid"/> (1-based) in <paramref name="table"/>, relative to

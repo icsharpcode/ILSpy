@@ -19,7 +19,7 @@
 using System;
 using System.Composition;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Marks a class as an Options-tab panel. MEF discovers all such exports under the

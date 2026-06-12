@@ -22,7 +22,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX.Settings;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Editor-and-tree visual preferences. Persisted under the <c>&lt;DisplaySettings/&gt;</c>

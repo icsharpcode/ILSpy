@@ -30,9 +30,9 @@ using Avalonia.Controls.Templates;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
-using ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// Tab content for a metadata-table view: an item list bound to a DataGrid plus the
@@ -206,7 +206,7 @@ namespace ILSpy.ViewModels
 						Convert.ToInt64(value, System.Globalization.CultureInfo.InvariantCulture)
 							& 0xFFFFFFFFL,
 						System.Globalization.CultureInfo.InvariantCulture);
-					if (!global::ILSpy.Metadata.Filters.CompiledFilter.Compile(flagsState).Matches(actual))
+					if (!global::ICSharpCode.ILSpy.Metadata.Filters.CompiledFilter.Compile(flagsState).Matches(actual))
 						return false;
 				}
 				// Fall through so a free-form substring filter on a [Flags] column still
@@ -328,14 +328,14 @@ namespace ILSpy.ViewModels
 		/// the text predicate.
 		/// </summary>
 		[ObservableProperty]
-		private global::ILSpy.Metadata.Filters.FilterState? flagsState;
+		private global::ICSharpCode.ILSpy.Metadata.Filters.FilterState? flagsState;
 
 		// Forward inner FilterState mutations as our own PropertyChanged so the page's
 		// CollectionChanged-driven subscription (which only listens for ColumnFilter
 		// property changes) wakes up and refreshes the DataGridCollectionView.
 		partial void OnFlagsStateChanged(
-			global::ILSpy.Metadata.Filters.FilterState? oldValue,
-			global::ILSpy.Metadata.Filters.FilterState? newValue)
+			global::ICSharpCode.ILSpy.Metadata.Filters.FilterState? oldValue,
+			global::ICSharpCode.ILSpy.Metadata.Filters.FilterState? newValue)
 		{
 			if (oldValue is not null)
 				oldValue.PropertyChanged -= OnFlagsStateInnerChanged;

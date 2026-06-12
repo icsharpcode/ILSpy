@@ -24,9 +24,9 @@ using System.Reflection;
 
 using AwesomeAssertions;
 
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.Options;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.Options;
 
 using NUnit.Framework;
 

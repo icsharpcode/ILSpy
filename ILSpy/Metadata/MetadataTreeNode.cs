@@ -24,10 +24,10 @@ using System.Reflection.Metadata.Ecma335;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Languages;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// Synthetic container surfaced under each loaded assembly's tree node. Its children
@@ -49,7 +49,7 @@ namespace ILSpy.Metadata
 
 		public override object Text => title;
 
-		public override object Icon => Images.Images.Metadata;
+		public override object Icon => Images.Metadata;
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath.
 		public override string ToString() => "Metadata: " + title;

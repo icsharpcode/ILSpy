@@ -26,9 +26,9 @@ using Avalonia.Input;
 
 using ICSharpCode.ILSpyX;
 
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.TreeNodes;
 
-namespace ILSpy.AssemblyTree
+namespace ICSharpCode.ILSpy.AssemblyTree
 {
 	/// <summary>
 	/// Handles drag-reorder drops on the assembly tree. Only top-level

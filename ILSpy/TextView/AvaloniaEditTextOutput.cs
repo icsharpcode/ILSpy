@@ -33,7 +33,7 @@ using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Avalonia-side <see cref="ITextOutput"/> + <see cref="ISmartTextOutput"/>: accumulates text

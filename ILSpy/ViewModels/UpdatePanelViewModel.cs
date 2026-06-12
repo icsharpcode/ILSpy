@@ -25,9 +25,9 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using ILSpy.Updates;
+using ICSharpCode.ILSpy.Updates;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
 	/// Drives the toolbar-strip banner shown under the main toolbar when an update is

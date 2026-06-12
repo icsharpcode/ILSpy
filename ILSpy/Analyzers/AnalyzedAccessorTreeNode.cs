@@ -20,7 +20,7 @@ using System;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	/// <summary>
 	/// Renders a property getter / setter or event add / remove / invoke as a short

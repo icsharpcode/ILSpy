@@ -21,7 +21,7 @@ using System.Composition;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click → "Decompile" (go to definition) on a symbol in the decompiled code. Navigates

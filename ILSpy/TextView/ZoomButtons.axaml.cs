@@ -23,9 +23,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
-using ILSpy.Options;
+using ICSharpCode.ILSpy.Options;
 
-namespace ILSpy.TextView
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Editor-corner overlay with zoom in / out / reset buttons plus a live "133%" label.

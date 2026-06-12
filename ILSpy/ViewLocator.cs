@@ -25,16 +25,16 @@ using Avalonia.Controls.Templates;
 
 using Dock.Model.Core;
 
-using ILSpy.Analyzers;
-using ILSpy.AssemblyTree;
-using ILSpy.Compare;
-using ILSpy.Options;
-using ILSpy.Search;
-using ILSpy.TextView;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Compare;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
-namespace ILSpy
+namespace ICSharpCode.ILSpy
 {
 	/// <summary>
 	/// Single application-wide IDataTemplate that resolves a view-model to its view. Two

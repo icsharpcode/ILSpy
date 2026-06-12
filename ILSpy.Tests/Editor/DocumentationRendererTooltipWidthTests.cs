@@ -30,7 +30,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.TextView;
 
 using NUnit.Framework;
 

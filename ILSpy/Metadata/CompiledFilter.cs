@@ -20,7 +20,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Numerics;
 
-namespace ILSpy.Metadata.Filters
+namespace ICSharpCode.ILSpy.Metadata.Filters
 {
 	/// <summary>
 	/// Evaluation-friendly snapshot of a <see cref="FilterState"/>. Compile once per state

@@ -29,10 +29,10 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.AppEnv;
-using ILSpy.Search;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -107,8 +107,8 @@ public class SearchProgressTests
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		// Search is hidden by default; surface it so its view realises.
-		AppComposition.Current.GetExport<global::ILSpy.Docking.DockWorkspace>()
-			.ShowToolPane(global::ILSpy.Search.SearchPaneModel.PaneContentId);
+		AppComposition.Current.GetExport<global::ICSharpCode.ILSpy.Docking.DockWorkspace>()
+			.ShowToolPane(global::ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 		TestCapture.Step("booted");
 

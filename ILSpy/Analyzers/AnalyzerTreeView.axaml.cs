@@ -25,14 +25,14 @@ using Avalonia.Controls;
 
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	public partial class AnalyzerTreeView : UserControl
 	{
 		AnalyzerTreeViewModel? boundModel;
-		ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
+		ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 
 		public AnalyzerTreeView()
@@ -93,7 +93,7 @@ namespace ILSpy.Analyzers
 		{
 			boundModel = model;
 			Tree.Root = model.Root;
-			selectionBinder = new ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
+			selectionBinder = new ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
 		}
 
 		void DetachFromModel()

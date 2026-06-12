@@ -30,9 +30,9 @@ using Avalonia.VisualTree;
 
 using Dock.Avalonia.Controls;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// Switches the document tab strip between single-line (a single horizontally scrolling row, the

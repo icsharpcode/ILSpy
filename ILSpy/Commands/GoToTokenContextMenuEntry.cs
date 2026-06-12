@@ -23,10 +23,10 @@ using Avalonia.Controls;
 
 using ICSharpCode.ILSpy.Properties;
 
-using ILSpy.Metadata;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click → "Go to token" on a metadata-table cell. Visible only when the click

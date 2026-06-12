@@ -2,10 +2,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:search="using:ILSpy.Search"
+             xmlns:search="using:ICSharpCode.ILSpy.Search"
              xmlns:res="using:ICSharpCode.ILSpy.Properties"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
-             x:Class="ILSpy.Search.SearchPane"
+             x:Class="ICSharpCode.ILSpy.Search.SearchPane"
              x:DataType="search:SearchPaneModel">
 	<Grid RowDefinitions="Auto,Auto,*" Margin="4">
 		<Grid Grid.Row="0" ColumnDefinitions="*,8,Auto" Margin="0,0,0,4">

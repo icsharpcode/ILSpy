@@ -20,8 +20,8 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
 
 using NUnit.Framework;
 
@@ -38,7 +38,7 @@ public class DockWorkspaceTests
 	public void DockWorkspace_resolves_and_exposes_root_layout_with_three_tool_panes()
 	{
 		var workspace = AppComposition.Current.GetExport<DockWorkspace>();
-		workspace.Should().NotBeNull("DockWorkspace is [Export][Shared] in ILSpy.Docking.");
+		workspace.Should().NotBeNull("DockWorkspace is [Export][Shared] in ICSharpCode.ILSpy.Docking.");
 
 		workspace.Layout.Should().NotBeNull("ILSpyDockFactory.CreateLayout() wires the root dock in the ctor.");
 		workspace.Factory.Should().NotBeNull();

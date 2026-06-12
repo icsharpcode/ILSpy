@@ -27,12 +27,12 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.MermaidDiagrammer;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Docking;
-using ILSpy.TextView;
-using ILSpy.TreeNodes;
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Right-click an assembly → "Create Diagram". Asks for an output folder, invokes the

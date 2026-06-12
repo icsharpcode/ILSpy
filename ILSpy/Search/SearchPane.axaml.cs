@@ -27,10 +27,10 @@ using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.Search;
 
-using ILSpy.AppEnv;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.Search
+namespace ICSharpCode.ILSpy.Search
 {
 	public partial class SearchPane : UserControl
 	{

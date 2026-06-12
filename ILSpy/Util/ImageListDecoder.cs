@@ -23,7 +23,7 @@ using System.Formats.Nrbf;
 using System.IO;
 using System.Runtime.Serialization;
 
-namespace ILSpy.ImageList
+namespace ICSharpCode.ILSpy.ImageList
 {
 	/// <summary>
 	/// One decoded ImageList frame: pixel dimensions plus the raw ARGB buffer

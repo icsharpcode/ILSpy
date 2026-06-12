@@ -28,12 +28,12 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.AssemblyTree;
-using ILSpy.Docking;
-using ILSpy.TreeNodes;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -59,13 +59,13 @@ public class HeadlessMmbPointerTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Any realised SharpTreeViewItem whose DataContext is an ILSpyTreeNode is a valid click
 		// target — the exact node doesn't matter, only that the gesture pipeline fires.
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.Any(r => r.DataContext is ILSpyTreeNode));
-		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var row = grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => r.DataContext is ILSpyTreeNode);
 
 		// Snapshot the tab count BEFORE the gesture so we can assert a strict +1 after.
@@ -108,11 +108,11 @@ public class HeadlessMmbPointerTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.Any(r => r.DataContext is ILSpyTreeNode));
-		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var row = grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => r.DataContext is ILSpyTreeNode);
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
@@ -152,14 +152,14 @@ public class HeadlessMmbPointerTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<global::ILSpy.Controls.TreeView.SharpTreeView>();
+		var grid = await pane.WaitForComponent<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
 		// Any realised SharpTreeViewItem whose data is an ILSpyTreeNode is a fine target; the
 		// non-leaf assembly node row (depth 0) is always present and never confused with a
 		// method row whose tree-toggle area is null.
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.Any(r => r.DataContext is ILSpyTreeNode));
-		var row = grid.GetVisualDescendants().OfType<global::ILSpy.Controls.TreeView.SharpTreeViewItem>()
+		var row = grid.GetVisualDescendants().OfType<global::ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => r.DataContext is ILSpyTreeNode);
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;

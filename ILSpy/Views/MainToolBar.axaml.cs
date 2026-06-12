@@ -26,12 +26,12 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.ViewModels;
-using ILSpy.Views.Controls;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views.Controls;
 
-namespace ILSpy;
+namespace ICSharpCode.ILSpy;
 
 public partial class MainToolBar : UserControl
 {
@@ -224,7 +224,7 @@ public partial class MainToolBar : UserControl
 		}
 		catch (System.Exception ex)
 		{
-			ILSpy.AppEnv.CompositionErrors.Report($"Toolbar command '{entry.Metadata.ToolTip}'", ex);
+			ICSharpCode.ILSpy.AppEnv.CompositionErrors.Report($"Toolbar command '{entry.Metadata.ToolTip}'", ex);
 			return null;
 		}
 		var button = new Button {
@@ -253,5 +253,5 @@ public partial class MainToolBar : UserControl
 	// "Images/Open" → looks up "Open" on Images.Images via reflection so the metadata can
 	// stay declarative. Delegates to the shared resolver in Images.cs, which other menu
 	// builders (MainMenu, ContextMenuProvider) also consume.
-	static IImage? ResolveIcon(string? iconPath) => Images.Images.ResolveByPath(iconPath);
+	static IImage? ResolveIcon(string? iconPath) => Images.ResolveByPath(iconPath);
 }

@@ -23,9 +23,9 @@ using System.Threading.Tasks;
 using global::Avalonia.Controls.ApplicationLifetimes;
 using global::Avalonia.Platform.Storage;
 
-using ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AppEnv;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Helpers around <see cref="IStorageProvider"/> for save dialogs. Mirrors the WPF

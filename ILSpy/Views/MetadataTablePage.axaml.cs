@@ -30,12 +30,12 @@ using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
-using ILSpy.AppEnv;
-using ILSpy.Commands;
-using ILSpy.Metadata;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Views
+namespace ICSharpCode.ILSpy.Views
 {
 	/// <summary>
 	/// DataGrid-backed view for <see cref="MetadataTablePageModel"/>. Avalonia DataGrid's

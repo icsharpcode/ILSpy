@@ -19,7 +19,7 @@
 using global::Avalonia.Controls;
 using global::Avalonia.Markup.Xaml;
 
-namespace ILSpy.Options.Panels
+namespace ICSharpCode.ILSpy.Options.Panels
 {
 	public partial class DisplaySettingsPanel : UserControl
 	{

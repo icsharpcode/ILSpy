@@ -22,7 +22,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpy.Properties;
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>Viewmodel for the Misc panel. WPF additionally exposes a shell-integration
 	/// command (Add/Remove "Open with ILSpy" registry keys); deferred for v1 since

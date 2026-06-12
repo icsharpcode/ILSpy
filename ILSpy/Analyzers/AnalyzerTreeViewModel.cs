@@ -24,11 +24,11 @@ using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Analyzers.TreeNodes;
-using ILSpy.Commands;
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	[Export]
 	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 0, IsVisibleByDefault = false)]

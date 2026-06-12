@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ILSpy.NuGetFeeds
+namespace ICSharpCode.ILSpy.NuGetFeeds
 {
 	/// <summary>
 	/// One search hit from a NuGet feed, reduced to what the package-chooser dialog

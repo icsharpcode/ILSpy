@@ -24,11 +24,11 @@ using Avalonia.Threading;
 
 using AwesomeAssertions;
 
-using ILSpy.AppEnv;
-using ILSpy.Docking;
-using ILSpy.Search;
-using ILSpy.ViewModels;
-using ILSpy.Views;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
@@ -66,7 +66,7 @@ public class SearchInputFocusTests
 
 		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
 		// Search is hidden by default; surface it so its view realises.
-		dockWorkspace.ShowToolPane(global::ILSpy.Search.SearchPaneModel.PaneContentId);
+		dockWorkspace.ShowToolPane(global::ICSharpCode.ILSpy.Search.SearchPaneModel.PaneContentId);
 		var pane = await window.WaitForComponent<SearchPane>();
 
 		dockWorkspace.ShowSearchCommand.Execute(null);

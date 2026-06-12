@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-namespace ILSpy.Options
+namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
 	/// Plugin contract for individual panels in the Options tab. Each implementation is
@@ -25,7 +25,7 @@ namespace ILSpy.Options
 	/// <see cref="LoadDefaults"/> when the user clicks the per-panel reset button. Panels
 	/// bind directly to the live section instances — every toggle is immediately visible
 	/// to other consumers (the decompiler view, the tree, etc.). XML persistence rides on
-	/// <see cref="ILSpy.SettingsService.Save"/> at app exit.
+	/// <see cref="ICSharpCode.ILSpy.SettingsService.Save"/> at app exit.
 	/// </summary>
 	public interface IOptionPage
 	{

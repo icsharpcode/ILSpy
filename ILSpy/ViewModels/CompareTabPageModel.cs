@@ -21,9 +21,9 @@ using CommunityToolkit.Mvvm.Input;
 
 using ICSharpCode.ILSpyX;
 
-using ILSpy.ViewModels;
+using ICSharpCode.ILSpy.ViewModels;
 
-namespace ILSpy.Compare
+namespace ICSharpCode.ILSpy.Compare
 {
 	/// <summary>
 	/// Tab content for the assembly-comparison view. Constructed by

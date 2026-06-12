@@ -21,7 +21,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Dock.Model.Controls;
 using Dock.Model.Core;
 
-namespace ILSpy.ViewModels
+namespace ICSharpCode.ILSpy.ViewModels
 {
 	public class ToolPaneMenuItem : ObservableObject
 	{

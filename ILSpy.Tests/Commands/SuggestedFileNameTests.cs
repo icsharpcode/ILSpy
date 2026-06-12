@@ -18,7 +18,7 @@
 
 using AwesomeAssertions;
 
-using ILSpy.Commands;
+using ICSharpCode.ILSpy.Commands;
 
 using NUnit.Framework;
 

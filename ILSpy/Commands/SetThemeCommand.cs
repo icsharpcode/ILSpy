@@ -18,7 +18,7 @@
 
 using System.Composition;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	[Export]
 	[Shared]

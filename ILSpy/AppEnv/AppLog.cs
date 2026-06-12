@@ -21,7 +21,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 
-namespace ILSpy.AppEnv
+namespace ICSharpCode.ILSpy.AppEnv
 {
 	/// <summary>
 	/// Categorized diagnostic log. All categories are off by default; production runs

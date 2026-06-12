@@ -25,8 +25,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Metadata;
-using ILSpy.TreeNodes;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 

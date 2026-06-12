@@ -30,9 +30,9 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.TreeView;
 
-using ILSpy.Analyzers.TreeNodes;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 
-namespace ILSpy.Analyzers
+namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Row that runs a single <see cref="IAnalyzer"/> against an analysed symbol and shows
@@ -78,7 +78,7 @@ namespace ILSpy.Analyzers
 		/// and renders an empty icon slot next to the header text — visually mismatched with
 		/// the result rows underneath, which all carry entity-kind icons.
 		/// </summary>
-		public override object Icon => Images.Images.Search;
+		public override object Icon => Images.Search;
 
 		protected override void LoadChildren()
 		{

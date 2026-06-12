@@ -20,7 +20,7 @@ using System.Collections.Generic;
 
 using Avalonia.Media;
 
-namespace ILSpy.Themes
+namespace ICSharpCode.ILSpy.Themes
 {
 	/// <summary>
 	/// Per-theme syntax-colour palettes, keyed by the named <c>&lt;Color&gt;</c> from the .xshd.

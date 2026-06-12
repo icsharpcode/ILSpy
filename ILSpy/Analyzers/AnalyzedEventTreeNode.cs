@@ -22,7 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedEventTreeNode : AnalyzerEntityTreeNode
 	{
@@ -42,8 +42,8 @@ namespace ILSpy.Analyzers.TreeNodes
 		public override object Text => prefix + Language.EntityToString(analyzedEvent,
 			ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
 
-		public override object Icon => Images.Images.GetIcon(Images.Images.Event,
-			Images.Images.GetOverlay(analyzedEvent.Accessibility), analyzedEvent.IsStatic);
+		public override object Icon => Images.GetIcon(Images.Event,
+			Images.GetOverlay(analyzedEvent.Accessibility), analyzedEvent.IsStatic);
 
 		protected override void LoadChildren()
 		{

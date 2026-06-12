@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ILSpy.Metadata.Filters
+namespace ICSharpCode.ILSpy.Metadata.Filters
 {
 	/// <summary>
 	/// Static description of how a <see cref="FlagsAttribute"/> enum's bits decompose into

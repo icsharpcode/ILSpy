@@ -23,9 +23,9 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
-using ILSpy.Languages;
+using ICSharpCode.ILSpy.Languages;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// One <c>TypeRef</c> entry inside <see cref="AssemblyReferenceReferencedTypesTreeNode"/>.
@@ -49,7 +49,7 @@ namespace ILSpy.TreeNodes
 
 		public override object NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.ReferencedTypes})";
 
-		public override object Icon => Images.Images.TypeReference;
+		public override object Icon => Images.TypeReference;
 
 		protected override void LoadChildren()
 		{

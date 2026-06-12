@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="240"
-             x:Class="ILSpy.Controls.ResourceStringTable">
+             x:Class="ICSharpCode.ILSpy.Controls.ResourceStringTable">
 	<!-- The table is embedded inside the decompiler text view via SmartTextOutput.
 	     The editor canvas is the full document width, so without a MaxWidth on the
 	     grid a single very long resource value pulls the table out to the right edge

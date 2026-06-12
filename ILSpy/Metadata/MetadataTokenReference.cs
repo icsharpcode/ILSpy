@@ -20,7 +20,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.Metadata;
 
-namespace ILSpy.Metadata
+namespace ICSharpCode.ILSpy.Metadata
 {
 	/// <summary>
 	/// A click target carrying a metadata token within a specific module. Emitted when the

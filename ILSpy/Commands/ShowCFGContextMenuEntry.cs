@@ -25,9 +25,9 @@ using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 
-using ILSpy.Util;
+using ICSharpCode.ILSpy.Util;
 
-namespace ILSpy.Commands
+namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// DEBUG-only: right-click a <see cref="BlockContainer"/> reference in the IL output

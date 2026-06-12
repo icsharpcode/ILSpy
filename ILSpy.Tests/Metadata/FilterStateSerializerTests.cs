@@ -23,7 +23,7 @@ using System.Reflection;
 
 using AwesomeAssertions;
 
-using ILSpy.Metadata.Filters;
+using ICSharpCode.ILSpy.Metadata.Filters;
 
 using NUnit.Framework;
 

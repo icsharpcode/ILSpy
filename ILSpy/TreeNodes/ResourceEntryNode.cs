@@ -26,11 +26,11 @@ using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 
-using ILSpy.Commands;
-using ILSpy.Languages;
-using ILSpy.TextView;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 
-namespace ILSpy.TreeNodes
+namespace ICSharpCode.ILSpy.TreeNodes
 {
 	/// <summary>
 	/// One entry inside a <see cref="ResourcesFileTreeNode"/>'s <c>.resources</c> file —
@@ -49,7 +49,7 @@ namespace ILSpy.TreeNodes
 
 		public override object Text => ILAmbience.EscapeName(key);
 
-		public override object Icon => Images.Images.Resource;
+		public override object Icon => Images.Resource;
 
 		protected Stream OpenStream() => openStream();
 
@@ -60,7 +60,7 @@ namespace ILSpy.TreeNodes
 			if (output is ISmartTextOutput smart)
 			{
 				smart.WriteLine();
-				smart.AddButton(Images.Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
+				smart.AddButton(Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
 				smart.WriteLine();
 			}
 		}
