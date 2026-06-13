@@ -46,8 +46,9 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public void Execute(TextViewContext context)
 		{
-			foreach (var path in GetPathsToReveal(context))
-				ShellHelper.RevealFile(path);
+			// Reveal all selected files in one grouped call so that several assemblies in the same
+			// folder open a single Explorer window (with them selected) rather than one per file.
+			ShellHelper.RevealFiles(GetPathsToReveal(context));
 		}
 
 		/// <summary>Public for tests: returns the on-disk file paths the reveal would target,
