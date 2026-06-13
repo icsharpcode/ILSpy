@@ -27,21 +27,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override SymbolKind SymbolKind => SymbolKind.TypeDefinition;
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole(Roles.TypeParameter); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		public AstNodeCollection<ParameterDeclaration> ReceiverParameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("Roles.TypeParameter")]
+		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole(Roles.Constraint); }
-		}
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> ReceiverParameters { get; }
 
-		public AstNodeCollection<EntityDeclaration> Members {
-			get { return GetChildrenByRole(Roles.TypeMemberRole); }
-		}
+		[Slot("Roles.Constraint")]
+		public partial AstNodeCollection<Constraint> Constraints { get; }
+
+		[Slot("Roles.TypeMemberRole")]
+		public partial AstNodeCollection<EntityDeclaration> Members { get; }
 
 		public ExtensionDeclaration()
 		{

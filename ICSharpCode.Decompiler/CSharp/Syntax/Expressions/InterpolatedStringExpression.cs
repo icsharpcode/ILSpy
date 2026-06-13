@@ -10,9 +10,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole OpenQuote = new TokenRole("$\"");
 		public static readonly TokenRole CloseQuote = new TokenRole("\"");
 
-		public AstNodeCollection<InterpolatedStringContent> Content {
-			get { return GetChildrenByRole(InterpolatedStringContent.Role); }
-		}
+		[Slot("InterpolatedStringContent.Role")]
+		public partial AstNodeCollection<InterpolatedStringContent> Content { get; }
 
 		public InterpolatedStringExpression()
 		{
@@ -52,10 +51,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(LBrace); }
 		}
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		public int Alignment { get; }
 

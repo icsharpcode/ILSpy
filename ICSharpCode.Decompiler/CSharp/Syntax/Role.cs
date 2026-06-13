@@ -54,6 +54,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public abstract bool IsValid(object node);
 
 		/// <summary>
+		/// Gets the role's null object as a non-generic reference, or null if the role has none.
+		/// Used by the transitional slot layer, which works with the non-generic <see cref="Role"/> base type.
+		/// </summary>
+		internal abstract object? NullObjectUntyped { get; }
+
+		/// <summary>
 		/// Gets the role with the specified index.
 		/// </summary>
 		public static Role GetByIndex(uint index)
@@ -82,6 +88,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public T NullObject {
 			get { return nullObject; }
 		}
+
+		internal override object? NullObjectUntyped => nullObject;
 
 		public override bool IsValid(object node)
 		{

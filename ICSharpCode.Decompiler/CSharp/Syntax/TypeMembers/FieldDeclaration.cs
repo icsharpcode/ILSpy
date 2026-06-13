@@ -38,9 +38,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole(Roles.Variable); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
+		[Slot("Roles.Variable")]
+		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
 		// Hide .Name and .NameToken from users; the actual field names
 		// are stored in the VariableInitializer.

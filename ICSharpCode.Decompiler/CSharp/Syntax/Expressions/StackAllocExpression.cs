@@ -39,28 +39,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(StackallocKeywordRole); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
 		public CSharpTokenNode LBracketToken {
 			get { return GetChildByRole(Roles.LBracket); }
 		}
 
-		public Expression CountExpression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression CountExpression { get; set; }
 
 		public CSharpTokenNode RBracketToken {
 			get { return GetChildByRole(Roles.RBracket); }
 		}
 
-		public ArrayInitializerExpression Initializer {
-			get { return GetChildByRole(InitializerRole); }
-			set { SetChildByRole(InitializerRole, value); }
-		}
+		[Slot("InitializerRole")]
+		public partial ArrayInitializerExpression Initializer { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

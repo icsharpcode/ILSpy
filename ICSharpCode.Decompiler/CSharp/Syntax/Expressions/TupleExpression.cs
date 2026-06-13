@@ -23,9 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TupleExpression : Expression
 	{
-		public AstNodeCollection<Expression> Elements {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
+		[Slot("Roles.Expression")]
+		public partial AstNodeCollection<Expression> Elements { get; }
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{

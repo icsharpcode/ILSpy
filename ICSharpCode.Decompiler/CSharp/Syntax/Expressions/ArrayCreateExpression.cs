@@ -32,26 +32,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(NewKeywordRole); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Argument); }
-		}
+		[Slot("Roles.Argument")]
+		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		/// <summary>
 		/// Gets additional array ranks (those without size info).
 		/// Empty for "new int[5,1]"; will contain a single element for "new int[5][]".
 		/// </summary>
-		public AstNodeCollection<ArraySpecifier> AdditionalArraySpecifiers {
-			get { return GetChildrenByRole(AdditionalArraySpecifierRole); }
-		}
+		[Slot("AdditionalArraySpecifierRole")]
+		public partial AstNodeCollection<ArraySpecifier> AdditionalArraySpecifiers { get; }
 
-		public ArrayInitializerExpression Initializer {
-			get { return GetChildByRole(InitializerRole); }
-			set { SetChildByRole(InitializerRole, value); }
-		}
+		[Slot("InitializerRole")]
+		public partial ArrayInitializerExpression Initializer { get; set; }
 	}
 }

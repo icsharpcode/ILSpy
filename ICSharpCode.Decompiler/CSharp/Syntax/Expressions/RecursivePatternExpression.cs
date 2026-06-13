@@ -25,19 +25,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<Expression> SubPatternRole = new Role<Expression>("SubPattern", Syntax.Expression.Null);
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
-		public AstNodeCollection<Expression> SubPatterns {
-			get { return GetChildrenByRole(SubPatternRole); }
-		}
+		[Slot("SubPatternRole")]
+		public partial AstNodeCollection<Expression> SubPatterns { get; }
 
-		public VariableDesignation Designation {
-			get { return GetChildByRole(Roles.VariableDesignationRole); }
-			set { SetChildByRole(Roles.VariableDesignationRole, value); }
-		}
+		[Slot("Roles.VariableDesignationRole")]
+		public partial VariableDesignation Designation { get; set; }
 
 		public bool IsPositional { get; set; }
 

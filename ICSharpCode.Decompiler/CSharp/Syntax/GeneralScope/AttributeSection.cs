@@ -51,18 +51,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier AttributeTargetToken {
-			get {
-				return GetChildByRole(Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier AttributeTargetToken { get; set; }
 
-		public AstNodeCollection<Attribute> Attributes {
-			get { return base.GetChildrenByRole(Roles.Attribute); }
-		}
+		[Slot("Roles.Attribute")]
+		public partial AstNodeCollection<Attribute> Attributes { get; }
 
 		public CSharpTokenNode RBracketToken {
 			get { return GetChildByRole(Roles.RBracket); }

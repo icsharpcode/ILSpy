@@ -34,18 +34,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InvocationExpression : Expression
 	{
-		public Expression Target {
-			get { return GetChildByRole(Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
-		}
+		[Slot("Roles.TargetExpression")]
+		public partial Expression Target { get; set; }
 
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole<Expression>(Roles.Argument); }
-		}
+		[Slot("Roles.Argument")]
+		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }

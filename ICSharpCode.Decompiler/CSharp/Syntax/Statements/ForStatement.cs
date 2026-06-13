@@ -49,27 +49,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Note: this contains multiple statements for "for (a = 2, b = 1; a > b; a--)", but contains
 		/// only a single statement for "for (int a = 2, b = 1; a > b; a--)" (a single VariableDeclarationStatement with two variables)
 		/// </summary>
-		public AstNodeCollection<Statement> Initializers {
-			get { return GetChildrenByRole(InitializerRole); }
-		}
+		[Slot("InitializerRole")]
+		public partial AstNodeCollection<Statement> Initializers { get; }
 
-		public Expression Condition {
-			get { return GetChildByRole(Roles.Condition); }
-			set { SetChildByRole(Roles.Condition, value); }
-		}
+		[Slot("Roles.Condition")]
+		public partial Expression Condition { get; set; }
 
-		public AstNodeCollection<Statement> Iterators {
-			get { return GetChildrenByRole(IteratorRole); }
-		}
+		[Slot("IteratorRole")]
+		public partial AstNodeCollection<Statement> Iterators { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement EmbeddedStatement {
-			get { return GetChildByRole(Roles.EmbeddedStatement); }
-			set { SetChildByRole(Roles.EmbeddedStatement, value); }
-		}
+		[Slot("Roles.EmbeddedStatement")]
+		public partial Statement EmbeddedStatement { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

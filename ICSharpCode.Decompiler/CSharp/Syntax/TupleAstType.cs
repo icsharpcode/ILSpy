@@ -25,9 +25,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", TupleTypeElement.Null);
 
-		public AstNodeCollection<TupleTypeElement> Elements {
-			get { return GetChildrenByRole(ElementRole); }
-		}
+		[Slot("ElementRole")]
+		public partial AstNodeCollection<TupleTypeElement> Elements { get; }
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
@@ -38,20 +37,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class TupleTypeElement : AstNode
 	{
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
 		public string Name {
 			get { return GetChildByRole(Roles.Identifier).Name; }
 			set { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
 		}
 
-		public Identifier NameToken {
-			get { return GetChildByRole(Roles.Identifier); }
-			set { SetChildByRole(Roles.Identifier, value); }
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier NameToken { get; set; }
 
 		public override NodeType NodeType => NodeType.Unknown;
 

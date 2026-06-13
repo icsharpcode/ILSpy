@@ -46,28 +46,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Condition {
-			get { return GetChildByRole(ConditionRole); }
-			set { SetChildByRole(ConditionRole, value); }
-		}
+		[Slot("ConditionRole")]
+		public partial Expression Condition { get; set; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement TrueStatement {
-			get { return GetChildByRole(TrueRole); }
-			set { SetChildByRole(TrueRole, value); }
-		}
+		[Slot("TrueRole")]
+		public partial Statement TrueStatement { get; set; }
 
 		public CSharpTokenNode ElseToken {
 			get { return GetChildByRole(ElseKeywordRole); }
 		}
 
-		public Statement FalseStatement {
-			get { return GetChildByRole(FalseRole); }
-			set { SetChildByRole(FalseRole, value); }
-		}
+		[Slot("FalseRole")]
+		public partial Statement FalseStatement { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

@@ -77,19 +77,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public Expression Left {
-			get { return GetChildByRole(LeftRole); }
-			set { SetChildByRole(LeftRole, value); }
-		}
+		[Slot(nameof(LeftRole))]
+		public partial Expression Left { get; set; }
 
 		public CSharpTokenNode OperatorToken {
 			get { return GetChildByRole(GetOperatorRole(Operator)); }
 		}
 
-		public Expression Right {
-			get { return GetChildByRole(RightRole); }
-			set { SetChildByRole(RightRole, value); }
-		}
+		[Slot(nameof(RightRole))]
+		public partial Expression Right { get; set; }
 
 		public static TokenRole GetOperatorRole(BinaryOperatorType op)
 		{

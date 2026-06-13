@@ -100,9 +100,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(RestoreKeywordRole); }
 		}
 
-		public AstNodeCollection<PrimitiveExpression> Warnings {
-			get { return GetChildrenByRole(WarningRole); }
-		}
+		[Slot("WarningRole")]
+		public partial AstNodeCollection<PrimitiveExpression> Warnings { get; }
 
 		public override TextLocation EndLocation {
 			get {

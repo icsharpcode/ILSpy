@@ -46,24 +46,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		public AstType PrivateImplementationType {
-			get { return GetChildByRole(PrivateImplementationTypeRole); }
-			set { SetChildByRole(PrivateImplementationTypeRole, value); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
+		[Slot("Roles.Identifier")]
+		public override partial Identifier NameToken { get; set; }
+
+		[Slot("PrivateImplementationTypeRole")]
+		public partial AstType PrivateImplementationType { get; set; }
 
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public Accessor Getter {
-			get { return GetChildByRole(GetterRole); }
-			set { SetChildByRole(GetterRole, value); }
-		}
+		[Slot("GetterRole")]
+		public partial Accessor Getter { get; set; }
 
-		public Accessor Setter {
-			get { return GetChildByRole(SetterRole); }
-			set { SetChildByRole(SetterRole, value); }
-		}
+		[Slot("SetterRole")]
+		public partial Accessor Setter { get; set; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }
@@ -73,15 +76,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression Initializer {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Initializer { get; set; }
 
-		public Expression ExpressionBody {
-			get { return GetChildByRole(ExpressionBodyRole); }
-			set { SetChildByRole(ExpressionBodyRole, value); }
-		}
+		[Slot("ExpressionBodyRole")]
+		public partial Expression ExpressionBody { get; set; }
 
 		public bool IsAutomaticProperty {
 			get {

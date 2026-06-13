@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? MembersToMatch);
+	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, bool IsOverride)>? Slots);
 
 	AstNodeAdditions GetAstNodeAdditions(GeneratorAttributeSyntaxContext context, CancellationToken ct)
 	{
@@ -76,13 +76,30 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 		}
 
+		// Collect the slot schema: child properties tagged [Slot], in declaration order. The
+		// attribute names the Role expression to use; single vs collection comes from the type.
+		List<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, bool IsOverride)>? slots = null;
+		foreach (var m in targetSymbol.GetMembers())
+		{
+			if (m is not IPropertySymbol property)
+				continue;
+			var slotAttr = property.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "SlotAttribute");
+			if (slotAttr == null)
+				continue;
+			slots ??= new();
+			string roleExpr = (string)slotAttr.ConstructorArguments[0].Value!;
+			bool isCollection = property.Type.MetadataName == "AstNodeCollection`1";
+			string propertyType = property.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+			slots.Add((roleExpr, isCollection, property.Name, propertyType, property.IsOverride));
+		}
+
 		return new(targetSymbol.Name, !targetSymbol.MemberNames.Contains("AcceptVisitor"),
 			NeedsVisitor: !targetSymbol.IsAbstract && targetSymbol.BaseType!.IsAbstract,
 			NeedsNullNode: (bool)attribute.ConstructorArguments[0].Value!,
 			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[1].Value!,
 			NullNodeBaseCtorParamCount: targetSymbol.InstanceConstructors.Min(m => m.Parameters.Length),
 			IsTypeNode: targetSymbol.Name == "AstType" || targetSymbol.BaseType?.Name == "AstType",
-			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray());
+			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray());
 	}
 
 	void WriteGeneratedMembers(SourceProductionContext context, AstNodeAdditions source)
@@ -256,6 +273,44 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 ");
 		}
 
+		if (source.Slots is { } slotsArray)
+		{
+			var slots = slotsArray.ToList();
+
+			// Implementing half of each [Slot] partial property: stored over the linked list for now.
+			// A slot re-declared from an inherited contract member (Part I.3 flatten) is an override.
+			foreach (var (roleExpr, isCollection, name, type, isOverride) in slots)
+			{
+				builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}partial {type} {name}");
+				builder.AppendLine("\t{");
+				builder.AppendLine($"\t\tget {{ return GetChild{(isCollection ? "ren" : "")}ByRole({roleExpr}); }}");
+				if (!isCollection)
+					builder.AppendLine($"\t\tset {{ SetChildByRole({roleExpr}, value); }}");
+				builder.AppendLine("\t}");
+			}
+
+			// Slot schema (transitional bridge): source-ordered slots mapped to roles.
+			builder.AppendLine($"\tinternal override int SlotCount => {slots.Count};");
+			builder.AppendLine("\tinternal override Role GetSlotRole(int slotIndex)");
+			builder.AppendLine("\t{");
+			builder.AppendLine("\t\tswitch (slotIndex)");
+			builder.AppendLine("\t\t{");
+			for (int i = 0; i < slots.Count; i++)
+				builder.AppendLine($"\t\t\tcase {i}: return {slots[i].RoleExpr};");
+			builder.AppendLine("\t\t\tdefault: throw new System.ArgumentOutOfRangeException(nameof(slotIndex));");
+			builder.AppendLine("\t\t}");
+			builder.AppendLine("\t}");
+			builder.AppendLine("\tinternal override bool IsCollectionSlot(int slotIndex)");
+			builder.AppendLine("\t{");
+			builder.AppendLine("\t\tswitch (slotIndex)");
+			builder.AppendLine("\t\t{");
+			for (int i = 0; i < slots.Count; i++)
+				builder.AppendLine($"\t\t\tcase {i}: return {(slots[i].IsCollection ? "true" : "false")};");
+			builder.AppendLine("\t\t\tdefault: throw new System.ArgumentOutOfRangeException(nameof(slotIndex));");
+			builder.AppendLine("\t\t}");
+			builder.AppendLine("\t}");
+		}
+
 		builder.AppendLine("}");
 
 		context.AddSource(source.NodeName + ".g.cs", SourceText.From(builder.ToString(), Encoding.UTF8));
@@ -268,7 +323,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
 
 		source = source
-			.Concat([new("NullNode", false, true, false, false, 0, false, "NullNode", "AstNode", null), new("PatternPlaceholder", false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null)])
+			.Concat([new("NullNode", false, true, false, false, 0, false, "NullNode", "AstNode", null, null), new("PatternPlaceholder", false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null)])
 			.ToImmutableArray();
 
 		WriteInterface("IAstVisitor", "void", "");
@@ -338,6 +393,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
 	sealed class ExcludeFromMatchAttribute : global::System.Attribute
 	{
+	}
+
+	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
+	[global::System.AttributeUsage(global::System.AttributeTargets.Property)]
+	sealed class SlotAttribute : global::System.Attribute
+	{
+		public SlotAttribute(string role) { }
 	}
 }
 

@@ -41,9 +41,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(FixedKeywordRole); }
 		}
 
-		public AstNodeCollection<FixedVariableInitializer> Variables {
-			get { return GetChildrenByRole(VariableRole); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
+		[Slot("VariableRole")]
+		public partial AstNodeCollection<FixedVariableInitializer> Variables { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

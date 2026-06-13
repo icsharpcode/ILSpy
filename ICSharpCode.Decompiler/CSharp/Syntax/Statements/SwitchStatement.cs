@@ -43,10 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
@@ -56,9 +54,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<SwitchSection> SwitchSections {
-			get { return GetChildrenByRole(SwitchSectionRole); }
-		}
+		[Slot("SwitchSectionRole")]
+		public partial AstNodeCollection<SwitchSection> SwitchSections { get; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }
@@ -82,13 +79,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<CaseLabel> CaseLabels {
-			get { return GetChildrenByRole(CaseLabelRole); }
-		}
+		[Slot("CaseLabelRole")]
+		public partial AstNodeCollection<CaseLabel> CaseLabels { get; }
 
-		public AstNodeCollection<Statement> Statements {
-			get { return GetChildrenByRole(Roles.EmbeddedStatement); }
-		}
+		[Slot("Roles.EmbeddedStatement")]
+		public partial AstNodeCollection<Statement> Statements { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -112,10 +107,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets or sets the expression. The expression can be null - if the expression is null, it's the default switch section.
 		/// </summary>
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		public CSharpTokenNode ColonToken {
 			get { return GetChildByRole(Roles.Colon); }

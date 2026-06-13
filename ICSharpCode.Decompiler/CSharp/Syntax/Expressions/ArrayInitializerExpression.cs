@@ -52,9 +52,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<Expression> Elements {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
+		[Slot("Roles.Expression")]
+		public partial AstNodeCollection<Expression> Elements { get; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }

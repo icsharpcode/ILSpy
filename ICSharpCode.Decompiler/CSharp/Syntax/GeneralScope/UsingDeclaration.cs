@@ -48,10 +48,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(UsingKeywordRole); }
 		}
 
-		public AstType Import {
-			get { return GetChildByRole(ImportRole); }
-			set { SetChildByRole(ImportRole, value); }
-		}
+		[Slot("ImportRole")]
+		public partial AstType Import { get; set; }
 
 		public string Namespace {
 			get { return ConstructNamespace(Import); }

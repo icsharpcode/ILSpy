@@ -34,18 +34,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool HasUnmanagedCallingConvention { get; set; }
 
-		public AstNodeCollection<AstType> CallingConventions {
-			get { return GetChildrenByRole(CallingConventionRole); }
-		}
+		[Slot("CallingConventionRole")]
+		public partial AstNodeCollection<AstType> CallingConventions { get; }
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		public AstType ReturnType {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType ReturnType { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
