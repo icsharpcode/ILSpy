@@ -39,18 +39,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return base.GetChildrenByRole(AttributeRole); }
 		}
 
-		public Modifiers Modifiers {
-			get { return GetModifiers(this); }
-			set { SetModifiers(this, value); }
-		}
+		public Modifiers Modifiers { get; set; }
 
 		public bool HasModifier(Modifiers mod)
 		{
 			return (Modifiers & mod) == mod;
-		}
-
-		public IEnumerable<CSharpModifierToken> ModifierTokens {
-			get { return GetChildrenByRole(ModifierRole); }
 		}
 
 		public virtual string Name {
@@ -74,48 +67,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
-		internal static Modifiers GetModifiers(AstNode node)
-		{
-			Modifiers m = 0;
-			foreach (CSharpModifierToken t in node.GetChildrenByRole(ModifierRole))
-			{
-				m |= t.Modifier;
-			}
-			return m;
-		}
-
-		internal static void SetModifiers(AstNode node, Modifiers newValue)
-		{
-			Modifiers oldValue = GetModifiers(node);
-			AstNode insertionPos = node.GetChildrenByRole(AttributeRole).LastOrDefault();
-			foreach (Modifiers m in CSharpModifierToken.AllModifiers)
-			{
-				if ((m & newValue) != 0)
-				{
-					if ((m & oldValue) == 0)
-					{
-						// Modifier was added
-						var newToken = new CSharpModifierToken(TextLocation.Empty, m);
-						node.InsertChildAfter(insertionPos, newToken, ModifierRole);
-						insertionPos = newToken;
-					}
-					else
-					{
-						// Modifier already exists
-						insertionPos = node.GetChildrenByRole(ModifierRole).First(t => t.Modifier == m);
-					}
-				}
-				else
-				{
-					if ((m & oldValue) != 0)
-					{
-						// Modifier was removed
-						node.GetChildrenByRole(ModifierRole).First(t => t.Modifier == m).Remove();
-					}
-				}
-			}
 		}
 
 		protected bool MatchAttributesAndModifiers(EntityDeclaration o, PatternMatching.Match match)

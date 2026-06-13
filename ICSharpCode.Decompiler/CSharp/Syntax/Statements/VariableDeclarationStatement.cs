@@ -41,10 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Variables.Add(new VariableInitializer(name, initializer));
 		}
 
-		public Modifiers Modifiers {
-			get { return EntityDeclaration.GetModifiers(this); }
-			set { EntityDeclaration.SetModifiers(this, value); }
-		}
+		public Modifiers Modifiers { get; set; }
 
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
