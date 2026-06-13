@@ -49,10 +49,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.NamespaceKeyword); }
 		}
 
-		public AstType NamespaceName {
-			get { return GetChildByRole(NamespaceNameRole) ?? AstType.Null; }
-			set { SetChildByRole(NamespaceNameRole, value); }
-		}
+		[Slot("NamespaceNameRole")]
+		public partial AstType NamespaceName { get; set; }
 
 		public string Name {
 			get {
@@ -105,9 +103,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<AstNode> Members {
-			get { return GetChildrenByRole(MemberRole); }
-		}
+		[Slot("MemberRole")]
+		public partial AstNodeCollection<AstNode> Members { get; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }

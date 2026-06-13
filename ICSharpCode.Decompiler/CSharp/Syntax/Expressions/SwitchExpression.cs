@@ -27,10 +27,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
 		public static readonly Role<SwitchExpressionSection> SwitchSectionRole = new Role<SwitchExpressionSection>("SwitchSection", null);
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		public CSharpTokenNode SwitchToken {
 			get { return GetChildByRole(SwitchKeywordRole); }
@@ -40,9 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<SwitchExpressionSection> SwitchSections {
-			get { return GetChildrenByRole(SwitchSectionRole); }
-		}
+		[Slot("SwitchSectionRole")]
+		public partial AstNodeCollection<SwitchExpressionSection> SwitchSections { get; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }
@@ -64,19 +61,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Expression> PatternRole = new Role<Expression>("Pattern", Expression.Null);
 		public static readonly Role<Expression> BodyRole = new Role<Expression>("Body", Expression.Null);
 
-		public Expression Pattern {
-			get { return GetChildByRole(PatternRole); }
-			set { SetChildByRole(PatternRole, value); }
-		}
+		[Slot("PatternRole")]
+		public partial Expression Pattern { get; set; }
 
 		public CSharpTokenNode ArrowToken {
 			get { return GetChildByRole(Roles.Arrow); }
 		}
 
-		public Expression Body {
-			get { return GetChildByRole(BodyRole); }
-			set { SetChildByRole(BodyRole, value); }
-		}
+		[Slot("BodyRole")]
+		public partial Expression Body { get; set; }
 
 		public override NodeType NodeType => NodeType.Unknown;
 

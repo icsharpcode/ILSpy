@@ -44,9 +44,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override NodeType NodeType => NodeType.Unknown;
 
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole(AttributeRole); }
-		}
+		[Slot("AttributeRole")]
+		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		bool hasThisModifier;
 		bool isParams;
@@ -92,10 +91,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
 		public string Name {
 			get {
@@ -106,23 +103,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier NameToken {
-			get {
-				return GetChildByRole(Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier NameToken { get; set; }
 
 		public CSharpTokenNode AssignToken {
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression DefaultExpression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression DefaultExpression { get; set; }
 
 		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{

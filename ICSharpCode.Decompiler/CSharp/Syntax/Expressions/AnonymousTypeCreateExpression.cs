@@ -43,9 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Initializers {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
+		[Slot("Roles.Expression")]
+		public partial AstNodeCollection<Expression> Initializers { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }

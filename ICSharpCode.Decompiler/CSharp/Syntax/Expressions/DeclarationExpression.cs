@@ -24,14 +24,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DeclarationExpression : Expression
 	{
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
-		public VariableDesignation Designation {
-			get { return GetChildByRole(Roles.VariableDesignationRole); }
-			set { SetChildByRole(Roles.VariableDesignationRole, value); }
-		}
+		[Slot("Roles.VariableDesignationRole")]
+		public partial VariableDesignation Designation { get; set; }
 	}
 }

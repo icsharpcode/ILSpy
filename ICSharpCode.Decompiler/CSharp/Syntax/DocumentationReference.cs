@@ -76,10 +76,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets/Sets the declaring type.
 		/// </summary>
-		public AstType DeclaringType {
-			get { return GetChildByRole(DeclaringTypeRole); }
-			set { SetChildByRole(DeclaringTypeRole, value); }
-		}
+		[Slot("DeclaringTypeRole")]
+		public partial AstType DeclaringType { get; set; }
 
 		/// <summary>
 		/// Gets/sets the member name.
@@ -94,18 +92,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the return type of conversion operators.
 		/// This property is only used when SymbolKind==Operator and OperatorType is explicit or implicit.
 		/// </summary>
-		public AstType ConversionOperatorReturnType {
-			get { return GetChildByRole(ConversionOperatorReturnTypeRole); }
-			set { SetChildByRole(ConversionOperatorReturnTypeRole, value); }
-		}
+		[Slot("ConversionOperatorReturnTypeRole")]
+		public partial AstType ConversionOperatorReturnType { get; set; }
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		[Slot("Roles.TypeArgument")]
+		public partial AstNodeCollection<AstType> TypeArguments { get; }
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

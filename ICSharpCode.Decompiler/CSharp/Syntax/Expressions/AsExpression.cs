@@ -33,19 +33,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole AsKeywordRole = new TokenRole("as");
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		public CSharpTokenNode AsToken {
 			get { return GetChildByRole(AsKeywordRole); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
 		public AsExpression()
 		{

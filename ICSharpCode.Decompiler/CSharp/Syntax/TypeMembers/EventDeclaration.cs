@@ -44,9 +44,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(EventKeywordRole); }
 		}
 
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole(Roles.Variable); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
+		[Slot("Roles.Variable")]
+		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
 		// Hide .Name and .NameToken from users; the actual field names
 		// are stored in the VariableInitializer.
@@ -88,24 +93,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		public AstType PrivateImplementationType {
-			get { return GetChildByRole(PrivateImplementationTypeRole); }
-			set { SetChildByRole(PrivateImplementationTypeRole, value); }
-		}
+		[Slot("PrivateImplementationTypeRole")]
+		public partial AstType PrivateImplementationType { get; set; }
 
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public Accessor AddAccessor {
-			get { return GetChildByRole(AddAccessorRole); }
-			set { SetChildByRole(AddAccessorRole, value); }
-		}
+		[Slot("AddAccessorRole")]
+		public partial Accessor AddAccessor { get; set; }
 
-		public Accessor RemoveAccessor {
-			get { return GetChildByRole(RemoveAccessorRole); }
-			set { SetChildByRole(RemoveAccessorRole, value); }
-		}
+		[Slot("RemoveAccessorRole")]
+		public partial Accessor RemoveAccessor { get; set; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }

@@ -37,10 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(value)); }
 		}
 
-		public Identifier IdentifierToken {
-			get { return GetChildByRole(Roles.Identifier); }
-			set { SetChildByRole(Roles.Identifier, value); }
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier IdentifierToken { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
@@ -59,9 +57,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<VariableDesignation> VariableDesignations {
-			get { return GetChildrenByRole(Roles.VariableDesignationRole); }
-		}
+		[Slot("Roles.VariableDesignationRole")]
+		public partial AstNodeCollection<VariableDesignation> VariableDesignations { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }

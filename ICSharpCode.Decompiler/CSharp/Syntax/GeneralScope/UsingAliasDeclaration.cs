@@ -59,10 +59,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public AstType Import {
-			get { return GetChildByRole(ImportRole); }
-			set { SetChildByRole(ImportRole, value); }
-		}
+		[Slot("ImportRole")]
+		public partial AstType Import { get; set; }
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }

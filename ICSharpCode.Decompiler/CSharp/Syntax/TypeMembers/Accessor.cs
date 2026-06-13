@@ -66,10 +66,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Body")]
+		public partial BlockStatement Body { get; set; }
 
 		public static TokenRole? GetAccessorKeywordRole(AccessorKind kind)
 		{

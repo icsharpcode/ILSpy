@@ -23,9 +23,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<QueryClause> ClauseRole = new Role<QueryClause>("Clause", null);
 
-		public AstNodeCollection<QueryClause> Clauses {
-			get { return GetChildrenByRole(ClauseRole); }
-		}
+		[Slot("ClauseRole")]
+		public partial AstNodeCollection<QueryClause> Clauses { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -65,10 +64,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<QueryExpression> PrecedingQueryRole = new Role<QueryExpression>("PrecedingQuery", QueryExpression.Null);
 		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
 
-		public QueryExpression PrecedingQuery {
-			get { return GetChildByRole(PrecedingQueryRole); }
-			set { SetChildByRole(PrecedingQueryRole, value); }
-		}
+		[Slot("PrecedingQueryRole")]
+		public partial QueryExpression PrecedingQuery { get; set; }
 
 		public CSharpTokenNode IntoKeyword {
 			get { return GetChildByRole(IntoKeywordRole); }
@@ -104,10 +101,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(FromKeywordRole); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
 		public string Identifier {
 			get {
@@ -126,10 +121,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(InKeywordRole); }
 		}
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -165,10 +158,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Assign); }
 		}
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -187,10 +178,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(WhereKeywordRole); }
 		}
 
-		public Expression Condition {
-			get { return GetChildByRole(Roles.Condition); }
-			set { SetChildByRole(Roles.Condition, value); }
-		}
+		[Slot("Roles.Condition")]
+		public partial Expression Condition { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -225,10 +214,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(JoinKeywordRole); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(TypeRole); }
-			set { SetChildByRole(TypeRole, value); }
-		}
+		[Slot("TypeRole")]
+		public partial AstType Type { get; set; }
 
 		public string JoinIdentifier {
 			get {
@@ -247,28 +234,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(InKeywordRole); }
 		}
 
-		public Expression InExpression {
-			get { return GetChildByRole(InExpressionRole); }
-			set { SetChildByRole(InExpressionRole, value); }
-		}
+		[Slot("InExpressionRole")]
+		public partial Expression InExpression { get; set; }
 
 		public CSharpTokenNode OnKeyword {
 			get { return GetChildByRole(OnKeywordRole); }
 		}
 
-		public Expression OnExpression {
-			get { return GetChildByRole(OnExpressionRole); }
-			set { SetChildByRole(OnExpressionRole, value); }
-		}
+		[Slot("OnExpressionRole")]
+		public partial Expression OnExpression { get; set; }
 
 		public CSharpTokenNode EqualsKeyword {
 			get { return GetChildByRole(EqualsKeywordRole); }
 		}
 
-		public Expression EqualsExpression {
-			get { return GetChildByRole(EqualsExpressionRole); }
-			set { SetChildByRole(EqualsExpressionRole, value); }
-		}
+		[Slot("EqualsExpressionRole")]
+		public partial Expression EqualsExpression { get; set; }
 
 		public CSharpTokenNode IntoKeyword {
 			get { return GetChildByRole(IntoKeywordRole); }
@@ -308,9 +289,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(OrderbyKeywordRole); }
 		}
 
-		public AstNodeCollection<QueryOrdering> Orderings {
-			get { return GetChildrenByRole(OrderingRole); }
-		}
+		[Slot("OrderingRole")]
+		public partial AstNodeCollection<QueryOrdering> Orderings { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -329,10 +309,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return NodeType.Unknown; }
 		}
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		public QueryOrderingDirection Direction {
 			get;
@@ -366,10 +344,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(SelectKeywordRole); }
 		}
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -390,19 +366,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(GroupKeywordRole); }
 		}
 
-		public Expression Projection {
-			get { return GetChildByRole(ProjectionRole); }
-			set { SetChildByRole(ProjectionRole, value); }
-		}
+		[Slot("ProjectionRole")]
+		public partial Expression Projection { get; set; }
 
 		public CSharpTokenNode ByKeyword {
 			get { return GetChildByRole(ByKeywordRole); }
 		}
 
-		public Expression Key {
-			get { return GetChildByRole(KeyRole); }
-			set { SetChildByRole(KeyRole, value); }
-		}
+		[Slot("KeyRole")]
+		public partial Expression Key { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

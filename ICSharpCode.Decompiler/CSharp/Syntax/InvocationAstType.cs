@@ -26,14 +26,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InvocationAstType : AstType
 	{
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Expression); }
-		}
+		[Slot("Roles.Expression")]
+		public partial AstNodeCollection<Expression> Arguments { get; }
 
-		public AstType BaseType {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType BaseType { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{

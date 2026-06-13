@@ -42,23 +42,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(TryKeywordRole); }
 		}
 
-		public BlockStatement TryBlock {
-			get { return GetChildByRole(TryBlockRole); }
-			set { SetChildByRole(TryBlockRole, value); }
-		}
+		[Slot("TryBlockRole")]
+		public partial BlockStatement TryBlock { get; set; }
 
-		public AstNodeCollection<CatchClause> CatchClauses {
-			get { return GetChildrenByRole(CatchClauseRole); }
-		}
+		[Slot("CatchClauseRole")]
+		public partial AstNodeCollection<CatchClause> CatchClauses { get; }
 
 		public CSharpTokenNode FinallyToken {
 			get { return GetChildByRole(FinallyKeywordRole); }
 		}
 
-		public BlockStatement FinallyBlock {
-			get { return GetChildByRole(FinallyBlockRole); }
-			set { SetChildByRole(FinallyBlockRole, value); }
-		}
+		[Slot("FinallyBlockRole")]
+		public partial BlockStatement FinallyBlock { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -93,10 +88,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
 		public string VariableName {
 			get { return GetChildByRole(Roles.Identifier).Name; }
@@ -108,14 +101,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier VariableNameToken {
-			get {
-				return GetChildByRole(Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier VariableNameToken { get; set; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
@@ -129,19 +116,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(CondLPar); }
 		}
 
-		public Expression Condition {
-			get { return GetChildByRole(ConditionRole); }
-			set { SetChildByRole(ConditionRole, value); }
-		}
+		[Slot("ConditionRole")]
+		public partial Expression Condition { get; set; }
 
 		public CSharpTokenNode CondRParToken {
 			get { return GetChildByRole(CondRPar); }
 		}
 
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
+		[Slot("Roles.Body")]
+		public partial BlockStatement Body { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

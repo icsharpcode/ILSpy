@@ -73,10 +73,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType BaseType {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType BaseType { get; set; }
 
 		public bool HasNullableSpecifier {
 			get {
@@ -120,13 +118,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<ArraySpecifier> ArraySpecifiers {
-			get { return GetChildrenByRole(ArraySpecifierRole); }
-		}
+		[Slot("ArraySpecifierRole")]
+		public partial AstNodeCollection<ArraySpecifier> ArraySpecifiers { get; }
 
-		public AstNodeCollection<CSharpTokenNode> PointerTokens {
-			get { return GetChildrenByRole(PointerRole); }
-		}
+		[Slot("PointerRole")]
+		public partial AstNodeCollection<CSharpTokenNode> PointerTokens { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

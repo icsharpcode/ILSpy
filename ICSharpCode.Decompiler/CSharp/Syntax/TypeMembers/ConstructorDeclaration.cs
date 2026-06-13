@@ -41,9 +41,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Identifier")]
+		public override partial Identifier NameToken { get; set; }
+
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
@@ -53,15 +58,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.Colon); }
 		}
 
-		public ConstructorInitializer Initializer {
-			get { return GetChildByRole(InitializerRole); }
-			set { SetChildByRole(InitializerRole, value); }
-		}
+		[Slot("InitializerRole")]
+		public partial ConstructorInitializer Initializer { get; set; }
 
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
+		[Slot("Roles.Body")]
+		public partial BlockStatement Body { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -108,9 +109,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Argument); }
-		}
+		[Slot("Roles.Argument")]
+		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }

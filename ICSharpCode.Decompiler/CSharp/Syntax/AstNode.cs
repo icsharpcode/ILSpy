@@ -263,6 +263,71 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				oldChild.ReplaceWith(newChild);
 		}
 
+		#region Slot bridge
+		// Transitional slot-accessor layer implemented OVER the linked-list child model. The
+		// eventual slot model assigns each node type a fixed, source-ordered set of slots; here we
+		// expose that schema while storage is still the linked list. A "single slot" maps to one
+		// Role (at most one child of that role); a "collection slot" maps to a Role that may hold
+		// many children. GetChild returns the canonical child for a single slot, or the first child
+		// of a collection slot.
+		//
+		// Converted nodes override SlotCount/GetSlotRole/IsCollectionSlot. The default implementation
+		// reports zero slots, so unconverted nodes keep working unchanged and the slot-order
+		// invariant skips them.
+
+		internal virtual int SlotCount => 0;
+
+		internal virtual Role GetSlotRole(int slotIndex)
+		{
+			throw new ArgumentOutOfRangeException(nameof(slotIndex));
+		}
+
+		internal virtual bool IsCollectionSlot(int slotIndex)
+		{
+			throw new ArgumentOutOfRangeException(nameof(slotIndex));
+		}
+
+		/// <summary>
+		/// Gets the child occupying the single slot at <paramref name="slotIndex"/>.
+		/// For collection slots this returns the first child of the slot's role.
+		/// </summary>
+		internal AstNode GetChild(int slotIndex)
+		{
+			Role role = GetSlotRole(slotIndex);
+			for (var cur = firstChild; cur != null; cur = cur.nextSibling)
+			{
+				if ((cur.flags & roleIndexMask) == role.Index)
+					return cur;
+			}
+			// Every role used for a single slot has a null object, so an AST property never returns null.
+			return (AstNode)role.NullObjectUntyped!;
+		}
+
+		internal void SetChild(int slotIndex, AstNode? newChild)
+		{
+			if (IsCollectionSlot(slotIndex))
+				throw new InvalidOperationException("SetChild is not valid for collection slots; mutate the collection instead.");
+			Role role = GetSlotRole(slotIndex);
+			AstNode oldChild = GetChild(slotIndex);
+			if (oldChild.IsNull)
+			{
+				if (newChild != null && !newChild.IsNull)
+					AddChildUnsafe(newChild, role);
+			}
+			else
+			{
+				oldChild.ReplaceWith(newChild);
+			}
+		}
+
+		// Note: document-order == slot-order is a POST-FLIP invariant, not a bridge invariant.
+		// During the transitional bridge the linked list still carries positional token children
+		// (e.g. the Roles.Comma trailing-comma marker) and comments whose document position encodes
+		// output meaning, so it legitimately diverges from slot order. The invariant is re-introduced
+		// once storage flips to slots (Phase 3c), where it holds by construction; until then the
+		// Pretty suite gates output. See ROLES_FREE_SLOT_AST_DESIGN.md (R8 / Phase 3c).
+		#endregion
+
 		public void AddChild<T>(T child, Role<T> role) where T : AstNode
 		{
 			if (role == null)

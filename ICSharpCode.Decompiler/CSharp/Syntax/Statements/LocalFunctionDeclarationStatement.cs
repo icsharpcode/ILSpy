@@ -25,10 +25,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new Role<MethodDeclaration>("Method", null);
 
-		public MethodDeclaration Declaration {
-			get { return GetChildByRole(MethodDeclarationRole); }
-			set { SetChildByRole(MethodDeclarationRole, value); }
-		}
+		[Slot("MethodDeclarationRole")]
+		public partial MethodDeclaration Declaration { get; set; }
 
 		public LocalFunctionDeclarationStatement(MethodDeclaration methodDeclaration)
 		{

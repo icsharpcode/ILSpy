@@ -53,9 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstNodeCollection<AstNode> Members {
-			get { return GetChildrenByRole(MemberRole); }
-		}
+		[Slot("MemberRole")]
+		public partial AstNodeCollection<AstNode> Members { get; }
 
 		IList<string> conditionalSymbols = null;
 

@@ -90,10 +90,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Used for "goto case LabelExpression;"
 		/// </summary>
-		public Expression LabelExpression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression LabelExpression { get; set; }
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }

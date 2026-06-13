@@ -92,9 +92,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LChevron); }
 		}
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole(Roles.TypeParameter); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Identifier")]
+		public override partial Identifier NameToken { get; set; }
+
+		[Slot("Roles.TypeParameter")]
+		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
 		public CSharpTokenNode RChevronToken {
 			get { return GetChildByRole(Roles.RChevron); }
@@ -112,29 +117,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public AstNodeCollection<AstType> BaseTypes {
-			get { return GetChildrenByRole(Roles.BaseType); }
-		}
+		[Slot("Roles.BaseType")]
+		public partial AstNodeCollection<AstType> BaseTypes { get; }
 
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole(Roles.Constraint); }
-		}
+		[Slot("Roles.Constraint")]
+		public partial AstNodeCollection<Constraint> Constraints { get; }
 
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public AstNodeCollection<EntityDeclaration> Members {
-			get { return GetChildrenByRole(Roles.TypeMemberRole); }
-		}
+		[Slot("Roles.TypeMemberRole")]
+		public partial AstNodeCollection<EntityDeclaration> Members { get; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }

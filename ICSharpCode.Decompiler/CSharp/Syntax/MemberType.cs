@@ -42,10 +42,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public AstType Target {
-			get { return GetChildByRole(TargetRole); }
-			set { SetChildByRole(TargetRole, value); }
-		}
+		[Slot("TargetRole")]
+		public partial AstType Target { get; set; }
 
 		public string MemberName {
 			get {
@@ -56,18 +54,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier MemberNameToken {
-			get {
-				return GetChildByRole(Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier MemberNameToken { get; set; }
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		[Slot("Roles.TypeArgument")]
+		public partial AstNodeCollection<AstType> TypeArguments { get; }
 
 		public MemberType()
 		{

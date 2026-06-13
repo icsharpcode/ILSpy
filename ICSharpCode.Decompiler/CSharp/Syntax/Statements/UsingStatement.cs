@@ -58,19 +58,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Either a VariableDeclarationStatement, or an Expression.
 		/// </summary>
-		public AstNode ResourceAcquisition {
-			get { return GetChildByRole(ResourceAcquisitionRole); }
-			set { SetChildByRole(ResourceAcquisitionRole, value); }
-		}
+		[Slot("ResourceAcquisitionRole")]
+		public partial AstNode ResourceAcquisition { get; set; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public Statement EmbeddedStatement {
-			get { return GetChildByRole(Roles.EmbeddedStatement); }
-			set { SetChildByRole(Roles.EmbeddedStatement, value); }
-		}
+		[Slot("Roles.EmbeddedStatement")]
+		public partial Statement EmbeddedStatement { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

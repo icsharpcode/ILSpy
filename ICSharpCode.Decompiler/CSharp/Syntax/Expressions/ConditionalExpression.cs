@@ -37,28 +37,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole ColonRole = Roles.Colon;
 		public readonly static Role<Expression> FalseRole = new Role<Expression>("False", Expression.Null);
 
-		public Expression Condition {
-			get { return GetChildByRole(ConditionRole); }
-			set { SetChildByRole(ConditionRole, value); }
-		}
+		[Slot("ConditionRole")]
+		public partial Expression Condition { get; set; }
 
 		public CSharpTokenNode QuestionMarkToken {
 			get { return GetChildByRole(QuestionMarkRole); }
 		}
 
-		public Expression TrueExpression {
-			get { return GetChildByRole(TrueRole); }
-			set { SetChildByRole(TrueRole, value); }
-		}
+		[Slot("TrueRole")]
+		public partial Expression TrueExpression { get; set; }
 
 		public CSharpTokenNode ColonToken {
 			get { return GetChildByRole(ColonRole); }
 		}
 
-		public Expression FalseExpression {
-			get { return GetChildByRole(FalseRole); }
-			set { SetChildByRole(FalseRole, value); }
-		}
+		[Slot("FalseRole")]
+		public partial Expression FalseExpression { get; set; }
 
 		public ConditionalExpression()
 		{

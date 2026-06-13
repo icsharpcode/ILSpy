@@ -30,15 +30,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(OutKeywordRole); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
-		public VariableInitializer Variable {
-			get { return GetChildByRole(Roles.Variable); }
-			set { SetChildByRole(Roles.Variable, value); }
-		}
+		[Slot("Roles.Variable")]
+		public partial VariableInitializer Variable { get; set; }
 
 		public OutVarDeclarationExpression()
 		{

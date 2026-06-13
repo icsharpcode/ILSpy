@@ -47,10 +47,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		public AstType PrivateImplementationType {
-			get { return GetChildByRole(PrivateImplementationTypeRole); }
-			set { SetChildByRole(PrivateImplementationTypeRole, value); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
+		[Slot("PrivateImplementationTypeRole")]
+		public partial AstType PrivateImplementationType { get; set; }
 
 		public override string Name {
 			get { return "Item"; }
@@ -71,9 +75,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(ThisKeywordRole); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		public CSharpTokenNode RBracketToken {
 			get { return GetChildByRole(Roles.RBracket); }
@@ -83,24 +86,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBrace); }
 		}
 
-		public Accessor Getter {
-			get { return GetChildByRole(GetterRole); }
-			set { SetChildByRole(GetterRole, value); }
-		}
+		[Slot("GetterRole")]
+		public partial Accessor Getter { get; set; }
 
-		public Accessor Setter {
-			get { return GetChildByRole(SetterRole); }
-			set { SetChildByRole(SetterRole, value); }
-		}
+		[Slot("SetterRole")]
+		public partial Accessor Setter { get; set; }
 
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole(Roles.RBrace); }
 		}
 
-		public Expression ExpressionBody {
-			get { return GetChildByRole(ExpressionBodyRole); }
-			set { SetChildByRole(ExpressionBodyRole, value); }
-		}
+		[Slot("ExpressionBodyRole")]
+		public partial Expression ExpressionBody { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

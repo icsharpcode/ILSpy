@@ -43,20 +43,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.WhereKeyword); }
 		}
 
-		public SimpleType TypeParameter {
-			get {
-				return GetChildByRole(Roles.ConstraintTypeParameter);
-			}
-			set {
-				SetChildByRole(Roles.ConstraintTypeParameter, value);
-			}
-		}
+		[Slot("Roles.ConstraintTypeParameter")]
+		public partial SimpleType TypeParameter { get; set; }
 
-		public AstNodeCollection<AstType> BaseTypes {
-			get {
-				return GetChildrenByRole(Roles.BaseType);
-			}
-		}
+		[Slot("Roles.BaseType")]
+		public partial AstNodeCollection<AstType> BaseTypes { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

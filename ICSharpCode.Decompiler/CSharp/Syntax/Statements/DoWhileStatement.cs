@@ -39,10 +39,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(DoKeywordRole); }
 		}
 
-		public Statement EmbeddedStatement {
-			get { return GetChildByRole(Roles.EmbeddedStatement); }
-			set { SetChildByRole(Roles.EmbeddedStatement, value); }
-		}
+		[Slot("Roles.EmbeddedStatement")]
+		public partial Statement EmbeddedStatement { get; set; }
 
 		public CSharpTokenNode WhileToken {
 			get { return GetChildByRole(WhileKeywordRole); }
@@ -52,10 +50,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public Expression Condition {
-			get { return GetChildByRole(Roles.Condition); }
-			set { SetChildByRole(Roles.Condition, value); }
-		}
+		[Slot("Roles.Condition")]
+		public partial Expression Condition { get; set; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }

@@ -34,10 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole ArrowRole = new TokenRole("->");
 
-		public Expression Target {
-			get { return GetChildByRole(Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
-		}
+		[Slot("Roles.TargetExpression")]
+		public partial Expression Target { get; set; }
 
 		public CSharpTokenNode ArrowToken {
 			get { return GetChildByRole(ArrowRole); }
@@ -52,18 +50,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier MemberNameToken {
-			get {
-				return GetChildByRole(Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier MemberNameToken { get; set; }
 
-		public AstNodeCollection<AstType> TypeArguments {
-			get { return GetChildrenByRole(Roles.TypeArgument); }
-		}
+		[Slot("Roles.TypeArgument")]
+		public partial AstNodeCollection<AstType> TypeArguments { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

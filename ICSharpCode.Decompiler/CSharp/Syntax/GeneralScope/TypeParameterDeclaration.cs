@@ -38,9 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return NodeType.Unknown; }
 		}
 
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return GetChildrenByRole(AttributeRole); }
-		}
+		[Slot("AttributeRole")]
+		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		VarianceModifier variance;
 
@@ -72,14 +71,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier NameToken {
-			get {
-				return GetChildByRole(Roles.Identifier);
-			}
-			set {
-				SetChildByRole(Roles.Identifier, value);
-			}
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier NameToken { get; set; }
 
 		public TypeParameterDeclaration()
 		{

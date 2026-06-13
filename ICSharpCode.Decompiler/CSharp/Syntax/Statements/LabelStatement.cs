@@ -41,10 +41,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public Identifier LabelToken {
-			get { return GetChildByRole(Roles.Identifier); }
-			set { SetChildByRole(Roles.Identifier, value); }
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier LabelToken { get; set; }
 
 		public CSharpTokenNode ColonToken {
 			get { return GetChildByRole(Roles.Colon); }

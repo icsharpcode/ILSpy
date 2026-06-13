@@ -46,14 +46,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { EntityDeclaration.SetModifiers(this, value); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
-		public AstNodeCollection<VariableInitializer> Variables {
-			get { return GetChildrenByRole(Roles.Variable); }
-		}
+		[Slot("Roles.Variable")]
+		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole(Roles.Semicolon); }

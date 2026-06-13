@@ -41,27 +41,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(NewKeywordRole); }
 		}
 
-		public AstType Type {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
-		}
+		[Slot("Roles.Type")]
+		public partial AstType Type { get; set; }
 
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole(Roles.Argument); }
-		}
+		[Slot("Roles.Argument")]
+		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public ArrayInitializerExpression Initializer {
-			get { return GetChildByRole(InitializerRole); }
-			set { SetChildByRole(InitializerRole, value); }
-		}
+		[Slot("InitializerRole")]
+		public partial ArrayInitializerExpression Initializer { get; set; }
 
 		public ObjectCreateExpression()
 		{

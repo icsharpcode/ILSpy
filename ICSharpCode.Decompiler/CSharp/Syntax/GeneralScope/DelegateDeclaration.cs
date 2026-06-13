@@ -46,25 +46,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.DelegateKeyword); }
 		}
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole(Roles.TypeParameter); }
-		}
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
+		[Slot("Roles.Identifier")]
+		public override partial Identifier NameToken { get; set; }
+
+		[Slot("Roles.TypeParameter")]
+		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole(Roles.Constraint); }
-		}
+		[Slot("Roles.Constraint")]
+		public partial AstNodeCollection<Constraint> Constraints { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

@@ -35,39 +35,43 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Method; }
 		}
 
+		// Slots in document order; inherited contract slots (Attributes, ReturnType, NameToken) are
+		// re-declared override per the flatten model (Part I.3).
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		public AstType PrivateImplementationType {
-			get { return GetChildByRole(PrivateImplementationTypeRole); }
-			set { SetChildByRole(PrivateImplementationTypeRole, value); }
-		}
+		[Slot("PrivateImplementationTypeRole")]
+		public partial AstType PrivateImplementationType { get; set; }
 
-		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
-			get { return GetChildrenByRole(Roles.TypeParameter); }
-		}
+		[Slot("Roles.Identifier")]
+		public override partial Identifier NameToken { get; set; }
+
+		[Slot("Roles.TypeParameter")]
+		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }
 		}
 
-		public AstNodeCollection<ParameterDeclaration> Parameters {
-			get { return GetChildrenByRole(Roles.Parameter); }
-		}
+		[Slot("Roles.Parameter")]
+		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		public CSharpTokenNode RParToken {
 			get { return GetChildByRole(Roles.RPar); }
 		}
 
-		public AstNodeCollection<Constraint> Constraints {
-			get { return GetChildrenByRole(Roles.Constraint); }
-		}
+		[Slot("Roles.Constraint")]
+		public partial AstNodeCollection<Constraint> Constraints { get; }
 
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
+		[Slot("Roles.Body")]
+		public partial BlockStatement Body { get; set; }
 
 		public bool IsExtensionMethod {
 			get {

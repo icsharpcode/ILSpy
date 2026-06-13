@@ -38,10 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(CheckedKeywordRole); }
 		}
 
-		public BlockStatement Body {
-			get { return GetChildByRole(Roles.Body); }
-			set { SetChildByRole(Roles.Body, value); }
-		}
+		[Slot("Roles.Body")]
+		public partial BlockStatement Body { get; set; }
 
 		public CheckedStatement()
 		{

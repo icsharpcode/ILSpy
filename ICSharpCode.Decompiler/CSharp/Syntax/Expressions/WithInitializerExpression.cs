@@ -29,19 +29,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole WithKeywordRole = new TokenRole("with");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
 
-		public Expression Expression {
-			get { return GetChildByRole(Roles.Expression); }
-			set { SetChildByRole(Roles.Expression, value); }
-		}
+		[Slot("Roles.Expression")]
+		public partial Expression Expression { get; set; }
 
 		public CSharpTokenNode WithToken {
 			get { return GetChildByRole(WithKeywordRole); }
 		}
 
-		public ArrayInitializerExpression Initializer {
-			get { return GetChildByRole(InitializerRole); }
-			set { SetChildByRole(InitializerRole, value); }
-		}
+		[Slot("InitializerRole")]
+		public partial ArrayInitializerExpression Initializer { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{
