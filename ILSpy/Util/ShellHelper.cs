@@ -17,29 +17,92 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+
+// The Windows-only part of this partial class declares shell32/ole32 P/Invokes; CA1060 reports on
+// the class declaration here in the primary file rather than at the DllImport site.
+#pragma warning disable CA1060 // Move pinvokes to native methods class
 
 namespace ICSharpCode.ILSpy.Util
 {
 	/// <summary>
-	/// Cross-platform helpers for handing a path to the OS shell: open a folder, reveal a file in
-	/// the file manager, or open a file with its default application. All calls are best-effort --
-	/// a failed launch is swallowed, since the user can navigate manually and the gesture has
-	/// already returned. Consolidates the explorer.exe / open / xdg-open switch that was copied
-	/// across the export, save, PDB, diagram and package-extraction commands.
+	/// Cross-platform helpers for handing a path to the OS shell: open a folder, reveal one or more
+	/// files in the file manager, or open a file with its default application. All calls are
+	/// best-effort -- a failed launch is swallowed, since the user can navigate manually and the
+	/// gesture has already returned. Consolidates the explorer.exe / open / xdg-open switch that was
+	/// copied across the export, save, PDB, diagram and package-extraction commands.
+	///
+	/// On Windows, revealing files goes through the shell COM API (see the Windows-specific part of
+	/// this class) so that several selected files collapse into a single Explorer window -- reusing
+	/// one already open at that folder -- instead of spawning a fresh explorer.exe per file.
 	/// </summary>
-	public static class ShellHelper
+	public static partial class ShellHelper
 	{
 		/// <summary>Opens <paramref name="path"/> (a directory) in the OS file manager.</summary>
-		public static void OpenFolder(string path) => Launch(path, selectItem: false);
+		public static void OpenFolder(string path)
+		{
+			try
+			{
+				if (OperatingSystem.IsWindows())
+					Process.Start(new ProcessStartInfo("explorer.exe", Quote(path)) { UseShellExecute = false });
+				else if (OperatingSystem.IsMacOS())
+					Process.Start(new ProcessStartInfo("open", Quote(path)) { UseShellExecute = false });
+				else
+					Process.Start(new ProcessStartInfo("xdg-open", path) { UseShellExecute = false });
+			}
+			catch
+			{
+				// Best-effort: the user can navigate manually if the shell call fails.
+			}
+		}
 
 		/// <summary>
 		/// Reveals <paramref name="path"/> (a file) in the OS file manager, selecting it where the
-		/// platform supports it (Windows <c>/select,</c>, macOS <c>-R</c>). On Linux there is no
-		/// stable cross-distro "select file" hook, so the parent directory is opened instead.
+		/// platform supports it. See <see cref="RevealFiles"/> for the multi-file behaviour.
 		/// </summary>
-		public static void RevealFile(string path) => Launch(path, selectItem: true);
+		public static void RevealFile(string path) => RevealFiles(new[] { path });
+
+		/// <summary>
+		/// Reveals several files in the OS file manager. Files are grouped by containing folder so
+		/// that each folder is shown in a single window with all of its files selected, rather than
+		/// one window per file. On Windows this reuses an Explorer window already open at the folder
+		/// (shell COM); on macOS Finder's <c>open -R</c> reveals and selects; on Linux there is no
+		/// portable "select item" hook, so each distinct parent folder is opened once.
+		/// </summary>
+		public static void RevealFiles(IEnumerable<string> paths)
+		{
+			var groups = GroupByFolder(paths);
+			if (groups.Count == 0)
+				return;
+
+			if (OperatingSystem.IsWindows())
+			{
+				foreach (var (folder, files) in groups)
+					RevealInExplorer(folder, files);
+			}
+			else if (OperatingSystem.IsMacOS())
+			{
+				// Finder reveals and selects every passed file in one invocation.
+				var allFiles = groups.SelectMany(g => g.Files).Select(Quote);
+				try
+				{
+					Process.Start(new ProcessStartInfo("open", "-R " + string.Join(' ', allFiles)) { UseShellExecute = false });
+				}
+				catch
+				{
+					// Best-effort: fall through silently.
+				}
+			}
+			else
+			{
+				// Linux + others: open each distinct parent folder once (deduped by GroupByFolder).
+				foreach (var (folder, _) in groups)
+					OpenFolder(folder);
+			}
+		}
 
 		/// <summary>Opens <paramref name="path"/> with its default application (image viewer,
 		/// browser, ...).</summary>
@@ -59,32 +122,40 @@ namespace ICSharpCode.ILSpy.Util
 			}
 		}
 
-		static void Launch(string path, bool selectItem)
+		/// <summary>
+		/// Groups paths by their containing directory, preserving the order in which folders are
+		/// first seen and deduping paths case-insensitively. Entries that are null/empty or have no
+		/// containing directory are dropped. Exposed for testing the reveal grouping without
+		/// launching the OS file manager.
+		/// </summary>
+		internal static IReadOnlyList<(string Folder, IReadOnlyList<string> Files)> GroupByFolder(IEnumerable<string?>? paths)
 		{
-			try
+			if (paths is null)
+				return Array.Empty<(string, IReadOnlyList<string>)>();
+
+			var groups = new List<(string Folder, List<string> Files)>();
+			var folderIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+			foreach (var path in paths)
 			{
-				if (OperatingSystem.IsWindows())
+				if (string.IsNullOrEmpty(path) || !seen.Add(path))
+					continue;
+				var folder = Path.GetDirectoryName(path);
+				if (string.IsNullOrEmpty(folder))
+					continue;
+				if (!folderIndex.TryGetValue(folder, out int i))
 				{
-					var args = selectItem ? $"/select,\"{path}\"" : $"\"{path}\"";
-					Process.Start(new ProcessStartInfo("explorer.exe", args) { UseShellExecute = false });
+					i = groups.Count;
+					folderIndex.Add(folder, i);
+					groups.Add((folder, new List<string>()));
 				}
-				else if (OperatingSystem.IsMacOS())
-				{
-					var args = selectItem ? $"-R \"{path}\"" : $"\"{path}\"";
-					Process.Start(new ProcessStartInfo("open", args) { UseShellExecute = false });
-				}
-				else
-				{
-					// Linux + others: no universal "select item" command, so revealing a file opens
-					// its parent directory.
-					var target = selectItem ? (Path.GetDirectoryName(path) ?? path) : path;
-					Process.Start(new ProcessStartInfo("xdg-open", target) { UseShellExecute = false });
-				}
+				groups[i].Files.Add(path);
 			}
-			catch
-			{
-				// Best-effort: the user can navigate manually if the shell call fails.
-			}
+
+			return groups.Select(g => (g.Folder, (IReadOnlyList<string>)g.Files)).ToList();
 		}
+
+		static string Quote(string value) => "\"" + value + "\"";
 	}
 }
