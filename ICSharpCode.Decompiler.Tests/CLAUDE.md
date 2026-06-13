@@ -42,7 +42,7 @@ root `CLAUDE.md` section on the submodule).
 | Ugly | `UglyTestRunner` / `Ugly/*.cs` | compile -> decompile with sugar settings disabled | sibling `.Expected.cs` file |
 | Disassembler | `DisassemblerPrettyTestRunner` / `Disassembler/Pretty/*.il` | ilasm -> disassemble with our `ReflectionDisassembler` | the `.il` source (or `.expected.il`, e.g. `SortedOutput`) |
 | VBPretty | `VBPrettyTestRunner` / `VBPretty/*.vb` | vbc -> decompile to C# | sibling `.cs` file |
-| PdbGen | `PdbGenerationTestRunner` / `PdbGen/*.xml` | in-proc Roslyn compile, generate portable PDB with `PortablePdbWriter`, dump both PDBs with `PdbToXmlConverter` | `.expected.xml` |
+| PdbGen | `PdbGenerationTestRunner` / `PdbGen/*.xml` | in-proc Roslyn compile (real PDB = oracle), decompile, generate portable PDB with `PortablePdbWriter`, parse both PDBs' sequence-point blobs | the compiler's PDB, projected to the visible breakpoint map (see below) |
 | Roundtrip | `RoundtripAssembly` (inputs from `ILSpy-tests/`) | whole-project decompile -> MSBuild rebuild -> run original NUnit tests against the rebuilt assembly | test-run success |
 | Unit tests | `TypeSystem/`, `Semantics/`, `Output/`, `Util/`, `DataFlowTest`, `Metadata/`, `ProjectDecompiler/` | plain in-process NUnit | assertions |
 
@@ -69,8 +69,24 @@ helper, which picks the file via `[CallerMemberName]`.
 - **ILPretty / Disassembler**: add a `.il` file (assembled with the NuGet ilasm) and the
   expected `.cs` (`ILPretty`) or rely on round-tripping the `.il` itself (`Disassembler`).
 - **VBPretty**: add `MyTest.vb` and the expected C# decompilation `MyTest.cs`.
-- **PdbGen**: add `MyTest.xml` containing the source files inside `<file name="...">` elements;
-  the expected PDB dump lives in `MyTest.expected.xml`.
+- **PdbGen** (the reconstructed PDB's breakpoints match the C# compiler's): add `MyTest.xml`
+  containing the source inside `<file name="...">` elements, written exactly as ILSpy
+  pretty-prints a *single type* (one document per type, no assembly-attribute header - the same
+  discipline as Pretty). The runner compiles it with Roslyn (whose PDB is the oracle), decompiles,
+  reconstructs a PDB, and compares only the **visible breakpoint map**: per method, the ordered
+  source locations of the non-hidden sequence points. IL offsets, hidden sequence points, local
+  scopes and the embedded source are all dropped, because the decompiler reconstructs them
+  differently and they never match byte-for-byte. The comparer also runs an oracle-free
+  well-formedness check (strictly increasing IL offsets = no duplicate/overlapping points).
+  `TestSequencePoints()` asserts the map matches the compiler exactly; for the handful of methods
+  where the decompiler legitimately diverges (e.g. it breakpoints a method's opening brace where
+  the compiler keeps it hidden), call `TestSequencePoints(knownResidual: true)`; the residual is
+  auto-derived and committed as `MyTest.residual.txt`, so improvements and regressions both flip
+  the test like a pretty diff. On a mismatch the test writes `MyTest.residual.txt.generated` and
+  fails; accept a deliberate change by re-running with `ILSPY_ACCEPT_PDB_RESIDUAL=1` set (which
+  overwrites the snapshot in place) or by copying the `.generated` file over it. `Tolerance.Lines` drops column comparison
+  for statements whose column placement differs. Nothing is hand-maintained except the `.cs`
+  source and, rarely, the residual snapshot. No `.expected.*` is committed (all regenerated).
 
 ## Conditional expectations (#if) and comparison rules
 

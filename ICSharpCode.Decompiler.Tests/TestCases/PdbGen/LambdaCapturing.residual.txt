@@ -1,0 +1,2 @@
+0x06000001 ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing.Main
+  + decompiler only: (8,2)-(8,3)
