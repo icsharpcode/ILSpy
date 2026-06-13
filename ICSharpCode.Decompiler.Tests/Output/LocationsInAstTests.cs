@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.IO;
 using System.Linq;
 
@@ -23,23 +24,13 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Tests.Helpers;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Output
 {
-	// Sample type decompiled by the tests below. A small method body gives the
-	// location-setting output path several statements and tokens to assign positions to.
-	internal class LocationSample
-	{
-		public int Add(int a, int b)
-		{
-			int sum = a + b;
-			return sum;
-		}
-	}
-
 	// Characterization coverage for the "AST with locations" output path
 	// (TokenWriter.CreateWriterThatSetsLocationsInAST -> InsertMissingTokensDecorator). The Pretty
 	// suite never drives this path, yet PDB sequence points depend on it (SequencePointBuilder reads
@@ -47,12 +38,39 @@ namespace ICSharpCode.Decompiler.Tests.Output
 	// pin the observable consequences that must survive later AST changes: the located path emits the
 	// same text as the plain path, real nodes receive sensible locations, and sequence points are
 	// produced for a method body.
+	//
+	// Like the Pretty tests, the samples live in a TestCases fixture compiled through Tester with a
+	// fixed Roslyn version, rather than being read out of this test assembly: its Debug/Release build
+	// flavor would otherwise change the sample IL and shift the sequence-point coordinates locked below.
 	[TestFixture]
 	public class LocationsInAstTests
 	{
+		static readonly string TestCasePath = Tester.TestCasePath + "/LocationsInAst";
+
+		const CompilerOptions SampleCompilerOptions =
+			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.UseDebug | CompilerOptions.Library;
+
+		const string LocationSampleName = "ICSharpCode.Decompiler.Tests.TestCases.LocationsInAst.LocationSample";
+		const string SequencePointSampleName = "ICSharpCode.Decompiler.Tests.TestCases.LocationsInAst.SequencePointSample";
+
+		static CompilerResults compiledSamples;
+
+		[OneTimeSetUp]
+		public void CompileSamples()
+		{
+			var csFile = Path.Combine(TestCasePath, "LocationsInAstSamples.cs");
+			compiledSamples = Tester.CompileCSharp(csFile, SampleCompilerOptions).GetAwaiter().GetResult();
+		}
+
+		[OneTimeTearDown]
+		public void DeleteCompiledSamples()
+		{
+			compiledSamples?.DeleteTempFiles();
+		}
+
 		static CSharpDecompiler CreateDecompiler(out DecompilerSettings settings)
 		{
-			string assemblyPath = typeof(LocationsInAstTests).Assembly.Location;
+			string assemblyPath = compiledSamples.PathToAssembly;
 			var module = new PEFile(assemblyPath);
 			var resolver = new UniversalAssemblyResolver(assemblyPath, false, module.Metadata.DetectTargetFrameworkId());
 			settings = new DecompilerSettings();
@@ -62,7 +80,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		static SyntaxTree DecompileSample(out CSharpDecompiler decompiler, out DecompilerSettings settings)
 		{
 			decompiler = CreateDecompiler(out settings);
-			return decompiler.DecompileType(new FullTypeName(typeof(LocationSample).FullName));
+			return decompiler.DecompileType(new FullTypeName(LocationSampleName));
 		}
 
 		static string Print(SyntaxTree syntaxTree, DecompilerSettings settings, bool setLocations)
@@ -127,7 +145,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 			// Guard against the loop passing vacuously: the sample's own members must be among them.
 			var names = identifiers.Select(id => id.Name).ToList();
-			Assert.That(names, Does.Contain(nameof(LocationSample.Add)));
+			Assert.That(names, Does.Contain("Add"));
 			Assert.That(names, Does.Contain("a").And.Contains("b"));
 		}
 
@@ -141,11 +159,59 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			Assert.That(sequencePoints, Is.Not.Empty, "no sequence points were produced");
 
 			var points = sequencePoints
-				.First(kvp => kvp.Key.Name == nameof(LocationSample.Add))
+				.First(kvp => kvp.Key.Name == "Add")
 				.Value;
 			Assert.That(points, Is.Not.Empty, "the sample method produced no sequence points");
 			Assert.That(points.Any(p => !p.IsHidden && p.StartLine > 0), Is.True,
 				"no visible sequence point carries a source line");
+		}
+
+		// Locks the exact source spans of the visible sequence points for a header-rich method, so a
+		// rewrite of how SequencePointBuilder sources brace/paren/keyword locations (e.g. deriving them
+		// from real nodes instead of reconstructed token nodes) cannot silently shift PDB coordinates.
+		// The coordinates are in decompiled-output space and are pinned to the fixed compilation above.
+		static readonly string[] ExpectedHeaderSequencePoints = {
+			"10,50 - 10,57",
+			"10,59 - 10,67",
+			"10,8 - 10,48",
+			"15,4 - 15,10",
+			"17,3 - 17,18",
+			"18,3 - 21,4",
+			"20,4 - 20,16",
+			"22,3 - 22,28",
+			"23,3 - 23,15",
+			"24,3 - 24,4",
+			"25,4 - 25,10",
+			"26,3 - 26,4",
+			"28,3 - 28,4",
+			"29,4 - 29,19",
+			"31,24 - 31,52",
+			"32,3 - 32,4",
+			"33,4 - 33,14",
+			"36,3 - 36,4",
+			"37,4 - 37,14",
+			"8,2 - 8,3",
+			"9,3 - 9,15",
+		};
+
+		[Test]
+		public void HeaderSequencePointCoordinatesAreStable()
+		{
+			var decompiler = CreateDecompiler(out var settings);
+			var syntaxTree = decompiler.DecompileType(new FullTypeName(SequencePointSampleName));
+			Print(syntaxTree, settings, setLocations: true);
+
+			var points = decompiler.CreateSequencePoints(syntaxTree)
+				.First(kvp => kvp.Key.Name == "Headers")
+				.Value;
+
+			var actual = points
+				.Where(p => !p.IsHidden)
+				.Select(p => $"{p.StartLine},{p.StartColumn} - {p.EndLine},{p.EndColumn}")
+				.OrderBy(s => s, StringComparer.Ordinal)
+				.ToArray();
+
+			Assert.That(actual, Is.EqualTo(ExpectedHeaderSequencePoints));
 		}
 	}
 }

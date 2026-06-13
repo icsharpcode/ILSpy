@@ -100,6 +100,7 @@
     <None Include="TestCases\Disassembler\Pretty\SortMembers.il" />
     <None Include="TestCases\ILPretty\ExtensionEncodingV2.il" />
     <None Include="testcases\ilpretty\ExtensionEncodingV1.il" />
+    <None Include="TestCases\LocationsInAst\LocationsInAstSamples.cs" />
     <None Include="TestCases\ILPretty\GuessAccessors.cs" />
     <None Include="TestCases\ILPretty\GuessAccessors.il" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.il" />

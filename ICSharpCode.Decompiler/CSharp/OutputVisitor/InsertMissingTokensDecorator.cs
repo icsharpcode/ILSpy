@@ -29,11 +29,30 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		List<AstNode> currentList;
 		readonly ILocatable locationProvider;
 
+		// Nodes that have been started but whose first token has not been written yet. The start
+		// location of a node is the position of its first printed token (not the StartNode position,
+		// which precedes any leading newline/indentation), so it is assigned lazily on the next write.
+		readonly List<AstNode> nodesAwaitingStart = new List<AstNode>();
+
+		// Position immediately after the most recently written token. A node's end location is the end
+		// of its last token (not the EndNode position, which follows the trailing newline/indentation).
+		TextLocation lastTokenEnd;
+
 		public InsertMissingTokensDecorator(TokenWriter writer, ILocatable locationProvider)
 			: base(writer)
 		{
 			this.locationProvider = locationProvider;
 			currentList = new List<AstNode>();
+		}
+
+		void AssignPendingStartLocations()
+		{
+			if (nodesAwaitingStart.Count == 0)
+				return;
+			TextLocation location = locationProvider.Location;
+			foreach (var node in nodesAwaitingStart)
+				node.StorePrintStart(location);
+			nodesAwaitingStart.Clear();
 		}
 
 		public override void StartNode(AstNode node)
@@ -45,6 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				currentList.Add(node);
 				nodes.Push(currentList);
 				currentList = new List<AstNode>();
+				nodesAwaitingStart.Add(node);
 			}
 			else if (node is Comment comment)
 			{
@@ -63,6 +83,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// StartNode/EndNode is only called for them to support folding of comments.
 			if (node.NodeType != NodeType.Whitespace)
 			{
+				// A node that printed no tokens of its own collapses to a zero-width span here.
+				if (nodesAwaitingStart.Remove(node))
+					node.StorePrintStart(lastTokenEnd);
+				node.StorePrintEnd(lastTokenEnd);
 				System.Diagnostics.Debug.Assert(currentList != null);
 				foreach (var removable in node.Children.Where(n => n is CSharpTokenNode))
 				{
@@ -85,6 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void WriteToken(Role role, string token)
 		{
+			AssignPendingStartLocations();
 			switch (nodes.Peek().LastOrDefault())
 			{
 				case EmptyStatement emptyStatement:
@@ -100,10 +125,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					break;
 			}
 			base.WriteToken(role, token);
+			lastTokenEnd = locationProvider.Location;
 		}
 
 		public override void WriteKeyword(Role role, string keyword)
 		{
+			AssignPendingStartLocations();
 			TextLocation start = locationProvider.Location;
 			CSharpTokenNode t = null;
 			if (role is TokenRole)
@@ -128,18 +155,22 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				t.Role = role;
 			}
 			base.WriteKeyword(role, keyword);
+			lastTokenEnd = locationProvider.Location;
 		}
 
 		public override void WriteIdentifier(Identifier identifier)
 		{
+			AssignPendingStartLocations();
 			if (!identifier.IsNull)
 				identifier.SetStartLocation(locationProvider.Location);
 			currentList.Add(identifier);
 			base.WriteIdentifier(identifier);
+			lastTokenEnd = locationProvider.Location;
 		}
 
 		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
 		{
+			AssignPendingStartLocations();
 			Expression node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;
 			base.WritePrimitiveValue(value, format);
@@ -151,14 +182,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				((NullReferenceExpression)node).SetStartLocation(startLocation);
 			}
+			lastTokenEnd = locationProvider.Location;
 		}
 
 		public override void WritePrimitiveType(string type)
 		{
+			AssignPendingStartLocations();
 			PrimitiveType node = nodes.Peek().LastOrDefault() as PrimitiveType;
 			if (node != null)
 				node.SetStartLocation(locationProvider.Location);
 			base.WritePrimitiveType(type);
+			lastTokenEnd = locationProvider.Location;
 		}
 	}
 }
