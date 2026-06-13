@@ -40,14 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(UsingKeywordRole); }
 		}
 
-		public CSharpTokenNode AwaitToken {
-			get { return GetChildByRole(AwaitRole); }
-		}
-
-		public bool IsAsync {
-			get { return !GetChildByRole(AwaitRole).IsNull; }
-			set { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
-		}
+		public bool IsAsync { get; set; }
 
 		public CSharpTokenNode LParToken {
 			get { return GetChildByRole(Roles.LPar); }

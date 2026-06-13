@@ -68,22 +68,33 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		TextLocation startLocation = TextLocation.Empty;
+		TextLocation endLocation = TextLocation.Empty;
+
+		// Source locations are assigned at print time (the output visitor brackets every node with
+		// StartNode/EndNode and InsertMissingTokensDecorator records the writer's position) rather than
+		// computed by recursion to child token positions. A node's span runs from its first printed
+		// token to its last; leaf nodes that print as a single token override these with their own value.
 		public virtual TextLocation StartLocation {
 			get {
-				var child = firstChild;
-				if (child == null)
-					return TextLocation.Empty;
-				return child.StartLocation;
+				return startLocation;
 			}
 		}
 
 		public virtual TextLocation EndLocation {
 			get {
-				var child = lastChild;
-				if (child == null)
-					return TextLocation.Empty;
-				return child.EndLocation;
+				return endLocation;
 			}
+		}
+
+		internal void StorePrintStart(TextLocation value)
+		{
+			startLocation = value;
+		}
+
+		internal void StorePrintEnd(TextLocation value)
+		{
+			endLocation = value;
 		}
 
 		public AstNode? Parent {

@@ -36,14 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ForeachKeywordRole = new TokenRole("foreach");
 		public static readonly TokenRole InKeywordRole = new TokenRole("in");
 
-		public CSharpTokenNode AwaitToken {
-			get { return GetChildByRole(AwaitRole); }
-		}
-
-		public bool IsAsync {
-			get { return !GetChildByRole(AwaitRole).IsNull; }
-			set { SetChildByRole(AwaitRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null); }
-		}
+		public bool IsAsync { get; set; }
 
 		public CSharpTokenNode ForeachToken {
 			get { return GetChildByRole(ForeachKeywordRole); }
