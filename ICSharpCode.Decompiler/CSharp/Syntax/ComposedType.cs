@@ -50,40 +50,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// This is used for C# 7 ref locals/ref return.
 		/// Parameters use ParameterDeclaration.ParameterModifier instead.
 		/// </summary>
-		public bool HasRefSpecifier {
-			get {
-				return !GetChildByRole(RefRole).IsNull;
-			}
-			set {
-				SetChildByRole(RefRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
-			}
-		}
+		public bool HasRefSpecifier { get; set; }
 
 		/// <summary>
 		/// Gets/sets whether this type has a 'readonly' specifier.
 		/// This is used for C# 7.2 'ref readonly' locals/ref return.
 		/// Parameters use ParameterDeclaration.ParameterModifier instead.
 		/// </summary>
-		public bool HasReadOnlySpecifier {
-			get {
-				return !GetChildByRole(ReadonlyRole).IsNull;
-			}
-			set {
-				SetChildByRole(ReadonlyRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
-			}
-		}
+		public bool HasReadOnlySpecifier { get; set; }
 
 		[Slot("Roles.Type")]
 		public partial AstType BaseType { get; set; }
 
-		public bool HasNullableSpecifier {
-			get {
-				return !GetChildByRole(NullableRole).IsNull;
-			}
-			set {
-				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
-			}
-		}
+		public bool HasNullableSpecifier { get; set; }
 
 		public bool HasOnlyNullableSpecifier {
 			get {
@@ -91,38 +70,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode NullableSpecifierToken {
-			get {
-				return GetChildByRole(NullableRole);
-			}
-		}
+		int pointerRank;
 
 		public int PointerRank {
 			get {
-				return GetChildrenByRole(PointerRole).Count;
+				return pointerRank;
 			}
 			set {
 				if (value < 0)
-					throw new ArgumentOutOfRangeException();
-				int d = this.PointerRank;
-				while (d > value)
-				{
-					GetChildByRole(PointerRole).Remove();
-					d--;
-				}
-				while (d < value)
-				{
-					InsertChildBefore(GetChildByRole(PointerRole), new CSharpTokenNode(TextLocation.Empty, PointerRole), PointerRole);
-					d++;
-				}
+					throw new ArgumentOutOfRangeException(nameof(value));
+				pointerRank = value;
 			}
 		}
 
 		[Slot("ArraySpecifierRole")]
 		public partial AstNodeCollection<ArraySpecifier> ArraySpecifiers { get; }
-
-		[Slot("PointerRole")]
-		public partial AstNodeCollection<CSharpTokenNode> PointerTokens { get; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -207,22 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return GetChildByRole(Roles.LBracket); }
 		}
 
-		public int Dimensions {
-			get { return 1 + GetChildrenByRole(Roles.Comma).Count; }
-			set {
-				int d = this.Dimensions;
-				while (d > value)
-				{
-					GetChildByRole(Roles.Comma).Remove();
-					d--;
-				}
-				while (d < value)
-				{
-					InsertChildBefore(GetChildByRole(Roles.Comma), new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
-					d++;
-				}
-			}
-		}
+		public int Dimensions { get; set; } = 1;
 
 		public CSharpTokenNode RBracketToken {
 			get { return GetChildByRole(Roles.RBracket); }
