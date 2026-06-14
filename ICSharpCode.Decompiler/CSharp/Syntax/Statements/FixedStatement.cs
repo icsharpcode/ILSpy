@@ -34,23 +34,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
 
-		public CSharpTokenNode FixedToken {
-			get { return GetChildByRole(FixedKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
 		[Slot("Roles.Variable")]
 		public partial AstNodeCollection<VariableInitializer> Variables { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }

@@ -26,7 +26,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public abstract class EntityDeclaration : AstNode
 	{
 		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
-		public static readonly Role<CSharpModifierToken> ModifierRole = new Role<CSharpModifierToken>("Modifier", null);
+		// Modifiers are stored in the Modifiers scalar; this role only tags the keyword tokens the
+		// output visitor emits (e.g. for the override-link reference in TextTokenWriter).
+		public static readonly Role<AstNode> ModifierRole = new Role<AstNode>("Modifier", null);
 		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
 
 		public override NodeType NodeType {
@@ -63,10 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual AstType ReturnType {
 			get { return GetChildByRole(Roles.Type); }
 			set { SetChildByRole(Roles.Type, value); }
-		}
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
 		protected bool MatchAttributesAndModifiers(EntityDeclaration o, PatternMatching.Match match)

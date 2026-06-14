@@ -48,20 +48,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { variance = value; }
 		}
 
-		public CSharpTokenNode VarianceToken {
-			get {
-				switch (Variance)
-				{
-					case VarianceModifier.Covariant:
-						return GetChildByRole(OutVarianceKeywordRole);
-					case VarianceModifier.Contravariant:
-						return GetChildByRole(InVarianceKeywordRole);
-					default:
-						return CSharpTokenNode.Null;
-				}
-			}
-		}
-
 		public string Name {
 			get {
 				return GetChildByRole(Roles.Identifier).Name;

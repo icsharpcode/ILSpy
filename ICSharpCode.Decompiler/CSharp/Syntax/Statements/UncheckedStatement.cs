@@ -34,10 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
 
-		public CSharpTokenNode UncheckedToken {
-			get { return GetChildByRole(UncheckedKeywordRole); }
-		}
-
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
 

@@ -64,10 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole(GetOperatorRole(Operator)); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 

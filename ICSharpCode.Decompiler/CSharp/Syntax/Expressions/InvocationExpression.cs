@@ -37,16 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.TargetExpression")]
 		public partial Expression Target { get; set; }
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		public InvocationExpression()
 		{

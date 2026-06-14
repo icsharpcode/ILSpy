@@ -1695,7 +1695,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								enumMember.Initializer = null;
 								if (enumMember.GetSymbol() is IField f && f.GetConstantValue() == null)
 								{
-									typeDecl.InsertChildBefore(enumMember, new Comment(" error: enumerator has no value"), Roles.Comment);
+									enumMember.AddLeadingTrivia(new Comment(" error: enumerator has no value"));
 								}
 							}
 							break;
@@ -1724,7 +1724,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						if (item is not EnumMemberDeclaration)
 						{
-							typeDecl.InsertChildBefore(item, new Comment(" error: nested types are not permitted in C#."), Roles.Comment);
+							item.AddLeadingTrivia(new Comment(" error: nested types are not permitted in C#."));
 						}
 					}
 				}
@@ -2046,9 +2046,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				catch (BadImageFormatException ex)
 				{
 					body = new BlockStatement();
-					body.AddChild(new Comment("Invalid MethodBodyBlock: " + ex.Message), Roles.Comment);
-					// insert explicit rbrace token to make the comment appear within the braces
-					body.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RBrace), Roles.RBrace);
+					var commentStatement = new EmptyStatement();
+					commentStatement.AddTrailingTrivia(new Comment("Invalid MethodBodyBlock: " + ex.Message));
+					body.Statements.Add(commentStatement);
 					entityDecl.AddChild(body, Roles.Body);
 					return;
 				}
@@ -2097,10 +2097,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
-					Comment prev = null;
+					var warningAnchor = body.Statements.FirstOrDefault();
 					foreach (string warning in function.Warnings)
 					{
-						body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+						var warningStatement = new EmptyStatement();
+						warningStatement.AddTrailingTrivia(new Comment(warning));
+						if (warningAnchor != null)
+							body.Statements.InsertBefore(warningAnchor, warningStatement);
+						else
+							body.Statements.Add(warningStatement);
 					}
 
 					entityDecl.AddChild(body, Roles.Body);
@@ -2260,7 +2265,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var symbolName = attr?.FixedArguments.FirstOrDefault().Value as string;
 				if (symbolName == null || !decompileRun.DefinedSymbols.Add(symbolName))
 					continue;
-				syntaxTree.InsertChildAfter(null, new PreProcessorDirective(PreProcessorDirectiveType.Define, symbolName), Roles.PreProcessorDirective);
+				syntaxTree.AddLeadingTrivia(new PreProcessorDirective(PreProcessorDirectiveType.Define, symbolName));
 			}
 		}
 
@@ -2319,7 +2324,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						message = ex.Message;
 					}
-					((FieldDeclaration)fieldDecl).Variables.Single().AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
+					((FieldDeclaration)fieldDecl).Variables.Single().AddTrailingTrivia(new Comment(message, CommentType.MultiLine));
 				}
 				return fieldDecl;
 			}

@@ -45,10 +45,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsFileScoped { get; set; }
 
-		public CSharpTokenNode NamespaceToken {
-			get { return GetChildByRole(Roles.NamespaceKeyword); }
-		}
-
 		[Slot("NamespaceNameRole")]
 		public partial AstType NamespaceName { get; set; }
 
@@ -99,16 +95,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("MemberRole")]
 		public partial AstNodeCollection<AstNode> Members { get; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 
 		public NamespaceDeclaration()
 		{

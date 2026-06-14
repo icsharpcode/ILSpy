@@ -49,20 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		public CSharpTokenNode FieldDirectionToken {
-			get {
-				switch (FieldDirection)
-				{
-					case FieldDirection.Ref:
-						return GetChildByRole(RefKeywordRole);
-					case FieldDirection.In:
-						return GetChildByRole(InKeywordRole);
-					default:
-						return GetChildByRole(OutKeywordRole);
-				}
-			}
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 

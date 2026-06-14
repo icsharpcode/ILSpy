@@ -50,34 +50,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get; set;
 		}
 
-		public CSharpTokenNode UndocumentedToken {
-			get {
-				switch (UndocumentedExpressionType)
-				{
-					case UndocumentedExpressionType.ArgListAccess:
-					case UndocumentedExpressionType.ArgList:
-						return GetChildByRole(ArglistKeywordRole);
-					case UndocumentedExpressionType.RefValue:
-						return GetChildByRole(RefvalueKeywordRole);
-					case UndocumentedExpressionType.RefType:
-						return GetChildByRole(ReftypeKeywordRole);
-					case UndocumentedExpressionType.MakeRef:
-						return GetChildByRole(MakerefKeywordRole);
-				}
-				return CSharpTokenNode.Null;
-			}
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

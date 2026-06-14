@@ -37,10 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.TargetExpression")]
 		public partial Expression Target { get; set; }
 
-		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole(ArrowRole); }
-		}
-
 		public string MemberName {
 			get {
 				return GetChildByRole(Roles.Identifier).Name;

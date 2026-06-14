@@ -36,10 +36,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		public CSharpTokenNode AsToken {
-			get { return GetChildByRole(AsKeywordRole); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 

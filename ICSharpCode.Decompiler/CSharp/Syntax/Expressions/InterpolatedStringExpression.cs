@@ -47,20 +47,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole LBrace = new TokenRole("{");
 		public static readonly TokenRole RBrace = new TokenRole("}");
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(LBrace); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
 		public int Alignment { get; }
 
 		public string Suffix { get; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(RBrace); }
-		}
 
 		public Interpolation()
 		{

@@ -38,10 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
-
 		public string AttributeTarget {
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
@@ -56,10 +52,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Attribute")]
 		public partial AstNodeCollection<Attribute> Attributes { get; }
-
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

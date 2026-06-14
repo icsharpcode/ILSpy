@@ -37,10 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		public CSharpTokenNode FixedToken {
-			get { return GetChildByRole(FixedKeywordRole); }
-		}
-
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 

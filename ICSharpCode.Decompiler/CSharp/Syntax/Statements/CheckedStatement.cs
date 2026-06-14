@@ -34,10 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole CheckedKeywordRole = new TokenRole("checked");
 
-		public CSharpTokenNode CheckedToken {
-			get { return GetChildByRole(CheckedKeywordRole); }
-		}
-
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
 

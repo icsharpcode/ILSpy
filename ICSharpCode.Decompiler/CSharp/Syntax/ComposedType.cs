@@ -41,9 +41,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole NullableRole = new TokenRole("?");
 		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier", null);
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole(AttributeRole); }
-		}
+		[Slot("AttributeRole")]
+		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		/// <summary>
 		/// Gets/sets whether this type has a 'ref' specifier.
@@ -165,15 +164,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Dimensions = dimensions;
 		}
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
-
 		public int Dimensions { get; set; } = 1;
-
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

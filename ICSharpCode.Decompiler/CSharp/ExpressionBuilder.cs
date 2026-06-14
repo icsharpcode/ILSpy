@@ -2062,7 +2062,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 							else
 							{
-								value.Expression.AddChild(new Comment("ILSpy Error: GetPointerArithmeticOffset() failed", CommentType.MultiLine), Roles.Comment);
+								value.Expression.AddTrailingTrivia(new Comment("ILSpy Error: GetPointerArithmeticOffset() failed", CommentType.MultiLine));
 							}
 						}
 						else
@@ -2439,10 +2439,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			);
 			var body = builder.ConvertAsBlock(function.Body);
 
-			Comment prev = null;
+			var warningAnchor = body.Statements.FirstOrDefault();
 			foreach (string warning in function.Warnings)
 			{
-				body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+				var warningStatement = new EmptyStatement();
+				warningStatement.AddTrailingTrivia(new Comment(warning));
+				if (warningAnchor != null)
+					body.Statements.InsertBefore(warningAnchor, warningStatement);
+				else
+					body.Statements.Add(warningStatement);
 			}
 			var attributeSections = new List<AttributeSection>();
 			foreach (var attr in method?.GetAttributes() ?? Enumerable.Empty<IAttribute>())
@@ -2620,8 +2625,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			try
 			{
 				var body = statementBuilder.ConvertAsBlock(container);
-				var comment = new Comment(" Could not convert BlockContainer to single expression");
-				body.InsertChildAfter(null, comment, Roles.Comment);
+				var commentStatement = new EmptyStatement();
+				commentStatement.AddTrailingTrivia(new Comment(" Could not convert BlockContainer to single expression"));
+				body.Statements.InsertBefore(body.Statements.FirstOrDefault(), commentStatement);
 				// set ILVariable.UsesInitialValue for any variables being used inside the container
 				foreach (var stloc in container.Descendants.OfType<StLoc>())
 					stloc.Variable.UsesInitialValue = true;
@@ -3641,8 +3647,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					var aie = new ArrayInitializerExpression();
 					var parentInitializer = container.Peek();
-					if (parentInitializer.CurrentElementCount > 0)
-						parentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
 					parentInitializer.Expression.Elements.Add(aie);
 					parentInitializer.CurrentElementCount++;
 					container.Push(new ArrayInitializer(aie));
@@ -3659,8 +3663,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					astBuilder.UseSpecialConstants = old;
 				}
 				var currentInitializer = container.Peek();
-				if (currentInitializer.CurrentElementCount > 0)
-					currentInitializer.Expression.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
 				currentInitializer.Expression.Elements.Add(val);
 				currentInitializer.CurrentElementCount++;
 				elementResolveResults.Add(val.ResolveResult);
@@ -4967,7 +4969,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		static TranslatedExpression ErrorExpression(string message)
 		{
 			var e = new ErrorExpression();
-			e.AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
+			e.AddTrailingTrivia(new Comment(message, CommentType.MultiLine));
 			return e.WithoutILInstruction().WithRR(ErrorResolveResult.UnknownError);
 		}
 	}

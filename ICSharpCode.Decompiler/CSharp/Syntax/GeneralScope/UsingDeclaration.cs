@@ -44,10 +44,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole(UsingKeywordRole); }
-		}
-
 		[Slot("ImportRole")]
 		public partial AstType Import { get; set; }
 
@@ -79,10 +75,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			while (stack.Count > 0)
 				result.Append(stack.Pop());
 			return result.ToString();
-		}
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
 		}
 
 		public UsingDeclaration()

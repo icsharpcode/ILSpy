@@ -34,20 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
 
-		public CSharpTokenNode WhileToken {
-			get { return GetChildByRole(WhileKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Condition")]
 		public partial Expression Condition { get; set; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }

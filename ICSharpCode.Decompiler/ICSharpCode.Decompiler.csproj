@@ -190,8 +190,6 @@
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
     <Compile Include="CSharp\Syntax\AstType.cs" />
     <Compile Include="CSharp\Syntax\ComposedType.cs" />
-    <Compile Include="CSharp\Syntax\CSharpModifierToken.cs" />
-    <Compile Include="CSharp\Syntax\CSharpTokenNode.cs" />
     <Compile Include="CSharp\Syntax\DepthFirstAstVisitor.cs" />
     <Compile Include="CSharp\Syntax\DocumentationReference.cs" />
     <Compile Include="CSharp\Syntax\Expressions\AnonymousMethodExpression.cs" />
@@ -244,6 +242,7 @@
     <Compile Include="CSharp\Syntax\GeneralScope\NamespaceDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\PreProcessorDirective.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\TypeDeclaration.cs" />
+    <Compile Include="CSharp\Syntax\GeneralScope\Trivia.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\TypeParameterDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\UsingAliasDeclaration.cs" />
     <Compile Include="CSharp\Syntax\GeneralScope\UsingDeclaration.cs" />
@@ -322,7 +321,6 @@
     <Compile Include="CSharp\OutputVisitor\InsertMissingTokensDecorator.cs" />
     <Compile Include="CSharp\OutputVisitor\InsertParenthesesVisitor.cs" />
     <Compile Include="CSharp\OutputVisitor\InsertRequiredSpacesDecorator.cs" />
-    <Compile Include="CSharp\OutputVisitor\InsertSpecialsDecorator.cs" />
     <Compile Include="CSharp\OutputVisitor\ITokenWriter.cs" />
     <Compile Include="CSharp\OutputVisitor\TextWriterTokenWriter.cs" />
     <Compile Include="CSharp\Resolver\AliasNamespaceResolveResult.cs" />

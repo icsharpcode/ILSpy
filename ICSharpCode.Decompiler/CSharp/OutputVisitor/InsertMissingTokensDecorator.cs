@@ -88,10 +88,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					node.StorePrintStart(lastTokenEnd);
 				node.StorePrintEnd(lastTokenEnd);
 				System.Diagnostics.Debug.Assert(currentList != null);
-				foreach (var removable in node.Children.Where(n => n is CSharpTokenNode))
-				{
-					removable.Remove();
-				}
 				foreach (var child in currentList)
 				{
 					System.Diagnostics.Debug.Assert(child.Parent == null || node == child.Parent);
@@ -118,11 +114,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case ErrorExpression errorExpression:
 					errorExpression.Location = locationProvider.Location;
 					break;
-				default:
-					CSharpTokenNode t = new CSharpTokenNode(locationProvider.Location, (TokenRole)role);
-					t.Role = role;
-					currentList.Add(t);
-					break;
 			}
 			base.WriteToken(role, token);
 			lastTokenEnd = locationProvider.Location;
@@ -132,12 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			AssignPendingStartLocations();
 			TextLocation start = locationProvider.Location;
-			CSharpTokenNode t = null;
-			if (role is TokenRole)
-				t = new CSharpTokenNode(start, (TokenRole)role);
-			else if (role == EntityDeclaration.ModifierRole)
-				t = new CSharpModifierToken(start, CSharpModifierToken.GetModifierValue(keyword));
-			else if (keyword == "this")
+			if (keyword == "this")
 			{
 				ThisReferenceExpression node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
 				if (node != null)
@@ -148,11 +134,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				BaseReferenceExpression node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
 				if (node != null)
 					node.Location = start;
-			}
-			if (t != null)
-			{
-				currentList.Add(t);
-				t.Role = role;
 			}
 			base.WriteKeyword(role, keyword);
 			lastTokenEnd = locationProvider.Location;

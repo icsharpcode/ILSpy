@@ -67,34 +67,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { throw new NotSupportedException(); }
 		}
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
-
-		public CSharpTokenNode ThisToken {
-			get { return GetChildByRole(ThisKeywordRole); }
-		}
-
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
-
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
-
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
 
 		[Slot("GetterRole")]
 		public partial Accessor Getter { get; set; }
 
 		[Slot("SetterRole")]
 		public partial Accessor Setter { get; set; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 
 		[Slot("ExpressionBodyRole")]
 		public partial Expression ExpressionBody { get; set; }

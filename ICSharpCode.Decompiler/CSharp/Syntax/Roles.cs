@@ -48,9 +48,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public static readonly Role<VariableDesignation> VariableDesignationRole = new Role<VariableDesignation>("VariableDesignation", VariableDesignation.Null);
 
-		//			public static readonly TokenRole Keyword = new TokenRole ("Keyword", CSharpTokenNode.Null);
-		//			public static readonly TokenRole InKeyword = new TokenRole ("InKeyword", CSharpTokenNode.Null);
-
 		// some pre defined constants for most used punctuation
 		public static readonly TokenRole LPar = new TokenRole("(");
 		public static readonly TokenRole RPar = new TokenRole(")");
@@ -73,7 +70,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<AstType> BaseType = new Role<AstType>("BaseType", AstType.Null);
 
 		public static readonly Role<Attribute> Attribute = new Role<Attribute>("Attribute", null);
-		public static readonly Role<CSharpTokenNode> AttributeTargetRole = new Role<CSharpTokenNode>("AttributeTarget", CSharpTokenNode.Null);
 
 		public readonly static TokenRole WhereKeyword = new TokenRole("where");
 		public readonly static Role<SimpleType> ConstraintTypeParameter = new Role<SimpleType>("TypeParameter", SimpleType.Null);

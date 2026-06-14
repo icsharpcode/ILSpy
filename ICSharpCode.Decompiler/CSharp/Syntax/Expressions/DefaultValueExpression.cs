@@ -34,20 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole DefaultKeywordRole = new TokenRole("default");
 
-		public CSharpTokenNode DefaultToken {
-			get { return GetChildByRole(DefaultKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		public DefaultValueExpression()
 		{

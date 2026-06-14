@@ -53,16 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ParenthesizedVariableDesignation : VariableDesignation
 	{
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.VariableDesignationRole")]
 		public partial AstNodeCollection<VariableDesignation> VariableDesignations { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, Match match)
 		{

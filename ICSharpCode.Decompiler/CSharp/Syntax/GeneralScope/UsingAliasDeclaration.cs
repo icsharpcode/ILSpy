@@ -42,29 +42,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole(UsingKeywordRole); }
-		}
-
 		public string Alias {
 			get {
-				return GetChildByRole(AliasRole).Name;
+				return AliasToken.Name;
 			}
 			set {
-				SetChildByRole(AliasRole, Identifier.Create(value));
+				AliasToken = Identifier.Create(value);
 			}
 		}
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
+		[Slot("AliasRole")]
+		public partial Identifier AliasToken { get; set; }
 
 		[Slot("ImportRole")]
 		public partial AstType Import { get; set; }
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
 
 		public UsingAliasDeclaration()
 		{

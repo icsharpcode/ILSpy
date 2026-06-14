@@ -28,10 +28,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new Role<ArraySpecifier>("AdditionalArraySpecifier", null);
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
 
-		public CSharpTokenNode NewToken {
-			get { return GetChildByRole(NewKeywordRole); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 

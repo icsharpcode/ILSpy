@@ -77,10 +77,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("LeftRole")]
 		public partial Expression Left { get; set; }
 
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole(GetOperatorRole(Operator)); }
-		}
-
 		[Slot("RightRole")]
 		public partial Expression Right { get; set; }
 

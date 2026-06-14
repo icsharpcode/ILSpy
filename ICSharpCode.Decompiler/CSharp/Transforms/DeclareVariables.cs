@@ -613,7 +613,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					if (v.ILVariable.Kind == VariableKind.PinnedLocal)
 					{
-						type.InsertChildAfter(null, new Comment("pinned", CommentType.MultiLine), Roles.Comment);
+						type.AddTrailingTrivia(new Comment("pinned", CommentType.MultiLine));
 					}
 					var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
 					var init = vds.Variables.Single();

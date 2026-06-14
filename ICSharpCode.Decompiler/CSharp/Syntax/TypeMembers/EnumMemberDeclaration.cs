@@ -37,10 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
-
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 

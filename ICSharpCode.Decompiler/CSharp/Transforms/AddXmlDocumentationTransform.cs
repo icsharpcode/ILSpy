@@ -54,9 +54,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			catch (XmlException ex)
 			{
 				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-				var insertionPoint = rootNode.FirstChild;
 				for (int i = 0; i < msg.Length; i++)
-					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation), Roles.Comment);
+					rootNode.AddLeadingTrivia(new Comment(msg[i], CommentType.Documentation));
 			}
 		}
 
@@ -86,14 +85,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						Comment emptyLine = new Comment(string.Empty, CommentType.Documentation);
 						emptyLine.AddAnnotation(node.GetResolveResult());
-						node.Parent.InsertChildBefore(node, emptyLine, Roles.Comment);
+						node.AddLeadingTrivia(emptyLine);
 						skippedWhitespaceLines--;
 					}
 					if (line.StartsWith(indentation, StringComparison.Ordinal))
 						line = line.Substring(indentation.Length);
 					Comment comment = new Comment(" " + line, CommentType.Documentation);
 					comment.AddAnnotation(node.GetResolveResult());
-					node.Parent.InsertChildBefore(node, comment, Roles.Comment);
+					node.AddLeadingTrivia(comment);
 				}
 				line = r.ReadLine();
 			}

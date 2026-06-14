@@ -436,11 +436,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		void PrintModifiers(Modifiers modifiers, TokenWriter writer)
 		{
-			foreach (var m in CSharpModifierToken.AllModifiers)
+			foreach (var m in CSharpModifiers.AllModifiers)
 			{
 				if ((modifiers & m) == m)
 				{
-					writer.WriteKeyword(EntityDeclaration.ModifierRole, CSharpModifierToken.GetModifierName(m));
+					writer.WriteKeyword(EntityDeclaration.ModifierRole, CSharpModifiers.GetModifierName(m));
 					writer.Space();
 				}
 			}

@@ -29,8 +29,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class VariableDeclarationStatement : Statement
 	{
-		public static readonly Role<CSharpModifierToken> ModifierRole = EntityDeclaration.ModifierRole;
-
 		public VariableDeclarationStatement()
 		{
 		}
@@ -48,10 +46,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Variable")]
 		public partial AstNodeCollection<VariableInitializer> Variables { get; }
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
 
 		public VariableInitializer GetVariable(string name)
 		{

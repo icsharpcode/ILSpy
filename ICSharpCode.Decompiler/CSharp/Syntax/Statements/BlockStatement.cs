@@ -36,16 +36,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<Statement> StatementRole = new Role<Statement>("Statement", Statement.Null);
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("StatementRole")]
 		public partial AstNodeCollection<Statement> Statements { get; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

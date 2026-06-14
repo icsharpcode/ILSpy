@@ -38,19 +38,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole FinallyKeywordRole = new TokenRole("finally");
 		public static readonly Role<BlockStatement> FinallyBlockRole = new Role<BlockStatement>("FinallyBlock", BlockStatement.Null);
 
-		public CSharpTokenNode TryToken {
-			get { return GetChildByRole(TryKeywordRole); }
-		}
-
 		[Slot("TryBlockRole")]
 		public partial BlockStatement TryBlock { get; set; }
 
 		[Slot("CatchClauseRole")]
 		public partial AstNodeCollection<CatchClause> CatchClauses { get; }
-
-		public CSharpTokenNode FinallyToken {
-			get { return GetChildByRole(FinallyKeywordRole); }
-		}
 
 		[Slot("FinallyBlockRole")]
 		public partial BlockStatement FinallyBlock { get; set; }
@@ -80,14 +72,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode CatchToken {
-			get { return GetChildByRole(CatchKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
@@ -104,24 +88,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Identifier")]
 		public partial Identifier VariableNameToken { get; set; }
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public CSharpTokenNode WhenToken {
-			get { return GetChildByRole(WhenKeywordRole); }
-		}
-
-		public CSharpTokenNode CondLParToken {
-			get { return GetChildByRole(CondLPar); }
-		}
-
 		[Slot("ConditionRole")]
 		public partial Expression Condition { get; set; }
-
-		public CSharpTokenNode CondRParToken {
-			get { return GetChildByRole(CondRPar); }
-		}
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }

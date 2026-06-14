@@ -38,27 +38,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole ElseKeywordRole = new TokenRole("else");
 		public readonly static Role<Statement> FalseRole = new Role<Statement>("False", Statement.Null);
 
-		public CSharpTokenNode IfToken {
-			get { return GetChildByRole(IfKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("ConditionRole")]
 		public partial Expression Condition { get; set; }
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
-
 		[Slot("TrueRole")]
 		public partial Statement TrueStatement { get; set; }
-
-		public CSharpTokenNode ElseToken {
-			get { return GetChildByRole(ElseKeywordRole); }
-		}
 
 		[Slot("FalseRole")]
 		public partial Statement FalseStatement { get; set; }

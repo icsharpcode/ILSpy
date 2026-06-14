@@ -30,20 +30,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		public CSharpTokenNode SwitchToken {
-			get { return GetChildByRole(SwitchKeywordRole); }
-		}
-
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("SwitchSectionRole")]
 		public partial AstNodeCollection<SwitchExpressionSection> SwitchSections { get; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -63,10 +51,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("PatternRole")]
 		public partial Expression Pattern { get; set; }
-
-		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole(Roles.Arrow); }
-		}
 
 		[Slot("BodyRole")]
 		public partial Expression Body { get; set; }

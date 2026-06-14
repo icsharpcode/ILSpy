@@ -35,31 +35,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
 		public static readonly Role<SwitchSection> SwitchSectionRole = new Role<SwitchSection>("SwitchSection", null);
 
-		public CSharpTokenNode SwitchToken {
-			get { return GetChildByRole(SwitchKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("SwitchSectionRole")]
 		public partial AstNodeCollection<SwitchSection> SwitchSections { get; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -109,10 +89,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole(Roles.Colon); }
-		}
 
 		public CaseLabel()
 		{

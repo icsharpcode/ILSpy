@@ -182,24 +182,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode OperatorToken {
-			get { return GetChildByRole(OperatorKeywordRole); }
-		}
-
-		public CSharpTokenNode OperatorTypeToken {
-			get { return GetChildByRole(GetRole(OperatorType)); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }

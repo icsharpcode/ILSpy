@@ -51,16 +51,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool isParams;
 		bool isScopedRef;
 
-		public CSharpTokenNode ThisKeyword {
-			get {
-				if (hasThisModifier)
-				{
-					return GetChildByRole(ThisModifierRole);
-				}
-				return CSharpTokenNode.Null;
-			}
-		}
-
 		public bool HasThisModifier {
 			get { return hasThisModifier; }
 			set {
@@ -105,10 +95,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
-
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
 
 		[Slot("Roles.Expression")]
 		public partial Expression DefaultExpression { get; set; }

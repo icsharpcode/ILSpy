@@ -35,10 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
 		public ExpressionStatement()
 		{
 		}
