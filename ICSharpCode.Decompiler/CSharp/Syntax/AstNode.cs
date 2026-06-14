@@ -383,7 +383,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return collection != null ? (AstNodeCollection<T>)collection : new AstNodeCollection<T>(this, role);
 		}
 
-		protected void SetChildByRole<T>(Role<T> role, T newChild) where T : AstNode
+		protected void SetChildByRole<T>(Role<T> role, T? newChild) where T : AstNode
 		{
 			SetChildByRoleUntyped(role, newChild);
 		}
@@ -722,6 +722,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		protected static bool MatchString(string? pattern, string? text)
 		{
 			return PatternMatching.Pattern.MatchString(pattern, text);
+		}
+
+		/// <summary>
+		/// Matches two optional children: both absent (null), or both present and matching.
+		/// When the pattern side is present, its own DoMatch decides (e.g. an OptionalNode matches an
+		/// absent candidate). When it is absent, the candidate must be absent too.
+		/// </summary>
+		protected static bool MatchOptional(AstNode? thisChild, AstNode? otherChild, PatternMatching.Match match)
+		{
+			return thisChild != null ? thisChild.DoMatch(otherChild, match) : otherChild == null;
 		}
 
 		protected internal abstract bool DoMatch(AstNode? other, PatternMatching.Match match);
