@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// try TryBlock CatchClauses finally FinallyBlock
+	/// <c>try_statement : 'try' block catch_clauses | 'try' block catch_clauses? finally_clause ;</c> (C# grammar §13.11)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TryCatchStatement : Statement
@@ -55,7 +55,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// catch (Type VariableName) { Body }
+	/// <c>specific_catch_clause : 'catch' exception_specifier exception_filter? block | 'catch' exception_filter block ;</c> (C# grammar §13.11)
+	/// <c>general_catch_clause : 'catch' block ;</c> (C# grammar §13.11)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class CatchClause : AstNode

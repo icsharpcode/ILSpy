@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// base
+	/// <c>base_access : 'base' '.' identifier type_argument_list? | 'base' '[' argument_list ']' ;</c> (C# grammar §12.8.15)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class BaseReferenceExpression : Expression

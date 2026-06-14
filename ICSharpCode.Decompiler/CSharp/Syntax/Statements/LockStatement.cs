@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// lock (Expression) EmbeddedStatement;
+	/// <c>lock_statement : 'lock' '(' expression ')' embedded_statement ;</c> (C# grammar §13.13)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LockStatement : Statement

@@ -28,6 +28,10 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>constructor_declaration : attributes? constructor_modifier* constructor_declarator constructor_body ;</c> (C# grammar §15.11.1)
+	/// <c>static_constructor_declaration : attributes? static_constructor_modifiers identifier '(' ')' static_constructor_body ;</c> (C# grammar §15.12)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ConstructorDeclaration : EntityDeclaration
 	{
@@ -67,6 +71,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		This
 	}
 
+	/// <summary>
+	/// <c>constructor_initializer : ':' 'base' '(' argument_list? ')' | ':' 'this' '(' argument_list? ')' ;</c> (C# grammar §15.11.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class ConstructorInitializer : AstNode
 	{

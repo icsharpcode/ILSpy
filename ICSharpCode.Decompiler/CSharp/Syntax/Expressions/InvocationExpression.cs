@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Target(Arguments)
+	/// <c>invocation_expression : primary_expression '(' argument_list? ')' ;</c> (C# grammar §12.8.10.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InvocationExpression : Expression

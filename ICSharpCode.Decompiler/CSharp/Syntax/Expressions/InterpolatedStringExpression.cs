@@ -4,6 +4,9 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>interpolated_string_expression : interpolated_regular_string_expression | interpolated_verbatim_string_expression | interpolated_raw_string_expression ;</c> (C# grammar §12.8.3)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InterpolatedStringExpression : Expression
 	{
@@ -39,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// { Expression , Alignment : Suffix }
+	/// <c>regular_interpolation : expression (',' interpolation_minimum_width)? Regular_Interpolation_Format? ;</c> (C# grammar §12.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class Interpolation : InterpolatedStringContent
@@ -73,6 +76,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
+	/// <summary>
+	/// <c>Interpolated_Regular_String_Mid : Interpolated_Regular_String_Element+ ;</c> (C# lexical grammar §12.8.3)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InterpolatedStringText : InterpolatedStringContent
 	{

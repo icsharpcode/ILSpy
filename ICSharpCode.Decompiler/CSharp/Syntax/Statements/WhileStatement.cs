@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// "while (Condition) EmbeddedStatement"
+	/// <c>while_statement : 'while' '(' boolean_expression ')' embedded_statement ;</c> (C# grammar §13.9.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class WhileStatement : Statement

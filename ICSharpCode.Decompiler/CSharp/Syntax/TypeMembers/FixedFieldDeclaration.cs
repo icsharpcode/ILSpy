@@ -27,6 +27,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>fixed_size_buffer_declaration : attributes? fixed_size_buffer_modifier* 'fixed' buffer_element_type fixed_size_buffer_declarators ';' ;</c> (C# grammar §24.8.2)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FixedFieldDeclaration : EntityDeclaration
 	{

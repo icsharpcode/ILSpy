@@ -30,6 +30,10 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>fixed_parameter : attributes? parameter_modifier? type identifier default_argument? ;</c> (C# grammar §15.6.2.1)
+	/// <c>parameter_array : attributes? 'params' array_type identifier ;</c> (C# grammar §15.6.2.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
 	public partial class ParameterDeclaration : AstNode
 	{

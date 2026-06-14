@@ -27,7 +27,8 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// [ await ] using (ResourceAcquisition) EmbeddedStatement
+	/// <c>using_statement : 'await'? 'using' '(' resource_acquisition ')' embedded_statement ;</c> (C# grammar §13.14.1)
+	/// <c>local_using_declaration : 'await'? 'using' non_ref_local_variable_declaration ';' statement_list? ;</c> (C# grammar §13.14.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UsingStatement : Statement

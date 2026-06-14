@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// this
+	/// <c>this_access : 'this' ;</c> (C# grammar §12.8.14)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ThisReferenceExpression : Expression

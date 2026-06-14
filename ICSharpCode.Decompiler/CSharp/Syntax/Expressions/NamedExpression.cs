@@ -27,9 +27,8 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// name = expression
-	/// This isn't the same as 'assign' even though it has the same syntax.
-	/// This expression is used in object initializers and for named attribute arguments [Attr(FieldName = value)].
+	/// No standalone expression production: 'name = value' as used in object initializers (member_initializer), anonymous-object members (member_declarator), and named attribute arguments.
+	/// <c>named_expression : identifier '=' expression ;</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamedExpression : Expression

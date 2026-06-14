@@ -30,7 +30,8 @@ using System.Text;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// using Import;
+	/// <c>using_namespace_directive : 'using' namespace_name ';' ;</c> (C# grammar §14.6.3)
+	/// <c>using_static_directive : 'using' 'static' type_name ';' ;</c> (C# grammar §14.6.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UsingDeclaration : AstNode

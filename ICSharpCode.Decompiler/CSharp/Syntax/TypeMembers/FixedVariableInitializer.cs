@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Name [ CountExpression ]
+	/// <c>fixed_size_buffer_declarator : identifier '[' constant_expression ']' ;</c> (C# grammar §24.8.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FixedVariableInitializer : AstNode

@@ -25,6 +25,10 @@
 // THE SOFTWARE.
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// No C# spec grammar production: placeholder inserted when the AST is built from input that does not parse as valid C#.
+	/// <c>error_expression : /* unparseable input */ ;</c>
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ErrorExpression : Expression
 	{

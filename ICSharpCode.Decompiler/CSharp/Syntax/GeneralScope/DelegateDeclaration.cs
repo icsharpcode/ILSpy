@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// delegate ReturnType Name&lt;TypeParameters&gt;(Parameters) where Constraints;
+	/// <c>delegate_declaration : attributes? delegate_modifier* 'delegate' return_type delegate_header | attributes? delegate_modifier* 'delegate' ref_kind ref_return_type delegate_header ;</c> (C# grammar §21.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DelegateDeclaration : EntityDeclaration

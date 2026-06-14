@@ -28,7 +28,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// new { [ExpressionList] }
+	/// <c>anonymous_object_creation_expression : 'new' anonymous_object_initializer ;</c> (C# grammar §12.8.17.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class AnonymousTypeCreateExpression : Expression

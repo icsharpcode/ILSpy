@@ -19,7 +19,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// out type expression
+	/// <c>declaration_expression : 'scoped'? local_variable_type identifier ;</c> (C# grammar §12.20)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class OutVarDeclarationExpression : Expression

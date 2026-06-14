@@ -31,6 +31,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>event_declaration : attributes? event_modifier* 'event' type variable_declarators ';' | attributes? event_modifier* 'event' type member_name '{' event_accessor_declarations '}' ;</c> (C# grammar §15.8.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class EventDeclaration : EntityDeclaration
 	{
@@ -71,6 +74,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
+	/// <summary>
+	/// <c>event_declaration : attributes? event_modifier* 'event' type variable_declarators ';' | attributes? event_modifier* 'event' type member_name '{' event_accessor_declarations '}' ;</c> (C# grammar §15.8.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CustomEventDeclaration : EntityDeclaration
 	{

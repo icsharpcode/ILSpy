@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// for (Initializers; Condition; Iterators) EmbeddedStatement
+	/// <c>for_statement : 'for' '(' for_initializer? ';' for_condition? ';' for_iterator? ')' embedded_statement ;</c> (C# grammar §13.9.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ForStatement : Statement

@@ -76,6 +76,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		CheckedExplicit
 	}
 
+	/// <summary>
+	/// <c>operator_declaration : attributes? operator_modifier+ operator_declarator operator_body ;</c> (C# grammar §15.10.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class OperatorDeclaration : EntityDeclaration
 	{

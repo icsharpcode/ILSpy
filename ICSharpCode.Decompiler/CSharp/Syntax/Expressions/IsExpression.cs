@@ -27,7 +27,8 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Expression is Type
+	/// Operator precedence is not represented in the syntax tree; required parentheses are reconstructed by <see cref="ICSharpCode.Decompiler.CSharp.OutputVisitor.InsertParenthesesVisitor"/>.
+	/// <c>is_expression : expression 'is' (type | pattern) ;</c> (C# grammar §12.15.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IsExpression : Expression

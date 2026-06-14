@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Label:
+	/// <c>labeled_statement : identifier ':' statement ;</c> (C# grammar §13.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LabelStatement : Statement

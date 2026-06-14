@@ -36,7 +36,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// Represents undocumented expressions.
+	/// No C# spec grammar production: the undocumented compiler keywords __arglist, __refvalue, __reftype and __makeref.
+	/// <c>undocumented_expression : '__arglist' | '__arglist' '(' argument_list? ')' | '__refvalue' '(' expression ',' type ')' | '__reftype' '(' expression ')' | '__makeref' '(' expression ')' ;</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UndocumentedExpression : Expression

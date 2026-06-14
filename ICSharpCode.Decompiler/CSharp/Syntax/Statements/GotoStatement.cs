@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// "goto Label;"
+	/// <c>goto_statement : 'goto' identifier ';' | 'goto' 'case' constant_expression ';' | 'goto' 'default' ';' ;</c> (C# grammar §13.10.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class GotoStatement : Statement
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// or "goto case LabelExpression;"
+	/// <c>goto_statement : 'goto' identifier ';' | 'goto' 'case' constant_expression ';' | 'goto' 'default' ';' ;</c> (C# grammar §13.10.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class GotoCaseStatement : Statement
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// or "goto default;"
+	/// <c>goto_statement : 'goto' identifier ';' | 'goto' 'case' constant_expression ';' | 'goto' 'default' ';' ;</c> (C# grammar §13.10.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class GotoDefaultStatement : Statement

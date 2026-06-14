@@ -50,6 +50,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		MultiLineDocumentation
 	}
 
+	/// <summary>
+	/// <c>Comment : Single_Line_Comment | Delimited_Comment ;</c> (C# lexical grammar §6.3.3)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class Comment : Trivia
 	{

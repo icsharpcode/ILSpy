@@ -28,6 +28,9 @@ using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>identifier : Simple_Identifier | contextual_keyword | discard_token ;</c> (C# lexical grammar §6.4.3)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class Identifier : AstNode
 	{

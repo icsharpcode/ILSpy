@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// [async] Parameters => Body
+	/// <c>lambda_expression : attributes? anonymous_function_modifier? (return_type | ref_kind ref_return_type)? anonymous_function_signature '=&gt;' anonymous_function_body ;</c> (C# grammar §12.22.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LambdaExpression : Expression

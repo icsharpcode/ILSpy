@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// fixed (Type Variables) EmbeddedStatement
+	/// <c>fixed_statement : 'fixed' '(' pointer_type fixed_pointer_declarators ')' embedded_statement ;</c> (C# grammar §24.7)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FixedStatement : Statement

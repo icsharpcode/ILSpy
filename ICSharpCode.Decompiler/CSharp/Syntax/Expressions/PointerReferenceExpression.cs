@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Target->MemberName
+	/// <c>pointer_member_access : primary_expression '-&gt;' identifier type_argument_list? ;</c> (C# grammar §24.6.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PointerReferenceExpression : Expression

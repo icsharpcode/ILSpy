@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Attribute(Arguments)
+	/// <c>attribute : attribute_name attribute_arguments? ;</c> (C# grammar §23.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class Attribute : AstNode
