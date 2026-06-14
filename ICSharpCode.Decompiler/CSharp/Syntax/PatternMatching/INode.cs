@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
@@ -25,13 +26,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public interface INode
 	{
-		Role Role { get; }
-		INode FirstChild { get; }
-		INode NextSibling { get; }
 		bool IsNull { get; }
 
 		bool DoMatch(INode other, Match match);
-		bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo);
+
+		/// <summary>
+		/// Matches this pattern node against the collection element at <paramref name="pos"/>.
+		/// Deterministic nodes return whether the element matched (the caller then advances by one);
+		/// non-deterministic nodes (Repeat, OptionalNode) push their alternative continuation indices
+		/// onto the backtracking stack instead.
+		/// </summary>
+		bool DoMatchCollection(IReadOnlyList<INode> other, int pos, Match match, BacktrackingInfo backtrackingInfo);
 	}
 
 	public static class PatternExtensions

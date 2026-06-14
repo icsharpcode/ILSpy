@@ -222,9 +222,9 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			return child.DoMatch(other, match);
 		}}
 
-		bool PatternMatching.INode.DoMatchCollection(Role? role, PatternMatching.INode? pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
+		bool PatternMatching.INode.DoMatchCollection(global::System.Collections.Generic.IReadOnlyList<PatternMatching.INode> other, int pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 		{{
-			return child.DoMatchCollection(role, pos, match, backtrackingInfo);
+			return child.DoMatchCollection(other, pos, match, backtrackingInfo);
 		}}
 	}}
 "

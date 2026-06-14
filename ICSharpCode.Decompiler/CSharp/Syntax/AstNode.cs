@@ -717,18 +717,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return (other == null || o != null) && DoMatch(o, match);
 		}
 
-		bool PatternMatching.INode.DoMatchCollection(Role? role, PatternMatching.INode? pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo? backtrackingInfo)
+		bool PatternMatching.INode.DoMatchCollection(System.Collections.Generic.IReadOnlyList<PatternMatching.INode> other, int pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 		{
-			AstNode? o = pos as AstNode;
-			return (pos == null || o != null) && DoMatch(o, match);
-		}
-
-		PatternMatching.INode? PatternMatching.INode.NextSibling {
-			get { return NextSibling; }
-		}
-
-		PatternMatching.INode? PatternMatching.INode.FirstChild {
-			get { return FirstChild; }
+			PatternMatching.INode? raw = pos < other.Count ? other[pos] : null;
+			AstNode? o = raw as AstNode;
+			// matches a single element: succeeds only if the element is absent or an AstNode
+			return (raw == null || o != null) && DoMatch(o, match);
 		}
 
 		#endregion

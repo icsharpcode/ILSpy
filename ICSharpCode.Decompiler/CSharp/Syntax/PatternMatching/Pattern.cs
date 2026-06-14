@@ -38,12 +38,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		internal struct PossibleMatch
 		{
-			public readonly INode NextOther; // next node after the last matched node
+			public readonly int NextOtherIndex; // index of the next other element after the last matched one
 			public readonly int Checkpoint; // checkpoint
 
-			public PossibleMatch(INode nextOther, int checkpoint)
+			public PossibleMatch(int nextOtherIndex, int checkpoint)
 			{
-				this.NextOther = nextOther;
+				this.NextOtherIndex = nextOtherIndex;
 				this.Checkpoint = checkpoint;
 			}
 		}
@@ -52,60 +52,46 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			get { return false; }
 		}
 
-		Role INode.Role {
-			get { return null; }
-		}
-
-		INode INode.NextSibling {
-			get { return null; }
-		}
-
-		INode INode.FirstChild {
-			get { return null; }
-		}
-
 		public abstract bool DoMatch(INode other, Match match);
 
-		public virtual bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
+		public virtual bool DoMatchCollection(IReadOnlyList<INode> other, int pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
-			return DoMatch(pos, match);
+			return DoMatch(pos < other.Count ? other[pos] : null, match);
 		}
 
-		public static bool DoMatchCollection(Role role, INode firstPatternChild, INode firstOtherChild, Match match)
+		/// <summary>
+		/// Matches the <paramref name="patternChildren"/> collection against the
+		/// <paramref name="otherChildren"/> collection, with backtracking over Repeat/OptionalNode.
+		/// Each collection is already the per-role child list, so the match walks them by index.
+		/// </summary>
+		public static bool DoMatchCollection(IReadOnlyList<INode> patternChildren, IReadOnlyList<INode> otherChildren, Match match)
 		{
 			BacktrackingInfo backtrackingInfo = new BacktrackingInfo();
-			Stack<INode> patternStack = new Stack<INode>();
+			Stack<int> patternStack = new Stack<int>();
 			Stack<PossibleMatch> stack = backtrackingInfo.backtrackingStack;
-			patternStack.Push(firstPatternChild);
-			stack.Push(new PossibleMatch(firstOtherChild, match.CheckPoint()));
+			patternStack.Push(0);
+			stack.Push(new PossibleMatch(0, match.CheckPoint()));
 			while (stack.Count > 0)
 			{
-				INode cur1 = patternStack.Pop();
-				INode cur2 = stack.Peek().NextOther;
+				int patternPos = patternStack.Pop();
+				int otherPos = stack.Peek().NextOtherIndex;
 				match.RestoreCheckPoint(stack.Pop().Checkpoint);
 				bool success = true;
-				while (cur1 != null && success)
+				while (patternPos < patternChildren.Count && success)
 				{
-					while (cur1 != null && cur1.Role != role)
-						cur1 = cur1.NextSibling;
-					while (cur2 != null && cur2.Role != role)
-						cur2 = cur2.NextSibling;
-					if (cur1 == null)
-						break;
-
+					INode cur1 = patternChildren[patternPos];
 					Debug.Assert(stack.Count == patternStack.Count);
-					success = cur1.DoMatchCollection(role, cur2, match, backtrackingInfo);
+					success = cur1.DoMatchCollection(otherChildren, otherPos, match, backtrackingInfo);
 					Debug.Assert(stack.Count >= patternStack.Count);
+					// For every alternative the pattern node pushed, queue the next pattern node so the
+					// continuation resumes after it.
 					while (stack.Count > patternStack.Count)
-						patternStack.Push(cur1.NextSibling);
+						patternStack.Push(patternPos + 1);
 
-					cur1 = cur1.NextSibling;
-					if (cur2 != null)
-						cur2 = cur2.NextSibling;
+					patternPos++;
+					otherPos++;
 				}
-				while (cur2 != null && cur2.Role != role)
-					cur2 = cur2.NextSibling;
-				if (success && cur2 == null)
+				if (success && otherPos >= otherChildren.Count)
 					return true;
 			}
 			return false;
