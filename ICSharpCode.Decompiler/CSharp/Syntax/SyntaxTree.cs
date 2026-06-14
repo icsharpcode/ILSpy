@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				foreach (var child in curNode.Children)
 				{
 					if (!(child is Statement || child is Expression) &&
-						(child.Role != Roles.TypeMemberRole || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
+						(child.Slot?.Kind != SlotKind.TypeMember || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
 						nodeStack.Push(child);
 				}
 			}

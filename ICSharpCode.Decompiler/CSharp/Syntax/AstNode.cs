@@ -403,6 +403,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal virtual Role GetChildSlot(int index) => throw new ArgumentOutOfRangeException(nameof(index));
 
+		// The CSharpSlotInfo for the slot at the given flattened index; generator-emitted per leaf.
+		internal virtual CSharpSlotInfo GetChildSlotInfo(int index) => throw new ArgumentOutOfRangeException(nameof(index));
+
+		/// <summary>
+		/// The slot this node occupies in its parent, or null if it has no parent. Compare against a
+		/// node type's generated slot statics (e.g. <c>node.Slot == BinaryOperatorExpression.LeftSlot</c>).
+		/// </summary>
+		public CSharpSlotInfo? Slot {
+			get {
+				if (parent == null)
+					return null;
+				parent.EnsureChildIndices();
+				return parent.GetChildSlotInfo(childIndex);
+			}
+		}
+
 		// Returns the collection occupying the slot with the given role, or null if there is none.
 		// Overridden by the generator for nodes that have collection slots.
 		internal virtual AstNodeCollection? GetCollectionByRole(Role role) => null;

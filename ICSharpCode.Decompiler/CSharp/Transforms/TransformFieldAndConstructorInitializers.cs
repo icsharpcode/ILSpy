@@ -674,7 +674,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						var newBaseType = new InvocationAstType();
 						baseType.ReplaceWith(newBaseType);
 						newBaseType.BaseType = baseType;
-						PrimaryConstructorDecl.Initializer.GetChildrenByRole(Roles.Argument).MoveTo(newBaseType.Arguments);
+						PrimaryConstructorDecl.Initializer.Arguments.MoveTo(newBaseType.Arguments);
 					}
 
 					PrimaryConstructorDecl.Remove();

@@ -513,7 +513,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		void HandleLambdaOrQuery(Expression expr)
 		{
-			if (expr.Role == BinaryOperatorExpression.LeftRole)
+			if (expr.Slot?.Kind == SlotKind.Left)
 				Parenthesize(expr);
 			if (expr.Parent is IsExpression || expr.Parent is AsExpression)
 				Parenthesize(expr);

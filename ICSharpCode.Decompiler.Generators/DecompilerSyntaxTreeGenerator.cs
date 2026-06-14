@@ -30,7 +30,21 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable)>? Slots);
+	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName)>? Slots);
+
+	// Derives the shared SlotKind name from a [Slot] role expression: the last dotted segment with a
+	// trailing "Role" removed (e.g. "Roles.EmbeddedStatement" -> "EmbeddedStatement", "LeftRole" ->
+	// "Left", "PropertyDeclaration.GetterRole" -> "Getter"). Roles that share a name (aliases, or the
+	// same logical slot across node types) intentionally collapse to one kind, so node.Slot.Kind matches
+	// node.Role comparisons; consumer sites derive the kind from their role the same way.
+	static string SlotKindName(string roleExpr)
+	{
+		int dot = roleExpr.LastIndexOf('.');
+		string name = dot >= 0 ? roleExpr.Substring(dot + 1) : roleExpr;
+		if (name.EndsWith("Role") && name.Length > 4)
+			name = name.Substring(0, name.Length - 4);
+		return name;
+	}
 
 	AstNodeAdditions GetAstNodeAdditions(GeneratorAttributeSyntaxContext context, CancellationToken ct)
 	{
@@ -78,7 +92,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 		// Collect the slot schema: child properties tagged [Slot], in declaration order. The
 		// attribute names the Role expression to use; single vs collection comes from the type.
-		List<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable)>? slots = null;
+		List<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName)>? slots = null;
 		foreach (var m in targetSymbol.GetMembers())
 		{
 			if (m is not IPropertySymbol property)
@@ -96,7 +110,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			string elementType = isCollection
 				? ((INamedTypeSymbol)property.Type).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
 				: propertyType;
-			slots.Add((roleExpr, isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable));
+			slots.Add((roleExpr, isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, SlotKindName(roleExpr)));
 		}
 
 		return new(targetSymbol.Name, !targetSymbol.MemberNames.Contains("AcceptVisitor"),
@@ -293,7 +307,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			// substitutes the role's null object when empty (pre-NRT); a collection slot owns a lazily
 			// created AstNodeCollection bound to this node. A slot re-declared from an inherited contract
 			// member (Part I.3 flatten) is an override.
-			foreach (var (roleExpr, isCollection, name, type, elementType, isOverride, isNullable) in slots)
+			foreach (var (roleExpr, isCollection, name, type, elementType, isOverride, isNullable, kindName) in slots)
 			{
 				string field = FieldName(name);
 				if (isCollection)
@@ -363,6 +377,23 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					builder.AppendLine($"\t\t{{ int n = {FieldName(s.PropertyName)}?.Count ?? 0; if (i < n) return {s.RoleExpr}; i -= n; }}");
 				else
 					builder.AppendLine($"\t\tif (i == 0) return {s.RoleExpr}; i -= 1;");
+			}
+			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
+			builder.AppendLine("\t}");
+
+			// One CSharpSlotInfo static per slot; node.Slot compares against these by object identity.
+			foreach (var s in slots)
+				builder.AppendLine($"\tpublic static readonly CSharpSlotInfo {s.PropertyName}Slot = new CSharpSlotInfo(\"{s.PropertyName}\", typeof({s.ElementType}), {(s.IsCollection ? "true" : "false")}, SlotKind.{s.KindName});");
+
+			builder.AppendLine("\tinternal override CSharpSlotInfo GetChildSlotInfo(int index)");
+			builder.AppendLine("\t{");
+			builder.AppendLine("\t\tint i = index;");
+			foreach (var s in slots)
+			{
+				if (s.IsCollection)
+					builder.AppendLine($"\t\t{{ int n = {FieldName(s.PropertyName)}?.Count ?? 0; if (i < n) return {s.PropertyName}Slot; i -= n; }}");
+				else
+					builder.AppendLine($"\t\tif (i == 0) return {s.PropertyName}Slot; i -= 1;");
 			}
 			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
 			builder.AppendLine("\t}");
@@ -489,6 +520,36 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		context.RegisterSourceOutput(astNodeAdditions, WriteGeneratedMembers);
 		context.RegisterSourceOutput(visitorMembers, WriteVisitors);
+		context.RegisterSourceOutput(visitorMembers, WriteSlotKinds);
+	}
+
+	// Emits the SlotKind enum: one value per distinct slot kind across all nodes. A node's CSharpSlotInfo
+	// carries its kind, and consumers compare node.Slot.Kind == SlotKind.X -- shared across node types, so
+	// it replaces the old polymorphic node.Role == Roles.X comparisons.
+	void WriteSlotKinds(SourceProductionContext context, ImmutableArray<AstNodeAdditions> source)
+	{
+		var kinds = new SortedSet<string>(StringComparer.Ordinal);
+		foreach (var node in source)
+		{
+			if (node.Slots is { } slots)
+			{
+				foreach (var s in slots)
+					kinds.Add(s.KindName);
+			}
+		}
+
+		var builder = new StringBuilder();
+		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
+		builder.AppendLine();
+		builder.AppendLine("/// <summary>Identifies the kind of an AST child slot, shared across node types.</summary>");
+		builder.AppendLine("public enum SlotKind");
+		builder.AppendLine("{");
+		builder.AppendLine("\tNone,");
+		foreach (var k in kinds)
+			builder.AppendLine($"\t{k},");
+		builder.AppendLine("}");
+
+		context.AddSource("SlotKind.g.cs", SourceText.From(builder.ToString(), Encoding.UTF8));
 	}
 }
 

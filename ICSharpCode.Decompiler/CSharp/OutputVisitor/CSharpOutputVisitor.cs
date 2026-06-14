@@ -252,8 +252,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		protected virtual void Semicolon()
 		{
-			// get the role of the current node
-			Role role = containerStack.Peek().Role;
+			// get the slot of the current node
+			SlotKind? kind = containerStack.Peek().Slot?.Kind;
 			if (!SkipToken())
 			{
 				WriteToken(Roles.Semicolon);
@@ -265,16 +265,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			bool SkipToken()
 			{
-				return role == ForStatement.InitializerRole
-					|| role == ForStatement.IteratorRole
-					|| role == UsingStatement.ResourceAcquisitionRole;
+				return kind == SlotKind.Initializer
+					|| kind == SlotKind.Iterator
+					|| kind == SlotKind.ResourceAcquisition;
 			}
 
 			bool SkipNewLine()
 			{
 				if (containerStack.Peek() is not Accessor accessor)
 					return false;
-				if (!(role == PropertyDeclaration.GetterRole || role == PropertyDeclaration.SetterRole))
+				if (!(kind == SlotKind.Getter || kind == SlotKind.Setter))
 					return false;
 				bool isAutoProperty = accessor.Body.IsNull
 					&& !accessor.Attributes.Any()
@@ -693,11 +693,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (node.Parent is ObjectCreateExpression)
 			{
-				return node.Role == ObjectCreateExpression.InitializerRole;
+				return node.Slot?.Kind == SlotKind.Initializer;
 			}
 			if (node.Parent is NamedExpression)
 			{
-				return node.Role == Roles.Expression;
+				return node.Slot?.Kind == SlotKind.Expression;
 			}
 			return false;
 		}
@@ -1358,7 +1358,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitQueryExpression(QueryExpression queryExpression)
 		{
 			StartNode(queryExpression);
-			if (queryExpression.Role != QueryContinuationClause.PrecedingQueryRole)
+			if (queryExpression.Slot?.Kind != SlotKind.PrecedingQuery)
 				writer.Indent();
 			bool first = true;
 			foreach (var clause in queryExpression.Clauses)
@@ -1376,7 +1376,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				clause.AcceptVisitor(this);
 			}
-			if (queryExpression.Role != QueryContinuationClause.PrecedingQueryRole)
+			if (queryExpression.Slot?.Kind != SlotKind.PrecedingQuery)
 				writer.Unindent();
 			EndNode(queryExpression);
 		}
@@ -1707,7 +1707,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(usingAliasDeclaration);
 			WriteKeyword(UsingAliasDeclaration.UsingKeywordRole);
-			WriteIdentifier(usingAliasDeclaration.GetChildByRole(UsingAliasDeclaration.AliasRole));
+			WriteIdentifier(usingAliasDeclaration.AliasToken);
 			Space(policy.SpaceAroundEqualityOperator);
 			WriteToken(Roles.Assign);
 			Space(policy.SpaceAroundEqualityOperator);
@@ -1912,7 +1912,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(gotoStatement);
 			WriteKeyword(GotoStatement.GotoKeywordRole);
-			WriteIdentifier(gotoStatement.GetChildByRole(Roles.Identifier));
+			WriteIdentifier(gotoStatement.NameToken);
 			Semicolon();
 			EndNode(gotoStatement);
 		}
@@ -1957,7 +1957,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			bool foundLabelledStatement = false;
 			for (AstNode tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
 			{
-				if (tmp.Role == labelStatement.Role)
+				if (tmp.Slot?.Kind == labelStatement.Slot?.Kind)
 				{
 					foundLabelledStatement = true;
 				}
@@ -2312,12 +2312,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteAttributes(accessor.Attributes);
 			WriteModifiers(accessor.Modifiers);
 			BraceStyle style = policy.StatementBraceStyle;
-			if (accessor.Role == PropertyDeclaration.GetterRole)
+			if (accessor.Slot?.Kind == SlotKind.Getter)
 			{
 				WriteKeyword("get", PropertyDeclaration.GetKeywordRole);
 				style = policy.PropertyGetBraceStyle;
 			}
-			else if (accessor.Role == PropertyDeclaration.SetterRole)
+			else if (accessor.Slot?.Kind == SlotKind.Setter)
 			{
 				if (accessor.Kind == AccessorKind.Init)
 				{
@@ -2329,12 +2329,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				style = policy.PropertySetBraceStyle;
 			}
-			else if (accessor.Role == CustomEventDeclaration.AddAccessorRole)
+			else if (accessor.Slot?.Kind == SlotKind.AddAccessor)
 			{
 				WriteKeyword("add", CustomEventDeclaration.AddKeywordRole);
 				style = policy.EventAddBraceStyle;
 			}
-			else if (accessor.Role == CustomEventDeclaration.RemoveAccessorRole)
+			else if (accessor.Slot?.Kind == SlotKind.RemoveAccessor)
 			{
 				WriteKeyword("remove", CustomEventDeclaration.RemoveKeywordRole);
 				style = policy.EventRemoveBraceStyle;
@@ -2479,7 +2479,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// output add/remove in their original order
 			foreach (AstNode node in customEventDeclaration.Children)
 			{
-				if (node.Role == CustomEventDeclaration.AddAccessorRole || node.Role == CustomEventDeclaration.RemoveAccessorRole)
+				if (node.Slot?.Kind == SlotKind.AddAccessor || node.Slot?.Kind == SlotKind.RemoveAccessor)
 				{
 					node.AcceptVisitor(this);
 				}
@@ -2556,7 +2556,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				// output get/set in their original order
 				foreach (AstNode node in indexerDeclaration.Children)
 				{
-					if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole)
+					if (node.Slot?.Kind == SlotKind.Getter || node.Slot?.Kind == SlotKind.Setter)
 					{
 						node.AcceptVisitor(this);
 					}
@@ -2718,7 +2718,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				// output get/set in their original order
 				foreach (AstNode node in propertyDeclaration.Children)
 				{
-					if (node.Role == IndexerDeclaration.GetterRole || node.Role == IndexerDeclaration.SetterRole)
+					if (node.Slot?.Kind == SlotKind.Getter || node.Slot?.Kind == SlotKind.Setter)
 					{
 						node.AcceptVisitor(this);
 					}
@@ -3183,7 +3183,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 					break;
 				default:
-					WriteIdentifier(documentationReference.GetChildByRole(Roles.Identifier));
+					WriteIdentifier(documentationReference.NameToken);
 					break;
 			}
 			WriteTypeArguments(documentationReference.TypeArguments);

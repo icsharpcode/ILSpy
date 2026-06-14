@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool IsElseIf(Statement statement, Statement parent)
 		{
-			return parent is IfElseStatement && statement.Role == IfElseStatement.FalseRole;
+			return parent is IfElseStatement && statement.Slot?.Kind == SlotKind.False;
 		}
 
 		static void InsertBlock(Statement statement)
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			switch (statement)
 			{
 				case IfElseStatement ies:
-					return parent is IfElseStatement && ies.Role == IfElseStatement.FalseRole;
+					return parent is IfElseStatement && ies.Slot?.Kind == SlotKind.False;
 				case VariableDeclarationStatement vds:
 				case WhileStatement ws:
 				case DoWhileStatement dws:
