@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAtStartOfLine = false;
 		}
 
-		public override void WriteKeyword(Role role, string keyword)
+		public override void WriteKeyword(TokenRole role, string keyword)
 		{
 			WriteIndentation();
 			column += keyword.Length;
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAtStartOfLine = false;
 		}
 
-		public override void WriteToken(Role role, string token)
+		public override void WriteToken(TokenRole role, string token)
 		{
 			WriteIndentation();
 			column += token.Length;

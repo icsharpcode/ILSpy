@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 						ConvertType(explicitInterfaceType, writer, formattingPolicy);
 						writer.WriteToken(Roles.Dot, ".");
 					}
-					writer.WriteKeyword(Roles.Identifier, "this");
+					writer.WriteKeyword(null, "this");
 					break;
 				case SymbolKind.Constructor:
 					WriteQualifiedName(member.DeclaringType!.Name, writer, formattingPolicy);

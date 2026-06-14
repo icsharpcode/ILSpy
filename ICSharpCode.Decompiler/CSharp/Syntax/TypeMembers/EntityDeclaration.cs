@@ -28,7 +28,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
 		// Modifiers are stored in the Modifiers scalar; this role only tags the keyword tokens the
 		// output visitor emits (e.g. for the override-link reference in TextTokenWriter).
-		public static readonly Role<AstNode> ModifierRole = new Role<AstNode>("Modifier", null);
+		// Identity marker for modifier keywords in the output (modifiers are scalars, not child nodes);
+		// the token writer uses it to make the 'override' modifier a go-to-definition reference.
+		public static readonly TokenRole ModifierRole = new TokenRole("modifier");
 		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
 
 		public override NodeType NodeType {

@@ -229,7 +229,7 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		public override void WriteKeyword(Role role, string keyword)
+		public override void WriteKeyword(TokenRole role, string keyword)
 		{
 			//To make reference for 'this' and 'base' keywords in the ClassName():this() expression
 			if (role == ConstructorInitializer.ThisKeywordRole || role == ConstructorInitializer.BaseKeywordRole)
@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
-		public override void WriteToken(Role role, string token)
+		public override void WriteToken(TokenRole role, string token)
 		{
 			switch (token)
 			{
