@@ -331,6 +331,7 @@
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />
     <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
     <Compile Include="PdbGenerationTestRunner.cs" />
+    <Compile Include="PatternMatching\PatternMatchingTests.cs" />
     <None Include="TestCases\ILPretty\Issue1047.il" />
     <None Include="TestCases\ILPretty\Issue959.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />

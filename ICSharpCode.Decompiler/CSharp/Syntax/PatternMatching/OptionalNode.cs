@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
@@ -39,10 +40,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		{
 		}
 
-		public override bool DoMatchCollection(Role role, INode pos, Match match, BacktrackingInfo backtrackingInfo)
+		public override bool DoMatchCollection(IReadOnlyList<INode> other, int pos, Match match, BacktrackingInfo backtrackingInfo)
 		{
+			// Push the "absent" alternative (resume the following pattern node at the same position),
+			// then try to consume the element here.
 			backtrackingInfo.backtrackingStack.Push(new PossibleMatch(pos, match.CheckPoint()));
-			return childNode.DoMatch(pos, match);
+			return childNode.DoMatch(pos < other.Count ? other[pos] : null, match);
 		}
 
 		public override bool DoMatch(INode other, Match match)

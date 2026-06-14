@@ -36,6 +36,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal abstract void InsertNodeBefore(AstNode? existing, AstNode node);
 		internal abstract void InsertNodeAfter(AstNode? existing, AstNode node);
 		internal abstract bool RemoveNode(AstNode node);
+
+		// The pattern matcher consumes a collection as an IReadOnlyList<INode>. The view is a separate
+		// (cached) object rather than the collection itself, because having AstNodeCollection<T>
+		// implement IEnumerable<INode> as well as IEnumerable<T> would make every LINQ call on a typed
+		// collection ambiguous.
+		private protected abstract int NodeCount { get; }
+		private protected abstract INode NodeAt(int index);
+
+		IReadOnlyList<INode>? nodeListView;
+		internal IReadOnlyList<INode> AsNodeList() => nodeListView ??= new NodeListView(this);
+
+		sealed class NodeListView : IReadOnlyList<INode>
+		{
+			readonly AstNodeCollection collection;
+			public NodeListView(AstNodeCollection collection) => this.collection = collection;
+			public INode this[int index] => collection.NodeAt(index);
+			public int Count => collection.NodeCount;
+			public IEnumerator<INode> GetEnumerator()
+			{
+				int count = collection.NodeCount;
+				for (int i = 0; i < count; i++)
+					yield return collection.NodeAt(i);
+			}
+			IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		}
 	}
 
 	/// <summary>
@@ -59,6 +84,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public int Count {
 			get { return list.Count; }
 		}
+
+		private protected override int NodeCount => list.Count;
+		private protected override INode NodeAt(int index) => list[index];
 
 		public T this[int index] {
 			get { return list[index]; }
@@ -272,7 +300,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal bool DoMatch(AstNodeCollection<T> other, Match match)
 		{
-			return Pattern.DoMatchCollection(role, parent.FirstChild, other.parent.FirstChild, match);
+			// Both collections are already the per-role child lists, so the matcher walks them by index.
+			return Pattern.DoMatchCollection(AsNodeList(), other.AsNodeList(), match);
 		}
 
 		public void InsertAfter(T existingItem, T newItem)
