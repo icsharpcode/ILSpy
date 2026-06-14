@@ -716,6 +716,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(rootNode, context);
+				// Verify the slot structure survived the transform (DEBUG only); mirrors the IL
+				// pipeline's per-transform ILInstruction.CheckInvariant.
+				rootNode.CheckInvariant();
 			}
 			CancellationToken.ThrowIfCancellationRequested();
 			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
@@ -1433,9 +1436,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Constraints are not copied because explicit interface implementations cannot have constraints. CS0460
 
 				methodDecl.Body = new BlockStatement();
-				methodDecl.Body.AddChild(new Comment(
-					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
-										 Roles.Comment);
+				var commentStatement = new EmptyStatement();
+				commentStatement.AddTrailingTrivia(new Comment(
+					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name));
+				methodDecl.Body.Add(commentStatement);
 				var forwardingCall = new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), memberDecl.Name,
 					methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name))),
 					methodDecl.Parameters.Select(ForwardParameter)

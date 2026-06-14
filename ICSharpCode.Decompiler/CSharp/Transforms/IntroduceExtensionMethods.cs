@@ -116,10 +116,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (invocationExpression.Target is IdentifierExpression identifierExpression)
 			{
+				identifierExpression.Detach();
 				memberRefExpr = new MemberReferenceExpression(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
-				// Replace in place so the target keeps its slot position; assigning after a
-				// Detach would re-append it behind the arguments in document order.
-				identifierExpression.ReplaceWith(memberRefExpr);
+				invocationExpression.Target = memberRefExpr;
 			}
 			else
 			{
