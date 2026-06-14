@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var stmt = new EmptyStatement();
 			if (inst.Comment != null)
 			{
-				stmt.AddChild(new Comment(inst.Comment), Roles.Comment);
+				stmt.AddTrailingTrivia(new Comment(inst.Comment));
 			}
 			return stmt.WithILInstruction(inst);
 		}
@@ -491,7 +491,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var tryCatch = new TryCatchStatement();
 			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
 			var faultBlock = ConvertAsBlock(inst.FaultBlock);
-			faultBlock.InsertChildAfter(null, new Comment("try-fault"), Roles.Comment);
+			var tryFaultStatement = new EmptyStatement();
+			tryFaultStatement.AddTrailingTrivia(new Comment("try-fault"));
+			faultBlock.Statements.InsertBefore(faultBlock.Statements.FirstOrDefault(), tryFaultStatement);
 			faultBlock.Add(new ThrowStatement());
 			tryCatch.CatchClauses.Add(new CatchClause { Body = faultBlock });
 			return tryCatch.WithILInstruction(inst);
@@ -1409,10 +1411,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					method.Body = nestedBuilder.ConvertAsBlock(function.Body);
 
-					Comment prev = null;
+					var warningAnchor = method.Body.Statements.FirstOrDefault();
 					foreach (string warning in function.Warnings)
 					{
-						method.Body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+						var warningStatement = new EmptyStatement();
+						warningStatement.AddTrailingTrivia(new Comment(warning));
+						if (warningAnchor != null)
+							method.Body.Statements.InsertBefore(warningAnchor, warningStatement);
+						else
+							method.Body.Statements.Add(warningStatement);
 					}
 				}
 				else
@@ -1523,7 +1530,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst
 				)
 			);
-			stmt.InsertChildAfter(null, new Comment(" IL initblk instruction"), Roles.Comment);
+			stmt.AddLeadingTrivia(new Comment(" IL initblk instruction"));
 			return stmt.WithILInstruction(inst);
 		}
 
@@ -1541,7 +1548,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst
 				)
 			);
-			stmt.InsertChildAfter(null, new Comment(" IL cpblk instruction"), Roles.Comment);
+			stmt.AddLeadingTrivia(new Comment(" IL cpblk instruction"));
 			return stmt.WithILInstruction(inst);
 		}
 

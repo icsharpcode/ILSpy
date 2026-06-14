@@ -34,16 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
 
-		public CSharpTokenNode ReturnToken {
-			get { return GetChildByRole(ReturnKeywordRole); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
 
 		public ReturnStatement()
 		{

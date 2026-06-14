@@ -36,15 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
 		public static readonly Role<AstNode> ResourceAcquisitionRole = new Role<AstNode>("ResourceAcquisition", AstNode.Null);
 
-		public CSharpTokenNode UsingToken {
-			get { return GetChildByRole(UsingKeywordRole); }
-		}
-
 		public bool IsAsync { get; set; }
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
 
 		public bool IsEnhanced { get; set; }
 
@@ -53,10 +45,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		[Slot("ResourceAcquisitionRole")]
 		public partial AstNode ResourceAcquisition { get; set; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }

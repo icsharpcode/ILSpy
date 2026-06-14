@@ -33,21 +33,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole TildeRole = new TokenRole("~");
 
-		public CSharpTokenNode TildeToken {
-			get { return GetChildByRole(TildeRole); }
-		}
-
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Destructor; }
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 

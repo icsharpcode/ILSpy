@@ -411,7 +411,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (treatedAs != null)
 				{
 					var result = ConvertTypeHelper(treatedAs);
-					result.AddChild(new Comment(astType.ToString(), CommentType.MultiLine), Roles.Comment);
+					result.AddTrailingTrivia(new Comment(astType.ToString(), CommentType.MultiLine));
 					return result;
 				}
 				else
@@ -810,9 +810,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (attribute.HasDecodeErrors)
 			{
 				attr.HasArgumentList = true;
-				attr.AddChild(new Comment("Could not decode attribute arguments.", CommentType.MultiLine), Roles.Comment);
-				// insert explicit rpar token to make the comment appear within the parentheses
-				attr.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RPar), Roles.RPar);
+				// An ErrorExpression renders purely as its comment, so it appears inside the
+				// parentheses without an explicit closing-paren token to anchor a comment child.
+				attr.Arguments.Add(new ErrorExpression("Could not decode attribute arguments."));
 			}
 			return attr;
 		}
@@ -2115,14 +2115,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				accessorKind = AccessorKind.Init;
 			}
 			decl.Kind = accessorKind;
-			if (accessorKind != AccessorKind.Any)
-			{
-				var tokenKind = Accessor.GetAccessorKeywordRole(accessorKind);
-				decl.AddChild(new CSharpTokenNode(TextLocation.Empty, tokenKind), tokenKind);
-			}
 			if (accessor.IsInitOnly && accessorKind != AccessorKind.Init)
 			{
-				decl.AddChild(new Comment("init", CommentType.MultiLine), Roles.Comment);
+				decl.AddTrailingTrivia(new Comment("init", CommentType.MultiLine));
 			}
 			if (AddResolveResultAnnotations)
 			{
@@ -2131,10 +2126,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (GenerateBody)
 			{
 				decl.Body = GenerateBodyBlock();
-			}
-			else
-			{
-				decl.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Semicolon), Roles.Semicolon);
 			}
 			return decl;
 		}

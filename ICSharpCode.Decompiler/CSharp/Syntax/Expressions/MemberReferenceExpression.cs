@@ -37,10 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.TargetExpression")]
 		public partial Expression Target { get; set; }
 
-		public CSharpTokenNode DotToken {
-			get { return GetChildByRole(Roles.Dot); }
-		}
-
 		public string MemberName {
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
@@ -53,16 +49,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Identifier")]
 		public partial Identifier MemberNameToken { get; set; }
 
-		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole(Roles.LChevron); }
-		}
-
 		[Slot("Roles.TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
-
-		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole(Roles.RChevron); }
-		}
 
 		public MemberReferenceExpression()
 		{

@@ -44,10 +44,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Identifier")]
 		public partial Identifier LabelToken { get; set; }
 
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole(Roles.Colon); }
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			LabelStatement o = other as LabelStatement;

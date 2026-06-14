@@ -78,28 +78,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole DisableKeywordRole = new TokenRole("disable");
 		public static readonly TokenRole RestoreKeywordRole = new TokenRole("restore");
 
-		public bool Disable {
-			get {
-				return !DisableToken.IsNull;
-			}
-		}
-
-		public CSharpTokenNode PragmaToken {
-			get { return GetChildByRole(PragmaKeywordRole); }
-		}
-
-		public CSharpTokenNode WarningToken {
-			get { return GetChildByRole(WarningKeywordRole); }
-		}
-
-		public CSharpTokenNode DisableToken {
-			get { return GetChildByRole(DisableKeywordRole); }
-		}
-
-		public CSharpTokenNode RestoreToken {
-			get { return GetChildByRole(RestoreKeywordRole); }
-		}
-
 		[Slot("WarningRole")]
 		public partial AstNodeCollection<PrimitiveExpression> Warnings { get; }
 
@@ -127,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class PreProcessorDirective : AstNode
+	public partial class PreProcessorDirective : Trivia
 	{
 		public override NodeType NodeType {
 			get {

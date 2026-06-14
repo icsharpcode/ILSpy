@@ -1,14 +1,14 @@
-// Copyright (c) 2010-2021 AlphaSierraPapa for the SharpDevelop Team
-// 
+// Copyright (c) 2026 Siegfried Pammer
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -16,30 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Expression with Initializer
+	/// Content that the output visitor emits verbatim but that is not a semantic child of a node:
+	/// comments (<see cref="Comment"/>) and preprocessor directives (<see cref="PreProcessorDirective"/>).
+	/// Trivia is attached to the node it annotates as leading or trailing trivia
+	/// (<see cref="AstNode.AddLeadingTrivia"/> / <see cref="AstNode.AddTrailingTrivia"/>) rather than
+	/// occupying a child slot, so it stays off the child-index space.
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
-	public partial class WithInitializerExpression : Expression
+	public abstract class Trivia : AstNode
 	{
-		public readonly static TokenRole WithKeywordRole = new TokenRole("with");
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
-
-		[Slot("Roles.Expression")]
-		public partial Expression Expression { get; set; }
-
-		[Slot("InitializerRole")]
-		public partial ArrayInitializerExpression Initializer { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is WithInitializerExpression o
-				&& this.Expression.DoMatch(o.Expression, match)
-				&& this.Initializer.DoMatch(o.Initializer, match);
-		}
 	}
 }

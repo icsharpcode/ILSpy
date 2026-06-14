@@ -40,16 +40,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("ConditionRole")]
 		public partial Expression Condition { get; set; }
 
-		public CSharpTokenNode QuestionMarkToken {
-			get { return GetChildByRole(QuestionMarkRole); }
-		}
-
 		[Slot("TrueRole")]
 		public partial Expression TrueExpression { get; set; }
-
-		public CSharpTokenNode ColonToken {
-			get { return GetChildByRole(ColonRole); }
-		}
 
 		[Slot("FalseRole")]
 		public partial Expression FalseExpression { get; set; }

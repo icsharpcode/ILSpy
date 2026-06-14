@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				throw new ArgumentNullException(nameof(formattingPolicy));
 			}
-			this.writer = new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(writer));
+			this.writer = new InsertRequiredSpacesDecorator(writer);
 			this.policy = formattingPolicy;
 		}
 
@@ -76,10 +76,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Debug.Assert(containerStack.Count == 0 || node.Parent == containerStack.Peek() || containerStack.Peek().NodeType == NodeType.Pattern);
 			containerStack.Push(node);
 			writer.StartNode(node);
+			foreach (var trivia in node.LeadingTrivia)
+				trivia.AcceptVisitor(this);
 		}
 
 		protected virtual void EndNode(AstNode node)
 		{
+			foreach (var trivia in node.TrailingTrivia)
+				trivia.AcceptVisitor(this);
 			Debug.Assert(node == containerStack.Peek());
 			containerStack.Pop();
 			writer.EndNode(node);
@@ -491,11 +495,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		protected virtual void WriteModifiers(Modifiers modifiers)
 		{
-			foreach (Modifiers modifier in CSharpModifierToken.AllModifiers)
+			foreach (Modifiers modifier in CSharpModifiers.AllModifiers)
 			{
 				if ((modifiers & modifier) == modifier)
 				{
-					WriteKeyword(CSharpModifierToken.GetModifierName(modifier), EntityDeclaration.ModifierRole);
+					WriteKeyword(CSharpModifiers.GetModifierName(modifier), EntityDeclaration.ModifierRole);
 					Space();
 				}
 			}
@@ -658,12 +662,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// "new List<int> { { 1 } }" and "new List<int> { 1 }" are the same semantically.
 			// We also use the same AST for both: we always use two nested ArrayInitializerExpressions
 			// for collection initializers, even if the user did not write nested brackets.
-			// The output visitor will output nested braces only if they are necessary,
-			// or if the braces tokens exist in the AST.
+			// The output visitor outputs nested braces only if they are necessary.
 			bool bracesAreOptional = arrayInitializerExpression.Elements.Count == 1
 				&& IsObjectOrCollectionInitializer(arrayInitializerExpression.Parent)
 				&& !CanBeConfusedWithObjectInitializer(arrayInitializerExpression.Elements.Single());
-			if (bracesAreOptional && arrayInitializerExpression.LBraceToken.IsNull)
+			if (bracesAreOptional)
 			{
 				arrayInitializerExpression.Elements.Single().AcceptVisitor(this);
 			}
@@ -1136,11 +1139,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(ObjectCreateExpression.NewKeywordRole);
 			objectCreateExpression.Type.AcceptVisitor(this);
 			bool useParenthesis = objectCreateExpression.Arguments.Any() || objectCreateExpression.Initializer.IsNull;
-			// also use parenthesis if there is an '(' token
-			if (!objectCreateExpression.LParToken.IsNull)
-			{
-				useParenthesis = true;
-			}
 			if (useParenthesis)
 			{
 				Space(policy.SpaceBeforeMethodCallParentheses);
@@ -1809,7 +1807,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitEmptyStatement(EmptyStatement emptyStatement)
 		{
 			StartNode(emptyStatement);
-			Semicolon();
+			// An empty statement that carries a comment renders as just that comment (emitted as
+			// trivia by StartNode/EndNode); otherwise it is a bare semicolon.
+			if (!emptyStatement.LeadingTrivia.Any() && !emptyStatement.TrailingTrivia.Any())
+				Semicolon();
 			EndNode(emptyStatement);
 		}
 
@@ -2318,7 +2319,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			else if (accessor.Role == PropertyDeclaration.SetterRole)
 			{
-				if (accessor.Keyword.Role == PropertyDeclaration.InitKeywordRole)
+				if (accessor.Kind == AccessorKind.Init)
 				{
 					WriteKeyword("init", PropertyDeclaration.InitKeywordRole);
 				}
@@ -2778,6 +2779,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public virtual void VisitSyntaxTree(SyntaxTree syntaxTree)
 		{
+			// The SyntaxTree is not bracketed by StartNode/EndNode (its children are visited
+			// directly), so emit its own leading trivia (e.g. generated #define directives) here.
+			foreach (var trivia in syntaxTree.LeadingTrivia)
+				trivia.AcceptVisitor(this);
 			// don't do node tracking as we visit all children directly
 			foreach (AstNode node in syntaxTree.Children)
 			{
@@ -2984,20 +2989,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(constraint);
 		}
 
-		public virtual void VisitCSharpTokenNode(CSharpTokenNode cSharpTokenNode)
-		{
-			CSharpModifierToken mod = cSharpTokenNode as CSharpModifierToken;
-			if (mod != null)
-			{
-				// ITokenWriter assumes that each node processed between a
-				// StartNode(parentNode)-EndNode(parentNode)-pair is a child of parentNode.
-				WriteKeyword(CSharpModifierToken.GetModifierName(mod.Modifier), cSharpTokenNode.Role);
-			}
-			else
-			{
-				throw new NotSupportedException("Should never visit individual tokens");
-			}
-		}
 
 		public virtual void VisitIdentifier(Identifier identifier)
 		{

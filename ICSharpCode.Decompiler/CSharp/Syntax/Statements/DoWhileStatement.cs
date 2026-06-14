@@ -35,31 +35,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole DoKeywordRole = new TokenRole("do");
 		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
 
-		public CSharpTokenNode DoToken {
-			get { return GetChildByRole(DoKeywordRole); }
-		}
-
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 
-		public CSharpTokenNode WhileToken {
-			get { return GetChildByRole(WhileKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Condition")]
 		public partial Expression Condition { get; set; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

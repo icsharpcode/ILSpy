@@ -26,10 +26,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole OutKeywordRole = DirectionExpression.OutKeywordRole;
 
-		public CSharpTokenNode OutKeywordToken {
-			get { return GetChildByRole(OutKeywordRole); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 

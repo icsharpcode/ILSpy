@@ -48,16 +48,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Elements.AddRange(elements);
 		}
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial AstNodeCollection<Expression> Elements { get; }
 
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 	}
 }
 

@@ -35,23 +35,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
 
-		public CSharpTokenNode StackAllocToken {
-			get { return GetChildByRole(StackallocKeywordRole); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
-		public CSharpTokenNode LBracketToken {
-			get { return GetChildByRole(Roles.LBracket); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression CountExpression { get; set; }
-
-		public CSharpTokenNode RBracketToken {
-			get { return GetChildByRole(Roles.RBracket); }
-		}
 
 		[Slot("InitializerRole")]
 		public partial ArrayInitializerExpression Initializer { get; set; }

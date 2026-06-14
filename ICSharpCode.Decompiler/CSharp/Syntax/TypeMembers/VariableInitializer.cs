@@ -57,10 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
 
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression Initializer { get; set; }
 

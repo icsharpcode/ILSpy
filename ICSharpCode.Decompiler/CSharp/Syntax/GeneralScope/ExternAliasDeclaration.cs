@@ -38,14 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public CSharpTokenNode ExternToken {
-			get { return GetChildByRole(Roles.ExternKeyword); }
-		}
-
-		public CSharpTokenNode AliasToken {
-			get { return GetChildByRole(Roles.AliasKeyword); }
-		}
-
 		public string Name {
 			get {
 				return GetChildByRole(Roles.Identifier).Name;
@@ -57,10 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

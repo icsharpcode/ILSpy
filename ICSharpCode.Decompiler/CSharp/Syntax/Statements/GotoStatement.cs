@@ -43,25 +43,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Label = label;
 		}
 
-		public CSharpTokenNode GotoToken {
-			get { return GetChildByRole(GotoKeywordRole); }
-		}
-
 		public string Label {
 			get {
-				return GetChildByRole(Roles.Identifier).Name;
+				return NameToken.Name;
 			}
 			set {
 				if (string.IsNullOrEmpty(value))
-					SetChildByRole(Roles.Identifier, null);
+					NameToken = null;
 				else
-					SetChildByRole(Roles.Identifier, Identifier.Create(value));
+					NameToken = Identifier.Create(value);
 			}
 		}
 
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
+		[Slot("Roles.Identifier")]
+		public partial Identifier NameToken { get; set; }
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -79,23 +74,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
 		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
 
-		public CSharpTokenNode GotoToken {
-			get { return GetChildByRole(GotoKeywordRole); }
-		}
-
-		public CSharpTokenNode CaseToken {
-			get { return GetChildByRole(CaseKeywordRole); }
-		}
-
 		/// <summary>
 		/// Used for "goto case LabelExpression;"
 		/// </summary>
 		[Slot("Roles.Expression")]
 		public partial Expression LabelExpression { get; set; }
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
@@ -112,18 +95,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
 		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
-
-		public CSharpTokenNode GotoToken {
-			get { return GetChildByRole(GotoKeywordRole); }
-		}
-
-		public CSharpTokenNode DefaultToken {
-			get { return GetChildByRole(DefaultKeywordRole); }
-		}
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ErrorExpression(string error)
 		{
-			AddChild(new Comment(error, CommentType.MultiLine), Roles.Comment);
+			AddTrailingTrivia(new Comment(error, CommentType.MultiLine));
 		}
 	}
 }

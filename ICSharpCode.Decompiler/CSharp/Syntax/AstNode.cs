@@ -97,6 +97,74 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			endLocation = value;
 		}
 
+		#region Trivia
+		// Comments and preprocessor directives attached to this node, kept off the child-index space.
+		// The holder lives in the annotation channel, so a node without trivia (the overwhelmingly
+		// common case) costs nothing extra, and CloneAnnotations copies it for free.
+		sealed class NodeTrivia : ICloneable
+		{
+			public List<Trivia>? Leading;
+			public List<Trivia>? Trailing;
+
+			public object Clone()
+			{
+				return new NodeTrivia {
+					Leading = Leading?.Select(t => (Trivia)t.Clone()).ToList(),
+					Trailing = Trailing?.Select(t => (Trivia)t.Clone()).ToList(),
+				};
+			}
+		}
+
+		/// <summary>Trivia printed before this node (in insertion order); empty when none.</summary>
+		public IEnumerable<Trivia> LeadingTrivia {
+			get { return Annotation<NodeTrivia>()?.Leading ?? Enumerable.Empty<Trivia>(); }
+		}
+
+		/// <summary>Trivia printed after this node (in insertion order); empty when none.</summary>
+		public IEnumerable<Trivia> TrailingTrivia {
+			get { return Annotation<NodeTrivia>()?.Trailing ?? Enumerable.Empty<Trivia>(); }
+		}
+
+		public void AddLeadingTrivia(Trivia trivia)
+		{
+			if (trivia == null)
+				throw new ArgumentNullException(nameof(trivia));
+			NodeTrivia holder = GetOrCreateTrivia();
+			(holder.Leading ??= new List<Trivia>()).Add(trivia);
+		}
+
+		/// <summary>
+		/// Inserts trivia at the start of this node's leading trivia, before any already attached. Used for
+		/// a file header comment that must precede generated leading directives such as <c>#define</c>.
+		/// </summary>
+		public void PrependLeadingTrivia(Trivia trivia)
+		{
+			if (trivia == null)
+				throw new ArgumentNullException(nameof(trivia));
+			NodeTrivia holder = GetOrCreateTrivia();
+			(holder.Leading ??= new List<Trivia>()).Insert(0, trivia);
+		}
+
+		public void AddTrailingTrivia(Trivia trivia)
+		{
+			if (trivia == null)
+				throw new ArgumentNullException(nameof(trivia));
+			NodeTrivia holder = GetOrCreateTrivia();
+			(holder.Trailing ??= new List<Trivia>()).Add(trivia);
+		}
+
+		NodeTrivia GetOrCreateTrivia()
+		{
+			NodeTrivia? holder = Annotation<NodeTrivia>();
+			if (holder == null)
+			{
+				holder = new NodeTrivia();
+				AddAnnotation(holder);
+			}
+			return holder;
+		}
+		#endregion
+
 		public AstNode? Parent {
 			get { return parent; }
 		}

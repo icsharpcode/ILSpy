@@ -60,36 +60,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		ClassType classType;
 
-		public CSharpTokenNode TypeKeyword {
-			get {
-				switch (classType)
-				{
-					case ClassType.Class:
-						return GetChildByRole(Roles.ClassKeyword);
-					case ClassType.Struct:
-					case ClassType.RecordStruct:
-						return GetChildByRole(Roles.StructKeyword);
-					case ClassType.Interface:
-						return GetChildByRole(Roles.InterfaceKeyword);
-					case ClassType.Enum:
-						return GetChildByRole(Roles.EnumKeyword);
-					case ClassType.RecordClass:
-						return GetChildByRole(Roles.RecordKeyword);
-					default:
-						return CSharpTokenNode.Null;
-				}
-			}
-		}
-
 		public ClassType ClassType {
 			get { return classType; }
 			set {
 				classType = value;
 			}
-		}
-
-		public CSharpTokenNode LChevronToken {
-			get { return GetChildByRole(Roles.LChevron); }
 		}
 
 		[Slot("AttributeRole")]
@@ -101,28 +76,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.TypeParameter")]
 		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
-		public CSharpTokenNode RChevronToken {
-			get { return GetChildByRole(Roles.RChevron); }
-		}
-
-		public CSharpTokenNode ColonToken {
-			get {
-				return GetChildByRole(Roles.Colon);
-			}
-		}
-
 		public bool HasPrimaryConstructor { get; set; }
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
 
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("Roles.BaseType")]
 		public partial AstNodeCollection<AstType> BaseTypes { get; }
@@ -130,16 +87,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Constraint")]
 		public partial AstNodeCollection<Constraint> Constraints { get; }
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("Roles.TypeMemberRole")]
 		public partial AstNodeCollection<EntityDeclaration> Members { get; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

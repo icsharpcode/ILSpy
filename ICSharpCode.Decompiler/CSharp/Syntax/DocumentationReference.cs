@@ -84,9 +84,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// This property is only used when SymbolKind==None.
 		/// </summary>
 		public string MemberName {
-			get { return GetChildByRole(Roles.Identifier).Name; }
-			set { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
+			get { return NameToken.Name; }
+			set { NameToken = Identifier.Create(value); }
 		}
+
+		[Slot("Roles.Identifier")]
+		public partial Identifier NameToken { get; set; }
 
 		/// <summary>
 		/// Gets/Sets the return type of conversion operators.

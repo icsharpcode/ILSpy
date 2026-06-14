@@ -56,16 +56,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AccessorKind Kind { get; set; }
 
-		/// <summary>
-		/// Gets the 'get'/'set'/'init'/'add'/'remove' keyword
-		/// </summary>
-		public CSharpTokenNode Keyword {
-			get {
-				var role = GetAccessorKeywordRole(Kind);
-				return role == null ? CSharpTokenNode.Null : GetChildByRole(role);
-			}
-		}
-
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 

@@ -37,23 +37,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
 
-		public CSharpTokenNode NewToken {
-			get { return GetChildByRole(NewKeywordRole); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("InitializerRole")]
 		public partial ArrayInitializerExpression Initializer { get; set; }

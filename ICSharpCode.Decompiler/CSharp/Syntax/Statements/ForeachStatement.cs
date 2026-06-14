@@ -38,30 +38,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync { get; set; }
 
-		public CSharpTokenNode ForeachToken {
-			get { return GetChildByRole(ForeachKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType VariableType { get; set; }
 
 		[Slot("Roles.VariableDesignationRole")]
 		public partial VariableDesignation VariableDesignation { get; set; }
 
-		public CSharpTokenNode InToken {
-			get { return GetChildByRole(InKeywordRole); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression InExpression { get; set; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }

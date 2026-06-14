@@ -65,13 +65,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public static TokenWriter Create(TextWriter writer, string indentation = "\t")
 		{
-			return new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(new TextWriterTokenWriter(writer) { IndentationString = indentation }));
+			return new InsertRequiredSpacesDecorator(new TextWriterTokenWriter(writer) { IndentationString = indentation });
 		}
 
 		public static TokenWriter CreateWriterThatSetsLocationsInAST(TextWriter writer, string indentation = "\t")
 		{
 			var target = new TextWriterTokenWriter(writer) { IndentationString = indentation };
-			return new InsertSpecialsDecorator(new InsertRequiredSpacesDecorator(new InsertMissingTokensDecorator(target, target)));
+			return new InsertRequiredSpacesDecorator(new InsertMissingTokensDecorator(target, target));
 		}
 
 		public static TokenWriter InsertRequiredSpaces(TokenWriter writer)

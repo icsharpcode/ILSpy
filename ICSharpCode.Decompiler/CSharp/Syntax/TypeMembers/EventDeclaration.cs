@@ -40,10 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Event; }
 		}
 
-		public CSharpTokenNode EventToken {
-			get { return GetChildByRole(EventKeywordRole); }
-		}
-
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
@@ -96,19 +92,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("PrivateImplementationTypeRole")]
 		public partial AstType PrivateImplementationType { get; set; }
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("AddAccessorRole")]
 		public partial Accessor AddAccessor { get; set; }
 
 		[Slot("RemoveAccessorRole")]
 		public partial Accessor RemoveAccessor { get; set; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{

@@ -76,10 +76,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(identifier);
 		}
 
-		public virtual void VisitCSharpTokenNode(CSharpTokenNode token)
-		{
-			VisitChildren(token);
-		}
 
 		public virtual void VisitPrimitiveType(PrimitiveType primitiveType)
 		{
@@ -764,10 +760,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(identifier);
 		}
 
-		public virtual T VisitCSharpTokenNode(CSharpTokenNode token)
-		{
-			return VisitChildren(token);
-		}
 
 		public virtual T VisitPrimitiveType(PrimitiveType primitiveType)
 		{
@@ -1452,10 +1444,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(identifier, data);
 		}
 
-		public virtual S VisitCSharpTokenNode(CSharpTokenNode token, T data)
-		{
-			return VisitChildren(token, data);
-		}
 
 		public virtual S VisitPrimitiveType(PrimitiveType primitiveType, T data)
 		{

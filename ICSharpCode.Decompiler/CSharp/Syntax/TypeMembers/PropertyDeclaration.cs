@@ -58,23 +58,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("PrivateImplementationTypeRole")]
 		public partial AstType PrivateImplementationType { get; set; }
 
-		public CSharpTokenNode LBraceToken {
-			get { return GetChildByRole(Roles.LBrace); }
-		}
-
 		[Slot("GetterRole")]
 		public partial Accessor Getter { get; set; }
 
 		[Slot("SetterRole")]
 		public partial Accessor Setter { get; set; }
-
-		public CSharpTokenNode RBraceToken {
-			get { return GetChildByRole(Roles.RBrace); }
-		}
-
-		public CSharpTokenNode AssignToken {
-			get { return GetChildByRole(Roles.Assign); }
-		}
 
 		[Slot("Roles.Expression")]
 		public partial Expression Initializer { get; set; }

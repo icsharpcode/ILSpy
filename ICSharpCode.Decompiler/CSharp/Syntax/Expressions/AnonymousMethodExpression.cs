@@ -53,20 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { hasParameterList = value; }
 		}
 
-		public CSharpTokenNode DelegateToken {
-			get { return GetChildByRole(DelegateKeywordRole); }
-		}
-
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }

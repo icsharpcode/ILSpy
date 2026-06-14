@@ -38,29 +38,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		bool isAsync;
 
-		public AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole(AttributeRole); }
-		}
+		[Slot("AttributeRole")]
+		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		public bool IsAsync {
 			get { return isAsync; }
 			set { isAsync = value; }
 		}
 
-		public CSharpTokenNode LParToken {
-			get { return GetChildByRole(Roles.LPar); }
-		}
-
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
-
-		public CSharpTokenNode RParToken {
-			get { return GetChildByRole(Roles.RPar); }
-		}
-
-		public CSharpTokenNode ArrowToken {
-			get { return GetChildByRole(Roles.Arrow); }
-		}
 
 		[Slot("BodyRole")]
 		public partial AstNode Body { get; set; }

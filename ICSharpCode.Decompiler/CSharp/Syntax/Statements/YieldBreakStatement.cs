@@ -35,18 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole YieldKeywordRole = new TokenRole("yield");
 		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
 
-		public CSharpTokenNode YieldToken {
-			get { return GetChildByRole(YieldKeywordRole); }
-		}
-
-		public CSharpTokenNode BreakToken {
-			get { return GetChildByRole(BreakKeywordRole); }
-		}
-
-		public CSharpTokenNode SemicolonToken {
-			get { return GetChildByRole(Roles.Semicolon); }
-		}
-
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			YieldBreakStatement o = other as YieldBreakStatement;

@@ -39,10 +39,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return NodeType.Unknown; }
 		}
 
-		public CSharpTokenNode WhereKeyword {
-			get { return GetChildByRole(Roles.WhereKeyword); }
-		}
-
 		[Slot("Roles.ConstraintTypeParameter")]
 		public partial SimpleType TypeParameter { get; set; }
 

@@ -26,10 +26,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole ThrowKeywordRole = ThrowStatement.ThrowKeywordRole;
 
-		public CSharpTokenNode ThrowToken {
-			get { return GetChildByRole(ThrowKeywordRole); }
-		}
-
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
