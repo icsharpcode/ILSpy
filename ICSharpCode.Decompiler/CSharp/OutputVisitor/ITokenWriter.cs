@@ -36,12 +36,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes a keyword to the output.
 		/// </summary>
-		public abstract void WriteKeyword(Role role, string keyword);
+		public abstract void WriteKeyword(TokenRole role, string keyword);
 
 		/// <summary>
 		/// Writes a token to the output.
 		/// </summary>
-		public abstract void WriteToken(Role role, string token);
+		public abstract void WriteToken(TokenRole role, string token);
 
 		/// <summary>
 		/// Writes a primitive/literal value
@@ -119,12 +119,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			decoratedWriter.WriteIdentifier(identifier);
 		}
 
-		public override void WriteKeyword(Role role, string keyword)
+		public override void WriteKeyword(TokenRole role, string keyword)
 		{
 			decoratedWriter.WriteKeyword(role, keyword);
 		}
 
-		public override void WriteToken(Role role, string token)
+		public override void WriteToken(TokenRole role, string token)
 		{
 			decoratedWriter.WriteToken(role, token);
 		}

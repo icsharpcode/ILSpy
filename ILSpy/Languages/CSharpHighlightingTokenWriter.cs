@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy.Languages
 			//this.externAliasKeywordColor = ...;
 		}
 
-		public override void WriteKeyword(Role role, string keyword)
+		public override void WriteKeyword(TokenRole role, string keyword)
 		{
 			HighlightingColor? color = null;
 			switch (keyword)

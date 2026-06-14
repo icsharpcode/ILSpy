@@ -106,38 +106,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// TODO: Comma policy has changed.
 		}
 
-		/// <summary>
-		/// Writes an optional comma, e.g. at the end of an enum declaration or in an array initializer
-		/// </summary>
-		protected virtual void OptionalComma(AstNode pos)
-		{
-			// Look if there's a comma after the current node, and insert it if it exists.
-			while (pos != null && pos.NodeType == NodeType.Whitespace)
-			{
-				pos = pos.NextSibling;
-			}
-			if (pos != null && pos.Role == Roles.Comma)
-			{
-				Comma(null, noSpaceAfterComma: true);
-			}
-		}
-
-		/// <summary>
-		/// Writes an optional semicolon, e.g. at the end of a type or namespace declaration.
-		/// </summary>
-		protected virtual void OptionalSemicolon(AstNode pos)
-		{
-			// Look if there's a semicolon after the current node, and insert it if it exists.
-			while (pos != null && pos.NodeType == NodeType.Whitespace)
-			{
-				pos = pos.PrevSibling;
-			}
-			if (pos != null && pos.Role == Roles.Semicolon)
-			{
-				Semicolon();
-			}
-		}
-
 		protected virtual void WriteCommaSeparatedList(IEnumerable<AstNode> list)
 		{
 			bool isFirst = true;
@@ -204,7 +172,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword(tokenRole.Token, tokenRole);
 		}
 
-		protected virtual void WriteKeyword(string token, Role tokenRole = null)
+		protected virtual void WriteKeyword(string token, TokenRole tokenRole = null)
 		{
 			writer.WriteKeyword(tokenRole, token);
 			isAtStartOfLine = false;
@@ -230,7 +198,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(tokenRole.Token, tokenRole);
 		}
 
-		protected virtual void WriteToken(string token, Role tokenRole)
+		protected virtual void WriteToken(string token, TokenRole tokenRole)
 		{
 			writer.WriteToken(tokenRole, token);
 			isAtStartOfLine = false;
@@ -712,7 +680,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			OpenBrace(wrap ? policy.ArrayInitializerBraceStyle : BraceStyle.EndOfLine, newLine: wrap);
 			if (!wrap)
 				Space();
-			AstNode last = null;
 			foreach (var (idx, node) in elements.WithIndex())
 			{
 				if (idx > 0)
@@ -723,11 +690,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					else
 						Space();
 				}
-				last = node;
 				node.AcceptVisitor(this);
 			}
-			if (last != null)
-				OptionalComma(last.NextSibling);
 			if (wrap)
 				NewLine();
 			else
@@ -794,7 +758,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitBaseReferenceExpression(BaseReferenceExpression baseReferenceExpression)
 		{
 			StartNode(baseReferenceExpression);
-			WriteKeyword("base", baseReferenceExpression.Role);
+			WriteKeyword("base");
 			EndNode(baseReferenceExpression);
 		}
 
@@ -1257,7 +1221,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitThisReferenceExpression(ThisReferenceExpression thisReferenceExpression)
 		{
 			StartNode(thisReferenceExpression);
-			WriteKeyword("this", thisReferenceExpression.Role);
+			WriteKeyword("this");
 			EndNode(thisReferenceExpression);
 		}
 
@@ -1527,7 +1491,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteToken(Roles.LBracket);
 			if (!string.IsNullOrEmpty(attributeSection.AttributeTarget))
 			{
-				WriteKeyword(attributeSection.AttributeTarget, Roles.Identifier);
+				WriteKeyword(attributeSection.AttributeTarget);
 				WriteToken(Roles.Colon);
 				Space();
 			}
@@ -1595,7 +1559,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (!namespaceDeclaration.IsFileScoped)
 			{
 				CloseBrace(policy.NamespaceBraceStyle);
-				OptionalSemicolon(namespaceDeclaration.LastChild);
 				NewLine();
 			}
 			EndNode(namespaceDeclaration);
@@ -1663,7 +1626,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (typeDeclaration.ClassType == ClassType.Enum)
 				{
 					bool first = true;
-					AstNode last = null;
 					foreach (var member in typeDeclaration.Members)
 					{
 						if (first)
@@ -1675,11 +1637,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 							Comma(member, noSpaceAfterComma: true);
 							NewLine();
 						}
-						last = member;
 						member.AcceptVisitor(this);
 					}
-					if (last != null)
-						OptionalComma(last.NextSibling);
 					NewLine();
 				}
 				else
@@ -1697,7 +1656,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 				}
 				CloseBrace(braceStyle);
-				OptionalSemicolon(typeDeclaration.LastChild);
 				NewLine();
 			}
 			EndNode(typeDeclaration);

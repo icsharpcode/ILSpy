@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
 
-		public override void WriteKeyword(Role role, string keyword)
+		public override void WriteKeyword(TokenRole role, string keyword)
 		{
 			if (lastWritten == LastWritten.KeywordOrIdentifier)
 			{
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
 
-		public override void WriteToken(Role role, string token)
+		public override void WriteToken(TokenRole role, string token)
 		{
 			// Avoid that two +, - or ? tokens are combined into a ++, -- or ?? token.
 			// Note that we don't need to handle tokens like = because there's no valid
