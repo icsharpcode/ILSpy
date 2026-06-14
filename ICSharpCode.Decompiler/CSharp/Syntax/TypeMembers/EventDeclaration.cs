@@ -85,12 +85,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Event; }
 		}
 
+		[Slot("AttributeRole")]
+		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
+
+		[Slot("Roles.Type")]
+		public override partial AstType ReturnType { get; set; }
+
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
 		[Slot("PrivateImplementationTypeRole")]
 		public partial AstType PrivateImplementationType { get; set; }
+
+		[Slot("Roles.Identifier")]
+		public override partial Identifier NameToken { get; set; }
 
 		[Slot("AddAccessorRole")]
 		public partial Accessor AddAccessor { get; set; }

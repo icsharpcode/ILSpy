@@ -44,10 +44,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal static readonly Role<AstNode?> RootRole = new Role<AstNode?>("Root", null);
 
 		AstNode? parent;
-		AstNode? prevSibling;
-		AstNode? nextSibling;
-		AstNode? firstChild;
-		AstNode? lastChild;
+		// Flattened index of this node within its parent's child-index space (-1 when unparented).
+		// Recomputed lazily by the parent (EnsureChildIndices) after a structural mutation.
+		internal int childIndex = -1;
 
 		// Flags, from least significant to most significant bits:
 		// - Role.RoleIndexBits: role index
@@ -192,36 +191,76 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public AstNode? NextSibling {
-			get { return nextSibling; }
+			get {
+				if (parent == null)
+					return null;
+				parent.EnsureChildIndices();
+				int count = parent.GetChildCount();
+				for (int i = childIndex + 1; i < count; i++)
+				{
+					AstNode? c = parent.GetChild(i);
+					if (c != null)
+						return c;
+				}
+				return null;
+			}
 		}
 
 		public AstNode? PrevSibling {
-			get { return prevSibling; }
+			get {
+				if (parent == null)
+					return null;
+				parent.EnsureChildIndices();
+				for (int i = childIndex - 1; i >= 0; i--)
+				{
+					AstNode? c = parent.GetChild(i);
+					if (c != null)
+						return c;
+				}
+				return null;
+			}
 		}
 
 		public AstNode? FirstChild {
-			get { return firstChild; }
+			get {
+				int count = GetChildCount();
+				for (int i = 0; i < count; i++)
+				{
+					AstNode? c = GetChild(i);
+					if (c != null)
+						return c;
+				}
+				return null;
+			}
 		}
 
 		public AstNode? LastChild {
-			get { return lastChild; }
+			get {
+				for (int i = GetChildCount() - 1; i >= 0; i--)
+				{
+					AstNode? c = GetChild(i);
+					if (c != null)
+						return c;
+				}
+				return null;
+			}
 		}
 
 		public bool HasChildren {
 			get {
-				return firstChild != null;
+				return FirstChild != null;
 			}
 		}
 
 		public IEnumerable<AstNode> Children {
 			get {
 				AstNode? next;
-				for (AstNode? cur = firstChild; cur != null; cur = next)
+				for (AstNode? cur = FirstChild; cur != null; cur = next)
 				{
 					Debug.Assert(cur.parent == this);
 					// Remember next before yielding cur.
-					// This allows removing/replacing nodes while iterating through the list.
-					next = cur.nextSibling;
+					// This allows removing/replacing nodes while iterating.
+					next = cur.NextSibling;
 					yield return cur;
 				}
 			}
@@ -286,16 +325,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			Stack<AstNode?> nextStack = new Stack<AstNode?>();
 			nextStack.Push(null);
-			AstNode? pos = firstChild;
+			AstNode? pos = FirstChild;
 			while (pos != null)
 			{
 				// Remember next before yielding pos.
-				// This allows removing/replacing nodes while iterating through the list.
-				if (pos.nextSibling != null)
-					nextStack.Push(pos.nextSibling);
+				// This allows removing/replacing nodes while iterating.
+				AstNode? posNext = pos.NextSibling;
+				if (posNext != null)
+					nextStack.Push(posNext);
 				yield return pos;
-				if (pos.firstChild != null && (descendIntoChildren == null || descendIntoChildren(pos)))
-					pos = pos.firstChild;
+				AstNode? posFirstChild = pos.FirstChild;
+				if (posFirstChild != null && (descendIntoChildren == null || descendIntoChildren(pos)))
+					pos = posFirstChild;
 				else
 					pos = nextStack.Pop();
 			}
@@ -309,11 +350,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (role == null)
 				throw new ArgumentNullException(nameof(role));
-			uint roleIndex = role.Index;
-			for (var cur = firstChild; cur != null; cur = cur.nextSibling)
+			int count = GetChildCount();
+			for (int i = 0; i < count; i++)
 			{
-				if ((cur.flags & roleIndexMask) == roleIndex)
-					return (T)cur;
+				if (GetChildSlot(i) == role)
+				{
+					AstNode? c = GetChild(i);
+					return c != null ? (T)c : role.NullObject;
+				}
 			}
 			return role.NullObject;
 		}
@@ -330,81 +374,134 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode
 		{
-			return new AstNodeCollection<T>(this, role);
+			if (role == null)
+				throw new ArgumentNullException(nameof(role));
+			AstNodeCollection? collection = GetCollectionByRole(role);
+			// A node has no children of a role it does not declare a collection slot for. Reads of such
+			// a role (e.g. the parameters of a non-indexer property) get a detached empty collection;
+			// writes go through AddChild/SetChildByRole, which reject a missing role.
+			return collection != null ? (AstNodeCollection<T>)collection : new AstNodeCollection<T>(this, role);
 		}
 
 		protected void SetChildByRole<T>(Role<T> role, T newChild) where T : AstNode
 		{
-			AstNode oldChild = GetChildByRole(role);
-			if (oldChild.IsNull)
-				AddChild(newChild, role);
-			else
-				oldChild.ReplaceWith(newChild);
+			SetChildByRoleUntyped(role, newChild);
 		}
 
-		#region Slot bridge
-		// Transitional slot-accessor layer implemented OVER the linked-list child model. The
-		// eventual slot model assigns each node type a fixed, source-ordered set of slots; here we
-		// expose that schema while storage is still the linked list. A "single slot" maps to one
-		// Role (at most one child of that role); a "collection slot" maps to a Role that may hold
-		// many children. GetChild returns the canonical child for a single slot, or the first child
-		// of a collection slot.
-		//
-		// Converted nodes override SlotCount/GetSlotRole/IsCollectionSlot. The default implementation
-		// reports zero slots, so unconverted nodes keep working unchanged and the slot-order
-		// invariant skips them.
+		#region Slot storage contract
+		// Each concrete node's slots form a flattened child-index space, in source-declaration order.
+		// A single slot occupies exactly one index (even when empty, where GetChild returns null); a
+		// collection slot occupies a contiguous run of its current length. The generator emits these
+		// four members per node from its [Slot] partial-property declarations; nodes without children
+		// (and the null/placeholder nodes) keep the zero-child defaults below.
 
-		internal virtual int SlotCount => 0;
+		internal virtual int GetChildCount() => 0;
 
-		internal virtual Role GetSlotRole(int slotIndex)
+		internal virtual AstNode? GetChild(int index) => throw new ArgumentOutOfRangeException(nameof(index));
+
+		internal virtual void SetChild(int index, AstNode? value) => throw new ArgumentOutOfRangeException(nameof(index));
+
+		internal virtual Role GetChildSlot(int index) => throw new ArgumentOutOfRangeException(nameof(index));
+
+		// Returns the collection occupying the slot with the given role, or null if there is none.
+		// Overridden by the generator for nodes that have collection slots.
+		internal virtual AstNodeCollection? GetCollectionByRole(Role role) => null;
+
+		// Deep-copies this node's children into the (memberwise-cloned) copy, which initially shares
+		// this node's child references. Overridden by the generator for nodes that have slots.
+		internal virtual void CloneChildrenInto(AstNode copy) { }
+
+		// Whether this node's children currently carry correct flattened childIndex values. Cleared on
+		// every structural mutation and restored lazily on the first index read, so bulk construction
+		// (many appends with no interleaved index reads) renumbers once instead of once per mutation.
+		bool childIndicesValid = true;
+
+		// Marks this node's children's flattened indices stale. Called by the slot setters and the
+		// collection after any structural change.
+		internal void InvalidateChildIndices()
 		{
-			throw new ArgumentOutOfRangeException(nameof(slotIndex));
+			childIndicesValid = false;
 		}
 
-		internal virtual bool IsCollectionSlot(int slotIndex)
+		// Assigns each child its flattened index if a mutation has invalidated them. The flattened-index
+		// arithmetic lives in the generated GetChild/GetChildCount, which depend only on the backing
+		// fields, so this is well-defined regardless of the current childIndex values.
+		void EnsureChildIndices()
 		{
-			throw new ArgumentOutOfRangeException(nameof(slotIndex));
+			if (childIndicesValid)
+				return;
+			childIndicesValid = true;
+			int count = GetChildCount();
+			for (int i = 0; i < count; i++)
+			{
+				AstNode? c = GetChild(i);
+				if (c != null)
+					c.childIndex = i;
+			}
 		}
 
 		/// <summary>
-		/// Gets the child occupying the single slot at <paramref name="slotIndex"/>.
-		/// For collection slots this returns the first child of the slot's role.
+		/// Recursively verifies the slot structure of this subtree (DEBUG only): every child's Parent
+		/// points back here, its stored flattened index matches its slot position, and its runtime type
+		/// is valid in the slot's role. The transform pipeline runs this after each transform, the
+		/// analog of <c>ILInstruction.CheckInvariant</c>, so a transform that corrupts the tree fails at
+		/// the exact transform rather than as a downstream output diff.
 		/// </summary>
-		internal AstNode GetChild(int slotIndex)
+		[System.Diagnostics.Conditional("DEBUG")]
+		internal void CheckInvariant()
 		{
-			Role role = GetSlotRole(slotIndex);
-			for (var cur = firstChild; cur != null; cur = cur.nextSibling)
+			EnsureChildIndices();
+			int count = GetChildCount();
+			for (int i = 0; i < count; i++)
 			{
-				if ((cur.flags & roleIndexMask) == role.Index)
-					return cur;
-			}
-			// Every role used for a single slot has a null object, so an AST property never returns null.
-			return (AstNode)role.NullObjectUntyped!;
-		}
-
-		internal void SetChild(int slotIndex, AstNode? newChild)
-		{
-			if (IsCollectionSlot(slotIndex))
-				throw new InvalidOperationException("SetChild is not valid for collection slots; mutate the collection instead.");
-			Role role = GetSlotRole(slotIndex);
-			AstNode oldChild = GetChild(slotIndex);
-			if (oldChild.IsNull)
-			{
-				if (newChild != null && !newChild.IsNull)
-					AddChildUnsafe(newChild, role);
-			}
-			else
-			{
-				oldChild.ReplaceWith(newChild);
+				AstNode? child = GetChild(i);
+				if (child == null)
+					continue; // empty optional single slot
+				Debug.Assert(child.parent == this, "child's Parent must point back to this node");
+				Debug.Assert(child.childIndex == i, "child's flattened index must match its slot position");
+				Debug.Assert(GetChildSlot(i).IsValid(child), "child's type must be valid in its slot's role");
+				child.CheckInvariant();
 			}
 		}
 
-		// Note: document-order == slot-order is a POST-FLIP invariant, not a bridge invariant.
-		// During the transitional bridge the linked list still carries positional token children
-		// (e.g. the Roles.Comma trailing-comma marker) and comments whose document position encodes
-		// output meaning, so it legitimately diverges from slot order. The invariant is re-introduced
-		// once storage flips to slots (Phase 3c), where it holds by construction; until then the
-		// Pretty suite gates output. See ROLES_FREE_SLOT_AST_DESIGN.md (R8 / Phase 3c).
+		// Writes a single-slot backing field: detaches the old child, attaches the new one, renumbers.
+		// A null or null-object value empties the slot. Called by generated single-slot property setters.
+		internal void SetChildNode<T>(ref T? field, T? value, Role role) where T : AstNode
+		{
+			T? newValue = (value == null || value.IsNull) ? null : value;
+			if (field == newValue)
+				return;
+			if (newValue != null)
+			{
+				if (newValue == this)
+					throw new ArgumentException("Cannot add a node to itself as a child.", nameof(value));
+				if (newValue.parent != null)
+				{
+					// Allow lifting a node out of the subtree being replaced, e.g.
+					// "assignment.Right = ((BinaryOperatorExpression)assignment.Right).Right;".
+					if (field != null && newValue.Ancestors.Contains(field))
+						newValue.Remove();
+					else
+						throw new ArgumentException("Node is already used in another tree.", nameof(value));
+				}
+			}
+			field?.ClearParentAndIndex();
+			field = newValue;
+			newValue?.SetParentAndRole(this, role);
+			InvalidateChildIndices();
+		}
+
+		internal void SetParentAndRole(AstNode newParent, Role role)
+		{
+			parent = newParent;
+			SetRole(role);
+		}
+
+		internal void ClearParentAndIndex()
+		{
+			parent = null;
+			childIndex = -1;
+		}
 		#endregion
 
 		public void AddChild<T>(T child, Role<T> role) where T : AstNode
@@ -413,10 +510,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException(nameof(role));
 			if (child == null || child.IsNull)
 				return;
-			if (child == this)
-				throw new ArgumentException("Cannot add a node to itself as a child.", nameof(child));
-			if (child.parent != null)
-				throw new ArgumentException("Node is already used in another tree.", nameof(child));
 			AddChildUnsafe(child, role);
 		}
 
@@ -424,76 +517,72 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (child == null || child.IsNull)
 				return;
-			if (child == this)
-				throw new ArgumentException("Cannot add a node to itself as a child.", nameof(child));
-			if (child.parent != null)
-				throw new ArgumentException("Node is already used in another tree.", nameof(child));
 			AddChildUnsafe(child, child.Role);
 		}
 
 		/// <summary>
-		/// Adds a child without performing any safety checks.
+		/// Adds a child into the slot matching <paramref name="role"/> (appending to a collection slot,
+		/// or filling a single slot).
 		/// </summary>
 		internal void AddChildUnsafe(AstNode child, Role role)
 		{
-			child.parent = this;
-			child.SetRole(role);
-			if (firstChild == null)
-			{
-				lastChild = firstChild = child;
-			}
+			AstNodeCollection? collection = GetCollectionByRole(role);
+			if (collection != null)
+				collection.AddNode(child);
 			else
+				SetChildByRoleUntyped(role, child);
+		}
+
+		// Sets the single slot matching the role (used by the non-generic mutation API). Symmetric with
+		// GetChildByRole, which returns the null object for a role this node does not declare a slot for:
+		// a node has no child of a role it has no slot for, so writing one is a no-op.
+		internal void SetChildByRoleUntyped(Role role, AstNode? child)
+		{
+			int count = GetChildCount();
+			for (int i = 0; i < count; i++)
 			{
-				lastChild!.nextSibling = child;
-				child.prevSibling = lastChild;
-				lastChild = child;
+				if (GetChildSlot(i) == role)
+				{
+					SetChild(i, child == null || child.IsNull ? null : child);
+					return;
+				}
 			}
+			throw new InvalidOperationException($"{GetType().Name} has no slot for role '{role}'.");
 		}
 
 		public void InsertChildBefore<T>(AstNode? nextSibling, T child, Role<T> role) where T : AstNode
 		{
 			if (role == null)
 				throw new ArgumentNullException(nameof(role));
-			if (nextSibling == null || nextSibling.IsNull)
-			{
-				AddChild(child, role);
-				return;
-			}
-
 			if (child == null || child.IsNull)
 				return;
-			if (child.parent != null)
-				throw new ArgumentException("Node is already used in another tree.", nameof(child));
-			if (nextSibling.parent != this)
-				throw new ArgumentException("NextSibling is not a child of this node.", nameof(nextSibling));
-			// No need to test for "Cannot add children to null nodes",
-			// as there isn't any valid nextSibling in null nodes.
-			InsertChildBeforeUnsafe(nextSibling, child, role);
+			AstNodeCollection? collection = GetCollectionByRole(role);
+			if (collection != null)
+				collection.InsertNodeBefore((nextSibling == null || nextSibling.IsNull) ? null : nextSibling, child);
+			else
+				SetChildByRoleUntyped(role, child);
 		}
 
 		internal void InsertChildBeforeUnsafe(AstNode nextSibling, AstNode child, Role role)
 		{
-			child.parent = this;
-			child.SetRole(role);
-			child.nextSibling = nextSibling;
-			child.prevSibling = nextSibling.prevSibling;
-
-			if (nextSibling.prevSibling != null)
-			{
-				Debug.Assert(nextSibling.prevSibling.nextSibling == nextSibling);
-				nextSibling.prevSibling.nextSibling = child;
-			}
+			AstNodeCollection? collection = GetCollectionByRole(role);
+			if (collection != null)
+				collection.InsertNodeBefore(nextSibling, child);
 			else
-			{
-				Debug.Assert(firstChild == nextSibling);
-				firstChild = child;
-			}
-			nextSibling.prevSibling = child;
+				SetChildByRoleUntyped(role, child);
 		}
 
 		public void InsertChildAfter<T>(AstNode? prevSibling, T child, Role<T> role) where T : AstNode
 		{
-			InsertChildBefore((prevSibling == null || prevSibling.IsNull) ? firstChild : prevSibling.nextSibling, child, role);
+			if (role == null)
+				throw new ArgumentNullException(nameof(role));
+			if (child == null || child.IsNull)
+				return;
+			AstNodeCollection? collection = GetCollectionByRole(role);
+			if (collection != null)
+				collection.InsertNodeAfter((prevSibling == null || prevSibling.IsNull) ? null : prevSibling, child);
+			else
+				SetChildByRoleUntyped(role, child);
 		}
 
 		/// <summary>
@@ -501,32 +590,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public void Remove()
 		{
-			if (parent != null)
-			{
-				if (prevSibling != null)
-				{
-					Debug.Assert(prevSibling.nextSibling == this);
-					prevSibling.nextSibling = nextSibling;
-				}
-				else
-				{
-					Debug.Assert(parent.firstChild == this);
-					parent.firstChild = nextSibling;
-				}
-				if (nextSibling != null)
-				{
-					Debug.Assert(nextSibling.prevSibling == this);
-					nextSibling.prevSibling = prevSibling;
-				}
-				else
-				{
-					Debug.Assert(parent.lastChild == this);
-					parent.lastChild = prevSibling;
-				}
-				parent = null;
-				prevSibling = null;
-				nextSibling = null;
-			}
+			if (parent == null)
+				return;
+			parent.EnsureChildIndices();
+			Role role = parent.GetChildSlot(childIndex);
+			AstNodeCollection? collection = parent.GetCollectionByRole(role);
+			if (collection != null)
+				collection.RemoveNode(this);
+			else
+				parent.SetChild(childIndex, null);
 		}
 
 		/// <summary>
@@ -545,11 +617,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				throw new InvalidOperationException(this.IsNull ? "Cannot replace the null nodes" : "Cannot replace the root node");
 			}
+			parent.EnsureChildIndices();
+			Role role = parent.GetChildSlot(childIndex);
 			// Because this method doesn't statically check the new node's type with the role,
 			// we perform a runtime test:
-			if (!this.Role.IsValid(newNode))
+			if (!role.IsValid(newNode))
 			{
-				throw new ArgumentException(string.Format("The new node '{0}' is not valid in the role {1}", newNode.GetType().Name, this.Role.ToString()), nameof(newNode));
+				throw new ArgumentException(string.Format("The new node '{0}' is not valid in the role {1}", newNode.GetType().Name, role.ToString()), nameof(newNode));
 			}
 			if (newNode.parent != null)
 			{
@@ -565,34 +639,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new ArgumentException("Node is already used in another tree.", nameof(newNode));
 				}
 			}
-			newNode.parent = parent;
-			newNode.SetRole(this.Role);
-			newNode.prevSibling = prevSibling;
-			newNode.nextSibling = nextSibling;
-
-			if (prevSibling != null)
-			{
-				Debug.Assert(prevSibling.nextSibling == this);
-				prevSibling.nextSibling = newNode;
-			}
-			else
-			{
-				Debug.Assert(parent.firstChild == this);
-				parent.firstChild = newNode;
-			}
-			if (nextSibling != null)
-			{
-				Debug.Assert(nextSibling.prevSibling == this);
-				nextSibling.prevSibling = newNode;
-			}
-			else
-			{
-				Debug.Assert(parent.lastChild == this);
-				parent.lastChild = newNode;
-			}
-			parent = null;
-			prevSibling = null;
-			nextSibling = null;
+			parent.SetChild(childIndex, newNode);
 		}
 
 		public AstNode? ReplaceWith(Func<AstNode, AstNode?> replaceFunction)
@@ -604,7 +651,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new InvalidOperationException(this.IsNull ? "Cannot replace the null nodes" : "Cannot replace the root node");
 			}
 			AstNode oldParent = parent;
-			AstNode? oldSuccessor = nextSibling;
+			AstNode? oldSuccessor = NextSibling;
 			Role oldRole = this.Role;
 			Remove();
 			AstNode? replacement = replaceFunction(this);
@@ -634,22 +681,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public AstNode Clone()
 		{
 			AstNode copy = (AstNode)MemberwiseClone();
-			// First, reset the shallow pointer copies
 			copy.parent = null;
-			copy.firstChild = null;
-			copy.lastChild = null;
-			copy.prevSibling = null;
-			copy.nextSibling = null;
-
-			// Then perform a deep copy:
-			for (AstNode? cur = firstChild; cur != null; cur = cur.nextSibling)
-			{
-				copy.AddChildUnsafe(cur.Clone(), cur.Role);
-			}
-
+			copy.childIndex = -1;
+			// Deep-copy the children (CloneChildrenInto first drops the shallow field copies that
+			// MemberwiseClone left pointing at this node's children).
+			CloneChildrenInto(copy);
 			// Finally, clone the annotation, if necessary
 			copy.CloneAnnotations();
-
 			return copy;
 		}
 
@@ -686,11 +724,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		PatternMatching.INode? PatternMatching.INode.NextSibling {
-			get { return nextSibling; }
+			get { return NextSibling; }
 		}
 
 		PatternMatching.INode? PatternMatching.INode.FirstChild {
-			get { return firstChild; }
+			get { return FirstChild; }
 		}
 
 		#endregion
@@ -775,222 +813,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			while (prev != null && !pred(prev))
 				prev = prev.PrevSibling;
 			return prev;
-		}
-
-		#region GetNodeAt
-		/// <summary>
-		/// Gets the node specified by T at the location line, column. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End exclusive)
-		/// </summary>
-		public AstNode? GetNodeAt(int line, int column, Predicate<AstNode>? pred = null)
-		{
-			return GetNodeAt(new TextLocation(line, column), pred);
-		}
-
-		/// <summary>
-		/// Gets the node specified by pred at location. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End exclusive)
-		/// </summary>
-		public AstNode? GetNodeAt(TextLocation location, Predicate<AstNode>? pred = null)
-		{
-			AstNode? result = null;
-			AstNode node = this;
-			while (node.LastChild != null)
-			{
-				var child = node.LastChild;
-				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
-				if (child != null && location < child.EndLocation)
-				{
-					if (pred == null || pred(child))
-						result = child;
-					node = child;
-				}
-				else
-				{
-					// found no better child node - therefore the parent is the right one.
-					break;
-				}
-			}
-			return result;
-		}
-
-		/// <summary>
-		/// Gets the node specified by T at the location line, column. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End exclusive)
-		/// </summary>
-		public T? GetNodeAt<T>(int line, int column) where T : AstNode
-		{
-			return GetNodeAt<T>(new TextLocation(line, column));
-		}
-
-		/// <summary>
-		/// Gets the node specified by T at location. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End exclusive)
-		/// </summary>
-		public T? GetNodeAt<T>(TextLocation location) where T : AstNode
-		{
-			T? result = null;
-			AstNode node = this;
-			while (node.LastChild != null)
-			{
-				var child = node.LastChild;
-				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
-				if (child != null && location < child.EndLocation)
-				{
-					if (child is T)
-						result = (T)child;
-					node = child;
-				}
-				else
-				{
-					// found no better child node - therefore the parent is the right one.
-					break;
-				}
-			}
-			return result;
-		}
-
-		#endregion
-
-		#region GetAdjacentNodeAt
-		/// <summary>
-		/// Gets the node specified by pred at the location line, column. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End inclusive)
-		/// </summary>
-		public AstNode? GetAdjacentNodeAt(int line, int column, Predicate<AstNode>? pred = null)
-		{
-			return GetAdjacentNodeAt(new TextLocation(line, column), pred);
-		}
-
-		/// <summary>
-		/// Gets the node specified by pred at location. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End inclusive)
-		/// </summary>
-		public AstNode? GetAdjacentNodeAt(TextLocation location, Predicate<AstNode>? pred = null)
-		{
-			AstNode? result = null;
-			AstNode node = this;
-			while (node.LastChild != null)
-			{
-				var child = node.LastChild;
-				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
-				if (child != null && location <= child.EndLocation)
-				{
-					if (pred == null || pred(child))
-						result = child;
-					node = child;
-				}
-				else
-				{
-					// found no better child node - therefore the parent is the right one.
-					break;
-				}
-			}
-			return result;
-		}
-
-		/// <summary>
-		/// Gets the node specified by T at the location line, column. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End inclusive)
-		/// </summary>
-		public T? GetAdjacentNodeAt<T>(int line, int column) where T : AstNode
-		{
-			return GetAdjacentNodeAt<T>(new TextLocation(line, column));
-		}
-
-		/// <summary>
-		/// Gets the node specified by T at location. This is useful for getting a specific node from the tree. For example searching
-		/// the current method declaration.
-		/// (End inclusive)
-		/// </summary>
-		public T? GetAdjacentNodeAt<T>(TextLocation location) where T : AstNode
-		{
-			T? result = null;
-			AstNode node = this;
-			while (node.LastChild != null)
-			{
-				var child = node.LastChild;
-				while (child != null && child.StartLocation > location)
-					child = child.prevSibling;
-				if (child != null && location <= child.EndLocation)
-				{
-					if (child is T t)
-						result = t;
-					node = child;
-				}
-				else
-				{
-					// found no better child node - therefore the parent is the right one.
-					break;
-				}
-			}
-			return result;
-		}
-		#endregion
-
-		/// <summary>
-		/// Gets the node that fully contains the range from startLocation to endLocation.
-		/// </summary>
-		public AstNode GetNodeContaining(TextLocation startLocation, TextLocation endLocation)
-		{
-			for (AstNode? child = firstChild; child != null; child = child.nextSibling)
-			{
-				if (child.StartLocation <= startLocation && endLocation <= child.EndLocation)
-					return child.GetNodeContaining(startLocation, endLocation);
-			}
-			return this;
-		}
-
-		/// <summary>
-		/// Returns the root nodes of all subtrees that are fully contained in the specified region.
-		/// </summary>
-		public IEnumerable<AstNode> GetNodesBetween(int startLine, int startColumn, int endLine, int endColumn)
-		{
-			return GetNodesBetween(new TextLocation(startLine, startColumn), new TextLocation(endLine, endColumn));
-		}
-
-		/// <summary>
-		/// Returns the root nodes of all subtrees that are fully contained between <paramref name="start"/> and <paramref name="end"/> (inclusive).
-		/// </summary>
-		public IEnumerable<AstNode> GetNodesBetween(TextLocation start, TextLocation end)
-		{
-			AstNode? node = this;
-			while (node != null)
-			{
-				AstNode? next;
-				if (start <= node.StartLocation && node.EndLocation <= end)
-				{
-					// Remember next before yielding node.
-					// This allows iteration to continue when the caller removes/replaces the node.
-					next = node.GetNextNode();
-					yield return node;
-				}
-				else
-				{
-					if (node.EndLocation <= start)
-					{
-						next = node.GetNextNode();
-					}
-					else
-					{
-						next = node.FirstChild;
-					}
-				}
-
-				if (next != null && next.StartLocation > end)
-					yield break;
-				node = next;
-			}
 		}
 
 		/// <summary>

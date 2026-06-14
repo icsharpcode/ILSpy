@@ -56,6 +56,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AccessorKind Kind { get; set; }
 
+		// An accessor is printed as its keyword (get/set/init/add/remove), never an identifier, so it
+		// carries no name. The contract members are overridden to no-ops: shared decompiler code sets a
+		// name on every method-like entity (e.g. explicit interface implementations), which is irrelevant
+		// here and must not throw.
+		public override string Name {
+			get { return string.Empty; }
+			set { }
+		}
+
+		public override Identifier NameToken {
+			get { return Identifier.Null; }
+			set { }
+		}
+
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 

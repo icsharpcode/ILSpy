@@ -1361,9 +1361,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					methodDecl.Parameters.Add(new ParameterDeclaration { ParameterModifier = ReferenceKind.In, Type = new SimpleType("T"), Name = "temp" });
 
 					methodDecl.Body = new BlockStatement();
-					methodDecl.Body.AddChild(new Comment(
-						"ILSpy generated this function to help ensure overload resolution can pick the overload using 'in'"),
-											 Roles.Comment);
+					var commentStatement = new EmptyStatement();
+					commentStatement.AddTrailingTrivia(new Comment(
+						"ILSpy generated this function to help ensure overload resolution can pick the overload using 'in'"));
+					methodDecl.Body.Add(commentStatement);
 					methodDecl.Body.Add(new ReturnStatement(new DirectionExpression(FieldDirection.Ref, new IdentifierExpression("temp"))));
 
 					blockStatement.Statements.Add(
