@@ -1,7 +1,11 @@
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+
+using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
@@ -10,9 +14,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	class NormalizeBlockStatements : DepthFirstAstVisitor, IAstTransform
 	{
+		[AllowNull]
 		TransformContext context;
 		bool hasNamespace;
-		NamespaceDeclaration singleNamespaceDeclaration;
+		NamespaceDeclaration? singleNamespaceDeclaration;
 
 		public override void VisitSyntaxTree(SyntaxTree syntaxTree)
 		{
@@ -196,7 +201,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			PrivateImplementationType = new AnyNodeOrNull(),
-			Parameters = { new Repeat(new AnyNode()) },
+			Parameters = { new Repeat(new AnyNode())! },
 			ReturnType = new AnyNode(),
 			Getter = new Accessor() {
 				Modifiers = Modifiers.Any,

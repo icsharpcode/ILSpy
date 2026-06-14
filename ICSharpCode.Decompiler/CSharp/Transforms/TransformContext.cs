@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Immutable;
 using System.Threading;
 
@@ -40,17 +42,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Returns the current member; or null if a whole type or module is being decompiled.
 		/// </summary>
-		public IMember CurrentMember => decompilationContext.CurrentMember;
+		public IMember? CurrentMember => decompilationContext.CurrentMember;
 
 		/// <summary>
 		/// Returns the current type definition; or null if a module is being decompiled.
 		/// </summary>
-		public ITypeDefinition CurrentTypeDefinition => decompilationContext.CurrentTypeDefinition;
+		public ITypeDefinition? CurrentTypeDefinition => decompilationContext.CurrentTypeDefinition;
 
 		/// <summary>
 		/// Returns the module that is being decompiled.
 		/// </summary>
-		public IModule CurrentModule => decompilationContext.CurrentModule;
+		public IModule? CurrentModule => decompilationContext.CurrentModule;
 
 		/// <summary>
 		/// Returns the max possible set of namespaces that will be used during decompilation.

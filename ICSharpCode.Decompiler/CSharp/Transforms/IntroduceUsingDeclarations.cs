@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -49,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				// #define directives are leading trivia on the SyntaxTree, not children, so using
 				// declarations go at the very start of the member list.
-				AstNode insertionPoint = null;
+				AstNode? insertionPoint = null;
 
 				// Now add using declarations for those namespaces:
 				IOrderedEnumerable<string> sortedImports = requiredImports.ImportedNamespaces
@@ -119,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				base.VisitSimpleType(simpleType); // also visit type arguments
 			}
 
-			private void AddImportedNamespace(IType type)
+			private void AddImportedNamespace(IType? type)
 			{
 				if (type != null && !IsParentOfCurrentNamespace(type.Namespace))
 				{
@@ -214,7 +216,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.astBuilder = CreateAstBuilder(resolver);
 			}
 
-			TypeSystemAstBuilder CreateAstBuilder(CSharpResolver resolver, IL.ILFunction function = null)
+			TypeSystemAstBuilder CreateAstBuilder(CSharpResolver resolver, IL.ILFunction? function = null)
 			{
 				if (function != null)
 				{

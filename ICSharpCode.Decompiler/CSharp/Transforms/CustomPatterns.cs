@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Linq;
 
@@ -27,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	sealed class TypePattern : Pattern
 	{
-		readonly string ns;
+		readonly string? ns;
 		readonly string name;
 
 		public TypePattern(Type type)
@@ -38,8 +40,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			ComposedType ct = other as ComposedType;
-			AstType o;
+			ComposedType? ct = other as ComposedType;
+			AstType? o;
 			if (ct != null && !ct.HasRefSpecifier && !ct.HasNullableSpecifier && ct.PointerRank == 0 && !ct.ArraySpecifiers.Any())
 			{
 				// Special case: ILSpy sometimes produces a ComposedType but then removed all array specifiers
@@ -73,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			InvocationExpression ie = other as InvocationExpression;
+			InvocationExpression? ie = other as InvocationExpression;
 			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1)
 			{
 				return childNode.DoMatch(ie.Arguments.Single(), match);
