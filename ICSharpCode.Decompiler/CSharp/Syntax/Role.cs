@@ -96,10 +96,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return node is T;
 		}
 
-		public Role(string name, T nullObject)
+		public Role(string name, T? nullObject)
 		{
 			this.name = name ?? throw new ArgumentNullException(nameof(name));
-			this.nullObject = nullObject;
+			// Roles used only for collections may omit the null object (pass null); NullObject then
+			// returns null, matching the documented contract. Single-value roles always pass one.
+			this.nullObject = nullObject!;
 		}
 
 		public override string ToString()

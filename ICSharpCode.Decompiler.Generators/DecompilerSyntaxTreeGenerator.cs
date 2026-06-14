@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName)>? Slots);
+	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName)>? Slots);
 
 	// Derives the shared SlotKind name from a [Slot] role expression: the last dotted segment with a
 	// trailing "Role" removed (e.g. "Roles.EmbeddedStatement" -> "EmbeddedStatement", "LeftRole" ->
@@ -56,7 +56,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			_ => (targetSymbol.Name, targetSymbol.Name),
 		};
 
-		List<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny)>? membersToMatch = null;
+		List<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? membersToMatch = null;
 
 		if (!targetSymbol.MemberNames.Contains("DoMatch"))
 		{
@@ -65,7 +65,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			var astNodeType = (INamedTypeSymbol)context.SemanticModel.GetSpeculativeSymbolInfo(context.TargetNode.Span.Start, SyntaxFactory.ParseTypeName("AstNode"), SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol!;
 
 			if (targetSymbol.BaseType!.MemberNames.Contains("MatchAttributesAndModifiers"))
-				membersToMatch.Add(("MatchAttributesAndModifiers", null!, false, false));
+				membersToMatch.Add(("MatchAttributesAndModifiers", null!, false, false, false));
 
 			foreach (var m in targetSymbol.GetMembers())
 			{
@@ -75,16 +75,17 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					continue;
 				if (property.Type.MetadataName is "CSharpTokenNode" or "TextLocation")
 					continue;
+				bool nullable = property.NullableAnnotation == NullableAnnotation.Annotated;
 				switch (property.Type)
 				{
 					case INamedTypeSymbol named when named.IsDerivedFrom(astNodeType) || named.MetadataName == "AstNodeCollection`1":
-						membersToMatch.Add((property.Name, named.Name, true, false));
+						membersToMatch.Add((property.Name, named.Name, true, false, nullable));
 						break;
 					case INamedTypeSymbol { TypeKind: TypeKind.Enum } named when named.GetMembers().Any(_ => _.Name == "Any"):
-						membersToMatch.Add((property.Name, named.Name, false, true));
+						membersToMatch.Add((property.Name, named.Name, false, true, false));
 						break;
 					default:
-						membersToMatch.Add((property.Name, property.Type.Name, false, false));
+						membersToMatch.Add((property.Name, property.Type.Name, false, false, false));
 						break;
 				}
 			}
@@ -278,11 +279,16 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 	{{
 		return other is {source.NodeName} o && !o.IsNull");
 
-			foreach (var (member, typeName, recursive, hasAny) in source.MembersToMatch)
+			foreach (var (member, typeName, recursive, hasAny, nullable) in source.MembersToMatch)
 			{
 				if (member == "MatchAttributesAndModifiers")
 				{
 					builder.Append($"\r\n\t\t\t&& this.MatchAttributesAndModifiers(o, match)");
+				}
+				else if (recursive && nullable && typeName != "AstNodeCollection")
+				{
+					// An optional single-value child is null when absent; match null-safely.
+					builder.Append($"\r\n\t\t\t&& MatchOptional(this.{member}, o.{member}, match)");
 				}
 				else if (recursive)
 				{
