@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	/// <summary>
 	/// Represents a literal value.
+	/// <c>literal : boolean_literal | Integer_Literal | Real_Literal | Character_Literal | String_Literal | null_literal ;</c> (C# grammar §6.4.5.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PrimitiveExpression : Expression

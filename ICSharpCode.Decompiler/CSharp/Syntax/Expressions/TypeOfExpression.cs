@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// typeof(Type)
+	/// <c>typeof_expression : 'typeof' '(' type ')' | 'typeof' '(' unbound_type_name ')' | 'typeof' '(' 'void' ')' ;</c> (C# grammar §12.8.18)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TypeOfExpression : Expression

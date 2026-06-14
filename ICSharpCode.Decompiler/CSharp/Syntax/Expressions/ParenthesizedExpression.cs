@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// ( Expression )
+	/// <c>parenthesized_expression : '(' expression ')' ;</c> (C# grammar §12.8.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ParenthesizedExpression : Expression

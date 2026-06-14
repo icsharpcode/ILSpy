@@ -31,6 +31,10 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>predefined_type : 'bool' | 'byte' | 'char' | 'decimal' | 'double' | 'float' | 'int' | 'long' | 'object' | 'sbyte' | 'short' | 'string' | 'uint' | 'ulong' | 'ushort' ;</c> (C# grammar §12.8.7.1)
+	/// <c>simple_type : numeric_type | 'bool' ;</c> (C# grammar §8.3.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PrimitiveType : AstType
 	{

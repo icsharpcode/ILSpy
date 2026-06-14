@@ -31,6 +31,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>indexer_declaration : attributes? indexer_modifier* indexer_declarator indexer_body | attributes? indexer_modifier* ref_kind indexer_declarator ref_indexer_body ;</c> (C# grammar §15.9.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IndexerDeclaration : EntityDeclaration
 	{

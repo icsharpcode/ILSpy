@@ -28,6 +28,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>property_declaration : attributes? property_modifier* type member_name property_body | attributes? property_modifier* ref_kind type member_name ref_property_body ;</c> (C# grammar §15.7.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PropertyDeclaration : EntityDeclaration
 	{

@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// { Statements }
+	/// <c>block : '{' statement_list? '}' ;</c> (C# grammar §13.3.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class BlockStatement : Statement, IEnumerable<Statement>

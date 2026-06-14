@@ -26,6 +26,9 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>simple_name : identifier type_argument_list? ;</c> (C# grammar §12.8.4)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IdentifierExpression : Expression
 	{

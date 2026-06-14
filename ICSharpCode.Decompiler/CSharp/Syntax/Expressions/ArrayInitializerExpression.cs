@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// { Elements }
+	/// <c>array_initializer : '{' variable_initializer_list? '}' | '{' variable_initializer_list ',' '}' ;</c> (C# grammar §17.7)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class ArrayInitializerExpression : Expression

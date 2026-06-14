@@ -20,6 +20,9 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>local_function_declaration : attributes? local_function_modifier* return_type local_function_header local_function_body | attributes? ref_local_function_modifier* ref_kind ref_return_type local_function_header ref_local_function_body ;</c> (C# grammar §13.6.4)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LocalFunctionDeclarationStatement : Statement
 	{

@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// stackalloc Type[Count]
+	/// <c>stackalloc_expression : 'stackalloc' unmanaged_type '[' expression ']' | 'stackalloc' unmanaged_type? '[' constant_expression? ']' stackalloc_initializer ;</c> (C# grammar §12.8.22)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class StackAllocExpression : Expression

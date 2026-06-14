@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// Identifier
+	/// <c>single_variable_designation : identifier ;</c> (C# grammar §11.2.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SingleVariableDesignation : VariableDesignation
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// ( VariableDesignation (, VariableDesignation)* )
+	/// <c>tuple_designation : '(' designations? ')' ;</c> (C# grammar §11.2.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ParenthesizedVariableDesignation : VariableDesignation

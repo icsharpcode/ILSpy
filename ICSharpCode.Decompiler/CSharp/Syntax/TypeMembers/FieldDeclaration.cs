@@ -31,6 +31,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>field_declaration : attributes? field_modifier* type variable_declarators ';' ;</c> (C# grammar §15.5.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FieldDeclaration : EntityDeclaration
 	{

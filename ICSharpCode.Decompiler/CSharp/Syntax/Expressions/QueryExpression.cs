@@ -18,6 +18,9 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
+	/// <summary>
+	/// <c>query_expression : from_clause query_body ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class QueryExpression : Expression
 	{
@@ -41,22 +44,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// Represents a query continuation.
-	/// "(from .. select ..) into Identifier" or "(from .. group .. by ..) into Identifier"
-	/// Note that "join .. into .." is not a query continuation!
-	/// 
-	/// This is always the first(!!) clause in a query expression.
-	/// The tree for "from a in b select c into d select e" looks like this:
-	/// new QueryExpression {
-	/// 	new QueryContinuationClause {
-	/// 		PrecedingQuery = new QueryExpression {
-	/// 			new QueryFromClause(a in b),
-	/// 			new QuerySelectClause(c)
-	/// 		},
-	/// 		Identifier = d
-	/// 	},
-	/// 	new QuerySelectClause(e)
-	/// }
+	/// Represents a query continuation, e.g. "(from .. select ..) into Identifier".
+	/// Note that "join .. into .." is not a query continuation.
+	/// A continuation is always the first clause of the query expression that contains it.
+	/// <c>query_continuation : 'into' identifier query_body ;</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryContinuationClause : QueryClause
@@ -86,6 +77,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
+	/// <summary>
+	/// <c>from_clause : 'from' type? identifier 'in' expression ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryFromClause : QueryClause
 	{
@@ -118,6 +112,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
+	/// <summary>
+	/// <c>let_clause : 'let' identifier '=' expression ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryLetClause : QueryClause
 	{
@@ -146,6 +143,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 
+	/// <summary>
+	/// <c>where_clause : 'where' boolean_expression ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryWhereClause : QueryClause
 	{
@@ -163,6 +163,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	/// <summary>
 	/// Represents a join or group join clause.
+	/// <c>join_clause : 'join' type? identifier 'in' expression 'on' expression 'equals' expression ;</c> (C# grammar §12.23.1)
+	/// <c>join_into_clause : 'join' type? identifier 'in' expression 'on' expression 'equals' expression 'into' identifier ;</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryJoinClause : QueryClause
@@ -230,6 +232,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
+	/// <summary>
+	/// <c>orderby_clause : 'orderby' orderings ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryOrderClause : QueryClause
 	{
@@ -246,6 +251,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
+	/// <summary>
+	/// <c>ordering : expression ordering_direction? ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryOrdering : AstNode
 	{
@@ -278,6 +286,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Descending
 	}
 
+	/// <summary>
+	/// <c>select_clause : 'select' expression ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QuerySelectClause : QueryClause
 	{
@@ -293,6 +304,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 
+	/// <summary>
+	/// <c>group_clause : 'group' expression 'by' expression ;</c> (C# grammar §12.23.1)
+	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryGroupClause : QueryClause
 	{

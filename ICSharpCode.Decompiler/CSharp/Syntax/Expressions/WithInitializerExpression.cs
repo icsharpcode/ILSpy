@@ -21,7 +21,8 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Expression with Initializer
+	/// Operator precedence is not represented in the syntax tree; required parentheses are reconstructed by <see cref="ICSharpCode.Decompiler.CSharp.OutputVisitor.InsertParenthesesVisitor"/>.
+	/// <c>with_expression : expression 'with' '{' member_initializer_list? '}' ;</c> (C# grammar §12.10)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class WithInitializerExpression : Expression

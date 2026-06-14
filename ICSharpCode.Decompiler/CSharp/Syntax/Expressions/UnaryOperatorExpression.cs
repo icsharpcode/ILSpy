@@ -30,7 +30,10 @@ using System.Linq.Expressions;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// Operator Expression
+	/// Operator precedence is not represented in the syntax tree; required parentheses are reconstructed by <see cref="ICSharpCode.Decompiler.CSharp.OutputVisitor.InsertParenthesesVisitor"/>.
+	/// <c>unary_operator_expression : unary_operator expression | expression postfix_unary_operator ;</c> (C# grammar §12.9, §12.8.16)
+	/// <c>unary_operator : '+' | '-' | '!' | '~' | '++' | '--' | '*' | '&amp;' | '^' | 'await' ;</c>
+	/// <c>postfix_unary_operator : '++' | '--' | '!' | '?' ;</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UnaryOperatorExpression : Expression
