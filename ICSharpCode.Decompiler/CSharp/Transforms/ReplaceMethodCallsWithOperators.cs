@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				);
 				return;
 			}
-			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition)
+			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Slot?.Kind == SlotKind.Condition)
 			{
 				invocationExpression.ReplaceWith(arguments[0].UnwrapInDirectionExpression());
 				return;

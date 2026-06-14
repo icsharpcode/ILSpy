@@ -581,7 +581,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (v.Type.IsByRefLike)
 				return true; // by-ref-like variables always must be initialized at their declaration.
 
-			if (v.InsertionPoint.nextNode.Role == ForStatement.InitializerRole)
+			if (v.InsertionPoint.nextNode.Slot?.Kind == SlotKind.Initializer)
 				return true; // for-statement initializers always should combine declaration and initialization.
 
 			return !context.Settings.SeparateLocalVariableDeclarations;
@@ -693,7 +693,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						v.InsertionPoint = v.InsertionPoint.Up();
 					}
-					Debug.Assert(v.InsertionPoint.nextNode.Role == BlockStatement.StatementRole);
+					Debug.Assert(v.InsertionPoint.nextNode.Slot?.Kind == SlotKind.Statement);
 					if (v.DefaultInitialization == VariableInitKind.NeedsSkipInit)
 					{
 						AstType unsafeType = context.TypeSystemAstBuilder.ConvertType(
@@ -770,7 +770,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			for (AstNode node = v.FirstUse; node != null; node = node.Parent)
 			{
-				if (node.Role == Roles.EmbeddedStatement)
+				if (node.Slot?.Kind == SlotKind.EmbeddedStatement)
 				{
 					return false;
 				}

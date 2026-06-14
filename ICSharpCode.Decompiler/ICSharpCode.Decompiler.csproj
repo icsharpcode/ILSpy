@@ -188,6 +188,7 @@
     <Compile Include="Solution\SolutionCreator.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
+    <Compile Include="CSharp\Syntax\CSharpSlotInfo.cs" />
     <Compile Include="CSharp\Syntax\AstType.cs" />
     <Compile Include="CSharp\Syntax\ComposedType.cs" />
     <Compile Include="CSharp\Syntax\DepthFirstAstVisitor.cs" />

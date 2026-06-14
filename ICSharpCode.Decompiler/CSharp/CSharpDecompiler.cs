@@ -765,14 +765,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					var astBuilder = CreateAstBuilder(decompileRun.Settings);
 					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 					attrSection.AttributeTarget = "assembly";
-					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
+					syntaxTree.Members.Add(attrSection);
 				}
 				foreach (var a in typeSystem.MainModule.GetModuleAttributes())
 				{
 					var astBuilder = CreateAstBuilder(decompileRun.Settings);
 					var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 					attrSection.AttributeTarget = "module";
-					syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
+					syntaxTree.Members.Add(attrSection);
 				}
 			}
 			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
@@ -801,7 +801,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (currentNamespace != typeDef.Namespace)
 					{
 						groupNode = new NamespaceDeclaration(typeDef.Namespace);
-						syntaxTree.AddChild(groupNode, SyntaxTree.MemberRole);
+						syntaxTree.Members.Add(groupNode);
 					}
 				}
 				currentNamespace = typeDef.Namespace;
