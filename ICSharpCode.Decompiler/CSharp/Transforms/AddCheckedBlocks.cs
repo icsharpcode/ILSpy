@@ -16,7 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -143,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </summary>
 		abstract class InsertedNode
 		{
-			public static InsertedNode operator +(InsertedNode a, InsertedNode b)
+			public static InsertedNode? operator +(InsertedNode? a, InsertedNode? b)
 			{
 				if (a == null)
 					return b;
@@ -194,11 +197,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		class InsertedBlock : InsertedNode
 		{
-			readonly Statement firstStatement; // inclusive
-			readonly Statement lastStatement; // exclusive
+			readonly Statement? firstStatement; // inclusive
+			readonly Statement? lastStatement; // exclusive
 			readonly bool isChecked;
 
-			public InsertedBlock(Statement firstStatement, Statement lastStatement, bool isChecked)
+			public InsertedBlock(Statement? firstStatement, Statement? lastStatement, bool isChecked)
 			{
 				this.firstStatement = firstStatement;
 				this.lastStatement = lastStatement;
@@ -207,10 +210,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void Insert()
 			{
+				// An InsertedBlock with a null start has infinite cost in the search and is never
+				// selected for insertion, so by the time Insert runs firstStatement is non-null.
+				Debug.Assert(firstStatement != null);
 				BlockStatement newBlock = new BlockStatement();
 				// Move all statements except for the first
-				Statement next;
-				for (Statement stmt = firstStatement.GetNextStatement(); stmt != lastStatement; stmt = next)
+				Statement? next;
+				for (Statement? stmt = firstStatement.GetNextStatement(); stmt != null && stmt != lastStatement; stmt = next)
 				{
 					next = stmt.GetNextStatement();
 					newBlock.Add(stmt.Detach());
@@ -233,18 +239,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		class Result
 		{
 			public Cost CostInCheckedContext;
-			public InsertedNode NodesToInsertInCheckedContext;
+			public InsertedNode? NodesToInsertInCheckedContext;
 			public Cost CostInUncheckedContext;
-			public InsertedNode NodesToInsertInUncheckedContext;
+			public InsertedNode? NodesToInsertInUncheckedContext;
 		}
 		#endregion
 
 		public void Run(AstNode node, TransformContext context)
 		{
-			BlockStatement block = node as BlockStatement;
+			BlockStatement? block = node as BlockStatement;
 			if (block == null)
 			{
-				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					Run(child, context);
 				}
@@ -268,20 +274,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// For a block, we are tracking 4 possibilities:
 			// a) context is checked, no unchecked block open
 			Cost costCheckedContext = new Cost(0, 0);
-			InsertedNode nodesCheckedContext = null;
+			InsertedNode? nodesCheckedContext = null;
 			// b) context is checked, an unchecked block is open
 			Cost costCheckedContextUncheckedBlockOpen = Cost.Infinite;
-			InsertedNode nodesCheckedContextUncheckedBlockOpen = null;
-			Statement uncheckedBlockStart = null;
+			InsertedNode? nodesCheckedContextUncheckedBlockOpen = null;
+			Statement? uncheckedBlockStart = null;
 			// c) context is unchecked, no checked block open
 			Cost costUncheckedContext = new Cost(0, 0);
-			InsertedNode nodesUncheckedContext = null;
+			InsertedNode? nodesUncheckedContext = null;
 			// d) context is unchecked, a checked block is open
 			Cost costUncheckedContextCheckedBlockOpen = Cost.Infinite;
-			InsertedNode nodesUncheckedContextCheckedBlockOpen = null;
-			Statement checkedBlockStart = null;
+			InsertedNode? nodesUncheckedContextCheckedBlockOpen = null;
+			Statement? checkedBlockStart = null;
 
-			Statement statement = block.Statements.FirstOrDefault();
+			Statement? statement = block.Statements.FirstOrDefault();
 			while (true)
 			{
 				// Blocks can be closed 'for free'. We use '<=' so that blocks are closed as late as possible (goal 4b)
@@ -346,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (node is BlockStatement)
 				return GetResultFromBlock((BlockStatement)node);
 			Result result = new Result();
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling)
+			for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 			{
 				Result childResult = GetResult(child);
 				result.CostInCheckedContext += childResult.CostInCheckedContext;
@@ -354,10 +360,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				result.CostInUncheckedContext += childResult.CostInUncheckedContext;
 				result.NodesToInsertInUncheckedContext += childResult.NodesToInsertInUncheckedContext;
 			}
-			Expression expr = node as Expression;
+			Expression? expr = node as Expression;
 			if (expr != null)
 			{
-				CheckedUncheckedAnnotation annotation = expr.Annotation<CheckedUncheckedAnnotation>();
+				CheckedUncheckedAnnotation? annotation = expr.Annotation<CheckedUncheckedAnnotation>();
 				if (annotation != null)
 				{
 					if (annotation.IsExplicit)

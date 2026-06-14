@@ -16,8 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -34,8 +37,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class IntroduceExtensionMethods : DepthFirstAstVisitor, IAstTransform
 	{
+		[AllowNull]
 		TransformContext context;
+		[AllowNull]
 		CSharpResolver resolver;
+		[AllowNull]
 		CSharpConversions conversions;
 
 		public void Run(AstNode rootNode, TransformContext context)
@@ -122,7 +128,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			else
 			{
-				memberRefExpr.Target = firstArgument.Detach();
+				// The target is not an IdentifierExpression, so CanTransformToExtensionMethodCall
+				// matched the MemberReferenceExpression case and memberRefExpr is non-null.
+				memberRefExpr!.Target = firstArgument.Detach();
 			}
 			if (invocationExpression.GetResolveResult() is CSharpInvocationResolveResult irr)
 			{
@@ -137,9 +145,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		static bool CanTransformToExtensionMethodCall(CSharpResolver resolver,
-			InvocationExpression invocationExpression, out MemberReferenceExpression memberRefExpr,
-			out ResolveResult target,
-			out Expression firstArgument)
+			InvocationExpression invocationExpression, out MemberReferenceExpression? memberRefExpr,
+			[NotNullWhen(true)] out ResolveResult? target,
+			[NotNullWhen(true)] out Expression? firstArgument)
 		{
 			var method = invocationExpression.GetSymbol() as IMethod;
 			memberRefExpr = null;
@@ -176,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			Debug.Assert(target != null);
 			ResolveResult[] args = new ResolveResult[invocationExpression.Arguments.Count - 1];
-			string[] argNames = null;
+			string[]? argNames = null;
 			int pos = 0;
 			foreach (var arg in invocationExpression.Arguments.Skip(1))
 			{

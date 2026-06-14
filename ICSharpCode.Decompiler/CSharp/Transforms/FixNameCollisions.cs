@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Linq;
 
@@ -68,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (node is IdentifierExpression || node is MemberReferenceExpression)
 				{
 					ISymbol symbol = node.GetSymbol();
-					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string newName))
+					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string? newName))
 					{
 						node.GetChildByRole(Roles.Identifier).Name = newName;
 					}

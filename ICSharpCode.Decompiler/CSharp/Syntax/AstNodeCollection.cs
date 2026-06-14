@@ -304,9 +304,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return Pattern.DoMatchCollection(AsNodeList(), other.AsNodeList(), match);
 		}
 
-		public void InsertAfter(T existingItem, T newItem)
+		public void InsertAfter(T? existingItem, T newItem)
 		{
-			Insert(IndexOf(existingItem) + 1, newItem);
+			// A null existingItem yields IndexOf == -1, so the new item is inserted at the front.
+			Insert(IndexOf(existingItem!) + 1, newItem);
 		}
 
 		public void InsertBefore(T existingItem, T newItem)

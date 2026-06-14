@@ -197,10 +197,18 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 		if (source.NeedsPatternPlaceholder)
 		{
+			// The placeholder conversion is part of the pattern-construction DSL, where a non-null
+			// pattern is the invariant; the result is therefore non-nullable for the specific node
+			// types. AstNode (the base) and ParameterDeclaration keep the nullable contract, and only
+			// AstNode also accepts a nullable pattern.
+			bool nullableReturn = source.NodeName is "AstNode" or "ParameterDeclaration";
+			string returnQ = nullableReturn ? "?" : "";
+			string paramQ = source.NodeName == "AstNode" ? "?" : "";
+			string forgive = nullableReturn ? "" : "!";
 			builder.Append(
-		$@"		public static implicit operator {source.NodeName}?(PatternMatching.Pattern? pattern)
+		$@"		public static implicit operator {source.NodeName}{returnQ}(PatternMatching.Pattern{paramQ} pattern)
 	{{
-		return pattern != null ? new PatternPlaceholder(pattern) : null;
+		return pattern != null ? new PatternPlaceholder(pattern) : null{forgive};
 	}}
 
 	sealed class PatternPlaceholder : {source.NodeName}, INode
