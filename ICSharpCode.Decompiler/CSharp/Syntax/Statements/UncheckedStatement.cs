@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>unchecked_statement : 'unchecked' block ;</c> (C# grammar §13.12)
+	/// <c>unchecked_statement ::= 'unchecked' block</c> (C# grammar §13.12)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UncheckedStatement : Statement

@@ -24,8 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents a type parameter.
 	/// Mirroring the C# syntax, constraints are not part of the type parameter declaration;
 	/// they belong to the parent type or method.
-	/// <c>type_parameter : identifier ;</c> (C# grammar §8.5)
-	/// <c>decorated_type_parameter : attributes? type_parameter ;</c> (C# grammar §15.2.3)
+	/// <c>type_parameter ::= attribute_section* ( 'in' | 'out' )? identifier</c> (C# grammar §8.5, §15.2.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TypeParameterDeclaration : AstNode

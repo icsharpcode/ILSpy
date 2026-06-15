@@ -45,10 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>class_declaration : attributes? class_modifier* 'partial'? class_tag identifier type_parameter_list? delimited_parameter_list? class_base? type_parameter_constraints_clause* class_body ;</c> (C# grammar §15.2.1)
-	/// <c>struct_declaration : non_record_struct_declaration | record_struct_declaration ;</c> (C# grammar §16.2.1)
-	/// <c>interface_declaration : attributes? interface_modifier* 'partial'? 'interface' identifier variant_type_parameter_list? interface_base? type_parameter_constraints_clause* interface_body ';'? ;</c> (C# grammar §19.2.1)
-	/// <c>enum_declaration : attributes? enum_modifier* 'enum' identifier enum_base? enum_body ';'? ;</c> (C# grammar §20.2)
+	/// <c>type_declaration ::= attribute_section* modifier* ( 'class' | 'struct' | 'interface' | 'enum' | 'record' 'class'? | 'record' 'struct' ) identifier type_parameter* ( '(' parameter* ')' )? ( ':' type+ )? constraint* '{' member* '}' ';'?</c> (C# grammar §15.2.1, §16.2.1, §19.2.1, §20.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TypeDeclaration : EntityDeclaration

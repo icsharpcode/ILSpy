@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>if_statement : 'if' '(' boolean_expression ')' embedded_statement | 'if' '(' boolean_expression ')' embedded_statement 'else' embedded_statement ;</c> (C# grammar §13.8.2)
+	/// <c>if_statement ::= 'if' '(' expression ')' statement ( 'else' statement )?</c> (C# grammar §13.8.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IfElseStatement : Statement

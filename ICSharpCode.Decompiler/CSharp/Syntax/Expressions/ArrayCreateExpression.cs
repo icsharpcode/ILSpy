@@ -19,7 +19,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>array_creation_expression : 'new' non_array_type '[' expression_list ']' rank_specifier* array_initializer? | 'new' array_type array_initializer | 'new' rank_specifier array_initializer ;</c> (C# grammar §12.8.17.5)
+	/// <c>array_creation_expression ::= 'new' type '[' expression* ']' array_specifier* array_initializer?</c> (C# grammar §12.8.17.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ArrayCreateExpression : Expression

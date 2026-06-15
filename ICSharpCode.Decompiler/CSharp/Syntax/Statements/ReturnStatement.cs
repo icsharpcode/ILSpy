@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>return_statement : 'return' ';' | 'return' expression ';' | 'return' 'ref' variable_reference ';' ;</c> (C# grammar §13.10.5)
+	/// <c>return_statement ::= 'return' expression? ';'</c> (C# grammar §13.10.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ReturnStatement : Statement

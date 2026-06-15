@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>fragment PP_Line : 'line' PP_Whitespace PP_Line_Indicator ;</c> (C# lexical grammar)
+	/// <c>line_directive ::= '#' 'line' ( decimal_digit+ string_literal? | 'default' | 'hidden' )</c> (C# lexical grammar)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LinePreprocessorDirective : PreProcessorDirective
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>fragment PP_Pragma : 'pragma' PP_Pragma_Text? ;</c> (C# lexical grammar)
+	/// <c>pragma_warning_directive ::= '#' 'pragma' 'warning' ( 'disable' | 'restore' ) expression*</c> (C# lexical grammar)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>PP_Directive : PP_Start PP_Kind PP_New_Line ;</c> (C# lexical grammar §6.5.1)
+	/// <c>pp_directive ::= '#' pp_kind new_line</c> (C# lexical grammar §6.5.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PreProcessorDirective : Trivia

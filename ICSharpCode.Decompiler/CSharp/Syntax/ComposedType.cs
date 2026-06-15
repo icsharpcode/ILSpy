@@ -33,10 +33,10 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>array_type : non_array_type rank_specifier+ ;</c> (C# grammar §8.2.1)
-	/// <c>pointer_type : dataptr_type | funcptr_type | voidptr_type ;</c> (C# grammar §24.3.1)
-	/// <c>nullable_reference_type : non_nullable_reference_type nullable_type_annotation ;</c> (C# grammar §8.2.1)
-	/// <c>nullable_value_type : non_nullable_value_type nullable_type_annotation ;</c> (C# grammar §8.3.1)
+	/// <c>array_type ::= non_array_type rank_specifier+</c> (C# grammar §8.2.1)
+	/// <c>pointer_type ::= dataptr_type | funcptr_type | voidptr_type</c> (C# grammar §24.3.1)
+	/// <c>nullable_reference_type ::= non_nullable_reference_type nullable_type_annotation</c> (C# grammar §8.2.1)
+	/// <c>nullable_value_type ::= non_nullable_value_type nullable_type_annotation</c> (C# grammar §8.3.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ComposedType : AstType
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>rank_specifier : '[' ','* ']' ;</c> (C# grammar §8.2.1)
+	/// <c>rank_specifier ::= '[' ','* ']'</c> (C# grammar §8.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ArraySpecifier : AstNode

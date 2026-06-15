@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>enum_member_declaration : attributes? identifier ('=' constant_expression)? ;</c> (C# grammar §20.4)
+	/// <c>enum_member_declaration ::= attribute_section* identifier ( '=' expression )?</c> (C# grammar §20.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class EnumMemberDeclaration : EntityDeclaration

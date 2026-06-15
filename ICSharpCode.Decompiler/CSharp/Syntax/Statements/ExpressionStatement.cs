@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>expression_statement : statement_expression ';' ;</c> (C# grammar §13.7)
+	/// <c>expression_statement ::= expression ';'</c> (C# grammar §13.7)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ExpressionStatement : Statement

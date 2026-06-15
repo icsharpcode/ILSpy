@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>finalizer_declaration : attributes? '~' identifier '(' ')' finalizer_body | attributes? 'extern' unsafe_modifier? '~' identifier '(' ')' finalizer_body | attributes? unsafe_modifier 'extern'? '~' identifier '(' ')' finalizer_body ;</c> (C# grammar §15.13)
+	/// <c>finalizer_declaration ::= attribute_section* modifier* '~' identifier '(' ')' ( block | ';' )</c> (C# grammar §15.13)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DestructorDeclaration : EntityDeclaration

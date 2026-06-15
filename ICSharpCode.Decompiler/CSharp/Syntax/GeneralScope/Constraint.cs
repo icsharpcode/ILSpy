@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// new(), struct and class constraints are represented using a PrimitiveType "new", "struct" or "class".
-	/// <c>type_parameter_constraints_clause : 'where' type_parameter ':' type_parameter_constraints ;</c> (C# grammar §15.2.5)
+	/// <c>type_parameter_constraints_clause ::= 'where' type ':' type+</c> (C# grammar §15.2.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class Constraint : AstNode

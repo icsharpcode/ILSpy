@@ -21,8 +21,12 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>property_pattern : type? property_subpattern simple_designation? ;</c> (C# grammar §11.2.6)
-	/// <c>positional_pattern : type? '(' subpatterns? ')' property_subpattern? simple_designation? ;</c> (C# grammar §11.2.5)
+	/// <code>
+	/// recursive_pattern ::=
+	///       type? '{' pattern* '}' variable_designation?
+	///     | type? '(' pattern* ')' variable_designation?
+	/// </code>
+	/// (C# grammar §11.2.5, §11.2.6)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class RecursivePatternExpression : Expression

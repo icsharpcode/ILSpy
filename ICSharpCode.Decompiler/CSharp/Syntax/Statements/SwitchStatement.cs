@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>switch_statement : 'switch' selector_expression switch_block ;</c> (C# grammar §13.8.3)
+	/// <c>switch_statement ::= 'switch' expression switch_section*</c> (C# grammar §13.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SwitchStatement : Statement
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>switch_section : switch_label+ statement_list ;</c> (C# grammar §13.8.3)
+	/// <c>switch_section ::= switch_label+ statement*</c> (C# grammar §13.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
 	public partial class SwitchSection : AstNode
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>switch_label : 'case' pattern case_guard? ':' | 'default' ':' ;</c> (C# grammar §13.8.3)
+	/// <c>switch_label ::= 'case' expression ':' | 'default' ':'</c> (C# grammar §13.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CaseLabel : AstNode

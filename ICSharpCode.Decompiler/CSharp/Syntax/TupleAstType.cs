@@ -21,7 +21,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>tuple_type : '(' tuple_type_element (',' tuple_type_element)+ ')' ;</c> (C# grammar §8.3.1)
+	/// <c>tuple_type ::= '(' tuple_type_element (',' tuple_type_element)+ ')'</c> (C# grammar §8.3.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TupleAstType : AstType
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>tuple_type_element : type identifier? ;</c> (C# grammar §8.3.1)
+	/// <c>tuple_type_element ::= type identifier?</c> (C# grammar §8.3.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class TupleTypeElement : AstNode

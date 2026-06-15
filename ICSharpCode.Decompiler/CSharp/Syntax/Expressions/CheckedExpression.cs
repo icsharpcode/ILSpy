@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>checked_expression : 'checked' '(' expression ')' ;</c> (C# grammar §12.8.20)
+	/// <c>checked_expression ::= 'checked' '(' expression ')'</c> (C# grammar §12.8.20)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CheckedExpression : Expression

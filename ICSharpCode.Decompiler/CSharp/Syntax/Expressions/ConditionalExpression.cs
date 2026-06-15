@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Operator precedence is not represented in the syntax tree; required parentheses are reconstructed by <see cref="ICSharpCode.Decompiler.CSharp.OutputVisitor.InsertParenthesesVisitor"/>.
-	/// <c>conditional_expression : expression '?' expression ':' expression ;</c> (C# grammar §12.21)
+	/// <c>conditional_expression ::= expression '?' expression ':' expression</c> (C# grammar §12.21)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ConditionalExpression : Expression

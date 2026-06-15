@@ -21,7 +21,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>tuple_literal : '(' tuple_element (',' tuple_element)+ ')' ;</c> (C# grammar §12.8.6)
+	/// <c>tuple_literal ::= '(' expression ( ',' expression )+ ')'</c> (C# grammar §12.8.6)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TupleExpression : Expression

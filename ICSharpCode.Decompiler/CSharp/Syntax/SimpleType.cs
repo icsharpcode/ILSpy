@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>namespace_or_type_name : identifier type_argument_list? ('.' identifier type_argument_list?)* | qualified_alias_member ('.' identifier type_argument_list?)* ;</c> (C# grammar §7.8.1)
+	/// <c>simple_type ::= identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §7.8.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class SimpleType : AstType

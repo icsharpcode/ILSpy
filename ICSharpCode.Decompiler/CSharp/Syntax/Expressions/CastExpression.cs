@@ -26,7 +26,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>cast_expression : '(' type ')' unary_expression ;</c> (C# grammar §12.9.8)
+	/// <c>cast_expression ::= '(' type ')' expression</c> (C# grammar §12.9.8)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CastExpression : Expression

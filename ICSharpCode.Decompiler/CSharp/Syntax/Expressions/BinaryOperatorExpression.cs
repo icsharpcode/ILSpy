@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Operator precedence is not represented in the syntax tree; required parentheses are reconstructed by <see cref="ICSharpCode.Decompiler.CSharp.OutputVisitor.InsertParenthesesVisitor"/>.
-	/// <c>binary_operator_expression : expression binary_operator expression ;</c> (C# grammar §12.13-§12.18, precedence-flattened)
-	/// <c>binary_operator : '*' | '/' | '%' | '+' | '-' | '&lt;&lt;' | '&gt;&gt;' | '&gt;&gt;&gt;' | '&lt;' | '&gt;' | '&lt;=' | '&gt;=' | '==' | '!=' | '&amp;' | '^' | '|' | '&amp;&amp;' | '||' | '??' | '..' ;</c>
+	/// <c>binary_operator_expression ::= expression binary_operator expression</c> (C# grammar §12.13-§12.18, precedence-flattened)
+	/// <c>binary_operator ::= '*' | '/' | '%' | '+' | '-' | '&lt;&lt;' | '&gt;&gt;' | '&gt;&gt;&gt;' | '&lt;' | '&gt;' | '&lt;=' | '&gt;=' | '==' | '!=' | '&amp;' | '^' | '|' | '&amp;&amp;' | '||' | '??' | '..'</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class BinaryOperatorExpression : Expression

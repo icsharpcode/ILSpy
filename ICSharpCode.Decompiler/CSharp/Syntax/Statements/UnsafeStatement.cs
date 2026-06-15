@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>unsafe_statement : 'unsafe' block ;</c> (C# grammar §24.2)
+	/// <c>unsafe_statement ::= 'unsafe' block</c> (C# grammar §24.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UnsafeStatement : Statement

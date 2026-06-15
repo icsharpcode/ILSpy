@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>method_declaration : attributes? method_modifiers return_type method_header method_body | attributes? ref_method_modifiers ref_kind ref_return_type method_header ref_method_body ;</c> (C# grammar §15.6.1)
+	/// <c>method_declaration ::= attribute_section* modifier* type ( type '.' )? identifier type_parameter* '(' parameter* ')' constraint* ( block | ';' )</c> (C# grammar §15.6.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class MethodDeclaration : EntityDeclaration

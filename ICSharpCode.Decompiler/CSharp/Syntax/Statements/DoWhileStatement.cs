@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>do_statement : 'do' embedded_statement 'while' '(' boolean_expression ')' ';' ;</c> (C# grammar §13.9.3)
+	/// <c>do_statement ::= 'do' statement 'while' '(' expression ')' ';'</c> (C# grammar §13.9.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DoWhileStatement : Statement

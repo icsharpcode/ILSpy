@@ -20,7 +20,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Operator precedence is not represented in the syntax tree; required parentheses are reconstructed by <see cref="ICSharpCode.Decompiler.CSharp.OutputVisitor.InsertParenthesesVisitor"/>.
-	/// <c>switch_expression : expression 'switch' '{' switch_expression_arms? '}' ;</c> (C# grammar §12.12)
+	/// <c>switch_expression ::= expression 'switch' '{' switch_expression_arm* '}'</c> (C# grammar §12.12)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SwitchExpression : Expression
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>switch_expression_arm : pattern case_guard? '=&gt;' switch_expression_arm_expression ;</c> (C# grammar §12.12)
+	/// <c>switch_expression_arm ::= pattern '=&gt;' expression</c> (C# grammar §12.12)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SwitchExpressionSection : AstNode

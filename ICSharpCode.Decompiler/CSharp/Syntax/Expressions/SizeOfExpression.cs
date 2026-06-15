@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>sizeof_expression : 'sizeof' '(' unmanaged_type ')' ;</c> (C# grammar §12.8.19)
+	/// <c>sizeof_expression ::= 'sizeof' '(' type ')'</c> (C# grammar §12.8.19)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SizeOfExpression : Expression

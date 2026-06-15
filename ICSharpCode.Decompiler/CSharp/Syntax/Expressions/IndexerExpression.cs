@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>element_access : primary_expression '[' argument_list ']' ;</c> (C# grammar §12.8.12.1)
+	/// <c>element_access ::= expression '[' expression* ']'</c> (C# grammar §12.8.12.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IndexerExpression : Expression
