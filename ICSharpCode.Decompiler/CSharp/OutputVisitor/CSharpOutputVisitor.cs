@@ -1870,7 +1870,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(gotoStatement);
 			WriteKeyword(GotoStatement.GotoKeywordRole);
-			WriteIdentifier(gotoStatement.NameToken);
+			WriteIdentifier(gotoStatement.LabelToken);
 			Semicolon();
 			EndNode(gotoStatement);
 		}

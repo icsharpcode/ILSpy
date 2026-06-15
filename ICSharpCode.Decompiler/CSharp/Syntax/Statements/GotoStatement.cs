@@ -43,22 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Label = label;
 		}
 
-		public string Label {
-			get {
-				return NameToken.Name;
-			}
-			set {
-				if (string.IsNullOrEmpty(value))
-					NameToken = null;
-				else
-					NameToken = Identifier.Create(value);
-			}
-		}
-
-		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier NameToken { get; set; }
+		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
+		public partial string Label { get; set; }
 	}
 
 	/// <summary>

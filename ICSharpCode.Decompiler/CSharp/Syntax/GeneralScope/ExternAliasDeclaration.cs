@@ -33,18 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ExternAliasDeclaration : AstNode
 	{
 
-		public string Name {
-			get {
-				return GetChildByRole(Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create(value));
-			}
-		}
-
-		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier NameToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string Name { get; set; }
 	}
 }

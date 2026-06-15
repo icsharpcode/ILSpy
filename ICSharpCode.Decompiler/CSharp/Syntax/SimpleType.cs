@@ -66,19 +66,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public string Identifier {
-			get {
-				return GetChildByRole(Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(value));
-			}
-		}
-
-		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier IdentifierToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string Identifier { get; set; }
 
 		[Slot("Roles.TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
