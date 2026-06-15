@@ -32,21 +32,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NullReferenceExpression : Expression
 	{
-		TextLocation location;
-		public override TextLocation StartLocation {
-			get {
-				return location;
-			}
-		}
-
-		internal void SetStartLocation(TextLocation value)
-		{
-			this.location = value;
-		}
-
+		// StartLocation comes from the base (stored at print time); only the end needs deriving.
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation(location.Line, location.Column + "null".Length);
+				return new TextLocation(StartLocation.Line, StartLocation.Column + "null".Length);
 			}
 		}
 
@@ -56,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public NullReferenceExpression(TextLocation location)
 		{
-			this.location = location;
+			StorePrintStart(location);
 		}
 	}
 }

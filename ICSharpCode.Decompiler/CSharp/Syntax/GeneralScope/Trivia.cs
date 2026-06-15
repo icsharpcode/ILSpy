@@ -27,5 +27,35 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public abstract class Trivia : AstNode
 	{
+		TextLocation startLocation;
+		TextLocation endLocation;
+
+		protected Trivia()
+		{
+		}
+
+		protected Trivia(TextLocation startLocation, TextLocation endLocation)
+		{
+			this.startLocation = startLocation;
+			this.endLocation = endLocation;
+		}
+
+		public override TextLocation StartLocation {
+			get { return startLocation; }
+		}
+
+		public override TextLocation EndLocation {
+			get { return endLocation; }
+		}
+
+		internal void SetStartLocation(TextLocation value)
+		{
+			this.startLocation = value;
+		}
+
+		internal void SetEndLocation(TextLocation value)
+		{
+			this.endLocation = value;
+		}
 	}
 }

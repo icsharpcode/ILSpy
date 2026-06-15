@@ -69,51 +69,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { commentType = value; }
 		}
 
-		/// <summary>
-		/// Returns true if the <see cref="CommentType"/> is Documentation or MultiLineDocumentation.
-		/// </summary>
-		public bool IsDocumentation {
-			get {
-				return commentType == CommentType.Documentation || commentType == CommentType.MultiLineDocumentation;
-			}
-		}
-
-		bool startsLine;
-
-		public bool StartsLine {
-			get { return startsLine; }
-			set { startsLine = value; }
-		}
-
 		string content;
 
 		public string Content {
 			get { return content; }
 			set { content = value; }
-		}
-
-		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
-
-		TextLocation endLocation;
-		public override TextLocation EndLocation {
-			get {
-				return endLocation;
-			}
-		}
-
-		internal void SetStartLocation(TextLocation value)
-		{
-			this.startLocation = value;
-		}
-
-		internal void SetEndLocation(TextLocation value)
-		{
-			this.endLocation = value;
 		}
 
 		public Comment(string content, CommentType type = CommentType.SingleLine)
@@ -122,17 +82,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Content = content;
 		}
 
-		public Comment(CommentType commentType, TextLocation startLocation, TextLocation endLocation)
+		public Comment(CommentType commentType, TextLocation startLocation, TextLocation endLocation) : base(startLocation, endLocation)
 		{
 			this.CommentType = commentType;
-			this.startLocation = startLocation;
-			this.endLocation = endLocation;
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			Comment o = other as Comment;
-			return o != null && this.CommentType == o.CommentType && MatchString(this.Content, o.Content);
 		}
 	}
 }

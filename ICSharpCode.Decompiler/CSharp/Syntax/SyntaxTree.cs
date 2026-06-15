@@ -44,48 +44,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		string fileName;
-
-		/// <summary>
-		/// Gets/Sets the file name of this syntax tree.
-		/// </summary>
-		public string FileName {
-			get { return fileName; }
-			set {
-				fileName = value;
-			}
-		}
-
 		[Slot("MemberRole")]
 		public partial AstNodeCollection<AstNode> Members { get; }
-
-		IList<string> conditionalSymbols = null;
-
-		/// <summary>
-		/// Gets the conditional symbols used to parse the source file. Note that this list contains
-		/// the conditional symbols at the start of the first token in the file - including the ones defined
-		/// in the source file.
-		/// </summary>
-		public IList<string> ConditionalSymbols {
-			get {
-				return conditionalSymbols ?? EmptyList<string>.Instance;
-			}
-			internal set {
-				conditionalSymbols = value;
-			}
-		}
-
-		/// <summary>
-		/// Gets the expression that was on top of the parse stack.
-		/// This is the only way to get an expression that isn't part of a statment.
-		/// (eg. when an error follows an expression).
-		/// 
-		/// This is used for code completion to 'get the expression before a token - like ., &lt;, ('.
-		/// </summary>
-		public AstNode TopExpression {
-			get;
-			internal set;
-		}
 
 		public SyntaxTree()
 		{
@@ -115,12 +75,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						nodeStack.Push(child);
 				}
 			}
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			SyntaxTree o = other as SyntaxTree;
-			return o != null && this.Members.DoMatch(o.Members, match);
 		}
 	}
 }

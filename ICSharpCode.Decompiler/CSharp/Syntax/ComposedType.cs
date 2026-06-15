@@ -69,14 +69,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool HasNullableSpecifier { get; set; }
 
-		// Derived from the other specifiers (all matched); exclude it to avoid a redundant compare.
-		[ExcludeFromMatch]
-		public bool HasOnlyNullableSpecifier {
-			get {
-				return HasNullableSpecifier && !HasRefSpecifier && !HasReadOnlySpecifier && PointerRank == 0 && ArraySpecifiers.Count == 0;
-			}
-		}
-
 		int pointerRank;
 
 		public int PointerRank {

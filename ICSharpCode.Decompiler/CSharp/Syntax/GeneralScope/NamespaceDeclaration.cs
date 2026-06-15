@@ -53,6 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("NamespaceNameRole")]
 		public partial AstType NamespaceName { get; set; }
 
+		// Computed from NamespaceName (the matched slot); exclude as redundant.
+		[ExcludeFromMatch]
 		public string Name {
 			get {
 				return UsingDeclaration.ConstructNamespace(NamespaceName);
@@ -75,6 +77,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets the full namespace name (including any parent namespaces)
 		/// </summary>
+		// Computed by walking the parent chain; exclude as redundant and costly.
+		[ExcludeFromMatch]
 		public string FullName {
 			get {
 				NamespaceDeclaration parentNamespace = Parent as NamespaceDeclaration;
@@ -84,6 +88,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// Computed from NamespaceName (the matched slot); exclude it (and it is not reference-comparable).
+		[ExcludeFromMatch]
 		public IEnumerable<string> Identifiers {
 			get {
 				var result = new Stack<string>();
@@ -124,12 +130,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public void AddMember(AstNode child)
 		{
 			AddChild(child, MemberRole);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			NamespaceDeclaration o = other as NamespaceDeclaration;
-			return o != null && MatchString(this.Name, o.Name) && this.Members.DoMatch(o.Members, match);
 		}
 	}
 };

@@ -70,6 +70,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		const uint verbatimBit = 1u << AstNodeFlagsUsedBits;
 
+		// The @-escaping is a lexical detail, not structural; exclude it from matching.
+		[ExcludeFromMatch]
 		public bool IsVerbatim {
 			get {
 				return (flags & verbatimBit) != 0;
@@ -124,12 +126,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (isVerbatim)
 				return new Identifier(name, location) { IsVerbatim = true };
 			return new Identifier(name, location);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			Identifier o = other as Identifier;
-			return o != null && !o.IsNull && MatchString(this.Name, o.Name);
 		}
 	}
 }
