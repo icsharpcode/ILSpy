@@ -55,6 +55,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// The Identifier string is what DoMatch compares; the token slot is excluded to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier IdentifierToken { get; set; }
 

@@ -270,6 +270,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 	{{
 		return visitor.Visit{source.VisitMethodName}(this, data);
 	}}
+
 ");
 		}
 
@@ -310,6 +311,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 			builder.Append(@";
 	}
+
 ");
 		}
 
@@ -338,6 +340,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value, {roleExpr});");
 					builder.AppendLine("\t}");
 				}
+				builder.AppendLine();
 			}
 
 			// Flattened child-index space: slots in declaration order, a single slot occupying one index
@@ -345,6 +348,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			builder.Append("\tinternal override int GetChildCount() => ");
 			builder.Append(string.Join(" + ", slots.Select(s => s.IsCollection ? $"({FieldName(s.PropertyName)}?.Count ?? 0)" : "1")));
 			builder.AppendLine(";");
+			builder.AppendLine();
 
 			builder.AppendLine("\tinternal override AstNode? GetChild(int index)");
 			builder.AppendLine("\t{");
@@ -363,6 +367,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
 			builder.AppendLine("\t}");
+			builder.AppendLine();
 
 			builder.AppendLine("\tinternal override void SetChild(int index, AstNode? value)");
 			builder.AppendLine("\t{");
@@ -381,6 +386,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
 			builder.AppendLine("\t}");
+			builder.AppendLine();
 
 			builder.AppendLine("\tinternal override Role GetChildSlot(int index)");
 			builder.AppendLine("\t{");
@@ -394,10 +400,12 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
 			builder.AppendLine("\t}");
+			builder.AppendLine();
 
 			// One CSharpSlotInfo static per slot; node.Slot compares against these by object identity.
 			foreach (var s in slots)
 				builder.AppendLine($"\tpublic static readonly CSharpSlotInfo {s.PropertyName}Slot = new CSharpSlotInfo(\"{s.PropertyName}\", typeof({s.ElementType}), {(s.IsCollection ? "true" : "false")}, SlotKind.{s.KindName});");
+			builder.AppendLine();
 
 			builder.AppendLine("\tinternal override CSharpSlotInfo GetChildSlotInfo(int index)");
 			builder.AppendLine("\t{");
@@ -411,6 +419,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
 			builder.AppendLine("\t}");
+			builder.AppendLine();
 
 			if (slots.Any(s => s.IsCollection))
 			{
@@ -420,6 +429,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					builder.AppendLine($"\t\tif (role == {s.RoleExpr}) return {s.PropertyName};");
 				builder.AppendLine("\t\treturn base.GetCollectionByRole(role);");
 				builder.AppendLine("\t}");
+				builder.AppendLine();
 			}
 
 			builder.AppendLine("\tinternal override void CloneChildrenInto(AstNode copyNode)");
@@ -436,11 +446,12 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					builder.AppendLine($"\t\tif ({field} != null) copy.{s.PropertyName} = ({s.PropertyType}){field}.Clone();");
 			}
 			builder.AppendLine("\t}");
+			builder.AppendLine();
 		}
 
 		builder.AppendLine("}");
 
-		context.AddSource(source.NodeName + ".g.cs", SourceText.From(builder.ToString(), Encoding.UTF8));
+		context.AddSource(source.NodeName + ".g.cs", SourceText.From(builder.ToString().Replace("\r\n", "\n"), Encoding.UTF8));
 	}
 
 	void WriteVisitors(SourceProductionContext context, ImmutableArray<AstNodeAdditions> source)

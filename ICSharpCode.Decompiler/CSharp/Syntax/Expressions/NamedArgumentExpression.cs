@@ -44,16 +44,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the Name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			NamedArgumentExpression o = other as NamedArgumentExpression;
-			return o != null && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 }
