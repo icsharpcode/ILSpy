@@ -12,79 +12,30 @@ For any licenses that require disclosure of source, sources are available at
 https://github.com/icsharpcode/ILSpy/.
 
 
-License Notice for AvalonDock (part of ILSpy)
+License Notice for Avalonia (part of ILSpy)
 ---------------------------
 
-https://github.com/Dirkster99/AvalonDock/blob/master/LICENSE
+https://github.com/AvaloniaUI/Avalonia/blob/master/licence.md
+
+The MIT License (MIT)
+
+Copyright (c) AvaloniaUI OÜ All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-Ms-PL
-Microsoft Public License (Ms-PL)
-
-This license governs use of the accompanying software. If you use the software, 
-you accept this license. If you do not accept the license, do not use the software.
-
-1. Definitions
-
-The terms "reproduce," "reproduction," "derivative works," and "distribution" have 
-the same meaning here as under U.S. copyright law.
-
-A "contribution" is the original software, or any additions or changes to the software.
-
-A "contributor" is any person that distributes its contribution under this license.
-
-"Licensed patents" are a contributor's patent claims that read directly on its contribution.
-
-2. Grant of Rights
-
-(A) Copyright Grant- Subject to the terms of this license, including the license 
-conditions and limitations in section 3, each contributor grants you a 
-non-exclusive, worldwide, royalty-free copyright license to reproduce its 
-contribution, prepare derivative works of its contribution, and distribute its 
-contribution or any derivative works that you create.
-
-(B) Patent Grant- Subject to the terms of this license, including the license 
-conditions and limitations in section 3, each contributor grants you a
- non-exclusive, worldwide, royalty-free license under its licensed patents to 
- make, have made, use, sell, offer for sale, import, and/or otherwise dispose 
- of its contribution in the software or derivative works of the contribution 
- in the software.
-
-3. Conditions and Limitations
-
-(A) No Trademark License- This license does not grant you rights to use any 
-contributors' name, logo, or trademarks.
-
-(B) If you bring a patent claim against any contributor over patents that 
-you claim are infringed by the software, your patent license from such 
-contributor to the software ends automatically.
-
-(C) If you distribute any portion of the software, you must retain all 
-copyright, patent, trademark, and attribution notices that are present 
-in the software.
-
-(D) If you distribute any portion of the software in source code form, you 
-may do so only under this license by including a complete copy of this 
-license with your distribution. If you distribute any portion of the software 
-in compiled or object code form, you may only do so under a license that 
-complies with this license.
-
-(E) The software is licensed "as-is." You bear the risk of using it. The 
-contributors give no express warranties, guarantees or conditions. You may 
-have additional consumer rights under your local laws which this license 
-cannot change. To the extent permitted under your local laws, the contributors 
-exclude the implied warranties of merchantability, fitness for a particular 
-purpose and non-infringement.
-
-
-License Notice for AvalonEdit (part of ILSpy)
+License Notice for AvaloniaEdit (part of ILSpy)
 ---------------------------
 
-https://github.com/icsharpcode/AvalonEdit/blob/master/LICENSE
+https://github.com/AvaloniaUI/AvaloniaEdit/blob/master/LICENSE
 
 MIT License
 
-Copyright (c) AvalonEdit Contributors
+Copyright (c) 2017 Eli Arbel
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -105,7 +56,138 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-License Notice for CommandLineUtils (part of ICSharpCode.ILSpyCmd)
+License Notice for .NET Community Toolkit (part of ILSpy)
+---------------------------
+
+https://github.com/CommunityToolkit/dotnet/blob/main/License.md
+
+MIT License (MIT)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+License Notice for Dock (part of ILSpy)
+---------------------------
+
+https://github.com/wieslawsoltes/Dock/blob/master/LICENSE.TXT
+
+The MIT License (MIT)
+
+Copyright (c) Wiesław Šoltés
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+License Notice for NuGet.Protocol (part of ILSpy)
+---------------------------
+
+https://github.com/NuGet/NuGet.Client/blob/dev/LICENSE.txt
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+these files except in compliance with the License. You may obtain a copy of the
+License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+
+License Notice for ProDataGrid (part of ILSpy)
+---------------------------
+
+https://github.com/wieslawsoltes/ProDataGrid/blob/master/licence.md
+
+The MIT License (MIT)
+
+Copyright (c) Wiesław Šoltés All Rights Reserved
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+License Notice for Svg.Skia (part of ILSpy)
+---------------------------
+
+https://github.com/wieslawsoltes/Svg.Skia/blob/master/LICENSE.TXT
+
+MIT License
+
+Copyright (c) 2020 Wiesław Šoltés
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+License Notice for XAML Behaviors (part of ILSpy)
+---------------------------
+
+https://github.com/wieslawsoltes/Xaml.Behaviors/blob/master/LICENSE.TXT
+
+The MIT License (MIT)
+
+Copyright (c) Wiesław Šoltés
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+License Notice for CommandLineUtils (part of ICSharpCode.ILSpyCmd and ILSpy)
 ---------------------------
 
 https://github.com/natemcmaster/CommandLineUtils/blob/master/LICENSE.txt
@@ -160,6 +242,7 @@ TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
     "Contribution" shall mean any work of authorship, including
     the original version of the Work and any modifications or additions
     to that Work or Derivative Works thereof, that is intentionally
+    submitted to Licensor for inclusion in the Work by the copyright owner
     submitted to Licensor for inclusion in the Work by the copyright owner
     or by an individual or Legal Entity authorized to submit on behalf of
     the copyright owner. For the purposes of this definition, "submitted"
@@ -286,34 +369,6 @@ TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
     of your accepting any such warranty or additional liability.
 
 END OF TERMS AND CONDITIONS
-
-
-License Notice for Data Grid Extensions (part of ILSpy)
----------------------------
-
-https://github.com/dotnet/DataGridExtensions/blob/master/License
-
-The MIT License (MIT)
-Copyright (c) .NET Foundation and Contributors
-All Rights Reserved
-
-Permission is hereby granted, free of charge, to any person obtaining a copy 
-of this software and associated documentation files (the "Software"), to deal 
-in the Software without restriction, including without limitation the rights 
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-copies of the Software, and to permit persons to whom the Software is 
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included 
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN 
-THE SOFTWARE.
 
 
 License Notice for Humanizer (part of ICSharpCode.Decompiler)
