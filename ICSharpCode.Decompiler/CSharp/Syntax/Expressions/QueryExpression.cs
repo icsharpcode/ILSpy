@@ -49,19 +49,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("PrecedingQueryRole")]
 		public partial QueryExpression PrecedingQuery { get; set; }
 
-		public string Identifier {
-			get {
-				return IdentifierToken.Name;
-			}
-			set {
-				IdentifierToken = Decompiler.CSharp.Syntax.Identifier.Create(value);
-			}
-		}
-
-		// DoMatch compares the Identifier string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier IdentifierToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string Identifier { get; set; }
 	}
 
 	/// <summary>
@@ -76,19 +65,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
-		public string Identifier {
-			get {
-				return IdentifierToken.Name;
-			}
-			set {
-				IdentifierToken = Decompiler.CSharp.Syntax.Identifier.Create(value);
-			}
-		}
-
-		// DoMatch compares the Identifier string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier IdentifierToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string Identifier { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
@@ -102,19 +80,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole LetKeywordRole = new TokenRole("let");
 
-		public string Identifier {
-			get {
-				return IdentifierToken.Name;
-			}
-			set {
-				IdentifierToken = Decompiler.CSharp.Syntax.Identifier.Create(value);
-			}
-		}
-
-		// DoMatch compares the Identifier string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier IdentifierToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string Identifier { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
@@ -166,19 +133,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("TypeRole")]
 		public partial AstType Type { get; set; }
 
-		public string JoinIdentifier {
-			get {
-				return JoinIdentifierToken.Name;
-			}
-			set {
-				JoinIdentifierToken = Identifier.Create(value);
-			}
-		}
-
-		// DoMatch compares the JoinIdentifier string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("JoinIdentifierRole")]
-		public partial Identifier JoinIdentifierToken { get; set; }
+		[NameSlot("JoinIdentifierRole")]
+		public partial string JoinIdentifier { get; set; }
 
 		[Slot("InExpressionRole")]
 		public partial Expression InExpression { get; set; }
@@ -189,19 +145,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("EqualsExpressionRole")]
 		public partial Expression EqualsExpression { get; set; }
 
-		public string IntoIdentifier {
-			get {
-				return IntoIdentifierToken.Name;
-			}
-			set {
-				IntoIdentifierToken = Identifier.Create(value);
-			}
-		}
-
-		// DoMatch compares the IntoIdentifier string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("IntoIdentifierRole")]
-		public partial Identifier IntoIdentifierToken { get; set; }
+		[NameSlot("IntoIdentifierRole")]
+		public partial string IntoIdentifier { get; set; }
 	}
 
 	/// <summary>

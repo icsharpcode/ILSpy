@@ -32,18 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LabelStatement : Statement
 	{
-		public string Label {
-			get {
-				return GetChildByRole(Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create(value));
-			}
-		}
-
-		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier LabelToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string Label { get; set; }
 	}
 }

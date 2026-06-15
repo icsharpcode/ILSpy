@@ -36,19 +36,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", Identifier.Null);
 		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
 
-		public string Alias {
-			get {
-				return AliasToken.Name;
-			}
-			set {
-				AliasToken = Identifier.Create(value);
-			}
-		}
-
-		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("AliasRole")]
-		public partial Identifier AliasToken { get; set; }
+		[NameSlot("AliasRole")]
+		public partial string Alias { get; set; }
 
 		[Slot("ImportRole")]
 		public partial AstType Import { get; set; }

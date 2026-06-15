@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName)>? Slots);
+	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots);
 
 	// Derives the shared SlotKind name from a [Slot] role expression: the last dotted segment with a
 	// trailing "Role" removed (e.g. "Roles.EmbeddedStatement" -> "EmbeddedStatement", "LeftRole" ->
@@ -107,27 +107,45 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 		}
 
-		// Collect the slot schema: child properties tagged [Slot], in declaration order. The
-		// attribute names the Role expression to use; single vs collection comes from the type.
-		List<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName)>? slots = null;
+		// Collect the slot schema: child properties tagged [Slot] or [NameSlot], in declaration order
+		// (the order is the node's child layout, so it must follow the source, not be grouped by kind).
+		// [Slot] names the Role expression and infers single vs collection from the type. [NameSlot("role")]
+		// string X declares only the convenience string; the generator owns the backing Identifier XToken
+		// child slot (emitted like a [Slot], but non-partial since the source does not declare it) plus the
+		// string body. DoMatch matches X (a string) and never sees XToken.
+		List<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? slots = null;
+		List<(string StringName, string TokenName, bool NullOnEmpty)>? nameSlots = null;
 		foreach (var m in targetSymbol.GetMembers())
 		{
 			if (m is not IPropertySymbol property)
 				continue;
 			var slotAttr = property.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "SlotAttribute");
-			if (slotAttr == null)
+			if (slotAttr != null)
+			{
+				slots ??= new();
+				string roleExpr = (string)slotAttr.ConstructorArguments[0].Value!;
+				bool isCollection = property.Type.MetadataName == "AstNodeCollection`1";
+				bool isNullable = property.Type.NullableAnnotation == NullableAnnotation.Annotated;
+				var unannotated = property.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
+				string propertyType = unannotated.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
+				// For a collection slot, the element type is the single type argument of AstNodeCollection<T>.
+				string elementType = isCollection
+					? ((INamedTypeSymbol)property.Type).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
+					: propertyType;
+				slots.Add((roleExpr, isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, SlotKindName(roleExpr), true));
 				continue;
-			slots ??= new();
-			string roleExpr = (string)slotAttr.ConstructorArguments[0].Value!;
-			bool isCollection = property.Type.MetadataName == "AstNodeCollection`1";
-			bool isNullable = property.Type.NullableAnnotation == NullableAnnotation.Annotated;
-			var unannotated = property.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
-			string propertyType = unannotated.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat);
-			// For a collection slot, the element type is the single type argument of AstNodeCollection<T>.
-			string elementType = isCollection
-				? ((INamedTypeSymbol)property.Type).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
-				: propertyType;
-			slots.Add((roleExpr, isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, SlotKindName(roleExpr)));
+			}
+			var nameSlotAttr = property.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "NameSlotAttribute");
+			if (nameSlotAttr != null)
+			{
+				nameSlots ??= new();
+				slots ??= new();
+				string roleExpr = (string)nameSlotAttr.ConstructorArguments[0].Value!;
+				bool nullOnEmpty = nameSlotAttr.ConstructorArguments.Length > 1 && (bool)nameSlotAttr.ConstructorArguments[1].Value!;
+				string tokenName = property.Name + "Token";
+				slots.Add((roleExpr, false, tokenName, "Identifier", "Identifier", false, false, SlotKindName(roleExpr), false));
+				nameSlots.Add((property.Name, tokenName, nullOnEmpty));
+			}
 		}
 
 		return new(targetSymbol.Name, !targetSymbol.MemberNames.Contains("AcceptVisitor"),
@@ -136,7 +154,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[1].Value!,
 			NullNodeBaseCtorParamCount: targetSymbol.InstanceConstructors.Min(m => m.Parameters.Length),
 			IsTypeNode: targetSymbol.Name == "AstType" || targetSymbol.BaseType?.Name == "AstType",
-			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray());
+			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray(), nameSlots?.ToEquatableArray());
 	}
 
 	// Backing-field name for a slot property. Prefixed to avoid colliding with hand-written fields
@@ -333,24 +351,42 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			// substitutes the role's null object when empty (pre-NRT); a collection slot owns a lazily
 			// created AstNodeCollection bound to this node. A slot re-declared from an inherited contract
 			// member (Part I.3 flatten) is an override.
-			foreach (var (roleExpr, isCollection, name, type, elementType, isOverride, isNullable, kindName) in slots)
+			foreach (var (roleExpr, isCollection, name, type, elementType, isOverride, isNullable, kindName, isPartial) in slots)
 			{
 				string field = FieldName(name);
+				string partialKw = isPartial ? "partial " : "";
 				if (isCollection)
 				{
 					builder.AppendLine($"\tAstNodeCollection<{elementType}>? {field};");
-					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}partial AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, {roleExpr});");
+					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, {roleExpr});");
 				}
 				else
 				{
 					builder.AppendLine($"\t{type}? {field};");
-					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}partial {type} {name}");
+					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}{type} {name}");
 					builder.AppendLine("\t{");
 					builder.AppendLine($"\t\tget => {field}{(isNullable ? "" : $" ?? {roleExpr}.NullObject")};");
 					builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value, {roleExpr});");
 					builder.AppendLine("\t}");
 				}
 				builder.AppendLine();
+			}
+
+			// A [NameSlot] string is a convenience accessor over its generated Identifier token slot.
+			if (source.NameSlots is { } nameSlotsArray)
+			{
+				foreach (var (stringName, tokenName, nullOnEmpty) in nameSlotsArray)
+				{
+					builder.AppendLine($"\tpublic partial string {stringName}");
+					builder.AppendLine("\t{");
+					builder.AppendLine($"\t\tget => {tokenName}.Name;");
+					if (nullOnEmpty)
+						builder.AppendLine($"\t\tset => {tokenName} = string.IsNullOrEmpty(value) ? null! : global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier.Create(value);");
+					else
+						builder.AppendLine($"\t\tset => {tokenName} = global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier.Create(value);");
+					builder.AppendLine("\t}");
+					builder.AppendLine();
+				}
 			}
 
 			// Flattened child-index space: slots in declaration order, a single slot occupying one index
@@ -471,7 +507,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
 
 		source = source
-			.Concat([new("NullNode", false, true, false, false, 0, false, "NullNode", "AstNode", null, null), new("PatternPlaceholder", false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null)])
+			.Concat([new("NullNode", false, true, false, false, 0, false, "NullNode", "AstNode", null, null, null), new("PatternPlaceholder", false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null, null)])
 			.ToImmutableArray();
 
 		WriteInterface("IAstVisitor", "void", "");
@@ -548,6 +584,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	sealed class SlotAttribute : global::System.Attribute
 	{
 		public SlotAttribute(string role) { }
+	}
+
+	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
+	[global::System.AttributeUsage(global::System.AttributeTargets.Property)]
+	sealed class NameSlotAttribute : global::System.Attribute
+	{
+		public NameSlotAttribute(string role, bool nullOnEmpty = false) { }
 	}
 }
 

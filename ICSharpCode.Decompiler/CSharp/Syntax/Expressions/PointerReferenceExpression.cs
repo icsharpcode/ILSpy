@@ -37,19 +37,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.TargetExpression")]
 		public partial Expression Target { get; set; }
 
-		public string MemberName {
-			get {
-				return GetChildByRole(Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create(value));
-			}
-		}
-
-		// DoMatch compares the MemberName string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier MemberNameToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string MemberName { get; set; }
 
 		[Slot("Roles.TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }

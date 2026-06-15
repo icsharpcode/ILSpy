@@ -63,20 +63,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
-		public string VariableName {
-			get { return GetChildByRole(Roles.Identifier).Name; }
-			set {
-				if (string.IsNullOrEmpty(value))
-					SetChildByRole(Roles.Identifier, null);
-				else
-					SetChildByRole(Roles.Identifier, Identifier.Create(value));
-			}
-		}
-
-		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier VariableNameToken { get; set; }
+		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
+		public partial string VariableName { get; set; }
 
 		[Slot("ConditionRole")]
 		public partial Expression Condition { get; set; }

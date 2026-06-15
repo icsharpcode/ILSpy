@@ -46,19 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(identifier, location));
 		}
 
-		public string Identifier {
-			get {
-				return GetChildByRole(Roles.Identifier).Name;
-			}
-			set {
-				SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(value));
-			}
-		}
-
-		// The Identifier string is what DoMatch compares; the token slot is excluded to avoid matching it twice.
-		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
-		public partial Identifier IdentifierToken { get; set; }
+		[NameSlot("Roles.Identifier")]
+		public partial string Identifier { get; set; }
 
 		[Slot("Roles.TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
