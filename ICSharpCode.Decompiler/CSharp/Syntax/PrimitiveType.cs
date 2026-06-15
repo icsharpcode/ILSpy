@@ -50,6 +50,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// Derived from Keyword (which DoMatch already compares); exclude it so the match
+		// doesn't redundantly re-run the keyword switch.
+		[ExcludeFromMatch]
 		public KnownTypeCode KnownTypeCode {
 			get { return GetTypeCodeForPrimitiveType(this.Keyword); }
 		}
@@ -84,12 +87,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				return new TextLocation(location.Line, location.Column + keyword.Length);
 			}
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			PrimitiveType o = other as PrimitiveType;
-			return o != null && MatchString(this.Keyword, o.Keyword);
 		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)

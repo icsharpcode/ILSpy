@@ -58,11 +58,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			this.location = location;
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			NullReferenceExpression o = other as NullReferenceExpression;
-			return o != null;
-		}
 	}
 }

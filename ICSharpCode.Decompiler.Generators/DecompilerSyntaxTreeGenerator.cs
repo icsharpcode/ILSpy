@@ -58,14 +58,30 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 		List<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? membersToMatch = null;
 
-		if (!targetSymbol.MemberNames.Contains("DoMatch"))
+		// Abstract base nodes are never the dispatch target of DoMatch (concrete subclasses and the
+		// null-object each emit their own and do not chain to base), so emitting one here is dead code.
+		if (!targetSymbol.IsAbstract && !targetSymbol.MemberNames.Contains("DoMatch"))
 		{
 			membersToMatch = new();
 
 			var astNodeType = (INamedTypeSymbol)context.SemanticModel.GetSpeculativeSymbolInfo(context.TargetNode.Span.Start, SyntaxFactory.ParseTypeName("AstNode"), SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol!;
+			var entityDeclarationType = context.SemanticModel.GetSpeculativeSymbolInfo(context.TargetNode.Span.Start, SyntaxFactory.ParseTypeName("EntityDeclaration"), SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol as INamedTypeSymbol;
 
-			if (targetSymbol.BaseType!.MemberNames.Contains("MatchAttributesAndModifiers"))
+			// EntityDeclaration declares Name (over Roles.Identifier), ReturnType, and the attributes/modifiers
+			// helper as virtual members on the base; a subclass overrides them, so the property scan (which
+			// skips overrides) misses them. Add them explicitly for every EntityDeclaration-derived node. The
+			// NameToken slot is intentionally not matched, since the Name string already covers it.
+			if (entityDeclarationType != null && targetSymbol.IsDerivedFrom(entityDeclarationType))
+			{
+				// A node opts out of the inherited Name match by marking its NameToken slot
+				// [ExcludeFromMatch] (e.g. constructors, whose Name is just the declaring type name).
+				bool excludeName = targetSymbol.GetMembers("NameToken").OfType<IPropertySymbol>()
+					.Any(p => p.GetAttributes().Any(a => a.AttributeClass?.Name == "ExcludeFromMatchAttribute"));
+				if (!excludeName)
+					membersToMatch.Add(("Name", "String", false, false, false));
 				membersToMatch.Add(("MatchAttributesAndModifiers", null!, false, false, false));
+				membersToMatch.Add(("ReturnType", "AstType", true, false, false));
+			}
 
 			foreach (var m in targetSymbol.GetMembers())
 			{

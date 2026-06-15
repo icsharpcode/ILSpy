@@ -45,11 +45,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			AddChild(returnExpression, Roles.Expression);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ReturnStatement o = other as ReturnStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 }

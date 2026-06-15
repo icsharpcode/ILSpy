@@ -36,11 +36,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			AddChild(type, Roles.Type);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			TypeReferenceExpression o = other as TypeReferenceExpression;
-			return o != null && this.Type.DoMatch(o.Type, match);
-		}
 	}
 }

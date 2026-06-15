@@ -48,13 +48,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("InitializerRole")]
 		public partial ArrayInitializerExpression Initializer { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			StackAllocExpression o = other as StackAllocExpression;
-			return o != null && this.Type.DoMatch(o.Type, match)
-				&& this.CountExpression.DoMatch(o.CountExpression, match)
-				&& this.Initializer.DoMatch(o.Initializer, match);
-		}
 	}
 }

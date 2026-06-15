@@ -48,11 +48,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return new TextLocation(Location.Line, Location.Column + 1);
 			}
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			EmptyStatement o = other as EmptyStatement;
-			return o != null;
-		}
 	}
 }

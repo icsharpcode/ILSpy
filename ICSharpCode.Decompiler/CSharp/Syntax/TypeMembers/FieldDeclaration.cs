@@ -63,12 +63,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			FieldDeclaration o = other as FieldDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
-				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
-		}
 	}
 }

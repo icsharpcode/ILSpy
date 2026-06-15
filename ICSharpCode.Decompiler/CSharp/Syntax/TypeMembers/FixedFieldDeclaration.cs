@@ -48,12 +48,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("VariableRole")]
 		public partial AstNodeCollection<FixedVariableInitializer> Variables { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as FixedFieldDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
-				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
-		}
 	}
 }

@@ -28,12 +28,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("ClauseRole")]
 		public partial AstNodeCollection<QueryClause> Clauses { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryExpression o = other as QueryExpression;
-			return o != null && !o.IsNull && this.Clauses.DoMatch(o.Clauses, match);
-		}
 	}
 
 	public abstract class QueryClause : AstNode
@@ -67,14 +61,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the Identifier string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier IdentifierToken { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryContinuationClause o = other as QueryContinuationClause;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.PrecedingQuery.DoMatch(o.PrecedingQuery, match);
-		}
 	}
 
 	/// <summary>
@@ -98,18 +88,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the Identifier string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier IdentifierToken { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryFromClause o = other as QueryFromClause;
-			return o != null && this.Type.DoMatch(o.Type, match) && MatchString(this.Identifier, o.Identifier)
-				&& this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 
 	/// <summary>
@@ -129,17 +114,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the Identifier string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier IdentifierToken { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryLetClause o = other as QueryLetClause;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 
 
@@ -153,12 +134,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Condition")]
 		public partial Expression Condition { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryWhereClause o = other as QueryWhereClause;
-			return o != null && this.Condition.DoMatch(o.Condition, match);
-		}
 	}
 
 	/// <summary>
@@ -185,6 +160,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
 		public static readonly Role<Identifier> IntoIdentifierRole = new Role<Identifier>("IntoIdentifier", Identifier.Null);
 
+		// Derived from IntoIdentifier (which DoMatch already compares); exclude it to avoid a redundant compare.
+		[ExcludeFromMatch]
 		public bool IsGroupJoin {
 			get { return !string.IsNullOrEmpty(this.IntoIdentifier); }
 		}
@@ -201,6 +178,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the JoinIdentifier string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("JoinIdentifierRole")]
 		public partial Identifier JoinIdentifierToken { get; set; }
 
@@ -222,18 +201,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the IntoIdentifier string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("IntoIdentifierRole")]
 		public partial Identifier IntoIdentifierToken { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryJoinClause o = other as QueryJoinClause;
-			return o != null && this.IsGroupJoin == o.IsGroupJoin
-				&& this.Type.DoMatch(o.Type, match) && MatchString(this.JoinIdentifier, o.JoinIdentifier)
-				&& this.InExpression.DoMatch(o.InExpression, match) && this.OnExpression.DoMatch(o.OnExpression, match)
-				&& this.EqualsExpression.DoMatch(o.EqualsExpression, match)
-				&& MatchString(this.IntoIdentifier, o.IntoIdentifier);
-		}
 	}
 
 	/// <summary>
@@ -247,12 +218,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("OrderingRole")]
 		public partial AstNodeCollection<QueryOrdering> Orderings { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryOrderClause o = other as QueryOrderClause;
-			return o != null && this.Orderings.DoMatch(o.Orderings, match);
-		}
 	}
 
 	/// <summary>
@@ -275,12 +240,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get;
 			set;
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryOrdering o = other as QueryOrdering;
-			return o != null && this.Direction == o.Direction && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 
 	public enum QueryOrderingDirection
@@ -300,12 +259,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QuerySelectClause o = other as QuerySelectClause;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 
 	/// <summary>
@@ -324,11 +277,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("KeyRole")]
 		public partial Expression Key { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			QueryGroupClause o = other as QueryGroupClause;
-			return o != null && this.Projection.DoMatch(o.Projection, match) && this.Key.DoMatch(o.Key, match);
-		}
 	}
 }

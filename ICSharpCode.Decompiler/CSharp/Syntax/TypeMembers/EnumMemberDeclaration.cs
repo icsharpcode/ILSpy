@@ -48,13 +48,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("InitializerRole")]
 		public partial Expression Initializer { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			EnumMemberDeclaration o = other as EnumMemberDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
-				&& MatchString(this.Name, o.Name) && this.Initializer.DoMatch(o.Initializer, match);
-		}
 	}
 }
 

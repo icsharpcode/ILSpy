@@ -39,12 +39,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("StatementRole")]
 		public partial AstNodeCollection<Statement> Statements { get; }
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			BlockStatement o = other as BlockStatement;
-			return o != null && !o.IsNull && this.Statements.DoMatch(o.Statements, match);
-		}
-
 		public void Add(Statement statement)
 		{
 			AddChild(statement, StatementRole);

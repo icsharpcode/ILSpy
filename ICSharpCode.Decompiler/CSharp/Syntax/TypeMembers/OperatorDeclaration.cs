@@ -325,15 +325,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			OperatorDeclaration o = other as OperatorDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.OperatorType == o.OperatorType
-				&& this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.Parameters.DoMatch(o.Parameters, match) && this.Body.DoMatch(o.Body, match);
-		}
 	}
 }

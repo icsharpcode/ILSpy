@@ -64,11 +64,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return visitor.VisitExtensionDeclaration(this, data);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as ExtensionDeclaration;
-			return o != null;
-		}
 	}
 }

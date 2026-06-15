@@ -93,16 +93,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return true;
 			}
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			PropertyDeclaration o = other as PropertyDeclaration;
-			return o != null && MatchString(this.Name, o.Name)
-				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)
-				&& this.Initializer.DoMatch(o.Initializer, match)
-				&& this.ExpressionBody.DoMatch(o.ExpressionBody, match);
-		}
 	}
 }

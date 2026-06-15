@@ -43,6 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
+		// The name is just the declaring type name; exclude it from matching (and the inherited Name match).
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
@@ -54,13 +56,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ConstructorDeclaration o = other as ConstructorDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match) && this.Parameters.DoMatch(o.Parameters, match)
-				&& this.Initializer.DoMatch(o.Initializer, match) && this.Body.DoMatch(o.Body, match);
-		}
 	}
 
 	public enum ConstructorInitializerType
@@ -92,13 +87,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ConstructorInitializer o = other as ConstructorInitializer;
-			return o != null && !o.IsNull
-				&& (this.ConstructorInitializerType == ConstructorInitializerType.Any || this.ConstructorInitializerType == o.ConstructorInitializerType)
-				&& this.Arguments.DoMatch(o.Arguments, match);
-		}
 	}
 }

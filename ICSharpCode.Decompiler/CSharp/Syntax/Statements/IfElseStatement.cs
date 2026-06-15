@@ -47,12 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("FalseRole")]
 		public partial Statement FalseStatement { get; set; }
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			IfElseStatement o = other as IfElseStatement;
-			return o != null && this.Condition.DoMatch(o.Condition, match) && this.TrueStatement.DoMatch(o.TrueStatement, match) && this.FalseStatement.DoMatch(o.FalseStatement, match);
-		}
-
 		public IfElseStatement()
 		{
 		}

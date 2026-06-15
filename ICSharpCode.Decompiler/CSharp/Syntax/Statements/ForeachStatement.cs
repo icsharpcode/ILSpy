@@ -49,12 +49,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ForeachStatement o = other as ForeachStatement;
-			return o != null && this.VariableType.DoMatch(o.VariableType, match) && this.VariableDesignation.DoMatch(o.VariableDesignation, match)
-				&& this.InExpression.DoMatch(o.InExpression, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
-		}
 	}
 }

@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	[DecompilerAstNode(hasNullNode: true)]
@@ -37,13 +35,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(value)); }
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier IdentifierToken { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is SingleVariableDesignation o && MatchString(this.Identifier, o.Identifier);
-		}
 	}
 
 	/// <summary>
@@ -55,10 +50,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.VariableDesignationRole")]
 		public partial AstNodeCollection<VariableDesignation> VariableDesignations { get; }
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is ParenthesizedVariableDesignation o && VariableDesignations.DoMatch(o.VariableDesignations, match);
-		}
 	}
 }

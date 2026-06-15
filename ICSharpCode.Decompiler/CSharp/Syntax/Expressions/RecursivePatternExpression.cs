@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -43,14 +41,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial VariableDesignation Designation { get; set; }
 
 		public bool IsPositional { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is RecursivePatternExpression o
-				&& Type.DoMatch(o.Type, match)
-				&& IsPositional == o.IsPositional
-				&& SubPatterns.DoMatch(o.SubPatterns, match)
-				&& Designation.DoMatch(o.Designation, match);
-		}
 	}
 }

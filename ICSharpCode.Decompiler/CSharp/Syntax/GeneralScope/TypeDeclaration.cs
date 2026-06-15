@@ -89,16 +89,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.TypeMemberRole")]
 		public partial AstNodeCollection<EntityDeclaration> Members { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			TypeDeclaration o = other as TypeDeclaration;
-			return o != null && this.ClassType == o.ClassType && MatchString(this.Name, o.Name)
-				&& this.MatchAttributesAndModifiers(o, match) && this.TypeParameters.DoMatch(o.TypeParameters, match)
-				&& this.BaseTypes.DoMatch(o.BaseTypes, match) && this.Constraints.DoMatch(o.Constraints, match)
-				&& this.HasPrimaryConstructor == o.HasPrimaryConstructor
-				&& this.PrimaryConstructorParameters.DoMatch(o.PrimaryConstructorParameters, match)
-				&& this.Members.DoMatch(o.Members, match);
-		}
 	}
 }

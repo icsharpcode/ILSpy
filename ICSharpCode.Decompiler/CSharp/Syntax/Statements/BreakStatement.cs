@@ -33,11 +33,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class BreakStatement : Statement
 	{
 		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			BreakStatement o = other as BreakStatement;
-			return o != null;
-		}
 	}
 }

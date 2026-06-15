@@ -36,11 +36,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			UnsafeStatement o = other as UnsafeStatement;
-			return o != null && this.Body.DoMatch(o.Body, match);
-		}
 	}
 }

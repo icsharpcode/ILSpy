@@ -34,11 +34,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole YieldKeywordRole = new TokenRole("yield");
 		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			YieldBreakStatement o = other as YieldBreakStatement;
-			return o != null;
-		}
 	}
 }
