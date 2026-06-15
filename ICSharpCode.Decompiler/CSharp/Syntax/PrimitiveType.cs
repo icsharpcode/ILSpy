@@ -38,7 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PrimitiveType : AstType
 	{
-		TextLocation location;
 		string keyword = string.Empty;
 
 		public string Keyword {
@@ -69,23 +68,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public PrimitiveType(string keyword, TextLocation location)
 		{
 			this.Keyword = keyword;
-			this.location = location;
+			StorePrintStart(location);
 		}
 
-		public override TextLocation StartLocation {
-			get {
-				return location;
-			}
-		}
-
-		internal void SetStartLocation(TextLocation value)
-		{
-			this.location = value;
-		}
-
+		// StartLocation comes from the base (stored at print time); only the end needs deriving.
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation(location.Line, location.Column + keyword.Length);
+				return new TextLocation(StartLocation.Line, StartLocation.Column + keyword.Length);
 			}
 		}
 

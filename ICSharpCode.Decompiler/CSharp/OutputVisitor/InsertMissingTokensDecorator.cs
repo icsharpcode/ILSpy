@@ -127,13 +127,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				ThisReferenceExpression node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
 				if (node != null)
-					node.Location = start;
+					node.StorePrintStart(start);
 			}
 			else if (keyword == "base")
 			{
 				BaseReferenceExpression node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
 				if (node != null)
-					node.Location = start;
+					node.StorePrintStart(start);
 			}
 			base.WriteKeyword(role, keyword);
 			lastTokenEnd = locationProvider.Location;
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (node is NullReferenceExpression)
 			{
-				((NullReferenceExpression)node).SetStartLocation(startLocation);
+				((NullReferenceExpression)node).StorePrintStart(startLocation);
 			}
 			lastTokenEnd = locationProvider.Location;
 		}
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			AssignPendingStartLocations();
 			PrimitiveType node = nodes.Peek().LastOrDefault() as PrimitiveType;
 			if (node != null)
-				node.SetStartLocation(locationProvider.Location);
+				node.StorePrintStart(locationProvider.Location);
 			base.WritePrimitiveType(type);
 			lastTokenEnd = locationProvider.Location;
 		}

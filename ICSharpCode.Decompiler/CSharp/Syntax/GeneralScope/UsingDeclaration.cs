@@ -52,6 +52,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("ImportRole")]
 		public partial AstType Import { get; set; }
 
+		// Computed from Import (which is matched); exclude to avoid a redundant compare.
+		[ExcludeFromMatch]
 		public string Namespace {
 			get { return ConstructNamespace(Import); }
 		}
@@ -94,12 +96,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public UsingDeclaration(AstType import)
 		{
 			AddChild(import, ImportRole);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			UsingDeclaration o = other as UsingDeclaration;
-			return o != null && this.Import.DoMatch(o.Import, match);
 		}
 	}
 }

@@ -32,19 +32,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ThisReferenceExpression : Expression
 	{
-		public TextLocation Location {
-			get;
-			set;
-		}
-
-		public override TextLocation StartLocation {
-			get {
-				return Location;
-			}
-		}
+		// StartLocation comes from the base (stored at print time); only the end needs deriving.
 		public override TextLocation EndLocation {
 			get {
-				return new TextLocation(Location.Line, Location.Column + "this".Length);
+				return new TextLocation(StartLocation.Line, StartLocation.Column + "this".Length);
 			}
 		}
 	}

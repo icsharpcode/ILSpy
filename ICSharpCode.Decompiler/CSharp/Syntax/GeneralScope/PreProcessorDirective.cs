@@ -52,16 +52,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LinePreprocessorDirective : PreProcessorDirective
 	{
-		public int LineNumber {
-			get;
-			set;
-		}
-
-		public string FileName {
-			get;
-			set;
-		}
-
 		public LinePreprocessorDirective(TextLocation startLocation, TextLocation endLocation) : base(PreProcessorDirectiveType.Line, startLocation, endLocation)
 		{
 		}
@@ -132,33 +122,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		/// <summary>
-		/// For an '#if' directive, specifies whether the condition evaluated to true.
-		/// </summary>
-		public bool Take {
-			get;
-			set;
-		}
-
-		TextLocation startLocation;
-		public override TextLocation StartLocation {
-			get {
-				return startLocation;
-			}
-		}
-
-		TextLocation endLocation;
-		public override TextLocation EndLocation {
-			get {
-				return endLocation;
-			}
-		}
-
-		public PreProcessorDirective(PreProcessorDirectiveType type, TextLocation startLocation, TextLocation endLocation)
+		public PreProcessorDirective(PreProcessorDirectiveType type, TextLocation startLocation, TextLocation endLocation) : base(startLocation, endLocation)
 		{
 			this.Type = type;
-			this.startLocation = startLocation;
-			this.endLocation = endLocation;
 		}
 
 		public PreProcessorDirective(PreProcessorDirectiveType type, string argument = null)
