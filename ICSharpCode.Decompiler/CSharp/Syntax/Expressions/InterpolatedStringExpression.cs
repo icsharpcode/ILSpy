@@ -38,7 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public new static readonly Role<InterpolatedStringContent> Role = new Role<InterpolatedStringContent>("InterpolatedStringContent", Syntax.InterpolatedStringContent.Null);
 
-		public override NodeType NodeType => NodeType.Unknown;
 	}
 
 	/// <summary>

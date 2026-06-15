@@ -32,9 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 	public abstract class QueryClause : AstNode
 	{
-		public override NodeType NodeType {
-			get { return NodeType.QueryClause; }
-		}
 	}
 
 	/// <summary>
@@ -228,10 +225,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public readonly static TokenRole AscendingKeywordRole = new TokenRole("ascending");
 		public readonly static TokenRole DescendingKeywordRole = new TokenRole("descending");
-
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

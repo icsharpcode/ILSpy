@@ -46,9 +46,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class Accessor : EntityDeclaration
 	{
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Method; }

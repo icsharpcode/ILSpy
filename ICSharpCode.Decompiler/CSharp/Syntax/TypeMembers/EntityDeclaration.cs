@@ -33,10 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ModifierRole = new TokenRole("modifier");
 		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
 
-		public override NodeType NodeType {
-			get { return NodeType.Member; }
-		}
-
 		public abstract SymbolKind SymbolKind { get; }
 
 		public virtual AstNodeCollection<AttributeSection> Attributes {

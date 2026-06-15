@@ -33,9 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class Constraint : AstNode
 	{
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
 
 		[Slot("Roles.ConstraintTypeParameter")]
 		public partial SimpleType TypeParameter { get; set; }

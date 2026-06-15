@@ -36,12 +36,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", Identifier.Null);
 		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		public string Alias {
 			get {
 				return AliasToken.Name;

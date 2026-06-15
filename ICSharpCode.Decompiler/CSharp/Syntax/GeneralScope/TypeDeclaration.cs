@@ -50,9 +50,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TypeDeclaration : EntityDeclaration
 	{
-		public override NodeType NodeType {
-			get { return NodeType.TypeDeclaration; }
-		}
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.TypeDefinition; }

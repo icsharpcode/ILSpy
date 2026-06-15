@@ -46,8 +46,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole InModifierRole = new TokenRole("in");
 		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
 
-		public override NodeType NodeType => NodeType.Unknown;
-
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 

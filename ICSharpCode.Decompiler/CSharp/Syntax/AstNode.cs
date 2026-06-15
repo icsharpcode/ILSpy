@@ -57,10 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		const uint roleIndexMask = (1u << Role.RoleIndexBits) - 1;
 		protected const int AstNodeFlagsUsedBits = Role.RoleIndexBits;
 
-		public abstract NodeType NodeType {
-			get;
-		}
-
 		public virtual bool IsNull {
 			get {
 				return false;

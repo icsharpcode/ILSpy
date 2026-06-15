@@ -106,11 +106,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PreProcessorDirective : Trivia
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Whitespace;
-			}
-		}
 
 		public PreProcessorDirectiveType Type {
 			get;

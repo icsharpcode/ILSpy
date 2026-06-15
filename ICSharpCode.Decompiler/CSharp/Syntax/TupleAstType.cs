@@ -49,6 +49,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
 
-		public override NodeType NodeType => NodeType.Unknown;
 	}
 }

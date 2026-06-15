@@ -29,9 +29,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public abstract partial class AstType : AstNode
 	{
-		public override NodeType NodeType {
-			get { return NodeType.TypeReference; }
-		}
 
 		public new AstType Clone()
 		{

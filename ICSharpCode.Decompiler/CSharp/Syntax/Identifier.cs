@@ -40,11 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class Identifier : AstNode
 	{
-		public override NodeType NodeType {
-			get {
-				return NodeType.Token;
-			}
-		}
 
 		string name;
 		public string Name {
