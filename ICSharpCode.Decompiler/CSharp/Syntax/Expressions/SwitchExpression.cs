@@ -50,6 +50,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("BodyRole")]
 		public partial Expression Body { get; set; }
 
-		public override NodeType NodeType => NodeType.Unknown;
 	}
 }

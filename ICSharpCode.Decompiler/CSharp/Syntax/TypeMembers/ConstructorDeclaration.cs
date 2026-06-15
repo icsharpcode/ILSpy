@@ -74,12 +74,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole BaseKeywordRole = new TokenRole("base");
 		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		public ConstructorInitializerType ConstructorInitializerType {
 			get;
 			set;

@@ -174,8 +174,6 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			builder.AppendLine($@"
 	sealed class Null{source.NodeName} : {source.NodeName}
 	{{
-		public override NodeType NodeType => NodeType.Unknown;
-
 		public override bool IsNull => true;
 
 		public override void AcceptVisitor(IAstVisitor visitor)
@@ -228,17 +226,13 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		return pattern != null ? new PatternPlaceholder(pattern) : null{forgive};
 	}}
 
-	sealed class PatternPlaceholder : {source.NodeName}, INode
+	sealed class PatternPlaceholder : {source.NodeName}, INode, PatternMatching.IPatternPlaceholder
 	{{
 		readonly PatternMatching.Pattern child;
 
 		public PatternPlaceholder(PatternMatching.Pattern child)
 		{{
 			this.child = child;
-		}}
-
-		public override NodeType NodeType {{
-			get {{ return NodeType.Pattern; }}
 		}}
 
 		public override void AcceptVisitor(IAstVisitor visitor)

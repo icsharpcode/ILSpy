@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			// ignore whitespace: these don't need to be processed.
 			// StartNode/EndNode is only called for them to support folding of comments.
-			if (node.NodeType != NodeType.Whitespace)
+			if (node is not Trivia)
 			{
 				currentList.Add(node);
 				nodes.Push(currentList);
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			// ignore whitespace: these don't need to be processed.
 			// StartNode/EndNode is only called for them to support folding of comments.
-			if (node.NodeType != NodeType.Whitespace)
+			if (node is not Trivia)
 			{
 				// A node that printed no tokens of its own collapses to a zero-width span here.
 				if (nodesAwaitingStart.Remove(node))

@@ -38,12 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		[Slot("MemberRole")]
 		public partial AstNodeCollection<AstNode> Members { get; }
 

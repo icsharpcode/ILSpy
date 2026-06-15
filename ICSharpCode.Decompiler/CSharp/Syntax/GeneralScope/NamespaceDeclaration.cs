@@ -42,12 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
 		public static readonly Role<AstType> NamespaceNameRole = new Role<AstType>("NamespaceName", AstType.Null);
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		public bool IsFileScoped { get; set; }
 
 		[Slot("NamespaceNameRole")]

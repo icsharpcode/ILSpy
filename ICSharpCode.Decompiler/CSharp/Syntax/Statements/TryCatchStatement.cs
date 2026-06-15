@@ -60,12 +60,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole CondLPar = new TokenRole("(");
 		public static readonly TokenRole CondRPar = new TokenRole(")");
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 

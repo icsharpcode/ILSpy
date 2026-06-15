@@ -251,13 +251,13 @@
     <Compile Include="CSharp\Syntax\PatternMatching\IdentifierExpressionBackreference.cs" />
     <Compile Include="CSharp\Syntax\MemberType.cs" />
     <Compile Include="CSharp\Syntax\Modifiers.cs" />
-    <Compile Include="CSharp\Syntax\NodeType.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\AnyNode.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\AnyNodeOrNull.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\Backreference.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\BacktrackingInfo.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\Choice.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\INode.cs" />
+    <Compile Include="CSharp\Syntax\PatternMatching\IPatternPlaceholder.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\Match.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\NamedNode.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\OptionalNode.cs" />

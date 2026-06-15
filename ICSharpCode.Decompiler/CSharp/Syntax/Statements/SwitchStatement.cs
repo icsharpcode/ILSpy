@@ -50,12 +50,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly Role<CaseLabel> CaseLabelRole = new Role<CaseLabel>("CaseLabel", null);
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		[Slot("CaseLabelRole")]
 		public partial AstNodeCollection<CaseLabel> CaseLabels { get; }
 
@@ -71,12 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
 		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
-
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
 
 		/// <summary>
 		/// Gets or sets the expression. The expression can be null - if the expression is null, it's the default switch section.

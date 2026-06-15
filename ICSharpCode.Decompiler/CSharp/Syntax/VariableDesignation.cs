@@ -21,7 +21,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public abstract partial class VariableDesignation : AstNode
 	{
-		public override NodeType NodeType => NodeType.Unknown;
 	}
 
 	/// <summary>

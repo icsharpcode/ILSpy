@@ -33,10 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");
 		public static readonly TokenRole InVarianceKeywordRole = new TokenRole("in");
 
-		public override NodeType NodeType {
-			get { return NodeType.Unknown; }
-		}
-
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 

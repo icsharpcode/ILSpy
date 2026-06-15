@@ -43,12 +43,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
 		public static readonly Role<AstType> ImportRole = new Role<AstType>("Import", AstType.Null);
 
-		public override NodeType NodeType {
-			get {
-				return NodeType.Unknown;
-			}
-		}
-
 		[Slot("ImportRole")]
 		public partial AstType Import { get; set; }
 
