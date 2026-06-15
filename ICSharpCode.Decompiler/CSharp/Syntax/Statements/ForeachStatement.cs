@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>foreach_statement : 'await'? 'foreach' '(' 'scoped'? ref_kind? local_variable_type identifier 'in' expression ')' embedded_statement ;</c> (C# grammar §13.9.5.1)
+	/// <c>foreach_statement ::= 'await'? 'foreach' '(' type variable_designation 'in' expression ')' statement</c> (C# grammar §13.9.5.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ForeachStatement : Statement

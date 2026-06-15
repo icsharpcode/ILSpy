@@ -31,7 +31,7 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>compilation_unit : extern_alias_directive* using_directive* global_attributes? compilation_unit_body ;</c> (C# grammar §14.2)
+	/// <c>compilation_unit ::= extern_alias_directive* using_directive* global_attributes? compilation_unit_body</c> (C# grammar §14.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SyntaxTree : AstNode

@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>default_value_expression : explicitly_typed_default | default_literal ;</c> (C# grammar §12.8.21)
+	/// <c>default_value_expression ::= 'default' ( '(' type ')' )?</c> (C# grammar §12.8.21)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DefaultValueExpression : Expression

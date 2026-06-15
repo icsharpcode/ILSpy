@@ -27,8 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>attribute_section : '[' attribute_target_specifier? attribute_list ']' ;</c> (C# grammar §23.3)
-	/// <c>global_attribute_section : '[' global_attribute_target_specifier attribute_list ']' ;</c> (C# grammar §23.3)
+	/// <c>attribute_section ::= '[' ( identifier ':' )? attribute* ']'</c> (C# grammar §23.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
 	public partial class AttributeSection : AstNode

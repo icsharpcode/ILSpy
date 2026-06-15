@@ -30,7 +30,7 @@ using System.Linq;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>anonymous_method_expression : anonymous_function_modifier? 'delegate' explicit_anonymous_function_signature? block ;</c> (C# grammar §12.22.1)
+	/// <c>anonymous_method_expression ::= 'async'? 'delegate' parameter* block</c> (C# grammar §12.22.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class AnonymousMethodExpression : Expression

@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>funcptr_type : 'delegate' '*' calling_convention_specifier? '&lt;' funcptr_parameter_list funcptr_return_type '&gt;' ;</c> (C# grammar §24.3.3)
+	/// <c>funcptr_type ::= 'delegate' '*' calling_convention_specifier? '&lt;' funcptr_parameter_list funcptr_return_type '&gt;'</c> (C# grammar §24.3.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FunctionPointerAstType : AstType

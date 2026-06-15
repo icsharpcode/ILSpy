@@ -19,7 +19,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>throw_expression : 'throw' null_coalescing_expression ;</c> (C# grammar §12.19)
+	/// <c>throw_expression ::= 'throw' expression</c> (C# grammar §12.19)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ThrowExpression : Expression

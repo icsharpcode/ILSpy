@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>using_alias_directive : 'using' identifier '=' namespace_or_type_name ';' ;</c> (C# grammar §14.6.2)
+	/// <c>using_alias_directive ::= 'using' identifier '=' type ';'</c> (C# grammar §14.6.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UsingAliasDeclaration : AstNode

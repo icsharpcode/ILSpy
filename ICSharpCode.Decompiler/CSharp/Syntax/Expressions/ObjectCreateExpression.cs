@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>object_creation_expression : 'new' type '(' argument_list? ')' object_or_collection_initializer? | 'new' type object_or_collection_initializer | target_typed_new ;</c> (C# grammar §12.8.17.2.1)
+	/// <c>object_create_expression ::= 'new' type '(' expression* ')' array_initializer_expression?</c> (C# grammar §12.8.17.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ObjectCreateExpression : Expression

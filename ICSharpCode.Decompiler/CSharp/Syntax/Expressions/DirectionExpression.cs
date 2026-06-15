@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>argument_value : expression | 'in' 'scoped'? variable_reference | 'ref' 'scoped'? variable_reference | 'out' 'scoped'? variable_reference ;</c> (C# grammar §12.6.2.1)
+	/// <c>argument_value ::= ( 'ref' | 'out' | 'in' )? expression</c> (C# grammar §12.6.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DirectionExpression : Expression

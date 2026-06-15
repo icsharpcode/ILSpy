@@ -29,8 +29,12 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>namespace_declaration : 'namespace' qualified_identifier namespace_body ';'? ;</c> (C# grammar §14.3)
-	/// <c>file_scoped_namespace_declaration : 'namespace' qualified_identifier ';' extern_alias_directive* using_directive* type_declaration* ;</c> (C# grammar §14.3)
+	/// <code>
+	/// namespace_declaration ::=
+	///       'namespace' type '{' namespace_member* '}' ';'?
+	///     | 'namespace' type ';' namespace_member*
+	/// </code>
+	/// (C# grammar §14.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamespaceDeclaration : AstNode

@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// No C# spec grammar production: ILSpy-internal type form used when a type appears applied to arguments (e.g. an attribute type written with its constructor arguments).
-	/// <c>invocation_ast_type : type '(' argument_list? ')' ;</c>
+	/// <c>invocation_ast_type ::= type '(' argument_list? ')'</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InvocationAstType : AstType

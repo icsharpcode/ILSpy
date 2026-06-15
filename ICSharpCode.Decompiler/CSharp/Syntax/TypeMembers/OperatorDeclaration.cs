@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	}
 
 	/// <summary>
-	/// <c>operator_declaration : attributes? operator_modifier+ operator_declarator operator_body ;</c> (C# grammar §15.10.1)
+	/// <c>operator_declaration ::= attribute_section* modifier+ type ( type '.' )? 'operator' 'checked'? operator_token '(' parameter* ')' ( block | ';' )</c> (C# grammar §15.10.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class OperatorDeclaration : EntityDeclaration

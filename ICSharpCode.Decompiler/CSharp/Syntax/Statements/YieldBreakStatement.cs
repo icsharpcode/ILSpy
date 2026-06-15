@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>yield_statement : 'yield' 'return' expression ';' | 'yield' 'break' ';' ;</c> (C# grammar §13.15)
+	/// <c>yield_statement ::= 'yield' 'break' ';'</c> (C# grammar §13.15)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class YieldBreakStatement : Statement

@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>local_variable_declaration : implicitly_typed_local_variable_declaration | explicitly_typed_local_variable_declaration | explicitly_typed_ref_local_variable_declaration ;</c> (C# grammar §13.6.2.1)
+	/// <c>local_variable_declaration ::= type variable_initializer+</c> (C# grammar §13.6.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class VariableDeclarationStatement : Statement

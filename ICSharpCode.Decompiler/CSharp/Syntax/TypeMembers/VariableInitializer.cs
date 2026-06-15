@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>variable_declarator : identifier ('=' variable_initializer)? ;</c> (C# grammar §15.5.1)
+	/// <c>variable_declarator ::= identifier ( '=' expression )?</c> (C# grammar §15.5.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class VariableInitializer : AstNode

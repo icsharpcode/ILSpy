@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>break_statement : 'break' ';' ;</c> (C# grammar §13.10.2)
+	/// <c>break_statement ::= 'break' ';'</c> (C# grammar §13.10.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class BreakStatement : Statement

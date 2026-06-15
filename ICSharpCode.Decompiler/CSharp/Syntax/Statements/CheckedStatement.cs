@@ -27,7 +27,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>checked_statement : 'checked' block ;</c> (C# grammar §13.12)
+	/// <c>checked_statement ::= 'checked' block</c> (C# grammar §13.12)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CheckedStatement : Statement

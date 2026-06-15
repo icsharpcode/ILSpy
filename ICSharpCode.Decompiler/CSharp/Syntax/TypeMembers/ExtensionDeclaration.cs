@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Not present in this revision of the C# specification grammar: C# 14 extension blocks ('extension(receiver) { members }').
-	/// <c>extension_declaration : 'extension' type_parameter_list? '(' parameter_list? ')' type_parameter_constraints_clause* '{' class_member_declaration* '}' ;</c>
+	/// <c>extension_declaration ::= attribute_section* 'extension' type_parameter* '(' parameter* ')' constraint* '{' member* '}'</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ExtensionDeclaration : EntityDeclaration

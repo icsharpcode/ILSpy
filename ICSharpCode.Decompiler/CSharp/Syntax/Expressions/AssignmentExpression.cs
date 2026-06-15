@@ -31,8 +31,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Operator precedence is not represented in the syntax tree; required parentheses are reconstructed by <see cref="ICSharpCode.Decompiler.CSharp.OutputVisitor.InsertParenthesesVisitor"/>.
-	/// <c>assignment_expression : expression assignment_operator expression ;</c> (C# grammar §12.24)
-	/// <c>assignment_operator : '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&lt;&lt;=' | '&gt;&gt;=' | '&gt;&gt;&gt;=' | '&amp;=' | '|=' | '^=' ;</c>
+	/// <c>assignment_expression ::= expression assignment_operator expression</c> (C# grammar §12.24)
+	/// <c>assignment_operator ::= '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&lt;&lt;=' | '&gt;&gt;=' | '&gt;&gt;&gt;=' | '&amp;=' | '|=' | '^='</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class AssignmentExpression : Expression

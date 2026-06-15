@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>member_access : primary_expression '.' identifier type_argument_list? | predefined_type '.' identifier type_argument_list? | qualified_alias_member '.' identifier type_argument_list? ;</c> (C# grammar §12.8.7.1)
+	/// <c>member_reference_expression ::= expression '.' identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §12.8.7.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class MemberReferenceExpression : Expression

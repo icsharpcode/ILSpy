@@ -22,7 +22,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// No C# spec grammar production: this models a 'cref' reference inside XML documentation comments, not C# source syntax.
-	/// <c>documentation_reference : type_name | type_name '.' member_name | member_name ;</c>
+	/// <code>
+	/// documentation_reference ::=
+	///       type_name
+	///     | type_name '.' member_name
+	///     | member_name
+	/// </code>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DocumentationReference : AstNode
