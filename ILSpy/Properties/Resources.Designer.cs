@@ -2997,7 +2997,16 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("ShowMetadataTokensInBase10", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Show omnibar (breadcrumb / search bar) above the decompiled code.
+        /// </summary>
+        public static string ShowOmnibar {
+            get {
+                return ResourceManager.GetString("ShowOmnibar", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Show only public types and members.
         /// </summary>

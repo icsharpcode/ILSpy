@@ -1,0 +1,197 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="using:ICSharpCode.ILSpy"
+             xmlns:omnibar="using:ICSharpCode.ILSpy.Controls.Omnibar"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="28"
+             x:Class="ICSharpCode.ILSpy.Controls.Omnibar.Omnibar"
+             x:DataType="omnibar:OmnibarViewModel"
+             Name="self">
+
+	<UserControl.Styles>
+		<!-- Flat, transparent-until-hover treatment mirroring the toolbar buttons, so the bar
+		     reads as chrome rather than a row of raised buttons. -->
+		<Style Selector="Button.crumb">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="CornerRadius" Value="3" />
+			<Setter Property="Foreground" Value="{DynamicResource ILSpy.WindowForeground}" />
+		</Style>
+		<Style Selector="Button.crumb:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{DynamicResource ILSpy.OmnibarHover}" />
+		</Style>
+
+		<Style Selector="Button.chevron">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="3,2" />
+			<Setter Property="CornerRadius" Value="3" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+		<Style Selector="Button.chevron:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{DynamicResource ILSpy.OmnibarHover}" />
+		</Style>
+
+		<Style Selector="Button.searchToggle">
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="BorderThickness" Value="0" />
+			<Setter Property="Padding" Value="4,2" />
+			<Setter Property="CornerRadius" Value="3" />
+		</Style>
+		<Style Selector="Button.searchToggle:pointerover /template/ ContentPresenter">
+			<Setter Property="Background" Value="{DynamicResource ILSpy.OmnibarHover}" />
+		</Style>
+	</UserControl.Styles>
+
+	<Panel>
+		<Border Height="28"
+		        Background="{DynamicResource ILSpy.OmnibarBackground}"
+		        BorderBrush="{DynamicResource ILSpy.OmnibarBorder}"
+		        BorderThickness="0,0,0,1"
+		        Padding="4,0">
+			<Panel>
+
+			<!-- Breadcrumb face: the trail plus a search affordance on the right. -->
+			<Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsBreadcrumbMode}">
+				<ScrollViewer Grid.Column="0"
+				              HorizontalScrollBarVisibility="Auto"
+				              VerticalScrollBarVisibility="Disabled"
+				              VerticalAlignment="Center">
+					<ItemsControl ItemsSource="{Binding Segments}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<StackPanel Orientation="Horizontal" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+						<ItemsControl.ItemTemplate>
+							<DataTemplate x:DataType="omnibar:BreadcrumbSegment">
+								<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+									<Button Classes="crumb" Click="OnSegmentClick" Tag="{Binding}"
+									        ToolTip.Tip="{Binding Text}">
+										<StackPanel Orientation="Horizontal" Spacing="4">
+											<Image Source="{Binding Icon}" Width="16" Height="16"
+											       VerticalAlignment="Center" />
+											<TextBlock Text="{Binding Text}" VerticalAlignment="Center" />
+										</StackPanel>
+									</Button>
+									<Button Classes="chevron" Click="OnChevronClick" Tag="{Binding}"
+									        IsVisible="{Binding HasChildren}"
+									        ToolTip.Tip="Show contents">
+										<Path Width="8" Height="5"
+										      Stretch="None"
+										      Stroke="{DynamicResource ILSpy.SecondaryForeground}"
+										      StrokeThickness="1.3"
+										      StrokeLineCap="Round"
+										      StrokeJoin="Round"
+										      Data="M 1 1 L 4 4 L 7 1" />
+									</Button>
+								</StackPanel>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</ScrollViewer>
+				<Button Grid.Column="1" Classes="searchToggle" Click="OnEnterSearchClick"
+				        VerticalAlignment="Center"
+				        ToolTip.Tip="Search (Ctrl+L)">
+					<Image Source="{x:Static local:Images.Search}" Width="16" Height="16" />
+				</Button>
+			</Grid>
+
+			<!-- Search face: a single-line query box with a leading magnifier and a clear button. -->
+			<Grid ColumnDefinitions="Auto,*" IsVisible="{Binding IsSearchMode}">
+				<Image Grid.Column="0" Source="{x:Static local:Images.Search}"
+				       Width="16" Height="16" Margin="2,0,4,0" VerticalAlignment="Center" />
+				<TextBox Grid.Column="1" Name="SearchInput"
+				         BorderThickness="0"
+				         Background="Transparent"
+				         VerticalAlignment="Center"
+				         VerticalContentAlignment="Center"
+				         PlaceholderText="Search types and members - t:Type, m:Member, c:Constant; -exclude, +require, /regex/"
+				         Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+					<TextBox.InnerRightContent>
+						<Button IsVisible="{Binding SearchText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+						        Background="Transparent" BorderThickness="0"
+						        Padding="4,0" Margin="0"
+						        ToolTip.Tip="Clear (Esc)"
+						        Click="OnClearSearchClick">
+							<TextBlock Text="x" FontSize="11" VerticalAlignment="Center" />
+						</Button>
+					</TextBox.InnerRightContent>
+				</TextBox>
+			</Grid>
+			</Panel>
+		</Border>
+
+		<!-- Inline suggestion list, anchored under the bar. Declared inside the control tree so the
+		     overlay popup host resolves its control theme through this logical parent (see
+		     DecompilerTextView's RichHoverPopup note). -->
+		<Popup Name="SuggestionsPopup"
+		       PlacementTarget="{Binding #self}"
+		       Placement="BottomEdgeAlignedLeft"
+		       IsLightDismissEnabled="True">
+			<Border Background="{DynamicResource ILSpy.InputBackground}"
+			        BorderBrush="{DynamicResource ILSpy.OmnibarBorder}"
+			        BorderThickness="1"
+			        CornerRadius="3"
+			        MinWidth="420"
+			        MaxHeight="360">
+				<ListBox Name="SuggestionsList"
+				         ItemsSource="{Binding Suggestions}"
+				         x:CompileBindings="False"
+				         BorderThickness="0">
+					<ListBox.ItemTemplate>
+						<DataTemplate>
+							<Grid ColumnDefinitions="Auto,6,*,12,Auto" Margin="2,1">
+								<Image Grid.Column="0" Source="{Binding Image}" Width="16" Height="16"
+								       VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="{Binding Name}"
+								           VerticalAlignment="Center"
+								           TextTrimming="CharacterEllipsis" />
+								<TextBlock Grid.Column="4" Text="{Binding Location}"
+								           Foreground="{DynamicResource ILSpy.SecondaryForeground}"
+								           VerticalAlignment="Center"
+								           TextTrimming="CharacterEllipsis" />
+							</Grid>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+			</Border>
+		</Popup>
+
+		<!-- Chevron dropdown: a filterable list of a crumb's child nodes for lateral navigation.
+		     One shared popup repositioned to whichever chevron was clicked. -->
+		<Popup Name="ChevronPopup"
+		       Placement="BottomEdgeAlignedLeft"
+		       IsLightDismissEnabled="True">
+			<Border Background="{DynamicResource ILSpy.InputBackground}"
+			        BorderBrush="{DynamicResource ILSpy.OmnibarBorder}"
+			        BorderThickness="1"
+			        CornerRadius="3"
+			        MinWidth="220"
+			        MaxHeight="400">
+				<DockPanel>
+					<TextBox Name="ChevronFilter" DockPanel.Dock="Top"
+					         Margin="4"
+					         PlaceholderText="Filter..."
+					         TextChanged="OnChevronFilterChanged" />
+					<ListBox Name="ChevronList"
+					         BorderThickness="0">
+						<ListBox.ItemTemplate>
+							<DataTemplate x:DataType="omnibar:BreadcrumbSegment">
+								<Grid ColumnDefinitions="Auto,6,*" Margin="2,1">
+									<Image Grid.Column="0" Source="{Binding Icon}" Width="16" Height="16"
+									       VerticalAlignment="Center" />
+									<TextBlock Grid.Column="2" Text="{Binding Text}"
+									           VerticalAlignment="Center"
+									           TextTrimming="CharacterEllipsis" />
+								</Grid>
+							</DataTemplate>
+						</ListBox.ItemTemplate>
+					</ListBox>
+				</DockPanel>
+			</Border>
+		</Popup>
+	</Panel>
+</UserControl>

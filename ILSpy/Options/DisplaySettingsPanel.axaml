@@ -103,6 +103,8 @@
 					          Content="Enable multiple rows in tab strip" />
 					<CheckBox IsChecked="{Binding SessionSettings.MouseWheelTogglesTabStripRows, Mode=TwoWay}"
 					          Content="Mouse wheel scroll toggles single/multiple row tab strip" />
+					<CheckBox IsChecked="{Binding Settings.EnableOmnibar, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ShowOmnibar}" />
 				</StackPanel>
 			</HeaderedContentControl>
 

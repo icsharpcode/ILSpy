@@ -307,6 +307,10 @@ namespace ICSharpCode.ILSpy.TextView
 				cachedBaseTitle = ComposeBaseTitle();
 				foreach (var n in currentNodes)
 					n.PropertyChanged += OnCurrentNodePropertyChanged;
+				// Let host chrome (the omnibar breadcrumb) react to the tab re-targeting a node.
+				// Nothing else relied on the absence of this notification.
+				OnPropertyChanged(nameof(CurrentNodes));
+				OnPropertyChanged(nameof(CurrentNode));
 				StartDecompile();
 			}
 		}

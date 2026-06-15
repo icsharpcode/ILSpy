@@ -1021,6 +1021,9 @@ Do you want to continue?</value>
   <data name="ShowMetadataTokensInBase10" xml:space="preserve">
     <value>Show metadata tokens in base 10</value>
   </data>
+  <data name="ShowOmnibar" xml:space="preserve">
+    <value>Show omnibar (breadcrumb / search bar) above the decompiled code</value>
+  </data>
   <data name="ShowPublicOnlyTypesMembers" xml:space="preserve">
     <value>Show only public types and members</value>
   </data>
