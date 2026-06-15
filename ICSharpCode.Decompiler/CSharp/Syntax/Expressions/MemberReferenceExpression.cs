@@ -46,6 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the MemberName string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier MemberNameToken { get; set; }
 
@@ -71,12 +73,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(target, memberName, (IEnumerable<AstType>)arguments)
 		{
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			MemberReferenceExpression o = other as MemberReferenceExpression;
-			return o != null && this.Target.DoMatch(o.Target, match) && MatchString(this.MemberName, o.MemberName) && this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
 	}
 }

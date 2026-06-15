@@ -59,11 +59,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public IndexerExpression(Expression target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
 		{
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			IndexerExpression o = other as IndexerExpression;
-			return o != null && this.Target.DoMatch(o.Target, match) && this.Arguments.DoMatch(o.Arguments, match);
-		}
 	}
 }

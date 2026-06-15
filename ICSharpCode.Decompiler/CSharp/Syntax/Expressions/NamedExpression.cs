@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// No standalone expression production: 'name = value' as used in object initializers (member_initializer), anonymous-object members (member_declarator), and named attribute arguments.
-	/// <c>named_expression : identifier '=' expression ;</c>
+	/// <c>named_expression ::= identifier '=' expression</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamedExpression : Expression
@@ -52,16 +52,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the Name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as NamedExpression;
-			return o != null && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 }

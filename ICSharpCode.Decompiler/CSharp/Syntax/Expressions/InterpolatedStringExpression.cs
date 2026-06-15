@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -24,12 +22,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public InterpolatedStringExpression(IList<InterpolatedStringContent> content)
 		{
 			Content.AddRange(content);
-		}
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			InterpolatedStringExpression o = other as InterpolatedStringExpression;
-			return o != null && !o.IsNull && this.Content.DoMatch(o.Content, match);
 		}
 	}
 
@@ -68,12 +60,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Alignment = alignment;
 			Suffix = suffix;
 		}
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			Interpolation o = other as Interpolation;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 
 	/// <summary>
@@ -92,12 +78,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public InterpolatedStringText(string text)
 		{
 			Text = text;
-		}
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			InterpolatedStringText o = other as InterpolatedStringText;
-			return o != null && o.Text == this.Text;
 		}
 	}
 }
