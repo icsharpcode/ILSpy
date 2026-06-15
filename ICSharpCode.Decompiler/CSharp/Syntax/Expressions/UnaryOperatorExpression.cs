@@ -75,13 +75,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			UnaryOperatorExpression o = other as UnaryOperatorExpression;
-			return o != null && (this.Operator == UnaryOperatorType.Any || this.Operator == o.Operator)
-				&& this.Expression.DoMatch(o.Expression, match);
-		}
-
 		public static TokenRole GetOperatorRole(UnaryOperatorType op)
 		{
 			switch (op)

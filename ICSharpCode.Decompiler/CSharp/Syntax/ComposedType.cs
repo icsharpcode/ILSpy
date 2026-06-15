@@ -69,6 +69,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool HasNullableSpecifier { get; set; }
 
+		// Derived from the other specifiers (all matched); exclude it to avoid a redundant compare.
+		[ExcludeFromMatch]
 		public bool HasOnlyNullableSpecifier {
 			get {
 				return HasNullableSpecifier && !HasRefSpecifier && !HasReadOnlySpecifier && PointerRank == 0 && ArraySpecifiers.Count == 0;
@@ -90,18 +92,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("ArraySpecifierRole")]
 		public partial AstNodeCollection<ArraySpecifier> ArraySpecifiers { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ComposedType o = other as ComposedType;
-			return o != null
-				&& this.HasNullableSpecifier == o.HasNullableSpecifier
-				&& this.PointerRank == o.PointerRank
-				&& this.HasRefSpecifier == o.HasRefSpecifier
-				&& this.HasReadOnlySpecifier == o.HasReadOnlySpecifier
-				&& this.BaseType.DoMatch(o.BaseType, match)
-				&& this.ArraySpecifiers.DoMatch(o.ArraySpecifiers, match);
-		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
@@ -171,12 +161,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public int Dimensions { get; set; } = 1;
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ArraySpecifier o = other as ArraySpecifier;
-			return o != null && this.Dimensions == o.Dimensions;
-		}
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{

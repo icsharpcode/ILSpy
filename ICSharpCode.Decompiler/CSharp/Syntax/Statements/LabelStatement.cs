@@ -41,13 +41,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier LabelToken { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			LabelStatement o = other as LabelStatement;
-			return o != null && MatchString(this.Label, o.Label);
-		}
 	}
 }

@@ -33,11 +33,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ContinueStatement : Statement
 	{
 		public static readonly TokenRole ContinueKeywordRole = new TokenRole("continue");
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ContinueStatement o = other as ContinueStatement;
-			return o != null;
-		}
 	}
 }

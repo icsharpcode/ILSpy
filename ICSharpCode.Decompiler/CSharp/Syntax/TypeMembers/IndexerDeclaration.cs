@@ -86,16 +86,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("ExpressionBodyRole")]
 		public partial Expression ExpressionBody { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			IndexerDeclaration o = other as IndexerDeclaration;
-			return o != null
-				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.Parameters.DoMatch(o.Parameters, match)
-				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)
-				&& this.ExpressionBody.DoMatch(o.ExpressionBody, match);
-		}
 	}
 }

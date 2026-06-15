@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -30,11 +28,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("ElementRole")]
 		public partial AstNodeCollection<TupleTypeElement> Elements { get; }
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is TupleAstType o && Elements.DoMatch(o.Elements, match);
-		}
 	}
 
 	/// <summary>
@@ -51,16 +44,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { SetChildByRole(Roles.Identifier, Identifier.Create(value)); }
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
 
 		public override NodeType NodeType => NodeType.Unknown;
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is TupleTypeElement o
-				&& Type.DoMatch(o.Type, match)
-				&& MatchString(Name, o.Name);
-		}
 	}
 }

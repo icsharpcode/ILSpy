@@ -56,6 +56,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
 
@@ -66,12 +68,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public TypeParameterDeclaration(string name)
 		{
 			Name = name;
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			TypeParameterDeclaration o = other as TypeParameterDeclaration;
-			return o != null && this.Variance == o.Variance && MatchString(this.Name, o.Name) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 	}
 }

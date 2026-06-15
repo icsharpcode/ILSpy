@@ -55,14 +55,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			GotoStatement o = other as GotoStatement;
-			return o != null && MatchString(this.Label, o.Label);
-		}
 	}
 
 	/// <summary>
@@ -79,12 +75,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		[Slot("Roles.Expression")]
 		public partial Expression LabelExpression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			GotoCaseStatement o = other as GotoCaseStatement;
-			return o != null && this.LabelExpression.DoMatch(o.LabelExpression, match);
-		}
 	}
 
 	/// <summary>
@@ -95,11 +85,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
 		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			GotoDefaultStatement o = other as GotoDefaultStatement;
-			return o != null;
-		}
 	}
 }

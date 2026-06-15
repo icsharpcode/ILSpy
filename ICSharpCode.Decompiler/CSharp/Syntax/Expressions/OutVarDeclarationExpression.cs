@@ -41,11 +41,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Type = type;
 			this.Variable = new VariableInitializer(name);
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as OutVarDeclarationExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Variable.DoMatch(o.Variable, match);
-		}
 	}
 }

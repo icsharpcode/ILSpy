@@ -52,12 +52,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			Attribute o = other as Attribute;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Arguments.DoMatch(o.Arguments, match);
-		}
-
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
 			if (IsNull)

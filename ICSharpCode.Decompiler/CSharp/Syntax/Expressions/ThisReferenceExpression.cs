@@ -47,11 +47,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return new TextLocation(Location.Line, Location.Column + "this".Length);
 			}
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ThisReferenceExpression o = other as ThisReferenceExpression;
-			return o != null;
-		}
 	}
 }

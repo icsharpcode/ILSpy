@@ -75,17 +75,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier IdentifierToken { get; set; }
 
 		[Slot("Roles.TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			SimpleType o = other as SimpleType;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);
-		}
 	}
 }
 

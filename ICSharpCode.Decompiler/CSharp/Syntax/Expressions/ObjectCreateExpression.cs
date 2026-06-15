@@ -29,7 +29,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>object_create_expression ::= 'new' type '(' expression* ')' array_initializer_expression?</c> (C# grammar §12.8.17.2.1)
+	/// <c>object_create_expression ::= 'new' type '(' expression* ')' array_initializer?</c> (C# grammar §12.8.17.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ObjectCreateExpression : Expression
@@ -64,12 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ObjectCreateExpression(AstType type, params Expression[] arguments) : this(type, (IEnumerable<Expression>)arguments)
 		{
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			ObjectCreateExpression o = other as ObjectCreateExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Arguments.DoMatch(o.Arguments, match) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }

@@ -51,6 +51,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("AliasRole")]
 		public partial Identifier AliasToken { get; set; }
 
@@ -71,12 +73,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			AddChild(Identifier.Create(alias), AliasRole);
 			AddChild(import, ImportRole);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			UsingAliasDeclaration o = other as UsingAliasDeclaration;
-			return o != null && MatchString(this.Alias, o.Alias) && this.Import.DoMatch(o.Import, match);
 		}
 	}
 }

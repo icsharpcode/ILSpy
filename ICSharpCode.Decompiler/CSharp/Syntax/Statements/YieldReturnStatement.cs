@@ -37,11 +37,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			YieldReturnStatement o = other as YieldReturnStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
-		}
 	}
 }

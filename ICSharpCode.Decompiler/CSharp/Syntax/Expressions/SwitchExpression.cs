@@ -33,12 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("SwitchSectionRole")]
 		public partial AstNodeCollection<SwitchExpressionSection> SwitchSections { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			SwitchExpression o = other as SwitchExpression;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
-		}
 	}
 
 	/// <summary>
@@ -57,11 +51,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial Expression Body { get; set; }
 
 		public override NodeType NodeType => NodeType.Unknown;
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			SwitchExpressionSection o = other as SwitchExpressionSection;
-			return o != null && this.Pattern.DoMatch(o.Pattern, match) && this.Body.DoMatch(o.Body, match);
-		}
 	}
 }

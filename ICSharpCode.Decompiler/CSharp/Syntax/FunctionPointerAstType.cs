@@ -45,13 +45,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Type")]
 		public partial AstType ReturnType { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			return other is FunctionPointerAstType o
-				&& this.CallingConventions.DoMatch(o.CallingConventions, match)
-				&& this.Parameters.DoMatch(o.Parameters, match)
-				&& this.ReturnType.DoMatch(o.ReturnType, match);
-		}
 	}
 }

@@ -43,16 +43,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
+		// The name is just the declaring type name; exclude it from matching (and the inherited Name match).
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			DestructorDeclaration o = other as DestructorDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match) && this.Body.DoMatch(o.Body, match);
-		}
 	}
 }

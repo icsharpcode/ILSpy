@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -32,12 +30,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Type")]
 		public partial AstType BaseType { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is InvocationAstType o
-				&& this.BaseType.DoMatch(o.BaseType, match)
-				&& this.Arguments.DoMatch(o.Arguments, match);
-		}
 	}
 }

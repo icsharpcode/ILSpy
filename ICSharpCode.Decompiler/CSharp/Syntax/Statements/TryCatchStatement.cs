@@ -46,12 +46,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("FinallyBlockRole")]
 		public partial BlockStatement FinallyBlock { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			TryCatchStatement o = other as TryCatchStatement;
-			return o != null && this.TryBlock.DoMatch(o.TryBlock, match) && this.CatchClauses.DoMatch(o.CatchClauses, match) && this.FinallyBlock.DoMatch(o.FinallyBlock, match);
-		}
 	}
 
 	/// <summary>
@@ -85,6 +79,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier VariableNameToken { get; set; }
 
@@ -93,11 +89,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			CatchClause o = other as CatchClause;
-			return o != null && this.Type.DoMatch(o.Type, match) && MatchString(this.VariableName, o.VariableName) && this.Body.DoMatch(o.Body, match);
-		}
 	}
 }

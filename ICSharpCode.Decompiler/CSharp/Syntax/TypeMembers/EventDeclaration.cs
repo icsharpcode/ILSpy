@@ -65,13 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return Identifier.Null; }
 			set { throw new NotSupportedException(); }
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			EventDeclaration o = other as EventDeclaration;
-			return o != null && this.MatchAttributesAndModifiers(o, match)
-				&& this.ReturnType.DoMatch(o.ReturnType, match) && this.Variables.DoMatch(o.Variables, match);
-		}
 	}
 
 	/// <summary>
@@ -112,14 +105,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("RemoveAccessorRole")]
 		public partial Accessor RemoveAccessor { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			CustomEventDeclaration o = other as CustomEventDeclaration;
-			return o != null && MatchString(this.Name, o.Name)
-				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.AddAccessor.DoMatch(o.AddAccessor, match) && this.RemoveAccessor.DoMatch(o.RemoveAccessor, match);
-		}
 	}
 }

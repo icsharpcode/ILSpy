@@ -40,12 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("SwitchSectionRole")]
 		public partial AstNodeCollection<SwitchSection> SwitchSections { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			SwitchStatement o = other as SwitchStatement;
-			return o != null && this.Expression.DoMatch(o.Expression, match) && this.SwitchSections.DoMatch(o.SwitchSections, match);
-		}
 	}
 
 	/// <summary>
@@ -67,12 +61,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.EmbeddedStatement")]
 		public partial AstNodeCollection<Statement> Statements { get; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			SwitchSection o = other as SwitchSection;
-			return o != null && this.CaseLabels.DoMatch(o.CaseLabels, match) && this.Statements.DoMatch(o.Statements, match);
-		}
 	}
 
 	/// <summary>
@@ -103,12 +91,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CaseLabel(Expression expression)
 		{
 			this.Expression = expression;
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			CaseLabel o = other as CaseLabel;
-			return o != null && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

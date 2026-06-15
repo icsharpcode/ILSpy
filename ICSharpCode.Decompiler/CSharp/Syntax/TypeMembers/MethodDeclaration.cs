@@ -74,16 +74,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return pd != null && pd.HasThisModifier;
 			}
 		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			MethodDeclaration o = other as MethodDeclaration;
-			return o != null && MatchString(this.Name, o.Name)
-				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
-				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.TypeParameters.DoMatch(o.TypeParameters, match)
-				&& this.Parameters.DoMatch(o.Parameters, match) && this.Constraints.DoMatch(o.Constraints, match)
-				&& this.Body.DoMatch(o.Body, match);
-		}
 	}
 }

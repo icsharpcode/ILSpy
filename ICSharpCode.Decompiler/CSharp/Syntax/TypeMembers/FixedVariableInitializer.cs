@@ -57,17 +57,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
+		// DoMatch compares the Name string; exclude the token slot to avoid matching it twice.
+		[ExcludeFromMatch]
 		[Slot("Roles.Identifier")]
 		public partial Identifier NameToken { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression CountExpression { get; set; }
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as FixedVariableInitializer;
-			return o != null && MatchString(this.Name, o.Name) && this.CountExpression.DoMatch(o.CountExpression, match);
-		}
 	}
 }
 

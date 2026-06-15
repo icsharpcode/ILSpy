@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -34,11 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public LocalFunctionDeclarationStatement(MethodDeclaration methodDeclaration)
 		{
 			AddChild(methodDeclaration, MethodDeclarationRole);
-		}
-
-		protected internal override bool DoMatch(AstNode other, Match match)
-		{
-			return other is LocalFunctionDeclarationStatement o && Declaration.DoMatch(o.Declaration, match);
 		}
 	}
 }
