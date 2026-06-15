@@ -90,6 +90,11 @@
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#808080" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="White" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedForeground" Color="Black" />
+                    <!-- Omnibar (breadcrumb / search bar atop the decompiled view): a faint surface
+                         set off from the cream editor canvas, with the toolbar accent for crumb hover. -->
+                    <SolidColorBrush x:Key="ILSpy.OmnibarBackground" Color="#F3F3F3" />
+                    <SolidColorBrush x:Key="ILSpy.OmnibarBorder" Color="#FFC8CDD3" />
+                    <SolidColorBrush x:Key="ILSpy.OmnibarHover" Color="#330078D7" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#1E1E1E" />
@@ -142,6 +147,11 @@
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerForeground" Color="#A0A0A0" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedBackground" Color="#2D2D30" />
                     <SolidColorBrush x:Key="ILSpy.FoldingMarkerSelectedForeground" Color="#DCDCDC" />
+                    <!-- Omnibar: a step lighter than the dark editor canvas so the bar reads as
+                         chrome, sharing the toolbar accent for crumb hover. -->
+                    <SolidColorBrush x:Key="ILSpy.OmnibarBackground" Color="#2D2D30" />
+                    <SolidColorBrush x:Key="ILSpy.OmnibarBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.OmnibarHover" Color="#330078D7" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 

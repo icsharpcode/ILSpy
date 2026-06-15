@@ -96,6 +96,9 @@ namespace ICSharpCode.ILSpy.Options
 		[ObservableProperty]
 		bool decodeCustomAttributeBlobs;
 
+		[ObservableProperty]
+		bool enableOmnibar;
+
 		public XName SectionName => "DisplaySettings";
 
 		public void LoadFromXml(XElement section)
@@ -121,6 +124,7 @@ namespace ICSharpCode.ILSpy.Options
 			ShowRawOffsetsAndBytesBeforeInstruction = (bool?)section.Attribute(nameof(ShowRawOffsetsAndBytesBeforeInstruction)) ?? false;
 			StyleWindowTitleBar = (bool?)section.Attribute(nameof(StyleWindowTitleBar)) ?? false;
 			DecodeCustomAttributeBlobs = (bool?)section.Attribute(nameof(DecodeCustomAttributeBlobs)) ?? false;
+			EnableOmnibar = (bool?)section.Attribute(nameof(EnableOmnibar)) ?? false;
 		}
 
 		public XElement SaveToXml()
@@ -147,6 +151,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue(nameof(ShowRawOffsetsAndBytesBeforeInstruction), ShowRawOffsetsAndBytesBeforeInstruction);
 			section.SetAttributeValue(nameof(StyleWindowTitleBar), StyleWindowTitleBar);
 			section.SetAttributeValue(nameof(DecodeCustomAttributeBlobs), DecodeCustomAttributeBlobs);
+			section.SetAttributeValue(nameof(EnableOmnibar), EnableOmnibar);
 			return section;
 		}
 	}

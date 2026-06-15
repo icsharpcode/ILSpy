@@ -129,6 +129,19 @@ namespace ICSharpCode.ILSpy.TextView
 			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
 
 			SetupZoomAndCopy();
+
+			// Ctrl+L focuses the omnibar into search mode (browser address-bar gesture). Tunnel so
+			// it wins before AvaloniaEdit's own key handling while focus is anywhere in the editor.
+			AddHandler(KeyDownEvent, OnPreviewKeyDownForOmnibar, RoutingStrategies.Tunnel);
+		}
+
+		void OnPreviewKeyDownForOmnibar(object? sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.L && e.KeyModifiers == KeyModifiers.Control && Omnibar.IsVisible)
+			{
+				Omnibar.FocusSearch();
+				e.Handled = true;
+			}
 		}
 
 		// One generator lives for the lifetime of the view; we only swap its References collection
@@ -492,6 +505,7 @@ namespace ICSharpCode.ILSpy.TextView
 			ApplyDisplaySetting(s, nameof(DisplaySettings.HighlightCurrentLine));
 			ApplyDisplaySetting(s, nameof(DisplaySettings.IndentationSize));
 			ApplyDisplaySetting(s, nameof(DisplaySettings.IndentationUseTabs));
+			ApplyDisplaySetting(s, nameof(DisplaySettings.EnableOmnibar));
 		}
 
 		void ApplyDisplaySetting(DisplaySettings s, string? propertyName)
@@ -521,6 +535,11 @@ namespace ICSharpCode.ILSpy.TextView
 					break;
 				case nameof(DisplaySettings.IndentationUseTabs):
 					Editor.Options.ConvertTabsToSpaces = !s.IndentationUseTabs;
+					break;
+				case nameof(DisplaySettings.EnableOmnibar):
+					// Off by default; the Options Display "Tab options" toggle shows/hides the bar
+					// live without a re-decompile, per text view.
+					Omnibar.IsVisible = s.EnableOmnibar;
 					break;
 			}
 		}
@@ -605,6 +624,13 @@ namespace ICSharpCode.ILSpy.TextView
 				// the first attach and an ABA reattach.
 				model.CaptureViewState = GetCurrentViewState;
 				ApplyDocument(model);
+				// Point the breadcrumb at this tab's node (the bar owns its own VM, so feed it the
+				// node rather than letting it inherit the document DataContext).
+				Omnibar.SetNode(model.CurrentNode);
+			}
+			else
+			{
+				Omnibar.SetNode(null);
 			}
 		}
 
@@ -636,6 +662,13 @@ namespace ICSharpCode.ILSpy.TextView
 				// Restore caret/scroll/foldings only on the Text change (the final content);
 				// SyntaxExtension fires an intermediate rebuild that must not move the scroll.
 				ApplyDocument(model, restoreViewState: e.PropertyName == nameof(DecompilerTabPageModel.Text));
+			}
+			// Keep the breadcrumb in step when the tab re-targets a different node (the model
+			// raises this when CurrentNodes changes).
+			else if (sender is DecompilerTabPageModel nodeModel
+				&& e.PropertyName == nameof(DecompilerTabPageModel.CurrentNode))
+			{
+				Omnibar.SetNode(nodeModel.CurrentNode);
 			}
 			// HighlightedReference can change independently of a re-decompile (e.g. the analyzer
 			// pane sets it while the user is already on the right tab). Apply it directly without

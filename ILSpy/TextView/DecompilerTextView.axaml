@@ -5,6 +5,7 @@
              xmlns:ae="using:AvaloniaEdit"
              xmlns:aeediting="using:AvaloniaEdit.Editing"
              xmlns:textView="using:ICSharpCode.ILSpy.TextView"
+             xmlns:omnibar="using:ICSharpCode.ILSpy.Controls.Omnibar"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
              Name="self"
              x:Class="ICSharpCode.ILSpy.TextView.DecompilerTextView"
@@ -19,6 +20,11 @@
 			<Setter Property="SelectionBrush" Value="{DynamicResource ILSpy.EditorSelectionBrush}" />
 		</Style>
 	</UserControl.Styles>
+
+	<DockPanel>
+	<!-- Breadcrumb / search bar atop the editor (EditorBar-style): shows the decompiled node's
+	     path and turns into a search box on typing. Per document tab, owns its own view model. -->
+	<omnibar:Omnibar Name="Omnibar" DockPanel.Dock="Top" />
 
 	<!-- Wait-adorner: a translucent overlay above the editor with a centred title +
 	     progress bar + cancel button while a decompilation is in flight. -->
@@ -87,4 +93,5 @@
 		     materialises and the popup is invisible. Renders nothing while closed. -->
 		<Popup Name="RichHoverPopup" />
 	</Grid>
+	</DockPanel>
 </UserControl>
