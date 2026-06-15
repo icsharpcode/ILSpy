@@ -9,7 +9,57 @@
              x:DataType="omnibar:OmnibarViewModel"
              Name="self">
 
+	<UserControl.Resources>
+		<!-- Thin, button-less overlay scrollbar for the breadcrumb. The Simple theme's scrollbar
+		     reserves a layout row (shifting the crumbs) and never auto-hides, so the breadcrumb
+		     hides its built-in bar and overlays this one instead: a bare track + rounded thumb that
+		     fades in (see the fade style below) only while the path overflows and the pointer is
+		     over the bar. -->
+		<ControlTheme x:Key="OmnibarOverflowScrollBar" TargetType="ScrollBar">
+			<Setter Property="Height" Value="6" />
+			<Setter Property="MinHeight" Value="6" />
+			<Setter Property="Background" Value="Transparent" />
+			<Setter Property="Opacity" Value="0" />
+			<Setter Property="IsHitTestVisible" Value="False" />
+			<Setter Property="Transitions">
+				<Transitions>
+					<DoubleTransition Property="Opacity" Duration="0:0:0.15" />
+				</Transitions>
+			</Setter>
+			<Setter Property="Template">
+				<ControlTemplate>
+					<Border Background="Transparent" Padding="2,0,2,1">
+						<Track Name="PART_Track"
+						       Orientation="Horizontal"
+						       Minimum="{TemplateBinding Minimum}"
+						       Maximum="{TemplateBinding Maximum}"
+						       Value="{TemplateBinding Value, Mode=TwoWay}"
+						       ViewportSize="{TemplateBinding ViewportSize}">
+							<Track.Thumb>
+								<Thumb Height="4" MinWidth="24" VerticalAlignment="Center"
+								       Background="{DynamicResource ILSpy.OmnibarScrollThumb}">
+									<Thumb.Template>
+										<ControlTemplate>
+											<Border Background="{TemplateBinding Background}" CornerRadius="2" />
+										</ControlTemplate>
+									</Thumb.Template>
+								</Thumb>
+							</Track.Thumb>
+						</Track>
+					</Border>
+				</ControlTemplate>
+			</Setter>
+		</ControlTheme>
+	</UserControl.Resources>
+
 	<UserControl.Styles>
+		<!-- Reveal the overflow scrollbar (and make it grabbable) only while the pointer is over the
+		     breadcrumb; it fades back out on leave via the Opacity transition above. -->
+		<Style Selector="Grid#BreadcrumbFace:pointerover ScrollBar#BreadcrumbScrollbar">
+			<Setter Property="Opacity" Value="1" />
+			<Setter Property="IsHitTestVisible" Value="True" />
+		</Style>
+
 		<!-- Flat, transparent-until-hover treatment mirroring the toolbar buttons, so the bar
 		     reads as chrome rather than a row of raised buttons. -->
 		<Style Selector="Button.crumb">
@@ -54,11 +104,16 @@
 			<Panel>
 
 			<!-- Breadcrumb face: the trail plus a search affordance on the right. -->
-			<Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsBreadcrumbMode}">
-				<ScrollViewer Grid.Column="0"
-				              HorizontalScrollBarVisibility="Auto"
+			<Grid Name="BreadcrumbFace" ColumnDefinitions="*,Auto" IsVisible="{Binding IsBreadcrumbMode}">
+				<!-- The trail scrolls horizontally with its built-in bar hidden (the Simple theme's
+				     bar would reserve a row and shift the crumbs); a thin overlay bar is layered on
+				     top instead, and the mouse wheel scrolls the trail (see code-behind). -->
+				<Panel Grid.Column="0">
+				<ScrollViewer Name="BreadcrumbScroll"
+				              HorizontalScrollBarVisibility="Hidden"
 				              VerticalScrollBarVisibility="Disabled"
-				              VerticalAlignment="Center">
+				              VerticalAlignment="Center"
+				              PointerWheelChanged="OnBreadcrumbWheel">
 					<ItemsControl ItemsSource="{Binding Segments}">
 						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
@@ -92,6 +147,16 @@
 						</ItemsControl.ItemTemplate>
 					</ItemsControl>
 				</ScrollViewer>
+				<ScrollBar Name="BreadcrumbScrollbar"
+				           Orientation="Horizontal"
+				           VerticalAlignment="Bottom"
+				           Theme="{StaticResource OmnibarOverflowScrollBar}"
+				           Minimum="0"
+				           Maximum="{Binding #BreadcrumbScroll.ScrollBarMaximum, Converter={x:Static omnibar:OmnibarScrollConverters.VectorX}}"
+				           ViewportSize="{Binding #BreadcrumbScroll.Viewport, Converter={x:Static omnibar:OmnibarScrollConverters.SizeWidth}}"
+				           Value="{Binding #BreadcrumbScroll.Offset, Mode=TwoWay, Converter={x:Static omnibar:OmnibarScrollConverters.VectorX}}"
+				           IsVisible="{Binding #BreadcrumbScroll.ScrollBarMaximum, Converter={x:Static omnibar:OmnibarScrollConverters.VectorXPositive}}" />
+				</Panel>
 				<Button Grid.Column="1" Classes="searchToggle" Click="OnEnterSearchClick"
 				        VerticalAlignment="Center"
 				        ToolTip.Tip="Search (Ctrl+L)">

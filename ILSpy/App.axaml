@@ -95,6 +95,7 @@
                     <SolidColorBrush x:Key="ILSpy.OmnibarBackground" Color="#F3F3F3" />
                     <SolidColorBrush x:Key="ILSpy.OmnibarBorder" Color="#FFC8CDD3" />
                     <SolidColorBrush x:Key="ILSpy.OmnibarHover" Color="#330078D7" />
+                    <SolidColorBrush x:Key="ILSpy.OmnibarScrollThumb" Color="#A6555555" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="ILSpy.EditorBackground" Color="#1E1E1E" />
@@ -152,6 +153,7 @@
                     <SolidColorBrush x:Key="ILSpy.OmnibarBackground" Color="#2D2D30" />
                     <SolidColorBrush x:Key="ILSpy.OmnibarBorder" Color="#3F3F46" />
                     <SolidColorBrush x:Key="ILSpy.OmnibarHover" Color="#330078D7" />
+                    <SolidColorBrush x:Key="ILSpy.OmnibarScrollThumb" Color="#A6C8C8C8" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 

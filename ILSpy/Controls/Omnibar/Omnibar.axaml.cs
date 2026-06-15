@@ -98,6 +98,22 @@ namespace ICSharpCode.ILSpy.Controls.Omnibar
 		void OnEnterSearchClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
 			=> FocusSearch();
 
+		// Vertical scrolling is disabled on the breadcrumb, so the wheel is otherwise idle here;
+		// map it to horizontal scroll so the trail can be panned without hunting for the thin
+		// overlay thumb.
+		void OnBreadcrumbWheel(object? sender, PointerWheelEventArgs e)
+		{
+			var max = BreadcrumbScroll.ScrollBarMaximum.X;
+			if (max <= 0)
+				return;
+			// A wheel notch is one unit; crumbs are far wider, so scale up for a usable step.
+			const double step = 48;
+			var delta = (e.Delta.Y != 0 ? e.Delta.Y : e.Delta.X) * step;
+			var x = Math.Clamp(BreadcrumbScroll.Offset.X - delta, 0, max);
+			BreadcrumbScroll.Offset = BreadcrumbScroll.Offset.WithX(x);
+			e.Handled = true;
+		}
+
 		void OnClearSearchClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
 		{
 			viewModel.SearchText = string.Empty;
