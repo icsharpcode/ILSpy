@@ -2,7 +2,8 @@
 root = true
 
 [*]
-charset = utf-8 # standardize on no BOM (except resx, see below)
+# standardize on no BOM (except resx, see below)
+charset = utf-8
 indent_style = tab
 indent_size = 4
 guidelines = 110
