@@ -731,7 +731,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var assignment = HandleAccessorCall(expectedTargetDetails, method, unused,
 				argumentList.Arguments.ToList(), argumentList.ArgumentNames);
 
-			if (((AssignmentExpression)assignment).Left is IndexerExpression indexer && !indexer.Target.IsNull)
+			if (((AssignmentExpression)assignment).Left is IndexerExpression indexer && indexer.Target is not null)
 				indexer.Target.Remove();
 
 			if (value != null)
@@ -1093,7 +1093,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					case ArrayCreateResolveResult { Type: ArrayType { ElementType: var type3 }, SizeArguments: [{ ConstantValue: int arrayLength }] }:
 						elementType = type3;
-						arguments = new(((ArrayCreateExpression)paramsArgument.Expression).Initializer.Elements.Select(e => new TranslatedExpression(e)));
+						arguments = new(((ArrayCreateExpression)paramsArgument.Expression).Initializer?.Elements.Select(e => new TranslatedExpression(e)) ?? []);
 						parameters = new List<IParameter>(arrayLength);
 						for (int i = 0; i < arrayLength; i++)
 						{
@@ -1423,7 +1423,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					continue;
 				if (child is ReturnStatement ret)
 				{
-					ret.Expression = new TranslatedExpression(ret.Expression.Detach()).ConvertTo(returnType, expressionBuilder);
+					if (ret.Expression is not null)
+						ret.Expression = new TranslatedExpression(ret.Expression.Detach()).ConvertTo(returnType, expressionBuilder);
 					continue;
 				}
 				ModifyReturnStatementInsideLambda(returnType, child);

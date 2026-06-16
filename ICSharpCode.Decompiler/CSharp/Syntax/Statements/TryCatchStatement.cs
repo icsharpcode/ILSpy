@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -45,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<CatchClause> CatchClauses { get; }
 
 		[Slot("FinallyBlockRole")]
-		public partial BlockStatement FinallyBlock { get; set; }
+		public partial BlockStatement? FinallyBlock { get; set; }
 	}
 
 	/// <summary>
@@ -61,13 +63,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole CondRPar = new TokenRole(")");
 
 		[Slot("Roles.Type")]
-		public partial AstType Type { get; set; }
+		public partial AstType? Type { get; set; }
 
 		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
 		public partial string VariableName { get; set; }
 
 		[Slot("ConditionRole")]
-		public partial Expression Condition { get; set; }
+		public partial Expression? Condition { get; set; }
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }

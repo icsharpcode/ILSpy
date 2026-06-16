@@ -199,17 +199,21 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void VisitIndexerExpression(IndexerExpression indexerExpression)
 		{
-			ParenthesizeIfRequired(indexerExpression.Target, PrecedenceLevel.Primary);
-			switch (indexerExpression.Target)
+			// An implicit-element-access indexer (e.g. the '[i]' in a dictionary initializer) has no target.
+			if (indexerExpression.Target is not null)
 			{
-				case ArrayCreateExpression ace when InsertParenthesesForReadability || ace.Initializer.IsNull:
-					// require parentheses for "(new int[1])[0]"
-					Parenthesize(indexerExpression.Target);
-					break;
-				case StackAllocExpression sae when InsertParenthesesForReadability || sae.Initializer.IsNull:
-					// require parentheses for "(stackalloc int[1])[0]"
-					Parenthesize(indexerExpression.Target);
-					break;
+				ParenthesizeIfRequired(indexerExpression.Target, PrecedenceLevel.Primary);
+				switch (indexerExpression.Target)
+				{
+					case ArrayCreateExpression ace when InsertParenthesesForReadability || ace.Initializer is null:
+						// require parentheses for "(new int[1])[0]"
+						Parenthesize(indexerExpression.Target);
+						break;
+					case StackAllocExpression sae when InsertParenthesesForReadability || sae.Initializer is null:
+						// require parentheses for "(stackalloc int[1])[0]"
+						Parenthesize(indexerExpression.Target);
+						break;
+				}
 			}
 			base.VisitIndexerExpression(indexerExpression);
 		}
@@ -487,7 +491,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public override void VisitVariableInitializer(VariableInitializer variableInitializer)
 		{
-			if (!variableInitializer.Initializer.IsNull)
+			if (variableInitializer.Initializer is not null)
 				HandleAssignmentRHS(variableInitializer.Initializer);
 			base.VisitVariableInitializer(variableInitializer);
 		}

@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		[Slot("Roles.Body")]
-		public partial BlockStatement Body { get; set; }
+		public partial BlockStatement? Body { get; set; }
 
 		public static TokenRole? GetAccessorKeywordRole(AccessorKind kind)
 		{

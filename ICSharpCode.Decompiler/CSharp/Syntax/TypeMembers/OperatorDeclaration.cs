@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.ComponentModel;
 
@@ -174,7 +176,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override partial AstType ReturnType { get; set; }
 
 		[Slot("PrivateImplementationTypeRole")]
-		public partial AstType PrivateImplementationType { get; set; }
+		public partial AstType? PrivateImplementationType { get; set; }
 
 		OperatorType operatorType;
 
@@ -189,7 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		[Slot("Roles.Body")]
-		public partial BlockStatement Body { get; set; }
+		public partial BlockStatement? Body { get; set; }
 
 		/// <summary>
 		/// Gets the operator type from the method name, or null, if the method does not represent one of the known operator types.
@@ -281,7 +283,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets the method name for the operator type. ("op_Addition", "op_Implicit", etc.)
 		/// </summary>
-		public static string GetName(OperatorType? type)
+		public static string? GetName(OperatorType? type)
 		{
 			if (type == null)
 				return null;
@@ -316,7 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override string Name {
-			get { return GetName(this.OperatorType); }
+			get { return GetName(this.OperatorType)!; }
 			set { throw new NotSupportedException(); }
 		}
 

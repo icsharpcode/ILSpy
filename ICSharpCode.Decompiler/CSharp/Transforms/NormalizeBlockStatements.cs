@@ -91,9 +91,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			DoTransform(usingStatement.EmbeddedStatement, usingStatement);
 		}
 
-		void DoTransform(Statement statement, Statement parent)
+		void DoTransform(Statement? statement, Statement parent)
 		{
-			if (statement.IsNull)
+			if (statement is null || statement.IsNull)
 				return;
 			if (context.Settings.AlwaysUseBraces)
 			{
@@ -219,12 +219,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var m = CalculatedGetterOnlyPropertyPattern.Match(propertyDeclaration);
 			if (!m.Success)
 				return;
-			if ((propertyDeclaration.Getter.Modifiers & ~movableModifiers) != 0)
+			if (propertyDeclaration.Getter is not { } getter)
 				return;
-			propertyDeclaration.Modifiers |= propertyDeclaration.Getter.Modifiers;
+			if ((getter.Modifiers & ~movableModifiers) != 0)
+				return;
+			propertyDeclaration.Modifiers |= getter.Modifiers;
 			propertyDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
-			propertyDeclaration.CopyAnnotationsFrom(propertyDeclaration.Getter);
-			propertyDeclaration.Getter.Remove();
+			propertyDeclaration.CopyAnnotationsFrom(getter);
+			getter.Remove();
 		}
 
 		void SimplifyIndexerDeclaration(IndexerDeclaration indexerDeclaration)
@@ -232,12 +234,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var m = CalculatedGetterOnlyIndexerPattern.Match(indexerDeclaration);
 			if (!m.Success)
 				return;
-			if ((indexerDeclaration.Getter.Modifiers & ~movableModifiers) != 0)
+			if (indexerDeclaration.Getter is not { } getter)
 				return;
-			indexerDeclaration.Modifiers |= indexerDeclaration.Getter.Modifiers;
+			if ((getter.Modifiers & ~movableModifiers) != 0)
+				return;
+			indexerDeclaration.Modifiers |= getter.Modifiers;
 			indexerDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
-			indexerDeclaration.CopyAnnotationsFrom(indexerDeclaration.Getter);
-			indexerDeclaration.Getter.Remove();
+			indexerDeclaration.CopyAnnotationsFrom(getter);
+			getter.Remove();
 		}
 	}
 }

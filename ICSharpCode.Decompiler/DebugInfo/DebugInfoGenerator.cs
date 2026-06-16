@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
-			if (!propertyDeclaration.ExpressionBody.IsNull)
+			if (propertyDeclaration.ExpressionBody is not null)
 			{
 				HandleMethod(propertyDeclaration.ExpressionBody, propertyDeclaration.Annotation<ILFunction>());
 			}
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 		public override void VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration)
 		{
-			if (!indexerDeclaration.ExpressionBody.IsNull)
+			if (indexerDeclaration.ExpressionBody is not null)
 			{
 				HandleMethod(indexerDeclaration.ExpressionBody, indexerDeclaration.Annotation<ILFunction>());
 			}

@@ -24,6 +24,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
+using System.Diagnostics.CodeAnalysis;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -41,12 +45,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
 
 		[Slot("Roles.Type")]
-		public partial AstType Type { get; set; }
+		public partial AstType? Type { get; set; }
 
 		[Slot("Roles.Expression")]
-		public partial Expression CountExpression { get; set; }
+		public partial Expression? CountExpression { get; set; }
 
 		[Slot("InitializerRole")]
-		public partial ArrayInitializerExpression Initializer { get; set; }
+		public partial ArrayInitializerExpression? Initializer { get; set; }
 	}
 }

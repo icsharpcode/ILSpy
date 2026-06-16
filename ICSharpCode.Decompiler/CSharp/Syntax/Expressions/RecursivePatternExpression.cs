@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -32,13 +34,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly Role<Expression> SubPatternRole = new Role<Expression>("SubPattern", Syntax.Expression.Null);
 
 		[Slot("Roles.Type")]
-		public partial AstType Type { get; set; }
+		public partial AstType? Type { get; set; }
 
 		[Slot("SubPatternRole")]
 		public partial AstNodeCollection<Expression> SubPatterns { get; }
 
 		[Slot("Roles.VariableDesignationRole")]
-		public partial VariableDesignation Designation { get; set; }
+		public partial VariableDesignation? Designation { get; set; }
 
 		public bool IsPositional { get; set; }
 	}

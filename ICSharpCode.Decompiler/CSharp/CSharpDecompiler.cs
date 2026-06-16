@@ -1663,7 +1663,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					typeDecl.Members.AddRange(entityMap[member]);
 				}
 
-				if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull))
+				if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType is null))
 				{
 					// Remove the [DefaultMember] attribute if the class contains indexers
 					RemoveAttribute(typeDecl, KnownAttribute.DefaultMember);

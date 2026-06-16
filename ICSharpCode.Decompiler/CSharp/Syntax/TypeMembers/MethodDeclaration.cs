@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -51,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
 		[Slot("PrivateImplementationTypeRole")]
-		public partial AstType PrivateImplementationType { get; set; }
+		public partial AstType? PrivateImplementationType { get; set; }
 
 		[Slot("Roles.Identifier")]
 		public override partial Identifier NameToken { get; set; }
@@ -66,7 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<Constraint> Constraints { get; }
 
 		[Slot("Roles.Body")]
-		public partial BlockStatement Body { get; set; }
+		public partial BlockStatement? Body { get; set; }
 
 		public bool IsExtensionMethod {
 			get {

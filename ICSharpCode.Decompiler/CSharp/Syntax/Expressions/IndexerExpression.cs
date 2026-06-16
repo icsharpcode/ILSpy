@@ -26,6 +26,8 @@
 
 using System.Collections.Generic;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -35,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class IndexerExpression : Expression
 	{
 		[Slot("Roles.TargetExpression")]
-		public partial Expression Target { get; set; }
+		public partial Expression? Target { get; set; }
 
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
@@ -44,9 +46,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public IndexerExpression(Expression target, IEnumerable<Expression> arguments)
+		public IndexerExpression(Expression? target, IEnumerable<Expression>? arguments)
 		{
-			AddChild(target, Roles.TargetExpression);
+			Target = target;
 			if (arguments != null)
 			{
 				foreach (var arg in arguments)
@@ -56,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public IndexerExpression(Expression target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
+		public IndexerExpression(Expression? target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
 		{
 		}
 	}

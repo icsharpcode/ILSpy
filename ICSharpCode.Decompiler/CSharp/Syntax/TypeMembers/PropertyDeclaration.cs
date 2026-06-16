@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -64,28 +66,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override partial Identifier NameToken { get; set; }
 
 		[Slot("PrivateImplementationTypeRole")]
-		public partial AstType PrivateImplementationType { get; set; }
+		public partial AstType? PrivateImplementationType { get; set; }
 
 		[Slot("GetterRole")]
-		public partial Accessor Getter { get; set; }
+		public partial Accessor? Getter { get; set; }
 
 		[Slot("SetterRole")]
-		public partial Accessor Setter { get; set; }
+		public partial Accessor? Setter { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Initializer { get; set; }
 
 		[Slot("ExpressionBodyRole")]
-		public partial Expression ExpressionBody { get; set; }
+		public partial Expression? ExpressionBody { get; set; }
 
 		public bool IsAutomaticProperty {
 			get {
-				if (!Getter.IsNull && !Getter.Body.IsNull)
+				if (Getter is { Body: not null })
 				{
 					return false;
 				}
 
-				if (!Setter.IsNull && !Setter.Body.IsNull)
+				if (Setter is { Body: not null })
 				{
 					return false;
 				}

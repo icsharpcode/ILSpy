@@ -614,14 +614,14 @@ namespace ICSharpCode.ILSpy.Languages
 							}
 							break;
 						case FieldDeclaration fd:
-							if (fd.Variables.All(v => v.Initializer.IsNull))
+							if (fd.Variables.All(v => v.Initializer is null))
 							{
 								fd.Remove();
 								removedSymbols.Add(fd.GetSymbol());
 							}
 							break;
 						case EventDeclaration ed:
-							if (ed.Variables.All(v => v.Initializer.IsNull))
+							if (ed.Variables.All(v => v.Initializer is null))
 							{
 								ed.Remove();
 								removedSymbols.Add(ed.GetSymbol());
@@ -641,7 +641,7 @@ namespace ICSharpCode.ILSpy.Languages
 							break;
 					}
 				}
-				if (ctorDecl?.Initializer.ConstructorInitializerType == ConstructorInitializerType.This)
+				if (ctorDecl?.Initializer?.ConstructorInitializerType == ConstructorInitializerType.This)
 				{
 					foreach (var node in rootNode.Children)
 					{

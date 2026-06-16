@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -79,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the declaring type.
 		/// </summary>
 		[Slot("DeclaringTypeRole")]
-		public partial AstType DeclaringType { get; set; }
+		public partial AstType? DeclaringType { get; set; }
 
 		/// <summary>
 		/// Gets/sets the member name.
@@ -106,9 +108,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			DocumentationReference o = other as DocumentationReference;
+			DocumentationReference? o = other as DocumentationReference;
 			if (!(o != null && this.SymbolKind == o.SymbolKind && this.HasParameterList == o.HasParameterList))
 				return false;
 			if (this.SymbolKind == SymbolKind.Operator)
