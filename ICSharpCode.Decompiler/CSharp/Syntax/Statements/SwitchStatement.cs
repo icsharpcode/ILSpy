@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -70,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets or sets the expression. The expression can be null - if the expression is null, it's the default switch section.
 		/// </summary>
 		[Slot("Roles.Expression")]
-		public partial Expression Expression { get; set; }
+		public partial Expression? Expression { get; set; }
 
 		public CaseLabel()
 		{

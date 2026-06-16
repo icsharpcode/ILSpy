@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -42,6 +44,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<ArraySpecifier> AdditionalArraySpecifiers { get; }
 
 		[Slot("InitializerRole")]
-		public partial ArrayInitializerExpression Initializer { get; set; }
+		public partial ArrayInitializerExpression? Initializer { get; set; }
 	}
 }

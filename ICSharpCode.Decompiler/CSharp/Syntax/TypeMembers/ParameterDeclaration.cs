@@ -84,13 +84,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		[Slot("Roles.Type")]
-		public partial AstType Type { get; set; }
+		public partial AstType? Type { get; set; }
 
 		[NameSlot("Roles.Identifier")]
 		public partial string Name { get; set; }
 
 		[Slot("Roles.Expression")]
-		public partial Expression DefaultExpression { get; set; }
+		public partial Expression? DefaultExpression { get; set; }
 
 		public ParameterDeclaration()
 		{

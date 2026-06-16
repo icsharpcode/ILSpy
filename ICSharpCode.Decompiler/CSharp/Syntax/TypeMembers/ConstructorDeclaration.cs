@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -52,10 +54,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		[Slot("InitializerRole")]
-		public partial ConstructorInitializer Initializer { get; set; }
+		public partial ConstructorInitializer? Initializer { get; set; }
 
 		[Slot("Roles.Body")]
-		public partial BlockStatement Body { get; set; }
+		public partial BlockStatement? Body { get; set; }
 	}
 
 	public enum ConstructorInitializerType

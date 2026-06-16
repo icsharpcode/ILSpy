@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				bool skippedStmts = false;
 
 				Statement? stmt;
-				for (stmt = ctor.Body.Statements.FirstOrDefault(); stmt != null; stmt = stmt.GetNextStatement())
+				for (stmt = ctor.Body?.Statements.FirstOrDefault(); stmt != null; stmt = stmt.GetNextStatement())
 				{
 					var m = memberInitializerPattern.Match(stmt);
 					if (!m.Success)
@@ -200,6 +200,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public bool IsMatch(ConstructorDeclaration ctor)
 			{
+				if (ctor.Body is null)
+					return false;
 				var stmts = ctor.Body.Statements;
 				var otherStmt = stmts.FirstOrDefault();
 				foreach (var (stmt, member, initializer, _) in Statements)
@@ -326,7 +328,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					else
 					{
 						// find this-ctor call
-						var stmt = ctor.Body.Statements.FirstOrDefault();
+						var stmt = ctor.Body?.Statements.FirstOrDefault();
 						var m = ctorMethod.DeclaringType.Kind == TypeKind.Struct
 							? ThisCallStructPattern.Match(stmt)
 							: ThisCallClassPattern.Match(stmt);
@@ -449,6 +451,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public bool MoveConstructorInitializer(ConstructorDeclaration constructorDeclaration, IMethod ctorMethod)
 			{
+				if (constructorDeclaration.Body is null)
+					return false;
 				Statement stmt = constructorDeclaration.Body.Statements.FirstOrDefault()!;
 				var isValueType = ctorMethod.DeclaringType.Kind == TypeKind.Struct;
 
@@ -512,7 +516,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						case FieldDeclaration fd:
 							v = fd.Variables.Single();
-							if (v.Initializer.IsNull)
+							if (v.Initializer is null)
 							{
 								v.Initializer = initializer.Detach();
 							}
@@ -554,7 +558,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							break;
 						case EventDeclaration ev:
 							v = ev.Variables.Single();
-							if (v.Initializer.IsNull)
+							if (v.Initializer is null)
 							{
 								v.Initializer = initializer.Detach();
 							}
@@ -603,7 +607,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Debug.Assert(PrimaryConstructorDecl != null);
 
 					this.TypeDeclaration.HasPrimaryConstructor = PrimaryConstructor.Parameters.Any()
-						|| !PrimaryConstructorDecl.Initializer.IsNull
+						|| PrimaryConstructorDecl.Initializer is not null
 						|| TypeDefinition.Kind == TypeKind.Struct;
 
 					// HACK: because our current AST model doesn't allow specifying an explicit order of roles,
@@ -671,15 +675,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						this.TypeDeclaration.Modifiers |= Modifiers.Unsafe;
 					}
 
-					if (!PrimaryConstructorDecl.Initializer.IsNull && TypeDeclaration is { BaseTypes.Count: > 0 })
+					if (PrimaryConstructorDecl.Initializer is { } initializer && TypeDeclaration is { BaseTypes.Count: > 0 })
 					{
-						Debug.Assert(PrimaryConstructorDecl.Initializer is { ConstructorInitializerType: ConstructorInitializerType.Base });
+						Debug.Assert(initializer.ConstructorInitializerType == ConstructorInitializerType.Base);
 
 						var baseType = TypeDeclaration.BaseTypes.First();
 						var newBaseType = new InvocationAstType();
 						baseType.ReplaceWith(newBaseType);
 						newBaseType.BaseType = baseType;
-						PrimaryConstructorDecl.Initializer.Arguments.MoveTo(newBaseType.Arguments);
+						initializer.Arguments.MoveTo(newBaseType.Arguments);
 					}
 
 					PrimaryConstructorDecl.Remove();
@@ -690,7 +694,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					Debug.Assert(StaticConstructorDecl != null);
 
-					if (IsBeforeFieldInit && StaticConstructorDecl.Body.Statements.Count == 0)
+					if (IsBeforeFieldInit && StaticConstructorDecl.Body is { Statements.Count: 0 })
 					{
 						StaticConstructorDecl.Remove();
 					}

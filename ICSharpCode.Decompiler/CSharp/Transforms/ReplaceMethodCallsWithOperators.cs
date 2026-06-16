@@ -63,9 +63,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Reduce "String.Concat(a, b)" to "a + b"
 			if (IsStringConcat(method) && context.Settings.StringConcat)
 			{
-				if (arguments is [ArrayCreateExpression ace] && method.Parameters is [{ Type: ArrayType }])
+				if (arguments is [ArrayCreateExpression { Initializer: { } aceInitializer }] && method.Parameters is [{ Type: ArrayType }])
 				{
-					arguments = ace.Initializer.Elements.ToArray();
+					arguments = aceInitializer.Elements.ToArray();
 				}
 
 				if (!CheckArgumentsForStringConcat(arguments))

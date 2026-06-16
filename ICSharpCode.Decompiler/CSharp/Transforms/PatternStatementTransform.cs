@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override AstNode VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
 			if (context.Settings.AutomaticProperties
-				&& (!propertyDeclaration.Setter.IsNull || context.Settings.GetterOnlyAutomaticProperties))
+				&& (propertyDeclaration.Setter is not null || context.Settings.GetterOnlyAutomaticProperties))
 			{
 				AstNode? result = TransformAutomaticProperty(propertyDeclaration);
 				if (result != null)
@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
 		{
-			if (statement.Condition.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable))
+			if (statement.Condition?.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable) == true)
 				return true;
 			if (statement.Iterators.Any(i => i.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable)))
 				return true;
@@ -638,18 +638,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (field == null || !NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out _))
 				return null;
-			if (propertyDeclaration.Setter.HasModifier(Modifiers.Readonly) || (propertyDeclaration.HasModifier(Modifiers.Readonly) && !propertyDeclaration.Setter.IsNull))
+			if (propertyDeclaration.Setter?.HasModifier(Modifiers.Readonly) == true || (propertyDeclaration.HasModifier(Modifiers.Readonly) && propertyDeclaration.Setter is not null))
 				return null;
 			if (field.IsCompilerGenerated() && field.DeclaringTypeDefinition == property.DeclaringTypeDefinition)
 			{
-				RemoveCompilerGeneratedAttribute(propertyDeclaration.Getter.Attributes);
-				RemoveCompilerGeneratedAttribute(propertyDeclaration.Setter.Attributes);
-				// Clearing the accessor body turns it into an auto-property accessor; the slot setter
-				// tolerates null until optional slots become nullable in the AST declarations.
-				propertyDeclaration.Getter.Body = null!;
-				propertyDeclaration.Setter.Body = null!;
+				// Clearing the accessor body turns it into an auto-property accessor.
+				var getter = propertyDeclaration.Getter;
+				var setter = propertyDeclaration.Setter;
+				if (getter is not null)
+				{
+					RemoveCompilerGeneratedAttribute(getter.Attributes);
+					getter.Body = null;
+				}
+				if (setter is not null)
+				{
+					RemoveCompilerGeneratedAttribute(setter.Attributes);
+					setter.Body = null;
+				}
 				propertyDeclaration.Modifiers &= ~Modifiers.Readonly;
-				propertyDeclaration.Getter.Modifiers &= ~Modifiers.Readonly;
+				if (getter is not null)
+					getter.Modifiers &= ~Modifiers.Readonly;
 
 				var fieldDecl = propertyDeclaration.Parent?.Children.OfType<FieldDeclaration>()
 					.FirstOrDefault(fd => field.Equals(fd.GetSymbol()));
@@ -1005,7 +1013,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		EventDeclaration? TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
-			if (!ev.PrivateImplementationType.IsNull)
+			if (ev.PrivateImplementationType is not null)
 				return null;
 			const Modifiers withoutBody = Modifiers.Abstract | Modifiers.Extern;
 			if (ev.GetSymbol() is not IEvent symbol)
@@ -1015,10 +1023,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!CheckAutomaticEventV4AggressivelyInlined(ev) && !CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
 					return null;
 			}
-			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
+			if (ev.AddAccessor is not { } addAccessor)
+				return null;
+			RemoveCompilerGeneratedAttribute(addAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
-			foreach (var attr in ev.AddAccessor.Attributes)
+			foreach (var attr in addAccessor.Attributes)
 			{
 				attr.AttributeTarget = "method";
 				ed.Attributes.Add(attr.Detach());

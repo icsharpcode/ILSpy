@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -44,13 +46,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		[Slot("InitializerRole")]
-		public partial ArrayInitializerExpression Initializer { get; set; }
+		public partial ArrayInitializerExpression? Initializer { get; set; }
 
 		public ObjectCreateExpression()
 		{
 		}
 
-		public ObjectCreateExpression(AstType type, IEnumerable<Expression> arguments = null)
+		public ObjectCreateExpression(AstType type, IEnumerable<Expression>? arguments = null)
 		{
 			AddChild(type, Roles.Type);
 			if (arguments != null)

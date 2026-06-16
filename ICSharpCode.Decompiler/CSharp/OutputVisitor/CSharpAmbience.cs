@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 					if ((ConversionFlags & ConversionFlags.ShowParameterDefaultValues) == 0)
 					{
-						param.DefaultExpression.Detach();
+						param.DefaultExpression?.Detach();
 					}
 					if (first)
 					{

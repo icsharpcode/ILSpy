@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return IsWithoutSideEffects(left);
 		}
 
-		static bool IsWithoutSideEffects(Expression left)
+		static bool IsWithoutSideEffects(Expression? left)
 		{
 			return left is ThisReferenceExpression || left is IdentifierExpression || left is TypeReferenceExpression || left is BaseReferenceExpression;
 		}

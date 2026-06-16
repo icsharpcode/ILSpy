@@ -268,7 +268,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							ConvertSwitchSectionBody(astSection, section.Body);
 						break;
 					case Leave leave:
-						if (astSection.CaseLabels.Count == 1 && astSection.CaseLabels.First().Expression.IsNull && leave.TargetContainer == switchContainer)
+						if (astSection.CaseLabels.Count == 1 && astSection.CaseLabels.First().Expression is null && leave.TargetContainer == switchContainer)
 						{
 							stmt.SwitchSections.Remove(astSection);
 							break;
@@ -442,7 +442,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var tryBlockConverted = Convert(tryBlock);
 			var tryCatch = tryBlockConverted as TryCatchStatement;
-			if (tryCatch != null && tryCatch.FinallyBlock.IsNull)
+			if (tryCatch != null && tryCatch.FinallyBlock is null)
 				return tryCatch; // extend existing try-catch
 			tryCatch = new TryCatchStatement();
 			tryCatch.TryBlock = tryBlockConverted as BlockStatement ?? new BlockStatement { tryBlockConverted };

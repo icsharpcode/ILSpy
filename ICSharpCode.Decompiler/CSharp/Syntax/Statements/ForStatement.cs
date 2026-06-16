@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -45,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<Statement> Initializers { get; }
 
 		[Slot("Roles.Condition")]
-		public partial Expression Condition { get; set; }
+		public partial Expression? Condition { get; set; }
 
 		[Slot("IteratorRole")]
 		public partial AstNodeCollection<Statement> Iterators { get; }

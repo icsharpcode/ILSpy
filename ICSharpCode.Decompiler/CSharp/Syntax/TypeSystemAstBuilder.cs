@@ -2157,7 +2157,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static void MergeReadOnlyModifiers(EntityDeclaration decl, Accessor accessor1, Accessor accessor2)
 		{
-			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2.IsNull)
+			if (accessor1 is null)
+				return;
+			if (accessor1.HasModifier(Modifiers.Readonly) && accessor2 is null)
 			{
 				accessor1.Modifiers &= ~Modifiers.Readonly;
 				decl.Modifiers |= Modifiers.Readonly;

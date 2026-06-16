@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -35,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
 
 		[Slot("Roles.Expression")]
-		public partial Expression Expression { get; set; }
+		public partial Expression? Expression { get; set; }
 
 		public ReturnStatement()
 		{

@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.ComponentModel;
 
@@ -62,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override partial AstType ReturnType { get; set; }
 
 		[Slot("PrivateImplementationTypeRole")]
-		public partial AstType PrivateImplementationType { get; set; }
+		public partial AstType? PrivateImplementationType { get; set; }
 
 		public override string Name {
 			get { return "Item"; }
@@ -79,12 +81,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		[Slot("GetterRole")]
-		public partial Accessor Getter { get; set; }
+		public partial Accessor? Getter { get; set; }
 
 		[Slot("SetterRole")]
-		public partial Accessor Setter { get; set; }
+		public partial Accessor? Setter { get; set; }
 
 		[Slot("ExpressionBodyRole")]
-		public partial Expression ExpressionBody { get; set; }
+		public partial Expression? ExpressionBody { get; set; }
 	}
 }

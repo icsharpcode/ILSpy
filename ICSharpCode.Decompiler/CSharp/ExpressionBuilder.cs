@@ -2469,7 +2469,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			bool isLambda = false;
-			if (ame.Parameters.Any(p => p.Type.IsNull))
+			if (ame.Parameters.Any(p => p.Type is null))
 			{
 				// if there is an anonymous type involved, we are forced to use a lambda expression.
 				isLambda = true;
@@ -2532,7 +2532,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				function, delegateType, inferredReturnType,
 				hasParameterList: isLambda || ame.HasParameterList,
 				isAnonymousMethod: !isLambda,
-				isImplicitlyTyped: ame.Parameters.Any(p => p.Type.IsNull));
+				isImplicitlyTyped: ame.Parameters.Any(p => p.Type is null));
 
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
@@ -2558,7 +2558,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (node is ReturnStatement ret)
 				{
-					if (!ret.Expression.IsNull)
+					if (ret.Expression is not null)
 					{
 						returnExpressions.Add(ret.Expression.GetResolveResult());
 					}

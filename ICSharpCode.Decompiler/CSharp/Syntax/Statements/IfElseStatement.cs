@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -45,13 +47,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial Statement TrueStatement { get; set; }
 
 		[Slot("FalseRole")]
-		public partial Statement FalseStatement { get; set; }
+		public partial Statement? FalseStatement { get; set; }
 
 		public IfElseStatement()
 		{
 		}
 
-		public IfElseStatement(Expression condition, Statement trueStatement, Statement falseStatement = null)
+		public IfElseStatement(Expression condition, Statement trueStatement, Statement? falseStatement = null)
 		{
 			this.Condition = condition;
 			this.TrueStatement = trueStatement;

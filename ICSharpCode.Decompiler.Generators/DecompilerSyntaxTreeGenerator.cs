@@ -143,7 +143,8 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				string roleExpr = (string)nameSlotAttr.ConstructorArguments[0].Value!;
 				bool nullOnEmpty = nameSlotAttr.ConstructorArguments.Length > 1 && (bool)nameSlotAttr.ConstructorArguments[1].Value!;
 				string tokenName = property.Name + "Token";
-				slots.Add((roleExpr, false, tokenName, "Identifier", "Identifier", false, false, SlotKindName(roleExpr), false));
+				// An optional name (nullOnEmpty) makes the backing token a real nullable slot: an absent name is a null token.
+				slots.Add((roleExpr, false, tokenName, "Identifier", "Identifier", false, nullOnEmpty, SlotKindName(roleExpr), false));
 				nameSlots.Add((property.Name, tokenName, nullOnEmpty));
 			}
 		}
@@ -363,7 +364,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				else
 				{
 					builder.AppendLine($"\t{type}? {field};");
-					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}{type} {name}");
+					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}{type}{(isNullable ? "?" : "")} {name}");
 					builder.AppendLine("\t{");
 					builder.AppendLine($"\t\tget => {field}{(isNullable ? "" : $" ?? {roleExpr}.NullObject")};");
 					builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value, {roleExpr});");
@@ -379,11 +380,17 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				{
 					builder.AppendLine($"\tpublic partial string {stringName}");
 					builder.AppendLine("\t{");
-					builder.AppendLine($"\t\tget => {tokenName}.Name;");
 					if (nullOnEmpty)
-						builder.AppendLine($"\t\tset => {tokenName} = string.IsNullOrEmpty(value) ? null! : global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier.Create(value);");
+					{
+						// The token is a nullable slot, so guard the read and clear it (to null) on an empty name.
+						builder.AppendLine($"\t\tget => {tokenName}?.Name ?? string.Empty;");
+						builder.AppendLine($"\t\tset => {tokenName} = string.IsNullOrEmpty(value) ? null : global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier.Create(value);");
+					}
 					else
+					{
+						builder.AppendLine($"\t\tget => {tokenName}.Name;");
 						builder.AppendLine($"\t\tset => {tokenName} = global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier.Create(value);");
+					}
 					builder.AppendLine("\t}");
 					builder.AppendLine();
 				}

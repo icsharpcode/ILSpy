@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void VisitAsSequencePoint(AstNode node)
 		{
-			if (node.IsNull)
+			if (node is null || node.IsNull)
 				return;
 			StartSequencePoint(node);
 			node.AcceptVisitor(this);
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
-			if (!propertyDeclaration.ExpressionBody.IsNull)
+			if (propertyDeclaration.ExpressionBody is not null)
 			{
 				VisitAsSequencePoint(propertyDeclaration.ExpressionBody);
 			}
@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration)
 		{
-			if (!indexerDeclaration.ExpressionBody.IsNull)
+			if (indexerDeclaration.ExpressionBody is not null)
 			{
 				VisitAsSequencePoint(indexerDeclaration.ExpressionBody);
 			}
@@ -385,7 +385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitCatchClause(CatchClause catchClause)
 		{
-			if (catchClause.Condition.IsNull)
+			if (catchClause.Condition is null)
 			{
 				var tryCatchHandler = catchClause.Annotation<TryCatchHandler>();
 				if (tryCatchHandler != null && !tryCatchHandler.ExceptionSpecifierILRange.IsEmpty)
@@ -432,9 +432,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		// the 'catch' keyword when there is no exception specifier.
 		static TextLocation CatchHeaderEnd(CatchClause catchClause)
 		{
-			if (catchClause.Type.IsNull)
+			if (catchClause.Type is null)
 				return Offset(catchClause.StartLocation, "catch".Length);
-			AstNode beforeRParen = catchClause.VariableNameToken.IsNull ? catchClause.Type : catchClause.VariableNameToken;
+			AstNode beforeRParen = catchClause.VariableNameToken is null ? catchClause.Type : catchClause.VariableNameToken;
 			return Offset(beforeRParen.EndLocation, 1);
 		}
 

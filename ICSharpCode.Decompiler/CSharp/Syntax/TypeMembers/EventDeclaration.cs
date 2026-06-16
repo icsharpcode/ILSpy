@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.ComponentModel;
 
@@ -95,15 +97,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
 		[Slot("PrivateImplementationTypeRole")]
-		public partial AstType PrivateImplementationType { get; set; }
+		public partial AstType? PrivateImplementationType { get; set; }
 
 		[Slot("Roles.Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
 		[Slot("AddAccessorRole")]
-		public partial Accessor AddAccessor { get; set; }
+		public partial Accessor? AddAccessor { get; set; }
 
 		[Slot("RemoveAccessorRole")]
-		public partial Accessor RemoveAccessor { get; set; }
+		public partial Accessor? RemoveAccessor { get; set; }
 	}
 }
