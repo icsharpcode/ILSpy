@@ -258,6 +258,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								// lambda, so this match always succeeds.
 								bool matched = MatchSimpleLambda(lambda, out parameter, out orderExpression);
 								Debug.Assert(matched);
+								Debug.Assert(orderExpression != null);
 							}
 							// The chain was validated and every iteration re-matched a simple lambda,
 							// so the final range-variable parameter is set.

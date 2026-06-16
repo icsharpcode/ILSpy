@@ -400,7 +400,7 @@ namespace ICSharpCode.Decompiler.IL
 					builder.Append(type.CallingConvention.ToILSyntax());
 					builder.Append(' ');
 				}
-				type.ReturnType.AcceptVisitor(this);
+				type.ReturnType?.AcceptVisitor(this);
 				builder.Append(" *(");
 				bool first = true;
 				foreach (var p in type.ParameterTypes)

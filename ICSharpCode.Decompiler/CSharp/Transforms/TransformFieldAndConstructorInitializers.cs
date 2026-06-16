@@ -541,7 +541,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							break;
 						case PropertyDeclaration pd:
 							Debug.Assert(pd.IsAutomaticProperty);
-							if (pd.Initializer.IsNull)
+							if (pd.Initializer is null)
 							{
 								pd.Initializer = initializer.Detach();
 							}

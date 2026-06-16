@@ -27,6 +27,8 @@
 using System;
 using System.Linq.Expressions;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -60,14 +62,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole RangeRole = new TokenRole("..");
 		public readonly static TokenRole IsKeywordRole = IsExpression.IsKeywordRole;
 
-		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", Expression.Null);
-		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", Expression.Null);
+		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", null);
+		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", null);
 
 		public BinaryOperatorExpression()
 		{
 		}
 
-		public BinaryOperatorExpression(Expression left, BinaryOperatorType op, Expression right)
+		public BinaryOperatorExpression(Expression? left, BinaryOperatorType op, Expression? right)
 		{
 			this.Left = left;
 			this.Operator = op;
@@ -80,10 +82,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		[Slot(nameof(LeftRole))]
-		public partial Expression Left { get; set; }
+		public partial Expression? Left { get; set; }
 
 		[Slot(nameof(RightRole))]
-		public partial Expression Right { get; set; }
+		public partial Expression? Right { get; set; }
 
 		public static TokenRole GetOperatorRole(BinaryOperatorType op)
 		{

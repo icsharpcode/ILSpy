@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SyntaxTree : AstNode
 	{
-		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", AstNode.Null);
+		public static readonly Role<AstNode> MemberRole = new Role<AstNode>("Member", null);
 
 		[Slot("MemberRole")]
 		public partial AstNodeCollection<AstNode> Members { get; }

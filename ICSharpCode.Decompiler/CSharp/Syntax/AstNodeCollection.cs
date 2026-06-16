@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public void Add(T element)
 		{
-			if (element == null || element.IsNull)
+			if (element == null)
 				return;
 			ValidateNewChild(element);
 			list.Add(element);
@@ -318,7 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		void Insert(int index, T newItem)
 		{
-			if (newItem == null || newItem.IsNull)
+			if (newItem == null)
 				return;
 			ValidateNewChild(newItem);
 			list.Insert(index, newItem);

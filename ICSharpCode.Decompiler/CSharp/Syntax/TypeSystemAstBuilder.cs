@@ -2081,14 +2081,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			else
 			{
-				return BlockStatement.Null;
+				return null;
 			}
 		}
 
 		Accessor ConvertAccessor(IMethod accessor, MethodSemanticsAttributes kind, Accessibility ownerAccessibility, bool addParameterAttribute)
 		{
 			if (accessor == null)
-				return Accessor.Null;
+				return null;
 			Accessor decl = new Accessor();
 			if (ShowAttributes)
 			{

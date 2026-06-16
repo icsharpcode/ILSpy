@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class UsingAliasDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
-		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", Identifier.Null);
+		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", null);
 		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
 
 		[NameSlot("AliasRole")]

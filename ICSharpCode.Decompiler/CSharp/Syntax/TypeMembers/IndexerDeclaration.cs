@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
 		public static readonly Role<Accessor> GetterRole = PropertyDeclaration.GetterRole;
 		public static readonly Role<Accessor> SetterRole = PropertyDeclaration.SetterRole;
-		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", Expression.Null);
+		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Indexer; }
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		public override Identifier NameToken {
-			get { return Identifier.Null; }
+			get { return null!; }
 			set { throw new NotSupportedException(); }
 		}
 

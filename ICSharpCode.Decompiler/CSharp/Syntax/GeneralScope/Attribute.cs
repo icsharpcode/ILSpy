@@ -49,8 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
-			if (IsNull)
-				return "Null";
 			return base.ToString(formattingOptions);
 		}
 	}

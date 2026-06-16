@@ -49,20 +49,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ExtensionDeclaration()
 		{
 		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitExtensionDeclaration(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitExtensionDeclaration(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitExtensionDeclaration(this, data);
-		}
 	}
 }

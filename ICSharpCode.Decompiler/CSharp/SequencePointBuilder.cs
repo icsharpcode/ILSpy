@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void VisitAsSequencePoint(AstNode node)
 		{
-			if (node is null || node.IsNull)
+			if (node is null)
 				return;
 			StartSequencePoint(node);
 			node.AcceptVisitor(this);

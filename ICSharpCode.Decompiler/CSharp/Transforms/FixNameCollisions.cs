@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var memberNames = typeDecl.Members.Select(m => {
 					var type = m.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole);
-					return type.IsNull ? m.Name : type + "." + m.Name;
+					return type is null ? m.Name : type + "." + m.Name;
 				}).ToHashSet();
 				// memberNames does not include fields or non-custom events because those
 				// don't have a single name, but a list of VariableInitializers.

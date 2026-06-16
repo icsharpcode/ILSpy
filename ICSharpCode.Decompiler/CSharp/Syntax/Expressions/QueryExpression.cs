@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -43,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryContinuationClause : QueryClause
 	{
-		public static readonly Role<QueryExpression> PrecedingQueryRole = new Role<QueryExpression>("PrecedingQuery", QueryExpression.Null);
+		public static readonly Role<QueryExpression> PrecedingQueryRole = new Role<QueryExpression>("PrecedingQuery", null);
 		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
 
 		[Slot("PrecedingQueryRole")]
@@ -63,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole InKeywordRole = new TokenRole("in");
 
 		[Slot("Roles.Type")]
-		public partial AstType Type { get; set; }
+		public partial AstType? Type { get; set; }
 
 		[NameSlot("Roles.Identifier")]
 		public partial string Identifier { get; set; }
@@ -118,11 +120,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole InKeywordRole = new TokenRole("in");
 		public static readonly Role<Expression> InExpressionRole = Roles.Expression;
 		public static readonly TokenRole OnKeywordRole = new TokenRole("on");
-		public static readonly Role<Expression> OnExpressionRole = new Role<Expression>("OnExpression", Expression.Null);
+		public static readonly Role<Expression> OnExpressionRole = new Role<Expression>("OnExpression", null);
 		public static readonly TokenRole EqualsKeywordRole = new TokenRole("equals");
-		public static readonly Role<Expression> EqualsExpressionRole = new Role<Expression>("EqualsExpression", Expression.Null);
+		public static readonly Role<Expression> EqualsExpressionRole = new Role<Expression>("EqualsExpression", null);
 		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
-		public static readonly Role<Identifier> IntoIdentifierRole = new Role<Identifier>("IntoIdentifier", Identifier.Null);
+		public static readonly Role<Identifier> IntoIdentifierRole = new Role<Identifier>("IntoIdentifier", null);
 
 		// Derived from IntoIdentifier (which DoMatch already compares); exclude it to avoid a redundant compare.
 		[ExcludeFromMatch]
@@ -131,7 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		[Slot("TypeRole")]
-		public partial AstType Type { get; set; }
+		public partial AstType? Type { get; set; }
 
 		[NameSlot("JoinIdentifierRole")]
 		public partial string JoinIdentifier { get; set; }
@@ -145,7 +147,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("EqualsExpressionRole")]
 		public partial Expression EqualsExpression { get; set; }
 
-		[NameSlot("IntoIdentifierRole")]
+		[NameSlot("IntoIdentifierRole", nullOnEmpty: true)]
 		public partial string IntoIdentifier { get; set; }
 	}
 
@@ -206,9 +208,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class QueryGroupClause : QueryClause
 	{
 		public static readonly TokenRole GroupKeywordRole = new TokenRole("group");
-		public static readonly Role<Expression> ProjectionRole = new Role<Expression>("Projection", Expression.Null);
+		public static readonly Role<Expression> ProjectionRole = new Role<Expression>("Projection", null);
 		public static readonly TokenRole ByKeywordRole = new TokenRole("by");
-		public static readonly Role<Expression> KeyRole = new Role<Expression>("Key", Expression.Null);
+		public static readonly Role<Expression> KeyRole = new Role<Expression>("Key", null);
 
 		[Slot("ProjectionRole")]
 		public partial Expression Projection { get; set; }

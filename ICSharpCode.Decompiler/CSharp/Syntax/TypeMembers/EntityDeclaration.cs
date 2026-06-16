@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// Identity marker for modifier keywords in the output (modifiers are scalars, not child nodes);
 		// the token writer uses it to make the 'override' modifier a go-to-definition reference.
 		public static readonly TokenRole ModifierRole = new TokenRole("modifier");
-		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", AstType.Null);
+		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", null);
 
 		public abstract SymbolKind SymbolKind { get; }
 
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public virtual string Name {
 			get {
-				return GetChildByRole(Roles.Identifier).Name;
+				return GetChildByRole(Roles.Identifier)?.Name ?? string.Empty;
 			}
 			set {
 				SetChildByRole(Roles.Identifier, Identifier.Create(value, TextLocation.Empty));

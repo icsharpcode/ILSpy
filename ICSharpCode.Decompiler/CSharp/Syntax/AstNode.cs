@@ -57,12 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		const uint roleIndexMask = (1u << Role.RoleIndexBits) - 1;
 		protected const int AstNodeFlagsUsedBits = Role.RoleIndexBits;
 
-		public virtual bool IsNull {
-			get {
-				return false;
-			}
-		}
-
 		TextLocation startLocation = TextLocation.Empty;
 		TextLocation endLocation = TextLocation.Empty;
 
@@ -480,7 +474,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// A null or null-object value empties the slot. Called by generated single-slot property setters.
 		internal void SetChildNode<T>(ref T? field, T? value, Role role) where T : AstNode
 		{
-			T? newValue = (value == null || value.IsNull) ? null : value;
+			T? newValue = value;
 			if (field == newValue)
 				return;
 			if (newValue != null)
@@ -520,14 +514,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (role == null)
 				throw new ArgumentNullException(nameof(role));
-			if (child == null || child.IsNull)
+			if (child == null)
 				return;
 			AddChildUnsafe(child, role);
 		}
 
 		public void AddChildWithExistingRole(AstNode? child)
 		{
-			if (child == null || child.IsNull)
+			if (child == null)
 				return;
 			AddChildUnsafe(child, child.Role);
 		}
@@ -555,7 +549,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				if (GetChildSlot(i) == role)
 				{
-					SetChild(i, child == null || child.IsNull ? null : child);
+					SetChild(i, child);
 					return;
 				}
 			}
@@ -566,11 +560,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (role == null)
 				throw new ArgumentNullException(nameof(role));
-			if (child == null || child.IsNull)
+			if (child == null)
 				return;
 			AstNodeCollection? collection = GetCollectionByRole(role);
 			if (collection != null)
-				collection.InsertNodeBefore((nextSibling == null || nextSibling.IsNull) ? null : nextSibling, child);
+				collection.InsertNodeBefore(nextSibling, child);
 			else
 				SetChildByRoleUntyped(role, child);
 		}
@@ -588,11 +582,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (role == null)
 				throw new ArgumentNullException(nameof(role));
-			if (child == null || child.IsNull)
+			if (child == null)
 				return;
 			AstNodeCollection? collection = GetCollectionByRole(role);
 			if (collection != null)
-				collection.InsertNodeAfter((prevSibling == null || prevSibling.IsNull) ? null : prevSibling, child);
+				collection.InsertNodeAfter(prevSibling, child);
 			else
 				SetChildByRoleUntyped(role, child);
 		}
@@ -618,7 +612,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public void ReplaceWith(AstNode? newNode)
 		{
-			if (newNode == null || newNode.IsNull)
+			if (newNode == null)
 			{
 				Remove();
 				return;
@@ -627,7 +621,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return; // nothing to do...
 			if (parent == null)
 			{
-				throw new InvalidOperationException(this.IsNull ? "Cannot replace the null nodes" : "Cannot replace the root node");
+				throw new InvalidOperationException("Cannot replace the root node");
 			}
 			parent.EnsureChildIndices();
 			Role role = parent.GetChildSlot(childIndex);
@@ -660,7 +654,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException(nameof(replaceFunction));
 			if (parent == null)
 			{
-				throw new InvalidOperationException(this.IsNull ? "Cannot replace the null nodes" : "Cannot replace the root node");
+				throw new InvalidOperationException("Cannot replace the root node");
 			}
 			AstNode oldParent = parent;
 			AstNode? oldSuccessor = NextSibling;
@@ -669,7 +663,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AstNode? replacement = replaceFunction(this);
 			if (oldSuccessor != null && oldSuccessor.parent != oldParent)
 				throw new InvalidOperationException("replace function changed nextSibling of node being replaced?");
-			if (!(replacement == null || replacement.IsNull))
+			if (replacement != null)
 			{
 				if (replacement.parent != null)
 					throw new InvalidOperationException("replace function must return the root of a tree");
@@ -839,8 +833,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </param>
 		public virtual string ToString(CSharpFormattingOptions? formattingOptions)
 		{
-			if (IsNull)
-				return "";
 			var w = new StringWriter();
 			AcceptVisitor(new CSharpOutputVisitor(w, formattingOptions ?? FormattingOptionsFactory.CreateMono()));
 			return w.ToString();
@@ -897,15 +889,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override void AddAnnotation(object annotation)
 		{
-			if (this.IsNull)
-				throw new InvalidOperationException("Cannot add annotations to the null node");
 			base.AddAnnotation(annotation);
 		}
 
 		internal string DebugToString()
 		{
-			if (IsNull)
-				return "Null";
 			string text = ToString();
 			text = text.TrimEnd().Replace("\t", "").Replace(Environment.NewLine, " ");
 			if (text.Length > 100)

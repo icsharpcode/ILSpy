@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (rhs is BinaryOperatorExpression binary && assignment.Operator == AssignmentOperatorType.Assign)
 			{
 				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left)
-					&& IsImplicitlyConvertible(binary.Right, expectedType))
+					&& binary.Right != null && IsImplicitlyConvertible(binary.Right, expectedType))
 				{
 					assignment.Operator = GetAssignmentOperatorForBinaryOperator(binary.Operator);
 					if (assignment.Operator != AssignmentOperatorType.Assign)

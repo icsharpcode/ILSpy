@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			if (other == null || other.IsNull)
+			if (other == null)
 				return this.MinCount <= 0;
 			else
 				return this.MaxCount >= 1 && childNode.DoMatch(other, match);

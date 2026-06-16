@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		public override Identifier NameToken {
-			get { return Identifier.Null; }
+			get { return null!; }
 			set { throw new NotSupportedException(); }
 		}
 	}

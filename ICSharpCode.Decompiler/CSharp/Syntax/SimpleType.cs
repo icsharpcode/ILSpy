@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
 		public partial string Identifier { get; set; }
 
 		[Slot("Roles.TypeArgument")]

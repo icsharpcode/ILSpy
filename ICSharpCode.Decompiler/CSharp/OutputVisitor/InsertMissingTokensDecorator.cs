@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void WriteIdentifier(Identifier identifier)
 		{
 			AssignPendingStartLocations();
-			if (!identifier.IsNull)
+			if (identifier is not null)
 				identifier.SetStartLocation(locationProvider.Location);
 			currentList.Add(identifier);
 			base.WriteIdentifier(identifier);
