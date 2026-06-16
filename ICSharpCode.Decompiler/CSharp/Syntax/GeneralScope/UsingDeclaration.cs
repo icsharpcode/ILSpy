@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class UsingDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
-		public static readonly Role<AstType> ImportRole = new Role<AstType>("Import", AstType.Null);
+		public static readonly Role<AstType> ImportRole = new Role<AstType>("Import", null);
 
 		[Slot("ImportRole")]
 		public partial AstType Import { get; set; }

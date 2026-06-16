@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class RecursivePatternExpression : Expression
 	{
-		public static readonly Role<Expression> SubPatternRole = new Role<Expression>("SubPattern", Syntax.Expression.Null);
+		public static readonly Role<Expression> SubPatternRole = new Role<Expression>("SubPattern", null);
 
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }

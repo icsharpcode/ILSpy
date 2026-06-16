@@ -502,7 +502,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </remarks>
 		protected virtual void WriteEmbeddedStatement(Statement embeddedStatement, NewLinePlacement nlp = NewLinePlacement.NewLine)
 		{
-			if (embeddedStatement.IsNull)
+			if (embeddedStatement is null)
 			{
 				NewLine();
 				return;
@@ -531,7 +531,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		protected virtual void WriteMethodBody(BlockStatement body, BraceStyle style, bool newLine = true)
 		{
-			if (body is null || body.IsNull)
+			if (body is null)
 			{
 				Semicolon();
 			}
@@ -552,7 +552,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		protected virtual void WritePrivateImplementationType(AstType privateImplementationType)
 		{
-			if (privateImplementationType is not null && !privateImplementationType.IsNull)
+			if (privateImplementationType is not null)
 			{
 				privateImplementationType.AcceptVisitor(this);
 				WriteToken(Roles.Dot);
@@ -611,7 +611,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(arrayCreateExpression);
 			WriteKeyword(ArrayCreateExpression.NewKeywordRole);
-			arrayCreateExpression.Type.AcceptVisitor(this);
+			arrayCreateExpression.Type?.AcceptVisitor(this);
 			if (arrayCreateExpression.Arguments.Count > 0)
 			{
 				WriteCommaSeparatedListInBrackets(arrayCreateExpression.Arguments);
@@ -765,7 +765,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitBinaryOperatorExpression(BinaryOperatorExpression binaryOperatorExpression)
 		{
 			StartNode(binaryOperatorExpression);
-			binaryOperatorExpression.Left.AcceptVisitor(this);
+			binaryOperatorExpression.Left?.AcceptVisitor(this);
 			bool spacePolicy;
 			switch (binaryOperatorExpression.Operator)
 			{
@@ -823,7 +823,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteToken(tokenRole);
 			}
 			Space(spacePolicy);
-			binaryOperatorExpression.Right.AcceptVisitor(this);
+			binaryOperatorExpression.Right?.AcceptVisitor(this);
 			EndNode(binaryOperatorExpression);
 		}
 
@@ -1361,7 +1361,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(queryFromClause);
 			WriteKeyword(QueryFromClause.FromKeywordRole);
 			Space();
-			queryFromClause.Type.AcceptVisitor(this);
+			queryFromClause.Type?.AcceptVisitor(this);
 			Space();
 			WriteIdentifier(queryFromClause.IdentifierToken);
 			Space();
@@ -1397,7 +1397,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(queryJoinClause);
 			WriteKeyword(QueryJoinClause.JoinKeywordRole);
-			queryJoinClause.Type.AcceptVisitor(this);
+			queryJoinClause.Type?.AcceptVisitor(this);
 			Space();
 			WriteIdentifier(queryJoinClause.JoinIdentifierToken);
 			Space();
@@ -1523,7 +1523,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteAttributes(delegateDeclaration.Attributes);
 			WriteModifiers(delegateDeclaration.Modifiers);
 			WriteKeyword(Roles.DelegateKeyword);
-			delegateDeclaration.ReturnType.AcceptVisitor(this);
+			delegateDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WriteIdentifier(delegateDeclaration.NameToken);
 			WriteTypeParameters(delegateDeclaration.TypeParameters);
@@ -2416,7 +2416,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteAttributes(eventDeclaration.Attributes);
 			WriteModifiers(eventDeclaration.Modifiers);
 			WriteKeyword(EventDeclaration.EventKeywordRole);
-			eventDeclaration.ReturnType.AcceptVisitor(this);
+			eventDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WriteCommaSeparatedList(eventDeclaration.Variables);
 			Semicolon();
@@ -2429,7 +2429,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteAttributes(customEventDeclaration.Attributes);
 			WriteModifiers(customEventDeclaration.Modifiers);
 			WriteKeyword(CustomEventDeclaration.EventKeywordRole);
-			customEventDeclaration.ReturnType.AcceptVisitor(this);
+			customEventDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WritePrivateImplementationType(customEventDeclaration.PrivateImplementationType);
 			WriteIdentifier(customEventDeclaration.NameToken);
@@ -2452,7 +2452,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(fieldDeclaration);
 			WriteAttributes(fieldDeclaration.Attributes);
 			WriteModifiers(fieldDeclaration.Modifiers);
-			fieldDeclaration.ReturnType.AcceptVisitor(this);
+			fieldDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WriteCommaSeparatedList(fieldDeclaration.Variables);
 			Semicolon();
@@ -2466,7 +2466,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteModifiers(fixedFieldDeclaration.Modifiers);
 			WriteKeyword(FixedFieldDeclaration.FixedKeywordRole);
 			Space();
-			fixedFieldDeclaration.ReturnType.AcceptVisitor(this);
+			fixedFieldDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WriteCommaSeparatedList(fixedFieldDeclaration.Variables);
 			Semicolon();
@@ -2477,7 +2477,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(fixedVariableInitializer);
 			WriteIdentifier(fixedVariableInitializer.NameToken);
-			if (!fixedVariableInitializer.CountExpression.IsNull)
+			if (fixedVariableInitializer.CountExpression is not null)
 			{
 				WriteToken(Roles.LBracket);
 				Space(policy.SpacesWithinBrackets);
@@ -2493,7 +2493,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(indexerDeclaration);
 			WriteAttributes(indexerDeclaration.Attributes);
 			WriteModifiers(indexerDeclaration.Modifiers);
-			indexerDeclaration.ReturnType.AcceptVisitor(this);
+			indexerDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WritePrivateImplementationType(indexerDeclaration.PrivateImplementationType);
 			WriteKeyword(IndexerDeclaration.ThisKeywordRole);
@@ -2538,7 +2538,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(methodDeclaration);
 			WriteAttributes(methodDeclaration.Attributes);
 			WriteModifiers(methodDeclaration.Modifiers);
-			methodDeclaration.ReturnType.AcceptVisitor(this);
+			methodDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WritePrivateImplementationType(methodDeclaration.PrivateImplementationType);
 			WriteIdentifier(methodDeclaration.NameToken);
@@ -2568,7 +2568,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			else
 			{
-				operatorDeclaration.ReturnType.AcceptVisitor(this);
+				operatorDeclaration.ReturnType?.AcceptVisitor(this);
 			}
 			Space();
 			WritePrivateImplementationType(operatorDeclaration.PrivateImplementationType);
@@ -2583,7 +2583,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				|| operatorDeclaration.OperatorType == OperatorType.CheckedExplicit
 				|| operatorDeclaration.OperatorType == OperatorType.Implicit)
 			{
-				operatorDeclaration.ReturnType.AcceptVisitor(this);
+				operatorDeclaration.ReturnType?.AcceptVisitor(this);
 			}
 			else
 			{
@@ -2658,7 +2658,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(propertyDeclaration);
 			WriteAttributes(propertyDeclaration.Attributes);
 			WriteModifiers(propertyDeclaration.Modifiers);
-			propertyDeclaration.ReturnType.AcceptVisitor(this);
+			propertyDeclaration.ReturnType?.AcceptVisitor(this);
 			Space();
 			WritePrivateImplementationType(propertyDeclaration.PrivateImplementationType);
 			WriteIdentifier(propertyDeclaration.NameToken);
@@ -2682,7 +2682,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					}
 				}
 				CloseBrace(isSingleLine ? BraceStyle.EndOfLine : policy.PropertyBraceStyle, unindent: !isSingleLine);
-				if (!propertyDeclaration.Initializer.IsNull)
+				if (propertyDeclaration.Initializer is not null)
 				{
 					Space(policy.SpaceAroundAssignment);
 					WriteToken(Roles.Assign);
@@ -2752,7 +2752,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitSimpleType(SimpleType simpleType)
 		{
 			StartNode(simpleType);
-			WriteIdentifier(simpleType.IdentifierToken);
+			// An unbound generic type argument (the '' in 'typeof(List<>)') is a nameless SimpleType.
+			if (simpleType.IdentifierToken is not null)
+				WriteIdentifier(simpleType.IdentifierToken);
 			WriteTypeArguments(simpleType.TypeArguments);
 			EndNode(simpleType);
 		}
@@ -2954,10 +2956,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// ITokenWriter assumes that each node processed between a
 			// StartNode(parentNode)-EndNode(parentNode)-pair is a child of parentNode.
 			WriteIdentifier(identifier);
-		}
-
-		void IAstVisitor.VisitNullNode(AstNode nullNode)
-		{
 		}
 
 		void IAstVisitor.VisitErrorNode(AstNode errorNode)

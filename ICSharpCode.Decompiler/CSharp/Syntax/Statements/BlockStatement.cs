@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class BlockStatement : Statement, IEnumerable<Statement>
 	{
-		public static readonly Role<Statement> StatementRole = new Role<Statement>("Statement", Statement.Null);
+		public static readonly Role<Statement> StatementRole = new Role<Statement>("Statement", null);
 
 		[Slot("StatementRole")]
 		public partial AstNodeCollection<Statement> Statements { get; }

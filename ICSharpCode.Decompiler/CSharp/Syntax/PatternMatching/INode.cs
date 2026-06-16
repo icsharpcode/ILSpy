@@ -26,8 +26,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public interface INode
 	{
-		bool IsNull { get; }
-
 		bool DoMatch(INode other, Match match);
 
 		/// <summary>

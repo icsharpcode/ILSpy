@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					// We cannot use checked/unchecked for top-level-expressions.
 				}
-				else if (expr.Role.IsValid(Expression.Null))
+				else if (expr.Role is Role<Expression> || expr.Role is Role<AstNode>)
 				{
 					// We use '<' so that expressions are introduced on the deepest level possible (goal 3)
 					var costIfWrapWithChecked = result.CostInCheckedContext.WrapInCheckedExpr();

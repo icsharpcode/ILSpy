@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TupleAstType : AstType
 	{
-		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", TupleTypeElement.Null);
+		public static readonly Role<TupleTypeElement> ElementRole = new Role<TupleTypeElement>("Element", null);
 
 		[Slot("ElementRole")]
 		public partial AstNodeCollection<TupleTypeElement> Elements { get; }

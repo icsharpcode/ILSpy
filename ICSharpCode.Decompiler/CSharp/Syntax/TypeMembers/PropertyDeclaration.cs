@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole GetKeywordRole = new TokenRole("get");
 		public static readonly TokenRole SetKeywordRole = new TokenRole("set");
 		public static readonly TokenRole InitKeywordRole = new TokenRole("init");
-		public static readonly Role<Accessor> GetterRole = new Role<Accessor>("Getter", Accessor.Null);
-		public static readonly Role<Accessor> SetterRole = new Role<Accessor>("Setter", Accessor.Null);
-		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", Expression.Null);
+		public static readonly Role<Accessor> GetterRole = new Role<Accessor>("Getter", null);
+		public static readonly Role<Accessor> SetterRole = new Role<Accessor>("Setter", null);
+		public static readonly Role<Expression> ExpressionBodyRole = new Role<Expression>("ExpressionBody", null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Property; }
@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial Accessor? Setter { get; set; }
 
 		[Slot("Roles.Expression")]
-		public partial Expression Initializer { get; set; }
+		public partial Expression? Initializer { get; set; }
 
 		[Slot("ExpressionBodyRole")]
 		public partial Expression? ExpressionBody { get; set; }

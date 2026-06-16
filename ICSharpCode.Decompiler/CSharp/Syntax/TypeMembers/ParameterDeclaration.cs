@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
 		public partial string Name { get; set; }
 
 		[Slot("Roles.Expression")]

@@ -48,10 +48,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 		}
 
-		bool INode.IsNull {
-			get { return false; }
-		}
-
 		public abstract bool DoMatch(INode other, Match match);
 
 		public virtual bool DoMatchCollection(IReadOnlyList<INode> other, int pos, Match match, BacktrackingInfo backtrackingInfo)

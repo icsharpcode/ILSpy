@@ -627,7 +627,7 @@ namespace ICSharpCode.ILSpy.Languages
 							}
 							break;
 						case PropertyDeclaration pd:
-							if (pd.Initializer.IsNull)
+							if (pd.Initializer is null)
 							{
 								pd.Remove();
 								removedSymbols.Add(pd.GetSymbol());

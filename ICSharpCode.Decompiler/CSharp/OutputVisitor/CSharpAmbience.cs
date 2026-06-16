@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
 			{
 				var rt = node.GetChildByRole(Roles.Type);
-				if (!rt.IsNull)
+				if (rt is not null)
 				{
 					rt.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
 					writer.Space();
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
 			{
 				var rt = node.GetChildByRole(Roles.Type);
-				if (!rt.IsNull)
+				if (rt is not null)
 				{
 					writer.Space();
 					writer.WriteToken(Roles.Colon, ":");

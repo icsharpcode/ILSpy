@@ -1406,7 +1406,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			EntityDeclaration memberDecl, IMethod method,
 			TypeSystemAstBuilder astBuilder)
 		{
-			if (!memberDecl.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole).IsNull)
+			if (memberDecl.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole) is not null)
 			{
 				yield break; // cannot create forwarder for existing explicit interface impl
 			}
@@ -1427,7 +1427,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (m == null || m.DeclaringType.Kind != TypeKind.Interface)
 					continue;
 				var methodDecl = new MethodDeclaration();
-				methodDecl.ReturnType = memberDecl.ReturnType.Clone();
+				methodDecl.ReturnType = memberDecl.ReturnType?.Clone();
 				methodDecl.PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType);
 				methodDecl.Name = m.Name;
 				methodDecl.TypeParameters.AddRange(memberDecl.GetChildrenByRole(Roles.TypeParameter)
@@ -2041,7 +2041,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 				var methodDef = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
-				var body = BlockStatement.Null;
+				BlockStatement body = new BlockStatement();
 				MethodBodyBlock methodBody;
 				try
 				{

@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 
 		public override bool DoMatch(INode other, Match match)
 		{
-			if (other == null || other.IsNull)
+			if (other == null)
 				return true;
 			else
 				return childNode.DoMatch(other, match);

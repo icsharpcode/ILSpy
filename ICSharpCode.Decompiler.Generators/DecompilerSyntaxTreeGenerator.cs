@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsAcceptImpls, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots);
+	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots);
 
 	// Derives the shared SlotKind name from a [Slot] role expression: the last dotted segment with a
 	// trailing "Role" removed (e.g. "Roles.EmbeddedStatement" -> "EmbeddedStatement", "LeftRole" ->
@@ -80,7 +80,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				if (!excludeName)
 					membersToMatch.Add(("Name", "String", false, false, false));
 				membersToMatch.Add(("MatchAttributesAndModifiers", null!, false, false, false));
-				membersToMatch.Add(("ReturnType", "AstType", true, false, false));
+				membersToMatch.Add(("ReturnType", "AstType", true, false, true));
 			}
 
 			foreach (var m in targetSymbol.GetMembers())
@@ -149,7 +149,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 		}
 
-		return new(targetSymbol.Name, !targetSymbol.MemberNames.Contains("AcceptVisitor"),
+		return new(targetSymbol.Name,
 			NeedsVisitor: !targetSymbol.IsAbstract && targetSymbol.BaseType!.IsAbstract,
 			NeedsNullNode: (bool)attribute.ConstructorArguments[0].Value!,
 			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[1].Value!,
@@ -183,51 +183,6 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 		builder.AppendLine($"partial class {source.NodeName}");
 		builder.AppendLine("{");
-
-		if (source.NeedsNullNode)
-		{
-			bool needsNew = source.NodeName != "AstNode";
-
-			builder.AppendLine($"	{(needsNew ? "new " : "")}public static readonly {source.NodeName} Null = new Null{source.NodeName}();");
-
-			builder.AppendLine($@"
-	sealed class Null{source.NodeName} : {source.NodeName}
-	{{
-		public override bool IsNull => true;
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{{
-			visitor.VisitNullNode(this);
-		}}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{{
-			return visitor.VisitNullNode(this);
-		}}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{{
-			return visitor.VisitNullNode(this, data);
-		}}
-
-		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
-		{{
-			return other == null || other.IsNull;
-		}}");
-
-			if (source.NullNodeBaseCtorParamCount > 0)
-			{
-				builder.AppendLine($@"
-
-		public Null{source.NodeName}() : base({string.Join(", ", Enumerable.Repeat("default", source.NullNodeBaseCtorParamCount))}) {{ }}");
-			}
-
-			builder.AppendLine($@"
-	}}
-
-");
-
-		}
 
 		if (source.NeedsPatternPlaceholder)
 		{
@@ -283,7 +238,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			);
 		}
 
-		if (source.NeedsAcceptImpls && source.NeedsVisitor)
+		if (source.NeedsVisitor)
 		{
 			builder.Append($@"	public override void AcceptVisitor(IAstVisitor visitor)
 	{{
@@ -307,7 +262,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		{
 			builder.Append($@"	protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 	{{
-		return other is {source.NodeName} o && !o.IsNull");
+		return other is {source.NodeName} o");
 
 			foreach (var (member, typeName, recursive, hasAny, nullable) in source.MembersToMatch)
 			{
@@ -366,7 +321,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					builder.AppendLine($"\t{type}? {field};");
 					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}{type}{(isNullable ? "?" : "")} {name}");
 					builder.AppendLine("\t{");
-					builder.AppendLine($"\t\tget => {field}{(isNullable ? "" : $" ?? {roleExpr}.NullObject")};");
+					builder.AppendLine($"\t\tget => {field}{(isNullable ? "" : "!")};");
 					builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value, {roleExpr});");
 					builder.AppendLine("\t}");
 				}
@@ -514,7 +469,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
 
 		source = source
-			.Concat([new("NullNode", false, true, false, false, 0, false, "NullNode", "AstNode", null, null, null), new("PatternPlaceholder", false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null, null)])
+			.Concat([new("PatternPlaceholder", true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null, null)])
 			.ToImmutableArray();
 
 		WriteInterface("IAstVisitor", "void", "");

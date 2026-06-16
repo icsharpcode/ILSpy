@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class NamespaceDeclaration : AstNode
 	{
 		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
-		public static readonly Role<AstType> NamespaceNameRole = new Role<AstType>("NamespaceName", AstType.Null);
+		public static readonly Role<AstType> NamespaceNameRole = new Role<AstType>("NamespaceName", null);
 
 		public bool IsFileScoped { get; set; }
 

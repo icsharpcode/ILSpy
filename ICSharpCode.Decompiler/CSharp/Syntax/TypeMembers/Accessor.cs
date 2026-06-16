@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override Identifier NameToken {
-			get { return Identifier.Null; }
+			get { return null!; }
 			set { }
 		}
 

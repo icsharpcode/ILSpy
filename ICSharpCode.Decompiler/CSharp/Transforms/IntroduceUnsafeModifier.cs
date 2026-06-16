@@ -97,8 +97,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					// transform "*(ptr + int)" to "ptr[int]"
 					IndexerExpression indexer = new IndexerExpression();
-					indexer.Target = bop.Left.Detach();
-					indexer.Arguments.Add(bop.Right.Detach());
+					indexer.Target = bop.Left!.Detach();
+					indexer.Arguments.Add(bop.Right!.Detach());
 					indexer.CopyAnnotationsFrom(unaryOperatorExpression);
 					indexer.CopyAnnotationsFrom(bop);
 					unaryOperatorExpression.ReplaceWith(indexer);

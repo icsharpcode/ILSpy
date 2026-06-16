@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		void DoTransform(Statement? statement, Statement parent)
 		{
-			if (statement is null || statement.IsNull)
+			if (statement is null)
 				return;
 			if (context.Settings.AlwaysUseBraces)
 			{
@@ -122,8 +122,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static void InsertBlock(Statement statement)
 		{
-			if (statement.IsNull)
-				return;
 			if (!(statement is BlockStatement))
 			{
 				var b = new BlockStatement();

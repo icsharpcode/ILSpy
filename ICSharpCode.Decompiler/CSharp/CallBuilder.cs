@@ -2182,19 +2182,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (callOpCode == OpCode.Call && method.Name == "get_All" && argumentList.Length == 0)
 				{
-					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range, Expression.Null)
+					result = new BinaryOperatorExpression(null, BinaryOperatorType.Range, null)
 						.WithRR(new MemberResolveResult(null, method.AccessorOwner ?? method));
 					return true;
 				}
 				else if (callOpCode == OpCode.Call && method.Name == "StartAt" && argumentList.Length == 1)
 				{
-					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range, Expression.Null)
+					result = new BinaryOperatorExpression(argumentList.Arguments[0], BinaryOperatorType.Range, null)
 						.WithRR(new MemberResolveResult(null, method));
 					return true;
 				}
 				else if (callOpCode == OpCode.Call && method.Name == "EndAt" && argumentList.Length == 1)
 				{
-					result = new BinaryOperatorExpression(Expression.Null, BinaryOperatorType.Range, argumentList.Arguments[0])
+					result = new BinaryOperatorExpression(null, BinaryOperatorType.Range, argumentList.Arguments[0])
 						.WithRR(new MemberResolveResult(null, method));
 					return true;
 				}

@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[EditorBrowsable(EditorBrowsableState.Never)]
 		public override Identifier NameToken {
-			get { return Identifier.Null; }
+			get { return null!; }
 			set { throw new NotSupportedException(); }
 		}
 	}
@@ -79,8 +79,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public static readonly TokenRole AddKeywordRole = new TokenRole("add");
 		public static readonly TokenRole RemoveKeywordRole = new TokenRole("remove");
 
-		public static readonly Role<Accessor> AddAccessorRole = new Role<Accessor>("AddAccessor", Accessor.Null);
-		public static readonly Role<Accessor> RemoveAccessorRole = new Role<Accessor>("RemoveAccessor", Accessor.Null);
+		public static readonly Role<Accessor> AddAccessorRole = new Role<Accessor>("AddAccessor", null);
+		public static readonly Role<Accessor> RemoveAccessorRole = new Role<Accessor>("RemoveAccessor", null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Event; }
