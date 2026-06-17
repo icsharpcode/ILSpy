@@ -165,6 +165,57 @@ Are you sure you want to continue?</value>
   <data name="BaseTypes" xml:space="preserve">
     <value>Base Types</value>
   </data>
+  <data name="BookmarkAssemblyMissing" xml:space="preserve">
+    <value>Assembly for this bookmark no longer exists on disk, remove bookmark?</value>
+  </data>
+  <data name="BookmarkDelete" xml:space="preserve">
+    <value>Delete Bookmark</value>
+  </data>
+  <data name="BookmarkDisable" xml:space="preserve">
+    <value>Enable / Disable Bookmark</value>
+  </data>
+  <data name="BookmarkExport" xml:space="preserve">
+    <value>Export Bookmarks...</value>
+  </data>
+  <data name="BookmarkExportTitle" xml:space="preserve">
+    <value>Export Bookmarks</value>
+  </data>
+  <data name="BookmarkImport" xml:space="preserve">
+    <value>Import Bookmarks...</value>
+  </data>
+  <data name="BookmarkImportMerge" xml:space="preserve">
+    <value>Merge</value>
+  </data>
+  <data name="BookmarkImportReplace" xml:space="preserve">
+    <value>Replace</value>
+  </data>
+  <data name="BookmarkImportReplaceOrMerge" xml:space="preserve">
+    <value>Replace the current bookmarks with the imported ones, or merge them?</value>
+  </data>
+  <data name="BookmarkImportTitle" xml:space="preserve">
+    <value>Import Bookmarks</value>
+  </data>
+  <data name="BookmarkModule" xml:space="preserve">
+    <value>Module</value>
+  </data>
+  <data name="BookmarkNextBookmark" xml:space="preserve">
+    <value>Next Bookmark</value>
+  </data>
+  <data name="BookmarkNextInFile" xml:space="preserve">
+    <value>Next Bookmark in File</value>
+  </data>
+  <data name="BookmarkPreviousBookmark" xml:space="preserve">
+    <value>Previous Bookmark</value>
+  </data>
+  <data name="BookmarkPreviousInFile" xml:space="preserve">
+    <value>Previous Bookmark in File</value>
+  </data>
+  <data name="BookmarkToggle" xml:space="preserve">
+    <value>Toggle Bookmark</value>
+  </data>
+  <data name="Bookmarks" xml:space="preserve">
+    <value>Bookmarks</value>
+  </data>
   <data name="C_lone" xml:space="preserve">
     <value>C_lone</value>
   </data>

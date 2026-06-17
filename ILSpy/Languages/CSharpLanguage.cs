@@ -345,11 +345,11 @@ namespace ICSharpCode.ILSpy.Languages
 			{
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition!, methodDefinition.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(methodDefinition));
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
+				WriteCode(output, options.DecompilerSettings, decompiler, decompiler.Decompile(members));
 			}
 			else
 			{
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method.MetadataToken), decompiler.TypeSystem);
+				WriteCode(output, options.DecompilerSettings, decompiler, decompiler.Decompile(method.MetadataToken));
 			}
 			OnCSharpDecompiled(output, options);
 		}
@@ -362,7 +362,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(property, output, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType));
-			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property.MetadataToken), decompiler.TypeSystem);
+			WriteCode(output, options.DecompilerSettings, decompiler, decompiler.Decompile(property.MetadataToken));
 			OnCSharpDecompiled(output, options);
 		}
 
@@ -372,14 +372,14 @@ namespace ICSharpCode.ILSpy.Languages
 			WriteCommentLine(output, TypeToString(field.DeclaringType));
 			if (field.IsConst)
 			{
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field.MetadataToken), decompiler.TypeSystem);
+				WriteCode(output, options.DecompilerSettings, decompiler, decompiler.Decompile(field.MetadataToken));
 			}
 			else
 			{
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition!, field.IsStatic);
 				var resolvedField = decompiler.TypeSystem.MainModule.GetDefinition((FieldDefinitionHandle)field.MetadataToken);
 				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
+				WriteCode(output, options.DecompilerSettings, decompiler, decompiler.Decompile(members));
 			}
 			OnCSharpDecompiled(output, options);
 		}
@@ -408,7 +408,7 @@ namespace ICSharpCode.ILSpy.Languages
 			CSharpDecompiler decompiler = BeginDecompile(extension, output, options);
 			WriteCommentLine(output, TypeToString(commentType,
 				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
+			WriteCode(output, options.DecompilerSettings, decompiler, decompiler.DecompileExtension(extension.MetadataToken));
 			OnCSharpDecompiled(output, options);
 		}
 
@@ -416,7 +416,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(ev, output, options);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType));
-			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(ev.MetadataToken), decompiler.TypeSystem);
+			WriteCode(output, options.DecompilerSettings, decompiler, decompiler.Decompile(ev.MetadataToken));
 			OnCSharpDecompiled(output, options);
 		}
 
@@ -424,7 +424,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(type, output, options);
 			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
-			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
+			WriteCode(output, options.DecompilerSettings, decompiler, decompiler.Decompile(type.MetadataToken));
 			OnCSharpDecompiled(output, options);
 		}
 
@@ -511,7 +511,7 @@ namespace ICSharpCode.ILSpy.Languages
 			SyntaxTree st = options.FullDecompilation
 				? decompiler.DecompileWholeModuleAsSingleFile()
 				: decompiler.DecompileModuleAndAssemblyAttributes();
-			WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
+			WriteCode(output, options.DecompilerSettings, decompiler, st);
 			return null;
 		}
 
@@ -709,14 +709,25 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 		}
 
-		static void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
+		static void WriteCode(ITextOutput output, DecompilerSettings settings, CSharpDecompiler decompiler, SyntaxTree syntaxTree)
 		{
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
-			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem);
+
+			TokenWriter tokenWriter = new TextTokenWriter(output, settings, decompiler.TypeSystem);
 			if (output is TextView.ISmartTextOutput smartOutput)
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, smartOutput);
+
+			// For the on-screen C# view, harvest the IL-offset/line map for body bookmarks during this
+			// single formatting pass (see Bookmarks.BookmarkDebugInfoCollector). The collector is the
+			// outermost writer so its StartNode sees each node's start line before any token is written.
+			// Other outputs (IL view, ilspycmd's plain text) are not AvaloniaEditTextOutput and are unaffected.
+			Bookmarks.BookmarkDebugInfoCollector? bookmarkCollector = null;
+			if (output is TextView.AvaloniaEditTextOutput bookmarkOutput)
+				tokenWriter = bookmarkCollector = new Bookmarks.BookmarkDebugInfoCollector(tokenWriter, bookmarkOutput);
+
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
+			bookmarkCollector?.Publish();
 		}
 
 		void AddWarningMessage(MetadataFile module, ITextOutput output, string line1, string? line2 = null,

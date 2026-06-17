@@ -93,6 +93,8 @@ namespace ICSharpCode.ILSpy.TextView
 		// text. Position-relative menu entries (e.g. "Toggle folding") read this so they act on the
 		// clicked line rather than wherever the caret happens to sit.
 		int? lastRightClickedOffset;
+		int lastRightClickedLine = -1;
+		Bookmarks.BookmarkMargin? bookmarkMargin;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 		Popup richPopup = null!;
 		double distanceToPopupLimit;
@@ -138,6 +140,14 @@ namespace ICSharpCode.ILSpy.TextView
 			// Ctrl+L focuses the omnibar into search mode (browser address-bar gesture). Tunnel so
 			// it wins before AvaloniaEdit's own key handling while focus is anywhere in the editor.
 			AddHandler(KeyDownEvent, OnPreviewKeyDownForOmnibar, RoutingStrategies.Tunnel);
+
+			// Ctrl+B toggles a bookmark on the caret line. Bubble so normal editor keys keep working.
+			AddHandler(KeyDownEvent, OnBookmarkKeyDown, RoutingStrategies.Bubble);
+
+			// Bookmark icon gutter, leftmost (before the line numbers). It draws nothing unless the
+			// current document is C# and has bookmarks, so it is harmless on IL / metadata views.
+			bookmarkMargin = new Bookmarks.BookmarkMargin(this);
+			Editor.TextArea.LeftMargins.Insert(0, bookmarkMargin);
 		}
 
 		void OnPreviewKeyDownForOmnibar(object? sender, KeyEventArgs e)
@@ -606,6 +616,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (!e.GetCurrentPoint(Editor.TextArea.TextView).Properties.IsRightButtonPressed)
 				return;
 			var pos = GetPositionFromPointer(e);
+			lastRightClickedLine = pos?.Line ?? -1;
 			if (pos == null)
 			{
 				lastRightClickedSegment = null;
@@ -648,6 +659,154 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
+		#region Bookmarks
+
+		Bookmarks.BookmarkManager? bookmarkManager;
+
+		Bookmarks.BookmarkManager? BookmarkManager
+			=> bookmarkManager ??= AppEnv.AppComposition.TryGetExport<Bookmarks.BookmarkManager>();
+
+		// Bookmarks live only on the decompiled C# view, not on IL / metadata / resource output.
+		bool ShowsBookmarkableCode => DataContext is DecompilerTabPageModel { SyntaxExtension: ".cs" };
+
+		Bookmarks.Bookmark? CreateBookmarkForLine(int line)
+		{
+			if (!ShowsBookmarkableCode || DataContext is not DecompilerTabPageModel model)
+				return null;
+			return Bookmarks.BookmarkAnchoring.CreateForLine(model.DebugInfo, model.References, Editor.Document, line);
+		}
+
+		/// <summary>Whether <paramref name="line"/> is a statement or definition line that can hold a bookmark.</summary>
+		internal bool CanToggleBookmarkAtLine(int line) => CreateBookmarkForLine(line) != null;
+
+		/// <summary>Adds or removes a bookmark on <paramref name="line"/>; a no-op for non-anchorable lines.</summary>
+		internal void ToggleBookmarkAtLine(int line)
+		{
+			if (CreateBookmarkForLine(line) is { } candidate)
+				BookmarkManager?.Toggle(candidate);
+		}
+
+		/// <summary>True when the line under the last right-click can hold a bookmark; drives the context-menu entry.</summary>
+		internal bool CanToggleBookmarkAtRightClick => lastRightClickedLine >= 1 && CanToggleBookmarkAtLine(lastRightClickedLine);
+
+		/// <summary>Toggles a bookmark on the line under the last right-click (the context-menu target).</summary>
+		internal void ToggleBookmarkAtRightClick()
+		{
+			if (lastRightClickedLine >= 1)
+				ToggleBookmarkAtLine(lastRightClickedLine);
+		}
+
+		void OnBookmarkKeyDown(object? sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.B && e.KeyModifiers == KeyModifiers.Control && Editor.TextArea.IsKeyboardFocusWithin)
+			{
+				ToggleBookmarkAtLine(Editor.TextArea.Caret.Line);
+				e.Handled = true;
+			}
+		}
+
+		// Wired onto the model so the bookmarks-pane toolbar can act on the active document.
+		void ToggleBookmarkAtCaret() => ToggleBookmarkAtLine(Editor.TextArea.Caret.Line);
+
+		// Moves the caret to the next/previous bookmark in this document, ordered by line and relative
+		// to the caret (wrapping around). A no-op when the document holds fewer than one bookmark.
+		void NavigateBookmarkInFile(bool forward)
+		{
+			if (BookmarkManager is not { } manager)
+				return;
+			var lines = new List<int>();
+			foreach (var bookmark in manager.Bookmarks)
+			{
+				// Disabled bookmarks stay visible in the gutter but are skipped by next/previous.
+				if (bookmark.Enabled && GetLineForBookmark(bookmark) is { } line)
+					lines.Add(line);
+			}
+			if (lines.Count == 0)
+				return;
+			lines.Sort();
+			int caretLine = Editor.TextArea.Caret.Line;
+			int target = forward
+				? lines.FirstOrDefault(l => l > caretLine, lines[0])
+				: lines.LastOrDefault(l => l < caretLine, lines[^1]);
+			ScrollToLine(target);
+		}
+
+		void ApplyPendingBookmark(DecompilerTabPageModel model)
+		{
+			if (model.PendingBookmark is not { } bookmark)
+				return;
+			if (GetLineForBookmark(bookmark) is { } line)
+			{
+				ScrollToLine(line);
+				model.PendingBookmark = null;
+			}
+		}
+
+		void ScrollToLine(int line)
+		{
+			line = Math.Clamp(line, 1, Editor.Document.LineCount);
+			Editor.TextArea.Caret.Offset = Editor.Document.GetLineByNumber(line).Offset;
+			// Centre the line and pulse its gutter icon once the layout has caught up. Posting lets a
+			// just-applied document finish measuring, so the visual position is accurate either way --
+			// whether we got here after a fresh decompile or while the document was already on screen.
+			Dispatcher.UIThread.Post(() => {
+				CenterLineInView(line);
+				LineHighlightAdorner.DisplayLineHighlight(Editor.TextArea, line);
+				bookmarkMargin?.PulseLine(line);
+			}, DispatcherPriority.Background);
+		}
+
+		// Scrolls so <paramref name="line"/> sits in the middle of the viewport. AvaloniaEdit's
+		// ScrollTo* are no-ops in 12.0.0 (#594), so set the ScrollViewer offset directly.
+		void CenterLineInView(int line)
+		{
+			if (EditorScrollViewer is not { } scrollViewer)
+				return;
+			var textView = Editor.TextArea.TextView;
+			double visualTop = textView.GetVisualTopByDocumentLine(line);
+			double target = visualTop - (scrollViewer.Viewport.Height - textView.DefaultLineHeight) / 2;
+			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, Math.Max(0, target));
+		}
+
+		/// <summary>
+		/// The document line a bookmark sits on in the currently shown C# document, or null when the
+		/// bookmark belongs to other code. Body anchors resolve via the IL-offset map; token anchors
+		/// via the definition's position. The module identity is verified so a token value shared
+		/// across assemblies can't place an icon on the wrong line.
+		/// </summary>
+		internal int? GetLineForBookmark(Bookmarks.Bookmark bookmark)
+		{
+			if (DataContext is not DecompilerTabPageModel { SyntaxExtension: ".cs" } model)
+				return null;
+
+			if (bookmark.Kind == Bookmarks.BookmarkKind.Body)
+			{
+				if (model.DebugInfo is not { } debug)
+					return null;
+				foreach (var method in debug.Methods)
+				{
+					if (method.Token == bookmark.Token && method.AssemblyFullName == bookmark.AssemblyFullName
+						&& method.TryGetLineForOffset(bookmark.ILOffset, out var bodyLine))
+						return bodyLine;
+				}
+				return null;
+			}
+
+			if (model.References is { } references)
+			{
+				foreach (var segment in references)
+				{
+					if (segment.IsDefinition && segment.Reference is IEntity entity
+						&& (uint)System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(entity.MetadataToken) == bookmark.Token
+						&& entity.ParentModule?.MetadataFile?.FullName == bookmark.AssemblyFullName)
+						return Editor.Document.GetLineByOffset(segment.StartOffset).LineNumber;
+				}
+			}
+			return null;
+		}
+
+		#endregion
+
 		protected override void OnDataContextChanged(System.EventArgs e)
 		{
 			base.OnDataContextChanged(e);
@@ -658,6 +817,8 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				previous.PropertyChanged -= OnModelPropertyChanged;
 				previous.CaptureViewState = null;
+				previous.ToggleBookmarkAtCaret = null;
+				previous.NavigateBookmarkInFile = null;
 			}
 
 			boundModel = DataContext as DecompilerTabPageModel;
@@ -668,6 +829,9 @@ namespace ICSharpCode.ILSpy.TextView
 				// records a navigation away. (Re)assigning every DataContext-change handles both
 				// the first attach and an ABA reattach.
 				model.CaptureViewState = GetCurrentViewState;
+				// Bookmarks-pane toolbar actions that operate on the active document route through these.
+				model.ToggleBookmarkAtCaret = ToggleBookmarkAtCaret;
+				model.NavigateBookmarkInFile = NavigateBookmarkInFile;
 				ApplyDocument(model);
 				// Point the breadcrumb at this tab's node (the bar owns its own VM, so feed it the
 				// node rather than letting it inherit the document DataContext).
@@ -723,6 +887,12 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				ApplyHighlightedReference(m);
 			}
+			// A bookmark navigation that lands on the already-open document (no re-decompile) scrolls here.
+			else if (sender is DecompilerTabPageModel bm
+				&& e.PropertyName == nameof(DecompilerTabPageModel.PendingBookmark))
+			{
+				ApplyPendingBookmark(bm);
+			}
 		}
 
 		void ApplyHighlightedReference(DecompilerTabPageModel model)
@@ -773,6 +943,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 			if (restoreViewState)
 				RestoreOrResetViewState(pendingState);
+
+			// Position at a navigated-to bookmark once its document (and debug map) has landed.
+			ApplyPendingBookmark(model);
 
 			SwapCustomElementGenerators(model.CustomElementGenerators);
 

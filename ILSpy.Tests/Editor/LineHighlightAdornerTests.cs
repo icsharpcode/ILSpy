@@ -16,38 +16,36 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
+
+using AvaloniaEdit;
+
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.TextView;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpy.Tests.Docking;
+namespace ICSharpCode.ILSpy.Tests;
 
-// DockWorkspace is the MEF-shared wrapper that holds the Dock.Avalonia factory + the root
-// layout. If MEF can't construct it (e.g., missing AssemblyTreeModel / SearchPaneModel /
-// AnalyzerTreeViewModel imports), the entire dock surface never materializes. Asserting
-// at the export layer catches that before we wire it into the DockControl.
+// The line-highlight flash that plays alongside the gutter-icon pulse on a bookmark navigation.
+// The animation curve / timing are eyeballed; this pins the register-then-unregister lifecycle.
 [TestFixture]
-public class DockWorkspaceTests
+public class LineHighlightAdornerTests
 {
 	[AvaloniaTest]
-	public void DockWorkspace_resolves_and_exposes_root_layout_with_tool_panes()
+	public void DisplayLineHighlight_registers_and_Dismiss_unregisters()
 	{
-		var workspace = AppComposition.Current.GetExport<DockWorkspace>();
-		workspace.Should().NotBeNull("DockWorkspace is [Export][Shared] in ICSharpCode.ILSpy.Docking.");
+		var editor = new TextEditor { Document = new AvaloniaEdit.Document.TextDocument("line1\nline2\nline3") };
+		var renderers = editor.TextArea.TextView.BackgroundRenderers;
+		renderers.Should().NotContain(r => r is LineHighlightAdorner);
 
-		workspace.Layout.Should().NotBeNull("ILSpyDockFactory.CreateLayout() wires the root dock in the ctor.");
-		workspace.Factory.Should().NotBeNull();
-#if DEBUG
-		workspace.ToolPaneMenuItems.Should().HaveCount(5,
-			"AssemblyTree, Search, Analyzers, Bookmarks, and the Debug Steps pane (Debug-only) are wired at this point.");
-#else
-		workspace.ToolPaneMenuItems.Should().HaveCount(4,
-			"AssemblyTree, Search, Analyzers, and Bookmarks are the tool panes wired at this point.");
-#endif
+		LineHighlightAdorner.DisplayLineHighlight(editor.TextArea, 2);
+		renderers.Should().Contain(r => r is LineHighlightAdorner, "DisplayLineHighlight adds the adorner");
+
+		renderers.OfType<LineHighlightAdorner>().Single().Dismiss();
+		renderers.Should().NotContain(r => r is LineHighlightAdorner, "Dismiss unregisters the adorner");
 	}
 }

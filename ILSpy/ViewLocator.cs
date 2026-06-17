@@ -27,6 +27,7 @@ using Dock.Model.Core;
 
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Bookmarks;
 using ICSharpCode.ILSpy.Compare;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Search;
@@ -62,6 +63,7 @@ namespace ICSharpCode.ILSpy
 		static readonly Dictionary<Type, Func<Control>> s_views = new() {
 			{ typeof(AssemblyTreeModel),       () => new AssemblyListPane() },
 			{ typeof(SearchPaneModel),         () => new SearchPane() },
+			{ typeof(BookmarksPaneModel),      () => new BookmarksPane() },
 			{ typeof(AnalyzerTreeViewModel),   () => new AnalyzerTreeView() },
 			{ typeof(ContentTabPage),          () => new ContentTabPageView() },
 			{ typeof(DecompilerTabPageModel),  () => new DecompilerTextView() },

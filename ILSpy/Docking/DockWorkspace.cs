@@ -131,22 +131,10 @@ namespace ICSharpCode.ILSpy.Docking
 		public void SaveLayout() => ILSpyDockFactory.SaveLayout(GetLayoutFilePath(), Layout);
 
 		/// <summary>
-		/// Resolves <c>ILSpy.Layout.json</c> as a sidecar in the same directory the
-		/// XML <c>ILSpy.xml</c> settings file lives in — local-to-binary on portable
-		/// installs, %APPDATA%/ICSharpCode/ otherwise. Keeping it next to the XML
-		/// makes "delete settings to reset" still work as a single-folder action.
-		/// WPF stays XML; this is Avalonia-side only.
+		/// Resolves <c>ILSpy.Layout.json</c> as a sidecar next to the XML <c>ILSpy.xml</c>
+		/// settings file. WPF stays XML; this is Avalonia-side only.
 		/// </summary>
-		static string GetLayoutFilePath()
-		{
-			var xmlPath = ICSharpCode.ILSpyX.Settings.ILSpySettings.SettingsFilePathProvider?.Invoke();
-			if (string.IsNullOrEmpty(xmlPath))
-				return "ILSpy.Layout.json";
-			var dir = System.IO.Path.GetDirectoryName(xmlPath);
-			return string.IsNullOrEmpty(dir)
-				? "ILSpy.Layout.json"
-				: System.IO.Path.Combine(dir, "ILSpy.Layout.json");
-		}
+		static string GetLayoutFilePath() => AppEnv.ConfigurationFiles.GetPath("ILSpy.Layout.json");
 
 		public IReadOnlyList<ToolPaneMenuItem> ToolPaneMenuItems { get; }
 
