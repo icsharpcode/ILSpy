@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>type_parameter ::= attribute_section* ( 'in' | 'out' )? identifier</c> (C# grammar §8.5, §15.2.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class TypeParameterDeclaration : AstNode
+	public sealed partial class TypeParameterDeclaration : AstNode
 	{
 		public const string OutVarianceKeyword = "out";
 		public const string InVarianceKeyword = "in";

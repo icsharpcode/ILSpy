@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>line_directive ::= '#' 'line' ( decimal_digit+ string_literal? | 'default' | 'hidden' )</c> (C# lexical grammar)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class LinePreprocessorDirective : PreProcessorDirective
+	public sealed partial class LinePreprocessorDirective : PreProcessorDirective
 	{
 		public LinePreprocessorDirective(TextLocation startLocation, TextLocation endLocation) : base(PreProcessorDirectiveType.Line, startLocation, endLocation)
 		{
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>pragma_warning_directive ::= '#' 'pragma' 'warning' ( 'disable' | 'restore' ) expression*</c> (C# lexical grammar)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
+	public sealed partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
 
 		[Slot("Warning")]

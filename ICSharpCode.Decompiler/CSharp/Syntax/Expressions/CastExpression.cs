@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>cast_expression ::= '(' type ')' expression</c> (C# grammar §12.9.8)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class CastExpression : Expression
+	public sealed partial class CastExpression : Expression
 	{
 		[Slot("Type")]
 		public partial AstType Type { get; set; }

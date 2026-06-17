@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// (C# grammar §15.9.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class IndexerDeclaration : EntityDeclaration
+	public sealed partial class IndexerDeclaration : EntityDeclaration
 	{
 		public const string ThisKeyword = "this";
 

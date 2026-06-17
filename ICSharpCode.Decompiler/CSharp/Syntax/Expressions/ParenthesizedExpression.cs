@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>parenthesized_expression ::= '(' expression ')'</c> (C# grammar §12.8.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ParenthesizedExpression : Expression
+	public sealed partial class ParenthesizedExpression : Expression
 	{
 		[Slot("Expression")]
 		public partial Expression Expression { get; set; }

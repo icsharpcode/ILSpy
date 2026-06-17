@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>type_declaration ::= attribute_section* modifier* ( 'class' | 'struct' | 'interface' | 'enum' | 'record' 'class'? | 'record' 'struct' ) identifier type_parameter* ( '(' parameter* ')' )? ( ':' type+ )? constraint* '{' member* '}' ';'?</c> (C# grammar §15.2.1, §16.2.1, §19.2.1, §20.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class TypeDeclaration : EntityDeclaration
+	public sealed partial class TypeDeclaration : EntityDeclaration
 	{
 
 		public override SymbolKind SymbolKind {

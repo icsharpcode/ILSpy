@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>using_alias_directive ::= 'using' identifier '=' type ';'</c> (C# grammar §14.6.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class UsingAliasDeclaration : AstNode
+	public sealed partial class UsingAliasDeclaration : AstNode
 	{
 		public const string UsingKeyword = "using";
 

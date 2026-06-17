@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>out_var_declaration_expression ::= type variable_initializer</c> (C# grammar §12.20)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class OutVarDeclarationExpression : Expression
+	public sealed partial class OutVarDeclarationExpression : Expression
 	{
 		public const string OutKeyword = DirectionExpression.OutKeyword;
 

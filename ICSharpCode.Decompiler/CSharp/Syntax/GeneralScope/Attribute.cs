@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>attribute ::= type ( '(' expression* ')' )?</c> (C# grammar §23.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class Attribute : AstNode
+	public sealed partial class Attribute : AstNode
 	{
 
 		[Slot("Type")]

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>empty_statement ::= ';'</c> (C# grammar §13.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class EmptyStatement : Statement
+	public sealed partial class EmptyStatement : Statement
 	{
 		public TextLocation Location { get; set; }
 

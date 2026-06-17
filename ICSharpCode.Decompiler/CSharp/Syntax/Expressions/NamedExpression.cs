@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>named_expression ::= identifier '=' expression</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class NamedExpression : Expression
+	public sealed partial class NamedExpression : Expression
 	{
 		[NameSlot("Identifier")]
 		public partial string Name { get; set; }

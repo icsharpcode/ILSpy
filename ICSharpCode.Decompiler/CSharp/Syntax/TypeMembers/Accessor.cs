@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// get/set/init/add/remove
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
-	public partial class Accessor : EntityDeclaration
+	public sealed partial class Accessor : EntityDeclaration
 	{
 
 		public override SymbolKind SymbolKind {

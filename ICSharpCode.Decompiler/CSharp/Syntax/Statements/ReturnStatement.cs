@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>return_statement ::= 'return' expression? ';'</c> (C# grammar §13.10.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ReturnStatement : Statement
+	public sealed partial class ReturnStatement : Statement
 	{
 		public const string ReturnKeyword = "return";
 

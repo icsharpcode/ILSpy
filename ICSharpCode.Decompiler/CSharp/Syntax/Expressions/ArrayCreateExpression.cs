@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>array_creation_expression ::= 'new' type '[' expression* ']' array_specifier* array_initializer?</c> (C# grammar §12.8.17.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ArrayCreateExpression : Expression
+	public sealed partial class ArrayCreateExpression : Expression
 	{
 		public const string NewKeyword = "new";
 

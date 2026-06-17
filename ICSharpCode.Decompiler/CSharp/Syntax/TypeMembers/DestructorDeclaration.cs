@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>finalizer_declaration ::= attribute_section* modifier* '~' identifier '(' ')' ( block | ';' )</c> (C# grammar §15.13)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class DestructorDeclaration : EntityDeclaration
+	public sealed partial class DestructorDeclaration : EntityDeclaration
 	{
 		public const string TildeToken = "~";
 

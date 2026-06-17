@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>type_reference_expression ::= type</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class TypeReferenceExpression : Expression
+	public sealed partial class TypeReferenceExpression : Expression
 	{
 		[Slot("Type")]
 		public partial AstType Type { get; set; }

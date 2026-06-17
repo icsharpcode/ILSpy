@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </code>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class DocumentationReference : AstNode
+	public sealed partial class DocumentationReference : AstNode
 	{
 
 		/// <summary>

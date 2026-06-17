@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>try_statement ::= 'try' block catch_clause* ( 'finally' block )?</c> (C# grammar §13.11)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class TryCatchStatement : Statement
+	public sealed partial class TryCatchStatement : Statement
 	{
 		public const string TryKeyword = "try";
 		public const string FinallyKeyword = "finally";

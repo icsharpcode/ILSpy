@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>assignment_operator ::= '=' | '+=' | '-=' | '*=' | '/=' | '%=' | '&lt;&lt;=' | '&gt;&gt;=' | '&gt;&gt;&gt;=' | '&amp;=' | '|=' | '^='</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class AssignmentExpression : Expression
+	public sealed partial class AssignmentExpression : Expression
 	{
 		// reuse roles from BinaryOperatorExpression
 

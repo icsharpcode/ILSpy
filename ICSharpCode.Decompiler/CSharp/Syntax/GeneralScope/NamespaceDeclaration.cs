@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// (C# grammar §14.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class NamespaceDeclaration : AstNode
+	public sealed partial class NamespaceDeclaration : AstNode
 	{
 
 		public bool IsFileScoped { get; set; }

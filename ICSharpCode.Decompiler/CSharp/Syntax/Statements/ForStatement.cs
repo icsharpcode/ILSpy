@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>for_statement ::= 'for' '(' statement* ';' expression? ';' statement* ')' statement</c> (C# grammar §13.9.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ForStatement : Statement
+	public sealed partial class ForStatement : Statement
 	{
 		public const string ForKeyword = "for";
 

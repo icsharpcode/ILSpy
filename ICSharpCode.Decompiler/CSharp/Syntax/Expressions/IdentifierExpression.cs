@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>simple_name ::= identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §12.8.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class IdentifierExpression : Expression
+	public sealed partial class IdentifierExpression : Expression
 	{
 		public IdentifierExpression(string identifier, TextLocation location)
 		{

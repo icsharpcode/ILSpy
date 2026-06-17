@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>switch_expression ::= expression 'switch' '{' switch_expression_arm* '}'</c> (C# grammar §12.12)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class SwitchExpression : Expression
+	public sealed partial class SwitchExpression : Expression
 	{
 		public const string SwitchKeyword = "switch";
 
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>switch_expression_arm ::= pattern '=&gt;' expression</c> (C# grammar §12.12)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class SwitchExpressionSection : AstNode
+	public sealed partial class SwitchExpressionSection : AstNode
 	{
 
 		[Slot("Pattern")]

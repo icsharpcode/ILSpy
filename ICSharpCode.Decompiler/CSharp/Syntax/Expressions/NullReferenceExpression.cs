@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>null_reference_expression ::= 'null'</c> (C# grammar §6.4.5.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class NullReferenceExpression : Expression
+	public sealed partial class NullReferenceExpression : Expression
 	{
 		// StartLocation comes from the base (stored at print time); only the end needs deriving.
 		public override TextLocation EndLocation {

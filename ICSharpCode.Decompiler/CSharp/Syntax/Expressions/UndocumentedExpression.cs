@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </code>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class UndocumentedExpression : Expression
+	public sealed partial class UndocumentedExpression : Expression
 	{
 		public const string ArglistKeyword = "__arglist";
 		public const string RefvalueKeyword = "__refvalue";

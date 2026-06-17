@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>member_type ::= type ( '.' | '::' ) identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §7.8.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class MemberType : AstType
+	public sealed partial class MemberType : AstType
 	{
 
 		public bool IsDoubleColon { get; set; }

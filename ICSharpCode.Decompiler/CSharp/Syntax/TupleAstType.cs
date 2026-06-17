@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>tuple_type ::= '(' tuple_type_element (',' tuple_type_element)+ ')'</c> (C# grammar §8.3.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class TupleAstType : AstType
+	public sealed partial class TupleAstType : AstType
 	{
 
 		[Slot("Element")]
@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>tuple_type_element ::= type identifier?</c> (C# grammar §8.3.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
-	public partial class TupleTypeElement : AstNode
+	public sealed partial class TupleTypeElement : AstNode
 	{
 		[Slot("Type")]
 		public partial AstType Type { get; set; }

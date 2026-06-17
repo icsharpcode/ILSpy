@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// (C# grammar §15.7.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class PropertyDeclaration : EntityDeclaration
+	public sealed partial class PropertyDeclaration : EntityDeclaration
 	{
 
 		public override SymbolKind SymbolKind {

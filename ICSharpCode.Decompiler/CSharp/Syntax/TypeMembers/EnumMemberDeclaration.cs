@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>enum_member_declaration ::= attribute_section* identifier ( '=' expression )?</c> (C# grammar §20.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class EnumMemberDeclaration : EntityDeclaration
+	public sealed partial class EnumMemberDeclaration : EntityDeclaration
 	{
 
 		public override SymbolKind SymbolKind {

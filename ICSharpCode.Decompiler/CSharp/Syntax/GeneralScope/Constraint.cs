@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>type_parameter_constraints_clause ::= 'where' type ':' type+</c> (C# grammar §15.2.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
-	public partial class Constraint : AstNode
+	public sealed partial class Constraint : AstNode
 	{
 
 		[Slot("ConstraintTypeParameter")]

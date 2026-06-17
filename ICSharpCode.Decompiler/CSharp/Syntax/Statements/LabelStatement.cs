@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>labeled_statement ::= identifier ':' statement</c> (C# grammar §13.5)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class LabelStatement : Statement
+	public sealed partial class LabelStatement : Statement
 	{
 		[NameSlot("Identifier")]
 		public partial string Label { get; set; }

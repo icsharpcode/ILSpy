@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>if_statement ::= 'if' '(' expression ')' statement ( 'else' statement )?</c> (C# grammar §13.8.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class IfElseStatement : Statement
+	public sealed partial class IfElseStatement : Statement
 	{
 		public const string IfKeyword = "if";
 		public const string ElseKeyword = "else";

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// (C# grammar §11.2.5, §11.2.6)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class RecursivePatternExpression : Expression
+	public sealed partial class RecursivePatternExpression : Expression
 	{
 
 		[Slot("Type")]

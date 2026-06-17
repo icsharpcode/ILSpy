@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>error_expression ::= /* unparseable input */</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ErrorExpression : Expression
+	public sealed partial class ErrorExpression : Expression
 	{
 		public TextLocation Location { get; set; }
 

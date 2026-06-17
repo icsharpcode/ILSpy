@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// (C# lexical grammar §6.4.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
-	public partial class Identifier : AstNode
+	public sealed partial class Identifier : AstNode
 	{
 
 		string name;
@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.name = string.Empty;
 		}
 
-		protected Identifier(string name, TextLocation location)
+		private Identifier(string name, TextLocation location)
 		{
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));

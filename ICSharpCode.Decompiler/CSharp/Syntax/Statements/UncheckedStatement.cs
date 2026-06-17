@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>unchecked_statement ::= 'unchecked' block</c> (C# grammar §13.12)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class UncheckedStatement : Statement
+	public sealed partial class UncheckedStatement : Statement
 	{
 		public const string UncheckedKeyword = "unchecked";
 

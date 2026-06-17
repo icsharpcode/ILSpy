@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>argument_value ::= ( 'ref' | 'out' | 'in' )? expression</c> (C# grammar §12.6.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class DirectionExpression : Expression
+	public sealed partial class DirectionExpression : Expression
 	{
 		public const string RefKeyword = "ref";
 		public const string OutKeyword = "out";

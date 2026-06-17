@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>fixed_size_buffer_declaration ::= attribute_section* modifier* 'fixed' type variable_initializer* ';'</c> (C# grammar §24.8.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class FixedFieldDeclaration : EntityDeclaration
+	public sealed partial class FixedFieldDeclaration : EntityDeclaration
 	{
 		public const string FixedKeyword = "fixed";
 
