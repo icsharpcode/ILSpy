@@ -212,7 +212,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.FirstClassSpanTypes;
 			if (settings.ExtensionMembers)
 				typeSystemOptions |= TypeSystemOptions.ExtensionMembers;
-			if (settings.RuntimeAsync)
+			if (settings.AsyncAwait)
 				typeSystemOptions |= TypeSystemOptions.RuntimeAsync;
 			return typeSystemOptions;
 		}

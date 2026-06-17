@@ -122,7 +122,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			moveNextLeaves.Clear();
 			if (!MatchTaskCreationPattern(function) && !MatchAsyncEnumeratorCreationPattern(function))
 			{
-				if (function.IsAsync && context.Settings.RuntimeAsync)
+				if (function.IsAsync)
 				{
 					TranslateThisCopyAccess(function);
 					RuntimeAsyncManualAwaitTransform.Run(function, context);
