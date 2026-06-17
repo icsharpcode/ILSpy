@@ -65,17 +65,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
 
-		public override void WriteKeyword(TokenRole role, string keyword)
+		public override void WriteKeyword(string keyword)
 		{
 			if (lastWritten == LastWritten.KeywordOrIdentifier)
 			{
 				Space();
 			}
-			base.WriteKeyword(role, keyword);
+			base.WriteKeyword(keyword);
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
 
-		public override void WriteToken(TokenRole role, string token)
+		public override void WriteToken(string token)
 		{
 			// Avoid that two +, - or ? tokens are combined into a ++, -- or ?? token.
 			// Note that we don't need to handle tokens like = because there's no valid
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				base.Space();
 			}
-			base.WriteToken(role, token);
+			base.WriteToken(token);
 			if (token == "+")
 			{
 				lastWritten = LastWritten.Plus;

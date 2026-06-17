@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DestructorDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole TildeRole = new TokenRole("~");
+		public const string TildeToken = "~";
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Destructor; }

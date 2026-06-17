@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class AnonymousTypeCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
+		public const string NewKeyword = "new";
 
 		[Slot("Roles.Expression")]
 		public partial AstNodeCollection<Expression> Initializers { get; }

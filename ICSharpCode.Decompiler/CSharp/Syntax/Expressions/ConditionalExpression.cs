@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ConditionalExpression : Expression
 	{
-		public readonly static TokenRole QuestionMarkRole = new TokenRole("?");
-		public readonly static TokenRole ColonRole = Roles.Colon;
+		public const string QuestionMarkToken = "?";
+		public const string ColonToken = Roles.Colon;
 
 		[Slot("ConditionRole")]
 		public partial Expression Condition { get; set; }

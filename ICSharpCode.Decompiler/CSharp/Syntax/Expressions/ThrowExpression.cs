@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ThrowExpression : Expression
 	{
-		public static readonly TokenRole ThrowKeywordRole = ThrowStatement.ThrowKeywordRole;
+		public const string ThrowKeyword = ThrowStatement.ThrowKeyword;
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

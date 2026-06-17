@@ -41,9 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class PropertyDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole GetKeywordRole = new TokenRole("get");
-		public static readonly TokenRole SetKeywordRole = new TokenRole("set");
-		public static readonly TokenRole InitKeywordRole = new TokenRole("init");
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Property; }

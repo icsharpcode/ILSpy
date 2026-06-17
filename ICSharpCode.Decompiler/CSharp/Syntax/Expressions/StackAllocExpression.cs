@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class StackAllocExpression : Expression
 	{
-		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");
+		public const string StackallocKeyword = "stackalloc";
 
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }

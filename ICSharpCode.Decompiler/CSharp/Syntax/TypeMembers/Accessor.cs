@@ -72,17 +72,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement? Body { get; set; }
-
-		public static TokenRole? GetAccessorKeywordRole(AccessorKind kind)
-		{
-			return kind switch {
-				AccessorKind.Getter => PropertyDeclaration.GetKeywordRole,
-				AccessorKind.Setter => PropertyDeclaration.SetKeywordRole,
-				AccessorKind.Init => PropertyDeclaration.InitKeywordRole,
-				AccessorKind.Adder => CustomEventDeclaration.AddKeywordRole,
-				AccessorKind.Remover => CustomEventDeclaration.RemoveKeywordRole,
-				_ => null,
-			};
-		}
 	}
 }

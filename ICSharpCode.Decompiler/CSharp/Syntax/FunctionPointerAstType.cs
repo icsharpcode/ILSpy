@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FunctionPointerAstType : AstType
 	{
-		public static readonly TokenRole PointerRole = new TokenRole("*");
+		public const string PointerToken = "*";
 
 		public bool HasUnmanagedCallingConvention { get; set; }
 

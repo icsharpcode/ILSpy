@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAtStartOfLine = false;
 		}
 
-		public override void WriteKeyword(TokenRole role, string keyword)
+		public override void WriteKeyword(string keyword)
 		{
 			WriteIndentation();
 			column += keyword.Length;
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAtStartOfLine = false;
 		}
 
-		public override void WriteToken(TokenRole role, string token)
+		public override void WriteToken(string token)
 		{
 			WriteIndentation();
 			column += token.Length;
@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					textWriter.Write("float");
 					column += 5;
 					Length += 5;
-					WriteToken(Roles.Dot, ".");
+					WriteToken(".");
 					if (float.IsPositiveInfinity(f))
 					{
 						textWriter.Write("PositiveInfinity");
@@ -345,7 +345,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					textWriter.Write("double");
 					column += 6;
 					Length += 6;
-					WriteToken(Roles.Dot, ".");
+					WriteToken(".");
 					if (double.IsPositiveInfinity(f))
 					{
 						textWriter.Write("PositiveInfinity");

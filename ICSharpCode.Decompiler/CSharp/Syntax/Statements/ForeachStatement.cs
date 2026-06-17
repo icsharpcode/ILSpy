@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ForeachStatement : Statement
 	{
-		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
-		public static readonly TokenRole ForeachKeywordRole = new TokenRole("foreach");
-		public static readonly TokenRole InKeywordRole = new TokenRole("in");
+		public const string AwaitKeyword = UnaryOperatorExpression.AwaitKeyword;
+		public const string ForeachKeyword = "foreach";
+		public const string InKeyword = "in";
 
 		public bool IsAsync { get; set; }
 

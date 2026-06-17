@@ -37,13 +37,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
 	public partial class ParameterDeclaration : AstNode
 	{
-		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
-		public static readonly TokenRole ScopedRefRole = new TokenRole("scoped");
-		public static readonly TokenRole RefModifierRole = new TokenRole("ref");
-		public static readonly TokenRole ReadonlyModifierRole = ComposedType.ReadonlyRole;
-		public static readonly TokenRole OutModifierRole = new TokenRole("out");
-		public static readonly TokenRole InModifierRole = new TokenRole("in");
-		public static readonly TokenRole ParamsModifierRole = new TokenRole("params");
+		public const string ThisModifier = "this";
+		public const string ScopedRefKeyword = "scoped";
+		public const string RefModifier = "ref";
+		public const string ReadonlyModifier = ComposedType.ReadonlyKeyword;
+		public const string OutModifier = "out";
+		public const string InModifier = "in";
+		public const string ParamsModifier = "params";
 
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }

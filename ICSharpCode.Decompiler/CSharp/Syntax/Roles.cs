@@ -33,36 +33,36 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 
 		// some pre defined constants for most used punctuation
-		public static readonly TokenRole LPar = new TokenRole("(");
-		public static readonly TokenRole RPar = new TokenRole(")");
-		public static readonly TokenRole LBracket = new TokenRole("[");
-		public static readonly TokenRole RBracket = new TokenRole("]");
-		public static readonly TokenRole LBrace = new TokenRole("{");
-		public static readonly TokenRole RBrace = new TokenRole("}");
-		public static readonly TokenRole LChevron = new TokenRole("<");
-		public static readonly TokenRole RChevron = new TokenRole(">");
-		public static readonly TokenRole Comma = new TokenRole(",");
-		public static readonly TokenRole Dot = new TokenRole(".");
-		public static readonly TokenRole Semicolon = new TokenRole(";");
-		public static readonly TokenRole Assign = new TokenRole("=");
-		public static readonly TokenRole Colon = new TokenRole(":");
-		public static readonly TokenRole DoubleColon = new TokenRole("::");
-		public static readonly TokenRole Arrow = new TokenRole("=>");
+		public const string LPar = "(";
+		public const string RPar = ")";
+		public const string LBracket = "[";
+		public const string RBracket = "]";
+		public const string LBrace = "{";
+		public const string RBrace = "}";
+		public const string LChevron = "<";
+		public const string RChevron = ">";
+		public const string Comma = ",";
+		public const string Dot = ".";
+		public const string Semicolon = ";";
+		public const string Assign = "=";
+		public const string Colon = ":";
+		public const string DoubleColon = "::";
+		public const string Arrow = "=>";
 
 
 
-		public readonly static TokenRole WhereKeyword = new TokenRole("where");
-		public readonly static TokenRole DelegateKeyword = new TokenRole("delegate");
-		public static readonly TokenRole ExternKeyword = new TokenRole("extern");
-		public static readonly TokenRole AliasKeyword = new TokenRole("alias");
-		public static readonly TokenRole NamespaceKeyword = new TokenRole("namespace");
+		public const string WhereKeyword = "where";
+		public const string DelegateKeyword = "delegate";
+		public const string ExternKeyword = "extern";
+		public const string AliasKeyword = "alias";
+		public const string NamespaceKeyword = "namespace";
 
-		public static readonly TokenRole EnumKeyword = new TokenRole("enum");
-		public static readonly TokenRole InterfaceKeyword = new TokenRole("interface");
-		public static readonly TokenRole StructKeyword = new TokenRole("struct");
-		public static readonly TokenRole ClassKeyword = new TokenRole("class");
-		public static readonly TokenRole RecordKeyword = new TokenRole("record");
-		public static readonly TokenRole RecordStructKeyword = new TokenRole("record");
+		public const string EnumKeyword = "enum";
+		public const string InterfaceKeyword = "interface";
+		public const string StructKeyword = "struct";
+		public const string ClassKeyword = "class";
+		public const string RecordKeyword = "record";
+		public const string RecordStructKeyword = "record";
 
 	}
 }

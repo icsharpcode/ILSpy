@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ObjectCreateExpression : Expression
 	{
-		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
+		public const string NewKeyword = "new";
 
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }

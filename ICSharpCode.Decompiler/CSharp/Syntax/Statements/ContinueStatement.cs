@@ -32,6 +32,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ContinueStatement : Statement
 	{
-		public static readonly TokenRole ContinueKeywordRole = new TokenRole("continue");
 	}
 }

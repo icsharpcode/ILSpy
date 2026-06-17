@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UnsafeStatement : Statement
 	{
-		public static readonly TokenRole UnsafeKeywordRole = new TokenRole("unsafe");
+		public const string UnsafeKeyword = "unsafe";
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }

@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IfElseStatement : Statement
 	{
-		public readonly static TokenRole IfKeywordRole = new TokenRole("if");
-		public readonly static TokenRole ElseKeywordRole = new TokenRole("else");
+		public const string IfKeyword = "if";
+		public const string ElseKeyword = "else";
 
 		[Slot("ConditionRole")]
 		public partial Expression Condition { get; set; }

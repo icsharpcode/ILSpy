@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryContinuationClause : QueryClause
 	{
-		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
+		public const string IntoKeyword = "into";
 
 		[Slot("PrecedingQueryRole")]
 		public partial QueryExpression PrecedingQuery { get; set; }
@@ -59,8 +59,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryFromClause : QueryClause
 	{
-		public static readonly TokenRole FromKeywordRole = new TokenRole("from");
-		public static readonly TokenRole InKeywordRole = new TokenRole("in");
+		public const string FromKeyword = "from";
+		public const string InKeyword = "in";
 
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryLetClause : QueryClause
 	{
-		public readonly static TokenRole LetKeywordRole = new TokenRole("let");
+		public const string LetKeyword = "let";
 
 		[NameSlot("Roles.Identifier")]
 		public partial string Identifier { get; set; }
@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryWhereClause : QueryClause
 	{
-		public readonly static TokenRole WhereKeywordRole = new TokenRole("where");
+		public const string WhereKeyword = "where";
 
 		[Slot("Roles.Condition")]
 		public partial Expression Condition { get; set; }
@@ -112,11 +112,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryJoinClause : QueryClause
 	{
-		public static readonly TokenRole JoinKeywordRole = new TokenRole("join");
-		public static readonly TokenRole InKeywordRole = new TokenRole("in");
-		public static readonly TokenRole OnKeywordRole = new TokenRole("on");
-		public static readonly TokenRole EqualsKeywordRole = new TokenRole("equals");
-		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
+		public const string JoinKeyword = "join";
+		public const string InKeyword = "in";
+		public const string OnKeyword = "on";
+		public const string EqualsKeyword = "equals";
+		public const string IntoKeyword = "into";
 
 		// Derived from IntoIdentifier (which DoMatch already compares); exclude it to avoid a redundant compare.
 		[ExcludeFromMatch]
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryOrderClause : QueryClause
 	{
-		public static readonly TokenRole OrderbyKeywordRole = new TokenRole("orderby");
+		public const string OrderbyKeyword = "orderby";
 
 		[Slot("OrderingRole")]
 		public partial AstNodeCollection<QueryOrdering> Orderings { get; }
@@ -161,8 +161,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryOrdering : AstNode
 	{
-		public readonly static TokenRole AscendingKeywordRole = new TokenRole("ascending");
-		public readonly static TokenRole DescendingKeywordRole = new TokenRole("descending");
+		public const string AscendingKeyword = "ascending";
+		public const string DescendingKeyword = "descending";
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QuerySelectClause : QueryClause
 	{
-		public readonly static TokenRole SelectKeywordRole = new TokenRole("select");
+		public const string SelectKeyword = "select";
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
@@ -198,8 +198,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryGroupClause : QueryClause
 	{
-		public static readonly TokenRole GroupKeywordRole = new TokenRole("group");
-		public static readonly TokenRole ByKeywordRole = new TokenRole("by");
+		public const string GroupKeyword = "group";
+		public const string ByKeyword = "by";
 
 		[Slot("ProjectionRole")]
 		public partial Expression Projection { get; set; }

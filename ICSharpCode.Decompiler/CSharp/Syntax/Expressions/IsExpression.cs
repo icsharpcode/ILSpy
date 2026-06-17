@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IsExpression : Expression
 	{
-		public readonly static TokenRole IsKeywordRole = new TokenRole("is");
+		public const string IsKeyword = "is";
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
