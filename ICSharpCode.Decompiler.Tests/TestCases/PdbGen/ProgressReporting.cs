@@ -1,8 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<symbols>
-  <files>
-    <file id="1" name="ICSharpCode.Decompiler.Tests.TestCases.PdbGen\ProgressReporting.cs" language="C#" checksumAlgorithm="SHA256">
-	<![CDATA[using System;
+using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen;
 
@@ -39,6 +35,3 @@ public class Class3
 		Console.WriteLine("Class3");
 	}
 }
-]]></file>
-  </files>
-</symbols>

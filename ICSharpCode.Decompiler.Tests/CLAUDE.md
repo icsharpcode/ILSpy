@@ -42,7 +42,7 @@ root `CLAUDE.md` section on the submodule).
 | Ugly | `UglyTestRunner` / `Ugly/*.cs` | compile -> decompile with sugar settings disabled | sibling `.Expected.cs` file |
 | Disassembler | `DisassemblerPrettyTestRunner` / `Disassembler/Pretty/*.il` | ilasm -> disassemble with our `ReflectionDisassembler` | the `.il` source (or `.expected.il`, e.g. `SortedOutput`) |
 | VBPretty | `VBPrettyTestRunner` / `VBPretty/*.vb` | vbc -> decompile to C# | sibling `.cs` file |
-| PdbGen | `PdbGenerationTestRunner` / `PdbGen/*.xml` | in-proc Roslyn compile (real PDB = oracle), decompile, generate portable PDB with `PortablePdbWriter`, parse both PDBs' sequence-point blobs | the compiler's PDB, projected to the visible breakpoint map (see below) |
+| PdbGen | `PdbGenerationTestRunner` / `PdbGen/*.cs` | in-proc Roslyn compile (real PDB = oracle), decompile, generate portable PDB with `PortablePdbWriter`, parse both PDBs' sequence-point blobs | the compiler's PDB, projected to the visible breakpoint map (see below) |
 | Roundtrip | `RoundtripAssembly` (inputs from `ILSpy-tests/`) | whole-project decompile -> MSBuild rebuild -> run original NUnit tests against the rebuilt assembly | test-run success |
 | Unit tests | `TypeSystem/`, `Semantics/`, `Output/`, `Util/`, `DataFlowTest`, `Metadata/`, `ProjectDecompiler/` | plain in-process NUnit | assertions |
 
@@ -69,14 +69,14 @@ helper, which picks the file via `[CallerMemberName]`.
 - **ILPretty / Disassembler**: add a `.il` file (assembled with the NuGet ilasm) and the
   expected `.cs` (`ILPretty`) or rely on round-tripping the `.il` itself (`Disassembler`).
 - **VBPretty**: add `MyTest.vb` and the expected C# decompilation `MyTest.cs`.
-- **PdbGen** (the reconstructed PDB's breakpoints match the C# compiler's): add `MyTest.xml`
-  containing the source inside `<file name="...">` elements, written exactly as ILSpy
-  pretty-prints a *single type* (one document per type, no assembly-attribute header - the same
-  discipline as Pretty). The runner compiles it with Roslyn (whose PDB is the oracle), decompiles,
-  reconstructs a PDB, and compares only the **visible breakpoint map**: per method, the ordered
-  source locations of the non-hidden sequence points. IL offsets, hidden sequence points, local
-  scopes and the embedded source are all dropped, because the decompiler reconstructs them
-  differently and they never match byte-for-byte. The comparer also runs an oracle-free
+- **PdbGen** (the reconstructed PDB's breakpoints match the C# compiler's): add `MyTest.cs`,
+  written exactly as ILSpy pretty-prints a *single type* (no assembly-attribute header - the
+  same discipline as Pretty). The runner compiles it with Roslyn (whose PDB is the oracle),
+  decompiles, reconstructs a PDB, and compares the **breakpoint map**: per method, the
+  ordered source locations of visible sequence points and the placement of hidden sequence
+  points anchored to neighboring source locations. IL offsets, local scopes and the embedded
+  source are all dropped, because the decompiler reconstructs them differently and they never
+  match byte-for-byte. The comparer also runs an oracle-free
   well-formedness check (strictly increasing IL offsets = no duplicate/overlapping points).
   `TestSequencePoints()` asserts the map matches the compiler exactly; for the handful of methods
   where the decompiler legitimately diverges (e.g. it breakpoints a method's opening brace where

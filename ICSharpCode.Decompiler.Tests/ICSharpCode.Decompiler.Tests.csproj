@@ -162,12 +162,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="TestCases\PdbGen\Members.xml" />
-    <Content Include="TestCases\PdbGen\ProgressReporting.xml" />
-    <Content Include="TestCases\PdbGen\ForLoopTests.xml" />
-    <Content Include="TestCases\PdbGen\CustomPdbId.xml" />
-    <Content Include="TestCases\PdbGen\HelloWorld.xml" />
-    <Content Include="TestCases\PdbGen\LambdaCapturing.xml" />
+    <None Include="TestCases\PdbGen\*.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -185,6 +180,7 @@
          are not valid standalone C#, expected-output fixtures that reuse type names, and
          MetadataAttributes.cs (applies assembly/module attributes that break NUnit discovery).
          The harness compiles these from disk at test time; kept as None for IDE visibility. -->
+    <Compile Remove="TestCases\PdbGen\*.cs" />
     <Compile Remove="TestCases\Correctness\ComInterop.cs" />
     <None Include="TestCases\Correctness\ComInterop.cs" />
     <Compile Remove="TestCases\ILPretty\CS1xSwitch_Debug.cs" />

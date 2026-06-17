@@ -1,0 +1,7 @@
+0x06000001 ForeachUsing.Run
+  - compiler only: (17,2)-(17,3)
+  - compiler only: (9,10)-(9,56)
+  - compiler only: hidden after (12,3)-(12,4)
+  - compiler only: hidden after (13,21)-(13,23)
+  - compiler only: hidden after (13,24)-(13,29)
+  + decompiler only: (9,3)-(9,57)

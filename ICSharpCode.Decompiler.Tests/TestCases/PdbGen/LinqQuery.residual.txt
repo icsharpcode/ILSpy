@@ -1,0 +1,7 @@
+0x06000001 LinqQuery.Run
+  - compiler only: (15,2)-(15,3)
+  - compiler only: hidden after (9,21)-(9,23)
+0x06000005 <>c.<Run>b__0_0
+  + decompiler only: hidden after (10,10)-(10,15)
+0x06000006 <>c.<Run>b__0_1
+  + decompiler only: hidden after (11,11)-(11,16)

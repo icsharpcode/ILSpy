@@ -1,0 +1,8 @@
+0x06000001 UsingDeclaration.Run
+  - compiler only: (11,2)-(11,3)
+  - compiler only: (11,2)-(11,3)
+  - compiler only: (8,3)-(8,56)
+  - compiler only: hidden after (11,2)-(11,3)
+  - compiler only: hidden after (11,2)-(11,3)
+  + decompiler only: (8,3)-(8,55)
+  + decompiler only: hidden after (10,3)-(10,46)

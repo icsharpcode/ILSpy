@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<symbols>
-  <files>
-    <file id="1" name="ICSharpCode.Decompiler.Tests.TestCases.PdbGen\LambdaCapturing.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
+using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.PdbGen;
 
@@ -19,6 +16,3 @@ public class LambdaCapturing
 		p(1, 2);
 	}
 }
-]]></file>
-  </files>
-</symbols>

@@ -1,0 +1,4 @@
+0x06000001 ICSharpCode.Decompiler.Tests.TestCases.PdbGen.ForLoopTests.SimplePrintLoop
+  - compiler only: hidden after (9,8)-(9,17)
+0x06000002 ICSharpCode.Decompiler.Tests.TestCases.PdbGen.ForLoopTests.SimplePrintLoopWithCondition
+  - compiler only: hidden after (17,8)-(17,17)

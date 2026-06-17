@@ -1,5 +1,5 @@
 /*.dll
 /*.pdb
-/*.expected.xml
-/*.generated.xml
 /*.residual.txt.generated
+/*.expected.cs
+/*.generated.cs

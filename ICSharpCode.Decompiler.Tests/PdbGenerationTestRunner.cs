@@ -5,7 +5,6 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
-using System.Xml.Linq;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugInfo;
@@ -41,7 +40,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ForLoopTests()
 		{
-			TestSequencePoints();
+			// The compiler hides the unconditional branch from the loop setup to the condition test;
+			// the decompiler folds that IL into the loop body's point instead. The residual pins it.
+			TestSequencePoints(knownResidual: true);
 		}
 
 		[Test]
@@ -59,6 +60,117 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void TryCatchFinally()
+		{
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void SwitchStatement()
+		{
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void AsyncAwait()
+		{
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void YieldReturn()
+		{
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void ForeachUsing()
+		{
+			// The using statement and foreach are lowered to try/finally; the decompiler places the
+			// disposal and the closing braces differently from the compiler.
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void WhileLoops()
+		{
+			TestSequencePoints();
+		}
+
+		[Test]
+		public void LockStatement()
+		{
+			// The compiler breakpoints the lock's closing brace and the static-field initializer in
+			// the .cctor; the decompiler reconstructs the lock exit and the cctor differently.
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void LinqQuery()
+		{
+			// The query is lowered to lambdas; the decompiler emits an extra hidden point inside each
+			// lambda and places the enclosing foreach's point differently from the compiler.
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void SwitchExpression()
+		{
+			// The compiler breakpoints each switch-expression arm; the decompiler breakpoints the
+			// method's opening brace and keeps the arm bodies hidden.
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void LocalFunctions()
+		{
+			TestSequencePoints();
+		}
+
+		[Test]
+		public void GotoLabels()
+		{
+			TestSequencePoints();
+		}
+
+		[Test]
+		public void CheckedUnchecked()
+		{
+			TestSequencePoints();
+		}
+
+		[Test]
+		public void NestedLoops()
+		{
+			// Same residual as ForLoopTests, once per loop: the compiler keeps the back-branch from
+			// the increment to the condition test hidden, while the decompiler folds that IL into the
+			// loop body's point.
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void ConditionalOperators()
+		{
+			// The decompiler emits an extra hidden point after each statement that the compiler
+			// does not, where the ?? / ?: result is consumed.
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
+		public void PatternMatching()
+		{
+			TestSequencePoints();
+		}
+
+		[Test]
+		public void UsingDeclaration()
+		{
+			// The using declaration is lowered to a try/finally whose disposal point the decompiler
+			// reconstructs at a different location than the compiler.
+			TestSequencePoints(knownResidual: true);
+		}
+
+		[Test]
 		public void CustomPdbId()
 		{
 			// Generate a PDB for an assembly using a randomly-generated ID, then validate that the PDB uses the specified ID
@@ -69,9 +181,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiler = new CSharpDecompiler(moduleDefinition, resolver, new DecompilerSettings());
 			var expectedPdbId = new BlobContentId(Guid.NewGuid(), (uint)Random.Shared.Next());
 
-			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(CustomPdbId) + ".pdb"), FileMode.Create, FileAccess.ReadWrite))
 			{
-				pdbStream.SetLength(0);
 				new PortablePdbWriter { NoLogo = true, PdbId = expectedPdbId }
 					.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream);
 
@@ -94,11 +205,9 @@ namespace ICSharpCode.Decompiler.Tests
 
 			// Compile HelloWorld's source into a uniquely-named assembly so this test never collides
 			// with the HelloWorld fixture's .expected files under the fixture's parallel scope.
-			string sourceXml = Path.Combine(TestCasePath, nameof(HelloWorld) + ".xml");
-			var files = XDocument.Parse(File.ReadAllText(sourceXml))
-				.Descendants("file").ToDictionary(f => f.Attribute("name").Value, f => f.Value);
+			string sourceFile = Path.Combine(TestCasePath, nameof(HelloWorld) + ".cs");
 			string outputBase = Path.Combine(TestCasePath, nameof(EmbedSourceFiles_False_Omits_Embedded_Source) + ".expected");
-			Tester.CompileCSharpWithPdb(outputBase, files);
+			CompileCSharpWithPdb(outputBase, sourceFile);
 			string peFileName = outputBase + ".dll";
 
 			var module = new PEFile(peFileName);
@@ -172,9 +281,8 @@ namespace ICSharpCode.Decompiler.Tests
 				lastFilesWritten = progress.UnitsCompleted;
 			};
 
-			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(ProgressReporting) + ".pdb"), FileMode.OpenOrCreate, FileAccess.ReadWrite))
+			using (FileStream pdbStream = File.Open(Path.Combine(TestCasePath, nameof(ProgressReporting) + ".pdb"), FileMode.Create, FileAccess.ReadWrite))
 			{
-				pdbStream.SetLength(0);
 				new PortablePdbWriter { NoLogo = true, Progress = new TestProgressReporter(reportFunc) }
 					.WritePdb(moduleDefinition, decompiler, new DecompilerSettings(), pdbStream);
 
@@ -204,9 +312,9 @@ namespace ICSharpCode.Decompiler.Tests
 		/// <summary>
 		/// Compiles the fixture with the C# compiler (producing a real PDB used as the oracle),
 		/// decompiles it and reconstructs a PDB with <see cref="PortablePdbWriter"/>, then compares
-		/// the two PDBs' visible breakpoint maps. The decompiler reconstructs IL ranges, hidden
-		/// sequence points and local scopes differently from the compiler, so the comparison drops
-		/// those and asserts only on the source location of each visible (non-hidden) sequence point.
+		/// the two PDBs' breakpoint maps. The decompiler reconstructs IL ranges and local scopes
+		/// differently from the compiler, so the comparison asserts on source locations and hidden
+		/// point placement without depending on exact IL offsets.
 		/// </summary>
 		/// <param name="tolerance">
 		/// Whether visible breakpoints must match on column as well as line.
@@ -242,7 +350,8 @@ namespace ICSharpCode.Decompiler.Tests
 			Assert.That(wellFormed, Is.Empty, "the reconstructed PDB is not well-formed:\n" + wellFormed);
 
 			string residual = PdbSequencePoints.CompareBreakpointMaps(
-				expected, actual, methodNames, includeColumns: tolerance == Tolerance.LinesAndColumns);
+				expected, actual, methodNames,
+				includeColumns: tolerance == Tolerance.LinesAndColumns, includeHidden: true);
 
 			if (knownResidual)
 			{
@@ -275,13 +384,17 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
+		private static void CompileCSharpWithPdb(string outputBase, string sourceFile)
+		{
+			Tester.CompileCSharpWithPdb(outputBase, new Dictionary<string, string> {
+				{ Path.GetFileName(sourceFile), File.ReadAllText(sourceFile) }
+			});
+		}
+
 		private (string peFileName, string pdbFileName) CompileTestCase(string testName)
 		{
-			string xmlFile = Path.Combine(TestCasePath, testName + ".xml");
-			string xmlContent = File.ReadAllText(xmlFile);
-			XDocument document = XDocument.Parse(xmlContent);
-			var files = document.Descendants("file").ToDictionary(f => f.Attribute("name").Value, f => f.Value);
-			Tester.CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), files);
+			string sourceFile = Path.Combine(TestCasePath, testName + ".cs");
+			CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), sourceFile);
 
 			string peFileName = Path.Combine(TestCasePath, testName + ".expected.dll");
 			string pdbFileName = Path.Combine(TestCasePath, testName + ".expected.pdb");
