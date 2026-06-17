@@ -37,15 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		public CastExpression()
-		{
-		}
-
-		public CastExpression(AstType castToType, Expression expression)
-		{
-			AddChild(castToType, SlotKind.Type);
-			AddChild(expression, SlotKind.Expression);
-		}
 	}
 }
 

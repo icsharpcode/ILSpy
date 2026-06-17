@@ -32,17 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FixedVariableInitializer : AstNode
 	{
-
-		public FixedVariableInitializer()
-		{
-		}
-
-		public FixedVariableInitializer(string name, Expression initializer = null)
-		{
-			this.Name = name;
-			this.CountExpression = initializer;
-		}
-
 		[NameSlot("Roles.Identifier")]
 		public partial string Name { get; set; }
 

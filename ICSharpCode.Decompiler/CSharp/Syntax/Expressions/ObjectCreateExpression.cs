@@ -46,25 +46,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("InitializerRole")]
 		public partial ArrayInitializerExpression? Initializer { get; set; }
-
-		public ObjectCreateExpression()
-		{
-		}
-
-		public ObjectCreateExpression(AstType type, IEnumerable<Expression>? arguments = null)
-		{
-			AddChild(type, SlotKind.Type);
-			if (arguments != null)
-			{
-				foreach (var arg in arguments)
-				{
-					AddChild(arg, SlotKind.Argument);
-				}
-			}
-		}
-
-		public ObjectCreateExpression(AstType type, params Expression[] arguments) : this(type, (IEnumerable<Expression>)arguments)
-		{
-		}
 	}
 }

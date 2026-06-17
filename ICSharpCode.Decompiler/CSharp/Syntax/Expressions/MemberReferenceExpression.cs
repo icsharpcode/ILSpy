@@ -42,26 +42,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
-
-		public MemberReferenceExpression()
-		{
-		}
-
-		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
-		{
-			AddChild(target, SlotKind.TargetExpression);
-			MemberName = memberName;
-			if (arguments != null)
-			{
-				foreach (var arg in arguments)
-				{
-					AddChild(arg, SlotKind.TypeArgument);
-				}
-			}
-		}
-
-		public MemberReferenceExpression(Expression target, string memberName, params AstType[] arguments) : this(target, memberName, (IEnumerable<AstType>)arguments)
-		{
-		}
 	}
 }

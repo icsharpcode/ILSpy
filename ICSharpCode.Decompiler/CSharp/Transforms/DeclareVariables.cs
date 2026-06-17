@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								mustResolveConflicts: true)
 						);
 						stmt.Expression = new AssignmentExpression(
-							new IdentifierExpression(v.Name).WithRR(new ILVariableResolveResult(v, v.Type)),
+							new IdentifierExpression(v.Name!).WithRR(new ILVariableResolveResult(v, v.Type)),
 							stmt.Expression.Detach());
 					}
 				}

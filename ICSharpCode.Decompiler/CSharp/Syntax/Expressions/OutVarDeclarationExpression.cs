@@ -32,10 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Variable")]
 		public partial VariableInitializer Variable { get; set; }
 
-		public OutVarDeclarationExpression()
-		{
-		}
-
 		public OutVarDeclarationExpression(AstType type, string name)
 		{
 			this.Type = type;

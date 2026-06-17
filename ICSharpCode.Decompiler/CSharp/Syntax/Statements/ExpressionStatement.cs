@@ -35,13 +35,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		public ExpressionStatement()
-		{
-		}
-
-		public ExpressionStatement(Expression expression)
-		{
-			this.Expression = expression;
-		}
 	}
 }

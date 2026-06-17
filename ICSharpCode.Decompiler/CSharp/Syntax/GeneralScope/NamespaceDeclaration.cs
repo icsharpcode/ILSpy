@@ -101,10 +101,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("MemberRole")]
 		public partial AstNodeCollection<AstNode> Members { get; }
 
-		public NamespaceDeclaration()
-		{
-		}
-
 		public NamespaceDeclaration(string name)
 		{
 			this.Name = name;

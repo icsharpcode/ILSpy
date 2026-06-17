@@ -25,16 +25,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamedArgumentExpression : Expression
 	{
-		public NamedArgumentExpression()
-		{
-		}
-
-		public NamedArgumentExpression(string name, Expression expression)
-		{
-			this.Name = name;
-			this.Expression = expression;
-		}
-
 		[NameSlot("Roles.Identifier")]
 		public partial string Name { get; set; }
 

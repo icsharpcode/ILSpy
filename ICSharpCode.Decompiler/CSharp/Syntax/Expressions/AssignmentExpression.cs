@@ -52,30 +52,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string BitwiseOrToken = "|=";
 		public const string ExclusiveOrToken = "^=";
 
-		public AssignmentExpression()
-		{
-		}
-
+		// Simple assignment convenience: Operator defaults to Assign. The (left, op, right) form is generated.
 		public AssignmentExpression(Expression left, Expression right)
 		{
 			this.Left = left;
 			this.Right = right;
 		}
 
-		public AssignmentExpression(Expression left, AssignmentOperatorType op, Expression right)
-		{
-			this.Left = left;
-			this.Operator = op;
-			this.Right = right;
-		}
+		[Slot("LeftRole")]
+		public partial Expression Left { get; set; }
 
 		public AssignmentOperatorType Operator {
 			get;
 			set;
 		}
-
-		[Slot("LeftRole")]
-		public partial Expression Left { get; set; }
 
 		[Slot("RightRole")]
 		public partial Expression Right { get; set; }

@@ -44,15 +44,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("FalseRole")]
 		public partial Expression FalseExpression { get; set; }
 
-		public ConditionalExpression()
-		{
-		}
-
-		public ConditionalExpression(Expression condition, Expression trueExpression, Expression falseExpression)
-		{
-			AddChild(condition, SlotKind.Condition);
-			AddChild(trueExpression, SlotKind.True);
-			AddChild(falseExpression, SlotKind.False);
-		}
 	}
 }

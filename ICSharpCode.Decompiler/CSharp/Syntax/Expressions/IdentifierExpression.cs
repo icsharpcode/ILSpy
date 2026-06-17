@@ -32,15 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IdentifierExpression : Expression
 	{
-		public IdentifierExpression()
-		{
-		}
-
-		public IdentifierExpression(string identifier)
-		{
-			this.Identifier = identifier;
-		}
-
 		public IdentifierExpression(string identifier, TextLocation location)
 		{
 			SetChildByRole(SlotKind.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(identifier, location));

@@ -40,15 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
-		public AsExpression()
-		{
-		}
-
-		public AsExpression(Expression expression, AstType type)
-		{
-			AddChild(expression, SlotKind.Expression);
-			AddChild(type, SlotKind.Type);
-		}
 	}
 }
 

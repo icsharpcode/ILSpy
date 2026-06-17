@@ -14,11 +14,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("InterpolatedStringContent.Role")]
 		public partial AstNodeCollection<InterpolatedStringContent> Content { get; }
 
-		public InterpolatedStringExpression()
-		{
-
-		}
-
 		public InterpolatedStringExpression(IList<InterpolatedStringContent> content)
 		{
 			Content.AddRange(content);
@@ -52,12 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public int Alignment { get; }
 
 		public string Suffix { get; }
-
-		public Interpolation()
-		{
-
-		}
-
 		public Interpolation(Expression expression, int alignment = 0, string suffix = null)
 		{
 			Expression = expression;

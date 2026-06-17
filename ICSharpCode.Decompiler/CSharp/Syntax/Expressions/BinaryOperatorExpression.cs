@@ -63,24 +63,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string IsKeyword = IsExpression.IsKeyword;
 
 
-		public BinaryOperatorExpression()
-		{
-		}
-
-		public BinaryOperatorExpression(Expression? left, BinaryOperatorType op, Expression? right)
-		{
-			this.Left = left;
-			this.Operator = op;
-			this.Right = right;
-		}
+		[Slot("LeftRole")]
+		public partial Expression? Left { get; set; }
 
 		public BinaryOperatorType Operator {
 			get;
 			set;
 		}
-
-		[Slot("LeftRole")]
-		public partial Expression? Left { get; set; }
 
 		[Slot("RightRole")]
 		public partial Expression? Right { get; set; }

@@ -40,20 +40,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("ImportRole")]
 		public partial AstType Import { get; set; }
 
-		public UsingAliasDeclaration()
-		{
-		}
-
 		public UsingAliasDeclaration(string alias, string nameSpace)
 		{
 			AddChild(Identifier.Create(alias), SlotKind.Alias);
 			AddChild(new SimpleType(nameSpace), SlotKind.Import);
-		}
-
-		public UsingAliasDeclaration(string alias, AstType import)
-		{
-			AddChild(Identifier.Create(alias), SlotKind.Alias);
-			AddChild(import, SlotKind.Import);
 		}
 	}
 }

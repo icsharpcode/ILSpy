@@ -41,10 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Condition")]
 		public partial Expression Condition { get; set; }
 
-		public DoWhileStatement()
-		{
-		}
-
 		public DoWhileStatement(Expression condition, Statement embeddedStatement)
 		{
 			this.Condition = condition;

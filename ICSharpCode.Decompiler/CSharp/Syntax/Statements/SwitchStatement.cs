@@ -71,14 +71,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		[Slot("Roles.Expression")]
 		public partial Expression? Expression { get; set; }
-
-		public CaseLabel()
-		{
-		}
-
-		public CaseLabel(Expression expression)
-		{
-			this.Expression = expression;
-		}
 	}
 }

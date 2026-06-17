@@ -56,17 +56,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string SuppressNullableWarningToken = "!";
 		public const string IndexFromEndToken = "^";
 		public const string PatternNotKeyword = "not";
-
-		public UnaryOperatorExpression()
-		{
-		}
-
-		public UnaryOperatorExpression(UnaryOperatorType op, Expression expression)
-		{
-			this.Operator = op;
-			this.Expression = expression;
-		}
-
 		public UnaryOperatorType Operator {
 			get;
 			set;

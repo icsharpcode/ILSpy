@@ -34,17 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class VariableInitializer : AstNode
 	{
-
-		public VariableInitializer()
-		{
-		}
-
-		public VariableInitializer(string name, Expression? initializer = null)
-		{
-			this.Name = name;
-			this.Initializer = initializer;
-		}
-
 		[NameSlot("Roles.Identifier")]
 		public partial string Name { get; set; }
 
