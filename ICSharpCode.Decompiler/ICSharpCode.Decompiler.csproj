@@ -264,7 +264,6 @@
     <Compile Include="CSharp\Syntax\PatternMatching\Pattern.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\Repeat.cs" />
     <Compile Include="CSharp\Syntax\PrimitiveType.cs" />
-    <Compile Include="CSharp\Syntax\Role.cs" />
     <Compile Include="CSharp\Syntax\Roles.cs" />
     <Compile Include="CSharp\Syntax\SimpleType.cs" />
     <Compile Include="CSharp\Syntax\Statements\BlockStatement.cs" />

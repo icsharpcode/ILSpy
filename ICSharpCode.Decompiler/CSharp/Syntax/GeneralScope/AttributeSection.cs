@@ -35,10 +35,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public string AttributeTarget {
 			get {
-				return GetChildByRole(Roles.Identifier)?.Name ?? string.Empty;
+				return GetChildByRole<Identifier>(SlotKind.Identifier)?.Name ?? string.Empty;
 			}
 			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create(value));
+				SetChildByRole(SlotKind.Identifier, Identifier.Create(value));
 			}
 		}
 

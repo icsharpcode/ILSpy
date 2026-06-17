@@ -72,13 +72,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		where T : AstNode
 	{
 		readonly AstNode parent;
-		readonly Role<T> role;
+		readonly SlotKind kind;
 		readonly List<T> list = new List<T>();
 
-		public AstNodeCollection(AstNode parent, Role<T> role)
+		public AstNodeCollection(AstNode parent, SlotKind kind)
 		{
 			this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
-			this.role = role ?? throw new ArgumentNullException(nameof(role));
+			this.kind = kind;
 		}
 
 		public int Count {
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				ValidateNewChild(value);
 				old.ClearParentAndIndex();
 				list[index] = value;
-				value.SetParentAndRole(parent, role);
+				value.SetParent(parent);
 				parent.InvalidateChildIndices();
 			}
 		}
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return;
 			ValidateNewChild(element);
 			list.Add(element);
-			element.SetParentAndRole(parent, role);
+			element.SetParent(parent);
 			parent.InvalidateChildIndices();
 		}
 
@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool Contains(T element)
 		{
-			return element != null && element.Parent == parent && element.RoleIndex == role.Index;
+			return element != null && element.Parent == parent && list.Contains(element);
 		}
 
 		public int IndexOf(T element)
@@ -247,7 +247,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			foreach (T item in list)
 				if (predicate == null || predicate(item))
 					return item;
-			return role.NullObject;
+			return null!;
 		}
 
 		/// <summary>
@@ -256,7 +256,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public T LastOrNullObject(Func<T, bool>? predicate = null)
 		{
-			T result = role.NullObject;
+			T result = null!;
 			foreach (T item in list)
 				if (predicate == null || predicate(item))
 					result = item;
@@ -289,12 +289,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Equals and GetHashCode implementation
 		public override int GetHashCode()
 		{
-			return parent.GetHashCode() ^ role.GetHashCode();
+			return parent.GetHashCode() ^ kind.GetHashCode();
 		}
 
 		public override bool Equals(object? obj)
 		{
-			return obj is AstNodeCollection<T> other && this.parent == other.parent && this.role == other.role;
+			return obj is AstNodeCollection<T> other && this.parent == other.parent && this.kind == other.kind;
 		}
 		#endregion
 
@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return;
 			ValidateNewChild(newItem);
 			list.Insert(index, newItem);
-			newItem.SetParentAndRole(parent, role);
+			newItem.SetParent(parent);
 			parent.InvalidateChildIndices();
 		}
 

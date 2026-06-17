@@ -314,7 +314,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				if (isCollection)
 				{
 					builder.AppendLine($"\tAstNodeCollection<{elementType}>? {field};");
-					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, {roleExpr});");
+					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, SlotKind.{kindName});");
 				}
 				else
 				{
@@ -322,7 +322,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}{type}{(isNullable ? "?" : "")} {name}");
 					builder.AppendLine("\t{");
 					builder.AppendLine($"\t\tget => {field}{(isNullable ? "" : "!")};");
-					builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value, {roleExpr});");
+					builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value);");
 					builder.AppendLine("\t}");
 				}
 				builder.AppendLine();
@@ -389,22 +389,8 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				}
 				else
 				{
-					builder.AppendLine($"\t\tif (i == 0) {{ SetChildNode(ref {FieldName(s.PropertyName)}, ({s.PropertyType}?)value, {s.RoleExpr}); return; }} i -= 1;");
+					builder.AppendLine($"\t\tif (i == 0) {{ SetChildNode(ref {FieldName(s.PropertyName)}, ({s.PropertyType}?)value); return; }} i -= 1;");
 				}
-			}
-			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
-			builder.AppendLine("\t}");
-			builder.AppendLine();
-
-			builder.AppendLine("\tinternal override Role GetChildSlot(int index)");
-			builder.AppendLine("\t{");
-			builder.AppendLine("\t\tint i = index;");
-			foreach (var s in slots)
-			{
-				if (s.IsCollection)
-					builder.AppendLine($"\t\t{{ int n = {FieldName(s.PropertyName)}?.Count ?? 0; if (i < n) return {s.RoleExpr}; i -= n; }}");
-				else
-					builder.AppendLine($"\t\tif (i == 0) return {s.RoleExpr}; i -= 1;");
 			}
 			builder.AppendLine("\t\tthrow new System.ArgumentOutOfRangeException(nameof(index));");
 			builder.AppendLine("\t}");
@@ -431,11 +417,11 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 			if (slots.Any(s => s.IsCollection))
 			{
-				builder.AppendLine("\tinternal override AstNodeCollection? GetCollectionByRole(Role role)");
+				builder.AppendLine("\tinternal override AstNodeCollection? GetCollectionByKind(SlotKind kind)");
 				builder.AppendLine("\t{");
 				foreach (var s in slots.Where(s => s.IsCollection))
-					builder.AppendLine($"\t\tif (role == {s.RoleExpr}) return {s.PropertyName};");
-				builder.AppendLine("\t\treturn base.GetCollectionByRole(role);");
+					builder.AppendLine($"\t\tif (kind == SlotKind.{s.KindName}) return {s.PropertyName};");
+				builder.AppendLine("\t\treturn base.GetCollectionByKind(kind);");
 				builder.AppendLine("\t}");
 				builder.AppendLine();
 			}

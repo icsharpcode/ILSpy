@@ -34,7 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class MemberType : AstType
 	{
-		public static readonly Role<AstType> TargetRole = new Role<AstType>("Target", null);
 
 		bool isDoubleColon;
 
@@ -70,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.MemberName = memberName;
 			foreach (var arg in typeArguments)
 			{
-				AddChild(arg, Roles.TypeArgument);
+				AddChild(arg, SlotKind.TypeArgument);
 			}
 		}
 

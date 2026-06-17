@@ -35,8 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ForStatement : Statement
 	{
 		public static readonly TokenRole ForKeywordRole = new TokenRole("for");
-		public readonly static Role<Statement> InitializerRole = new Role<Statement>("Initializer", null);
-		public readonly static Role<Statement> IteratorRole = new Role<Statement>("Iterator", null);
 
 		/// <summary>
 		/// Gets the list of initializer statements.

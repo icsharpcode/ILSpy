@@ -42,7 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class StackAllocExpression : Expression
 	{
 		public readonly static TokenRole StackallocKeywordRole = new TokenRole("stackalloc");
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", null);
 
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }

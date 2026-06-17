@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ReturnStatement(Expression returnExpression)
 		{
-			AddChild(returnExpression, Roles.Expression);
+			AddChild(returnExpression, SlotKind.Expression);
 		}
 	}
 }

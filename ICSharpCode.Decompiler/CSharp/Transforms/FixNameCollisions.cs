@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (var typeDecl in rootNode.DescendantsAndSelf.OfType<TypeDeclaration>())
 			{
 				var memberNames = typeDecl.Members.Select(m => {
-					var type = m.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole);
+					var type = m.GetChildByRole<AstType>(SlotKind.PrivateImplementationType);
 					return type is null ? m.Name : type + "." + m.Name;
 				}).ToHashSet();
 				// memberNames does not include fields or non-custom events because those
@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					ISymbol symbol = node.GetSymbol();
 					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string? newName))
 					{
-						node.GetChildByRole(Roles.Identifier).Name = newName;
+						node.GetChildByRole<Identifier>(SlotKind.Identifier).Name = newName;
 					}
 				}
 			}

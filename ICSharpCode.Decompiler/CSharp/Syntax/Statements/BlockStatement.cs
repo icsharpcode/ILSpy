@@ -34,19 +34,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class BlockStatement : Statement, IEnumerable<Statement>
 	{
-		public static readonly Role<Statement> StatementRole = new Role<Statement>("Statement", null);
 
 		[Slot("StatementRole")]
 		public partial AstNodeCollection<Statement> Statements { get; }
 
 		public void Add(Statement statement)
 		{
-			AddChild(statement, StatementRole);
+			AddChild(statement, SlotKind.Statement);
 		}
 
 		public void Add(Expression expression)
 		{
-			AddChild(new ExpressionStatement(expression), StatementRole);
+			AddChild(new ExpressionStatement(expression), SlotKind.Statement);
 		}
 
 		IEnumerator<Statement> IEnumerable<Statement>.GetEnumerator()

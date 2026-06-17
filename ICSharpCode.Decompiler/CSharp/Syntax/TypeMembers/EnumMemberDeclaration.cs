@@ -36,7 +36,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class EnumMemberDeclaration : EntityDeclaration
 	{
-		public static readonly Role<Expression> InitializerRole = new Role<Expression>("Initializer", null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }

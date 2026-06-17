@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public IdentifierExpression(string identifier, TextLocation location)
 		{
-			SetChildByRole(Roles.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(identifier, location));
+			SetChildByRole(SlotKind.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(identifier, location));
 		}
 
 		[NameSlot("Roles.Identifier")]

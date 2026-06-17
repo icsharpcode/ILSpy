@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public SizeOfExpression(AstType type)
 		{
-			AddChild(type, Roles.Type);
+			AddChild(type, SlotKind.Type);
 		}
 	}
 }

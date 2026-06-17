@@ -91,8 +91,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				foreach (var child in currentList)
 				{
 					System.Diagnostics.Debug.Assert(child.Parent == null || node == child.Parent);
+					// Slot is derived from the child's index in its parent, so it must be read before
+					// Remove() detaches the child (which would otherwise leave it as SlotKind.None).
+					SlotKind kind = child.Slot?.Kind ?? SlotKind.None;
 					child.Remove();
-					node.AddChildWithExistingRole(child);
+					node.AddChildUnsafe(child, kind);
 				}
 				currentList = nodes.Pop();
 			}

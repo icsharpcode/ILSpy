@@ -37,7 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ObjectCreateExpression : Expression
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
 
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
@@ -54,12 +53,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ObjectCreateExpression(AstType type, IEnumerable<Expression>? arguments = null)
 		{
-			AddChild(type, Roles.Type);
+			AddChild(type, SlotKind.Type);
 			if (arguments != null)
 			{
 				foreach (var arg in arguments)
 				{
-					AddChild(arg, Roles.Argument);
+					AddChild(arg, SlotKind.Argument);
 				}
 			}
 		}

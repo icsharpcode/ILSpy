@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public DirectionExpression(FieldDirection direction, Expression expression)
 		{
 			this.FieldDirection = direction;
-			AddChild(expression, Roles.Expression);
+			AddChild(expression, SlotKind.Expression);
 		}
 	}
 }

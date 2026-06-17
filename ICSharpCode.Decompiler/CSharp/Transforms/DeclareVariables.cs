@@ -725,14 +725,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 										}
 									}
 								},
-								BlockStatement.StatementRole);
+								SlotKind.Statement);
 						}
 						else
 						{
 							insertionParent.InsertChildBefore(
 								v.InsertionPoint.nextNode,
 								vds,
-								BlockStatement.StatementRole);
+								SlotKind.Statement);
 							insertionParent.InsertChildBefore(
 								v.InsertionPoint.nextNode,
 								new ExpressionStatement {
@@ -750,7 +750,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 										}
 									}
 								},
-								BlockStatement.StatementRole);
+								SlotKind.Statement);
 						}
 					}
 					else
@@ -758,7 +758,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						insertionParent.InsertChildBefore(
 							v.InsertionPoint.nextNode,
 							vds,
-							BlockStatement.StatementRole);
+							SlotKind.Statement);
 					}
 				}
 			}

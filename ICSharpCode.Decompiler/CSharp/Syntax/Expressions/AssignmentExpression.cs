@@ -38,8 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class AssignmentExpression : Expression
 	{
 		// reuse roles from BinaryOperatorExpression
-		public readonly static Role<Expression> LeftRole = BinaryOperatorExpression.LeftRole;
-		public readonly static Role<Expression> RightRole = BinaryOperatorExpression.RightRole;
 
 		public readonly static TokenRole AssignRole = new TokenRole("=");
 		public readonly static TokenRole AddRole = new TokenRole("+=");

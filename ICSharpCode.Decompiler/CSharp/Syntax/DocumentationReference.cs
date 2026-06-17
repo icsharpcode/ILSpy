@@ -34,8 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DocumentationReference : AstNode
 	{
-		public static readonly Role<AstType> DeclaringTypeRole = new Role<AstType>("DeclaringType", null);
-		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new Role<AstType>("ConversionOperatorReturnType", null);
 
 		SymbolKind symbolKind;
 		OperatorType operatorType;

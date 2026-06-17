@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CheckedExpression(Expression expression)
 		{
-			AddChild(expression, Roles.Expression);
+			AddChild(expression, SlotKind.Expression);
 		}
 	}
 }

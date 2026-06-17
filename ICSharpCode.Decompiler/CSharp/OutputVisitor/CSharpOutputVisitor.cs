@@ -1910,7 +1910,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitLabelStatement(LabelStatement labelStatement)
 		{
 			StartNode(labelStatement);
-			WriteIdentifier(labelStatement.GetChildByRole(Roles.Identifier));
+			WriteIdentifier(labelStatement.GetChildByRole<Identifier>(SlotKind.Identifier));
 			WriteToken(Roles.Colon);
 			bool foundLabelledStatement = false;
 			for (AstNode tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)

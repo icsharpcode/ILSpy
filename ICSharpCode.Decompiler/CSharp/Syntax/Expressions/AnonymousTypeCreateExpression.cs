@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			foreach (var ini in initializers)
 			{
-				AddChild(ini, Roles.Expression);
+				AddChild(ini, SlotKind.Expression);
 			}
 		}
 

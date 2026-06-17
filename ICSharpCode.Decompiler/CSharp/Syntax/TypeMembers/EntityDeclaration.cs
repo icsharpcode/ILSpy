@@ -25,18 +25,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class EntityDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
 		// Modifiers are stored in the Modifiers scalar; this role only tags the keyword tokens the
 		// output visitor emits (e.g. for the override-link reference in TextTokenWriter).
 		// Identity marker for modifier keywords in the output (modifiers are scalars, not child nodes);
 		// the token writer uses it to make the 'override' modifier a go-to-definition reference.
 		public static readonly TokenRole ModifierRole = new TokenRole("modifier");
-		public static readonly Role<AstType> PrivateImplementationTypeRole = new Role<AstType>("PrivateImplementationType", null);
 
 		public abstract SymbolKind SymbolKind { get; }
 
 		public virtual AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole(AttributeRole); }
+			get { return base.GetChildrenByRole<AttributeSection>(SlotKind.Attribute); }
 		}
 
 		public Modifiers Modifiers { get; set; }
@@ -48,21 +46,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public virtual string Name {
 			get {
-				return GetChildByRole(Roles.Identifier)?.Name ?? string.Empty;
+				return GetChildByRole<Identifier>(SlotKind.Identifier)?.Name ?? string.Empty;
 			}
 			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create(value, TextLocation.Empty));
+				SetChildByRole(SlotKind.Identifier, Identifier.Create(value, TextLocation.Empty));
 			}
 		}
 
 		public virtual Identifier NameToken {
-			get { return GetChildByRole(Roles.Identifier); }
-			set { SetChildByRole(Roles.Identifier, value); }
+			get { return GetChildByRole<Identifier>(SlotKind.Identifier); }
+			set { SetChildByRole(SlotKind.Identifier, value); }
 		}
 
 		public virtual AstType ReturnType {
-			get { return GetChildByRole(Roles.Type); }
-			set { SetChildByRole(Roles.Type, value); }
+			get { return GetChildByRole<AstType>(SlotKind.Type); }
+			set { SetChildByRole(SlotKind.Type, value); }
 		}
 
 		protected bool MatchAttributesAndModifiers(EntityDeclaration o, PatternMatching.Match match)

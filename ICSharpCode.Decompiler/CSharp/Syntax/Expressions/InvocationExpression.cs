@@ -46,12 +46,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public InvocationExpression(Expression target, IEnumerable<Expression> arguments)
 		{
-			AddChild(target, Roles.TargetExpression);
+			AddChild(target, SlotKind.TargetExpression);
 			if (arguments != null)
 			{
 				foreach (var arg in arguments)
 				{
-					AddChild(arg, Roles.Argument);
+					AddChild(arg, SlotKind.Argument);
 				}
 			}
 		}

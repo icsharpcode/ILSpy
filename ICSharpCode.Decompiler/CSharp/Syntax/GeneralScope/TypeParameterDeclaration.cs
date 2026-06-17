@@ -29,7 +29,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TypeParameterDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");
 		public static readonly TokenRole InVarianceKeywordRole = new TokenRole("in");
 

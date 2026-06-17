@@ -482,7 +482,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var ci = new ConstructorInitializer { ConstructorInitializerType = type };
 
 				// Move arguments from invocation to initializer:
-				invocation.GetChildrenByRole(Roles.Argument).MoveTo(ci.Arguments);
+				invocation.GetChildrenByRole<Expression>(SlotKind.Argument).MoveTo(ci.Arguments);
 				// Add the initializer: (unless it is the default 'base()')
 				if (!(ci.ConstructorInitializerType == ConstructorInitializerType.Base && ci.Arguments.Count == 0))
 					constructorDeclaration.Initializer = ci.CopyAnnotationsFrom(invocation);
@@ -619,7 +619,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						foreach (var param in PrimaryConstructorDecl.Parameters)
 						{
 							param.Remove();
-							this.TypeDeclaration.InsertChildAfter(insertionPoint, param, Roles.Parameter);
+							this.TypeDeclaration.InsertChildAfter(insertionPoint, param, SlotKind.Parameter);
 							insertionPoint = param;
 						}
 					}
