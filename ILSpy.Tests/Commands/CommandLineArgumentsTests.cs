@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.IO;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
@@ -107,5 +109,34 @@ public class CommandLineArgumentsTests
 
 		// Assert — SelectedItem is still null.
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().BeNull();
+	}
+
+	[AvaloniaTest]
+	public async Task NavigateTo_Skips_A_Missing_Session_Assembly_Instead_Of_Crashing()
+	{
+		// A restored session can still list an assembly whose file has since been deleted or
+		// moved. Navigating on launch eagerly loads every relevant assembly's metadata before
+		// resolving the target; a gone file must be skipped, not abort startup with an
+		// unhandled exception. Regression test for a DirectoryNotFoundException thrown out of
+		// that pre-load loop.
+
+		// Arrange — boot, then inject a session assembly whose file does not exist.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var missingPath = Path.Combine(
+			Path.GetTempPath(), "ILSpyMissing_" + Guid.NewGuid().ToString("N"), "gone.dll");
+		vm.AssemblyTreeModel.AssemblyList!.OpenAssembly(missingPath);
+
+		var args = CommandLineArguments.Create(new[] { "--navigateto", "T:System.Linq.Enumerable" });
+
+		// Act — applying the args must complete without throwing despite the missing entry.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert — the missing assembly was skipped and the present target still resolved.
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
+		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be("System.Linq.Enumerable");
 	}
 }

@@ -710,7 +710,9 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					var assemblyNode = FindAssemblyNode(asm);
 					if (assemblyNode == null)
 						continue;
-					await asm.GetMetadataFileAsync().ConfigureAwait(true);
+					// A restored session can reference an assembly whose file is gone; loading it must
+					// not abort navigation, so skip a failed load rather than throw out of startup.
+					await asm.GetMetadataFileOrNullAsync().ConfigureAwait(true);
 					var nsNode = assemblyNode.FindNamespaceNode(namespaceName);
 					if (nsNode != null)
 					{
@@ -721,8 +723,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				return;
 			}
 
+			// A gone or unreadable assembly resolves to null and is skipped by the entity search
+			// below; eagerly loading it here must not throw and crash navigation on launch.
 			foreach (var asm in relevant)
-				await asm.GetMetadataFileAsync().ConfigureAwait(true);
+				await asm.GetMetadataFileOrNullAsync().ConfigureAwait(true);
 
 			var entity = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevant));
 			if (entity != null)
