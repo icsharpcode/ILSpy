@@ -35,12 +35,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		VarianceModifier variance;
 
-		public VarianceModifier Variance {
-			get { return variance; }
-			set { variance = value; }
-		}
+		public VarianceModifier Variance { get; set; }
 
 		[NameSlot("Roles.Identifier")]
 		public partial string Name { get; set; }

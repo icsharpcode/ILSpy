@@ -102,15 +102,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class PreProcessorDirective : Trivia
 	{
 
-		public PreProcessorDirectiveType Type {
-			get;
-			set;
-		}
+		public PreProcessorDirectiveType Type { get; set; }
 
-		public string Argument {
-			get;
-			set;
-		}
+		public string Argument { get; set; }
 
 		public PreProcessorDirective(PreProcessorDirectiveType type, TextLocation startLocation, TextLocation endLocation) : base(startLocation, endLocation)
 		{

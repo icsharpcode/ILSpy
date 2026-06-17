@@ -38,12 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string DelegateKeyword = "delegate";
 		public const string AsyncModifier = LambdaExpression.AsyncModifier;
 
-		bool isAsync;
 
-		public bool IsAsync {
-			get { return isAsync; }
-			set { isAsync = value; }
-		}
+		public bool IsAsync { get; set; }
 
 		// used to tell the difference between delegate {} and delegate () {}
 		bool hasParameterList;

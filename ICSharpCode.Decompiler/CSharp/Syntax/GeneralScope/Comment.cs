@@ -57,19 +57,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class Comment : Trivia
 	{
 
-		CommentType commentType;
 
-		public CommentType CommentType {
-			get { return commentType; }
-			set { commentType = value; }
-		}
+		public CommentType CommentType { get; set; }
 
-		string content;
 
-		public string Content {
-			get { return content; }
-			set { content = value; }
-		}
+		public string Content { get; set; }
 
 		public Comment(string content, CommentType type = CommentType.SingleLine)
 		{

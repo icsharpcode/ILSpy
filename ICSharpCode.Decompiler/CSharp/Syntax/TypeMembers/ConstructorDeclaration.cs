@@ -75,10 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string BaseKeyword = "base";
 		public const string ThisKeyword = "this";
 
-		public ConstructorInitializerType ConstructorInitializerType {
-			get;
-			set;
-		}
+		public ConstructorInitializerType ConstructorInitializerType { get; set; }
 
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }

@@ -56,10 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string SuppressNullableWarningToken = "!";
 		public const string IndexFromEndToken = "^";
 		public const string PatternNotKeyword = "not";
-		public UnaryOperatorType Operator {
-			get;
-			set;
-		}
+		public UnaryOperatorType Operator { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

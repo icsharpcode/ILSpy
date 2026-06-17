@@ -44,10 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string OutKeyword = "out";
 		public const string InKeyword = "in";
 
-		public FieldDirection FieldDirection {
-			get;
-			set;
-		}
+		public FieldDirection FieldDirection { get; set; }
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

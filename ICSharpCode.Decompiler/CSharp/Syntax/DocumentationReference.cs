@@ -35,9 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class DocumentationReference : AstNode
 	{
 
-		SymbolKind symbolKind;
-		OperatorType operatorType;
-		bool hasParameterList;
 
 		/// <summary>
 		/// Gets/Sets the entity type.
@@ -47,33 +44,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		///   <c>SymbolKind.TypeDefinition</c> for references to primitive types,
 		///   and <c>SymbolKind.None</c> for everything else.
 		/// </summary>
-		public SymbolKind SymbolKind {
-			get { return symbolKind; }
-			set {
-				symbolKind = value;
-			}
-		}
+		public SymbolKind SymbolKind { get; set; }
 
 		/// <summary>
 		/// Gets/Sets the operator type.
 		/// This property is only used when SymbolKind==Operator.
 		/// </summary>
-		public OperatorType OperatorType {
-			get { return operatorType; }
-			set {
-				operatorType = value;
-			}
-		}
+		public OperatorType OperatorType { get; set; }
 
 		/// <summary>
 		/// Gets/Sets whether a parameter list was provided.
 		/// </summary>
-		public bool HasParameterList {
-			get { return hasParameterList; }
-			set {
-				hasParameterList = value;
-			}
-		}
+		public bool HasParameterList { get; set; }
 
 		/// <summary>
 		/// Gets/Sets the declaring type.

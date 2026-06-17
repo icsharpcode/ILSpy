@@ -73,7 +73,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		object value;
-		LiteralFormat format;
 
 		public object Value {
 			get { return this.value; }
@@ -82,12 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public LiteralFormat Format {
-			get { return format; }
-			set {
-				format = value;
-			}
-		}
+		public LiteralFormat Format { get; set; }
 
 		public PrimitiveExpression(object value)
 		{
@@ -97,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public PrimitiveExpression(object value, LiteralFormat format)
 		{
 			this.Value = value;
-			this.format = format;
+			this.Format = format;
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)

@@ -48,39 +48,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		bool hasThisModifier;
-		bool isParams;
-		bool isScopedRef;
 
-		public bool HasThisModifier {
-			get { return hasThisModifier; }
-			set {
-				hasThisModifier = value;
-			}
-		}
+		public bool HasThisModifier { get; set; }
 
-		public bool IsParams {
-			get { return isParams; }
-			set {
-				isParams = value;
-			}
-		}
+		public bool IsParams { get; set; }
 
-		public bool IsScopedRef {
-			get { return isScopedRef; }
-			set {
-				isScopedRef = value;
-			}
-		}
+		public bool IsScopedRef { get; set; }
 
-		ReferenceKind parameterModifier;
 
-		public ReferenceKind ParameterModifier {
-			get { return parameterModifier; }
-			set {
-				parameterModifier = value;
-			}
-		}
+		public ReferenceKind ParameterModifier { get; set; }
 
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }
