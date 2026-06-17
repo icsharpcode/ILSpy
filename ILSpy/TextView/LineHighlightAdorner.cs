@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 using AvaloniaEdit.Editing;
 using AvaloniaEdit.Rendering;
@@ -88,6 +89,11 @@ namespace ICSharpCode.ILSpy.TextView
 		public static void DisplayLineHighlight(TextArea textArea, int line)
 		{
 			ArgumentNullException.ThrowIfNull(textArea);
+
+			// Clear any still-running highlight first, so quick successive navigations replace rather
+			// than stack adorners (each carries its own pair of timers driving redraws).
+			foreach (var existing in textArea.TextView.BackgroundRenderers.OfType<LineHighlightAdorner>().ToArray())
+				existing.Dismiss();
 
 			var adorner = new LineHighlightAdorner(textArea, line);
 			textArea.TextView.BackgroundRenderers.Add(adorner);

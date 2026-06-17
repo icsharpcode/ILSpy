@@ -65,9 +65,10 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		public int ILOffset { get; init; }
 
 		/// <summary>
-		/// Display name of the anchored member, shown in the pane's "Location" column and used as a
-		/// stale-token guard: if a reloaded module's token no longer resolves to this member, the
-		/// bookmark is treated as missing rather than silently pointing at the wrong code.
+		/// Display name of the anchored member, shown in the pane's "Location" column. Navigation
+		/// resolves purely by token and does not compare this name: a token can legitimately point at
+		/// a compiler-generated member (e.g. a local function) whose resolved name differs from this
+		/// stored display name, and a name check would wrongly reject that valid navigation.
 		/// </summary>
 		public required string MemberName { get; init; }
 
