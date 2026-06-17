@@ -55,30 +55,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.TypeDefinition; }
 		}
 
-
 		public ClassType ClassType { get; set; }
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("Roles.TypeParameter")]
+		[Slot("TypeParameter")]
 		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
 		public bool HasPrimaryConstructor { get; set; }
 
-		[Slot("Roles.Parameter")]
+		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> PrimaryConstructorParameters { get; }
 
-		[Slot("Roles.BaseType")]
+		[Slot("BaseType")]
 		public partial AstNodeCollection<AstType> BaseTypes { get; }
 
-		[Slot("Roles.Constraint")]
+		[Slot("Constraint")]
 		public partial AstNodeCollection<Constraint> Constraints { get; }
 
-		[Slot("Roles.TypeMemberRole")]
+		[Slot("TypeMember")]
 		public partial AstNodeCollection<EntityDeclaration> Members { get; }
 	}
 }

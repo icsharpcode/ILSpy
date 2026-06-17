@@ -25,10 +25,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InvocationAstType : AstType
 	{
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType BaseType { get; set; }
 	}
 }

@@ -40,10 +40,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public Modifiers Modifiers { get; set; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[Slot("Roles.Variable")]
+		[Slot("Variable")]
 		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
 		public VariableInitializer GetVariable(string name)

@@ -34,13 +34,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string FixedKeyword = "fixed";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[Slot("Roles.Variable")]
+		[Slot("Variable")]
 		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 	}
 }

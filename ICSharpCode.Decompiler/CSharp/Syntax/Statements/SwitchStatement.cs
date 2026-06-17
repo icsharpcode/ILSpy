@@ -36,10 +36,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string SwitchKeyword = "switch";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
-		[Slot("SwitchSectionRole")]
+		[Slot("SwitchSection")]
 		public partial AstNodeCollection<SwitchSection> SwitchSections { get; }
 	}
 
@@ -50,10 +50,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class SwitchSection : AstNode
 	{
 
-		[Slot("CaseLabelRole")]
+		[Slot("CaseLabel")]
 		public partial AstNodeCollection<CaseLabel> CaseLabels { get; }
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial AstNodeCollection<Statement> Statements { get; }
 	}
 
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets or sets the expression. The expression can be null - if the expression is null, it's the default switch section.
 		/// </summary>
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression? Expression { get; set; }
 	}
 }

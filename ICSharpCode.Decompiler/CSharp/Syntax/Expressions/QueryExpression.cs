@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class QueryExpression : Expression
 	{
 
-		[Slot("ClauseRole")]
+		[Slot("Clause")]
 		public partial AstNodeCollection<QueryClause> Clauses { get; }
 	}
 
@@ -46,10 +46,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string IntoKeyword = "into";
 
-		[Slot("PrecedingQueryRole")]
+		[Slot("PrecedingQuery")]
 		public partial QueryExpression PrecedingQuery { get; set; }
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Identifier { get; set; }
 	}
 
@@ -62,13 +62,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string FromKeyword = "from";
 		public const string InKeyword = "in";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Identifier { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 	}
 
@@ -80,13 +80,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string LetKeyword = "let";
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Identifier { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 	}
-
 
 	/// <summary>
 	/// <c>where_clause ::= 'where' expression</c> (C# grammar §12.23.1)
@@ -96,7 +95,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string WhereKeyword = "where";
 
-		[Slot("Roles.Condition")]
+		[Slot("Condition")]
 		public partial Expression Condition { get; set; }
 	}
 
@@ -124,22 +123,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return !string.IsNullOrEmpty(this.IntoIdentifier); }
 		}
 
-		[Slot("TypeRole")]
+		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("JoinIdentifierRole")]
+		[NameSlot("JoinIdentifier")]
 		public partial string JoinIdentifier { get; set; }
 
-		[Slot("InExpressionRole")]
+		[Slot("InExpression")]
 		public partial Expression InExpression { get; set; }
 
-		[Slot("OnExpressionRole")]
+		[Slot("OnExpression")]
 		public partial Expression OnExpression { get; set; }
 
-		[Slot("EqualsExpressionRole")]
+		[Slot("EqualsExpression")]
 		public partial Expression EqualsExpression { get; set; }
 
-		[NameSlot("IntoIdentifierRole", nullOnEmpty: true)]
+		[NameSlot("IntoIdentifier", nullOnEmpty: true)]
 		public partial string IntoIdentifier { get; set; }
 	}
 
@@ -151,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string OrderbyKeyword = "orderby";
 
-		[Slot("OrderingRole")]
+		[Slot("Ordering")]
 		public partial AstNodeCollection<QueryOrdering> Orderings { get; }
 	}
 
@@ -164,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string AscendingKeyword = "ascending";
 		public const string DescendingKeyword = "descending";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
 		public QueryOrderingDirection Direction { get; set; }
@@ -185,7 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string SelectKeyword = "select";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 	}
 
@@ -198,10 +197,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string GroupKeyword = "group";
 		public const string ByKeyword = "by";
 
-		[Slot("ProjectionRole")]
+		[Slot("Projection")]
 		public partial Expression Projection { get; set; }
 
-		[Slot("KeyRole")]
+		[Slot("Key")]
 		public partial Expression Key { get; set; }
 	}
 }

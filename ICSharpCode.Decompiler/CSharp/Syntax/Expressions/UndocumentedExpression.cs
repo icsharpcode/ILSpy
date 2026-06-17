@@ -58,8 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get; set;
 		}
 
-		[Slot("Roles.Argument")]
+		[Slot("Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
 	}
 }
-

@@ -43,11 +43,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			SetChildByRole(SlotKind.Identifier, Syntax.Identifier.Create(identifier, location));
 		}
-		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
+		[NameSlot("Identifier", nullOnEmpty: true)]
 		public partial string Identifier { get; set; }
 
-		[Slot("Roles.TypeArgument")]
+		[Slot("TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
 	}
 }
-

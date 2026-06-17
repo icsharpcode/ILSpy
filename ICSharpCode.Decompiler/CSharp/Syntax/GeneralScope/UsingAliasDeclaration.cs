@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string UsingKeyword = "using";
 
-		[NameSlot("AliasRole")]
+		[NameSlot("Alias")]
 		public partial string Alias { get; set; }
 
-		[Slot("ImportRole")]
+		[Slot("Import")]
 		public partial AstType Import { get; set; }
 
 		public UsingAliasDeclaration(string alias, string nameSpace)

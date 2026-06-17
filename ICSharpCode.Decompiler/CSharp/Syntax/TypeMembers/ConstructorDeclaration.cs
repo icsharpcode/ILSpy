@@ -41,21 +41,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Constructor; }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		// The name is just the declaring type name; exclude it from matching (and the inherited Name match).
 		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("Roles.Parameter")]
+		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		[Slot("InitializerRole")]
+		[Slot("Initializer")]
 		public partial ConstructorInitializer? Initializer { get; set; }
 
-		[Slot("Roles.Body")]
+		[Slot("Body")]
 		public partial BlockStatement? Body { get; set; }
 	}
 
@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ConstructorInitializerType ConstructorInitializerType { get; set; }
 
-		[Slot("Roles.Argument")]
+		[Slot("Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
 	}
 }

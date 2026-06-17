@@ -41,16 +41,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Note: this contains multiple statements for "for (a = 2, b = 1; a > b; a--)", but contains
 		/// only a single statement for "for (int a = 2, b = 1; a > b; a--)" (a single VariableDeclarationStatement with two variables)
 		/// </summary>
-		[Slot("InitializerRole")]
+		[Slot("Initializer")]
 		public partial AstNodeCollection<Statement> Initializers { get; }
 
-		[Slot("Roles.Condition")]
+		[Slot("Condition")]
 		public partial Expression? Condition { get; set; }
 
-		[Slot("IteratorRole")]
+		[Slot("Iterator")]
 		public partial AstNodeCollection<Statement> Iterators { get; }
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 	}
 }

@@ -42,10 +42,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Either a VariableDeclarationStatement, or an Expression.
 		/// </summary>
-		[Slot("ResourceAcquisitionRole")]
+		[Slot("ResourceAcquisition")]
 		public partial AstNode ResourceAcquisition { get; set; }
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 	}
 }

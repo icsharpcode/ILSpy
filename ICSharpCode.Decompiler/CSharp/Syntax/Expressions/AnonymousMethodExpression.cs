@@ -38,13 +38,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string DelegateKeyword = "delegate";
 		public const string AsyncModifier = LambdaExpression.AsyncModifier;
 
-
 		public bool IsAsync { get; set; }
 
-		[Slot("Roles.Parameter")]
+		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		[Slot("Roles.Body")]
+		[Slot("Body")]
 		public partial BlockStatement Body { get; set; }
 	}
 }

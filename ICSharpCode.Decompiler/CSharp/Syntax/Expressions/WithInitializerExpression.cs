@@ -26,10 +26,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class WithInitializerExpression : Expression
 	{
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
-		[Slot("InitializerRole")]
+		[Slot("Initializer")]
 		public partial ArrayInitializerExpression Initializer { get; set; }
 	}
 }

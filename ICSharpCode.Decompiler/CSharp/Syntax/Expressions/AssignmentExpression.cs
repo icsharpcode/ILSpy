@@ -59,12 +59,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Right = right;
 		}
 
-		[Slot("LeftRole")]
+		[Slot("Left")]
 		public partial Expression Left { get; set; }
 
 		public AssignmentOperatorType Operator { get; set; }
 
-		[Slot("RightRole")]
+		[Slot("Right")]
 		public partial Expression Right { get; set; }
 
 		public static string GetOperatorToken(AssignmentOperatorType op)

@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string YieldKeyword = "yield";
 		public const string ReturnKeyword = "return";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 	}
 }

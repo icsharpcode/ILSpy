@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class SyntaxTree : AstNode
 	{
 
-		[Slot("MemberRole")]
+		[Slot("Member")]
 		public partial AstNodeCollection<AstNode> Members { get; }
 
 		/// <summary>

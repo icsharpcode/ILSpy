@@ -34,11 +34,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class Constraint : AstNode
 	{
 
-		[Slot("Roles.ConstraintTypeParameter")]
+		[Slot("ConstraintTypeParameter")]
 		public partial SimpleType TypeParameter { get; set; }
 
-		[Slot("Roles.BaseType")]
+		[Slot("BaseType")]
 		public partial AstNodeCollection<AstType> BaseTypes { get; }
 	}
 }
-

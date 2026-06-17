@@ -11,7 +11,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string OpenQuote = "$\"";
 		public const string CloseQuote = "\"";
 
-		[Slot("InterpolatedStringContent.Role")]
+		[Slot("Role")]
 		public partial AstNodeCollection<InterpolatedStringContent> Content { get; }
 
 		public InterpolatedStringExpression(IList<InterpolatedStringContent> content)
@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class Interpolation : InterpolatedStringContent
 	{
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
 		public int Alignment { get; }

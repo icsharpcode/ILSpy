@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public FieldDirection FieldDirection { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 	}
 }

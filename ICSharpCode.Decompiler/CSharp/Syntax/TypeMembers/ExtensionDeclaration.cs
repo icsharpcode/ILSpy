@@ -31,19 +31,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override SymbolKind SymbolKind => SymbolKind.TypeDefinition;
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.TypeParameter")]
+		[Slot("TypeParameter")]
 		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
-		[Slot("Roles.Parameter")]
+		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> ReceiverParameters { get; }
 
-		[Slot("Roles.Constraint")]
+		[Slot("Constraint")]
 		public partial AstNodeCollection<Constraint> Constraints { get; }
 
-		[Slot("Roles.TypeMemberRole")]
+		[Slot("TypeMember")]
 		public partial AstNodeCollection<EntityDeclaration> Members { get; }
 
 	}

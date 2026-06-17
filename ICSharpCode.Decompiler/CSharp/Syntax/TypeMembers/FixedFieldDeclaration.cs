@@ -39,13 +39,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
-		[Slot("VariableRole")]
+		[Slot("Variable")]
 		public partial AstNodeCollection<FixedVariableInitializer> Variables { get; }
 	}
 }

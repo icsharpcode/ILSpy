@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsFileScoped { get; set; }
 
-		[Slot("NamespaceNameRole")]
+		[Slot("NamespaceName")]
 		public partial AstType NamespaceName { get; set; }
 
 		// Computed from NamespaceName (the matched slot); exclude as redundant.
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		[Slot("MemberRole")]
+		[Slot("Member")]
 		public partial AstNodeCollection<AstNode> Members { get; }
 
 		public NamespaceDeclaration(string name)

@@ -67,10 +67,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Body")]
+		[Slot("Body")]
 		public partial BlockStatement? Body { get; set; }
 	}
 }

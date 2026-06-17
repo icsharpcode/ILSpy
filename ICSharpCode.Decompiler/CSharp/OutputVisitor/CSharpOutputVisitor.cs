@@ -2940,7 +2940,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			EndNode(constraint);
 		}
 
-
 		public virtual void VisitIdentifier(Identifier identifier)
 		{
 			// Do not call StartNode and EndNode for Identifier, because they are handled by the ITokenWriter.

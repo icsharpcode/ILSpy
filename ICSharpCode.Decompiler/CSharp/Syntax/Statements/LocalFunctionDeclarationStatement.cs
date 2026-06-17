@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class LocalFunctionDeclarationStatement : Statement
 	{
 
-		[Slot("MethodDeclarationRole")]
+		[Slot("MethodDeclaration")]
 		public partial MethodDeclaration Declaration { get; set; }
 
 	}

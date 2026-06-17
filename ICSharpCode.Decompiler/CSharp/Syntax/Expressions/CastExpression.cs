@@ -31,12 +31,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CastExpression : Expression
 	{
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
 	}
 }
-

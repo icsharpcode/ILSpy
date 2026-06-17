@@ -45,9 +45,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string InModifier = "in";
 		public const string ParamsModifier = "params";
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
-
 
 		public bool HasThisModifier { get; set; }
 
@@ -55,16 +54,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsScopedRef { get; set; }
 
-
 		public ReferenceKind ParameterModifier { get; set; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
+		[NameSlot("Identifier", nullOnEmpty: true)]
 		public partial string Name { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression? DefaultExpression { get; set; }
 
 		public new ParameterDeclaration Clone()
@@ -73,4 +71,3 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 }
-

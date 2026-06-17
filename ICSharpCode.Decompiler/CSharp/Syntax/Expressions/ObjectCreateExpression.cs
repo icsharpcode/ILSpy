@@ -38,13 +38,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string NewKeyword = "new";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[Slot("Roles.Argument")]
+		[Slot("Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
 
-		[Slot("InitializerRole")]
+		[Slot("Initializer")]
 		public partial ArrayInitializerExpression? Initializer { get; set; }
 	}
 }

@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string LockKeyword = "lock";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 	}
 }

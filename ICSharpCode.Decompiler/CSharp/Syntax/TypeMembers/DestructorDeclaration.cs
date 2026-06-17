@@ -42,15 +42,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Destructor; }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		// The name is just the declaring type name; exclude it from matching (and the inherited Name match).
 		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("Roles.Body")]
+		[Slot("Body")]
 		public partial BlockStatement? Body { get; set; }
 	}
 }

@@ -50,28 +50,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("PrivateImplementationTypeRole")]
+		[Slot("PrivateImplementationType")]
 		public partial AstType? PrivateImplementationType { get; set; }
 
-		[Slot("GetterRole")]
+		[Slot("Getter")]
 		public partial Accessor? Getter { get; set; }
 
-		[Slot("SetterRole")]
+		[Slot("Setter")]
 		public partial Accessor? Setter { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression? Initializer { get; set; }
 
-		[Slot("ExpressionBodyRole")]
+		[Slot("ExpressionBody")]
 		public partial Expression? ExpressionBody { get; set; }
 
 		public bool IsAutomaticProperty {

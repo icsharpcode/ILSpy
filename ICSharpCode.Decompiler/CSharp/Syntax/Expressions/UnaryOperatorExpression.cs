@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string PatternNotKeyword = "not";
 		public UnaryOperatorType Operator { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
 		public static string GetOperatorToken(UnaryOperatorType op)

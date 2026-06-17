@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class BlockStatement : Statement, IEnumerable<Statement>
 	{
 
-		[Slot("StatementRole")]
+		[Slot("Statement")]
 		public partial AstNodeCollection<Statement> Statements { get; }
 
 		public void Add(Statement statement)

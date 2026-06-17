@@ -37,13 +37,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string TryKeyword = "try";
 		public const string FinallyKeyword = "finally";
 
-		[Slot("TryBlockRole")]
+		[Slot("TryBlock")]
 		public partial BlockStatement TryBlock { get; set; }
 
-		[Slot("CatchClauseRole")]
+		[Slot("CatchClause")]
 		public partial AstNodeCollection<CatchClause> CatchClauses { get; }
 
-		[Slot("FinallyBlockRole")]
+		[Slot("FinallyBlock")]
 		public partial BlockStatement? FinallyBlock { get; set; }
 	}
 
@@ -58,16 +58,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string CondLPar = "(";
 		public const string CondRPar = ")";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
+		[NameSlot("Identifier", nullOnEmpty: true)]
 		public partial string VariableName { get; set; }
 
-		[Slot("ConditionRole")]
+		[Slot("Condition")]
 		public partial Expression? Condition { get; set; }
 
-		[Slot("Roles.Body")]
+		[Slot("Body")]
 		public partial BlockStatement Body { get; set; }
 	}
 }

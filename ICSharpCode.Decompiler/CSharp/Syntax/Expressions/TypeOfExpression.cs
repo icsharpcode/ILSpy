@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string TypeofKeyword = "typeof";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
 	}

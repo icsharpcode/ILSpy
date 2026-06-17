@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InvocationExpression : Expression
 	{
-		[Slot("Roles.TargetExpression")]
+		[Slot("TargetExpression")]
 		public partial Expression Target { get; set; }
 
-		[Slot("Roles.Argument")]
+		[Slot("Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
 	}
 }

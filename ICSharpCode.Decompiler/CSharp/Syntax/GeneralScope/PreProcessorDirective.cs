@@ -68,8 +68,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
 
-
-		[Slot("WarningRole")]
+		[Slot("Warning")]
 		public partial AstNodeCollection<PrimitiveExpression> Warnings { get; }
 
 		public override TextLocation EndLocation {
