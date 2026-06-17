@@ -497,8 +497,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					if (!MemberToDeclaringSyntaxNodeMap.TryGetValue(member, out var declaringSyntaxNode))
 					{
-						Debug.Assert(kind is InitializerKind.Primary);
-						stmt.Remove();
+						// A primary-constructor parameter assignment whose backing member has no separate
+						// declaration is redundant and dropped. For static/instance initializers a missing
+						// declaration instead means the member is not part of this (partial) syntax tree --
+						// e.g. when a single static constructor is decompiled in isolation -- so the
+						// assignment must remain in the constructor body.
+						if (kind is InitializerKind.Primary)
+							stmt.Remove();
 						continue;
 					}
 
