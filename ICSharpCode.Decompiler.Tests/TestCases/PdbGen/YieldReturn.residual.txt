@@ -1,0 +1,6 @@
+0x06000005 <Range>d__0.MoveNext
+  - compiler only: hidden at method start
+  + decompiler only: (7,2)-(7,3)
+  + decompiler only: hidden after (7,2)-(7,3)
+  + decompiler only: hidden after (8,19)-(8,28)
+  + decompiler only: hidden after (8,30)-(8,33)

@@ -1,0 +1,3 @@
+0x06000001 NestedLoops.Print
+  - compiler only: hidden after (7,8)-(7,17)
+  - compiler only: hidden after (9,9)-(9,18)

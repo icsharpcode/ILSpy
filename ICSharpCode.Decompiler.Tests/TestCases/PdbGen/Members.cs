@@ -1,7 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<symbols>
-  <files>
-    <file id="1" name="-\C.cs" language="C#" checksumAlgorithm="SHA256"><![CDATA[using System;
+using System;
 
 internal class C : IDisposable
 {
@@ -81,6 +78,3 @@ internal class C : IDisposable
 		}
 	}
 }
-]]></file>
-  </files>
-</symbols>

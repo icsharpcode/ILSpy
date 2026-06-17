@@ -117,17 +117,24 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		/// line span is compared (use for methods where the decompiler's column placement within a
 		/// statement legitimately differs).
 		/// </param>
+		/// <param name="includeHidden">
+		/// When true, hidden sequence points are compared too. A hidden point has no source
+		/// location, so it is described by the visible point it follows ("hidden after &lt;loc&gt;",
+		/// or "hidden at method start"). Anchoring to a source location keeps the comparison
+		/// independent of the exact IL offsets, which the decompiler reconstructs differently.
+		/// </param>
 		public static string CompareBreakpointMaps(
 			Dictionary<int, List<RawSequencePoint>> expected,
 			Dictionary<int, List<RawSequencePoint>> actual,
 			Dictionary<int, string> methodNames,
-			bool includeColumns)
+			bool includeColumns,
+			bool includeHidden)
 		{
 			var report = new StringBuilder();
 			foreach (int row in expected.Keys.Union(actual.Keys).OrderBy(r => r))
 			{
-				var expectedPoints = Visible(expected, row, includeColumns);
-				var actualPoints = Visible(actual, row, includeColumns);
+				var expectedPoints = Tokens(expected, row, includeColumns, includeHidden);
+				var actualPoints = Tokens(actual, row, includeColumns, includeHidden);
 
 				var expectedOnly = MultisetDifference(expectedPoints, actualPoints);
 				var actualOnly = MultisetDifference(actualPoints, expectedPoints);
@@ -144,11 +151,31 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return report.ToString();
 		}
 
-		static List<string> Visible(Dictionary<int, List<RawSequencePoint>> map, int row, bool includeColumns)
+		/// <summary>
+		/// Projects a method's sequence points onto comparable descriptors: each visible point
+		/// becomes its source location; each hidden point (when included) is anchored to the visible
+		/// point it follows, so the descriptor does not depend on the reconstructed IL offset.
+		/// </summary>
+		static List<string> Tokens(Dictionary<int, List<RawSequencePoint>> map, int row, bool includeColumns, bool includeHidden)
 		{
+			var result = new List<string>();
 			if (!map.TryGetValue(row, out var list))
-				return new List<string>();
-			return list.Where(sp => !sp.IsHidden).Select(sp => sp.Format(includeColumns)).ToList();
+				return result;
+			string lastVisible = null;
+			foreach (var sp in list)
+			{
+				if (sp.IsHidden)
+				{
+					if (includeHidden)
+						result.Add(lastVisible == null ? "hidden at method start" : "hidden after " + lastVisible);
+				}
+				else
+				{
+					lastVisible = sp.Format(includeColumns);
+					result.Add(lastVisible);
+				}
+			}
+			return result;
 		}
 
 		static List<string> MultisetDifference(List<string> a, List<string> b)

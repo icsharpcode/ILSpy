@@ -1,2 +1,8 @@
 0x06000001 ICSharpCode.Decompiler.Tests.TestCases.PdbGen.LambdaCapturing.Main
+  - compiler only: hidden at method start
   + decompiler only: (8,2)-(8,3)
+  + decompiler only: hidden after (10,3)-(10,46)
+  + decompiler only: hidden after (8,2)-(8,3)
+  + decompiler only: hidden after (9,3)-(9,15)
+0x06000005 <>c__DisplayClass0_0.<Main>b__0
+  + decompiler only: hidden after (11,26)-(11,42)

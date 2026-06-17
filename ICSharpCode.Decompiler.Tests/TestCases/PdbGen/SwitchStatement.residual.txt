@@ -1,0 +1,5 @@
+0x06000001 SwitchStatement.Classify
+  - compiler only: hidden at method start
+  + decompiler only: (6,2)-(6,3)
+  + decompiler only: (7,3)-(7,13)
+  + decompiler only: hidden after (7,3)-(7,13)
