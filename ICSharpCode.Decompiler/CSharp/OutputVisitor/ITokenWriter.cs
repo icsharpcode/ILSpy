@@ -21,6 +21,8 @@ using System.IO;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	public abstract class TokenWriter
@@ -46,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Writes a primitive/literal value
 		/// </summary>
-		public abstract void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None);
+		public abstract void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None);
 
 		public abstract void WritePrimitiveType(string type);
 
@@ -129,7 +131,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			decoratedWriter.WriteToken(token);
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			decoratedWriter.WritePrimitiveValue(value, format);
 		}

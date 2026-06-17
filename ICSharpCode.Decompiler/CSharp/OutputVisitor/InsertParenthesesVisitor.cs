@@ -20,6 +20,8 @@ using System;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	/// <summary>
@@ -165,8 +167,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// <summary>
 		/// Parenthesizes the expression if it does not have the minimum required precedence.
 		/// </summary>
-		static void ParenthesizeIfRequired(Expression expr, PrecedenceLevel minimumPrecedence)
+		static void ParenthesizeIfRequired(Expression? expr, PrecedenceLevel minimumPrecedence)
 		{
+			if (expr == null)
+				return;
 			if (GetPrecedence(expr) < minimumPrecedence)
 			{
 				Parenthesize(expr);
@@ -222,7 +226,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			ParenthesizeIfRequired(unaryOperatorExpression.Expression, GetPrecedence(unaryOperatorExpression));
-			UnaryOperatorExpression child = unaryOperatorExpression.Expression as UnaryOperatorExpression;
+			UnaryOperatorExpression? child = unaryOperatorExpression.Expression as UnaryOperatorExpression;
 			if (child != null && InsertParenthesesForReadability)
 				Parenthesize(child);
 			base.VisitUnaryOperatorExpression(unaryOperatorExpression);
@@ -237,7 +241,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			// There's a nasty issue in the C# grammar: cast expressions including certain operators are ambiguous in some cases
 			// "(int)-1" is fine, but "(A)-b" is not a cast.
-			UnaryOperatorExpression uoe = castExpression.Expression as UnaryOperatorExpression;
+			UnaryOperatorExpression? uoe = castExpression.Expression as UnaryOperatorExpression;
 			if (uoe != null && !(uoe.Operator == UnaryOperatorType.BitNot || uoe.Operator == UnaryOperatorType.Not))
 			{
 				if (TypeCanBeMisinterpretedAsExpression(castExpression.Type))
@@ -246,7 +250,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 			// The above issue can also happen with PrimitiveExpressions representing negative values:
-			PrimitiveExpression pe = castExpression.Expression as PrimitiveExpression;
+			PrimitiveExpression? pe = castExpression.Expression as PrimitiveExpression;
 			if (pe != null && pe.Value != null && TypeCanBeMisinterpretedAsExpression(castExpression.Type))
 			{
 				TypeCode typeCode = Type.GetTypeCode(pe.Value.GetType());
@@ -290,7 +294,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// SimpleTypes can always be misinterpreted as IdentifierExpressions
 			// MemberTypes can be misinterpreted as MemberReferenceExpressions if they don't use double colon
 			// PrimitiveTypes or ComposedTypes can never be misinterpreted as expressions.
-			MemberType mt = type as MemberType;
+			MemberType? mt = type as MemberType;
 			if (mt != null)
 				return !mt.IsDoubleColon;
 			else
@@ -356,9 +360,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				|| op == BinaryOperatorType.ExclusiveOr;
 		}
 
-		BinaryOperatorType? GetBinaryOperatorType(Expression expr)
+		BinaryOperatorType? GetBinaryOperatorType(Expression? expr)
 		{
-			BinaryOperatorExpression boe = expr as BinaryOperatorExpression;
+			BinaryOperatorExpression? boe = expr as BinaryOperatorExpression;
 			if (boe != null)
 				return boe.Operator;
 			else

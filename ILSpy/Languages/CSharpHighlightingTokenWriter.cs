@@ -437,7 +437,7 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 		}
 
-		public override void WritePrimitiveValue(object value, ICSharpCode.Decompiler.CSharp.Syntax.LiteralFormat format)
+		public override void WritePrimitiveValue(object? value, ICSharpCode.Decompiler.CSharp.Syntax.LiteralFormat format)
 		{
 			HighlightingColor? color = null;
 			if (value is null)

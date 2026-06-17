@@ -284,7 +284,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				MemberToDeclaringSyntaxNodeMap = members
 					.Select(m => (symbol: m.GetSymbol(), entity: (EntityDeclaration)m))
 					.Where(_ => _.symbol is IMember)
-					.ToDictionary(_ => (IMember)_.symbol, _ => _.entity);
+					.ToDictionary(_ => (IMember)_.symbol!, _ => _.entity);
 
 				List<ConstructorDeclaration> constructorsNotChainedWithThis = [];
 				List<ConstructorDeclaration> allCtors = [];
@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				foreach (var ctor in members.OfType<ConstructorDeclaration>())
 				{
-					var ctorMethod = (IMethod)ctor.GetSymbol();
+					var ctorMethod = (IMethod)ctor.GetSymbol()!;
 					Debug.Assert(ctorMethod.IsConstructor);
 					Debug.Assert(ctorMethod.MetadataToken.IsNil == false);
 
@@ -351,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					// this constructor could be converted to a primary constructor
 					var ctor = constructorsNotChainedWithThis[0];
-					var ctorMethod = (IMethod)constructorsNotChainedWithThis[0].GetSymbol();
+					var ctorMethod = (IMethod)constructorsNotChainedWithThis[0].GetSymbol()!;
 
 					var initializer = InitializerSequence.Analyze(this, ctor, ctorMethod);
 
@@ -425,7 +425,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						bool isPrimaryCtor = constructorsNotChainedWithThis[0] == PrimaryConstructorDecl;
 						var sequence = isPrimaryCtor
 							? PrimaryConstructorInitializers
-							: InitializerSequence.Analyze(this, constructorsNotChainedWithThis[0], (IMethod)constructorsNotChainedWithThis[0].GetSymbol());
+							: InitializerSequence.Analyze(this, constructorsNotChainedWithThis[0], (IMethod)constructorsNotChainedWithThis[0].GetSymbol()!);
 
 						if (sequence == null)
 							return false;
@@ -705,7 +705,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return;
 
 				var ctor = InstanceConstructors[0];
-				var ctorMethod = (IMethod)ctor.GetSymbol();
+				var ctorMethod = (IMethod)ctor.GetSymbol()!;
 
 				if (TypeDefinition.Kind == TypeKind.Struct && ctorMethod.Parameters.Count == 0 && InstanceInitializers != null)
 				{
@@ -810,7 +810,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			foreach (var typeDeclaration in node.Descendants.OfType<TypeDeclaration>())
 			{
-				var currentTypeDefinition = (ITypeDefinition)typeDeclaration.GetSymbol();
+				var currentTypeDefinition = (ITypeDefinition)typeDeclaration.GetSymbol()!;
 				TransformDeclaration(currentTypeDefinition, typeDeclaration, typeDeclaration.Members);
 			}
 		}
@@ -838,7 +838,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			foreach (var constructorDeclaration in members.OfType<ConstructorDeclaration>())
 			{
-				analyzer.MoveConstructorInitializer(constructorDeclaration, (IMethod)constructorDeclaration.GetSymbol());
+				analyzer.MoveConstructorInitializer(constructorDeclaration, (IMethod)constructorDeclaration.GetSymbol()!);
 			}
 
 			analyzer.RemoveImplicitConstructor();

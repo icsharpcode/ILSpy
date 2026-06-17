@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							if (mre.MemberName == "GroupJoin")
 							{
 								joinClause.IntoIdentifier = p2.Name; // into p2.Name
-								joinClause.IntoIdentifierToken.CopyAnnotationsFrom(p2);
+								joinClause.IntoIdentifierToken!.CopyAnnotationsFrom(p2);
 							}
 							joinClause.AddAnnotation(new QueryJoinClauseAnnotation(outerLambda.Annotation<IL.ILFunction>(), innerLambda.Annotation<IL.ILFunction>()));
 							query.Clauses.Add(joinClause);
