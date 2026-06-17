@@ -98,6 +98,7 @@
     <None Include="TestCases\Disassembler\Pretty\InterfaceImplAttributes.il" />
     <None Include="TestCases\Disassembler\Pretty\SortMembers.expected.il" />
     <None Include="TestCases\Disassembler\Pretty\SortMembers.il" />
+    <None Include="TestCases\IsolatedDecompilation\IsolatedStaticCtor.il" />
     <None Include="TestCases\ILPretty\ExtensionEncodingV2.il" />
     <None Include="testcases\ilpretty\ExtensionEncodingV1.il" />
     <None Include="TestCases\ILPretty\GuessAccessors.cs" />
@@ -143,6 +144,7 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="IsolatedMethodDecompilationTests.cs" />
     <Compile Include="Helpers\RoslynToolset.cs" />
     <Compile Include="Helpers\TestsAssemblyOutput.cs" />
     <Compile Include="Output\ILAmbienceTests.cs" />
