@@ -213,19 +213,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public IEnumerable<AstNode> Children {
-			get {
-				AstNode? next;
-				for (AstNode? cur = FirstChild; cur != null; cur = next)
-				{
-					Debug.Assert(cur.parent == this);
-					// Remember next before yielding cur.
-					// This allows removing/replacing nodes while iterating.
-					next = cur.NextSibling;
-					yield return cur;
-				}
-			}
-		}
+		public IEnumerable<AstNode> Children => GetChildNodes();
+
+		// Enumerates the children in slot order in a single pass (O(children)). The generator overrides this
+		// per node; the base (a leaf node with no slots) has none. Collection slots iterate via their own
+		// enumerator, which tolerates removing/replacing the current child mid-traversal.
+		internal virtual IEnumerable<AstNode> GetChildNodes() => System.Linq.Enumerable.Empty<AstNode>();
 
 		/// <summary>
 		/// Gets the ancestors of this node (excluding this node itself)
