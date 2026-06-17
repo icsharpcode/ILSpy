@@ -66,10 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("LeftRole")]
 		public partial Expression? Left { get; set; }
 
-		public BinaryOperatorType Operator {
-			get;
-			set;
-		}
+		public BinaryOperatorType Operator { get; set; }
 
 		[Slot("RightRole")]
 		public partial Expression? Right { get; set; }

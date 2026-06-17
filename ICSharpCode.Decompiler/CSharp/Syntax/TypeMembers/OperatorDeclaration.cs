@@ -155,14 +155,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("PrivateImplementationTypeRole")]
 		public partial AstType? PrivateImplementationType { get; set; }
 
-		OperatorType operatorType;
 
-		public OperatorType OperatorType {
-			get { return operatorType; }
-			set {
-				operatorType = value;
-			}
-		}
+		public OperatorType OperatorType { get; set; }
 
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }

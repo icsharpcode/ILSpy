@@ -167,10 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
 
-		public QueryOrderingDirection Direction {
-			get;
-			set;
-		}
+		public QueryOrderingDirection Direction { get; set; }
 	}
 
 	public enum QueryOrderingDirection

@@ -35,14 +35,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class MemberType : AstType
 	{
 
-		bool isDoubleColon;
 
-		public bool IsDoubleColon {
-			get { return isDoubleColon; }
-			set {
-				isDoubleColon = value;
-			}
-		}
+		public bool IsDoubleColon { get; set; }
 
 		[Slot("TargetRole")]
 		public partial AstType Target { get; set; }

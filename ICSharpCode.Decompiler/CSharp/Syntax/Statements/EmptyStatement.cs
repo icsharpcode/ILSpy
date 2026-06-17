@@ -32,10 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class EmptyStatement : Statement
 	{
-		public TextLocation Location {
-			get;
-			set;
-		}
+		public TextLocation Location { get; set; }
 
 		public override TextLocation StartLocation {
 			get {

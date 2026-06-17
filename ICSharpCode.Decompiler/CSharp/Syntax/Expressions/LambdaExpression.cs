@@ -34,15 +34,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string AsyncModifier = "async";
 
-		bool isAsync;
 
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		public bool IsAsync {
-			get { return isAsync; }
-			set { isAsync = value; }
-		}
+		public bool IsAsync { get; set; }
 
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }

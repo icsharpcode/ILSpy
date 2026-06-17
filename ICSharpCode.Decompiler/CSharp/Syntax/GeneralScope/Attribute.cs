@@ -42,10 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		// HasArgumentList == false: [Empty]
-		public bool HasArgumentList {
-			get;
-			set;
-		}
+		public bool HasArgumentList { get; set; }
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{

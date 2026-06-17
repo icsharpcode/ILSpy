@@ -55,14 +55,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.TypeDefinition; }
 		}
 
-		ClassType classType;
 
-		public ClassType ClassType {
-			get { return classType; }
-			set {
-				classType = value;
-			}
-		}
+		public ClassType ClassType { get; set; }
 
 		[Slot("AttributeRole")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
