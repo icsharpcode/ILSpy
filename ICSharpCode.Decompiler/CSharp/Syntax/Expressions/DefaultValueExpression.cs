@@ -34,9 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string DefaultKeyword = "default";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
 	}
 }
-

@@ -35,13 +35,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string QuestionMarkToken = "?";
 		public const string ColonToken = Roles.Colon;
 
-		[Slot("ConditionRole")]
+		[Slot("Condition")]
 		public partial Expression Condition { get; set; }
 
-		[Slot("TrueRole")]
+		[Slot("True")]
 		public partial Expression TrueExpression { get; set; }
 
-		[Slot("FalseRole")]
+		[Slot("False")]
 		public partial Expression FalseExpression { get; set; }
 
 	}

@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ExternAliasDeclaration : AstNode
 	{
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Name { get; set; }
 	}
 }

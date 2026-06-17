@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LabelStatement : Statement
 	{
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Label { get; set; }
 	}
 }

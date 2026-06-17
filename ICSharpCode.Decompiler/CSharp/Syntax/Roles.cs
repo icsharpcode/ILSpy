@@ -31,7 +31,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// some pre defined constants for common roles
 
-
 		// some pre defined constants for most used punctuation
 		public const string LPar = "(";
 		public const string RPar = ")";
@@ -48,8 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string Colon = ":";
 		public const string DoubleColon = "::";
 		public const string Arrow = "=>";
-
-
 
 		public const string WhereKeyword = "where";
 		public const string DelegateKeyword = "delegate";

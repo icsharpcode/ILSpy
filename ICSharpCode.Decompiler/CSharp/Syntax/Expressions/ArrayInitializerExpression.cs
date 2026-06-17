@@ -34,9 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class ArrayInitializerExpression : Expression
 	{
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial AstNodeCollection<Expression> Elements { get; }
 
 	}
 }
-

@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class VariableInitializer : AstNode
 	{
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Name { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression? Initializer { get; set; }
 	}
 }

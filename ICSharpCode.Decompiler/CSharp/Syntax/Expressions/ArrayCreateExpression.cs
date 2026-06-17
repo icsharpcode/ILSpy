@@ -28,20 +28,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string NewKeyword = "new";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[Slot("Roles.Argument")]
+		[Slot("Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		/// <summary>
 		/// Gets additional array ranks (those without size info).
 		/// Empty for "new int[5,1]"; will contain a single element for "new int[5][]".
 		/// </summary>
-		[Slot("AdditionalArraySpecifierRole")]
+		[Slot("AdditionalArraySpecifier")]
 		public partial AstNodeCollection<ArraySpecifier> AdditionalArraySpecifiers { get; }
 
-		[Slot("InitializerRole")]
+		[Slot("Initializer")]
 		public partial ArrayInitializerExpression? Initializer { get; set; }
 	}
 }

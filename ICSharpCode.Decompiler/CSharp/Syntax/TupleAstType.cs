@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class TupleAstType : AstType
 	{
 
-		[Slot("ElementRole")]
+		[Slot("Element")]
 		public partial AstNodeCollection<TupleTypeElement> Elements { get; }
 	}
 
@@ -35,10 +35,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class TupleTypeElement : AstNode
 	{
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
+		[NameSlot("Identifier", nullOnEmpty: true)]
 		public partial string Name { get; set; }
 
 	}

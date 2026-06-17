@@ -32,13 +32,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class RecursivePatternExpression : Expression
 	{
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[Slot("SubPatternRole")]
+		[Slot("SubPattern")]
 		public partial AstNodeCollection<Expression> SubPatterns { get; }
 
-		[Slot("Roles.VariableDesignationRole")]
+		[Slot("VariableDesignation")]
 		public partial VariableDesignation? Designation { get; set; }
 
 		public bool IsPositional { get; set; }

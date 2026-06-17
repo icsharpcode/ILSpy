@@ -27,10 +27,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string SwitchKeyword = "switch";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
-		[Slot("SwitchSectionRole")]
+		[Slot("SwitchSection")]
 		public partial AstNodeCollection<SwitchExpressionSection> SwitchSections { get; }
 	}
 
@@ -41,10 +41,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class SwitchExpressionSection : AstNode
 	{
 
-		[Slot("PatternRole")]
+		[Slot("Pattern")]
 		public partial Expression Pattern { get; set; }
 
-		[Slot("BodyRole")]
+		[Slot("Body")]
 		public partial Expression Body { get; set; }
 
 	}

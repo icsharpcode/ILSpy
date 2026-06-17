@@ -36,13 +36,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool HasUnmanagedCallingConvention { get; set; }
 
-		[Slot("CallingConventionRole")]
+		[Slot("CallingConvention")]
 		public partial AstNodeCollection<AstType> CallingConventions { get; }
 
-		[Slot("Roles.Parameter")]
+		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType ReturnType { get; set; }
 	}
 }

@@ -57,9 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class Comment : Trivia
 	{
 
-
 		public CommentType CommentType { get; set; }
-
 
 		public string Content { get; set; }
 
@@ -75,4 +73,3 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 }
-

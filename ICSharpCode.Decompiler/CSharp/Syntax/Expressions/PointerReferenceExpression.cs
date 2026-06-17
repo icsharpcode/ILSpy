@@ -34,13 +34,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string ArrowToken = "->";
 
-		[Slot("Roles.TargetExpression")]
+		[Slot("TargetExpression")]
 		public partial Expression Target { get; set; }
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string MemberName { get; set; }
 
-		[Slot("Roles.TypeArgument")]
+		[Slot("TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
 	}
 }

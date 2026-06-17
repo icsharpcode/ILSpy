@@ -33,10 +33,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamedExpression : Expression
 	{
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Name { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 	}
 }

@@ -41,13 +41,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
-		[Slot("Roles.Variable")]
+		[Slot("Variable")]
 		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
 		// Hide .Name and .NameToken from users; the actual field names

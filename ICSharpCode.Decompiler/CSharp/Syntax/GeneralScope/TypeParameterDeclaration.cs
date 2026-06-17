@@ -32,13 +32,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string OutVarianceKeyword = "out";
 		public const string InVarianceKeyword = "in";
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
-
 
 		public VarianceModifier Variance { get; set; }
 
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Name { get; set; }
 
 		public TypeParameterDeclaration(string name)

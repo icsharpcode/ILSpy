@@ -35,10 +35,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string DoKeyword = "do";
 		public const string WhileKeyword = "while";
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 
-		[Slot("Roles.Condition")]
+		[Slot("Condition")]
 		public partial Expression Condition { get; set; }
 
 		public DoWhileStatement(Expression condition, Statement embeddedStatement)
@@ -48,4 +48,3 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 	}
 }
-

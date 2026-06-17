@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string ReadonlyKeyword = "readonly";
 		public const string NullableToken = "?";
 		public const string PointerToken = "*";
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		/// <summary>
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool HasReadOnlySpecifier { get; set; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType BaseType { get; set; }
 
 		public bool HasNullableSpecifier { get; set; }
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		[Slot("ArraySpecifierRole")]
+		[Slot("ArraySpecifier")]
 		public partial AstNodeCollection<ArraySpecifier> ArraySpecifiers { get; }
 
 		public override string ToString(CSharpFormattingOptions formattingOptions)

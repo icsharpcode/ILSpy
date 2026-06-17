@@ -62,13 +62,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string RangeToken = "..";
 		public const string IsKeyword = IsExpression.IsKeyword;
 
-
-		[Slot("LeftRole")]
+		[Slot("Left")]
 		public partial Expression? Left { get; set; }
 
 		public BinaryOperatorType Operator { get; set; }
 
-		[Slot("RightRole")]
+		[Slot("Right")]
 		public partial Expression? Right { get; set; }
 
 		public static string GetOperatorToken(BinaryOperatorType op)

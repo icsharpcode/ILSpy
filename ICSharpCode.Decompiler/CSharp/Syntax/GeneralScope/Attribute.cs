@@ -35,10 +35,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class Attribute : AstNode
 	{
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[Slot("Roles.Argument")]
+		[Slot("Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
 
 		// HasArgumentList == false: [Empty]

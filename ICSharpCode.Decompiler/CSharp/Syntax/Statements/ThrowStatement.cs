@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string ThrowKeyword = "throw";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression? Expression { get; set; }
 
 	}

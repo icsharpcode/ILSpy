@@ -34,10 +34,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string WhileKeyword = "while";
 
-		[Slot("Roles.Condition")]
+		[Slot("Condition")]
 		public partial Expression Condition { get; set; }
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 
 	}

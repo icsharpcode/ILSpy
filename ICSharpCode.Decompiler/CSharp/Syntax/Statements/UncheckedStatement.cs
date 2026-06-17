@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string UncheckedKeyword = "unchecked";
 
-		[Slot("Roles.Body")]
+		[Slot("Body")]
 		public partial BlockStatement Body { get; set; }
 
 	}

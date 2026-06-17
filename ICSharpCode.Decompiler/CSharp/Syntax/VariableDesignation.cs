@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SingleVariableDesignation : VariableDesignation
 	{
-		[NameSlot("Roles.Identifier")]
+		[NameSlot("Identifier")]
 		public partial string Identifier { get; set; }
 	}
 
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ParenthesizedVariableDesignation : VariableDesignation
 	{
 
-		[Slot("Roles.VariableDesignationRole")]
+		[Slot("VariableDesignation")]
 		public partial AstNodeCollection<VariableDesignation> VariableDesignations { get; }
 	}
 }

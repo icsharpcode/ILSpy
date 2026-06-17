@@ -44,10 +44,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
 		[ExcludeFromMatch]
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public partial Identifier AttributeTargetToken { get; set; }
 
-		[Slot("Roles.Attribute")]
+		[Slot("Attribute")]
 		public partial AstNodeCollection<Attribute> Attributes { get; }
 
 		public AttributeSection(Attribute attr)

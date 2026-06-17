@@ -37,13 +37,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string IfKeyword = "if";
 		public const string ElseKeyword = "else";
 
-		[Slot("ConditionRole")]
+		[Slot("Condition")]
 		public partial Expression Condition { get; set; }
 
-		[Slot("TrueRole")]
+		[Slot("True")]
 		public partial Statement TrueStatement { get; set; }
 
-		[Slot("FalseRole")]
+		[Slot("False")]
 		public partial Statement? FalseStatement { get; set; }
 
 	}

@@ -43,13 +43,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string StackallocKeyword = "stackalloc";
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression? CountExpression { get; set; }
 
-		[Slot("InitializerRole")]
+		[Slot("Initializer")]
 		public partial ArrayInitializerExpression? Initializer { get; set; }
 	}
 }

@@ -34,12 +34,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string AsKeyword = "as";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
 	}
 }
-

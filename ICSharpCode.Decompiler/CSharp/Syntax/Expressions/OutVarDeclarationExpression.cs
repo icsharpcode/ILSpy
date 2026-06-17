@@ -26,10 +26,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string OutKeyword = DirectionExpression.OutKeyword;
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[Slot("Roles.Variable")]
+		[Slot("Variable")]
 		public partial VariableInitializer Variable { get; set; }
 
 		public OutVarDeclarationExpression(AstType type, string name)

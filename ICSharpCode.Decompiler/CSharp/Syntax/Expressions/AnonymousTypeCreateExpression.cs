@@ -35,8 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string NewKeyword = "new";
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial AstNodeCollection<Expression> Initializers { get; }
 	}
 }
-

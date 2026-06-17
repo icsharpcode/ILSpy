@@ -42,32 +42,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// Slots in document order; inherited contract slots (Attributes, ReturnType, NameToken) are
 		// re-declared override per the flatten model (Part I.3).
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		[Slot("PrivateImplementationTypeRole")]
+		[Slot("PrivateImplementationType")]
 		public partial AstType? PrivateImplementationType { get; set; }
 
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("Roles.TypeParameter")]
+		[Slot("TypeParameter")]
 		public partial AstNodeCollection<TypeParameterDeclaration> TypeParameters { get; }
 
-		[Slot("Roles.Parameter")]
+		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		[Slot("Roles.Constraint")]
+		[Slot("Constraint")]
 		public partial AstNodeCollection<Constraint> Constraints { get; }
 
-		[Slot("Roles.Body")]
+		[Slot("Body")]
 		public partial BlockStatement? Body { get; set; }
 
 		public bool IsExtensionMethod {

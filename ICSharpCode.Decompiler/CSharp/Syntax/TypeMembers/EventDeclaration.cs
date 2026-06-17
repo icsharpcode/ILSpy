@@ -45,13 +45,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Event; }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
-		[Slot("Roles.Variable")]
+		[Slot("Variable")]
 		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
 		// Hide .Name and .NameToken from users; the actual field names
@@ -77,31 +77,30 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string EventKeyword = "event";
 
-
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Event; }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
 		/// Null node if this member is not an explicit interface implementation.
 		/// </summary>
-		[Slot("PrivateImplementationTypeRole")]
+		[Slot("PrivateImplementationType")]
 		public partial AstType? PrivateImplementationType { get; set; }
 
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("AddAccessorRole")]
+		[Slot("AddAccessor")]
 		public partial Accessor? AddAccessor { get; set; }
 
-		[Slot("RemoveAccessorRole")]
+		[Slot("RemoveAccessor")]
 		public partial Accessor? RemoveAccessor { get; set; }
 	}
 }

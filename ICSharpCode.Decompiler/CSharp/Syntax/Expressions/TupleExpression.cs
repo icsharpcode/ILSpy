@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TupleExpression : Expression
 	{
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial AstNodeCollection<Expression> Elements { get; }
 	}
 }

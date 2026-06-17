@@ -35,7 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class DocumentationReference : AstNode
 	{
 
-
 		/// <summary>
 		/// Gets/Sets the entity type.
 		/// Possible values are:
@@ -60,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets/Sets the declaring type.
 		/// </summary>
-		[Slot("DeclaringTypeRole")]
+		[Slot("DeclaringType")]
 		public partial AstType? DeclaringType { get; set; }
 
 		/// <summary>
@@ -72,20 +71,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { NameToken = Identifier.Create(value); }
 		}
 
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public partial Identifier NameToken { get; set; }
 
 		/// <summary>
 		/// Gets/Sets the return type of conversion operators.
 		/// This property is only used when SymbolKind==Operator and OperatorType is explicit or implicit.
 		/// </summary>
-		[Slot("ConversionOperatorReturnTypeRole")]
+		[Slot("ConversionOperatorReturnType")]
 		public partial AstType ConversionOperatorReturnType { get; set; }
 
-		[Slot("Roles.TypeArgument")]
+		[Slot("TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
 
-		[Slot("Roles.Parameter")]
+		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
 		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)

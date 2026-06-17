@@ -38,16 +38,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync { get; set; }
 
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType VariableType { get; set; }
 
-		[Slot("Roles.VariableDesignationRole")]
+		[Slot("VariableDesignation")]
 		public partial VariableDesignation VariableDesignation { get; set; }
 
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression InExpression { get; set; }
 
-		[Slot("Roles.EmbeddedStatement")]
+		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 	}
 }

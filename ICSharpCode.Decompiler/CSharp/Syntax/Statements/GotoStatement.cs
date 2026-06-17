@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class GotoStatement : Statement
 	{
 		public const string GotoKeyword = "goto";
-		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
+		[NameSlot("Identifier", nullOnEmpty: true)]
 		public partial string Label { get; set; }
 	}
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Used for "goto case LabelExpression;"
 		/// </summary>
-		[Slot("Roles.Expression")]
+		[Slot("Expression")]
 		public partial Expression LabelExpression { get; set; }
 	}
 

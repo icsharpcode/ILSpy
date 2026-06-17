@@ -24,10 +24,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DeclarationExpression : Expression
 	{
-		[Slot("Roles.Type")]
+		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[Slot("Roles.VariableDesignationRole")]
+		[Slot("VariableDesignation")]
 		public partial VariableDesignation Designation { get; set; }
 	}
 }

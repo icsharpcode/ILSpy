@@ -41,14 +41,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		[Slot("AttributeRole")]
+		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
-		[Slot("Roles.Identifier")]
+		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("InitializerRole")]
+		[Slot("Initializer")]
 		public partial Expression? Initializer { get; set; }
 	}
 }
-

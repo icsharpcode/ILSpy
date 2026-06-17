@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string UsingKeyword = "using";
 
-		[Slot("ImportRole")]
+		[Slot("Import")]
 		public partial AstType Import { get; set; }
 
 		// Computed from Import (which is matched); exclude to avoid a redundant compare.
