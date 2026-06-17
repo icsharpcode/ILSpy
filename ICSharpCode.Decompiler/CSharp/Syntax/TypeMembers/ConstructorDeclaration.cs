@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>constructor_declaration ::= attribute_section* modifier* identifier '(' parameter* ')' constructor_initializer? ( block | ';' )</c> (C# grammar §15.11.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ConstructorDeclaration : EntityDeclaration
+	public sealed partial class ConstructorDeclaration : EntityDeclaration
 	{
 
 		public override SymbolKind SymbolKind {
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>constructor_initializer ::= ':' ( 'base' | 'this' ) '(' expression* ')'</c> (C# grammar §15.11.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
-	public partial class ConstructorInitializer : AstNode
+	public sealed partial class ConstructorInitializer : AstNode
 	{
 		public const string BaseKeyword = "base";
 		public const string ThisKeyword = "this";

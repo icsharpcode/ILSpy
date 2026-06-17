@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>named_argument_expression ::= identifier ':' expression</c> (C# grammar §12.6.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class NamedArgumentExpression : Expression
+	public sealed partial class NamedArgumentExpression : Expression
 	{
 		[NameSlot("Identifier")]
 		public partial string Name { get; set; }

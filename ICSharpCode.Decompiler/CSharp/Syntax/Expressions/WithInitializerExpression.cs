@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>with_expression ::= expression 'with' array_initializer</c> (C# grammar §12.10)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class WithInitializerExpression : Expression
+	public sealed partial class WithInitializerExpression : Expression
 	{
 
 		[Slot("Expression")]

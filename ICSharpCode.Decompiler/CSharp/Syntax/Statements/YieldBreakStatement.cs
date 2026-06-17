@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>yield_statement ::= 'yield' 'break' ';'</c> (C# grammar §13.15)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class YieldBreakStatement : Statement
+	public sealed partial class YieldBreakStatement : Statement
 	{
 		public const string YieldKeyword = "yield";
 		public const string BreakKeyword = "break";

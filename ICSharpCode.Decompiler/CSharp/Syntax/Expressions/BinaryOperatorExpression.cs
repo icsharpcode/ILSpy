@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>binary_operator ::= '*' | '/' | '%' | '+' | '-' | '&lt;&lt;' | '&gt;&gt;' | '&gt;&gt;&gt;' | '&lt;' | '&gt;' | '&lt;=' | '&gt;=' | '==' | '!=' | '&amp;' | '^' | '|' | '&amp;&amp;' | '||' | '??' | '..'</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class BinaryOperatorExpression : Expression
+	public sealed partial class BinaryOperatorExpression : Expression
 	{
 		public const string BitwiseAndToken = "&";
 		public const string BitwiseOrToken = "|";

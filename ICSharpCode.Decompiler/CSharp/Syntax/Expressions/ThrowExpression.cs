@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>throw_expression ::= 'throw' expression</c> (C# grammar §12.19)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ThrowExpression : Expression
+	public sealed partial class ThrowExpression : Expression
 	{
 		public const string ThrowKeyword = ThrowStatement.ThrowKeyword;
 

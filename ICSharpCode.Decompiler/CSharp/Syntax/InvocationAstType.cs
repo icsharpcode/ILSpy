@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>invocation_ast_type ::= type '(' argument_list? ')'</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class InvocationAstType : AstType
+	public sealed partial class InvocationAstType : AstType
 	{
 		[Slot("Expression")]
 		public partial AstNodeCollection<Expression> Arguments { get; }

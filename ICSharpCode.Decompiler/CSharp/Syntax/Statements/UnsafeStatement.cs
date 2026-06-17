@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>unsafe_statement ::= 'unsafe' block</c> (C# grammar §24.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class UnsafeStatement : Statement
+	public sealed partial class UnsafeStatement : Statement
 	{
 		public const string UnsafeKeyword = "unsafe";
 

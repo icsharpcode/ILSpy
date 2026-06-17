@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>element_access ::= expression '[' expression* ']'</c> (C# grammar §12.8.12.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class IndexerExpression : Expression
+	public sealed partial class IndexerExpression : Expression
 	{
 		[Slot("TargetExpression")]
 		public partial Expression? Target { get; set; }

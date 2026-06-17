@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>anonymous_method_expression ::= 'async'? 'delegate' parameter* block</c> (C# grammar §12.22.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class AnonymousMethodExpression : Expression
+	public sealed partial class AnonymousMethodExpression : Expression
 	{
 		public const string DelegateKeyword = "delegate";
 		public const string AsyncModifier = LambdaExpression.AsyncModifier;

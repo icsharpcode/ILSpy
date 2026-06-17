@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>event_declaration ::= attribute_section* modifier* 'event' type variable_initializer* ';'</c> (C# grammar §15.8.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class EventDeclaration : EntityDeclaration
+	public sealed partial class EventDeclaration : EntityDeclaration
 	{
 		public const string EventKeyword = "event";
 
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>custom_event_declaration ::= attribute_section* modifier* 'event' type ( type '.' )? identifier '{' accessor accessor '}'</c> (C# grammar §15.8.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class CustomEventDeclaration : EntityDeclaration
+	public sealed partial class CustomEventDeclaration : EntityDeclaration
 	{
 		public const string EventKeyword = "event";
 

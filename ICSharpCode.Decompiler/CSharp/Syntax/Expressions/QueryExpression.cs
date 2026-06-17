@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>query_expression ::= query_clause+</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: true)]
-	public partial class QueryExpression : Expression
+	public sealed partial class QueryExpression : Expression
 	{
 
 		[Slot("Clause")]
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>query_continuation ::= query_expression 'into' identifier</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryContinuationClause : QueryClause
+	public sealed partial class QueryContinuationClause : QueryClause
 	{
 		public const string IntoKeyword = "into";
 
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>from_clause ::= 'from' type? identifier 'in' expression</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryFromClause : QueryClause
+	public sealed partial class QueryFromClause : QueryClause
 	{
 		public const string FromKeyword = "from";
 		public const string InKeyword = "in";
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>let_clause ::= 'let' identifier '=' expression</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryLetClause : QueryClause
+	public sealed partial class QueryLetClause : QueryClause
 	{
 		public const string LetKeyword = "let";
 
@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>where_clause ::= 'where' expression</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryWhereClause : QueryClause
+	public sealed partial class QueryWhereClause : QueryClause
 	{
 		public const string WhereKeyword = "where";
 
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryJoinClause : QueryClause
+	public sealed partial class QueryJoinClause : QueryClause
 	{
 		public const string JoinKeyword = "join";
 		public const string InKeyword = "in";
@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>orderby_clause ::= 'orderby' ordering ( ',' ordering )*</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryOrderClause : QueryClause
+	public sealed partial class QueryOrderClause : QueryClause
 	{
 		public const string OrderbyKeyword = "orderby";
 
@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>ordering ::= expression ( 'ascending' | 'descending' )?</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryOrdering : AstNode
+	public sealed partial class QueryOrdering : AstNode
 	{
 		public const string AscendingKeyword = "ascending";
 		public const string DescendingKeyword = "descending";
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>select_clause ::= 'select' expression</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QuerySelectClause : QueryClause
+	public sealed partial class QuerySelectClause : QueryClause
 	{
 		public const string SelectKeyword = "select";
 
@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>group_clause ::= 'group' expression 'by' expression</c> (C# grammar §12.23.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class QueryGroupClause : QueryClause
+	public sealed partial class QueryGroupClause : QueryClause
 	{
 		public const string GroupKeyword = "group";
 		public const string ByKeyword = "by";

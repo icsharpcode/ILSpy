@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>delegate_declaration ::= attribute_section* modifier* 'delegate' ( 'ref' 'readonly'? )? type identifier type_parameter* '(' parameter* ')' constraint*</c> (C# grammar §21.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class DelegateDeclaration : EntityDeclaration
+	public sealed partial class DelegateDeclaration : EntityDeclaration
 	{
 
 		public override SymbolKind SymbolKind {

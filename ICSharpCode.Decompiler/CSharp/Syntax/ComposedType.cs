@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>nullable_value_type ::= non_nullable_value_type nullable_type_annotation</c> (C# grammar §8.3.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ComposedType : AstType
+	public sealed partial class ComposedType : AstType
 	{
 		public const string RefKeyword = "ref";
 		public const string ReadonlyKeyword = "readonly";
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>rank_specifier ::= '[' ','* ']'</c> (C# grammar §8.2.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ArraySpecifier : AstNode
+	public sealed partial class ArraySpecifier : AstNode
 	{
 
 		public ArraySpecifier()

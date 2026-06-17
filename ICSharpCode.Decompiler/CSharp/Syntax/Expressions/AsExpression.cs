@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>as_expression ::= expression 'as' type</c> (C# grammar §12.15.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class AsExpression : Expression
+	public sealed partial class AsExpression : Expression
 	{
 		public const string AsKeyword = "as";
 

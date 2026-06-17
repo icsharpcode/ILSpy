@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>pointer_member_access ::= expression '-&gt;' identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §24.6.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class PointerReferenceExpression : Expression
+	public sealed partial class PointerReferenceExpression : Expression
 	{
 		public const string ArrowToken = "->";
 

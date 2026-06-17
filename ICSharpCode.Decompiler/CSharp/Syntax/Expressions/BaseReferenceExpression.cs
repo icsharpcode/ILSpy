@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>base_access ::= 'base'</c> (C# grammar §12.8.15)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class BaseReferenceExpression : Expression
+	public sealed partial class BaseReferenceExpression : Expression
 	{
 		// StartLocation comes from the base (stored at print time); only the end needs deriving.
 		public override TextLocation EndLocation {

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>compilation_unit ::= extern_alias_directive* using_directive* global_attributes? compilation_unit_body</c> (C# grammar §14.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class SyntaxTree : AstNode
+	public sealed partial class SyntaxTree : AstNode
 	{
 
 		[Slot("Member")]

@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>postfix_unary_operator ::= '++' | '--' | '!' | '?'</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class UnaryOperatorExpression : Expression
+	public sealed partial class UnaryOperatorExpression : Expression
 	{
 		public const string NotToken = "!";
 		public const string BitNotToken = "~";

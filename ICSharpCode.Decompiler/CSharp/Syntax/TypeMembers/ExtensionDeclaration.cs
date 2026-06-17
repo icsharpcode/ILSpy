@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>extension_declaration ::= attribute_section* 'extension' type_parameter* '(' parameter* ')' constraint* '{' member* '}'</c>
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ExtensionDeclaration : EntityDeclaration
+	public sealed partial class ExtensionDeclaration : EntityDeclaration
 	{
 		public const string ExtensionKeyword = "extension";
 

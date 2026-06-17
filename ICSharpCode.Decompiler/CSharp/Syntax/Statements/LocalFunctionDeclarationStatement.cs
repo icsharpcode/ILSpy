@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>local_function_declaration ::= method_declaration</c> (C# grammar §13.6.4)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class LocalFunctionDeclarationStatement : Statement
+	public sealed partial class LocalFunctionDeclarationStatement : Statement
 	{
 
 		[Slot("MethodDeclaration")]

@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// (C# grammar §12.8.22)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class StackAllocExpression : Expression
+	public sealed partial class StackAllocExpression : Expression
 	{
 		public const string StackallocKeyword = "stackalloc";
 

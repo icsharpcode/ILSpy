@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>typeof_expression ::= 'typeof' '(' type ')'</c> (C# grammar §12.8.18)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class TypeOfExpression : Expression
+	public sealed partial class TypeOfExpression : Expression
 	{
 		public const string TypeofKeyword = "typeof";
 

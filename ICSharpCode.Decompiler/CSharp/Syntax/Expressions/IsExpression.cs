@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>is_expression ::= expression 'is' type</c> (C# grammar §12.15.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class IsExpression : Expression
+	public sealed partial class IsExpression : Expression
 	{
 		public const string IsKeyword = "is";
 

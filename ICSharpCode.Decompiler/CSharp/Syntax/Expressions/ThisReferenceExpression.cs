@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>this_access ::= 'this'</c> (C# grammar §12.8.14)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ThisReferenceExpression : Expression
+	public sealed partial class ThisReferenceExpression : Expression
 	{
 		// StartLocation comes from the base (stored at print time); only the end needs deriving.
 		public override TextLocation EndLocation {

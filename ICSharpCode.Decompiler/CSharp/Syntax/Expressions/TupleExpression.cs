@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>tuple_literal ::= '(' expression ( ',' expression )+ ')'</c> (C# grammar §12.8.6)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class TupleExpression : Expression
+	public sealed partial class TupleExpression : Expression
 	{
 		[Slot("Expression")]
 		public partial AstNodeCollection<Expression> Elements { get; }

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>switch_statement ::= 'switch' expression switch_section*</c> (C# grammar §13.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class SwitchStatement : Statement
+	public sealed partial class SwitchStatement : Statement
 	{
 		public const string SwitchKeyword = "switch";
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>switch_label ::= 'case' expression ':' | 'default' ':'</c> (C# grammar §13.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class CaseLabel : AstNode
+	public sealed partial class CaseLabel : AstNode
 	{
 		public const string CaseKeyword = "case";
 		public const string DefaultKeyword = "default";

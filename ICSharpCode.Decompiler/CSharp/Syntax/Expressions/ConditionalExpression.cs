@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>conditional_expression ::= expression '?' expression ':' expression</c> (C# grammar §12.21)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class ConditionalExpression : Expression
+	public sealed partial class ConditionalExpression : Expression
 	{
 		public const string QuestionMarkToken = "?";
 		public const string ColonToken = Roles.Colon;

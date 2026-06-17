@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>while_statement ::= 'while' '(' expression ')' statement</c> (C# grammar §13.9.2)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class WhileStatement : Statement
+	public sealed partial class WhileStatement : Statement
 	{
 		public const string WhileKeyword = "while";
 

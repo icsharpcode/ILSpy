@@ -6,7 +6,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>interpolated_string_expression ::= interpolated_string_content*</c> (C# grammar §12.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class InterpolatedStringExpression : Expression
+	public sealed partial class InterpolatedStringExpression : Expression
 	{
 		public const string OpenQuote = "$\"";
 		public const string CloseQuote = "\"";
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>interpolation ::= '{' expression ( ',' alignment )? ( ':' format )? '}'</c> (C# grammar §12.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class Interpolation : InterpolatedStringContent
+	public sealed partial class Interpolation : InterpolatedStringContent
 	{
 
 		[Slot("Expression")]
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>interpolated_string_text ::= text_character+</c> (C# lexical grammar §12.8.3)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class InterpolatedStringText : InterpolatedStringContent
+	public sealed partial class InterpolatedStringText : InterpolatedStringContent
 	{
 		public string Text { get; set; }
 

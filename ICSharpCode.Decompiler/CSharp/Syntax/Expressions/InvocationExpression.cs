@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>invocation_expression ::= expression '(' expression* ')'</c> (C# grammar §12.8.10.1)
 	/// </summary>
 	[DecompilerAstNode(hasNullNode: false)]
-	public partial class InvocationExpression : Expression
+	public sealed partial class InvocationExpression : Expression
 	{
 		[Slot("TargetExpression")]
 		public partial Expression Target { get; set; }
