@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public DefaultValueExpression(AstType type)
 		{
-			AddChild(type, Roles.Type);
+			AddChild(type, SlotKind.Type);
 		}
 	}
 }

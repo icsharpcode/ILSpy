@@ -49,13 +49,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public MemberReferenceExpression(Expression target, string memberName, IEnumerable<AstType> arguments = null)
 		{
-			AddChild(target, Roles.TargetExpression);
+			AddChild(target, SlotKind.TargetExpression);
 			MemberName = memberName;
 			if (arguments != null)
 			{
 				foreach (var arg in arguments)
 				{
-					AddChild(arg, Roles.TypeArgument);
+					AddChild(arg, SlotKind.TypeArgument);
 				}
 			}
 		}

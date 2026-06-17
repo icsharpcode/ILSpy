@@ -40,22 +40,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public abstract partial class AstNode : AbstractAnnotatable, IFreezable, INode, ICloneable
 	{
-		// the Root role must be available when creating the null nodes, so we can't put it in the Roles class
-		internal static readonly Role<AstNode?> RootRole = new Role<AstNode?>("Root", null);
-
 		AstNode? parent;
 		// Flattened index of this node within its parent's child-index space (-1 when unparented).
 		// Recomputed lazily by the parent (EnsureChildIndices) after a structural mutation.
 		internal int childIndex = -1;
 
-		// Flags, from least significant to most significant bits:
-		// - Role.RoleIndexBits: role index
-		protected uint flags = RootRole.Index;
-		// Derived classes may also use a few bits,
-		// for example Identifier uses 1 bit for IsVerbatim
+		// Flag bits used by derived classes (e.g. Identifier uses 1 bit for IsVerbatim).
+		protected uint flags = 0;
 
-		const uint roleIndexMask = (1u << Role.RoleIndexBits) - 1;
-		protected const int AstNodeFlagsUsedBits = Role.RoleIndexBits;
+		protected const int AstNodeFlagsUsedBits = 0;
 
 		TextLocation startLocation = TextLocation.Empty;
 		TextLocation endLocation = TextLocation.Empty;
@@ -156,28 +149,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AstNode? Parent {
 			get { return parent; }
-		}
-
-		public Role Role {
-			get {
-				return Role.GetByIndex(flags & roleIndexMask);
-			}
-			set {
-				if (value == null)
-					throw new ArgumentNullException(nameof(value));
-				if (!value.IsValid(this))
-					throw new ArgumentException("This node is not valid in the new role.");
-				SetRole(value);
-			}
-		}
-
-		internal uint RoleIndex {
-			get { return flags & roleIndexMask; }
-		}
-
-		void SetRole(Role role)
-		{
-			flags = (flags & ~roleIndexMask) | role.Index;
 		}
 
 		public AstNode? NextSibling {
@@ -336,20 +307,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Gets the first child with the specified role.
 		/// Returns the role's null object if the child is not found.
 		/// </summary>
-		public T GetChildByRole<T>(Role<T> role) where T : AstNode?
+		public T GetChildByRole<T>(SlotKind kind) where T : AstNode?
 		{
-			if (role == null)
-				throw new ArgumentNullException(nameof(role));
 			int count = GetChildCount();
 			for (int i = 0; i < count; i++)
 			{
-				if (GetChildSlot(i) == role)
+				if (GetChildSlotInfo(i).Kind == kind)
 				{
 					AstNode? c = GetChild(i);
-					return c != null ? (T)c : role.NullObject;
+					return c != null ? (T)c : default!;
 				}
 			}
-			return role.NullObject;
+			return default!;
 		}
 
 		public T? GetParent<T>() where T : AstNode
@@ -362,20 +331,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return pred != null ? Ancestors.FirstOrDefault(pred) : Ancestors.FirstOrDefault();
 		}
 
-		public AstNodeCollection<T> GetChildrenByRole<T>(Role<T> role) where T : AstNode
+		public AstNodeCollection<T> GetChildrenByRole<T>(SlotKind kind) where T : AstNode
 		{
-			if (role == null)
-				throw new ArgumentNullException(nameof(role));
-			AstNodeCollection? collection = GetCollectionByRole(role);
-			// A node has no children of a role it does not declare a collection slot for. Reads of such
-			// a role (e.g. the parameters of a non-indexer property) get a detached empty collection;
-			// writes go through AddChild/SetChildByRole, which reject a missing role.
-			return collection != null ? (AstNodeCollection<T>)collection : new AstNodeCollection<T>(this, role);
+			AstNodeCollection? collection = GetCollectionByKind(kind);
+			// A node has no children of a kind it does not declare a collection slot for. Reads of such
+			// a kind (e.g. the parameters of a non-indexer property) get a detached empty collection;
+			// writes go through AddChild/SetChildByRole, which reject a missing slot.
+			return collection != null ? (AstNodeCollection<T>)collection : new AstNodeCollection<T>(this, kind);
 		}
 
-		protected void SetChildByRole<T>(Role<T> role, T? newChild) where T : AstNode
+		protected void SetChildByRole<T>(SlotKind kind, T? newChild) where T : AstNode
 		{
-			SetChildByRoleUntyped(role, newChild);
+			SetChildByRoleUntyped(kind, newChild);
 		}
 
 		#region Slot storage contract
@@ -390,8 +357,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal virtual AstNode? GetChild(int index) => throw new ArgumentOutOfRangeException(nameof(index));
 
 		internal virtual void SetChild(int index, AstNode? value) => throw new ArgumentOutOfRangeException(nameof(index));
-
-		internal virtual Role GetChildSlot(int index) => throw new ArgumentOutOfRangeException(nameof(index));
 
 		// The CSharpSlotInfo for the slot at the given flattened index; generator-emitted per leaf.
 		internal virtual CSharpSlotInfo GetChildSlotInfo(int index) => throw new ArgumentOutOfRangeException(nameof(index));
@@ -409,9 +374,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		// Returns the collection occupying the slot with the given role, or null if there is none.
+		// Returns the collection occupying the slot with the given kind, or null if there is none.
 		// Overridden by the generator for nodes that have collection slots.
-		internal virtual AstNodeCollection? GetCollectionByRole(Role role) => null;
+		internal virtual AstNodeCollection? GetCollectionByKind(SlotKind kind) => null;
 
 		// Deep-copies this node's children into the (memberwise-cloned) copy, which initially shares
 		// this node's child references. Overridden by the generator for nodes that have slots.
@@ -465,14 +430,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					continue; // empty optional single slot
 				Debug.Assert(child.parent == this, "child's Parent must point back to this node");
 				Debug.Assert(child.childIndex == i, "child's flattened index must match its slot position");
-				Debug.Assert(GetChildSlot(i).IsValid(child), "child's type must be valid in its slot's role");
+				Debug.Assert(GetChildSlotInfo(i).ChildType.IsInstanceOfType(child), "child's type must be valid in its slot");
 				child.CheckInvariant();
 			}
 		}
 
 		// Writes a single-slot backing field: detaches the old child, attaches the new one, renumbers.
 		// A null or null-object value empties the slot. Called by generated single-slot property setters.
-		internal void SetChildNode<T>(ref T? field, T? value, Role role) where T : AstNode
+		internal void SetChildNode<T>(ref T? field, T? value) where T : AstNode
 		{
 			T? newValue = value;
 			if (field == newValue)
@@ -493,14 +458,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			field?.ClearParentAndIndex();
 			field = newValue;
-			newValue?.SetParentAndRole(this, role);
+			newValue?.SetParent(this);
 			InvalidateChildIndices();
 		}
 
-		internal void SetParentAndRole(AstNode newParent, Role role)
+		internal void SetParent(AstNode newParent)
 		{
 			parent = newParent;
-			SetRole(role);
 		}
 
 		internal void ClearParentAndIndex()
@@ -510,85 +474,72 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public void AddChild<T>(T child, Role<T> role) where T : AstNode
-		{
-			if (role == null)
-				throw new ArgumentNullException(nameof(role));
-			if (child == null)
-				return;
-			AddChildUnsafe(child, role);
-		}
-
-		public void AddChildWithExistingRole(AstNode? child)
+		public void AddChild<T>(T child, SlotKind kind) where T : AstNode
 		{
 			if (child == null)
 				return;
-			AddChildUnsafe(child, child.Role);
+			AddChildUnsafe(child, kind);
 		}
 
 		/// <summary>
-		/// Adds a child into the slot matching <paramref name="role"/> (appending to a collection slot,
+		/// Adds a child into the slot matching <paramref name="kind"/> (appending to a collection slot,
 		/// or filling a single slot).
 		/// </summary>
-		internal void AddChildUnsafe(AstNode child, Role role)
+		internal void AddChildUnsafe(AstNode child, SlotKind kind)
 		{
-			AstNodeCollection? collection = GetCollectionByRole(role);
+			AstNodeCollection? collection = GetCollectionByKind(kind);
 			if (collection != null)
 				collection.AddNode(child);
 			else
-				SetChildByRoleUntyped(role, child);
+				SetChildByRoleUntyped(kind, child);
 		}
 
 		// Sets the single slot matching the role (used by the non-generic mutation API). Symmetric with
 		// GetChildByRole, which returns the null object for a role this node does not declare a slot for:
 		// a node has no child of a role it has no slot for, so writing one is a no-op.
-		internal void SetChildByRoleUntyped(Role role, AstNode? child)
+		internal void SetChildByRoleUntyped(SlotKind kind, AstNode? child)
 		{
 			int count = GetChildCount();
 			for (int i = 0; i < count; i++)
 			{
-				if (GetChildSlot(i) == role)
+				if (GetChildSlotInfo(i).Kind == kind)
 				{
 					SetChild(i, child);
 					return;
 				}
 			}
-			throw new InvalidOperationException($"{GetType().Name} has no slot for role '{role}'.");
+			throw new InvalidOperationException($"{GetType().Name} has no slot of kind '{kind}'.");
 		}
 
-		public void InsertChildBefore<T>(AstNode? nextSibling, T child, Role<T> role) where T : AstNode
+		public void InsertChildBefore<T>(AstNode? nextSibling, T child, SlotKind kind) where T : AstNode
 		{
-			if (role == null)
-				throw new ArgumentNullException(nameof(role));
 			if (child == null)
 				return;
-			AstNodeCollection? collection = GetCollectionByRole(role);
+			AstNodeCollection? collection = GetCollectionByKind(kind);
 			if (collection != null)
 				collection.InsertNodeBefore(nextSibling, child);
 			else
-				SetChildByRoleUntyped(role, child);
+				SetChildByRoleUntyped(kind, child);
 		}
 
-		internal void InsertChildBeforeUnsafe(AstNode nextSibling, AstNode child, Role role)
+		internal void InsertChildBeforeUnsafe(AstNode nextSibling, AstNode child, SlotKind kind)
 		{
-			AstNodeCollection? collection = GetCollectionByRole(role);
+			AstNodeCollection? collection = GetCollectionByKind(kind);
 			if (collection != null)
 				collection.InsertNodeBefore(nextSibling, child);
 			else
-				SetChildByRoleUntyped(role, child);
+				SetChildByRoleUntyped(kind, child);
 		}
 
-		public void InsertChildAfter<T>(AstNode? prevSibling, T child, Role<T> role) where T : AstNode
+		public void InsertChildAfter<T>(AstNode? prevSibling, T child, SlotKind kind) where T : AstNode
 		{
-			if (role == null)
-				throw new ArgumentNullException(nameof(role));
 			if (child == null)
 				return;
-			AstNodeCollection? collection = GetCollectionByRole(role);
+			AstNodeCollection? collection = GetCollectionByKind(kind);
 			if (collection != null)
 				collection.InsertNodeAfter(prevSibling, child);
 			else
-				SetChildByRoleUntyped(role, child);
+				SetChildByRoleUntyped(kind, child);
 		}
 
 		/// <summary>
@@ -599,8 +550,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (parent == null)
 				return;
 			parent.EnsureChildIndices();
-			Role role = parent.GetChildSlot(childIndex);
-			AstNodeCollection? collection = parent.GetCollectionByRole(role);
+			SlotKind kind = parent.GetChildSlotInfo(childIndex).Kind;
+			AstNodeCollection? collection = parent.GetCollectionByKind(kind);
 			if (collection != null)
 				collection.RemoveNode(this);
 			else
@@ -624,12 +575,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new InvalidOperationException("Cannot replace the root node");
 			}
 			parent.EnsureChildIndices();
-			Role role = parent.GetChildSlot(childIndex);
-			// Because this method doesn't statically check the new node's type with the role,
+			CSharpSlotInfo slot = parent.GetChildSlotInfo(childIndex);
+			// Because this method doesn't statically check the new node's type with the slot,
 			// we perform a runtime test:
-			if (!role.IsValid(newNode))
+			if (!slot.ChildType.IsInstanceOfType(newNode))
 			{
-				throw new ArgumentException(string.Format("The new node '{0}' is not valid in the role {1}", newNode.GetType().Name, role.ToString()), nameof(newNode));
+				throw new ArgumentException(string.Format("The new node '{0}' is not valid in the slot {1}", newNode.GetType().Name, slot.ToString()), nameof(newNode));
 			}
 			if (newNode.parent != null)
 			{
@@ -658,7 +609,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 			AstNode oldParent = parent;
 			AstNode? oldSuccessor = NextSibling;
-			Role oldRole = this.Role;
+			CSharpSlotInfo? oldSlot = this.Slot;
+			SlotKind oldKind = oldSlot?.Kind ?? SlotKind.None;
 			Remove();
 			AstNode? replacement = replaceFunction(this);
 			if (oldSuccessor != null && oldSuccessor.parent != oldParent)
@@ -667,15 +619,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				if (replacement.parent != null)
 					throw new InvalidOperationException("replace function must return the root of a tree");
-				if (!oldRole.IsValid(replacement))
+				if (oldSlot != null && !oldSlot.ChildType.IsInstanceOfType(replacement))
 				{
-					throw new InvalidOperationException(string.Format("The new node '{0}' is not valid in the role {1}", replacement.GetType().Name, oldRole.ToString()));
+					throw new InvalidOperationException(string.Format("The new node '{0}' is not valid in the slot {1}", replacement.GetType().Name, oldSlot.ToString()));
 				}
 
 				if (oldSuccessor != null)
-					oldParent.InsertChildBeforeUnsafe(oldSuccessor, replacement, oldRole);
+					oldParent.InsertChildBeforeUnsafe(oldSuccessor, replacement, oldKind);
 				else
-					oldParent.AddChildUnsafe(replacement, oldRole);
+					oldParent.AddChildUnsafe(replacement, oldKind);
 			}
 			return replacement;
 		}
@@ -786,17 +738,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				prev = prev.GetPrevNode();
 			return prev;
 		}
-		// filters all non c# nodes (comments, white spaces or pre processor directives)
+		// Comments and directives are trivia, not sibling nodes, so the previous sibling is always a C# node.
 		public AstNode? GetCSharpNodeBefore(AstNode node)
 		{
-			var n = node.PrevSibling;
-			while (n != null)
-			{
-				if (n.Role != Roles.Comment)
-					return n;
-				n = n.GetPrevNode();
-			}
-			return null;
+			return node.PrevSibling;
 		}
 
 		/// <summary>

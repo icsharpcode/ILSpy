@@ -35,10 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class TryCatchStatement : Statement
 	{
 		public static readonly TokenRole TryKeywordRole = new TokenRole("try");
-		public static readonly Role<BlockStatement> TryBlockRole = new Role<BlockStatement>("TryBlock", null);
-		public static readonly Role<CatchClause> CatchClauseRole = new Role<CatchClause>("CatchClause", null);
 		public static readonly TokenRole FinallyKeywordRole = new TokenRole("finally");
-		public static readonly Role<BlockStatement> FinallyBlockRole = new Role<BlockStatement>("FinallyBlock", null);
 
 		[Slot("TryBlockRole")]
 		public partial BlockStatement TryBlock { get; set; }
@@ -58,7 +55,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public static readonly TokenRole CatchKeywordRole = new TokenRole("catch");
 		public static readonly TokenRole WhenKeywordRole = new TokenRole("when");
-		public static readonly Role<Expression> ConditionRole = Roles.Condition;
 		public static readonly TokenRole CondLPar = new TokenRole("(");
 		public static readonly TokenRole CondRPar = new TokenRole(")");
 

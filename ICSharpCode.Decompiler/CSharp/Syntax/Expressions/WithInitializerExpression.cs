@@ -26,7 +26,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class WithInitializerExpression : Expression
 	{
 		public readonly static TokenRole WithKeywordRole = new TokenRole("with");
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = ArrayCreateExpression.InitializerRole;
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

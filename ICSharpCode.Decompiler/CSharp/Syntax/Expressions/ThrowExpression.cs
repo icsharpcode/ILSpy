@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public ThrowExpression(Expression expression)
 		{
-			AddChild(expression, Roles.Expression);
+			AddChild(expression, SlotKind.Expression);
 		}
 	}
 }

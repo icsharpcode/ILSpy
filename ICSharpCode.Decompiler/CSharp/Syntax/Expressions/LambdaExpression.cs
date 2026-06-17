@@ -32,9 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LambdaExpression : Expression
 	{
-		public static readonly Role<AttributeSection> AttributeRole = new Role<AttributeSection>("Attribute", null);
 		public readonly static TokenRole AsyncModifierRole = new TokenRole("async");
-		public static readonly Role<AstNode> BodyRole = new Role<AstNode>("Body", null);
 
 		bool isAsync;
 

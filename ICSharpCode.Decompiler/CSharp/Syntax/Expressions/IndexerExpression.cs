@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				foreach (var arg in arguments)
 				{
-					AddChild(arg, Roles.Argument);
+					AddChild(arg, SlotKind.Argument);
 				}
 			}
 		}

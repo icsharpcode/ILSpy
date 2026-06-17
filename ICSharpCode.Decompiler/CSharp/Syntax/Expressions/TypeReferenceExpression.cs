@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public TypeReferenceExpression(AstType type)
 		{
-			AddChild(type, Roles.Type);
+			AddChild(type, SlotKind.Type);
 		}
 	}
 }

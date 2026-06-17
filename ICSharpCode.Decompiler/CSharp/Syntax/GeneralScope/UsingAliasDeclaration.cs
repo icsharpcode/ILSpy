@@ -33,8 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class UsingAliasDeclaration : AstNode
 	{
 		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
-		public static readonly Role<Identifier> AliasRole = new Role<Identifier>("Alias", null);
-		public static readonly Role<AstType> ImportRole = UsingDeclaration.ImportRole;
 
 		[NameSlot("AliasRole")]
 		public partial string Alias { get; set; }
@@ -48,14 +46,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public UsingAliasDeclaration(string alias, string nameSpace)
 		{
-			AddChild(Identifier.Create(alias), AliasRole);
-			AddChild(new SimpleType(nameSpace), ImportRole);
+			AddChild(Identifier.Create(alias), SlotKind.Alias);
+			AddChild(new SimpleType(nameSpace), SlotKind.Import);
 		}
 
 		public UsingAliasDeclaration(string alias, AstType import)
 		{
-			AddChild(Identifier.Create(alias), AliasRole);
-			AddChild(import, ImportRole);
+			AddChild(Identifier.Create(alias), SlotKind.Alias);
+			AddChild(import, SlotKind.Import);
 		}
 	}
 }

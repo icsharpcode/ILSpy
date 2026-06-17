@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						resolvedNamespaces.Add(resolvedNamespace);
 					}
-					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
+					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SlotKind.Member);
 				}
 			}
 

@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public UncheckedStatement(BlockStatement body)
 		{
-			AddChild(body, Roles.Body);
+			AddChild(body, SlotKind.Body);
 		}
 	}
 }

@@ -24,14 +24,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LocalFunctionDeclarationStatement : Statement
 	{
-		public static readonly Role<MethodDeclaration> MethodDeclarationRole = new Role<MethodDeclaration>("Method", null);
 
 		[Slot("MethodDeclarationRole")]
 		public partial MethodDeclaration Declaration { get; set; }
 
 		public LocalFunctionDeclarationStatement(MethodDeclaration methodDeclaration)
 		{
-			AddChild(methodDeclaration, MethodDeclarationRole);
+			AddChild(methodDeclaration, SlotKind.MethodDeclaration);
 		}
 	}
 }

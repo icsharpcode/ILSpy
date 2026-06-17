@@ -43,8 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CastExpression(AstType castToType, Expression expression)
 		{
-			AddChild(castToType, Roles.Type);
-			AddChild(expression, Roles.Expression);
+			AddChild(castToType, SlotKind.Type);
+			AddChild(expression, SlotKind.Expression);
 		}
 	}
 }

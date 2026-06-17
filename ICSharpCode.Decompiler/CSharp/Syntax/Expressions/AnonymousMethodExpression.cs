@@ -70,10 +70,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				hasParameterList = true;
 				foreach (var parameter in parameters)
 				{
-					AddChild(parameter, Roles.Parameter);
+					AddChild(parameter, SlotKind.Parameter);
 				}
 			}
-			AddChild(body, Roles.Body);
+			AddChild(body, SlotKind.Body);
 		}
 
 		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body, (IEnumerable<ParameterDeclaration>)parameters)

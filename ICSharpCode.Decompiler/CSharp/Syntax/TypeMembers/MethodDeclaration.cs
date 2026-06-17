@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsExtensionMethod {
 			get {
-				ParameterDeclaration pd = (ParameterDeclaration)GetChildByRole(Roles.Parameter);
+				ParameterDeclaration pd = (ParameterDeclaration)GetChildByRole<ParameterDeclaration>(SlotKind.Parameter);
 				return pd != null && pd.HasThisModifier;
 			}
 		}

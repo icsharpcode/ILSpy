@@ -26,7 +26,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class QueryExpression : Expression
 	{
-		public static readonly Role<QueryClause> ClauseRole = new Role<QueryClause>("Clause", null);
 
 		[Slot("ClauseRole")]
 		public partial AstNodeCollection<QueryClause> Clauses { get; }
@@ -45,7 +44,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class QueryContinuationClause : QueryClause
 	{
-		public static readonly Role<QueryExpression> PrecedingQueryRole = new Role<QueryExpression>("PrecedingQuery", null);
 		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
 
 		[Slot("PrecedingQueryRole")]
@@ -115,16 +113,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class QueryJoinClause : QueryClause
 	{
 		public static readonly TokenRole JoinKeywordRole = new TokenRole("join");
-		public static readonly Role<AstType> TypeRole = Roles.Type;
-		public static readonly Role<Identifier> JoinIdentifierRole = Roles.Identifier;
 		public static readonly TokenRole InKeywordRole = new TokenRole("in");
-		public static readonly Role<Expression> InExpressionRole = Roles.Expression;
 		public static readonly TokenRole OnKeywordRole = new TokenRole("on");
-		public static readonly Role<Expression> OnExpressionRole = new Role<Expression>("OnExpression", null);
 		public static readonly TokenRole EqualsKeywordRole = new TokenRole("equals");
-		public static readonly Role<Expression> EqualsExpressionRole = new Role<Expression>("EqualsExpression", null);
 		public static readonly TokenRole IntoKeywordRole = new TokenRole("into");
-		public static readonly Role<Identifier> IntoIdentifierRole = new Role<Identifier>("IntoIdentifier", null);
 
 		// Derived from IntoIdentifier (which DoMatch already compares); exclude it to avoid a redundant compare.
 		[ExcludeFromMatch]
@@ -158,7 +150,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class QueryOrderClause : QueryClause
 	{
 		public static readonly TokenRole OrderbyKeywordRole = new TokenRole("orderby");
-		public static readonly Role<QueryOrdering> OrderingRole = new Role<QueryOrdering>("Ordering", null);
 
 		[Slot("OrderingRole")]
 		public partial AstNodeCollection<QueryOrdering> Orderings { get; }
@@ -208,9 +199,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class QueryGroupClause : QueryClause
 	{
 		public static readonly TokenRole GroupKeywordRole = new TokenRole("group");
-		public static readonly Role<Expression> ProjectionRole = new Role<Expression>("Projection", null);
 		public static readonly TokenRole ByKeywordRole = new TokenRole("by");
-		public static readonly Role<Expression> KeyRole = new Role<Expression>("Key", null);
 
 		[Slot("ProjectionRole")]
 		public partial Expression Projection { get; set; }

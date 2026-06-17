@@ -46,8 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AsExpression(Expression expression, AstType type)
 		{
-			AddChild(expression, Roles.Expression);
-			AddChild(type, Roles.Type);
+			AddChild(expression, SlotKind.Expression);
+			AddChild(type, SlotKind.Type);
 		}
 	}
 }

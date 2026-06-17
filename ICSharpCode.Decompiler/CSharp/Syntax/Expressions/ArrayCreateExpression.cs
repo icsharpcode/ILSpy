@@ -27,8 +27,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class ArrayCreateExpression : Expression
 	{
 		public readonly static TokenRole NewKeywordRole = new TokenRole("new");
-		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new Role<ArraySpecifier>("AdditionalArraySpecifier", null);
-		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", null);
 
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }

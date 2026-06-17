@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public UncheckedExpression(Expression expression)
 		{
-			AddChild(expression, Roles.Expression);
+			AddChild(expression, SlotKind.Expression);
 		}
 	}
 }

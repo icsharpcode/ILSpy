@@ -34,7 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class FixedFieldDeclaration : EntityDeclaration
 	{
 		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
-		public static readonly Role<FixedVariableInitializer> VariableRole = new Role<FixedVariableInitializer>("FixedVariable", null);
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }

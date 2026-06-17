@@ -35,7 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class SwitchStatement : Statement
 	{
 		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
-		public static readonly Role<SwitchSection> SwitchSectionRole = new Role<SwitchSection>("SwitchSection", null);
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
@@ -50,7 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
 	public partial class SwitchSection : AstNode
 	{
-		public static readonly Role<CaseLabel> CaseLabelRole = new Role<CaseLabel>("CaseLabel", null);
 
 		[Slot("CaseLabelRole")]
 		public partial AstNodeCollection<CaseLabel> CaseLabels { get; }

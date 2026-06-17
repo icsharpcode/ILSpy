@@ -62,8 +62,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public readonly static TokenRole RangeRole = new TokenRole("..");
 		public readonly static TokenRole IsKeywordRole = IsExpression.IsKeywordRole;
 
-		public readonly static Role<Expression> LeftRole = new Role<Expression>("Left", null);
-		public readonly static Role<Expression> RightRole = new Role<Expression>("Right", null);
 
 		public BinaryOperatorExpression()
 		{
@@ -81,10 +79,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set;
 		}
 
-		[Slot(nameof(LeftRole))]
+		[Slot("LeftRole")]
 		public partial Expression? Left { get; set; }
 
-		[Slot(nameof(RightRole))]
+		[Slot("RightRole")]
 		public partial Expression? Right { get; set; }
 
 		public static TokenRole GetOperatorRole(BinaryOperatorType op)

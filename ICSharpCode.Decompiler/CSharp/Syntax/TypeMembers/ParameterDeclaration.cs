@@ -37,7 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
 	public partial class ParameterDeclaration : AstNode
 	{
-		public static readonly Role<AttributeSection> AttributeRole = EntityDeclaration.AttributeRole;
 		public static readonly TokenRole ThisModifierRole = new TokenRole("this");
 		public static readonly TokenRole ScopedRefRole = new TokenRole("scoped");
 		public static readonly TokenRole RefModifierRole = new TokenRole("ref");

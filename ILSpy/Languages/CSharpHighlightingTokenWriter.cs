@@ -350,7 +350,7 @@ namespace ICSharpCode.ILSpy.Languages
 				{
 					if (identifier.Name == "value"
 						&& identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is { } accessor
-						&& accessor.Role != PropertyDeclaration.GetterRole)
+						&& accessor.Slot?.Kind != SlotKind.Getter)
 					{
 						color = valueKeywordColor;
 					}
@@ -476,17 +476,17 @@ namespace ICSharpCode.ILSpy.Languages
 
 			AstNode node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
-			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression)
+			if (symbol == null && node.Slot?.Kind == SlotKind.TargetExpression && node.Parent is InvocationExpression)
 			{
 				symbol = node.Parent.GetSymbol();
 			}
-			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression)
+			if (symbol != null && node.Slot?.Kind == SlotKind.Type && node.Parent is ObjectCreateExpression)
 			{
 				var ctorSymbol = node.Parent.GetSymbol();
 				if (ctorSymbol != null)
 					symbol = ctorSymbol;
 			}
-			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
+			if (node is IdentifierExpression && node.Slot?.Kind == SlotKind.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
 			{
 				var declaringType = member.DeclaringType;
 				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)

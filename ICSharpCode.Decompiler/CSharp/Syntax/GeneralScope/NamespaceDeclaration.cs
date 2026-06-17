@@ -39,8 +39,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamespaceDeclaration : AstNode
 	{
-		public static readonly Role<AstNode> MemberRole = SyntaxTree.MemberRole;
-		public static readonly Role<AstType> NamespaceNameRole = new Role<AstType>("NamespaceName", null);
 
 		public bool IsFileScoped { get; set; }
 
@@ -123,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public void AddMember(AstNode child)
 		{
-			AddChild(child, MemberRole);
+			AddChild(child, SlotKind.Member);
 		}
 	}
 };

@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public SimpleType(string identifier, TextLocation location)
 		{
-			SetChildByRole(Roles.Identifier, Syntax.Identifier.Create(identifier, location));
+			SetChildByRole(SlotKind.Identifier, Syntax.Identifier.Create(identifier, location));
 		}
 
 		public SimpleType(string identifier, IEnumerable<AstType> typeArguments)
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.Identifier = identifier;
 			foreach (var arg in typeArguments)
 			{
-				AddChild(arg, Roles.TypeArgument);
+				AddChild(arg, SlotKind.TypeArgument);
 			}
 		}
 
