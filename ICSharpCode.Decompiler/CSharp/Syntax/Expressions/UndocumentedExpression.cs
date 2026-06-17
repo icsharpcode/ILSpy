@@ -49,10 +49,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UndocumentedExpression : Expression
 	{
-		public readonly static TokenRole ArglistKeywordRole = new TokenRole("__arglist");
-		public readonly static TokenRole RefvalueKeywordRole = new TokenRole("__refvalue");
-		public readonly static TokenRole ReftypeKeywordRole = new TokenRole("__reftype");
-		public readonly static TokenRole MakerefKeywordRole = new TokenRole("__makeref");
+		public const string ArglistKeyword = "__arglist";
+		public const string RefvalueKeyword = "__refvalue";
+		public const string ReftypeKeyword = "__reftype";
+		public const string MakerefKeyword = "__makeref";
 
 		public UndocumentedExpressionType UndocumentedExpressionType {
 			get; set;

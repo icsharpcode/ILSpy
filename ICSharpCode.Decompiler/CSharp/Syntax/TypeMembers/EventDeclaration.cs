@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class EventDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
+		public const string EventKeyword = "event";
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Event; }
@@ -75,9 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CustomEventDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole EventKeywordRole = new TokenRole("event");
-		public static readonly TokenRole AddKeywordRole = new TokenRole("add");
-		public static readonly TokenRole RemoveKeywordRole = new TokenRole("remove");
+		public const string EventKeyword = "event";
 
 
 		public override SymbolKind SymbolKind {

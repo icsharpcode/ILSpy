@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class DoWhileStatement : Statement
 	{
-		public static readonly TokenRole DoKeywordRole = new TokenRole("do");
-		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+		public const string DoKeyword = "do";
+		public const string WhileKeyword = "while";
 
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }

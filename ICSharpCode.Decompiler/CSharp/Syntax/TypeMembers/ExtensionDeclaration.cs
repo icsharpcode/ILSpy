@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ExtensionDeclaration : EntityDeclaration
 	{
-		public readonly static TokenRole ExtensionKeywordRole = new TokenRole("extension");
+		public const string ExtensionKeyword = "extension";
 
 		public override SymbolKind SymbolKind => SymbolKind.TypeDefinition;
 

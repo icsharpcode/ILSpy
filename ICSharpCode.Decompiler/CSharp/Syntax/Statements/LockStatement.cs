@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class LockStatement : Statement
 	{
-		public static readonly TokenRole LockKeywordRole = new TokenRole("lock");
+		public const string LockKeyword = "lock";
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

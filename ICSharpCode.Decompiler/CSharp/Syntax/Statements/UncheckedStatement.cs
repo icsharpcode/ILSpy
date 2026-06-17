@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UncheckedStatement : Statement
 	{
-		public static readonly TokenRole UncheckedKeywordRole = new TokenRole("unchecked");
+		public const string UncheckedKeyword = "unchecked";
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }

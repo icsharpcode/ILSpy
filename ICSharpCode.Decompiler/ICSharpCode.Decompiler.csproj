@@ -296,7 +296,6 @@
     <Compile Include="CSharp\Syntax\SyntaxExtensions.cs" />
     <Compile Include="CSharp\Syntax\SyntaxTree.cs" />
     <Compile Include="CSharp\Syntax\TextLocation.cs" />
-    <Compile Include="CSharp\Syntax\TokenRole.cs" />
     <Compile Include="CSharp\Syntax\TupleAstType.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\Accessor.cs" />
     <Compile Include="CSharp\Syntax\TypeMembers\ConstructorDeclaration.cs" />

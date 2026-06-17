@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SwitchExpression : Expression
 	{
-		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
+		public const string SwitchKeyword = "switch";
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

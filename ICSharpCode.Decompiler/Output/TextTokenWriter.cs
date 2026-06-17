@@ -229,10 +229,10 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		public override void WriteKeyword(TokenRole role, string keyword)
+		public override void WriteKeyword(string keyword)
 		{
 			//To make reference for 'this' and 'base' keywords in the ClassName():this() expression
-			if (role == ConstructorInitializer.ThisKeywordRole || role == ConstructorInitializer.BaseKeywordRole)
+			if (keyword is "this" or "base")
 			{
 				if (nodeStack.Peek() is ConstructorInitializer initializer && initializer.GetSymbol() is IMember member)
 				{
@@ -244,7 +244,7 @@ namespace ICSharpCode.Decompiler
 			// so that go-to-definition on 'override' navigates to the base member.
 			// Modifier tokens are written without being pushed onto the node stack,
 			// so the top of the stack is the declaration the modifier belongs to.
-			if (role == EntityDeclaration.ModifierRole && keyword == "override"
+			if (keyword == "override"
 				&& nodeStack.Peek() is EntityDeclaration entityDeclaration
 				&& entityDeclaration.GetSymbol() is IMember { IsOverride: true } overrideMember
 				&& InheritanceHelper.GetBaseMember(overrideMember) is IMember baseMember)
@@ -271,12 +271,14 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
-		public override void WriteToken(TokenRole role, string token)
+		public override void WriteToken(string token)
 		{
 			switch (token)
 			{
 				case "{":
-					if (role != Roles.LBrace)
+					// Interpolation braces ("{" inside an interpolated string) are not structural
+					// braces: they neither fold nor affect the within-type brace level.
+					if (nodeStack.PeekOrDefault() is Interpolation)
 					{
 						output.Write("{");
 						break;
@@ -289,7 +291,7 @@ namespace ICSharpCode.Decompiler
 					break;
 				case "}":
 					output.Write('}');
-					if (role != Roles.RBrace)
+					if (nodeStack.PeekOrDefault() is Interpolation)
 						break;
 					if (NeedsFold(nodeStack.PeekOrDefault()) || settings.FoldBraces)
 						output.MarkFoldEnd();

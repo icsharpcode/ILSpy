@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class YieldBreakStatement : Statement
 	{
-		public static readonly TokenRole YieldKeywordRole = new TokenRole("yield");
-		public static readonly TokenRole BreakKeywordRole = new TokenRole("break");
+		public const string YieldKeyword = "yield";
+		public const string BreakKeyword = "break";
 	}
 }

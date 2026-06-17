@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static string GetToken(this ComparisonKind kind)
 		{
-			return BinaryOperatorExpression.GetOperatorRole(kind.ToBinaryOperatorType()).Token;
+			return BinaryOperatorExpression.GetOperatorToken(kind.ToBinaryOperatorType());
 		}
 	}
 

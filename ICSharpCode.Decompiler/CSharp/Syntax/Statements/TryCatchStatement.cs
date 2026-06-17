@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TryCatchStatement : Statement
 	{
-		public static readonly TokenRole TryKeywordRole = new TokenRole("try");
-		public static readonly TokenRole FinallyKeywordRole = new TokenRole("finally");
+		public const string TryKeyword = "try";
+		public const string FinallyKeyword = "finally";
 
 		[Slot("TryBlockRole")]
 		public partial BlockStatement TryBlock { get; set; }
@@ -53,10 +53,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
 	public partial class CatchClause : AstNode
 	{
-		public static readonly TokenRole CatchKeywordRole = new TokenRole("catch");
-		public static readonly TokenRole WhenKeywordRole = new TokenRole("when");
-		public static readonly TokenRole CondLPar = new TokenRole("(");
-		public static readonly TokenRole CondRPar = new TokenRole(")");
+		public const string CatchKeyword = "catch";
+		public const string WhenKeyword = "when";
+		public const string CondLPar = "(";
+		public const string CondRPar = ")";
 
 		[Slot("Roles.Type")]
 		public partial AstType? Type { get; set; }

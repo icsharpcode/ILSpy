@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SizeOfExpression : Expression
 	{
-		public readonly static TokenRole SizeofKeywordRole = new TokenRole("sizeof");
+		public const string SizeofKeyword = "sizeof";
 
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }

@@ -29,8 +29,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class TypeParameterDeclaration : AstNode
 	{
-		public static readonly TokenRole OutVarianceKeywordRole = new TokenRole("out");
-		public static readonly TokenRole InVarianceKeywordRole = new TokenRole("in");
+		public const string OutVarianceKeyword = "out";
+		public const string InVarianceKeyword = "in";
 
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }

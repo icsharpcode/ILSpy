@@ -72,8 +72,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class ConstructorInitializer : AstNode
 	{
-		public static readonly TokenRole BaseKeywordRole = new TokenRole("base");
-		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
+		public const string BaseKeyword = "base";
+		public const string ThisKeyword = "this";
 
 		public ConstructorInitializerType ConstructorInitializerType {
 			get;

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class AsExpression : Expression
 	{
-		public readonly static TokenRole AsKeywordRole = new TokenRole("as");
+		public const string AsKeyword = "as";
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

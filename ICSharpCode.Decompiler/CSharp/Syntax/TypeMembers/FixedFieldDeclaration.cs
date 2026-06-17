@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FixedFieldDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
+		public const string FixedKeyword = "fixed";
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Field; }

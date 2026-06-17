@@ -41,10 +41,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ComposedType : AstType
 	{
-		public static readonly TokenRole RefRole = new TokenRole("ref");
-		public static readonly TokenRole ReadonlyRole = new TokenRole("readonly");
-		public static readonly TokenRole NullableRole = new TokenRole("?");
-		public static readonly TokenRole PointerRole = new TokenRole("*");
+		public const string RefKeyword = "ref";
+		public const string ReadonlyKeyword = "readonly";
+		public const string NullableToken = "?";
+		public const string PointerToken = "*";
 		[Slot("AttributeRole")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 

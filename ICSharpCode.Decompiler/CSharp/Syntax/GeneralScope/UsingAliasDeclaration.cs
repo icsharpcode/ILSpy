@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UsingAliasDeclaration : AstNode
 	{
-		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
+		public const string UsingKeyword = "using";
 
 		[NameSlot("AliasRole")]
 		public partial string Alias { get; set; }

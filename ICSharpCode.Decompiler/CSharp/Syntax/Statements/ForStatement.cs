@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ForStatement : Statement
 	{
-		public static readonly TokenRole ForKeywordRole = new TokenRole("for");
+		public const string ForKeyword = "for";
 
 		/// <summary>
 		/// Gets the list of initializer statements.

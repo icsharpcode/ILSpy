@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class GotoStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
+		public const string GotoKeyword = "goto";
 
 		public GotoStatement()
 		{
@@ -53,8 +53,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class GotoCaseStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
-		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
+		public const string GotoKeyword = "goto";
+		public const string CaseKeyword = "case";
 
 		/// <summary>
 		/// Used for "goto case LabelExpression;"
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class GotoDefaultStatement : Statement
 	{
-		public static readonly TokenRole GotoKeywordRole = new TokenRole("goto");
-		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
+		public const string GotoKeyword = "goto";
+		public const string DefaultKeyword = "default";
 	}
 }

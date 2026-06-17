@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class SwitchStatement : Statement
 	{
-		public static readonly TokenRole SwitchKeywordRole = new TokenRole("switch");
+		public const string SwitchKeyword = "switch";
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
@@ -63,8 +63,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class CaseLabel : AstNode
 	{
-		public static readonly TokenRole CaseKeywordRole = new TokenRole("case");
-		public static readonly TokenRole DefaultKeywordRole = new TokenRole("default");
+		public const string CaseKeyword = "case";
+		public const string DefaultKeyword = "default";
 
 		/// <summary>
 		/// Gets or sets the expression. The expression can be null - if the expression is null, it's the default switch section.

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class WhileStatement : Statement
 	{
-		public static readonly TokenRole WhileKeywordRole = new TokenRole("while");
+		public const string WhileKeyword = "while";
 
 		[Slot("Roles.Condition")]
 		public partial Expression Condition { get; set; }

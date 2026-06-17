@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class ReturnStatement : Statement
 	{
-		public static readonly TokenRole ReturnKeywordRole = new TokenRole("return");
+		public const string ReturnKeyword = "return";
 
 		[Slot("Roles.Expression")]
 		public partial Expression? Expression { get; set; }

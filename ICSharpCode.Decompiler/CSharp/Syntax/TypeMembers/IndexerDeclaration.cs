@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class IndexerDeclaration : EntityDeclaration
 	{
-		public static readonly TokenRole ThisKeywordRole = new TokenRole("this");
+		public const string ThisKeyword = "this";
 
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Indexer; }

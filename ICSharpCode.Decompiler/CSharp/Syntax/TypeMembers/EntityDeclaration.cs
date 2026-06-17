@@ -29,7 +29,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// output visitor emits (e.g. for the override-link reference in TextTokenWriter).
 		// Identity marker for modifier keywords in the output (modifiers are scalars, not child nodes);
 		// the token writer uses it to make the 'override' modifier a go-to-definition reference.
-		public static readonly TokenRole ModifierRole = new TokenRole("modifier");
 
 		public abstract SymbolKind SymbolKind { get; }
 

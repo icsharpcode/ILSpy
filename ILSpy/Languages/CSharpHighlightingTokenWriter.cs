@@ -124,14 +124,14 @@ namespace ICSharpCode.ILSpy.Languages
 			//this.externAliasKeywordColor = ...;
 		}
 
-		public override void WriteKeyword(TokenRole role, string keyword)
+		public override void WriteKeyword(string keyword)
 		{
 			HighlightingColor? color = null;
 			switch (keyword)
 			{
 				case "namespace":
 				case "using":
-					if (role == UsingStatement.UsingKeywordRole)
+					if (nodeStack.PeekOrDefault() is UsingStatement)
 						color = structureKeywordsColor;
 					else
 						color = namespaceKeywordsColor;
@@ -187,7 +187,7 @@ namespace ICSharpCode.ILSpy.Languages
 					color = typeKeywordsColor;
 					break;
 				case "with":
-					if (role == WithInitializerExpression.WithKeywordRole)
+					if (nodeStack.PeekOrDefault() is WithInitializerExpression)
 						color = typeKeywordsColor;
 					break;
 				case "try":
@@ -197,7 +197,7 @@ namespace ICSharpCode.ILSpy.Languages
 					color = exceptionKeywordsColor;
 					break;
 				case "when":
-					if (role == CatchClause.WhenKeywordRole)
+					if (nodeStack.PeekOrDefault() is CatchClause)
 						color = exceptionKeywordsColor;
 					break;
 				case "get":
@@ -205,11 +205,7 @@ namespace ICSharpCode.ILSpy.Languages
 				case "add":
 				case "remove":
 				case "init":
-					if (role == PropertyDeclaration.GetKeywordRole ||
-						role == PropertyDeclaration.SetKeywordRole ||
-						role == PropertyDeclaration.InitKeywordRole ||
-						role == CustomEventDeclaration.AddKeywordRole ||
-						role == CustomEventDeclaration.RemoveKeywordRole)
+					if (nodeStack.PeekOrDefault() is Accessor)
 						color = accessorKeywordsColor;
 					break;
 				case "abstract":
@@ -227,7 +223,7 @@ namespace ICSharpCode.ILSpy.Languages
 					color = modifiersColor;
 					break;
 				case "readonly":
-					if (role == ComposedType.ReadonlyRole)
+					if (nodeStack.PeekOrDefault() is ComposedType)
 						color = parameterModifierColor;
 					else
 						color = modifiersColor;
@@ -251,7 +247,8 @@ namespace ICSharpCode.ILSpy.Languages
 					color = referenceTypeKeywordsColor;
 					break;
 				case "record":
-					color = role == Roles.RecordKeyword ? referenceTypeKeywordsColor : valueTypeKeywordsColor;
+					color = nodeStack.PeekOrDefault() is TypeDeclaration { ClassType: ClassType.RecordClass }
+						? referenceTypeKeywordsColor : valueTypeKeywordsColor;
 					break;
 				case "select":
 				case "group":
@@ -293,7 +290,7 @@ namespace ICSharpCode.ILSpy.Languages
 			if (nodeStack.PeekOrDefault() is AttributeSection)
 				color = attributeKeywordsColor;
 			using (Colored(color))
-				base.WriteKeyword(role, keyword);
+				base.WriteKeyword(keyword);
 		}
 
 		public override void WritePrimitiveType(string type)

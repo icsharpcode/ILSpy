@@ -39,18 +39,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		// reuse roles from BinaryOperatorExpression
 
-		public readonly static TokenRole AssignRole = new TokenRole("=");
-		public readonly static TokenRole AddRole = new TokenRole("+=");
-		public readonly static TokenRole SubtractRole = new TokenRole("-=");
-		public readonly static TokenRole MultiplyRole = new TokenRole("*=");
-		public readonly static TokenRole DivideRole = new TokenRole("/=");
-		public readonly static TokenRole ModulusRole = new TokenRole("%=");
-		public readonly static TokenRole ShiftLeftRole = new TokenRole("<<=");
-		public readonly static TokenRole ShiftRightRole = new TokenRole(">>=");
-		public readonly static TokenRole UnsignedShiftRightRole = new TokenRole(">>>=");
-		public readonly static TokenRole BitwiseAndRole = new TokenRole("&=");
-		public readonly static TokenRole BitwiseOrRole = new TokenRole("|=");
-		public readonly static TokenRole ExclusiveOrRole = new TokenRole("^=");
+		public const string AssignToken = "=";
+		public const string AddToken = "+=";
+		public const string SubtractToken = "-=";
+		public const string MultiplyToken = "*=";
+		public const string DivideToken = "/=";
+		public const string ModulusToken = "%=";
+		public const string ShiftLeftToken = "<<=";
+		public const string ShiftRightToken = ">>=";
+		public const string UnsignedShiftRightToken = ">>>=";
+		public const string BitwiseAndToken = "&=";
+		public const string BitwiseOrToken = "|=";
+		public const string ExclusiveOrToken = "^=";
 
 		public AssignmentExpression()
 		{
@@ -80,34 +80,34 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("RightRole")]
 		public partial Expression Right { get; set; }
 
-		public static TokenRole GetOperatorRole(AssignmentOperatorType op)
+		public static string GetOperatorToken(AssignmentOperatorType op)
 		{
 			switch (op)
 			{
 				case AssignmentOperatorType.Assign:
-					return AssignRole;
+					return AssignToken;
 				case AssignmentOperatorType.Add:
-					return AddRole;
+					return AddToken;
 				case AssignmentOperatorType.Subtract:
-					return SubtractRole;
+					return SubtractToken;
 				case AssignmentOperatorType.Multiply:
-					return MultiplyRole;
+					return MultiplyToken;
 				case AssignmentOperatorType.Divide:
-					return DivideRole;
+					return DivideToken;
 				case AssignmentOperatorType.Modulus:
-					return ModulusRole;
+					return ModulusToken;
 				case AssignmentOperatorType.ShiftLeft:
-					return ShiftLeftRole;
+					return ShiftLeftToken;
 				case AssignmentOperatorType.ShiftRight:
-					return ShiftRightRole;
+					return ShiftRightToken;
 				case AssignmentOperatorType.UnsignedShiftRight:
-					return UnsignedShiftRightRole;
+					return UnsignedShiftRightToken;
 				case AssignmentOperatorType.BitwiseAnd:
-					return BitwiseAndRole;
+					return BitwiseAndToken;
 				case AssignmentOperatorType.BitwiseOr:
-					return BitwiseOrRole;
+					return BitwiseOrToken;
 				case AssignmentOperatorType.ExclusiveOr:
-					return ExclusiveOrRole;
+					return ExclusiveOrToken;
 				default:
 					throw new NotSupportedException("Invalid value for AssignmentOperatorType");
 			}

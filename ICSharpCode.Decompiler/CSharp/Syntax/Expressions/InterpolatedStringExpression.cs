@@ -8,8 +8,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class InterpolatedStringExpression : Expression
 	{
-		public static readonly TokenRole OpenQuote = new TokenRole("$\"");
-		public static readonly TokenRole CloseQuote = new TokenRole("\"");
+		public const string OpenQuote = "$\"";
+		public const string CloseQuote = "\"";
 
 		[Slot("InterpolatedStringContent.Role")]
 		public partial AstNodeCollection<InterpolatedStringContent> Content { get; }
@@ -45,8 +45,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class Interpolation : InterpolatedStringContent
 	{
-		public static readonly TokenRole LBrace = new TokenRole("{");
-		public static readonly TokenRole RBrace = new TokenRole("}");
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }

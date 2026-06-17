@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			base.EndNode(node);
 		}
 
-		public override void WriteToken(TokenRole role, string token)
+		public override void WriteToken(string token)
 		{
 			AssignPendingStartLocations();
 			switch (nodes.Peek().LastOrDefault())
@@ -118,11 +118,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					errorExpression.Location = locationProvider.Location;
 					break;
 			}
-			base.WriteToken(role, token);
+			base.WriteToken(token);
 			lastTokenEnd = locationProvider.Location;
 		}
 
-		public override void WriteKeyword(TokenRole role, string keyword)
+		public override void WriteKeyword(string keyword)
 		{
 			AssignPendingStartLocations();
 			TextLocation start = locationProvider.Location;
@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (node != null)
 					node.StorePrintStart(start);
 			}
-			base.WriteKeyword(role, keyword);
+			base.WriteKeyword(keyword);
 			lastTokenEnd = locationProvider.Location;
 		}
 

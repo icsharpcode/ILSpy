@@ -32,8 +32,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class UsingStatement : Statement
 	{
-		public static readonly TokenRole UsingKeywordRole = new TokenRole("using");
-		public static readonly TokenRole AwaitRole = UnaryOperatorExpression.AwaitRole;
+		public const string UsingKeyword = "using";
+		public const string AwaitKeyword = UnaryOperatorExpression.AwaitKeyword;
 
 		public bool IsAsync { get; set; }
 

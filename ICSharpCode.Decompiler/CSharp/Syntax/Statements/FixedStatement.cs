@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class FixedStatement : Statement
 	{
-		public static readonly TokenRole FixedKeywordRole = new TokenRole("fixed");
+		public const string FixedKeyword = "fixed";
 
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
