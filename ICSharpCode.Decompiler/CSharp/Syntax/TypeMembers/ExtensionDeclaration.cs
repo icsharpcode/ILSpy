@@ -46,8 +46,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.TypeMemberRole")]
 		public partial AstNodeCollection<EntityDeclaration> Members { get; }
 
-		public ExtensionDeclaration()
-		{
-		}
 	}
 }

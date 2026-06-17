@@ -37,13 +37,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
 
-		public CheckedStatement()
-		{
-		}
-
-		public CheckedStatement(BlockStatement body)
-		{
-			AddChild(body, SlotKind.Body);
-		}
 	}
 }

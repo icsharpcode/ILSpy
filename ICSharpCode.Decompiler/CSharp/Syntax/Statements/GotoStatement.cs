@@ -33,16 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public partial class GotoStatement : Statement
 	{
 		public const string GotoKeyword = "goto";
-
-		public GotoStatement()
-		{
-		}
-
-		public GotoStatement(string label)
-		{
-			this.Label = label;
-		}
-
 		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
 		public partial string Label { get; set; }
 	}

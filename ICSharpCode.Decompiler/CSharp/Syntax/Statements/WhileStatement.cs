@@ -40,14 +40,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
 
-		public WhileStatement()
-		{
-		}
-
-		public WhileStatement(Expression condition, Statement embeddedStatement)
-		{
-			this.Condition = condition;
-			this.EmbeddedStatement = embeddedStatement;
-		}
 	}
 }

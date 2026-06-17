@@ -51,15 +51,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Expression")]
 		public partial Expression Expression { get; set; }
-
-		public DirectionExpression()
-		{
-		}
-
-		public DirectionExpression(FieldDirection direction, Expression expression)
-		{
-			this.FieldDirection = direction;
-			AddChild(expression, SlotKind.Expression);
-		}
 	}
 }

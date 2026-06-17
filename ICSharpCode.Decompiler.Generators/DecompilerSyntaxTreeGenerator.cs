@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots);
+	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
 
 	// Derives the shared SlotKind name from a [Slot] role expression: the last dotted segment with a
 	// trailing "Role" removed (e.g. "Roles.EmbeddedStatement" -> "EmbeddedStatement", "LeftRole" ->
@@ -115,6 +115,11 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		// string body. DoMatch matches X (a string) and never sees XToken.
 		List<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? slots = null;
 		List<(string StringName, string TokenName, bool NullOnEmpty)>? nameSlots = null;
+		// Constructor parameters in declaration order: single/collection [Slot] children, the [NameSlot]
+		// string, and settable enum-typed scalar properties (e.g. Operator, FieldDirection). ParamType is the
+		// full parameter type for non-collections; for a collection it is empty and ElementType names the
+		// element. IsOptional (nullable / collection / nullOnEmpty) drives the required-parameter prefix.
+		List<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? ctorParams = null;
 		foreach (var m in targetSymbol.GetMembers())
 		{
 			if (m is not IPropertySymbol property)
@@ -133,6 +138,10 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					? ((INamedTypeSymbol)property.Type).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
 					: propertyType;
 				slots.Add((roleExpr, isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, SlotKindName(roleExpr), true));
+				ctorParams ??= new();
+				ctorParams.Add(isCollection
+					? (property.Name, "", elementType, true, true)
+					: (property.Name, propertyType + (isNullable ? "?" : ""), "", false, isNullable));
 				continue;
 			}
 			var nameSlotAttr = property.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "NameSlotAttribute");
@@ -146,16 +155,30 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				// An optional name (nullOnEmpty) makes the backing token a real nullable slot: an absent name is a null token.
 				slots.Add((roleExpr, false, tokenName, "Identifier", "Identifier", false, nullOnEmpty, SlotKindName(roleExpr), false));
 				nameSlots.Add((property.Name, tokenName, nullOnEmpty));
+				// The name is the primary construction value, so it is a required param. nullOnEmpty only
+				// governs the empty-string-to-null behaviour of the setter, not ctor optionality.
+				ctorParams ??= new();
+				ctorParams.Add((property.Name, "string", "", false, false));
+				continue;
+			}
+			// A settable enum-typed scalar (e.g. Operator, FieldDirection) is part of construction. The enum may
+			// live in another namespace, so fully-qualify it (the generated file has only a few usings).
+			if (property.Type.TypeKind == TypeKind.Enum && property.SetMethod != null && !property.IsStatic)
+			{
+				ctorParams ??= new();
+				ctorParams.Add((property.Name, property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), "", false, false));
 			}
 		}
 
 		return new(targetSymbol.Name,
 			NeedsVisitor: !targetSymbol.IsAbstract && targetSymbol.BaseType!.IsAbstract,
+			IsAbstract: targetSymbol.IsAbstract,
+			BaseHasDefaultConstructor: targetSymbol.BaseType is { } bt && bt.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility != Accessibility.Private),
 			NeedsNullNode: (bool)attribute.ConstructorArguments[0].Value!,
 			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[1].Value!,
 			NullNodeBaseCtorParamCount: targetSymbol.InstanceConstructors.Min(m => m.Parameters.Length),
 			IsTypeNode: targetSymbol.Name == "AstType" || targetSymbol.BaseType?.Name == "AstType",
-			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray(), nameSlots?.ToEquatableArray());
+			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray(), nameSlots?.ToEquatableArray(), ctorParams?.ToEquatableArray());
 	}
 
 	// Backing-field name for a slot property. Prefixed to avoid colliding with hand-written fields
@@ -351,6 +374,98 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				}
 			}
 
+			// Constructors. Parameters follow member source order and cover single/collection [Slot] children,
+			// the [NameSlot] string, and settable enum scalars (Operator, FieldDirection, ...); a collection is
+			// an IEnumerable<T> param in its declared position. We emit the empty ctor (for object-initializer
+			// construction), then a ctor for the required prefix (through the last required param), one ending at
+			// each collection, and one with all params. A params T[] overload is added when a ctor's last param
+			// is the collection. Pure-scalar nodes (no [Slot]/[NameSlot], e.g. PrimitiveExpression) are excluded
+			// because their non-enum state (a literal value) is invisible here; those keep hand-written ctors.
+			if (!source.IsAbstract && source.BaseHasDefaultConstructor && slots.Count > 0 && source.CtorParams is { } ctorParamsArray)
+			{
+				var cp = ctorParamsArray.ToList();
+				string ParamName(string n)
+				{
+					string p = char.ToLowerInvariant(n[0]) + n.Substring(1);
+					return SyntaxFacts.GetKeywordKind(p) != SyntaxKind.None ? "@" + p : p;
+				}
+				string ParamType(int i) => cp[i].IsCollection
+					? $"global::System.Collections.Generic.IEnumerable<{cp[i].ElementType}>"
+					: cp[i].ParamType;
+
+				builder.AppendLine($"\tpublic {source.NodeName}()");
+				builder.AppendLine("\t{");
+				builder.AppendLine("\t}");
+				builder.AppendLine();
+
+				// Required prefix: through the last non-optional param (an optional param before it is still
+				// positionally included so the required param after it can be passed).
+				int reqLen = 0;
+				for (int i = 0; i < cp.Count; i++)
+					if (!cp[i].IsOptional)
+						reqLen = i + 1;
+
+				// A normal prefix ctor forwards to the previous (shorter) emitted prefix via : this(...) and only
+				// sets the params between them; the shortest sets its params directly. A params T[] overload
+				// forwards to the IEnumerable overload of the same length.
+				void EmitPrefix(int len, int chainLen, bool paramsForm)
+				{
+					var decls = new List<string>();
+					for (int i = 0; i < len; i++)
+					{
+						if (paramsForm && i == len - 1)
+							decls.Add($"params {cp[i].ElementType}[] {ParamName(cp[i].PropertyName)}");
+						else
+							decls.Add($"{ParamType(i)} {ParamName(cp[i].PropertyName)}");
+					}
+					builder.AppendLine($"\tpublic {source.NodeName}({string.Join(", ", decls)})");
+					if (paramsForm)
+					{
+						var args = new List<string>();
+						for (int i = 0; i < len; i++)
+							args.Add(i == len - 1
+								? $"(global::System.Collections.Generic.IEnumerable<{cp[i].ElementType}>){ParamName(cp[i].PropertyName)}"
+								: ParamName(cp[i].PropertyName));
+						builder.AppendLine($"\t\t: this({string.Join(", ", args)})");
+						builder.AppendLine("\t{");
+						builder.AppendLine("\t}");
+					}
+					else
+					{
+						if (chainLen > 0)
+							builder.AppendLine($"\t\t: this({string.Join(", ", Enumerable.Range(0, chainLen).Select(i => ParamName(cp[i].PropertyName)))})");
+						builder.AppendLine("\t{");
+						for (int i = chainLen; i < len; i++)
+						{
+							if (cp[i].IsCollection)
+								builder.AppendLine($"\t\tthis.{cp[i].PropertyName}.AddRange({ParamName(cp[i].PropertyName)});");
+							else
+								builder.AppendLine($"\t\tthis.{cp[i].PropertyName} = {ParamName(cp[i].PropertyName)};");
+						}
+						builder.AppendLine("\t}");
+					}
+					builder.AppendLine();
+				}
+
+				var lengths = new SortedSet<int>();
+				if (reqLen > 0)
+					lengths.Add(reqLen);
+				for (int i = 0; i < cp.Count; i++)
+					if (cp[i].IsCollection && i + 1 >= reqLen)
+						lengths.Add(i + 1);
+				lengths.Add(cp.Count);
+				int prev = 0;
+				foreach (int len in lengths)
+				{
+					if (len <= 0)
+						continue;
+					EmitPrefix(len, prev, paramsForm: false);
+					if (cp[len - 1].IsCollection)
+						EmitPrefix(len, len, paramsForm: true);
+					prev = len;
+				}
+			}
+
 			// Flattened child-index space: slots in declaration order, a single slot occupying one index
 			// (even when empty), a collection slot a contiguous run of its current length.
 			builder.Append("\tinternal override int GetChildCount() => ");
@@ -455,7 +570,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
 
 		source = source
-			.Concat([new("PatternPlaceholder", true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null, null)])
+			.Concat([new("PatternPlaceholder", true, false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null, null, null)])
 			.ToImmutableArray();
 
 		WriteInterface("IAstVisitor", "void", "");

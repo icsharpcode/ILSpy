@@ -41,25 +41,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
-
-		public IndexerExpression()
-		{
-		}
-
-		public IndexerExpression(Expression? target, IEnumerable<Expression>? arguments)
-		{
-			Target = target;
-			if (arguments != null)
-			{
-				foreach (var arg in arguments)
-				{
-					AddChild(arg, SlotKind.Argument);
-				}
-			}
-		}
-
-		public IndexerExpression(Expression? target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
-		{
-		}
 	}
 }

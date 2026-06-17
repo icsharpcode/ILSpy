@@ -52,30 +52,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }
-
-		public MemberType()
-		{
-		}
-
-		public MemberType(AstType target, string memberName)
-		{
-			this.Target = target;
-			this.MemberName = memberName;
-		}
-
-		public MemberType(AstType target, string memberName, IEnumerable<AstType> typeArguments)
-		{
-			this.Target = target;
-			this.MemberName = memberName;
-			foreach (var arg in typeArguments)
-			{
-				AddChild(arg, SlotKind.TypeArgument);
-			}
-		}
-
-		public MemberType(AstType target, string memberName, params AstType[] typeArguments) : this(target, memberName, (IEnumerable<AstType>)typeArguments)
-		{
-		}
 	}
 }
 

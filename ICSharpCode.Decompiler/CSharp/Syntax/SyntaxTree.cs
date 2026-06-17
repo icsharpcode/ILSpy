@@ -40,10 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("MemberRole")]
 		public partial AstNodeCollection<AstNode> Members { get; }
 
-		public SyntaxTree()
-		{
-		}
-
 		/// <summary>
 		/// Gets all defined types in this syntax tree.
 		/// </summary>

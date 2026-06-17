@@ -46,15 +46,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("FalseRole")]
 		public partial Statement? FalseStatement { get; set; }
 
-		public IfElseStatement()
-		{
-		}
-
-		public IfElseStatement(Expression condition, Statement trueStatement, Statement? falseStatement = null)
-		{
-			this.Condition = condition;
-			this.TrueStatement = trueStatement;
-			this.FalseStatement = falseStatement;
-		}
 	}
 }

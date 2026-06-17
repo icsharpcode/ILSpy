@@ -28,13 +28,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Type")]
 		public partial AstType Type { get; set; }
 
-		public TypeReferenceExpression()
-		{
-		}
-
-		public TypeReferenceExpression(AstType type)
-		{
-			AddChild(type, SlotKind.Type);
-		}
 	}
 }

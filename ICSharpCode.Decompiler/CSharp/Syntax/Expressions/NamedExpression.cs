@@ -33,16 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class NamedExpression : Expression
 	{
-		public NamedExpression()
-		{
-		}
-
-		public NamedExpression(string name, Expression expression)
-		{
-			this.Name = name;
-			this.Expression = expression;
-		}
-
 		[NameSlot("Roles.Identifier")]
 		public partial string Name { get; set; }
 

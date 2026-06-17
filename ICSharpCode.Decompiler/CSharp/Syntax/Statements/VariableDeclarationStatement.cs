@@ -32,10 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: false)]
 	public partial class VariableDeclarationStatement : Statement
 	{
-		public VariableDeclarationStatement()
-		{
-		}
-
 		public VariableDeclarationStatement(AstType type, string name, Expression initializer = null)
 		{
 			this.Type = type;

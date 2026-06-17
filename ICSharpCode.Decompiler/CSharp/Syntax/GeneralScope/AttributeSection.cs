@@ -50,10 +50,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Attribute")]
 		public partial AstNodeCollection<Attribute> Attributes { get; }
 
-		public AttributeSection()
-		{
-		}
-
 		public AttributeSection(Attribute attr)
 		{
 			this.Attributes.Add(attr);

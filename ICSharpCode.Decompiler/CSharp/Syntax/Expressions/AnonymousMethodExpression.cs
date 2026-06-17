@@ -58,26 +58,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Body")]
 		public partial BlockStatement Body { get; set; }
-
-		public AnonymousMethodExpression()
-		{
-		}
-
-		public AnonymousMethodExpression(BlockStatement body, IEnumerable<ParameterDeclaration> parameters = null)
-		{
-			if (parameters != null)
-			{
-				hasParameterList = true;
-				foreach (var parameter in parameters)
-				{
-					AddChild(parameter, SlotKind.Parameter);
-				}
-			}
-			AddChild(body, SlotKind.Body);
-		}
-
-		public AnonymousMethodExpression(BlockStatement body, params ParameterDeclaration[] parameters) : this(body, (IEnumerable<ParameterDeclaration>)parameters)
-		{
-		}
 	}
 }

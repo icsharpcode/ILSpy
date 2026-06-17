@@ -34,15 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class SimpleType : AstType
 	{
-		public SimpleType()
-		{
-		}
-
-		public SimpleType(string identifier)
-		{
-			this.Identifier = identifier;
-		}
-
 		public SimpleType(Identifier identifier)
 		{
 			this.IdentifierToken = identifier;
@@ -52,20 +43,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			SetChildByRole(SlotKind.Identifier, Syntax.Identifier.Create(identifier, location));
 		}
-
-		public SimpleType(string identifier, IEnumerable<AstType> typeArguments)
-		{
-			this.Identifier = identifier;
-			foreach (var arg in typeArguments)
-			{
-				AddChild(arg, SlotKind.TypeArgument);
-			}
-		}
-
-		public SimpleType(string identifier, params AstType[] typeArguments) : this(identifier, (IEnumerable<AstType>)typeArguments)
-		{
-		}
-
 		[NameSlot("Roles.Identifier", nullOnEmpty: true)]
 		public partial string Identifier { get; set; }
 

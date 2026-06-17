@@ -39,13 +39,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression? Expression { get; set; }
 
-		public ReturnStatement()
-		{
-		}
-
-		public ReturnStatement(Expression returnExpression)
-		{
-			AddChild(returnExpression, SlotKind.Expression);
-		}
 	}
 }

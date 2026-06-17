@@ -91,10 +91,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Roles.Expression")]
 		public partial Expression? DefaultExpression { get; set; }
 
-		public ParameterDeclaration()
-		{
-		}
-
 		public new ParameterDeclaration Clone()
 		{
 			return (ParameterDeclaration)base.Clone();

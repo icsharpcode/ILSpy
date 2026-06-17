@@ -39,25 +39,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Argument")]
 		public partial AstNodeCollection<Expression> Arguments { get; }
-
-		public InvocationExpression()
-		{
-		}
-
-		public InvocationExpression(Expression target, IEnumerable<Expression> arguments)
-		{
-			AddChild(target, SlotKind.TargetExpression);
-			if (arguments != null)
-			{
-				foreach (var arg in arguments)
-				{
-					AddChild(arg, SlotKind.Argument);
-				}
-			}
-		}
-
-		public InvocationExpression(Expression target, params Expression[] arguments) : this(target, (IEnumerable<Expression>)arguments)
-		{
-		}
 	}
 }

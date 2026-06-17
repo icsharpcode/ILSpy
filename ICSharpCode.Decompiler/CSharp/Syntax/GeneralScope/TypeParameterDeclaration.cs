@@ -45,10 +45,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[NameSlot("Roles.Identifier")]
 		public partial string Name { get; set; }
 
-		public TypeParameterDeclaration()
-		{
-		}
-
 		public TypeParameterDeclaration(string name)
 		{
 			Name = name;

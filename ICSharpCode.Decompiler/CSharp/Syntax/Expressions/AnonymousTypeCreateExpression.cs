@@ -37,22 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Roles.Expression")]
 		public partial AstNodeCollection<Expression> Initializers { get; }
-
-		public AnonymousTypeCreateExpression()
-		{
-		}
-
-		public AnonymousTypeCreateExpression(IEnumerable<Expression> initializers)
-		{
-			foreach (var ini in initializers)
-			{
-				AddChild(ini, SlotKind.Expression);
-			}
-		}
-
-		public AnonymousTypeCreateExpression(params Expression[] initializer) : this((IEnumerable<Expression>)initializer)
-		{
-		}
 	}
 }
 
