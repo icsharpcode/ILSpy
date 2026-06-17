@@ -65,6 +65,25 @@ namespace ICSharpCode.ILSpy.Commands
 		}
 
 		/// <summary>
+		/// Shows an open-file picker for a single file. <paramref name="filter"/> uses the same
+		/// WPF-style <c>display|patterns</c> syntax as <see cref="SaveAsync"/>. Returns the selected
+		/// absolute path, or <c>null</c> if the user cancelled.
+		/// </summary>
+		public static async Task<string?> OpenAsync(string filter, string? title = null)
+		{
+			var owner = UiContext.MainWindow;
+			if (owner == null)
+				return null;
+
+			var files = await owner.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions {
+				Title = title,
+				AllowMultiple = false,
+				FileTypeFilter = ParseFilter(filter),
+			});
+			return files.Count == 0 ? null : files[0].TryGetLocalPath();
+		}
+
+		/// <summary>
 		/// Shows a folder-picker dialog. <paramref name="title"/> appears in the dialog
 		/// chrome. Returns the selected folder's absolute path, or <c>null</c> if the user
 		/// cancelled or the storage provider refused to give a local path (e.g. cloud

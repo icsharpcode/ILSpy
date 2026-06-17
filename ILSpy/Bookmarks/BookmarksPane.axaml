@@ -1,0 +1,105 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:bookmarks="using:ICSharpCode.ILSpy.Bookmarks"
+             xmlns:res="using:ICSharpCode.ILSpy.Properties"
+             xmlns:ilspy="using:ICSharpCode.ILSpy"
+             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="200"
+             x:Class="ICSharpCode.ILSpy.Bookmarks.BookmarksPane"
+             x:DataType="bookmarks:BookmarksPaneModel">
+	<Grid RowDefinitions="Auto,*" Margin="4">
+		<!-- Toolbar: bookmark actions. Each button shows a 16x16 glyph and a tooltip; commands live
+		     on the pane view model. -->
+		<StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,4" Spacing="2">
+			<StackPanel.Styles>
+				<Style Selector="Button">
+					<Setter Property="Background" Value="Transparent" />
+					<Setter Property="BorderThickness" Value="0" />
+					<Setter Property="Padding" Value="4" />
+				</Style>
+				<Style Selector="Button > Image">
+					<Setter Property="Width" Value="16" />
+					<Setter Property="Height" Value="16" />
+				</Style>
+			</StackPanel.Styles>
+			<Button Command="{Binding ToggleCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkToggle}">
+				<Image Source="{x:Static ilspy:Images.Bookmark}" />
+			</Button>
+			<Border Width="1" Margin="2,2" Background="{DynamicResource ILSpy.ToolbarSeparatorBrush}" />
+			<Button Command="{Binding PreviousCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkPreviousBookmark}">
+				<Image Source="{x:Static ilspy:Images.BookmarkPrevious}" />
+			</Button>
+			<Button Command="{Binding NextCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkNextBookmark}">
+				<Image Source="{x:Static ilspy:Images.BookmarkNext}" />
+			</Button>
+			<Button Command="{Binding PreviousInFileCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkPreviousInFile}">
+				<Image Source="{x:Static ilspy:Images.BookmarkPreviousInFile}" />
+			</Button>
+			<Button Command="{Binding NextInFileCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkNextInFile}">
+				<Image Source="{x:Static ilspy:Images.BookmarkNextInFile}" />
+			</Button>
+			<Border Width="1" Margin="2,2" Background="{DynamicResource ILSpy.ToolbarSeparatorBrush}" />
+			<Button Command="{Binding DisableCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkDisable}">
+				<Image Source="{x:Static ilspy:Images.BookmarkDisable}" />
+			</Button>
+			<Button Command="{Binding DeleteCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkDelete}">
+				<Image Source="{x:Static ilspy:Images.BookmarkClear}" />
+			</Button>
+			<Border Width="1" Margin="2,2" Background="{DynamicResource ILSpy.ToolbarSeparatorBrush}" />
+			<Button Command="{Binding ExportCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkExport}">
+				<Image Source="{x:Static ilspy:Images.Save}" />
+			</Button>
+			<Button Command="{Binding ImportCommand}" ToolTip.Tip="{x:Static res:Resources.BookmarkImport}">
+				<Image Source="{x:Static ilspy:Images.Open}" />
+			</Button>
+		</StackPanel>
+
+		<!-- The flat bookmark list. The Name column is editable; double-click any row navigates. -->
+		<!-- CanUserAddRows=False removes the trailing new-item placeholder row: bookmarks are only
+		     created by toggling in the editor, never typed into the grid. (Bookmark has a
+		     parameterless ctor, so the grid would otherwise offer an empty add-new row.) -->
+		<DataGrid Grid.Row="1" Name="BookmarkGrid"
+		          ItemsSource="{Binding Bookmarks}"
+		          SelectedItem="{Binding SelectedBookmark, Mode=TwoWay}"
+		          AutoGenerateColumns="False"
+		          CanUserAddRows="False"
+		          CanUserResizeColumns="True"
+		          HeadersVisibility="Column"
+		          SelectionMode="Single">
+			<DataGrid.Columns>
+				<!-- A live CheckBox in a template column toggles on a single click; a
+				     DataGridCheckBoxColumn would require first entering cell-edit mode. -->
+				<DataGridTemplateColumn Width="Auto">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate DataType="bookmarks:Bookmark">
+							<CheckBox IsChecked="{Binding Enabled, Mode=TwoWay}"
+							          HorizontalAlignment="Center" VerticalAlignment="Center" Margin="6,0" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTemplateColumn Header="{x:Static res:Resources.Name}" Width="2*">
+					<DataGridTemplateColumn.CellTemplate>
+						<DataTemplate DataType="bookmarks:Bookmark">
+							<Grid ColumnDefinitions="Auto,4,*" Margin="2,1">
+								<Image Grid.Column="0" Source="{x:Static ilspy:Images.Bookmark}"
+								       Width="16" Height="16" VerticalAlignment="Center" />
+								<TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center"
+								           TextTrimming="CharacterEllipsis" />
+							</Grid>
+						</DataTemplate>
+					</DataGridTemplateColumn.CellTemplate>
+					<DataGridTemplateColumn.CellEditingTemplate>
+						<DataTemplate DataType="bookmarks:Bookmark">
+							<TextBox Text="{Binding Name, Mode=TwoWay}" AcceptsReturn="False" />
+						</DataTemplate>
+					</DataGridTemplateColumn.CellEditingTemplate>
+				</DataGridTemplateColumn>
+				<DataGridTextColumn Header="{x:Static res:Resources.Location}" Width="3*"
+				                    Binding="{Binding MemberName}" IsReadOnly="True" />
+				<DataGridTextColumn Header="{x:Static res:Resources.BookmarkModule}" Width="2*"
+				                    Binding="{Binding ModuleName}" IsReadOnly="True" />
+			</DataGrid.Columns>
+		</DataGrid>
+	</Grid>
+</UserControl>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 21.0.2, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
+<style type="text/css">
+	.icon_x002D_canvas_x002D_transparent{opacity:0;fill:#F6F6F6;}
+	.icon_x002D_vs_x002D_out{fill:#F6F6F6;}
+	.icon_x002D_folder{fill:#DCB67A;}
+	.icon_x002D_vs_x002D_action_x002D_blue{fill:#00539C;}
+	.icon_x002D_vs_x002D_fg{fill:#F0EFF1;}
+</style>
+<g id="canvas">
+	<path id="XMLID_113_" class="icon_x002D_canvas_x002D_transparent" d="M0,0h16v16H0V0z"/>
+</g>
+<g id="outline">
+	<path class="icon_x002D_vs_x002D_out" d="M14.5,5h-2.886l-1-2H9.878V2.057H6.552l0.432-0.432L5.361,0H4.012L0.33,3.682L1.017,4.37
+		C1.013,4.413,1.004,4.455,1.004,4.5v10c0,0.827,0.673,1.5,1.5,1.5H14.5c0.827,0,1.5-0.673,1.5-1.5v-8C16,5.673,15.327,5,14.5,5z"/>
+</g>
+<g id="iconBg">
+	<path class="icon_x002D_folder" d="M15,6.5C15,6.224,14.777,6,14.5,6h-3.496h-0.008l-1-2H9.878v1.307H9.532L9.878,6H6.723
+		L4.687,8.04L2.004,5.357V14.5c0,0.276,0.225,0.5,0.5,0.5H14.5c0.277,0,0.5-0.224,0.5-0.5V13H8l2.5-2.5L8,8h7V6.5z"/>
+</g>
+<g id="colorAction">
+	<polygon class="icon_x002D_vs_x002D_action_x002D_blue" points="5.57,1.512 3.992,3 9.004,2.987 8.992,4 3.839,4 5.583,5.831 
+		4.8,6.625 1.988,3.551 4.8,0.74 	"/>
+</g>
+<g id="iconFg">
+	<polygon class="icon_x002D_vs_x002D_fg" points="8,8 10.5,10.5 8,13 15,13 15,8 	"/>
+	<g>
+	</g>
+	<g>
+	</g>
+	<g>
+	</g>
+	<g>
+	</g>
+	<g>
+	</g>
+	<g>
+	</g>
+</g>
+</svg>

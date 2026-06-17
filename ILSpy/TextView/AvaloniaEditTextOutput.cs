@@ -60,6 +60,10 @@ namespace ICSharpCode.ILSpy.TextView
 		bool needsIndent;
 		int lineNumber = 1;
 
+		/// <summary>The 1-based line the next written text lands on; used to map captured
+		/// sequence-point lines (relative to a code block) to absolute document lines.</summary>
+		public int CurrentLine => lineNumber;
+
 		public RichTextModel HighlightingModel { get; } = new RichTextModel();
 
 		// The same spans that build HighlightingModel, but holding the SHARED named
@@ -82,6 +86,18 @@ namespace ICSharpCode.ILSpy.TextView
 
 		/// <summary>Maps reference targets to their definition offsets in the rendered text.</summary>
 		public DefinitionLookup DefinitionLookup { get; } = new();
+
+		readonly List<Bookmarks.MethodDebugInfo> methodDebugInfos = new();
+
+		/// <summary>
+		/// Per-method IL-offset &lt;-&gt; line maps captured during a C# decompile (see
+		/// <see cref="Bookmarks.MethodDebugInfo"/>). Empty for non-C# output; used to anchor
+		/// in-method bookmarks by IL offset instead of a fragile line number.
+		/// </summary>
+		public IReadOnlyList<Bookmarks.MethodDebugInfo> MethodDebugInfos => methodDebugInfos;
+
+		/// <summary>Appends a captured method map; called by the C# language after writing the code.</summary>
+		public void AddMethodDebugInfo(Bookmarks.MethodDebugInfo info) => methodDebugInfos.Add(info);
 
 		readonly List<KeyValuePair<int, Func<Control>>> uiElements = new();
 

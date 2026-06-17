@@ -184,6 +184,14 @@ namespace ICSharpCode.ILSpy.TextView
 		private DefinitionLookup? definitionLookup;
 
 		/// <summary>
+		/// IL-offset &lt;-&gt; line maps for the methods in this document (C# only). Lets bookmarks
+		/// anchor in-method lines by IL offset and the gutter place their icons. Null for non-C#
+		/// content; <see cref="Bookmarks.DecompiledDebugInfo.Empty"/> when C# yielded no methods.
+		/// </summary>
+		[ObservableProperty]
+		private Bookmarks.DecompiledDebugInfo? debugInfo;
+
+		/// <summary>
 		/// Inline UI elements (<see cref="ISmartTextOutput.AddUIElement"/>), in offset order.
 		/// Fed to <see cref="UIElementGenerator"/> by the text view.
 		/// </summary>
@@ -228,6 +236,20 @@ namespace ICSharpCode.ILSpy.TextView
 		/// async gap between the navigation firing and the decompile finishing.
 		/// </summary>
 		public DecompilerTextViewState? PendingViewState { get; set; }
+
+		/// <summary>
+		/// A bookmark to scroll to once this document is shown. Set by bookmark navigation before the
+		/// target node is decompiled; the text view computes the line and positions the caret after
+		/// the new document lands (and clears this), mirroring <see cref="HighlightedReference"/>.
+		/// </summary>
+		[ObservableProperty]
+		private Bookmarks.Bookmark? pendingBookmark;
+
+		/// <summary>Toggles a bookmark on the caret line. Set by the text view; used by the bookmarks pane toolbar.</summary>
+		public System.Action? ToggleBookmarkAtCaret { get; set; }
+
+		/// <summary>Moves to the next (true) / previous (false) bookmark within this document. Set by the text view.</summary>
+		public System.Action<bool>? NavigateBookmarkInFile { get; set; }
 
 		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
@@ -482,6 +504,7 @@ namespace ICSharpCode.ILSpy.TextView
 				Foldings = null;
 				References = null;
 				DefinitionLookup = null;
+				DebugInfo = null;
 				UIElements = null;
 				Text = string.Empty;
 				IsDecompiling = false;
@@ -711,6 +734,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Foldings = output.Foldings;
 			References = output.References;
 			DefinitionLookup = output.DefinitionLookup;
+			DebugInfo = new Bookmarks.DecompiledDebugInfo(output.MethodDebugInfos);
 			UIElements = output.UIElements;
 			Text = text;
 		}

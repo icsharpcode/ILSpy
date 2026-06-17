@@ -16,38 +16,47 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Avalonia.Headless.NUnit;
+using System;
+using System.IO;
 
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpyX.Settings;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpy.Tests.Docking;
+namespace ICSharpCode.ILSpy.Tests.AppEnv;
 
-// DockWorkspace is the MEF-shared wrapper that holds the Dock.Avalonia factory + the root
-// layout. If MEF can't construct it (e.g., missing AssemblyTreeModel / SearchPaneModel /
-// AnalyzerTreeViewModel imports), the entire dock surface never materializes. Asserting
-// at the export layer catches that before we wire it into the DockControl.
+// ConfigurationFiles.GetPath underpins where the dock layout and the bookmark list are
+// stored: as JSON sidecars in the same directory as ILSpy.xml. These tests pin that
+// "next to the settings file" contract and the headless fallback.
 [TestFixture]
-public class DockWorkspaceTests
+public class ConfigurationFilesTests
 {
-	[AvaloniaTest]
-	public void DockWorkspace_resolves_and_exposes_root_layout_with_tool_panes()
-	{
-		var workspace = AppComposition.Current.GetExport<DockWorkspace>();
-		workspace.Should().NotBeNull("DockWorkspace is [Export][Shared] in ICSharpCode.ILSpy.Docking.");
+	Func<string>? savedProvider;
 
-		workspace.Layout.Should().NotBeNull("ILSpyDockFactory.CreateLayout() wires the root dock in the ctor.");
-		workspace.Factory.Should().NotBeNull();
-#if DEBUG
-		workspace.ToolPaneMenuItems.Should().HaveCount(5,
-			"AssemblyTree, Search, Analyzers, Bookmarks, and the Debug Steps pane (Debug-only) are wired at this point.");
-#else
-		workspace.ToolPaneMenuItems.Should().HaveCount(4,
-			"AssemblyTree, Search, Analyzers, and Bookmarks are the tool panes wired at this point.");
-#endif
+	[SetUp]
+	public void SaveProvider() => savedProvider = ILSpySettings.SettingsFilePathProvider;
+
+	[TearDown]
+	public void RestoreProvider() => ILSpySettings.SettingsFilePathProvider = savedProvider;
+
+	[Test]
+	public void GetPath_returns_sidecar_in_settings_directory()
+	{
+		var settingsDir = Path.Combine(Path.GetTempPath(), "ILSpyConfigTest");
+		ILSpySettings.SettingsFilePathProvider = () => Path.Combine(settingsDir, "ILSpy.xml");
+
+		ConfigurationFiles.GetPath("ILSpy.Bookmarks.json")
+			.Should().Be(Path.Combine(settingsDir, "ILSpy.Bookmarks.json"));
+	}
+
+	[Test]
+	public void GetPath_falls_back_to_bare_name_when_provider_is_absent()
+	{
+		ILSpySettings.SettingsFilePathProvider = null;
+
+		ConfigurationFiles.GetPath("ILSpy.Bookmarks.json").Should().Be("ILSpy.Bookmarks.json");
 	}
 }
