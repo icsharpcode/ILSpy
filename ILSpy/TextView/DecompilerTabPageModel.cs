@@ -734,7 +734,11 @@ namespace ICSharpCode.ILSpy.TextView
 			Foldings = output.Foldings;
 			References = output.References;
 			DefinitionLookup = output.DefinitionLookup;
-			DebugInfo = new Bookmarks.DecompiledDebugInfo(output.MethodDebugInfos);
+			DebugInfo = syntaxExtension != ".cs"
+				? null
+				: output.MethodDebugInfos.Count > 0
+					? new Bookmarks.DecompiledDebugInfo(output.MethodDebugInfos)
+					: Bookmarks.DecompiledDebugInfo.Empty;
 			UIElements = output.UIElements;
 			Text = text;
 		}

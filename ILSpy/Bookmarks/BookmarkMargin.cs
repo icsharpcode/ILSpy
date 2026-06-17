@@ -53,10 +53,26 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		{
 			this.owner = owner;
 			manager = AppEnv.AppComposition.TryGetExport<BookmarkManager>();
-			if (manager != null)
-				manager.Changed += OnBookmarksChanged;
 			pulseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
 			pulseTimer.Tick += OnPulseTick;
+		}
+
+		// The manager is a shared singleton, so its Changed event would otherwise keep a closed tab's
+		// margin (and its pulse timer) alive. Track the subscription to the margin's time in the tree.
+		protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+		{
+			base.OnAttachedToVisualTree(e);
+			if (manager != null)
+				manager.Changed += OnBookmarksChanged;
+		}
+
+		protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+		{
+			base.OnDetachedFromVisualTree(e);
+			if (manager != null)
+				manager.Changed -= OnBookmarksChanged;
+			pulseTimer.Stop();
+			pulseLine = -1;
 		}
 
 		void OnBookmarksChanged(object? sender, EventArgs e) => InvalidateVisual();
