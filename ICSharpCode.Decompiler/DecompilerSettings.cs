@@ -177,16 +177,10 @@ namespace ICSharpCode.Decompiler
 				extensionMembers = false;
 				firstClassSpanTypes = false;
 			}
-			if (languageVersion < CSharp.LanguageVersion.CSharp15_0)
-			{
-				runtimeAsync = false;
-			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
-			if (runtimeAsync)
-				return CSharp.LanguageVersion.CSharp15_0;
 			if (extensionMembers || firstClassSpanTypes)
 				return CSharp.LanguageVersion.CSharp14_0;
 			if (paramsCollections)
@@ -2199,24 +2193,6 @@ namespace ICSharpCode.Decompiler
 				if (firstClassSpanTypes != value)
 				{
 					firstClassSpanTypes = value;
-					OnPropertyChanged();
-				}
-			}
-		}
-
-		bool runtimeAsync = true;
-
-		/// <summary>
-		/// Gets/Sets whether runtime async should be used.
-		/// </summary>
-		[Category("C# 15.0 / VS 202x.yy")]
-		[Description("DecompilerSettings.RuntimeAsync")]
-		public bool RuntimeAsync {
-			get { return runtimeAsync; }
-			set {
-				if (runtimeAsync != value)
-				{
-					runtimeAsync = value;
 					OnPropertyChanged();
 				}
 			}

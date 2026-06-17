@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		// rewritten into IL that the surrounding non-async control flow can't represent.
 		internal static bool TransformAsyncHelpersAwaitToAwait(Call inst, ILTransformContext context)
 		{
-			if (!context.Settings.RuntimeAsync || !context.Function.IsAsync)
+			if (!context.Settings.AsyncAwait || !context.Function.IsAsync)
 				return false;
 			if (!inst.Method.IsStatic || inst.Arguments.Count != 1 || !IsAsyncHelpersMethod(inst.Method, "Await"))
 				return false;
