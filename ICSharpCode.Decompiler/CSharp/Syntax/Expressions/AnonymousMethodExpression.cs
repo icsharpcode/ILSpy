@@ -41,14 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync { get; set; }
 
-		// used to tell the difference between delegate {} and delegate () {}
-		bool hasParameterList;
-
-		public bool HasParameterList {
-			get { return hasParameterList || Parameters.Any(); }
-			set { hasParameterList = value; }
-		}
-
 		[Slot("Roles.Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
