@@ -20,6 +20,8 @@ using System;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	class InsertRequiredSpacesDecorator : DecoratingTokenWriter
@@ -148,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastWritten = LastWritten.Whitespace;
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			if (lastWritten == LastWritten.KeywordOrIdentifier)
 			{

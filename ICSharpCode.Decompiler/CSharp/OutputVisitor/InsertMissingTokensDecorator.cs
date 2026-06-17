@@ -21,6 +21,8 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	class InsertMissingTokensDecorator : DecoratingTokenWriter
@@ -128,13 +130,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TextLocation start = locationProvider.Location;
 			if (keyword == "this")
 			{
-				ThisReferenceExpression node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
+				ThisReferenceExpression? node = nodes.Peek().LastOrDefault() as ThisReferenceExpression;
 				if (node != null)
 					node.StorePrintStart(start);
 			}
 			else if (keyword == "base")
 			{
-				BaseReferenceExpression node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
+				BaseReferenceExpression? node = nodes.Peek().LastOrDefault() as BaseReferenceExpression;
 				if (node != null)
 					node.StorePrintStart(start);
 			}
@@ -145,17 +147,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void WriteIdentifier(Identifier identifier)
 		{
 			AssignPendingStartLocations();
-			if (identifier is not null)
-				identifier.SetStartLocation(locationProvider.Location);
+			identifier.SetStartLocation(locationProvider.Location);
 			currentList.Add(identifier);
 			base.WriteIdentifier(identifier);
 			lastTokenEnd = locationProvider.Location;
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			AssignPendingStartLocations();
-			Expression node = nodes.Peek().LastOrDefault() as Expression;
+			Expression? node = nodes.Peek().LastOrDefault() as Expression;
 			var startLocation = locationProvider.Location;
 			base.WritePrimitiveValue(value, format);
 			if (node is PrimitiveExpression)
@@ -172,7 +173,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void WritePrimitiveType(string type)
 		{
 			AssignPendingStartLocations();
-			PrimitiveType node = nodes.Peek().LastOrDefault() as PrimitiveType;
+			PrimitiveType? node = nodes.Peek().LastOrDefault() as PrimitiveType;
 			if (node != null)
 				node.StorePrintStart(locationProvider.Location);
 			base.WritePrimitiveType(type);

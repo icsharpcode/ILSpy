@@ -11,6 +11,8 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 using static ICSharpCode.Decompiler.Metadata.ILOpCodeExtensions;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp
 {
 	class RequiredNamespaceCollector
@@ -37,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var collector = new RequiredNamespaceCollector(namespaces);
 			foreach (var type in module.TypeDefinitions)
 			{
-				collector.CollectNamespaces(type, module, (CodeMappingInfo)null);
+				collector.CollectNamespaces(type, module, (CodeMappingInfo?)null);
 			}
 			collector.HandleAttributes(module.GetAssemblyAttributes());
 			collector.HandleAttributes(module.GetModuleAttributes());
@@ -50,13 +52,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			collector.HandleAttributes(module.GetModuleAttributes());
 		}
 
-		public static void CollectNamespaces(IEntity entity, MetadataModule module, HashSet<string> namespaces)
+		public static void CollectNamespaces(IEntity? entity, MetadataModule module, HashSet<string> namespaces)
 		{
 			var collector = new RequiredNamespaceCollector(namespaces);
 			collector.CollectNamespaces(entity, module);
 		}
 
-		void CollectNamespaces(IEntity entity, MetadataModule module, CodeMappingInfo mappingInfo = null)
+		void CollectNamespaces(IEntity? entity, MetadataModule module, CodeMappingInfo? mappingInfo = null)
 		{
 			if (entity == null || entity.MetadataToken.IsNil || module.MetadataFile is not MetadataFile corFile)
 				return;
@@ -230,7 +232,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void HandleAttributeValue(IType type, object value)
+		void HandleAttributeValue(IType type, object? value)
 		{
 			CollectNamespacesForTypeReference(type);
 			if (value is IType typeofType)
@@ -343,7 +345,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							case HandleKind.MethodDefinition:
 							case HandleKind.MethodSpecification:
 							case HandleKind.MemberReference:
-								IMember member;
+								IMember? member;
 								try
 								{
 									member = module.ResolveEntity(handle, genericContext) as IMember;
@@ -394,7 +396,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		void CollectNamespacesForMemberReference(IMember member)
+		void CollectNamespacesForMemberReference(IMember? member)
 		{
 			switch (member)
 			{

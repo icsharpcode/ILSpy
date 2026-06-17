@@ -805,7 +805,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			foreach (var node in rootNode.Descendants)
 			{
-				ILVariable ilVar;
+				ILVariable? ilVar;
 				switch (node)
 				{
 					case IdentifierExpression id:

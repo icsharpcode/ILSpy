@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
-		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
+		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable? variable)
 		{
 			if (statement.Condition?.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable) == true)
 				return true;
@@ -515,7 +515,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					break;
 				if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value?.ToString() ?? "", out int index) || index != i)
 					break;
-				upperBounds[i] = m.Get<IdentifierExpression>("variable").Single().GetILVariable();
+				upperBounds[i] = m.Get<IdentifierExpression>("variable").Single().GetILVariable()!;
 				stmt = stmt.GetNextStatement();
 				i++;
 			} while (stmt != null && upperBounds != null && i < upperBounds.Length);
@@ -948,7 +948,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// ignore tuple element names, dynamic and nullability
 			if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(returnType, eventType))
 				return false;
-			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
+			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent!.GetSymbol() as IMethod;
 			if (combineMethod == null || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
 				return false;
 			return combineMethod.DeclaringType.FullName == "System.Delegate";

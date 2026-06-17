@@ -26,6 +26,8 @@ using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp
 {
 	/// <summary>
@@ -75,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// <summary>
 			/// The function containing this sequence point.
 			/// </summary>
-			internal ILFunction Function;
+			internal ILFunction? Function;
 
 			public StatePerSequencePoint(AstNode primaryNode)
 			{
@@ -94,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		// Collects information for the current sequence point.
 		StatePerSequencePoint current;
 
-		void VisitAsSequencePoint(AstNode node)
+		void VisitAsSequencePoint(AstNode? node)
 		{
 			if (node is null)
 				return;
@@ -240,7 +242,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitQueryFromClause(QueryFromClause queryFromClause)
 		{
-			if (queryFromClause.Parent.FirstChild != queryFromClause)
+			if (queryFromClause.Parent!.FirstChild != queryFromClause)
 			{
 				AddToSequencePoint(queryFromClause);
 				VisitAsSequencePoint(queryFromClause.Expression);
@@ -459,7 +461,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			current = outerStates.Pop();
 		}
 
-		void AddToSequencePointRaw(ILFunction function, IEnumerable<Interval> ranges)
+		void AddToSequencePointRaw(ILFunction? function, IEnumerable<Interval> ranges)
 		{
 			current.Intervals.AddRange(ranges);
 			Debug.Assert(current.Function == null || current.Function == function);
@@ -489,7 +491,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (HasUsableILRange(inst) && current.Intervals != null)
 			{
 				current.Intervals.AddRange(inst.ILRanges);
-				var function = inst.Parent.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				var function = inst.Parent!.Ancestors.OfType<ILFunction>().FirstOrDefault();
 				Debug.Assert(current.Function == null || current.Function == function);
 				current.Function = function;
 			}
@@ -570,7 +572,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					newList.Add(hidden);
 				}
 
-				List<int> sequencePointCandidates = function.SequencePointCandidates;
+				List<int> sequencePointCandidates = function.SequencePointCandidates!;
 				int currSPCandidateIndex = 0;
 
 				for (int i = 0; i < newList.Count - 1; i++)

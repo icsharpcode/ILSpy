@@ -23,6 +23,8 @@ using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	/// <summary>
@@ -230,10 +232,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			TextWriter writer = new StringWriter();
 			TextWriterTokenWriter tokenWriter = new TextWriterTokenWriter(writer);
 			tokenWriter.WritePrimitiveValue(value);
-			return writer.ToString();
+			return writer.ToString()!;
 		}
 
-		public override void WritePrimitiveValue(object value, LiteralFormat format = LiteralFormat.None)
+		public override void WritePrimitiveValue(object? value, LiteralFormat format = LiteralFormat.None)
 		{
 			if (value == null)
 			{
@@ -263,7 +265,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			if (value is string)
 			{
-				string tmp = ConvertString(value.ToString());
+				string tmp = ConvertString(value.ToString()!);
 				column += tmp.Length + 2;
 				Length += tmp.Length + 2;
 				textWriter.Write('"');
@@ -409,7 +411,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			else
 			{
 				textWriter.Write(value.ToString());
-				int length = value.ToString().Length;
+				int length = value.ToString()!.Length;
 				column += length;
 				Length += length;
 			}
@@ -437,7 +439,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// Gets the escape sequence for the specified character.
 		/// </summary>
 		/// <remarks>This method does not convert ' or ".</remarks>
-		static string ConvertChar(char ch)
+		static string? ConvertChar(char ch)
 		{
 			switch (ch)
 			{
@@ -499,7 +501,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StringBuilder sb = new StringBuilder();
 			foreach (char ch in str)
 			{
-				string s = ch == '"' ? "\\\"" : ConvertChar(ch);
+				string? s = ch == '"' ? "\\\"" : ConvertChar(ch);
 				if (s != null)
 					sb.Append(s);
 				else

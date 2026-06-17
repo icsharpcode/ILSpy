@@ -18,6 +18,8 @@
 
 using ICSharpCode.Decompiler.TypeSystem;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp
 {
 	/// <summary>

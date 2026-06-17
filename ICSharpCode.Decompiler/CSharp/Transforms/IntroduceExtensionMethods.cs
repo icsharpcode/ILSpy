@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				return;
 			}
-			var method = (IMethod)invocationExpression.GetSymbol();
+			var method = (IMethod)invocationExpression.GetSymbol()!;
 			if (firstArgument is DirectionExpression dirExpr)
 			{
 				if (!context.Settings.RefExtensionMethods || dirExpr.FieldDirection == FieldDirection.Out)

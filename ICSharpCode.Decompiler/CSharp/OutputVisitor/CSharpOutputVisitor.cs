@@ -29,6 +29,8 @@ using ICSharpCode.Decompiler.Util;
 
 using Attribute = ICSharpCode.Decompiler.CSharp.Syntax.Attribute;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	/// <summary>
@@ -390,7 +392,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// Determines whether the specified identifier is a keyword in the given context.
 		/// If <paramref name="context"/> is <see langword="null" /> all keywords are treated as unconditional.
 		/// </summary>
-		public static bool IsKeyword(string identifier, AstNode context = null)
+		public static bool IsKeyword(string identifier, AstNode? context = null)
 		{
 			// only 2-10 char lower-case identifiers can be keywords
 			if (identifier.Length > maxKeywordLength || identifier.Length < 2 || identifier[0] < 'a')
@@ -497,7 +499,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				NewLine();
 				return;
 			}
-			BlockStatement block = embeddedStatement as BlockStatement;
+			BlockStatement? block = embeddedStatement as BlockStatement;
 			if (block != null)
 			{
 				WriteBlock(block, policy.StatementBraceStyle);
@@ -519,7 +521,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		protected virtual void WriteMethodBody(BlockStatement body, BraceStyle style, bool newLine = true)
+		protected virtual void WriteMethodBody(BlockStatement? body, BraceStyle style, bool newLine = true)
 		{
 			if (body is null)
 			{
@@ -540,7 +542,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		protected virtual void WritePrivateImplementationType(AstType privateImplementationType)
+		protected virtual void WritePrivateImplementationType(AstType? privateImplementationType)
 		{
 			if (privateImplementationType is not null)
 			{
@@ -640,11 +642,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			// "int a; new List<int> { a = 1 };" is an object initalizers and invalid, but
 			// "int a; new List<int> { { a = 1 } };" is a valid collection initializer.
-			AssignmentExpression ae = expr as AssignmentExpression;
+			AssignmentExpression? ae = expr as AssignmentExpression;
 			return ae != null && ae.Operator == AssignmentOperatorType.Assign;
 		}
 
-		protected bool IsObjectOrCollectionInitializer(AstNode node)
+		protected bool IsObjectOrCollectionInitializer(AstNode? node)
 		{
 			if (!(node is ArrayInitializerExpression))
 			{
@@ -1273,7 +1275,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			unaryOperatorExpression.Expression.AcceptVisitor(this);
 			if (IsPostfixOperator(opType))
 			{
-				WriteToken(opSymbol);
+				WriteToken(opSymbol!);
 			}
 			EndNode(unaryOperatorExpression);
 		}
@@ -1407,7 +1409,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				Space();
 				WriteKeyword(QueryJoinClause.IntoKeyword);
-				WriteIdentifier(queryJoinClause.IntoIdentifierToken);
+				WriteIdentifier(queryJoinClause.IntoIdentifierToken!);
 			}
 			EndNode(queryJoinClause);
 		}
@@ -1861,7 +1863,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(gotoStatement);
 			WriteKeyword(GotoStatement.GotoKeyword);
-			WriteIdentifier(gotoStatement.LabelToken);
+			WriteIdentifier(gotoStatement.LabelToken!);
 			Semicolon();
 			EndNode(gotoStatement);
 		}
@@ -1904,7 +1906,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIdentifier(labelStatement.GetChildByRole<Identifier>(SlotKind.Identifier));
 			WriteToken(Roles.Colon);
 			bool foundLabelledStatement = false;
-			for (AstNode tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
+			for (AstNode? tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
 			{
 				if (tmp.Slot?.Kind == labelStatement.Slot?.Kind)
 				{
@@ -2109,7 +2111,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (!string.IsNullOrEmpty(catchClause.VariableName))
 				{
 					Space();
-					WriteIdentifier(catchClause.VariableNameToken);
+					WriteIdentifier(catchClause.VariableNameToken!);
 				}
 				Space(policy.SpacesWithinCatchParentheses);
 				RPar();
@@ -2297,7 +2299,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(constructorDeclaration);
 			WriteAttributes(constructorDeclaration.Attributes);
 			WriteModifiers(constructorDeclaration.Modifiers);
-			TypeDeclaration type = constructorDeclaration.Parent as TypeDeclaration;
+			TypeDeclaration? type = constructorDeclaration.Parent as TypeDeclaration;
 			if (type != null && type.Name != constructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
@@ -2343,7 +2345,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 			}
 			WriteToken(DestructorDeclaration.TildeToken);
-			TypeDeclaration type = destructorDeclaration.Parent as TypeDeclaration;
+			TypeDeclaration? type = destructorDeclaration.Parent as TypeDeclaration;
 			if (type != null && type.Name != destructorDeclaration.Name)
 				WriteIdentifier((Identifier)type.NameToken.Clone());
 			else
@@ -2632,7 +2634,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (!string.IsNullOrEmpty(parameterDeclaration.Name))
 			{
-				WriteIdentifier(parameterDeclaration.NameToken);
+				WriteIdentifier(parameterDeclaration.NameToken!);
 			}
 			if (parameterDeclaration.DefaultExpression is not null)
 			{

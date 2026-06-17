@@ -52,15 +52,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (fieldDecl.Variables.Count != 1)
 						continue;
 					string oldName = fieldDecl.Variables.Single().Name;
-					ISymbol symbol = fieldDecl.GetSymbol();
-					if (memberNames.Contains(oldName) && ((IField)symbol).Accessibility == Accessibility.Private)
+					ISymbol? symbol = fieldDecl.GetSymbol();
+					if (memberNames.Contains(oldName) && symbol is IField { Accessibility: Accessibility.Private })
 					{
 						string newName = PickNewName(memberNames, oldName);
-						if (symbol != null)
-						{
-							fieldDecl.Variables.Single().Name = newName;
-							renamedSymbols[symbol] = newName;
-						}
+						fieldDecl.Variables.Single().Name = newName;
+						renamedSymbols[symbol] = newName;
 					}
 				}
 			}
@@ -69,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (node is IdentifierExpression || node is MemberReferenceExpression)
 				{
-					ISymbol symbol = node.GetSymbol();
+					ISymbol? symbol = node.GetSymbol();
 					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string? newName))
 					{
 						node.GetChildByRole<Identifier>(SlotKind.Identifier).Name = newName;

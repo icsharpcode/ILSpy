@@ -6,6 +6,8 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp
 {
 	[DebuggerDisplay("{Statement}")]

@@ -310,9 +310,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Insert(IndexOf(existingItem!) + 1, newItem);
 		}
 
-		public void InsertBefore(T existingItem, T newItem)
+		public void InsertBefore(T? existingItem, T newItem)
 		{
-			int index = IndexOf(existingItem);
+			// A null existingItem yields IndexOf == -1, so the new item is appended.
+			int index = IndexOf(existingItem!);
 			Insert(index < 0 ? list.Count : index, newItem);
 		}
 

@@ -29,6 +29,8 @@ using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp
 {
 	/// <summary>
@@ -156,7 +158,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (descendant == Expression)
 				return this;
-			for (AstNode parent = descendant.Parent; parent != null; parent = parent.Parent)
+			for (AstNode? parent = descendant.Parent; parent != null; parent = parent.Parent)
 			{
 				foreach (var inst in parent.Annotations.OfType<ILInstruction>())
 					descendant.AddAnnotation(inst);
@@ -664,7 +666,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// In conditional contexts, remove the bool-cast emitted when converting
 		/// an "implicit operator bool" invocation.
 		/// </summary>
-		public TranslatedExpression UnwrapImplicitBoolConversion(Func<IType, bool> typeFilter = null)
+		public TranslatedExpression UnwrapImplicitBoolConversion(Func<IType, bool>? typeFilter = null)
 		{
 			if (!this.Type.IsKnownType(KnownTypeCode.Boolean))
 				return this;
