@@ -561,7 +561,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				Space();
 			}
 			WriteKeyword(AnonymousMethodExpression.DelegateKeyword);
-			if (anonymousMethodExpression.HasParameterList)
+			// No parameters -> "delegate {}" (omit the list); with parameters -> "delegate (...) {}".
+			if (anonymousMethodExpression.Parameters.Any())
 			{
 				Space(policy.SpaceBeforeAnonymousMethodParentheses);
 				WriteCommaSeparatedListInParenthesis(anonymousMethodExpression.Parameters, policy.SpaceWithinAnonymousMethodParentheses);

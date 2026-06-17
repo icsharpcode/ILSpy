@@ -2428,7 +2428,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
-			ame.HasParameterList = ame.Parameters.Count > 0;
 			var builder = new StatementBuilder(
 				typeSystem,
 				this.decompilationContext,
@@ -2493,7 +2492,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!isLambda && !parameterReferencingIdentifiers.Any())
 			{
 				ame.Parameters.Clear();
-				ame.HasParameterList = false;
 			}
 
 			Expression replacement;
@@ -2530,7 +2528,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var rr = new DecompiledLambdaResolveResult(
 				function, delegateType, inferredReturnType,
-				hasParameterList: isLambda || ame.HasParameterList,
+				hasParameterList: isLambda || ame.Parameters.Any(),
 				isAnonymousMethod: !isLambda,
 				isImplicitlyTyped: ame.Parameters.Any(p => p.Type is null));
 
