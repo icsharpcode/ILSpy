@@ -32,11 +32,11 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
 	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
 
-	// Derives the shared SlotKind name from a [Slot] role expression: the last dotted segment with a
-	// trailing "Role" removed (e.g. "Roles.EmbeddedStatement" -> "EmbeddedStatement", "LeftRole" ->
-	// "Left", "PropertyDeclaration.GetterRole" -> "Getter"). Roles that share a name (aliases, or the
-	// same logical slot across node types) intentionally collapse to one kind, so node.Slot.Kind matches
-	// node.Role comparisons; consumer sites derive the kind from their role the same way.
+	// Derives the shared SlotKind name from a [Slot]/[NameSlot] string. Those strings are already bare
+	// kind names (e.g. "Body", "Getter"), so this is mostly identity; the last-dotted-segment and
+	// trailing-"Role" stripping below is defensive against any legacy dotted/Role-suffixed form. Names
+	// shared across node types (aliases, or the same logical slot on different nodes) intentionally
+	// collapse to one kind, so node.Slot.Kind is shared and consumers compare against SlotKind.X.
 	static string SlotKindName(string roleExpr)
 	{
 		int dot = roleExpr.LastIndexOf('.');
@@ -109,7 +109,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 		// Collect the slot schema: child properties tagged [Slot] or [NameSlot], in declaration order
 		// (the order is the node's child layout, so it must follow the source, not be grouped by kind).
-		// [Slot] names the Role expression and infers single vs collection from the type. [NameSlot("role")]
+		// [Slot] names the slot kind and infers single vs collection from the type. [NameSlot("role")]
 		// string X declares only the convenience string; the generator owns the backing Identifier XToken
 		// child slot (emitted like a [Slot], but non-partial since the source does not declare it) plus the
 		// string body. DoMatch matches X (a string) and never sees XToken.
