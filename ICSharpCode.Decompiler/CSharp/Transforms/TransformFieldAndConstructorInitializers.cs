@@ -610,7 +610,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						|| PrimaryConstructorDecl.Initializer is not null
 						|| TypeDefinition.Kind == TypeKind.Struct;
 
-					// HACK: because our current AST model doesn't allow specifying an explicit order of roles,
+					// HACK: because our current AST model doesn't allow specifying an explicit ordering across slots,
 					// we have to explicitly insert the primary constructor parameters,
 					// MoveTo would just append the parameters to the list of children
 					if (PrimaryConstructorDecl.Parameters.Count > 0)

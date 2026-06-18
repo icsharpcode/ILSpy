@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// <summary>
 		/// Matches the <paramref name="patternChildren"/> collection against the
 		/// <paramref name="otherChildren"/> collection, with backtracking over Repeat/OptionalNode.
-		/// Each collection is already the per-role child list, so the match walks them by index.
+		/// Each collection is already the per-slot child list, so the match walks them by index.
 		/// </summary>
 		public static bool DoMatchCollection(IReadOnlyList<INode> patternChildren, IReadOnlyList<INode> otherChildren, Match match)
 		{
