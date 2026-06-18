@@ -1027,7 +1027,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 				if (acrr.SizeArguments != null && acrr.InitializerElements == null)
 				{
-					ace.AdditionalArraySpecifiers.FirstOrNullObject().Remove();
+					ace.AdditionalArraySpecifiers.FirstOrNull().Remove();
 					ace.Arguments.AddRange(acrr.SizeArguments.Select(ConvertConstantValue));
 				}
 				if (acrr.InitializerElements != null)
