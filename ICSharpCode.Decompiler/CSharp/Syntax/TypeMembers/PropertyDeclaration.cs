@@ -46,10 +46,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Property; }
 		}
 
-		/// <summary>
-		/// Gets/Sets the type reference of the interface that is explicitly implemented.
-		/// Null node if this member is not an explicit interface implementation.
-		/// </summary>
 		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
@@ -59,6 +55,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
+		/// <summary>
+		/// Gets/Sets the type reference of the interface that is explicitly implemented.
+		/// Null if this member is not an explicit interface implementation.
+		/// </summary>
 		[Slot("PrivateImplementationType")]
 		public partial AstType? PrivateImplementationType { get; set; }
 

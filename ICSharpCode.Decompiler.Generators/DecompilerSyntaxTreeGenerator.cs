@@ -58,8 +58,8 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 		List<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? membersToMatch = null;
 
-		// Abstract base nodes are never the dispatch target of DoMatch (concrete subclasses and the
-		// null-object each emit their own and do not chain to base), so emitting one here is dead code.
+		// Abstract base nodes are never the dispatch target of DoMatch (concrete subclasses each emit
+		// their own and do not chain to base), so emitting one here is dead code.
 		if (!targetSymbol.IsAbstract && !targetSymbol.MemberNames.Contains("DoMatch"))
 		{
 			membersToMatch = new();
@@ -324,9 +324,9 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		{
 			var slots = slotsArray.ToList();
 
-			// Backing fields and the partial-property bodies. A single slot stores a nullable field and
-			// substitutes the role's null object when empty (pre-NRT); a collection slot owns a lazily
-			// created AstNodeCollection bound to this node. A slot re-declared from an inherited contract
+			// Backing fields and the partial-property bodies. A single slot stores a nullable backing
+			// field (returned null-forgiving for a required child, nullable for an optional one); a
+			// collection slot owns a lazily created AstNodeCollection bound to this node. A slot re-declared from an inherited contract
 			// member (Part I.3 flatten) is an override.
 			foreach (var (roleExpr, isCollection, name, type, elementType, isOverride, isNullable, kindName, isPartial) in slots)
 			{

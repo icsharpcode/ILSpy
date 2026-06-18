@@ -343,7 +343,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// A single slot occupies exactly one index (even when empty, where GetChild returns null); a
 		// collection slot occupies a contiguous run of its current length. The generator emits these
 		// four members per node from its [Slot] partial-property declarations; nodes without children
-		// (and the null/placeholder nodes) keep the zero-child defaults below.
+		// (and the placeholder nodes) keep the zero-child defaults below.
 
 		internal virtual int GetChildCount() => 0;
 
@@ -487,9 +487,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				SetChildByRoleUntyped(kind, child);
 		}
 
-		// Sets the single slot matching the role (used by the non-generic mutation API). Symmetric with
-		// GetChildByRole, which returns null for a role this node does not declare a slot for:
-		// a node has no child of a role it has no slot for, so writing one is a no-op.
+		// Sets the single slot matching the kind (used by the non-generic mutation API). Unlike
+		// GetChildByRole, which returns null when this node declares no slot of that kind, writing a
+		// child to a kind the node has no slot for throws.
 		internal void SetChildByRoleUntyped(SlotKind kind, AstNode? child)
 		{
 			int count = GetChildCount();

@@ -240,7 +240,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>
 		/// Returns the first element for which the predicate returns true,
-		/// or the null node (AstNode with IsNull=true) if no such object is found.
+		/// or null if no such object is found.
 		/// </summary>
 		public T FirstOrNullObject(Func<T, bool>? predicate = null)
 		{
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>
 		/// Returns the last element for which the predicate returns true,
-		/// or the null node (AstNode with IsNull=true) if no such object is found.
+		/// or null if no such object is found.
 		/// </summary>
 		public T LastOrNullObject(Func<T, bool>? predicate = null)
 		{
