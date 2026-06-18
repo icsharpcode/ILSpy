@@ -50,16 +50,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Indexer; }
 		}
 
-		/// <summary>
-		/// Gets/Sets the type reference of the interface that is explicitly implemented.
-		/// Null node if this member is not an explicit interface implementation.
-		/// </summary>
 		[Slot("Attribute")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
+		/// <summary>
+		/// Gets/Sets the type reference of the interface that is explicitly implemented.
+		/// Null if this member is not an explicit interface implementation.
+		/// </summary>
 		[Slot("PrivateImplementationType")]
 		public partial AstType? PrivateImplementationType { get; set; }
 

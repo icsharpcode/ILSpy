@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>
 		/// Gets/Sets the type reference of the interface that is explicitly implemented.
-		/// Null node if this member is not an explicit interface implementation.
+		/// Null if this member is not an explicit interface implementation.
 		/// </summary>
 		[Slot("PrivateImplementationType")]
 		public partial AstType? PrivateImplementationType { get; set; }
