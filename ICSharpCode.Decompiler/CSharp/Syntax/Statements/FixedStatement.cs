@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>fixed_statement ::= 'fixed' '(' type variable_initializer* ')' statement</c> (C# grammar §24.7)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class FixedStatement : Statement
 	{
 		public const string FixedKeyword = "fixed";

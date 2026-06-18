@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>local_variable_declaration ::= type variable_initializer+</c> (C# grammar §13.6.2.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class VariableDeclarationStatement : Statement
 	{
 		public VariableDeclarationStatement(AstType type, string name, Expression initializer = null)

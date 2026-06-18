@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>comment ::= '//' input_character* | '/*' input_character* '*/'</c> (C# lexical grammar §6.3.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class Comment : Trivia
 	{
 

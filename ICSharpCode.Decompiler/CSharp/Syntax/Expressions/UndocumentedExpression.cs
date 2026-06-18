@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	///     | '__makeref' '(' expression ')'
 	/// </code>
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class UndocumentedExpression : Expression
 	{
 		public const string ArglistKeyword = "__arglist";

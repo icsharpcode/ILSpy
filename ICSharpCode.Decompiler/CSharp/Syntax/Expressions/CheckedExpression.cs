@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>checked_expression ::= 'checked' '(' expression ')'</c> (C# grammar §12.8.20)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class CheckedExpression : Expression
 	{
 		public const string CheckedKeyword = "checked";

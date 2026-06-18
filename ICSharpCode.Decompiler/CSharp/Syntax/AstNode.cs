@@ -37,8 +37,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
-	public abstract partial class AstNode : AbstractAnnotatable, IFreezable, INode, ICloneable
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
+	public abstract partial class AstNode : AbstractAnnotatable, INode, ICloneable
 	{
 		AstNode? parent;
 		// Flattened index of this node within its parent's child-index space (-1 when unparented).
@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>
 		/// Gets the first child with the specified role.
-		/// Returns the role's null object if the child is not found.
+		/// Returns null if the child is not found.
 		/// </summary>
 		public T GetChildByRole<T>(SlotKind kind) where T : AstNode?
 		{
@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		// Writes a single-slot backing field: detaches the old child, attaches the new one, renumbers.
-		// A null or null-object value empties the slot. Called by generated single-slot property setters.
+		// A null value empties the slot. Called by generated single-slot property setters.
 		internal void SetChildNode<T>(ref T? field, T? value) where T : AstNode
 		{
 			T? newValue = value;
@@ -488,7 +488,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		// Sets the single slot matching the role (used by the non-generic mutation API). Symmetric with
-		// GetChildByRole, which returns the null object for a role this node does not declare a slot for:
+		// GetChildByRole, which returns null for a role this node does not declare a slot for:
 		// a node has no child of a role it has no slot for, so writing one is a no-op.
 		internal void SetChildByRoleUntyped(SlotKind kind, AstNode? child)
 		{

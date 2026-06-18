@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>using_statement ::= 'await'? 'using' '(' ( local_variable_declaration | expression ) ')' statement</c> (C# grammar §13.14.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class UsingStatement : Statement
 	{
 		public const string UsingKeyword = "using";

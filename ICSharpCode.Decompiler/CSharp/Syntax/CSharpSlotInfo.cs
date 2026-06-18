@@ -41,24 +41,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool IsCollection { get; }
 
 		/// <summary>
-		/// Whether the slot is syntactically optional. Populated accurately once the null-object model
-		/// is replaced by nullable reference types; currently informational.
-		/// </summary>
-		public bool IsOptional { get; }
-
-		/// <summary>
 		/// The slot's kind, shared across node types (so <c>node.Slot.Kind == SlotKind.X</c> identifies a
 		/// node's position the way <c>node.Role == Roles.X</c> did, including polymorphically).
 		/// </summary>
 		public SlotKind Kind { get; }
 
-		internal CSharpSlotInfo(string name, Type childType, bool isCollection, SlotKind kind, bool isOptional = false)
+		internal CSharpSlotInfo(string name, Type childType, bool isCollection, SlotKind kind)
 		{
 			Name = name;
 			ChildType = childType;
 			IsCollection = isCollection;
 			Kind = kind;
-			IsOptional = isOptional;
 		}
 
 		public override string ToString() => Name;

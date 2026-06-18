@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>line_directive ::= '#' 'line' ( decimal_digit+ string_literal? | 'default' | 'hidden' )</c> (C# lexical grammar)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class LinePreprocessorDirective : PreProcessorDirective
 	{
 		public LinePreprocessorDirective(TextLocation startLocation, TextLocation endLocation) : base(PreProcessorDirectiveType.Line, startLocation, endLocation)
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>pragma_warning_directive ::= '#' 'pragma' 'warning' ( 'disable' | 'restore' ) expression*</c> (C# lexical grammar)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
 
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>pp_directive ::= '#' pp_kind new_line</c> (C# lexical grammar §6.5.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public partial class PreProcessorDirective : Trivia
 	{
 

@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Represents a named argument passed to a method or attribute.
 	/// <c>named_argument_expression ::= identifier ':' expression</c> (C# grammar §12.6.2.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class NamedArgumentExpression : Expression
 	{
 		[NameSlot("Identifier")]

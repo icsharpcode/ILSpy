@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>predefined_type ::= 'bool' | 'byte' | 'char' | 'decimal' | 'double' | 'float' | 'int' | 'long' | 'object' | 'sbyte' | 'short' | 'string' | 'uint' | 'ulong' | 'ushort'</c> (C# grammar §12.8.7.1)
 	/// <c>simple_type ::= numeric_type | 'bool'</c> (C# grammar §8.3.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class PrimitiveType : AstType
 	{
 		string keyword = string.Empty;

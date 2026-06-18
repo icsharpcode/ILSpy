@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>continue_statement ::= 'continue' ';'</c> (C# grammar §13.10.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ContinueStatement : Statement
 	{
 	}

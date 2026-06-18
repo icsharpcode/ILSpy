@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>foreach_statement ::= 'await'? 'foreach' '(' type variable_designation 'in' expression ')' statement</c> (C# grammar §13.9.5.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ForeachStatement : Statement
 	{
 		public const string AwaitKeyword = UnaryOperatorExpression.AwaitKeyword;

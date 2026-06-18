@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>delegate_declaration ::= attribute_section* modifier* 'delegate' ( 'ref' 'readonly'? )? type identifier type_parameter* '(' parameter* ')' constraint*</c> (C# grammar §21.2)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class DelegateDeclaration : EntityDeclaration
 	{
 

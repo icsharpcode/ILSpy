@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>object_create_expression ::= 'new' type '(' expression* ')' array_initializer?</c> (C# grammar §12.8.17.2.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ObjectCreateExpression : Expression
 	{
 		public const string NewKeyword = "new";

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>extern_alias_directive ::= 'extern' 'alias' identifier ';'</c> (C# grammar §14.4)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ExternAliasDeclaration : AstNode
 	{
 

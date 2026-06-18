@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>anonymous_object_creation_expression ::= 'new' '{' expression* '}'</c> (C# grammar §12.8.17.4)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class AnonymousTypeCreateExpression : Expression
 	{
 		public const string NewKeyword = "new";

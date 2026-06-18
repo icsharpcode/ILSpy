@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Not present in this revision of the C# specification grammar: C# 14 extension blocks ('extension(receiver) { members }').
 	/// <c>extension_declaration ::= attribute_section* 'extension' type_parameter* '(' parameter* ')' constraint* '{' member* '}'</c>
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ExtensionDeclaration : EntityDeclaration
 	{
 		public const string ExtensionKeyword = "extension";

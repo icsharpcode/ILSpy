@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </code>
 	/// (C# grammar §14.6.3, §14.6.4)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class UsingDeclaration : AstNode
 	{
 		public const string UsingKeyword = "using";

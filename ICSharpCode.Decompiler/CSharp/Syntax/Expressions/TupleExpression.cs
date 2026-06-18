@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>tuple_literal ::= '(' expression ( ',' expression )+ ')'</c> (C# grammar §12.8.6)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class TupleExpression : Expression
 	{
 		[Slot("Expression")]

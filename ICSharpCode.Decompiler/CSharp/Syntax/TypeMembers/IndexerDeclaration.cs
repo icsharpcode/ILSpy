@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </code>
 	/// (C# grammar §15.9.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class IndexerDeclaration : EntityDeclaration
 	{
 		public const string ThisKeyword = "this";

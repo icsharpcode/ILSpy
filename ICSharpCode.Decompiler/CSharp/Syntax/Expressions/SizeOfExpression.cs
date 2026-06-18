@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>sizeof_expression ::= 'sizeof' '(' type ')'</c> (C# grammar §12.8.19)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class SizeOfExpression : Expression
 	{
 		public const string SizeofKeyword = "sizeof";

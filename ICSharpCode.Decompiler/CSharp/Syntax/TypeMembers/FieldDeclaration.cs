@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>field_declaration ::= attribute_section* modifier* type variable_initializer* ';'</c> (C# grammar §15.5.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class FieldDeclaration : EntityDeclaration
 	{
 		public override SymbolKind SymbolKind {

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>typeof_expression ::= 'typeof' '(' type ')'</c> (C# grammar §12.8.18)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class TypeOfExpression : Expression
 	{
 		public const string TypeofKeyword = "typeof";

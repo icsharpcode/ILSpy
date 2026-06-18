@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>block ::= '{' statement* '}'</c> (C# grammar §13.3.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class BlockStatement : Statement, IEnumerable<Statement>
 	{
 

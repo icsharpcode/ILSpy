@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>expression_statement ::= expression ';'</c> (C# grammar §13.7)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ExpressionStatement : Statement
 	{
 		[Slot("Expression")]

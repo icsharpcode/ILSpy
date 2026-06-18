@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>unary_operator ::= '+' | '-' | '!' | '~' | '++' | '--' | '*' | '&amp;' | '^' | 'await'</c>
 	/// <c>postfix_unary_operator ::= '++' | '--' | '!' | '?'</c>
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class UnaryOperatorExpression : Expression
 	{
 		public const string NotToken = "!";

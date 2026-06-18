@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>switch_statement ::= 'switch' expression switch_section*</c> (C# grammar §13.8.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class SwitchStatement : Statement
 	{
 		public const string SwitchKeyword = "switch";
@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>switch_section ::= switch_label+ statement*</c> (C# grammar §13.8.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class SwitchSection : AstNode
 	{
 
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>switch_label ::= 'case' expression ':' | 'default' ':'</c> (C# grammar §13.8.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class CaseLabel : AstNode
 	{
 		public const string CaseKeyword = "case";

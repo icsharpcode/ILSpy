@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>nullable_reference_type ::= non_nullable_reference_type nullable_type_annotation</c> (C# grammar §8.2.1)
 	/// <c>nullable_value_type ::= non_nullable_value_type nullable_type_annotation</c> (C# grammar §8.3.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ComposedType : AstType
 	{
 		public const string RefKeyword = "ref";
@@ -132,7 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>rank_specifier ::= '[' ','* ']'</c> (C# grammar §8.2.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ArraySpecifier : AstNode
 	{
 

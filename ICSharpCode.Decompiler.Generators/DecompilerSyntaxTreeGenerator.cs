@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsNullNode, bool NeedsPatternPlaceholder, int NullNodeBaseCtorParamCount, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
+	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, bool IsTypeNode, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
 
 	// Derives the shared SlotKind name from a [Slot] role expression: the last dotted segment with a
 	// trailing "Role" removed (e.g. "Roles.EmbeddedStatement" -> "EmbeddedStatement", "LeftRole" ->
@@ -174,9 +174,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			NeedsVisitor: !targetSymbol.IsAbstract && targetSymbol.BaseType!.IsAbstract,
 			IsAbstract: targetSymbol.IsAbstract,
 			BaseHasDefaultConstructor: targetSymbol.BaseType is { } bt && bt.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility != Accessibility.Private),
-			NeedsNullNode: (bool)attribute.ConstructorArguments[0].Value!,
-			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[1].Value!,
-			NullNodeBaseCtorParamCount: targetSymbol.InstanceConstructors.Min(m => m.Parameters.Length),
+			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[0].Value!,
 			IsTypeNode: targetSymbol.Name == "AstType" || targetSymbol.BaseType?.Name == "AstType",
 			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray(), nameSlots?.ToEquatableArray(), ctorParams?.ToEquatableArray());
 	}
@@ -589,7 +587,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
 
 		source = source
-			.Concat([new("PatternPlaceholder", true, false, true, false, false, 0, false, "PatternPlaceholder", "AstNode", null, null, null, null)])
+			.Concat([new("PatternPlaceholder", true, false, true, false, false, "PatternPlaceholder", "AstNode", null, null, null, null)])
 			.ToImmutableArray();
 
 		WriteInterface("IAstVisitor", "void", "");
@@ -653,7 +651,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
 	sealed class DecompilerAstNodeAttribute : global::System.Attribute
 	{
-		public DecompilerAstNodeAttribute(bool hasNullNode = false, bool hasPatternPlaceholder = false) { }
+		public DecompilerAstNodeAttribute(bool hasPatternPlaceholder = false) { }
 	}
 
 	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]

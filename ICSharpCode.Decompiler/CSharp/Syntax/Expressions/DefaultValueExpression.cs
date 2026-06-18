@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>default_value_expression ::= 'default' ( '(' type ')' )?</c> (C# grammar §12.8.21)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class DefaultValueExpression : Expression
 	{
 		public const string DefaultKeyword = "default";
