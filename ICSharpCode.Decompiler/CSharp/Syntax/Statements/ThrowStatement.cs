@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>throw_statement ::= 'throw' expression? ';'</c> (C# grammar §13.10.6)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ThrowStatement : Statement
 	{
 		public const string ThrowKeyword = "throw";

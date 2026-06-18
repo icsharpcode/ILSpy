@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>goto_statement ::= 'goto' identifier ';'</c> (C# grammar §13.10.4)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class GotoStatement : Statement
 	{
 		public const string GotoKeyword = "goto";
@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>goto_statement ::= 'goto' 'case' expression ';'</c> (C# grammar §13.10.4)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class GotoCaseStatement : Statement
 	{
 		public const string GotoKeyword = "goto";
@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>goto_statement ::= 'goto' 'default' ';'</c> (C# grammar §13.10.4)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class GotoDefaultStatement : Statement
 	{
 		public const string GotoKeyword = "goto";

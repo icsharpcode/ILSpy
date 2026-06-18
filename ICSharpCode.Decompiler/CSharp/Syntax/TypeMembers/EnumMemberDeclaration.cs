@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>enum_member_declaration ::= attribute_section* identifier ( '=' expression )?</c> (C# grammar §20.4)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class EnumMemberDeclaration : EntityDeclaration
 	{
 

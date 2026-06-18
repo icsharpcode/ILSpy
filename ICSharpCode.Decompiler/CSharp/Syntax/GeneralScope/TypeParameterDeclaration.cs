@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// they belong to the parent type or method.
 	/// <c>type_parameter ::= attribute_section* ( 'in' | 'out' )? identifier</c> (C# grammar §8.5, §15.2.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class TypeParameterDeclaration : AstNode
 	{
 		public const string OutVarianceKeyword = "out";

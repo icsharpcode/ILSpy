@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>try_statement ::= 'try' block catch_clause* ( 'finally' block )?</c> (C# grammar §13.11)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class TryCatchStatement : Statement
 	{
 		public const string TryKeyword = "try";
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>catch_clause ::= 'catch' ( '(' type identifier? ')' )? ( 'when' '(' expression ')' )? block</c> (C# grammar §13.11)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class CatchClause : AstNode
 	{
 		public const string CatchKeyword = "catch";

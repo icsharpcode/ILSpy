@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>lambda_expression ::= attribute_section* 'async'? parameter* '=&gt;' ( block | expression )</c> (C# grammar §12.22.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class LambdaExpression : Expression
 	{
 		public const string AsyncModifier = "async";

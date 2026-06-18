@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>break_statement ::= 'break' ';'</c> (C# grammar §13.10.2)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class BreakStatement : Statement
 	{
 		public const string BreakKeyword = "break";

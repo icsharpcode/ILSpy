@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>array_initializer ::= '{' expression* '}'</c> (C# grammar §17.7)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class ArrayInitializerExpression : Expression
 	{
 		[Slot("Expression")]

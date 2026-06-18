@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </code>
 	/// (C# grammar §6.4.5.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class PrimitiveExpression : Expression
 	{
 		public static readonly object AnyValue = new object();

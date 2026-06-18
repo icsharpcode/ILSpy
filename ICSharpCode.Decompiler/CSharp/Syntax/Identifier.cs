@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </code>
 	/// (C# lexical grammar §6.4.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true)]
+	[DecompilerAstNode]
 	public sealed partial class Identifier : AstNode
 	{
 

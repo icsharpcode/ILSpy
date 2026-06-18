@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>attribute_section ::= '[' ( identifier ':' )? attribute* ']'</c> (C# grammar §23.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class AttributeSection : AstNode
 	{
 

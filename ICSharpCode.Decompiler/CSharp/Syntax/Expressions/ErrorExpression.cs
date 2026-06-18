@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// No C# spec grammar production: placeholder inserted when the AST is built from input that does not parse as valid C#.
 	/// <c>error_expression ::= /* unparseable input */</c>
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ErrorExpression : Expression
 	{
 		public TextLocation Location { get; set; }

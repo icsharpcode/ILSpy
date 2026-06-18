@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>yield_statement ::= 'yield' 'return' expression ';'</c> (C# grammar §13.15)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class YieldReturnStatement : Statement
 	{
 		public const string YieldKeyword = "yield";

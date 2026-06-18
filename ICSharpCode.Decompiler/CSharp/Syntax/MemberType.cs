@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>member_type ::= type ( '.' | '::' ) identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §7.8.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class MemberType : AstType
 	{
 

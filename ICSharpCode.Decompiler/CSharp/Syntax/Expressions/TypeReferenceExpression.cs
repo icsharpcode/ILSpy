@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// No C# spec grammar production: ILSpy wrapper that lets an AstType appear in expression position (e.g. the 'int' in 'int.Parse(...)').
 	/// <c>type_reference_expression ::= type</c>
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class TypeReferenceExpression : Expression
 	{
 		[Slot("Type")]

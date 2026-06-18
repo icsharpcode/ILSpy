@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>member_reference_expression ::= expression '.' identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §12.8.7.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class MemberReferenceExpression : Expression
 	{
 		[Slot("TargetExpression")]

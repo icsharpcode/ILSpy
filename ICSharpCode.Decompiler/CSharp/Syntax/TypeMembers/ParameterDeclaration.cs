@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>fixed_parameter ::= attribute_section* ( 'this' | 'scoped'? ( 'ref' 'readonly'? | 'out' | 'in' ) )? type identifier ( '=' expression )?</c> (C# grammar §15.6.2.1)
 	/// <c>parameter_array ::= attribute_section* 'params' type identifier</c> (C# grammar §15.6.2.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class ParameterDeclaration : AstNode
 	{
 		public const string ThisModifier = "this";

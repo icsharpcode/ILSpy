@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// This class is useful even though it doesn't provide any additional functionality:
 	/// It can be used to communicate more information in APIs, e.g. "this subnode will always be a statement"
 	/// </remarks>
-	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public abstract partial class Statement : AstNode
 	{
 		public new Statement Clone()

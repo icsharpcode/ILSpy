@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>fixed_size_buffer_declarator ::= identifier '[' expression ']'</c> (C# grammar §24.8.2)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class FixedVariableInitializer : AstNode
 	{
 		[NameSlot("Identifier")]

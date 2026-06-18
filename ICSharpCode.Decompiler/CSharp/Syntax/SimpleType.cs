@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>simple_type ::= identifier ( '&lt;' type ( ',' type )* '&gt;' )?</c> (C# grammar §7.8.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true)]
+	[DecompilerAstNode]
 	public sealed partial class SimpleType : AstType
 	{
 		public SimpleType(Identifier identifier)

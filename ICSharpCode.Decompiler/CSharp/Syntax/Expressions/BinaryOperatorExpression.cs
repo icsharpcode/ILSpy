@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <c>binary_operator_expression ::= expression binary_operator expression</c> (C# grammar §12.13-§12.18, precedence-flattened)
 	/// <c>binary_operator ::= '*' | '/' | '%' | '+' | '-' | '&lt;&lt;' | '&gt;&gt;' | '&gt;&gt;&gt;' | '&lt;' | '&gt;' | '&lt;=' | '&gt;=' | '==' | '!=' | '&amp;' | '^' | '|' | '&amp;&amp;' | '||' | '??' | '..'</c>
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class BinaryOperatorExpression : Expression
 	{
 		public const string BitwiseAndToken = "&";
@@ -230,7 +230,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>left ?? right</summary>
 		NullCoalescing,
 		/// <summary>left .. right</summary>
-		/// <remarks>left and right are optional = may be Expression.Null</remarks>
+		/// <remarks>left and right are optional and may be null</remarks>
 		Range,
 
 		/// <summary>left is right</summary>

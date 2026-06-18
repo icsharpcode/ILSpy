@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>method_declaration ::= attribute_section* modifier* type ( type '.' )? identifier type_parameter* '(' parameter* ')' constraint* ( block | ';' )</c> (C# grammar §15.6.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class MethodDeclaration : EntityDeclaration
 	{
 		public override SymbolKind SymbolKind {

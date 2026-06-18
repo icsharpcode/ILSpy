@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>do_statement ::= 'do' statement 'while' '(' expression ')' ';'</c> (C# grammar §13.9.3)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class DoWhileStatement : Statement
 	{
 		public const string DoKeyword = "do";

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>lock_statement ::= 'lock' '(' expression ')' statement</c> (C# grammar §13.13)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class LockStatement : Statement
 	{
 		public const string LockKeyword = "lock";

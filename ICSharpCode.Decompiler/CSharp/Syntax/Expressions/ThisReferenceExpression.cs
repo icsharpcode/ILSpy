@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>this_access ::= 'this'</c> (C# grammar §12.8.14)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ThisReferenceExpression : Expression
 	{
 		// StartLocation comes from the base (stored at print time); only the end needs deriving.

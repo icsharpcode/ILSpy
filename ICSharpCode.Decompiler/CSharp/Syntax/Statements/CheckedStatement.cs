@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>checked_statement ::= 'checked' block</c> (C# grammar §13.12)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class CheckedStatement : Statement
 	{
 		public const string CheckedKeyword = "checked";

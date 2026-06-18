@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>declaration_expression ::= type variable_designation</c> (C# grammar §12.20)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class DeclarationExpression : Expression
 	{
 		[Slot("Type")]

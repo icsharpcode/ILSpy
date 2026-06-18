@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>unchecked_expression ::= 'unchecked' '(' expression ')'</c> (C# grammar §12.8.20)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class UncheckedExpression : Expression
 	{
 		public const string UncheckedKeyword = "unchecked";

@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// No standalone expression production: 'name = value' as used in object initializers (member_initializer), anonymous-object members (member_declarator), and named attribute arguments.
 	/// <c>named_expression ::= identifier '=' expression</c>
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class NamedExpression : Expression
 	{
 		[NameSlot("Identifier")]

@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// A type reference in the C# AST.
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true, hasPatternPlaceholder: true)]
+	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public abstract partial class AstType : AstNode
 	{
 

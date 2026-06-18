@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>constructor_declaration ::= attribute_section* modifier* identifier '(' parameter* ')' constructor_initializer? ( block | ';' )</c> (C# grammar §15.11.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: false)]
+	[DecompilerAstNode]
 	public sealed partial class ConstructorDeclaration : EntityDeclaration
 	{
 
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// <summary>
 	/// <c>constructor_initializer ::= ':' ( 'base' | 'this' ) '(' expression* ')'</c> (C# grammar §15.11.1)
 	/// </summary>
-	[DecompilerAstNode(hasNullNode: true)]
+	[DecompilerAstNode]
 	public sealed partial class ConstructorInitializer : AstNode
 	{
 		public const string BaseKeyword = "base";
