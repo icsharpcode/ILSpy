@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public VariableInitializer GetVariable(string name)
 		{
-			return Variables.FirstOrNullObject(vi => vi.Name == name);
+			return Variables.FirstOrNull(vi => vi.Name == name);
 		}
 	}
 }
