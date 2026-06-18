@@ -167,8 +167,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		}
 
 		// Locks the exact source spans of the visible sequence points for a header-rich method, so a
-		// rewrite of how SequencePointBuilder sources brace/paren/keyword locations (e.g. deriving them
-		// from real nodes instead of reconstructed token nodes) cannot silently shift PDB coordinates.
+		// change to how SequencePointBuilder derives brace/paren/keyword locations from the surrounding
+		// real nodes cannot silently shift PDB coordinates.
 		// The coordinates are in decompiled-output space and are pinned to the fixed compilation above.
 		static readonly string[] ExpectedHeaderSequencePoints = {
 			"10,50 - 10,57",
