@@ -67,7 +67,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			var astNodeType = (INamedTypeSymbol)context.SemanticModel.GetSpeculativeSymbolInfo(context.TargetNode.Span.Start, SyntaxFactory.ParseTypeName("AstNode"), SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol!;
 			var entityDeclarationType = context.SemanticModel.GetSpeculativeSymbolInfo(context.TargetNode.Span.Start, SyntaxFactory.ParseTypeName("EntityDeclaration"), SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol as INamedTypeSymbol;
 
-			// EntityDeclaration declares Name (over Roles.Identifier), ReturnType, and the attributes/modifiers
+			// EntityDeclaration declares Name (a NameSlot over its Identifier token), ReturnType, and the attributes/modifiers
 			// helper as virtual members on the base; a subclass overrides them, so the property scan (which
 			// skips overrides) misses them. Add them explicitly for every EntityDeclaration-derived node. The
 			// NameToken slot is intentionally not matched, since the Name string already covers it.

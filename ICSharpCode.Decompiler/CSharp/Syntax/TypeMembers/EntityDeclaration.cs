@@ -25,11 +25,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public abstract class EntityDeclaration : AstNode
 	{
-		// Modifiers are stored in the Modifiers scalar; this role only tags the keyword tokens the
-		// output visitor emits (e.g. for the override-link reference in TextTokenWriter).
-		// Identity marker for modifier keywords in the output (modifiers are scalars, not child nodes);
-		// the token writer uses it to make the 'override' modifier a go-to-definition reference.
-
 		public abstract SymbolKind SymbolKind { get; }
 
 		public virtual AstNodeCollection<AttributeSection> Attributes {

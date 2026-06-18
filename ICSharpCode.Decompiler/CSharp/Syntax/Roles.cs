@@ -29,8 +29,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public static class Roles
 	{
 
-		// some pre defined constants for common roles
-
 		// some pre defined constants for most used punctuation
 		public const string LPar = "(";
 		public const string RPar = ")";

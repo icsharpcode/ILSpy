@@ -300,7 +300,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal bool DoMatch(AstNodeCollection<T> other, Match match)
 		{
-			// Both collections are already the per-role child lists, so the matcher walks them by index.
+			// Both collections are already the per-slot child lists, so the matcher walks them by index.
 			return Pattern.DoMatchCollection(AsNodeList(), other.AsNodeList(), match);
 		}
 

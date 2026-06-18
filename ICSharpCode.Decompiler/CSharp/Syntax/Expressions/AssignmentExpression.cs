@@ -37,8 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class AssignmentExpression : Expression
 	{
-		// reuse roles from BinaryOperatorExpression
-
 		public const string AssignToken = "=";
 		public const string AddToken = "+=";
 		public const string SubtractToken = "-=";
