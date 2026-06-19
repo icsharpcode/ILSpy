@@ -167,7 +167,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			if (property.Type.TypeKind == TypeKind.Enum && property.SetMethod != null && !property.IsStatic)
 			{
 				ctorParams ??= new();
-				ctorParams.Add((property.Name, property.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat), "", false, false));
+				ctorParams.Add((property.Name, CtorParamTypeName(property.Type), "", false, false));
 			}
 		}
 
@@ -183,6 +183,17 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 	// in the same partial class; the generated file carries an auto-generated header, so naming-style
 	// rules do not apply.
 	static string FieldName(string propertyName) => "slot_" + propertyName;
+
+	// Type name for an enum-typed constructor parameter. Fully-qualified so an enum in another
+	// namespace resolves without a using, minus the generated file's own namespace prefix, which is
+	// redundant there. Used only in parameter-type position, so no member-name shadowing applies
+	// (unlike Identifier.Create in NameSlot setters, which must stay global::-qualified).
+	static string CtorParamTypeName(ITypeSymbol type)
+	{
+		const string ownNamespacePrefix = "global::ICSharpCode.Decompiler.CSharp.Syntax.";
+		string name = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+		return name.StartsWith(ownNamespacePrefix) ? name.Substring(ownNamespacePrefix.Length) : name;
+	}
 
 	void WriteGeneratedMembers(SourceProductionContext context, AstNodeAdditions source)
 	{
