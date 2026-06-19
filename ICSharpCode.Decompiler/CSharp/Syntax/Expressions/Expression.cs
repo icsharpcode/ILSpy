@@ -30,7 +30,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public abstract partial class Expression : AstNode
 	{
-
 		public new Expression Clone()
 		{
 			return (Expression)base.Clone();

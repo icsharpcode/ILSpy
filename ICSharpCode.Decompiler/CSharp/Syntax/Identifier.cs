@@ -42,7 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class Identifier : AstNode
 	{
-
 		string name;
 		public string Name {
 			get { return this.name; }

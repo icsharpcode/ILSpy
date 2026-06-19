@@ -36,6 +36,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		[Slot("Expression")]
 		public partial AstNodeCollection<Expression> Elements { get; }
-
 	}
 }

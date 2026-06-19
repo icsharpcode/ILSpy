@@ -34,7 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class BlockStatement : Statement, IEnumerable<Statement>
 	{
-
 		[Slot("Statement")]
 		public partial AstNodeCollection<Statement> Statements { get; }
 

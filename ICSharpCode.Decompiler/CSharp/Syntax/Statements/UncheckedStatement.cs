@@ -38,6 +38,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Body")]
 		public partial BlockStatement Body { get; set; }
-
 	}
 }

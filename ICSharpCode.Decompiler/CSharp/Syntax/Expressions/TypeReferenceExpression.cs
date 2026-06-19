@@ -29,6 +29,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		[Slot("Type")]
 		public partial AstType Type { get; set; }
-
 	}
 }

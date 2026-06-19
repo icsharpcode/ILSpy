@@ -41,7 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class ParenthesizedVariableDesignation : VariableDesignation
 	{
-
 		[Slot("VariableDesignation")]
 		public partial AstNodeCollection<VariableDesignation> VariableDesignations { get; }
 	}

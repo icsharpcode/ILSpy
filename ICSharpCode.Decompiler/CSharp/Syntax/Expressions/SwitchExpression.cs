@@ -42,12 +42,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class SwitchExpressionSection : AstNode
 	{
-
 		[Slot("Pattern")]
 		public partial Expression Pattern { get; set; }
 
 		[Slot("Body")]
 		public partial Expression Body { get; set; }
-
 	}
 }

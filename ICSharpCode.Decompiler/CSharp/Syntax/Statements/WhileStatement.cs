@@ -41,6 +41,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("EmbeddedStatement")]
 		public partial Statement EmbeddedStatement { get; set; }
-
 	}
 }

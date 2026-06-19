@@ -34,7 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class ExternAliasDeclaration : AstNode
 	{
-
 		[Slot("Identifier")]
 		public partial string Name { get; set; }
 	}

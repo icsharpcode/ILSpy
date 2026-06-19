@@ -34,7 +34,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class DocumentationReference : AstNode
 	{
-
 		/// <summary>
 		/// Gets/Sets the entity type.
 		/// Possible values are:

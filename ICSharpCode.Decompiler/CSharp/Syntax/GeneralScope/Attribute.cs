@@ -36,7 +36,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class Attribute : AstNode
 	{
-
 		[Slot("Type")]
 		public partial AstType Type { get; set; }
 

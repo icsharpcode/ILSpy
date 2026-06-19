@@ -45,6 +45,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("False")]
 		public partial Expression FalseExpression { get; set; }
-
 	}
 }

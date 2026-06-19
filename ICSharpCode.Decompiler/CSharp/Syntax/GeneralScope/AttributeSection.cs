@@ -32,7 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class AttributeSection : AstNode
 	{
-
 		public string AttributeTarget {
 			get {
 				return GetChildByRole<Identifier>(SlotKind.Identifier)?.Name ?? string.Empty;
