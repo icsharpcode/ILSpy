@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
+	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
 
 	// Derives the shared SlotKind name from a [Slot]/[NameSlot] string. Those strings are already bare
 	// kind names (e.g. "Body", "Getter"), so this is mostly identity; the last-dotted-segment and
@@ -113,7 +113,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		// string X declares only the convenience string; the generator owns the backing Identifier XToken
 		// child slot (emitted like a [Slot], but non-partial since the source does not declare it) plus the
 		// string body. DoMatch matches X (a string) and never sees XToken.
-		List<(string RoleExpr, bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? slots = null;
+		List<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? slots = null;
 		List<(string StringName, string TokenName, bool NullOnEmpty)>? nameSlots = null;
 		// Constructor parameters in declaration order: single/collection [Slot] children, the [NameSlot]
 		// string, and settable enum-typed scalar properties (e.g. Operator, FieldDirection). ParamType is the
@@ -137,7 +137,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				string elementType = isCollection
 					? ((INamedTypeSymbol)property.Type).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
 					: propertyType;
-				slots.Add((roleExpr, isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, SlotKindName(roleExpr), true));
+				slots.Add((isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, SlotKindName(roleExpr), true));
 				ctorParams ??= new();
 				ctorParams.Add(isCollection
 					? (property.Name, "", elementType, true, true)
@@ -153,7 +153,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				bool nullOnEmpty = nameSlotAttr.ConstructorArguments.Length > 1 && (bool)nameSlotAttr.ConstructorArguments[1].Value!;
 				string tokenName = property.Name + "Token";
 				// An optional name (nullOnEmpty) makes the backing token a real nullable slot: an absent name is a null token.
-				slots.Add((roleExpr, false, tokenName, "Identifier", "Identifier", false, nullOnEmpty, SlotKindName(roleExpr), false));
+				slots.Add((false, tokenName, "Identifier", "Identifier", false, nullOnEmpty, SlotKindName(roleExpr), false));
 				nameSlots.Add((property.Name, tokenName, nullOnEmpty));
 				// The name is the primary construction value, so it is a required param. nullOnEmpty only
 				// governs the empty-string-to-null behaviour of the setter, not ctor optionality.
@@ -327,7 +327,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			// field (returned null-forgiving for a required child, nullable for an optional one); a
 			// collection slot owns a lazily created AstNodeCollection bound to this node. A slot re-declared from an inherited contract
 			// member (Part I.3 flatten) is an override.
-			foreach (var (roleExpr, isCollection, name, type, elementType, isOverride, isNullable, kindName, isPartial) in slots)
+			foreach (var (isCollection, name, type, elementType, isOverride, isNullable, kindName, isPartial) in slots)
 			{
 				string field = FieldName(name);
 				string partialKw = isPartial ? "partial " : "";
