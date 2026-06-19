@@ -66,7 +66,6 @@ public abstract class AstNode : AbstractAnnotatable, ICloneable, PatternMatching
     AstNode? parent;
     int childIndex = -1;            // flattened index within parent
     TextLocation startLocation, endLocation;   // set at print time
-    // flags: per-class bits only (e.g. Identifier.IsVerbatim); no role index, no frozen bit
 
     public AstNode? Parent { get; }
     public int ChildIndex { get; }
@@ -555,16 +554,22 @@ spot-check optional-child output (abstract methods, expression-bodied members, n
 using/foreach).
 
 ## Phase 9 -- Cleanup & niceties
-**Decided, deferred (generator-internal, zero public-API impact): bit-pack declared scalars into
-`flags`** (ILAst-style). The generator backs each declared `bool` (1 bit) and *narrow non-`[Flags]`
-enum* (`BinaryOperatorType`/`UnaryOperatorType`/`AssignmentOperatorType` ~5-6 bits, `AccessorKind`,
-`VarianceModifier`, ...) with a mask+shift over `flags` instead of a field, allocating bit ranges
-per class above the base's used bits (generalize `AstNodeFlagsUsedBits` to a generated per-class
-`const`), with an overflow diagnostic if a node exceeds the word. **Carve-out: `[Flags]` enums stay
-their own field** -- `Modifiers` is ~19 flag bits, already a bitset, and would overflow the word
-(esp. while the 9-bit role index is still present pre-Phase-7). The accessor signature is unchanged
-(`public bool IsAsync { get; set; }`), so this is a pure storage swap doable any time after Phase 2.
-Delete dead decorators/visitor methods; optionally generate `SymbolKind` from the model; re-add
+**Measured and dropped: bit-packing declared scalars into `flags` is not worth it; the `flags` field
+itself was removed instead.** The plan was to back each declared `bool` (1 bit) and *narrow
+non-`[Flags]` enum* (`BinaryOperatorType`/`UnaryOperatorType`/`AssignmentOperatorType` ~5-6 bits,
+`AccessorKind`, `VarianceModifier`, ...) with a mask+shift over `flags` instead of a field. Measuring
+it (per-thread allocation counting on representative nodes) showed ~zero benefit on the
+high-frequency nodes: the CLR already packs a node's bools and narrow enums into the object's existing
+alignment padding, so hand-packing reclaims slots that do not exist. `ParameterDeclaration` (3 bools +
+`ReferenceKind`) stayed 96 B and `BinaryOperatorExpression` (`BinaryOperatorType`) stayed 80 B after
+packing; only a node whose scalars happened to tip an 8-byte boundary with nothing to share padding
+with (`ComposedType`, 3 bools) dropped 8 B. With packing off the table, the `flags` word's only user
+was `Identifier.IsVerbatim`; that became a plain `bool` (free -- it lands in padding) and **the `flags`
+field and `AstNodeFlagsUsedBits` were removed**, which shrank *every* `AstNode` by 8 bytes (the field
+occupied its own aligned slot rather than pairing with `childIndex` as assumed; a minimal node
+measured 64 -> 56 B) -- a universal win the per-node packing never delivered. `[Flags]` `Modifiers`
+keeps its own field regardless. Remaining cleanup:
+delete dead decorators/visitor methods; optionally generate `SymbolKind` from the model; re-add
 the `Generators` project to `ILSpy.sln` (already done); regenerate lock files; final
 public-API-diff pass; update docs.
 
@@ -661,7 +666,8 @@ De-risking spikes (each isolated, parallel-worktree-friendly):
 ## Open items
 - Phase 3 mechanic: RESOLVED to BRIDGE by spike E1 (see Phase 3 / Phase S).
 - Collection-renumber scheme: RESOLVED to plain eager + documented lazy fallback by spike E2.
-- `SymbolKind` generation (Phase 9) is optional; flags bit-packing (Phase 9) decided + deferred.
+- `SymbolKind` generation (Phase 9) is optional; flags bit-packing (Phase 9) measured and dropped --
+  the `flags` field was removed instead (-8 B/node), see Phase 9.
 - Remaining within-plan probes (not decisions): extend the slot-order assert to optional/reordered-
   child families before the 3c flip (E1/N2); add regression coverage for the
   `InsertMissingTokensDecorator` location path before the token drop (E3/N1); re-time a CoreLib
