@@ -65,21 +65,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.startLocation = value;
 		}
 
-		const uint verbatimBit = 1u << AstNodeFlagsUsedBits;
-
 		// The @-escaping is a lexical detail, not structural; exclude it from matching.
 		[ExcludeFromMatch]
-		public bool IsVerbatim {
-			get {
-				return (flags & verbatimBit) != 0;
-			}
-			set {
-				if (value)
-					flags |= verbatimBit;
-				else
-					flags &= ~verbatimBit;
-			}
-		}
+		public bool IsVerbatim { get; set; }
 
 		public override TextLocation EndLocation {
 			get {
