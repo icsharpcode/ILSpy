@@ -150,6 +150,27 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		}
 
 		[Test]
+		public void RenamedConstructorNameSurvivesLocationSetting()
+		{
+			// A constructor whose name differs from its declaring type (e.g. after a type rename) makes
+			// CSharpOutputVisitor.VisitConstructorDeclaration print a detached clone of the type's name
+			// token. That clone reaches the location-setting decorator parentless, so it has no slot; the
+			// decorator must skip it instead of routing SlotKind.None into the throwing child setter.
+			var type = new TypeDeclaration { ClassType = ClassType.Class, Name = "Foo" };
+			type.Members.Add(new ConstructorDeclaration { Name = "Bar", Body = new BlockStatement() });
+			var syntaxTree = new SyntaxTree();
+			syntaxTree.Members.Add(type);
+
+			var settings = new DecompilerSettings();
+			string located = null;
+			Assert.That(() => located = Print(syntaxTree, settings, setLocations: true), Throws.Nothing);
+
+			// The clone path is the one under test: the constructor is named after the type, not "Bar".
+			Assert.That(located, Does.Contain("Foo()"));
+			Assert.That(located, Is.EqualTo(Print(syntaxTree, settings, setLocations: false)));
+		}
+
+		[Test]
 		public void SequencePointsAreGeneratedForTheMethodBody()
 		{
 			var syntaxTree = DecompileSample(out var decompiler, out var settings);
