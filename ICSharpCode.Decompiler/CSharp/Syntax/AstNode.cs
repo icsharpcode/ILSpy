@@ -45,11 +45,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// Recomputed lazily by the parent (EnsureChildIndices) after a structural mutation.
 		internal int childIndex = -1;
 
-		// Flag bits used by derived classes (e.g. Identifier uses 1 bit for IsVerbatim).
-		protected uint flags = 0;
-
-		protected const int AstNodeFlagsUsedBits = 0;
-
 		TextLocation startLocation = TextLocation.Empty;
 		TextLocation endLocation = TextLocation.Empty;
 
