@@ -1,3 +1,5 @@
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -46,8 +48,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public int Alignment { get; }
 
-		public string Suffix { get; }
-		public Interpolation(Expression expression, int alignment = 0, string suffix = null)
+		public string? Suffix { get; }
+		public Interpolation(Expression expression, int alignment = 0, string? suffix = null)
 		{
 			Expression = expression;
 			Alignment = alignment;
@@ -61,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class InterpolatedStringText : InterpolatedStringContent
 	{
-		public string Text { get; set; }
+		public string Text { get; set; } = string.Empty;
 
 		public InterpolatedStringText()
 		{

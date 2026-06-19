@@ -584,7 +584,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (var.LoadCount > 0 || var.AddressCount > 0)
 				{
 					var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
-					var vds = new VariableDeclarationStatement(type, var.Name, resource);
+					var vds = new VariableDeclarationStatement(type, var.Name!, resource);
 					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
 					usingInit = vds;
 				}
@@ -750,7 +750,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			if (designation == null)
 			{
-				designation = new SingleVariableDesignation { Identifier = foreachVariable!.Name };
+				designation = new SingleVariableDesignation { Identifier = foreachVariable!.Name! };
 				// Add the variable annotation for highlighting
 				designation.AddAnnotation(new ILVariableResolveResult(foreachVariable, foreachVariable.Type));
 			}
@@ -829,7 +829,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							ILVariable v = ((StLoc)assignments[assignmentPos]).Variable;
 							if (isForeach)
 								v.Kind = VariableKind.ForeachLocal;
-							designation.Identifier = v.Name;
+							designation.Identifier = v.Name!;
 							designation.AddAnnotation(new ILVariableResolveResult(v));
 							assignmentPos++;
 						}

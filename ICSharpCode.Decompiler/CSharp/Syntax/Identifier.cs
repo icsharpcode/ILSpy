@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -94,13 +96,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
-			this.Name = name;
+			this.name = name;
 			this.startLocation = location;
 		}
 
 		public static Identifier Create(string name)
 		{
 			return Create(name, TextLocation.Empty);
+		}
+
+		// Convenience for optional names (a [Slot] string? property): an empty or null name maps to a
+		// null token (no name), any other name to an Identifier.
+		public static Identifier? CreateIfNotEmpty(string? name)
+		{
+			return string.IsNullOrEmpty(name) ? null : Create(name);
 		}
 
 		public static Identifier Create(string name, TextLocation location)

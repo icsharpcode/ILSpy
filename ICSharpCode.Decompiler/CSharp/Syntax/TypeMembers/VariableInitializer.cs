@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class VariableInitializer : AstNode
 	{
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string Name { get; set; }
 
 		[Slot("Expression")]

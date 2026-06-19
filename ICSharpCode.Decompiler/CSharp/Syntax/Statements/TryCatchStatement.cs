@@ -61,8 +61,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("Identifier", nullOnEmpty: true)]
-		public partial string VariableName { get; set; }
+		[Slot("Identifier")]
+		public partial string? VariableName { get; set; }
 
 		[Slot("Condition")]
 		public partial Expression? Condition { get; set; }

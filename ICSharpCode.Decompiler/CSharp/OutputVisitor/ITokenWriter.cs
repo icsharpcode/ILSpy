@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public abstract void NewLine();
 
 		public abstract void WriteComment(CommentType commentType, string content);
-		public abstract void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument);
+		public abstract void WritePreProcessorDirective(PreProcessorDirectiveType type, string? argument);
 
 		public static TokenWriter Create(TextWriter writer, string indentation = "\t")
 		{
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			decoratedWriter.WriteComment(commentType, content);
 		}
 
-		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument)
+		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string? argument)
 		{
 			decoratedWriter.WritePreProcessorDirective(type, argument);
 		}

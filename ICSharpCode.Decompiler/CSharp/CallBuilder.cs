@@ -618,7 +618,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				switch (kind)
 				{
 					case TokenKind.String:
-						content.Add(new InterpolatedStringText(text));
+						content.Add(new InterpolatedStringText(text!));
 						break;
 					case TokenKind.Argument:
 						argument = arguments[index + 1];

@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System;
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
@@ -78,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			return Keyword;
 		}

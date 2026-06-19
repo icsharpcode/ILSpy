@@ -32,7 +32,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
 	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
 
-	// Derives the shared SlotKind name from a [Slot]/[NameSlot] string. Those strings are already bare
+	// Derives the shared SlotKind name from a [Slot] string. Those strings are already bare
 	// kind names (e.g. "Body", "Getter"), so this is mostly identity; the last-dotted-segment and
 	// trailing-"Role" stripping below is defensive against any legacy dotted/Role-suffixed form. Names
 	// shared across node types (aliases, or the same logical slot on different nodes) intentionally
@@ -68,7 +68,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			var astNodeType = compilation.GetTypeByMetadataName("ICSharpCode.Decompiler.CSharp.Syntax.AstNode")!;
 			var entityDeclarationType = compilation.GetTypeByMetadataName("ICSharpCode.Decompiler.CSharp.Syntax.EntityDeclaration");
 
-			// EntityDeclaration declares Name (a NameSlot over its Identifier token), ReturnType, and the attributes/modifiers
+			// EntityDeclaration declares Name (a string [Slot] over its Identifier token), ReturnType, and the attributes/modifiers
 			// helper as virtual members on the base; a subclass overrides them, so the property scan (which
 			// skips overrides) misses them. Add them explicitly for every EntityDeclaration-derived node. The
 			// NameToken slot is intentionally not matched, since the Name string already covers it.
@@ -108,18 +108,18 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 		}
 
-		// Collect the slot schema: child properties tagged [Slot] or [NameSlot], in declaration order
+		// Collect the slot schema: child properties tagged [Slot], in declaration order
 		// (the order is the node's child layout, so it must follow the source, not be grouped by kind).
-		// [Slot] names the slot kind and infers single vs collection from the type. [NameSlot("role")]
-		// string X declares only the convenience string; the generator owns the backing Identifier XToken
-		// child slot (emitted like a [Slot], but non-partial since the source does not declare it) plus the
-		// string body. DoMatch matches X (a string) and never sees XToken.
+		// [Slot] names the slot kind and infers the shape from the property type: an AstNode (or collection)
+		// is a child slot; a string X is a name -- only the convenience string is declared, and the generator
+		// owns the backing Identifier XToken child slot (emitted like a [Slot], but non-partial since the
+		// source does not declare it) plus the string body. DoMatch matches X (a string) and never sees XToken.
 		List<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? slots = null;
 		List<(string StringName, string TokenName, bool NullOnEmpty)>? nameSlots = null;
-		// Constructor parameters in declaration order: single/collection [Slot] children, the [NameSlot]
-		// string, and settable enum-typed scalar properties (e.g. Operator, FieldDirection). ParamType is the
+		// Constructor parameters in declaration order: single/collection [Slot] children, the string [Slot]
+		// name, and settable enum-typed scalar properties (e.g. Operator, FieldDirection). ParamType is the
 		// full parameter type for non-collections; for a collection it is empty and ElementType names the
-		// element. IsOptional (nullable / collection / nullOnEmpty) drives the required-parameter prefix.
+		// element. IsOptional (nullable / collection) drives the required-parameter prefix.
 		List<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? ctorParams = null;
 		foreach (var m in targetSymbol.GetMembers())
 		{
@@ -130,6 +130,24 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			{
 				slots ??= new();
 				string roleExpr = (string)slotAttr.ConstructorArguments[0].Value!;
+				// A [Slot] on a string property is a name: a convenience string accessor over a backing
+				// Identifier token slot. Child slots are AstNode-typed, so the property type disambiguates -
+				// no separate attribute is needed. Optionality comes from the nullable annotation ('string?'
+				// = the name may be absent); a 'string?' declaration already requires a #nullable context.
+				if (property.Type.SpecialType == SpecialType.System_String)
+				{
+					nameSlots ??= new();
+					bool nameNullable = property.Type.NullableAnnotation == NullableAnnotation.Annotated;
+					string tokenName = property.Name + "Token";
+					// An optional name makes the backing token a real nullable slot: an absent name is a null token.
+					slots.Add((false, tokenName, "Identifier", "Identifier", false, nameNullable, SlotKindName(roleExpr), false));
+					nameSlots.Add((property.Name, tokenName, nameNullable));
+					// The name is the primary construction value, so it is a required ctor param regardless of
+					// optionality (which only governs the setter's empty-to-null behaviour and the property type).
+					ctorParams ??= new();
+					ctorParams.Add((property.Name, "string", "", false, false));
+					continue;
+				}
 				bool isCollection = property.Type.MetadataName == "AstNodeCollection`1";
 				bool isNullable = property.Type.NullableAnnotation == NullableAnnotation.Annotated;
 				var unannotated = property.Type.WithNullableAnnotation(NullableAnnotation.NotAnnotated);
@@ -143,23 +161,6 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				ctorParams.Add(isCollection
 					? (property.Name, "", elementType, true, true)
 					: (property.Name, propertyType + (isNullable ? "?" : ""), "", false, isNullable));
-				continue;
-			}
-			var nameSlotAttr = property.GetAttributes().FirstOrDefault(a => a.AttributeClass?.Name == "NameSlotAttribute");
-			if (nameSlotAttr != null)
-			{
-				nameSlots ??= new();
-				slots ??= new();
-				string roleExpr = (string)nameSlotAttr.ConstructorArguments[0].Value!;
-				bool nullOnEmpty = nameSlotAttr.ConstructorArguments.Length > 1 && (bool)nameSlotAttr.ConstructorArguments[1].Value!;
-				string tokenName = property.Name + "Token";
-				// An optional name (nullOnEmpty) makes the backing token a real nullable slot: an absent name is a null token.
-				slots.Add((false, tokenName, "Identifier", "Identifier", false, nullOnEmpty, SlotKindName(roleExpr), false));
-				nameSlots.Add((property.Name, tokenName, nullOnEmpty));
-				// The name is the primary construction value, so it is a required param. nullOnEmpty only
-				// governs the empty-string-to-null behaviour of the setter, not ctor optionality.
-				ctorParams ??= new();
-				ctorParams.Add((property.Name, "string", "", false, false));
 				continue;
 			}
 			// A settable enum-typed scalar (e.g. Operator, FieldDirection) is part of construction. The enum may
@@ -187,7 +188,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 	// Type name for an enum-typed constructor parameter. Fully-qualified so an enum in another
 	// namespace resolves without a using, minus the generated file's own namespace prefix, which is
 	// redundant there. Used only in parameter-type position, so no member-name shadowing applies
-	// (unlike Identifier.Create in NameSlot setters, which must stay global::-qualified).
+	// (unlike Identifier.Create in name-slot setters, which must stay global::-qualified).
 	static string CtorParamTypeName(ITypeSymbol type)
 	{
 		const string ownNamespacePrefix = "global::ICSharpCode.Decompiler.CSharp.Syntax.";
@@ -361,23 +362,30 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				builder.AppendLine();
 			}
 
-			// A [NameSlot] string is a convenience accessor over its generated Identifier token slot.
+			// A string [Slot] is a convenience accessor over its generated Identifier token slot.
 			if (source.NameSlots is { } nameSlotsArray)
 			{
 				foreach (var (stringName, tokenName, nullOnEmpty) in nameSlotsArray)
 				{
-					builder.AppendLine($"\tpublic partial string {stringName}");
+					// The token factory is the type 'Identifier'. A [Slot] string property literally named
+					// "Identifier" (e.g. SimpleType.Identifier) shadows that type inside its own setter, so the
+					// bare name would bind to the string property; qualify with global:: only in that case.
+					string createType = stringName == "Identifier"
+						? "global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier"
+						: "Identifier";
+					builder.AppendLine($"\tpublic partial string{(nullOnEmpty ? "?" : "")} {stringName}");
 					builder.AppendLine("\t{");
 					if (nullOnEmpty)
 					{
-						// The token is a nullable slot, so guard the read and clear it (to null) on an empty name.
-						builder.AppendLine($"\t\tget => {tokenName}?.Name ?? string.Empty;");
-						builder.AppendLine($"\t\tset => {tokenName} = string.IsNullOrEmpty(value) ? null : global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier.Create(value);");
+						// Optional name: the backing token is a nullable slot. An absent name reads as null; an
+						// empty or null name clears the token, so "" and null both mean "no name".
+						builder.AppendLine($"\t\tget => {tokenName}?.Name;");
+						builder.AppendLine($"\t\tset => {tokenName} = {createType}.CreateIfNotEmpty(value);");
 					}
 					else
 					{
 						builder.AppendLine($"\t\tget => {tokenName}.Name;");
-						builder.AppendLine($"\t\tset => {tokenName} = global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier.Create(value);");
+						builder.AppendLine($"\t\tset => {tokenName} = {createType}.Create(value);");
 					}
 					builder.AppendLine("\t}");
 					builder.AppendLine();
@@ -385,11 +393,11 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 
 			// Constructors. Parameters follow member source order and cover single/collection [Slot] children,
-			// the [NameSlot] string, and settable enum scalars (Operator, FieldDirection, ...); a collection is
+			// the string [Slot], and settable enum scalars (Operator, FieldDirection, ...); a collection is
 			// an IEnumerable<T> param in its declared position. We emit the empty ctor (for object-initializer
 			// construction), then a ctor for the required prefix (through the last required param), one ending at
 			// each collection, and one with all params. A params T[] overload is added when a ctor's last param
-			// is the collection. Pure-scalar nodes (no [Slot]/[NameSlot], e.g. PrimitiveExpression) are excluded
+			// is the collection. Pure-scalar nodes (no [Slot], e.g. PrimitiveExpression) are excluded
 			// because their non-enum state (a literal value) is invisible here; those keep hand-written ctors.
 			if (!source.IsAbstract && source.BaseHasDefaultConstructor && slots.Count > 0 && source.CtorParams is { } ctorParamsArray)
 			{
@@ -751,13 +759,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	sealed class SlotAttribute : global::System.Attribute
 	{
 		public SlotAttribute(string role) { }
-	}
-
-	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
-	[global::System.AttributeUsage(global::System.AttributeTargets.Property)]
-	sealed class NameSlotAttribute : global::System.Attribute
-	{
-		public NameSlotAttribute(string role, bool nullOnEmpty = false) { }
 	}
 }
 

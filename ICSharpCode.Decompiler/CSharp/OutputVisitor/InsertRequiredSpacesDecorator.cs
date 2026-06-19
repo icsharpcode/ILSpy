@@ -144,7 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			lastWritten = LastWritten.Whitespace;
 		}
 
-		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument)
+		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string? argument)
 		{
 			base.WritePreProcessorDirective(type, argument);
 			lastWritten = LastWritten.Whitespace;

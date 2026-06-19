@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -32,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class VariableDeclarationStatement : Statement
 	{
-		public VariableDeclarationStatement(AstType type, string name, Expression initializer = null)
+		public VariableDeclarationStatement(AstType type, string name, Expression? initializer = null)
 		{
 			this.Type = type;
 			this.Variables.Add(new VariableInitializer(name, initializer));

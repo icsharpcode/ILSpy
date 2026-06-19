@@ -23,6 +23,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+#nullable enable
+
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -56,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public LinePreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Line, argument)
+		public LinePreprocessorDirective(string? argument = null) : base(PreProcessorDirectiveType.Line, argument)
 		{
 		}
 	}
@@ -84,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 		}
 
-		public PragmaWarningPreprocessorDirective(string argument = null) : base(PreProcessorDirectiveType.Pragma, argument)
+		public PragmaWarningPreprocessorDirective(string? argument = null) : base(PreProcessorDirectiveType.Pragma, argument)
 		{
 		}
 
@@ -103,22 +105,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public PreProcessorDirectiveType Type { get; set; }
 
-		public string Argument { get; set; }
+		public string? Argument { get; set; }
 
 		public PreProcessorDirective(PreProcessorDirectiveType type, TextLocation startLocation, TextLocation endLocation) : base(startLocation, endLocation)
 		{
 			this.Type = type;
 		}
 
-		public PreProcessorDirective(PreProcessorDirectiveType type, string argument = null)
+		public PreProcessorDirective(PreProcessorDirectiveType type, string? argument = null)
 		{
 			this.Type = type;
 			this.Argument = argument;
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			PreProcessorDirective o = other as PreProcessorDirective;
+			PreProcessorDirective? o = other as PreProcessorDirective;
 			return o != null && Type == o.Type && MatchString(Argument, o.Argument);
 		}
 	}

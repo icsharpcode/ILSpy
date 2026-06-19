@@ -23,6 +23,8 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 
@@ -73,7 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[ExcludeFromMatch]
 		public string FullName {
 			get {
-				NamespaceDeclaration parentNamespace = Parent as NamespaceDeclaration;
+				NamespaceDeclaration? parentNamespace = Parent as NamespaceDeclaration;
 				if (parentNamespace != null)
 					return BuildQualifiedName(parentNamespace.FullName, Name);
 				return Name;
@@ -92,8 +94,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					result.Push(mt.MemberName);
 					type = mt.Target;
 				}
-				if (type is SimpleType)
-					result.Push(((SimpleType)type).Identifier);
+				if (type is SimpleType simpleType)
+					result.Push(simpleType.Identifier ?? string.Empty);
 				return result;
 			}
 		}

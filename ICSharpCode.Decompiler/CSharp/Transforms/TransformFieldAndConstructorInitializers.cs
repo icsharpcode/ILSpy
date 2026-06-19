@@ -855,7 +855,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				identifier.Parent.RemoveAnnotations<MemberResolveResult>();
 				identifier.Parent.AddAnnotation(new ILVariableResolveResult(v));
-				identifier.ReplaceWith(Identifier.Create(v.Name));
+				identifier.ReplaceWith(Identifier.Create(v.Name!));
 			}
 
 			return true;

@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -43,8 +45,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			SetChildByRole(SlotKind.Identifier, Syntax.Identifier.Create(identifier, location));
 		}
-		[NameSlot("Identifier", nullOnEmpty: true)]
-		public partial string Identifier { get; set; }
+		[Slot("Identifier")]
+		public partial string? Identifier { get; set; }
 
 		[Slot("TypeArgument")]
 		public partial AstNodeCollection<AstType> TypeArguments { get; }

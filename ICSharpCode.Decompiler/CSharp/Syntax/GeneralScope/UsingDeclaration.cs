@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Text;
 
@@ -68,8 +70,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					stack.Push(".");
 				}
 			}
-			if (type is SimpleType)
-				stack.Push(((SimpleType)type).Identifier);
+			if (type is SimpleType simpleType)
+				stack.Push(simpleType.Identifier ?? string.Empty);
 
 			var result = new StringBuilder();
 			while (stack.Count > 0)

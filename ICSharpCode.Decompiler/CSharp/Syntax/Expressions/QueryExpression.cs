@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("PrecedingQuery")]
 		public partial QueryExpression PrecedingQuery { get; set; }
 
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string Identifier { get; set; }
 	}
 
@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string Identifier { get; set; }
 
 		[Slot("Expression")]
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string LetKeyword = "let";
 
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string Identifier { get; set; }
 
 		[Slot("Expression")]
@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 
-		[NameSlot("JoinIdentifier")]
+		[Slot("JoinIdentifier")]
 		public partial string JoinIdentifier { get; set; }
 
 		[Slot("InExpression")]
@@ -138,8 +138,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("EqualsExpression")]
 		public partial Expression EqualsExpression { get; set; }
 
-		[NameSlot("IntoIdentifier", nullOnEmpty: true)]
-		public partial string IntoIdentifier { get; set; }
+		[Slot("IntoIdentifier")]
+		public partial string? IntoIdentifier { get; set; }
 	}
 
 	/// <summary>

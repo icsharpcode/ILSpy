@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public enum CommentType
@@ -59,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CommentType CommentType { get; set; }
 
-		public string Content { get; set; }
+		public string Content { get; set; } = string.Empty;
 
 		public Comment(string content, CommentType type = CommentType.SingleLine)
 		{
