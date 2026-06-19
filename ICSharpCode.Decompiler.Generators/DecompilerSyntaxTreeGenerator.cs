@@ -217,7 +217,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			string paramQ = source.NodeName == "AstNode" ? "?" : "";
 			string forgive = nullableReturn ? "" : "!";
 			builder.Append(
-		$@"		public static implicit operator {source.NodeName}{returnQ}(PatternMatching.Pattern{paramQ} pattern)
+		$@"	public static implicit operator {source.NodeName}{returnQ}(PatternMatching.Pattern{paramQ} pattern)
 	{{
 		return pattern != null ? new PatternPlaceholder(pattern) : null{forgive};
 	}}
