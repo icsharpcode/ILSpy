@@ -38,7 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class SyntaxTree : AstNode
 	{
-
 		[Slot("Member")]
 		public partial AstNodeCollection<AstNode> Members { get; }
 

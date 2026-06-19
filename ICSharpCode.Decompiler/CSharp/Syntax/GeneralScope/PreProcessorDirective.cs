@@ -69,7 +69,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class PragmaWarningPreprocessorDirective : PreProcessorDirective
 	{
-
 		[Slot("Warning")]
 		public partial AstNodeCollection<PrimitiveExpression> Warnings { get; }
 
@@ -102,7 +101,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public partial class PreProcessorDirective : Trivia
 	{
-
 		public PreProcessorDirectiveType Type { get; set; }
 
 		public string? Argument { get; set; }

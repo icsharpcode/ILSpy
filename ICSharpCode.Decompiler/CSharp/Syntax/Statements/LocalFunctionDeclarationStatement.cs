@@ -26,9 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class LocalFunctionDeclarationStatement : Statement
 	{
-
 		[Slot("MethodDeclaration")]
 		public partial MethodDeclaration Declaration { get; set; }
-
 	}
 }

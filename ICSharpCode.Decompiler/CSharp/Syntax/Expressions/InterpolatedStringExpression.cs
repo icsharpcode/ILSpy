@@ -33,7 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public abstract partial class InterpolatedStringContent : AstNode
 	{
-
 	}
 
 	/// <summary>
@@ -42,7 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class Interpolation : InterpolatedStringContent
 	{
-
 		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
@@ -67,7 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public InterpolatedStringText()
 		{
-
 		}
 
 		public InterpolatedStringText(string text)

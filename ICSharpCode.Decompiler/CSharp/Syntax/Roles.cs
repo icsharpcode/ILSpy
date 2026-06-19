@@ -28,7 +28,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public static class Roles
 	{
-
 		// some pre defined constants for most used punctuation
 		public const string LPar = "(";
 		public const string RPar = ")";
@@ -58,6 +57,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string ClassKeyword = "class";
 		public const string RecordKeyword = "record";
 		public const string RecordStructKeyword = "record";
-
 	}
 }

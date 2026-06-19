@@ -83,6 +83,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			AddChild(AstType.Create(nameSpace), SlotKind.Import);
 		}
-
 	}
 }

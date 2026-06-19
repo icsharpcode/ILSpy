@@ -27,7 +27,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class WithInitializerExpression : Expression
 	{
-
 		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 

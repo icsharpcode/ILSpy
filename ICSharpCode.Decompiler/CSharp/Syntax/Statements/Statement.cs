@@ -41,6 +41,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException(nameof(replaceFunction));
 			return (Statement)base.ReplaceWith(node => replaceFunction((Statement)node));
 		}
-
 	}
 }

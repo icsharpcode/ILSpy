@@ -30,6 +30,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
-
 	}
 }

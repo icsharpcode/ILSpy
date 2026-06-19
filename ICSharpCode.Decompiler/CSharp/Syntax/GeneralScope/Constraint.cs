@@ -35,7 +35,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class Constraint : AstNode
 	{
-
 		[Slot("ConstraintTypeParameter")]
 		public partial SimpleType TypeParameter { get; set; }
 

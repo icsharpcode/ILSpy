@@ -49,7 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasPatternPlaceholder: true)]
 	public partial class SwitchSection : AstNode
 	{
-
 		[Slot("CaseLabel")]
 		public partial AstNodeCollection<CaseLabel> CaseLabels { get; }
 

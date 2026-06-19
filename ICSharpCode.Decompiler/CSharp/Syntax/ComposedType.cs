@@ -137,7 +137,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class ArraySpecifier : AstNode
 	{
-
 		public ArraySpecifier()
 		{
 		}

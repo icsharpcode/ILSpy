@@ -31,7 +31,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class RecursivePatternExpression : Expression
 	{
-
 		[Slot("Type")]
 		public partial AstType? Type { get; set; }
 

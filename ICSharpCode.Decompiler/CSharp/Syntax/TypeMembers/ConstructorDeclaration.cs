@@ -36,7 +36,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class ConstructorDeclaration : EntityDeclaration
 	{
-
 		public override SymbolKind SymbolKind {
 			get { return SymbolKind.Constructor; }
 		}

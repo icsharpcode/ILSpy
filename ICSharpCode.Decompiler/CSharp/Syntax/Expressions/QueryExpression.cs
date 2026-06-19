@@ -26,7 +26,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class QueryExpression : Expression
 	{
-
 		[Slot("Clause")]
 		public partial AstNodeCollection<QueryClause> Clauses { get; }
 	}

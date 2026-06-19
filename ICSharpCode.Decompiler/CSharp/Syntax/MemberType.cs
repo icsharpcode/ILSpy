@@ -36,7 +36,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class MemberType : AstType
 	{
-
 		public bool IsDoubleColon { get; set; }
 
 		[Slot("Target")]

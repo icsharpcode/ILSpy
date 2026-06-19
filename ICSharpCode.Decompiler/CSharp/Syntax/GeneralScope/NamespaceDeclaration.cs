@@ -41,7 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class NamespaceDeclaration : AstNode
 	{
-
 		public bool IsFileScoped { get; set; }
 
 		[Slot("NamespaceName")]

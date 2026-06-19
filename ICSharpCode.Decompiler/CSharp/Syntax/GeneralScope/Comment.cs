@@ -58,7 +58,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class Comment : Trivia
 	{
-
 		public CommentType CommentType { get; set; }
 
 		public string Content { get; set; } = string.Empty;

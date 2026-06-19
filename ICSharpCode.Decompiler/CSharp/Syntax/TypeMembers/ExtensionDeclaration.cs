@@ -47,6 +47,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		[Slot("TypeMember")]
 		public partial AstNodeCollection<EntityDeclaration> Members { get; }
-
 	}
 }
