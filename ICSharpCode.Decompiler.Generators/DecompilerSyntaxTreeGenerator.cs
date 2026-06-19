@@ -800,8 +800,33 @@ readonly struct EquatableArray<T> : IEquatable<EquatableArray<T>>, IEnumerable<T
 
 	public bool Equals(EquatableArray<T> other)
 	{
-		return other.array.AsSpan().SequenceEqual(this.array);
+		return this.array.AsSpan().SequenceEqual(other.array.AsSpan());
 	}
+
+	public override bool Equals(object obj)
+	{
+		return obj is EquatableArray<T> other && Equals(other);
+	}
+
+	// Content-based hash so it agrees with the content-based Equals; the default struct
+	// GetHashCode would hash the array reference and break the records that cache these as
+	// incremental-generator keys. (System.HashCode is unavailable on netstandard2.0.)
+	public override int GetHashCode()
+	{
+		if (array == null)
+			return 0;
+		unchecked
+		{
+			int hash = 17;
+			foreach (T item in array)
+				hash = hash * 31 + EqualityComparer<T>.Default.GetHashCode(item);
+			return hash;
+		}
+	}
+
+	public static bool operator ==(EquatableArray<T> left, EquatableArray<T> right) => left.Equals(right);
+
+	public static bool operator !=(EquatableArray<T> left, EquatableArray<T> right) => !left.Equals(right);
 
 	public IEnumerator<T> GetEnumerator()
 	{
