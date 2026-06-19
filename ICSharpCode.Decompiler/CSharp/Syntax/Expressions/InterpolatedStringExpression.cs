@@ -13,7 +13,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string OpenQuote = "$\"";
 		public const string CloseQuote = "\"";
 
-		[Slot("Role")]
+		[Slot("Content")]
 		public partial AstNodeCollection<InterpolatedStringContent> Content { get; }
 
 		public InterpolatedStringExpression(IList<InterpolatedStringContent> content)
