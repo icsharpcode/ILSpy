@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool NullOnEmpty)>? NameSlots, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
+	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool IsOptional)>? NameAccessors, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
 
 	// Derives the shared SlotKind name from a [Slot] string. Those strings are already bare
 	// kind names (e.g. "Body", "Getter"), so this is mostly identity; the last-dotted-segment and
@@ -52,7 +52,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		var attribute = context.Attributes.SingleOrDefault(ad => ad.AttributeClass?.Name == "DecompilerAstNodeAttribute")!;
 		var (visitMethodName, paramTypeName) = targetSymbol.Name switch {
 			"ErrorExpression" => ("ErrorNode", "AstNode"),
-			string s when s.Contains("AstType") => (s.Replace("AstType", "Type"), s),
+			string s when s.EndsWith("AstType") => (s.Replace("AstType", "Type"), s),
 			_ => (targetSymbol.Name, targetSymbol.Name),
 		};
 
@@ -115,7 +115,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		// owns the backing Identifier XToken child slot (emitted like a [Slot], but non-partial since the
 		// source does not declare it) plus the string body. DoMatch matches X (a string) and never sees XToken.
 		List<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? slots = null;
-		List<(string StringName, string TokenName, bool NullOnEmpty)>? nameSlots = null;
+		List<(string StringName, string TokenName, bool IsOptional)>? nameAccessors = null;
 		// Constructor parameters in declaration order: single/collection [Slot] children, the string [Slot]
 		// name, and settable enum-typed scalar properties (e.g. Operator, FieldDirection). ParamType is the
 		// full parameter type for non-collections; for a collection it is empty and ElementType names the
@@ -136,12 +136,12 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				// = the name may be absent); a 'string?' declaration already requires a #nullable context.
 				if (property.Type.SpecialType == SpecialType.System_String)
 				{
-					nameSlots ??= new();
+					nameAccessors ??= new();
 					bool nameNullable = property.Type.NullableAnnotation == NullableAnnotation.Annotated;
 					string tokenName = property.Name + "Token";
 					// An optional name makes the backing token a real nullable slot: an absent name is a null token.
 					slots.Add((false, tokenName, "Identifier", "Identifier", false, nameNullable, SlotKindName(roleExpr), false));
-					nameSlots.Add((property.Name, tokenName, nameNullable));
+					nameAccessors.Add((property.Name, tokenName, nameNullable));
 					// The name is the primary construction value, so it is a required ctor param regardless of
 					// optionality (which only governs the setter's empty-to-null behaviour and the property type).
 					ctorParams ??= new();
@@ -177,7 +177,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			IsAbstract: targetSymbol.IsAbstract,
 			BaseHasDefaultConstructor: targetSymbol.BaseType is { } bt && bt.InstanceConstructors.Any(c => c.Parameters.Length == 0 && c.DeclaredAccessibility != Accessibility.Private),
 			NeedsPatternPlaceholder: (bool)attribute.ConstructorArguments[0].Value!,
-			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray(), nameSlots?.ToEquatableArray(), ctorParams?.ToEquatableArray());
+			visitMethodName, paramTypeName, membersToMatch?.ToEquatableArray(), slots?.ToEquatableArray(), nameAccessors?.ToEquatableArray(), ctorParams?.ToEquatableArray());
 	}
 
 	// Backing-field name for a slot property. Prefixed to avoid colliding with hand-written fields
@@ -363,9 +363,9 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 
 			// A string [Slot] is a convenience accessor over its generated Identifier token slot.
-			if (source.NameSlots is { } nameSlotsArray)
+			if (source.NameAccessors is { } nameAccessorsArray)
 			{
-				foreach (var (stringName, tokenName, nullOnEmpty) in nameSlotsArray)
+				foreach (var (stringName, tokenName, isOptional) in nameAccessorsArray)
 				{
 					// The token factory is the type 'Identifier'. A [Slot] string property literally named
 					// "Identifier" (e.g. SimpleType.Identifier) shadows that type inside its own setter, so the
@@ -373,9 +373,9 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					string createType = stringName == "Identifier"
 						? "global::ICSharpCode.Decompiler.CSharp.Syntax.Identifier"
 						: "Identifier";
-					builder.AppendLine($"\tpublic partial string{(nullOnEmpty ? "?" : "")} {stringName}");
+					builder.AppendLine($"\tpublic partial string{(isOptional ? "?" : "")} {stringName}");
 					builder.AppendLine("\t{");
-					if (nullOnEmpty)
+					if (isOptional)
 					{
 						// Optional name: the backing token is a nullable slot. An absent name reads as null; an
 						// empty or null name clears the token, so "" and null both mean "no name".
