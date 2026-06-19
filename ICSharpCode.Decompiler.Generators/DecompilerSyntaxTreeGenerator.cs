@@ -64,8 +64,9 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		{
 			membersToMatch = new();
 
-			var astNodeType = (INamedTypeSymbol)context.SemanticModel.GetSpeculativeSymbolInfo(context.TargetNode.Span.Start, SyntaxFactory.ParseTypeName("AstNode"), SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol!;
-			var entityDeclarationType = context.SemanticModel.GetSpeculativeSymbolInfo(context.TargetNode.Span.Start, SyntaxFactory.ParseTypeName("EntityDeclaration"), SpeculativeBindingOption.BindAsTypeOrNamespace).Symbol as INamedTypeSymbol;
+			var compilation = context.SemanticModel.Compilation;
+			var astNodeType = compilation.GetTypeByMetadataName("ICSharpCode.Decompiler.CSharp.Syntax.AstNode")!;
+			var entityDeclarationType = compilation.GetTypeByMetadataName("ICSharpCode.Decompiler.CSharp.Syntax.EntityDeclaration");
 
 			// EntityDeclaration declares Name (a NameSlot over its Identifier token), ReturnType, and the attributes/modifiers
 			// helper as virtual members on the base; a subclass overrides them, so the property scan (which
