@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (rr.Type.IsCSharpSmallIntegerType())
 				{
-					expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition()!.KnownTypeCode)), expr);
+					expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition()!.KnownTypeCode)!), expr);
 					// Note: no unchecked annotation necessary, because the constant was folded to be in-range
 				}
 				else if (rr.Type.IsCSharpNativeIntegerType())
@@ -4869,7 +4869,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						if (matchInstruction.HasDesignator)
 						{
-							SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
+							SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name! };
 							designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));
 							recursivePatternExpression.Designation = designator;
 						}
@@ -4877,7 +4877,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					else if (matchInstruction.HasDesignator || !matchInstruction.CheckType)
 					{
-						SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name };
+						SingleVariableDesignation designator = new SingleVariableDesignation { Identifier = matchInstruction.Variable.Name! };
 						designator.AddAnnotation(new ILVariableResolveResult(matchInstruction.Variable));
 						AstType type;
 						if (matchInstruction.CheckType)

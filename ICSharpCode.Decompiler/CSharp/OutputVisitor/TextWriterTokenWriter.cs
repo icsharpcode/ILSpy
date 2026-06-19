@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 		}
 
-		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument)
+		public override void WritePreProcessorDirective(PreProcessorDirectiveType type, string? argument)
 		{
 			// pre-processor directive must start on its own line
 			if (!isAtStartOfLine)

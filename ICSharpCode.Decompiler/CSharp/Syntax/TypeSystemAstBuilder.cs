@@ -774,8 +774,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			switch (attr.Type)
 			{
 				case SimpleType st:
-					if (st.Identifier.EndsWith("Attribute", StringComparison.Ordinal))
-						st.Identifier = st.Identifier.Substring(0, st.Identifier.Length - 9);
+					if (st.Identifier is { } id && id.EndsWith("Attribute", StringComparison.Ordinal))
+						st.Identifier = id.Substring(0, id.Length - 9);
 					break;
 				case MemberType mt:
 					if (mt.MemberName.EndsWith("Attribute", StringComparison.Ordinal))
@@ -909,7 +909,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						st.Identifier = shortName;
 						break;
 					case MemberType mt:
-						mt.MemberName = shortName;
+						mt.MemberName = shortName!;
 						break;
 				}
 			}

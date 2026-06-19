@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -37,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public VarianceModifier Variance { get; set; }
 
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string Name { get; set; }
 
 		public TypeParameterDeclaration(string name)

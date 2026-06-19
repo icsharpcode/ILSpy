@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					parent.RemoveAnnotations<ILVariableResolveResult>();
 					parent.AddAnnotation(new ILVariableResolveResult(newVariable));
-					identifier.ReplaceWith(Identifier.Create(newVariable.Name));
+					identifier.ReplaceWith(Identifier.Create(newVariable.Name!));
 				}
 			}
 		}
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						QueryExpression query = new QueryExpression();
 						query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
-						query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameter.Name) }.CopyAnnotationsFrom(expr));
+						query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameter.Name!) }.CopyAnnotationsFrom(expr));
 						return query;
 					}
 					return null;
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						{
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
-							query.Clauses.Add(new QueryGroupClause { Projection = new IdentifierExpression(parameter.Name).CopyAnnotationsFrom(parameter), Key = keySelector.Detach() });
+							query.Clauses.Add(new QueryGroupClause { Projection = new IdentifierExpression(parameter.Name!).CopyAnnotationsFrom(parameter), Key = keySelector.Detach() });
 							return query;
 						}
 					}
@@ -205,7 +205,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(p1, mre.Target.Detach()));
 							query.Clauses.Add(MakeFromClause(p2, collectionSelector.Detach()).CopyAnnotationsFrom(fromExpressionLambda));
-							query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(((Expression)lambda.Body).Detach(), parameter.Name) });
+							query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(((Expression)lambda.Body).Detach(), parameter.Name!) });
 							return query;
 						}
 					}
@@ -239,7 +239,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var lambda = invocation.Arguments.Single();
 					if (MatchSimpleLambda(lambda, out var parameter, out var orderExpression))
 					{
-						if (ValidateThenByChain(invocation, parameter.Name))
+						if (ValidateThenByChain(invocation, parameter.Name!))
 						{
 							QueryOrderClause orderClause = new QueryOrderClause();
 							while (mre.MemberName == "ThenBy" || mre.MemberName == "ThenByDescending")
@@ -304,7 +304,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(element1, source1.Detach()));
 							QueryJoinClause joinClause = new QueryJoinClause();
-							joinClause.JoinIdentifier = element2.Name;    // join elementName2
+							joinClause.JoinIdentifier = element2.Name!;    // join elementName2
 							joinClause.JoinIdentifierToken.CopyAnnotationsFrom(element2);
 							joinClause.InExpression = source2.Detach();  // in source2
 							joinClause.OnExpression = key1.Detach();     // on key1
@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		QueryFromClause MakeFromClause(ParameterDeclaration parameter, Expression body)
 		{
 			QueryFromClause fromClause = new QueryFromClause {
-				Identifier = parameter.Name,
+				Identifier = parameter.Name!,
 				Expression = body
 			};
 			fromClause.CopyAnnotationsFrom(parameter);

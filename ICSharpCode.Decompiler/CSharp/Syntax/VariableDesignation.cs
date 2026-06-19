@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	[DecompilerAstNode]
@@ -29,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class SingleVariableDesignation : VariableDesignation
 	{
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string Identifier { get; set; }
 	}
 

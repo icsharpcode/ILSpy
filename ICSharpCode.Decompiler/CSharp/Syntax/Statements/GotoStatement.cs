@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -33,8 +35,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed partial class GotoStatement : Statement
 	{
 		public const string GotoKeyword = "goto";
-		[NameSlot("Identifier", nullOnEmpty: true)]
-		public partial string Label { get; set; }
+		[Slot("Identifier")]
+		public partial string? Label { get; set; }
 	}
 
 	/// <summary>

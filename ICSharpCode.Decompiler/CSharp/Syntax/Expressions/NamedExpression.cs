@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -33,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class NamedExpression : Expression
 	{
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string Name { get; set; }
 
 		[Slot("Expression")]

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -24,7 +26,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode]
 	public sealed partial class TupleAstType : AstType
 	{
-
 		[Slot("Element")]
 		public partial AstNodeCollection<TupleTypeElement> Elements { get; }
 	}
@@ -38,8 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Type")]
 		public partial AstType Type { get; set; }
 
-		[NameSlot("Identifier", nullOnEmpty: true)]
-		public partial string Name { get; set; }
-
+		[Slot("Identifier")]
+		public partial string? Name { get; set; }
 	}
 }

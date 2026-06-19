@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Linq;
 using System.Text;
@@ -83,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("ArraySpecifier")]
 		public partial AstNodeCollection<ArraySpecifier> ArraySpecifiers { get; }
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			StringBuilder b = new StringBuilder();
 			if (this.HasRefSpecifier)
@@ -147,7 +149,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public int Dimensions { get; set; } = 1;
 
-		public override string ToString(CSharpFormattingOptions formattingOptions)
+		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			return "[" + new string(',', this.Dimensions - 1) + "]";
 		}

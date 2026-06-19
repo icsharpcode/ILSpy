@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -37,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("TargetExpression")]
 		public partial Expression Target { get; set; }
 
-		[NameSlot("Identifier")]
+		[Slot("Identifier")]
 		public partial string MemberName { get; set; }
 
 		[Slot("TypeArgument")]

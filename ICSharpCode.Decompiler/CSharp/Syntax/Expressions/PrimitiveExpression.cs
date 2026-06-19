@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -85,18 +87,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public PrimitiveExpression(object value)
 		{
-			this.Value = value;
+			this.value = value;
 		}
 
 		public PrimitiveExpression(object value, LiteralFormat format)
 		{
-			this.Value = value;
+			this.value = value;
 			this.Format = format;
 		}
 
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode? other, PatternMatching.Match match)
 		{
-			PrimitiveExpression o = other as PrimitiveExpression;
+			PrimitiveExpression? o = other as PrimitiveExpression;
 			return o != null && (this.Value == AnyValue || object.Equals(this.Value, o.Value));
 		}
 	}

@@ -368,7 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				body.Statements.Add(statement.Detach());
 			var foreachStmt = new ForeachStatement {
 				VariableType = context.Settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVariable.Type),
-				VariableDesignation = new SingleVariableDesignation { Identifier = itemVariable.Name },
+				VariableDesignation = new SingleVariableDesignation { Identifier = itemVariable.Name! },
 				InExpression = m.Get<IdentifierExpression>("arrayVariable").Single().Detach(),
 				EmbeddedStatement = body
 			};
@@ -537,7 +537,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				body.Statements.Add(statement.Detach());
 			var foreachStmt = new ForeachStatement {
 				VariableType = context.Settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVariable.Type),
-				VariableDesignation = new SingleVariableDesignation { Identifier = itemVariable.Name },
+				VariableDesignation = new SingleVariableDesignation { Identifier = itemVariable.Name! },
 				InExpression = m.Get<IdentifierExpression>("collection").Single().Detach(),
 				EmbeddedStatement = body
 			};

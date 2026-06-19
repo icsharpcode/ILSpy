@@ -1467,14 +1467,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (p.ParameterModifier)
 			{
 				case ReferenceKind.None:
-					return new IdentifierExpression(p.Name);
+					return new IdentifierExpression(p.Name!);
 				case ReferenceKind.Ref:
 				case ReferenceKind.RefReadOnly:
-					return new DirectionExpression(FieldDirection.Ref, new IdentifierExpression(p.Name));
+					return new DirectionExpression(FieldDirection.Ref, new IdentifierExpression(p.Name!));
 				case ReferenceKind.Out:
-					return new DirectionExpression(FieldDirection.Out, new IdentifierExpression(p.Name));
+					return new DirectionExpression(FieldDirection.Out, new IdentifierExpression(p.Name!));
 				case ReferenceKind.In:
-					return new DirectionExpression(FieldDirection.In, new IdentifierExpression(p.Name));
+					return new DirectionExpression(FieldDirection.In, new IdentifierExpression(p.Name!));
 				default:
 					throw new NotSupportedException();
 			}

@@ -1265,7 +1265,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var opSymbol = UnaryOperatorExpression.GetOperatorToken(opType);
 			if (opType is UnaryOperatorType.Await or UnaryOperatorType.PatternNot)
 			{
-				WriteKeyword(opSymbol);
+				// Await and PatternNot always have a keyword token.
+				WriteKeyword(opSymbol!);
 				Space();
 			}
 			else if (!IsPostfixOperator(opType) && opSymbol != null)

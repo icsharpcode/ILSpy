@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -34,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string UsingKeyword = "using";
 
-		[NameSlot("Alias")]
+		[Slot("Alias")]
 		public partial string Alias { get; set; }
 
 		[Slot("Import")]

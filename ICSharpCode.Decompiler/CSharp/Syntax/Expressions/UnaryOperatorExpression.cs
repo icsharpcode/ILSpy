@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Linq.Expressions;
 
@@ -61,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
-		public static string GetOperatorToken(UnaryOperatorType op)
+		public static string? GetOperatorToken(UnaryOperatorType op)
 		{
 			switch (op)
 			{
