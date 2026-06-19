@@ -69,7 +69,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					ISymbol? symbol = node.GetSymbol();
 					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string? newName))
 					{
-						node.GetChildByRole<Identifier>(SlotKind.Identifier).Name = newName;
+						// An IdentifierExpression / MemberReferenceExpression always carries its name identifier.
+						node.GetChildByRole<Identifier>(SlotKind.Identifier)!.Name = newName;
 					}
 				}
 			}

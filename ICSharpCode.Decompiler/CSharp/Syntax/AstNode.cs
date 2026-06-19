@@ -297,21 +297,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		/// <summary>
-		/// Gets the first child with the specified role.
-		/// Returns null if the child is not found.
+		/// Gets the first child with the specified role, or null if this node has no such child (the
+		/// slot is empty or the node declares no slot of that kind).
 		/// </summary>
-		public T GetChildByRole<T>(SlotKind kind) where T : AstNode?
+		public T? GetChildByRole<T>(SlotKind kind) where T : AstNode
 		{
 			int count = GetChildCount();
 			for (int i = 0; i < count; i++)
 			{
 				if (GetChildSlotInfo(i).Kind == kind)
 				{
-					AstNode? c = GetChild(i);
-					return c != null ? (T)c : default!;
+					return GetChild(i) as T;
 				}
 			}
-			return default!;
+			return null;
 		}
 
 		public T? GetParent<T>() where T : AstNode
@@ -731,11 +730,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				prev = prev.GetPrevNode();
 			return prev;
 		}
-		// Comments and directives are trivia, not sibling nodes, so the previous sibling is always a C# node.
-		public AstNode? GetCSharpNodeBefore(AstNode node)
-		{
-			return node.PrevSibling;
-		}
 
 		/// <summary>
 		/// Gets the next sibling which fullfills a given predicate
@@ -823,11 +817,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool IsInside(TextLocation location)
 		{
 			return this.StartLocation <= location && location <= this.EndLocation;
-		}
-
-		public override void AddAnnotation(object annotation)
-		{
-			base.AddAnnotation(annotation);
 		}
 
 		internal string DebugToString()

@@ -48,12 +48,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public virtual Identifier NameToken {
-			get { return GetChildByRole<Identifier>(SlotKind.Identifier); }
+			get { return GetChildByRole<Identifier>(SlotKind.Identifier)!; }
 			set { SetChildByRole(SlotKind.Identifier, value); }
 		}
 
 		public virtual AstType ReturnType {
-			get { return GetChildByRole<AstType>(SlotKind.Type); }
+			get { return GetChildByRole<AstType>(SlotKind.Type)!; }
 			set { SetChildByRole(SlotKind.Type, value); }
 		}
 

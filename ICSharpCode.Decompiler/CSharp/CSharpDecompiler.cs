@@ -1352,11 +1352,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
 					if (propDef.Getter != null)
 					{
-						RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Getter), KnownAttribute.ExtensionMarker);
+						RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Getter)!, KnownAttribute.ExtensionMarker);
 					}
 					if (propDef.Setter != null)
 					{
-						RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Setter), KnownAttribute.ExtensionMarker);
+						RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Setter)!, KnownAttribute.ExtensionMarker);
 					}
 					RunTransforms(syntaxTree, decompileRun, new SimpleTypeResolveContext(propDef.DeclaringTypeDefinition));
 					break;
@@ -1851,11 +1851,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
 							if (p.Getter != null)
 							{
-								RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Getter), KnownAttribute.ExtensionMarker);
+								RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Getter)!, KnownAttribute.ExtensionMarker);
 							}
 							if (p.Setter != null)
 							{
-								RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Setter), KnownAttribute.ExtensionMarker);
+								RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Setter)!, KnownAttribute.ExtensionMarker);
 							}
 							extMemberDecl = prop;
 							break;

@@ -1903,7 +1903,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitLabelStatement(LabelStatement labelStatement)
 		{
 			StartNode(labelStatement);
-			WriteIdentifier(labelStatement.GetChildByRole<Identifier>(SlotKind.Identifier));
+			WriteIdentifier(labelStatement.GetChildByRole<Identifier>(SlotKind.Identifier)!);
 			WriteToken(Roles.Colon);
 			bool foundLabelledStatement = false;
 			for (AstNode? tmp = labelStatement.NextSibling; tmp != null; tmp = tmp.NextSibling)
@@ -1911,6 +1911,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (tmp.Slot?.Kind == labelStatement.Slot?.Kind)
 				{
 					foundLabelledStatement = true;
+					break;
 				}
 			}
 			if (!foundLabelledStatement)
@@ -2428,7 +2429,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIdentifier(customEventDeclaration.NameToken);
 			OpenBrace(policy.EventBraceStyle);
 			// output add/remove in their original order
-			foreach (AstNode node in customEventDeclaration.Children)
+			for (AstNode? node = customEventDeclaration.FirstChild; node != null; node = node.NextSibling)
 			{
 				if (node.Slot?.Kind == SlotKind.AddAccessor || node.Slot?.Kind == SlotKind.RemoveAccessor)
 				{
@@ -2505,7 +2506,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (isSingleLine)
 					Space();
 				// output get/set in their original order
-				foreach (AstNode node in indexerDeclaration.Children)
+				for (AstNode? node = indexerDeclaration.FirstChild; node != null; node = node.NextSibling)
 				{
 					if (node.Slot?.Kind == SlotKind.Getter || node.Slot?.Kind == SlotKind.Setter)
 					{
@@ -2667,7 +2668,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (isSingleLine)
 					Space();
 				// output get/set in their original order
-				foreach (AstNode node in propertyDeclaration.Children)
+				for (AstNode? node = propertyDeclaration.FirstChild; node != null; node = node.NextSibling)
 				{
 					if (node.Slot?.Kind == SlotKind.Getter || node.Slot?.Kind == SlotKind.Setter)
 					{
@@ -2735,7 +2736,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			foreach (var trivia in syntaxTree.LeadingTrivia)
 				trivia.AcceptVisitor(this);
 			// don't do node tracking as we visit all children directly
-			foreach (AstNode node in syntaxTree.Children)
+			for (AstNode? node = syntaxTree.FirstChild; node != null; node = node.NextSibling)
 			{
 				node.AcceptVisitor(this);
 				MaybeNewLinesAfterUsings(node);

@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (node is CastExpression cast)
 					return InterpolationNeedsParenthesis(cast.Expression);
 
-				foreach (var child in node.Children)
+				for (AstNode? child = node.FirstChild; child != null; child = child.NextSibling)
 				{
 					if (InterpolationNeedsParenthesis(child))
 						return true;

@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				var b = new BlockStatement();
 				statement.ReplaceWith(b);
-				if (statement is EmptyStatement && !statement.Children.Any())
+				if (statement is EmptyStatement && !statement.HasChildren)
 				{
 					b.CopyAnnotationsFrom(statement);
 				}
