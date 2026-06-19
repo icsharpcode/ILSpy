@@ -93,9 +93,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				foreach (var child in currentList)
 				{
 					System.Diagnostics.Debug.Assert(child.Parent == null || node == child.Parent);
+					// A parentless child is a print-only artifact with no slot in the tree -- e.g. the
+					// detached clone of a type's name token that a renamed constructor/destructor prints
+					// (CSharpOutputVisitor.VisitConstructorDeclaration). It cannot be re-attached by kind,
+					// and the real name token is already a child, so leave it out rather than route
+					// SlotKind.None into the throwing child setter.
+					if (child.Slot is not { } slot)
+						continue;
 					// Slot is derived from the child's index in its parent, so it must be read before
 					// Remove() detaches the child (which would otherwise leave it as SlotKind.None).
-					SlotKind kind = child.Slot?.Kind ?? SlotKind.None;
+					SlotKind kind = slot.Kind;
 					child.Remove();
 					node.AddChildUnsafe(child, kind);
 				}

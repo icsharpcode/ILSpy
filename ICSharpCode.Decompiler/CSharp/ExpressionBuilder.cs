@@ -2506,7 +2506,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				lambda.IsAsync = ame.IsAsync;
 				lambda.CopyAnnotationsFrom(ame);
 				ame.Parameters.MoveTo(lambda.Parameters);
-				if (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement returnStmt)
+				if (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement { Expression: not null } returnStmt)
 				{
 					lambda.Body = returnStmt.Expression.Detach();
 					inferredReturnType = lambda.Body!.GetResolveResult().Type;
