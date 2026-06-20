@@ -42,21 +42,21 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public virtual string Name {
 			get {
-				return GetChildByRole<Identifier>(SlotKind.Identifier)?.Name ?? string.Empty;
+				return GetChild(Slots.Identifier)?.Name ?? string.Empty;
 			}
 			set {
-				SetChildByRole(SlotKind.Identifier, Identifier.Create(value, TextLocation.Empty));
+				SetChild(Slots.Identifier, Identifier.Create(value, TextLocation.Empty));
 			}
 		}
 
 		public virtual Identifier NameToken {
-			get { return GetChildByRole<Identifier>(SlotKind.Identifier)!; }
-			set { SetChildByRole(SlotKind.Identifier, value); }
+			get { return GetChild(Slots.Identifier)!; }
+			set { SetChild(Slots.Identifier, value); }
 		}
 
 		public virtual AstType ReturnType {
-			get { return GetChildByRole<AstType>(SlotKind.Type)!; }
-			set { SetChildByRole(SlotKind.Type, value); }
+			get { return GetChild(Slots.Type)!; }
+			set { SetChild(Slots.Type, value); }
 		}
 
 		protected bool MatchAttributesAndModifiers(EntityDeclaration o, PatternMatching.Match match)

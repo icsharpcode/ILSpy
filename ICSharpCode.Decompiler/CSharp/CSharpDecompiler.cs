@@ -1355,11 +1355,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
 					if (propDef.Getter != null)
 					{
-						RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Getter)!, KnownAttribute.ExtensionMarker);
+						RemoveAttribute(prop.GetChild(Slots.Getter)!, KnownAttribute.ExtensionMarker);
 					}
 					if (propDef.Setter != null)
 					{
-						RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Setter)!, KnownAttribute.ExtensionMarker);
+						RemoveAttribute(prop.GetChild(Slots.Setter)!, KnownAttribute.ExtensionMarker);
 					}
 					RunTransforms(syntaxTree, decompileRun, new SimpleTypeResolveContext(propDef.DeclaringTypeDefinition));
 					break;
@@ -1412,7 +1412,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			EntityDeclaration memberDecl, IMethod method,
 			TypeSystemAstBuilder astBuilder)
 		{
-			if (memberDecl.GetChildByRole<AstType>(SlotKind.PrivateImplementationType) is not null)
+			if (memberDecl.GetChild(Slots.PrivateImplementationType) is not null)
 			{
 				yield break; // cannot create forwarder for existing explicit interface impl
 			}
@@ -1439,9 +1439,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					methodDecl.ReturnType = memberReturnType.Clone();
 				methodDecl.PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType);
 				methodDecl.Name = m.Name;
-				methodDecl.TypeParameters.AddRange(memberDecl.GetChildrenByRole<TypeParameterDeclaration>(SlotKind.TypeParameter)
+				methodDecl.TypeParameters.AddRange(memberDecl.GetChildren(Slots.TypeParameter)
 												   .Select(n => (TypeParameterDeclaration)n.Clone()));
-				methodDecl.Parameters.AddRange(memberDecl.GetChildrenByRole<ParameterDeclaration>(SlotKind.Parameter).Select(n => n.Clone()));
+				methodDecl.Parameters.AddRange(memberDecl.GetChildren(Slots.Parameter).Select(n => n.Clone()));
 				// Constraints are not copied because explicit interface implementations cannot have constraints. CS0460
 
 				methodDecl.Body = new BlockStatement();
@@ -1557,7 +1557,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		void FixParameterNames(EntityDeclaration entity)
 		{
 			int i = 0;
-			foreach (var parameter in entity.GetChildrenByRole<ParameterDeclaration>(SlotKind.Parameter))
+			foreach (var parameter in entity.GetChildren(Slots.Parameter))
 			{
 				if (string.IsNullOrWhiteSpace(parameter.Name) && !parameter.Type.IsArgList())
 				{
@@ -1854,11 +1854,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							RemoveAttribute(prop, KnownAttribute.ExtensionMarker);
 							if (p.Getter != null)
 							{
-								RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Getter)!, KnownAttribute.ExtensionMarker);
+								RemoveAttribute(prop.GetChild(Slots.Getter)!, KnownAttribute.ExtensionMarker);
 							}
 							if (p.Setter != null)
 							{
-								RemoveAttribute(prop.GetChildByRole<Accessor>(SlotKind.Setter)!, KnownAttribute.ExtensionMarker);
+								RemoveAttribute(prop.GetChild(Slots.Setter)!, KnownAttribute.ExtensionMarker);
 							}
 							extMemberDecl = prop;
 							break;
@@ -2136,7 +2136,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			int i = parameterOffset;
 			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
-			foreach (var parameter in entityDecl.GetChildrenByRole<ParameterDeclaration>(SlotKind.Parameter))
+			foreach (var parameter in entityDecl.GetChildren(Slots.Parameter))
 			{
 				if (parameters.TryGetValue(i, out var v))
 					parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
