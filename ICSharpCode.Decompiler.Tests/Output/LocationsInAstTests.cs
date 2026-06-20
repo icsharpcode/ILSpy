@@ -45,7 +45,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 	[TestFixture]
 	public class LocationsInAstTests
 	{
-		static readonly string TestCasePath = Tester.TestCasePath + "/LocationsInAst";
+		// The sample source sits next to this test file under Output/, not in TestCases/.
+		static readonly string SamplesPath = Path.Combine(Tester.TestCasePath, "..", "Output");
 
 		const CompilerOptions SampleCompilerOptions =
 			CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.UseDebug | CompilerOptions.Library;
@@ -58,7 +59,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[OneTimeSetUp]
 		public void CompileSamples()
 		{
-			var csFile = Path.Combine(TestCasePath, "LocationsInAstSamples.cs");
+			var csFile = Path.Combine(SamplesPath, "LocationsInAstSamples.cs");
 			compiledSamples = Tester.CompileCSharp(csFile, SampleCompilerOptions).GetAwaiter().GetResult();
 		}
 
