@@ -36,10 +36,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public string AttributeTarget {
 			get {
-				return GetChildByRole<Identifier>(SlotKind.Identifier)?.Name ?? string.Empty;
+				return GetChild(Slots.Identifier)?.Name ?? string.Empty;
 			}
 			set {
-				SetChildByRole(SlotKind.Identifier, Identifier.Create(value));
+				SetChild(Slots.Identifier, Identifier.Create(value));
 			}
 		}
 

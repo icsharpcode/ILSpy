@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if ((ConversionFlags & ConversionFlags.PlaceReturnTypeAfterParameterList) != ConversionFlags.PlaceReturnTypeAfterParameterList
 				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
 			{
-				var rt = node.GetChildByRole<AstType>(SlotKind.Type);
+				var rt = node.GetChild(Slots.Type);
 				if (rt is not null)
 				{
 					rt.AcceptVisitor(new CSharpOutputVisitor(writer, formattingPolicy));
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				else
 				{
-					parameters = node.GetChildrenByRole<ParameterDeclaration>(SlotKind.Parameter);
+					parameters = node.GetChildren(Slots.Parameter);
 				}
 				foreach (var param in parameters)
 				{
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if ((ConversionFlags & ConversionFlags.PlaceReturnTypeAfterParameterList) == ConversionFlags.PlaceReturnTypeAfterParameterList
 				&& (ConversionFlags & ConversionFlags.ShowReturnType) == ConversionFlags.ShowReturnType)
 			{
-				var rt = node.GetChildByRole<AstType>(SlotKind.Type);
+				var rt = node.GetChild(Slots.Type);
 				if (rt is not null)
 				{
 					writer.Space();
@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			else
 			{
 				writer.WriteIdentifier(node.NameToken);
-				WriteTypeParameters(node.GetChildrenByRole<TypeParameterDeclaration>(SlotKind.TypeParameter), writer, formattingPolicy);
+				WriteTypeParameters(node.GetChildren(Slots.TypeParameter), writer, formattingPolicy);
 			}
 		}
 
@@ -412,7 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					writer.WriteIdentifier(Identifier.Create(name));
 					break;
 			}
-			WriteTypeParameters(node.GetChildrenByRole<TypeParameterDeclaration>(SlotKind.TypeParameter), writer, formattingPolicy);
+			WriteTypeParameters(node.GetChildren(Slots.TypeParameter), writer, formattingPolicy);
 		}
 
 		void WriteTypeParameters(IEnumerable<TypeParameterDeclaration> typeParameters, TokenWriter writer, CSharpFormattingOptions formattingPolicy)

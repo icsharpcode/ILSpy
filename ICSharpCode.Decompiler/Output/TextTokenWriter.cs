@@ -302,7 +302,7 @@ namespace ICSharpCode.Decompiler
 					// Attach member reference to token only if there's no identifier in the current node.
 					var member = GetCurrentMemberReference();
 					var node = nodeStack.Peek();
-					if (member != null && node.GetChildByRole<Identifier>(SlotKind.Identifier) is null)
+					if (member != null && node.GetChild(Slots.Identifier) is null)
 					{
 						switch (member)
 						{

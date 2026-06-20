@@ -781,13 +781,26 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	// it replaces the old polymorphic node.Role == Roles.X comparisons.
 	void WriteSlotKinds(SourceProductionContext context, ImmutableArray<AstNodeAdditions> source)
 	{
-		var kinds = new SortedSet<string>(StringComparer.Ordinal);
+		// Per kind: the element types seen (to choose a typed slot's T) and whether it is a collection.
+		// kindIsCollection is null once a kind is seen as a collection on one node and a single child on
+		// another (e.g. Expression, Initializer); it is resolved by agreement, so the emitted flag never
+		// depends on iteration order (each kind's value is written exactly once it is determined).
+		var kindTypes = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
+		var kindIsCollection = new Dictionary<string, bool?>();
 		foreach (var node in source)
 		{
 			if (node.Slots is { } slots)
 			{
 				foreach (var s in slots)
-					kinds.Add(s.KindName);
+				{
+					if (!kindTypes.TryGetValue(s.KindName, out var set))
+						kindTypes[s.KindName] = set = new SortedSet<string>(StringComparer.Ordinal);
+					set.Add(s.ElementType);
+					if (!kindIsCollection.TryGetValue(s.KindName, out var arity))
+						kindIsCollection[s.KindName] = s.IsCollection;
+					else if (arity is bool b && b != s.IsCollection)
+						kindIsCollection[s.KindName] = null;
+				}
 			}
 		}
 
@@ -800,8 +813,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		builder.AppendLine("public enum SlotKind");
 		builder.AppendLine("{");
 		builder.AppendLine("\tNone,");
-		foreach (var k in kinds)
+		foreach (var k in kindTypes.Keys)
 			builder.AppendLine($"\t{k},");
+		builder.AppendLine("}");
+		builder.AppendLine();
+		// Typed kind constants for polymorphic access: node.GetChild(Slots.X) infers the child type. A
+		// kind reused with several child types across node types widens to AstNode (only its concrete
+		// per-node slots carry the precise type); such kinds are only reached through those per-node slots.
+		builder.AppendLine("/// <summary>Typed slot kinds for polymorphic child access; the child type is inferred from the slot.</summary>");
+		builder.AppendLine("public static class Slots");
+		builder.AppendLine("{");
+		foreach (var kv in kindTypes)
+		{
+			string type = kv.Value.Count == 1 ? kv.Value.Min : "AstNode";
+			string isColl = kindIsCollection[kv.Key] == true ? "true" : "false";
+			builder.AppendLine($"\tpublic static readonly CSharpSlotInfo<{type}> {kv.Key} = new CSharpSlotInfo<{type}>(\"{kv.Key}\", {isColl}, SlotKind.{kv.Key}, false);");
+		}
 		builder.AppendLine("}");
 
 		context.AddSource("SlotKind.g.cs", SourceText.From(builder.ToString().Replace("\r\n", "\n"), Encoding.UTF8));

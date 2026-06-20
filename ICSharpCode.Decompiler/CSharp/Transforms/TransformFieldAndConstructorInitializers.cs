@@ -482,7 +482,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var ci = new ConstructorInitializer { ConstructorInitializerType = type };
 
 				// Move arguments from invocation to initializer:
-				invocation.GetChildrenByRole<Expression>(SlotKind.Argument).MoveTo(ci.Arguments);
+				invocation.GetChildren(Slots.Argument).MoveTo(ci.Arguments);
 				// Add the initializer: (unless it is the default 'base()')
 				if (!(ci.ConstructorInitializerType == ConstructorInitializerType.Base && ci.Arguments.Count == 0))
 					constructorDeclaration.Initializer = ci.CopyAnnotationsFrom(invocation);

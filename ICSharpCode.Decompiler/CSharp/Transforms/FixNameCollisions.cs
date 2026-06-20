@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (var typeDecl in rootNode.DescendantsAndSelf.OfType<TypeDeclaration>())
 			{
 				var memberNames = typeDecl.Members.Select(m => {
-					var type = m.GetChildByRole<AstType>(SlotKind.PrivateImplementationType);
+					var type = m.GetChild(Slots.PrivateImplementationType);
 					return type is null ? m.Name : type + "." + m.Name;
 				}).ToHashSet();
 				// memberNames does not include fields or non-custom events because those
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string? newName))
 					{
 						// An IdentifierExpression / MemberReferenceExpression always carries its name identifier.
-						node.GetChildByRole<Identifier>(SlotKind.Identifier)!.Name = newName;
+						node.GetChild(Slots.Identifier)!.Name = newName;
 					}
 				}
 			}

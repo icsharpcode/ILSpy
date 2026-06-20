@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public IdentifierExpression(string identifier, TextLocation location)
 		{
-			SetChildByRole(SlotKind.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(identifier, location));
+			SetChild(Slots.Identifier, Decompiler.CSharp.Syntax.Identifier.Create(identifier, location));
 		}
 
 		[Slot("Identifier")]

@@ -46,9 +46,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			var ident = other as IdentifierExpression;
 			if (ident == null || ident.TypeArguments.Any())
 				return false;
-			if (match.Get(referencedGroupName).Last() is not IdentifierExpression referenced)
+			if (match.Get(referencedGroupName).Last() is not AstNode referenced)
 				return false;
-			return ident.Identifier == referenced.Identifier;
+			Identifier? referencedIdentifier = referenced.GetChild(Slots.Identifier);
+			if (referencedIdentifier == null)
+				return false;
+			return ident.Identifier == referencedIdentifier.Name;
 		}
 	}
 }

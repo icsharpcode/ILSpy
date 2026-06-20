@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public SimpleType(string identifier, TextLocation location)
 		{
-			SetChildByRole(SlotKind.Identifier, Syntax.Identifier.Create(identifier, location));
+			SetChild(Slots.Identifier, Syntax.Identifier.Create(identifier, location));
 		}
 		[Slot("Identifier")]
 		public partial string? Identifier { get; set; }
