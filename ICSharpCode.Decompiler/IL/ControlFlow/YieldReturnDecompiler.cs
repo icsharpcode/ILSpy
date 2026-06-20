@@ -82,6 +82,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <remarks>Set in ConstructExceptionTable() for assembly compiled with Mono</remarks>
 		IField disposingField;
 
+		Block creationBlock;
+
 		/// <summary>Maps the fields of the compiler-generated class to the original parameters.</summary>
 		/// <remarks>Set in MatchEnumeratorCreationPattern() and ResolveIEnumerableIEnumeratorFieldMapping()</remarks>
 		readonly Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
@@ -133,6 +135,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.stateField = null;
 			this.currentField = null;
 			this.disposingField = null;
+			this.creationBlock = null;
 			this.fieldToParameterMap.Clear();
 			this.finallyMethodToStateRange = null;
 			this.decompiledFinallyMethods.Clear();
@@ -253,6 +256,42 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
+			if (oldBody is BlockContainer oldContainer && oldContainer.Blocks.Count > 1 && creationBlock != null)
+			{
+				context.Step("Reintroduce original wrapper blocks", function);
+				foreach (var branch in oldContainer.Descendants.OfType<Branch>())
+				{
+					if (branch.TargetBlock == creationBlock)
+					{
+						branch.TargetBlock = newBody.EntryPoint;
+					}
+				}
+
+				var newBlocks = newBody.Blocks.ToList();
+				newBody.Blocks.Clear();
+
+				int insertionIndex = oldContainer.Blocks.IndexOf(creationBlock);
+				oldContainer.Blocks.RemoveAt(insertionIndex);
+				foreach (var block in newBlocks)
+				{
+					oldContainer.Blocks.Insert(insertionIndex++, block);
+				}
+
+				foreach (var leave in oldContainer.Descendants.OfType<Leave>())
+				{
+					if (leave.TargetContainer == newBody)
+					{
+						leave.TargetContainer = oldContainer;
+						if (oldContainer.ExpectedResultType == StackType.O)
+						{
+							leave.Value = new LdNull().WithILRange(leave);
+						}
+					}
+				}
+
+				function.Body = oldContainer;
+			}
+
 			// Re-run control flow simplification over the newly constructed set of gotos,
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
 			function.RunTransforms(CSharpDecompiler.EarlyILTransforms(), context);
@@ -263,6 +302,41 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		bool MatchEnumeratorCreationPattern(ILFunction function)
 		{
 			Block body = SingleBlock(function.Body);
+			if (body != null && body.Instructions.Count > 0)
+			{
+				if (MatchEnumeratorCreationPattern(body))
+				{
+					creationBlock = body;
+					return true;
+				}
+			}
+
+			if (function.Body is BlockContainer container)
+			{
+				foreach (var block in container.Blocks)
+				{
+					if (block.Instructions.Count == 0)
+						continue;
+					isCompiledWithMono = false;
+					isCompiledWithVisualBasic = false;
+					isCompiledWithLegacyVisualBasic = false;
+					stateField = null;
+					fieldToParameterMap.Clear();
+					enumeratorCtor = default;
+					enumeratorType = default;
+					if (MatchEnumeratorCreationPattern(block))
+					{
+						creationBlock = block;
+						return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		bool MatchEnumeratorCreationPattern(Block body)
+		{
 			if (body == null || body.Instructions.Count == 0)
 			{
 				return false;

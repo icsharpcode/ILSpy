@@ -76,6 +76,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task IssueIEnumeratorPatchWrapper()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task Issue982()
 		{
 			await Run();

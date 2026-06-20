@@ -369,7 +369,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new BreakStatement().WithILInstruction(inst);
 			if (inst.TargetContainer == currentReturnContainer)
 			{
-				if (currentIsIterator)
+				if (currentIsIterator && (inst.Value.MatchNop() || inst.Value is LdNull))
 					return new YieldBreakStatement().WithILInstruction(inst);
 				else if (!inst.Value.MatchNop())
 				{

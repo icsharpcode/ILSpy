@@ -101,6 +101,7 @@
     <None Include="TestCases\IsolatedDecompilation\IsolatedStaticCtor.il" />
     <None Include="TestCases\ILPretty\ExtensionEncodingV2.il" />
     <None Include="testcases\ilpretty\ExtensionEncodingV1.il" />
+    <None Include="TestCases\ILPretty\IssueIEnumeratorPatchWrapper.il" />
     <None Include="TestCases\ILPretty\GuessAccessors.cs" />
     <None Include="TestCases\ILPretty\GuessAccessors.il" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.il" />
@@ -157,6 +158,7 @@
     <Compile Include="TestAssemblyResolver.cs" />
     <Compile Include="TestCases\ILPretty\ExtensionEncodingV2.cs" />
     <Compile Include="TestCases\ILPretty\ExtensionEncodingV1.cs" />
+    <None Include="TestCases\ILPretty\IssueIEnumeratorPatchWrapper.cs" />
     <Compile Include="TestCases\ILPretty\Issue3344CkFinite.cs" />
     <Compile Include="TestCases\ILPretty\Issue3421.cs" />
     <Compile Include="TestCases\ILPretty\Issue3465.cs" />
