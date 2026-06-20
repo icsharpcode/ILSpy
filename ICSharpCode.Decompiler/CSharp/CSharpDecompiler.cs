@@ -715,6 +715,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder);
+			// The tree handed to the pipeline must already be well-formed; check it once up front so a
+			// malformed builder output is caught here rather than blamed on the first transform (DEBUG only).
+			rootNode.CheckInvariant();
 			foreach (var transform in astTransforms)
 			{
 				CancellationToken.ThrowIfCancellationRequested();

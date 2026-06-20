@@ -27,6 +27,7 @@
 #nullable enable
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
@@ -69,18 +70,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool HasNullableSpecifier { get; set; }
 
-		int pointerRank;
-
-		public int PointerRank {
-			get {
-				return pointerRank;
-			}
-			set {
-				if (value < 0)
-					throw new ArgumentOutOfRangeException(nameof(value));
-				pointerRank = value;
-			}
-		}
+		// Non-negativity is verified by CheckInvariant rather than an eager setter guard.
+		public int PointerRank { get; set; }
 
 		[Slot("ArraySpecifier")]
 		public partial AstNodeCollection<ArraySpecifier> ArraySpecifiers { get; }
@@ -129,6 +120,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.HasRefSpecifier = true;
 			return this;
 		}
+
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			// PointerRank is the number of '*' specifiers; a transform that corrupts it
+			// (e.g. an unbalanced decrement) is caught here at the offending transform.
+			Debug.Assert(PointerRank >= 0, "ComposedType.PointerRank must not be negative");
+		}
 	}
 
 	/// <summary>
@@ -151,6 +150,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override string ToString(CSharpFormattingOptions? formattingOptions)
 		{
 			return "[" + new string(',', this.Dimensions - 1) + "]";
+		}
+
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			// A rank specifier always has at least one dimension ('[]' is rank 1); the output relies on it.
+			Debug.Assert(Dimensions >= 1, "ArraySpecifier.Dimensions must be at least 1");
 		}
 	}
 }
