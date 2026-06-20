@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Linq;
 
@@ -39,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			this.referencedGroupName = referencedGroupName;
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			var ident = other as IdentifierExpression;
 			if (ident == null || ident.TypeArguments.Any())

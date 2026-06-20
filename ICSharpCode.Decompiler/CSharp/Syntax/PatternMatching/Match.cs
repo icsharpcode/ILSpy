@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
@@ -27,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	{
 		// TODO: maybe we should add an implicit Match->bool conversion? (implicit operator bool(Match m) { return m != null; })
 
-		List<KeyValuePair<string, INode>> results;
+		List<KeyValuePair<string, INode?>> results;
 
 		public bool Success {
 			get { return results != null; }
@@ -36,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		internal static Match CreateNew()
 		{
 			Match m;
-			m.results = new List<KeyValuePair<string, INode>>();
+			m.results = new List<KeyValuePair<string, INode?>>();
 			return m;
 		}
 
@@ -50,7 +52,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			results.RemoveRange(checkPoint, results.Count - checkPoint);
 		}
 
-		public IEnumerable<INode> Get(string groupName)
+		public IEnumerable<INode?> Get(string groupName)
 		{
 			if (results == null)
 				yield break;
@@ -68,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			foreach (var pair in results)
 			{
 				if (pair.Key == groupName)
-					yield return (T)pair.Value;
+					yield return (T)pair.Value!;
 			}
 		}
 
@@ -84,19 +86,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			return false;
 		}
 
-		public void Add(string groupName, INode node)
+		public void Add(string? groupName, INode? node)
 		{
 			if (groupName != null && node != null)
 			{
-				results.Add(new KeyValuePair<string, INode>(groupName, node));
+				results.Add(new KeyValuePair<string, INode?>(groupName, node));
 			}
 		}
 
-		internal void AddNull(string groupName)
+		internal void AddNull(string? groupName)
 		{
 			if (groupName != null)
 			{
-				results.Add(new KeyValuePair<string, INode>(groupName, null));
+				results.Add(new KeyValuePair<string, INode?>(groupName, null));
 			}
 		}
 	}

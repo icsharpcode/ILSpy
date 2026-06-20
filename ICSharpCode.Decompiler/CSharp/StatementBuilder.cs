@@ -764,8 +764,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			Statement firstStatement = foreachBody.Statements.First();
 			if (firstStatement is LabelStatement)
 			{
-				// skip the entry-point label, if any
-				firstStatement = firstStatement.GetNextStatement();
+				// skip the entry-point label, if any; the assignment statement always follows it
+				firstStatement = firstStatement.GetNextStatement()!;
 			}
 			Debug.Assert(firstStatement is ExpressionStatement);
 			firstStatement.Remove();

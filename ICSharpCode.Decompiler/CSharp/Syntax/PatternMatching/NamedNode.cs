@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
@@ -44,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			this.childNode = childNode;
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			match.Add(this.groupName, other);
 			return childNode.DoMatch(other, match);

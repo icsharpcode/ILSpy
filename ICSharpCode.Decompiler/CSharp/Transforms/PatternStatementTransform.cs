@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return declPoint.Ancestors.Contains(loop) && !declareVariables.WasMerged(itemVar);
 		}
 
-		static bool AddressUsedForSingleCall(IL.ILVariable v, IL.BlockContainer loop)
+		static bool AddressUsedForSingleCall(IL.ILVariable v, IL.BlockContainer? loop)
 		{
 			if (v.StoreCount == 1 && v.AddressCount == 1 && v.LoadCount == 0 && v.Type.IsReferenceType == false)
 			{
@@ -525,7 +525,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!MatchForeachOnMultiDimArray(upperBounds, collection, stmt, out var foreachVariable, out var statements, out var lowerBounds))
 				return null;
 			statementsToDelete.Add(stmt);
-			statementsToDelete.Add(stmt.GetNextStatement());
+			// The matched multi-dimensional foreach pattern guarantees a statement after stmt.
+			statementsToDelete.Add(stmt.GetNextStatement()!);
 			var itemVariable = foreachVariable.GetILVariable();
 			if (itemVariable == null || !itemVariable.IsSingleDefinition
 				|| (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot)
@@ -1098,7 +1099,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				dd.CopyAnnotationsFrom(methodDef);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
 				dd.Body = m.Get<BlockStatement>("body").Single().Detach();
-				dd.Name = currentTypeDefinition?.Name;
+				// A destructor only appears inside a type declaration, so the context tracker
+				// has an enclosing type at this point.
+				dd.Name = currentTypeDefinition!.Name;
 				methodDef.ReplaceWith(dd);
 				return dd;
 			}
@@ -1188,9 +1191,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var bAndC = expr.Right as BinaryOperatorExpression;
 					if (bAndC != null && bAndC.Operator == expr.Operator)
 					{
-						// make bAndC the parent and expr the child
-						var b = bAndC.Left.Detach();
-						var c = bAndC.Right.Detach();
+						// make bAndC the parent and expr the child.
+						// A conditional-and/or operator always has both operands present.
+						var b = bAndC.Left!.Detach();
+						var c = bAndC.Right!.Detach();
 						expr.ReplaceWith(bAndC.Detach());
 						bAndC.Left = expr;
 						bAndC.Right = c;

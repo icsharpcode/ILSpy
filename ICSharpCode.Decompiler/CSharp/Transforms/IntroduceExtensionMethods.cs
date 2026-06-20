@@ -48,7 +48,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem);
-			InitializeContext(rootNode.Annotation<UsingScope>());
+			// The decompiler attaches a UsingScope annotation to the syntax-tree root.
+			InitializeContext(rootNode.Annotation<UsingScope>()!);
 			rootNode.AcceptVisitor(this);
 		}
 
@@ -111,14 +112,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (!context.Settings.RefExtensionMethods || dirExpr.FieldDirection == FieldDirection.Out)
 					return;
-				firstArgument = dirExpr.Expression;
+				// A ref/out direction expression always wraps an operand.
+				firstArgument = dirExpr.Expression!;
 				target = firstArgument.GetResolveResult();
 				dirExpr.Detach();
 			}
 			else if (firstArgument is NullReferenceExpression)
 			{
 				Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
-				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
+				// The replacement is a freshly created CastExpression, so the result is non-null.
+				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()))!;
 			}
 			if (invocationExpression.Target is IdentifierExpression identifierExpression)
 			{

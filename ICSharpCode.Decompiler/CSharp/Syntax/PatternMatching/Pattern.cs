@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.Diagnostics;
 
@@ -31,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// </summary>
 		public static readonly string AnyString = "$any$";
 
-		public static bool MatchString(string pattern, string text)
+		public static bool MatchString(string? pattern, string? text)
 		{
 			return pattern == AnyString || pattern == text;
 		}
@@ -48,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			}
 		}
 
-		public abstract bool DoMatch(INode other, Match match);
+		public abstract bool DoMatch(INode? other, Match match);
 
 		public virtual bool DoMatchCollection(IReadOnlyList<INode> other, int pos, Match match, BacktrackingInfo backtrackingInfo)
 		{

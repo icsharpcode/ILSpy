@@ -379,7 +379,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
-				TypeResolveResult rr;
+				TypeResolveResult? rr;
 				if ((rr = simpleType.Annotation<TypeResolveResult>()) == null)
 				{
 					base.VisitSimpleType(simpleType);

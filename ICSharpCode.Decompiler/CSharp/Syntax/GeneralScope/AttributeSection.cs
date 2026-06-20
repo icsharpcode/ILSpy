@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -42,9 +44,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		// DoMatch compares the name string; exclude the token slot to avoid matching it twice.
+		// Optional: most attribute sections have no target (e.g. [Foo]); only [return:]/[assembly:]/...
+		// carry one, so the backing token slot may be empty.
 		[ExcludeFromMatch]
 		[Slot("Identifier")]
-		public partial Identifier AttributeTargetToken { get; set; }
+		public partial Identifier? AttributeTargetToken { get; set; }
 
 		[Slot("Attribute")]
 		public partial AstNodeCollection<Attribute> Attributes { get; }
