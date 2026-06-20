@@ -72,7 +72,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set {
 				if (value == null)
 					throw new ArgumentNullException(nameof(value));
-				ThrowIfFrozen();
 				this.name = value;
 			}
 		}
@@ -86,7 +85,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal void SetStartLocation(TextLocation value)
 		{
-			ThrowIfFrozen();
 			this.startLocation = value;
 		}
 
@@ -97,7 +95,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return (flags & verbatimBit) != 0;
 			}
 			set {
-				ThrowIfFrozen();
 				if (value)
 					flags |= verbatimBit;
 				else

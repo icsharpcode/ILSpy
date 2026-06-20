@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync {
 			get { return isAsync; }
-			set { ThrowIfFrozen(); isAsync = value; }
+			set { isAsync = value; }
 		}
 
 		// used to tell the difference between delegate {} and delegate () {}
@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool HasParameterList {
 			get { return hasParameterList || Parameters.Any(); }
-			set { ThrowIfFrozen(); hasParameterList = value; }
+			set { hasParameterList = value; }
 		}
 
 		public CSharpTokenNode DelegateToken {

@@ -41,7 +41,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set {
 				if (value == null)
 					throw new ArgumentNullException();
-				ThrowIfFrozen();
 				keyword = value;
 			}
 		}
@@ -73,7 +72,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal void SetStartLocation(TextLocation value)
 		{
-			ThrowIfFrozen();
 			this.location = value;
 		}
 

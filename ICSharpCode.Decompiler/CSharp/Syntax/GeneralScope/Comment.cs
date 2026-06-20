@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public CommentType CommentType {
 			get { return commentType; }
-			set { ThrowIfFrozen(); commentType = value; }
+			set { commentType = value; }
 		}
 
 		/// <summary>
@@ -78,14 +78,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool StartsLine {
 			get { return startsLine; }
-			set { ThrowIfFrozen(); startsLine = value; }
+			set { startsLine = value; }
 		}
 
 		string content;
 
 		public string Content {
 			get { return content; }
-			set { ThrowIfFrozen(); content = value; }
+			set { content = value; }
 		}
 
 		TextLocation startLocation;
@@ -104,13 +104,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal void SetStartLocation(TextLocation value)
 		{
-			ThrowIfFrozen();
 			this.startLocation = value;
 		}
 
 		internal void SetEndLocation(TextLocation value)
 		{
-			ThrowIfFrozen();
 			this.endLocation = value;
 		}
 

@@ -173,7 +173,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public OperatorType OperatorType {
 			get { return operatorType; }
 			set {
-				ThrowIfFrozen();
 				operatorType = value;
 			}
 		}

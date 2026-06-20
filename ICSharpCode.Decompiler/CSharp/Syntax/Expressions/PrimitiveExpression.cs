@@ -57,7 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal void SetLocation(TextLocation startLocation, TextLocation endLocation)
 		{
-			ThrowIfFrozen();
 			this.startLocation = startLocation;
 			this.endLocation = endLocation;
 		}
@@ -68,7 +67,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public object Value {
 			get { return this.value; }
 			set {
-				ThrowIfFrozen();
 				this.value = value;
 			}
 		}
@@ -76,7 +74,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public LiteralFormat Format {
 			get { return format; }
 			set {
-				ThrowIfFrozen();
 				format = value;
 			}
 		}

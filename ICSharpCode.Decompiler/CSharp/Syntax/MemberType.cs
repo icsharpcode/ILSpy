@@ -37,7 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool IsDoubleColon {
 			get { return isDoubleColon; }
 			set {
-				ThrowIfFrozen();
 				isDoubleColon = value;
 			}
 		}
