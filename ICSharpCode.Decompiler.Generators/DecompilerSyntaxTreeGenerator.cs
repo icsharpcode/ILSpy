@@ -32,20 +32,6 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
 	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool IsOptional)>? NameAccessors, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
 
-	// Derives the shared SlotKind name from a [Slot] string. Those strings are already bare
-	// kind names (e.g. "Body", "Getter"), so this is mostly identity; the last-dotted-segment and
-	// trailing-"Role" stripping below is defensive against any legacy dotted/Role-suffixed form. Names
-	// shared across node types (aliases, or the same logical slot on different nodes) intentionally
-	// collapse to one kind, so node.Slot.Kind is shared and consumers compare against SlotKind.X.
-	static string SlotKindName(string roleExpr)
-	{
-		int dot = roleExpr.LastIndexOf('.');
-		string name = dot >= 0 ? roleExpr.Substring(dot + 1) : roleExpr;
-		if (name.EndsWith("Role") && name.Length > 4)
-			name = name.Substring(0, name.Length - 4);
-		return name;
-	}
-
 	AstNodeAdditions GetAstNodeAdditions(GeneratorAttributeSyntaxContext context, CancellationToken ct)
 	{
 		var targetSymbol = (INamedTypeSymbol)context.TargetSymbol;
@@ -129,7 +115,10 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			if (slotAttr != null)
 			{
 				slots ??= new();
-				string roleExpr = (string)slotAttr.ConstructorArguments[0].Value!;
+				// The [Slot] argument is already the bare SlotKind name (e.g. "Body", "Expression"); kinds
+				// shared across nodes (aliases, or the same logical slot on different node types) deliberately
+				// collapse to one name, so node.Slot.Kind is shared and consumers compare against SlotKind.X.
+				string kindName = (string)slotAttr.ConstructorArguments[0].Value!;
 				// A [Slot] on a string property is a name: a convenience string accessor over a backing
 				// Identifier token slot. Child slots are AstNode-typed, so the property type disambiguates -
 				// no separate attribute is needed. Optionality comes from the nullable annotation ('string?'
@@ -140,7 +129,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					bool nameNullable = property.Type.NullableAnnotation == NullableAnnotation.Annotated;
 					string tokenName = property.Name + "Token";
 					// An optional name makes the backing token a real nullable slot: an absent name is a null token.
-					slots.Add((false, tokenName, "Identifier", "Identifier", false, nameNullable, SlotKindName(roleExpr), false));
+					slots.Add((false, tokenName, "Identifier", "Identifier", false, nameNullable, kindName, false));
 					nameAccessors.Add((property.Name, tokenName, nameNullable));
 					// The name is the primary construction value, so it is a required ctor param regardless of
 					// optionality (which only governs the setter's empty-to-null behaviour and the property type).
@@ -156,7 +145,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				string elementType = isCollection
 					? ((INamedTypeSymbol)property.Type).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
 					: propertyType;
-				slots.Add((isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, SlotKindName(roleExpr), true));
+				slots.Add((isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, kindName, true));
 				ctorParams ??= new();
 				ctorParams.Add(isCollection
 					? (property.Name, "", elementType, true, true)
