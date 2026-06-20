@@ -365,11 +365,19 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				}
 				else
 				{
+					// A single slot occupies a fixed flattened index. When no collection precedes it, that
+					// index is the constant slotIndex, so the setter can assign childIndex directly (the ILAst
+					// pattern -- no invalidate, no renumber). After a collection the index is dynamic, so fall
+					// back to the index-less setter (which invalidates on a set/clear).
+					bool constIndex = !slots.Take(slotIndex).Any(s => s.IsCollection);
 					builder.AppendLine($"\t{type}? {field};");
 					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}{type}{(isNullable ? "?" : "")} {name}");
 					builder.AppendLine("\t{");
 					builder.AppendLine($"\t\tget => {field}{(isNullable ? "" : "!")};");
-					builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value);");
+					if (constIndex)
+						builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value, {slotIndex});");
+					else
+						builder.AppendLine($"\t\tset => SetChildNode(ref {field}, value);");
 					builder.AppendLine("\t}");
 				}
 				builder.AppendLine();
@@ -571,7 +579,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				for (int k = 0; k < slots.Count; k++)
 				{
 					builder.AppendLine($"\t\t\tcase {k}:");
-					builder.AppendLine($"\t\t\t\tSetChildNode(ref {FieldName(slots[k].PropertyName)}, ({slots[k].PropertyType}?)value);");
+					builder.AppendLine($"\t\t\t\tSetChildNode(ref {FieldName(slots[k].PropertyName)}, ({slots[k].PropertyType}?)value, index);");
 					builder.AppendLine("\t\t\t\treturn;");
 				}
 				builder.AppendLine("\t\t\tdefault:");
@@ -603,7 +611,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					{
 						builder.AppendLine("\t\tif (i == 0)");
 						builder.AppendLine("\t\t{");
-						builder.AppendLine($"\t\t\tSetChildNode(ref {field}, ({s.PropertyType}?)value);");
+						builder.AppendLine($"\t\t\tSetChildNode(ref {field}, ({s.PropertyType}?)value, index);");
 						builder.AppendLine("\t\t\treturn;");
 						builder.AppendLine("\t\t}");
 						if (!last)
