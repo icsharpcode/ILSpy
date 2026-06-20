@@ -74,7 +74,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		readonly AstNode parent;
 		readonly CSharpSlotInfo kind;
-		readonly List<T> list = new List<T>();
+		// Allocated lazily on first Add: a collection slot that is accessed but stays empty (the common
+		// case for Attributes, TypeArguments, constraints, ...) then costs only this wrapper, not a List.
+		List<T>? list;
 
 		public AstNodeCollection(AstNode parent, CSharpSlotInfo kind)
 		{
@@ -83,16 +85,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public int Count {
-			get { return list.Count; }
+			get { return list?.Count ?? 0; }
 		}
 
-		private protected override int NodeCount => list.Count;
-		private protected override INode NodeAt(int index) => list[index];
+		private protected override int NodeCount => list?.Count ?? 0;
+		private protected override INode NodeAt(int index) => list![index];
 
 		public T this[int index] {
-			get { return list[index]; }
+			get { return list![index]; }
 			set {
-				T old = list[index];
+				T old = list![index];
 				if (old == value)
 					return;
 				ValidateNewChild(value);
@@ -118,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (element == null)
 				return;
 			ValidateNewChild(element);
-			list.Add(element);
+			(list ??= new List<T>()).Add(element);
 			element.SetParent(parent);
 			parent.InvalidateChildIndices();
 		}
@@ -161,7 +163,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (targetCollection == null)
 				throw new ArgumentNullException(nameof(targetCollection));
-			foreach (T node in list.ToArray())
+			foreach (T node in list?.ToArray() ?? Array.Empty<T>())
 			{
 				node.Remove();
 				targetCollection.Add(node);
@@ -170,14 +172,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool Contains(T element)
 		{
-			return element != null && element.Parent == parent && list.Contains(element);
+			return element != null && element.Parent == parent && list != null && list.Contains(element);
 		}
 
 		public int IndexOf(T element)
 		{
 			if (element == null || element.Parent != parent)
 				return -1;
-			return list.IndexOf(element);
+			return list?.IndexOf(element) ?? -1;
 		}
 
 		public bool Remove(T element)
@@ -185,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			int index = IndexOf(element);
 			if (index < 0)
 				return false;
-			list.RemoveAt(index);
+			list!.RemoveAt(index);
 			element.ClearParentAndIndex();
 			parent.InvalidateChildIndices();
 			return true;
@@ -221,11 +223,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public void CopyTo(T[] array, int arrayIndex)
 		{
-			list.CopyTo(array, arrayIndex);
+			list?.CopyTo(array, arrayIndex);
 		}
 
 		public void Clear()
 		{
+			if (list == null)
+				return;
 			foreach (T item in list)
 				item.ClearParentAndIndex();
 			list.Clear();
@@ -234,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public IEnumerable<T> Detach()
 		{
-			T[] items = list.ToArray();
+			T[] items = list?.ToArray() ?? Array.Empty<T>();
 			Clear();
 			return items;
 		}
@@ -245,9 +249,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public T FirstOrNull(Func<T, bool>? predicate = null)
 		{
-			foreach (T item in list)
-				if (predicate == null || predicate(item))
-					return item;
+			if (list != null)
+				foreach (T item in list)
+					if (predicate == null || predicate(item))
+						return item;
 			return null!;
 		}
 
@@ -258,9 +263,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public T LastOrNull(Func<T, bool>? predicate = null)
 		{
 			T result = null!;
-			foreach (T item in list)
-				if (predicate == null || predicate(item))
-					result = item;
+			if (list != null)
+				foreach (T item in list)
+					if (predicate == null || predicate(item))
+						result = item;
 			return result;
 		}
 
@@ -289,13 +295,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public struct Enumerator : IEnumerator<T>
 		{
-			readonly List<T> list;
+			readonly List<T>? list;
 			int pos;        // index at which 'current' was found when it was yielded
 			T? current;     // the element handed out by the last MoveNext
 			T? next;        // the element that followed 'current' at the moment it was yielded
 			bool started;
 
-			internal Enumerator(List<T> list)
+			internal Enumerator(List<T>? list)
 			{
 				this.list = list;
 				this.pos = 0;
@@ -309,6 +315,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			public bool MoveNext()
 			{
+				List<T>? list = this.list;
+				if (list == null)
+				{
+					current = null;
+					return false;
+				}
 				if (!started)
 				{
 					started = true;
@@ -395,7 +407,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			// A null existingItem yields IndexOf == -1, so the new item is appended.
 			int index = IndexOf(existingItem!);
-			Insert(index < 0 ? list.Count : index, newItem);
+			Insert(index < 0 ? Count : index, newItem);
 		}
 
 		void Insert(int index, T newItem)
@@ -403,7 +415,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (newItem == null)
 				return;
 			ValidateNewChild(newItem);
-			list.Insert(index, newItem);
+			(list ??= new List<T>()).Insert(index, newItem);
 			newItem.SetParent(parent);
 			parent.InvalidateChildIndices();
 		}
