@@ -347,14 +347,21 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			// field (returned null-forgiving for a required child, nullable for an optional one); a
 			// collection slot owns a lazily created AstNodeCollection bound to this node. A slot re-declared from an inherited contract
 			// member (Part I.3 flatten) is an override.
-			foreach (var (isCollection, name, type, elementType, isOverride, isNullable, kindName, isPartial) in slots)
+			// A collection can maintain its children's flattened indices incrementally only when it is the
+			// node's sole collection and its last slot: then it owns the contiguous range [slotIndex, ..)
+			// with nothing after it, so an element's index is slotIndex + its local position (all
+			// preceding slots are single children, one index each).
+			int collectionCount = slots.Count(s => s.IsCollection);
+			for (int slotIndex = 0; slotIndex < slots.Count; slotIndex++)
 			{
+				var (isCollection, name, type, elementType, isOverride, isNullable, kindName, isPartial) = slots[slotIndex];
 				string field = FieldName(name);
 				string partialKw = isPartial ? "partial " : "";
 				if (isCollection)
 				{
+					bool supportsIncremental = collectionCount == 1 && slotIndex == slots.Count - 1;
 					builder.AppendLine($"\tAstNodeCollection<{elementType}>? {field};");
-					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, Slots.{kindName});");
+					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, Slots.{kindName}, {slotIndex}, {(supportsIncremental ? "true" : "false")});");
 				}
 				else
 				{
