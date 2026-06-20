@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// its parent, so <c>node.Slot == X.YSlot</c> identifies a node's position by object identity (the
 	/// successor to <c>node.Role == X.YRole</c>).
 	/// </summary>
-	public sealed class CSharpSlotInfo
+	public class CSharpSlotInfo
 	{
 		/// <summary>The slot's property name, e.g. "Left", "Body", "Parameters".</summary>
 		public string Name { get; }
@@ -63,5 +63,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		public override string ToString() => Name;
+	}
+
+	/// <summary>
+	/// A <see cref="CSharpSlotInfo"/> that carries its child type as a type parameter, so the typed
+	/// child accessors (<c>node.GetChild(SomeNode.XSlot)</c>) infer the result type from the slot
+	/// instead of needing an explicit type argument. <typeparamref name="T"/> is the child type (the
+	/// element type for a collection slot).
+	/// </summary>
+	public sealed class CSharpSlotInfo<T> : CSharpSlotInfo where T : AstNode
+	{
+		internal CSharpSlotInfo(string name, bool isCollection, SlotKind kind, bool isOptional)
+			: base(name, typeof(T), isCollection, kind, isOptional)
+		{
+		}
 	}
 }
