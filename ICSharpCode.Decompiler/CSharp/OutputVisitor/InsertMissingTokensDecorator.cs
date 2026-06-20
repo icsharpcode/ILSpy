@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		// Nodes that have been started but whose first token has not been written yet. The start
 		// location of a node is the position of its first printed token (not the StartNode position,
 		// which precedes any leading newline/indentation), so it is assigned lazily on the next write.
-		readonly List<AstNode> nodesAwaitingStart = new List<AstNode>();
+		readonly HashSet<AstNode> nodesAwaitingStartLocation = new HashSet<AstNode>();
 
 		// Position immediately after the most recently written token. A node's end location is the end
 		// of its last token (not the EndNode position, which follows the trailing newline/indentation).
@@ -49,12 +49,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		void AssignPendingStartLocations()
 		{
-			if (nodesAwaitingStart.Count == 0)
+			if (nodesAwaitingStartLocation.Count == 0)
 				return;
 			TextLocation location = locationProvider.Location;
-			foreach (var node in nodesAwaitingStart)
+			foreach (var node in nodesAwaitingStartLocation)
 				node.StorePrintStart(location);
-			nodesAwaitingStart.Clear();
+			nodesAwaitingStartLocation.Clear();
 		}
 
 		public override void StartNode(AstNode node)
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				currentList.Add(node);
 				nodes.Push(currentList);
 				currentList = new List<AstNode>();
-				nodesAwaitingStart.Add(node);
+				nodesAwaitingStartLocation.Add(node);
 			}
 			else if (node is Comment comment)
 			{
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (node is not Trivia)
 			{
 				// A node that printed no tokens of its own collapses to a zero-width span here.
-				if (nodesAwaitingStart.Remove(node))
+				if (nodesAwaitingStartLocation.Remove(node))
 					node.StorePrintStart(lastTokenEnd);
 				node.StorePrintEnd(lastTokenEnd);
 				System.Diagnostics.Debug.Assert(currentList != null);
