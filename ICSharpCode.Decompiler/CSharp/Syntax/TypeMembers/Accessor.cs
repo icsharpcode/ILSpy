@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			set { }
 		}
 
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		[Slot("Body")]

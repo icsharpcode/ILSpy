@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string ReadonlyKeyword = "readonly";
 		public const string NullableToken = "?";
 		public const string PointerToken = "*";
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		/// <summary>

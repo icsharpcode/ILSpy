@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Field; }
 		}
 
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		[Slot("Identifier")]

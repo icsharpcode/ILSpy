@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string OutVarianceKeyword = "out";
 		public const string InVarianceKeyword = "in";
 
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		public VarianceModifier Variance { get; set; }
