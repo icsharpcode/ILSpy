@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
 	/// <summary>
@@ -32,18 +34,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// <remarks>Does not match null nodes.</remarks>
 	public class AnyNodeOrNull : Pattern
 	{
-		readonly string groupName;
+		readonly string? groupName;
 
-		public string GroupName {
+		public string? GroupName {
 			get { return groupName; }
 		}
 
-		public AnyNodeOrNull(string groupName = null)
+		public AnyNodeOrNull(string? groupName = null)
 		{
 			this.groupName = groupName;
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			if (other == null)
 			{

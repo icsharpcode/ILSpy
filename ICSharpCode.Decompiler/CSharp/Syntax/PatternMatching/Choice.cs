@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -43,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 			alternatives.Add(alternative);
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			var checkPoint = match.CheckPoint();
 			foreach (INode alt in alternatives)

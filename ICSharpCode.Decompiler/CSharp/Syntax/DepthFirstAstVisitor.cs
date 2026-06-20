@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -711,7 +713,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				child.AcceptVisitor(this);
 			}
-			return default(T);
+			// Unconstrained T: the default-returning visitor methods are the no-op base behavior
+			// for node kinds a derived visitor does not override.
+			return default(T)!;
 		}
 
 		public virtual T VisitSyntaxTree(SyntaxTree unit)
@@ -1384,7 +1388,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				child.AcceptVisitor(this, data);
 			}
-			return default(S);
+			// Unconstrained S: the default-returning visitor methods are the no-op base behavior
+			// for node kinds a derived visitor does not override.
+			return default(S)!;
 		}
 
 		public virtual S VisitSyntaxTree(SyntaxTree unit, T data)

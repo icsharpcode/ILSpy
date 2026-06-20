@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!context.Settings.QueryExpressions)
 				return;
-			CombineQueries(rootNode, new Dictionary<string, object>());
+			CombineQueries(rootNode, new Dictionary<string, object?>());
 		}
 
 		static readonly InvocationExpression castPattern = new InvocationExpression {
@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		void CombineQueries(AstNode node, Dictionary<string, object> fromOrLetIdentifiers)
+		void CombineQueries(AstNode node, Dictionary<string, object?> fromOrLetIdentifiers)
 		{
 			AstNode? next;
 			for (AstNode? child = node.FirstChild; child != null; child = next)
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 
-		bool TryRemoveTransparentIdentifier(QueryExpression query, QueryFromClause fromClause, QueryExpression innerQuery, Dictionary<string, object> letClauses)
+		bool TryRemoveTransparentIdentifier(QueryExpression query, QueryFromClause fromClause, QueryExpression innerQuery, Dictionary<string, object?> letClauses)
 		{
 			if (!CSharpDecompiler.IsTransparentIdentifier(fromClause.Identifier))
 				return false;
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>
 		/// Removes all occurrences of transparent identifiers
 		/// </summary>
-		void RemoveTransparentIdentifierReferences(AstNode node, Dictionary<string, object> fromOrLetIdentifiers)
+		void RemoveTransparentIdentifierReferences(AstNode node, Dictionary<string, object?> fromOrLetIdentifiers)
 		{
 			foreach (AstNode child in node.Children)
 			{
@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				mre.TypeArguments.MoveTo(newIdent.TypeArguments);
 				newIdent.CopyAnnotationsFrom(mre);
 				newIdent.RemoveAnnotations<Semantics.MemberResolveResult>(); // remove the reference to the property of the anonymous type
-				if (fromOrLetIdentifiers.TryGetValue(mre.MemberName, out var annotation))
+				if (fromOrLetIdentifiers.TryGetValue(mre.MemberName, out var annotation) && annotation != null)
 					newIdent.AddAnnotation(annotation);
 				mre.ReplaceWith(newIdent);
 				return;

@@ -168,7 +168,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								Projection = elementSelector.Detach(),
 								Key = keySelector.Detach()
 							};
-							queryGroupClause.AddAnnotation(new QueryGroupClauseAnnotation(keyLambda.Annotation<IL.ILFunction>(), projectionLambda.Annotation<IL.ILFunction>()));
+							// The matched group-by lambdas always carry their ILFunction annotation.
+							queryGroupClause.AddAnnotation(new QueryGroupClauseAnnotation(keyLambda.Annotation<IL.ILFunction>()!, projectionLambda.Annotation<IL.ILFunction>()!));
 							query.Clauses.Add(queryGroupClause);
 							return query;
 						}
@@ -314,7 +315,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								joinClause.IntoIdentifier = p2.Name; // into p2.Name
 								joinClause.IntoIdentifierToken!.CopyAnnotationsFrom(p2);
 							}
-							joinClause.AddAnnotation(new QueryJoinClauseAnnotation(outerLambda.Annotation<IL.ILFunction>(), innerLambda.Annotation<IL.ILFunction>()));
+							// The matched join key-selector lambdas always carry their ILFunction annotation.
+							joinClause.AddAnnotation(new QueryJoinClauseAnnotation(outerLambda.Annotation<IL.ILFunction>()!, innerLambda.Annotation<IL.ILFunction>()!));
 							query.Clauses.Add(joinClause);
 							query.Clauses.Add(new QuerySelectClause { Expression = ((Expression)lambda.Body).Detach() }.CopyAnnotationsFrom(lambda));
 							return query;

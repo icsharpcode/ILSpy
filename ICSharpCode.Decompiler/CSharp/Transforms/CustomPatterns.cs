@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			this.name = type.Name;
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			ComposedType? ct = other as ComposedType;
 			AstType? o;
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			this.childNode = new AnyNode(groupName);
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			InvocationExpression? ie = other as InvocationExpression;
 			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1)
@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				), "TypeHandle");
 		}
 
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(INode? other, Match match)
 		{
 			return childNode.DoMatch(other, match);
 		}

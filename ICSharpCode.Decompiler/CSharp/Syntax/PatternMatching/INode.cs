@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 
@@ -26,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 	/// </summary>
 	public interface INode
 	{
-		bool DoMatch(INode other, Match match);
+		bool DoMatch(INode? other, Match match);
 
 		/// <summary>
 		/// Matches this pattern node against the collection element at <paramref name="pos"/>.
@@ -51,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 		/// However, it is also possible to match two ASTs without any pattern nodes -
 		/// doing so will produce a successful match if the two ASTs are structurally identical.
 		/// </remarks>
-		public static Match Match(this INode pattern, INode other)
+		public static Match Match(this INode pattern, INode? other)
 		{
 			if (pattern == null)
 				throw new ArgumentNullException(nameof(pattern));
@@ -62,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 				return default(PatternMatching.Match);
 		}
 
-		public static bool IsMatch(this INode pattern, INode other)
+		public static bool IsMatch(this INode pattern, INode? other)
 		{
 			if (pattern == null)
 				throw new ArgumentNullException(nameof(pattern));

@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -39,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool IsVar()
 		{
-			SimpleType st = this as SimpleType;
+			SimpleType? st = this as SimpleType;
 			return st != null && st.Identifier == "var" && st.TypeArguments.Count == 0;
 		}
 

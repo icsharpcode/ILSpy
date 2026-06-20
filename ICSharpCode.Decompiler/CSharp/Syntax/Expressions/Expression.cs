@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
@@ -35,11 +37,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return (Expression)base.Clone();
 		}
 
-		public Expression ReplaceWith(Func<Expression, Expression> replaceFunction)
+		public Expression? ReplaceWith(Func<Expression, Expression> replaceFunction)
 		{
 			if (replaceFunction == null)
 				throw new ArgumentNullException(nameof(replaceFunction));
-			return (Expression)base.ReplaceWith(node => replaceFunction((Expression)node));
+			return (Expression?)base.ReplaceWith(node => replaceFunction((Expression)node));
 		}
 	}
 }

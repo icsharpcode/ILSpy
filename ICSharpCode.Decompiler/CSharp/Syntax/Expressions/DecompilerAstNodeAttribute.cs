@@ -22,6 +22,8 @@
 
 
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	class DecompilerAstNodeAttribute : System.Attribute
