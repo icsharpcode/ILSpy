@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public void AddMember(AstNode child)
 		{
-			AddChild(child, SlotKind.Member);
+			AddChild(child, Slots.Member);
 		}
 	}
 };

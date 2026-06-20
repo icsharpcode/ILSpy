@@ -213,7 +213,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		protected virtual void Semicolon()
 		{
 			// get the slot of the current node
-			SlotKind? kind = containerStack.Peek().Slot?.Kind;
+			CSharpSlotInfo? kind = containerStack.Peek().Slot?.Kind;
 			if (!SkipToken())
 			{
 				WriteToken(Roles.Semicolon);
@@ -225,16 +225,16 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			bool SkipToken()
 			{
-				return kind == SlotKind.Initializer
-					|| kind == SlotKind.Iterator
-					|| kind == SlotKind.ResourceAcquisition;
+				return kind == Slots.Initializer
+					|| kind == Slots.Iterator
+					|| kind == Slots.ResourceAcquisition;
 			}
 
 			bool SkipNewLine()
 			{
 				if (containerStack.Peek() is not Accessor accessor)
 					return false;
-				if (!(kind == SlotKind.Getter || kind == SlotKind.Setter))
+				if (!(kind == Slots.Getter || kind == Slots.Setter))
 					return false;
 				bool isAutoProperty = accessor.Body is null
 					&& !accessor.Attributes.Any()
@@ -654,11 +654,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			}
 			if (node.Parent is ObjectCreateExpression)
 			{
-				return node.Slot?.Kind == SlotKind.Initializer;
+				return node.Slot?.Kind == Slots.Initializer;
 			}
 			if (node.Parent is NamedExpression)
 			{
-				return node.Slot?.Kind == SlotKind.Expression;
+				return node.Slot?.Kind == Slots.Expression;
 			}
 			return false;
 		}
@@ -1316,7 +1316,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public virtual void VisitQueryExpression(QueryExpression queryExpression)
 		{
 			StartNode(queryExpression);
-			if (queryExpression.Slot?.Kind != SlotKind.PrecedingQuery)
+			if (queryExpression.Slot?.Kind != Slots.PrecedingQuery)
 				writer.Indent();
 			bool first = true;
 			foreach (var clause in queryExpression.Clauses)
@@ -1334,7 +1334,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				clause.AcceptVisitor(this);
 			}
-			if (queryExpression.Slot?.Kind != SlotKind.PrecedingQuery)
+			if (queryExpression.Slot?.Kind != Slots.PrecedingQuery)
 				writer.Unindent();
 			EndNode(queryExpression);
 		}
@@ -2265,12 +2265,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteAttributes(accessor.Attributes);
 			WriteModifiers(accessor.Modifiers);
 			BraceStyle style = policy.StatementBraceStyle;
-			if (accessor.Slot?.Kind == SlotKind.Getter)
+			if (accessor.Slot?.Kind == Slots.Getter)
 			{
 				WriteKeyword("get");
 				style = policy.PropertyGetBraceStyle;
 			}
-			else if (accessor.Slot?.Kind == SlotKind.Setter)
+			else if (accessor.Slot?.Kind == Slots.Setter)
 			{
 				if (accessor.Kind == AccessorKind.Init)
 				{
@@ -2282,12 +2282,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 				style = policy.PropertySetBraceStyle;
 			}
-			else if (accessor.Slot?.Kind == SlotKind.AddAccessor)
+			else if (accessor.Slot?.Kind == Slots.AddAccessor)
 			{
 				WriteKeyword("add");
 				style = policy.EventAddBraceStyle;
 			}
-			else if (accessor.Slot?.Kind == SlotKind.RemoveAccessor)
+			else if (accessor.Slot?.Kind == Slots.RemoveAccessor)
 			{
 				WriteKeyword("remove");
 				style = policy.EventRemoveBraceStyle;
@@ -2432,7 +2432,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			// output add/remove in their original order
 			for (AstNode? node = customEventDeclaration.FirstChild; node != null; node = node.NextSibling)
 			{
-				if (node.Slot?.Kind == SlotKind.AddAccessor || node.Slot?.Kind == SlotKind.RemoveAccessor)
+				if (node.Slot?.Kind == Slots.AddAccessor || node.Slot?.Kind == Slots.RemoveAccessor)
 				{
 					node.AcceptVisitor(this);
 				}
@@ -2509,7 +2509,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				// output get/set in their original order
 				for (AstNode? node = indexerDeclaration.FirstChild; node != null; node = node.NextSibling)
 				{
-					if (node.Slot?.Kind == SlotKind.Getter || node.Slot?.Kind == SlotKind.Setter)
+					if (node.Slot?.Kind == Slots.Getter || node.Slot?.Kind == Slots.Setter)
 					{
 						node.AcceptVisitor(this);
 					}
@@ -2671,7 +2671,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				// output get/set in their original order
 				for (AstNode? node = propertyDeclaration.FirstChild; node != null; node = node.NextSibling)
 				{
-					if (node.Slot?.Kind == SlotKind.Getter || node.Slot?.Kind == SlotKind.Setter)
+					if (node.Slot?.Kind == Slots.Getter || node.Slot?.Kind == Slots.Setter)
 					{
 						node.AcceptVisitor(this);
 					}

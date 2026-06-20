@@ -619,7 +619,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						foreach (var param in PrimaryConstructorDecl.Parameters)
 						{
 							param.Remove();
-							this.TypeDeclaration.InsertChildAfter(insertionPoint, param, SlotKind.Parameter);
+							this.TypeDeclaration.InsertChildAfter(insertionPoint, param, Slots.Parameter);
 							insertionPoint = param;
 						}
 					}

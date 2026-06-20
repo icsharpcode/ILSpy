@@ -72,10 +72,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		where T : AstNode
 	{
 		readonly AstNode parent;
-		readonly SlotKind kind;
+		readonly CSharpSlotInfo kind;
 		readonly List<T> list = new List<T>();
 
-		public AstNodeCollection(AstNode parent, SlotKind kind)
+		public AstNodeCollection(AstNode parent, CSharpSlotInfo kind)
 		{
 			this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			this.kind = kind;

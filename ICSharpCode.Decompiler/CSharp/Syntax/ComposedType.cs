@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public override AstType MakeArrayType(int dimensions)
 		{
-			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions), SlotKind.ArraySpecifier);
+			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions), Slots.ArraySpecifier);
 			return this;
 		}
 

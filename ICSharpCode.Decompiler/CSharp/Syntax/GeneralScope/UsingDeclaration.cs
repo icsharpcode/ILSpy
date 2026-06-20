@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public UsingDeclaration(string nameSpace)
 		{
-			AddChild(AstType.Create(nameSpace), SlotKind.Import);
+			AddChild(AstType.Create(nameSpace), Slots.Import);
 		}
 	}
 }

@@ -44,8 +44,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public UsingAliasDeclaration(string alias, string nameSpace)
 		{
-			AddChild(Identifier.Create(alias), SlotKind.Alias);
-			AddChild(new SimpleType(nameSpace), SlotKind.Import);
+			AddChild(Identifier.Create(alias), Slots.Alias);
+			AddChild(new SimpleType(nameSpace), Slots.Import);
 		}
 	}
 }

@@ -192,7 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (next is ForStatement forStatement && ForStatementUsesVariable(forStatement, variable))
 			{
 				node.Remove();
-				next.InsertChildAfter(null, node, SlotKind.Initializer);
+				next.InsertChildAfter(null, node, Slots.Initializer);
 				return (ForStatement)next;
 			}
 			Match m3 = forPattern.Match(next);

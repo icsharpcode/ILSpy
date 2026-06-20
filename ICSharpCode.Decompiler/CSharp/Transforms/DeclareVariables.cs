@@ -587,7 +587,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (v.Type.IsByRefLike)
 				return true; // by-ref-like variables always must be initialized at their declaration.
 
-			if (v.InsertionPoint.nextNode.Slot?.Kind == SlotKind.Initializer)
+			if (v.InsertionPoint.nextNode.Slot?.Kind == Slots.Initializer)
 				return true; // for-statement initializers always should combine declaration and initialization.
 
 			return !context.Settings.SeparateLocalVariableDeclarations;
@@ -699,7 +699,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						v.InsertionPoint = v.InsertionPoint.Up();
 					}
-					Debug.Assert(v.InsertionPoint.nextNode.Slot?.Kind == SlotKind.Statement);
+					Debug.Assert(v.InsertionPoint.nextNode.Slot?.Kind == Slots.Statement);
 					// The insertion point is a statement within a block, so it always has a parent.
 					AstNode insertionNode = v.InsertionPoint.nextNode;
 					AstNode insertionParent = insertionNode.Parent
@@ -725,14 +725,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 										}
 									}
 								},
-								SlotKind.Statement);
+								Slots.Statement);
 						}
 						else
 						{
 							insertionParent.InsertChildBefore(
 								v.InsertionPoint.nextNode,
 								vds,
-								SlotKind.Statement);
+								Slots.Statement);
 							insertionParent.InsertChildBefore(
 								v.InsertionPoint.nextNode,
 								new ExpressionStatement {
@@ -750,7 +750,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 										}
 									}
 								},
-								SlotKind.Statement);
+								Slots.Statement);
 						}
 					}
 					else
@@ -758,7 +758,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						insertionParent.InsertChildBefore(
 							v.InsertionPoint.nextNode,
 							vds,
-							SlotKind.Statement);
+							Slots.Statement);
 					}
 				}
 			}
@@ -780,7 +780,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			for (AstNode? node = v.FirstUse; node != null; node = node.Parent)
 			{
-				if (node.Slot?.Kind == SlotKind.EmbeddedStatement)
+				if (node.Slot?.Kind == Slots.EmbeddedStatement)
 				{
 					return false;
 				}
