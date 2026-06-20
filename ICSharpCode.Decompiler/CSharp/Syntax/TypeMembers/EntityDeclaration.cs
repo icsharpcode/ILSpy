@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public abstract SymbolKind SymbolKind { get; }
 
 		public virtual AstNodeCollection<AttributeSection> Attributes {
-			get { return base.GetChildrenByRole<AttributeSection>(SlotKind.Attribute); }
+			get { return base.GetChildren(Slots.AttributeSection); }
 		}
 
 		public Modifiers Modifiers { get; set; }

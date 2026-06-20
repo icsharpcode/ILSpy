@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// Slots in document order; inherited contract slots (Attributes, ReturnType, NameToken) are
 		// re-declared override per the flatten model (Part I.3).
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		[Slot("Type")]

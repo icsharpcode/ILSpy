@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		public const string AsyncModifier = "async";
 
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		public bool IsAsync { get; set; }

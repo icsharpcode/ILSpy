@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Event; }
 		}
 
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		[Slot("Type")]
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return SymbolKind.Event; }
 		}
 
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public override partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		[Slot("Type")]

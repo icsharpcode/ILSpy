@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string InModifier = "in";
 		public const string ParamsModifier = "params";
 
-		[Slot("Attribute")]
+		[Slot("AttributeSection")]
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		public bool HasThisModifier { get; set; }
