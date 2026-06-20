@@ -26,6 +26,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -208,12 +209,91 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public IEnumerable<AstNode> Children => GetChildNodes();
+		/// <summary>
+		/// The children of this node in document order. The collection and its enumerator are structs, so
+		/// a <c>foreach</c> over <see cref="Children"/> allocates nothing; only enumeration through the
+		/// <see cref="IEnumerable{T}"/> interface (e.g. LINQ) boxes the enumerator. The enumerator captures
+		/// the successor before handing out each child, so the loop body may remove or replace the current
+		/// child mid-traversal (the behavior the visitor and transforms rely on).
+		/// </summary>
+		public ChildrenCollection Children => new ChildrenCollection(this);
 
-		// Enumerates the children in slot order in a single pass (O(children)). The generator overrides this
-		// per node; the base (a leaf node with no slots) has none. Collection slots iterate via their own
-		// enumerator, which tolerates removing/replacing the current child mid-traversal.
-		internal virtual IEnumerable<AstNode> GetChildNodes() => System.Linq.Enumerable.Empty<AstNode>();
+		public readonly struct ChildrenCollection : IReadOnlyList<AstNode>
+		{
+			readonly AstNode node;
+
+			internal ChildrenCollection(AstNode node) => this.node = node;
+
+			public ChildEnumerator GetEnumerator() => new ChildEnumerator(node);
+			IEnumerator<AstNode> IEnumerable<AstNode>.GetEnumerator() => new ChildEnumerator(node);
+			IEnumerator IEnumerable.GetEnumerator() => new ChildEnumerator(node);
+
+			public int Count {
+				get {
+					int count = 0;
+					for (ChildEnumerator e = GetEnumerator(); e.MoveNext();)
+						count++;
+					return count;
+				}
+			}
+
+			public AstNode this[int index] {
+				get {
+					int i = 0;
+					foreach (AstNode child in this)
+					{
+						if (i++ == index)
+							return child;
+					}
+					throw new ArgumentOutOfRangeException(nameof(index));
+				}
+			}
+		}
+
+		/// <summary>
+		/// Zero-allocation enumerator over a node's children. It captures each child's successor before
+		/// the child is handed out, so removing or replacing the current child in the loop body does not
+		/// disturb the traversal -- the same guarantee the old linked-list enumerator gave.
+		/// </summary>
+		public struct ChildEnumerator : IEnumerator<AstNode>
+		{
+			readonly AstNode node;
+			AstNode? current;
+			AstNode? next;
+			bool started;
+
+			internal ChildEnumerator(AstNode node)
+			{
+				this.node = node;
+				this.current = null;
+				this.next = null;
+				this.started = false;
+			}
+
+			public readonly AstNode Current => current!;
+			readonly object IEnumerator.Current => current!;
+
+			public bool MoveNext()
+			{
+				current = started ? next : node.FirstChild;
+				started = true;
+				if (current == null)
+					return false;
+				// Remember the successor before the child is yielded, so the loop body may remove or
+				// replace 'current' without losing our place.
+				next = current.NextSibling;
+				return true;
+			}
+
+			public void Reset()
+			{
+				current = null;
+				next = null;
+				started = false;
+			}
+
+			public readonly void Dispose() { }
+		}
 
 		/// <summary>
 		/// Gets the ancestors of this node (excluding this node itself)

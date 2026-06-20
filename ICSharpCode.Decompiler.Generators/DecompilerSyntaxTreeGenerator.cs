@@ -650,25 +650,6 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			}
 			builder.AppendLine("\t}");
 			builder.AppendLine();
-
-			// Single-pass enumeration of children in slot order (O(children) total) for AstNode.Children
-			// and the visitors' VisitChildren, instead of the per-step O(slots) index scan (NextSibling).
-			// Collection slots iterate via their own enumerator, which tolerates removing/replacing the
-			// current child during traversal.
-			builder.AppendLine("\tinternal override IEnumerable<AstNode> GetChildNodes()");
-			builder.AppendLine("\t{");
-			builder.AppendLine("\t\tvar children = new List<AstNode>(GetChildCount());");
-			foreach (var s in slots)
-			{
-				string field = FieldName(s.PropertyName);
-				if (s.IsCollection)
-					builder.AppendLine($"\t\tif ({field} != null) children.AddRange({field});");
-				else
-					builder.AppendLine($"\t\tif ({field} != null) children.Add({field});");
-			}
-			builder.AppendLine("\t\treturn children;");
-			builder.AppendLine("\t}");
-			builder.AppendLine();
 		}
 
 		// Close the class, trimming the blank line the per-member spacer leaves before the brace.

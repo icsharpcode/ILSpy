@@ -35,9 +35,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		protected virtual void VisitChildren(AstNode node)
 		{
-			// GetChildNodes enumerates in slot order and tolerates the visitor removing or replacing
-			// the current child.
-			foreach (var child in node.GetChildNodes())
+			// Children enumerates in document order and tolerates the visitor removing or replacing
+			// the current child (its enumerator captures the successor before yielding).
+			foreach (var child in node.Children)
 			{
 				child.AcceptVisitor(this);
 			}
@@ -707,9 +707,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		protected virtual T VisitChildren(AstNode node)
 		{
-			// GetChildNodes enumerates in slot order and tolerates the visitor removing or replacing
-			// the current child.
-			foreach (var child in node.GetChildNodes())
+			// Children enumerates in document order and tolerates the visitor removing or replacing
+			// the current child (its enumerator captures the successor before yielding).
+			foreach (var child in node.Children)
 			{
 				child.AcceptVisitor(this);
 			}
@@ -1382,9 +1382,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	{
 		protected virtual S VisitChildren(AstNode node, T data)
 		{
-			// GetChildNodes enumerates in slot order and tolerates the visitor removing or replacing
-			// the current child.
-			foreach (var child in node.GetChildNodes())
+			// Children enumerates in document order and tolerates the visitor removing or replacing
+			// the current child (its enumerator captures the successor before yielding).
+			foreach (var child in node.Children)
 			{
 				child.AcceptVisitor(this, data);
 			}

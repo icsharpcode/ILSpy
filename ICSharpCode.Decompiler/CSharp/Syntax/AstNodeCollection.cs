@@ -21,6 +21,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
@@ -267,23 +268,103 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get { return false; }
 		}
 
-		// Tolerates removing or replacing the current element during enumeration (the common
-		// transform pattern), matching the previous linked-list collection's behavior.
-		public IEnumerator<T> GetEnumerator()
-		{
-			int pos = 0;
-			while (pos < list.Count)
-			{
-				T cur = list[pos];
-				yield return cur;
-				if (pos < list.Count && ReferenceEquals(list[pos], cur))
-					pos++;
-			}
-		}
+		// Returned by value, so a foreach over a concrete collection allocates nothing; only enumeration
+		// through the IEnumerable<T> interface (e.g. LINQ) boxes it.
+		public Enumerator GetEnumerator() => new Enumerator(list);
 
-		IEnumerator IEnumerable.GetEnumerator()
+		IEnumerator<T> IEnumerable<T>.GetEnumerator() => new Enumerator(list);
+
+		IEnumerator IEnumerable.GetEnumerator() => new Enumerator(list);
+
+		/// <summary>
+		/// Enumerates the collection while tolerating removal or replacement of the current element during
+		/// the loop body -- the behavior transforms that mutate a collection mid-foreach rely on. Before
+		/// yielding an element it captures the following one, then resumes on that captured successor
+		/// located by identity, so the walk follows node identity hand-over-hand like the old linked-list
+		/// enumerator: removing or replacing the current element advances to the captured successor (a
+		/// replacement is not re-visited), and inserting or removing other elements only shifts the
+		/// backing-list indices, which the identity resume absorbs. The one mutation it cannot follow is
+		/// removing the captured successor itself during the body -- that element is gone, so enumeration
+		/// stops there (the linked-list enumerator lost track of it too).
+		/// </summary>
+		public struct Enumerator : IEnumerator<T>
 		{
-			return GetEnumerator();
+			readonly List<T> list;
+			int pos;        // index at which 'current' was found when it was yielded
+			T? current;     // the element handed out by the last MoveNext
+			T? next;        // the element that followed 'current' at the moment it was yielded
+			bool started;
+
+			internal Enumerator(List<T> list)
+			{
+				this.list = list;
+				this.pos = 0;
+				this.current = null;
+				this.next = null;
+				this.started = false;
+			}
+
+			public readonly T Current => current!;
+			readonly object? IEnumerator.Current => current;
+
+			public bool MoveNext()
+			{
+				if (!started)
+				{
+					started = true;
+					if (list.Count == 0)
+						return false;
+					pos = 0;
+				}
+				else
+				{
+					if (next == null)
+					{
+						current = null;
+						return false;
+					}
+					// Resume on the successor captured before the body ran, located by identity. The two
+					// fast paths cover the common shapes -- the successor still sits at pos+1, or 'current'
+					// was removed so the successor dropped into pos -- and any other mutation falls back to
+					// an O(n) identity search. Each fast path is guarded by ReferenceEquals(next), so it can
+					// only fire when the successor genuinely sits there; landing the cursor anywhere else
+					// would be the only way to skip or re-yield an element.
+					int resume;
+					if (pos + 1 < list.Count && ReferenceEquals(list[pos + 1], next))
+						resume = pos + 1;
+					else if (pos < list.Count && ReferenceEquals(list[pos], next))
+						resume = pos;
+					else
+						resume = list.IndexOf(next);
+					// Runtime guard against the cursor mislocating: the chosen index must equal the
+					// authoritative identity position (also -1 == -1 when the successor was removed). It
+					// holds for every mutation the body can make today, and the decompiler test suite runs
+					// it after every transform, so a future change that lets the cursor skip or re-yield an
+					// element fails loudly here instead of silently corrupting the output.
+					Debug.Assert(resume == list.IndexOf(next),
+						"AstNodeCollection enumerator lost track of its position during a mid-enumeration mutation.");
+					if (resume < 0)
+					{
+						current = null;
+						next = null;
+						return false;
+					}
+					pos = resume;
+				}
+				current = list[pos];
+				next = pos + 1 < list.Count ? list[pos + 1] : null;
+				return true;
+			}
+
+			public void Reset()
+			{
+				pos = 0;
+				current = null;
+				next = null;
+				started = false;
+			}
+
+			public readonly void Dispose() { }
 		}
 
 		#region Equals and GetHashCode implementation
