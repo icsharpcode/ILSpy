@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public bool IsAsync {
 			get { return isAsync; }
-			set { ThrowIfFrozen(); isAsync = value; }
+			set { isAsync = value; }
 		}
 
 		public CSharpTokenNode LParToken {

@@ -38,7 +38,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Modifiers Modifier {
 			get { return modifier; }
 			set {
-				ThrowIfFrozen();
 				this.modifier = value;
 			}
 		}

@@ -49,7 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public string FileName {
 			get { return fileName; }
 			set {
-				ThrowIfFrozen();
 				fileName = value;
 			}
 		}

@@ -83,7 +83,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ClassType ClassType {
 			get { return classType; }
 			set {
-				ThrowIfFrozen();
 				classType = value;
 			}
 		}

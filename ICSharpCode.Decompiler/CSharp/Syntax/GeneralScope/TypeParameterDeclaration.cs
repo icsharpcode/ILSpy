@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public VarianceModifier Variance {
 			get { return variance; }
-			set { ThrowIfFrozen(); variance = value; }
+			set { variance = value; }
 		}
 
 		public CSharpTokenNode VarianceToken {

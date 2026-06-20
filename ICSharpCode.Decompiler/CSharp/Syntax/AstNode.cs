@@ -37,7 +37,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public abstract class AstNode : AbstractAnnotatable, IFreezable, INode, ICloneable
+	public abstract partial class AstNode : AbstractAnnotatable, INode, ICloneable
 	{
 		// the Root role must be available when creating the null nodes, so we can't put it in the Roles class
 		internal static readonly Role<AstNode?> RootRole = new Role<AstNode?>("Root", null);
@@ -135,40 +135,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// Flags, from least significant to most significant bits:
 		// - Role.RoleIndexBits: role index
-		// - 1 bit: IsFrozen
 		protected uint flags = RootRole.Index;
 		// Derived classes may also use a few bits,
 		// for example Identifier uses 1 bit for IsVerbatim
 
 		const uint roleIndexMask = (1u << Role.RoleIndexBits) - 1;
-		const uint frozenBit = 1u << Role.RoleIndexBits;
-		protected const int AstNodeFlagsUsedBits = Role.RoleIndexBits + 1;
-
-		protected AstNode()
-		{
-			if (IsNull)
-				Freeze();
-		}
-
-		public bool IsFrozen {
-			get { return (flags & frozenBit) != 0; }
-		}
-
-		public void Freeze()
-		{
-			if (!IsFrozen)
-			{
-				for (AstNode? child = firstChild; child != null; child = child.nextSibling)
-					child.Freeze();
-				flags |= frozenBit;
-			}
-		}
-
-		protected void ThrowIfFrozen()
-		{
-			if (IsFrozen)
-				throw new InvalidOperationException("Cannot mutate frozen " + GetType().Name);
-		}
+		protected const int AstNodeFlagsUsedBits = Role.RoleIndexBits;
 
 		public abstract NodeType NodeType {
 			get;
@@ -211,7 +183,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new ArgumentNullException(nameof(value));
 				if (!value.IsValid(this))
 					throw new ArgumentException("This node is not valid in the new role.");
-				ThrowIfFrozen();
 				SetRole(value);
 			}
 		}
@@ -382,13 +353,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException(nameof(role));
 			if (child == null || child.IsNull)
 				return;
-			ThrowIfFrozen();
 			if (child == this)
 				throw new ArgumentException("Cannot add a node to itself as a child.", nameof(child));
 			if (child.parent != null)
 				throw new ArgumentException("Node is already used in another tree.", nameof(child));
-			if (child.IsFrozen)
-				throw new ArgumentException("Cannot add a frozen node.", nameof(child));
 			AddChildUnsafe(child, role);
 		}
 
@@ -396,13 +364,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (child == null || child.IsNull)
 				return;
-			ThrowIfFrozen();
 			if (child == this)
 				throw new ArgumentException("Cannot add a node to itself as a child.", nameof(child));
 			if (child.parent != null)
 				throw new ArgumentException("Node is already used in another tree.", nameof(child));
-			if (child.IsFrozen)
-				throw new ArgumentException("Cannot add a frozen node.", nameof(child));
 			AddChildUnsafe(child, child.Role);
 		}
 
@@ -437,11 +402,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			if (child == null || child.IsNull)
 				return;
-			ThrowIfFrozen();
 			if (child.parent != null)
 				throw new ArgumentException("Node is already used in another tree.", nameof(child));
-			if (child.IsFrozen)
-				throw new ArgumentException("Cannot add a frozen node.", nameof(child));
 			if (nextSibling.parent != this)
 				throw new ArgumentException("NextSibling is not a child of this node.", nameof(nextSibling));
 			// No need to test for "Cannot add children to null nodes",
@@ -481,7 +443,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (parent != null)
 			{
-				ThrowIfFrozen();
 				if (prevSibling != null)
 				{
 					Debug.Assert(prevSibling.nextSibling == this);
@@ -524,7 +485,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				throw new InvalidOperationException(this.IsNull ? "Cannot replace the null nodes" : "Cannot replace the root node");
 			}
-			ThrowIfFrozen();
 			// Because this method doesn't statically check the new node's type with the role,
 			// we perform a runtime test:
 			if (!this.Role.IsValid(newNode))
@@ -545,9 +505,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					throw new ArgumentException("Node is already used in another tree.", nameof(newNode));
 				}
 			}
-			if (newNode.IsFrozen)
-				throw new ArgumentException("Cannot add a frozen node.", nameof(newNode));
-
 			newNode.parent = parent;
 			newNode.SetRole(this.Role);
 			newNode.prevSibling = prevSibling;
@@ -623,7 +580,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			copy.lastChild = null;
 			copy.prevSibling = null;
 			copy.nextSibling = null;
-			copy.flags &= ~frozenBit; // unfreeze the copy
 
 			// Then perform a deep copy:
 			for (AstNode? cur = firstChild; cur != null; cur = cur.nextSibling)

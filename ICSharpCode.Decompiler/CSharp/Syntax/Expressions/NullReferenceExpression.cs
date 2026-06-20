@@ -40,7 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		internal void SetStartLocation(TextLocation value)
 		{
-			ThrowIfFrozen();
 			this.location = value;
 		}
 

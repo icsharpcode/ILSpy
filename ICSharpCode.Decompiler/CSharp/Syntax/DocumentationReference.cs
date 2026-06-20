@@ -43,7 +43,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public SymbolKind SymbolKind {
 			get { return symbolKind; }
 			set {
-				ThrowIfFrozen();
 				symbolKind = value;
 			}
 		}
@@ -55,7 +54,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public OperatorType OperatorType {
 			get { return operatorType; }
 			set {
-				ThrowIfFrozen();
 				operatorType = value;
 			}
 		}
@@ -66,7 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool HasParameterList {
 			get { return hasParameterList; }
 			set {
-				ThrowIfFrozen();
 				hasParameterList = value;
 			}
 		}

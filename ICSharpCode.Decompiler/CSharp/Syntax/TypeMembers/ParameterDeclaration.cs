@@ -110,7 +110,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool HasThisModifier {
 			get { return hasThisModifier; }
 			set {
-				ThrowIfFrozen();
 				hasThisModifier = value;
 			}
 		}
@@ -118,7 +117,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool IsParams {
 			get { return isParams; }
 			set {
-				ThrowIfFrozen();
 				isParams = value;
 			}
 		}
@@ -126,7 +124,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool IsScopedRef {
 			get { return isScopedRef; }
 			set {
-				ThrowIfFrozen();
 				isScopedRef = value;
 			}
 		}
@@ -136,7 +133,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ReferenceKind ParameterModifier {
 			get { return parameterModifier; }
 			set {
-				ThrowIfFrozen();
 				parameterModifier = value;
 			}
 		}
