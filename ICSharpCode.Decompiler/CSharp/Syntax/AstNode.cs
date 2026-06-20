@@ -539,10 +539,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						throw new ArgumentException("Node is already used in another tree.", nameof(value));
 				}
 			}
-			field?.ClearParentAndIndex();
+			T? oldField = field;
+			int oldChildIndex = oldField?.childIndex ?? -1;
+			oldField?.ClearParentAndIndex();
 			field = newValue;
 			newValue?.SetParent(this);
-			InvalidateChildIndices();
+			// A single slot always occupies the same flattened index, so replacing its child in place
+			// changes no index: carry the slot's index to the new child instead of invalidating (and
+			// rebuilding) every child's index. Setting or clearing the slot still invalidates, since the
+			// new child's index is then not known here. When the indices are already stale the carried
+			// value is corrected by the next EnsureChildIndices anyway.
+			if (oldField != null && newValue != null)
+				newValue.childIndex = oldChildIndex;
+			else
+				InvalidateChildIndices();
 		}
 
 		internal void SetParent(AstNode newParent)

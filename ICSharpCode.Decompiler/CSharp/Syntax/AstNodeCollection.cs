@@ -98,10 +98,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (old == value)
 					return;
 				ValidateNewChild(value);
+				int oldChildIndex = old.childIndex;
 				old.ClearParentAndIndex();
 				list[index] = value;
 				value.SetParent(parent);
-				parent.InvalidateChildIndices();
+				// Replacing an element in place keeps its flattened position, so no index changes: carry
+				// the old element's index to the new one rather than invalidating (and rebuilding) the
+				// parent's whole index set. A stale carried value is corrected by the next renumber.
+				value.childIndex = oldChildIndex;
 			}
 		}
 
