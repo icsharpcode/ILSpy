@@ -23,8 +23,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-using System;
-
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	[DecompilerAstNode(hasNullNode: false)]
@@ -44,11 +42,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		public string Error {
-			get;
-			private set;
-		}
-
 		public ErrorExpression()
 		{
 		}
@@ -56,27 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public ErrorExpression(string error)
 		{
 			AddChild(new Comment(error, CommentType.MultiLine), Roles.Comment);
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitErrorNode(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitErrorNode(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitErrorNode(this, data);
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			var o = other as ErrorExpression;
-			return o != null;
 		}
 	}
 }

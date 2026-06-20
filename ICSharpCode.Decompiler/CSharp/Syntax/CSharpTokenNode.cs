@@ -37,40 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	[DecompilerAstNode(hasNullNode: true)]
 	public partial class CSharpTokenNode : AstNode
 	{
-		public static new readonly CSharpTokenNode Null = new NullCSharpTokenNode();
-		class NullCSharpTokenNode : CSharpTokenNode
-		{
-			public override bool IsNull {
-				get {
-					return true;
-				}
-			}
-
-			public NullCSharpTokenNode() : base(TextLocation.Empty, null)
-			{
-			}
-
-			public override void AcceptVisitor(IAstVisitor visitor)
-			{
-				visitor.VisitNullNode(this);
-			}
-
-			public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-			{
-				return visitor.VisitNullNode(this);
-			}
-
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-			{
-				return visitor.VisitNullNode(this, data);
-			}
-
-			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-			{
-				return other == null || other.IsNull;
-			}
-		}
-
 		public override NodeType NodeType {
 			get {
 				return NodeType.Token;
@@ -116,21 +82,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return r.Token;
 			}
 			return string.Empty;
-		}
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			visitor.VisitCSharpTokenNode(this);
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			return visitor.VisitCSharpTokenNode(this);
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			return visitor.VisitCSharpTokenNode(this, data);
 		}
 
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
