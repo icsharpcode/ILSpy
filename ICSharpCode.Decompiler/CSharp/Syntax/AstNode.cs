@@ -151,7 +151,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				if (parent == null)
 					return null;
-				parent.EnsureChildIndices();
+				// Inline the validity check: sibling navigation is one of the hottest operations, and the
+				// indices are almost always already current, so skip the (non-inlinable) call when valid.
+				if (!parent.childIndicesValid)
+					parent.EnsureChildIndices();
 				int count = parent.GetChildCount();
 				for (int i = childIndex + 1; i < count; i++)
 				{
@@ -167,7 +170,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				if (parent == null)
 					return null;
-				parent.EnsureChildIndices();
+				if (!parent.childIndicesValid)
+					parent.EnsureChildIndices();
 				for (int i = childIndex - 1; i >= 0; i--)
 				{
 					AstNode? c = parent.GetChild(i);
@@ -522,41 +526,59 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 
-		// Writes a single-slot backing field: detaches the old child, attaches the new one, renumbers.
-		// A null value empties the slot. Called by generated single-slot property setters.
+		// Self-reference and two-tree guards shared by the single-slot setters; lifts a node out of the
+		// subtree currently being replaced (e.g. "x.Right = ((BinaryOperatorExpression)x.Right).Right;").
+		void ValidateNewSingleChild<T>(T? value, T? oldChild) where T : AstNode
+		{
+			if (value == null)
+				return;
+			if (value == this)
+				throw new ArgumentException("Cannot add a node to itself as a child.", nameof(value));
+			if (value.parent != null)
+			{
+				if (oldChild != null && value.Ancestors.Contains(oldChild))
+					value.Remove();
+				else
+					throw new ArgumentException("Node is already used in another tree.", nameof(value));
+			}
+		}
+
+		// Writes a single-slot backing field when the slot's flattened index is not statically known
+		// (a single slot following a collection). A single slot always occupies the same index, so an
+		// in-place replace keeps it (carry the old child's index); a set or clear leaves the new child's
+		// index unknown here and invalidates, to be reassigned by the next EnsureChildIndices.
 		internal void SetChildNode<T>(ref T? field, T? value) where T : AstNode
 		{
-			T? newValue = value;
-			if (field == newValue)
+			if (field == value)
 				return;
-			if (newValue != null)
-			{
-				if (newValue == this)
-					throw new ArgumentException("Cannot add a node to itself as a child.", nameof(value));
-				if (newValue.parent != null)
-				{
-					// Allow lifting a node out of the subtree being replaced, e.g.
-					// "assignment.Right = ((BinaryOperatorExpression)assignment.Right).Right;".
-					if (field != null && newValue.Ancestors.Contains(field))
-						newValue.Remove();
-					else
-						throw new ArgumentException("Node is already used in another tree.", nameof(value));
-				}
-			}
+			ValidateNewSingleChild(value, field);
 			T? oldField = field;
 			int oldChildIndex = oldField?.childIndex ?? -1;
 			oldField?.ClearParentAndIndex();
-			field = newValue;
-			newValue?.SetParent(this);
-			// A single slot always occupies the same flattened index, so replacing its child in place
-			// changes no index: carry the slot's index to the new child instead of invalidating (and
-			// rebuilding) every child's index. Setting or clearing the slot still invalidates, since the
-			// new child's index is then not known here. When the indices are already stale the carried
-			// value is corrected by the next EnsureChildIndices anyway.
-			if (oldField != null && newValue != null)
-				newValue.childIndex = oldChildIndex;
+			field = value;
+			value?.SetParent(this);
+			if (oldField != null && value != null)
+				value.childIndex = oldChildIndex;
 			else
 				InvalidateChildIndices();
+		}
+
+		// Writes a single-slot backing field whose flattened index is known (the generated setter passes
+		// it when no collection precedes the slot, and SetChild passes its argument). Filling, clearing,
+		// or replacing a single slot moves no other child, so assign the index directly and never
+		// invalidate -- childIndex stays maintained by construction, as in the IL AST.
+		internal void SetChildNode<T>(ref T? field, T? value, int index) where T : AstNode
+		{
+			if (field == value)
+				return;
+			ValidateNewSingleChild(value, field);
+			field?.ClearParentAndIndex();
+			field = value;
+			if (value != null)
+			{
+				value.SetParent(this);
+				value.childIndex = index;
+			}
 		}
 
 		internal void SetParent(AstNode newParent)
