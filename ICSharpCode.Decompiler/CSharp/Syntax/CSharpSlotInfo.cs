@@ -46,12 +46,20 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public SlotKind Kind { get; }
 
-		internal CSharpSlotInfo(string name, Type childType, bool isCollection, SlotKind kind)
+		/// <summary>
+		/// Whether the slot may be empty: a single slot whose child is nullable, or any collection slot
+		/// (a collection may hold zero children). A non-optional single slot must always hold a child in a
+		/// well-formed tree; <see cref="AstNode.CheckInvariant"/> asserts this.
+		/// </summary>
+		public bool IsOptional { get; }
+
+		internal CSharpSlotInfo(string name, Type childType, bool isCollection, SlotKind kind, bool isOptional)
 		{
 			Name = name;
 			ChildType = childType;
 			IsCollection = isCollection;
 			Kind = kind;
+			IsOptional = isOptional;
 		}
 
 		public override string ToString() => Name;

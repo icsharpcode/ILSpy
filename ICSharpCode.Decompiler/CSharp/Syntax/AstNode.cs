@@ -399,25 +399,41 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		/// <summary>
-		/// Recursively verifies the slot structure of this subtree (DEBUG only): every child's Parent
-		/// points back here, its stored flattened index matches its slot position, and its runtime type
-		/// is valid in the slot's role. The transform pipeline runs this after each transform, the
-		/// analog of <c>ILInstruction.CheckInvariant</c>, so a transform that corrupts the tree fails at
-		/// the exact transform rather than as a downstream output diff.
+		/// Recursively verifies the slot structure of this subtree (DEBUG only):
+		/// <list type="bullet">
+		/// <item>every required (non-optional) single slot holds a child, so a transform that drops a
+		/// mandatory node is caught here rather than as malformed output;</item>
+		/// <item>each present child points its <see cref="Parent"/> back at this node;</item>
+		/// <item>its stored flattened index matches its slot position; and</item>
+		/// <item>its runtime type is valid for the slot.</item>
+		/// </list>
+		/// The transform pipeline runs this after each transform, the analog of
+		/// <c>ILInstruction.CheckInvariant</c>, so a transform that corrupts the tree fails at the exact
+		/// transform rather than as a downstream output diff. The other tree invariants (no node reused
+		/// across trees, no node parented to itself) are enforced eagerly by the child setters and follow
+		/// from the parent back-pointer check above. A node type overrides this (calling <c>base</c>) to
+		/// assert its own constraints -- the scalar invariants its setters enforce eagerly, e.g.
+		/// <c>ComposedType.PointerRank &gt;= 0</c>.
 		/// </summary>
 		[System.Diagnostics.Conditional("DEBUG")]
-		internal void CheckInvariant()
+		internal virtual void CheckInvariant()
 		{
 			EnsureChildIndices();
 			int count = GetChildCount();
 			for (int i = 0; i < count; i++)
 			{
+				CSharpSlotInfo slot = GetChildSlotInfo(i);
 				AstNode? child = GetChild(i);
 				if (child == null)
-					continue; // empty optional single slot
+				{
+					// A single slot reads null only when empty; that is valid only if the slot is optional.
+					// (Collection slots never yield a null index, so this branch is always a single slot.)
+					Debug.Assert(slot.IsOptional, $"required slot '{slot.Name}' on {GetType().Name} must not be empty");
+					continue;
+				}
 				Debug.Assert(child.parent == this, "child's Parent must point back to this node");
 				Debug.Assert(child.childIndex == i, "child's flattened index must match its slot position");
-				Debug.Assert(GetChildSlotInfo(i).ChildType.IsInstanceOfType(child), "child's type must be valid in its slot");
+				Debug.Assert(slot.ChildType.IsInstanceOfType(child), "child's type must be valid in its slot");
 				child.CheckInvariant();
 			}
 		}

@@ -610,7 +610,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 			// One CSharpSlotInfo static per slot; node.Slot compares against these by object identity.
 			foreach (var s in slots)
-				builder.AppendLine($"\tpublic static readonly CSharpSlotInfo {s.PropertyName}Slot = new CSharpSlotInfo(\"{s.PropertyName}\", typeof({s.ElementType}), {(s.IsCollection ? "true" : "false")}, SlotKind.{s.KindName});");
+				builder.AppendLine($"\tpublic static readonly CSharpSlotInfo {s.PropertyName}Slot = new CSharpSlotInfo(\"{s.PropertyName}\", typeof({s.ElementType}), {(s.IsCollection ? "true" : "false")}, SlotKind.{s.KindName}, {(s.IsCollection || s.IsNullable ? "true" : "false")});");
 			builder.AppendLine();
 
 			builder.AppendLine("\tinternal override CSharpSlotInfo GetChildSlotInfo(int index)");
