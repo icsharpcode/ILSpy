@@ -78,10 +78,34 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// case for Attributes, TypeArguments, constraints, ...) then costs only this wrapper, not a List.
 		List<T>? list;
 
+		// When this is the parent's only collection and its last slot, the collection occupies the
+		// contiguous flattened range [baseIndex, baseIndex + Count) with nothing after it, so an element's
+		// flattened childIndex is exactly baseIndex + its local position. That lets mutations maintain
+		// childIndex incrementally (no full re-index) and IndexOf run in O(1). Other shapes (multiple
+		// collections, or a slot following this one) fall back to invalidate-and-rebuild.
+		readonly int baseIndex;
+		readonly bool supportsIncremental;
+
 		public AstNodeCollection(AstNode parent, CSharpSlotInfo kind)
+			: this(parent, kind, 0, false)
+		{
+		}
+
+		public AstNodeCollection(AstNode parent, CSharpSlotInfo kind, int baseIndex, bool supportsIncremental)
 		{
 			this.parent = parent ?? throw new ArgumentNullException(nameof(parent));
 			this.kind = kind;
+			this.baseIndex = baseIndex;
+			this.supportsIncremental = supportsIncremental;
+		}
+
+		// Reassigns the flattened childIndex of every element from 'start' to the end after a shift,
+		// keeping the parent's indices valid without a full rebuild. Only meaningful on the incremental
+		// fast-path (the collection occupies [baseIndex, baseIndex + Count) with nothing after it).
+		void ReindexFrom(int start)
+		{
+			for (int i = start; i < list!.Count; i++)
+				list[i].childIndex = baseIndex + i;
 		}
 
 		public int Count {
@@ -126,7 +150,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			ValidateNewChild(element);
 			(list ??= new List<T>()).Add(element);
 			element.SetParent(parent);
-			parent.InvalidateChildIndices();
+			// Appending leaves every existing index unchanged, so just index the new element instead of
+			// invalidating; otherwise fall back to a rebuild.
+			if (supportsIncremental && parent.ChildIndicesValid)
+				element.childIndex = baseIndex + list.Count - 1;
+			else
+				parent.InvalidateChildIndices();
 		}
 
 		public void AddRange(IEnumerable<T> nodes)
@@ -183,6 +212,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (element == null || element.Parent != parent)
 				return -1;
+			// O(1) when the indices are current and this collection owns a contiguous flattened range:
+			// the element's local position is its childIndex minus our base.
+			if (supportsIncremental && parent.ChildIndicesValid && list != null)
+			{
+				int local = element.childIndex - baseIndex;
+				if (local >= 0 && local < list.Count && ReferenceEquals(list[local], element))
+					return local;
+			}
 			return list?.IndexOf(element) ?? -1;
 		}
 
@@ -191,9 +228,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			int index = IndexOf(element);
 			if (index < 0)
 				return false;
+			bool incremental = supportsIncremental && parent.ChildIndicesValid;
 			list!.RemoveAt(index);
 			element.ClearParentAndIndex();
-			parent.InvalidateChildIndices();
+			// The elements after the removed one shifted down by one; renumber just them rather than
+			// invalidating (and later rebuilding) the parent's whole index set.
+			if (incremental)
+				ReindexFrom(index);
+			else
+				parent.InvalidateChildIndices();
 			return true;
 		}
 
@@ -419,9 +462,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (newItem == null)
 				return;
 			ValidateNewChild(newItem);
+			bool incremental = supportsIncremental && parent.ChildIndicesValid;
 			(list ??= new List<T>()).Insert(index, newItem);
 			newItem.SetParent(parent);
-			parent.InvalidateChildIndices();
+			// The new element and everything after it occupy fresh positions; renumber from the insertion
+			// point rather than invalidating the parent's whole index set.
+			if (incremental)
+				ReindexFrom(index);
+			else
+				parent.InvalidateChildIndices();
 		}
 
 		/// <summary>

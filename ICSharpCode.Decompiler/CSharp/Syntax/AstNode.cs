@@ -454,6 +454,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// (many appends with no interleaved index reads) renumbers once instead of once per mutation.
 		bool childIndicesValid = true;
 
+		// Whether this node's children currently carry correct flattened childIndex values, so a
+		// collection can decide between maintaining them incrementally and invalidating the whole set.
+		internal bool ChildIndicesValid => childIndicesValid;
+
 		// Marks this node's children's flattened indices stale. Called by the slot setters and the
 		// collection after any structural change.
 		internal void InvalidateChildIndices()
