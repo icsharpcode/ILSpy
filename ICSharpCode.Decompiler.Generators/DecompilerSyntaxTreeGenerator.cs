@@ -38,7 +38,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 	readonly record struct MemberMatch(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable);
 
 	// One child slot's schema: a single AstNode-typed child, an AstNodeCollection, or the backing
-	// Identifier token of a string name. KindName is the shared SlotKind; IsPartial is false only for
+	// Identifier token of a string name. KindName is the shared slot-kind name; IsPartial is false only for
 	// the generator-owned token slot behind a name (the source does not declare that property).
 	readonly record struct SlotInfo(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial);
 
@@ -132,9 +132,9 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			if (slotAttr != null)
 			{
 				slots ??= new();
-				// The [Slot] argument is already the bare SlotKind name (e.g. "Body", "Expression"); kinds
+				// The [Slot] argument is already the bare slot-kind name (e.g. "Body", "Expression"); kinds
 				// shared across nodes (aliases, or the same logical slot on different node types) deliberately
-				// collapse to one name, so node.Slot.Kind is shared and consumers compare against SlotKind.X.
+				// collapse to one name, so node.Slot.Kind is shared and consumers compare against Slots.X.
 				string kindName = (string)slotAttr.ConstructorArguments[0].Value!;
 				// A [Slot] on a string property is a name: a convenience string accessor over a backing
 				// Identifier token slot. Child slots are AstNode-typed, so the property type disambiguates -
@@ -354,7 +354,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				if (isCollection)
 				{
 					builder.AppendLine($"\tAstNodeCollection<{elementType}>? {field};");
-					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, SlotKind.{kindName});");
+					builder.AppendLine($"\tpublic {(isOverride ? "override " : "")}{partialKw}AstNodeCollection<{elementType}> {name} => {field} ??= new AstNodeCollection<{elementType}>(this, Slots.{kindName});");
 				}
 				else
 				{
@@ -611,7 +611,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			// One typed CSharpSlotInfo<T> static per slot; node.Slot compares against these by object
 			// identity, and the typed child accessors infer the child type from the slot.
 			foreach (var s in slots)
-				builder.AppendLine($"\tpublic static readonly CSharpSlotInfo<{s.ElementType}> {s.PropertyName}Slot = new CSharpSlotInfo<{s.ElementType}>(\"{s.PropertyName}\", {(s.IsCollection ? "true" : "false")}, SlotKind.{s.KindName}, {(s.IsCollection || s.IsNullable ? "true" : "false")});");
+				builder.AppendLine($"\tpublic static readonly CSharpSlotInfo<{s.ElementType}> {s.PropertyName}Slot = new CSharpSlotInfo<{s.ElementType}>(\"{s.PropertyName}\", {(s.IsCollection ? "true" : "false")}, Slots.{s.KindName}, {(s.IsCollection || s.IsNullable ? "true" : "false")});");
 			builder.AppendLine();
 
 			builder.AppendLine("\tinternal override CSharpSlotInfo GetChildSlotInfo(int index)");
@@ -622,10 +622,10 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 
 			if (slots.Any(s => s.IsCollection))
 			{
-				builder.AppendLine("\tinternal override AstNodeCollection? GetCollectionByKind(SlotKind kind)");
+				builder.AppendLine("\tinternal override AstNodeCollection? GetCollectionByKind(CSharpSlotInfo kind)");
 				builder.AppendLine("\t{");
 				foreach (var s in slots.Where(s => s.IsCollection))
-					builder.AppendLine($"\t\tif (kind == SlotKind.{s.KindName}) return {s.PropertyName};");
+					builder.AppendLine($"\t\tif (kind == Slots.{s.KindName}) return {s.PropertyName};");
 				builder.AppendLine("\t\treturn base.GetCollectionByKind(kind);");
 				builder.AppendLine("\t}");
 				builder.AppendLine();
@@ -776,9 +776,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		context.RegisterSourceOutput(visitorMembers, WriteSlotKinds);
 	}
 
-	// Emits the SlotKind enum: one value per distinct slot kind across all nodes. A node's CSharpSlotInfo
-	// carries its kind, and consumers compare node.Slot.Kind == SlotKind.X -- shared across node types, so
-	// it replaces the old polymorphic node.Role == Roles.X comparisons.
+	// Emits the Slots holder: one typed CSharpSlotInfo<T> constant per distinct slot kind across all
+	// nodes. Each is its own canonical kind (constructed with a null Kind); a node's per-node slot points
+	// back at it, and consumers compare node.Slot.Kind == Slots.X by object identity -- shared across node
+	// types, replacing the old polymorphic node.Role == Roles.X comparisons.
 	void WriteSlotKinds(SourceProductionContext context, ImmutableArray<AstNodeAdditions> source)
 	{
 		// Per kind: the element types seen (to choose a typed slot's T) and whether it is a collection.
@@ -809,29 +810,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		builder.AppendLine();
 		builder.AppendLine("namespace ICSharpCode.Decompiler.CSharp.Syntax;");
 		builder.AppendLine();
-		builder.AppendLine("/// <summary>Identifies the kind of an AST child slot, shared across node types.</summary>");
-		builder.AppendLine("public enum SlotKind");
-		builder.AppendLine("{");
-		builder.AppendLine("\tNone,");
-		foreach (var k in kindTypes.Keys)
-			builder.AppendLine($"\t{k},");
-		builder.AppendLine("}");
-		builder.AppendLine();
-		// Typed kind constants for polymorphic access: node.GetChild(Slots.X) infers the child type. A
-		// kind reused with several child types across node types widens to AstNode (only its concrete
-		// per-node slots carry the precise type); such kinds are only reached through those per-node slots.
-		builder.AppendLine("/// <summary>Typed slot kinds for polymorphic child access; the child type is inferred from the slot.</summary>");
+		// Each constant is its own canonical kind (null Kind): node.GetChild(Slots.X) infers the child
+		// type, and node.Slot.Kind == Slots.X identifies a position polymorphically. A kind reused with
+		// several child types across node types widens to AstNode (only its concrete per-node slots carry
+		// the precise type); such kinds are only reached through those per-node slots. For the same reason
+		// the shared kind's IsCollection flag and its hard-coded isOptional: false are not authoritative
+		// when a kind is a collection on one node and a single/optional child on another: such dual-use
+		// kinds carry IsCollection false (no arity claim), and the precise per-position flags live on the
+		// per-node slots, which is where consumers read them; the shared constant carries identity, not
+		// those flags.
+		builder.AppendLine("/// <summary>The shared slot kinds, one per distinct child position across the AST node types.</summary>");
 		builder.AppendLine("public static class Slots");
 		builder.AppendLine("{");
 		foreach (var kv in kindTypes)
 		{
 			string type = kv.Value.Count == 1 ? kv.Value.Min : "AstNode";
 			string isColl = kindIsCollection[kv.Key] == true ? "true" : "false";
-			builder.AppendLine($"\tpublic static readonly CSharpSlotInfo<{type}> {kv.Key} = new CSharpSlotInfo<{type}>(\"{kv.Key}\", {isColl}, SlotKind.{kv.Key}, false);");
+			builder.AppendLine($"\tpublic static readonly CSharpSlotInfo<{type}> {kv.Key} = new CSharpSlotInfo<{type}>(\"{kv.Key}\", {isColl}, null, false);");
 		}
 		builder.AppendLine("}");
 
-		context.AddSource("SlotKind.g.cs", SourceText.From(builder.ToString().Replace("\r\n", "\n"), Encoding.UTF8));
+		context.AddSource("Slots.g.cs", SourceText.From(builder.ToString().Replace("\r\n", "\n"), Encoding.UTF8));
 	}
 }
 

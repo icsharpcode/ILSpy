@@ -41,10 +41,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public bool IsCollection { get; }
 
 		/// <summary>
-		/// The slot's kind, shared across node types (so <c>node.Slot.Kind == SlotKind.X</c> identifies a
-		/// node's position the way <c>node.Role == Roles.X</c> did, including polymorphically).
+		/// The slot's kind: the canonical shared slot for this child position, identifying it across node
+		/// types by object identity (so <c>node.Slot.Kind == Slots.X</c> identifies a node's position the
+		/// way <c>node.Role == Roles.X</c> did, including polymorphically). A per-node slot points at its
+		/// shared <c>Slots</c> constant; a <c>Slots</c> constant is itself the kind, so its own
+		/// <see cref="Kind"/> is null (and is never read -- only per-node slots are asked for their kind).
 		/// </summary>
-		public SlotKind Kind { get; }
+		public CSharpSlotInfo? Kind { get; }
 
 		/// <summary>
 		/// Whether the slot may be empty: a single slot whose child is nullable, or any collection slot
@@ -53,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public bool IsOptional { get; }
 
-		internal CSharpSlotInfo(string name, Type childType, bool isCollection, SlotKind kind, bool isOptional)
+		internal CSharpSlotInfo(string name, Type childType, bool isCollection, CSharpSlotInfo? kind, bool isOptional)
 		{
 			Name = name;
 			ChildType = childType;
@@ -73,7 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public sealed class CSharpSlotInfo<T> : CSharpSlotInfo where T : AstNode
 	{
-		internal CSharpSlotInfo(string name, bool isCollection, SlotKind kind, bool isOptional)
+		internal CSharpSlotInfo(string name, bool isCollection, CSharpSlotInfo? kind, bool isOptional)
 			: base(name, typeof(T), isCollection, kind, isOptional)
 		{
 		}

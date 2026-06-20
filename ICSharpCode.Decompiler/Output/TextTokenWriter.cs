@@ -112,18 +112,18 @@ namespace ICSharpCode.Decompiler
 		{
 			AstNode node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
-			if (symbol == null && node.Slot?.Kind == SlotKind.TargetExpression && node.Parent is InvocationExpression)
+			if (symbol == null && node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression)
 			{
 				symbol = node.Parent.GetSymbol();
 			}
-			if (symbol != null && node.Slot?.Kind == SlotKind.Type && node.Parent is ObjectCreateExpression)
+			if (symbol != null && node.Slot?.Kind == Slots.Type && node.Parent is ObjectCreateExpression)
 			{
 				var ctorSymbol = node.Parent.GetSymbol();
 				if (ctorSymbol != null)
 					symbol = ctorSymbol;
 			}
 
-			if (node is IdentifierExpression && node.Slot?.Kind == SlotKind.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
+			if (node is IdentifierExpression && node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member)
 			{
 				var declaringType = member.DeclaringType;
 				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler
 					return method + gotoStatement.Label;
 			}
 
-			if (node.Slot?.Kind == SlotKind.TargetExpression && node.Parent is InvocationExpression)
+			if (node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression)
 			{
 				var symbol = node.Parent.GetSymbol();
 				if (symbol is LocalFunctionMethod)
@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler
 					return variable;
 			}
 
-			if (id.Slot?.Kind == SlotKind.IntoIdentifier || id.Slot?.Kind == SlotKind.JoinIdentifier)
+			if (id.Slot?.Kind == Slots.IntoIdentifier || id.Slot?.Kind == Slots.JoinIdentifier)
 			{
 				var variable = id.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable != null)
@@ -428,7 +428,7 @@ namespace ICSharpCode.Decompiler
 				case "object":
 					var node = nodeStack.Peek();
 					ISymbol symbol;
-					if (node.Slot?.Kind == SlotKind.Type && node.Parent is ObjectCreateExpression)
+					if (node.Slot?.Kind == Slots.Type && node.Parent is ObjectCreateExpression)
 					{
 						symbol = node.Parent.GetSymbol();
 					}

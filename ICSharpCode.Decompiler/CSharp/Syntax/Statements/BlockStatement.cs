@@ -41,12 +41,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public void Add(Statement statement)
 		{
-			AddChild(statement, SlotKind.Statement);
+			AddChild(statement, Slots.Statement);
 		}
 
 		public void Add(Expression expression)
 		{
-			AddChild(new ExpressionStatement(expression), SlotKind.Statement);
+			AddChild(new ExpressionStatement(expression), Slots.Statement);
 		}
 
 		IEnumerator<Statement> IEnumerable<Statement>.GetEnumerator()

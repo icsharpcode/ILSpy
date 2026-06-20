@@ -636,11 +636,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				if (ConvertUnboundTypeArguments && typeArguments[i].Kind == TypeKind.UnboundTypeArgument)
 				{
-					result.AddChild(MakeSimpleType(typeParameters[i].Name), SlotKind.TypeArgument);
+					result.AddChild(MakeSimpleType(typeParameters[i].Name), Slots.TypeArgument);
 				}
 				else
 				{
-					result.AddChild(ConvertType(typeArguments[i]), SlotKind.TypeArgument);
+					result.AddChild(ConvertType(typeArguments[i]), Slots.TypeArgument);
 				}
 			}
 		}

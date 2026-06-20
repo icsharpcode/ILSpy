@@ -292,27 +292,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		/// <summary>
-		/// Gets the first child with the specified role, or null if this node has no such child (the
-		/// slot is empty or the node declares no slot of that kind).
+		/// Gets the first child occupying <paramref name="slot"/>, or null if the slot is empty (or the
+		/// node declares no such slot). <paramref name="slot"/> is a canonical <c>Slots</c> kind; the
+		/// result type is inferred from it.
 		/// </summary>
-		public T? GetChildByRole<T>(SlotKind kind) where T : AstNode
+		public T? GetChild<T>(CSharpSlotInfo<T> slot) where T : AstNode
 		{
 			int count = GetChildCount();
 			for (int i = 0; i < count; i++)
 			{
-				if (GetChildSlotInfo(i).Kind == kind)
+				if (GetChildSlotInfo(i).Kind == slot)
 				{
 					return GetChild(i) as T;
 				}
 			}
 			return null;
 		}
-
-		/// <summary>
-		/// Gets the first child occupying <paramref name="slot"/>, or null if the slot is empty (or the
-		/// node declares no such slot). The result type is inferred from the typed slot.
-		/// </summary>
-		public T? GetChild<T>(CSharpSlotInfo<T> slot) where T : AstNode => GetChildByRole<T>(slot.Kind);
 
 		public T? GetParent<T>() where T : AstNode
 		{
@@ -324,25 +319,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return pred != null ? Ancestors.FirstOrDefault(pred) : Ancestors.FirstOrDefault();
 		}
 
-		public AstNodeCollection<T> GetChildrenByRole<T>(SlotKind kind) where T : AstNode
+		/// <summary>Gets the collection occupying <paramref name="slot"/>; the element type is inferred from the slot.</summary>
+		public AstNodeCollection<T> GetChildren<T>(CSharpSlotInfo<T> slot) where T : AstNode
 		{
-			AstNodeCollection? collection = GetCollectionByKind(kind);
+			AstNodeCollection? collection = GetCollectionByKind(slot);
 			// A node has no children of a kind it does not declare a collection slot for. Reads of such
 			// a kind (e.g. the parameters of a non-indexer property) get a detached empty collection;
-			// writes go through AddChild/SetChildByRole, which reject a missing slot.
-			return collection != null ? (AstNodeCollection<T>)collection : new AstNodeCollection<T>(this, kind);
-		}
-
-		/// <summary>Gets the collection occupying <paramref name="slot"/>; the element type is inferred from the slot.</summary>
-		public AstNodeCollection<T> GetChildren<T>(CSharpSlotInfo<T> slot) where T : AstNode => GetChildrenByRole<T>(slot.Kind);
-
-		protected void SetChildByRole<T>(SlotKind kind, T? newChild) where T : AstNode
-		{
-			SetChildByRoleUntyped(kind, newChild);
+			// writes go through AddChild/SetChild, which reject a missing slot.
+			return collection != null ? (AstNodeCollection<T>)collection : new AstNodeCollection<T>(this, slot);
 		}
 
 		/// <summary>Sets the single child occupying <paramref name="slot"/>; the child type is inferred from the slot.</summary>
-		protected void SetChild<T>(CSharpSlotInfo<T> slot, T? newChild) where T : AstNode => SetChildByRole(slot.Kind, newChild);
+		protected void SetChild<T>(CSharpSlotInfo<T> slot, T? newChild) where T : AstNode => SetChildByKindUntyped(slot, newChild);
 
 		#region Slot storage contract
 		// Each concrete node's slots form a flattened child-index space, in source-declaration order.
@@ -375,7 +363,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// Returns the collection occupying the slot with the given kind, or null if there is none.
 		// Overridden by the generator for nodes that have collection slots.
-		internal virtual AstNodeCollection? GetCollectionByKind(SlotKind kind) => null;
+		internal virtual AstNodeCollection? GetCollectionByKind(CSharpSlotInfo kind) => null;
 
 		// Deep-copies this node's children into the (memberwise-cloned) copy, which initially shares
 		// this node's child references. Overridden by the generator for nodes that have slots.
@@ -489,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 		#endregion
 
-		public void AddChild<T>(T child, SlotKind kind) where T : AstNode
+		public void AddChild<T>(T child, CSharpSlotInfo kind) where T : AstNode
 		{
 			if (child == null)
 				return;
@@ -500,19 +488,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Adds a child into the slot matching <paramref name="kind"/> (appending to a collection slot,
 		/// or filling a single slot).
 		/// </summary>
-		internal void AddChildUnsafe(AstNode child, SlotKind kind)
+		internal void AddChildUnsafe(AstNode child, CSharpSlotInfo kind)
 		{
 			AstNodeCollection? collection = GetCollectionByKind(kind);
 			if (collection != null)
 				collection.AddNode(child);
 			else
-				SetChildByRoleUntyped(kind, child);
+				SetChildByKindUntyped(kind, child);
 		}
 
 		// Sets the single slot matching the kind (used by the non-generic mutation API). Unlike
-		// GetChildByRole, which returns null when this node declares no slot of that kind, writing a
+		// GetChild, which returns null when this node declares no slot of that kind, writing a
 		// child to a kind the node has no slot for throws.
-		internal void SetChildByRoleUntyped(SlotKind kind, AstNode? child)
+		internal void SetChildByKindUntyped(CSharpSlotInfo kind, AstNode? child)
 		{
 			int count = GetChildCount();
 			for (int i = 0; i < count; i++)
@@ -526,7 +514,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			throw new InvalidOperationException($"{GetType().Name} has no slot of kind '{kind}'.");
 		}
 
-		public void InsertChildBefore<T>(AstNode? nextSibling, T child, SlotKind kind) where T : AstNode
+		public void InsertChildBefore<T>(AstNode? nextSibling, T child, CSharpSlotInfo kind) where T : AstNode
 		{
 			if (child == null)
 				return;
@@ -534,19 +522,19 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (collection != null)
 				collection.InsertNodeBefore(nextSibling, child);
 			else
-				SetChildByRoleUntyped(kind, child);
+				SetChildByKindUntyped(kind, child);
 		}
 
-		internal void InsertChildBeforeUnsafe(AstNode nextSibling, AstNode child, SlotKind kind)
+		internal void InsertChildBeforeUnsafe(AstNode nextSibling, AstNode child, CSharpSlotInfo kind)
 		{
 			AstNodeCollection? collection = GetCollectionByKind(kind);
 			if (collection != null)
 				collection.InsertNodeBefore(nextSibling, child);
 			else
-				SetChildByRoleUntyped(kind, child);
+				SetChildByKindUntyped(kind, child);
 		}
 
-		public void InsertChildAfter<T>(AstNode? prevSibling, T child, SlotKind kind) where T : AstNode
+		public void InsertChildAfter<T>(AstNode? prevSibling, T child, CSharpSlotInfo kind) where T : AstNode
 		{
 			if (child == null)
 				return;
@@ -554,7 +542,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (collection != null)
 				collection.InsertNodeAfter(prevSibling, child);
 			else
-				SetChildByRoleUntyped(kind, child);
+				SetChildByKindUntyped(kind, child);
 		}
 
 		/// <summary>
@@ -565,7 +553,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (parent == null)
 				return;
 			parent.EnsureChildIndices();
-			SlotKind kind = parent.GetChildSlotInfo(childIndex).Kind;
+			CSharpSlotInfo kind = parent.GetChildSlotInfo(childIndex).Kind!;
 			AstNodeCollection? collection = parent.GetCollectionByKind(kind);
 			if (collection != null)
 				collection.RemoveNode(this);
@@ -625,12 +613,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AstNode oldParent = parent;
 			AstNode? oldSuccessor = NextSibling;
 			CSharpSlotInfo? oldSlot = this.Slot;
-			SlotKind oldKind = oldSlot?.Kind ?? SlotKind.None;
+			CSharpSlotInfo? oldKind = oldSlot?.Kind;
 			Remove();
 			AstNode? replacement = replaceFunction(this);
 			if (oldSuccessor != null && oldSuccessor.parent != oldParent)
 				throw new InvalidOperationException("replace function changed nextSibling of node being replaced?");
-			if (replacement != null)
+			if (replacement != null && oldKind != null)
 			{
 				if (replacement.parent != null)
 					throw new InvalidOperationException("replace function must return the root of a tree");

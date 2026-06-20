@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				return NameLookupMode.TypeInUsingDeclaration;
 			}
-			else if (outermostType.Slot?.Kind == SlotKind.BaseType)
+			else if (outermostType.Slot?.Kind == Slots.BaseType)
 			{
 				// Use BaseTypeReference for a type's base type, and for a constraint on a type.
 				// Do not use it for a constraint on a method.

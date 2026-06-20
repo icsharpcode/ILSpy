@@ -521,7 +521,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		void HandleLambdaOrQuery(Expression expr)
 		{
-			if (expr.Slot?.Kind == SlotKind.Left)
+			if (expr.Slot?.Kind == Slots.Left)
 				Parenthesize(expr);
 			if (expr.Parent is IsExpression || expr.Parent is AsExpression)
 				Parenthesize(expr);

@@ -812,7 +812,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				currentNamespace = typeDef.Namespace;
 				var typeDecl = DoDecompile(typeDef, decompileRun, decompilationContext.WithCurrentTypeDefinition(typeDef));
-				groupNode!.AddChild(typeDecl, SlotKind.Member);
+				groupNode!.AddChild(typeDecl, Slots.Member);
 			}
 		}
 
@@ -2062,7 +2062,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					var commentStatement = new EmptyStatement();
 					commentStatement.AddTrailingTrivia(new Comment("Invalid MethodBodyBlock: " + ex.Message));
 					body.Statements.Add(commentStatement);
-					entityDecl.AddChild(body, SlotKind.Body);
+					entityDecl.AddChild(body, Slots.Body);
 					return;
 				}
 				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
@@ -2121,7 +2121,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							body.Statements.Add(warningStatement);
 					}
 
-					entityDecl.AddChild(body, SlotKind.Body);
+					entityDecl.AddChild(body, Slots.Body);
 				}
 
 				CleanUpMethodDeclaration(entityDecl, body, function, localSettings.DecompileMemberBodies);

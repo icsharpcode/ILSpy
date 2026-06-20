@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				);
 				return;
 			}
-			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Slot?.Kind == SlotKind.Condition)
+			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Slot?.Kind == Slots.Condition)
 			{
 				invocationExpression.ReplaceWith(arguments[0].UnwrapInDirectionExpression());
 				return;
