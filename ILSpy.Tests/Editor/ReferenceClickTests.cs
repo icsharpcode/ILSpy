@@ -115,4 +115,21 @@ public class ReferenceClickTests
 
 		navigated.Should().BeTrue("a click without dragging follows the link");
 	}
+
+	[AvaloniaTest]
+	public async Task Click_On_A_Link_Then_Moving_The_Mouse_Does_Not_Select_Text()
+	{
+		var (window, view, tab) = await SetupAsync();
+		var (_, point) = FindVisibleReference(window, view, tab);
+		tab.NavigateRequested += _ => { };
+
+		// A stationary click navigates; the gesture must end cleanly so that afterwards moving
+		// the mouse with no button held does not extend a selection (issue #3793).
+		window.MouseDown(point, MouseButton.Left);
+		window.MouseUp(point, MouseButton.Left);
+		window.MouseMove(point + new Point(60, 0));
+
+		view.Editor.TextArea.Selection.IsEmpty.Should().BeTrue(
+			"moving the mouse after a click, with no button held, must not select text");
+	}
 }
