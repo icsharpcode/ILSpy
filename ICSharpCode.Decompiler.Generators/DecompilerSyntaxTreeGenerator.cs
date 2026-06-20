@@ -30,7 +30,26 @@ namespace ICSharpCode.Decompiler.Generators;
 [Generator]
 internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 {
-	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? MembersToMatch, EquatableArray<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? Slots, EquatableArray<(string StringName, string TokenName, bool IsOptional)>? NameAccessors, EquatableArray<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? CtorParams);
+	record AstNodeAdditions(string NodeName, bool NeedsVisitor, bool IsAbstract, bool BaseHasDefaultConstructor, bool NeedsPatternPlaceholder, string VisitMethodName, string VisitMethodParamType, EquatableArray<MemberMatch>? MembersToMatch, EquatableArray<SlotInfo>? Slots, EquatableArray<NameAccessor>? NameAccessors, EquatableArray<CtorParam>? CtorParams);
+
+	// One DoMatch comparison: Member is the property (or the "MatchAttributesAndModifiers" sentinel);
+	// RecursiveMatch matches child nodes structurally, MatchAny compares an enum that has an "Any"
+	// wildcard, and TypeName/Nullable pick the comparison form for the rest.
+	readonly record struct MemberMatch(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable);
+
+	// One child slot's schema: a single AstNode-typed child, an AstNodeCollection, or the backing
+	// Identifier token of a string name. KindName is the shared SlotKind; IsPartial is false only for
+	// the generator-owned token slot behind a name (the source does not declare that property).
+	readonly record struct SlotInfo(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial);
+
+	// A string name accessor (StringName) over its backing Identifier token slot (TokenName); IsOptional
+	// when the name may be absent (the token is then a nullable slot).
+	readonly record struct NameAccessor(string StringName, string TokenName, bool IsOptional);
+
+	// One generated constructor parameter. ParamType is the full type for a non-collection; for a
+	// collection it is empty and ElementType names the element. IsOptional (nullable / collection)
+	// drives the required-parameter prefix.
+	readonly record struct CtorParam(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional);
 
 	AstNodeAdditions GetAstNodeAdditions(GeneratorAttributeSyntaxContext context, CancellationToken ct)
 	{
@@ -42,7 +61,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			_ => (targetSymbol.Name, targetSymbol.Name),
 		};
 
-		List<(string Member, string TypeName, bool RecursiveMatch, bool MatchAny, bool Nullable)>? membersToMatch = null;
+		List<MemberMatch>? membersToMatch = null;
 
 		// Abstract base nodes are never the dispatch target of DoMatch (concrete subclasses each emit
 		// their own and do not chain to base), so emitting one here is dead code.
@@ -65,9 +84,9 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				bool excludeName = targetSymbol.GetMembers("NameToken").OfType<IPropertySymbol>()
 					.Any(p => p.GetAttributes().Any(a => a.AttributeClass?.Name == "ExcludeFromMatchAttribute"));
 				if (!excludeName)
-					membersToMatch.Add(("Name", "String", false, false, false));
-				membersToMatch.Add(("MatchAttributesAndModifiers", null!, false, false, false));
-				membersToMatch.Add(("ReturnType", "AstType", true, false, true));
+					membersToMatch.Add(new("Name", "String", RecursiveMatch: false, MatchAny: false, Nullable: false));
+				membersToMatch.Add(new("MatchAttributesAndModifiers", null!, RecursiveMatch: false, MatchAny: false, Nullable: false));
+				membersToMatch.Add(new("ReturnType", "AstType", RecursiveMatch: true, MatchAny: false, Nullable: true));
 			}
 
 			foreach (var m in targetSymbol.GetMembers())
@@ -82,13 +101,13 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				switch (property.Type)
 				{
 					case INamedTypeSymbol named when named.IsDerivedFrom(astNodeType) || named.MetadataName == "AstNodeCollection`1":
-						membersToMatch.Add((property.Name, named.Name, true, false, nullable));
+						membersToMatch.Add(new(property.Name, named.Name, RecursiveMatch: true, MatchAny: false, Nullable: nullable));
 						break;
 					case INamedTypeSymbol { TypeKind: TypeKind.Enum } named when named.GetMembers().Any(_ => _.Name == "Any"):
-						membersToMatch.Add((property.Name, named.Name, false, true, false));
+						membersToMatch.Add(new(property.Name, named.Name, RecursiveMatch: false, MatchAny: true, Nullable: false));
 						break;
 					default:
-						membersToMatch.Add((property.Name, property.Type.Name, false, false, false));
+						membersToMatch.Add(new(property.Name, property.Type.Name, RecursiveMatch: false, MatchAny: false, Nullable: false));
 						break;
 				}
 			}
@@ -100,13 +119,11 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		// is a child slot; a string X is a name -- only the convenience string is declared, and the generator
 		// owns the backing Identifier XToken child slot (emitted like a [Slot], but non-partial since the
 		// source does not declare it) plus the string body. DoMatch matches X (a string) and never sees XToken.
-		List<(bool IsCollection, string PropertyName, string PropertyType, string ElementType, bool IsOverride, bool IsNullable, string KindName, bool IsPartial)>? slots = null;
-		List<(string StringName, string TokenName, bool IsOptional)>? nameAccessors = null;
+		List<SlotInfo>? slots = null;
+		List<NameAccessor>? nameAccessors = null;
 		// Constructor parameters in declaration order: single/collection [Slot] children, the string [Slot]
-		// name, and settable enum-typed scalar properties (e.g. Operator, FieldDirection). ParamType is the
-		// full parameter type for non-collections; for a collection it is empty and ElementType names the
-		// element. IsOptional (nullable / collection) drives the required-parameter prefix.
-		List<(string PropertyName, string ParamType, string ElementType, bool IsCollection, bool IsOptional)>? ctorParams = null;
+		// name, and settable enum-typed scalar properties (e.g. Operator, FieldDirection).
+		List<CtorParam>? ctorParams = null;
 		foreach (var m in targetSymbol.GetMembers())
 		{
 			if (m is not IPropertySymbol property)
@@ -129,12 +146,12 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 					bool nameNullable = property.Type.NullableAnnotation == NullableAnnotation.Annotated;
 					string tokenName = property.Name + "Token";
 					// An optional name makes the backing token a real nullable slot: an absent name is a null token.
-					slots.Add((false, tokenName, "Identifier", "Identifier", false, nameNullable, kindName, false));
-					nameAccessors.Add((property.Name, tokenName, nameNullable));
+					slots.Add(new(IsCollection: false, tokenName, "Identifier", "Identifier", IsOverride: false, nameNullable, kindName, IsPartial: false));
+					nameAccessors.Add(new(property.Name, tokenName, nameNullable));
 					// The name is the primary construction value, so it is a required ctor param regardless of
 					// optionality (which only governs the setter's empty-to-null behaviour and the property type).
 					ctorParams ??= new();
-					ctorParams.Add((property.Name, "string", "", false, false));
+					ctorParams.Add(new(property.Name, "string", "", IsCollection: false, IsOptional: false));
 					continue;
 				}
 				bool isCollection = property.Type.MetadataName == "AstNodeCollection`1";
@@ -145,11 +162,11 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 				string elementType = isCollection
 					? ((INamedTypeSymbol)property.Type).TypeArguments[0].ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)
 					: propertyType;
-				slots.Add((isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, kindName, true));
+				slots.Add(new(isCollection, property.Name, propertyType, elementType, property.IsOverride, isNullable, kindName, IsPartial: true));
 				ctorParams ??= new();
 				ctorParams.Add(isCollection
-					? (property.Name, "", elementType, true, true)
-					: (property.Name, propertyType + (isNullable ? "?" : ""), "", false, isNullable));
+					? new(property.Name, "", elementType, IsCollection: true, IsOptional: true)
+					: new(property.Name, propertyType + (isNullable ? "?" : ""), "", IsCollection: false, IsOptional: isNullable));
 				continue;
 			}
 			// A settable enum-typed scalar (e.g. Operator, FieldDirection) is part of construction. The enum may
@@ -157,7 +174,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 			if (property.Type.TypeKind == TypeKind.Enum && property.SetMethod != null && !property.IsStatic)
 			{
 				ctorParams ??= new();
-				ctorParams.Add((property.Name, CtorParamTypeName(property.Type), "", false, false));
+				ctorParams.Add(new(property.Name, CtorParamTypeName(property.Type), "", IsCollection: false, IsOptional: false));
 			}
 		}
 
@@ -670,7 +687,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		builder.AppendLine();
 
 		source = source
-			.Concat([new("PatternPlaceholder", true, false, true, false, "PatternPlaceholder", "AstNode", null, null, null, null)])
+			.Concat([new("PatternPlaceholder", NeedsVisitor: true, IsAbstract: false, BaseHasDefaultConstructor: true, NeedsPatternPlaceholder: false, "PatternPlaceholder", "AstNode", null, null, null, null)])
 			.ToImmutableArray();
 
 		WriteInterface("IAstVisitor", "void", "");
