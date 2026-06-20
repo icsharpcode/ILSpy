@@ -308,6 +308,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return null;
 		}
 
+		/// <summary>
+		/// Gets the first child occupying <paramref name="slot"/>, or null if the slot is empty (or the
+		/// node declares no such slot). The result type is inferred from the typed slot.
+		/// </summary>
+		public T? GetChild<T>(CSharpSlotInfo<T> slot) where T : AstNode => GetChildByRole<T>(slot.Kind);
+
 		public T? GetParent<T>() where T : AstNode
 		{
 			return Ancestors.OfType<T>().FirstOrDefault();
@@ -327,10 +333,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return collection != null ? (AstNodeCollection<T>)collection : new AstNodeCollection<T>(this, kind);
 		}
 
+		/// <summary>Gets the collection occupying <paramref name="slot"/>; the element type is inferred from the slot.</summary>
+		public AstNodeCollection<T> GetChildren<T>(CSharpSlotInfo<T> slot) where T : AstNode => GetChildrenByRole<T>(slot.Kind);
+
 		protected void SetChildByRole<T>(SlotKind kind, T? newChild) where T : AstNode
 		{
 			SetChildByRoleUntyped(kind, newChild);
 		}
+
+		/// <summary>Sets the single child occupying <paramref name="slot"/>; the child type is inferred from the slot.</summary>
+		protected void SetChild<T>(CSharpSlotInfo<T> slot, T? newChild) where T : AstNode => SetChildByRole(slot.Kind, newChild);
 
 		#region Slot storage contract
 		// Each concrete node's slots form a flattened child-index space, in source-declaration order.
