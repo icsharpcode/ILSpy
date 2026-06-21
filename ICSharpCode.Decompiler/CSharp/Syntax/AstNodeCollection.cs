@@ -294,22 +294,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Returns the first element for which the predicate returns true,
 		/// or null if no such object is found.
 		/// </summary>
-		public T FirstOrNull(Func<T, bool>? predicate = null)
+		public T? FirstOrNull(Func<T, bool>? predicate = null)
 		{
 			if (list != null)
 				foreach (T item in list)
 					if (predicate == null || predicate(item))
 						return item;
-			return null!;
+			return null;
 		}
 
 		/// <summary>
 		/// Returns the last element for which the predicate returns true,
 		/// or null if no such object is found.
 		/// </summary>
-		public T LastOrNull(Func<T, bool>? predicate = null)
+		public T? LastOrNull(Func<T, bool>? predicate = null)
 		{
-			T result = null!;
+			T? result = null;
 			if (list != null)
 				foreach (T item in list)
 					if (predicate == null || predicate(item))
