@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Variable")]
 		public partial AstNodeCollection<VariableInitializer> Variables { get; }
 
-		public VariableInitializer GetVariable(string name)
+		public VariableInitializer? GetVariable(string name)
 		{
 			return Variables.FirstOrNull(vi => vi.Name == name);
 		}
