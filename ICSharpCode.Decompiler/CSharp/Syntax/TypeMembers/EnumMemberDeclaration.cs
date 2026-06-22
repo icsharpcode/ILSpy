@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Identifier")]
 		public override partial Identifier NameToken { get; set; }
 
-		[Slot("Initializer")]
+		[Slot("EnumMemberInitializer")]
 		public partial Expression? Initializer { get; set; }
 	}
 }

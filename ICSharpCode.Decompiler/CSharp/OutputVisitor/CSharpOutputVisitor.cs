@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 			bool SkipToken()
 			{
-				return kind == Slots.Initializer
+				return kind == Slots.ForInitializer
 					|| kind == Slots.Iterator
 					|| kind == Slots.ResourceAcquisition;
 			}
