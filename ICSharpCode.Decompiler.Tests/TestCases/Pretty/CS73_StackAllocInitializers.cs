@@ -257,6 +257,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UsePointer((byte*)ptr);
 		}
 
+		// A pointer-typed stackalloc passed to a call must stay a local: inlining it into the
+		// argument would retype it as Span<T>, which does not convert to the pointer parameter.
+		public unsafe void StackAllocPassedToPointerCall(int v)
+		{
+			int* ptr = stackalloc int[3] { 1, 2, v };
+			UseIntPointer(ptr);
+		}
+
+		public unsafe static void UseIntPointer(int* ptr)
+		{
+		}
+
 		// A buffer that is only partially written through a reinterpreting cast is not an
 		// initializer: the fourth int is never assigned, so it must stay a sequence of stores
 		// rather than be reconstructed as 'stackalloc int[4] { 1, v, 3 }' (too few elements).
