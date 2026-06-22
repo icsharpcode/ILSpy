@@ -26,8 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// Describes one child slot of a node type: its name, the declared child type, and whether it is a
 	/// collection. Each slot has a single generated static instance (e.g.
 	/// <c>BinaryOperatorExpression.LeftSlot</c>); <c>node.Slot</c> returns the slot a node occupies in
-	/// its parent, so <c>node.Slot == X.YSlot</c> identifies a node's position by object identity (the
-	/// successor to <c>node.Role == X.YRole</c>).
+	/// its parent, so <c>node.Slot == X.YSlot</c> identifies a node's position by object identity.
 	/// </summary>
 	public class CSharpSlotInfo
 	{
@@ -42,8 +41,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>
 		/// The slot's kind: the canonical shared slot for this child position, identifying it across node
-		/// types by object identity (so <c>node.Slot.Kind == Slots.X</c> identifies a node's position the
-		/// way <c>node.Role == Roles.X</c> did, including polymorphically). A per-node slot points at its
+		/// types by object identity (so <c>node.Slot.Kind == Slots.X</c> identifies a node's position
+		/// polymorphically). A per-node slot points at its
 		/// shared <c>Slots</c> constant; a <c>Slots</c> constant is itself the kind, so its own
 		/// <see cref="Kind"/> is null (and is never read -- only per-node slots are asked for their kind).
 		/// </summary>
