@@ -212,6 +212,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UsePointer((byte*)ptr);
 		}
 
+		// Mixed constant/non-constant floating-point initializers go through the constant data
+		// blob; reading a 'float'/'double' element as the integer of the same width produced the
+		// raw bit pattern as the literal (e.g. 1f decoded as 1.0653532E+09f).
+		public unsafe string SimpleStackAllocSingle(float a)
+		{
+			float* ptr = stackalloc float[4] { 1f, 2f, 3f, a };
+			Console.WriteLine(*ptr);
+			return UsePointer((byte*)ptr);
+		}
+
+		public unsafe string SimpleStackAllocDouble(double a)
+		{
+			double* ptr = stackalloc double[4] { 1.0, 2.0, 3.0, a };
+			Console.WriteLine(*ptr);
+			return UsePointer((byte*)ptr);
+		}
+
 		public unsafe string SimpleStackAllocInt32NonConstant(int a, int b, int c)
 		{
 			int* ptr = stackalloc int[6] { 0, 1, 0, a, b, c };

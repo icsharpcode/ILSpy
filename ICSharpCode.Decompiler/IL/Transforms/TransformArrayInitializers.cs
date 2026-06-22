@@ -325,6 +325,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private ILInstruction ReadElement(ref BlobReader blob, IType elementType)
 		{
+			// Floating-point elements must be read as their actual type: their stored bytes are
+			// not the integer of the same width, and the resulting constant has to match the
+			// element type's stack type (see StObj.CheckInvariant).
+			switch (ReflectionHelper.GetTypeCode(elementType))
+			{
+				case TypeCode.Single:
+					return new LdcF4(blob.ReadSingle());
+				case TypeCode.Double:
+					return new LdcF8(blob.ReadDouble());
+			}
 			switch (elementType.GetSize())
 			{
 				case 1:
