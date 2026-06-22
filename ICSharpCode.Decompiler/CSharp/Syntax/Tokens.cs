@@ -1,5 +1,5 @@
 // 
-// Roles.cs
+// Tokens.cs
 //  
 // Author:
 //       Mike Krüger <mkrueger@xamarin.com>
@@ -28,7 +28,7 @@
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	public static class Roles
+	public static class Tokens
 	{
 		// some pre defined constants for most used punctuation
 		public const string LPar = "(";

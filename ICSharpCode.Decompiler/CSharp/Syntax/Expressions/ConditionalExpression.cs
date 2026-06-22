@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public sealed partial class ConditionalExpression : Expression
 	{
 		public const string QuestionMarkToken = "?";
-		public const string ColonToken = Roles.Colon;
+		public const string ColonToken = Tokens.Colon;
 
 		[Slot("Condition")]
 		public partial Expression Condition { get; set; }
