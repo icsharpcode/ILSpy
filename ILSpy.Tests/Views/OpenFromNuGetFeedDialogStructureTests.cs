@@ -21,6 +21,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless.NUnit;
 using Avalonia.VisualTree;
 
@@ -80,6 +81,20 @@ public class OpenFromNuGetFeedDialogStructureTests
 		var errorBar = dialog.FindControl<Border>("ErrorBar");
 		errorBar.Should().NotBeNull("feed failures surface in an in-dialog status bar");
 		errorBar!.IsVisible.Should().BeFalse("no error is showing before anything went wrong");
+	}
+
+	[AvaloniaTest]
+	public void Results_List_Disables_Horizontal_Scrolling()
+	{
+		// With horizontal scrolling enabled, rows are measured at their unbounded content width
+		// instead of the viewport width, so the star-sized column stops filling and selecting a
+		// row brings its overflow into view - the list jumps right and grows a scrollbar. The
+		// row layout is meant to fit the width (the description wraps/trims), so it must be off.
+		var list = CreateDialog().FindControl<ListBox>("PackagesList")!;
+
+		ScrollViewer.GetHorizontalScrollBarVisibility(list)
+			.Should().Be(ScrollBarVisibility.Disabled,
+				"selecting a package must not scroll or shift the results list sideways");
 	}
 
 	[AvaloniaTest]

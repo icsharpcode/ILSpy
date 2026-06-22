@@ -48,19 +48,20 @@ namespace ICSharpCode.ILSpy.Views
 		// Runtime-loader/designer constructor; production callers and tests use the
 		// overload below to inject the settings service and (in tests) a fake client.
 		public OpenFromNuGetFeedDialog()
-			: this(settingsService: null, client: new NuGetFeedClient())
+			: this(settingsService: null, client: new NuGetFeedClient(), iconLoader: new NuGetIconLoader())
 		{
 		}
 
 		public OpenFromNuGetFeedDialog(
 			SettingsService? settingsService,
 			INuGetFeedClient client,
-			TimeSpan? debounceDelay = null)
+			TimeSpan? debounceDelay = null,
+			INuGetIconLoader? iconLoader = null)
 		{
 			InitializeComponent();
 
 			var settings = settingsService?.GetSettings<NuGetFeedSettings>() ?? new NuGetFeedSettings();
-			viewModel = new OpenFromNuGetFeedDialogViewModel(client, settings, debounceDelay);
+			viewModel = new OpenFromNuGetFeedDialogViewModel(client, settings, debounceDelay, iconLoader);
 			DataContext = viewModel;
 
 			Title = Loc.NuGetFeedSelectPackage;

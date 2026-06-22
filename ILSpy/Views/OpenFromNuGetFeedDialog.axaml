@@ -1,7 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:img="using:ICSharpCode.ILSpy"
-        xmlns:nf="using:ICSharpCode.ILSpy.NuGetFeeds"
         xmlns:vm="using:ICSharpCode.ILSpy.ViewModels"
         x:Class="ICSharpCode.ILSpy.Views.OpenFromNuGetFeedDialog"
         x:DataType="vm:OpenFromNuGetFeedDialogViewModel"
@@ -43,29 +42,30 @@
 			<Grid Grid.Column="0" RowDefinitions="*">
 				<ListBox Grid.Row="0" Name="PackagesList"
 				         ItemsSource="{Binding Packages}"
-				         SelectedItem="{Binding SelectedPackage, Mode=TwoWay}">
+				         SelectedItem="{Binding SelectedPackage, Mode=TwoWay}"
+				         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 					<ListBox.ItemTemplate>
-						<DataTemplate x:DataType="nf:NuGetPackageInfo">
+						<DataTemplate x:DataType="vm:NuGetPackageViewModel">
 							<!-- MinHeight reserves the two description lines (MaxLines below caps
 							     them), so rows stay uniform whether a package has a long, short,
 							     or missing description. -->
 							<Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="2"
 							      MinHeight="52">
 								<Image Grid.Column="0" Width="32" Height="32" VerticalAlignment="Top"
-								       Source="{x:Static img:Images.NuGet}" />
+								       Source="{Binding Icon}" />
 								<StackPanel Grid.Column="1" Spacing="2">
 									<StackPanel Orientation="Horizontal" Spacing="4">
-										<TextBlock FontWeight="Bold" Text="{Binding Id}" />
+										<TextBlock FontWeight="Bold" Text="{Binding Info.Id}" />
 										<TextBlock Opacity="0.75"
-										           IsVisible="{Binding Authors, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-										           Text="{Binding Authors, StringFormat='by {0}'}" />
+										           IsVisible="{Binding Info.Authors, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+										           Text="{Binding Info.Authors, StringFormat='by {0}'}" />
 									</StackPanel>
 									<TextBlock Opacity="0.75" TextWrapping="Wrap" MaxLines="2"
 									           TextTrimming="CharacterEllipsis"
-									           Text="{Binding Description}" />
+									           Text="{Binding Info.Description}" />
 								</StackPanel>
 								<TextBlock Grid.Column="2" VerticalAlignment="Top"
-								           Text="{Binding LatestVersion, StringFormat='v{0}'}" />
+								           Text="{Binding Info.LatestVersion, StringFormat='v{0}'}" />
 							</Grid>
 						</DataTemplate>
 					</ListBox.ItemTemplate>
@@ -79,9 +79,9 @@
 			              IsVisible="{Binding SelectedPackage, Converter={x:Static ObjectConverters.IsNotNull}}">
 				<StackPanel Name="DetailPane" Spacing="8" Margin="0,0,4,0">
 					<StackPanel Orientation="Horizontal" Spacing="8">
-						<Image Width="32" Height="32" Source="{x:Static img:Images.NuGet}" />
+						<Image Width="32" Height="32" Source="{Binding SelectedPackage.Icon}" />
 						<TextBlock FontSize="20" FontWeight="Bold" VerticalAlignment="Center"
-						           Text="{Binding SelectedPackage.Id}" />
+						           Text="{Binding SelectedPackage.Info.Id}" />
 					</StackPanel>
 
 					<StackPanel Orientation="Horizontal" Spacing="6">
@@ -104,37 +104,37 @@
 					</StackPanel>
 
 					<TextBlock Name="DescriptionHeaderLabel" FontWeight="Bold" />
-					<TextBlock TextWrapping="Wrap" Text="{Binding SelectedPackage.Description}" />
+					<TextBlock TextWrapping="Wrap" Text="{Binding SelectedPackage.Info.Description}" />
 
 					<Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"
 					      RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="4">
 						<TextBlock Grid.Row="0" Grid.Column="0" Name="AuthorsLabel" FontWeight="Bold" />
 						<TextBlock Grid.Row="0" Grid.Column="1" TextWrapping="Wrap"
-						           Text="{Binding SelectedPackage.Authors}" />
+						           Text="{Binding SelectedPackage.Info.Authors}" />
 
 						<TextBlock Grid.Row="1" Grid.Column="0" Name="LicenseLabel" FontWeight="Bold" />
 						<TextBlock Grid.Row="1" Grid.Column="1" Name="LicenseLink"
 						           TextDecorations="Underline" Foreground="#1B6EC2" Cursor="Hand"
 						           TextWrapping="Wrap"
-						           Text="{Binding SelectedPackage.LicenseUrl}" />
+						           Text="{Binding SelectedPackage.Info.LicenseUrl}" />
 
 						<TextBlock Grid.Row="2" Grid.Column="0" Name="PublishedLabel" FontWeight="Bold" />
 						<TextBlock Grid.Row="2" Grid.Column="1"
-						           Text="{Binding SelectedPackage.Published, StringFormat='{}{0:D}'}" />
+						           Text="{Binding SelectedPackage.Info.Published, StringFormat='{}{0:D}'}" />
 
 						<TextBlock Grid.Row="3" Grid.Column="0" Name="ProjectUrlLabel" FontWeight="Bold" />
 						<TextBlock Grid.Row="3" Grid.Column="1" Name="ProjectUrlLink"
 						           TextDecorations="Underline" Foreground="#1B6EC2" Cursor="Hand"
 						           TextWrapping="Wrap"
-						           Text="{Binding SelectedPackage.ProjectUrl}" />
+						           Text="{Binding SelectedPackage.Info.ProjectUrl}" />
 
 						<TextBlock Grid.Row="4" Grid.Column="0" Name="DownloadsLabel" FontWeight="Bold" />
 						<TextBlock Grid.Row="4" Grid.Column="1"
-						           Text="{Binding SelectedPackage.DownloadCount, StringFormat='{}{0:N0}'}" />
+						           Text="{Binding SelectedPackage.Info.DownloadCount, StringFormat='{}{0:N0}'}" />
 
 						<TextBlock Grid.Row="5" Grid.Column="0" Name="TagsLabel" FontWeight="Bold" />
 						<TextBlock Grid.Row="5" Grid.Column="1" TextWrapping="Wrap"
-						           Text="{Binding SelectedPackage.Tags}" />
+						           Text="{Binding SelectedPackage.Info.Tags}" />
 					</Grid>
 				</StackPanel>
 			</ScrollViewer>

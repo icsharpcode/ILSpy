@@ -43,6 +43,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public const int MaxVersions = 100;
 
 		readonly INuGetFeedClient client;
+		readonly INuGetIconLoader? iconLoader;
 		readonly NuGetFeedSettings settings;
 		readonly TimeSpan debounceDelay;
 
@@ -56,6 +57,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		CancellationTokenSource? downloadCts;
 
+		// Cancels the background icon downloads for a result set once it is replaced by a new
+		// search, so stale icons never land on rows that have been recycled to other packages.
+		CancellationTokenSource? iconLoadCts;
+
 		[ObservableProperty]
 		string searchText = string.Empty;
 
@@ -66,7 +71,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		string selectedFeedUrl;
 
 		[ObservableProperty]
-		NuGetPackageInfo? selectedPackage;
+		NuGetPackageViewModel? selectedPackage;
 
 		[ObservableProperty]
 		[NotifyCanExecuteChangedFor(nameof(OpenPackageCommand))]
@@ -89,7 +94,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		string? downloadedPackagePath;
 
 		public ObservableCollection<string> FeedUrls { get; }
-		public ObservableCollection<NuGetPackageInfo> Packages { get; } = new();
+		public ObservableCollection<NuGetPackageViewModel> Packages { get; } = new();
 		public ObservableCollection<string> Versions { get; } = new();
 
 		/// <summary>
@@ -99,9 +104,11 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public event Action<string?>? CloseRequested;
 
 		public OpenFromNuGetFeedDialogViewModel(
-			INuGetFeedClient client, NuGetFeedSettings settings, TimeSpan? debounceDelay = null)
+			INuGetFeedClient client, NuGetFeedSettings settings, TimeSpan? debounceDelay = null,
+			INuGetIconLoader? iconLoader = null)
 		{
 			this.client = client;
+			this.iconLoader = iconLoader;
 			this.settings = settings;
 			this.debounceDelay = debounceDelay ?? TimeSpan.FromMilliseconds(300);
 			FeedUrls = new ObservableCollection<string>(settings.Feeds);
@@ -119,7 +126,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		partial void OnSelectedFeedUrlChanged(string value) => StartSearch(debounce: true);
 
-		partial void OnSelectedPackageChanged(NuGetPackageInfo? value)
+		partial void OnSelectedPackageChanged(NuGetPackageViewModel? value)
 			=> _ = LoadVersionsAsync(value);
 
 		partial void OnSelectedVersionChanged(string? value)
@@ -162,7 +169,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			try
 			{
 				string path = await client.DownloadToGlobalPackagesFolderAsync(
-					SelectedFeedUrl?.Trim() ?? string.Empty, package.Id, version, cts.Token);
+					SelectedFeedUrl?.Trim() ?? string.Empty, package.Info.Id, version, cts.Token);
 				ErrorMessage = null;
 				DownloadedPackagePath = path;
 				CloseRequested?.Invoke(path);
@@ -190,9 +197,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 			searchCts?.Cancel();
 			versionsCts?.Cancel();
 			downloadCts?.Cancel();
+			iconLoadCts?.Cancel();
 		}
 
-		async Task LoadVersionsAsync(NuGetPackageInfo? package)
+		async Task LoadVersionsAsync(NuGetPackageViewModel? package)
 		{
 			versionsCts?.Cancel();
 			var cts = versionsCts = new CancellationTokenSource();
@@ -204,7 +212,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			try
 			{
 				var versions = await client.GetVersionsAsync(
-					SelectedFeedUrl?.Trim() ?? string.Empty, package.Id, IncludePrerelease,
+					SelectedFeedUrl?.Trim() ?? string.Empty, package.Info.Id, IncludePrerelease,
 					MaxVersions, cts.Token);
 				if (generation != versionsGeneration)
 					return;
@@ -247,11 +255,21 @@ namespace ICSharpCode.ILSpy.ViewModels
 				ErrorMessage = null;
 				if (!append)
 				{
+					// A fresh result set replaces the list: stop the previous set's icon
+					// downloads so they can't complete onto recycled rows.
+					iconLoadCts?.Cancel();
+					iconLoadCts = new CancellationTokenSource();
 					Packages.Clear();
 					SelectedPackage = null;
 				}
+				var iconToken = (iconLoadCts ??= new CancellationTokenSource()).Token;
 				foreach (var package in results)
-					Packages.Add(package);
+				{
+					var item = new NuGetPackageViewModel(package);
+					Packages.Add(item);
+					if (iconLoader != null)
+						_ = item.LoadIconAsync(iconLoader, iconToken);
+				}
 				CanLoadMore = results.Count == PageSize;
 
 				// Only a feed that actually answered earns a spot in the persisted MRU.
