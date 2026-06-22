@@ -257,6 +257,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UsePointer((byte*)ptr);
 		}
 
+		// A buffer that is only partially written through a reinterpreting cast is not an
+		// initializer: the fourth int is never assigned, so it must stay a sequence of stores
+		// rather than be reconstructed as 'stackalloc int[4] { 1, v, 3 }' (too few elements).
+		public unsafe string PartialReinterpret(int v)
+		{
+#if OPT
+			byte* num = stackalloc byte[16];
+			*(int*)num = 1;
+			((int*)num)[1] = v;
+			((int*)num)[2] = 3;
+			long num2 = 0L;
+			return UseBytePointer(num, &num2);
+#else
+			byte* ptr = stackalloc byte[16];
+			*(int*)ptr = 1;
+			((int*)ptr)[1] = v;
+			((int*)ptr)[2] = 3;
+			long num = 0L;
+			return UseBytePointer(ptr, &num);
+#endif
+		}
+
+		public unsafe static string UseBytePointer(byte* ptr, long* length)
+		{
+			return ((int*)ptr)->ToString();
+		}
+
 		public unsafe string NegativeOffsets(int a, int b, int c)
 		{
 #if OPT
