@@ -131,6 +131,8 @@ namespace ICSharpCode.ILSpy.Commands
 		// One client for the command's lifetime so the per-feed service-index discovery
 		// and the NuGet HTTP cache survive across dialog invocations.
 		readonly NuGetFeedClient feedClient = new();
+		// Likewise long-lived so the icon cache survives across dialog invocations.
+		readonly NuGetIconLoader iconLoader = new();
 
 		public override void Execute(object? parameter)
 		{
@@ -142,7 +144,7 @@ namespace ICSharpCode.ILSpy.Commands
 
 		async Task ShowAsync(global::Avalonia.Controls.Window owner)
 		{
-			var dlg = new Views.OpenFromNuGetFeedDialog(settingsService, feedClient);
+			var dlg = new Views.OpenFromNuGetFeedDialog(settingsService, feedClient, iconLoader: iconLoader);
 			// The dialog result is the absolute path of the .nupkg in the global packages
 			// folder; ILSpy opens .nupkg natively (ArchiveFileLoader/LoadedPackage).
 			var path = await dlg.ShowDialog<string?>(owner);

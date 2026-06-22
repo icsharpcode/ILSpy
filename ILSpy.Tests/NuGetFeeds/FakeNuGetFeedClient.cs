@@ -62,12 +62,12 @@ public sealed class FakeNuGetFeedClient : INuGetFeedClient
 	/// </summary>
 	public TaskCompletionSource<string>? PendingDownload { get; set; }
 
-	public static NuGetPackageInfo MakePackage(string id, string version = "1.0.0") => new(
+	public static NuGetPackageInfo MakePackage(string id, string version = "1.0.0", string? iconUrl = null) => new(
 		Id: id,
 		LatestVersion: version,
 		Description: $"Description of {id}",
 		Authors: "Test Author",
-		IconUrl: null,
+		IconUrl: iconUrl,
 		LicenseUrl: "https://licenses.example/MIT",
 		ProjectUrl: $"https://github.example/{id}",
 		Tags: "test fake",

@@ -25,6 +25,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.NuGetFeeds;
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -45,13 +46,20 @@ public class OpenFromNuGetFeedViewModelTests
 	const string CustomFeed = "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json";
 
 	static (OpenFromNuGetFeedDialogViewModel vm, FakeNuGetFeedClient client, NuGetFeedSettings settings)
-		CreateViewModel(TimeSpan? debounceDelay = null, NuGetFeedSettings? settings = null)
+		CreateViewModel(TimeSpan? debounceDelay = null, NuGetFeedSettings? settings = null,
+			INuGetIconLoader? iconLoader = null)
 	{
 		var client = new FakeNuGetFeedClient();
 		settings ??= new NuGetFeedSettings();
-		var vm = new OpenFromNuGetFeedDialogViewModel(client, settings, debounceDelay ?? TimeSpan.Zero);
+		var vm = new OpenFromNuGetFeedDialogViewModel(
+			client, settings, debounceDelay ?? TimeSpan.Zero, iconLoader);
 		return (vm, client, settings);
 	}
+
+	// The list/selection now carry per-row view models; tests that drive a selection directly
+	// wrap the feed DTO the same way a real search result is wrapped.
+	static NuGetPackageViewModel Pkg(string id, string version = "1.0.0")
+		=> new(FakeNuGetFeedClient.MakePackage(id, version));
 
 	[AvaloniaTest]
 	public async Task Refresh_Searches_The_Persisted_Feed_With_Empty_Term_And_Persisted_Prerelease()
@@ -146,7 +154,7 @@ public class OpenFromNuGetFeedViewModelTests
 		client.SearchCalls[1].Skip.Should().Be(OpenFromNuGetFeedDialogViewModel.PageSize,
 			"the second page must start where the first ended");
 		vm.CanLoadMore.Should().BeFalse("a short page means the listing is exhausted");
-		vm.Packages.Select(p => p.Id).Should().OnlyHaveUniqueItems();
+		vm.Packages.Select(p => p.Info.Id).Should().OnlyHaveUniqueItems();
 	}
 
 	[AvaloniaTest]
@@ -169,7 +177,7 @@ public class OpenFromNuGetFeedViewModelTests
 		var (vm, client, _) = CreateViewModel();
 		client.VersionsToReturn = new[] { "13.0.3", "13.0.2", "12.0.1" };
 
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => vm.Versions.Count == 3);
 
 		vm.Versions.Should().Equal(new[] { "13.0.3", "13.0.2", "12.0.1" },
@@ -188,7 +196,7 @@ public class OpenFromNuGetFeedViewModelTests
 		vm.IncludePrerelease = true;
 		await Waiters.WaitForAsync(() => client.SearchCalls.Count > 0);
 
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => client.VersionsCalls.Count > 0);
 
 		client.VersionsCalls.Last().IncludePrerelease.Should().BeTrue();
@@ -198,11 +206,11 @@ public class OpenFromNuGetFeedViewModelTests
 	public async Task Switching_Packages_Replaces_The_Version_List()
 	{
 		var (vm, client, _) = CreateViewModel();
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("PackageA");
+		vm.SelectedPackage = Pkg("PackageA");
 		await Waiters.WaitForAsync(() => vm.Versions.Count > 0);
 
 		client.VersionsToReturn = new[] { "2.0.0" };
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("PackageB");
+		vm.SelectedPackage = Pkg("PackageB");
 		await Waiters.WaitForAsync(() => vm.Versions.Count == 1);
 
 		vm.Versions.Should().Equal(new[] { "2.0.0" });
@@ -215,7 +223,7 @@ public class OpenFromNuGetFeedViewModelTests
 	{
 		var (vm, client, _) = CreateViewModel();
 		client.VersionsToReturn = new[] { "13.0.3", "13.0.2" };
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => vm.SelectedVersion != null);
 
 		// A ComboBox resets its SelectedItem to null when its items change under it;
@@ -232,7 +240,7 @@ public class OpenFromNuGetFeedViewModelTests
 		var (vm, client, _) = CreateViewModel();
 		client.VersionsException = new HttpRequestException("flat container unavailable");
 
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => vm.ErrorMessage != null);
 
 		vm.ErrorMessage.Should().Contain("flat container unavailable");
@@ -247,7 +255,7 @@ public class OpenFromNuGetFeedViewModelTests
 		vm.OpenPackageCommand.CanExecute(null).Should().BeFalse(
 			"there is nothing to download before a package/version is selected");
 
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => vm.SelectedVersion != null);
 
 		vm.OpenPackageCommand.CanExecute(null).Should().BeTrue();
@@ -260,7 +268,7 @@ public class OpenFromNuGetFeedViewModelTests
 		string? closedWith = null;
 		vm.CloseRequested += path => closedWith = path;
 
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => vm.SelectedVersion != null);
 		vm.SelectedVersion = "13.0.2";
 
@@ -284,7 +292,7 @@ public class OpenFromNuGetFeedViewModelTests
 		bool closeRaised = false;
 		vm.CloseRequested += _ => closeRaised = true;
 
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => vm.SelectedVersion != null);
 		vm.OpenPackageCommand.Execute(null);
 		await Waiters.WaitForAsync(() => vm.IsDownloading);
@@ -308,7 +316,7 @@ public class OpenFromNuGetFeedViewModelTests
 		bool closeRaised = false;
 		vm.CloseRequested += _ => closeRaised = true;
 
-		vm.SelectedPackage = FakeNuGetFeedClient.MakePackage("Newtonsoft.Json");
+		vm.SelectedPackage = Pkg("Newtonsoft.Json");
 		await Waiters.WaitForAsync(() => vm.SelectedVersion != null);
 		vm.OpenPackageCommand.Execute(null);
 		await Waiters.WaitForAsync(() => vm.ErrorMessage != null);
@@ -337,5 +345,83 @@ public class OpenFromNuGetFeedViewModelTests
 		vm.RefreshCommand.Execute(null);
 		await Waiters.WaitForAsync(() => vm.Packages.Count > 0);
 		vm.ErrorMessage.Should().BeNull("a successful retry must dismiss the stale error");
+	}
+
+	[AvaloniaTest]
+	public async Task A_Result_With_An_Icon_Url_Has_Its_Custom_Icon_Fetched_And_Swapped_In()
+	{
+		var iconLoader = new FakeNuGetIconLoader();
+		var (vm, client, _) = CreateViewModel(iconLoader: iconLoader);
+		client.SearchHandler = _ => new[] {
+			FakeNuGetFeedClient.MakePackage("WithIcon", iconUrl: "https://example/icon.png")
+		};
+
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.Packages.Count > 0);
+		await Waiters.WaitForAsync(() => vm.Packages[0].Icon is FakeNuGetIconLoader.StubImage);
+
+		((FakeNuGetIconLoader.StubImage)vm.Packages[0].Icon).Url.Should().Be("https://example/icon.png",
+			"the row must show the package's own icon once it loads");
+		iconLoader.RequestedUrls.Should().Contain("https://example/icon.png");
+	}
+
+	[AvaloniaTest]
+	public async Task A_Result_Without_An_Icon_Url_Keeps_The_Default_Icon_And_Is_Never_Fetched()
+	{
+		var iconLoader = new FakeNuGetIconLoader();
+		var (vm, client, _) = CreateViewModel(iconLoader: iconLoader);
+		client.SearchHandler = _ => new[] { FakeNuGetFeedClient.MakePackage("NoIcon") };
+
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.Packages.Count > 0);
+		// Give any erroneous load a chance to run before asserting it did not happen.
+		await Task.Delay(50);
+
+		vm.Packages[0].Icon.Should().BeSameAs(Images.NuGet, "a package with no icon URL stays on the default");
+		iconLoader.RequestedUrls.Should().BeEmpty("there is nothing to fetch without an icon URL");
+	}
+
+	[AvaloniaTest]
+	public async Task A_Broken_Icon_Url_Leaves_The_Default_Icon_In_Place()
+	{
+		var iconLoader = new FakeNuGetIconLoader { ReturnImage = false };
+		var (vm, client, _) = CreateViewModel(iconLoader: iconLoader);
+		client.SearchHandler = _ => new[] {
+			FakeNuGetFeedClient.MakePackage("WithIcon", iconUrl: "https://example/icon.png")
+		};
+
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.Packages.Count > 0);
+		await Waiters.WaitForAsync(() => iconLoader.RequestedUrls.Contains("https://example/icon.png"));
+		await Task.Delay(50);
+
+		vm.Packages[0].Icon.Should().BeSameAs(Images.NuGet, "a failed fetch must not disturb the default icon");
+	}
+
+	[AvaloniaTest]
+	public async Task A_New_Search_Cancels_The_Previous_Result_Sets_Pending_Icon_Loads()
+	{
+		var gate = new TaskCompletionSource();
+		var iconLoader = new FakeNuGetIconLoader { Gate = gate };
+		var (vm, client, _) = CreateViewModel(iconLoader: iconLoader);
+		client.SearchHandler = _ => new[] {
+			FakeNuGetFeedClient.MakePackage("Pkg", iconUrl: "https://example/icon.png")
+		};
+
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.Packages.Count > 0);
+		var firstRow = vm.Packages[0];
+		// The first row's icon load is now in flight, parked on the gate.
+		await Waiters.WaitForAsync(() => iconLoader.RequestedUrls.Count > 0);
+
+		// A new search replaces the result set, which must cancel the first set's pending load.
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.Packages.Count > 0 && !ReferenceEquals(vm.Packages[0], firstRow));
+
+		gate.SetResult();
+		await Task.Delay(50);
+
+		firstRow.Icon.Should().BeSameAs(Images.NuGet,
+			"a superseded result set must not paint icons onto its now-discarded rows");
 	}
 }
