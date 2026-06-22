@@ -40,10 +40,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Condition")]
 		public partial Expression Condition { get; set; }
 
-		[Slot("True")]
+		[Slot("TrueStatement")]
 		public partial Statement TrueStatement { get; set; }
 
-		[Slot("False")]
+		[Slot("FalseStatement")]
 		public partial Statement? FalseStatement { get; set; }
 	}
 }

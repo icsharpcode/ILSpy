@@ -60,10 +60,13 @@ and the **string** is the slot *kind* (see [Slots and kinds](#slots-and-kinds)):
 
 The kind string is shared across node types: every slot tagged `[Slot("Expression")]` has the same
 kind, so `node.Slot.Kind == Slots.Expression` works polymorphically. Pick an existing kind name when
-the position is the same logical role as on other nodes; pick a new one when it differs. Keep a kind
-mapping to a single child type
-where you can -- if one kind is used with several child types its typed `Slots` constant widens to
-`AstNode` (still usable, but you lose inference for that kind; see the de-aliasing note below).
+the position is the same logical role *and* child type as on other nodes; pick a new one when either
+differs. A kind must map to a **single child type** across every node that uses it: the generator
+emits one typed `Slots.X` constant per kind, and a kind spanning two child types would have to widen
+that constant to `AstNode`, leaving the typed accessors (`GetChildren` especially) unable to recover
+the real element type. The generator enforces this at build time (`DSTG001`). A position that is
+genuinely an expression *or* a statement -- a lambda body -- is still a single declared type,
+`AstNode`, and is fine.
 
 ### `[ExcludeFromMatch]`
 
@@ -140,9 +143,12 @@ So a transform that corrupts the tree fails at the exact transform, not as a dow
 ## Conventions and gotchas
 
 - The `[Slot]` string is the **bare kind name** ("Body", "Expression"), not a dotted role expression.
-- A kind reused with two different child types widens its `Slots` constant to `AstNode`. If you need a
-  precise type, give the position its own kind name -- as the declaration-level attribute slot does
-  (`[Slot("AttributeSection")]`) versus an attribute section's own `[Slot("Attribute")]`.
+- A kind maps to exactly one child type; reusing one name for two different child types is a build
+  error (`DSTG001`). When two positions would share a name but differ in child type, give each its own
+  kind name -- as the declaration-level attribute slot (`[Slot("AttributeSection")]`) does versus an
+  attribute section's own `[Slot("Attribute")]`, or the for-statement initializer
+  (`[Slot("ForInitializer")]`, a `Statement` collection) versus an object/array initializer
+  (`[Slot("Initializer")]`, an `ArrayInitializerExpression`).
 - Optional **names** read back as `null` (not an empty string) and a `null`/empty assignment clears the
   backing token.
 - Don't hand-write what the generator emits (visitors, `DoMatch`, child dispatch, constructors, slot

@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Expression")]
 		public partial Expression Expression { get; set; }
 
-		[Slot("SwitchSection")]
+		[Slot("SwitchExpressionSection")]
 		public partial AstNodeCollection<SwitchExpressionSection> SwitchSections { get; }
 	}
 
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Pattern")]
 		public partial Expression Pattern { get; set; }
 
-		[Slot("Body")]
+		[Slot("SwitchExpressionBody")]
 		public partial Expression Body { get; set; }
 	}
 }

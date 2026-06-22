@@ -587,7 +587,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (v.Type.IsByRefLike)
 				return true; // by-ref-like variables always must be initialized at their declaration.
 
-			if (v.InsertionPoint.nextNode.Slot?.Kind == Slots.Initializer)
+			if (v.InsertionPoint.nextNode.Slot?.Kind == Slots.ForInitializer)
 				return true; // for-statement initializers always should combine declaration and initialization.
 
 			return !context.Settings.SeparateLocalVariableDeclarations;

@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		[Slot("Body")]
+		[Slot("LambdaBody")]
 		public partial AstNode Body { get; set; }
 	}
 }

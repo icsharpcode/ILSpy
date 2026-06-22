@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Type")]
 		public override partial AstType ReturnType { get; set; }
 
-		[Slot("Variable")]
+		[Slot("FixedVariable")]
 		public partial AstNodeCollection<FixedVariableInitializer> Variables { get; }
 	}
 }

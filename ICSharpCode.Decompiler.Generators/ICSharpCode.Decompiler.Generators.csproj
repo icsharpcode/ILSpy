@@ -18,4 +18,9 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Analyzer release tracking for the generator's own diagnostics (RS2008). -->
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
 </Project>

@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
 
-		[Slot("Initializer")]
+		[Slot("ConstructorInitializer")]
 		public partial ConstructorInitializer? Initializer { get; set; }
 
 		[Slot("Body")]
