@@ -458,7 +458,7 @@ Examples:
 			{
 				if (!kinds.Contains(type.Kind))
 					continue;
-				output.WriteLine($"{type.Kind} {type.FullName}");
+				output.WriteLine($"{type.Kind} {type.FullTypeName.ReflectionName}");
 			}
 			return 0;
 		}
@@ -588,13 +588,230 @@ Examples:
 			if (typeName == null)
 			{
 				output.Write(decompiler.DecompileWholeModuleAsString());
+				return 0;
 			}
-			else
+
+			if (!TryResolveType(decompiler.TypeSystem, typeName, out ITypeDefinition typeDefinition, out string error))
 			{
-				var name = new FullTypeName(typeName);
-				output.Write(decompiler.DecompileTypeAsString(name));
+				Console.Error.WriteLine(error);
+				return ProgramExitCodes.EX_DATAERR;
 			}
+
+			output.Write(decompiler.DecompileTypeAsString(typeDefinition.FullTypeName));
 			return 0;
+		}
+
+		/// <summary>
+		/// Resolves a type name supplied on the command line to a single type definition.
+		/// <para>
+		/// Matching is a ladder of progressively looser rules, each requiring a unique hit:
+		/// the engine's exact reflection-name lookup ("Ns.List`1"); then, against the input
+		/// reduced to FullName shape (parsed via the reflection grammar, then arity- and
+		/// nesting-separator-stripped), an exact FullName match ("Ns.List", "Ns.A`1+B`2"),
+		/// a case-insensitive FullName match, a namespace-less simple-name match ("List"),
+		/// and finally a trailing-segment-path match ("Dictionary.KeyCollection").
+		/// </para>
+		/// The first rule that matches exactly one type wins; a rule matching more than one
+		/// stops the ladder and reports the ambiguity (the candidates) rather than guessing;
+		/// no match at all yields a not-found message with name suggestions.
+		/// </summary>
+		static bool TryResolveType(IDecompilerTypeSystem typeSystem, string typeName, out ITypeDefinition typeDefinition, out string error)
+		{
+			typeDefinition = null;
+			error = null;
+
+			// Exact match on the reflection name. This is the canonical form printed by
+			// --list-* (e.g. "Ns.List`1") and the only form that resolves generic types directly.
+			var exact = typeSystem.FindType(new FullTypeName(typeName)).GetDefinition();
+			if (exact != null)
+			{
+				typeDefinition = exact;
+				return true;
+			}
+
+			var allTypes = typeSystem.MainModule.TypeDefinitions.ToList();
+
+			// Reduce whatever spelling the user gave to the shape of ITypeDefinition.FullName
+			// ('.'-separated, no `n arity). The grammar parser drops assembly qualification,
+			// generic arguments and array/pointer/byref decorations so they cannot leak into the
+			// comparison key; if the input is not a well-formed type name we match against it as-is.
+			string normalized = TryNormalizeTypeName(typeName, out string parsed) ? parsed : typeName;
+
+			// Arity- and separator-insensitive: "Ns.CachedPsiValue" finds "Ns.CachedPsiValue`1",
+			// and any spelling of a nested generic ("Ns.A.B", "Ns.A`1+B`2") finds it.
+			if (TrySingleMatch(allTypes, t => t.FullName == normalized, typeName, out typeDefinition, out error))
+				return true;
+			if (error != null)
+				return false;
+
+			// Case-insensitive variant of the same.
+			if (TrySingleMatch(allTypes, t => string.Equals(t.FullName, normalized, StringComparison.OrdinalIgnoreCase),
+				typeName, out typeDefinition, out error))
+				return true;
+			if (error != null)
+				return false;
+
+			// Simple name only, with the namespace omitted (e.g. "CachedPsiValue").
+			if (TrySingleMatch(allTypes, t => string.Equals(t.Name, normalized, StringComparison.OrdinalIgnoreCase),
+				typeName, out typeDefinition, out error))
+				return true;
+			if (error != null)
+				return false;
+
+			// Trailing segment path: "Dictionary.KeyCollection" finds
+			// "System.Collections.Generic.Dictionary`2+KeyCollection". Matching whole '.'-separated
+			// segments keeps "ReadOnlyDictionary.KeyCollection" from being treated as a match.
+			string[] suffixSegments = normalized.Split('.');
+			if (TrySingleMatch(allTypes, t => IsTrailingSegmentPath(t.FullName, suffixSegments),
+				typeName, out typeDefinition, out error))
+				return true;
+			if (error != null)
+				return false;
+
+			error = FormatNotFound(typeName, allTypes);
+			return false;
+		}
+
+		/// <summary>
+		/// Returns true if <paramref name="suffixSegments"/> equals the trailing run of
+		/// '.'-separated segments of <paramref name="fullName"/>. The comparison is on whole
+		/// segments, so "Dictionary.KeyCollection" matches "...Generic.Dictionary.KeyCollection"
+		/// but not "...ObjectModel.ReadOnlyDictionary.KeyCollection".
+		/// </summary>
+		static bool IsTrailingSegmentPath(string fullName, string[] suffixSegments)
+		{
+			string[] segments = fullName.Split('.');
+			if (suffixSegments.Length > segments.Length)
+				return false;
+			int offset = segments.Length - suffixSegments.Length;
+			for (int i = 0; i < suffixSegments.Length; i++)
+			{
+				if (!string.Equals(segments[offset + i], suffixSegments[i], StringComparison.Ordinal))
+					return false;
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Parses a type name in any reflection-grammar spelling and reduces it to the shape of
+		/// <see cref="INamedElement.FullName"/>. Assembly qualification, generic arguments and
+		/// array/pointer/byref decorations are dropped by the parser; the remaining arity
+		/// suffixes (<c>`n</c>) are then removed and the nested-type separator <c>+</c> is
+		/// replaced with <c>.</c>. Returns false when the input is not a well-formed type name.
+		/// </summary>
+		static bool TryNormalizeTypeName(string typeName, out string normalized)
+		{
+			normalized = null;
+			// Fully qualified: the ILSpyCmdProgram.TypeName option property shadows the type name.
+			if (!System.Reflection.Metadata.TypeName.TryParse(typeName, out System.Reflection.Metadata.TypeName parsed))
+				return false;
+
+			// Peel decorations down to the underlying type definition: arrays, pointers and
+			// byrefs expose an element type, and a constructed generic exposes its open definition.
+			while (parsed.IsArray || parsed.IsPointer || parsed.IsByRef)
+				parsed = parsed.GetElementType();
+			if (parsed.IsConstructedGenericType)
+				parsed = parsed.GetGenericTypeDefinition();
+
+			// parsed.FullName is now free of assembly and generic-argument noise; only the arity
+			// suffixes and '+' separators still differ from ITypeDefinition.FullName.
+			var sb = new System.Text.StringBuilder(parsed.FullName.Length);
+			string reflectionName = parsed.FullName;
+			int i = 0;
+			while (i < reflectionName.Length)
+			{
+				char c = reflectionName[i];
+				if (c == '`')
+				{
+					i++;
+					while (i < reflectionName.Length && char.IsDigit(reflectionName[i]))
+						i++;
+				}
+				else
+				{
+					sb.Append(c == '+' ? '.' : c);
+					i++;
+				}
+			}
+			normalized = sb.ToString();
+			return true;
+		}
+
+		/// <summary>
+		/// Selects the single type definition matching <paramref name="predicate"/>. Sets
+		/// <paramref name="error"/> when the predicate matches more than one type so the caller
+		/// can report the ambiguity instead of silently picking one.
+		/// </summary>
+		static bool TrySingleMatch(IReadOnlyList<ITypeDefinition> allTypes, Func<ITypeDefinition, bool> predicate, string typeName, out ITypeDefinition typeDefinition, out string error)
+		{
+			typeDefinition = null;
+			error = null;
+			var matches = allTypes.Where(predicate).ToList();
+			if (matches.Count == 1)
+			{
+				typeDefinition = matches[0];
+				return true;
+			}
+			if (matches.Count > 1)
+			{
+				error = $"The type name '{typeName}' is ambiguous between:{Environment.NewLine}"
+					+ string.Join(Environment.NewLine, matches.Select(t => "    " + t.FullTypeName.ReflectionName))
+					+ $"{Environment.NewLine}Specify the full reflection name (including the `n generic-arity suffix).";
+			}
+			return false;
+		}
+
+		static string FormatNotFound(string typeName, IReadOnlyList<ITypeDefinition> allTypes)
+		{
+			var message = $"Could not find a type named '{typeName}'.";
+
+			// Suggest types whose name contains the requested simple name (case-insensitive).
+			int lastDot = typeName.LastIndexOf('.');
+			string simpleName = lastDot >= 0 ? typeName.Substring(lastDot + 1) : typeName;
+			int backtick = simpleName.IndexOf('`');
+			if (backtick >= 0)
+				simpleName = simpleName.Substring(0, backtick);
+
+			// Prefer types whose simple name contains the requested name; if a typo means
+			// nothing contains it, fall back to a subsequence match (the requested letters
+			// appearing in order), which still catches names with a dropped character.
+			var suggestions = SelectSuggestions(allTypes,
+				t => t.Name.IndexOf(simpleName, StringComparison.OrdinalIgnoreCase) >= 0);
+			if (suggestions.Count == 0)
+				suggestions = SelectSuggestions(allTypes, t => IsSubsequence(simpleName, t.Name));
+
+			if (suggestions.Count > 0)
+			{
+				message += $"{Environment.NewLine}Did you mean one of the following?{Environment.NewLine}"
+					+ string.Join(Environment.NewLine, suggestions.Select(n => "    " + n));
+			}
+			return message;
+		}
+
+		static List<string> SelectSuggestions(IReadOnlyList<ITypeDefinition> allTypes, Func<ITypeDefinition, bool> predicate)
+		{
+			return allTypes
+				.Where(predicate)
+				.Select(t => t.FullTypeName.ReflectionName)
+				.Distinct()
+				.OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+				.Take(10)
+				.ToList();
+		}
+
+		/// <summary>
+		/// Returns true if every character of <paramref name="value"/> appears in
+		/// <paramref name="text"/> in order (case-insensitively), allowing gaps.
+		/// </summary>
+		static bool IsSubsequence(string value, string text)
+		{
+			int i = 0;
+			foreach (char c in text)
+			{
+				if (i < value.Length && char.ToUpperInvariant(c) == char.ToUpperInvariant(value[i]))
+					i++;
+			}
+			return i == value.Length;
 		}
 
 		int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
