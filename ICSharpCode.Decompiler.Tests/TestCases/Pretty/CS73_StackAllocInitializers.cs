@@ -219,6 +219,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UsePointer((byte*)ptr);
 		}
 
+		// The buffer is only passed to a static call, never dereferenced as a typed pointer, so
+		// some compilers keep it on the stack as a native int rather than in an int* local.
+		// Combined with the constant allocation size being folded to a byte count, that previously
+		// made the decompiler lose the element type and throw "given Block is invalid!".
+		public unsafe string Issue3799(int pid)
+		{
+			int* ptr = stackalloc int[4] { 1, 14, 1, pid };
+			long num = 0L;
+			return UseTwoPointers(ptr, &num);
+		}
+
 		public unsafe string NotAnInitializer(int a, int b, int c)
 		{
 			int* ptr = stackalloc int[6];
@@ -253,6 +264,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string UsePointer(byte* ptr)
 		{
 			return ptr->ToString();
+		}
+
+		public unsafe static string UseTwoPointers(int* ptr, long* length)
+		{
+			return ((byte*)ptr)->ToString();
 		}
 
 		public string GetSpan()

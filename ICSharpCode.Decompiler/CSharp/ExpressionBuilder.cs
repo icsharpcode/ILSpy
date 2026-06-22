@@ -3713,7 +3713,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType elementType;
 			if (block.Instructions.Count < 2 || !block.Instructions[1].MatchStObj(out _, out _, out var t))
 				throw new ArgumentException("given Block is invalid!");
-			if (typeHint is PointerType pt && !TypeUtils.IsCompatibleTypeForMemoryAccess(t, pt.ElementType))
+			// Derive the element type from the type actually being stored when the type hint does
+			// not pin it down. The hint is unreliable here: when the allocation size is a folded
+			// constant (e.g. 'localloc 16' for 'stackalloc int[4]') the element type can no longer
+			// be read off a 'count * sizeof(T)' expression, and the surrounding context may type the
+			// buffer as a plain native int rather than a T*. In both cases falling back to 't' keeps
+			// the element type consistent with the stores in the block.
+			if (!(typeHint is PointerType pt) || !TypeUtils.IsCompatibleTypeForMemoryAccess(t, pt.ElementType))
 			{
 				typeHint = new PointerType(t);
 			}
