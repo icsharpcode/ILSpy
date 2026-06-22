@@ -36,7 +36,7 @@ jobs:
     - run: mkdir -p $env:StagingDirectory
       
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
@@ -291,7 +291,7 @@ jobs:
     steps:
     - run: mkdir -p $env:StagingDirectory
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         submodules: true
         fetch-depth: 0
