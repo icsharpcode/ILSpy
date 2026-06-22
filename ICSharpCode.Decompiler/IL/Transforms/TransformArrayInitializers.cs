@@ -515,8 +515,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				elementCount++;
 			}
 
-			if (values == null || store.Kind != VariableKind.StackSlot || store.StoreCount != 1
-				|| store.AddressCount != 0 || store.LoadCount > values.Length + 1)
+			// Every element must be written, either from the constant data blob or by an explicit
+			// store. A gap means the buffer is only partially initialized (e.g. a 'stackalloc
+			// byte[16]' reinterpreted and written through a few elements), which cannot be
+			// represented as an initializer and has to stay a sequence of individual stores.
+			if (values == null || Array.IndexOf(values, null) >= 0 || store.Kind != VariableKind.StackSlot
+				|| store.StoreCount != 1 || store.AddressCount != 0 || store.LoadCount > values.Length + 1)
 				return false;
 
 			if (store.LoadInstructions.Last().Parent is StLoc finalStore)
