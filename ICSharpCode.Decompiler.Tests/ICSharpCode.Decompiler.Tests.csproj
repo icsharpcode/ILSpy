@@ -7,7 +7,7 @@
     <!-- A single (host) RID makes the build copy the native DiaSymReader.Native assets the
          Windows PDB tests need; the explicit RID list makes packages.lock.json carry every RID
          (host-independent), so the lock does not drift between Linux and Windows restores. -->
-    <RuntimeIdentifier>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</RuntimeIdentifier>
+    <RuntimeIdentifier>$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
     <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
 
     <IsPackable>false</IsPackable>
@@ -98,6 +98,7 @@
     <None Include="TestCases\Disassembler\Pretty\InterfaceImplAttributes.il" />
     <None Include="TestCases\Disassembler\Pretty\SortMembers.expected.il" />
     <None Include="TestCases\Disassembler\Pretty\SortMembers.il" />
+    <None Include="TestCases\IsolatedDecompilation\IsolatedStaticCtor.il" />
     <None Include="TestCases\ILPretty\ExtensionEncodingV2.il" />
     <None Include="testcases\ilpretty\ExtensionEncodingV1.il" />
     <None Include="Output\LocationsInAstSamples.cs" />
@@ -144,6 +145,7 @@
 
   <ItemGroup>
     <Compile Include="DisassemblerPrettyTestRunner.cs" />
+    <Compile Include="IsolatedMethodDecompilationTests.cs" />
     <Compile Include="Helpers\RoslynToolset.cs" />
     <Compile Include="Helpers\TestsAssemblyOutput.cs" />
     <Compile Include="Output\ILAmbienceTests.cs" />

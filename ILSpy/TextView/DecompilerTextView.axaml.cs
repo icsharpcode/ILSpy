@@ -157,15 +157,22 @@ namespace ICSharpCode.ILSpy.TextView
 
 			// Reference navigation fires on pointer-RELEASE without drag (WPF parity: the WPF
 			// view used TextArea.PreviewMouseDown/Up the same way), so a press-and-drag over a
-			// link starts a text selection instead of navigating away. Tunnel routing mirrors
-			// WPF's Preview events and sees the gesture before AvaloniaEdit's own handlers.
+			// link starts a text selection instead of navigating away. The press handler only
+			// records the start position, so tunnel routing (before AvaloniaEdit consumes the
+			// press) is fine.
 			Editor.TextArea.AddHandler(InputElement.PointerPressedEvent,
 				OnTextAreaPointerPressedForReferenceClick,
 				RoutingStrategies.Tunnel,
 				handledEventsToo: true);
+			// The release handler must run AFTER AvaloniaEdit's own PointerReleased: AvaloniaEdit's
+			// SelectionMouseHandler captures the pointer and enters selection mode on press, and
+			// only its release handler resets that mode and releases the capture. AvaloniaEdit
+			// subscribes in the bubble phase from the TextArea constructor (before this view adds
+			// its handlers), so a bubble handler here is guaranteed to run after it. handledEventsToo
+			// keeps us running even though AvaloniaEdit marks the release handled.
 			Editor.TextArea.AddHandler(InputElement.PointerReleasedEvent,
 				OnTextAreaPointerReleasedForReferenceClick,
-				RoutingStrategies.Tunnel,
+				RoutingStrategies.Bubble,
 				handledEventsToo: true);
 		}
 
@@ -200,9 +207,10 @@ namespace ICSharpCode.ILSpy.TextView
 				ClearLocalReferenceMarks();
 				return;
 			}
-			// Cancel the caret-click selection AvaloniaEdit started on press, and stop its
-			// release processing, so the navigation's caret move doesn't grow a selection
-			// between the old anchor and the new position.
+			// AvaloniaEdit's own release handler has already reset its selection mode and released
+			// the pointer capture (it runs first in the bubble phase). Clear the empty caret-click
+			// selection it leaves behind, then navigate; marking the release handled stops it from
+			// bubbling further now that it has been consumed as a link click.
 			Editor.TextArea.ClearSelection();
 			e.Handled = true;
 			OnReferenceClicked(segment);
