@@ -43,7 +43,7 @@ Windows-only frontends, packaging, and tests:
 - `ILSpy.Installer/` — WiX installer (`net472`)
 - `ILSpy.BamlDecompiler.Tests/` — BAML-decompiler tests, still WPF/Windows-bound (`net11.0-windows`)
 
-Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the decompiler libs + `ilspycmd` + their tests (no UI — the Linux CI target); `ILSpy.Desktop.slnf` is the UI plus its dependencies and tests; `ILSpy.Installer.sln` / `ILSpy.VSExtensions.sln` cover the legacy packaging.
+Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the decompiler libs + `ilspycmd` + their tests (no UI — the Linux CI target); `ILSpy.Desktop.slnf` is the UI plus its dependencies and tests; `ILSpy.Installer.sln` covers the legacy packaging, and `ILSpy.VSExtensions.slnx` the VS 2022 extension (`dotnet build`-able).
 
 ## ILSpy-tests submodule
 

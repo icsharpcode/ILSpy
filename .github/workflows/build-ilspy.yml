@@ -146,9 +146,7 @@ jobs:
 
     - name: Build VS Extension (for VS 2022)
       if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
-      run: |
-        msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
-        msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
+      run: dotnet build ILSpy.VSExtensions.slnx -c Release
       
     - name: Verify package contents
       if: matrix.configuration == 'debug'

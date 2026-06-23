@@ -49,7 +49,7 @@ How to build
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Install Visual Studio (documented version: 18.0/2026). You need the following workload components:
   - Workload ".NET Desktop Development". This workload includes the .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (ILSpy.csproj targets .NET 10.0, but we have net472 projects too). Our unit tests require [.NET 11.0 SDK](https://dotnet.microsoft.com/download/dotnet/11.0).
-  - Workload "Visual Studio extension development" (Note: ILSpy.VSExtensions.sln is separate from ILSpy.sln and thus this workload is optional)
+  - Workload "Visual Studio extension development" (Note: ILSpy.VSExtensions.slnx is separate from ILSpy.sln and thus this workload is optional)
   - Individual Component "MSVC v143 - VS 2022 C++ x64/x86 build tools" (or similar)
     - _The VC++ toolset is optional_; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
 - Open ILSpy.sln in Visual Studio.
@@ -59,7 +59,7 @@ How to build
   - If you are only interested in a specific subset of ILSpy, you can also use
     - ILSpy.Desktop.slnf: for the cross-platform Avalonia UI and its tests
     - ILSpy.XPlat.slnf: for the cross-platform CLI (ilspycmd) or PowerShell cmdlets
-    - ILSpy.VSExtensions.sln: for the Visual Studio extensions
+    - ILSpy.VSExtensions.slnx: for the Visual Studio extensions
 
 **Note:** Visual Studio includes a version of the .NET SDK that is managed by the Visual Studio installer - once you update, it may get upgraded too.
 Please note that ILSpy is only compatible with the .NET 11.0 SDK and Visual Studio will refuse to load some projects in the solution (and unit tests will fail). 
