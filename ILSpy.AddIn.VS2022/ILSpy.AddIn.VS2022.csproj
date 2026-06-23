@@ -177,8 +177,8 @@
 
   <!-- The VSSDK CTO merger reads VSPackage.resources with the classic reader, which cannot
        parse the System.Resources.Extensions format that dotnet build emits for the binary package
-       icon. Skip the merge for this SDK-style build; VSCTCompile already embeds Menus.ctmenu as its
-       own resource, which is how ProvideMenuResource locates it. The legacy project keeps MergeWithCTO. -->
+       icon. Skip the merge; VSCTCompile already embeds Menus.ctmenu as its own resource, which is
+       how ProvideMenuResource locates it. -->
   <ItemGroup>
     <EmbeddedResource Update="..\ILSpy.AddIn.Shared\VSPackage.resx">
       <MergeWithCTO>false</MergeWithCTO>

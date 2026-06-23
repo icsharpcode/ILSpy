@@ -99,7 +99,6 @@ function gitBranch() {
 
 $templateFiles = (
 	@{Input=$decompilerVersionInfoTemplateFile; Output="ICSharpCode.Decompiler/Properties/DecompilerVersionInfo.cs"},
-	@{Input="ILSpy.AddIn/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn/source.extension.vsixmanifest"},
 	@{Input="ILSpy.AddIn.VS2022/source.extension.vsixmanifest.template"; Output = "ILSpy.AddIn.VS2022/source.extension.vsixmanifest"}
 );
 

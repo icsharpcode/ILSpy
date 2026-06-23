@@ -3,5 +3,4 @@
   <Project Path="ILSpy.AddIn.VS2022/ILSpy.AddIn.VS2022.csproj">
     <Deploy Solution="Debug|Any CPU" />
   </Project>
-  <Project Path="ILSpy.AddIn/ILSpy.AddIn.csproj" />
 </Solution>
