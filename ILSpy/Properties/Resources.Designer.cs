@@ -2047,6 +2047,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ILSpy started from .
+        /// </summary>
+        public static string ILSpyStartedFrom {
+            get {
+                return ResourceManager.GetString("ILSpyStartedFrom", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to ILSpy version .
         /// </summary>
         public static string ILSpyVersion {

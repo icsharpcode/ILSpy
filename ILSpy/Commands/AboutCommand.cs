@@ -101,6 +101,7 @@ namespace ICSharpCode.ILSpy.Commands
 			var output = new AvaloniaEditTextOutput { Title = Resources.About };
 			output.WriteLine(Resources.ILSpyVersion + DecompilerVersionInfo.FullVersionWithCommitHash);
 			output.WriteLine(Resources.NETFrameworkVersion + GetDotnetProductVersion());
+			output.WriteLine(Resources.ILSpyStartedFrom + GetStartupPath());
 			output.WriteLine();
 			output.AddUIElement(BuildUpdateSection);
 			output.WriteLine();
@@ -222,6 +223,17 @@ namespace ICSharpCode.ILSpy.Commands
 			if (!string.IsNullOrWhiteSpace(location))
 				return FileVersionInfo.GetVersionInfo(location).ProductVersion ?? "UNKNOWN";
 			return typeof(object).Assembly.GetName().Version?.ToString() ?? "UNKNOWN";
+		}
+
+		static string GetStartupPath()
+		{
+			// The full path of the executable that launched this process (ilspy.exe). On the rare
+			// host where Environment.ProcessPath is unavailable, fall back to the application's base
+			// directory (the folder ILSpy's binaries were published to).
+			var processPath = Environment.ProcessPath;
+			if (!string.IsNullOrWhiteSpace(processPath))
+				return processPath;
+			return AppContext.BaseDirectory;
 		}
 
 	}
