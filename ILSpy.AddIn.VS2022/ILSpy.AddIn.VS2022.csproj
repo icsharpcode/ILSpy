@@ -29,11 +29,6 @@
     <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
     <VsixDeployOnDebug>true</VsixDeployOnDebug>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
-
-    <!-- VSPackage.resx holds the package icon (resource 400) as a non-string System.Drawing.Icon.
-         The dotnet CLI GenerateResource task cannot BinaryFormatter-serialize it the way full
-         msbuild does, so emit the resource via System.Resources.Extensions instead. -->
-    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
   </PropertyGroup>
 
   <ItemGroup>
@@ -69,8 +64,6 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Mono.Cecil" Version="0.11.5" />
-    <!-- Required at build and runtime to read the preserialized VSPackage icon resource (see GenerateResourceUsePreserializedResources above). -->
-    <PackageReference Include="System.Resources.Extensions" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -124,18 +117,18 @@
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <Generator>ResXFileCodeGenerator</Generator>
     </EmbeddedResource>
-    <!-- The VSSDK CTO merger reads VSPackage.resources with the classic reader, which cannot
-         parse the System.Resources.Extensions format that dotnet build emits for the binary
-         package icon. Skip the merge; VSCTCompile already embeds Menus.ctmenu as its own
-         resource, which is how ProvideMenuResource locates the menus. -->
+    <!-- ProvideMenuResource("Menus.ctmenu", 1) makes VS load the menu table from the "Menus.ctmenu"
+         entry of the package's VSPackage.resources stream, so the compiled .vsct must be merged into
+         it. MergeWithCTO uses the classic resource reader/writer, which only works when VSPackage.resx
+         stays string-only; that is why the package icon is not stored here (see ILSpyAddInPackage). -->
     <EmbeddedResource Include="VSPackage.en-US.resx">
       <DependentUpon>VSPackage.resx</DependentUpon>
       <LogicalName>VSPackage.en-US.resources</LogicalName>
-      <MergeWithCTO>false</MergeWithCTO>
+      <MergeWithCTO>true</MergeWithCTO>
     </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <ManifestResourceName>VSPackage</ManifestResourceName>
-      <MergeWithCTO>false</MergeWithCTO>
+      <MergeWithCTO>true</MergeWithCTO>
     </EmbeddedResource>
   </ItemGroup>
 
@@ -165,7 +158,6 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\Images.png" />
-    <Content Include="Resources\Package.ico" />
   </ItemGroup>
 
   <ItemGroup>
