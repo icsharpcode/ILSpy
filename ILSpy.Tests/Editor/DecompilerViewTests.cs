@@ -94,6 +94,7 @@ public class DecompilerViewTests
 
 		// Assert — every header and a representative referenced assembly land in the listing.
 		tab.Text.Should().Contain("Detected TargetFramework-Id:");
+		tab.Text.Should().Contain("Effective TargetFramework-Id:");
 		tab.Text.Should().Contain("Detected RuntimePack:");
 		tab.Text.Should().Contain("Referenced assemblies (in metadata order):");
 		tab.Text.Should().Contain("System.Runtime");

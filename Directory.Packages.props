@@ -67,6 +67,7 @@
     <PackageVersion Include="NSubstitute" Version="5.3.0" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
+    <PackageVersion Include="NuGet.Frameworks" Version="7.6.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="$(NetPackageVersion)" />

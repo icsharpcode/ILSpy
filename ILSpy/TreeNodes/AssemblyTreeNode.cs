@@ -27,6 +27,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 using Avalonia.Media;
 
+using AvaloniaEdit.Highlighting;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -38,11 +40,12 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
-	public sealed class AssemblyTreeNode : ILSpyTreeNode
+	public sealed class AssemblyTreeNode : ILSpyTreeNode, IRichTextNode
 	{
 		readonly LoadedAssembly assembly;
 		string? loadError;
@@ -227,6 +230,29 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		public override object Text => assembly.Text;
+
+		/// <summary>
+		/// The label already embeds the effective target framework in parentheses (see
+		/// <see cref="LoadedAssembly.Text"/>, e.g. "Foo (1.0.0.0, .NETFramework, v4.8)"). When that
+		/// framework comes from a user override, this bolds just that TFM fragment so overridden
+		/// assemblies stand out without bolding the whole row. Returns null (plain <see cref="Text"/>)
+		/// when there is no override.
+		/// </summary>
+		public RichText? CreateRichText()
+		{
+			if (assembly.TargetFrameworkIdOverride is not { } tfmOverride)
+				return null;
+			string label = assembly.Text;
+			// LoadedAssembly.Text renders the TFM as the effective id with "Version=" replaced by a
+			// space; reproduce that and locate it so only the framework fragment is emphasized.
+			string fragment = tfmOverride.Replace("Version=", " ");
+			int start = label.LastIndexOf(fragment, StringComparison.Ordinal);
+			if (start < 0)
+				return null;
+			var model = new RichTextModel();
+			model.SetFontWeight(start, fragment.Length, FontWeight.Bold);
+			return new RichText(label, model);
+		}
 
 		// ToString is the stable identity used by SessionSettings.ActiveTreeViewPath — must not
 		// depend on the active language. The full file path uniquely identifies the assembly.

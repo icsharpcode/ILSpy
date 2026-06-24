@@ -120,6 +120,9 @@
     <!-- NuGet V3 feed client for the "Open from NuGet feed" dialog: search, version
          enumeration, and download into the global packages folder. -->
     <PackageReference Include="NuGet.Protocol" />
+
+    <!-- Parses/validates target-framework monikers for the "Set Target Framework" dialog. -->
+    <PackageReference Include="NuGet.Frameworks" />
   </ItemGroup>
 
   <ItemGroup>

@@ -561,11 +561,6 @@
           "System.Security.Cryptography.ProtectedData": "8.0.0"
         }
       },
-      "NuGet.Frameworks": {
-        "type": "Transitive",
-        "resolved": "7.6.0",
-        "contentHash": "rJ7QtKN45XzLXCrMATve6eFLiUyUGEkA1rFSb6U6Fw6laM4hEAcKOrcdbgWlcFUlCK2158qP1LF00hg/ivF3nw=="
-      },
       "NuGet.Packaging": {
         "type": "Transitive",
         "resolved": "7.6.0",
@@ -1623,6 +1618,7 @@
           "Microsoft.DiaSymReader.Converter.Xml": "[1.1.0-beta2-22171-02, )",
           "Microsoft.DiaSymReader.Native": "[17.0.0-beta1.21524.1, )",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.9, )",
+          "NuGet.Frameworks": "[7.6.0, )",
           "NuGet.Protocol": "[7.6.0, )",
           "ProDataGrid": "[12.0.0, )",
           "Svg.Controls.Skia.Avalonia": "[12.0.0.11, )",
@@ -1799,6 +1795,12 @@
         "requested": "[0.11.6, )",
         "resolved": "0.11.6",
         "contentHash": "f33RkDtZO8VlGXCtmQIviOtxgnUdym9xx/b1p9h91CRGOsJFxCFOFK1FDbVt1OCf1aWwYejUFa2MOQyFWTFjbA=="
+      },
+      "NuGet.Frameworks": {
+        "type": "CentralTransitive",
+        "requested": "[7.6.0, )",
+        "resolved": "7.6.0",
+        "contentHash": "rJ7QtKN45XzLXCrMATve6eFLiUyUGEkA1rFSb6U6Fw6laM4hEAcKOrcdbgWlcFUlCK2158qP1LF00hg/ivF3nw=="
       },
       "NuGet.Protocol": {
         "type": "CentralTransitive",
