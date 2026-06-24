@@ -255,6 +255,19 @@
         <Style Selector="MenuItem">
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+            <!-- The Simple theme sizes a dropdown row to its 16px icon plus margins (~24px), tighter
+                 than the classic WPF menu. Give rows more vertical breathing room to match. -->
+            <Setter Property="MinHeight" Value="28" />
+        </Style>
+        <!-- Centre the icon and label in the taller row instead of letting them sit at the top. -->
+        <Style Selector="MenuItem /template/ ContentPresenter#PART_IconPresenter">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="MenuItem /template/ ContentPresenter#PART_HeaderPresenter">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="MenuItem /template/ TextBlock#PART_InputGestureText">
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="ContextMenu">
             <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
