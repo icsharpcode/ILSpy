@@ -238,8 +238,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return BuildStringConcat(inst.Method, operands).WithILInstruction(inst);
 			}
-			return Build(inst.OpCode, inst.Method, inst.Arguments, constrainedTo: inst.ConstrainedTo)
+			var result = Build(inst.OpCode, inst.Method, inst.Arguments, constrainedTo: inst.ConstrainedTo)
 				.WithILInstruction(inst);
+			if (inst.IsTail)
+			{
+				// Surface the IL 'tail.' prefix as an inline marker, e.g. '/*tail.*/Callee(x)'.
+				// F# emits tail calls pervasively, and the prefix is otherwise dropped entirely.
+				result.Expression.AddLeadingTrivia(new Comment("tail.", CommentType.MultiLine));
+			}
+			return result;
 		}
 
 		private ExpressionWithResolveResult BuildStringConcat(IMethod method, List<(ILInstruction Instruction, KnownTypeCode TypeCode)> operands)

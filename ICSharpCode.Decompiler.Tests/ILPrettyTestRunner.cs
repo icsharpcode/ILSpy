@@ -136,6 +136,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task TailCall()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task CS1xSwitch_Debug()
 		{
 			await Run(settings: new DecompilerSettings { SwitchExpressions = false, FileScopedNamespaces = false });
