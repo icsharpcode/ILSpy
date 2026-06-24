@@ -2837,6 +2837,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Reset Target Framework.
+        /// </summary>
+        public static string ResetTargetFramework {
+            get {
+                return ResourceManager.GetString("ResetTargetFramework", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Reset to defaults.
         /// </summary>
         public static string ResetToDefaults {
@@ -3006,7 +3015,34 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("SelectPDB", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Set Target Framework....
+        /// </summary>
+        public static string SetTargetFramework {
+            get {
+                return ResourceManager.GetString("SetTargetFramework", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Target framework:.
+        /// </summary>
+        public static string TargetFramework {
+            get {
+                return ResourceManager.GetString("TargetFramework", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown target framework. Enter a moniker such as net48 or net6.0..
+        /// </summary>
+        public static string InvalidTargetFramework {
+            get {
+                return ResourceManager.GetString("InvalidTargetFramework", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Select target folder.
         /// </summary>

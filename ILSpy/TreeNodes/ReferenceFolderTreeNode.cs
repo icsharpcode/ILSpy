@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Threading.Tasks;
 
 using Avalonia.Threading;
 
@@ -25,6 +26,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
 
 using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpyX;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -61,9 +63,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			var targetFramework = parentAssembly.LoadedAssembly.GetTargetFrameworkIdAsync().GetAwaiter().GetResult();
-			var runtimePack = parentAssembly.LoadedAssembly.GetRuntimePackAsync().GetAwaiter().GetResult();
-			output.WriteLine($"Detected TargetFramework-Id: {targetFramework}");
+			var loadedAssembly = parentAssembly.LoadedAssembly;
+			var (detectedTargetFramework, effectiveTargetFramework, runtimePack) = GetFrameworkInfoAsync(loadedAssembly).GetAwaiter().GetResult();
+			output.WriteLine($"Detected TargetFramework-Id: {detectedTargetFramework}");
+			output.WriteLine($"Effective TargetFramework-Id: {effectiveTargetFramework}");
 			output.WriteLine($"Detected RuntimePack: {runtimePack}");
 
 			// Children realise lazily on the UI thread; we may run from a background decompile.
@@ -85,6 +88,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.Unindent();
 				output.WriteLine();
 			}
+		}
+
+		// One await chain instead of three separate blocking GetResult() calls: each blocked wait
+		// can park a thread-pool thread, so resolving all three framework values in a single async
+		// method and blocking once is cheaper.
+		static async Task<(string Detected, string Effective, string RuntimePack)> GetFrameworkInfoAsync(LoadedAssembly loadedAssembly)
+		{
+			var detected = await loadedAssembly.GetDetectedTargetFrameworkIdAsync().ConfigureAwait(false);
+			var effective = await loadedAssembly.GetTargetFrameworkIdAsync().ConfigureAwait(false);
+			var runtimePack = await loadedAssembly.GetRuntimePackAsync().ConfigureAwait(false);
+			return (detected, effective, runtimePack);
 		}
 	}
 }

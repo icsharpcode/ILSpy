@@ -1,0 +1,22 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="ICSharpCode.ILSpy.Views.SetTargetFrameworkDialog"
+        Width="360" SizeToContent="Height" CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Title="ILSpy">
+	<Grid Margin="12,10" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+		<TextBlock Grid.Row="0" Name="PromptText" Margin="0,0,0,6" TextWrapping="Wrap" />
+		<TextBox Grid.Row="1" Name="FrameworkBox" />
+		<!-- The presets sit in an always-visible list rather than a dropdown: the app forces
+		     OverlayPopups (see Program.cs), so a popup would be clamped to this small dialog and
+		     blanket it. A fixed-height ListBox scrolls when the presets overflow. -->
+		<ListBox Grid.Row="2" Name="PresetList" Height="150" Margin="0,6,0,0"
+		         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+		<TextBlock Grid.Row="3" Name="ErrorText" Margin="0,6,0,0"
+		           Foreground="Red" TextWrapping="Wrap" IsVisible="False" />
+		<StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6" Margin="0,12,0,0">
+			<Button Name="OkButton" Content="OK" IsDefault="True" MinWidth="72" />
+			<Button Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="72" />
+		</StackPanel>
+	</Grid>
+</Window>
