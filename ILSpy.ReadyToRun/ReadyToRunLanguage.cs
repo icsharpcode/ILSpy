@@ -232,9 +232,9 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 			}
 		}
 
-		public override RichText GetRichTextTooltip(IEntity entity)
+		public override RichText GetRichText(IEntity entity, ConversionFlags conversionFlags, bool boldTypeNames = false)
 		{
-			return languageService.Value.GetLanguage("IL").GetRichTextTooltip(entity);
+			return languageService.Value.GetLanguage("IL").GetRichText(entity, conversionFlags, boldTypeNames);
 		}
 
 		private ReadyToRunReaderCacheEntry GetReader(LoadedAssembly assembly, MetadataFile file)

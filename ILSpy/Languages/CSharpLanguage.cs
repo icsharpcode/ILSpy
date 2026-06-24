@@ -265,17 +265,46 @@ namespace ICSharpCode.ILSpy.Languages
 			return !CSharpDecompiler.MemberIsHidden(assembly, member.MetadataToken, settings);
 		}
 
-		public override RichText GetRichTextTooltip(IEntity entity)
+		// Type-name highlighting colours, matching the spans CSharpHighlightingTokenWriter assigns
+		// to the various kinds of type reference. Used to embolden type names (issue #2164).
+		static readonly string[] typeHighlightingColorNames = {
+			"ReferenceTypes", "ValueTypes", "InterfaceTypes", "EnumTypes", "TypeParameters", "DelegateTypes",
+		};
+
+		public override RichText GetRichText(IEntity entity, ConversionFlags conversionFlags, bool boldTypeNames = false)
 		{
 			ArgumentNullException.ThrowIfNull(entity);
-			var flags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
 			var output = new StringWriter();
 			var decoratedWriter = new TextWriterTokenWriter(output);
 			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
 			if (entity is IMethod m && m.IsLocalFunction)
 				writer.WriteIdentifier(Identifier.Create("(local)"));
-			new CSharpAmbience { ConversionFlags = flags }.ConvertSymbol(entity, writer, FormattingOptionsFactory.CreateAllman());
-			return new RichText(output.ToString(), writer.HighlightingModel);
+			new CSharpAmbience { ConversionFlags = conversionFlags }.ConvertSymbol(entity, writer, FormattingOptionsFactory.CreateAllman());
+			var text = output.ToString();
+			var model = writer.HighlightingModel;
+			if (boldTypeNames)
+				EmboldenTypeNames(text, model);
+			return new RichText(text, model);
+		}
+
+		static void EmboldenTypeNames(string text, RichTextModel model)
+		{
+			var highlighting = HighlightingManager.Instance.GetDefinition("C#");
+			if (highlighting == null)
+				return;
+			var typeColors = new HashSet<HighlightingColor>();
+			foreach (var name in typeHighlightingColorNames)
+			{
+				if (highlighting.GetNamedColor(name) is { } color)
+					typeColors.Add(color);
+			}
+			if (typeColors.Count == 0)
+				return;
+			foreach (var section in model.GetHighlightedSections(0, text.Length).ToList())
+			{
+				if (section.Color is { } sectionColor && typeColors.Contains(sectionColor))
+					model.SetFontWeight(section.Offset, section.Length, Avalonia.Media.FontWeight.Bold);
+			}
 		}
 
 		CSharpDecompiler CreateDecompiler(MetadataFile module, DecompilationOptions options)

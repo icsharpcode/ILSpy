@@ -18,6 +18,9 @@
 
 using System.Collections.Generic;
 
+using AvaloniaEdit.Highlighting;
+
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
@@ -25,6 +28,7 @@ using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -36,8 +40,57 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// icon, and its text; this base owns the navigation hook and the assembly-change
 	/// pruning logic.
 	/// </summary>
-	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode
+	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IRichTextNode
 	{
+		// Flags reproducing the plain signature the pane used before highlighting: the member's
+		// declaring type, fully-qualified names, and the usual return-type/parameter detail.
+		protected const ConversionFlags MemberSignatureFlags =
+			ConversionFlags.ShowDeclaringType
+			| ConversionFlags.UseFullyQualifiedEntityNames
+			| ConversionFlags.ShowReturnType
+			| ConversionFlags.ShowParameterList
+			| ConversionFlags.ShowParameterModifiers
+			| ConversionFlags.ShowTypeParameterList
+			| ConversionFlags.PlaceReturnTypeAfterParameterList;
+
+		// Type rows show a fully-qualified type signature with its type parameters.
+		protected const ConversionFlags TypeSignatureFlags =
+			ConversionFlags.UseFullyQualifiedEntityNames
+			| ConversionFlags.UseFullyQualifiedTypeNames
+			| ConversionFlags.ShowTypeParameterList;
+
+		RichText? richText;
+		bool richTextComputed;
+
+		/// <summary>
+		/// The highlighted, type-name-emboldened signature for this row, computed once and cached.
+		/// Falls back to <see langword="null"/> (plain <c>Text</c>) for non-entity rows.
+		/// </summary>
+		public RichText? CreateRichText()
+		{
+			if (!richTextComputed)
+			{
+				richText = BuildRichText();
+				richTextComputed = true;
+			}
+			return richText;
+		}
+
+		protected virtual RichText? BuildRichText() => null;
+
+		/// <summary>
+		/// Builds the coloured signature for <see cref="Member"/> with the given flags, bolding
+		/// type names, and prepends <paramref name="prefix"/> as plain (uncoloured) text.
+		/// </summary>
+		protected RichText? CreateMemberRichText(string prefix, ConversionFlags flags)
+		{
+			var member = Member;
+			if (member == null)
+				return null;
+			var body = Language.GetRichText(member, flags, boldTypeNames: true);
+			return prefix.Length == 0 ? body : new RichText(prefix) + body;
+		}
+
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
 		{
 			e.Handled = true;

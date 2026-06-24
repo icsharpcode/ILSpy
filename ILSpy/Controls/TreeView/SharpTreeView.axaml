@@ -108,7 +108,9 @@
 						<Border Width="13" IsVisible="{Binding !ShowExpander}" />
 						<Image Source="{Binding Icon}" Width="16" Height="16"
 						       Margin="4,0,6,0" VerticalAlignment="Center" />
-						<TextBlock Text="{Binding Text}" VerticalAlignment="Center"
+						<!-- RichNodeText renders coloured/bold inlines for IRichTextNode rows (the analyzer
+						     pane, issue #2164) and falls back to the node's plain Text otherwise. -->
+						<TextBlock tv:RichNodeText.Node="{Binding}" VerticalAlignment="Center"
 						           Classes.autoloaded="{Binding IsAutoLoaded}"
 						           Classes.nonPublicAPI="{Binding IsNonPublicAPI}" />
 					</StackPanel>

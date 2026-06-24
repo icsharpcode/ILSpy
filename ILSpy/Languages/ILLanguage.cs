@@ -29,6 +29,7 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
@@ -84,12 +85,12 @@ namespace ICSharpCode.ILSpy.Languages
 		/// The hover tooltip for an entity in IL view is its disassembled IL header (signature
 		/// only, no body), collapsed to a single line and highlighted with the IL definition.
 		/// </summary>
-		public override RichText GetRichTextTooltip(IEntity entity)
+		public override RichText GetRichText(IEntity entity, ConversionFlags conversionFlags, bool boldTypeNames = false)
 		{
 			ArgumentNullException.ThrowIfNull(entity);
 			var module = entity.ParentModule?.MetadataFile;
 			if (module == null)
-				return base.GetRichTextTooltip(entity);
+				return base.GetRichText(entity, conversionFlags, boldTypeNames);
 
 			var output = new AvaloniaEditTextOutput { IgnoreNewLineAndIndent = true };
 			// A header never reaches the settings the full Decompile* paths feed into
@@ -121,7 +122,7 @@ namespace ICSharpCode.ILSpy.Languages
 					disasm.DisassembleMethodHeader(module, (MethodDefinitionHandle)entity.MetadataToken);
 					break;
 				default:
-					return base.GetRichTextTooltip(entity);
+					return base.GetRichText(entity, conversionFlags, boldTypeNames);
 			}
 
 			var text = output.GetText().TrimEnd();

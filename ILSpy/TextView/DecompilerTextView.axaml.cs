@@ -40,6 +40,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
@@ -1081,7 +1082,10 @@ namespace ICSharpCode.ILSpy.TextView
 			switch (resolved)
 			{
 				case IEntity entity when language != null:
-					var rich = language.GetRichTextTooltip(entity);
+					// The hover tooltip is the full signature (return type before the name, no body);
+					// IL renders its own header form. No bold emphasis here, unlike the analyzer pane.
+					var rich = language.GetRichText(entity,
+						ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList));
 					if (rich == null || string.IsNullOrEmpty(rich.Text))
 						return null;
 					var renderer = CreateTooltipRenderer();
