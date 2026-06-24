@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy.Commands
 	/// of clicking the hyperlink. Visible only when the click landed on a reference that resolves to
 	/// an <see cref="IEntity"/>.
 	/// </summary>
-	[ExportContextMenuEntry(Header = nameof(Resources.Decompile), Category = "Navigation", Order = 10)]
+	[ExportContextMenuEntry(Header = nameof(Resources.Decompile), Category = "Navigation", Order = 150)]
 	[Shared]
 	public sealed class DecompileReferenceContextMenuEntry : IContextMenuEntry
 	{
