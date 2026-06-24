@@ -7,5 +7,5 @@
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
              x:Class="ICSharpCode.ILSpy.Analyzers.AnalyzerTreeView"
              x:DataType="analyzers:AnalyzerTreeViewModel">
-	<tv:SharpTreeView Name="Tree" ShowRoot="False" ShowLines="False" />
+	<tv:SharpTreeView Name="Tree" ShowRoot="False" ShowLines="True" />
 </UserControl>
