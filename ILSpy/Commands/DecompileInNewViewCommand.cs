@@ -36,10 +36,10 @@ namespace ICSharpCode.ILSpy.Commands
 	/// </summary>
 	[ExportContextMenuEntry(
 		Header = nameof(Resources.DecompileToNewPanel),
-		Category = "Navigate",
+		Category = "Navigation",
 		Icon = "Images/ViewCode",
 		InputGestureText = "MMB",
-		Order = 100)]
+		Order = 160)]
 	[Shared]
 	internal sealed class DecompileInNewViewCommand : IContextMenuEntry
 	{
