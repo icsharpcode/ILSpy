@@ -16,13 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.ComponentModel;
 
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.TextView;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.Controls.TreeView
@@ -39,9 +42,25 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		public static readonly AttachedProperty<SharpTreeNode?> NodeProperty =
 			AvaloniaProperty.RegisterAttached<TextBlock, SharpTreeNode?>("Node", typeof(RichNodeText));
 
-		// Holds the live PropertyChanged subscription so a recycled TextBlock detaches cleanly.
-		static readonly AttachedProperty<PropertyChangedEventHandler?> HandlerProperty =
-			AvaloniaProperty.RegisterAttached<TextBlock, PropertyChangedEventHandler?>("Handler", typeof(RichNodeText));
+		// Live PropertyChanged subscription on the bound node, so a recycled TextBlock detaches cleanly.
+		static readonly AttachedProperty<PropertyChangedEventHandler?> TextHandlerProperty =
+			AvaloniaProperty.RegisterAttached<TextBlock, PropertyChangedEventHandler?>("TextHandler", typeof(RichNodeText));
+
+		// Live ThemeChanged / language-settings subscriptions (rich nodes only): the signature colours
+		// and per-language formatting are baked into the node's cached RichText, so the inlines must be
+		// rebuilt when the theme or the active language changes.
+		static readonly AttachedProperty<EventHandler?> ThemeHandlerProperty =
+			AvaloniaProperty.RegisterAttached<TextBlock, EventHandler?>("ThemeHandler", typeof(RichNodeText));
+
+		static readonly AttachedProperty<PropertyChangedEventHandler?> LanguageHandlerProperty =
+			AvaloniaProperty.RegisterAttached<TextBlock, PropertyChangedEventHandler?>("LanguageHandler", typeof(RichNodeText));
+
+		static readonly AttachedProperty<bool> CleanupHookedProperty =
+			AvaloniaProperty.RegisterAttached<TextBlock, bool>("CleanupHooked", typeof(RichNodeText));
+
+		static LanguageSettings? languageSettings;
+		static LanguageSettings? GetLanguageSettings()
+			=> languageSettings ??= AppComposition.TryGetExport<SettingsService>()?.SessionSettings.LanguageSettings;
 
 		static RichNodeText()
 		{
@@ -53,29 +72,63 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 		static void OnNodeChanged(TextBlock textBlock, AvaloniaPropertyChangedEventArgs e)
 		{
-			if (e.OldValue is INotifyPropertyChanged oldNode
-				&& textBlock.GetValue(HandlerProperty) is { } oldHandler)
-			{
-				oldNode.PropertyChanged -= oldHandler;
-				textBlock.SetValue(HandlerProperty, null);
-			}
+			Detach(textBlock, e.OldValue as SharpTreeNode);
 
 			var node = e.NewValue as SharpTreeNode;
-			if (node is INotifyPropertyChanged newNode)
+			if (node is INotifyPropertyChanged notify)
 			{
 				// Mirror the {Binding Text} the cell used to have: refresh when Text changes
 				// (e.g. a lazily-loaded node swapping its placeholder for the real label).
-				void Handler(object? sender, PropertyChangedEventArgs args)
+				void TextHandler(object? sender, PropertyChangedEventArgs args)
 				{
 					if (args.PropertyName is nameof(SharpTreeNode.Text) or null or "")
 						Render(textBlock, node);
 				}
 
-				newNode.PropertyChanged += Handler;
-				textBlock.SetValue(HandlerProperty, Handler);
+				notify.PropertyChanged += TextHandler;
+				textBlock.SetValue(TextHandlerProperty, (PropertyChangedEventHandler)TextHandler);
+			}
+
+			if (node is IRichTextNode)
+			{
+				// Rebuild on theme change (palette) and on language change (signature syntax/colours).
+				void ThemeHandler(object? sender, EventArgs args) => Render(textBlock, GetNode(textBlock));
+
+				ThemeManager.Current.ThemeChanged += ThemeHandler;
+				textBlock.SetValue(ThemeHandlerProperty, (EventHandler)ThemeHandler);
+
+				if (GetLanguageSettings() is { } settings)
+				{
+					void LanguageHandler(object? sender, PropertyChangedEventArgs args) => Render(textBlock, GetNode(textBlock));
+
+					settings.PropertyChanged += LanguageHandler;
+					textBlock.SetValue(LanguageHandlerProperty, (PropertyChangedEventHandler)LanguageHandler);
+				}
+			}
+
+			if (!textBlock.GetValue(CleanupHookedProperty))
+			{
+				textBlock.SetValue(CleanupHookedProperty, true);
+				textBlock.DetachedFromVisualTree += (sender, args) => Detach(textBlock, GetNode(textBlock));
 			}
 
 			Render(textBlock, node);
+		}
+
+		// Drops the live subscriptions for <paramref name="node"/>; safe to call repeatedly.
+		static void Detach(TextBlock textBlock, SharpTreeNode? node)
+		{
+			if (node is INotifyPropertyChanged notify && textBlock.GetValue(TextHandlerProperty) is { } textHandler)
+				notify.PropertyChanged -= textHandler;
+			textBlock.SetValue(TextHandlerProperty, null);
+
+			if (textBlock.GetValue(ThemeHandlerProperty) is { } themeHandler)
+				ThemeManager.Current.ThemeChanged -= themeHandler;
+			textBlock.SetValue(ThemeHandlerProperty, null);
+
+			if (textBlock.GetValue(LanguageHandlerProperty) is { } languageHandler && GetLanguageSettings() is { } settings)
+				settings.PropertyChanged -= languageHandler;
+			textBlock.SetValue(LanguageHandlerProperty, null);
 		}
 
 		static void Render(TextBlock textBlock, SharpTreeNode? node)

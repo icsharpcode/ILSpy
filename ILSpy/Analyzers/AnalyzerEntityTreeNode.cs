@@ -29,6 +29,7 @@ using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Controls.TreeView;
+using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -60,18 +61,21 @@ namespace ICSharpCode.ILSpy.Analyzers
 			| ConversionFlags.ShowTypeParameterList;
 
 		RichText? richText;
-		bool richTextComputed;
+		// The build key: the signature's colours depend on the active theme and its formatting on the
+		// active language, so the cache is rebuilt when either changes (not just once).
+		(string? theme, object language)? richTextKey;
 
 		/// <summary>
-		/// The highlighted, type-name-emboldened signature for this row, computed once and cached.
-		/// Falls back to <see langword="null"/> (plain <c>Text</c>) for non-entity rows.
+		/// The highlighted, type-name-emboldened signature for this row, cached until the theme or
+		/// language changes. Falls back to <see langword="null"/> (plain <c>Text</c>) for non-entity rows.
 		/// </summary>
 		public RichText? CreateRichText()
 		{
-			if (!richTextComputed)
+			var key = (ThemeManager.Current.Theme, (object)Language);
+			if (richTextKey != key)
 			{
 				richText = BuildRichText();
-				richTextComputed = true;
+				richTextKey = key;
 			}
 			return richText;
 		}
