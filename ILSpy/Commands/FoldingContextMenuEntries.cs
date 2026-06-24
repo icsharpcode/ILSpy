@@ -23,8 +23,8 @@ using ICSharpCode.ILSpy.Properties;
 namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
-	/// Right-click in the decompiled code → "Toggle folding": folds/unfolds the innermost block at the
-	/// caret. The menu equivalent of Ctrl+M. Only shown when the document actually has foldings.
+	/// Right-click in the decompiled code → "Toggle folding": folds/unfolds the innermost block under
+	/// the clicked line. The menu equivalent of Ctrl+M. Only shown when the document actually has foldings.
 	/// </summary>
 	[ExportContextMenuEntry(Header = nameof(Resources._ToggleFolding), Category = nameof(Resources.Folding), Order = 300)]
 	[Shared]
@@ -34,7 +34,17 @@ namespace ICSharpCode.ILSpy.Commands
 
 		public bool IsEnabled(TextViewContext context) => true;
 
-		public void Execute(TextViewContext context) => context.TextView?.ToggleFoldingAtCaret();
+		public void Execute(TextViewContext context)
+		{
+			if (context.TextView is not { } view)
+				return;
+			// Toggle the fold the user right-clicked on. TextLocation is the offset under the pointer;
+			// fall back to the caret only when the menu was raised without a recorded click position.
+			if (context.TextLocation is { } offset)
+				view.ToggleFoldingAt(offset);
+			else
+				view.ToggleFoldingAtCaret();
+		}
 	}
 
 	/// <summary>

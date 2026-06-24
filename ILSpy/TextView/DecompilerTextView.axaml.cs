@@ -88,6 +88,10 @@ namespace ICSharpCode.ILSpy.TextView
 		ScrollViewer? editorScrollViewer;
 		DisplaySettings? currentDisplaySettings;
 		ReferenceSegment? lastRightClickedSegment;
+		// Document offset under the pointer at the last right-click, or null if the click missed the
+		// text. Position-relative menu entries (e.g. "Toggle folding") read this so they act on the
+		// clicked line rather than wherever the caret happens to sit.
+		int? lastRightClickedOffset;
 		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
 		Popup richPopup = null!;
 		double distanceToPopupLimit;
@@ -379,16 +383,41 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>Number of currently-collapsed folds (test observation point for the folding commands).</summary>
 		internal int FoldedFoldingCount => activeFoldingManager is { } mgr ? mgr.AllFoldings.Count(f => f.IsFolded) : 0;
 
-		/// <summary>Toggles the innermost fold containing the caret (the "Toggle folding" command / Ctrl+M).</summary>
-		public void ToggleFoldingAtCaret()
+		/// <summary>The active foldings as (Start, End, IsFolded) tuples (test observation point for
+		/// verifying which fold a positional command acted on).</summary>
+		internal IReadOnlyList<(int Start, int End, bool IsFolded)> GetFoldingsForTest()
+			=> activeFoldingManager is { } mgr
+				? mgr.AllFoldings.Select(f => (f.StartOffset, f.EndOffset, f.IsFolded)).ToArray()
+				: Array.Empty<(int, int, bool)>();
+
+		/// <summary>True when the innermost fold containing <paramref name="offset"/> is collapsed.
+		/// Returns false when no fold contains it (test observation point).</summary>
+		internal bool IsFoldedAt(int offset)
 		{
 			if (activeFoldingManager is not { } mgr)
-				return;
-			var caret = Editor.TextArea.Caret.Offset;
+				return false;
 			FoldingSection? target = null;
 			foreach (var f in mgr.AllFoldings)
 			{
-				if (f.StartOffset <= caret && caret <= f.EndOffset)
+				if (f.StartOffset <= offset && offset <= f.EndOffset && (target == null || f.StartOffset > target.StartOffset))
+					target = f;
+			}
+			return target?.IsFolded == true;
+		}
+
+		/// <summary>Toggles the innermost fold containing the caret (the "Toggle folding" command / Ctrl+M).</summary>
+		public void ToggleFoldingAtCaret() => ToggleFoldingAt(Editor.TextArea.Caret.Offset);
+
+		/// <summary>Toggles the innermost fold containing <paramref name="offset"/>. The right-click menu
+		/// passes the offset under the pointer so it acts on the clicked line, not the caret line.</summary>
+		public void ToggleFoldingAt(int offset)
+		{
+			if (activeFoldingManager is not { } mgr)
+				return;
+			FoldingSection? target = null;
+			foreach (var f in mgr.AllFoldings)
+			{
+				if (f.StartOffset <= offset && offset <= f.EndOffset)
 				{
 					if (target == null || f.StartOffset > target.StartOffset)
 						target = f;
@@ -576,13 +605,19 @@ namespace ICSharpCode.ILSpy.TextView
 			if (!e.GetCurrentPoint(Editor.TextArea.TextView).Properties.IsRightButtonPressed)
 				return;
 			var pos = GetPositionFromPointer(e);
-			if (pos == null || DataContext is not DecompilerTabPageModel model || model.References == null)
+			if (pos == null)
 			{
 				lastRightClickedSegment = null;
+				lastRightClickedOffset = null;
 				return;
 			}
 			var offset = Editor.Document.GetOffset(pos.Value.Line, pos.Value.Column);
-			lastRightClickedSegment = model.References.FindSegmentsContaining(offset).FirstOrDefault();
+			lastRightClickedOffset = offset;
+			// References and foldings are independent: a document may carry foldings but no clickable
+			// references, so the offset is recorded above before this reference lookup can bail.
+			lastRightClickedSegment = DataContext is DecompilerTabPageModel model && model.References != null
+				? model.References.FindSegmentsContaining(offset).FirstOrDefault()
+				: null;
 		}
 
 		void OnContextMenuOpening(object? sender, CancelEventArgs e)
@@ -592,6 +627,7 @@ namespace ICSharpCode.ILSpy.TextView
 			var ctx = new TextViewContext {
 				TextView = this,
 				Reference = lastRightClickedSegment,
+				TextLocation = lastRightClickedOffset,
 			};
 			menu.Items.Clear();
 

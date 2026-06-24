@@ -67,6 +67,12 @@ namespace ICSharpCode.ILSpy
 		/// <summary>The reference under the pointer in the text view, or the focused list/grid item, when applicable.</summary>
 		public ReferenceSegment? Reference { get; init; }
 
+		/// <summary>The document offset under the pointer at the time the text-view menu opened, or null
+		/// when the menu wasn't opened on the text view (or the click missed the text). Entries that act on
+		/// a position (e.g. toggle the fold under the click) use this rather than the caret, which may sit
+		/// on an entirely different line than the one the user right-clicked.</summary>
+		public int? TextLocation { get; init; }
+
 		/// <summary>The visual element the original event came from — useful for context-aware entries that need to inspect the click target.</summary>
 		public Visual? OriginalSource { get; init; }
 	}
