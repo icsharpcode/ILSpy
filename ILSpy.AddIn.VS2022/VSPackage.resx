@@ -127,14 +127,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="110" xml:space="preserve">
     <value>ILSpy.AddIn</value>
   </data>
   <data name="112" xml:space="preserve">
     <value>Integration of the ILSpy Decompiler into Visual Studio.</value>
-  </data>
-  <data name="400" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\ILSpy.AddIn\Resources\Package.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

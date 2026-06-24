@@ -144,11 +144,9 @@ jobs:
         dotnet msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
         dotnet msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:PlatformForInstaller="ARM64"
 
-    - name: Build VS Extensions (for 2017-2019 and 2022)
+    - name: Build VS Extension (for VS 2022)
       if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
-      run: |
-        msbuild ILSpy.VSExtensions.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
-        msbuild ILSpy.VSExtensions.sln /p:Configuration="Release" /p:Platform="Any CPU"
+      run: dotnet build ILSpy.VSExtensions.slnx -c Release
       
     - name: Verify package contents
       if: matrix.configuration == 'debug'
@@ -157,14 +155,6 @@ jobs:
         git diff --exit-code
 
     # https://github.com/actions/upload-artifact
-    - name: Upload VSIX (VS 2019) release build artifacts
-      if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
-      uses: actions/upload-artifact@v7
-      with:
-        name: ILSpy VS Addin for VS 2017-2019 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
-        path: ILSpy.AddIn\bin\${{ matrix.configuration }}\net472\*.vsix
-        if-no-files-found: error
-
     - name: Upload VSIX (VS 2022) release build artifacts
       if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
       uses: actions/upload-artifact@v7

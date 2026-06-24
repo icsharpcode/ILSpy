@@ -199,7 +199,6 @@
 
   <ItemGroup>
     <SortResXInput Include="Properties\*.resx" />
-    <SortResXInput Include="..\ILSpy.AddIn\*.resx" />
     <SortResXInput Include="..\ILSpy.ReadyToRun\Properties\*.resx" />
     <SortResXStamp Include="obj\sort-resx.stamp" />
   </ItemGroup>

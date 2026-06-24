@@ -708,6 +708,9 @@ Are you sure you want to continue?</value>
   <data name="ILSpyAboutPageTxt" xml:space="preserve">
     <value>ILSpyAboutPage.txt</value>
   </data>
+  <data name="ILSpyStartedFrom" xml:space="preserve">
+    <value>ILSpy started from </value>
+  </data>
   <data name="ILSpyVersion" xml:space="preserve">
     <value>ILSpy version </value>
   </data>
