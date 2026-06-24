@@ -19,6 +19,8 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
+using AvaloniaEdit.Highlighting;
+
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -39,8 +41,11 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override IEntity Member => analyzedEvent;
 
-		public override object Text => prefix + Language.EntityToString(analyzedEvent,
-			ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
+		public override object Text => CreateRichText()?.Text
+			?? prefix + Language.EntityToString(analyzedEvent,
+				ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
+
+		protected override RichText? BuildRichText() => CreateMemberRichText(prefix, MemberSignatureFlags);
 
 		public override object Icon => Images.GetIcon(Images.Event,
 			Images.GetOverlay(analyzedEvent.Accessibility), analyzedEvent.IsStatic);

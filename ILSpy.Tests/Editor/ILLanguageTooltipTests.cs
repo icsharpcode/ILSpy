@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpy.Tests.TextView;
 /// Pins the IL-specific halves of the decompiler-view hover tooltip. In the IL language
 /// view, hovering a member reference must show the member's disassembled IL header
 /// (".method ...", ".class ...", ".field ..."), not a C#-style one-liner — that is what
-/// <see cref="ILLanguage.GetRichTextTooltip"/> produces. Hovering an opcode must show the
+/// <see cref="ILLanguage.GetRichText"/> produces. Hovering an opcode must show the
 /// opcode's XML documentation, which comes from
 /// <see cref="XmlDocLoader.MscorlibDocumentation"/> via the
 /// "F:System.Reflection.Emit.OpCodes.*" doc ids.
@@ -78,7 +78,7 @@ public class ILLanguageTooltipTests
 			.First(m => m.MethodDefinition.Name == "Concat" && m.MethodDefinition.Parameters.Count == 2)
 			.MethodDefinition;
 
-		var tooltip = GetILLanguage().GetRichTextTooltip(concat);
+		var tooltip = GetILLanguage().GetRichText(concat, default);
 
 		tooltip.Should().NotBeNull();
 		tooltip!.Text.Should().StartWith(".method",
@@ -94,7 +94,7 @@ public class ILLanguageTooltipTests
 		var stringNode = await LoadCoreLibStringNodeAsync();
 		var stringType = (ITypeDefinition)stringNode.Member!;
 
-		var tooltip = GetILLanguage().GetRichTextTooltip(stringType);
+		var tooltip = GetILLanguage().GetRichText(stringType, default);
 
 		tooltip.Should().NotBeNull();
 		tooltip!.Text.Should().StartWith(".class");
@@ -110,7 +110,7 @@ public class ILLanguageTooltipTests
 			.First(f => f.FieldDefinition.Name == "Empty")
 			.FieldDefinition;
 
-		var tooltip = GetILLanguage().GetRichTextTooltip(empty);
+		var tooltip = GetILLanguage().GetRichText(empty, default);
 
 		tooltip.Should().NotBeNull();
 		tooltip!.Text.Should().StartWith(".field");

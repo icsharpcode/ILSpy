@@ -178,7 +178,15 @@ namespace ICSharpCode.ILSpy.Languages
 			return EntityToString(entity, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.ShowDeclaringType);
 		}
 
-		public virtual RichText GetRichTextTooltip(IEntity entity) => new(GetTooltip(entity));
+		/// <summary>
+		/// Produces a syntax-highlighted signature for <paramref name="entity"/> using the given
+		/// conversion flags. The base implementation carries no highlighting; language subclasses
+		/// colour the signature (C#) or render their own equivalent (the IL method/type header).
+		/// When <paramref name="boldTypeNames"/> is set, type-name spans are rendered bold so they
+		/// stand out in dense lists such as the analyzer pane (issue #2164).
+		/// </summary>
+		public virtual RichText GetRichText(IEntity entity, ConversionFlags conversionFlags, bool boldTypeNames = false)
+			=> new(EntityToString(entity, conversionFlags));
 
 		public virtual void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{

@@ -16,37 +16,25 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-
 using AvaloniaEdit.Highlighting;
 
-using ICSharpCode.Decompiler.Output;
-using ICSharpCode.Decompiler.TypeSystem;
-
-namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
+namespace ICSharpCode.ILSpy.Controls.TreeView
 {
-	internal sealed class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
+	/// <summary>
+	/// Implemented by tree nodes whose label should render as syntax-highlighted rich text
+	/// (coloured runs, bold type names) instead of the plain string from
+	/// <c>SharpTreeNode.Text</c>. The cell template renders <see cref="CreateRichText"/> when
+	/// it returns a value and falls back to the plain <c>Text</c> otherwise, so a node's
+	/// <c>Text</c> stays the authoritative plain-string representation for search, copy and
+	/// keyboard navigation.
+	/// </summary>
+	public interface IRichTextNode
 	{
-		readonly IField analyzedField;
-
-		public AnalyzedFieldTreeNode(IField analyzedField, IEntity? source)
-		{
-			this.analyzedField = analyzedField ?? throw new ArgumentNullException(nameof(analyzedField));
-			this.SourceMember = source;
-			LazyLoading = true;
-		}
-
-		public override IEntity Member => analyzedField;
-
-		public override object Text => CreateRichText()?.Text
-			?? Language.EntityToString(analyzedField,
-				ConversionFlags.ShowDeclaringType | ConversionFlags.UseFullyQualifiedEntityNames);
-
-		protected override RichText? BuildRichText() => CreateMemberRichText("", MemberSignatureFlags);
-
-		public override object Icon => Images.GetIcon(Images.Field,
-			Images.GetOverlay(analyzedField.Accessibility), analyzedField.IsStatic);
-
-		protected override void LoadChildren() => AddAnalyzerChildren(analyzedField);
+		/// <summary>
+		/// The highlighted label, or <see langword="null"/> to fall back to the plain
+		/// <c>Text</c> (e.g. when no entity is available or the active language has no
+		/// highlighting). The returned text must equal the plain <c>Text</c>.
+		/// </summary>
+		RichText? CreateRichText();
 	}
 }

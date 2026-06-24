@@ -18,6 +18,8 @@
 
 using System;
 
+using AvaloniaEdit.Highlighting;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
@@ -35,7 +37,9 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		public override IEntity Member => analyzedType;
 
-		public override object Text => Language.TypeToString(analyzedType);
+		public override object Text => CreateRichText()?.Text ?? Language.TypeToString(analyzedType);
+
+		protected override RichText? BuildRichText() => CreateMemberRichText("", TypeSignatureFlags);
 
 		public override object Icon => ResolveIcon(analyzedType);
 
