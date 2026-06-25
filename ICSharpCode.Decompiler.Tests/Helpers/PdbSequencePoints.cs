@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -136,17 +137,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				var expectedPoints = Tokens(expected, row, includeColumns, includeHidden);
 				var actualPoints = Tokens(actual, row, includeColumns, includeHidden);
 
-				var expectedOnly = MultisetDifference(expectedPoints, actualPoints);
-				var actualOnly = MultisetDifference(actualPoints, expectedPoints);
-				if (expectedOnly.Count == 0 && actualOnly.Count == 0)
+				if (expectedPoints.SequenceEqual(actualPoints))
 					continue;
 
 				methodNames.TryGetValue(row, out var name);
 				report.Append($"0x{0x06000000 | row:x8} {name}").Append('\n');
-				foreach (var p in expectedOnly.OrderBy(p => p))
-					report.Append("  - compiler only: ").Append(p).Append('\n');
-				foreach (var p in actualOnly.OrderBy(p => p))
-					report.Append("  + decompiler only: ").Append(p).Append('\n');
+				foreach (var (prefix, point) in OrderedDifference(expectedPoints, actualPoints))
+					report.Append(prefix).Append(point).Append('\n');
 			}
 			return report.ToString();
 		}
@@ -178,18 +175,37 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return result;
 		}
 
-		static List<string> MultisetDifference(List<string> a, List<string> b)
+		static List<(string Prefix, string Point)> OrderedDifference(List<string> expected, List<string> actual)
 		{
-			var counts = new Dictionary<string, int>();
-			foreach (var x in b)
-				counts[x] = counts.GetValueOrDefault(x) + 1;
-			var result = new List<string>();
-			foreach (var x in a)
+			int[,] lcs = new int[expected.Count + 1, actual.Count + 1];
+			for (int i = expected.Count - 1; i >= 0; i--)
 			{
-				if (counts.TryGetValue(x, out int c) && c > 0)
-					counts[x] = c - 1;
+				for (int j = actual.Count - 1; j >= 0; j--)
+				{
+					lcs[i, j] = expected[i] == actual[j]
+						? lcs[i + 1, j + 1] + 1
+						: Math.Max(lcs[i + 1, j], lcs[i, j + 1]);
+				}
+			}
+
+			var result = new List<(string Prefix, string Point)>();
+			for (int i = 0, j = 0; i < expected.Count || j < actual.Count;)
+			{
+				if (i < expected.Count && j < actual.Count && expected[i] == actual[j])
+				{
+					i++;
+					j++;
+				}
+				else if (j < actual.Count && (i == expected.Count || lcs[i, j + 1] >= lcs[i + 1, j]))
+				{
+					result.Add(("  + decompiler only: ", actual[j]));
+					j++;
+				}
 				else
-					result.Add(x);
+				{
+					result.Add(("  - compiler only: ", expected[i]));
+					i++;
+				}
 			}
 			return result;
 		}

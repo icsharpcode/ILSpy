@@ -1,6 +1,6 @@
 0x06000001 LockStatement.Run
-  - compiler only: (13,2)-(13,3)
-  - compiler only: hidden after (12,3)-(12,4)
   + decompiler only: (10,3)-(10,4)
+  - compiler only: hidden after (12,3)-(12,4)
+  - compiler only: (13,2)-(13,3)
 0x06000003 LockStatement..cctor
   - compiler only: (5,2)-(5,53)

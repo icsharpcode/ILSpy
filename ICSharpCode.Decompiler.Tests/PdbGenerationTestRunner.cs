@@ -94,7 +94,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void WhileLoops()
 		{
-			TestSequencePoints();
+			// The compiler keeps the while-condition back-branch hidden, while the decompiler
+			// projects the loop condition and body points onto the decompiled source layout.
+			TestSequencePoints(knownResidual: true);
 		}
 
 		[Test]

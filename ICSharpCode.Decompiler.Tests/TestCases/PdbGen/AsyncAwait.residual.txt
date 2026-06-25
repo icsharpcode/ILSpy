@@ -1,7 +1,7 @@
 0x06000003 <SumAsync>d__0.MoveNext
+  + decompiler only: (7,2)-(7,3)
+  - compiler only: hidden at method start
+  - compiler only: hidden at method start
+  + decompiler only: hidden after (9,3)-(9,19)
   - compiler only: (12,2)-(12,3)
   - compiler only: hidden after (12,2)-(12,3)
-  - compiler only: hidden at method start
-  - compiler only: hidden at method start
-  + decompiler only: (7,2)-(7,3)
-  + decompiler only: hidden after (9,3)-(9,19)
