@@ -3,11 +3,11 @@
 0x06000004 C.get_Item
   + decompiler only: hidden after (18,31)-(18,35)
 0x0600000b C..ctor
-  - compiler only: (50,2)-(50,12)
   + decompiler only: (51,2)-(51,3)
+  - compiler only: (50,2)-(50,12)
 0x0600000c C.Finalize
   - compiler only: (56,2)-(56,3)
-  - compiler only: (57,2)-(57,3)
   + decompiler only: hidden after (57,2)-(57,3)
+  - compiler only: (57,2)-(57,3)
 0x0600000e C.Main
   + decompiler only: hidden after (66,3)-(68,5)

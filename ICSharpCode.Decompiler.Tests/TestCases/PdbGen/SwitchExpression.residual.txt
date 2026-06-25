@@ -1,7 +1,7 @@
 0x06000001 SwitchExpression.Classify
+  + decompiler only: (4,2)-(4,3)
+  + decompiler only: hidden after (5,3)-(10,5)
   - compiler only: (7,9)-(7,15)
   - compiler only: (8,9)-(8,14)
   - compiler only: (9,9)-(9,15)
   - compiler only: hidden after (9,9)-(9,15)
-  + decompiler only: (4,2)-(4,3)
-  + decompiler only: hidden after (5,3)-(10,5)
