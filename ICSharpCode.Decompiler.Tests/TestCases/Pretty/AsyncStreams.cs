@@ -62,6 +62,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			await Task.Delay(100, cancellationToken);
 			yield return 2;
 		}
+
+		public static async IAsyncEnumerable<int> AwaitInFinallyWithCancellation([EnumeratorCancellation] CancellationToken cancellationToken)
+		{
+			await Task.Yield();
+			try
+			{
+				yield return 1;
+				await Task.Delay(10, cancellationToken);
+			}
+			finally
+			{
+				await Task.Yield();
+			}
+		}
 	}
 
 	public struct TestStruct
