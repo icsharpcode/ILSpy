@@ -24,6 +24,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			PrintResult((ref dynamic x) => x = x / 2.0, 5);
 			PrintResult((ref dynamic x) => x = x / 2, 5.0);
 			PrintResult((ref dynamic x) => x = x / 2, 5);
+			PrintResult((ref dynamic x) => x = ~x, 5);
+			PrintResult((ref dynamic x) => x = -x, 5);
+			PrintResult((ref dynamic x) => x = +x, 5);
+			PrintResult((ref dynamic x) => x = !x, true);
 		}
 
 		private static void PrintResult(RefAction<dynamic> p, dynamic arg)
