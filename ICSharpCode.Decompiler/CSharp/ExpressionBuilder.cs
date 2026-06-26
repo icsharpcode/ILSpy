@@ -4540,6 +4540,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return CreateUnaryOperator(UnaryOperatorType.Minus, isChecked: true);
 				case ExpressionType.UnaryPlus:
 					return CreateUnaryOperator(UnaryOperatorType.Plus, isChecked: inst.BinderFlags.HasFlag(CSharpBinderFlags.CheckedContext));
+				case ExpressionType.OnesComplement:
+					return CreateUnaryOperator(UnaryOperatorType.BitNot);
 				case ExpressionType.IsTrue:
 					var operand = TranslateDynamicArgument(inst.Operand, inst.OperandArgumentInfo);
 					Expression expr;
