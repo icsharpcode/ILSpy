@@ -359,6 +359,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task UncheckedConstants([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
+		[Test]
 		public async Task ConditionalAttr([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
