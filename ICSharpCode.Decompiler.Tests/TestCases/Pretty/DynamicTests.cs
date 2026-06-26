@@ -369,6 +369,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a.Setter2 -= b;
 			a.Setter2 *= b;
 			a.Setter2 /= b;
+			a.Setter2 %= b;
+			a.Setter2 &= b;
+			a.Setter2 |= b;
+			a.Setter2 ^= b;
+			a.Setter2 <<= b;
+			a.Setter2 >>= b;
 			field.Setter += 5;
 			field.Setter -= 5;
 		}
