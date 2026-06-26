@@ -394,6 +394,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//++a;
 			DynamicTests.Casts(-a);
 			DynamicTests.Casts(+a);
+			DynamicTests.Casts(~a);
 		}
 
 		private static void Loops(dynamic list)
