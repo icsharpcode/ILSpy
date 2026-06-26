@@ -232,6 +232,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if CS70
+		public class NullCheckedArgumentBase
+		{
+			public NullCheckedArgumentBase(int a, int b, int c, string s)
+			{
+			}
+		}
+
+		public class NullCheckedArgumentChain : NullCheckedArgumentBase
+		{
+			public string Value;
+
+			// The null-check for 'value' is hoisted in front of the chained constructor call because
+			// 'value' is used by more than one argument; it must be folded back into the first
+			// argument as 'value ?? throw ...' rather than emitted as an illegal in-body call.
+			public NullCheckedArgumentChain(string value)
+				: base(0, (value ?? throw new ArgumentNullException("value")).Length, value.Length, "value")
+			{
+				Value = value;
+			}
+		}
+#endif
+
 #if CS100
 		public class PrimaryCtorClassThisChain(Guid id)
 		{
