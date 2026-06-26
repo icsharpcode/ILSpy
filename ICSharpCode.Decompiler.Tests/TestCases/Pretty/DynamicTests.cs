@@ -310,6 +310,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private static void BitwiseAndShiftBinaryOperators(dynamic a, dynamic b)
+		{
+			DynamicTests.MemberAccess(a & b);
+			DynamicTests.MemberAccess(a & 1);
+			DynamicTests.MemberAccess(a & null);
+			DynamicTests.MemberAccess(a | b);
+			DynamicTests.MemberAccess(a | 1);
+			DynamicTests.MemberAccess(a | null);
+			DynamicTests.MemberAccess(a ^ b);
+			DynamicTests.MemberAccess(a ^ 1);
+			DynamicTests.MemberAccess(a ^ null);
+			DynamicTests.MemberAccess(a << b);
+			DynamicTests.MemberAccess(a << 1);
+			DynamicTests.MemberAccess(a >> b);
+			DynamicTests.MemberAccess(a >> 1);
+		}
+
 		private static void RelationalOperators(dynamic a, dynamic b)
 		{
 			DynamicTests.MemberAccess(a == b);
