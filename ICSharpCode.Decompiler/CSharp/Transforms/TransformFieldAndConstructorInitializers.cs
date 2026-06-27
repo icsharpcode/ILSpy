@@ -481,6 +481,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				var ci = new ConstructorInitializer { ConstructorInitializerType = type };
 
+				context.Step("Move constructor call to initializer", stmt);
 				// Move arguments from invocation to initializer:
 				invocation.GetChildren(Slots.Argument).MoveTo(ci.Arguments);
 				// Add the initializer: (unless it is the default 'base()')
@@ -489,6 +490,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				// Remove the statement
 				stmt.Remove();
+				context.EndStep(constructorDeclaration.Initializer);
 
 				return true;
 			}
@@ -507,7 +509,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						// e.g. when a single static constructor is decompiled in isolation -- so the
 						// assignment must remain in the constructor body.
 						if (kind is InitializerKind.Primary)
+						{
+							context.Step("Remove redundant primary constructor assignment", stmt);
 							stmt.Remove();
+						}
 						continue;
 					}
 
@@ -518,7 +523,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							v = fd.Variables.Single();
 							if (v.Initializer is null)
 							{
-								v.Initializer = initializer.Detach();
+								context.Step("Move assignment to field initializer", stmt);
+								var movedInitializer = initializer.Detach();
+								v.Initializer = movedInitializer;
+								context.EndStep(movedInitializer);
 							}
 							else if (kind == InitializerKind.Static)
 							{
@@ -548,7 +556,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							Debug.Assert(pd.IsAutomaticProperty);
 							if (pd.Initializer is null)
 							{
-								pd.Initializer = initializer.Detach();
+								context.Step("Move assignment to property initializer", stmt);
+								var movedInitializer = initializer.Detach();
+								pd.Initializer = movedInitializer;
+								context.EndStep(movedInitializer);
 							}
 							else
 							{
@@ -560,7 +571,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							v = ev.Variables.Single();
 							if (v.Initializer is null)
 							{
-								v.Initializer = initializer.Detach();
+								context.Step("Move assignment to event initializer", stmt);
+								var movedInitializer = initializer.Detach();
+								v.Initializer = movedInitializer;
+								context.EndStep(movedInitializer);
 							}
 							else
 							{
@@ -594,6 +608,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					if (sequence.IsUnsafe && IntroduceUnsafeModifier.IsUnsafe(initializer))
 					{
+						context.Step("Add unsafe modifier to initialized member", declaringSyntaxNode);
 						declaringSyntaxNode.Modifiers |= Modifiers.Unsafe;
 					}
 				}
@@ -626,6 +641,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						var insertionPoint = (AstNode?)this.TypeDeclaration.TypeParameters.LastOrDefault() ?? this.TypeDeclaration.NameToken;
 						foreach (var param in PrimaryConstructorDecl.Parameters)
 						{
+							context.Step("Move primary constructor parameter to type", param);
 							param.Remove();
 							this.TypeDeclaration.InsertChildAfter(insertionPoint, param, Slots.Parameter);
 							insertionPoint = param;
@@ -680,6 +696,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					if (PrimaryConstructorDecl.HasModifier(Modifiers.Unsafe))
 					{
+						context.Step("Move unsafe modifier from primary constructor to type", this.TypeDeclaration);
 						this.TypeDeclaration.Modifiers |= Modifiers.Unsafe;
 					}
 
@@ -689,11 +706,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 						var baseType = TypeDeclaration.BaseTypes.First();
 						var newBaseType = new InvocationAstType();
+						context.Step("Move primary constructor initializer to base type", baseType);
 						baseType.ReplaceWith(newBaseType);
 						newBaseType.BaseType = baseType;
 						initializer.Arguments.MoveTo(newBaseType.Arguments);
+						context.EndStep(newBaseType);
 					}
 
+					context.Step("Remove primary constructor body", PrimaryConstructorDecl);
 					PrimaryConstructorDecl.Remove();
 				}
 
@@ -704,6 +724,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 					if (IsBeforeFieldInit && StaticConstructorDecl.Body is { Statements.Count: 0 })
 					{
+						context.Step("Remove empty static constructor", StaticConstructorDecl);
 						StaticConstructorDecl.Remove();
 					}
 				}
@@ -733,7 +754,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					bool retainBecauseOfDocumentation = context.Settings.ShowXmlDocumentation
 						&& context.DecompileRun.DocumentationProvider?.GetDocumentation(ctorMethod) != null;
 					if (!retainBecauseOfDocumentation)
+					{
+						context.Step("Remove implicit constructor", ctor);
 						ctor.Remove();
+					}
 				}
 			}
 

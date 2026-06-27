@@ -81,5 +81,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			func();
 			func2();
 		}
+
+		public static void CapturedBoolResult(Dictionary<int, int> d, int key)
+		{
+			// The boolean result of the out-returning call is captured into a local, yet the out
+			// parameter is still promoted to an inline 'out var' rather than a separate declaration.
+			bool value = d.TryGetValue(key, out var value2);
+			Console.WriteLine(value);
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value2);
+		}
 	}
 }

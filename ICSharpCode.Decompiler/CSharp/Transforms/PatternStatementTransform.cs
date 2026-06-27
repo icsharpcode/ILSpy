@@ -191,6 +191,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			if (next is ForStatement forStatement && ForStatementUsesVariable(forStatement, variable))
 			{
+				context.Step("Move declaration into for initializer", node);
 				node.Remove();
 				next.InsertChildAfter(null, node, Slots.ForInitializer);
 				return (ForStatement)next;
@@ -212,6 +213,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Whereas continue in for jumps to the increment block.
 			if (loop.DescendantNodes(DescendIntoStatement).OfType<Statement>().Any(s => s is ContinueStatement))
 				return null;
+			context.Step("Transform while loop to for", loop);
 			node.Remove();
 			BlockStatement newBody = new BlockStatement();
 			foreach (Statement stmt in m3.Get<Statement>("statement"))
@@ -223,6 +225,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			forStatement.Iterators.Add(iteratorStatement.Detach());
 			forStatement.EmbeddedStatement = newBody;
 			loop.ReplaceWith(forStatement);
+			context.EndStep(forStatement);
 			return forStatement;
 		}
 
@@ -363,6 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
 				return null;
+			context.Step("Introduce foreach over array", forStatement);
 			var body = new BlockStatement();
 			foreach (var statement in m.Get<Statement>("statements"))
 				body.Statements.Add(statement.Detach());
@@ -378,6 +382,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
 			forStatement.ReplaceWith(foreachStmt);
+			context.EndStep(foreachStmt);
 			return foreachStmt;
 		}
 
@@ -533,6 +538,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
 				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;
+			context.Step("Introduce foreach over multidimensional array", expressionStatement);
 			var body = new BlockStatement();
 			foreach (var statement in statements)
 				body.Statements.Add(statement.Detach());
@@ -550,6 +556,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
 			expressionStatement.ReplaceWith(foreachStmt);
+			context.EndStep(foreachStmt);
 			return foreachStmt;
 		}
 
@@ -643,6 +650,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			if (field.IsCompilerGenerated() && field.DeclaringTypeDefinition == property.DeclaringTypeDefinition)
 			{
+				context.Step("Convert property to auto-property", propertyDeclaration);
 				// Clearing the accessor body turns it into an auto-property accessor.
 				var getter = propertyDeclaration.Getter;
 				var setter = propertyDeclaration.Setter;
@@ -710,6 +718,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (newIdentifier != null)
 				{
 					identifier.ReplaceWith(newIdentifier);
+					context.EndStep(newIdentifier);
 					return newIdentifier;
 				}
 			}
@@ -769,6 +778,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					if (!property.CanSet && !context.Settings.GetterOnlyAutomaticProperties)
 						return null;
+					context.Step("Replace backing field use with property", identifier);
 					parent.RemoveAnnotations<MemberResolveResult>();
 					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
 					return Identifier.Create(property.Name);
@@ -793,6 +803,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var eventDef = module.ResolveEntity(eventHandle) as IEvent;
 				if (eventDef != null && currentMethod?.AccessorOwner != eventDef)
 				{
+					context.Step("Replace event backing field use with event", identifier);
 					parent.RemoveAnnotations<MemberResolveResult>();
 					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, eventDef));
 					identifier.Name = eventDef.Name;
@@ -1026,6 +1037,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (ev.AddAccessor is not { } addAccessor)
 				return null;
+			context.Step("Convert custom event to field-like event", ev);
 			RemoveCompilerGeneratedAttribute(addAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
@@ -1054,6 +1066,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			ev.ReplaceWith(ed);
+			context.EndStep(ed);
 			return ed;
 
 			bool IsEventBackingField(FieldDeclaration fd)
@@ -1094,6 +1107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = destructorPattern.Match(methodDef);
 			if (m.Success)
 			{
+				context.Step("Convert Finalize method to destructor", methodDef);
 				DestructorDeclaration dd = new DestructorDeclaration();
 				methodDef.Attributes.MoveTo(dd.Attributes);
 				dd.CopyAnnotationsFrom(methodDef);
@@ -1103,6 +1117,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// has an enclosing type at this point.
 				dd.Name = currentTypeDefinition!.Name;
 				methodDef.ReplaceWith(dd);
+				context.EndStep(dd);
 				return dd;
 			}
 			return null;
@@ -1113,6 +1128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = destructorBodyPattern.Match(dtorDef.Body);
 			if (m.Success)
 			{
+				context.Step("Simplify destructor body", dtorDef);
 				dtorDef.Body = m.Get<BlockStatement>("body").Single().Detach();
 				return dtorDef;
 			}
@@ -1139,6 +1155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (tryCatchFinallyPattern.IsMatch(tryFinally))
 			{
+				context.Step("Merge nested try-catch-finally", tryFinally);
 				TryCatchStatement tryCatch = (TryCatchStatement)tryFinally.TryBlock.Statements.Single();
 				tryFinally.TryBlock = tryCatch.TryBlock.Detach();
 				tryCatch.CatchClauses.MoveTo(tryFinally.CatchClauses);
@@ -1171,6 +1188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = cascadingIfElsePattern.Match(node);
 			if (m.Success)
 			{
+				context.Step("Simplify cascading if-else", node);
 				IfElseStatement elseIf = m.Get<IfElseStatement>("nestedIfStatement").Single();
 				node.FalseStatement = elseIf.Detach();
 			}
@@ -1191,6 +1209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var bAndC = expr.Right as BinaryOperatorExpression;
 					if (bAndC != null && bAndC.Operator == expr.Operator)
 					{
+						context.Step("Reassociate conditional logic", expr);
 						// make bAndC the parent and expr the child.
 						// A conditional-and/or operator always has both operands present.
 						var b = bAndC.Left!.Detach();
@@ -1199,6 +1218,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						bAndC.Left = expr;
 						bAndC.Right = c;
 						expr.Right = b;
+						context.EndStep(bAndC);
 						return base.VisitBinaryOperatorExpression(bAndC);
 					}
 					break;
@@ -1210,8 +1230,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (expr.Operator == UnaryOperatorType.Not && expr.Expression is BinaryOperatorExpression { Operator: BinaryOperatorType.Equality } binary)
 			{
+				context.Step("Replace negated equality with inequality", expr);
 				binary.Operator = BinaryOperatorType.InEquality;
 				expr.ReplaceWith(binary.Detach());
+				context.EndStep(binary);
 				return VisitBinaryOperatorExpression(binary);
 			}
 			return base.VisitUnaryOperatorExpression(expr);
@@ -1240,6 +1262,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						Expression target = m.Get<Expression>("target").Single();
 						if (target.GetResolveResult().Type.IsReferenceType == false)
 						{
+							context.Step("Use pattern-based fixed statement", fixedStatement);
 							v.Initializer = target.Detach();
 						}
 					}
@@ -1262,6 +1285,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!(usingStatement.ResourceAcquisition is VariableDeclarationStatement))
 				return usingStatement;
 
+			context.Step("Use enhanced using statement", usingStatement);
 			usingStatement.IsEnhanced = true;
 			return usingStatement;
 		}

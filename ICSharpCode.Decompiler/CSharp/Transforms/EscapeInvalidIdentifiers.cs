@@ -56,7 +56,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			foreach (var ident in rootNode.DescendantsAndSelf.OfType<Identifier>())
 			{
-				ident.Name = ReplaceInvalid(ident.Name);
+				string newName = ReplaceInvalid(ident.Name);
+				if (newName != ident.Name)
+				{
+					context.Step($"Escape identifier '{ident.Name}'", ident);
+					ident.Name = newName;
+				}
 			}
 		}
 	}

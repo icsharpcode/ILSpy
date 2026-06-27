@@ -176,6 +176,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		List<IAstTransform> astTransforms = GetAstTransforms();
 
+		public Stepper Stepper { get; set; } = new Stepper();
+
 		/// <summary>
 		/// Returns all built-in transforms of the C# AST pipeline.
 		/// </summary>
@@ -714,17 +716,27 @@ namespace ICSharpCode.Decompiler.CSharp
 		void RunTransforms(AstNode rootNode, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder);
+			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder) {
+				Stepper = Stepper
+			};
 			// The tree handed to the pipeline must already be well-formed; check it once up front so a
 			// malformed builder output is caught here rather than blamed on the first transform (DEBUG only).
 			rootNode.CheckInvariant();
-			foreach (var transform in astTransforms)
+			try
 			{
-				CancellationToken.ThrowIfCancellationRequested();
-				transform.Run(rootNode, context);
-				// Verify the slot structure survived the transform (DEBUG only); mirrors the IL
-				// pipeline's per-transform ILInstruction.CheckInvariant.
-				rootNode.CheckInvariant();
+				foreach (var transform in astTransforms)
+				{
+					CancellationToken.ThrowIfCancellationRequested();
+					context.StepStartGroup(transform.GetType().Name);
+					transform.Run(rootNode, context);
+					// Verify the slot structure survived the transform (DEBUG only); mirrors the IL
+					// pipeline's per-transform ILInstruction.CheckInvariant.
+					rootNode.CheckInvariant();
+					context.StepEndGroup(keepIfEmpty: true);
+				}
+			}
+			catch (StepLimitReachedException)
+			{
 			}
 			CancellationToken.ThrowIfCancellationRequested();
 			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });

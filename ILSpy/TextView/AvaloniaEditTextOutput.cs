@@ -54,6 +54,7 @@ namespace ICSharpCode.ILSpy.TextView
 		public int LengthLimit { get; set; } = int.MaxValue;
 
 		readonly Stack<(int Offset, HighlightingColor Color)> openSpans = new();
+		readonly Stack<(object Node, int Offset)> openNodes = new();
 		readonly Stack<(NewFolding Folding, int StartLine)> openFoldings = new();
 		readonly List<NewFolding> foldings = new();
 		int indent;
@@ -86,6 +87,10 @@ namespace ICSharpCode.ILSpy.TextView
 
 		/// <summary>Maps reference targets to their definition offsets in the rendered text.</summary>
 		public DefinitionLookup DefinitionLookup { get; } = new();
+
+		internal NodeLookup NodeLookup { get; } = new();
+
+		internal TextRange? DebugStepHighlight { get; set; }
 
 		readonly List<Bookmarks.MethodDebugInfo> methodDebugInfos = new();
 
@@ -299,6 +304,21 @@ namespace ICSharpCode.ILSpy.TextView
 				HighlightingModel.SetHighlighting(start, length, color);
 				highlightingSpans.Add((start, length, color));
 			}
+		}
+
+		internal void MarkNodeStart(object node)
+		{
+			openNodes.Push((node, builder.Length));
+		}
+
+		internal void MarkNodeEnd(object node)
+		{
+			if (openNodes.Count == 0)
+				return;
+			var (currentNode, start) = openNodes.Pop();
+			if (!ReferenceEquals(currentNode, node))
+				return;
+			NodeLookup.AddNode(node, start, builder.Length - start);
 		}
 	}
 }

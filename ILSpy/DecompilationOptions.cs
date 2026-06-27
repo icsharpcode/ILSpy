@@ -61,6 +61,13 @@ namespace ICSharpCode.ILSpy
 		public int StepLimit { get; set; } = int.MaxValue;
 
 		/// <summary>
+		/// Step whose changed node should be highlighted after a debug-stepper re-decompile.
+		/// This can differ from <see cref="StepLimit"/> when showing the state after a step,
+		/// because the next recorded step is where the pipeline stops.
+		/// </summary>
+		public int? HighlightStep { get; set; }
+
+		/// <summary>
 		/// When true, transforms emit verbose debug information about their behaviour. Only
 		/// meaningful in combination with <see cref="StepLimit"/> — the Debug Steps pane sets
 		/// it on the "Debug this step" context-menu action.

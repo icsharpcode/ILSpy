@@ -26,6 +26,9 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+#if STEP
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+#endif
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -73,7 +76,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						resolvedNamespaces.Add(resolvedNamespace);
 					}
-					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, Slots.Member);
+					context.Step("Add using declaration", rootNode);
+					var node = new UsingDeclaration { Import = nsType };
+					rootNode.InsertChildAfter(insertionPoint, node, Slots.Member);
+					context.EndStep(node);
 				}
 			}
 
@@ -189,6 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			readonly bool ignoreUsingScope;
 			readonly DecompilerSettings settings;
+			readonly TransformContext context;
 
 			CSharpResolver resolver;
 			TypeSystemAstBuilder astBuilder;
@@ -197,6 +204,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
 			{
+				this.context = context;
 				this.ignoreUsingScope = !context.Settings.UsingDeclarations;
 				this.settings = context.Settings;
 				this.resolver = new CSharpResolver(new CSharpTypeResolveContext(context.TypeSystem.MainModule));
@@ -401,12 +409,30 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				if (simpleType.Parent is Syntax.Attribute)
 				{
-					simpleType.ReplaceWith(astBuilder.ConvertAttributeType(rr.Type));
+					ReplaceAndRecordStep("Qualify ambiguous attribute type", simpleType, astBuilder.ConvertAttributeType(rr.Type));
 				}
 				else
 				{
-					simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
+					ReplaceAndRecordStep("Qualify ambiguous type", simpleType, astBuilder.ConvertType(rr.Type));
 				}
+			}
+
+			void ReplaceAndRecordStep(string stepDescription, SimpleType simpleType, AstType replacement)
+			{
+#if STEP
+				// Record a debug step only when the converted type actually differs from the
+				// original, so the step list stays meaningful. This structural comparison is
+				// debug-only (it allocates a pattern Match); release builds skip it entirely and
+				// just perform the replacement below.
+				bool changed = !simpleType.IsMatch(replacement);
+				if (changed)
+					context.Step(stepDescription, simpleType);
+#endif
+				simpleType.ReplaceWith(replacement);
+#if STEP
+				if (changed)
+					context.EndStep(replacement);
+#endif
 			}
 		}
 	}

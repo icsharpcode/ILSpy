@@ -64,6 +64,7 @@ namespace ICSharpCode.ILSpy.TextView
 		// softer green for the actual definition.
 		static readonly Color LocalMatchBackground = Colors.GreenYellow;
 		static readonly Color LocalDefinitionBackground = Color.FromArgb(0x80, 0xA0, 0xFF, 0xA0);
+		static readonly Color DebugStepBackground = Color.FromArgb(0x80, 0xFF, 0xD7, 0x66);
 
 		// Stay-open corridor for the rich popup: as long as the pointer is closer than
 		// `distanceToPopupLimit` to the popup edges, the popup stays. The limit shrinks toward
@@ -78,6 +79,7 @@ namespace ICSharpCode.ILSpy.TextView
 		TextMarkerService textMarkerService = null!;
 		BracketHighlightRenderer bracketHighlightRenderer = null!;
 		readonly List<TextMarker> localReferenceMarks = new();
+		readonly List<TextMarker> debugStepMarks = new();
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
@@ -1043,6 +1045,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// force-close even if the popup currently wants to stay (mouseClick: true).
 			TryCloseExistingPopup(mouseClick: true);
 			ClearLocalReferenceMarks();
+			ClearDebugStepMarks();
 			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
 			Editor.Document.Text = model.Text;
 
@@ -1071,6 +1074,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 			if (restoreViewState)
 				RestoreOrResetViewState(pendingState);
+
+			ApplyDebugStepHighlight(model.DebugStepHighlight);
 
 			// Position at a navigated-to bookmark once its document (and debug map) has landed. Only on
 			// the final content (the Text change, where restoreViewState is set), AFTER the view-state
@@ -1244,6 +1249,31 @@ namespace ICSharpCode.ILSpy.TextView
 			foreach (var mark in localReferenceMarks)
 				textMarkerService.Remove(mark);
 			localReferenceMarks.Clear();
+		}
+
+		void ApplyDebugStepHighlight(TextRange? range)
+		{
+			ClearDebugStepMarks();
+			if (range is not { } r || r.Length <= 0)
+				return;
+			var start = Math.Clamp(r.Start, 0, Editor.Document.TextLength);
+			var end = Math.Clamp(r.Start + r.Length, start, Editor.Document.TextLength);
+			if (end <= start)
+				return;
+			var mark = textMarkerService.Create(start, end - start);
+			mark.BackgroundColor = DebugStepBackground;
+			debugStepMarks.Add(mark);
+			Editor.TextArea.Caret.Offset = start;
+			Editor.TextArea.Caret.BringCaretToView();
+			CaretHighlightAdorner.DisplayCaretHighlightAnimation(Editor.TextArea);
+		}
+
+
+		void ClearDebugStepMarks()
+		{
+			foreach (var mark in debugStepMarks)
+				textMarkerService.Remove(mark);
+			debugStepMarks.Clear();
 		}
 
 		// Live cursor + full ScrollOffset, queried at hover-event time. Returns null if the

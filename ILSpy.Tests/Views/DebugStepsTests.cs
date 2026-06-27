@@ -18,6 +18,7 @@
 
 #if DEBUG
 
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -27,10 +28,14 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Views;
@@ -120,6 +125,75 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
+	public async Task CSharp_DebugSteps_Are_Grouped_By_Ast_Transform()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		var csharp = languageService.Languages.OfType<CSharpLanguage>().First();
+		languageService.CurrentLanguage = csharp;
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Range");
+		vm.AssemblyTreeModel.SelectNode(method);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+		await Waiters.WaitForAsync(
+			() => debugStepsVm.Steps?.Count > 0,
+			description: "DebugStepsPaneModel.Steps to be populated after the C# decompile");
+
+		var astTransformNames = CSharpDecompiler.GetAstTransforms()
+			.Select(transform => transform.GetType().Name)
+			.ToArray();
+
+		debugStepsVm.Steps!
+			.Select(step => StripStepNumber(step.Description))
+			.Should().Equal(astTransformNames,
+				"C# debug steps must use AST transforms as top-level groups");
+
+		var transformGroupWithChanges = debugStepsVm.Steps!
+			.FirstOrDefault(step => step.Children.Count > 0);
+		transformGroupWithChanges.Should().NotBeNull(
+			"individual C# AST mutation steps must be nested under their transform group");
+		transformGroupWithChanges!.Children
+			.Select(step => StripStepNumber(step.Description))
+			.Should().Contain(
+				description => !astTransformNames.Contains(description),
+				"nested C# debug steps must describe individual AST mutation points");
+
+		var collectedSteps = debugStepsVm.Steps;
+		var replayStep = transformGroupWithChanges.Children.First();
+		var tab = vm.DockWorkspace.ActiveDecompilerTab!;
+
+		tab.RestartDecompileWithStepLimit(replayStep.BeginStep, isDebug: false, replayStep.BeginStep);
+		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Text.Should().NotBeNullOrWhiteSpace("C# replay before a selected AST mutation step must still emit code");
+		tab.DebugStepHighlight.Should().NotBeNull("C# replay before a selected AST mutation step must locate the changed node");
+		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
+			"a step-limited C# replay must not replace the full step tree shown by the pane");
+
+		tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
+		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Text.Should().NotBeNullOrWhiteSpace("C# replay after a selected AST mutation step must still emit code");
+		tab.DebugStepHighlight.Should().NotBeNull("C# replay after a selected AST mutation step must locate the changed node");
+		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
+			"a step-limited C# replay must preserve the current full-run step tree and selection context");
+
+		static string StripStepNumber(string description)
+		{
+			var separatorIndex = description.IndexOf(": ", StringComparison.Ordinal);
+			return separatorIndex >= 0 ? description[(separatorIndex + 2)..] : description;
+		}
+	}
+
+	[AvaloniaTest]
 	public Task ILAst_And_TypedIL_Languages_Are_Registered_In_Debug_Builds()
 	{
 		// Two ILAstLanguage subclasses: BlockILLanguage ("ILAst") drives the stepper,
@@ -133,6 +207,25 @@ public class DebugStepsTests
 		languageService.Languages.Should().Contain(l => l.Name == "Typed IL");
 		return Task.CompletedTask;
 	}
+
+	[AvaloniaTest]
+	public Task NodeLookup_Resolves_Copied_Ast_Annotations()
+	{
+		var marker = new object();
+		var original = new IdentifierExpression("old");
+		original.AddAnnotation(marker);
+		var replacement = new IdentifierExpression("new").CopyAnnotationsFrom(original);
+		var lookup = new NodeLookup();
+
+		lookup.AddNode(replacement, 12, 3);
+
+		lookup.TryGetRange(marker, out var range).Should().BeTrue(
+			"C# debug-step markers copied by AST replacements must still resolve to emitted text");
+		range.Start.Should().Be(12);
+		range.Length.Should().Be(3);
+		return Task.CompletedTask;
+	}
+
 	[AvaloniaTest]
 	public Task Pane_Reports_Not_Available_For_Languages_Without_Debug_Steps()
 	{

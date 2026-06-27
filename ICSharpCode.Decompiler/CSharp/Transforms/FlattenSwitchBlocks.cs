@@ -22,6 +22,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (blockStatement == null || blockStatement.Statements.Any(ContainsLocalDeclaration))
 					continue;
 
+				context.Step("Flatten switch section block", blockStatement);
 				blockStatement.Remove();
 				blockStatement.Statements.MoveTo(switchSection.Statements);
 			}

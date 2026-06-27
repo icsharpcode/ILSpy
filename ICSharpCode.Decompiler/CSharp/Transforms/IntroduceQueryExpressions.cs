@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (IsDegenerateQuery(query))
 				{
 					// introduce select for degenerate query
+					context.Step("Add degenerate query select clause", query);
 					query.Clauses.Add(new QuerySelectClause { Expression = new IdentifierExpression(fromClause.Identifier).CopyAnnotationsFrom(fromClause) });
 				}
 				// See if the data source of this query is a degenerate query,
@@ -61,6 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					QueryFromClause innerFromClause = (QueryFromClause)innerQuery.Clauses.First();
 					ILVariable? innerVariable = innerFromClause.Annotation<ILVariableResolveResult>()?.Variable;
 					ILVariable? rangeVariable = fromClause.Annotation<ILVariableResolveResult>()?.Variable;
+					context.Step("Combine nested query clauses", fromClause);
 					// Replace the fromClause with all clauses from the inner query
 					fromClause.Remove();
 					QueryClause? insertionPos = null;
@@ -69,6 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						CombineRangeVariables(clause, innerVariable, rangeVariable);
 						query.Clauses.InsertAfter(insertionPos, insertionPos = clause.Detach());
 					}
+					context.EndStep(innerFromClause);
 					fromClause = innerFromClause;
 					innerQuery = fromClause.Expression as QueryExpression;
 				}
@@ -87,9 +90,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var variable = parent.Annotation<ILVariableResolveResult>()?.Variable;
 				if (variable == oldVariable)
 				{
+					context.Step("Combine query range variables", identifier);
 					parent.RemoveAnnotations<ILVariableResolveResult>();
 					parent.AddAnnotation(new ILVariableResolveResult(newVariable));
-					identifier.ReplaceWith(Identifier.Create(newVariable.Name!));
+					var newIdentifier = Identifier.Create(newVariable.Name!);
+					identifier.ReplaceWith(newIdentifier);
+					context.EndStep(newIdentifier);
 				}
 			}
 		}
@@ -110,6 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (node.Parent is ExpressionStatement && CanUseDiscardAssignment())
 					query = new AssignmentExpression(new IdentifierExpression("_"), query);
 				node.ReplaceWith(query);
+				context.EndStep(query);
 			}
 
 			AstNode? next;
@@ -145,6 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Expression expr = invocation.Arguments.Single();
 					if (MatchSimpleLambda(expr, out var parameter, out var body))
 					{
+						context.Step("Build select query", invocation);
 						QueryExpression query = new QueryExpression();
 						query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 						query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameter.Name!) }.CopyAnnotationsFrom(expr));
@@ -162,6 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							&& MatchSimpleLambda(projectionLambda, out var parameter2, out var elementSelector)
 							&& parameter1.Name == parameter2.Name)
 						{
+							context.Step("Build group query", invocation);
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter1, mre.Target.Detach()));
 							var queryGroupClause = new QueryGroupClause {
@@ -179,6 +188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						Expression lambda = invocation.Arguments.Single();
 						if (MatchSimpleLambda(lambda, out var parameter, out var keySelector))
 						{
+							context.Step("Build group query", invocation);
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 							query.Clauses.Add(new QueryGroupClause { Projection = new IdentifierExpression(parameter.Name!).CopyAnnotationsFrom(parameter), Key = keySelector.Detach() });
@@ -203,6 +213,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						ParameterDeclaration p2 = lambda.Parameters.ElementAt(1);
 						if (p1.Name == parameter.Name)
 						{
+							context.Step("Build select-many query", invocation);
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(p1, mre.Target.Detach()));
 							query.Clauses.Add(MakeFromClause(p2, collectionSelector.Detach()).CopyAnnotationsFrom(fromExpressionLambda));
@@ -221,6 +232,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Expression expr = invocation.Arguments.Single();
 					if (MatchSimpleLambda(expr, out var parameter, out var body))
 					{
+						context.Step("Build where query", invocation);
 						QueryExpression query = new QueryExpression();
 						query.Clauses.Add(MakeFromClause(parameter, mre.Target.Detach()));
 						query.Clauses.Add(new QueryWhereClause { Condition = body.Detach() }.CopyAnnotationsFrom(expr));
@@ -242,6 +254,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (ValidateThenByChain(invocation, parameter.Name!))
 						{
+							context.Step("Build order query", invocation);
 							QueryOrderClause orderClause = new QueryOrderClause();
 							while (mre.MemberName == "ThenBy" || mre.MemberName == "ThenByDescending")
 							{
@@ -302,6 +315,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (ValidateParameter(p1) && ValidateParameter(p2)
 							&& p1.Name == element1.Name && (p2.Name == element2.Name || mre.MemberName == "GroupJoin"))
 						{
+							context.Step(mre.MemberName == "GroupJoin" ? "Build group join query" : "Build join query", invocation);
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(MakeFromClause(element1, source1.Detach()));
 							QueryJoinClause joinClause = new QueryJoinClause();
