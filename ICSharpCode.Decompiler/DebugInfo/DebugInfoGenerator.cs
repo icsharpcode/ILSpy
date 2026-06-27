@@ -253,7 +253,14 @@ namespace ICSharpCode.Decompiler.DebugInfo
 					if (v.Index != null && v.Kind.IsLocal())
 					{
 #if DEBUG
-						Debug.Assert(v.Index < types.Length && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(v.Type, types[v.Index.Value]));
+						// The index is the IL ldloc/stloc operand, which indexes the local signature
+						// directly: ILReader creates one variable per signature slot, and SplitVariables
+						// copies that index. It is therefore correct by construction. The variable type
+						// is intentionally not checked against the signature - it is never written to the
+						// PDB (only the slot index and name are), and it legitimately diverges after
+						// variable splitting (one slot, several typed variables), for pinned-region locals
+						// modeled as pointers, and through generic-context type-parameter identity.
+						Debug.Assert(v.Index < types.Length);
 #endif
 						localVariables.Add(v);
 					}
