@@ -27,6 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 
@@ -46,8 +47,8 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	/// The single source of truth for the flat bookmark list. Holds the live
 	/// <see cref="ObservableCollection{Bookmark}"/>, persists it to <c>ILSpy.Bookmarks.json</c>
 	/// next to <c>ILSpy.xml</c>, and raises <see cref="Changed"/> whenever the list or any
-	/// bookmark's name/enabled state changes so the gutter margin can redraw. Mirrors the
-	/// best-effort load/save of the dock layout sidecar.
+	/// bookmark's name/enabled state changes so the gutter margin can redraw. Updates reload the
+	/// JSON file under a mutex so multiple ILSpy instances do not overwrite unrelated edits.
 	/// </summary>
 	[Export]
 	[Shared]
@@ -55,6 +56,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	{
 		const string FileName = "ILSpy.Bookmarks.json";
 		const int CurrentVersion = 1;
+		const string BookmarksFileMutex = "81FC41D7-A7FA-4386-B8DE-E75BA5355A35";
 
 		static readonly JsonSerializerOptions JsonOptions = new() {
 			WriteIndented = true,
@@ -83,21 +85,29 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		public bool Toggle(Bookmark bookmark)
 		{
 			ArgumentNullException.ThrowIfNull(bookmark);
-			var existing = Bookmarks.FirstOrDefault(b => b.AnchorKey == bookmark.AnchorKey);
-			if (existing != null)
-			{
-				Bookmarks.Remove(existing);
-				return false;
-			}
-			if (string.IsNullOrEmpty(bookmark.Name))
-				bookmark.Name = NextDefaultName();
-			Bookmarks.Add(bookmark);
-			return true;
+			bool added = false;
+			UpdateSavedBookmarks(bookmarks => {
+				var existing = bookmarks.FirstOrDefault(b => b.AnchorKey == bookmark.AnchorKey);
+				if (existing != null)
+				{
+					bookmarks.Remove(existing);
+					return;
+				}
+				if (string.IsNullOrEmpty(bookmark.Name))
+					bookmark.Name = NextDefaultName(bookmarks);
+				bookmarks.Add(bookmark);
+				added = true;
+			});
+			return added;
 		}
 
-		public void Remove(Bookmark bookmark) => Bookmarks.Remove(bookmark);
+		public void Remove(Bookmark bookmark)
+		{
+			ArgumentNullException.ThrowIfNull(bookmark);
+			UpdateSavedBookmarks(bookmarks => bookmarks.RemoveAll(b => b.AnchorKey == bookmark.AnchorKey));
+		}
 
-		public void Clear() => Bookmarks.Clear();
+		public void Clear() => UpdateSavedBookmarks(bookmarks => bookmarks.Clear());
 
 		/// <summary>Writes the current list to <paramref name="path"/> in the on-disk JSON format.</summary>
 		public void Export(string path)
@@ -118,20 +128,23 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			if (imported.Count == 0 && mode == BookmarkImportMode.Merge)
 				return;
 
-			RunBatch(() => {
+			UpdateSavedBookmarks(bookmarks => {
 				if (mode == BookmarkImportMode.Replace)
-					Bookmarks.Clear();
-				var present = new HashSet<string>(Bookmarks.Select(b => b.AnchorKey));
+					bookmarks.Clear();
+				var present = new HashSet<string>(bookmarks.Select(b => b.AnchorKey));
 				foreach (var b in imported)
 				{
 					if (present.Add(b.AnchorKey))
-						Bookmarks.Add(b);
+						bookmarks.Add(b);
 				}
 			});
 		}
 
 		/// <summary>Persists the current list to the standard sidecar location.</summary>
-		public void Save() => WriteTo(ConfigurationFiles.GetPath(FileName));
+		public void Save() => UpdateSavedBookmarks(bookmarks => {
+			bookmarks.Clear();
+			bookmarks.AddRange(Bookmarks);
+		});
 
 		void Load()
 		{
@@ -150,25 +163,28 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			}
 		}
 
-		// Applies a multi-step mutation without persisting/raising per step, then persists once.
-		void RunBatch(Action action)
+		// Replaces the observable collection without treating each item as a user edit.
+		void ReplaceLiveBookmarks(List<Bookmark> bookmarks)
 		{
 			suppressPersist = true;
 			try
 			{
-				action();
+				Bookmarks.Clear();
+				foreach (var bookmark in bookmarks)
+					Bookmarks.Add(bookmark);
 			}
 			finally
 			{
 				suppressPersist = false;
 			}
-			PersistAndNotify();
 		}
 
-		string NextDefaultName()
+		string NextDefaultName() => NextDefaultName(Bookmarks);
+
+		static string NextDefaultName(IEnumerable<Bookmark> bookmarks)
 		{
 			// Pick the lowest unused "Bookmark{n}" so names stay stable and unsurprising.
-			var used = new HashSet<string>(Bookmarks.Select(b => b.Name));
+			var used = new HashSet<string>(bookmarks.Select(b => b.Name));
 			for (int i = 0; ; i++)
 			{
 				var candidate = "Bookmark" + i;
@@ -192,7 +208,12 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			PersistAndNotify();
 		}
 
-		void OnBookmarkPropertyChanged(object? sender, PropertyChangedEventArgs e) => PersistAndNotify();
+		void OnBookmarkPropertyChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (sender is Bookmark bookmark
+				&& (e.PropertyName == nameof(Bookmark.Name) || e.PropertyName == nameof(Bookmark.Enabled)))
+				PersistBookmarkEdit(bookmark);
+		}
 
 		void PersistAndNotify()
 		{
@@ -202,21 +223,61 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			Changed?.Invoke(this, EventArgs.Empty);
 		}
 
+		void PersistBookmarkEdit(Bookmark bookmark)
+		{
+			if (suppressPersist)
+				return;
+			UpdateSavedBookmarks(bookmarks => {
+				int index = bookmarks.FindIndex(b => b.AnchorKey == bookmark.AnchorKey);
+				if (index >= 0)
+					bookmarks[index] = bookmark;
+				else
+					bookmarks.Add(bookmark);
+			});
+		}
+
+		void UpdateSavedBookmarks(Action<List<Bookmark>> update)
+		{
+			ArgumentNullException.ThrowIfNull(update);
+			try
+			{
+				var path = ConfigurationFiles.GetPath(FileName);
+				List<Bookmark> bookmarks;
+				using (new MutexProtector(BookmarksFileMutex))
+				{
+					bookmarks = ReadFrom(path);
+					update(bookmarks);
+					WriteListTo(path, bookmarks);
+				}
+				ReplaceLiveBookmarks(bookmarks);
+				Changed?.Invoke(this, EventArgs.Empty);
+			}
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"[BookmarkManager] Update failed: {ex}");
+			}
+		}
+
 		void WriteTo(string path)
 		{
 			try
 			{
-				var dir = Path.GetDirectoryName(path);
-				if (!string.IsNullOrEmpty(dir))
-					Directory.CreateDirectory(dir);
-				var file = new BookmarkFile(CurrentVersion, Bookmarks.Select(BookmarkRecord.From).ToList());
-				using var stream = System.IO.File.Create(path);
-				JsonSerializer.Serialize(stream, file, JsonOptions);
+				WriteListTo(path, Bookmarks);
 			}
 			catch (Exception ex)
 			{
 				Debug.WriteLine($"[BookmarkManager] Save failed: {ex}");
 			}
+		}
+
+		static void WriteListTo(string path, IEnumerable<Bookmark> bookmarks)
+		{
+			var dir = Path.GetDirectoryName(path);
+			if (!string.IsNullOrEmpty(dir))
+				Directory.CreateDirectory(dir);
+			var file = new BookmarkFile(CurrentVersion, bookmarks.Select(BookmarkRecord.From).ToList());
+			using var stream = System.IO.File.Create(path);
+			JsonSerializer.Serialize(stream, file, JsonOptions);
 		}
 
 		static List<Bookmark> ReadFrom(string path)
@@ -246,10 +307,12 @@ namespace ICSharpCode.ILSpy.Bookmarks
 
 		sealed record BookmarkRecord(
 			string Name, bool Enabled, string FileName, string AssemblyFullName,
-			string ModuleName, uint Token, BookmarkKind Kind, int ILOffset, string MemberName)
+			string ModuleName, uint Token, BookmarkKind Kind, int ILOffset, int LineNumber,
+			string MemberName, string? LocationNodeName, BookmarkViewState? ViewState)
 		{
 			public static BookmarkRecord From(Bookmark b) => new(
-				b.Name, b.Enabled, b.FileName, b.AssemblyFullName, b.ModuleName, b.Token, b.Kind, b.ILOffset, b.MemberName);
+				b.Name, b.Enabled, b.FileName, b.AssemblyFullName, b.ModuleName, b.Token, b.Kind,
+				b.ILOffset, b.LineNumber, b.MemberName, b.LocationNodeName, b.ViewState);
 
 			public Bookmark ToBookmark() => new() {
 				Name = Name,
@@ -260,8 +323,37 @@ namespace ICSharpCode.ILSpy.Bookmarks
 				Token = Token,
 				Kind = Kind,
 				ILOffset = ILOffset,
+				LineNumber = LineNumber,
 				MemberName = MemberName,
+				LocationNodeName = LocationNodeName,
+				ViewState = ViewState,
 			};
+		}
+
+		sealed class MutexProtector : IDisposable
+		{
+			readonly Mutex mutex;
+
+			public MutexProtector(string name)
+			{
+				mutex = new Mutex(true, name, out bool createdNew);
+				if (createdNew)
+					return;
+
+				try
+				{
+					mutex.WaitOne();
+				}
+				catch (AbandonedMutexException)
+				{
+				}
+			}
+
+			public void Dispose()
+			{
+				mutex.ReleaseMutex();
+				mutex.Dispose();
+			}
 		}
 	}
 }

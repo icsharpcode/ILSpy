@@ -25,8 +25,8 @@ namespace ICSharpCode.ILSpy.AppEnv
 	/// <summary>
 	/// Resolves auxiliary configuration files that live as JSON sidecars next to the main
 	/// <c>ILSpy.xml</c> settings file (the dock layout, the bookmark list, ...). Keeping them
-	/// in the same directory the XML settings live in — local-to-binary on portable installs,
-	/// %APPDATA%/ICSharpCode/ otherwise — makes "delete settings to reset" a single-folder action.
+	/// in the same directory the XML settings live in -- local-to-binary on portable installs,
+	/// %APPDATA%/ICSharpCode/ otherwise -- makes "delete settings to reset" a single-folder action.
 	/// </summary>
 	public static class ConfigurationFiles
 	{

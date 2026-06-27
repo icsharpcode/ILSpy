@@ -245,9 +245,6 @@ namespace ICSharpCode.ILSpy.TextView
 		[ObservableProperty]
 		private Bookmarks.Bookmark? pendingBookmark;
 
-		/// <summary>Toggles a bookmark on the caret line. Set by the text view; used by the bookmarks pane toolbar.</summary>
-		public System.Action? ToggleBookmarkAtCaret { get; set; }
-
 		/// <summary>Moves to the next (true) / previous (false) bookmark within this document. Set by the text view.</summary>
 		public System.Action<bool>? NavigateBookmarkInFile { get; set; }
 

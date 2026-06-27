@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -39,22 +40,42 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	public sealed class BookmarkMargin : AbstractMargin
 	{
 		const double IconSize = 16;
+		static readonly IBrush FallbackBackground = new SolidColorBrush(Color.FromRgb(0xF3, 0xF0, 0xD0));
+		static readonly IBrush FallbackBorder = new SolidColorBrush(Color.FromRgb(0xC8, 0xCD, 0xD3));
 		// One scale-up-and-back bounce, peaking at 1 + PulseAmount halfway through PulseDurationMs.
 		const double PulseAmount = 0.35;
 		const int PulseDurationMs = 600;
 
 		readonly TextView.DecompilerTextView owner;
-		readonly BookmarkManager? manager;
+		BookmarkManager? manager;
 		readonly DispatcherTimer pulseTimer;
 		readonly Stopwatch pulseElapsed = new();
+		bool isAttached;
+		bool subscribedToManager;
 		int pulseLine = -1;
+		int hoverLine = -1;
 
 		public BookmarkMargin(TextView.DecompilerTextView owner)
 		{
 			this.owner = owner;
-			manager = AppEnv.AppComposition.TryGetExport<BookmarkManager>();
 			pulseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
 			pulseTimer.Tick += OnPulseTick;
+		}
+
+		BookmarkManager? Manager {
+			get {
+				manager ??= AppEnv.AppComposition.TryGetExport<BookmarkManager>();
+				EnsureManagerSubscription();
+				return manager;
+			}
+		}
+
+		void EnsureManagerSubscription()
+		{
+			if (!isAttached || subscribedToManager || manager == null)
+				return;
+			manager.Changed += OnBookmarksChanged;
+			subscribedToManager = true;
 		}
 
 		// The manager is a shared singleton, so its Changed event would otherwise keep a closed tab's
@@ -62,17 +83,22 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
 		{
 			base.OnAttachedToVisualTree(e);
-			if (manager != null)
-				manager.Changed += OnBookmarksChanged;
+			isAttached = true;
+			_ = Manager;
 		}
 
 		protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
 		{
 			base.OnDetachedFromVisualTree(e);
-			if (manager != null)
+			isAttached = false;
+			if (manager != null && subscribedToManager)
+			{
 				manager.Changed -= OnBookmarksChanged;
+				subscribedToManager = false;
+			}
 			pulseTimer.Stop();
 			pulseLine = -1;
+			hoverLine = -1;
 		}
 
 		void OnBookmarksChanged(object? sender, EventArgs e) => InvalidateVisual();
@@ -107,7 +133,10 @@ namespace ICSharpCode.ILSpy.Bookmarks
 
 		public override void Render(DrawingContext drawingContext)
 		{
+			DrawBackground(drawingContext);
+
 			var textView = TextView;
+			var manager = Manager;
 			if (manager == null || textView == null || !textView.VisualLinesValid)
 				return;
 
@@ -116,19 +145,32 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			var glyphByLine = new Dictionary<int, IImage>();
 			foreach (var bookmark in manager.Bookmarks)
 			{
-				if (owner.GetLineForBookmark(bookmark) is { } line)
+				if (owner.GetLineForBookmark(bookmark, updateRenderedLine: false) is { } line)
+				{
+					if (bookmark.LineNumber != line)
+					{
+						Dispatcher.UIThread.Post(() => bookmark.UpdateRenderedLineNumber(line), DispatcherPriority.Background);
+					}
 					glyphByLine[line] = bookmark.Enabled ? Images.Bookmark : Images.BookmarkDisable;
+				}
 			}
-			if (glyphByLine.Count == 0)
-				return;
-
 			foreach (var visualLine in textView.VisualLines)
 			{
 				int lineNumber = visualLine.FirstDocumentLine.LineNumber;
-				if (!glyphByLine.TryGetValue(lineNumber, out var glyph))
+				bool hasGlyph = glyphByLine.TryGetValue(lineNumber, out var glyph);
+				bool isHoverPreview = !hasGlyph && lineNumber == hoverLine;
+				if (!hasGlyph && !isHoverPreview)
 					continue;
 				double top = visualLine.GetTextLineVisualYPosition(visualLine.TextLines[0], VisualYPosition.TextTop) - textView.VerticalOffset;
 				var rect = new Rect(0, top, IconSize, IconSize);
+				glyph ??= Images.Bookmark;
+
+				if (isHoverPreview)
+				{
+					using (drawingContext.PushOpacity(0.35))
+						drawingContext.DrawImage(glyph, rect);
+					continue;
+				}
 
 				double scale = lineNumber == pulseLine ? CurrentPulseScale() : 1.0;
 				if (scale != 1.0)
@@ -146,18 +188,71 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			}
 		}
 
+		void DrawBackground(DrawingContext drawingContext)
+		{
+			// The filled background keeps the empty gutter hit-testable so the first click can
+			// create a bookmark and so hover previews work before any glyph has been drawn.
+			var bounds = new Rect(Bounds.Size);
+			drawingContext.DrawRectangle(GetBrush("ILSpy.BookmarkGutterBackground", FallbackBackground), null, bounds);
+			var border = GetBrush("ILSpy.BookmarkGutterBorder", FallbackBorder);
+			double x = Math.Max(0, Bounds.Width - 0.5);
+			drawingContext.DrawLine(new Pen(border, 1), new Point(x, 0), new Point(x, Bounds.Height));
+		}
+
+		IBrush GetBrush(string key, IBrush fallback)
+		{
+			return this.TryFindResource(key, ActualThemeVariant, out var resource) && resource is IBrush brush
+				? brush
+				: fallback;
+		}
+
 		protected override void OnPointerPressed(PointerPressedEventArgs e)
 		{
 			base.OnPointerPressed(e);
 			var textView = TextView;
 			if (e.Handled || textView == null)
 				return;
+			// Only the left button toggles. A right- or middle-click in the gutter must not
+			// add or remove a bookmark: it makes accidental deletion easy and would clash with
+			// a future gutter context menu.
+			if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+				return;
 			double y = e.GetPosition(textView).Y + textView.VerticalOffset;
 			var visualLine = textView.GetVisualLineFromVisualTop(y);
 			if (visualLine == null)
 				return;
 			owner.ToggleBookmarkAtLine(visualLine.FirstDocumentLine.LineNumber);
+			InvalidateVisual();
 			e.Handled = true;
+		}
+
+		protected override void OnPointerMoved(PointerEventArgs e)
+		{
+			base.OnPointerMoved(e);
+			var textView = TextView;
+			int newHoverLine = -1;
+			if (textView != null)
+			{
+				double y = e.GetPosition(textView).Y + textView.VerticalOffset;
+				var visualLine = textView.GetVisualLineFromVisualTop(y);
+				if (visualLine != null && owner.CanToggleBookmarkAtLine(visualLine.FirstDocumentLine.LineNumber))
+					newHoverLine = visualLine.FirstDocumentLine.LineNumber;
+			}
+			SetHoverLine(newHoverLine);
+		}
+
+		protected override void OnPointerExited(PointerEventArgs e)
+		{
+			base.OnPointerExited(e);
+			SetHoverLine(-1);
+		}
+
+		void SetHoverLine(int line)
+		{
+			if (hoverLine == line)
+				return;
+			hoverLine = line;
+			InvalidateVisual();
 		}
 	}
 }

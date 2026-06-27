@@ -70,7 +70,13 @@ public class BookmarkAnchoringTests
 		body.Should().NotBeNull("statement lines must produce a body anchor");
 		token.Should().NotBeNull("definition lines must produce a token anchor");
 
-		// Line 1 is the "// <assembly name>" comment: neither a statement nor a definition.
-		BookmarkAnchoring.CreateForLine(debugInfo, output.References, document, 1).Should().BeNull();
+
+		// Line 1 is the "// <assembly name>" comment: neither a statement nor a definition,
+		// so it falls back to the visible line in the current decompiled document.
+		var fallback = BookmarkAnchoring.CreateForLine(debugInfo, output.References, document, 1, type);
+		fallback.Should().NotBeNull();
+		fallback!.Kind.Should().Be(BookmarkKind.Line);
+		fallback.LineNumber.Should().Be(1);
+		fallback.Token.Should().Be((uint)System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(type.MetadataToken));
 	}
 }

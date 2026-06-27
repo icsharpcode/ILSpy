@@ -18,10 +18,9 @@
 
 using System.Composition;
 using System.IO;
-using System.Reflection.Metadata.Ecma335;
+using System.Linq;
 using System.Threading.Tasks;
 
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
@@ -30,9 +29,9 @@ namespace ICSharpCode.ILSpy.Bookmarks
 {
 	/// <summary>
 	/// Navigates to a bookmark's location: it makes sure the assembly is loaded (loading it from
-	/// disk if it dropped out of the list), resolves the token to an entity, selects the matching
-	/// tree node, and asks the text view to scroll to the exact line once the document is shown. A
-	/// bookmark whose assembly is gone (or whose token no longer matches) offers to remove itself.
+	/// disk if it dropped out of the list), restores the captured tree node, and asks the text view
+	/// to scroll to the exact line once the document is shown. A bookmark whose assembly is gone
+	/// offers to remove itself.
 	/// </summary>
 	[Export]
 	[Shared]
@@ -64,35 +63,16 @@ namespace ICSharpCode.ILSpy.Bookmarks
 				loaded = list.OpenAssembly(bookmark.FileName);
 			}
 
-			if (await loaded.GetMetadataFileOrNullAsync() == null
-				|| loaded.GetTypeSystemOrNull()?.MainModule is not MetadataModule mainModule)
+			if (await loaded.GetMetadataFileOrNullAsync() == null)
 			{
 				await OfferRemoveAsync(bookmark);
 				return;
 			}
 
-			IEntity? entity = null;
-			try
-			{
-				entity = mainModule.ResolveEntity(MetadataTokens.EntityHandle((int)bookmark.Token));
-			}
-			catch
-			{
-				// A malformed token throws inside the resolver; treated as "not found" below.
-			}
-
-			// The assembly is present, but the token no longer resolves -- e.g. the file on disk was
-			// rebuilt and the tokens shifted. That is not the "assembly missing" case, so abort
-			// quietly instead of nagging with the removal dialog.
-			if (entity == null)
-				return;
-
-			// Find the nearest navigable tree node: the entity itself, or the closest enclosing type
-			// that has one. Compiler-generated members (local functions, lambdas, their display
-			// classes) have no node of their own, so walk up to the user-visible type containing them.
-			var node = assemblyTree.FindTreeNode(entity);
-			for (var type = entity.DeclaringTypeDefinition; node == null && type != null; type = type.DeclaringTypeDefinition)
-				node = assemblyTree.FindTreeNode(type);
+			// Restore the selected tree node captured with the bookmark when it is still present.
+			var node = bookmark.ViewState?.SelectedTreeNodePath is { Count: > 0 } path
+				? assemblyTree.FindNodeByPath(path.ToArray(), returnBestMatch: false)
+				: null;
 			if (node == null)
 				return;
 
@@ -100,6 +80,11 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			// document (and its IL-offset map) has landed.
 			if (AppComposition.TryGetExport<DockWorkspace>()?.ActiveDecompilerTab is { } tab)
 				tab.PendingBookmark = bookmark;
+			if (bookmark.ViewState?.RenderedLayoutSettings is { } layoutSettings
+				&& AppComposition.TryGetExport<SettingsService>() is { } settingsService)
+			{
+				layoutSettings.ApplyTo(settingsService.DisplaySettings);
+			}
 			assemblyTree.SelectNode(node);
 		}
 

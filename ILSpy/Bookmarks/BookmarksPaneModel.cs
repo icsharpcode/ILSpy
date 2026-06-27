@@ -72,9 +72,6 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		}
 
 		[RelayCommand]
-		void Toggle() => ActiveTab?.ToggleBookmarkAtCaret?.Invoke();
-
-		[RelayCommand]
 		void Next() => NavigateRelative(1);
 
 		[RelayCommand]

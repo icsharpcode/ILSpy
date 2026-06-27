@@ -24,17 +24,23 @@ namespace ICSharpCode.ILSpy.Bookmarks
 {
 	/// <summary>
 	/// Right-click -&gt; Toggle Bookmark in the decompiled C# view. Only shown on a line that can
-	/// actually hold a bookmark (a statement or a definition); the text view decides eligibility.
+	/// hold a bookmark; the text view decides eligibility from the right-clicked text location.
 	/// </summary>
 	[ExportContextMenuEntry(Header = nameof(Resources.BookmarkToggle), Category = nameof(Resources.Editor), Order = 120, Icon = "Images/Bookmark")]
 	[Shared]
 	public sealed class ToggleBookmarkContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
-			=> context.TextView is { } view && view.CanToggleBookmarkAtRightClick;
+			=> context.TextView is { } view
+			&& context.TextLocation is { } offset
+			&& view.CanToggleBookmarkAtOffset(offset);
 
 		public bool IsEnabled(TextViewContext context) => true;
 
-		public void Execute(TextViewContext context) => context.TextView?.ToggleBookmarkAtRightClick();
+		public void Execute(TextViewContext context)
+		{
+			if (context.TextView is { } view && context.TextLocation is { } offset)
+				view.ToggleBookmarkAtOffset(offset);
+		}
 	}
 }
