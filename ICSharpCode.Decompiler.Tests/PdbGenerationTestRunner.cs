@@ -336,6 +336,29 @@ namespace ICSharpCode.Decompiler.Tests
 			Assert.DoesNotThrow(() => decompiler.CreateSequencePoints(syntaxTree));
 		}
 
+		[Test]
+		public async Task PinnedLocalSlot()
+		{
+			// The decompiler models a pinned-region local as a pointer (int*), which never matches the
+			// metadata local signature type (int& pinned). The slot index is still faithful to the IL,
+			// and the type is never written to the PDB, so generating debug info must not assert on the
+			// type difference.
+			string ilFile = Path.Combine(TestCasePath, nameof(PinnedLocalSlot) + ".il");
+			string peFileName = await Tester.AssembleIL(ilFile, AssemblerOptions.Library);
+
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+
+			var syntaxTree = decompiler.DecompileType(new Decompiler.TypeSystem.FullTypeName("C"));
+
+			Assert.DoesNotThrow(() => {
+				var debugInfo = new Decompiler.DebugInfo.DebugInfoGenerator(decompiler.TypeSystem);
+				syntaxTree.AcceptVisitor(debugInfo);
+			});
+		}
+
 		private class TestProgressReporter : IProgress<DecompilationProgress>
 		{
 			private Action<DecompilationProgress> reportFunc;
