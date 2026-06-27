@@ -87,7 +87,20 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				// A node that printed no tokens of its own collapses to a zero-width span here.
 				if (nodesAwaitingStartLocation.Remove(node))
+				{
 					node.StorePrintStart(lastTokenEnd);
+					// EmptyStatement derives StartLocation/EndLocation from its own Location field, which
+					// is otherwise only set when the semicolon token is written. A comment-only empty
+					// statement (e.g. the carrier for a decompiler warning) prints no semicolon, so point
+					// its location at the comment it carries -- already printed by now, so the statement
+					// lines up with the text the reader sees -- rather than leaving it empty.
+					if (node is EmptyStatement emptyStatement)
+					{
+						var trivia = emptyStatement.LeadingTrivia.Concat(emptyStatement.TrailingTrivia)
+							.FirstOrDefault(t => !t.StartLocation.IsEmpty);
+						emptyStatement.Location = trivia != null ? trivia.StartLocation : lastTokenEnd;
+					}
+				}
 				node.StorePrintEnd(lastTokenEnd);
 				System.Diagnostics.Debug.Assert(currentList != null);
 				foreach (var child in currentList)

@@ -5,8 +5,11 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -294,6 +297,43 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			Assert.That(lastFilesWritten, Is.EqualTo(totalFiles));
+		}
+
+		[Test]
+		public async Task PinnedRegionWarning()
+		{
+			// Decompiling this fixture makes DetectPinnedRegions duplicate a block shared by a pinned
+			// region and record a warning. The warning is emitted as an EmptyStatement that carries
+			// only a comment, so it prints no semicolon. Such a statement must still be assigned a text
+			// location, otherwise SequencePointBuilder crashes on the empty location while generating
+			// sequence points for the PDB.
+			string ilFile = Path.Combine(TestCasePath, nameof(PinnedRegionWarning) + ".il");
+			string peFileName = await Tester.AssembleIL(ilFile, AssemblerOptions.Library);
+
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var settings = new DecompilerSettings();
+			var decompiler = new CSharpDecompiler(module, resolver, settings);
+
+			var syntaxTree = decompiler.DecompileType(new Decompiler.TypeSystem.FullTypeName("C"));
+
+			// Locations are recorded while printing, so the tree has to be run through the output
+			// visitor first - exactly as PortablePdbWriter does before calling CreateSequencePoints.
+			var output = new StringWriter();
+			TokenWriter tokenWriter = new TextWriterTokenWriter(output);
+			tokenWriter = TokenWriter.WrapInWriterThatSetsLocationsInAST(tokenWriter);
+			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
+
+			var warningStatement = syntaxTree.Descendants.OfType<EmptyStatement>().SingleOrDefault();
+			Assert.That(warningStatement, Is.Not.Null,
+				"the fixture must produce the warning-carrying EmptyStatement it is testing");
+			var comment = warningStatement.LeadingTrivia.Concat(warningStatement.TrailingTrivia).FirstOrDefault();
+			Assert.That(comment, Is.Not.Null, "the warning statement must carry a comment");
+			Assert.That(comment.StartLocation.IsEmpty, Is.False, "the carried comment must have been printed");
+			Assert.That(warningStatement.StartLocation, Is.EqualTo(comment.StartLocation),
+				"a comment-only EmptyStatement should take the location of the comment it carries");
+			Assert.DoesNotThrow(() => decompiler.CreateSequencePoints(syntaxTree));
 		}
 
 		private class TestProgressReporter : IProgress<DecompilationProgress>

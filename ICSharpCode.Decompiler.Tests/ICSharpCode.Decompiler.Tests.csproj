@@ -163,6 +163,7 @@
 
   <ItemGroup>
     <None Include="TestCases\PdbGen\*.cs" />
+    <None Include="TestCases\PdbGen\PinnedRegionWarning.il" />
   </ItemGroup>
 
   <ItemGroup>
