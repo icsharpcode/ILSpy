@@ -99,6 +99,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return array[GetIndex()] = (array[GetIndex() + 1] = value);
 		}
 
+		public int Sum(Byte16 b)
+		{
+			int num = 0;
+#if EXPECTED_OUTPUT
+			for (int i = 0; i < 16; i++)
+			{
+				byte b2 = b[i];
+				num += b2;
+			}
+#else
+			foreach (byte item in b)
+			{
+				num += item;
+			}
+#endif
+			return num;
+		}
+
 		public void OverloadResolution()
 		{
 			Receiver(GetByte16());
