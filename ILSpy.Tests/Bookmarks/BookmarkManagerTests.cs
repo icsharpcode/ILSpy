@@ -70,7 +70,7 @@ public class BookmarkManagerTests
 		return new BookmarkManager();
 	}
 
-	static Bookmark MakeBookmark(uint token, BookmarkKind kind = BookmarkKind.Token, int ilOffset = 0, string name = "")
+	static Bookmark MakeBookmark(uint token, BookmarkKind kind = BookmarkKind.Token, int ilOffset = 0, string name = "", int lineNumber = 1, string? locationNodeName = null)
 		=> new() {
 			Name = name,
 			FileName = @"C:\asm\Sample.dll",
@@ -79,7 +79,9 @@ public class BookmarkManagerTests
 			Token = token,
 			Kind = kind,
 			ILOffset = ilOffset,
+			LineNumber = lineNumber,
 			MemberName = "Sample.Type.Member",
+			LocationNodeName = locationNodeName,
 		};
 
 	[Test]
@@ -117,6 +119,17 @@ public class BookmarkManagerTests
 	}
 
 	[Test]
+	public void Line_anchors_with_different_visible_lines_are_distinct()
+	{
+		var manager = new BookmarkManager();
+
+		manager.Toggle(MakeBookmark(0x02000001, BookmarkKind.Line, lineNumber: 3));
+		manager.Toggle(MakeBookmark(0x02000001, BookmarkKind.Line, lineNumber: 4));
+
+		manager.Bookmarks.Should().HaveCount(2);
+	}
+
+	[Test]
 	public void Saved_bookmarks_reload_in_a_fresh_manager()
 	{
 		var first = new BookmarkManager();
@@ -130,6 +143,120 @@ public class BookmarkManagerTests
 		reloaded.Token.Should().Be(0x06000001);
 		reloaded.Kind.Should().Be(BookmarkKind.Body);
 		reloaded.ILOffset.Should().Be(4);
+	}
+
+	[Test]
+	public void Saved_line_bookmarks_reload_in_a_fresh_manager()
+	{
+		var first = new BookmarkManager();
+		first.Toggle(MakeBookmark(0x02000001, BookmarkKind.Line, lineNumber: 7, name: "Header", locationNodeName: "Sample.Type"));
+
+		var second = new BookmarkManager();
+
+		second.Bookmarks.Should().ContainSingle();
+		var reloaded = second.Bookmarks[0];
+		reloaded.Kind.Should().Be(BookmarkKind.Line);
+		reloaded.LineNumber.Should().Be(7);
+		reloaded.LocationNodeName.Should().Be("Sample.Type");
+	}
+
+	[Test]
+	public void Saved_bookmarks_reload_their_view_state_payload()
+	{
+		var first = new BookmarkManager();
+		var bookmark = MakeBookmark(0x06000001, name: "With view");
+		bookmark.ViewState = new BookmarkViewState(1, 42, 120.5, 7.25, 100,
+			new[] { new BookmarkFoldingRange(10, 20) }, SelectedTreeNodePath: new[] { "Sample", "Sample.Type" });
+		first.Toggle(bookmark);
+
+		var second = new BookmarkManager();
+
+		second.Bookmarks.Should().ContainSingle();
+		second.Bookmarks[0].ViewState.Should().NotBeNull();
+		second.Bookmarks[0].ViewState!.CaretOffset.Should().Be(42);
+		second.Bookmarks[0].ViewState!.ExpandedFoldings.Should().ContainSingle()
+			.Which.Should().Be(new BookmarkFoldingRange(10, 20));
+		second.Bookmarks[0].ViewState!.SelectedTreeNodePath.Should().Equal("Sample", "Sample.Type");
+	}
+
+	[Test]
+	public void Display_location_shows_node_name_and_line()
+	{
+		var bookmark = MakeBookmark(0x02000001, BookmarkKind.Line, lineNumber: 7, locationNodeName: "Sample.Type.Node");
+		bookmark.ViewState = new BookmarkViewState(1, 42, 120.5, 7.25, null, null,
+			SelectedTreeNodePath: new[] { "Sample", "Sample.Type" });
+
+		bookmark.DisplayLocation.Should().Be("Sample.Type.Node:7");
+	}
+
+	[Test]
+	public void Display_location_uses_resolved_rendered_line_when_it_was_not_stored()
+	{
+		var bookmark = MakeBookmark(0x02000001, BookmarkKind.Token, lineNumber: 0, locationNodeName: "Sample.Type.Node");
+
+		bookmark.DisplayLocation.Should().Be("Sample.Type.Node");
+
+		bookmark.UpdateRenderedLineNumber(59);
+
+		bookmark.LineNumber.Should().Be(59);
+		bookmark.DisplayLocation.Should().Be("Sample.Type.Node:59");
+	}
+
+	[Test]
+	public void Two_managers_adding_different_bookmarks_preserve_both_entries()
+	{
+		var first = new BookmarkManager();
+		var second = new BookmarkManager();
+
+		first.Toggle(MakeBookmark(0x06000001, name: "First"));
+		second.Toggle(MakeBookmark(0x06000002, name: "Second"));
+
+		var reloaded = new BookmarkManager();
+
+		reloaded.Bookmarks.Select(b => b.Name).Should().BeEquivalentTo("First", "Second");
+	}
+
+	[Test]
+	public void Two_managers_editing_the_same_anchor_keep_the_later_value()
+	{
+		var first = new BookmarkManager();
+		first.Toggle(MakeBookmark(0x06000001, name: "Original"));
+		var second = new BookmarkManager();
+
+		first.Bookmarks[0].Name = "First edit";
+		second.Bookmarks[0].Name = "Second edit";
+
+		var reloaded = new BookmarkManager();
+
+		reloaded.Bookmarks.Should().ContainSingle();
+		reloaded.Bookmarks[0].Name.Should().Be("Second edit");
+	}
+
+	[Test]
+	public void Two_managers_remove_and_add_preserve_the_added_bookmark()
+	{
+		var first = new BookmarkManager();
+		first.Toggle(MakeBookmark(0x06000001, name: "Remove me"));
+		var second = new BookmarkManager();
+
+		first.Remove(first.Bookmarks[0]);
+		second.Toggle(MakeBookmark(0x06000002, name: "Keep me"));
+
+		var reloaded = new BookmarkManager();
+
+		reloaded.Bookmarks.Select(b => b.Name).Should().Equal("Keep me");
+	}
+
+	[Test]
+	public void Malformed_bookmark_file_recovers_on_next_update()
+	{
+		File.WriteAllText(Path.Combine(tempDir, "ILSpy.Bookmarks.json"), "not json");
+		var manager = new BookmarkManager();
+
+		manager.Toggle(MakeBookmark(0x06000001, name: "Recovered"));
+
+		var reloaded = new BookmarkManager();
+		reloaded.Bookmarks.Select(b => b.Name).Should().Equal("Recovered");
 	}
 
 	[Test]

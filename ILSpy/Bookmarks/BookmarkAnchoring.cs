@@ -29,44 +29,78 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	/// <summary>
 	/// Turns a clicked line in the decompiled C# view into a <see cref="Bookmark"/> anchor: a line
 	/// that starts a statement becomes an IL-offset body anchor; a definition line becomes a token
-	/// anchor; any other line is not bookmarkable.
+	/// anchor; other displayed lines fall back to their current visible line number.
 	/// </summary>
 	public static class BookmarkAnchoring
 	{
 		/// <summary>
 		/// Builds an unnamed candidate bookmark for <paramref name="line"/>, or null when the line
-		/// is neither a statement nor a definition (e.g. a blank line or a lone brace).
+		/// is outside the current document or no containing entity can be identified.
 		/// </summary>
 		public static Bookmark? CreateForLine(DecompiledDebugInfo? debugInfo,
-			TextSegmentCollection<ReferenceSegment>? references, TextDocument document, int line)
+			TextSegmentCollection<ReferenceSegment>? references, TextDocument document, int line,
+			IEntity? fallbackOwner = null, string? locationNodeName = null)
 		{
+			if (document == null || line < 1 || line > document.LineCount)
+				return null;
+
 			if (debugInfo != null && debugInfo.TryGetBodyAnchor(line, out var method, out var ilOffset))
 			{
 				return new Bookmark {
 					Kind = BookmarkKind.Body,
 					Token = method.Token,
 					ILOffset = ilOffset,
+					LineNumber = line,
 					FileName = method.FileName,
 					AssemblyFullName = method.AssemblyFullName,
 					ModuleName = method.ModuleName,
 					MemberName = method.MemberName,
+					LocationNodeName = locationNodeName,
 				};
 			}
 
-			if (references != null && document != null && line >= 1 && line <= document.LineCount)
+			if (references != null)
 			{
 				var docLine = document.GetLineByNumber(line);
 				foreach (var segment in references.FindOverlappingSegments(docLine.Offset, docLine.Length))
 				{
-					if (segment.IsDefinition && segment.Reference is IEntity entity && CreateForEntity(entity) is { } bookmark)
+					if (segment.IsDefinition && segment.Reference is IEntity entity && CreateForEntity(entity, line, locationNodeName) is { } bookmark)
 						return bookmark;
 				}
 			}
 
+			return CreateForFallbackLine(fallbackOwner ?? FindFirstEntity(references), line, locationNodeName);
+		}
+
+		static IEntity? FindFirstEntity(TextSegmentCollection<ReferenceSegment>? references)
+		{
+			if (references == null)
+				return null;
+			foreach (var segment in references)
+			{
+				if (segment.Reference is IEntity entity)
+					return entity;
+			}
 			return null;
 		}
 
-		static Bookmark? CreateForEntity(IEntity entity)
+		static Bookmark? CreateForFallbackLine(IEntity? entity, int line, string? locationNodeName)
+		{
+			if (entity == null || CreateForEntity(entity, line, locationNodeName) is not { } bookmark)
+				return null;
+			return new Bookmark {
+				Kind = BookmarkKind.Line,
+				Token = bookmark.Token,
+				LineNumber = line,
+				FileName = bookmark.FileName,
+				AssemblyFullName = bookmark.AssemblyFullName,
+				ModuleName = bookmark.ModuleName,
+				MemberName = bookmark.MemberName,
+				LocationNodeName = bookmark.LocationNodeName,
+			};
+		}
+
+		static Bookmark? CreateForEntity(IEntity entity, int line, string? locationNodeName)
 		{
 			var file = entity.ParentModule?.MetadataFile;
 			if (file == null)
@@ -75,10 +109,12 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			return new Bookmark {
 				Kind = BookmarkKind.Token,
 				Token = (uint)MetadataTokens.GetToken(entity.MetadataToken),
+				LineNumber = line,
 				FileName = file.FileName,
 				AssemblyFullName = file.FullName,
 				ModuleName = moduleName,
 				MemberName = entity.FullName,
+				LocationNodeName = locationNodeName,
 			};
 		}
 	}

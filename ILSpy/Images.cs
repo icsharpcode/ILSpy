@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly IImage ShowAll = LoadSvg(nameof(ShowAll));
 
 		// Bookmarks (file names carry dots, so they can't use nameof; "Boomark.Disable" is the
-		// asset's actual — misspelled — file name).
+		// asset's actual -- misspelled -- file name).
 		public static readonly IImage Bookmark = LoadSvg(nameof(Bookmark));
 		public static readonly IImage BookmarkDisable = LoadSvg("Boomark.Disable");
 		public static readonly IImage BookmarkNext = LoadSvg("Bookmark.Next");
