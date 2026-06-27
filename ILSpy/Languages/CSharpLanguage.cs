@@ -33,6 +33,7 @@ using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
@@ -313,11 +314,8 @@ namespace ICSharpCode.ILSpy.Languages
 				CancellationToken = options.CancellationToken,
 				DebugInfoProvider = module.GetDebugInfoOrNull(),
 			};
-			// The Debug Steps pane stops the AST pipeline at a chosen step by re-decompiling with
-			// options.StepLimit = number of AST transforms to keep; pop the rest from the end.
-			// StepLimit is int.MaxValue for a normal decompile, so nothing is removed.
-			while (decompiler.AstTransforms.Count > options.StepLimit)
-				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
+			decompiler.Stepper.StepLimit = options.StepLimit;
+			decompiler.Stepper.IsDebug = options.IsDebug;
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			return decompiler;
@@ -345,25 +343,25 @@ namespace ICSharpCode.ILSpy.Languages
 			{
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition!, methodDefinition.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(methodDefinition));
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler);
 			}
 			else
 			{
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method.MetadataToken), decompiler.TypeSystem);
+				WriteCode(output, options, decompiler.Decompile(method.MetadataToken), decompiler);
 			}
-			OnCSharpDecompiled(output, options);
+			OnCSharpDecompiled(decompiler, output, options);
 		}
 
 		// Implemented only under DEBUG (CSharpLanguage.DebugSteps.cs) to feed the Debug Steps pane;
 		// a no-op partial in Release.
-		partial void OnCSharpDecompiled(ITextOutput output, DecompilationOptions options);
+		partial void OnCSharpDecompiled(CSharpDecompiler decompiler, ITextOutput output, DecompilationOptions options);
 
 		public override void DecompileProperty(IProperty property, ITextOutput output, DecompilationOptions options)
 		{
 			CSharpDecompiler decompiler = BeginDecompile(property, output, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType));
-			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property.MetadataToken), decompiler.TypeSystem);
-			OnCSharpDecompiled(output, options);
+			WriteCode(output, options, decompiler.Decompile(property.MetadataToken), decompiler);
+			OnCSharpDecompiled(decompiler, output, options);
 		}
 
 		public override void DecompileField(IField field, ITextOutput output, DecompilationOptions options)
@@ -372,16 +370,16 @@ namespace ICSharpCode.ILSpy.Languages
 			WriteCommentLine(output, TypeToString(field.DeclaringType));
 			if (field.IsConst)
 			{
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field.MetadataToken), decompiler.TypeSystem);
+				WriteCode(output, options, decompiler.Decompile(field.MetadataToken), decompiler);
 			}
 			else
 			{
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition!, field.IsStatic);
 				var resolvedField = decompiler.TypeSystem.MainModule.GetDefinition((FieldDefinitionHandle)field.MetadataToken);
 				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
-				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler);
 			}
-			OnCSharpDecompiled(output, options);
+			OnCSharpDecompiled(decompiler, output, options);
 		}
 
 		/// <summary>
@@ -408,24 +406,24 @@ namespace ICSharpCode.ILSpy.Languages
 			CSharpDecompiler decompiler = BeginDecompile(extension, output, options);
 			WriteCommentLine(output, TypeToString(commentType,
 				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options.DecompilerSettings, decompiler.DecompileExtension(extension.MetadataToken), decompiler.TypeSystem);
-			OnCSharpDecompiled(output, options);
+			WriteCode(output, options, decompiler.DecompileExtension(extension.MetadataToken), decompiler);
+			OnCSharpDecompiled(decompiler, output, options);
 		}
 
 		public override void DecompileEvent(IEvent ev, ITextOutput output, DecompilationOptions options)
 		{
 			CSharpDecompiler decompiler = BeginDecompile(ev, output, options);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType));
-			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(ev.MetadataToken), decompiler.TypeSystem);
-			OnCSharpDecompiled(output, options);
+			WriteCode(output, options, decompiler.Decompile(ev.MetadataToken), decompiler);
+			OnCSharpDecompiled(decompiler, output, options);
 		}
 
 		public override void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			CSharpDecompiler decompiler = BeginDecompile(type, output, options);
 			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
-			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type.MetadataToken), decompiler.TypeSystem);
-			OnCSharpDecompiled(output, options);
+			WriteCode(output, options, decompiler.Decompile(type.MetadataToken), decompiler);
+			OnCSharpDecompiled(decompiler, output, options);
 		}
 
 		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
@@ -511,7 +509,7 @@ namespace ICSharpCode.ILSpy.Languages
 			SyntaxTree st = options.FullDecompilation
 				? decompiler.DecompileWholeModuleAsSingleFile()
 				: decompiler.DecompileModuleAndAssemblyAttributes();
-			WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
+			WriteCode(output, options, st, decompiler);
 			return null;
 		}
 
@@ -709,14 +707,58 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 		}
 
-		static void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
+		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, CSharpDecompiler decompiler)
 		{
+			var settings = options.DecompilerSettings;
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
-			TokenWriter tokenWriter = new TextTokenWriter(output, settings, typeSystem);
-			if (output is TextView.ISmartTextOutput smartOutput)
+			TokenWriter tokenWriter = new TextTokenWriter(output, settings, decompiler.TypeSystem);
+			if (output is TextView.AvaloniaEditTextOutput avaloniaOutput)
+				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, avaloniaOutput);
+			else if (output is TextView.ISmartTextOutput smartOutput)
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, smartOutput);
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
+			if (output is TextView.AvaloniaEditTextOutput nodeOutput
+				&& TryGetDebugStepHighlightRange(decompiler, options, nodeOutput.NodeLookup, out var range))
+			{
+				nodeOutput.DebugStepHighlight = range;
+			}
+		}
+
+		static bool TryGetDebugStepHighlightRange(CSharpDecompiler decompiler, DecompilationOptions options, TextView.NodeLookup nodeLookup, out TextView.TextRange range)
+		{
+			range = default;
+			if (options.StepLimit == int.MaxValue)
+				return false;
+			if (options.HighlightStep is { } highlightStep)
+			{
+				if (TryGetRange(decompiler.Stepper.GetStepByBeginStep(highlightStep), nodeLookup, out range))
+					return true;
+				if (decompiler.Stepper.LimitReachedStep is { BeginStep: var limitStep } reachedStep
+					&& limitStep == highlightStep)
+				{
+					return TryGetRange(reachedStep, nodeLookup, out range);
+				}
+				return false;
+			}
+			if (TryGetRange(decompiler.Stepper.LimitReachedStep, nodeLookup, out range))
+				return true;
+			if (options.StepLimit > 0)
+				return TryGetRange(decompiler.Stepper.GetStepByBeginStep(options.StepLimit - 1), nodeLookup, out range);
+			return false;
+
+			static bool TryGetRange(Stepper.Node? step, TextView.NodeLookup nodeLookup, out TextView.TextRange range)
+			{
+				range = default;
+				if (step == null)
+					return false;
+				foreach (var candidate in step.ModifiedNodeCandidates)
+				{
+					if (nodeLookup.TryGetRange(candidate, out range))
+						return true;
+				}
+				return step.ModifiedNode != null && nodeLookup.TryGetRange(step.ModifiedNode, out range);
+			}
 		}
 
 		void AddWarningMessage(MetadataFile module, ITextOutput output, string line1, string? line2 = null,

@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitSyntaxTree(syntaxTree);
 			if (context.Settings.FileScopedNamespaces && singleNamespaceDeclaration != null)
 			{
+				context.Step("Use file-scoped namespace", singleNamespaceDeclaration);
 				singleNamespaceDeclaration.IsFileScoped = true;
 			}
 		}
@@ -106,7 +107,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (statement is BlockStatement b && b.Statements.Count == 1 && IsAllowedAsEmbeddedStatement(b.Statements.First(), parent))
 				{
-					statement.ReplaceWith(b.Statements.First().Detach());
+					context.Step("Remove redundant block statement", statement);
+					var innerStatement = b.Statements.First().Detach();
+					statement.ReplaceWith(innerStatement);
+					context.EndStep(innerStatement);
 				}
 				else if (!IsAllowedAsEmbeddedStatement(statement, parent))
 				{
@@ -120,11 +124,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return parent is IfElseStatement && statement.Slot?.Kind == Slots.FalseStatement;
 		}
 
-		static void InsertBlock(Statement statement)
+		void InsertBlock(Statement statement)
 		{
 			if (!(statement is BlockStatement))
 			{
 				var b = new BlockStatement();
+				context.Step("Add block statement", statement);
 				statement.ReplaceWith(b);
 				if (statement is EmptyStatement && !statement.HasChildren)
 				{
@@ -134,6 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					b.Add(statement);
 				}
+				context.EndStep(b);
 			}
 		}
 
@@ -221,6 +227,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			if ((getter.Modifiers & ~movableModifiers) != 0)
 				return;
+			context.Step("Use expression-bodied property", propertyDeclaration);
 			propertyDeclaration.Modifiers |= getter.Modifiers;
 			propertyDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
 			propertyDeclaration.CopyAnnotationsFrom(getter);
@@ -236,6 +243,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			if ((getter.Modifiers & ~movableModifiers) != 0)
 				return;
+			context.Step("Use expression-bodied indexer", indexerDeclaration);
 			indexerDeclaration.Modifiers |= getter.Modifiers;
 			indexerDeclaration.ExpressionBody = m.Get<Expression>("expression").Single().Detach();
 			indexerDeclaration.CopyAnnotationsFrom(getter);

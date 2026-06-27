@@ -49,6 +49,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					string doc = provider.GetDocumentation(entity);
 					if (doc != null)
 					{
+						context.Step("Add XML documentation", entityDecl);
 						InsertXmlDocumentation(entityDecl, new StringReader(doc));
 					}
 				}

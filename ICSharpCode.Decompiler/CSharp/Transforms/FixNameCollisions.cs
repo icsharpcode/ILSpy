@@ -56,6 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (memberNames.Contains(oldName) && symbol is IField { Accessibility: Accessibility.Private })
 					{
 						string newName = PickNewName(memberNames, oldName);
+						context.Step($"Rename field '{oldName}' to '{newName}'", fieldDecl);
 						fieldDecl.Variables.Single().Name = newName;
 						renamedSymbols[symbol] = newName;
 					}
@@ -70,6 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (symbol != null && renamedSymbols.TryGetValue(symbol, out string? newName))
 					{
 						// An IdentifierExpression / MemberReferenceExpression always carries its name identifier.
+						context.Step($"Rename field reference to '{newName}'", node);
 						node.GetChild(Slots.Identifier)!.Name = newName;
 					}
 				}

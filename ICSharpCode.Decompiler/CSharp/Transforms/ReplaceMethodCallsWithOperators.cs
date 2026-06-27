@@ -75,6 +75,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				bool isInExpressionTree = invocationExpression.Ancestors.OfType<LambdaExpression>().Any(
 					lambda => lambda.Annotation<IL.ILFunction>()?.Kind == IL.ILFunctionKind.ExpressionTree);
+				context.Step("Replace String.Concat with +", invocationExpression);
 				Expression arg0 = arguments[0].Detach();
 				Expression arg1 = arguments[1].Detach();
 				if (!isInExpressionTree)
@@ -97,6 +98,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				expr.CopyAnnotationsFrom(invocationExpression);
 				invocationExpression.ReplaceWith(expr);
+				context.EndStep(expr);
 				return;
 			}
 
@@ -107,9 +109,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0]))
 						{
+							context.Step("Replace GetTypeFromHandle with typeof", invocationExpression);
 							Expression target = ((MemberReferenceExpression)arguments[0]).Target;
 							target.CopyInstructionsFrom(invocationExpression);
 							invocationExpression.ReplaceWith(target);
+							context.EndStep(target);
 							return;
 						}
 					}
@@ -147,15 +151,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						method.TypeArguments.Count == 1 &&
 						IsInstantiableTypeParameter(method.TypeArguments[0]))
 					{
-						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
+						context.Step("Replace Activator.CreateInstance with new", invocationExpression);
+						var objectCreate = new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First()));
+						invocationExpression.ReplaceWith(objectCreate);
+						context.EndStep(objectCreate);
 					}
 					break;
 				case "System.Runtime.CompilerServices.RuntimeHelpers.GetSubArray":
 					if (arguments.Length == 2 && context.Settings.Ranges)
 					{
+						context.Step("Replace RuntimeHelpers.GetSubArray with range indexer", invocationExpression);
 						var slicing = new IndexerExpression(arguments[0].Detach(), arguments[1].Detach());
 						slicing.CopyAnnotationsFrom(invocationExpression);
 						invocationExpression.ReplaceWith(slicing);
+						context.EndStep(slicing);
 					}
 					break;
 			}
@@ -164,6 +173,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name, out isChecked, context.Settings);
 			if (bop != null && arguments.Length == 2)
 			{
+				context.Step("Replace operator method with binary operator", invocationExpression);
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				if (isChecked)
 				{
@@ -173,13 +183,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					invocationExpression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
 				}
-				invocationExpression.ReplaceWith(
-					new BinaryOperatorExpression(
-						arguments[0].UnwrapInDirectionExpression(),
-						bop.Value,
-						arguments[1].UnwrapInDirectionExpression()
-					).CopyAnnotationsFrom(invocationExpression)
-				);
+				var binaryOperator = new BinaryOperatorExpression(
+					arguments[0].UnwrapInDirectionExpression(),
+					bop.Value,
+					arguments[1].UnwrapInDirectionExpression()
+				).CopyAnnotationsFrom(invocationExpression);
+				invocationExpression.ReplaceWith(binaryOperator);
+				context.EndStep(binaryOperator);
 				return;
 			}
 			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name, out isChecked, context.Settings);
@@ -199,28 +209,31 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// because it doesn't assign the incremented value to a.
 					if (method.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
 					{
+						context.Step("Replace decimal increment method with arithmetic", invocationExpression);
 						// Legacy csc optimizes "d + 1m" to "op_Increment(d)",
 						// so reverse that optimization here:
-						invocationExpression.ReplaceWith(
-							new BinaryOperatorExpression(
-								arguments[0].UnwrapInDirectionExpression().Detach(),
-								(uop == UnaryOperatorType.Increment ? BinaryOperatorType.Add : BinaryOperatorType.Subtract),
-								new PrimitiveExpression(1m)
-							).CopyAnnotationsFrom(invocationExpression)
-						);
+						var arithmetic = new BinaryOperatorExpression(
+							arguments[0].UnwrapInDirectionExpression().Detach(),
+							(uop == UnaryOperatorType.Increment ? BinaryOperatorType.Add : BinaryOperatorType.Subtract),
+							new PrimitiveExpression(1m)
+						).CopyAnnotationsFrom(invocationExpression);
+						invocationExpression.ReplaceWith(arithmetic);
+						context.EndStep(arithmetic);
 					}
 				}
 				else
 				{
+					context.Step("Replace operator method with unary operator", invocationExpression);
 					arguments[0].Remove(); // detach argument
-					invocationExpression.ReplaceWith(
-						new UnaryOperatorExpression(uop.Value, arguments[0].UnwrapInDirectionExpression()).CopyAnnotationsFrom(invocationExpression)
-					);
+					var unaryOperator = new UnaryOperatorExpression(uop.Value, arguments[0].UnwrapInDirectionExpression()).CopyAnnotationsFrom(invocationExpression);
+					invocationExpression.ReplaceWith(unaryOperator);
+					context.EndStep(unaryOperator);
 				}
 				return;
 			}
 			if (method.Name is "op_Explicit" or "op_CheckedExplicit" && arguments.Length == 1)
 			{
+				context.Step("Replace conversion operator method with cast", invocationExpression);
 				arguments[0].Remove(); // detach argument
 				if (method.Name == "op_CheckedExplicit")
 				{
@@ -230,15 +243,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					invocationExpression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
 				}
-				invocationExpression.ReplaceWith(
-					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType), arguments[0].UnwrapInDirectionExpression())
-						.CopyAnnotationsFrom(invocationExpression)
-				);
+				var cast = new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType), arguments[0].UnwrapInDirectionExpression())
+					.CopyAnnotationsFrom(invocationExpression);
+				invocationExpression.ReplaceWith(cast);
+				context.EndStep(cast);
 				return;
 			}
 			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Slot?.Kind == Slots.Condition)
 			{
-				invocationExpression.ReplaceWith(arguments[0].UnwrapInDirectionExpression());
+				context.Step("Remove op_True from condition", invocationExpression);
+				var condition = arguments[0].UnwrapInDirectionExpression();
+				invocationExpression.ReplaceWith(condition);
+				context.EndStep(condition);
 				return;
 			}
 

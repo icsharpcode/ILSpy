@@ -109,8 +109,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			Id = PaneContentId;
 			Title = "Debug Steps";
-			ShowStateBeforeCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: false));
-			ShowStateAfterCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.EndStep ?? int.MaxValue, isDebug: false));
+			ShowStateBeforeCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: false, SelectedStep?.BeginStep));
+			ShowStateAfterCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.EndStep ?? int.MaxValue, isDebug: false, SelectedStep?.BeginStep));
 			DebugStepCommand = new RelayCommand(() => {
 				// "Debug this step" relies on Stepper.Step calling Debugger.Break() when
 				// step == StepLimit — which is a silent no-op without a debugger attached.
@@ -123,7 +123,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					if (!System.Diagnostics.Debugger.Launch())
 						AppEnv.AppLog.Mark("DebugStep: Debugger.Launch returned false; the upcoming Stepper.Step break is a no-op without a debugger attached.");
 				}
-				RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: true);
+				RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: true, SelectedStep?.BeginStep);
 			});
 		}
 
@@ -222,12 +222,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 			RequestRedecompile(lastSelectedStep, isDebug: false);
 		}
 
-		void RequestRedecompile(int stepLimit, bool isDebug)
+		void RequestRedecompile(int stepLimit, bool isDebug, int? highlightStep = null)
 		{
 			lastSelectedStep = stepLimit;
 			// Composition unavailable in design-time previews; the gesture is a no-op there.
 			var dock = AppComposition.TryGetExport<DockWorkspace>();
-			dock?.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug);
+			dock?.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug, highlightStep);
 		}
 	}
 }

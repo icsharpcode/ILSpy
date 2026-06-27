@@ -183,6 +183,9 @@ namespace ICSharpCode.ILSpy.TextView
 		[ObservableProperty]
 		private DefinitionLookup? definitionLookup;
 
+		[ObservableProperty]
+		private TextRange? debugStepHighlight;
+
 		/// <summary>
 		/// Inline UI elements (<see cref="ISmartTextOutput.AddUIElement"/>), in offset order.
 		/// Fed to <see cref="UIElementGenerator"/> by the text view.
@@ -351,6 +354,7 @@ namespace ICSharpCode.ILSpy.TextView
 		// every run; set non-default by RestartDecompileWithStepLimit before kicking off a
 		// debug-stepper decompile. Set on the UI thread only — no inter-thread access.
 		int pendingStepLimit = int.MaxValue;
+		int? pendingHighlightStep;
 		bool pendingIsDebug;
 
 		/// <summary>
@@ -369,9 +373,10 @@ namespace ICSharpCode.ILSpy.TextView
 		/// is <see cref="int.MaxValue"/>). <paramref name="isDebug"/> toggles the transforms'
 		/// verbose-debug emission. No-op when there's nothing currently being decompiled.
 		/// </summary>
-		public void RestartDecompileWithStepLimit(int stepLimit, bool isDebug)
+		public void RestartDecompileWithStepLimit(int stepLimit, bool isDebug, int? highlightStep = null)
 		{
 			pendingStepLimit = stepLimit;
+			pendingHighlightStep = highlightStep;
 			pendingIsDebug = isDebug;
 			StartDecompile();
 		}
@@ -482,6 +487,7 @@ namespace ICSharpCode.ILSpy.TextView
 				Foldings = null;
 				References = null;
 				DefinitionLookup = null;
+				DebugStepHighlight = null;
 				UIElements = null;
 				Text = string.Empty;
 				IsDecompiling = false;
@@ -508,8 +514,10 @@ namespace ICSharpCode.ILSpy.TextView
 				// stable value, and reset the fields to defaults so the NEXT decompile runs
 				// at full fidelity unless RestartDecompileWithStepLimit sets them again.
 				var stepLimit = pendingStepLimit;
+				var highlightStep = pendingHighlightStep;
 				var isDebug = pendingIsDebug;
 				pendingStepLimit = int.MaxValue;
+				pendingHighlightStep = null;
 				pendingIsDebug = false;
 				var outputLengthLimit = pendingOutputLengthLimit;
 				pendingOutputLengthLimit = DefaultOutputLengthLimit;
@@ -524,6 +532,7 @@ namespace ICSharpCode.ILSpy.TextView
 							decompilerSettings ?? new ICSharpCode.Decompiler.DecompilerSettings()) {
 							CancellationToken = cts.Token,
 							StepLimit = stepLimit,
+							HighlightStep = highlightStep,
 							IsDebug = isDebug,
 						};
 						try
@@ -711,6 +720,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Foldings = output.Foldings;
 			References = output.References;
 			DefinitionLookup = output.DefinitionLookup;
+			DebugStepHighlight = output.DebugStepHighlight;
 			UIElements = output.UIElements;
 			Text = text;
 		}

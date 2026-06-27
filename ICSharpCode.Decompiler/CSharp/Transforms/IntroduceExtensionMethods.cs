@@ -108,10 +108,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			}
 			var method = (IMethod)invocationExpression.GetSymbol()!;
+			bool stepped = false;
 			if (firstArgument is DirectionExpression dirExpr)
 			{
 				if (!context.Settings.RefExtensionMethods || dirExpr.FieldDirection == FieldDirection.Out)
 					return;
+				context.Step("Introduce extension method call", invocationExpression);
+				stepped = true;
 				// A ref/out direction expression always wraps an operand.
 				firstArgument = dirExpr.Expression!;
 				target = firstArgument.GetResolveResult();
@@ -120,17 +123,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			else if (firstArgument is NullReferenceExpression)
 			{
 				Debug.Assert(context.RequiredNamespacesSuperset.Contains(method.Parameters[0].Type.Namespace));
+				context.Step("Introduce extension method call", invocationExpression);
+				stepped = true;
 				// The replacement is a freshly created CastExpression, so the result is non-null.
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()))!;
 			}
 			if (invocationExpression.Target is IdentifierExpression identifierExpression)
 			{
+				if (!stepped)
+					context.Step("Introduce extension method call", invocationExpression);
 				identifierExpression.Detach();
 				memberRefExpr = new MemberReferenceExpression(firstArgument.Detach(), method.Name, identifierExpression.TypeArguments.Detach());
 				invocationExpression.Target = memberRefExpr;
 			}
 			else
 			{
+				if (!stepped)
+					context.Step("Introduce extension method call", invocationExpression);
 				// The target is not an IdentifierExpression, so CanTransformToExtensionMethodCall
 				// matched the MemberReferenceExpression case and memberRefExpr is non-null.
 				memberRefExpr!.Target = firstArgument.Detach();

@@ -124,6 +124,12 @@ namespace ICSharpCode.ILSpy.Languages
 			//this.externAliasKeywordColor = ...;
 		}
 
+		public CSharpHighlightingTokenWriter(TokenWriter decoratedWriter, AvaloniaEditTextOutput textOutput, ILocatable? locatable = null)
+			: this(decoratedWriter, (ISmartTextOutput?)textOutput, locatable)
+		{
+			this.nodeTrackingOutput = textOutput;
+		}
+
 		public override void WriteKeyword(string keyword)
 		{
 			HighlightingColor? color = null;
@@ -496,6 +502,7 @@ namespace ICSharpCode.ILSpy.Languages
 
 		public override void StartNode(AstNode node)
 		{
+			nodeTrackingOutput?.MarkNodeStart(node);
 			nodeStack.Push(node);
 			base.StartNode(node);
 		}
@@ -503,6 +510,7 @@ namespace ICSharpCode.ILSpy.Languages
 		public override void EndNode(AstNode node)
 		{
 			base.EndNode(node);
+			nodeTrackingOutput?.MarkNodeEnd(node);
 			nodeStack.Pop();
 		}
 
@@ -511,6 +519,7 @@ namespace ICSharpCode.ILSpy.Languages
 		int currentColorBegin = -1;
 		readonly ILocatable? locatable;
 		readonly ISmartTextOutput? textOutput;
+		readonly AvaloniaEditTextOutput? nodeTrackingOutput;
 
 		// Wraps a base WriteX call so its output lands inside a highlighting span for the given colour
 		// (or no span when null) -- replacing the begin/end guard each WriteX override used to repeat.
