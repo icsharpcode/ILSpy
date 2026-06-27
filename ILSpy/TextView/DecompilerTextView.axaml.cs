@@ -1265,9 +1265,22 @@ namespace ICSharpCode.ILSpy.TextView
 			debugStepMarks.Add(mark);
 			Editor.TextArea.Caret.Offset = start;
 			Editor.TextArea.Caret.BringCaretToView();
+			Dispatcher.UIThread.Post(() => CenterDocumentOffsetInView(start));
 			CaretHighlightAdorner.DisplayCaretHighlightAnimation(Editor.TextArea);
 		}
 
+		void CenterDocumentOffsetInView(int offset)
+		{
+			if (EditorScrollViewer is not { } scrollViewer || Editor.Document.TextLength == 0)
+				return;
+			offset = Math.Clamp(offset, 0, Editor.Document.TextLength);
+			var line = Editor.Document.GetLineByOffset(offset);
+			var lineHeight = Editor.TextArea.TextView.DefaultLineHeight;
+			if (lineHeight <= 0 || scrollViewer.Viewport.Height <= 0)
+				return;
+			var targetY = Math.Max(0, (line.LineNumber - 1) * lineHeight - (scrollViewer.Viewport.Height - lineHeight) / 2);
+			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, targetY);
+		}
 
 		void ClearDebugStepMarks()
 		{
