@@ -359,6 +359,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (module.Kind != MetadataFile.MetadataFileKind.PortableExecutable
 				&& module.Kind != MetadataFile.MetadataFileKind.WebCIL)
 			{
+				// Standalone metadata-only files (a portable .pdb, or a raw metadata stream)
+				// are entirely metadata, so surface the tables and heaps directly under the
+				// file node rather than nesting them inside a "Metadata" folder.
+				Children.Add(new ICSharpCode.ILSpy.Metadata.MetadataTablesTreeNode(module));
+				Children.Add(new ICSharpCode.ILSpy.Metadata.StringHeapTreeNode(module));
+				Children.Add(new ICSharpCode.ILSpy.Metadata.UserStringHeapTreeNode(module));
+				Children.Add(new ICSharpCode.ILSpy.Metadata.GuidHeapTreeNode(module));
+				Children.Add(new ICSharpCode.ILSpy.Metadata.BlobHeapTreeNode(module));
 				return;
 			}
 
