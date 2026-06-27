@@ -50,10 +50,18 @@ namespace ICSharpCode.Decompiler
 			{
 				if (*ptr == 0x8b && bundleSignature.SequenceEqual(new ReadOnlySpan<byte>(ptr, bundleSignature.Length)))
 				{
-					bundleHeaderOffset = Unsafe.ReadUnaligned<long>(ptr - sizeof(long));
-					if (bundleHeaderOffset > 0 && bundleHeaderOffset < size)
+					// A genuine bundle stores the 8-byte header offset immediately before the
+					// signature, so the signature never appears within the first sizeof(long)
+					// bytes of the file. Without this guard, a crafted file with the signature at
+					// offset 0..7 reads before the start of the (page-aligned, memory-mapped)
+					// buffer, faulting on the preceding unmapped page.
+					if (ptr - data >= sizeof(long))
 					{
-						return true;
+						bundleHeaderOffset = Unsafe.ReadUnaligned<long>(ptr - sizeof(long));
+						if (bundleHeaderOffset > 0 && bundleHeaderOffset < size)
+						{
+							return true;
+						}
 					}
 				}
 			}
@@ -130,6 +138,14 @@ namespace ICSharpCode.Decompiler
 				throw new InvalidDataException($"Unsupported manifest version: {header.MajorVersion}.{header.MinorVersion}");
 			}
 			header.FileCount = reader.ReadInt32();
+			// FileCount is used below to pre-size the entry array. Each entry occupies at least
+			// one byte in the stream, so a count larger than the bytes that remain cannot be
+			// honest; reject it instead of attempting a huge allocation for a crafted manifest.
+			long remainingBytes = stream.Length - stream.Position;
+			if (header.FileCount < 0 || header.FileCount > remainingBytes)
+			{
+				throw new InvalidDataException($"Invalid bundle manifest: FileCount {header.FileCount} exceeds available data.");
+			}
 			header.BundleID = reader.ReadString();
 			if (header.MajorVersion >= 2)
 			{
