@@ -191,7 +191,12 @@ namespace ICSharpCode.Decompiler.DebugInfo
 								metadata.GetOrAddBlob(BuildStateMachineHoistedLocalScopes(function))
 							));
 						}
-						if (function.IsAsync)
+						// Runtime-async methods (.NET 11) are IsAsync from their signature but carry no
+						// state machine, so AsyncAwaitDecompiler never populates AsyncDebugInfo and its
+						// Awaits stays an uninitialized ImmutableArray. They have no yield/resume offsets
+						// to record, so omit stepping information entirely - matching the C# compiler,
+						// which emits none either - rather than build a blob from the default struct.
+						if (function.IsAsync && !function.AsyncDebugInfo.Awaits.IsDefault)
 						{
 							customMethodDebugInfo.Add((methodHandle,
 								metadata.GetOrAddGuid(KnownGuids.MethodSteppingInformation),

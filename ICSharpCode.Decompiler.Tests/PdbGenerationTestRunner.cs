@@ -359,6 +359,40 @@ namespace ICSharpCode.Decompiler.Tests
 			});
 		}
 
+		[Test]
+		public void RuntimeAsync()
+		{
+			// A .NET 11 runtime-async method (MethodImplAsync bit, no MoveNext state machine) is
+			// IsAsync from its signature but never gets AsyncDebugInfo populated. The writer must omit
+			// MethodSteppingInformation for it - the C# compiler emits none either - rather than build
+			// a stepping blob from the default (uninitialized) AsyncDebugInfo and throw an NRE (#3754).
+			string sourceFile = Path.Combine(TestCasePath, nameof(RuntimeAsync) + ".cs");
+			string outputBase = Path.Combine(TestCasePath, nameof(RuntimeAsync) + ".expected");
+			Tester.CompileCSharpWithPdb(outputBase, new Dictionary<string, string> {
+				{ Path.GetFileName(sourceFile), File.ReadAllText(sourceFile) }
+			}, CompilerOptions.EnableRuntimeAsync);
+			string peFileName = outputBase + ".dll";
+
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+
+			using var generatedPdb = new MemoryStream();
+			Assert.DoesNotThrow(() => new PortablePdbWriter { NoLogo = true }
+				.WritePdb(module, decompiler, new DecompilerSettings(), generatedPdb));
+
+			// The runtime-async method must carry no MethodSteppingInformation, matching the compiler.
+			generatedPdb.Position = 0;
+			var reader = MetadataReaderProvider.FromPortablePdbStream(generatedPdb).GetMetadataReader();
+			foreach (var handle in reader.CustomDebugInformation)
+			{
+				var cdi = reader.GetCustomDebugInformation(handle);
+				Assert.That(reader.GetGuid(cdi.Kind), Is.Not.EqualTo(KnownGuids.MethodSteppingInformation),
+					"runtime-async methods have no yield/resume offsets; no stepping information should be emitted");
+			}
+		}
+
 		private class TestProgressReporter : IProgress<DecompilationProgress>
 		{
 			private Action<DecompilationProgress> reportFunc;

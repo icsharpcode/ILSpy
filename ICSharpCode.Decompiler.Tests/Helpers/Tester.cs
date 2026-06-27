@@ -847,9 +847,15 @@ namespace System.Runtime.CompilerServices
 			}
 		}
 
-		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles)
+		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles, CompilerOptions compilerOptions = CompilerOptions.None)
 		{
 			var parseOptions = new CSharpParseOptions(languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
+			if (compilerOptions.HasFlag(CompilerOptions.EnableRuntimeAsync))
+			{
+				// Mirror the out-of-process csc '/features:runtime-async=on' flag so the compiler lowers
+				// async methods to the .NET 11 runtime-async form (MethodImplAsync bit, no state machine).
+				parseOptions = parseOptions.WithFeatures(new[] { new KeyValuePair<string, string>("runtime-async", "on") });
+			}
 
 			List<EmbeddedText> embeddedTexts = new List<EmbeddedText>();
 			List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
