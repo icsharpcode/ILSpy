@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return new InsertedNodeList(a, b);
 			}
 
-			public abstract void Insert();
+			public abstract void Insert(TransformContext context);
 		}
 
 		class InsertedNodeList : InsertedNode
@@ -168,10 +168,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.child2 = child2;
 			}
 
-			public override void Insert()
+			public override void Insert(TransformContext context)
 			{
-				child1.Insert();
-				child2.Insert();
+				child1.Insert(context);
+				child2.Insert(context);
 			}
 		}
 
@@ -186,12 +186,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.isChecked = isChecked;
 			}
 
-			public override void Insert()
+			public override void Insert(TransformContext context)
 			{
+				context.Step(isChecked ? "Add checked expression" : "Add unchecked expression", expression);
+				Expression? replacement;
 				if (isChecked)
-					expression.ReplaceWith(e => new CheckedExpression { Expression = e });
+					replacement = expression.ReplaceWith(e => new CheckedExpression { Expression = e });
 				else
-					expression.ReplaceWith(e => new UncheckedExpression { Expression = e });
+					replacement = expression.ReplaceWith(e => new UncheckedExpression { Expression = e });
+				context.EndStep(replacement);
 			}
 		}
 
@@ -208,11 +211,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.isChecked = isChecked;
 			}
 
-			public override void Insert()
+			public override void Insert(TransformContext context)
 			{
 				// An InsertedBlock with a null start has infinite cost in the search and is never
 				// selected for insertion, so by the time Insert runs firstStatement is non-null.
 				Debug.Assert(firstStatement != null);
+				context.Step(isChecked ? "Add checked block" : "Add unchecked block", firstStatement);
 				BlockStatement newBlock = new BlockStatement();
 				// Move all statements except for the first
 				Statement? next;
@@ -222,12 +226,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					newBlock.Add(stmt.Detach());
 				}
 				// Replace the first statement with the new (un)checked block
-				if (isChecked)
-					firstStatement.ReplaceWith(new CheckedStatement { Body = newBlock });
-				else
-					firstStatement.ReplaceWith(new UncheckedStatement { Body = newBlock });
+				Statement checkedBlock = isChecked
+					? new CheckedStatement { Body = newBlock }
+					: new UncheckedStatement { Body = newBlock };
+				firstStatement.ReplaceWith(checkedBlock);
 				// now also move the first node into the new block
 				newBlock.Statements.InsertAfter(null, firstStatement);
+				context.EndStep(checkedBlock);
 			}
 		}
 		#endregion
@@ -260,11 +265,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Result r = GetResultFromBlock(block);
 				if (context.DecompileRun.Settings.CheckForOverflowUnderflow)
 				{
-					r.NodesToInsertInCheckedContext?.Insert();
+					r.NodesToInsertInCheckedContext?.Insert(context);
 				}
 				else
 				{
-					r.NodesToInsertInUncheckedContext?.Insert();
+					r.NodesToInsertInUncheckedContext?.Insert(context);
 				}
 			}
 		}

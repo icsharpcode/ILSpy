@@ -63,9 +63,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left)
 					&& binary.Right != null && IsImplicitlyConvertible(binary.Right, expectedType))
 				{
-					assignment.Operator = GetAssignmentOperatorForBinaryOperator(binary.Operator);
-					if (assignment.Operator != AssignmentOperatorType.Assign)
+					var newOperator = GetAssignmentOperatorForBinaryOperator(binary.Operator);
+					if (newOperator != AssignmentOperatorType.Assign)
 					{
+						context.Step("Convert assignment to compound assignment", assignment);
+						assignment.Operator = newOperator;
 						// If we found a shorter operator, get rid of the BinaryOperatorExpression:
 						assignment.CopyAnnotationsFrom(binary);
 						assignment.Right = binary.Right;
@@ -88,7 +90,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							type = (assignment.Operator == AssignmentOperatorType.Add) ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement;
 						else
 							type = (assignment.Operator == AssignmentOperatorType.Add) ? UnaryOperatorType.Increment : UnaryOperatorType.Decrement;
-						assignment.ReplaceWith(new UnaryOperatorExpression(type, assignment.Left.Detach()).CopyAnnotationsFrom(assignment));
+						context.Step(type is UnaryOperatorType.Increment or UnaryOperatorType.PostIncrement ? "Convert assignment to increment" : "Convert assignment to decrement", assignment);
+						var unaryOperator = new UnaryOperatorExpression(type, assignment.Left.Detach()).CopyAnnotationsFrom(assignment);
+						assignment.ReplaceWith(unaryOperator);
+						context.EndStep(unaryOperator);
 					}
 				}
 			}

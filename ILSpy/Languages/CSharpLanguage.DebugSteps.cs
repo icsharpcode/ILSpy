@@ -32,18 +32,16 @@ using ICSharpCode.ILSpy.ViewModels;
 namespace ICSharpCode.ILSpy.Languages
 {
 	/// <summary>
-	/// Debug Steps support for the C# language: coarse, one step per AST transform, shown in the
-	/// Debug Steps pane like the ILAst language already does for IL transforms. The step list is
-	/// static -- the C# AST pipeline (<see cref="CSharpDecompiler.GetAstTransforms"/>) is the same
-	/// for every member -- so a selected step's index maps straight onto <see
-	/// cref="DecompilationOptions.StepLimit"/>, which CreateDecompiler turns into the number of AST
-	/// transforms to keep before re-rendering.
+	/// Debug Steps support for the C# language, shown in the Debug Steps pane like the ILAst
+	/// language already does for IL transforms. A full decompile records AST transform groups with
+	/// individual mutation steps inside; a selected step's index is replayed by re-decompiling with <see
+	/// cref="DecompilationOptions.StepLimit"/>.
 	/// </summary>
 	partial class CSharpLanguage : IDebugStepProvider
 	{
-		Stepper? stepper;
+		Stepper stepper = new Stepper();
 
-		public Stepper Stepper => stepper ??= BuildStepper();
+		public Stepper Stepper => stepper;
 
 		public event EventHandler? StepperUpdated;
 
@@ -51,18 +49,7 @@ namespace ICSharpCode.ILSpy.Languages
 		// tree for C#, unlike ILAst's writing-options checkboxes.
 		public object? StepOptions => null;
 
-		// One node per AST transform, in pipeline order. Stepper.Step assigns BeginStep=i /
-		// EndStep=i+1 automatically, so "show state before step i" re-decompiles with StepLimit=i
-		// (run i transforms) and "after" with StepLimit=i+1 -- exactly the cap CreateDecompiler wants.
-		static Stepper BuildStepper()
-		{
-			var s = new Stepper();
-			foreach (var transform in CSharpDecompiler.GetAstTransforms())
-				s.Step(transform.GetType().Name);
-			return s;
-		}
-
-		partial void OnCSharpDecompiled(ITextOutput output, DecompilationOptions options)
+		partial void OnCSharpDecompiled(CSharpDecompiler decompiler, ITextOutput output, DecompilationOptions options)
 		{
 			// The button always shows so the pane is one click away; mirrors the ILAst language.
 			// DockWorkspace is resolved lazily (an ImportingConstructor import would form a MEF
@@ -74,7 +61,7 @@ namespace ICSharpCode.ILSpy.Languages
 			// pane itself) must leave the tree and the user's selection intact.
 			if (options.StepLimit == int.MaxValue)
 			{
-				_ = Stepper;
+				stepper = decompiler.Stepper;
 				StepperUpdated?.Invoke(this, EventArgs.Empty);
 			}
 		}

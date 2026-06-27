@@ -19,9 +19,11 @@
 #nullable enable
 
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -36,6 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public readonly TypeSystemAstBuilder TypeSystemAstBuilder;
 		public readonly DecompilerSettings Settings;
 		internal readonly DecompileRun DecompileRun;
+		public Stepper Stepper { get; set; }
 
 		readonly ITypeResolveContext decompilationContext;
 
@@ -67,6 +70,74 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			this.TypeSystemAstBuilder = typeSystemAstBuilder;
 			this.CancellationToken = decompileRun.CancellationToken;
 			this.Settings = decompileRun.Settings;
+			this.Stepper = new Stepper();
+		}
+
+		/// <summary>
+		/// Call this method immediately before performing a transform step.
+		/// Unlike <c>context.Stepper.Step()</c>, calls to this method are only compiled in debug builds.
+		/// </summary>
+		[Conditional("STEP")]
+		[DebuggerStepThrough]
+		internal void Step(string description, AstNode? near = null)
+		{
+			TrackModifiedNode(Stepper.Step(description, modifiedNode: near), near);
+		}
+
+		[Conditional("STEP")]
+		[DebuggerStepThrough]
+		internal void StepStartGroup(string description, AstNode? near = null)
+		{
+			TrackModifiedNode(Stepper.StartGroup(description, modifiedNode: near), near);
+		}
+
+		[Conditional("STEP")]
+		internal void StepEndGroup(bool keepIfEmpty = false)
+		{
+			Stepper.EndGroup(keepIfEmpty);
+		}
+
+		/// <summary>
+		/// Points the most recently recorded step at the node its mutation produced.
+		/// Call this after a <see cref="Step"/> whose modified node only comes into existence
+		/// during the mutation (e.g. the result of a ReplaceWith or a freshly inserted node).
+		/// </summary>
+		[Conditional("STEP")]
+		internal void EndStep(AstNode? modifiedNode)
+		{
+			if (Stepper.LastStep != null)
+			{
+				Stepper.LastStep.ModifiedNode = modifiedNode;
+				TrackModifiedNode(Stepper.LastStep, modifiedNode, insertFirst: true);
+			}
+		}
+
+		static void TrackModifiedNode(Stepper.Node step, AstNode? modifiedNode, bool insertFirst = false)
+		{
+			if (modifiedNode == null)
+				return;
+			AddCandidate(step, modifiedNode, insertFirst);
+			var marker = new DebugStepMarker();
+			modifiedNode.AddAnnotation(marker);
+			AddCandidate(step, marker, insertFirst: false);
+			for (var parent = modifiedNode.Parent; parent != null; parent = parent.Parent)
+			{
+				AddCandidate(step, parent, insertFirst: false);
+			}
+		}
+
+		static void AddCandidate(Stepper.Node step, object candidate, bool insertFirst)
+		{
+			if (step.ModifiedNodeCandidates.Contains(candidate))
+				return;
+			if (insertFirst)
+				step.ModifiedNodeCandidates.Insert(0, candidate);
+			else
+				step.ModifiedNodeCandidates.Add(candidate);
+		}
+
+		sealed class DebugStepMarker
+		{
 		}
 	}
 }

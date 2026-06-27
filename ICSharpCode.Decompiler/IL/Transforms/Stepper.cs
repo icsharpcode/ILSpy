@@ -54,6 +54,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		public IList<Node> Steps => steps;
+		public Node? LimitReachedStep { get; private set; }
+		public Node? LastStep { get; private set; }
 
 		public int StepLimit { get; set; } = int.MaxValue;
 		public bool IsDebug { get; set; }
@@ -62,6 +64,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			public string Description { get; }
 			public ILInstruction? Position { get; set; }
+			public object? ModifiedNode { get; set; }
+			public IList<object> ModifiedNodeCandidates { get; } = new List<object>();
 			/// <summary>
 			/// BeginStep is inclusive.
 			/// </summary>
@@ -96,39 +100,62 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// May throw <see cref="StepLimitReachedException"/> in debug mode.
 		/// </summary>
 		[DebuggerStepThrough]
-		public void Step(string description, ILInstruction? near = null)
+		public Node Step(string description, ILInstruction? near = null, object? modifiedNode = null)
 		{
-			StepInternal(description, near);
+			return StepInternal(description, near, modifiedNode ?? near);
 		}
 
 		[DebuggerStepThrough]
-		private Node StepInternal(string description, ILInstruction? near)
+		private Node StepInternal(string description, ILInstruction? near, object? modifiedNode)
 		{
+			var stepNode = new Node($"{step}: {description}") {
+				Position = near,
+				ModifiedNode = modifiedNode,
+				BeginStep = step,
+				EndStep = step + 1
+			};
 			if (step == StepLimit)
 			{
+				LimitReachedStep = stepNode;
 				if (IsDebug)
 					Debugger.Break();
 				else
 					throw new StepLimitReachedException();
 			}
-			var stepNode = new Node($"{step}: {description}") {
-				Position = near,
-				BeginStep = step,
-				EndStep = step + 1
-			};
 			var p = groups.PeekOrDefault();
 			if (p != null)
 				p.Children.Add(stepNode);
 			else
 				steps.Add(stepNode);
+			LastStep = stepNode;
 			step++;
 			return stepNode;
 		}
 
 		[DebuggerStepThrough]
-		public void StartGroup(string description, ILInstruction? near = null)
+		public Node StartGroup(string description, ILInstruction? near = null, object? modifiedNode = null)
 		{
-			groups.Push(StepInternal(description, near));
+			var stepNode = StepInternal(description, near, modifiedNode ?? near);
+			groups.Push(stepNode);
+			return stepNode;
+		}
+
+		public Node? GetStepByBeginStep(int beginStep)
+		{
+			return FindStep(steps, beginStep);
+
+			static Node? FindStep(IEnumerable<Node> nodes, int beginStep)
+			{
+				foreach (var node in nodes)
+				{
+					if (node.BeginStep == beginStep)
+						return node;
+					var child = FindStep(node.Children, beginStep);
+					if (child != null)
+						return child;
+				}
+				return null;
+			}
 		}
 
 		public void EndGroup(bool keepIfEmpty = false)
