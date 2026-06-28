@@ -74,6 +74,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			insertionPoint.ReplaceWith(replacement);
 			replacement.FinalInstruction = callToStringAndClear;
 			block.Instructions.RemoveRange(interpolationStart, interpolationEnd - interpolationStart);
+			context.EndStep(replacement);
 		}
 
 		private bool IsKnownCall(Block block, int pos, ILVariable v)

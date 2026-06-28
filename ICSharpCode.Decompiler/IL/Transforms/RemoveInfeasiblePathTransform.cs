@@ -61,7 +61,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchBlock2(br.TargetBlock, s, value, out var exitInst))
 				return false;
 			context.Step("RemoveInfeasiblePath", br);
-			br.ReplaceWith(exitInst.Clone());
+			var newInst = exitInst.Clone();
+			br.ReplaceWith(newInst);
+			context.EndStep(newInst);
 			s.RemoveIfRedundant = true;
 			return true;
 		}

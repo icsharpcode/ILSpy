@@ -132,14 +132,22 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public DynamicConvertInstruction(CSharpBinderFlags binderFlags, IType type, IType? context, ILInstruction argument)
@@ -184,25 +192,33 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write(Name);
-			if (TypeArguments.Count > 0)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write('<');
-				int i = 0;
-				foreach (var typeArg in TypeArguments)
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write(Name);
+				if (TypeArguments.Count > 0)
 				{
-					if (i > 0)
-						output.Write(", ");
-					typeArg.WriteTo(output);
-					i++;
+					output.Write('<');
+					int i = 0;
+					foreach (var typeArg in TypeArguments)
+					{
+						if (i > 0)
+							output.Write(", ");
+						typeArg.WriteTo(output);
+						i++;
+					}
+					output.Write('>');
 				}
-				output.Write('>');
+				WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
 			}
-			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -230,12 +246,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write(Name);
-			WriteArgumentList(output, options, (Target, TargetArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write(Name);
+				WriteArgumentList(output, options, (Target, TargetArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -266,12 +290,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write(Name);
-			WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write(Name);
+				WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -304,12 +336,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write("get_Item");
-			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write("get_Item");
+				WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -336,12 +376,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write("set_Item");
-			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write("set_Item");
+				WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -371,13 +419,21 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			resultType?.WriteTo(output);
-			output.Write(".ctor");
-			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				resultType?.WriteTo(output);
+				output.Write(".ctor");
+				WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => resultType?.GetStackType() ?? StackType.Unknown;
@@ -408,12 +464,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write(Operation.ToString());
-			WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write(Operation.ToString());
+				WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -450,12 +514,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write(Operation.ToString());
-			WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write(Operation.ToString());
+				WriteArgumentList(output, options, (Left, LeftArgumentInfo), (Right, RightArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -497,12 +569,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write(Operation.ToString());
-			WriteArgumentList(output, options, (Operand, OperandArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write(Operation.ToString());
+				WriteArgumentList(output, options, (Operand, OperandArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType {
@@ -544,11 +624,19 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				WriteArgumentList(output, options, Arguments.Zip(ArgumentInfo));
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.O;
@@ -574,13 +662,21 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			WriteBinderFlags(output, options);
-			output.Write(' ');
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				WriteBinderFlags(output, options);
+				output.Write(' ');
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType => StackType.I4;

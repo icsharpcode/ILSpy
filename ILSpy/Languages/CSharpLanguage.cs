@@ -719,45 +719,9 @@ namespace ICSharpCode.ILSpy.Languages
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, smartOutput);
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 			if (output is TextView.AvaloniaEditTextOutput nodeOutput
-				&& TryGetDebugStepHighlightRange(decompiler, options, nodeOutput.NodeLookup, out var range))
+				&& TextView.DebugStepHighlighter.TryResolve(decompiler.Stepper, options.StepLimit, options.HighlightStep, nodeOutput.NodeLookup, out var range))
 			{
 				nodeOutput.DebugStepHighlight = range;
-			}
-		}
-
-		static bool TryGetDebugStepHighlightRange(CSharpDecompiler decompiler, DecompilationOptions options, TextView.NodeLookup nodeLookup, out TextView.TextRange range)
-		{
-			range = default;
-			if (options.StepLimit == int.MaxValue)
-				return false;
-			if (options.HighlightStep is { } highlightStep)
-			{
-				if (TryGetRange(decompiler.Stepper.GetStepByBeginStep(highlightStep), nodeLookup, out range))
-					return true;
-				if (decompiler.Stepper.LimitReachedStep is { BeginStep: var limitStep } reachedStep
-					&& limitStep == highlightStep)
-				{
-					return TryGetRange(reachedStep, nodeLookup, out range);
-				}
-				return false;
-			}
-			if (TryGetRange(decompiler.Stepper.LimitReachedStep, nodeLookup, out range))
-				return true;
-			if (options.StepLimit > 0)
-				return TryGetRange(decompiler.Stepper.GetStepByBeginStep(options.StepLimit - 1), nodeLookup, out range);
-			return false;
-
-			static bool TryGetRange(Stepper.Node? step, TextView.NodeLookup nodeLookup, out TextView.TextRange range)
-			{
-				range = default;
-				if (step == null)
-					return false;
-				foreach (var candidate in step.ModifiedNodeCandidates)
-				{
-					if (nodeLookup.TryGetRange(candidate, out range))
-						return true;
-				}
-				return step.ModifiedNode != null && nodeLookup.TryGetRange(step.ModifiedNode, out range);
 			}
 		}
 

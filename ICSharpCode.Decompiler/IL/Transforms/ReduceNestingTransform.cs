@@ -195,7 +195,9 @@ namespace ICSharpCode.Decompiler.IL
 					return;
 
 				context.Step("Replace leave with keyword exit", ifInst.TrueInst);
-				block.Instructions.Last().ReplaceWith(keywordExit.Clone());
+				var keywordExitClone = keywordExit.Clone();
+				block.Instructions.Last().ReplaceWith(keywordExitClone);
+				context.EndStep(keywordExitClone);
 			}
 
 			ConditionDetection.InvertIf(block, ifInst, context);
@@ -234,7 +236,9 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					Debug.Assert(ifInst.TrueInst is Leave);
 					context.Step("Replace leave with keyword exit", ifInst.TrueInst);
-					ifInst.TrueInst.ReplaceWith(exitInst.Clone());
+					var exitClone = exitInst.Clone();
+					ifInst.TrueInst.ReplaceWith(exitClone);
+					context.EndStep(exitClone);
 				}
 				return true;
 			}
@@ -430,7 +434,9 @@ namespace ICSharpCode.Decompiler.IL
 			if (!block.HasFlag(InstructionFlags.EndPointUnreachable))
 			{
 				context.Step("Duplicate block exit", fallthroughExit);
-				block.Instructions.Add(fallthroughExit.Clone());
+				var exitClone = fallthroughExit.Clone();
+				block.Instructions.Add(exitClone);
+				context.EndStep(exitClone);
 			}
 		}
 

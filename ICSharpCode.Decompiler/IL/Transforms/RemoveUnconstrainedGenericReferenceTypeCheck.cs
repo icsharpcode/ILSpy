@@ -140,6 +140,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				argument.ReplaceWith(expr);
 			}
 			block.Instructions.RemoveRange(startPos, containingStmt.ChildIndex - startPos);
+			context.EndStep(containingStmt);
 		}
 	}
 }

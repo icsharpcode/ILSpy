@@ -60,6 +60,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (lifted != null)
 			{
 				ifInst.ReplaceWith(lifted);
+				context.EndStep(lifted);
 				return true;
 			}
 			return false;
@@ -80,6 +81,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (lifted != null)
 			{
 				bni.ReplaceWith(lifted);
+				context.EndStep(lifted);
 				return true;
 			}
 			return false;
@@ -138,6 +140,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				thenLeave.Value = lifted;
 				ifInst.ReplaceWith(thenLeave);
+				context.EndStep(thenLeave);
 				block.Instructions.Remove(elseLeave);
 				return true;
 			}

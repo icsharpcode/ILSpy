@@ -85,6 +85,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
 							copiedExpr.AddILRange(block.Instructions[i]);
 							block.Instructions[i] = copiedExpr;
+							context.EndStep(copiedExpr);
 						}
 					}
 					else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr, splitVariables, context.Settings))

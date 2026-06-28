@@ -208,13 +208,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								TransformToLocalFunctionReference(info.Definition, newObj);
 								break;
 							case CallInstruction call:
-								TransformToLocalFunctionInvocation(info.Definition.ReducedMethod, call);
+								var callReplacement = TransformToLocalFunctionInvocation(info.Definition.ReducedMethod, call);
+								context.EndStep(callReplacement);
 								break;
 							case LdFtn fnptr:
 								var specializeMethod = info.Definition.ReducedMethod
 									.Specialize(fnptr.Method.Substitution);
 								var replacement = new LdFtn(specializeMethod).WithILRange(fnptr);
 								fnptr.ReplaceWith(replacement);
+								context.EndStep(replacement);
 								break;
 							default:
 								throw new NotSupportedException();
@@ -626,7 +628,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			useSite.Arguments[1].ReplaceWith(replacement);
 		}
 
-		void TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction useSite)
+		Call TransformToLocalFunctionInvocation(LocalFunctionMethod reducedMethod, CallInstruction useSite)
 		{
 			var specializeMethod = reducedMethod.Specialize(useSite.Method.Substitution);
 			bool wasInstanceCall = !useSite.Method.IsStatic;
@@ -656,6 +658,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				replacement.AddILRange(useSite.Arguments[argumentCount - i - 1]);
 			}
 			useSite.ReplaceWith(replacement);
+			return replacement;
 		}
 
 		void DetermineCaptureAndDeclarationScope(LocalFunctionInfo info, ILInstruction useSite)

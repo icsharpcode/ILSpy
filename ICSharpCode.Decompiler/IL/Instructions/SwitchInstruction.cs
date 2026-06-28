@@ -85,26 +85,34 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write("switch");
-			if (IsLifted)
-				output.Write(".lifted");
-			output.Write(' ');
-			Type?.WriteTo(output);
-			output.Write('(');
-			value.WriteTo(output, options);
-			output.Write(") ");
-			output.MarkFoldStart("{...}");
-			output.WriteLine("{");
-			output.Indent();
-			foreach (var section in this.Sections)
+			output.MarkNodeStart(this);
+			try
 			{
-				section.WriteTo(output, options);
-				output.WriteLine();
+				WriteILRange(output, options);
+				output.Write("switch");
+				if (IsLifted)
+					output.Write(".lifted");
+				output.Write(' ');
+				Type?.WriteTo(output);
+				output.Write('(');
+				value.WriteTo(output, options);
+				output.Write(") ");
+				output.MarkFoldStart("{...}");
+				output.WriteLine("{");
+				output.Indent();
+				foreach (var section in this.Sections)
+				{
+					section.WriteTo(output, options);
+					output.WriteLine();
+				}
+				output.Unindent();
+				output.Write('}');
+				output.MarkFoldEnd();
 			}
-			output.Unindent();
-			output.Write('}');
-			output.MarkFoldEnd();
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		protected override int GetChildCount()
@@ -226,27 +234,35 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			if (IsCompilerGeneratedDefaultSection)
-				output.Write("generated.");
-			output.WriteLocalReference("case", this, isDefinition: true);
-			output.Write(' ');
-			if (HasNullLabel)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write("null");
-				if (!Labels.IsEmpty)
+				WriteILRange(output, options);
+				if (IsCompilerGeneratedDefaultSection)
+					output.Write("generated.");
+				output.WriteLocalReference("case", this, isDefinition: true);
+				output.Write(' ');
+				if (HasNullLabel)
 				{
-					output.Write(", ");
+					output.Write("null");
+					if (!Labels.IsEmpty)
+					{
+						output.Write(", ");
+						output.Write(Labels.ToString());
+					}
+				}
+				else
+				{
 					output.Write(Labels.ToString());
 				}
-			}
-			else
-			{
-				output.Write(Labels.ToString());
-			}
-			output.Write(": ");
+				output.Write(": ");
 
-			body.WriteTo(output, options);
+				body.WriteTo(output, options);
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 	}
 }

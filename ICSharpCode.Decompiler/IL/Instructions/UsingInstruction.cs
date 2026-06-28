@@ -42,26 +42,34 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write("using");
-			if (IsAsync)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(".async");
+				WriteILRange(output, options);
+				output.Write("using");
+				if (IsAsync)
+				{
+					output.Write(".async");
+				}
+				if (IsRefStruct)
+				{
+					output.Write(".ref");
+				}
+				output.Write(" (");
+				Variable.WriteTo(output);
+				output.Write(" = ");
+				ResourceExpression.WriteTo(output, options);
+				output.WriteLine(") {");
+				output.Indent();
+				Body.WriteTo(output, options);
+				output.Unindent();
+				output.WriteLine();
+				output.Write("}");
 			}
-			if (IsRefStruct)
+			finally
 			{
-				output.Write(".ref");
+				output.MarkNodeEnd(this);
 			}
-			output.Write(" (");
-			Variable.WriteTo(output);
-			output.Write(" = ");
-			ResourceExpression.WriteTo(output, options);
-			output.WriteLine(") {");
-			output.Indent();
-			Body.WriteTo(output, options);
-			output.Unindent();
-			output.WriteLine();
-			output.Write("}");
 		}
 	}
 }

@@ -110,8 +110,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			int argIndex = arg.ChildIndex;
 			Debug.Assert(call.Arguments[argIndex] == arg);
-			namedArgBlock.Instructions.Insert(call.IsInstanceCall ? 1 : 0, new StLoc(v, arg));
+			var newInst = new StLoc(v, arg);
+			namedArgBlock.Instructions.Insert(call.IsInstanceCall ? 1 : 0, newInst);
 			call.Arguments[argIndex] = new LdLoc(v);
+			context.EndStep(newInst);
 		}
 
 		public void Run(Block block, int pos, StatementTransformContext context)

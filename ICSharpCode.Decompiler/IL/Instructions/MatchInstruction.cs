@@ -276,50 +276,58 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (CheckNotNull)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(".notnull");
-			}
-			if (CheckType)
-			{
-				output.Write(".type[");
-				variable.Type.WriteTo(output);
-				output.Write(']');
-			}
-			if (IsDeconstructCall)
-			{
-				output.Write(".deconstruct[");
-				if (method == null)
-					output.Write("<null>");
-				else
-					method.WriteTo(output);
-				output.Write(']');
-			}
-			if (IsDeconstructTuple)
-			{
-				output.Write(".tuple");
-			}
-			output.Write(' ');
-			output.Write('(');
-			Variable.WriteTo(output);
-			output.Write(" = ");
-			TestedOperand.WriteTo(output, options);
-			output.Write(')');
-			if (SubPatterns.Count > 0)
-			{
-				output.MarkFoldStart("{...}");
-				output.WriteLine("{");
-				output.Indent();
-				foreach (var pattern in SubPatterns)
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (CheckNotNull)
 				{
-					pattern.WriteTo(output, options);
-					output.WriteLine();
+					output.Write(".notnull");
 				}
-				output.Unindent();
-				output.Write('}');
-				output.MarkFoldEnd();
+				if (CheckType)
+				{
+					output.Write(".type[");
+					variable.Type.WriteTo(output);
+					output.Write(']');
+				}
+				if (IsDeconstructCall)
+				{
+					output.Write(".deconstruct[");
+					if (method == null)
+						output.Write("<null>");
+					else
+						method.WriteTo(output);
+					output.Write(']');
+				}
+				if (IsDeconstructTuple)
+				{
+					output.Write(".tuple");
+				}
+				output.Write(' ');
+				output.Write('(');
+				Variable.WriteTo(output);
+				output.Write(" = ");
+				TestedOperand.WriteTo(output, options);
+				output.Write(')');
+				if (SubPatterns.Count > 0)
+				{
+					output.MarkFoldStart("{...}");
+					output.WriteLine("{");
+					output.Indent();
+					foreach (var pattern in SubPatterns)
+					{
+						pattern.WriteTo(output, options);
+						output.WriteLine();
+					}
+					output.Unindent();
+					output.Write('}');
+					output.MarkFoldEnd();
+				}
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
 			}
 		}
 	}

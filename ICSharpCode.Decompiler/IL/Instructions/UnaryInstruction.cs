@@ -52,15 +52,23 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (IsLifted)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(".lifted");
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (IsLifted)
+				{
+					output.Write(".lifted");
+				}
+				output.Write('(');
+				this.Argument.WriteTo(output, options);
+				output.Write(')');
 			}
-			output.Write('(');
-			this.Argument.WriteTo(output, options);
-			output.Write(')');
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 	}
 }

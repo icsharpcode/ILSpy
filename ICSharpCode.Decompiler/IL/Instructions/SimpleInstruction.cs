@@ -26,9 +26,17 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			// the non-custom WriteTo would add useless parentheses
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				// the non-custom WriteTo would add useless parentheses
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 	}
 
@@ -46,15 +54,23 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (Kind != NopKind.Normal)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write("." + Kind.ToString().ToLowerInvariant());
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (Kind != NopKind.Normal)
+				{
+					output.Write("." + Kind.ToString().ToLowerInvariant());
+				}
+				if (!string.IsNullOrEmpty(Comment))
+				{
+					output.Write(" // " + Comment);
+				}
 			}
-			if (!string.IsNullOrEmpty(Comment))
+			finally
 			{
-				output.Write(" // " + Comment);
+				output.MarkNodeEnd(this);
 			}
 		}
 	}
@@ -75,13 +91,21 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (!string.IsNullOrEmpty(Message))
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write("(\"");
-				output.Write(Message);
-				output.Write("\")");
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (!string.IsNullOrEmpty(Message))
+				{
+					output.Write("(\"");
+					output.Write(Message);
+					output.Write("\")");
+				}
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
 			}
 		}
 	}
@@ -103,13 +127,21 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (!string.IsNullOrEmpty(Message))
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write("(\"");
-				output.Write(Message);
-				output.Write("\")");
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (!string.IsNullOrEmpty(Message))
+				{
+					output.Write("(\"");
+					output.Write(Message);
+					output.Write("\")");
+				}
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
 			}
 		}
 	}

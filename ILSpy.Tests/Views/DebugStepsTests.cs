@@ -194,6 +194,72 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
+	public async Task ILAst_DebugStep_Replay_Highlights_Changed_Instruction()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		var blockIL = languageService.Languages.OfType<ILAstLanguage>().Single(l => l.Name == "ILAst");
+		languageService.CurrentLanguage = blockIL;
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Range");
+		vm.AssemblyTreeModel.SelectNode(method);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+		await Waiters.WaitForAsync(
+			() => debugStepsVm.Steps?.Count > 0,
+			description: "DebugStepsPaneModel.Steps to be populated after the ILAst decompile");
+
+		// Replaying an individual mutation step is what surfaces a single IL change; the leaf
+		// step's changed instruction (or a surviving ancestor) must map to a rendered text range.
+		var replayStep = FirstLeafStep(debugStepsVm.Steps!);
+		replayStep.Should().NotBeNull("the ILAst stepper must record individual mutation steps");
+
+		var collectedSteps = debugStepsVm.Steps;
+		var tab = vm.DockWorkspace.ActiveDecompilerTab!;
+
+		tab.RestartDecompileWithStepLimit(replayStep!.BeginStep, isDebug: false, replayStep.BeginStep);
+		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay before a selected step must still emit IL");
+		tab.DebugStepHighlight.Should().NotBeNull("ILAst replay before a selected step must locate the changed instruction");
+		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
+			"a step-limited ILAst replay must not replace the full step tree shown by the pane");
+
+		tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
+		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay after a selected step must still emit IL");
+		tab.DebugStepHighlight.Should().NotBeNull("ILAst replay after a selected step must locate the changed instruction");
+
+		// The first leaf step that acts on a concrete instruction; a step whose Position is null
+		// (e.g. an empty transform group) has nothing to highlight and is not what a user replays.
+		static ICSharpCode.Decompiler.IL.Transforms.Stepper.Node? FirstLeafStep(
+			System.Collections.Generic.IEnumerable<ICSharpCode.Decompiler.IL.Transforms.Stepper.Node> steps)
+		{
+			foreach (var step in steps)
+			{
+				if (step.Children.Count == 0)
+				{
+					if (step.Position != null)
+						return step;
+					continue;
+				}
+				var leaf = FirstLeafStep(step.Children);
+				if (leaf != null)
+					return leaf;
+			}
+			return null;
+		}
+	}
+
+	[AvaloniaTest]
 	public Task ILAst_And_TypedIL_Languages_Are_Registered_In_Debug_Builds()
 	{
 		// Two ILAstLanguage subclasses: BlockILLanguage ("ILAst") drives the stepper,

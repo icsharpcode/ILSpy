@@ -186,6 +186,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.RemoveRange(pos + 1, initializerItemsCount);
 			siblings[insertionPos] = initializerBlock;
 			ILInlining.InlineIfPossible(block, pos, context);
+			context.EndStep(initializerBlock);
 		}
 
 		private static bool TypeContainsInitOnlyProperties(ITypeDefinition? typeDefinition)

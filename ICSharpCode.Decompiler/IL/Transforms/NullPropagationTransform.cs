@@ -130,7 +130,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// testedVar != null ? testedVar.AccessChain : null
 				// => testedVar?.AccessChain
 				IntroduceUnwrap(testedVar, varLoad, mode);
-				return new NullableRewrap(nonNullInst);
+				var result = new NullableRewrap(nonNullInst);
+				context.EndStep(result);
+				return result;
 			}
 			else if (nullInst.MatchDefaultValue(out var type) && type.IsKnownType(KnownTypeCode.NullableOfT))
 			{
@@ -138,7 +140,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// testedVar != null ? testedVar.AccessChain : default(T?)
 				// => testedVar?.AccessChain
 				IntroduceUnwrap(testedVar, varLoad, mode);
-				return new NullableRewrap(nonNullInst);
+				var result = new NullableRewrap(nonNullInst);
+				context.EndStep(result);
+				return result;
 			}
 			else if (!removedRewrapOrNullableCtor && NullableType.IsNonNullableValueType(returnType))
 			{
@@ -147,13 +151,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// => testedVar?.AccessChain ?? nullInst
 				// (only valid if AccessChain returns a non-nullable value)
 				IntroduceUnwrap(testedVar, varLoad, mode);
-				return new NullCoalescingInstruction(
+				var result = new NullCoalescingInstruction(
 					NullCoalescingKind.NullableWithValueFallback,
 					new NullableRewrap(nonNullInst),
 					nullInst
 				) {
 					UnderlyingResultType = nullInst.ResultType
 				};
+				context.EndStep(result);
+				return result;
 			}
 			return null;
 		}
@@ -203,6 +209,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// has changed, but this part of the code was not properly adjusted.
 						throw new NotSupportedException();
 				}
+				context.EndStep(replacement);
 				// Remove the fallback conditions and blocks
 				block.Instructions.RemoveRange(pos + 1, 2);
 				// if the endBlock is only reachable through the current block,
@@ -232,9 +239,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (testedVar != null) { testedVar.AccessChain(); }
 			// => testedVar?.AccessChain();
 			IntroduceUnwrap(testedVar, varLoad, mode);
-			ifInst.ReplaceWith(new NullableRewrap(
+			var replacement = new NullableRewrap(
 				bodyInst
-			).WithILRange(ifInst));
+			).WithILRange(ifInst);
+			ifInst.ReplaceWith(replacement);
+			context.EndStep(replacement);
 		}
 
 		bool IsValidAccessChain(ILVariable testedVar, Mode mode, ILInstruction inst, out ILInstruction finalLoad)

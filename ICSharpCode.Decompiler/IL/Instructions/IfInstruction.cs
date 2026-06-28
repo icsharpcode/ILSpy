@@ -84,37 +84,45 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			if (options.UseLogicOperationSugar)
+			output.MarkNodeStart(this);
+			try
 			{
-				if (MatchLogicAnd(out var lhs, out var rhs))
+				WriteILRange(output, options);
+				if (options.UseLogicOperationSugar)
 				{
-					output.Write("logic.and(");
-					lhs.WriteTo(output, options);
-					output.Write(", ");
-					rhs.WriteTo(output, options);
-					output.Write(')');
-					return;
+					if (MatchLogicAnd(out var lhs, out var rhs))
+					{
+						output.Write("logic.and(");
+						lhs.WriteTo(output, options);
+						output.Write(", ");
+						rhs.WriteTo(output, options);
+						output.Write(')');
+						return;
+					}
+					if (MatchLogicOr(out lhs, out rhs))
+					{
+						output.Write("logic.or(");
+						lhs.WriteTo(output, options);
+						output.Write(", ");
+						rhs.WriteTo(output, options);
+						output.Write(')');
+						return;
+					}
 				}
-				if (MatchLogicOr(out lhs, out rhs))
+				output.Write(OpCode);
+				output.Write(" (");
+				condition.WriteTo(output, options);
+				output.Write(") ");
+				trueInst.WriteTo(output, options);
+				if (falseInst.OpCode != OpCode.Nop)
 				{
-					output.Write("logic.or(");
-					lhs.WriteTo(output, options);
-					output.Write(", ");
-					rhs.WriteTo(output, options);
-					output.Write(')');
-					return;
+					output.Write(" else ");
+					falseInst.WriteTo(output, options);
 				}
 			}
-			output.Write(OpCode);
-			output.Write(" (");
-			condition.WriteTo(output, options);
-			output.Write(") ");
-			trueInst.WriteTo(output, options);
-			if (falseInst.OpCode != OpCode.Nop)
+			finally
 			{
-				output.Write(" else ");
-				falseInst.WriteTo(output, options);
+				output.MarkNodeEnd(this);
 			}
 		}
 
