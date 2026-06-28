@@ -36,13 +36,21 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		readonly MemoryMappedViewAccessor view;
 		readonly long webcilOffset;
+		readonly long viewLength;
+		unsafe byte* basePointer;
 
-		private WebCilFile(string fileName, long webcilOffset, long metadataOffset, MemoryMappedViewAccessor view, ImmutableArray<SectionHeader> sectionHeaders, ImmutableArray<WasmSection> wasmSections, MetadataReaderProvider provider, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
+		private unsafe WebCilFile(string fileName, long webcilOffset, long metadataOffset, MemoryMappedViewAccessor view, ImmutableArray<SectionHeader> sectionHeaders, ImmutableArray<WasmSection> wasmSections, MetadataReaderProvider provider, MetadataReaderOptions metadataOptions = MetadataReaderOptions.Default)
 			: base(MetadataFileKind.WebCIL, fileName, provider, metadataOptions, 0)
 		{
 			this.webcilOffset = webcilOffset;
 			this.MetadataOffset = (int)metadataOffset;
 			this.view = view;
+			this.viewLength = checked((long)view.SafeMemoryMappedViewHandle.ByteLength);
+			// Pin the mapped view once for the lifetime of this instance; SectionData hands out raw
+			// pointers into it, so the pointer must stay valid until Dispose releases it.
+			byte* ptr = null;
+			view.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
+			this.basePointer = ptr;
 			this.SectionHeaders = sectionHeaders;
 			this.WasmSections = wasmSections;
 		}
@@ -125,6 +133,14 @@ namespace ICSharpCode.Decompiler.Metadata
 
 				return null;
 			}
+			catch (Exception ex) when (ex is EndOfStreamException or OverflowException or BadImageFormatException)
+			{
+				// A crafted or truncated module can drive the structural reads (Wasm sections, data
+				// segments, the WebCIL header and RVA translation) past the mapped view or produce an
+				// invalid metadata stream. Treat any such file as "not a WebCIL file" instead of
+				// letting the exception escape the loader.
+				return null;
+			}
 			finally
 			{
 				view?.Dispose();
@@ -190,7 +206,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			int i = 0;
 			foreach (var section in sections)
 			{
-				if (rva >= section.VirtualAddress && rva < section.VirtualAddress + section.VirtualSize)
+				if (rva >= section.VirtualAddress && rva < (long)section.VirtualAddress + section.VirtualSize)
 				{
 					return i;
 				}
@@ -203,12 +219,41 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			foreach (var section in sections)
 			{
-				if (rva >= section.VirtualAddress && rva < section.VirtualAddress + section.VirtualSize)
+				if (rva >= section.VirtualAddress && rva < (long)section.VirtualAddress + section.VirtualSize)
 				{
-					return section.RawDataPtr + (rva - section.VirtualAddress) + webcilOffset;
+					return (long)section.RawDataPtr + (rva - section.VirtualAddress) + webcilOffset;
 				}
 			}
 			throw new BadImageFormatException("RVA not found in any section");
+		}
+
+		// Resolves an RVA to the (file offset, length) of its section's raw data inside the mapped
+		// view, or returns false when no section contains the RVA or the raw-data range falls outside
+		// the view. All arithmetic is widened to long so crafted uint header fields cannot wrap the
+		// range check or narrow into a length that looks valid.
+		internal static bool TryGetSectionDataRange(ImmutableArray<SectionHeader> sectionHeaders, long webcilOffset, long viewLength, int rva, out long offset, out int length)
+		{
+			offset = 0;
+			length = 0;
+			foreach (var section in sectionHeaders)
+			{
+				if (rva >= section.VirtualAddress && rva < (long)section.VirtualAddress + section.VirtualSize)
+				{
+					long delta = (long)rva - section.VirtualAddress;
+					long o = (long)section.RawDataPtr + webcilOffset + delta;
+					// Length is the raw data remaining from the RVA to the end of the section, matching
+					// PEReader.GetSectionData (callers such as GetInitialValue treat SectionData.Length
+					// as the bytes available starting at the RVA). A section whose virtual size exceeds
+					// its raw data can place the RVA past the raw bytes, leaving nothing to read.
+					long remaining = (long)section.RawDataSize - delta;
+					if (o < 0 || remaining < 0 || remaining > int.MaxValue || o > viewLength || remaining > viewLength - o)
+						return false;
+					offset = o;
+					length = (int)remaining;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		public override MethodBodyBlock GetMethodBody(int rva)
@@ -224,14 +269,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public override unsafe SectionData GetSectionData(int rva)
 		{
-			foreach (var section in SectionHeaders)
+			if (TryGetSectionDataRange(SectionHeaders, webcilOffset, viewLength, rva, out long offset, out int length))
 			{
-				if (rva >= section.VirtualAddress && rva < section.VirtualAddress + section.VirtualSize)
-				{
-					byte* ptr = (byte*)0;
-					view.SafeMemoryMappedViewHandle.AcquirePointer(ref ptr);
-					return new SectionData(ptr + section.RawDataPtr + webcilOffset + (rva - section.VirtualAddress), (int)section.RawDataSize);
-				}
+				return new SectionData(basePointer + offset, length);
 			}
 			throw new BadImageFormatException("RVA not found in any section");
 		}
@@ -245,10 +285,17 @@ namespace ICSharpCode.Decompiler.Metadata
 			return new MetadataModule(context.Compilation, this, TypeSystemOptions.Default);
 		}
 
-		protected override void Dispose(bool disposing)
+		protected override unsafe void Dispose(bool disposing)
 		{
 			if (disposing)
+			{
+				if (basePointer != null)
+				{
+					view.SafeMemoryMappedViewHandle.ReleasePointer();
+					basePointer = null;
+				}
 				view.Dispose();
+			}
 			base.Dispose(disposing);
 		}
 
