@@ -289,6 +289,49 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
+	public Task MarkNodeStart_Excludes_Leading_Indentation()
+	{
+		// A node opened at the start of an indented line must record its range from the first real
+		// character, so the debug-step highlight does not extend across the indentation to column 0.
+		var output = new AvaloniaEditTextOutput();
+		output.Indent();
+		output.WriteLine();
+
+		var node = new object();
+		output.MarkNodeStart(node);
+		output.Write("statement;");
+		output.MarkNodeEnd(node);
+
+		output.NodeLookup.TryGetRange(node, out var range).Should().BeTrue();
+		output.GetText().Substring(range.Start, range.Length).Should().Be("statement;");
+		return Task.CompletedTask;
+	}
+
+	[AvaloniaTest]
+	public Task MarkNodeEnd_Records_Nodes_Regardless_Of_Close_Order()
+	{
+		// Node spans are keyed by identity, so closing an outer node before the inner one it still
+		// contains must not discard either range. A stack that popped by position would lose both.
+		var output = new AvaloniaEditTextOutput();
+		var outer = new object();
+		var inner = new object();
+
+		output.MarkNodeStart(outer);
+		output.Write("a(");
+		output.MarkNodeStart(inner);
+		output.Write("b");
+		output.MarkNodeEnd(outer);
+		output.Write(")");
+		output.MarkNodeEnd(inner);
+
+		output.NodeLookup.TryGetRange(outer, out var outerRange).Should().BeTrue();
+		output.GetText().Substring(outerRange.Start, outerRange.Length).Should().Be("a(b");
+		output.NodeLookup.TryGetRange(inner, out var innerRange).Should().BeTrue();
+		output.GetText().Substring(innerRange.Start, innerRange.Length).Should().Be("b)");
+		return Task.CompletedTask;
+	}
+
+	[AvaloniaTest]
 	public Task Pane_Reports_Not_Available_For_Languages_Without_Debug_Steps()
 	{
 		// The step tree only makes sense for IDebugStepProvider languages (C#, ILAst, Typed IL).
