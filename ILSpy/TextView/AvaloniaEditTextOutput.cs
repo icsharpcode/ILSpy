@@ -54,7 +54,10 @@ namespace ICSharpCode.ILSpy.TextView
 		public int LengthLimit { get; set; } = int.MaxValue;
 
 		readonly Stack<(int Offset, HighlightingColor Color)> openSpans = new();
-		readonly Stack<(object Node, int Offset)> openNodes = new();
+		// Keyed by node rather than a stack: node writes are strictly nested today, but keying by
+		// identity means a stray or out-of-order MarkNodeEnd is a clean no-op that can't desync the
+		// remaining open nodes. Each node is written exactly once, so there is no self-nesting.
+		readonly Dictionary<object, int> openNodeStarts = new(ReferenceEqualityComparer.Instance);
 		readonly Stack<(NewFolding Folding, int StartLine)> openFoldings = new();
 		readonly List<NewFolding> foldings = new();
 		int indent;
@@ -290,6 +293,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void BeginSpan(HighlightingColor highlightingColor)
 		{
+			WriteIndentIfNeeded();
 			openSpans.Push((builder.Length, highlightingColor));
 		}
 
@@ -308,17 +312,17 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void MarkNodeStart(object node)
 		{
-			openNodes.Push((node, builder.Length));
+			// Flush a pending indent before capturing the offset so a node opened at the start of a
+			// line records its range from the first real character, not from column 0 across the
+			// leading indentation.
+			WriteIndentIfNeeded();
+			openNodeStarts[node] = builder.Length;
 		}
 
 		public void MarkNodeEnd(object node)
 		{
-			if (openNodes.Count == 0)
-				return;
-			var (currentNode, start) = openNodes.Pop();
-			if (!ReferenceEquals(currentNode, node))
-				return;
-			NodeLookup.AddNode(node, start, builder.Length - start);
+			if (openNodeStarts.Remove(node, out var start))
+				NodeLookup.AddNode(node, start, builder.Length - start);
 		}
 	}
 }
