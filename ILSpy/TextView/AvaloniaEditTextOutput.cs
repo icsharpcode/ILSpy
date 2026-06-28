@@ -180,7 +180,13 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			WriteIndentIfNeeded();
 			int start = builder.Length;
-			var name = omitSuffix ? opCode.Name.TrimEnd('.') : opCode.Name;
+			string name = opCode.Name;
+			if (omitSuffix)
+			{
+				int lastDot = name.LastIndexOf('.');
+				if (lastDot > 0)
+					name = name.Remove(lastDot + 1);
+			}
 			builder.Append(name);
 			References.Add(new ReferenceSegment {
 				StartOffset = start,
