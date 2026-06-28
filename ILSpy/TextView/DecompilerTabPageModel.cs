@@ -401,12 +401,12 @@ namespace ICSharpCode.ILSpy.TextView
 		/// is <see cref="int.MaxValue"/>). <paramref name="isDebug"/> toggles the transforms'
 		/// verbose-debug emission. No-op when there's nothing currently being decompiled.
 		/// </summary>
-		public void RestartDecompileWithStepLimit(int stepLimit, bool isDebug, int? highlightStep = null)
+		public Task RestartDecompileWithStepLimit(int stepLimit, bool isDebug, int? highlightStep = null)
 		{
 			pendingStepLimit = stepLimit;
 			pendingHighlightStep = highlightStep;
 			pendingIsDebug = isDebug;
-			StartDecompile();
+			return StartDecompile();
 		}
 
 		/// <summary>Re-runs the current decompile with a larger output-length limit (the "Display code
@@ -463,16 +463,20 @@ namespace ICSharpCode.ILSpy.TextView
 			ICSharpCode.ILSpy.Commands.SaveCodeHelper.SaveNodeAsync(node, languageService, dockWorkspace).HandleExceptions();
 		}
 
-		// Fire-and-forget wrapper around DecompileAsync that observes the resulting Task.
-		// Without this, exceptions raised by the dispatched property setters (e.g. the
-		// PropertyChanged subscribers in DecompilerTextView) become UnobservedTaskException
-		// faults that the finalizer thread rethrows much later, hiding the originating bug.
-		void StartDecompile()
+		// Starts a decompile and returns the Task that completes once the output has been applied,
+		// so callers (e.g. the Debug Steps replay, and tests) can await completion deterministically
+		// instead of polling IsDecompiling/Text. A fault-observing continuation is attached so that
+		// exceptions raised by the dispatched property setters (e.g. the PropertyChanged subscribers
+		// in DecompilerTextView) don't become UnobservedTaskException faults the finalizer thread
+		// rethrows much later, hiding the originating bug.
+		Task StartDecompile()
 		{
-			pendingDecompile = DecompileAsync().ContinueWith(t => {
+			var decompile = DecompileAsync();
+			pendingDecompile = decompile.ContinueWith(t => {
 				if (t.Exception is { } ex)
 					System.Diagnostics.Debug.WriteLine($"DecompileAsync faulted: {ex.Flatten()}");
 			}, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously);
+			return decompile;
 		}
 
 		/// <summary>
