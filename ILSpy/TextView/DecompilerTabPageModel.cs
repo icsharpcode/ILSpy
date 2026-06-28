@@ -529,7 +529,12 @@ namespace ICSharpCode.ILSpy.TextView
 				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Task.Run decompile body ({nodes.Count} node(s), language={language.Name})"))
 				{
 					(output, _) = await Task.Run(() => {
-						var output = new AvaloniaEditTextOutput { LengthLimit = outputLengthLimit };
+						var output = new AvaloniaEditTextOutput {
+							LengthLimit = outputLengthLimit,
+							// Only a step-limited replay resolves a debug-step highlight; full-fidelity
+							// decompiles skip resolution, so skip the node-span bookkeeping there too.
+							EnableNodeTracking = stepLimit != int.MaxValue,
+						};
 						// decompilerSettings is null only in design-time / minimal test hosts
 						// without composition; fall back to defaults there.
 						var options = new DecompilationOptions(

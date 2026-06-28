@@ -86,6 +86,15 @@ namespace ICSharpCode.ILSpy.TextView
 
 		internal NodeLookup NodeLookup { get; } = new();
 
+		/// <summary>
+		/// When false, <see cref="MarkNodeStart"/>/<see cref="MarkNodeEnd"/> are no-ops and no node
+		/// spans are recorded. Node tracking only feeds debug-step highlight resolution, which is
+		/// skipped for full-fidelity decompiles, so normal browsing leaves this off to avoid the
+		/// per-node stack and <see cref="NodeLookup"/> bookkeeping. The decompiler tab turns it on
+		/// for step-limited replay runs.
+		/// </summary>
+		public bool EnableNodeTracking { get; set; }
+
 		internal TextRange? DebugStepHighlight { get; set; }
 
 		readonly List<KeyValuePair<int, Func<Control>>> uiElements = new();
@@ -286,16 +295,22 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void MarkNodeStart(object node)
 		{
+			if (!EnableNodeTracking)
+				return;
 			openNodes.Push((node, builder.Length));
 		}
 
 		public void MarkNodeEnd(object node)
 		{
-			if (openNodes.Count == 0)
+			if (!EnableNodeTracking || openNodes.Count == 0)
 				return;
-			var (currentNode, start) = openNodes.Pop();
+			// Peek before popping: a mismatched start/end pair (out-of-order MarkNodeEnd) must not
+			// discard an unrelated open node, which would permanently desync the stack and drop every
+			// subsequent span. Only consume the entry when it actually belongs to this node.
+			var (currentNode, start) = openNodes.Peek();
 			if (!ReferenceEquals(currentNode, node))
 				return;
+			openNodes.Pop();
 			NodeLookup.AddNode(node, start, builder.Length - start);
 		}
 	}
