@@ -36,23 +36,55 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
 			using var fileReader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
 			// Read compressed file header
+			if (stream.Length < sizeof(uint))
+				return null;
 			var magic = fileReader.ReadUInt32();
 			if (magic != CompressedDataMagic)
 				return null;
+			// The magic identifies this as an XALZ module, so it must carry the full 12-byte
+			// header: magic, descriptor table index, and uncompressed length. A shorter stream is
+			// a truncated/corrupt module; fail consistently instead of letting a later read throw
+			// EndOfStreamException.
+			if (stream.Length < 3 * sizeof(uint))
+				throw new InvalidDataException("Invalid Xamarin compressed module: truncated header.");
 			_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
-			int uncompressedLength = (int)fileReader.ReadUInt32();
-			int compressedLength = (int)stream.Length;  // Ensure we read all of compressed data
+			uint declaredUncompressedLength = fileReader.ReadUInt32();
+			// The compressed payload is whatever follows the 12-byte header, not the whole file.
+			long compressedLength = stream.Length - stream.Position;
+			// The declared uncompressed length is attacker-controlled. Reject implausible values
+			// before renting buffers: a negative/oversized size (both lengths are sized for
+			// int-based ArrayPool and MemoryStream), or one larger than any LZ4 block of this
+			// payload could possibly produce. An LZ4 block expands by at most 255x, so a smaller
+			// payload claiming a larger output is a malformed or decompression-bomb header.
+			const long MaxLZ4ExpansionRatio = 255;
+			if (compressedLength <= 0 || compressedLength > int.MaxValue
+				|| declaredUncompressedLength == 0
+				|| declaredUncompressedLength > int.MaxValue
+				|| declaredUncompressedLength > compressedLength * MaxLZ4ExpansionRatio)
+			{
+				throw new InvalidDataException("Invalid Xamarin compressed module: declared length is out of range.");
+			}
+			int uncompressedLength = (int)declaredUncompressedLength;
+			int compressed = (int)compressedLength;
 			ArrayPool<byte> pool = ArrayPool<byte>.Shared;
-			var src = pool.Rent(compressedLength);
+			var src = pool.Rent(compressed);
 			var dst = pool.Rent(uncompressedLength);
 			try
 			{
 				// fileReader stream position is now at compressed module data
-				await stream.ReadAsync(src, 0, compressedLength).ConfigureAwait(false);
-				// Decompress
-				LZ4Codec.Decode(src, 0, compressedLength, dst, 0, uncompressedLength);
-				// Load module from decompressed data buffer
-				using (var uncompressedStream = new MemoryStream(dst, writable: false))
+				await stream.ReadExactlyAsync(src, 0, compressed).ConfigureAwait(false);
+				// Decompress; Decode returns the number of bytes written, or negative on failure.
+				// The header declares the exact decompressed size, so anything other than an exact
+				// match (a negative error code or a short, truncated decode) means the payload is
+				// corrupt and must not be parsed as a partial module.
+				int decodedLength = LZ4Codec.Decode(src, 0, compressed, dst, 0, uncompressedLength);
+				if (decodedLength != uncompressedLength)
+				{
+					throw new InvalidDataException("Invalid Xamarin compressed module: decompressed size does not match the header.");
+				}
+				// Load module from the decompressed data buffer, sliced to the declared length (the
+				// rented buffer may be larger than the decompressed data).
+				using (var uncompressedStream = new MemoryStream(dst, 0, uncompressedLength, writable: false))
 				{
 					MetadataReaderOptions options = context.ApplyWinRTProjections
 						? MetadataReaderOptions.ApplyWindowsRuntimeProjections
