@@ -230,7 +230,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// Assign the ranges of the stloc instruction:
 					stloc.Value.AddILRange(stloc);
 					// Remove the stloc, but keep the inner expression
-					stloc.ReplaceWith(stloc.Value);
+					var keptExpression = stloc.Value;
+					stloc.ReplaceWith(keptExpression);
+					context.EndStep(keptExpression);
 					return true;
 				}
 			}
@@ -288,17 +290,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Assign the ranges of the ldloc instruction:
 				inlinedExpression.AddILRange(loadInst);
 
+				ILInstruction inlinedResult;
 				if (loadInst.OpCode == OpCode.LdLoca)
 				{
 					// it was an ldloca instruction, so we need to use the pseudo-opcode 'addressof'
 					// to preserve the semantics of the compiler-generated temporary
 					Debug.Assert(((LdLoca)loadInst).Variable == v);
-					loadInst.ReplaceWith(new AddressOf(inlinedExpression, v.Type));
+					inlinedResult = new AddressOf(inlinedExpression, v.Type);
+					loadInst.ReplaceWith(inlinedResult);
 				}
 				else
 				{
+					inlinedResult = inlinedExpression;
 					loadInst.ReplaceWith(inlinedExpression);
 				}
+				context.EndStep(inlinedResult);
 				return true;
 			}
 			return false;

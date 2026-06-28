@@ -115,6 +115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			newInst.AddILRange(inst);
 			newInst.Arguments.ReplaceList(inst.Arguments);
 			inst.ReplaceWith(newInst);
+			context.EndStep(newInst);
 		}
 
 		static bool IsDefinedInCurrentOrOuterClass(IMethod method, ITypeDefinition declaringTypeDefinition)

@@ -102,6 +102,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("CachedDelegateInitializationWithField", inst);
 			usages[0].ReplaceWith(value);
+			context.EndStep(value);
 			return true;
 		}
 
@@ -141,6 +142,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("CachedDelegateInitializationWithLocal", inst);
 			((Block)otherStore.Parent).Instructions.Remove(otherStore);
 			inst.ReplaceWith(storeInst);
+			context.EndStep(storeInst);
 			return true;
 		}
 
@@ -247,7 +249,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationVB", inst);
-			inst.ReplaceWith(new StLoc(s, delegateConstruction));
+			var stloc = new StLoc(s, delegateConstruction);
+			inst.ReplaceWith(stloc);
+			context.EndStep(stloc);
 			return true;
 		}
 
@@ -318,7 +322,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationVBWithClosure", inst);
-			inst.ReplaceWith(new StLoc(s, delegateConstruction));
+			var stloc = new StLoc(s, delegateConstruction);
+			inst.ReplaceWith(stloc);
+			context.EndStep(stloc);
 			return true;
 		}
 	}

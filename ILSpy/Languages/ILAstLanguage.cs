@@ -188,6 +188,11 @@ namespace ICSharpCode.ILSpy.Languages
 			});
 			output.WriteLine();
 			il.WriteTo(output, DebugStepsPaneModel.WritingOptions);
+			if (output is TextView.AvaloniaEditTextOutput nodeOutput
+				&& TextView.DebugStepHighlighter.TryResolve(context.Stepper, options.StepLimit, options.HighlightStep, nodeOutput.NodeLookup, out var range))
+			{
+				nodeOutput.DebugStepHighlight = range;
+			}
 		}
 	}
 }

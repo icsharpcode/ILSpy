@@ -62,8 +62,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// if (comp(isinst exceptionType(ldloc exceptionVar) != ldnull)) br whenConditionBlock
 						// br falseBlock
 						context.Step($"Detected catch-when for {catchBlock.Variable.Name}", instructions[0]);
-						instructions[0].ReplaceWith(new Branch(whenConditionBlock));
+						var branch = new Branch(whenConditionBlock);
+						instructions[0].ReplaceWith(branch);
 						instructions.RemoveAt(1);
+						context.EndStep(branch);
 						container.SortBlocks(deleteUnreachableBlocks: true);
 					}
 

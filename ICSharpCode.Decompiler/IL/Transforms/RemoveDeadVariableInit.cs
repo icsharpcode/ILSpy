@@ -69,7 +69,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						else
 						{
-							stloc.ReplaceWith(stloc.Value);
+							var value = stloc.Value;
+							stloc.ReplaceWith(value);
+							context.EndStep(value);
 						}
 						if (stloc.Value is LdLoc ldloc)
 						{

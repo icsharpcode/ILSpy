@@ -316,44 +316,52 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (CheckForOverflow)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(".ovf");
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (CheckForOverflow)
+				{
+					output.Write(".ovf");
+				}
+				if (InputSign == Sign.Unsigned)
+				{
+					output.Write(".unsigned");
+				}
+				else if (InputSign == Sign.Signed)
+				{
+					output.Write(".signed");
+				}
+				if (IsLifted)
+				{
+					output.Write(".lifted");
+				}
+				output.Write(' ');
+				output.Write(InputType);
+				output.Write("->");
+				output.Write(TargetType);
+				output.Write(' ');
+				switch (Kind)
+				{
+					case ConversionKind.SignExtend:
+						output.Write("<sign extend>");
+						break;
+					case ConversionKind.ZeroExtend:
+						output.Write("<zero extend>");
+						break;
+					case ConversionKind.Invalid:
+						output.Write("<invalid>");
+						break;
+				}
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
 			}
-			if (InputSign == Sign.Unsigned)
+			finally
 			{
-				output.Write(".unsigned");
+				output.MarkNodeEnd(this);
 			}
-			else if (InputSign == Sign.Signed)
-			{
-				output.Write(".signed");
-			}
-			if (IsLifted)
-			{
-				output.Write(".lifted");
-			}
-			output.Write(' ');
-			output.Write(InputType);
-			output.Write("->");
-			output.Write(TargetType);
-			output.Write(' ');
-			switch (Kind)
-			{
-				case ConversionKind.SignExtend:
-					output.Write("<sign extend>");
-					break;
-				case ConversionKind.ZeroExtend:
-					output.Write("<zero extend>");
-					break;
-				case ConversionKind.Invalid:
-					output.Write("<invalid>");
-					break;
-			}
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
 		}
 
 		protected override InstructionFlags ComputeFlags()

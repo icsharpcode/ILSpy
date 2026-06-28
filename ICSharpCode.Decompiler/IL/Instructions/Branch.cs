@@ -120,10 +120,18 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			output.WriteLocalReference(TargetLabel, (object?)targetBlock ?? TargetILOffset);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				output.WriteLocalReference(TargetLabel, (object?)targetBlock ?? TargetILOffset);
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 	}
 

@@ -272,83 +272,91 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (Method != null)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(' ');
-				Method.WriteTo(output);
-			}
-			switch (kind)
-			{
-				case ILFunctionKind.ExpressionTree:
-					output.Write(".ET");
-					break;
-				case ILFunctionKind.LocalFunction:
-					output.Write(".local");
-					break;
-			}
-			if (DelegateType != null)
-			{
-				output.Write("[");
-				DelegateType.WriteTo(output);
-				output.Write("]");
-			}
-			output.WriteLine(" {");
-			output.Indent();
-
-			if (IsAsync)
-			{
-				output.WriteLine(".async");
-			}
-			if (IsIterator)
-			{
-				output.WriteLine(".iterator");
-			}
-			if (DeclarationScope != null)
-			{
-				output.Write("declared as " + Name + " in ");
-				output.WriteLocalReference(DeclarationScope.EntryPoint.Label, DeclarationScope);
-				output.WriteLine();
-			}
-
-			output.MarkFoldStart(Variables.Count + " variable(s)", true);
-			foreach (var variable in Variables)
-			{
-				variable.WriteDefinitionTo(output);
-				output.WriteLine();
-			}
-			output.MarkFoldEnd();
-			output.WriteLine();
-
-			foreach (string warning in Warnings)
-			{
-				output.WriteLine("//" + warning);
-			}
-
-			body.WriteTo(output, options);
-			output.WriteLine();
-
-			foreach (var localFunction in LocalFunctions)
-			{
-				output.WriteLine();
-				localFunction.WriteTo(output, options);
-			}
-
-			if (options.ShowILRanges)
-			{
-				var unusedILRanges = FindUnusedILRanges();
-				if (!unusedILRanges.IsEmpty)
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (Method != null)
 				{
-					output.Write("// Unused IL Ranges: ");
-					output.Write(string.Join(", ", unusedILRanges.Intervals.Select(
-						range => $"[{range.Start:x4}..{range.InclusiveEnd:x4}]")));
+					output.Write(' ');
+					Method.WriteTo(output);
+				}
+				switch (kind)
+				{
+					case ILFunctionKind.ExpressionTree:
+						output.Write(".ET");
+						break;
+					case ILFunctionKind.LocalFunction:
+						output.Write(".local");
+						break;
+				}
+				if (DelegateType != null)
+				{
+					output.Write("[");
+					DelegateType.WriteTo(output);
+					output.Write("]");
+				}
+				output.WriteLine(" {");
+				output.Indent();
+
+				if (IsAsync)
+				{
+					output.WriteLine(".async");
+				}
+				if (IsIterator)
+				{
+					output.WriteLine(".iterator");
+				}
+				if (DeclarationScope != null)
+				{
+					output.Write("declared as " + Name + " in ");
+					output.WriteLocalReference(DeclarationScope.EntryPoint.Label, DeclarationScope);
 					output.WriteLine();
 				}
-			}
 
-			output.Unindent();
-			output.WriteLine("}");
+				output.MarkFoldStart(Variables.Count + " variable(s)", true);
+				foreach (var variable in Variables)
+				{
+					variable.WriteDefinitionTo(output);
+					output.WriteLine();
+				}
+				output.MarkFoldEnd();
+				output.WriteLine();
+
+				foreach (string warning in Warnings)
+				{
+					output.WriteLine("//" + warning);
+				}
+
+				body.WriteTo(output, options);
+				output.WriteLine();
+
+				foreach (var localFunction in LocalFunctions)
+				{
+					output.WriteLine();
+					localFunction.WriteTo(output, options);
+				}
+
+				if (options.ShowILRanges)
+				{
+					var unusedILRanges = FindUnusedILRanges();
+					if (!unusedILRanges.IsEmpty)
+					{
+						output.Write("// Unused IL Ranges: ");
+						output.Write(string.Join(", ", unusedILRanges.Intervals.Select(
+							range => $"[{range.Start:x4}..{range.InclusiveEnd:x4}]")));
+						output.WriteLine();
+					}
+				}
+
+				output.Unindent();
+				output.WriteLine("}");
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		LongSet FindUnusedILRanges()

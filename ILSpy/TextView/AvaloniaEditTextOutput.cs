@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Reference markers, fold ranges, and inline UI elements are intentionally dropped here —
 	/// those land when we add hyperlinks and folding support.
 	/// </summary>
-	public sealed class AvaloniaEditTextOutput : ISmartTextOutput
+	public sealed class AvaloniaEditTextOutput : ISmartTextOutput, INodeTrackingOutput
 	{
 		readonly StringBuilder builder = new();
 
@@ -306,12 +306,12 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		internal void MarkNodeStart(object node)
+		public void MarkNodeStart(object node)
 		{
 			openNodes.Push((node, builder.Length));
 		}
 
-		internal void MarkNodeEnd(object node)
+		public void MarkNodeEnd(object node)
 		{
 			if (openNodes.Count == 0)
 				return;

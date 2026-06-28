@@ -114,6 +114,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				BeginStep = step,
 				EndStep = step + 1
 			};
+			// Record the IL position and its ancestor chain as highlight candidates here, before
+			// the limit-reached check below can throw: the debug-step view halts the pipeline at the
+			// selected step, so that step would otherwise carry no candidates and the "show state
+			// before" view could not locate the change. A later transform may detach the exact
+			// instruction, but a surviving ancestor (ultimately the ILFunction) still resolves.
+			for (var node = near; node != null; node = node.Parent)
+			{
+				stepNode.ModifiedNodeCandidates.Add(node);
+			}
 			if (step == StepLimit)
 			{
 				LimitReachedStep = stepNode;

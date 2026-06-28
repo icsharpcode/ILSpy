@@ -343,11 +343,11 @@ namespace ICSharpCode.ILSpy.Languages
 			{
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition!, methodDefinition.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(methodDefinition));
-				WriteCode(output, options, decompiler.Decompile(members), decompiler);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper);
 			}
 			else
 			{
-				WriteCode(output, options, decompiler.Decompile(method.MetadataToken), decompiler);
+				WriteCode(output, options, decompiler.Decompile(method.MetadataToken), decompiler.Stepper);
 			}
 			OnCSharpDecompiled(decompiler, output, options);
 		}
@@ -360,7 +360,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(property, output, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType));
-			WriteCode(output, options, decompiler.Decompile(property.MetadataToken), decompiler);
+			WriteCode(output, options, decompiler.Decompile(property.MetadataToken), decompiler.Stepper);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -370,14 +370,14 @@ namespace ICSharpCode.ILSpy.Languages
 			WriteCommentLine(output, TypeToString(field.DeclaringType));
 			if (field.IsConst)
 			{
-				WriteCode(output, options, decompiler.Decompile(field.MetadataToken), decompiler);
+				WriteCode(output, options, decompiler.Decompile(field.MetadataToken), decompiler.Stepper);
 			}
 			else
 			{
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition!, field.IsStatic);
 				var resolvedField = decompiler.TypeSystem.MainModule.GetDefinition((FieldDefinitionHandle)field.MetadataToken);
 				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
-				WriteCode(output, options, decompiler.Decompile(members), decompiler);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper);
 			}
 			OnCSharpDecompiled(decompiler, output, options);
 		}
@@ -406,7 +406,7 @@ namespace ICSharpCode.ILSpy.Languages
 			CSharpDecompiler decompiler = BeginDecompile(extension, output, options);
 			WriteCommentLine(output, TypeToString(commentType,
 				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options, decompiler.DecompileExtension(extension.MetadataToken), decompiler);
+			WriteCode(output, options, decompiler.DecompileExtension(extension.MetadataToken), decompiler.Stepper);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -414,7 +414,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(ev, output, options);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType));
-			WriteCode(output, options, decompiler.Decompile(ev.MetadataToken), decompiler);
+			WriteCode(output, options, decompiler.Decompile(ev.MetadataToken), decompiler.Stepper);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -422,7 +422,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(type, output, options);
 			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
-			WriteCode(output, options, decompiler.Decompile(type.MetadataToken), decompiler);
+			WriteCode(output, options, decompiler.Decompile(type.MetadataToken), decompiler.Stepper);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -509,7 +509,7 @@ namespace ICSharpCode.ILSpy.Languages
 			SyntaxTree st = options.FullDecompilation
 				? decompiler.DecompileWholeModuleAsSingleFile()
 				: decompiler.DecompileModuleAndAssemblyAttributes();
-			WriteCode(output, options, st, decompiler);
+			WriteCode(output, options, st, decompiler.Stepper);
 			return null;
 		}
 
@@ -707,12 +707,12 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 		}
 
-		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, CSharpDecompiler decompiler)
+		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, Stepper stepper)
 		{
 			var settings = options.DecompilerSettings;
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
-			TokenWriter tokenWriter = new TextTokenWriter(output, settings, decompiler.TypeSystem);
+			TokenWriter tokenWriter = new TextTokenWriter(output, settings);
 			if (output is TextView.AvaloniaEditTextOutput avaloniaOutput)
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, avaloniaOutput);
 			else if (output is TextView.ISmartTextOutput smartOutput)
@@ -729,45 +729,9 @@ namespace ICSharpCode.ILSpy.Languages
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 			bookmarkCollector?.Publish();
 			if (output is TextView.AvaloniaEditTextOutput nodeOutput
-				&& TryGetDebugStepHighlightRange(decompiler, options, nodeOutput.NodeLookup, out var range))
+				&& TextView.DebugStepHighlighter.TryResolve(stepper, options.StepLimit, options.HighlightStep, nodeOutput.NodeLookup, out var range))
 			{
 				nodeOutput.DebugStepHighlight = range;
-			}
-		}
-
-		static bool TryGetDebugStepHighlightRange(CSharpDecompiler decompiler, DecompilationOptions options, TextView.NodeLookup nodeLookup, out TextView.TextRange range)
-		{
-			range = default;
-			if (options.StepLimit == int.MaxValue)
-				return false;
-			if (options.HighlightStep is { } highlightStep)
-			{
-				if (TryGetRange(decompiler.Stepper.GetStepByBeginStep(highlightStep), nodeLookup, out range))
-					return true;
-				if (decompiler.Stepper.LimitReachedStep is { BeginStep: var limitStep } reachedStep
-					&& limitStep == highlightStep)
-				{
-					return TryGetRange(reachedStep, nodeLookup, out range);
-				}
-				return false;
-			}
-			if (TryGetRange(decompiler.Stepper.LimitReachedStep, nodeLookup, out range))
-				return true;
-			if (options.StepLimit > 0)
-				return TryGetRange(decompiler.Stepper.GetStepByBeginStep(options.StepLimit - 1), nodeLookup, out range);
-			return false;
-
-			static bool TryGetRange(Stepper.Node? step, TextView.NodeLookup nodeLookup, out TextView.TextRange range)
-			{
-				range = default;
-				if (step == null)
-					return false;
-				foreach (var candidate in step.ModifiedNodeCandidates)
-				{
-					if (nodeLookup.TryGetRange(candidate, out range))
-						return true;
-				}
-				return step.ModifiedNode != null && nodeLookup.TryGetRange(step.ModifiedNode, out range);
 			}
 		}
 

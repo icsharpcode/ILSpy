@@ -254,6 +254,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						condition = Comp.LogicNot(condition);
 					}
 					parentPattern.SubPatterns.Add(condition);
+					context.EndStep(condition);
 				}
 				else if (PropertyOrFieldAccess(condition, out var target, out _))
 				{
@@ -266,8 +267,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					}
 					context.Step("Sub pattern: implicit != 0", condition);
-					parentPattern.SubPatterns.Add(new Comp(negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
-						Sign.None, condition, new LdcI4(0)));
+					var subPattern = new Comp(negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
+						Sign.None, condition, new LdcI4(0));
+					parentPattern.SubPatterns.Add(subPattern);
+					context.EndStep(subPattern);
 				}
 				else
 				{
@@ -299,6 +302,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var varPattern = new MatchInstruction(targetVariable, operand)
 					.WithILRange(block.Instructions[0]);
 				parentPattern.SubPatterns.Add(varPattern);
+				context.EndStep(varPattern);
 				block.Instructions.RemoveAt(0);
 				targetVariable.Kind = VariableKind.PatternLocal;
 
@@ -382,7 +386,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 
 					context.Step("Nullable.HasValue check -> null pattern", block);
-					varPattern.ReplaceWith(new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull()));
+					var nullComp = new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull());
+					varPattern.ReplaceWith(nullComp);
+					context.EndStep(nullComp);
 					block.Instructions.Clear();
 					block.Instructions.Add(falseInst);
 					return falseInst;
@@ -392,7 +398,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (varPattern.Variable.AddressCount == 1 && context.Settings.PatternCombinators)
 			{
 				context.Step("Nullable.HasValue check -> not null pattern", block);
-				varPattern.ReplaceWith(new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull()));
+				var notNullComp = new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull());
+				varPattern.ReplaceWith(notNullComp);
+				context.EndStep(notNullComp);
 				block.Instructions.Clear();
 				block.Instructions.Add(trueInst);
 				return trueInst;
@@ -462,6 +470,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					comp = Comp.LogicNot(comp);
 				}
 				varPattern.ReplaceWith(comp);
+				context.EndStep(comp);
 				return trueInst;
 			}
 			else

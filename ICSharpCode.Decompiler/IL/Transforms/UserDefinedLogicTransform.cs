@@ -70,6 +70,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.Step("User-defined short-circuiting logic operator (optimized return)", condition);
 					((Leave)block.Instructions[pos + 1]).Value = transformed;
 					block.Instructions.RemoveAt(pos);
+					context.EndStep(transformed);
 					return true;
 				}
 			}
@@ -107,9 +108,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (s.IsUsedWithin(call.Arguments[1]))
 					return false;
 				context.Step("User-defined short-circuiting logic operator (legacy pattern)", condition);
-				((StLoc)block.Instructions[pos]).Value = new UserDefinedLogicOperator(call.Method, lhsInst, call.Arguments[1])
+				var userLogicOp = new UserDefinedLogicOperator(call.Method, lhsInst, call.Arguments[1])
 					.WithILRange(call);
+				((StLoc)block.Instructions[pos]).Value = userLogicOp;
 				block.Instructions.RemoveAt(pos + 1);
+				context.EndStep(userLogicOp);
 				context.RequestRerun(); // the 'stloc s' may now be eligible for inlining
 				return true;
 			}

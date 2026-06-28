@@ -100,9 +100,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("UsingTransform", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			block.Instructions.RemoveAt(i + 1);
-			block.Instructions[i] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock) {
+			var usingInst = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock) {
 				IsRefStruct = context.Settings.IntroduceRefModifiersOnStructs && storeInst.Variable.Type.Kind == TypeKind.Struct && storeInst.Variable.Type.IsByRefLike
 			}.WithILRange(storeInst);
+			block.Instructions[i] = usingInst;
+			context.EndStep(usingInst);
 			return true;
 
 			bool ValidateAddressUse(LdLoca la)
@@ -167,7 +169,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("UsingTransformVB", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			tryContainer.EntryPoint.Instructions.RemoveAt(0);
-			block.Instructions[i] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
+			var usingInst = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
+			block.Instructions[i] = usingInst;
+			context.EndStep(usingInst);
 			return true;
 		}
 
@@ -500,8 +504,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("AsyncUsingTransform", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			block.Instructions.RemoveAt(i);
-			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock) { IsAsync = true }
+			var usingInst = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock) { IsAsync = true }
 				.WithILRange(storeInst);
+			block.Instructions[i - 1] = usingInst;
+			context.EndStep(usingInst);
 			return true;
 		}
 

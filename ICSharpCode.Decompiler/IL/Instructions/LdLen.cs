@@ -41,13 +41,21 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write('.');
-			output.Write(resultType);
-			output.Write('(');
-			this.array.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write('.');
+				output.Write(resultType);
+				output.Write('(');
+				this.array.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 	}
 }

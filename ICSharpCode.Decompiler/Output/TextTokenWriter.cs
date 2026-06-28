@@ -35,24 +35,20 @@ namespace ICSharpCode.Decompiler
 	{
 		readonly ITextOutput output;
 		readonly DecompilerSettings settings;
-		readonly IDecompilerTypeSystem typeSystem;
 		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
 		int braceLevelWithinType = -1;
 		bool inDocumentationComment = false;
 		bool firstUsingDeclaration;
 		bool lastUsingDeclaration;
 
-		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
+		public TextTokenWriter(ITextOutput output, DecompilerSettings settings)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
-			if (typeSystem == null)
-				throw new ArgumentNullException(nameof(typeSystem));
 			this.output = output;
 			this.settings = settings;
-			this.typeSystem = typeSystem;
 		}
 
 		public override void WriteIdentifier(Identifier identifier)

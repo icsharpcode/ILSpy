@@ -38,7 +38,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					context.Step("call get_Item(addressof System.Span{T}(call InlineArrayAsSpan(addr)), index) -> ldelema.inlinearray(addr, index)", inst);
 				}
-				inst.ReplaceWith(new LdElemaInlineArray(type, addr, index) { IsReadOnly = isReadOnly }.WithILRange(inst));
+				var newInst = new LdElemaInlineArray(type, addr, index) { IsReadOnly = isReadOnly }.WithILRange(inst);
+				inst.ReplaceWith(newInst);
+				context.EndStep(newInst);
 				return true;
 			}
 
@@ -52,7 +54,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					context.Step("call InlineArrayElementRef(addr, index) -> ldelema.inlinearray(addr, index)", inst);
 				}
-				inst.ReplaceWith(new LdElemaInlineArray(type, addr, index) { IsReadOnly = isReadOnly }.WithILRange(inst));
+				var newInst = new LdElemaInlineArray(type, addr, index) { IsReadOnly = isReadOnly }.WithILRange(inst);
+				inst.ReplaceWith(newInst);
+				context.EndStep(newInst);
 				return true;
 			}
 
@@ -66,7 +70,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					context.Step("call InlineArrayFirstElementRef(addr) -> ldelema.inlinearray(addr, ldc.i4 0)", inst);
 				}
-				inst.ReplaceWith(new LdElemaInlineArray(type, addr, new LdcI4(0)) { IsReadOnly = isReadOnly }.WithILRange(inst));
+				var newInst = new LdElemaInlineArray(type, addr, new LdcI4(0)) { IsReadOnly = isReadOnly }.WithILRange(inst);
+				inst.ReplaceWith(newInst);
+				context.EndStep(newInst);
 				return true;
 			}
 
