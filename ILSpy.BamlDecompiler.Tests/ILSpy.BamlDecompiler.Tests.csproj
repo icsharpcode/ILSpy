@@ -49,6 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="BamlSecurityTests.cs" />
     <Compile Include="BamlTestRunner.cs" />
     <Compile Include="Cases\AttachedEvent.xaml.cs">
       <DependentUpon>AttachedEvent.xaml</DependentUpon>
