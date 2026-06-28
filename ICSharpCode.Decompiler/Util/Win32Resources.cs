@@ -7,6 +7,13 @@ using System.Reflection.PortableExecutable;
 namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
+	/// Resolves a resource data RVA to a pointer into the PE image and reports how many bytes remain
+	/// from that point to the end of the containing section, so a crafted Size can be bounded against
+	/// the data that actually exists.
+	/// </summary>
+	internal unsafe delegate byte* ResolveResourceData(int rva, out int length);
+
+	/// <summary>
 	/// Represents win32 resources
 	/// </summary>
 	public static class Win32Resources
@@ -24,10 +31,39 @@ namespace ICSharpCode.Decompiler.Util
 			}
 
 			int rva = pe.PEHeaders.PEHeader?.ResourceTableDirectory.RelativeVirtualAddress ?? 0;
-			if (rva == 0)
+			// A crafted header can set the directory RVA negative; GetSectionData throws on a negative
+			// RVA, so reject it here rather than let it abort parsing.
+			if (rva <= 0)
 				return null;
-			byte* pRoot = pe.GetSectionData(rva).Pointer;
-			return new Win32ResourceDirectory(pe, pRoot, 0, new Win32ResourceName("Root"));
+			var block = pe.GetSectionData(rva);
+			if (block.Pointer == null || block.Length <= 0)
+				return null;
+
+			byte* Resolve(int dataRva, out int length)
+			{
+				// OffsetToData is a file uint cast to int, so it can be negative; GetSectionData throws
+				// on a negative RVA, and a positive RVA outside any section yields an empty block.
+				if (dataRva < 0)
+				{
+					length = 0;
+					return null;
+				}
+				var dataBlock = pe.GetSectionData(dataRva);
+				length = dataBlock.Length;
+				return dataBlock.Pointer;
+			}
+
+			return Win32ResourceDirectory.ReadDirectoryTree(block.Pointer, block.Length, Resolve);
+		}
+
+		/// <summary>
+		/// Returns true when reading <paramref name="size"/> bytes at <paramref name="offset"/> stays
+		/// within a section of <paramref name="length"/> bytes. Subtraction avoids the overflow an
+		/// <c>offset + size</c> bound would have on attacker-controlled values.
+		/// </summary>
+		internal static bool InBounds(int offset, int size, int length)
+		{
+			return offset >= 0 && size >= 0 && offset <= length && size <= length - offset;
 		}
 
 		public static Win32ResourceDirectory? Find(this Win32ResourceDirectory root, Win32ResourceName type)
@@ -91,8 +127,33 @@ namespace ICSharpCode.Decompiler.Util
 
 		public IList<Win32ResourceData> Datas { get; }
 
-		internal unsafe Win32ResourceDirectory(PEReader pe, byte* pRoot, int offset, Win32ResourceName name)
+		// Windows resource trees are conventionally Type -> Name -> Language (three directory levels).
+		// This cap sits well above that, so it never rejects a real tree, while keeping a crafted deep
+		// chain from exhausting the stack - which the cycle check alone cannot, since a non-repeating
+		// chain of distinct offsets is acyclic yet still arbitrarily deep.
+		const int MaxDepth = 16;
+
+		internal static unsafe Win32ResourceDirectory ReadDirectoryTree(byte* pRoot, int length, ResolveResourceData resolveData)
 		{
+			return new Win32ResourceDirectory(resolveData, pRoot, length, 0, new Win32ResourceName("Root"), 0, new HashSet<int>());
+		}
+
+		unsafe Win32ResourceDirectory(ResolveResourceData resolveData, byte* pRoot, int length, int offset, Win32ResourceName name, int depth, HashSet<int> visited)
+		{
+			Name = name;
+			Directories = new List<Win32ResourceDirectory>();
+			Datas = new List<Win32ResourceData>();
+
+			// A crafted .rsrc tree can be cyclic or arbitrarily deep. The depth cap bounds nesting; the
+			// visited set, shared across the whole walk, parses each directory offset at most once,
+			// which breaks cycles and caps total work at the distinct offsets in the section. Real
+			// resource trees never reference one directory from two branches, so parsing a repeated
+			// offset only once is lossless for valid input.
+			if (depth > MaxDepth || !visited.Add(offset))
+				return;
+			if (!Win32Resources.InBounds(offset, sizeof(IMAGE_RESOURCE_DIRECTORY), length))
+				return;
+
 			var p = (IMAGE_RESOURCE_DIRECTORY*)(pRoot + offset);
 			Characteristics = p->Characteristics;
 			TimeDateStamp = p->TimeDateStamp;
@@ -101,26 +162,26 @@ namespace ICSharpCode.Decompiler.Util
 			NumberOfNamedEntries = p->NumberOfNamedEntries;
 			NumberOfIdEntries = p->NumberOfIdEntries;
 
-			Name = name;
-			Directories = new List<Win32ResourceDirectory>();
-			Datas = new List<Win32ResourceData>();
-			var pEntries = (IMAGE_RESOURCE_DIRECTORY_ENTRY*)(p + 1);
+			int entriesOffset = offset + sizeof(IMAGE_RESOURCE_DIRECTORY);
 			int total = NumberOfNamedEntries + NumberOfIdEntries;
+			// Clamp the file-declared entry count to the entries that actually fit before the section
+			// end, so the walk below cannot read past it.
+			int available = (length - entriesOffset) / sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY);
+			if (available < 0)
+				available = 0;
+			if (total > available)
+				total = available;
+
+			var pEntries = (IMAGE_RESOURCE_DIRECTORY_ENTRY*)(pRoot + entriesOffset);
 			for (int i = 0; i < total; i++)
 			{
 				var pEntry = pEntries + i;
-				name = new Win32ResourceName(pRoot, pEntry);
+				name = new Win32ResourceName(pRoot, length, pEntry);
 				if ((pEntry->OffsetToData & 0x80000000) == 0)
-					Datas.Add(new Win32ResourceData(pe, pRoot, (int)pEntry->OffsetToData, name));
+					Datas.Add(new Win32ResourceData(resolveData, pRoot, length, (int)pEntry->OffsetToData, name));
 				else
-					Directories.Add(new Win32ResourceDirectory(pe, pRoot, (int)(pEntry->OffsetToData & 0x7FFFFFFF), name));
+					Directories.Add(new Win32ResourceDirectory(resolveData, pRoot, length, (int)(pEntry->OffsetToData & 0x7FFFFFFF), name, depth + 1, visited));
 			}
-		}
-
-		static unsafe string ReadString(byte* pRoot, int offset)
-		{
-			var pString = (IMAGE_RESOURCE_DIRECTORY_STRING*)(pRoot + offset);
-			return new string(pString->NameString, 0, pString->Length);
 		}
 
 		public Win32ResourceDirectory? FindDirectory(Win32ResourceName name)
@@ -164,29 +225,41 @@ namespace ICSharpCode.Decompiler.Util
 		public uint Reserved { get; }
 		#endregion
 
-		private readonly void* _pointer;
+		private readonly byte* _pointer;
+		private readonly int _dataLength;
 
 		public Win32ResourceName Name { get; }
 
 		public byte[] Data {
 			get {
-				byte[] data = new byte[Size];
+				// Size is file-controlled (up to 4 GB); bound both the allocation and the copy to the
+				// bytes the resolver reports between the data pointer and the end of its section. That
+				// length is never negative, so the clamped count fits in an int.
+				if (_pointer == null || _dataLength <= 0)
+					return Array.Empty<byte>();
+				int count = (int)Math.Min((uint)Size, (uint)_dataLength);
+				byte[] data = new byte[count];
 				fixed (void* pData = data)
-					Buffer.MemoryCopy(_pointer, pData, Size, Size);
+					Buffer.MemoryCopy(_pointer, pData, count, count);
 				return data;
 			}
 		}
 
-		internal Win32ResourceData(PEReader pe, byte* pRoot, int offset, Win32ResourceName name)
+		internal Win32ResourceData(ResolveResourceData resolveData, byte* pRoot, int length, int offset, Win32ResourceName name)
 		{
+			Name = name;
+			if (!Win32Resources.InBounds(offset, sizeof(IMAGE_RESOURCE_DATA_ENTRY), length))
+				return;
+
 			var p = (IMAGE_RESOURCE_DATA_ENTRY*)(pRoot + offset);
 			OffsetToData = p->OffsetToData;
 			Size = p->Size;
 			CodePage = p->CodePage;
 			Reserved = p->Reserved;
 
-			_pointer = pe.GetSectionData((int)OffsetToData).Pointer;
-			Name = name;
+			// OffsetToData is an RVA that can exceed int range; wrap deliberately (the library builds
+			// checked) so an out-of-range value reaches the resolver as a negative RVA it rejects.
+			_pointer = resolveData(unchecked((int)OffsetToData), out _dataLength);
 		}
 	}
 
@@ -216,14 +289,22 @@ namespace ICSharpCode.Decompiler.Util
 			_name = id;
 		}
 
-		internal unsafe Win32ResourceName(byte* pRoot, IMAGE_RESOURCE_DIRECTORY_ENTRY* pEntry)
+		internal unsafe Win32ResourceName(byte* pRoot, int length, IMAGE_RESOURCE_DIRECTORY_ENTRY* pEntry)
 		{
-			_name = (pEntry->Name & 0x80000000) == 0 ? (object)(ushort)pEntry->Name : ReadString(pRoot, (int)(pEntry->Name & 0x7FFFFFFF));
+			_name = (pEntry->Name & 0x80000000) == 0 ? (object)(ushort)pEntry->Name : ReadString(pRoot, length, (int)(pEntry->Name & 0x7FFFFFFF));
 
-			static string ReadString(byte* pRoot, int offset)
+			static string ReadString(byte* pRoot, int length, int offset)
 			{
+				// A ushort character count followed by that many UTF-16 chars. Reject a prefix that
+				// runs past the section and clamp the character count to the bytes that remain.
+				if (!Win32Resources.InBounds(offset, sizeof(ushort), length))
+					return string.Empty;
 				var pString = (IMAGE_RESOURCE_DIRECTORY_STRING*)(pRoot + offset);
-				return new string(pString->NameString, 0, pString->Length);
+				int charCount = pString->Length;
+				int available = (length - (offset + sizeof(ushort))) / sizeof(char);
+				if (charCount > available)
+					charCount = available;
+				return new string(pString->NameString, 0, charCount);
 			}
 		}
 
