@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			[AllowNull]
 			public List<(Statement Statement, IMember Member, Expression Initializer, bool DependsOnConstructorBody)> Statements;
 
-			public Dictionary<Statement, List<Statement>>? StatementToOtherCtorsMap;
+			public Dictionary<Statement, List<(Statement Statement, Expression Initializer)>>? StatementToOtherCtorsMap;
 
 			public bool HasDuplicateAssignments { get; private set; }
 			public bool IsUnsafe { get; private set; }
@@ -223,7 +223,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						list = [];
 						StatementToOtherCtorsMap[stmt] = list;
 					}
-					list.Add(otherStmt);
+					list.Add((otherStmt, otherInitializer));
 					otherStmt = otherStmt.GetNextStatement();
 				}
 				return true;
@@ -576,11 +576,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					stmt.Remove();
 
 					if (sequence.StatementToOtherCtorsMap != null &&
-						sequence.StatementToOtherCtorsMap.TryGetValue(stmt, out var otherStmts))
+						sequence.StatementToOtherCtorsMap.TryGetValue(stmt, out var otherCtors))
 					{
-						foreach (var otherStmt in otherStmts)
+						var otherInitializers = new List<Expression>(otherCtors.Count);
+						foreach (var (otherStmt, otherInitializer) in otherCtors)
 						{
 							otherStmt.Remove();
+							otherInitializers.Add(otherInitializer);
+						}
+						// Preserve the discarded copies so the breakpoint for this initializer can be
+						// emitted in every constructor that runs it, not just the one it was lifted from.
+						if (otherInitializers.Count > 0)
+						{
+							initializer.AddAnnotation(new MemberInitializerInOtherConstructorsAnnotation(otherInitializers));
 						}
 					}
 

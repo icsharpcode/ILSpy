@@ -1,0 +1,6 @@
+0x06000001 MemberInitializerImplicitCtor.get_Property
+  - compiler only: (7,25)-(7,29)
+0x06000004 MemberInitializerImplicitCtor..ctor
+  + decompiler only: (5,22)-(5,32)
+  - compiler only: (5,2)-(5,33)
+  + decompiler only: hidden after (7,34)-(7,44)

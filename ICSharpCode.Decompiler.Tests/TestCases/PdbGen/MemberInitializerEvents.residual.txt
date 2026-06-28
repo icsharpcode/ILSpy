@@ -1,0 +1,14 @@
+0x06000003 MemberInitializerEvents..ctor
+  + decompiler only: (8,2)-(8,3)
+  + decompiler only: (5,39)-(5,46)
+  + decompiler only: hidden after (5,39)-(5,46)
+  - compiler only: (5,2)-(5,47)
+  - compiler only: (7,2)-(7,34)
+  + decompiler only: hidden after (10,2)-(10,3)
+0x06000004 MemberInitializerEvents..ctor
+  + decompiler only: (13,2)-(13,3)
+  + decompiler only: (5,39)-(5,46)
+  + decompiler only: hidden after (5,39)-(5,46)
+  - compiler only: (5,2)-(5,47)
+  - compiler only: (12,2)-(12,43)
+  + decompiler only: hidden after (15,2)-(15,3)

@@ -165,15 +165,51 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
+		{
+			foreach (var variable in fieldDeclaration.Variables)
+			{
+				VisitMemberInitializer(variable.Initializer);
+			}
+			base.VisitFieldDeclaration(fieldDeclaration);
+		}
+
 		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
 			if (propertyDeclaration.ExpressionBody is not null)
 			{
 				VisitAsSequencePoint(propertyDeclaration.ExpressionBody);
 			}
+			else if (propertyDeclaration.Initializer is not null)
+			{
+				VisitMemberInitializer(propertyDeclaration.Initializer);
+			}
 			else
 			{
 				base.VisitPropertyDeclaration(propertyDeclaration);
+			}
+		}
+
+		// A field/auto-property/event initializer is emitted once at the declaration but, in IL,
+		// runs in every instance constructor that does not chain to this(...) (and static
+		// initializers run in the static constructor). The primary sequence point covers the
+		// constructor the initializer was lifted from; MemberInitializerInOtherConstructorsAnnotation
+		// carries the initializer's copies from the remaining constructors, so a matching sequence
+		// point is emitted - at the same source location, but with the other constructor's IL - for
+		// each of them.
+		void VisitMemberInitializer(Expression? initializer)
+		{
+			if (initializer is null)
+				return;
+			VisitAsSequencePoint(initializer);
+			var annotation = initializer.Annotation<MemberInitializerInOtherConstructorsAnnotation>();
+			if (annotation is null)
+				return;
+			foreach (var other in annotation.Initializers)
+			{
+				StartSequencePoint(initializer);
+				other.AcceptVisitor(this);
+				EndSequencePoint(initializer.StartLocation, initializer.EndLocation);
 			}
 		}
 
@@ -202,6 +238,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				VisitAsSequencePoint(inc);
 			}
 			VisitAsSequencePoint(forStatement.EmbeddedStatement);
+		}
+
+		public override void VisitEventDeclaration(EventDeclaration eventDeclaration)
+		{
+			foreach (var variable in eventDeclaration.Variables)
+			{
+				VisitMemberInitializer(variable.Initializer);
+			}
+			base.VisitEventDeclaration(eventDeclaration);
 		}
 
 		public override void VisitSwitchStatement(SwitchStatement switchStatement)

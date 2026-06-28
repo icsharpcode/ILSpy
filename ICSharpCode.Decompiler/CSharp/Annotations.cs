@@ -287,6 +287,27 @@ namespace ICSharpCode.Decompiler.CSharp
 	}
 
 	/// <summary>
+	/// Annotates a field/auto-property/event initializer that the decompiler lifted to the
+	/// declaration site with the copies of the same initializer found in the other constructors.
+	/// In IL a member initializer runs in every instance constructor that does not chain to
+	/// this(...), so the initializer's expression appears once per such constructor. The decompiler
+	/// lifts it from a single constructor and discards the rest; this annotation preserves the
+	/// discarded copies so <see cref="SequencePointBuilder"/> can map the initializer's source
+	/// location onto every constructor that runs it, not just the one it was lifted from. Each entry
+	/// is one other constructor's copy of the initializer expression (still carrying that
+	/// constructor's IL annotations).
+	/// </summary>
+	public class MemberInitializerInOtherConstructorsAnnotation
+	{
+		public readonly IReadOnlyList<Expression> Initializers;
+
+		public MemberInitializerInOtherConstructorsAnnotation(IReadOnlyList<Expression> initializers)
+		{
+			this.Initializers = initializers;
+		}
+	}
+
+	/// <summary>
 	/// Annotates an expression when an implicit user-defined conversion was omitted.
 	/// </summary>
 	public class ImplicitConversionAnnotation
