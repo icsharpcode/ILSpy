@@ -3,4 +3,6 @@
   - compiler only: hidden after (12,3)-(12,4)
   - compiler only: (13,2)-(13,3)
 0x06000003 LockStatement..cctor
+  + decompiler only: (5,40)-(5,52)
+  + decompiler only: hidden after (5,40)-(5,52)
   - compiler only: (5,2)-(5,53)

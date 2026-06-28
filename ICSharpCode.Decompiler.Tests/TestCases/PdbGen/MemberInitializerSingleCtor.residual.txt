@@ -1,0 +1,8 @@
+0x06000001 MemberInitializerSingleCtor.get_Property
+  - compiler only: (7,25)-(7,29)
+0x06000002 MemberInitializerSingleCtor..ctor
+  + decompiler only: (10,2)-(10,3)
+  + decompiler only: (5,22)-(5,32)
+  - compiler only: (5,2)-(5,33)
+  + decompiler only: hidden after (7,34)-(7,44)
+  - compiler only: (9,2)-(9,38)

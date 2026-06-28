@@ -1,0 +1,6 @@
+0x06000001 MemberInitializerStaticCtor.get_Property
+  - compiler only: (7,32)-(7,36)
+0x06000005 MemberInitializerStaticCtor..cctor
+  + decompiler only: (5,29)-(5,39)
+  - compiler only: (5,2)-(5,40)
+  + decompiler only: hidden after (7,41)-(7,51)

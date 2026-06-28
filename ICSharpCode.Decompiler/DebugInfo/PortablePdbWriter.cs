@@ -203,6 +203,24 @@ namespace ICSharpCode.Decompiler.DebugInfo
 								metadata.GetOrAddBlob(function.AsyncDebugInfo.BuildBlob(methodHandle))));
 						}
 					}
+
+					// Sequence points are keyed by the ILFunction resolved through the IL instruction
+					// tree, which still resolves for member initializers that were lifted out of a
+					// constructor the decompiler omits from the output (an implicit default constructor,
+					// an implicit static constructor, or a primary constructor). DebugInfoGenerator only
+					// discovers functions through their declaration syntax, so those constructors are not
+					// in its set; emit their sequence points here so the lifted initializers stay
+					// breakpointable.
+					var emittedFunctions = new HashSet<ILFunction>(debugInfoGen.Functions);
+					foreach (var (function, points) in sequencePoints)
+					{
+						if (!emittedFunctions.Add(function))
+							continue;
+						var method = function.MoveNextMethod ?? function.Method;
+						if (method == null || method.MetadataToken.IsNil)
+							continue;
+						ProcessMethod((MethodDefinitionHandle)method.MetadataToken, document, points, syntaxTree);
+					}
 				}
 			}
 
