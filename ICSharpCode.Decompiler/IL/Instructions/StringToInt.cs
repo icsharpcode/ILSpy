@@ -54,24 +54,32 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write("string.to.int ");
-			ExpectedType.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(", { ");
-			int i = 0;
-			foreach (var entry in Map)
+			output.MarkNodeStart(this);
+			try
 			{
-				if (i > 0)
-					output.Write(", ");
-				if (entry.Key is null)
-					output.Write($"[null] = {entry.Value}");
-				else
-					output.Write($"[\"{entry.Key}\"] = {entry.Value}");
-				i++;
+				WriteILRange(output, options);
+				output.Write("string.to.int ");
+				ExpectedType.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(", { ");
+				int i = 0;
+				foreach (var entry in Map)
+				{
+					if (i > 0)
+						output.Write(", ");
+					if (entry.Key is null)
+						output.Write($"[null] = {entry.Value}");
+					else
+						output.Write($"[\"{entry.Key}\"] = {entry.Value}");
+					i++;
+				}
+				output.Write(" })");
 			}
-			output.Write(" })");
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 	}
 }

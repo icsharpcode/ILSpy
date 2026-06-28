@@ -135,6 +135,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					var newLambda = (ILFunction)lambda();
 					SetExpressionTreeFlag(newLambda, (CallInstruction)instruction);
 					instruction.ReplaceWith(newLambda);
+					context.EndStep(newLambda);
 					return true;
 				}
 				return false;

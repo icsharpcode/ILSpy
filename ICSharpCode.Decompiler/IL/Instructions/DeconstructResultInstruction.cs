@@ -39,13 +39,21 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			output.Write(Index.ToString());
-			output.Write('(');
-			this.Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				output.Write(Index.ToString());
+				output.Write('(');
+				this.Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		MatchInstruction? FindMatch()

@@ -166,7 +166,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.Remove(localStore);
 				block.Instructions.Remove(stobj);
 				stobj.Value = inst.Value;
-				inst.ReplaceWith(new StLoc(local, stobj));
+				var inlineAssignment = new StLoc(local, stobj);
+				inst.ReplaceWith(inlineAssignment);
+				context.EndStep(inlineAssignment);
 				// note: our caller will trigger a re-run, which will call HandleStObjCompoundAssign if applicable
 				return true;
 			}
@@ -210,7 +212,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Instructions = { call },
 					FinalInstruction = new LdLoc(newVar)
 				};
-				inst.ReplaceWith(new StLoc(local, inlineBlock));
+				var inlineAssignment = new StLoc(local, inlineBlock);
+				inst.ReplaceWith(inlineAssignment);
+				context.EndStep(inlineAssignment);
 				// because the ExpressionTransforms don't look into inline blocks, manually trigger HandleCallCompoundAssign
 				if (HandleCompoundAssign(call, context))
 				{
@@ -483,6 +487,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun(); // moving stloc to top-level might trigger inlining
 			}
 			compoundStore.ReplaceWith(newInst);
+			context.EndStep(newInst);
 			if (newInst.Parent is Block inlineAssignBlock && inlineAssignBlock.Kind == BlockKind.CallInlineAssign)
 			{
 				// It's possible that we first replaced the instruction in an inline-assign helper block.
@@ -541,7 +546,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var var = nextInst.Variable;
 			var stackVar = inst.Variable;
 			block.Instructions.RemoveAt(pos);
-			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
+			var inlineAssignment = new StLoc(stackVar, new StLoc(var, value));
+			nextInst.ReplaceWith(inlineAssignment);
+			context.EndStep(inlineAssignment);
 			return true;
 		}
 
@@ -918,6 +925,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions[pos] = new StLoc(stloc_outer.Variable, new UserDefinedCompoundAssign(
 					operatorCall.Method, CompoundEvalMode.EvaluatesToNewValue, target, targetKind, new LdcI4(1)));
 			}
+			context.EndStep(block.Instructions[pos]);
 			return true;
 		}
 
@@ -998,6 +1006,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions[pos] = new StLoc(stloc.Variable, new UserDefinedCompoundAssign(
 					operatorCall.Method, CompoundEvalMode.EvaluatesToOldValue, target, targetKind, new LdcI4(1)));
 			}
+			context.EndStep(block.Instructions[pos]);
 			return true;
 		}
 

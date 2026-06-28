@@ -259,6 +259,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			delayedActions?.Invoke(replacement);
 			block.Instructions[startPos] = replacement;
 			block.Instructions.RemoveRange(startPos + 1, pos - startPos - 1);
+			context.EndStep(replacement);
 			return true;
 		}
 

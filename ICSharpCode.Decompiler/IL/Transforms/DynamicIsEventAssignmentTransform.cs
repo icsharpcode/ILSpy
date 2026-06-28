@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				getMemberVarUse.ReplaceWith(getMemberInst);
 				isEventConditionUse.ReplaceWith(isEvent);
 				block.Instructions.RemoveRange(pos, 2);
+				context.EndStep(setMemberInst);
 				// Reuse ExpressionTransforms
 				ExpressionTransforms.TransformDynamicSetMemberInstruction(setMemberInst, context);
 				context.RequestRerun();

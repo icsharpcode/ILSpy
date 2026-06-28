@@ -76,26 +76,34 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write("call.indirect ");
-			FunctionPointerType.ReturnType.WriteTo(output);
-			output.Write('(');
-			functionPointer.WriteTo(output, options);
-			int firstArgument = IsInstance ? 1 : 0;
-			if (firstArgument == 1)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(", ");
-				Arguments[0].WriteTo(output, options);
+				WriteILRange(output, options);
+				output.Write("call.indirect ");
+				FunctionPointerType.ReturnType.WriteTo(output);
+				output.Write('(');
+				functionPointer.WriteTo(output, options);
+				int firstArgument = IsInstance ? 1 : 0;
+				if (firstArgument == 1)
+				{
+					output.Write(", ");
+					Arguments[0].WriteTo(output, options);
+				}
+				foreach (var (inst, type) in Arguments.Zip(FunctionPointerType.ParameterTypes, (a, b) => (a, b)))
+				{
+					output.Write(", ");
+					inst.WriteTo(output, options);
+					output.Write(" : ");
+					type.WriteTo(output);
+				}
+				if (Arguments.Count > 0)
+					output.Write(')');
 			}
-			foreach (var (inst, type) in Arguments.Zip(FunctionPointerType.ParameterTypes, (a, b) => (a, b)))
+			finally
 			{
-				output.Write(", ");
-				inst.WriteTo(output, options);
-				output.Write(" : ");
-				type.WriteTo(output);
+				output.MarkNodeEnd(this);
 			}
-			if (Arguments.Count > 0)
-				output.Write(')');
 		}
 
 		protected override int GetChildCount()

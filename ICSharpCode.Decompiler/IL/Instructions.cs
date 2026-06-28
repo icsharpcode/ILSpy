@@ -372,11 +372,16 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write('(');
-			this.argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write('(');
+				this.argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 	}
 }
@@ -468,13 +473,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write('(');
-			this.left.WriteTo(output, options);
-			output.Write(", ");
-			this.right.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write('(');
+				this.left.WriteTo(output, options);
+				output.Write(", ");
+				this.right.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 	}
 }
@@ -626,13 +636,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write('(');
-			this.target.WriteTo(output, options);
-			output.Write(", ");
-			this.value.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write('(');
+				this.target.WriteTo(output, options);
+				output.Write(", ");
+				this.value.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 	}
 }
@@ -1011,15 +1026,20 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			variable.WriteTo(output);
-			output.Write('(');
-			this.init.WriteTo(output, options);
-			output.Write(", ");
-			this.body.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				variable.WriteTo(output);
+				output.Write('(');
+				this.init.WriteTo(output, options);
+				output.Write(", ");
+				this.body.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2341,10 +2361,15 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			variable.WriteTo(output);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				variable.WriteTo(output);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2415,10 +2440,15 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			variable.WriteTo(output);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				variable.WriteTo(output);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2550,13 +2580,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			variable.WriteTo(output);
-			output.Write('(');
-			this.value.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				variable.WriteTo(output);
+				output.Write('(');
+				this.value.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2655,13 +2690,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			this.value.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				this.value.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2820,10 +2860,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2857,10 +2902,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2894,10 +2944,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2931,10 +2986,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I8; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2968,10 +3028,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.F4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3005,10 +3070,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.F8; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3042,10 +3112,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3109,13 +3184,18 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (method != null)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(' ');
-				method.WriteTo(output);
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (method != null)
+				{
+					output.Write(' ');
+					method.WriteTo(output);
+				}
 			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3160,16 +3240,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (method != null)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(' ');
-				method.WriteTo(output);
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (method != null)
+				{
+					output.Write(' ');
+					method.WriteTo(output);
+				}
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
 			}
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3221,18 +3306,23 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			if (method != null)
+			output.MarkNodeStart(this);
+			try
 			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
 				output.Write(' ');
-				method.WriteTo(output);
+				type.WriteTo(output);
+				if (method != null)
+				{
+					output.Write(' ');
+					method.WriteTo(output);
+				}
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
 			}
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3271,10 +3361,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3310,10 +3405,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			member.WriteTo(output);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				member.WriteTo(output);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3398,13 +3498,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3536,19 +3641,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			if (IsVolatile)
-				output.Write("volatile.");
-			if (UnalignedPrefix > 0)
-				output.Write("unaligned(" + UnalignedPrefix + ").");
-			output.Write(OpCode);
-			output.Write('(');
-			this.destAddress.WriteTo(output, options);
-			output.Write(", ");
-			this.sourceAddress.WriteTo(output, options);
-			output.Write(", ");
-			this.size.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				if (IsVolatile)
+					output.Write("volatile.");
+				if (UnalignedPrefix > 0)
+					output.Write("unaligned(" + UnalignedPrefix + ").");
+				output.Write(OpCode);
+				output.Write('(');
+				this.destAddress.WriteTo(output, options);
+				output.Write(", ");
+				this.sourceAddress.WriteTo(output, options);
+				output.Write(", ");
+				this.size.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3687,19 +3797,24 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			if (IsVolatile)
-				output.Write("volatile.");
-			if (UnalignedPrefix > 0)
-				output.Write("unaligned(" + UnalignedPrefix + ").");
-			output.Write(OpCode);
-			output.Write('(');
-			this.address.WriteTo(output, options);
-			output.Write(", ");
-			this.value.WriteTo(output, options);
-			output.Write(", ");
-			this.size.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				if (IsVolatile)
+					output.Write("volatile.");
+				if (UnalignedPrefix > 0)
+					output.Write("unaligned(" + UnalignedPrefix + ").");
+				output.Write(OpCode);
+				output.Write('(');
+				this.address.WriteTo(output, options);
+				output.Write(", ");
+				this.value.WriteTo(output, options);
+				output.Write(", ");
+				this.size.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3803,15 +3918,20 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			if (DelayExceptions)
-				output.Write("delayex.");
-			output.Write(OpCode);
-			output.Write(' ');
-			@field.WriteTo(output);
-			output.Write('(');
-			this.target.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				if (DelayExceptions)
+					output.Write("delayex.");
+				output.Write(OpCode);
+				output.Write(' ');
+				@field.WriteTo(output);
+				output.Write('(');
+				this.target.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3847,10 +3967,15 @@ namespace ICSharpCode.Decompiler.IL
 		public IField Field { get { return @field; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			@field.WriteTo(output);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				@field.WriteTo(output);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3898,13 +4023,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3943,13 +4073,18 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4166,13 +4301,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			this.target.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				this.target.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4357,13 +4497,18 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4411,13 +4556,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4465,13 +4615,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4582,21 +4737,26 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			bool first = true;
-			foreach (var indices in Indices)
+			output.MarkNodeStart(this);
+			try
 			{
-				if (!first)
-					output.Write(", ");
-				else
-					first = false;
-				indices.WriteTo(output, options);
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				bool first = true;
+				foreach (var indices in Indices)
+				{
+					if (!first)
+						output.Write(", ");
+					else
+						first = false;
+					indices.WriteTo(output, options);
+				}
+				output.Write(')');
 			}
-			output.Write(')');
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4635,10 +4795,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4751,10 +4916,15 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4952,24 +5122,29 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			if (WithSystemIndex)
-				output.Write("withsystemindex.");
-			if (DelayExceptions)
-				output.Write("delayex.");
-			if (IsReadOnly)
-				output.Write("readonly.");
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			this.array.WriteTo(output, options);
-			foreach (var indices in Indices)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(", ");
-				indices.WriteTo(output, options);
+				WriteILRange(output, options);
+				if (WithSystemIndex)
+					output.Write("withsystemindex.");
+				if (DelayExceptions)
+					output.Write("delayex.");
+				if (IsReadOnly)
+					output.Write("readonly.");
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				this.array.WriteTo(output, options);
+				foreach (var indices in Indices)
+				{
+					output.Write(", ");
+					indices.WriteTo(output, options);
+				}
+				output.Write(')');
 			}
-			output.Write(')');
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -5077,20 +5252,25 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			if (IsReadOnly)
-				output.Write("readonly.");
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			this.array.WriteTo(output, options);
-			foreach (var indices in Indices)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(", ");
-				indices.WriteTo(output, options);
+				WriteILRange(output, options);
+				if (IsReadOnly)
+					output.Write("readonly.");
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				this.array.WriteTo(output, options);
+				foreach (var indices in Indices)
+				{
+					output.Write(", ");
+					indices.WriteTo(output, options);
+				}
+				output.Write(')');
 			}
-			output.Write(')');
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -5190,16 +5370,21 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (method != null)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(' ');
-				method.WriteTo(output);
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (method != null)
+				{
+					output.Write(' ');
+					method.WriteTo(output);
+				}
+				output.Write('(');
+				this.argument.WriteTo(output, options);
+				output.Write(')');
 			}
-			output.Write('(');
-			this.argument.WriteTo(output, options);
-			output.Write(')');
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -5438,18 +5623,23 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (method != null)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(' ');
-				method.WriteTo(output);
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (method != null)
+				{
+					output.Write(' ');
+					method.WriteTo(output);
+				}
+				output.Write('(');
+				this.left.WriteTo(output, options);
+				output.Write(", ");
+				this.right.WriteTo(output, options);
+				output.Write(')');
 			}
-			output.Write('(');
-			this.left.WriteTo(output, options);
-			output.Write(", ");
-			this.right.WriteTo(output, options);
-			output.Write(')');
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -6635,13 +6825,18 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -6717,13 +6912,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write(' ');
+				type.WriteTo(output);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -6815,11 +7015,16 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write('(');
-			this.value.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write('(');
+				this.value.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -6911,11 +7116,16 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write('(');
-			this.value.WriteTo(output, options);
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write('(');
+				this.value.WriteTo(output, options);
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -7031,10 +7241,15 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			output.Write('(');
-			output.Write(')');
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				output.Write('(');
+				output.Write(')');
+			}
+			finally { output.MarkNodeEnd(this); }
 		}
 	}
 }

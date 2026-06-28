@@ -427,10 +427,15 @@ namespace <#=opCode.Namespace#>
 <#	if (opCode.GenerateWriteTo) { #>
 <#      if (opCode.CustomWriteToButKeepOriginal) { #>
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
+		{<#=Body(opCode.WriteToBody)#>}
 <#      } else { #>
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			output.MarkNodeStart(this);
+			try {<#=Body(opCode.WriteToBody)#>}
+			finally { output.MarkNodeEnd(this); }
+		}
 <#      } #>
-		{<#=Body(opCode.WriteToBody)#>}
 <#	} #>
 <#	if (opCode.GenerateAcceptVisitor) { #>
 		public override void AcceptVisitor(ILVisitor visitor)

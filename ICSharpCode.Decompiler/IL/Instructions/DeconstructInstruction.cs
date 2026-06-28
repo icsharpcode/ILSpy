@@ -161,33 +161,41 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write("deconstruct ");
-			output.MarkFoldStart("{...}");
-			output.WriteLine("{");
-			output.Indent();
-			output.WriteLine("init:");
-			output.Indent();
-			foreach (var inst in this.Init)
+			output.MarkNodeStart(this);
+			try
 			{
-				inst.WriteTo(output, options);
+				WriteILRange(output, options);
+				output.Write("deconstruct ");
+				output.MarkFoldStart("{...}");
+				output.WriteLine("{");
+				output.Indent();
+				output.WriteLine("init:");
+				output.Indent();
+				foreach (var inst in this.Init)
+				{
+					inst.WriteTo(output, options);
+					output.WriteLine();
+				}
+				output.Unindent();
+				output.WriteLine("pattern:");
+				output.Indent();
+				pattern.WriteTo(output, options);
+				output.Unindent();
 				output.WriteLine();
+				output.Write("conversions: ");
+				conversions.WriteTo(output, options);
+				output.WriteLine();
+				output.Write("assignments: ");
+				assignments.WriteTo(output, options);
+				output.Unindent();
+				output.WriteLine();
+				output.Write('}');
+				output.MarkFoldEnd();
 			}
-			output.Unindent();
-			output.WriteLine("pattern:");
-			output.Indent();
-			pattern.WriteTo(output, options);
-			output.Unindent();
-			output.WriteLine();
-			output.Write("conversions: ");
-			conversions.WriteTo(output, options);
-			output.WriteLine();
-			output.Write("assignments: ");
-			assignments.WriteTo(output, options);
-			output.Unindent();
-			output.WriteLine();
-			output.Write('}');
-			output.MarkFoldEnd();
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable, out ILVariable inputVariable)

@@ -116,15 +116,23 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write(OpCode);
-			if (targetContainer != null)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write(' ');
-				output.WriteLocalReference(TargetLabel, targetContainer);
-				output.Write(" (");
-				value.WriteTo(output, options);
-				output.Write(')');
+				WriteILRange(output, options);
+				output.Write(OpCode);
+				if (targetContainer != null)
+				{
+					output.Write(' ');
+					output.WriteLocalReference(TargetLabel, targetContainer);
+					output.Write(" (");
+					value.WriteTo(output, options);
+					output.Write(')');
+				}
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
 			}
 		}
 	}

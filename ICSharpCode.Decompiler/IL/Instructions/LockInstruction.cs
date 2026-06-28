@@ -29,15 +29,23 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write("lock (");
-			OnExpression.WriteTo(output, options);
-			output.WriteLine(") {");
-			output.Indent();
-			Body.WriteTo(output, options);
-			output.Unindent();
-			output.WriteLine();
-			output.Write("}");
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteILRange(output, options);
+				output.Write("lock (");
+				OnExpression.WriteTo(output, options);
+				output.WriteLine(") {");
+				output.Indent();
+				Body.WriteTo(output, options);
+				output.Unindent();
+				output.WriteLine();
+				output.Write("}");
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 	}
 }

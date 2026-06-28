@@ -120,5 +120,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			Stepper.EndGroup(keepIfEmpty);
 		}
+
+		/// <summary>
+		/// Points the most recently recorded step at the instruction its mutation produced.
+		/// Call this after a <see cref="Step"/> whose modified instruction only comes into
+		/// existence during the mutation (e.g. the result of a ReplaceWith or a freshly
+		/// inserted instruction). The step already carries the original position and its
+		/// ancestors as fallback candidates (see <see cref="Stepper"/>); this prepends the
+		/// produced instruction so it is preferred.
+		/// </summary>
+		[Conditional("STEP")]
+		internal void EndStep(ILInstruction? modifiedNode)
+		{
+			if (Stepper.LastStep is { } step && modifiedNode != null)
+			{
+				step.ModifiedNode = modifiedNode;
+				if (!step.ModifiedNodeCandidates.Contains(modifiedNode))
+					step.ModifiedNodeCandidates.Insert(0, modifiedNode);
+			}
+		}
 	}
 }

@@ -69,8 +69,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.Step("HandleRuntimeHelperInitializeArray: single-dim", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
-					body.Instructions[pos] = new StLoc(v, block);
+					var newStore = new StLoc(v, block);
+					body.Instructions[pos] = newStore;
 					body.Instructions.RemoveAt(initArrayPos);
+					context.EndStep(newStore);
 					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
@@ -91,8 +93,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						));
 						block.FinalInstruction = new LdLoc(tempStore);
-						body.Instructions[pos] = new StLoc(v, block);
+						var newStore = new StLoc(v, block);
+						body.Instructions[pos] = newStore;
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
+						context.EndStep(newStore);
 						ILInlining.InlineIfPossible(body, pos, context);
 						return true;
 					}
@@ -104,8 +108,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
 						block.FinalInstruction = new LdLoc(tempStore);
-						body.Instructions[pos] = new StLoc(finalStore, block);
+						var newStore = new StLoc(finalStore, block);
+						body.Instructions[pos] = newStore;
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
+						context.EndStep(newStore);
 						ILInlining.InlineIfPossible(body, pos, context);
 						return true;
 					}
@@ -250,8 +256,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					context.Step("HandleRuntimeHelpersInitializeArray: multi-dim", inst);
 					var block = BlockFromInitializer(v, elementType, length, values);
-					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
+					var newStore = new StLoc(v, block);
+					body.Instructions[pos].ReplaceWith(newStore);
 					body.Instructions.RemoveAt(initArrayPos);
+					context.EndStep(newStore);
 					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
@@ -270,8 +278,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 					));
 					block.FinalInstruction = new LdLoc(tempStore);
-					body.Instructions[pos] = new StLoc(v, block);
+					var newStore = new StLoc(v, block);
+					body.Instructions[pos] = newStore;
 					body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
+					context.EndStep(newStore);
 					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
@@ -299,8 +309,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 
 					block.FinalInstruction = new LdLoc(tempStore);
-					body.Instructions[pos] = new StLoc(v, block);
+					var newStore = new StLoc(v, block);
+					body.Instructions[pos] = newStore;
 					body.Instructions.RemoveAt(pos + 1);
+					context.EndStep(newStore);
 					ILInlining.InlineIfPossible(body, pos, context);
 					ExpressionTransforms.RunOnSingleStatement(body.Instructions[pos], context);
 					return true;
@@ -313,8 +325,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					block.Instructions.Add(new StLoc(tempStore, locallocExpr));
 					block.Instructions.AddRange(values.Where(value => value != null).Select(value => RewrapStore(tempStore, value, elementType)));
 					block.FinalInstruction = new LdLoc(tempStore);
-					body.Instructions[pos] = new StLoc(v, block);
+					var newStore = new StLoc(v, block);
+					body.Instructions[pos] = newStore;
 					body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
+					context.EndStep(newStore);
 					ILInlining.InlineIfPossible(body, pos, context);
 					ExpressionTransforms.RunOnSingleStatement(body.Instructions[pos], context);
 					return true;
@@ -911,6 +925,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType, arrayLength.Length));
 			var block = BlockFromInitializer(tempStore, elementType, arrayLength, valuesList.ToArray());
 			body.Instructions[pos] = block;
+			context.EndStep(block);
 			ILInlining.InlineIfPossible(body, pos, context);
 			return true;
 		}

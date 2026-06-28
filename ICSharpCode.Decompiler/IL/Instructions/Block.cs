@@ -260,37 +260,45 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			WriteILRange(output, options);
-			output.Write("Block ");
-			output.WriteLocalReference(Label, this, isDefinition: true);
-			if (Kind != BlockKind.ControlFlow)
-				output.Write($" ({Kind})");
-			if (Parent is BlockContainer)
-				output.Write(" (incoming: {0})", IncomingEdgeCount);
-			output.Write(' ');
-			output.MarkFoldStart("{...}");
-			output.WriteLine("{");
-			output.Indent();
-			int index = 0;
-			foreach (var inst in Instructions)
+			output.MarkNodeStart(this);
+			try
 			{
-				if (options.ShowChildIndexInBlock)
+				WriteILRange(output, options);
+				output.Write("Block ");
+				output.WriteLocalReference(Label, this, isDefinition: true);
+				if (Kind != BlockKind.ControlFlow)
+					output.Write($" ({Kind})");
+				if (Parent is BlockContainer)
+					output.Write(" (incoming: {0})", IncomingEdgeCount);
+				output.Write(' ');
+				output.MarkFoldStart("{...}");
+				output.WriteLine("{");
+				output.Indent();
+				int index = 0;
+				foreach (var inst in Instructions)
 				{
-					output.Write("[" + index + "] ");
-					index++;
+					if (options.ShowChildIndexInBlock)
+					{
+						output.Write("[" + index + "] ");
+						index++;
+					}
+					inst.WriteTo(output, options);
+					output.WriteLine();
 				}
-				inst.WriteTo(output, options);
-				output.WriteLine();
+				if (finalInstruction.OpCode != OpCode.Nop)
+				{
+					output.Write("final: ");
+					finalInstruction.WriteTo(output, options);
+					output.WriteLine();
+				}
+				output.Unindent();
+				output.Write("}");
+				output.MarkFoldEnd();
 			}
-			if (finalInstruction.OpCode != OpCode.Nop)
+			finally
 			{
-				output.Write("final: ");
-				finalInstruction.WriteTo(output, options);
-				output.WriteLine();
+				output.MarkNodeEnd(this);
 			}
-			output.Unindent();
-			output.Write("}");
-			output.MarkFoldEnd();
 		}
 
 		protected override int GetChildCount()

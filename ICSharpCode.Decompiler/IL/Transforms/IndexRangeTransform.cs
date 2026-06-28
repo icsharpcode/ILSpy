@@ -269,6 +269,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					newCall.AddILRange(block.Instructions[i]);
 				}
 				call.ReplaceWith(newCall);
+				context.EndStep(newCall);
 				block.Instructions.RemoveRange(startPos, pos - startPos);
 			}
 
@@ -358,6 +359,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					newCall.AddILRange(block.Instructions[i]);
 				}
 				call.ReplaceWith(newCall);
+				context.EndStep(newCall);
 				block.Instructions.RemoveRange(startPos, pos - startPos);
 			}
 

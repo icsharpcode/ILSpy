@@ -377,6 +377,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					i--;
 				}
 			}
+			context.EndStep(inst);
 			return true;
 		}
 
@@ -476,6 +477,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructions.RemoveAt(i + 1);
 			instructions.RemoveAt(i - 1);
 
+			context.EndStep(inst);
 			return true;
 		}
 
@@ -713,6 +715,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				instructions.RemoveRange(i - 1, 2);
 				i -= 2;
 			}
+			context.EndStep(inst);
 			return true;
 		}
 
@@ -954,6 +957,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inst.AddILRange(block.Instructions[i]);
 			block.Instructions[i].ReplaceWith(inst);
 			block.Instructions.RemoveRange(i + 1, 3);
+			context.EndStep(inst);
 			info.Transformed = true;
 			hashtableInitializers[dictField] = info;
 			return true;
@@ -1181,6 +1185,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					IsCompilerGeneratedDefaultSection = defaultSection.IsCompilerGeneratedDefaultSection
 				});
 				instructions[offset].ReplaceWith(newSwitch);
+				context.EndStep(newSwitch);
 				return newSwitch;
 			}
 		}
@@ -1325,6 +1330,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			instructions[i] = newSwitch;
 			instructions.RemoveRange(i + 1, instructions.Count - (i + 1));
+			context.EndStep(newSwitch);
 			return true;
 
 			void InheritCompilerGeneratedDefaultMarker(SwitchInstruction inner)

@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var syntaxTree = decompiler.DecompileType(new FullTypeName(type.FullName));
 
 			var output = new ReferenceRecordingOutput();
-			var tokenWriter = new TextTokenWriter(output, settings, decompiler.TypeSystem);
+			var tokenWriter = new TextTokenWriter(output, settings);
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 			return output.MemberReferences;
 		}

@@ -69,8 +69,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			}
 			context.Step("LdLocaDupInitObjTransform", inst1);
-			block.Instructions[i] = new StLoc(v, inst2.Value).WithILRange(inst2);
+			var newInst = new StLoc(v, inst2.Value).WithILRange(inst2);
+			block.Instructions[i] = newInst;
 			block.Instructions[i + 1] = inst1;
+			context.EndStep(newInst);
 			return true;
 		}
 	}

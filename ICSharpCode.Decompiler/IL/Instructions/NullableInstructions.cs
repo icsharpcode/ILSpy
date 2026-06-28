@@ -92,15 +92,23 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.Write("nullable.unwrap.");
-			if (RefInput)
+			output.MarkNodeStart(this);
+			try
 			{
-				output.Write("refinput.");
+				output.Write("nullable.unwrap.");
+				if (RefInput)
+				{
+					output.Write("refinput.");
+				}
+				output.Write(ResultType);
+				output.Write('(');
+				Argument.WriteTo(output, options);
+				output.Write(')');
 			}
-			output.Write(ResultType);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
 		}
 
 		public override StackType ResultType { get; }
