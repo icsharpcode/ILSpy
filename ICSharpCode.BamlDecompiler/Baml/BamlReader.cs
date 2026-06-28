@@ -64,6 +64,11 @@ namespace ICSharpCode.BamlDecompiler.Baml
 		{
 			var rdr = new BinaryReader(str, Encoding.Unicode);
 			uint len = rdr.ReadUInt32();
+			// len is read straight from the file, before the MSBAML_SIG check below. The only
+			// accepted signature is the fixed-length "MSBAML", so reject any other length here
+			// rather than allocating an attacker-sized string from a crafted value.
+			if (len >> 1 != (uint)MSBAML_SIG.Length)
+				throw new InvalidDataException("Invalid BAML signature length.");
 			var sig = new string(rdr.ReadChars((int)(len >> 1)));
 			rdr.ReadBytes((int)(((len + 3) & ~3) - len));
 			return sig;
@@ -263,7 +268,9 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			for (int i = 0; i < ret.Count; i++)
 			{
 				if (ret[i] is IBamlDeferRecord defer)
-					defer.ReadDefer(ret, i, _ => recs[_]);
+					defer.ReadDefer(ret, i, offset => recs.TryGetValue(offset, out var rec)
+						? rec
+						: throw new InvalidDataException("BAML defer record points at an offset that is not a record boundary."));
 			}
 
 			return ret;

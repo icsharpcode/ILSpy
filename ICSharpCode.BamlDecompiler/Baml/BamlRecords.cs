@@ -149,6 +149,79 @@ namespace ICSharpCode.BamlDecompiler.Baml
 		void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr);
 	}
 
+	/// <summary>
+	/// Walks the key records that precede a defer target. The record offsets are part of
+	/// the BAML payload and therefore attacker-controlled, so every list access is bounded
+	/// and the nesting walk is depth-capped: a crafted resource fails with a catchable
+	/// <see cref="InvalidDataException"/> instead of reading past the end of the record list
+	/// or recursing until the process dies with an uncatchable StackOverflowException.
+	/// </summary>
+	internal static class BamlDeferReader
+	{
+		// Legitimate BAML defer blocks nest only a handful of levels; this cap sits far
+		// below the CLR stack limit, so it never rejects real input but stops a crafted
+		// chain of nested start records before it overflows the stack.
+		const int MaxNestingDepth = 1000;
+
+		static InvalidDataException Malformed(string detail)
+			=> new InvalidDataException("Malformed BAML defer block: " + detail + ".");
+
+		/// <summary>
+		/// Advances past the leading key records of a defer block and returns the index of
+		/// the record that terminates it.
+		/// </summary>
+		public static int SkipKeys(BamlDocument doc, int index)
+		{
+			bool keys = true;
+			do
+			{
+				if (index < 0 || index >= doc.Count)
+					throw Malformed("ran off the end of the record list while scanning keys");
+				switch (doc[index].Type)
+				{
+					case BamlRecordType.DefAttributeKeyString:
+					case BamlRecordType.DefAttributeKeyType:
+					case BamlRecordType.OptimizedStaticResource:
+						keys = true;
+						break;
+					case BamlRecordType.StaticResourceStart:
+						NavigateTree(doc, BamlRecordType.StaticResourceStart, BamlRecordType.StaticResourceEnd, ref index, 0);
+						keys = true;
+						break;
+					case BamlRecordType.KeyElementStart:
+						NavigateTree(doc, BamlRecordType.KeyElementStart, BamlRecordType.KeyElementEnd, ref index, 0);
+						keys = true;
+						break;
+					default:
+						keys = false;
+						index--;
+						break;
+				}
+				index++;
+			} while (keys);
+			if (index < 0 || index >= doc.Count)
+				throw Malformed("ran off the end of the record list before the defer target");
+			return index;
+		}
+
+		static void NavigateTree(BamlDocument doc, BamlRecordType start, BamlRecordType end, ref int index, int depth)
+		{
+			if (depth >= MaxNestingDepth)
+				throw Malformed("nested start records exceed the maximum supported depth");
+			index++;
+			while (true)
+			{
+				if (index >= doc.Count)
+					throw Malformed("a start record has no matching end record");
+				if (doc[index].Type == start)
+					NavigateTree(doc, start, end, ref index, depth + 1);
+				else if (doc[index].Type == end)
+					return;
+				index++;
+			}
+		}
+	}
+
 	internal class XmlnsPropertyRecord : SizedBamlRecord
 	{
 		public override BamlRecordType Type => BamlRecordType.XmlnsProperty;
@@ -336,61 +409,13 @@ namespace ICSharpCode.BamlDecompiler.Baml
 
 		public void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve)
 		{
-			bool keys = true;
-			do
-			{
-				switch (doc[index].Type)
-				{
-					case BamlRecordType.DefAttributeKeyString:
-					case BamlRecordType.DefAttributeKeyType:
-					case BamlRecordType.OptimizedStaticResource:
-						keys = true;
-						break;
-					case BamlRecordType.StaticResourceStart:
-						NavigateTree(doc, BamlRecordType.StaticResourceStart, BamlRecordType.StaticResourceEnd, ref index);
-						keys = true;
-						break;
-					case BamlRecordType.KeyElementStart:
-						NavigateTree(doc, BamlRecordType.KeyElementStart, BamlRecordType.KeyElementEnd, ref index);
-						keys = true;
-						break;
-					default:
-						keys = false;
-						index--;
-						break;
-				}
-				index++;
-			} while (keys);
+			index = BamlDeferReader.SkipKeys(doc, index);
 			Record = resolve(doc[index].Position + pos);
 		}
 
 		public void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr)
 		{
-			bool keys = true;
-			do
-			{
-				switch (doc[index].Type)
-				{
-					case BamlRecordType.DefAttributeKeyString:
-					case BamlRecordType.DefAttributeKeyType:
-					case BamlRecordType.OptimizedStaticResource:
-						keys = true;
-						break;
-					case BamlRecordType.StaticResourceStart:
-						NavigateTree(doc, BamlRecordType.StaticResourceStart, BamlRecordType.StaticResourceEnd, ref index);
-						keys = true;
-						break;
-					case BamlRecordType.KeyElementStart:
-						NavigateTree(doc, BamlRecordType.KeyElementStart, BamlRecordType.KeyElementEnd, ref index);
-						keys = true;
-						break;
-					default:
-						keys = false;
-						index--;
-						break;
-				}
-				index++;
-			} while (keys);
+			index = BamlDeferReader.SkipKeys(doc, index);
 			wtr.BaseStream.Seek(pos, SeekOrigin.Begin);
 			wtr.Write((uint)(Record.Position - doc[index].Position));
 		}
@@ -410,19 +435,6 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			writer.Write((uint)0);
 			writer.Write(Shared);
 			writer.Write(SharedSet);
-		}
-
-		static void NavigateTree(BamlDocument doc, BamlRecordType start, BamlRecordType end, ref int index)
-		{
-			index++;
-			while (true) //Assume there alway is a end
-			{
-				if (doc[index].Type == start)
-					NavigateTree(doc, start, end, ref index);
-				else if (doc[index].Type == end)
-					return;
-				index++;
-			}
 		}
 	}
 
@@ -801,61 +813,13 @@ namespace ICSharpCode.BamlDecompiler.Baml
 
 		public void ReadDefer(BamlDocument doc, int index, Func<long, BamlRecord> resolve)
 		{
-			bool keys = true;
-			do
-			{
-				switch (doc[index].Type)
-				{
-					case BamlRecordType.DefAttributeKeyString:
-					case BamlRecordType.DefAttributeKeyType:
-					case BamlRecordType.OptimizedStaticResource:
-						keys = true;
-						break;
-					case BamlRecordType.StaticResourceStart:
-						NavigateTree(doc, BamlRecordType.StaticResourceStart, BamlRecordType.StaticResourceEnd, ref index);
-						keys = true;
-						break;
-					case BamlRecordType.KeyElementStart:
-						NavigateTree(doc, BamlRecordType.KeyElementStart, BamlRecordType.KeyElementEnd, ref index);
-						keys = true;
-						break;
-					default:
-						keys = false;
-						index--;
-						break;
-				}
-				index++;
-			} while (keys);
+			index = BamlDeferReader.SkipKeys(doc, index);
 			Record = resolve(doc[index].Position + pos);
 		}
 
 		public void WriteDefer(BamlDocument doc, int index, BinaryWriter wtr)
 		{
-			bool keys = true;
-			do
-			{
-				switch (doc[index].Type)
-				{
-					case BamlRecordType.DefAttributeKeyString:
-					case BamlRecordType.DefAttributeKeyType:
-					case BamlRecordType.OptimizedStaticResource:
-						keys = true;
-						break;
-					case BamlRecordType.StaticResourceStart:
-						NavigateTree(doc, BamlRecordType.StaticResourceStart, BamlRecordType.StaticResourceEnd, ref index);
-						keys = true;
-						break;
-					case BamlRecordType.KeyElementStart:
-						NavigateTree(doc, BamlRecordType.KeyElementStart, BamlRecordType.KeyElementEnd, ref index);
-						keys = true;
-						break;
-					default:
-						keys = false;
-						index--;
-						break;
-				}
-				index++;
-			} while (keys);
+			index = BamlDeferReader.SkipKeys(doc, index);
 			wtr.BaseStream.Seek(pos, SeekOrigin.Begin);
 			wtr.Write((uint)(Record.Position - doc[index].Position));
 		}
@@ -875,19 +839,6 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			writer.Write((uint)0);
 			writer.Write(Shared);
 			writer.Write(SharedSet);
-		}
-
-		static void NavigateTree(BamlDocument doc, BamlRecordType start, BamlRecordType end, ref int index)
-		{
-			index++;
-			while (true)
-			{
-				if (doc[index].Type == start)
-					NavigateTree(doc, start, end, ref index);
-				else if (doc[index].Type == end)
-					return;
-				index++;
-			}
 		}
 	}
 
