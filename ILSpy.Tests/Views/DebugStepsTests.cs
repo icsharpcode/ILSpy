@@ -172,15 +172,13 @@ public class DebugStepsTests
 		var replayStep = transformGroupWithChanges.Children.First();
 		var tab = vm.DockWorkspace.ActiveDecompilerTab!;
 
-		tab.RestartDecompileWithStepLimit(replayStep.BeginStep, isDebug: false, replayStep.BeginStep);
-		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await tab.RestartDecompileWithStepLimit(replayStep.BeginStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("C# replay before a selected AST mutation step must still emit code");
 		tab.DebugStepHighlight.Should().NotBeNull("C# replay before a selected AST mutation step must locate the changed node");
 		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
 			"a step-limited C# replay must not replace the full step tree shown by the pane");
 
-		tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
-		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("C# replay after a selected AST mutation step must still emit code");
 		tab.DebugStepHighlight.Should().NotBeNull("C# replay after a selected AST mutation step must locate the changed node");
 		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
@@ -226,15 +224,13 @@ public class DebugStepsTests
 		var collectedSteps = debugStepsVm.Steps;
 		var tab = vm.DockWorkspace.ActiveDecompilerTab!;
 
-		tab.RestartDecompileWithStepLimit(replayStep!.BeginStep, isDebug: false, replayStep.BeginStep);
-		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await tab.RestartDecompileWithStepLimit(replayStep!.BeginStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay before a selected step must still emit IL");
 		tab.DebugStepHighlight.Should().NotBeNull("ILAst replay before a selected step must locate the changed instruction");
 		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
 			"a step-limited ILAst replay must not replace the full step tree shown by the pane");
 
-		tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
-		tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay after a selected step must still emit IL");
 		tab.DebugStepHighlight.Should().NotBeNull("ILAst replay after a selected step must locate the changed instruction");
 
