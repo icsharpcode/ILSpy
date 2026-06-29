@@ -18,7 +18,6 @@
 
 using System;
 using System.IO;
-using System.Threading;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -129,34 +128,5 @@ namespace ICSharpCode.ILSpyX.Settings
 		}
 
 		const string ConfigFileMutex = "01A91708-49D1-410D-B8EB-4DE2662B3971";
-
-		/// <summary>
-		/// Helper class for serializing access to the config file when multiple ILSpy instances are running.
-		/// </summary>
-		sealed class MutexProtector : IDisposable
-		{
-			readonly Mutex mutex;
-
-			public MutexProtector(string name)
-			{
-				this.mutex = new Mutex(true, name, out bool createdNew);
-				if (createdNew)
-					return;
-
-				try
-				{
-					mutex.WaitOne();
-				}
-				catch (AbandonedMutexException)
-				{
-				}
-			}
-
-			public void Dispose()
-			{
-				mutex.ReleaseMutex();
-				mutex.Dispose();
-			}
-		}
 	}
 }
