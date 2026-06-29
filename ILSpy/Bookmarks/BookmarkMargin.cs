@@ -210,7 +210,12 @@ namespace ICSharpCode.ILSpy.Bookmarks
 				{
 					if (bookmark.LineNumber != line)
 						Dispatcher.UIThread.Post(() => bookmark.UpdateRenderedLineNumber(line), DispatcherPriority.Background);
-					map[line] = bookmark.Enabled ? Images.Bookmark : Images.BookmarkDisable;
+					// When two bookmarks resolve to the same line, an enabled one wins so the line never
+					// reads as disabled while an active bookmark sits on it.
+					if (bookmark.Enabled)
+						map[line] = Images.Bookmark;
+					else if (!map.ContainsKey(line))
+						map[line] = Images.BookmarkDisable;
 				}
 			}
 			return glyphByLine = map;

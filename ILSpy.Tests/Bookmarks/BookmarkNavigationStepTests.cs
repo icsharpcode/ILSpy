@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.Tests.Bookmarks;
 [TestFixture]
 public class BookmarkNavigationStepTests
 {
-	// Three bookmarks, the middle one disabled (the reported scenario).
+	// Three bookmarks with the middle one disabled, so next/previous must step over it.
 	static readonly IReadOnlyList<bool> ThreeMiddleDisabled = new[] { true, false, true };
 
 	[Test]

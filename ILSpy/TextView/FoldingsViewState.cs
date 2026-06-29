@@ -88,19 +88,33 @@ namespace ICSharpCode.ILSpy.TextView
 			if (checksum != saved.Checksum)
 				return false;
 			foreach (var folding in newFoldings)
-			{
-				bool wasExpanded = false;
-				foreach (var (start, end) in saved.Expanded)
-				{
-					if (start == folding.StartOffset && end == folding.EndOffset)
-					{
-						wasExpanded = true;
-						break;
-					}
-				}
-				folding.DefaultClosed = !wasExpanded;
-			}
+				folding.DefaultClosed = !IsExpanded(saved, folding.StartOffset, folding.EndOffset);
 			return true;
+		}
+
+		/// <summary>
+		/// Applies <paramref name="saved"/> to live <paramref name="foldings"/> already installed in a
+		/// FoldingManager by toggling <see cref="FoldingSection.IsFolded"/>. Returns <c>true</c> when the
+		/// layout still matches the snapshot; <c>false</c> (leaving the foldings untouched) on a mismatch.
+		/// </summary>
+		public static bool Restore(IEnumerable<FoldingSection> foldings, Snapshot saved)
+		{
+			var sections = foldings as IReadOnlyList<FoldingSection> ?? foldings.ToList();
+			if (Capture(sections).Checksum != saved.Checksum)
+				return false;
+			foreach (var folding in sections)
+				folding.IsFolded = !IsExpanded(saved, folding.StartOffset, folding.EndOffset);
+			return true;
+		}
+
+		static bool IsExpanded(Snapshot saved, int start, int end)
+		{
+			foreach (var (s, e) in saved.Expanded)
+			{
+				if (s == start && e == end)
+					return true;
+			}
+			return false;
 		}
 	}
 }
