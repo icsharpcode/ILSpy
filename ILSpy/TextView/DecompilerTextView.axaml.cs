@@ -715,11 +715,15 @@ namespace ICSharpCode.ILSpy.TextView
 			return CanToggleBookmarkAtLine(Editor.Document.GetLineByOffset(offset).LineNumber);
 		}
 
-		/// <summary>Adds or removes a bookmark on <paramref name="line"/>; a no-op for non-anchorable lines.</summary>
-		internal void ToggleBookmarkAtLine(int line)
+		/// <summary>
+		/// Adds or removes a bookmark on <paramref name="line"/>; a no-op for non-anchorable lines.
+		/// Returns true when a bookmark was added, false when one was removed or the line is not anchorable.
+		/// </summary>
+		internal bool ToggleBookmarkAtLine(int line)
 		{
 			if (CreateBookmarkForLine(line) is { } candidate)
-				BookmarkManager?.Toggle(candidate);
+				return BookmarkManager?.Toggle(candidate) ?? false;
+			return false;
 		}
 
 		internal void ToggleBookmarkAtOffset(int offset)

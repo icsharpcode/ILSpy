@@ -24,6 +24,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 
 using AvaloniaEdit.Editing;
@@ -40,6 +41,9 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	public sealed class BookmarkMargin : AbstractMargin
 	{
 		const double IconSize = 16;
+		// Faded glyph shown on a hovered, not-yet-bookmarked line to hint the gutter is clickable;
+		// kept translucent so it reads as a preview, not an actual (opaque) bookmark.
+		const double HoverPreviewOpacity = 0.5;
 		static readonly IBrush FallbackBackground = new SolidColorBrush(Color.FromRgb(0xF3, 0xF0, 0xD0));
 		static readonly IBrush FallbackBorder = new SolidColorBrush(Color.FromRgb(0xC8, 0xCD, 0xD3));
 		// One scale-up-and-back bounce, peaking at 1 + PulseAmount halfway through PulseDurationMs.
@@ -54,6 +58,8 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		bool subscribedToManager;
 		int pulseLine = -1;
 		int hoverLine = -1;
+		// A line whose hover preview stays hidden after a removal click, until the pointer leaves it.
+		int suppressedHoverLine = -1;
 
 		public BookmarkMargin(TextView.DecompilerTextView owner)
 		{
@@ -167,8 +173,8 @@ namespace ICSharpCode.ILSpy.Bookmarks
 
 				if (isHoverPreview)
 				{
-					using (drawingContext.PushOpacity(0.35))
-						drawingContext.DrawImage(glyph, rect);
+					using (drawingContext.PushOpacity(HoverPreviewOpacity))
+						drawingContext.DrawImage(HoverPreviewGlyph(), rect);
 					continue;
 				}
 
@@ -186,6 +192,24 @@ namespace ICSharpCode.ILSpy.Bookmarks
 					drawingContext.DrawImage(glyph, rect);
 				}
 			}
+		}
+
+		// A bitmap copy of the bookmark glyph, shared by all gutters, used only for the hover preview.
+		// SvgImage paints through a custom Skia draw operation that ignores DrawingContext.PushOpacity,
+		// so the SVG can't be faded directly; a rasterized bitmap is composited at the pushed opacity.
+		static Bitmap? hoverPreviewGlyph;
+
+		static Bitmap HoverPreviewGlyph()
+		{
+			if (hoverPreviewGlyph != null)
+				return hoverPreviewGlyph;
+			var source = Images.Bookmark;
+			// Oversample so the bitmap stays crisp when the gutter draws it at the device scale.
+			int pixels = (int)(IconSize * 3);
+			var bitmap = new RenderTargetBitmap(new PixelSize(pixels, pixels), new Vector(96, 96));
+			using (var context = bitmap.CreateDrawingContext())
+				source.Draw(context, new Rect(source.Size), new Rect(0, 0, pixels, pixels));
+			return hoverPreviewGlyph = bitmap;
 		}
 
 		void DrawBackground(DrawingContext drawingContext)
@@ -221,7 +245,15 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			var visualLine = textView.GetVisualLineFromVisualTop(y);
 			if (visualLine == null)
 				return;
-			owner.ToggleBookmarkAtLine(visualLine.FirstDocumentLine.LineNumber);
+			// A removal click leaves the pointer hovering the line it just cleared. Without this, Render
+			// would immediately redraw the line's hover-preview glyph, so the click would look like a
+			// no-op. Suppress the preview on that line until the pointer leaves it (a jitter that stays
+			// on the same line must not bring it back); a fresh hover after leaving shows it again.
+			if (!owner.ToggleBookmarkAtLine(visualLine.FirstDocumentLine.LineNumber))
+			{
+				suppressedHoverLine = visualLine.FirstDocumentLine.LineNumber;
+				SetHoverLine(-1);
+			}
 			InvalidateVisual();
 			e.Handled = true;
 		}
@@ -238,12 +270,23 @@ namespace ICSharpCode.ILSpy.Bookmarks
 				if (visualLine != null && owner.CanToggleBookmarkAtLine(visualLine.FirstDocumentLine.LineNumber))
 					newHoverLine = visualLine.FirstDocumentLine.LineNumber;
 			}
+			if (newHoverLine == suppressedHoverLine)
+			{
+				// Still on the just-removed line: keep its preview hidden.
+				newHoverLine = -1;
+			}
+			else
+			{
+				// The pointer moved onto a different line, so normal hover resumes.
+				suppressedHoverLine = -1;
+			}
 			SetHoverLine(newHoverLine);
 		}
 
 		protected override void OnPointerExited(PointerEventArgs e)
 		{
 			base.OnPointerExited(e);
+			suppressedHoverLine = -1;
 			SetHoverLine(-1);
 		}
 
@@ -254,5 +297,8 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			hoverLine = line;
 			InvalidateVisual();
 		}
+
+		// The line currently drawing a hover-preview glyph, or -1 when none. Exposed for tests.
+		internal int HoverPreviewLine => hoverLine;
 	}
 }
