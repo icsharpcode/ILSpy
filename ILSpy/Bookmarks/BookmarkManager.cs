@@ -119,14 +119,18 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		/// <summary>
 		/// Loads bookmarks from <paramref name="path"/>. In <see cref="BookmarkImportMode.Merge"/>
 		/// only entries whose anchor is not already present are added; in
-		/// <see cref="BookmarkImportMode.Replace"/> the current list is discarded first.
+		/// <see cref="BookmarkImportMode.Replace"/> the current list is discarded first. Returns
+		/// <c>false</c> when the file cannot be read or parsed, leaving the current list untouched --
+		/// in particular so a corrupt file picked for a Replace import does not wipe the bookmarks.
+		/// A valid but empty file is a success and, in Replace mode, legitimately clears the list.
 		/// </summary>
-		public void Import(string path, BookmarkImportMode mode)
+		public bool Import(string path, BookmarkImportMode mode)
 		{
 			ArgumentNullException.ThrowIfNull(path);
-			var imported = ReadFrom(path);
+			if (!TryReadFrom(path, out var imported))
+				return false;
 			if (imported.Count == 0 && mode == BookmarkImportMode.Merge)
-				return;
+				return true;
 
 			UpdateSavedBookmarks(bookmarks => {
 				if (mode == BookmarkImportMode.Replace)
@@ -138,6 +142,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 						bookmarks.Add(b);
 				}
 			});
+			return true;
 		}
 
 		/// <summary>Persists the current list to the standard sidecar location.</summary>
@@ -280,24 +285,38 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			JsonSerializer.Serialize(stream, file, JsonOptions);
 		}
 
+		// Tolerant read for the sidecar load path: an empty list whether the file is absent, empty, or
+		// unreadable. Import goes through TryReadFrom instead, to tell a valid empty file from a failure.
 		static List<Bookmark> ReadFrom(string path)
 		{
+			TryReadFrom(path, out var bookmarks);
+			return bookmarks;
+		}
+
+		// Reads and parses the bookmark file. Returns false (with an empty list) when the file is
+		// missing or cannot be deserialized, so callers that must not destroy data on a bad file --
+		// notably a Replace import -- can bail. A valid file (including an empty one) returns true.
+		static bool TryReadFrom(string path, out List<Bookmark> bookmarks)
+		{
+			bookmarks = new List<Bookmark>();
 			if (!System.IO.File.Exists(path))
-				return new List<Bookmark>();
+				return false;
 			try
 			{
 				using var stream = System.IO.File.OpenRead(path);
 				var file = JsonSerializer.Deserialize<BookmarkFile>(stream, JsonOptions);
-				return file?.Bookmarks?
+				bookmarks = file?.Bookmarks?
 					// A bookmark must reference an assembly file. Entries without one are artifacts
 					// (e.g. a stray empty row) that could never navigate; drop them defensively.
 					.Where(r => !string.IsNullOrEmpty(r.FileName))
 					.Select(r => r.ToBookmark()).ToList() ?? new List<Bookmark>();
+				return true;
 			}
 			catch (Exception ex)
 			{
 				Debug.WriteLine($"[BookmarkManager] Load failed: {ex}");
-				return new List<Bookmark>();
+				bookmarks = new List<Bookmark>();
+				return false;
 			}
 		}
 

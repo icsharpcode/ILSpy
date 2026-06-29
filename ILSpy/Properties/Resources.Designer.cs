@@ -496,6 +496,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to The selected file could not be read as a bookmark file. Your bookmarks were left unchanged..
+        /// </summary>
+        public static string BookmarkImportFailed {
+            get {
+                return ResourceManager.GetString("BookmarkImportFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Merge.
         /// </summary>
         public static string BookmarkImportMerge {

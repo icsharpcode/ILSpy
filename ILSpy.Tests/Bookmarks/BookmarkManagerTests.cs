@@ -309,4 +309,35 @@ public class BookmarkManagerTests
 		// The shared anchor keeps the existing entry; only the genuinely new one is appended.
 		target.Bookmarks.Select(b => b.Name).Should().Equal("Existing", "New");
 	}
+
+	[Test]
+	public void Import_replace_of_a_corrupt_file_keeps_the_existing_bookmarks()
+	{
+		var corruptPath = Path.Combine(tempDir, "corrupt.json");
+		File.WriteAllText(corruptPath, "{ this is not valid json");
+
+		var target = NewManagerInFreshDir();
+		target.Toggle(MakeBookmark(0x06000001, name: "Keep"));
+
+		bool ok = target.Import(corruptPath, BookmarkImportMode.Replace);
+
+		ok.Should().BeFalse("a file that cannot be parsed is not a successful import");
+		target.Bookmarks.Select(b => b.Name).Should().Equal(new[] { "Keep" });
+	}
+
+	[Test]
+	public void Import_replace_of_a_valid_empty_file_clears_the_bookmarks()
+	{
+		var source = NewManagerInFreshDir();
+		var emptyExport = Path.Combine(tempDir, "empty.json");
+		source.Export(emptyExport);
+
+		var target = NewManagerInFreshDir();
+		target.Toggle(MakeBookmark(0x06000001, name: "Old"));
+
+		bool ok = target.Import(emptyExport, BookmarkImportMode.Replace);
+
+		ok.Should().BeTrue("a valid empty file is a successful import");
+		target.Bookmarks.Should().BeEmpty("Replace with a valid empty file legitimately clears the list");
+	}
 }
