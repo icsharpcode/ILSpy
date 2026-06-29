@@ -37,6 +37,9 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			=> "yes" == await ShowChoiceAsync(Resources.Bookmarks, Resources.BookmarkAssemblyMissing,
 				(Resources._Remove, "yes"), (Resources.Cancel, "no"));
 
+		public static Task InformImportFailedAsync()
+			=> ShowChoiceAsync(Resources.BookmarkImportTitle, Resources.BookmarkImportFailed, (Resources.OK, "ok"));
+
 		public static async Task<BookmarkImportMode?> AskImportModeAsync()
 		{
 			var result = await ShowChoiceAsync(Resources.BookmarkImportTitle, Resources.BookmarkImportReplaceOrMerge,

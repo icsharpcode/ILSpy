@@ -183,6 +183,9 @@ Are you sure you want to continue?</value>
   <data name="BookmarkImport" xml:space="preserve">
     <value>Import Bookmarks...</value>
   </data>
+  <data name="BookmarkImportFailed" xml:space="preserve">
+    <value>The selected file could not be read as a bookmark file. Your bookmarks were left unchanged.</value>
+  </data>
   <data name="BookmarkImportMerge" xml:space="preserve">
     <value>Merge</value>
   </data>

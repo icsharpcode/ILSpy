@@ -119,7 +119,8 @@ namespace ICSharpCode.ILSpy.Bookmarks
 					return;
 				mode = chosen;
 			}
-			manager.Import(path, mode);
+			if (!manager.Import(path, mode))
+				await BookmarkDialogs.InformImportFailedAsync();
 		}
 
 		const string BookmarkFileFilter = "Bookmarks (*.json)|*.json|All Files|*.*";
