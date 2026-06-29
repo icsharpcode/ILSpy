@@ -27,9 +27,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Bookmarks
 {
@@ -360,32 +360,6 @@ namespace ICSharpCode.ILSpy.Bookmarks
 				LocationNodeName = LocationNodeName,
 				ViewState = ViewState,
 			};
-		}
-
-		sealed class MutexProtector : IDisposable
-		{
-			readonly Mutex mutex;
-
-			public MutexProtector(string name)
-			{
-				mutex = new Mutex(true, name, out bool createdNew);
-				if (createdNew)
-					return;
-
-				try
-				{
-					mutex.WaitOne();
-				}
-				catch (AbandonedMutexException)
-				{
-				}
-			}
-
-			public void Dispose()
-			{
-				mutex.ReleaseMutex();
-				mutex.Dispose();
-			}
 		}
 	}
 }
