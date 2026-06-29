@@ -130,6 +130,38 @@ public class BookmarkManagerTests
 	}
 
 	[Test]
+	public void Adding_a_bookmark_preserves_existing_live_instances()
+	{
+		var manager = new BookmarkManager();
+		manager.Toggle(MakeBookmark(0x06000001, name: "A"));
+		var first = manager.Bookmarks[0];
+
+		manager.Toggle(MakeBookmark(0x06000002, name: "B"));
+
+		manager.Bookmarks.Should().HaveCount(2);
+		// A structural change must reconcile the live list, not rebuild it: the bookmarks pane holds a
+		// live selection by reference, so replacing every instance on each toggle would drop it.
+		manager.Bookmarks[0].Should().BeSameAs(first, "adding a bookmark must not replace existing instances");
+	}
+
+	[Test]
+	public void Editing_a_bookmark_keeps_the_other_live_instances_intact()
+	{
+		var manager = new BookmarkManager();
+		manager.Toggle(MakeBookmark(0x06000001, name: "A"));
+		manager.Toggle(MakeBookmark(0x06000002, name: "B"));
+		var first = manager.Bookmarks[0];
+		var second = manager.Bookmarks[1];
+
+		// Editing a name (as the pane's Name editor does) must persist without tearing down the list.
+		first.Name = "A renamed";
+
+		manager.Bookmarks[0].Should().BeSameAs(first);
+		manager.Bookmarks[1].Should().BeSameAs(second, "editing one bookmark must not replace the others");
+		new BookmarkManager().Bookmarks.Single(b => b.Token == 0x06000001).Name.Should().Be("A renamed");
+	}
+
+	[Test]
 	public void Saved_bookmarks_reload_in_a_fresh_manager()
 	{
 		var first = new BookmarkManager();
