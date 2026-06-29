@@ -145,12 +145,6 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			return true;
 		}
 
-		/// <summary>Persists the current list to the standard sidecar location.</summary>
-		public void Save() => UpdateSavedBookmarks(bookmarks => {
-			bookmarks.Clear();
-			bookmarks.AddRange(Bookmarks);
-		});
-
 		void Load()
 		{
 			var loaded = ReadFrom(ConfigurationFiles.GetPath(FileName));
@@ -168,15 +162,41 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			}
 		}
 
-		// Replaces the observable collection without treating each item as a user edit.
+		// Reconciles the observable collection with the freshly saved list, in place and without
+		// treating the changes as user edits. Entries already present (matched by AnchorKey) keep their
+		// existing instance -- so the bookmarks pane's live selection and the gutter's references stay
+		// valid -- and only their editable Name/Enabled are refreshed; entries gone from the saved list
+		// are removed and new ones appended. Rebuilding via Clear()+Add() instead would replace every
+		// instance and drop the pane's selection on each toggle or edit.
 		void ReplaceLiveBookmarks(List<Bookmark> bookmarks)
 		{
 			suppressPersist = true;
 			try
 			{
-				Bookmarks.Clear();
-				foreach (var bookmark in bookmarks)
-					Bookmarks.Add(bookmark);
+				var live = new Dictionary<string, Bookmark>();
+				foreach (var bookmark in Bookmarks)
+					live[bookmark.AnchorKey] = bookmark;
+
+				var savedKeys = new HashSet<string>(bookmarks.Select(b => b.AnchorKey));
+				for (int i = Bookmarks.Count - 1; i >= 0; i--)
+				{
+					if (!savedKeys.Contains(Bookmarks[i].AnchorKey))
+						Bookmarks.RemoveAt(i);
+				}
+
+				foreach (var saved in bookmarks)
+				{
+					if (live.TryGetValue(saved.AnchorKey, out var existing))
+					{
+						// Setters are equality-checked, so assigning an unchanged value is a no-op.
+						existing.Name = saved.Name;
+						existing.Enabled = saved.Enabled;
+					}
+					else
+					{
+						Bookmarks.Add(saved);
+					}
+				}
 			}
 			finally
 			{
@@ -198,6 +218,10 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			}
 		}
 
+		// The collection is only ever mutated under suppressPersist (the initial load and the
+		// post-write reconcile in ReplaceLiveBookmarks); persistence and the Changed event are owned
+		// by UpdateSavedBookmarks. This handler's sole job is to keep each bookmark's name/enabled
+		// edit subscription in step with the live list.
 		void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			if (e.OldItems != null)
@@ -210,7 +234,6 @@ namespace ICSharpCode.ILSpy.Bookmarks
 				foreach (Bookmark b in e.NewItems)
 					b.PropertyChanged += OnBookmarkPropertyChanged;
 			}
-			PersistAndNotify();
 		}
 
 		void OnBookmarkPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -218,14 +241,6 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			if (sender is Bookmark bookmark
 				&& (e.PropertyName == nameof(Bookmark.Name) || e.PropertyName == nameof(Bookmark.Enabled)))
 				PersistBookmarkEdit(bookmark);
-		}
-
-		void PersistAndNotify()
-		{
-			if (suppressPersist)
-				return;
-			Save();
-			Changed?.Invoke(this, EventArgs.Empty);
 		}
 
 		void PersistBookmarkEdit(Bookmark bookmark)
