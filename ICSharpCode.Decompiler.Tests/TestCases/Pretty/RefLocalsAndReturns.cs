@@ -168,17 +168,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Issue3827Node RefLocalUsedAfterForLoop(Issue3827Node[] buckets, int hash, Issue3827Node newNode)
 		{
-			// The ref local is used after the loop, so its declaration is hoisted in front of the
-			// for-statement; the for-initializer ref-assignment must stay on the declaration, because
-			// a ref local cannot be declared without an initializer.
+			// The ref local is used after the loop, so its declaration is hoisted in front of the loop.
+			// The loop is kept as a while-loop (rather than converted to a headless for-loop) so the
+			// ref-assignment stays on the declaration -- a ref local cannot be declared without an initializer.
 			ref Issue3827Node reference = ref buckets[hash & 3];
-			for (; reference != null; reference = ref reference.next)
+			while (reference != null)
 			{
 				if (reference.value == hash)
 				{
 					reference = newNode;
 					break;
 				}
+				reference = ref reference.next;
 			}
 			if (reference == null)
 			{
