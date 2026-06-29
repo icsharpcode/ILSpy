@@ -800,22 +800,20 @@ namespace ICSharpCode.ILSpy.TextView
 			Dispatcher.UIThread.Post(() => {
 				if (!ReferenceEquals(Editor.Document, document) || line < 1 || line > document.LineCount)
 					return;
+				// Restore the captured foldings first -- collapsing/expanding shifts where lines sit --
+				// then centre the re-resolved line. The bookmark's saved caret/scroll are deliberately
+				// not restored: a decompiler-setting change can reflow the text so the bookmark
+				// re-anchors to a different line, and the stale offset would scroll it back off-screen.
+				if (viewState != null)
+					RestoreBookmarkFoldings(viewState);
 				CenterLineInView(document, line);
 				LineHighlightAdorner.DisplayLineHighlight(Editor.TextArea, line);
 				bookmarkMargin?.PulseLine(line);
-				if (viewState != null)
-					RestoreBookmarkViewState(viewState);
 			}, DispatcherPriority.Background);
 		}
 
-		void RestoreBookmarkViewState(Bookmarks.BookmarkViewState viewState)
-		{
-			var state = viewState.ToDecompilerTextViewState();
-			RestoreCurrentFoldings(state.Foldings);
-			Editor.TextArea.Caret.Offset = Math.Clamp(state.CaretOffset, 0, Editor.Document.TextLength);
-			if (EditorScrollViewer is { } scrollViewer)
-				scrollViewer.Offset = new Vector(state.HorizontalOffset, state.VerticalOffset);
-		}
+		void RestoreBookmarkFoldings(Bookmarks.BookmarkViewState viewState)
+			=> RestoreCurrentFoldings(viewState.ToDecompilerTextViewState().Foldings);
 
 		void RestoreCurrentFoldings(FoldingsViewState.Snapshot? saved)
 		{
