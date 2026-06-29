@@ -60,6 +60,9 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		int hoverLine = -1;
 		// A line whose hover preview stays hidden after a removal click, until the pointer leaves it.
 		int suppressedHoverLine = -1;
+		// Cached document-line -> glyph map and the content version it was built against.
+		Dictionary<int, IImage>? glyphByLine;
+		(object?, object?) glyphByLineVersion;
 
 		public BookmarkMargin(TextView.DecompilerTextView owner)
 		{
@@ -105,9 +108,14 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			pulseTimer.Stop();
 			pulseLine = -1;
 			hoverLine = -1;
+			glyphByLine = null;
 		}
 
-		void OnBookmarksChanged(object? sender, EventArgs e) => InvalidateVisual();
+		void OnBookmarksChanged(object? sender, EventArgs e)
+		{
+			glyphByLine = null;
+			InvalidateVisual();
+		}
 
 		/// <summary>Plays the one-shot bounce on the bookmark glyph at <paramref name="line"/>.</summary>
 		public void PulseLine(int line)
@@ -146,20 +154,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			if (manager == null || textView == null || !textView.VisualLinesValid)
 				return;
 
-			// Map the document lines that currently hold a bookmark to their glyph. Bookmarks not in
-			// this document resolve to no line and are skipped.
-			var glyphByLine = new Dictionary<int, IImage>();
-			foreach (var bookmark in manager.Bookmarks)
-			{
-				if (owner.GetLineForBookmark(bookmark, updateRenderedLine: false) is { } line)
-				{
-					if (bookmark.LineNumber != line)
-					{
-						Dispatcher.UIThread.Post(() => bookmark.UpdateRenderedLineNumber(line), DispatcherPriority.Background);
-					}
-					glyphByLine[line] = bookmark.Enabled ? Images.Bookmark : Images.BookmarkDisable;
-				}
-			}
+			var glyphByLine = GetGlyphByLine(manager);
 			foreach (var visualLine in textView.VisualLines)
 			{
 				int lineNumber = visualLine.FirstDocumentLine.LineNumber;
@@ -192,6 +187,33 @@ namespace ICSharpCode.ILSpy.Bookmarks
 					drawingContext.DrawImage(glyph, rect);
 				}
 			}
+		}
+
+		// The document line -> glyph map for the current document and bookmark set. Resolving a bookmark
+		// to its line scans the document's references, so it is computed once and reused across the many
+		// repaints a scroll, hover or pulse triggers. It is rebuilt when the bookmark set changes (which
+		// clears the cache) or when the displayed document changes -- detected by its content version,
+		// since the editor reuses one TextDocument and only swaps its text, so the document reference
+		// never changes.
+		Dictionary<int, IImage> GetGlyphByLine(BookmarkManager manager)
+		{
+			var version = owner.BookmarkContentVersion;
+			if (glyphByLine != null && version.Equals(glyphByLineVersion))
+				return glyphByLine;
+			glyphByLineVersion = version;
+
+			// Bookmarks not anchored in this document resolve to no line and are skipped.
+			var map = new Dictionary<int, IImage>();
+			foreach (var bookmark in manager.Bookmarks)
+			{
+				if (owner.GetLineForBookmark(bookmark, updateRenderedLine: false) is { } line)
+				{
+					if (bookmark.LineNumber != line)
+						Dispatcher.UIThread.Post(() => bookmark.UpdateRenderedLineNumber(line), DispatcherPriority.Background);
+					map[line] = bookmark.Enabled ? Images.Bookmark : Images.BookmarkDisable;
+				}
+			}
+			return glyphByLine = map;
 		}
 
 		// A bitmap copy of the bookmark glyph, shared by all gutters, used only for the hover preview.
@@ -300,5 +322,10 @@ namespace ICSharpCode.ILSpy.Bookmarks
 
 		// The line currently drawing a hover-preview glyph, or -1 when none. Exposed for tests.
 		internal int HoverPreviewLine => hoverLine;
+
+		// The document lines that currently carry a bookmark glyph, resolved against the live document.
+		// Exposed for tests because the gutter only paints when rendering is on (off in the headless CI).
+		internal IReadOnlyDictionary<int, IImage> GlyphLinesForTest()
+			=> Manager is { } m ? GetGlyphByLine(m) : new Dictionary<int, IImage>();
 	}
 }

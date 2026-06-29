@@ -686,14 +686,22 @@ namespace ICSharpCode.ILSpy.TextView
 		// Bookmarks live only on the decompiled C# view, not on IL / metadata / resource output.
 		bool ShowsBookmarkableCode => DataContext is DecompilerTabPageModel { SyntaxExtension: ".cs" };
 
-		Bookmarks.Bookmark? CreateBookmarkForLine(int line)
+		// Just the anchor for a line, or null when the line can't be bookmarked. Cheap enough to call
+		// per hovered line: it does not capture the editor view state (foldings, scroll, tree path),
+		// which only a bookmark that is actually being created needs.
+		Bookmarks.Bookmark? CreateAnchorForLine(int line)
 		{
 			if (!ShowsBookmarkableCode || DataContext is not DecompilerTabPageModel model)
 				return null;
 			var fallbackOwner = model.CurrentNode is IMemberTreeNode memberNode ? memberNode.Member : null;
-			var bookmark = Bookmarks.BookmarkAnchoring.CreateForLine(model.DebugInfo, model.References, Editor.Document, line,
+			return Bookmarks.BookmarkAnchoring.CreateForLine(model.DebugInfo, model.References, Editor.Document, line,
 				fallbackOwner, GetLocationNodeName(model.CurrentNode));
-			if (bookmark != null)
+		}
+
+		Bookmarks.Bookmark? CreateBookmarkForLine(int line)
+		{
+			var bookmark = CreateAnchorForLine(line);
+			if (bookmark != null && DataContext is DecompilerTabPageModel model)
 			{
 				var displaySettings = AppComposition.TryGetExport<SettingsService>()?.DisplaySettings;
 				var selectedTreeNodePath = AssemblyTreeModel.GetPathForNode(model.CurrentNode);
@@ -706,7 +714,7 @@ namespace ICSharpCode.ILSpy.TextView
 			=> node is IMemberTreeNode { Member: { } member } ? member.FullName : node?.ToString();
 
 		/// <summary>Whether <paramref name="line"/> can hold a bookmark in the current document.</summary>
-		internal bool CanToggleBookmarkAtLine(int line) => CreateBookmarkForLine(line) != null;
+		internal bool CanToggleBookmarkAtLine(int line) => CreateAnchorForLine(line) != null;
 
 		internal bool CanToggleBookmarkAtOffset(int offset)
 		{
@@ -854,6 +862,14 @@ namespace ICSharpCode.ILSpy.TextView
 			double target = visualTop - (scrollViewer.Viewport.Height - textView.DefaultLineHeight) / 2;
 			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, Math.Max(0, target));
 		}
+
+		// The identity of the inputs that decide where bookmarks resolve in the current C# document.
+		// Both are replaced on every decompile, while the editor reuses one TextDocument (only its text
+		// changes), so this -- not the document reference -- is what tells the gutter its cache is stale.
+		internal (object? DebugInfo, object? References) BookmarkContentVersion
+			=> DataContext is DecompilerTabPageModel { SyntaxExtension: ".cs" } model
+				? (model.DebugInfo, model.References)
+				: default;
 
 		/// <summary>
 		/// The document line a bookmark sits on in the currently shown C# document, or null when the
