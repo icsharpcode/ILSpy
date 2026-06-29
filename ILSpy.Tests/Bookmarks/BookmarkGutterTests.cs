@@ -134,4 +134,80 @@ public class BookmarkGutterTests
 
 		manager.Bookmarks.Should().ContainSingle("a left-click at the same coordinate still toggles");
 	}
+
+	[AvaloniaTest]
+	public async Task Removing_A_Bookmark_From_The_Gutter_Hides_Its_Hover_Preview_Until_The_Pointer_Leaves_The_Line()
+	{
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var manager = AppComposition.Current.GetExport<BookmarkManager>();
+		manager.Clear();
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var view = await window.WaitForComponent<DecompilerTextView>();
+		for (int i = 0; i < 8; i++)
+		{
+			Dispatcher.UIThread.RunJobs();
+			await Task.Delay(25);
+		}
+		window.UpdateLayout();
+
+		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
+		var textView = view.Editor.TextArea.TextView;
+		textView.EnsureVisualLines();
+		var bookmarkable = textView.VisualLines
+			.Where(line => view.CanToggleBookmarkAtLine(line.FirstDocumentLine.LineNumber))
+			.Take(2)
+			.ToArray();
+		bookmarkable.Should().HaveCount(2, "two bookmarkable lines are needed to leave and re-enter the removed line");
+
+		Point GutterPoint(VisualLine line)
+		{
+			double y = line.GetTextLineVisualYPosition(line.TextLines[0], VisualYPosition.LineMiddle) - textView.VerticalOffset;
+			var p = margin.TranslatePoint(new Point(margin.Bounds.Width / 2, y), window);
+			p.Should().NotBeNull("the gutter line coordinate must map into the test window");
+			return p!.Value;
+		}
+
+		int line0 = bookmarkable[0].FirstDocumentLine.LineNumber;
+		int line1 = bookmarkable[1].FirstDocumentLine.LineNumber;
+		Point point0 = GutterPoint(bookmarkable[0]);
+		Point point1 = GutterPoint(bookmarkable[1]);
+
+		// Hovering an empty bookmarkable line previews a ghost glyph.
+		window.MouseMove(point0);
+		Dispatcher.UIThread.RunJobs();
+		margin.HoverPreviewLine.Should().Be(line0, "hovering a bookmarkable line previews its glyph");
+
+		// Click adds the bookmark; the pointer stays on the line.
+		window.MouseDown(point0, MouseButton.Left);
+		window.MouseUp(point0, MouseButton.Left);
+		Dispatcher.UIThread.RunJobs();
+		manager.Bookmarks.Should().ContainSingle();
+
+		// Clicking again removes it: the line must visibly empty rather than redraw a ghost.
+		window.MouseDown(point0, MouseButton.Left);
+		window.MouseUp(point0, MouseButton.Left);
+		Dispatcher.UIThread.RunJobs();
+		manager.Bookmarks.Should().BeEmpty();
+		margin.HoverPreviewLine.Should().Be(-1, "removing via the gutter hides the preview");
+
+		// A jitter that stays on the just-removed line must NOT bring the preview back.
+		window.MouseMove(new Point(point0.X + 1, point0.Y));
+		Dispatcher.UIThread.RunJobs();
+		margin.HoverPreviewLine.Should().Be(-1, "moving within the same line keeps the removed line's preview hidden");
+
+		// Moving onto a different line resumes normal hover.
+		window.MouseMove(point1);
+		Dispatcher.UIThread.RunJobs();
+		margin.HoverPreviewLine.Should().Be(line1, "a different line hovers normally");
+
+		// Returning to the original line now shows its preview again.
+		window.MouseMove(point0);
+		Dispatcher.UIThread.RunJobs();
+		margin.HoverPreviewLine.Should().Be(line0, "leaving and re-entering the line restores its preview");
+	}
 }
