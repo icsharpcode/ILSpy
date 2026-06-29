@@ -177,6 +177,61 @@ public class BookmarkNavigationViewTests
 			.Should().ContainSingle("the destination line must be highlighted in the fresh preview");
 	}
 
+	// Regression: a bookmark re-anchors by token/IL offset, so a decompiler-setting change that
+	// reflows the text moves it to a different line than the one saved in its view state. Navigation
+	// must scroll to the re-resolved line; restoring the bookmark's stale saved caret/scroll instead
+	// would leave the bookmarked line off-screen with only the highlight playing where it can't be seen.
+	[AvaloniaTest]
+	public async Task Navigating_To_A_Bookmark_Scrolls_To_The_Resolved_Line_Not_The_Stale_Saved_Offset()
+	{
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var manager = AppComposition.Current.GetExport<BookmarkManager>();
+		manager.Clear();
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+
+		// A long type so the bookmark can sit well below the first screenful.
+		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
+		vm.AssemblyTreeModel.SelectNode(stringNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var view = await window.WaitForComponent<DecompilerTextView>();
+		await PumpLayoutAsync();
+
+		var textView = view.Editor.TextArea.TextView;
+		textView.EnsureVisualLines();
+
+		// Bookmark a line well below the initial viewport.
+		int bookmarkLine = Enumerable.Range(1, view.Editor.Document.LineCount)
+			.Where(view.CanToggleBookmarkAtLine)
+			.FirstOrDefault(l => textView.GetVisualTopByDocumentLine(l) > textView.Bounds.Height * 1.5);
+		bookmarkLine.Should().BeGreaterThan(0, "need a bookmarkable line well below the first screenful");
+		int offset = view.Editor.Document.GetLineByNumber(bookmarkLine).Offset;
+		view.Editor.TextArea.Caret.Offset = offset;
+		AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.BookmarkToggle))
+			.Execute(new TextViewContext { TextView = view, TextLocation = offset });
+		Dispatcher.UIThread.RunJobs();
+		var bookmark = manager.Bookmarks.Should().ContainSingle().Subject;
+
+		// Simulate the post-reflow state: the bookmark still resolves (by token / IL offset) to its
+		// line, but the saved caret/scroll now point at the top of the document instead.
+		bookmark.ViewState.Should().NotBeNull();
+		bookmark.ViewState = bookmark.ViewState! with { CaretOffset = 0, VerticalOffset = 0, HorizontalOffset = 0 };
+
+		// Navigate to the bookmark on the already-shown node.
+		vm.DockWorkspace.ActiveDecompilerTab!.ScrollToBookmark!.Invoke(bookmark);
+		await PumpLayoutAsync();
+
+		int targetLine = view.GetLineForBookmark(bookmark) ?? -1;
+		targetLine.Should().Be(bookmarkLine, "no real reflow happened, so the bookmark still resolves to its line");
+
+		view.Editor.TextArea.Caret.Line.Should().Be(targetLine,
+			"navigation must position by the re-resolved line, not the bookmark's stale saved caret");
+
+		double visualTop = textView.GetVisualTopByDocumentLine(targetLine);
+		visualTop.Should().BeInRange(textView.VerticalOffset, textView.VerticalOffset + textView.Bounds.Height,
+			"the bookmarked line must be on-screen after navigation, not scrolled away by the stale saved offset");
+	}
+
 	static async Task PumpLayoutAsync()
 	{
 		for (int i = 0; i < 8; i++)
