@@ -821,30 +821,9 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 
 		void RestoreBookmarkFoldings(Bookmarks.BookmarkViewState viewState)
-			=> RestoreCurrentFoldings(viewState.ToDecompilerTextViewState().Foldings);
-
-		void RestoreCurrentFoldings(FoldingsViewState.Snapshot? saved)
 		{
-			if (saved == null || activeFoldingManager is not { } manager)
-				return;
-
-			var current = FoldingsViewState.Capture(manager.AllFoldings);
-			if (current.Checksum != saved.Value.Checksum)
-				return;
-
-			foreach (var folding in manager.AllFoldings)
-			{
-				bool wasExpanded = false;
-				foreach (var (start, end) in saved.Value.Expanded)
-				{
-					if (start == folding.StartOffset && end == folding.EndOffset)
-					{
-						wasExpanded = true;
-						break;
-					}
-				}
-				folding.IsFolded = !wasExpanded;
-			}
+			if (viewState.ToDecompilerTextViewState().Foldings is { } saved && activeFoldingManager is { } manager)
+				FoldingsViewState.Restore(manager.AllFoldings, saved);
 		}
 
 		// Scrolls so <paramref name="line"/> sits in the middle of the viewport. AvaloniaEdit's
@@ -888,7 +867,7 @@ namespace ICSharpCode.ILSpy.TextView
 					return null;
 				foreach (var method in debug.Methods)
 				{
-					if (method.Token == bookmark.Token && method.AssemblyFullName == bookmark.AssemblyFullName
+					if (MatchesBookmark(method, bookmark)
 						&& method.TryGetLineForOffset(bookmark.ILOffset, out var bodyLine))
 					{
 						if (updateRenderedLine)
@@ -912,9 +891,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				foreach (var segment in references)
 				{
-					if (segment.IsDefinition && segment.Reference is IEntity entity
-						&& (uint)System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(entity.MetadataToken) == bookmark.Token
-						&& entity.ParentModule?.MetadataFile?.FullName == bookmark.AssemblyFullName)
+					if (segment.IsDefinition && segment.Reference is IEntity entity && MatchesBookmark(entity, bookmark))
 					{
 						var line = Editor.Document.GetLineByOffset(segment.StartOffset).LineNumber;
 						if (updateRenderedLine)
@@ -926,13 +903,24 @@ namespace ICSharpCode.ILSpy.TextView
 			return null;
 		}
 
+		// The token + assembly identity that ties a bookmark to a member in the current document. The
+		// module identity is checked too, so a token value shared across assemblies can't match the
+		// wrong member. Both forms (the body-anchor debug map and a reference segment's entity) are
+		// kept in step here rather than spelled out at each call site.
+		static bool MatchesBookmark(Bookmarks.MethodDebugInfo method, Bookmarks.Bookmark bookmark)
+			=> method.Token == bookmark.Token && method.AssemblyFullName == bookmark.AssemblyFullName;
+
+		static bool MatchesBookmark(IEntity entity, Bookmarks.Bookmark bookmark)
+			=> (uint)MetadataTokens.GetToken(entity.MetadataToken) == bookmark.Token
+				&& entity.ParentModule?.MetadataFile?.FullName == bookmark.AssemblyFullName;
+
 		static bool DocumentContainsBookmarkToken(DecompilerTabPageModel model, Bookmarks.Bookmark bookmark)
 		{
 			if (model.DebugInfo != null)
 			{
 				foreach (var method in model.DebugInfo.Methods)
 				{
-					if (method.Token == bookmark.Token && method.AssemblyFullName == bookmark.AssemblyFullName)
+					if (MatchesBookmark(method, bookmark))
 						return true;
 				}
 			}
@@ -941,9 +929,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				foreach (var segment in model.References)
 				{
-					if (segment.Reference is IEntity entity
-						&& (uint)MetadataTokens.GetToken(entity.MetadataToken) == bookmark.Token
-						&& entity.ParentModule?.MetadataFile?.FullName == bookmark.AssemblyFullName)
+					if (segment.Reference is IEntity entity && MatchesBookmark(entity, bookmark))
 						return true;
 				}
 			}
