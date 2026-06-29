@@ -140,12 +140,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IntroduceUnwrap(testedVar, varLoad, mode);
 				return new NullableRewrap(nonNullInst);
 			}
-			else if (!removedRewrapOrNullableCtor && NullableType.IsNonNullableValueType(returnType))
+			else if (!removedRewrapOrNullableCtor && NullableType.IsNonNullableValueType(returnType)
+				&& !returnType.IsByRefLike)
 			{
 				context.Step($"Null propagation (mode={mode}, output=null coalescing)", nonNullInst);
 				// testedVar != null ? testedVar.AccessChain : nullInst
 				// => testedVar?.AccessChain ?? nullInst
-				// (only valid if AccessChain returns a non-nullable value)
+				// (only valid if AccessChain returns a non-nullable value; a by-ref-like type such as
+				// Span<T> is excluded because it cannot be wrapped in Nullable<T> for the ?. / ?? form)
 				IntroduceUnwrap(testedVar, varLoad, mode);
 				return new NullCoalescingInstruction(
 					NullCoalescingKind.NullableWithValueFallback,
