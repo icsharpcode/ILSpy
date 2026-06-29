@@ -76,16 +76,21 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			if (node == null)
 				return;
 
-			// Hand the target line to the text view: it positions the caret once this node's
-			// document (and its IL-offset map) has landed.
-			if (AppComposition.TryGetExport<DockWorkspace>()?.ActiveDecompilerTab is { } tab)
-				tab.PendingBookmark = bookmark;
 			if (bookmark.ViewState?.RenderedLayoutSettings is { } layoutSettings
 				&& AppComposition.TryGetExport<SettingsService>() is { } settingsService)
 			{
 				layoutSettings.ApplyTo(settingsService.DisplaySettings);
 			}
-			assemblyTree.SelectNode(node);
+
+			// Select the node and hand the target line to the decompiler view it lands in. Routing
+			// through DockWorkspace (rather than setting PendingBookmark on the active decompiler tab
+			// here) covers the case where the currently active content is not a decompiler tab -- a
+			// metadata table, the Options page, the About page -- so there is no active decompiler tab
+			// to position directly.
+			if (AppComposition.TryGetExport<DockWorkspace>() is { } dockWorkspace)
+				dockWorkspace.NavigateToBookmark(node, bookmark);
+			else
+				assemblyTree.SelectNode(node);
 		}
 
 		async Task OfferRemoveAsync(Bookmark bookmark)

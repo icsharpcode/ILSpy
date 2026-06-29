@@ -685,6 +685,13 @@ namespace ICSharpCode.ILSpy.Docking
 		// Created lazily on first need.
 		DecompilerTabPageModel? decompilerContent;
 
+		// A bookmark whose line the next tree-node decompile should scroll to and highlight. Set by
+		// NavigateToBookmark before the node is selected, and consumed in ShowSelectedNode when the
+		// selection routes to the decompiler content -- so a bookmark activated while a metadata
+		// table, the Options page, or the About page is the active content still positions correctly,
+		// even though there is no active decompiler tab to hand it to directly.
+		Bookmarks.Bookmark? pendingBookmark;
+
 		// The startup welcome page (About content in the reusable MainTab, non-static). Tracked so
 		// Help > About can activate it instead of spawning a duplicate static About tab while it is
 		// still on screen. Self-correcting: once a tree-node selection swaps MainTab.Content to the
@@ -733,6 +740,33 @@ namespace ICSharpCode.ILSpy.Docking
 			{
 				if (!tab.IsStaticContent)
 					tab.Redecompile();
+			}
+		}
+
+		/// <summary>
+		/// Selects <paramref name="node"/> and scrolls the decompiler view to <paramref name="bookmark"/>'s
+		/// line once that node's document and IL-offset map have landed. Unlike setting
+		/// <see cref="DecompilerTabPageModel.PendingBookmark"/> on <see cref="ActiveDecompilerTab"/>,
+		/// this works when the currently active content is not a decompiler tab (a metadata table, the
+		/// Options page, the About page): the bookmark is handed to the decompiler model that
+		/// <see cref="ShowSelectedNode"/> routes the selection to.
+		/// </summary>
+		public void NavigateToBookmark(ICSharpCode.ILSpyX.TreeView.SharpTreeNode node, Bookmarks.Bookmark bookmark)
+		{
+			pendingBookmark = bookmark;
+			var previousSelection = assemblyTreeModel.SelectedItem;
+			assemblyTreeModel.SelectNode(node);
+			// Selecting an already-selected node is a no-op, so ShowSelectedNode never runs to consume
+			// the pending bookmark. When the node is already the active decompiler content, position
+			// against the live tab directly; otherwise drop the pending bookmark so it cannot bleed
+			// into a later navigation.
+			if (pendingBookmark is { } pending && ReferenceEquals(previousSelection, node))
+			{
+				pendingBookmark = null;
+				// The document is already displayed, so no document-apply step will run to consume a
+				// PendingBookmark -- scroll the live view directly instead.
+				if (ActiveDecompilerTab is { } tab)
+					tab.ScrollToBookmark?.Invoke(pending);
 			}
 		}
 
@@ -795,6 +829,19 @@ namespace ICSharpCode.ILSpy.Docking
 			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: main.Content = decTab (Dock view-recycling)"))
 				main.Content = decTab;
 			decTab.Language = languageService.CurrentLanguage;
+			// Carry a bookmark navigation onto the model that will display the node, before the
+			// decompile starts; the text view positions the caret + highlight once the document lands.
+			if (pendingBookmark is { } bookmark)
+			{
+				pendingBookmark = null;
+				// When the node is already decompiled in this tab (re-shown after a metadata/Options/
+				// About interlude), no document-apply step runs to consume a PendingBookmark, so scroll
+				// the live view directly. Otherwise the upcoming decompile's apply step consumes it.
+				if (decTab.CurrentNodes.SequenceEqual(nodes))
+					decTab.ScrollToBookmark?.Invoke(bookmark);
+				else
+					decTab.PendingBookmark = bookmark;
+			}
 			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: decTab.CurrentNodes = nodes (kicks off DecompileAsync)"))
 				decTab.CurrentNodes = nodes;
 			main.SourceNode = nodes.Length == 1 ? nodes[0] : null;

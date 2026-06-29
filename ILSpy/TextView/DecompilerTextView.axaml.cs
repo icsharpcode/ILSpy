@@ -748,13 +748,26 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void ApplyPendingBookmark(DecompilerTabPageModel model)
 		{
-			if (model.PendingBookmark is not { } bookmark)
-				return;
+			// Clear only once the line actually resolves and we scroll. A document-apply can run
+			// against the not-yet-decompiled document (a fresh preview tab binds with empty text
+			// before its decompile lands); leaving PendingBookmark set there lets the apply that
+			// follows the real content position the caret instead of discarding the navigation.
+			if (model.PendingBookmark is { } bookmark && ApplyBookmark(bookmark))
+				model.PendingBookmark = null;
+		}
+
+		// Computes the bookmark's current line from its saved token/anchor (resilient to reflow) and
+		// scrolls there with the one-shot highlight. Returns false when the line cannot be resolved
+		// yet (document not decompiled, or not C#). Shared by the document-apply consumption of
+		// PendingBookmark and the ScrollToBookmark callback for an already-displayed node.
+		bool ApplyBookmark(Bookmarks.Bookmark bookmark)
+		{
 			if (GetLineForBookmark(bookmark) is { } line)
 			{
 				ScrollToLine(line, bookmark.ViewState);
-				model.PendingBookmark = null;
+				return true;
 			}
+			return false;
 		}
 
 		void ScrollToLine(int line, Bookmarks.BookmarkViewState? viewState = null)
@@ -918,6 +931,7 @@ namespace ICSharpCode.ILSpy.TextView
 				previous.PropertyChanged -= OnModelPropertyChanged;
 				previous.CaptureViewState = null;
 				previous.NavigateBookmarkInFile = null;
+				previous.ScrollToBookmark = null;
 			}
 
 			boundModel = DataContext as DecompilerTabPageModel;
@@ -930,6 +944,9 @@ namespace ICSharpCode.ILSpy.TextView
 				model.CaptureViewState = GetCurrentViewState;
 				// Bookmarks-pane toolbar navigation actions that operate on the active document route through this.
 				model.NavigateBookmarkInFile = NavigateBookmarkInFile;
+				// Direct scroll for a bookmark activated on the already-displayed node, where no
+				// document-apply step runs to consume PendingBookmark.
+				model.ScrollToBookmark = bookmark => ApplyBookmark(bookmark);
 				ApplyDocument(model);
 				// Point the breadcrumb at this tab's node (the bar owns its own VM, so feed it the
 				// node rather than letting it inherit the document DataContext).
@@ -985,12 +1002,6 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				ApplyHighlightedReference(m);
 			}
-			// A bookmark navigation that lands on the already-open document (no re-decompile) scrolls here.
-			else if (sender is DecompilerTabPageModel bm
-				&& e.PropertyName == nameof(DecompilerTabPageModel.PendingBookmark))
-			{
-				ApplyPendingBookmark(bm);
-			}
 		}
 
 		void ApplyHighlightedReference(DecompilerTabPageModel model)
@@ -1042,8 +1053,12 @@ namespace ICSharpCode.ILSpy.TextView
 			if (restoreViewState)
 				RestoreOrResetViewState(pendingState);
 
-			// Position at a navigated-to bookmark once its document (and debug map) has landed.
-			ApplyPendingBookmark(model);
+			// Position at a navigated-to bookmark once its document (and debug map) has landed. Only on
+			// the final content (the Text change, where restoreViewState is set), AFTER the view-state
+			// reset above, so the bookmark scroll is the last word on position and the highlight plays
+			// on the settled layout instead of an intermediate render a later rebuild would scroll away.
+			if (restoreViewState)
+				ApplyPendingBookmark(model);
 
 			SwapCustomElementGenerators(model.CustomElementGenerators);
 
