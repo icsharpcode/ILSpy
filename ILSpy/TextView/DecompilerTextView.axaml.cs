@@ -151,6 +151,21 @@ namespace ICSharpCode.ILSpy.TextView
 			// current document is C# and has bookmarks, so it is harmless on IL / metadata views.
 			bookmarkMargin = new Bookmarks.BookmarkMargin(this);
 			Editor.TextArea.LeftMargins.Insert(0, bookmarkMargin);
+
+			// The text area paints the I-beam across its whole surface and the gutter margins inherit it
+			// by walking up the visual tree. The left margins (bookmark gutter, line numbers, folding) are
+			// click targets, not text, so force the normal arrow there. Line numbers and folding come and
+			// go as their display settings toggle, so re-apply whenever the margin collection changes.
+			Editor.TextArea.LeftMargins.CollectionChanged += (_, _) => ApplyArrowCursorToLeftMargins();
+			ApplyArrowCursorToLeftMargins();
+		}
+
+		internal static readonly Cursor ArrowCursor = new(StandardCursorType.Arrow);
+
+		void ApplyArrowCursorToLeftMargins()
+		{
+			foreach (var margin in Editor.TextArea.LeftMargins)
+				margin.Cursor = ArrowCursor;
 		}
 
 		void OnPreviewKeyDownForOmnibar(object? sender, KeyEventArgs e)
