@@ -133,7 +133,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		{
 			int index = SelectedBookmark != null ? Bookmarks.IndexOf(SelectedBookmark) : -1;
 			if (NextEnabledIndex(Bookmarks.Select(b => b.Enabled).ToList(), index, delta) is { } next)
-				_ = ActivateAsync(Bookmarks[next]);
+				ActivateAsync(Bookmarks[next]).HandleExceptions();
 		}
 
 		/// <summary>

@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		{
 			if (DataContext is BookmarksPaneModel model && BookmarkGrid.SelectedItem is Bookmark bookmark)
 			{
-				_ = model.ActivateAsync(bookmark);
+				model.ActivateAsync(bookmark).HandleExceptions();
 				e.Handled = true;
 			}
 		}

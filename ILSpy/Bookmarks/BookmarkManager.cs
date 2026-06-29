@@ -204,8 +204,6 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			}
 		}
 
-		string NextDefaultName() => NextDefaultName(Bookmarks);
-
 		static string NextDefaultName(IEnumerable<Bookmark> bookmarks)
 		{
 			// Pick the lowest unused "Bookmark{n}" so names stay stable and unsurprising.
