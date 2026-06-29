@@ -582,39 +582,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				&& identExpr.TypeArguments.Count == 0;
 		}
 
-		/// <summary>
-		/// Matches the case where the variable's only initialization is the first initializer of a
-		/// for-statement (`for (v = expr; ...)`) and the declaration has to be placed in front of the
-		/// for-statement (e.g. because the variable is used after the loop). Used to keep a ref local's
-		/// initializer on its declaration (a ref local may not be declared without one).
-		/// </summary>
-		bool IsMatchingForInitializerAssignment(VariableToDeclare v, [NotNullWhen(true)] out ForStatement? forStatement,
-			[NotNullWhen(true)] out Statement? initializerStatement, [NotNullWhen(true)] out AssignmentExpression? assignment)
-		{
-			forStatement = null;
-			initializerStatement = null;
-			assignment = null;
-
-			if (v.InsertionPoint.nextNode is not ForStatement { Parent: BlockStatement } fs)
-				return false;
-
-			if (fs.Initializers.FirstOrDefault() is not ExpressionStatement { Expression: AssignmentExpression a } firstInit)
-				return false;
-
-			if (a.Operator != AssignmentOperatorType.Assign
-				|| a.Left is not IdentifierExpression identExpr
-				|| identExpr.Identifier != v.Name
-				|| identExpr.TypeArguments.Count != 0)
-			{
-				return false;
-			}
-
-			forStatement = fs;
-			initializerStatement = firstInit;
-			assignment = a;
-			return true;
-		}
-
 		bool CombineDeclarationAndInitializer(VariableToDeclare v, TransformContext context)
 		{
 			if (v.Type.IsByRefLike)
@@ -665,32 +632,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					replacements.Add((v.InsertionPoint.nextNode, vds));
-				}
-				else if (v.Type.IsByRefLike && IsMatchingForInitializerAssignment(v, out var forStatement, out var forInitializerStatement, out var forInitAssignment))
-				{
-					// A by-ref-like local that is used after the loop has its declaration hoisted in
-					// front of the for-statement, but its only initialization is the for-initializer
-					// ref-assignment. A ref local must be declared with an initializer (CS8174), so move
-					// the ref-assignment's value up into the declaration and drop the for-initializer.
-					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
-					if (v.ILVariable.IsRefReadOnly && type is ComposedType { HasRefSpecifier: true } composedType)
-					{
-						composedType.HasReadOnlySpecifier = true;
-					}
-
-					var vds = new VariableDeclarationStatement(type, v.Name, forInitAssignment.Right.Detach());
-					var init = vds.Variables.Single();
-					init.AddAnnotation(forInitAssignment.Left.GetResolveResult());
-					foreach (object annotation in forInitAssignment.Left.Annotations.Concat(forInitAssignment.Annotations))
-					{
-						if (annotation is not ResolveResult)
-						{
-							init.AddAnnotation(annotation);
-						}
-					}
-
-					forInitializerStatement.Remove();
-					forStatement.Parent!.InsertChildBefore(forStatement, vds, Slots.Statement);
 				}
 				else if (CanBeDeclaredAsOutVariable(v, out var dirExpr))
 				{

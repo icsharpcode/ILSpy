@@ -202,6 +202,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (variable != m3.Get<IdentifierExpression>("ident").Single().GetILVariable())
 				return null;
 			WhileStatement loop = (WhileStatement)next;
+			// Cannot convert to for loop, if the iteration variable is a ref local used after the loop: its
+			// declaration is hoisted in front, leaving a headless `for (; cond; v = ref ...)` whose only
+			// initialization is the for-initializer ref-assignment -- which can't be split from a ref local
+			// (CS8174). Keeping it a while-loop matches the source and keeps the initializer on the decl.
+			if (variable != null && variable.Type.IsByRefLike && IsVariableUsedAfter(loop, variable))
+				return null;
 			// Cannot convert to for loop, if any variable that is used in the "iterator" part of the pattern,
 			// will be declared in the body of the while-loop.
 			var iteratorStatement = m3.Get<Statement>("iterator").Single();
@@ -241,6 +247,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return true;
 			if (statement.Iterators.Any(i => i.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable)))
 				return true;
+			return false;
+		}
+
+		bool IsVariableUsedAfter(Statement loop, IL.ILVariable variable)
+		{
+			for (AstNode? sibling = loop.NextSibling; sibling != null; sibling = sibling.NextSibling)
+			{
+				if (sibling.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable))
+					return true;
+			}
 			return false;
 		}
 
