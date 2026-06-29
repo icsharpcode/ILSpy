@@ -238,12 +238,21 @@ namespace ICSharpCode.ILSpy.TextView
 		public DecompilerTextViewState? PendingViewState { get; set; }
 
 		/// <summary>
-		/// A bookmark to scroll to once this document is shown. Set by bookmark navigation before the
-		/// target node is decompiled; the text view computes the line and positions the caret after
-		/// the new document lands (and clears this), mirroring <see cref="HighlightedReference"/>.
+		/// A bookmark to scroll to the next time this document is (re)applied. Set by bookmark
+		/// navigation before the target node is decompiled; the text view reads it in its
+		/// document-apply step, computes the line from the saved token, positions the caret and plays
+		/// the highlight, then clears it. Consumed there -- alongside the view-state restore -- rather
+		/// than reacting to a property change, so the reset-to-top of a fresh navigation cannot scroll
+		/// the bookmark position away in a later pass.
 		/// </summary>
-		[ObservableProperty]
-		private Bookmarks.Bookmark? pendingBookmark;
+		public Bookmarks.Bookmark? PendingBookmark { get; set; }
+
+		/// <summary>
+		/// Scrolls the live document to a bookmark immediately, for navigation that lands on the
+		/// already-displayed node (no re-decompile, so no document-apply step runs). Set by the text
+		/// view; mirrors <see cref="NavigateBookmarkInFile"/>.
+		/// </summary>
+		public System.Action<Bookmarks.Bookmark>? ScrollToBookmark { get; set; }
 
 		/// <summary>Moves to the next (true) / previous (false) bookmark within this document. Set by the text view.</summary>
 		public System.Action<bool>? NavigateBookmarkInFile { get; set; }
