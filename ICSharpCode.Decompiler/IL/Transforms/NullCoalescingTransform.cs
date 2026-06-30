@@ -36,10 +36,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			if (!TransformRefTypes(block, pos, context))
-			{
-				TransformThrowExpressionValueTypes(block, pos, context);
-			}
+			if (TransformRefTypes(block, pos, context))
+				return;
+			if (TransformHoistedConstructorArgumentNullGuard(block, pos, context))
+				return;
+			TransformThrowExpressionValueTypes(block, pos, context);
 		}
 
 		/// <summary>
@@ -105,6 +106,164 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// When an argument of a chained constructor call contains a throwing null-check
+		/// (e.g. <c>arg ?? throw ...</c>) and <c>arg</c> is evaluated more than once, the C#
+		/// compiler hoists the null-check in front of the chained call:
+		/// <code>
+		///   if (comp.o(ldloc param == ldnull)) throw(...)
+		///   call Base..ctor(..., ldlen(ldloc param), ..., ldloc param, ...)
+		/// </code>
+		/// The guard then blocks TransformFieldAndConstructorInitializers from lifting the chained
+		/// call into a <c>: this(...)</c> / <c>: base(...)</c> clause. Replace the guard with
+		/// <code>
+		///   stloc temp(if.notnull(ldloc param, throw(...)))
+		/// </code>
+		/// redirecting the first following use of the parameter (the position the check was hoisted
+		/// from) to <c>temp</c>, and leave moving the coalescing expression into the chained call to
+		/// ILInlining, which does so only when that preserves the order of evaluation.
+		/// Reference-type chains (<c>base/this..ctor</c> calls) are identified by IL offset via
+		/// <see cref="ILInlining.IsInConstructorInitializer"/>; value types chain via
+		/// <c>this = new TSelf(...)</c>, i.e. <c>stobj(ldthis, newobj TSelf(...))</c>, which
+		/// <see cref="ILFunction.ChainedConstructorCallILOffset"/> does not report, so the stobj
+		/// shape is matched directly.
+		/// </summary>
+		bool TransformHoistedConstructorArgumentNullGuard(Block block, int pos, StatementTransformContext context)
+		{
+			// A throw-expression is the only way to express the folded form.
+			if (!context.Settings.ThrowExpressions)
+				return false;
+
+			var function = block.Ancestors.OfType<ILFunction>().FirstOrDefault();
+			if (function?.Method is not { IsConstructor: true, IsStatic: false })
+				return false;
+
+			// Match `if (comp(ldloc param == ldnull)) throw(...)` with no else branch.
+			var guard = block.Instructions[pos];
+			if (!IsArgumentNullGuard(guard, out var paramLoad, out var throwInst))
+				return false;
+
+			if (!GuardPrecedesChainedConstructorCall(block, pos, function, out int searchEndPos))
+				return false;
+
+			// Redirect the first following use of the parameter, i.e. the position where the
+			// null-check sat before the compiler hoisted it.
+			LdLoc firstUse = null;
+			for (int i = pos + 1; i <= searchEndPos && firstUse == null; i++)
+			{
+				firstUse = block.Instructions[i].Descendants.OfType<LdLoc>()
+					.FirstOrDefault(ld => ld.Variable == paramLoad.Variable);
+			}
+			if (firstUse == null)
+				return false; // parameter not used up to the chained call -> cannot fold; leave guard in place
+
+			context.Step($"NullCoalescingTransform: fold hoisted null-guard of '{paramLoad.Variable.Name}' into argument of chained constructor call", guard);
+
+			var temp = function.RegisterVariable(VariableKind.StackSlot, paramLoad.Variable.Type);
+			firstUse.Variable = temp;
+			throwInst.resultType = StackType.O;
+			var stloc = new StLoc(temp, new NullCoalescingInstruction(NullCoalescingKind.Ref, paramLoad, throwInst));
+			stloc.AddILRange(guard);
+			block.Instructions[pos] = stloc;
+			context.EndStep(stloc);
+			ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
+			return true;
+		}
+
+		/// <summary>
+		/// Matches a hoisted argument null-guard `if (comp(ldloc param == ldnull)) throw(...)`
+		/// (no else branch). Only parameters qualify: nothing else is in scope before the
+		/// constructor initializer.
+		/// </summary>
+		static bool IsArgumentNullGuard(ILInstruction inst, out LdLoc paramLoad, out Throw throwInst)
+		{
+			paramLoad = null;
+			throwInst = null;
+			if (!inst.MatchIfInstruction(out var condition, out var trueInst))
+				return false;
+			if (!(Block.Unwrap(trueInst) is Throw t))
+				return false;
+			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left is LdLoc load))
+				return false;
+			if (load.Variable.Kind != VariableKind.Parameter)
+				return false;
+			paramLoad = load;
+			throwInst = t;
+			return true;
+		}
+
+		/// <summary>
+		/// Determines whether the guard at <paramref name="pos"/> precedes the constructor's chained
+		/// this/base call, i.e. belongs to the hoisted argument evaluation of the constructor
+		/// initializer. <paramref name="searchEndPos"/> is the last statement index that may contain
+		/// the parameter use to redirect (the statement containing the chained call, if it is in
+		/// this block).
+		/// </summary>
+		static bool GuardPrecedesChainedConstructorCall(Block block, int pos, ILFunction function, out int searchEndPos)
+		{
+			searchEndPos = -1;
+			if (ILInlining.IsInConstructorInitializer(function, block.Instructions[pos]))
+			{
+				// Reference-type chain: everything before ChainedConstructorCallILOffset is the
+				// initializer's argument evaluation. Search up to and including the first statement
+				// that reaches past that offset (the statement containing the chained call).
+				int ctorCallStart = function.ChainedConstructorCallILOffset;
+				for (int i = pos + 1; i < block.Instructions.Count; i++)
+				{
+					searchEndPos = i;
+					if (block.Instructions[i].EndILOffset > ctorCallStart)
+						break;
+				}
+				return searchEndPos > pos;
+			}
+			// Value-type chain: `this = new TSelf(...)` is not reported by
+			// ChainedConstructorCallILOffset, so match the stobj shape directly. Only further
+			// hoisted guards may sit between this guard and the chained call; anything else means
+			// the stobj is a plain body statement rather than a chain.
+			for (int i = pos + 1; i < block.Instructions.Count; i++)
+			{
+				var inst = block.Instructions[i];
+				if (IsValueTypeChainedConstructorCall(inst, function))
+				{
+					searchEndPos = i;
+					return true;
+				}
+				if (!IsArgumentNullGuard(inst, out _, out _))
+					return false;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// True if <paramref name="inst"/> is a value-type chained constructor call
+		/// <c>this = new TSelf(...)</c>, i.e. <c>stobj(ldthis, newobj TSelf(...))</c> where TSelf
+		/// is the constructor's declaring type.
+		/// </summary>
+		static bool IsValueTypeChainedConstructorCall(ILInstruction inst, ILFunction function)
+		{
+			return inst is StObj { Value: NewObj { Method.IsConstructor: true } newObj } stobj
+				&& newObj.Method.DeclaringType.IsReferenceType == false
+				&& newObj.Method.DeclaringTypeDefinition == function.Method.DeclaringTypeDefinition
+				&& MatchLdThisOrStackSlotCopy(stobj.Target);
+		}
+
+		/// <summary>
+		/// Matches a load of the this-pointer, either directly or via a single-definition stack slot
+		/// that copies it. The compiler spills this to such a slot when a hoisted guard sits between
+		/// the this-load and the chained <c>this = new TSelf(...)</c> call.
+		/// </summary>
+		static bool MatchLdThisOrStackSlotCopy(ILInstruction inst)
+		{
+			if (inst.MatchLdThis())
+				return true;
+			return inst.MatchLdLoc(out var v)
+				&& v.Kind == VariableKind.StackSlot
+				&& v.IsSingleDefinition
+				&& v.StoreInstructions.Count == 1
+				&& v.StoreInstructions[0] is StLoc { Value: { } storeValue }
+				&& storeValue.MatchLdThis();
 		}
 
 		/// <summary>
