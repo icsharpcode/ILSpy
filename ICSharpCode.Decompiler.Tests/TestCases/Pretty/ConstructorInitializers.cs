@@ -69,6 +69,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		// Multiple constructors that do not chain with this and assign fields differently must not
+		// prevent the remaining constructor's this(...) chain from being lifted to an initializer.
+		public struct StructWithDivergentCtorsAndThisChain
+		{
+			public int X;
+			public int Y;
+
+			public StructWithDivergentCtorsAndThisChain(int x, int y)
+			{
+				X = x;
+				Y = y;
+			}
+
+			public StructWithDivergentCtorsAndThisChain(int x)
+			{
+				X = x;
+				Y = 0;
+			}
+
+			public StructWithDivergentCtorsAndThisChain(string s)
+				: this(s.Length)
+			{
+			}
+		}
+
 #if CS120
 		public struct Issue1743WithPrimaryCtor(int dummy1, int dummy2)
 		{
