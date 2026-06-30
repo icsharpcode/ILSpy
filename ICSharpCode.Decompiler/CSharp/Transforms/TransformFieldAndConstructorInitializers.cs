@@ -430,13 +430,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (sequence == null)
 							return false;
 
+						bool sequenceMatchesAllCtors = true;
 						for (int i = 1; i < constructorsNotChainedWithThis.Count; i++)
 						{
 							if (!sequence.IsMatch(constructorsNotChainedWithThis[i]))
-								return false;
+							{
+								sequenceMatchesAllCtors = false;
+								break;
+							}
 						}
 
-						if (!isPrimaryCtor)
+						if (!sequenceMatchesAllCtors)
+						{
+							// The non-this-chained constructors disagree on their leading field
+							// assignments, so there is no shared field-initializer sequence to extract.
+							// A primary constructor must extract its initializers (its parameters drive
+							// them), so bail; otherwise keep the assignments in the bodies but continue,
+							// so the this(...)/base(...) chains still get lifted to initializers.
+							if (isPrimaryCtor)
+								return false;
+						}
+						else if (!isPrimaryCtor)
 						{
 							if (!sequence.Statements.Any(s => s.DependsOnConstructorBody))
 								InstanceInitializers = sequence;
