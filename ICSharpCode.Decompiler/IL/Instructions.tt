@@ -429,12 +429,8 @@ namespace <#=opCode.Namespace#>
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{<#=Body(opCode.WriteToBody)#>}
 <#      } else { #>
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
-		{
-			output.MarkNodeStart(this);
-			try {<#=Body(opCode.WriteToBody)#>}
-			finally { output.MarkNodeEnd(this); }
-		}
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
+		{<#=Body(opCode.WriteToBody)#>}
 <#      } #>
 <#	} #>
 <#	if (opCode.GenerateAcceptVisitor) { #>

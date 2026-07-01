@@ -24,19 +24,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public abstract partial class SimpleInstruction : ILInstruction
 	{
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				// the non-custom WriteTo would add useless parentheses
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			// the non-custom WriteTo would add useless parentheses
 		}
 	}
 
@@ -52,25 +44,17 @@ namespace ICSharpCode.Decompiler.IL
 
 		public NopKind Kind;
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			if (Kind != NopKind.Normal)
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				if (Kind != NopKind.Normal)
-				{
-					output.Write("." + Kind.ToString().ToLowerInvariant());
-				}
-				if (!string.IsNullOrEmpty(Comment))
-				{
-					output.Write(" // " + Comment);
-				}
+				output.Write("." + Kind.ToString().ToLowerInvariant());
 			}
-			finally
+			if (!string.IsNullOrEmpty(Comment))
 			{
-				output.MarkNodeEnd(this);
+				output.Write(" // " + Comment);
 			}
 		}
 	}
@@ -89,23 +73,15 @@ namespace ICSharpCode.Decompiler.IL
 			get { return ExpectedResultType; }
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			if (!string.IsNullOrEmpty(Message))
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				if (!string.IsNullOrEmpty(Message))
-				{
-					output.Write("(\"");
-					output.Write(Message);
-					output.Write("\")");
-				}
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
+				output.Write("(\"");
+				output.Write(Message);
+				output.Write("\")");
 			}
 		}
 	}
@@ -125,23 +101,15 @@ namespace ICSharpCode.Decompiler.IL
 			get { return ExpectedResultType; }
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			if (!string.IsNullOrEmpty(Message))
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				if (!string.IsNullOrEmpty(Message))
-				{
-					output.Write("(\"");
-					output.Write(Message);
-					output.Write("\")");
-				}
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
+				output.Write("(\"");
+				output.Write(Message);
+				output.Write("\")");
 			}
 		}
 	}

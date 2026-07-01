@@ -383,9 +383,29 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
-		/// Writes the ILAst to the text output.
+		/// Writes the ILAst to the text output. Brackets the instruction's rendered span so it can be
+		/// mapped back to its character range for debug-step highlighting; the bracket lives here, in
+		/// one place, so a new instruction cannot forget it. Override <see cref="WriteToCore"/> to
+		/// render an instruction, not this method. Both marks are no-ops unless the output tracks nodes.
 		/// </summary>
-		public abstract void WriteTo(ITextOutput output, ILAstWritingOptions options);
+		public void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			output.MarkNodeStart(this);
+			try
+			{
+				WriteToCore(output, options);
+			}
+			finally
+			{
+				output.MarkNodeEnd(this);
+			}
+		}
+
+		/// <summary>
+		/// Renders this instruction to the text output. This is the override point; callers use
+		/// <see cref="WriteTo"/>, which wraps this in the node-tracking bracket.
+		/// </summary>
+		protected abstract void WriteToCore(ITextOutput output, ILAstWritingOptions options);
 
 		public override string ToString()
 		{

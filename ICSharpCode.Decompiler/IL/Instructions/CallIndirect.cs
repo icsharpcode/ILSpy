@@ -74,36 +74,28 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(Arguments.Count == FunctionPointerType.ParameterTypes.Length + (IsInstance ? 1 : 0));
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write("call.indirect ");
+			FunctionPointerType.ReturnType.WriteTo(output);
+			output.Write('(');
+			functionPointer.WriteTo(output, options);
+			int firstArgument = IsInstance ? 1 : 0;
+			if (firstArgument == 1)
 			{
-				WriteILRange(output, options);
-				output.Write("call.indirect ");
-				FunctionPointerType.ReturnType.WriteTo(output);
-				output.Write('(');
-				functionPointer.WriteTo(output, options);
-				int firstArgument = IsInstance ? 1 : 0;
-				if (firstArgument == 1)
-				{
-					output.Write(", ");
-					Arguments[0].WriteTo(output, options);
-				}
-				foreach (var (inst, type) in Arguments.Zip(FunctionPointerType.ParameterTypes, (a, b) => (a, b)))
-				{
-					output.Write(", ");
-					inst.WriteTo(output, options);
-					output.Write(" : ");
-					type.WriteTo(output);
-				}
-				if (Arguments.Count > 0)
-					output.Write(')');
+				output.Write(", ");
+				Arguments[0].WriteTo(output, options);
 			}
-			finally
+			foreach (var (inst, type) in Arguments.Zip(FunctionPointerType.ParameterTypes, (a, b) => (a, b)))
 			{
-				output.MarkNodeEnd(this);
+				output.Write(", ");
+				inst.WriteTo(output, options);
+				output.Write(" : ");
+				type.WriteTo(output);
 			}
+			if (Arguments.Count > 0)
+				output.Write(')');
 		}
 
 		protected override int GetChildCount()

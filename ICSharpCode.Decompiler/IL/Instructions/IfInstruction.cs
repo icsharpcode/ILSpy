@@ -82,47 +82,39 @@ namespace ICSharpCode.Decompiler.IL
 			return InstructionFlags.ControlFlow | condition.Flags | SemanticHelper.CombineBranches(trueInst.Flags, falseInst.Flags);
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			if (options.UseLogicOperationSugar)
 			{
-				WriteILRange(output, options);
-				if (options.UseLogicOperationSugar)
+				if (MatchLogicAnd(out var lhs, out var rhs))
 				{
-					if (MatchLogicAnd(out var lhs, out var rhs))
-					{
-						output.Write("logic.and(");
-						lhs.WriteTo(output, options);
-						output.Write(", ");
-						rhs.WriteTo(output, options);
-						output.Write(')');
-						return;
-					}
-					if (MatchLogicOr(out lhs, out rhs))
-					{
-						output.Write("logic.or(");
-						lhs.WriteTo(output, options);
-						output.Write(", ");
-						rhs.WriteTo(output, options);
-						output.Write(')');
-						return;
-					}
+					output.Write("logic.and(");
+					lhs.WriteTo(output, options);
+					output.Write(", ");
+					rhs.WriteTo(output, options);
+					output.Write(')');
+					return;
 				}
-				output.Write(OpCode);
-				output.Write(" (");
-				condition.WriteTo(output, options);
-				output.Write(") ");
-				trueInst.WriteTo(output, options);
-				if (falseInst.OpCode != OpCode.Nop)
+				if (MatchLogicOr(out lhs, out rhs))
 				{
-					output.Write(" else ");
-					falseInst.WriteTo(output, options);
+					output.Write("logic.or(");
+					lhs.WriteTo(output, options);
+					output.Write(", ");
+					rhs.WriteTo(output, options);
+					output.Write(')');
+					return;
 				}
 			}
-			finally
+			output.Write(OpCode);
+			output.Write(" (");
+			condition.WriteTo(output, options);
+			output.Write(") ");
+			trueInst.WriteTo(output, options);
+			if (falseInst.OpCode != OpCode.Nop)
 			{
-				output.MarkNodeEnd(this);
+				output.Write(" else ");
+				falseInst.WriteTo(output, options);
 			}
 		}
 

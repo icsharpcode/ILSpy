@@ -114,25 +114,17 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(phase <= ILPhase.InILReader || phase == ILPhase.InAsyncAwait || value.ResultType == targetContainer!.ResultType);
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			if (targetContainer != null)
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				if (targetContainer != null)
-				{
-					output.Write(' ');
-					output.WriteLocalReference(TargetLabel, targetContainer);
-					output.Write(" (");
-					value.WriteTo(output, options);
-					output.Write(')');
-				}
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
+				output.Write(' ');
+				output.WriteLocalReference(TargetLabel, targetContainer);
+				output.Write(" (");
+				value.WriteTo(output, options);
+				output.Write(')');
 			}
 		}
 	}

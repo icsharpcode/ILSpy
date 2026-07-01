@@ -27,25 +27,17 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class LockInstruction
 	{
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write("lock (");
-				OnExpression.WriteTo(output, options);
-				output.WriteLine(") {");
-				output.Indent();
-				Body.WriteTo(output, options);
-				output.Unindent();
-				output.WriteLine();
-				output.Write("}");
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write("lock (");
+			OnExpression.WriteTo(output, options);
+			output.WriteLine(") {");
+			output.Indent();
+			Body.WriteTo(output, options);
+			output.Unindent();
+			output.WriteLine();
+			output.Write("}");
 		}
 	}
 }

@@ -314,54 +314,46 @@ namespace ICSharpCode.Decompiler.IL
 			get => TargetType.GetStackType();
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			if (CheckForOverflow)
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				if (CheckForOverflow)
-				{
-					output.Write(".ovf");
-				}
-				if (InputSign == Sign.Unsigned)
-				{
-					output.Write(".unsigned");
-				}
-				else if (InputSign == Sign.Signed)
-				{
-					output.Write(".signed");
-				}
-				if (IsLifted)
-				{
-					output.Write(".lifted");
-				}
-				output.Write(' ');
-				output.Write(InputType);
-				output.Write("->");
-				output.Write(TargetType);
-				output.Write(' ');
-				switch (Kind)
-				{
-					case ConversionKind.SignExtend:
-						output.Write("<sign extend>");
-						break;
-					case ConversionKind.ZeroExtend:
-						output.Write("<zero extend>");
-						break;
-					case ConversionKind.Invalid:
-						output.Write("<invalid>");
-						break;
-				}
-				output.Write('(');
-				Argument.WriteTo(output, options);
-				output.Write(')');
+				output.Write(".ovf");
 			}
-			finally
+			if (InputSign == Sign.Unsigned)
 			{
-				output.MarkNodeEnd(this);
+				output.Write(".unsigned");
 			}
+			else if (InputSign == Sign.Signed)
+			{
+				output.Write(".signed");
+			}
+			if (IsLifted)
+			{
+				output.Write(".lifted");
+			}
+			output.Write(' ');
+			output.Write(InputType);
+			output.Write("->");
+			output.Write(TargetType);
+			output.Write(' ');
+			switch (Kind)
+			{
+				case ConversionKind.SignExtend:
+					output.Write("<sign extend>");
+					break;
+				case ConversionKind.ZeroExtend:
+					output.Write("<zero extend>");
+					break;
+				case ConversionKind.Invalid:
+					output.Write("<invalid>");
+					break;
+			}
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
 		}
 
 		protected override InstructionFlags ComputeFlags()

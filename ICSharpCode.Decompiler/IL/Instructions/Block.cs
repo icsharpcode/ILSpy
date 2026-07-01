@@ -258,47 +258,39 @@ namespace ICSharpCode.Decompiler.IL
 			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.StartILOffset); }
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write("Block ");
+			output.WriteLocalReference(Label, this, isDefinition: true);
+			if (Kind != BlockKind.ControlFlow)
+				output.Write($" ({Kind})");
+			if (Parent is BlockContainer)
+				output.Write(" (incoming: {0})", IncomingEdgeCount);
+			output.Write(' ');
+			output.MarkFoldStart("{...}");
+			output.WriteLine("{");
+			output.Indent();
+			int index = 0;
+			foreach (var inst in Instructions)
 			{
-				WriteILRange(output, options);
-				output.Write("Block ");
-				output.WriteLocalReference(Label, this, isDefinition: true);
-				if (Kind != BlockKind.ControlFlow)
-					output.Write($" ({Kind})");
-				if (Parent is BlockContainer)
-					output.Write(" (incoming: {0})", IncomingEdgeCount);
-				output.Write(' ');
-				output.MarkFoldStart("{...}");
-				output.WriteLine("{");
-				output.Indent();
-				int index = 0;
-				foreach (var inst in Instructions)
+				if (options.ShowChildIndexInBlock)
 				{
-					if (options.ShowChildIndexInBlock)
-					{
-						output.Write("[" + index + "] ");
-						index++;
-					}
-					inst.WriteTo(output, options);
-					output.WriteLine();
+					output.Write("[" + index + "] ");
+					index++;
 				}
-				if (finalInstruction.OpCode != OpCode.Nop)
-				{
-					output.Write("final: ");
-					finalInstruction.WriteTo(output, options);
-					output.WriteLine();
-				}
-				output.Unindent();
-				output.Write("}");
-				output.MarkFoldEnd();
+				inst.WriteTo(output, options);
+				output.WriteLine();
 			}
-			finally
+			if (finalInstruction.OpCode != OpCode.Nop)
 			{
-				output.MarkNodeEnd(this);
+				output.Write("final: ");
+				finalInstruction.WriteTo(output, options);
+				output.WriteLine();
 			}
+			output.Unindent();
+			output.Write("}");
+			output.MarkFoldEnd();
 		}
 
 		protected override int GetChildCount()

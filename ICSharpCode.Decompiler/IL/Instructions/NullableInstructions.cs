@@ -90,25 +90,17 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			output.Write("nullable.unwrap.");
+			if (RefInput)
 			{
-				output.Write("nullable.unwrap.");
-				if (RefInput)
-				{
-					output.Write("refinput.");
-				}
-				output.Write(ResultType);
-				output.Write('(');
-				Argument.WriteTo(output, options);
-				output.Write(')');
+				output.Write("refinput.");
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			output.Write(ResultType);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
 		}
 
 		public override StackType ResultType { get; }
