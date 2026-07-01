@@ -65,7 +65,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public string Description { get; }
 			public ILInstruction? Position { get; set; }
 			public object? ModifiedNode { get; set; }
+			/// <summary>
+			/// Precise identities of the changed node (the node itself, its debug-step marker, and
+			/// any node its mutation produced). Resolved first when highlighting the step.
+			/// </summary>
 			public IList<object> ModifiedNodeCandidates { get; } = new List<object>();
+			/// <summary>
+			/// Neighbours of the changed node, recorded before the mutation. When the node itself is
+			/// gone from the rendered text (a removal), a caret is placed at the gap they leave:
+			/// at the start of a following neighbour, or the end of a preceding one (AtEnd).
+			/// </summary>
+			public IList<(object Anchor, bool AtEnd)> SeamAnchors { get; } = new List<(object, bool)>();
+			/// <summary>
+			/// The changed node's ancestor chain, resolved as a last resort when neither the node
+			/// nor a seam neighbour has a rendered range.
+			/// </summary>
+			public IList<object> AncestorCandidates { get; } = new List<object>();
 			/// <summary>
 			/// BeginStep is inclusive.
 			/// </summary>
@@ -114,14 +129,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				BeginStep = step,
 				EndStep = step + 1
 			};
-			// Record the IL position and its ancestor chain as highlight candidates here, before
-			// the limit-reached check below can throw: the debug-step view halts the pipeline at the
-			// selected step, so that step would otherwise carry no candidates and the "show state
-			// before" view could not locate the change. A later transform may detach the exact
-			// instruction, but a surviving ancestor (ultimately the ILFunction) still resolves.
-			for (var node = near; node != null; node = node.Parent)
+			// Record the IL position, its neighbours, and its ancestor chain as highlight candidates
+			// here, before the limit-reached check below can throw: the debug-step view halts the
+			// pipeline at the selected step, so that step would otherwise carry no candidates and the
+			// "show state before" view could not locate the change. A later transform may detach the
+			// exact instruction; a surviving neighbour then anchors a seam caret, and failing that a
+			// surviving ancestor (ultimately the ILFunction) still resolves.
+			if (near != null)
 			{
-				stepNode.ModifiedNodeCandidates.Add(node);
+				stepNode.ModifiedNodeCandidates.Add(near);
+				if (near.Parent is { } parent)
+				{
+					int index = near.ChildIndex;
+					if (index + 1 < parent.Children.Count)
+						stepNode.SeamAnchors.Add((parent.Children[index + 1], false));
+					if (index - 1 >= 0)
+						stepNode.SeamAnchors.Add((parent.Children[index - 1], true));
+				}
+				for (var node = near.Parent; node != null; node = node.Parent)
+				{
+					stepNode.AncestorCandidates.Add(node);
+				}
 			}
 			if (step == StepLimit)
 			{

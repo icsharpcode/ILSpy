@@ -120,9 +120,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var marker = new DebugStepMarker();
 			modifiedNode.AddAnnotation(marker);
 			AddCandidate(step, marker, insertFirst: false);
-			for (var parent = modifiedNode.Parent; parent != null; parent = parent.Parent)
+			// insertFirst marks the produced-node update from EndStep; the seam neighbours and
+			// ancestor chain are recorded once, from the original node captured before the mutation.
+			if (!insertFirst)
 			{
-				AddCandidate(step, parent, insertFirst: false);
+				if (modifiedNode.NextSibling is { } nextSibling)
+					step.SeamAnchors.Add((nextSibling, false));
+				if (modifiedNode.PrevSibling is { } prevSibling)
+					step.SeamAnchors.Add((prevSibling, true));
+				for (var parent = modifiedNode.Parent; parent != null; parent = parent.Parent)
+				{
+					step.AncestorCandidates.Add(parent);
+				}
 			}
 		}
 

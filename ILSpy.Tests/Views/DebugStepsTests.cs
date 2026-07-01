@@ -289,6 +289,50 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
+	public Task DebugStepHighlighter_Removal_Resolves_To_Seam_Caret()
+	{
+		// A step whose node was removed has no precise range and (in this fixture) no rendered
+		// ancestor, only surviving neighbours. It must resolve to a zero-length caret at the gap:
+		// the successor's start when one survives, otherwise the predecessor's end.
+		var successor = new object();
+		var predecessor = new object();
+
+		var successorLookup = new NodeLookup();
+		successorLookup.AddNode(successor, 40, 6);
+		var removalWithSuccessor = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("0: Remove statement") {
+			BeginStep = 0,
+			EndStep = 1
+		};
+		removalWithSuccessor.SeamAnchors.Add((successor, false));
+		removalWithSuccessor.SeamAnchors.Add((predecessor, true));
+		var successorStepper = new ICSharpCode.Decompiler.IL.Transforms.Stepper();
+		successorStepper.Steps.Add(removalWithSuccessor);
+
+		DebugStepHighlighter.TryResolve(successorStepper, stepLimit: 1, highlightStep: 0, successorLookup, out var caret)
+			.Should().BeTrue("a removed node must still resolve to a surviving seam neighbour");
+		caret.Length.Should().Be(0, "a removal has no text to highlight, only a caret at the gap");
+		caret.Start.Should().Be(40, "the caret sits at the successor's start, where the node was");
+
+		// Only the predecessor survives: the caret sits at its end (10 + 5).
+		var predecessorLookup = new NodeLookup();
+		predecessorLookup.AddNode(predecessor, 10, 5);
+		var removalWithPredecessor = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("0: Remove statement") {
+			BeginStep = 0,
+			EndStep = 1
+		};
+		removalWithPredecessor.SeamAnchors.Add((successor, false));
+		removalWithPredecessor.SeamAnchors.Add((predecessor, true));
+		var predecessorStepper = new ICSharpCode.Decompiler.IL.Transforms.Stepper();
+		predecessorStepper.Steps.Add(removalWithPredecessor);
+
+		DebugStepHighlighter.TryResolve(predecessorStepper, stepLimit: 1, highlightStep: 0, predecessorLookup, out var endCaret)
+			.Should().BeTrue("a removed node must fall back to a surviving predecessor");
+		endCaret.Length.Should().Be(0);
+		endCaret.Start.Should().Be(15, "with no successor, the caret sits at the predecessor's end");
+		return Task.CompletedTask;
+	}
+
+	[AvaloniaTest]
 	public Task MarkNodeStart_Excludes_Leading_Indentation()
 	{
 		// A node opened at the start of an indented line must record its range from the first real
