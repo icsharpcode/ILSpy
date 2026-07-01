@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		[Conditional("STEP")]
 		internal void EndStep(AstNode? modifiedNode)
 		{
-			if (Stepper.LastStep != null)
+			if (Stepper.LastStep != null && modifiedNode != null)
 			{
 				Stepper.LastStep.ModifiedNode = modifiedNode;
 				TrackModifiedNode(Stepper.LastStep, modifiedNode, insertFirst: true);
