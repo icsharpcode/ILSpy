@@ -144,9 +144,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			else
 				step.ModifiedNodeCandidates.Add(candidate);
 		}
+	}
 
-		sealed class DebugStepMarker
-		{
-		}
+	/// <summary>
+	/// Annotation attached to a step's modified node so the debug-step highlighter can still locate
+	/// that node's rendered range after a later transform copies its annotations onto a replacement
+	/// (via CopyAnnotationsFrom). This is the only annotation <c>NodeLookup</c> bridges to a text
+	/// range; indexing every annotation would add dead keys and let shared ones collide by identity.
+	/// </summary>
+	public sealed class DebugStepMarker
+	{
 	}
 }

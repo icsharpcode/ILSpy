@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -34,15 +35,20 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void AddNode(object node, int start, int length)
 		{
-			if (length > 0)
+			if (length <= 0)
+				return;
+			var range = new TextRange(start, length);
+			nodes[node] = range;
+			// Bridge only the debug-step marker: it is the sole annotation the resolver ever looks up
+			// (it rides CopyAnnotationsFrom so a replaced node's step still resolves to the emitted
+			// text). Indexing every annotation would add dead keys never queried, and would let a
+			// shared annotation resolve to whichever node rendered last.
+			if (node is IAnnotatable annotatable)
 			{
-				nodes[node] = new TextRange(start, length);
-				if (node is IAnnotatable annotatable)
+				foreach (var annotation in annotatable.Annotations)
 				{
-					foreach (var annotation in annotatable.Annotations)
-					{
-						nodes[annotation] = new TextRange(start, length);
-					}
+					if (annotation is DebugStepMarker)
+						nodes[annotation] = range;
 				}
 			}
 		}
