@@ -3,40 +3,64 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ICSharpCode.ILSpy.ViewModels"
+             xmlns:views="using:ICSharpCode.ILSpy.Views"
              xmlns:il="using:ICSharpCode.Decompiler.IL"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
              x:Class="ICSharpCode.ILSpy.Views.DebugSteps"
              x:DataType="vm:DebugStepsPaneModel">
+	<UserControl.Resources>
+		<views:DebugStepFilterConverter x:Key="StepFilter" />
+	</UserControl.Resources>
 	<Panel>
 	<TextBlock IsVisible="{Binding !IsAvailable}"
 	           HorizontalAlignment="Center" VerticalAlignment="Center"
 	           Margin="8" TextWrapping="Wrap" Opacity="0.7"
 	           Text="Debug steps are not available for the current language." />
 	<DockPanel IsVisible="{Binding IsAvailable}">
-		<!-- Options are contributed by the active step-provider language and selected by type:
-		     ILAst renders its writing-options checkboxes; C# (null Options) renders nothing. -->
-		<ContentControl DockPanel.Dock="Top" Margin="2" Content="{Binding Options}">
-			<ContentControl.DataTemplates>
-				<DataTemplate DataType="il:ILAstWritingOptions">
-					<StackPanel Orientation="Horizontal">
-						<CheckBox Margin="3" Content="Field sugar"
-						          IsChecked="{Binding UseFieldSugar, Mode=TwoWay}" />
-						<CheckBox Margin="3" Content="Logic operation sugar"
-						          IsChecked="{Binding UseLogicOperationSugar, Mode=TwoWay}" />
-						<CheckBox Margin="3" Content="Show IL ranges"
-						          IsChecked="{Binding ShowILRanges, Mode=TwoWay}" />
-						<CheckBox Margin="3" Content="Show child index in block"
-						          IsChecked="{Binding ShowChildIndexInBlock, Mode=TwoWay}" />
-					</StackPanel>
-				</DataTemplate>
-			</ContentControl.DataTemplates>
-		</ContentControl>
+		<!-- Top row: language-contributed options on the left, filter box in the top-right corner.
+		     Options are selected by type: ILAst renders its writing-options checkboxes; C# (null
+		     Options) renders nothing, leaving just the filter box. -->
+		<DockPanel DockPanel.Dock="Top" Margin="2">
+			<TextBox DockPanel.Dock="Right" Width="160" Margin="4,0,0,0"
+			         VerticalAlignment="Center" PlaceholderText="Filter steps"
+			         Text="{Binding FilterText}" />
+			<ContentControl Content="{Binding Options}">
+				<ContentControl.DataTemplates>
+					<DataTemplate DataType="il:ILAstWritingOptions">
+						<StackPanel Orientation="Horizontal">
+							<CheckBox Margin="3" Content="Field sugar"
+							          IsChecked="{Binding UseFieldSugar, Mode=TwoWay}" />
+							<CheckBox Margin="3" Content="Logic operation sugar"
+							          IsChecked="{Binding UseLogicOperationSugar, Mode=TwoWay}" />
+							<CheckBox Margin="3" Content="Show IL ranges"
+							          IsChecked="{Binding ShowILRanges, Mode=TwoWay}" />
+							<CheckBox Margin="3" Content="Show child index in block"
+							          IsChecked="{Binding ShowChildIndexInBlock, Mode=TwoWay}" />
+						</StackPanel>
+					</DataTemplate>
+				</ContentControl.DataTemplates>
+			</ContentControl>
+		</DockPanel>
 		<TreeView Name="StepsTree"
 		          ItemsSource="{Binding Steps}"
 		          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
 		          DoubleTapped="OnTreeDoubleTapped"
 		          KeyDown="OnTreeKeyDown"
 		          x:CompileBindings="False">
+			<TreeView.Styles>
+				<!-- Hide rows that neither match the filter nor lead to a match, and expand the tree
+				     while filtering so surviving matches under transform groups stay visible. -->
+				<Style Selector="TreeViewItem">
+					<Setter Property="IsVisible">
+						<MultiBinding Converter="{StaticResource StepFilter}">
+							<Binding />
+							<Binding Path="DataContext.FilterText" RelativeSource="{RelativeSource AncestorType=TreeView}" />
+						</MultiBinding>
+					</Setter>
+					<Setter Property="IsExpanded"
+					        Value="{Binding DataContext.IsFiltering, RelativeSource={RelativeSource AncestorType=TreeView}}" />
+				</Style>
+			</TreeView.Styles>
 			<TreeView.ItemTemplate>
 				<TreeDataTemplate ItemsSource="{Binding Children}">
 					<TextBlock Text="{Binding Description}" />
