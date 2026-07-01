@@ -24,7 +24,7 @@ using System.Diagnostics;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.DebugSteps;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -82,29 +82,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		[DebuggerStepThrough]
 		internal void Step(string description, AstNode? near = null)
 		{
-			Stepper.Node stepNode;
-			try
-			{
-				stepNode = Stepper.Step(description, modifiedNode: near);
-			}
-			catch (StepLimitReachedException)
-			{
-				// The limit fell on this step: Stepper recorded it as LimitReachedStep but threw
-				// before we could attach the node candidates. Attach them to the limit-reached node
-				// (the tree is still in its pre-mutation state) so the "show state before" view can
-				// locate the change, mirroring how the IL path records candidates before its throw.
-				if (Stepper.LimitReachedStep is { } limitStep)
-					TrackModifiedNode(limitStep, near);
-				throw;
-			}
-			TrackModifiedNode(stepNode, near);
+			Stepper.Step(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
 		[DebuggerStepThrough]
 		internal void StepStartGroup(string description, AstNode? near = null)
 		{
-			TrackModifiedNode(Stepper.StartGroup(description, modifiedNode: near), near);
+			Stepper.StartGroup(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
@@ -123,28 +108,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (Stepper.LastStep != null && modifiedNode != null)
 			{
+				var marker = new DebugStepMarker();
+				modifiedNode.AddAnnotation(marker);
 				Stepper.LastStep.ModifiedNode = modifiedNode;
-				TrackModifiedNode(Stepper.LastStep, modifiedNode, insertFirst: true);
+				Stepper.LastStep.RecordModifiedNode(modifiedNode, extraIdentity: marker, insertFirst: true);
 			}
 		}
 
-		static void TrackModifiedNode(Stepper.Node step, AstNode? modifiedNode, bool insertFirst = false)
+		static DebugStepNodeInfo? CreateNodeInfo(AstNode? modifiedNode)
 		{
 			if (modifiedNode == null)
-				return;
+				return null;
 			// The marker rides CopyAnnotationsFrom so a replaced node's step still resolves to the
 			// emitted text; it is recorded as a second identity for the changed node. The seam
-			// neighbours and ancestor chain are captured from the original node on the initial pass
-			// (insertFirst == false); a produced-node update only prepends the new node.
+			// neighbors and ancestor chain are captured from the original node before mutation.
 			var marker = new DebugStepMarker();
 			modifiedNode.AddAnnotation(marker);
-			step.RecordModifiedNode(
+			return new DebugStepNodeInfo(
 				modifiedNode,
-				insertFirst ? null : modifiedNode.NextSibling,
-				insertFirst ? null : modifiedNode.PrevSibling,
-				insertFirst ? null : Ancestors(modifiedNode),
-				extraIdentity: marker,
-				insertFirst: insertFirst);
+				modifiedNode.NextSibling,
+				modifiedNode.PrevSibling,
+				Ancestors(modifiedNode),
+				extraIdentity: marker);
 
 			static IEnumerable<object> Ancestors(AstNode node)
 			{
@@ -154,13 +139,4 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 	}
 
-	/// <summary>
-	/// Annotation attached to a step's modified node so the debug-step highlighter can still locate
-	/// that node's rendered range after a later transform copies its annotations onto a replacement
-	/// (via CopyAnnotationsFrom). This is the only annotation <c>NodeLookup</c> bridges to a text
-	/// range; indexing every annotation would add dead keys and let shared ones collide by identity.
-	/// </summary>
-	public sealed class DebugStepMarker
-	{
-	}
 }

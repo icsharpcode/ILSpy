@@ -24,7 +24,7 @@ using System.Globalization;
 
 using Avalonia.Data.Converters;
 
-using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.DebugSteps;
 
 namespace ICSharpCode.ILSpy.Views
 {
