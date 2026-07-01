@@ -19,11 +19,13 @@
 #if DEBUG
 
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using AwesomeAssertions;
@@ -329,6 +331,53 @@ public class DebugStepsTests
 			.Should().BeTrue("a removed node must fall back to a surviving predecessor");
 		endCaret.Length.Should().Be(0);
 		endCaret.Start.Should().Be(15, "with no successor, the caret sits at the predecessor's end");
+		return Task.CompletedTask;
+	}
+
+	[AvaloniaTest]
+	public Task DebugStepFilter_Keeps_Matches_And_The_Path_To_Them()
+	{
+		var converter = new DebugStepFilterConverter();
+		var matchingLeaf = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("3: Introduce query continuation");
+		var otherLeaf = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("4: Flatten switch section block");
+		var group = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("CombineQueryExpressions");
+		group.Children.Add(matchingLeaf);
+		group.Children.Add(otherLeaf);
+
+		// An empty filter shows every row.
+		Filter(group, "").Should().BeTrue();
+		Filter(otherLeaf, "  ").Should().BeTrue();
+		// A group survives because a descendant matches, keeping the path to the match.
+		Filter(group, "continuation").Should().BeTrue();
+		// The matching leaf survives, case-insensitively.
+		Filter(matchingLeaf, "CONTINUATION").Should().BeTrue();
+		// A sibling that neither matches nor leads to a match is hidden.
+		Filter(otherLeaf, "continuation").Should().BeFalse();
+		return Task.CompletedTask;
+
+		bool Filter(ICSharpCode.Decompiler.IL.Transforms.Stepper.Node node, string filter)
+			=> (bool)converter.Convert(new object?[] { node, filter }, typeof(bool), null, CultureInfo.InvariantCulture);
+	}
+
+	[AvaloniaTest]
+	public Task DebugSteps_View_Loads_With_Filter_Applied()
+	{
+		// Guards the filter wiring in the XAML -- a MultiBinding inside a TreeViewItem style Setter
+		// plus the RelativeSource lookups -- against a structural break that x:CompileBindings="False"
+		// would not catch at build time. Realising the view with a populated tree and a live filter
+		// must not throw.
+		var vm = new DebugStepsPaneModel();
+		var group = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("CombineQueryExpressions");
+		group.Children.Add(new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("3: Introduce query continuation"));
+		group.Children.Add(new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("4: Flatten switch section block"));
+		vm.Steps = new[] { group };
+		vm.IsAvailable = true;
+
+		var window = new Window { Width = 400, Height = 300, Content = new DebugSteps { DataContext = vm } };
+		window.Show();
+		vm.FilterText = "continuation";
+		Dispatcher.UIThread.RunJobs();
+		window.Close();
 		return Task.CompletedTask;
 	}
 

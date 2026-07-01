@@ -100,6 +100,20 @@ namespace ICSharpCode.ILSpy.ViewModels
 		[ObservableProperty]
 		bool isAvailable;
 
+		/// <summary>
+		/// Free-text filter for the step tree; empty shows everything. Bound to the filter box in the
+		/// pane's top-right corner. A row survives when its description -- or a descendant's -- matches.
+		/// </summary>
+		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(IsFiltering))]
+		string? filterText;
+
+		/// <summary>
+		/// True while <see cref="FilterText"/> is non-empty. Drives auto-expansion of the tree so that
+		/// matches nested under transform groups are revealed rather than hidden in collapsed groups.
+		/// </summary>
+		public bool IsFiltering => !string.IsNullOrWhiteSpace(FilterText);
+
 		public IRelayCommand ShowStateBeforeCommand { get; }
 		public IRelayCommand ShowStateAfterCommand { get; }
 		public IRelayCommand DebugStepCommand { get; }
