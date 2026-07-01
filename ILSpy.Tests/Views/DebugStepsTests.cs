@@ -177,13 +177,13 @@ public class DebugStepsTests
 
 		await tab.RestartDecompileWithStepLimit(replayStep.BeginStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("C# replay before a selected AST mutation step must still emit code");
-		tab.DebugStepHighlight.Should().NotBeNull("C# replay before a selected AST mutation step must locate the changed node");
+		AssertPreciseHighlight(tab, "C# replay before a selected AST mutation step must locate the changed node");
 		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
 			"a step-limited C# replay must not replace the full step tree shown by the pane");
 
 		await tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("C# replay after a selected AST mutation step must still emit code");
-		tab.DebugStepHighlight.Should().NotBeNull("C# replay after a selected AST mutation step must locate the changed node");
+		AssertPreciseHighlight(tab, "C# replay after a selected AST mutation step must locate the changed node");
 		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
 			"a step-limited C# replay must preserve the current full-run step tree and selection context");
 
@@ -229,13 +229,13 @@ public class DebugStepsTests
 
 		await tab.RestartDecompileWithStepLimit(replayStep!.BeginStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay before a selected step must still emit IL");
-		tab.DebugStepHighlight.Should().NotBeNull("ILAst replay before a selected step must locate the changed instruction");
+		AssertPreciseHighlight(tab, "ILAst replay before a selected step must locate the changed instruction");
 		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
 			"a step-limited ILAst replay must not replace the full step tree shown by the pane");
 
 		await tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
 		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay after a selected step must still emit IL");
-		tab.DebugStepHighlight.Should().NotBeNull("ILAst replay after a selected step must locate the changed instruction");
+		AssertPreciseHighlight(tab, "ILAst replay after a selected step must locate the changed instruction");
 
 		// The first leaf step that acts on a concrete instruction; a step whose Position is null
 		// (e.g. an empty transform group) has nothing to highlight and is not what a user replays.
@@ -389,6 +389,26 @@ public class DebugStepsTests
 		Dispatcher.UIThread.RunJobs();
 		window.Close();
 		return Task.CompletedTask;
+	}
+
+	// A replay highlight must land on the changed node, not merely be non-null: in bounds, not a
+	// flood of the whole document, and (unless it is a zero-length removal caret) on rendered code
+	// rather than whitespace. This is what keeps the ancestor fallback from silently widening every
+	// highlight to the enclosing method undetected.
+	static void AssertPreciseHighlight(DecompilerTabPageModel tab, string because)
+	{
+		tab.DebugStepHighlight.Should().NotBeNull(because);
+		var range = tab.DebugStepHighlight!.Value;
+		var text = tab.Text!;
+		(range.Start >= 0 && range.Start + range.Length <= text.Length).Should()
+			.BeTrue("the debug-step highlight must lie within the emitted document");
+		range.Length.Should().BeLessThan(text.Length,
+			"the highlight must mark a specific node, not flood the whole document");
+		if (range.Length > 0)
+		{
+			text.Substring(range.Start, range.Length).Trim().Should()
+				.NotBeEmpty("a non-caret highlight must cover rendered code, not just whitespace");
+		}
 	}
 
 	[AvaloniaTest]
