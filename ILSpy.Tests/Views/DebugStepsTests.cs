@@ -412,11 +412,25 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
+	public Task MarkNodeStart_Does_Not_Record_When_Node_Tracking_Is_Disabled()
+	{
+		var output = new AvaloniaEditTextOutput();
+		var node = new object();
+
+		output.MarkNodeStart(node);
+		output.Write("statement;");
+		output.MarkNodeEnd(node);
+
+		output.NodeLookup.TryGetRange(node, out _).Should().BeFalse();
+		return Task.CompletedTask;
+	}
+
+	[AvaloniaTest]
 	public Task MarkNodeStart_Excludes_Leading_Indentation()
 	{
 		// A node opened at the start of an indented line must record its range from the first real
 		// character, so the debug-step highlight does not extend across the indentation to column 0.
-		var output = new AvaloniaEditTextOutput();
+		var output = new AvaloniaEditTextOutput { EnableNodeTracking = true };
 		output.Indent();
 		output.WriteLine();
 
@@ -435,7 +449,7 @@ public class DebugStepsTests
 	{
 		// Node spans are keyed by identity, so closing an outer node before the inner one it still
 		// contains must not discard either range. A stack that popped by position would lose both.
-		var output = new AvaloniaEditTextOutput();
+		var output = new AvaloniaEditTextOutput { EnableNodeTracking = true };
 		var outer = new object();
 		var inner = new object();
 
