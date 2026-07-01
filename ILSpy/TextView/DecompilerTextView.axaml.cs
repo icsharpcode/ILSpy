@@ -1254,15 +1254,21 @@ namespace ICSharpCode.ILSpy.TextView
 		void ApplyDebugStepHighlight(TextRange? range)
 		{
 			ClearDebugStepMarks();
-			if (range is not { } r || r.Length <= 0)
+			if (range is not { } r || r.Length < 0)
 				return;
 			var start = Math.Clamp(r.Start, 0, Editor.Document.TextLength);
-			var end = Math.Clamp(r.Start + r.Length, start, Editor.Document.TextLength);
-			if (end <= start)
-				return;
-			var mark = textMarkerService.Create(start, end - start);
-			mark.BackgroundColor = DebugStepBackground;
-			debugStepMarks.Add(mark);
+			// A zero-length range is a seam caret: a step that removed its node leaves nothing to
+			// colour in the resulting text, so only the caret is placed and pulsed at the gap.
+			if (r.Length > 0)
+			{
+				var end = Math.Clamp(r.Start + r.Length, start, Editor.Document.TextLength);
+				if (end > start)
+				{
+					var mark = textMarkerService.Create(start, end - start);
+					mark.BackgroundColor = DebugStepBackground;
+					debugStepMarks.Add(mark);
+				}
+			}
 			Editor.TextArea.Caret.Offset = start;
 			Editor.TextArea.Caret.BringCaretToView();
 			// Centre on the changed node once layout has caught up, via the same helper bookmark

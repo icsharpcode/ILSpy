@@ -62,12 +62,32 @@ namespace ICSharpCode.ILSpy.TextView
 			range = default;
 			if (step == null)
 				return false;
+			// Precise identities of the changed node (node, marker, produced node).
 			foreach (var candidate in step.ModifiedNodeCandidates)
 			{
 				if (nodeLookup.TryGetRange(candidate, out range))
 					return true;
 			}
-			return step.ModifiedNode != null && nodeLookup.TryGetRange(step.ModifiedNode, out range);
+			if (step.ModifiedNode != null && nodeLookup.TryGetRange(step.ModifiedNode, out range))
+				return true;
+			// The node itself is gone (a removal): point a zero-length caret at the gap it left,
+			// anchored to a surviving neighbour, rather than flooding the enclosing block.
+			foreach (var (anchor, atEnd) in step.SeamAnchors)
+			{
+				if (nodeLookup.TryGetRange(anchor, out var anchorRange))
+				{
+					int caret = atEnd ? anchorRange.Start + anchorRange.Length : anchorRange.Start;
+					range = new TextRange(caret, 0);
+					return true;
+				}
+			}
+			// Last resort: the enclosing block, so the "show state before" view still lands somewhere.
+			foreach (var candidate in step.AncestorCandidates)
+			{
+				if (nodeLookup.TryGetRange(candidate, out range))
+					return true;
+			}
+			return false;
 		}
 	}
 }
