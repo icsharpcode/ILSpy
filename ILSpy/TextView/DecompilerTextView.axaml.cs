@@ -1265,21 +1265,15 @@ namespace ICSharpCode.ILSpy.TextView
 			debugStepMarks.Add(mark);
 			Editor.TextArea.Caret.Offset = start;
 			Editor.TextArea.Caret.BringCaretToView();
-			Dispatcher.UIThread.Post(() => CenterDocumentOffsetInView(start));
+			// Centre on the changed node once layout has caught up, via the same helper bookmark
+			// navigation uses: GetVisualTopByDocumentLine accounts for collapsed foldings (dense in
+			// ILAst block output) that a logical line*height calc would misplace, Background priority
+			// lets a just-applied document finish measuring, and CenterLineInView rechecks the document
+			// so a newer decompile landing before the post runs can't scroll the wrong content.
+			var document = Editor.Document;
+			var line = document.GetLineByOffset(start).LineNumber;
+			Dispatcher.UIThread.Post(() => CenterLineInView(document, line), DispatcherPriority.Background);
 			CaretHighlightAdorner.DisplayCaretHighlightAnimation(Editor.TextArea);
-		}
-
-		void CenterDocumentOffsetInView(int offset)
-		{
-			if (EditorScrollViewer is not { } scrollViewer || Editor.Document.TextLength == 0)
-				return;
-			offset = Math.Clamp(offset, 0, Editor.Document.TextLength);
-			var line = Editor.Document.GetLineByOffset(offset);
-			var lineHeight = Editor.TextArea.TextView.DefaultLineHeight;
-			if (lineHeight <= 0 || scrollViewer.Viewport.Height <= 0)
-				return;
-			var targetY = Math.Max(0, (line.LineNumber - 1) * lineHeight - (scrollViewer.Viewport.Height - lineHeight) / 2);
-			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, targetY);
 		}
 
 		void ClearDebugStepMarks()
