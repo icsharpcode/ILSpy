@@ -713,7 +713,11 @@ namespace ICSharpCode.ILSpy.Languages
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
 			TokenWriter tokenWriter = new TextTokenWriter(output, settings);
-			if (output is TextView.AvaloniaEditTextOutput avaloniaOutput)
+			// Node-range tracking (NodeLookup) is only consumed by the debug-step highlighter, which
+			// resolves nothing without a step limit. Skip it on a normal decompile so the common path
+			// doesn't pay the per-node/per-annotation bookkeeping; AvaloniaEditTextOutput is an
+			// ISmartTextOutput, so the branch below still gives it full syntax highlighting.
+			if (output is TextView.AvaloniaEditTextOutput avaloniaOutput && options.StepLimit != int.MaxValue)
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, avaloniaOutput);
 			else if (output is TextView.ISmartTextOutput smartOutput)
 				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, smartOutput);
