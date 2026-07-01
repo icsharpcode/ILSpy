@@ -80,6 +80,7 @@ namespace ICSharpCode.ILSpy.TextView
 		BracketHighlightRenderer bracketHighlightRenderer = null!;
 		readonly List<TextMarker> localReferenceMarks = new();
 		readonly List<TextMarker> debugStepMarks = new();
+		int debugStepHighlightVersion;
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
 		FoldingManager? activeFoldingManager;
@@ -1278,12 +1279,17 @@ namespace ICSharpCode.ILSpy.TextView
 			// so a newer decompile landing before the post runs can't scroll the wrong content.
 			var document = Editor.Document;
 			var line = document.GetLineByOffset(start).LineNumber;
-			Dispatcher.UIThread.Post(() => CenterLineInView(document, line), DispatcherPriority.Background);
+			var highlightVersion = debugStepHighlightVersion;
+			Dispatcher.UIThread.Post(() => {
+				if (highlightVersion == debugStepHighlightVersion)
+					CenterLineInView(document, line);
+			}, DispatcherPriority.Background);
 			CaretHighlightAdorner.DisplayCaretHighlightAnimation(Editor.TextArea);
 		}
 
 		void ClearDebugStepMarks()
 		{
+			debugStepHighlightVersion++;
 			foreach (var mark in debugStepMarks)
 				textMarkerService.Remove(mark);
 			debugStepMarks.Clear();
