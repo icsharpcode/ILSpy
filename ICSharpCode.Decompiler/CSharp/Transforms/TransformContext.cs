@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Threading;
@@ -131,33 +132,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (modifiedNode == null)
 				return;
-			AddCandidate(step, modifiedNode, insertFirst);
+			// The marker rides CopyAnnotationsFrom so a replaced node's step still resolves to the
+			// emitted text; it is recorded as a second identity for the changed node. The seam
+			// neighbours and ancestor chain are captured from the original node on the initial pass
+			// (insertFirst == false); a produced-node update only prepends the new node.
 			var marker = new DebugStepMarker();
 			modifiedNode.AddAnnotation(marker);
-			AddCandidate(step, marker, insertFirst: false);
-			// insertFirst marks the produced-node update from EndStep; the seam neighbours and
-			// ancestor chain are recorded once, from the original node captured before the mutation.
-			if (!insertFirst)
-			{
-				if (modifiedNode.NextSibling is { } nextSibling)
-					step.SeamAnchors.Add((nextSibling, false));
-				if (modifiedNode.PrevSibling is { } prevSibling)
-					step.SeamAnchors.Add((prevSibling, true));
-				for (var parent = modifiedNode.Parent; parent != null; parent = parent.Parent)
-				{
-					step.AncestorCandidates.Add(parent);
-				}
-			}
-		}
+			step.RecordModifiedNode(
+				modifiedNode,
+				insertFirst ? null : modifiedNode.NextSibling,
+				insertFirst ? null : modifiedNode.PrevSibling,
+				insertFirst ? null : Ancestors(modifiedNode),
+				extraIdentity: marker,
+				insertFirst: insertFirst);
 
-		static void AddCandidate(Stepper.Node step, object candidate, bool insertFirst)
-		{
-			if (step.ModifiedNodeCandidates.Contains(candidate))
-				return;
-			if (insertFirst)
-				step.ModifiedNodeCandidates.Insert(0, candidate);
-			else
-				step.ModifiedNodeCandidates.Add(candidate);
+			static IEnumerable<object> Ancestors(AstNode node)
+			{
+				for (var parent = node.Parent; parent != null; parent = parent.Parent)
+					yield return parent;
+			}
 		}
 	}
 
