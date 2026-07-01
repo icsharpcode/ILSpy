@@ -81,7 +81,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		[DebuggerStepThrough]
 		internal void Step(string description, AstNode? near = null)
 		{
-			TrackModifiedNode(Stepper.Step(description, modifiedNode: near), near);
+			Stepper.Node stepNode;
+			try
+			{
+				stepNode = Stepper.Step(description, modifiedNode: near);
+			}
+			catch (StepLimitReachedException)
+			{
+				// The limit fell on this step: Stepper recorded it as LimitReachedStep but threw
+				// before we could attach the node candidates. Attach them to the limit-reached node
+				// (the tree is still in its pre-mutation state) so the "show state before" view can
+				// locate the change, mirroring how the IL path records candidates before its throw.
+				if (Stepper.LimitReachedStep is { } limitStep)
+					TrackModifiedNode(limitStep, near);
+				throw;
+			}
+			TrackModifiedNode(stepNode, near);
 		}
 
 		[Conditional("STEP")]
