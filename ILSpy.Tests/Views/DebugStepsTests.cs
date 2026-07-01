@@ -32,6 +32,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.AppEnv;
@@ -275,7 +276,7 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public Task NodeLookup_Resolves_Copied_Ast_Annotations()
 	{
-		var marker = new object();
+		var marker = new DebugStepMarker();
 		var original = new IdentifierExpression("old");
 		original.AddAnnotation(marker);
 		var replacement = new IdentifierExpression("new").CopyAnnotationsFrom(original);
@@ -287,6 +288,15 @@ public class DebugStepsTests
 			"C# debug-step markers copied by AST replacements must still resolve to emitted text");
 		range.Start.Should().Be(12);
 		range.Length.Should().Be(3);
+
+		// A non-marker annotation is not bridged: only the debug-step marker is queried by the
+		// resolver, and indexing arbitrary shared annotations would collide by reference identity.
+		var otherAnnotation = new object();
+		var otherNode = new IdentifierExpression("x");
+		otherNode.AddAnnotation(otherAnnotation);
+		lookup.AddNode(otherNode, 30, 1);
+		lookup.TryGetRange(otherAnnotation, out _).Should().BeFalse(
+			"only DebugStepMarker annotations are bridged to a text range");
 		return Task.CompletedTask;
 	}
 
