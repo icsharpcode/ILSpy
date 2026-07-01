@@ -462,6 +462,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return true;
 				}
 
+				// The chained constructor call is normally the first statement. However, when an
+				// initializer argument contains a null-check that throws (e.g. `arg ?? throw ...`) and
+				// the argument is used more than once, the compiler hoists the null-check in front of
+				// the chained call. Collect such leading argument null-guards so we can fold them back
+				// into the call's arguments below; otherwise the chained call would be left as an
+				// illegal in-body `this..ctor(...)` / `base..ctor(...)` statement.
+				List<IfElseStatement>? nullGuards = null;
+				HashSet<string>? parameterNames = null;
+
+				if (!isValueType && stmt is IfElseStatement)
+				{
+					parameterNames = ctorMethod.Parameters.Select(p => p.Name).ToHashSet();
+					while (stmt is IfElseStatement guard && IsArgumentNullGuard(guard, parameterNames, out _, out _))
+					{
+						(nullGuards ??= []).Add(guard);
+						stmt = stmt.GetNextStatement()!;
+					}
+				}
+
 				var m = isValueType
 					? ThisCallStructPattern.Match(stmt)
 					: ThisCallClassPattern.Match(stmt);
@@ -473,6 +492,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 				AstNode invocation = m.Get<AstNode>("invocation").Single();
 				if (invocation.GetSymbol() is not IMethod { IsConstructor: true } ctor)
+					return false;
+
+				// Fold any hoisted argument null-guards back into the chained call's arguments. If a
+				// guard cannot be folded (its parameter is not used by any argument), leave the
+				// constructor unchanged rather than producing incorrect code.
+				if (nullGuards != null && !TryFoldNullGuardsIntoArguments(invocation, parameterNames!, nullGuards))
 					return false;
 
 				ConstructorInitializerType type = ctor.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition
@@ -487,8 +512,97 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!(ci.ConstructorInitializerType == ConstructorInitializerType.Base && ci.Arguments.Count == 0))
 					constructorDeclaration.Initializer = ci.CopyAnnotationsFrom(invocation);
 
-				// Remove the statement
+				// Remove the chained-call statement and any folded null-guards:
 				stmt.Remove();
+				nullGuards?.ForEach(guard => guard.Remove());
+
+				return true;
+			}
+
+			/// <summary>
+			/// Matches an argument null-guard of the form `if (param == null) throw ...;` (or
+			/// `if (null == param) { throw ...; }`) where param is one of the given constructor parameters.
+			/// </summary>
+			static bool IsArgumentNullGuard(IfElseStatement ifElse, HashSet<string> parameterNames, [NotNullWhen(true)] out string? parameterName, [NotNullWhen(true)] out Expression? thrown)
+			{
+				parameterName = null;
+				thrown = null;
+
+				if (ifElse.FalseStatement is not null)
+					return false;
+
+				if (ifElse.Condition is not BinaryOperatorExpression { Operator: BinaryOperatorType.Equality } condition)
+					return false;
+
+				IdentifierExpression? parameterReference;
+
+				if (condition.Left is NullReferenceExpression)
+					parameterReference = condition.Right as IdentifierExpression;
+				else if (condition.Right is NullReferenceExpression)
+					parameterReference = condition.Left as IdentifierExpression;
+				else
+					return false;
+
+				if (parameterReference == null || !parameterNames.Contains(parameterReference.Identifier))
+					return false;
+
+				Statement body = ifElse.TrueStatement;
+				if (body is BlockStatement block)
+				{
+					if (block.Statements.Count != 1)
+						return false;
+					body = block.Statements.First();
+				}
+
+				if (body is not ThrowStatement throwStatement)
+					return false;
+
+				if (throwStatement.Expression is not { } thrownExpression)
+					return false;
+
+				parameterName = parameterReference.Identifier;
+				thrown = thrownExpression;
+				return true;
+			}
+
+			/// <summary>
+			/// Folds each hoisted argument null-guard into the first chained-call argument that uses the
+			/// guarded parameter, rewriting that use as `param ?? throw ...`. Returns false without
+			/// mutating if any guard's parameter is not used by an argument.
+			/// </summary>
+			static bool TryFoldNullGuardsIntoArguments(AstNode invocation, HashSet<string> parameterNames, List<IfElseStatement> nullGuards)
+			{
+				var folds = new List<(IdentifierExpression Target, Expression Thrown)>();
+				foreach (var guard in nullGuards)
+				{
+					if (!IsArgumentNullGuard(guard, parameterNames, out var parameterName, out var thrown))
+						return false;
+
+					IdentifierExpression? target = null;
+					foreach (var argument in invocation.GetChildren(Slots.Argument))
+					{
+						target = argument.DescendantsAndSelf.OfType<IdentifierExpression>()
+							.FirstOrDefault(id => id.Identifier == parameterName);
+
+						if (target != null)
+							break;
+					}
+
+					if (target == null)
+						return false;
+
+					folds.Add((target, thrown));
+				}
+
+				foreach (var (target, thrown) in folds)
+				{
+					var coalesce = new BinaryOperatorExpression(
+						target.Clone(),
+						BinaryOperatorType.NullCoalescing,
+						new ThrowExpression(thrown.Clone()));
+
+					target.ReplaceWith(coalesce);
+				}
 
 				return true;
 			}
