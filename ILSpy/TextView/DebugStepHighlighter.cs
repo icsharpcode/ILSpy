@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.DebugSteps;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (step.ModifiedNode != null && nodeLookup.TryGetRange(step.ModifiedNode, out range))
 				return true;
 			// The node itself is gone (a removal): point a zero-length caret at the gap it left,
-			// anchored to a surviving neighbour, rather than flooding the enclosing block.
+			// anchored to a surviving neighbor, rather than flooding the enclosing block.
 			foreach (var (anchor, atEnd) in step.SeamAnchors)
 			{
 				if (nodeLookup.TryGetRange(anchor, out var anchorRange))

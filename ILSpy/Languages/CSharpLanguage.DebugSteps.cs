@@ -22,7 +22,7 @@ using System;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.DebugSteps;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;

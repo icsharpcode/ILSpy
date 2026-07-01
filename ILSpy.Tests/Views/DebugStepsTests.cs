@@ -33,6 +33,7 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.DebugSteps;
 
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.AppEnv;
@@ -239,8 +240,7 @@ public class DebugStepsTests
 
 		// The first leaf step that acts on a concrete instruction; a step whose Position is null
 		// (e.g. an empty transform group) has nothing to highlight and is not what a user replays.
-		static ICSharpCode.Decompiler.IL.Transforms.Stepper.Node? FirstLeafStep(
-			System.Collections.Generic.IEnumerable<ICSharpCode.Decompiler.IL.Transforms.Stepper.Node> steps)
+		static Stepper.Node? FirstLeafStep(System.Collections.Generic.IEnumerable<Stepper.Node> steps)
 		{
 			foreach (var step in steps)
 			{
@@ -304,37 +304,37 @@ public class DebugStepsTests
 	public Task DebugStepHighlighter_Removal_Resolves_To_Seam_Caret()
 	{
 		// A step whose node was removed has no precise range and (in this fixture) no rendered
-		// ancestor, only surviving neighbours. It must resolve to a zero-length caret at the gap:
+		// ancestor, only surviving neighbors. It must resolve to a zero-length caret at the gap:
 		// the successor's start when one survives, otherwise the predecessor's end.
 		var successor = new object();
 		var predecessor = new object();
 
 		var successorLookup = new NodeLookup();
 		successorLookup.AddNode(successor, 40, 6);
-		var removalWithSuccessor = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("0: Remove statement") {
+		var removalWithSuccessor = new Stepper.Node("0: Remove statement") {
 			BeginStep = 0,
 			EndStep = 1
 		};
 		removalWithSuccessor.SeamAnchors.Add((successor, false));
 		removalWithSuccessor.SeamAnchors.Add((predecessor, true));
-		var successorStepper = new ICSharpCode.Decompiler.IL.Transforms.Stepper();
+		var successorStepper = new Stepper();
 		successorStepper.Steps.Add(removalWithSuccessor);
 
 		DebugStepHighlighter.TryResolve(successorStepper, stepLimit: 1, highlightStep: 0, successorLookup, out var caret)
-			.Should().BeTrue("a removed node must still resolve to a surviving seam neighbour");
+			.Should().BeTrue("a removed node must still resolve to a surviving seam neighbor");
 		caret.Length.Should().Be(0, "a removal has no text to highlight, only a caret at the gap");
 		caret.Start.Should().Be(40, "the caret sits at the successor's start, where the node was");
 
 		// Only the predecessor survives: the caret sits at its end (10 + 5).
 		var predecessorLookup = new NodeLookup();
 		predecessorLookup.AddNode(predecessor, 10, 5);
-		var removalWithPredecessor = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("0: Remove statement") {
+		var removalWithPredecessor = new Stepper.Node("0: Remove statement") {
 			BeginStep = 0,
 			EndStep = 1
 		};
 		removalWithPredecessor.SeamAnchors.Add((successor, false));
 		removalWithPredecessor.SeamAnchors.Add((predecessor, true));
-		var predecessorStepper = new ICSharpCode.Decompiler.IL.Transforms.Stepper();
+		var predecessorStepper = new Stepper();
 		predecessorStepper.Steps.Add(removalWithPredecessor);
 
 		DebugStepHighlighter.TryResolve(predecessorStepper, stepLimit: 1, highlightStep: 0, predecessorLookup, out var endCaret)
@@ -348,9 +348,9 @@ public class DebugStepsTests
 	public Task DebugStepFilter_Keeps_Matches_And_The_Path_To_Them()
 	{
 		var converter = new DebugStepFilterConverter();
-		var matchingLeaf = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("3: Introduce query continuation");
-		var otherLeaf = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("4: Flatten switch section block");
-		var group = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("CombineQueryExpressions");
+		var matchingLeaf = new Stepper.Node("3: Introduce query continuation");
+		var otherLeaf = new Stepper.Node("4: Flatten switch section block");
+		var group = new Stepper.Node("CombineQueryExpressions");
 		group.Children.Add(matchingLeaf);
 		group.Children.Add(otherLeaf);
 
@@ -365,7 +365,7 @@ public class DebugStepsTests
 		Filter(otherLeaf, "continuation").Should().BeFalse();
 		return Task.CompletedTask;
 
-		bool Filter(ICSharpCode.Decompiler.IL.Transforms.Stepper.Node node, string filter)
+		bool Filter(Stepper.Node node, string filter)
 			=> (bool)converter.Convert(new object?[] { node, filter }, typeof(bool), null, CultureInfo.InvariantCulture);
 	}
 
@@ -377,9 +377,9 @@ public class DebugStepsTests
 		// would not catch at build time. Realising the view with a populated tree and a live filter
 		// must not throw.
 		var vm = new DebugStepsPaneModel();
-		var group = new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("CombineQueryExpressions");
-		group.Children.Add(new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("3: Introduce query continuation"));
-		group.Children.Add(new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("4: Flatten switch section block"));
+		var group = new Stepper.Node("CombineQueryExpressions");
+		group.Children.Add(new Stepper.Node("3: Introduce query continuation"));
+		group.Children.Add(new Stepper.Node("4: Flatten switch section block"));
 		vm.Steps = new[] { group };
 		vm.IsAvailable = true;
 
@@ -483,7 +483,7 @@ public class DebugStepsTests
 		debugStepsVm.IsAvailable.Should().BeTrue("C# provides debug steps");
 
 		// Simulate a populated tree from the C# run, then flip to the disassembler language.
-		debugStepsVm.Steps = new[] { new ICSharpCode.Decompiler.IL.Transforms.Stepper.Node("stale") };
+		debugStepsVm.Steps = new[] { new Stepper.Node("stale") };
 		languageService.CurrentLanguage = languageService.Languages.OfType<ILLanguage>().First(l => l.Name == "IL");
 		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 

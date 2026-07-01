@@ -27,8 +27,8 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ICSharpCode.Decompiler.DebugSteps;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.IL.Transforms;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Commands;

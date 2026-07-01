@@ -25,13 +25,39 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.IL.Transforms
+namespace ICSharpCode.Decompiler.DebugSteps
 {
 	/// <summary>
-	/// Exception thrown when an IL transform runs into the <see cref="Stepper.StepLimit"/>.
+	/// Exception thrown when a debug-step-enabled transform pipeline runs into the <see cref="Stepper.StepLimit"/>.
 	/// </summary>
 	public class StepLimitReachedException : Exception
 	{
+	}
+
+	/// <summary>
+	/// Language-specific node identities and navigation data captured before a transform mutation.
+	/// </summary>
+	public readonly struct DebugStepNodeInfo
+	{
+		public object Node { get; }
+		public object? NextSibling { get; }
+		public object? PreviousSibling { get; }
+		public IEnumerable<object>? Ancestors { get; }
+		public object? ExtraIdentity { get; }
+
+		public DebugStepNodeInfo(
+			object node,
+			object? nextSibling = null,
+			object? previousSibling = null,
+			IEnumerable<object>? ancestors = null,
+			object? extraIdentity = null)
+		{
+			Node = node ?? throw new ArgumentNullException(nameof(node));
+			NextSibling = nextSibling;
+			PreviousSibling = previousSibling;
+			Ancestors = ancestors;
+			ExtraIdentity = extraIdentity;
+		}
 	}
 
 	/// <summary>
@@ -63,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public class Node
 		{
 			public string Description { get; }
-			public ILInstruction? Position { get; set; }
+			public object? Position { get; set; }
 			public object? ModifiedNode { get; set; }
 			/// <summary>
 			/// Precise identities of the changed node (the node itself, its debug-step marker, and
@@ -71,14 +97,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			/// </summary>
 			public IList<object> ModifiedNodeCandidates { get; } = new List<object>();
 			/// <summary>
-			/// Neighbours of the changed node, recorded before the mutation. When the node itself is
+			/// Neighbors of the changed node, recorded before the mutation. When the node itself is
 			/// gone from the rendered text (a removal), a caret is placed at the gap they leave:
-			/// at the start of a following neighbour, or the end of a preceding one (AtEnd).
+			/// at the start of a following neighbor, or the end of a preceding one (AtEnd).
 			/// </summary>
 			public IList<(object Anchor, bool AtEnd)> SeamAnchors { get; } = new List<(object, bool)>();
 			/// <summary>
 			/// The changed node's ancestor chain, resolved as a last resort when neither the node
-			/// nor a seam neighbour has a rendered range.
+			/// nor a seam neighbor has a rendered range.
 			/// </summary>
 			public IList<object> AncestorCandidates { get; } = new List<object>();
 			/// <summary>
@@ -101,12 +127,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			/// Records the highlight candidates for this step from an already-navigated node: the
 			/// node's identity (optionally a second identity such as a debug-step marker), its
 			/// immediate siblings as seam anchors, and its ancestor chain. Callers pass the
-			/// neighbours because <see cref="ILInstruction"/> and the C# AST expose navigation
-			/// differently; the ordering/dedup/seam strategy lives here so the two languages'
+			/// neighbors because each transform representation exposes navigation differently;
+			/// the ordering/dedup/seam strategy lives here so languages'
 			/// recording can't drift. <paramref name="insertFirst"/> marks a produced-node update
 			/// (from EndStep): the node is preferred over existing candidates and the seam and
 			/// ancestor anchors are left untouched, since they were captured from the original node.
 			/// </summary>
+			public void RecordModifiedNode(DebugStepNodeInfo modifiedNode, bool insertFirst = false)
+			{
+				RecordModifiedNode(
+					modifiedNode.Node,
+					modifiedNode.NextSibling,
+					modifiedNode.PreviousSibling,
+					modifiedNode.Ancestors,
+					modifiedNode.ExtraIdentity,
+					insertFirst);
+			}
+
 			public void RecordModifiedNode(
 				object node,
 				object? nextSibling = null,
@@ -159,44 +196,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// May throw <see cref="StepLimitReachedException"/> in debug mode.
 		/// </summary>
 		[DebuggerStepThrough]
-		public Node Step(string description, ILInstruction? near = null, object? modifiedNode = null)
+		public Node Step(string description, DebugStepNodeInfo? modifiedNode = null)
 		{
-			return StepInternal(description, near, modifiedNode ?? near);
-		}
-
-		[DebuggerStepThrough]
-		private Node StepInternal(string description, ILInstruction? near, object? modifiedNode)
-		{
+			object? node = modifiedNode?.Node;
 			var stepNode = new Node($"{step}: {description}") {
-				Position = near,
-				ModifiedNode = modifiedNode,
+				Position = node,
+				ModifiedNode = node,
 				BeginStep = step,
 				EndStep = step + 1
 			};
-			// Record the IL position, its neighbours, and its ancestor chain as highlight candidates
-			// here, before the limit-reached check below can throw: the debug-step view halts the
-			// pipeline at the selected step, so that step would otherwise carry no candidates and the
-			// "show state before" view could not locate the change. A later transform may detach the
-			// exact instruction; a surviving neighbour then anchors a seam caret, and failing that a
-			// surviving ancestor (ultimately the ILFunction) still resolves.
-			if (near != null)
+			// Record highlight candidates before the limit-reached check below can throw: the debug-step
+			// view halts the pipeline at the selected step, so that step would otherwise carry no
+			// candidates and the "show state before" view could not locate the change.
+			if (modifiedNode is { } info)
 			{
-				object? next = null, prev = null;
-				if (near.Parent is { } parent)
-				{
-					int index = near.ChildIndex;
-					if (index + 1 < parent.Children.Count)
-						next = parent.Children[index + 1];
-					if (index - 1 >= 0)
-						prev = parent.Children[index - 1];
-				}
-				stepNode.RecordModifiedNode(near, next, prev, Ancestors(near));
-
-				static IEnumerable<object> Ancestors(ILInstruction inst)
-				{
-					for (var node = inst.Parent; node != null; node = node.Parent)
-						yield return node;
-				}
+				stepNode.RecordModifiedNode(info);
 			}
 			if (step == StepLimit)
 			{
@@ -217,9 +231,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		[DebuggerStepThrough]
-		public Node StartGroup(string description, ILInstruction? near = null, object? modifiedNode = null)
+		public Node StartGroup(string description, DebugStepNodeInfo? modifiedNode = null)
 		{
-			var stepNode = StepInternal(description, near, modifiedNode ?? near);
+			var stepNode = Step(description, modifiedNode);
 			groups.Push(stepNode);
 			return stepNode;
 		}
@@ -253,5 +267,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			node.EndStep = step;
 		}
+	}
+
+	/// <summary>
+	/// Annotation attached to a step's modified node so the debug-step highlighter can still locate
+	/// that node's rendered range after a later transform copies its annotations onto a replacement
+	/// (via CopyAnnotationsFrom). This is the only annotation the UI bridges to a text range; indexing
+	/// every annotation would add dead keys and let shared ones collide by identity.
+	/// </summary>
+	public sealed class DebugStepMarker
+	{
 	}
 }

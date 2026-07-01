@@ -20,7 +20,7 @@
 
 using System;
 
-using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.DebugSteps;
 
 namespace ICSharpCode.ILSpy.Languages
 {

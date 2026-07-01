@@ -19,7 +19,7 @@
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.DebugSteps;
 
 namespace ICSharpCode.ILSpy.TextView
 {

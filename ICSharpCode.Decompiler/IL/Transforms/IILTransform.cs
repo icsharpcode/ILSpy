@@ -19,11 +19,13 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.DebugSteps;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -105,14 +107,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		[DebuggerStepThrough]
 		internal void Step(string description, ILInstruction? near)
 		{
-			Stepper.Step(description, near);
+			Stepper.Step(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
 		[DebuggerStepThrough]
 		internal void StepStartGroup(string description, ILInstruction? near = null)
 		{
-			Stepper.StartGroup(description, near);
+			Stepper.StartGroup(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
@@ -136,6 +138,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				step.ModifiedNode = modifiedNode;
 				step.RecordModifiedNode(modifiedNode, insertFirst: true);
+			}
+		}
+
+		static DebugStepNodeInfo? CreateNodeInfo(ILInstruction? instruction)
+		{
+			if (instruction == null)
+				return null;
+			object? next = null, previous = null;
+			if (instruction.Parent is { } parent)
+			{
+				int index = instruction.ChildIndex;
+				if (index + 1 < parent.Children.Count)
+					next = parent.Children[index + 1];
+				if (index - 1 >= 0)
+					previous = parent.Children[index - 1];
+			}
+			return new DebugStepNodeInfo(instruction, next, previous, Ancestors(instruction));
+
+			static IEnumerable<object> Ancestors(ILInstruction instruction)
+			{
+				for (var node = instruction.Parent; node != null; node = node.Parent)
+					yield return node;
 			}
 		}
 	}
