@@ -220,12 +220,26 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		void OnSelectionChanged(object? sender, AssemblyTreeSelectionChangedEventArgs e)
 		{
-			// User picked a new tree node — the previous run's stepper is stale until the
-			// next decompile populates it.
-			Dispatcher.UIThread.Post(() => {
+			// User picked a new tree node — the previous run's stepper is stale until the next
+			// decompile populates it. Clear synchronously (this message is raised on the UI thread,
+			// right as the new selection's decompile is kicked off) so the blanking is pinned before
+			// that decompile can finish and post its StepperUpdated. A deferred clear could otherwise
+			// float to a dispatcher cycle after the populate and wipe the fresh steps, leaving the
+			// pane empty until the next decompile — the intermittent "no steps" race.
+			if (Dispatcher.UIThread.CheckAccess())
+			{
+				ClearSteps();
+			}
+			else
+			{
+				Dispatcher.UIThread.Post(ClearSteps);
+			}
+
+			void ClearSteps()
+			{
 				Steps = null;
 				lastSelectedStep = int.MaxValue;
-			});
+			}
 		}
 
 		void OnWritingOptionsChanged(object? sender, PropertyChangedEventArgs e)
