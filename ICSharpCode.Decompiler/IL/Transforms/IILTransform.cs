@@ -135,8 +135,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (Stepper.LastStep is { } step && modifiedNode != null)
 			{
 				step.ModifiedNode = modifiedNode;
-				if (!step.ModifiedNodeCandidates.Contains(modifiedNode))
-					step.ModifiedNodeCandidates.Insert(0, modifiedNode);
+				step.RecordModifiedNode(modifiedNode, insertFirst: true);
 			}
 		}
 	}

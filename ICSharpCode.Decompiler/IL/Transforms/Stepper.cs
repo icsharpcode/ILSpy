@@ -96,6 +96,50 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				Description = description;
 			}
+
+			/// <summary>
+			/// Records the highlight candidates for this step from an already-navigated node: the
+			/// node's identity (optionally a second identity such as a debug-step marker), its
+			/// immediate siblings as seam anchors, and its ancestor chain. Callers pass the
+			/// neighbours because <see cref="ILInstruction"/> and the C# AST expose navigation
+			/// differently; the ordering/dedup/seam strategy lives here so the two languages'
+			/// recording can't drift. <paramref name="insertFirst"/> marks a produced-node update
+			/// (from EndStep): the node is preferred over existing candidates and the seam and
+			/// ancestor anchors are left untouched, since they were captured from the original node.
+			/// </summary>
+			public void RecordModifiedNode(
+				object node,
+				object? nextSibling = null,
+				object? previousSibling = null,
+				IEnumerable<object>? ancestors = null,
+				object? extraIdentity = null,
+				bool insertFirst = false)
+			{
+				AddCandidate(node, insertFirst);
+				if (extraIdentity != null)
+					AddCandidate(extraIdentity, insertFirst: false);
+				if (insertFirst)
+					return;
+				if (nextSibling != null)
+					SeamAnchors.Add((nextSibling, false));
+				if (previousSibling != null)
+					SeamAnchors.Add((previousSibling, true));
+				if (ancestors != null)
+				{
+					foreach (var ancestor in ancestors)
+						AncestorCandidates.Add(ancestor);
+				}
+			}
+
+			void AddCandidate(object candidate, bool insertFirst)
+			{
+				if (ModifiedNodeCandidates.Contains(candidate))
+					return;
+				if (insertFirst)
+					ModifiedNodeCandidates.Insert(0, candidate);
+				else
+					ModifiedNodeCandidates.Add(candidate);
+			}
 		}
 
 		readonly Stack<Node> groups;
@@ -137,18 +181,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// surviving ancestor (ultimately the ILFunction) still resolves.
 			if (near != null)
 			{
-				stepNode.ModifiedNodeCandidates.Add(near);
+				object? next = null, prev = null;
 				if (near.Parent is { } parent)
 				{
 					int index = near.ChildIndex;
 					if (index + 1 < parent.Children.Count)
-						stepNode.SeamAnchors.Add((parent.Children[index + 1], false));
+						next = parent.Children[index + 1];
 					if (index - 1 >= 0)
-						stepNode.SeamAnchors.Add((parent.Children[index - 1], true));
+						prev = parent.Children[index - 1];
 				}
-				for (var node = near.Parent; node != null; node = node.Parent)
+				stepNode.RecordModifiedNode(near, next, prev, Ancestors(near));
+
+				static IEnumerable<object> Ancestors(ILInstruction inst)
 				{
-					stepNode.AncestorCandidates.Add(node);
+					for (var node = inst.Parent; node != null; node = node.Parent)
+						yield return node;
 				}
 			}
 			if (step == StepLimit)
