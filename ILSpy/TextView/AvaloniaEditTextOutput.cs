@@ -79,6 +79,12 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>The highlighting spans referencing the live named colours; see the field note.</summary>
 		public IReadOnlyList<(int Start, int Length, HighlightingColor Color)> HighlightingSpans => highlightingSpans;
 
+		/// <summary>
+		/// Enables syntax-node range collection for debug-step highlighting. Normal decompiles leave this
+		/// off because node ranges are only consumed by step-limited replay output.
+		/// </summary>
+		public bool EnableNodeTracking { get; set; }
+
 		/// <summary>Foldings collected during writing — only ones spanning more than one line.</summary>
 		public IReadOnlyList<NewFolding> Foldings => foldings;
 
@@ -312,6 +318,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void MarkNodeStart(object node)
 		{
+			if (!EnableNodeTracking)
+				return;
 			// Flush a pending indent before capturing the offset so a node opened at the start of a
 			// line records its range from the first real character, not from column 0 across the
 			// leading indentation.
@@ -321,6 +329,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		public void MarkNodeEnd(object node)
 		{
+			if (!EnableNodeTracking)
+				return;
 			if (openNodeStarts.Remove(node, out var start))
 				NodeLookup.AddNode(node, start, builder.Length - start);
 		}
