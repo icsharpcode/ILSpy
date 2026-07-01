@@ -37,78 +37,62 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class LdObj
 	{
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			if (options.UseFieldSugar)
 			{
-				if (options.UseFieldSugar)
+				if (this.MatchLdFld(out var target, out var field))
 				{
-					if (this.MatchLdFld(out var target, out var field))
-					{
-						WriteILRange(output, options);
-						output.Write("ldfld ");
-						field.WriteTo(output);
-						output.Write('(');
-						target.WriteTo(output, options);
-						output.Write(')');
-						return;
-					}
-					else if (this.MatchLdsFld(out field))
-					{
-						WriteILRange(output, options);
-						output.Write("ldsfld ");
-						field.WriteTo(output);
-						return;
-					}
+					WriteILRange(output, options);
+					output.Write("ldfld ");
+					field.WriteTo(output);
+					output.Write('(');
+					target.WriteTo(output, options);
+					output.Write(')');
+					return;
 				}
-				OriginalWriteTo(output, options);
+				else if (this.MatchLdsFld(out field))
+				{
+					WriteILRange(output, options);
+					output.Write("ldsfld ");
+					field.WriteTo(output);
+					return;
+				}
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			OriginalWriteTo(output, options);
 		}
 	}
 
 	partial class StObj
 	{
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			if (options.UseFieldSugar)
 			{
-				if (options.UseFieldSugar)
+				if (this.MatchStFld(out var target, out var field, out var value))
 				{
-					if (this.MatchStFld(out var target, out var field, out var value))
-					{
-						WriteILRange(output, options);
-						output.Write("stfld ");
-						field.WriteTo(output);
-						output.Write('(');
-						target.WriteTo(output, options);
-						output.Write(", ");
-						value.WriteTo(output, options);
-						output.Write(')');
-						return;
-					}
-					else if (this.MatchStsFld(out field, out value))
-					{
-						WriteILRange(output, options);
-						output.Write("stsfld ");
-						field.WriteTo(output);
-						output.Write('(');
-						value.WriteTo(output, options);
-						output.Write(')');
-						return;
-					}
+					WriteILRange(output, options);
+					output.Write("stfld ");
+					field.WriteTo(output);
+					output.Write('(');
+					target.WriteTo(output, options);
+					output.Write(", ");
+					value.WriteTo(output, options);
+					output.Write(')');
+					return;
 				}
-				OriginalWriteTo(output, options);
+				else if (this.MatchStsFld(out field, out value))
+				{
+					WriteILRange(output, options);
+					output.Write("stsfld ");
+					field.WriteTo(output);
+					output.Write('(');
+					value.WriteTo(output, options);
+					output.Write(')');
+					return;
+				}
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			OriginalWriteTo(output, options);
 		}
 	}
 }

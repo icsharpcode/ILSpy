@@ -159,43 +159,35 @@ namespace ICSharpCode.Decompiler.IL
 				assignments.ChildIndex = Init.Count + 2;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write("deconstruct ");
+			output.MarkFoldStart("{...}");
+			output.WriteLine("{");
+			output.Indent();
+			output.WriteLine("init:");
+			output.Indent();
+			foreach (var inst in this.Init)
 			{
-				WriteILRange(output, options);
-				output.Write("deconstruct ");
-				output.MarkFoldStart("{...}");
-				output.WriteLine("{");
-				output.Indent();
-				output.WriteLine("init:");
-				output.Indent();
-				foreach (var inst in this.Init)
-				{
-					inst.WriteTo(output, options);
-					output.WriteLine();
-				}
-				output.Unindent();
-				output.WriteLine("pattern:");
-				output.Indent();
-				pattern.WriteTo(output, options);
-				output.Unindent();
+				inst.WriteTo(output, options);
 				output.WriteLine();
-				output.Write("conversions: ");
-				conversions.WriteTo(output, options);
-				output.WriteLine();
-				output.Write("assignments: ");
-				assignments.WriteTo(output, options);
-				output.Unindent();
-				output.WriteLine();
-				output.Write('}');
-				output.MarkFoldEnd();
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			output.Unindent();
+			output.WriteLine("pattern:");
+			output.Indent();
+			pattern.WriteTo(output, options);
+			output.Unindent();
+			output.WriteLine();
+			output.Write("conversions: ");
+			conversions.WriteTo(output, options);
+			output.WriteLine();
+			output.Write("assignments: ");
+			assignments.WriteTo(output, options);
+			output.Unindent();
+			output.WriteLine();
+			output.Write('}');
+			output.MarkFoldEnd();
 		}
 
 		internal static bool IsConversionStLoc(ILInstruction inst, out ILVariable variable, out ILVariable inputVariable)

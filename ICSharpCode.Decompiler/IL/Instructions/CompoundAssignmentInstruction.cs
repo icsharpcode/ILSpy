@@ -272,43 +272,35 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write("." + BinaryNumericInstruction.GetOperatorName(Operator));
+			if (CheckForOverflow)
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				output.Write("." + BinaryNumericInstruction.GetOperatorName(Operator));
-				if (CheckForOverflow)
-				{
-					output.Write(".ovf");
-				}
-				if (Sign == Sign.Unsigned)
-				{
-					output.Write(".unsigned");
-				}
-				else if (Sign == Sign.Signed)
-				{
-					output.Write(".signed");
-				}
-				output.Write('.');
-				output.Write(UnderlyingResultType.ToString().ToLowerInvariant());
-				if (IsLifted)
-				{
-					output.Write(".lifted");
-				}
-				base.WriteSuffix(output);
-				output.Write('(');
-				Target.WriteTo(output, options);
-				output.Write(", ");
-				Value.WriteTo(output, options);
-				output.Write(')');
+				output.Write(".ovf");
 			}
-			finally
+			if (Sign == Sign.Unsigned)
 			{
-				output.MarkNodeEnd(this);
+				output.Write(".unsigned");
 			}
+			else if (Sign == Sign.Signed)
+			{
+				output.Write(".signed");
+			}
+			output.Write('.');
+			output.Write(UnderlyingResultType.ToString().ToLowerInvariant());
+			if (IsLifted)
+			{
+				output.Write(".lifted");
+			}
+			base.WriteSuffix(output);
+			output.Write('(');
+			Target.WriteTo(output, options);
+			output.Write(", ");
+			Value.WriteTo(output, options);
+			output.Write(')');
 		}
 	}
 
@@ -344,26 +336,18 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType => Method.ReturnType.GetStackType();
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				base.WriteSuffix(output);
-				output.Write(' ');
-				Method.WriteTo(output);
-				output.Write('(');
-				this.Target.WriteTo(output, options);
-				output.Write(", ");
-				this.Value.WriteTo(output, options);
-				output.Write(')');
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			base.WriteSuffix(output);
+			output.Write(' ');
+			Method.WriteTo(output);
+			output.Write('(');
+			this.Target.WriteTo(output, options);
+			output.Write(", ");
+			this.Value.WriteTo(output, options);
+			output.Write(')');
 		}
 	}
 
@@ -388,23 +372,15 @@ namespace ICSharpCode.Decompiler.IL
 			this.ValueArgumentInfo = valueArgumentInfo;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				output.Write("." + Operation.ToString().ToLower());
-				DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
-				base.WriteSuffix(output);
-				output.Write(' ');
-				DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write("." + Operation.ToString().ToLower());
+			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
+			base.WriteSuffix(output);
+			output.Write(' ');
+			DynamicInstruction.WriteArgumentList(output, options, (Target, TargetArgumentInfo), (Value, ValueArgumentInfo));
 		}
 
 		internal static bool IsExpressionTypeSupported(ExpressionType type)

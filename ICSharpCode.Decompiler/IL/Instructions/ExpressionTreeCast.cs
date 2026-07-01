@@ -14,25 +14,17 @@ namespace ICSharpCode.Decompiler.IL
 			this.IsChecked = isChecked;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				if (IsChecked)
-					output.Write(".checked");
-				output.Write(' ');
-				type.WriteTo(output);
-				output.Write('(');
-				Argument.WriteTo(output, options);
-				output.Write(')');
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			if (IsChecked)
+				output.Write(".checked");
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
 		}
 	}
 }

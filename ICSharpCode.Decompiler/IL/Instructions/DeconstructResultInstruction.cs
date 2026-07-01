@@ -37,23 +37,15 @@ namespace ICSharpCode.Decompiler.IL
 			ResultType = resultType;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				output.Write(' ');
-				output.Write(Index.ToString());
-				output.Write('(');
-				this.Argument.WriteTo(output, options);
-				output.Write(')');
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			output.Write(Index.ToString());
+			output.Write('(');
+			this.Argument.WriteTo(output, options);
+			output.Write(')');
 		}
 
 		MatchInstruction? FindMatch()

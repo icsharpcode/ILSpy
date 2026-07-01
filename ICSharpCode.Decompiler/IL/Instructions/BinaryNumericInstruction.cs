@@ -184,42 +184,34 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write("." + GetOperatorName(Operator));
+			if (CheckForOverflow)
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				output.Write("." + GetOperatorName(Operator));
-				if (CheckForOverflow)
-				{
-					output.Write(".ovf");
-				}
-				if (Sign == Sign.Unsigned)
-				{
-					output.Write(".unsigned");
-				}
-				else if (Sign == Sign.Signed)
-				{
-					output.Write(".signed");
-				}
-				output.Write('.');
-				output.Write(resultType.ToString().ToLowerInvariant());
-				if (IsLifted)
-				{
-					output.Write(".lifted");
-				}
-				output.Write('(');
-				Left.WriteTo(output, options);
-				output.Write(", ");
-				Right.WriteTo(output, options);
-				output.Write(')');
+				output.Write(".ovf");
 			}
-			finally
+			if (Sign == Sign.Unsigned)
 			{
-				output.MarkNodeEnd(this);
+				output.Write(".unsigned");
 			}
+			else if (Sign == Sign.Signed)
+			{
+				output.Write(".signed");
+			}
+			output.Write('.');
+			output.Write(resultType.ToString().ToLowerInvariant());
+			if (IsLifted)
+			{
+				output.Write(".lifted");
+			}
+			output.Write('(');
+			Left.WriteTo(output, options);
+			output.Write(", ");
+			Right.WriteTo(output, options);
+			output.Write(')');
 		}
 	}
 }

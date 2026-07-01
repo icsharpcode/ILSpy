@@ -50,25 +50,17 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(IsLifted || ResultType == UnderlyingResultType);
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			if (IsLifted)
 			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				if (IsLifted)
-				{
-					output.Write(".lifted");
-				}
-				output.Write('(');
-				this.Argument.WriteTo(output, options);
-				output.Write(')');
+				output.Write(".lifted");
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			output.Write('(');
+			this.Argument.WriteTo(output, options);
+			output.Write(')');
 		}
 	}
 }

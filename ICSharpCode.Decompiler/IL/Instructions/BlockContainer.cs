@@ -125,57 +125,49 @@ namespace ICSharpCode.Decompiler.IL
 				entryPoint.IncomingEdgeCount--;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.WriteLocalReference("BlockContainer", this, isDefinition: true);
+			output.Write(' ');
+			switch (Kind)
 			{
-				WriteILRange(output, options);
-				output.WriteLocalReference("BlockContainer", this, isDefinition: true);
-				output.Write(' ');
-				switch (Kind)
-				{
-					case ContainerKind.Loop:
-						output.Write("(while-true) ");
-						break;
-					case ContainerKind.Switch:
-						output.Write("(switch) ");
-						break;
-					case ContainerKind.While:
-						output.Write("(while) ");
-						break;
-					case ContainerKind.DoWhile:
-						output.Write("(do-while) ");
-						break;
-					case ContainerKind.For:
-						output.Write("(for) ");
-						break;
-				}
-				output.MarkFoldStart("{...}");
-				output.WriteLine("{");
-				output.Indent();
-				foreach (var inst in Blocks)
-				{
-					if (inst.Parent == this)
-					{
-						inst.WriteTo(output, options);
-					}
-					else
-					{
-						output.Write("stale reference to ");
-						output.WriteLocalReference(inst.Label, inst);
-					}
-					output.WriteLine();
-					output.WriteLine();
-				}
-				output.Unindent();
-				output.Write("}");
-				output.MarkFoldEnd();
+				case ContainerKind.Loop:
+					output.Write("(while-true) ");
+					break;
+				case ContainerKind.Switch:
+					output.Write("(switch) ");
+					break;
+				case ContainerKind.While:
+					output.Write("(while) ");
+					break;
+				case ContainerKind.DoWhile:
+					output.Write("(do-while) ");
+					break;
+				case ContainerKind.For:
+					output.Write("(for) ");
+					break;
 			}
-			finally
+			output.MarkFoldStart("{...}");
+			output.WriteLine("{");
+			output.Indent();
+			foreach (var inst in Blocks)
 			{
-				output.MarkNodeEnd(this);
+				if (inst.Parent == this)
+				{
+					inst.WriteTo(output, options);
+				}
+				else
+				{
+					output.Write("stale reference to ");
+					output.WriteLocalReference(inst.Label, inst);
+				}
+				output.WriteLine();
+				output.WriteLine();
 			}
+			output.Unindent();
+			output.Write("}");
+			output.MarkFoldEnd();
 		}
 
 		protected override int GetChildCount()

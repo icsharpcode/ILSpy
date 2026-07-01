@@ -40,36 +40,28 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool IsRefStruct { get; set; }
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write("using");
+			if (IsAsync)
 			{
-				WriteILRange(output, options);
-				output.Write("using");
-				if (IsAsync)
-				{
-					output.Write(".async");
-				}
-				if (IsRefStruct)
-				{
-					output.Write(".ref");
-				}
-				output.Write(" (");
-				Variable.WriteTo(output);
-				output.Write(" = ");
-				ResourceExpression.WriteTo(output, options);
-				output.WriteLine(") {");
-				output.Indent();
-				Body.WriteTo(output, options);
-				output.Unindent();
-				output.WriteLine();
-				output.Write("}");
+				output.Write(".async");
 			}
-			finally
+			if (IsRefStruct)
 			{
-				output.MarkNodeEnd(this);
+				output.Write(".ref");
 			}
+			output.Write(" (");
+			Variable.WriteTo(output);
+			output.Write(" = ");
+			ResourceExpression.WriteTo(output, options);
+			output.WriteLine(") {");
+			output.Indent();
+			Body.WriteTo(output, options);
+			output.Unindent();
+			output.WriteLine();
+			output.Write("}");
 		}
 	}
 }

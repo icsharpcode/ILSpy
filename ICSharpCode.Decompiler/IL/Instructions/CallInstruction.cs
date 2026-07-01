@@ -138,36 +138,28 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			if (ConstrainedTo != null)
 			{
-				WriteILRange(output, options);
-				if (ConstrainedTo != null)
-				{
-					output.Write("constrained[");
-					ConstrainedTo.WriteTo(output);
-					output.Write("].");
-				}
-				if (IsTail)
-					output.Write("tail.");
-				output.Write(OpCode);
-				output.Write(' ');
-				Method.WriteTo(output);
-				output.Write('(');
-				for (int i = 0; i < Arguments.Count; i++)
-				{
-					if (i > 0)
-						output.Write(", ");
-					Arguments[i].WriteTo(output, options);
-				}
-				output.Write(')');
+				output.Write("constrained[");
+				ConstrainedTo.WriteTo(output);
+				output.Write("].");
 			}
-			finally
+			if (IsTail)
+				output.Write("tail.");
+			output.Write(OpCode);
+			output.Write(' ');
+			Method.WriteTo(output);
+			output.Write('(');
+			for (int i = 0; i < Arguments.Count; i++)
 			{
-				output.MarkNodeEnd(this);
+				if (i > 0)
+					output.Write(", ");
+				Arguments[i].WriteTo(output, options);
 			}
+			output.Write(')');
 		}
 
 		protected internal sealed override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)

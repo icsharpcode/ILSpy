@@ -83,36 +83,28 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write("switch");
+			if (IsLifted)
+				output.Write(".lifted");
+			output.Write(' ');
+			Type?.WriteTo(output);
+			output.Write('(');
+			value.WriteTo(output, options);
+			output.Write(") ");
+			output.MarkFoldStart("{...}");
+			output.WriteLine("{");
+			output.Indent();
+			foreach (var section in this.Sections)
 			{
-				WriteILRange(output, options);
-				output.Write("switch");
-				if (IsLifted)
-					output.Write(".lifted");
-				output.Write(' ');
-				Type?.WriteTo(output);
-				output.Write('(');
-				value.WriteTo(output, options);
-				output.Write(") ");
-				output.MarkFoldStart("{...}");
-				output.WriteLine("{");
-				output.Indent();
-				foreach (var section in this.Sections)
-				{
-					section.WriteTo(output, options);
-					output.WriteLine();
-				}
-				output.Unindent();
-				output.Write('}');
-				output.MarkFoldEnd();
+				section.WriteTo(output, options);
+				output.WriteLine();
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			output.Unindent();
+			output.Write('}');
+			output.MarkFoldEnd();
 		}
 
 		protected override int GetChildCount()
@@ -232,37 +224,29 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			if (IsCompilerGeneratedDefaultSection)
+				output.Write("generated.");
+			output.WriteLocalReference("case", this, isDefinition: true);
+			output.Write(' ');
+			if (HasNullLabel)
 			{
-				WriteILRange(output, options);
-				if (IsCompilerGeneratedDefaultSection)
-					output.Write("generated.");
-				output.WriteLocalReference("case", this, isDefinition: true);
-				output.Write(' ');
-				if (HasNullLabel)
+				output.Write("null");
+				if (!Labels.IsEmpty)
 				{
-					output.Write("null");
-					if (!Labels.IsEmpty)
-					{
-						output.Write(", ");
-						output.Write(Labels.ToString());
-					}
-				}
-				else
-				{
+					output.Write(", ");
 					output.Write(Labels.ToString());
 				}
-				output.Write(": ");
-
-				body.WriteTo(output, options);
 			}
-			finally
+			else
 			{
-				output.MarkNodeEnd(this);
+				output.Write(Labels.ToString());
 			}
+			output.Write(": ");
+
+			body.WriteTo(output, options);
 		}
 	}
 }

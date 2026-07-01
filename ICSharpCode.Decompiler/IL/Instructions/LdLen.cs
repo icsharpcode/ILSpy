@@ -39,23 +39,15 @@ namespace ICSharpCode.Decompiler.IL
 			get { return resultType; }
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(OpCode);
-				output.Write('.');
-				output.Write(resultType);
-				output.Write('(');
-				this.array.WriteTo(output, options);
-				output.Write(')');
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write('.');
+			output.Write(resultType);
+			output.Write('(');
+			this.array.WriteTo(output, options);
+			output.Write(')');
 		}
 	}
 }

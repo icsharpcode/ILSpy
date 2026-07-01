@@ -68,23 +68,15 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write(".try ");
+			TryBlock.WriteTo(output, options);
+			foreach (var handler in Handlers)
 			{
-				WriteILRange(output, options);
-				output.Write(".try ");
-				TryBlock.WriteTo(output, options);
-				foreach (var handler in Handlers)
-				{
-					output.Write(' ');
-					handler.WriteTo(output, options);
-				}
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
+				output.Write(' ');
+				handler.WriteTo(output, options);
 			}
 		}
 
@@ -172,29 +164,21 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write("catch ");
+			if (variable != null)
 			{
-				WriteILRange(output, options);
-				output.Write("catch ");
-				if (variable != null)
-				{
-					output.WriteLocalReference(variable.Name, variable, isDefinition: true);
-					output.Write(" : ");
-					Disassembler.DisassemblerHelpers.WriteOperand(output, variable.Type);
-				}
-				output.Write(" when (");
-				filter.WriteTo(output, options);
-				output.Write(')');
-				output.Write(' ');
-				body.WriteTo(output, options);
+				output.WriteLocalReference(variable.Name, variable, isDefinition: true);
+				output.Write(" : ");
+				Disassembler.DisassemblerHelpers.WriteOperand(output, variable.Type);
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			output.Write(" when (");
+			filter.WriteTo(output, options);
+			output.Write(')');
+			output.Write(' ');
+			body.WriteTo(output, options);
 		}
 
 		/// <summary>
@@ -233,21 +217,13 @@ namespace ICSharpCode.Decompiler.IL
 			return new TryFinally(TryBlock.Clone(), finallyBlock.Clone()).WithILRange(this);
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(".try ");
-				TryBlock.WriteTo(output, options);
-				output.Write(" finally ");
-				finallyBlock.WriteTo(output, options);
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(".try ");
+			TryBlock.WriteTo(output, options);
+			output.Write(" finally ");
+			finallyBlock.WriteTo(output, options);
 		}
 
 		public override StackType ResultType {
@@ -338,21 +314,13 @@ namespace ICSharpCode.Decompiler.IL
 			return new TryFault(TryBlock.Clone(), faultBlock.Clone()).WithILRange(this);
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
-			{
-				WriteILRange(output, options);
-				output.Write(".try ");
-				TryBlock.WriteTo(output, options);
-				output.Write(" fault ");
-				faultBlock.WriteTo(output, options);
-			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			WriteILRange(output, options);
+			output.Write(".try ");
+			TryBlock.WriteTo(output, options);
+			output.Write(" fault ");
+			faultBlock.WriteTo(output, options);
 		}
 
 		public override StackType ResultType {

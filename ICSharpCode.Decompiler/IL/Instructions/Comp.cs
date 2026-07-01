@@ -179,52 +179,44 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			if (options.UseLogicOperationSugar && MatchLogicNot(out var arg))
 			{
-				WriteILRange(output, options);
-				if (options.UseLogicOperationSugar && MatchLogicNot(out var arg))
-				{
-					output.Write("logic.not(");
-					arg.WriteTo(output, options);
-					output.Write(')');
-					return;
-				}
-				output.Write(OpCode);
-				output.Write('.');
-				output.Write(InputType.ToString().ToLower());
-				switch (Sign)
-				{
-					case Sign.Signed:
-						output.Write(".signed");
-						break;
-					case Sign.Unsigned:
-						output.Write(".unsigned");
-						break;
-				}
-				switch (LiftingKind)
-				{
-					case ComparisonLiftingKind.CSharp:
-						output.Write(".lifted[C#]");
-						break;
-					case ComparisonLiftingKind.ThreeValuedLogic:
-						output.Write(".lifted[3VL]");
-						break;
-				}
-				output.Write('(');
-				Left.WriteTo(output, options);
-				output.Write(' ');
-				output.Write(Kind.GetToken());
-				output.Write(' ');
-				Right.WriteTo(output, options);
+				output.Write("logic.not(");
+				arg.WriteTo(output, options);
 				output.Write(')');
+				return;
 			}
-			finally
+			output.Write(OpCode);
+			output.Write('.');
+			output.Write(InputType.ToString().ToLower());
+			switch (Sign)
 			{
-				output.MarkNodeEnd(this);
+				case Sign.Signed:
+					output.Write(".signed");
+					break;
+				case Sign.Unsigned:
+					output.Write(".unsigned");
+					break;
 			}
+			switch (LiftingKind)
+			{
+				case ComparisonLiftingKind.CSharp:
+					output.Write(".lifted[C#]");
+					break;
+				case ComparisonLiftingKind.ThreeValuedLogic:
+					output.Write(".lifted[3VL]");
+					break;
+			}
+			output.Write('(');
+			Left.WriteTo(output, options);
+			output.Write(' ');
+			output.Write(Kind.GetToken());
+			output.Write(' ');
+			Right.WriteTo(output, options);
+			output.Write(')');
 		}
 
 		public static Comp LogicNot(ILInstruction arg)

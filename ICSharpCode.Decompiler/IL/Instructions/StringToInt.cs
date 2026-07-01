@@ -52,34 +52,26 @@ namespace ICSharpCode.Decompiler.IL
 			return dict;
 		}
 
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.MarkNodeStart(this);
-			try
+			WriteILRange(output, options);
+			output.Write("string.to.int ");
+			ExpectedType.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(", { ");
+			int i = 0;
+			foreach (var entry in Map)
 			{
-				WriteILRange(output, options);
-				output.Write("string.to.int ");
-				ExpectedType.WriteTo(output);
-				output.Write('(');
-				Argument.WriteTo(output, options);
-				output.Write(", { ");
-				int i = 0;
-				foreach (var entry in Map)
-				{
-					if (i > 0)
-						output.Write(", ");
-					if (entry.Key is null)
-						output.Write($"[null] = {entry.Value}");
-					else
-						output.Write($"[\"{entry.Key}\"] = {entry.Value}");
-					i++;
-				}
-				output.Write(" })");
+				if (i > 0)
+					output.Write(", ");
+				if (entry.Key is null)
+					output.Write($"[null] = {entry.Value}");
+				else
+					output.Write($"[\"{entry.Key}\"] = {entry.Value}");
+				i++;
 			}
-			finally
-			{
-				output.MarkNodeEnd(this);
-			}
+			output.Write(" })");
 		}
 	}
 }
