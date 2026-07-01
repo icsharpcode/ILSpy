@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -49,6 +50,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return node.AcceptVisitor(new IntroduceUnsafeModifier());
 		}
 
+		// Run() sets the context, but the static IsUnsafe() entry point drives this visitor with no
+		// context, so step recording must tolerate a null context. Both helpers compile out entirely
+		// in non-STEP (Release) builds, so the null check only exists in debug step-recording builds.
+		[Conditional("STEP")]
+		void Step(string description, AstNode node)
+		{
+			if (context != null)
+				context.Step(description, node);
+		}
+
+		[Conditional("STEP")]
+		void EndStep(AstNode node)
+		{
+			if (context != null)
+				context.EndStep(node);
+		}
+
 		protected override bool VisitChildren(AstNode node)
 		{
 			bool result = false;
@@ -62,8 +80,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (result && node is EntityDeclaration && !(node is Accessor))
 			{
-				if (context != null)
-					context.Step("Add unsafe modifier", node);
+				Step("Add unsafe modifier", node);
 				((EntityDeclaration)node).Modifiers |= Modifiers.Unsafe;
 				return false;
 			}
@@ -107,8 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					&& bop.GetResolveResult() is OperatorResolveResult orr
 					&& orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
 				{
-					if (context != null)
-						context.Step("Replace pointer addition with indexer", unaryOperatorExpression);
+					Step("Replace pointer addition with indexer", unaryOperatorExpression);
 					// transform "*(ptr + int)" to "ptr[int]"
 					IndexerExpression indexer = new IndexerExpression();
 					indexer.Target = bop.Left!.Detach();
@@ -116,8 +132,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					indexer.CopyAnnotationsFrom(unaryOperatorExpression);
 					indexer.CopyAnnotationsFrom(bop);
 					unaryOperatorExpression.ReplaceWith(indexer);
-					if (context != null)
-						context.EndStep(indexer);
+					EndStep(indexer);
 				}
 				return true;
 			}
@@ -137,8 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			UnaryOperatorExpression? uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
 			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference)
 			{
-				if (context != null)
-					context.Step("Replace pointer member access", memberReferenceExpression);
+				Step("Replace pointer member access", memberReferenceExpression);
 				PointerReferenceExpression pre = new PointerReferenceExpression();
 				pre.Target = uoe.Expression.Detach();
 				pre.MemberName = memberReferenceExpression.MemberName;
@@ -147,8 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				pre.RemoveAnnotations<ResolveResult>(); // only copy the ResolveResult from the MRE
 				pre.CopyAnnotationsFrom(memberReferenceExpression);
 				memberReferenceExpression.ReplaceWith(pre);
-				if (context != null)
-					context.EndStep(pre);
+				EndStep(pre);
 			}
 			if (HasUnsafeResolveResult(memberReferenceExpression))
 				return true;
