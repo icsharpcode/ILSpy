@@ -45,7 +45,6 @@
 		          ItemsSource="{Binding Steps}"
 		          SelectedItem="{Binding SelectedStep, Mode=TwoWay}"
 		          DoubleTapped="OnTreeDoubleTapped"
-		          KeyDown="OnTreeKeyDown"
 		          x:CompileBindings="False">
 			<TreeView.Styles>
 				<!-- Hide rows that neither match the filter nor lead to a match, and expand the tree

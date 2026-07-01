@@ -37,6 +37,11 @@ namespace ICSharpCode.ILSpy.Views
 		public DebugSteps()
 		{
 			InitializeComponent();
+			// TreeViewItem.OnKeyDown consumes Enter/Return to expand or collapse the focused row
+			// (marking the event handled) before it bubbles, so a bubble-phase handler never sees
+			// Enter on a group row. Intercept in the tunnel phase, ahead of the item, so Enter and
+			// Shift+Enter drive the show-state commands for both leaf and group steps.
+			StepsTree.AddHandler(InputElement.KeyDownEvent, OnTreeKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
 		}
 
 		void OnTreeDoubleTapped(object? sender, TappedEventArgs e)
