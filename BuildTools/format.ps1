@@ -2,6 +2,7 @@
 # Trigger the commit hook's formatter against the working tree without committing,
 # applying the same formatting the pre-commit hook enforces.
 $ErrorActionPreference = 'Stop'
+$env:OPENSSL_ENABLE_SHA1_SIGNATURES = '1'
 Push-Location (Join-Path $PSScriptRoot '..')
 try {
     bash BuildTools/pre-commit --format

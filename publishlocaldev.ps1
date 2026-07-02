@@ -1,5 +1,8 @@
 # For local development of the VSIX package - build and publish (VS2022 also needs arm64)
 
+$ErrorActionPreference = 'Stop'
+$env:OPENSSL_ENABLE_SHA1_SIGNATURES = '1'
+
 $configuration = "Debug"
 
 dotnet build ./ILSpy.sln -c $configuration
