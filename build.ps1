@@ -6,4 +6,5 @@ param(
     [string]$Configuration = 'Debug'
 )
 $ErrorActionPreference = 'Stop'
+$env:OPENSSL_ENABLE_SHA1_SIGNATURES = '1'
 dotnet build ILSpy.sln -c $Configuration "-p:Platform=Any CPU" @args

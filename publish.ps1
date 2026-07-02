@@ -13,6 +13,7 @@ param(
     [string]$Platform = 'windows'
 )
 $ErrorActionPreference = 'Stop'
+$env:OPENSSL_ENABLE_SHA1_SIGNATURES = '1'
 
 $base = "./ILSpy/bin/$Configuration/net10.0"
 

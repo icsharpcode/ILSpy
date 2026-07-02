@@ -8,6 +8,7 @@ set -eu
 
 DOTNET_FORMAT_VERSION=10.0.100-rtm.25531.102
 DOTNET_FORMAT_SOURCE="https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json"
+export OPENSSL_ENABLE_SHA1_SIGNATURES=1
 
 # Per-OS tool cache location + binary suffix. Windows uses %LOCALAPPDATA% and a .exe
 # suffix; Unix-likes follow the XDG basedir spec (falling back to ~/.local/share) and
