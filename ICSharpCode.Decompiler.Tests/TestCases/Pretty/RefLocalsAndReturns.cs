@@ -45,6 +45,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class Issue3827Node
+		{
+			public Issue3827Node next;
+
+			public int value;
+		}
+
 		public delegate ref T RefFunc<T>();
 		public delegate ref readonly T ReadOnlyRefFunc<T>();
 		public delegate ref TReturn RefFunc<T1, TReturn>(T1 param1);
@@ -158,6 +165,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static string NullString = "";
 
 		private static int DefaultInt = 0;
+
+		public static Issue3827Node RefLocalUsedAfterForLoop(Issue3827Node[] buckets, int hash, Issue3827Node newNode)
+		{
+			// The ref local is used after the loop, so its declaration is hoisted in front of the loop.
+			// The loop is kept as a while-loop (rather than converted to a headless for-loop) so the
+			// ref-assignment stays on the declaration -- a ref local cannot be declared without an initializer.
+			ref Issue3827Node reference = ref buckets[hash & 3];
+			while (reference != null)
+			{
+				if (reference.value == hash)
+				{
+					reference = newNode;
+					break;
+				}
+				reference = ref reference.next;
+			}
+			if (reference == null)
+			{
+				reference = newNode;
+			}
+			return reference;
+		}
 
 		public static ref T GetRef<T>()
 		{
