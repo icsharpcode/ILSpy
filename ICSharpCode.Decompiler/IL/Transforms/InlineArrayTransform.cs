@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			index = null;
 			isReadOnly = false;
 
-			if (inst.Arguments is not [var addrInst, LdcI4 { Value: var indexValue } indexInst])
+			if (inst.Arguments is not [var addrInst, var indexInst])
 				return false;
 
 			addr = addrInst;
@@ -168,7 +168,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			}
 
-			if (indexValue < 0 || indexValue >= inlineArrayType.GetInlineArrayLength())
+			// A constant index can be range-checked against the buffer length; a non-constant
+			// index (e.g. the loop variable of a foreach lowering) is only emitted by the
+			// compiler where it is provably in range, so there is nothing to verify.
+			if (indexInst is LdcI4 { Value: var indexValue }
+				&& (indexValue < 0 || indexValue >= inlineArrayType.GetInlineArrayLength()))
 			{
 				return false;
 			}
