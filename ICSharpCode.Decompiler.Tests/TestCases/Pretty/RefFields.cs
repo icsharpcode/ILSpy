@@ -37,11 +37,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Calls()
 		{
 			int value = 0;
-			Span<int> span = CreateWithoutCapture(ref value);
-			//span = CreateAndCapture(ref value); -- would need scoped local, not yet implemented
+			scoped Span<int> span = CreateWithoutCapture(ref value);
+			span = CreateAndCapture(ref value);
 			span = ScopedRefSpan(ref span);
 			span = ScopedSpan(span);
 			OutSpan(out span);
+		}
+
+		public int ReassignScopedRefToLocal(bool b, ref int x)
+		{
+			int num = 42;
+			scoped ref int reference = ref x;
+			if (b)
+			{
+				reference = ref num;
+			}
+			return reference;
 		}
 	}
 

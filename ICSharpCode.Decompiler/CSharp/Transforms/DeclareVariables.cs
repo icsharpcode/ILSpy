@@ -599,6 +599,58 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return !context.Settings.SeparateLocalVariableDeclarations;
 		}
 
+		// A by-ref-like local (a 'ref' local or a ref struct such as Span<T>) that is re-assigned to a value
+		// limited to a method-local's scope must have been declared 'scoped' for the original source to pass
+		// ref-safety (otherwise CS8374/CS8352). 'scoped' has no runtime effect, and such a local provably
+		// cannot escape the method, so restoring it is behavior-preserving and lets the code recompile.
+		static bool RequiresScopedModifier(ILVariable v)
+		{
+			if (v.StoreInstructions.Count < 2)
+				return false;
+			foreach (var store in v.StoreInstructions)
+			{
+				if (store is StLoc stloc && CapturesNarrowReference(stloc.Value))
+					return true;
+			}
+			return false;
+		}
+
+		// True if the stored ref / ref-struct value is limited to a method-local's scope: either the address
+		// of method-local storage (a narrow ref itself), or a call/newobj that passes such an address to a
+		// NON-scoped by-ref parameter (so the returned ref struct captures it and inherits the narrow scope).
+		static bool CapturesNarrowReference(ILInstruction value)
+		{
+			switch (value)
+			{
+				case LdLoca:
+				case LdFlda:
+					return IsAddressOfMethodLocal(value);
+				case CallInstruction call when call.OpCode is OpCode.Call or OpCode.CallVirt or OpCode.NewObj:
+					for (int i = 0; i < call.Arguments.Count; i++)
+					{
+						if (IsAddressOfMethodLocal(call.Arguments[i])
+							&& call.GetParameter(i) is { ReferenceKind: ReferenceKind.Ref or ReferenceKind.In or ReferenceKind.RefReadOnly } p
+							&& !p.Lifetime.ScopedRef)
+						{
+							return true;
+						}
+					}
+					return false;
+				default:
+					return false;
+			}
+		}
+
+		// True if 'addr' is the address of method-local storage: the address of a local/stack-slot, or a
+		// field thereof (a struct field of a local is exactly as narrow as the local). A field of a heap
+		// object (LdFlda over a loaded reference) or an array element bottoms out at a non-LdLoca root and
+		// is therefore treated as wide.
+		static bool IsAddressOfMethodLocal(ILInstruction addr) => addr switch {
+			LdLoca ldloca => ldloca.Variable.Kind is VariableKind.Local or VariableKind.StackSlot,
+			LdFlda ldflda => IsAddressOfMethodLocal(ldflda.Target),
+			_ => false,
+		};
+
 		void InsertVariableDeclarations(TransformContext context)
 		{
 			var replacements = new List<(AstNode OldNode, Func<AstNode> CreateNewNode, string StepDescription)>();
@@ -637,6 +689,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							{
 								init.AddAnnotation(annotation);
 							}
+						}
+						if (context.Settings.ScopedRef
+							&& v.ILVariable.Kind is VariableKind.Local or VariableKind.StackSlot
+							&& (type is ComposedType { HasRefSpecifier: true } || v.ILVariable.Type.IsByRefLike)
+							&& RequiresScopedModifier(v.ILVariable))
+						{
+							vds.Modifiers |= Modifiers.Scoped;
 						}
 						return vds;
 					}, "Combine variable declaration with initializer"));
