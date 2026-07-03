@@ -134,6 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform
 						// and must run before NullCoalescingTransform
 						new CachedDelegateInitialization(),
+						new CachedReadOnlySpanInitialization(),
 						new StatementTransform(
 							// per-block transforms that depend on each other, and thus need to
 							// run interleaved (statement by statement).
