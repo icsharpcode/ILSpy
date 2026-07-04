@@ -22,6 +22,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -157,11 +158,23 @@ namespace ICSharpCode.Decompiler
 					return method + gotoStatement.Label;
 			}
 
+			// Local-function references are recorded with the unspecialized definition, so that
+			// generic use sites (which carry specialized methods) and the declaration all share
+			// equal reference objects and can be matched for highlighting.
 			if (node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression)
 			{
 				var symbol = node.Parent.GetSymbol();
-				if (symbol is LocalFunctionMethod)
-					return symbol;
+				if (symbol is LocalFunctionMethod localFunction)
+					return localFunction.MemberDefinition;
+			}
+
+			// Method-group references to local functions (delegate conversions) are annotated
+			// with a MethodGroupResolveResult, which GetSymbol() does not surface. A local
+			// function cannot be overloaded, so such a group contains exactly one method.
+			if (node.GetResolveResult() is MethodGroupResolveResult methodGroup
+				&& methodGroup.Methods.FirstOrDefault() is LocalFunctionMethod methodGroupLocalFunction)
+			{
+				return methodGroupLocalFunction.MemberDefinition;
 			}
 
 			return null;
@@ -205,7 +218,7 @@ namespace ICSharpCode.Decompiler
 			{
 				var localFunction = node.Parent.GetResolveResult() as MemberResolveResult;
 				if (localFunction != null)
-					return localFunction.Member;
+					return localFunction.Member.MemberDefinition;
 			}
 
 			return null;
