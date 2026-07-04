@@ -1257,6 +1257,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		}
 
 #if CS60
+		public static void RealDictionaryIndexInitializer()
+		{
+			X(Y(), new Dictionary<string, int> {
+				["a"] = 1,
+				["b"] = GetInt()
+			});
+		}
+
 		public static void SimpleDictInitializer()
 		{
 			X(Y(), new Data {
