@@ -144,7 +144,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		internal static async Task Initialize()
 		{
 			await roslynToolset.Fetch("1.3.2", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
-			await roslynToolset.Fetch("2.10.0", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
+			if (OperatingSystem.IsWindows())
+			{
+				await roslynToolset.Fetch("2.10.0", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
+			}
+			else
+			{
+				// Microsoft.Net.Compilers only ships .NET Framework executables. The sibling
+				// Microsoft.NETCore.Compilers package contains the dotnet-hosted build of the
+				// same compiler version (tools/bincore/csc.dll), usable on any platform.
+				await roslynToolset.Fetch("2.10.0", "Microsoft.NETCore.Compilers", "tools/bincore").ConfigureAwait(false);
+			}
 			// On non-Windows hosts the net472 compiler binaries cannot be executed; use the
 			// .NET build of each toolset instead. Its tasks folder is named "netcoreapp3.1"
 			// up to Roslyn 3.x and "netcore" from Roslyn 4.x on.
@@ -176,33 +186,72 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		/// <summary>
+		/// True when a Mono runtime is on the PATH. Mono hosts the .NET Framework builds of
+		/// compilers that have no .NET build (Roslyn 1.x csc.exe from Microsoft.Net.Compilers);
+		/// Roslyn 2.x+ configurations use dotnet-hosted builds and do not depend on Mono.
+		/// </summary>
+		public static readonly bool MonoRuntimeAvailable =
+			!OperatingSystem.IsWindows()
+			&& (Environment.GetEnvironmentVariable("PATH") ?? "")
+				.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries)
+				.Any(dir => File.Exists(Path.Combine(dir, "mono")));
+
+		/// <summary>
 		/// Reduces a compiler-configuration matrix to the entries usable on the current platform.
 		/// On Windows every configuration is supported. On other platforms, configurations that
-		/// depend on Windows-only tools or runtimes are removed: the legacy (pre-Roslyn) csc/vbc,
-		/// Roslyn 1.x/2.x (their packages only ship .NET Framework binaries), mcs, and Force32Bit
-		/// (requires a 32-bit runtime). When <paramref name="executesCompiledOutput"/> is set
-		/// (correctness-style fixtures), configurations targeting .NET Framework 4.0 are removed
-		/// as well, because their output executables only run on Windows.
+		/// depend on Windows-only tools or runtimes are removed: the legacy (pre-Roslyn) csc/vbc
+		/// and Force32Bit (requires a 32-bit runtime) always; Roslyn 1.x/2.x (their packages only
+		/// ship .NET Framework binaries) and mcs unless a Mono runtime is available to host them.
+		/// When <paramref name="executesCompiledOutput"/> is set (correctness-style fixtures),
+		/// configurations targeting .NET Framework 4.0 are removed as well, because their output
+		/// executables only run on Windows, and the Mono-hosted compilers are not included either
+		/// (their output would likewise need a Mono host to execute).
 		/// </summary>
 		public static CompilerOptions[] SupportedOnCurrentPlatform(CompilerOptions[] configurations, bool executesCompiledOutput = false)
 		{
 			if (OperatingSystem.IsWindows())
 				return configurations;
 			const CompilerOptions dotnetHostedCompilers = CompilerOptions.UseRoslyn3_11_0 | CompilerOptions.UseRoslyn4_14_0 | CompilerOptions.UseRoslynLatest;
-			return configurations.Where(c => (c & dotnetHostedCompilers) != 0
+			CompilerOptions supportedCompilers = dotnetHostedCompilers;
+			if (!executesCompiledOutput)
+			{
+				// The dotnet-hosted Roslyn 2.x build (Microsoft.NETCore.Compilers) can compile
+				// on any platform, but its output targets .NET Core 2.2 or .NET Framework,
+				// which the correctness runners cannot execute here.
+				supportedCompilers |= CompilerOptions.UseRoslyn2_10_0;
+				// Roslyn 1.3.2 has only a .NET Framework build and needs Mono as its host.
+				// The configuration stays in the matrix even without Mono so that a missing
+				// runtime shows up as skipped tests (see WrapCompiler) instead of a silently
+				// smaller matrix. mcs 2.6.4 stays excluded: it needs the Reflection.Emit
+				// COMPILER_ACCESS mode that current Mono runtimes no longer implement.
+				supportedCompilers |= CompilerOptions.UseRoslyn1_3_2;
+			}
+			return configurations.Where(c => (c & supportedCompilers) != 0
 				&& !c.HasFlag(CompilerOptions.Force32Bit)
 				&& !(executesCompiledOutput && c.HasFlag(CompilerOptions.TargetNet40))).ToArray();
 		}
 
 		/// <summary>
 		/// Wraps an external compiler invocation. The .NET Framework builds of the Roslyn
-		/// compilers (csc.exe/vbc.exe) are directly executable; the .NET builds ship as a
-		/// .dll that must be launched through the 'dotnet' host.
+		/// compilers (csc.exe/vbc.exe) are directly executable on Windows and are hosted by
+		/// Mono elsewhere; the .NET builds ship as a .dll that must be launched through the
+		/// 'dotnet' host.
 		/// </summary>
 		static Command WrapCompiler(string compilerPath, string arguments)
 		{
+			// Old compiler builds pin an out-of-support runtime in their runtimeconfig
+			// (e.g. Roslyn 2.x pins Microsoft.NETCore.App 2.0), so allow the host to
+			// roll forward across major versions to whatever runtime is installed.
 			if (compilerPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-				return Cli.Wrap("dotnet").WithArguments($"\"{compilerPath}\" {arguments}");
+				return Cli.Wrap("dotnet").WithArguments($"--roll-forward LatestMajor \"{compilerPath}\" {arguments}");
+			if (!OperatingSystem.IsWindows() && compilerPath.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+			{
+				if (!MonoRuntimeAvailable)
+				{
+					Assert.Ignore($"{Path.GetFileName(compilerPath)} requires a Mono runtime on the PATH to run on this platform.");
+				}
+				return Cli.Wrap("mono").WithArguments($"\"{compilerPath}\" {arguments}");
+			}
 			return Cli.Wrap(compilerPath).WithArguments(arguments);
 		}
 
@@ -695,7 +744,17 @@ namespace System.Runtime.CompilerServices
 
 				if (flags.HasFlag(CompilerOptions.GeneratePdb))
 				{
-					otherOptions += "-debug:full ";
+					// The Windows PDB writer needs the native DiaSymReader, so only portable
+					// PDBs work on other platforms. Roslyn 2.x+ falls back to portable on its
+					// own; Roslyn 1.x needs the explicit request.
+					if (!OperatingSystem.IsWindows() && (flags & CompilerOptions.UseRoslynMask) != 0)
+					{
+						otherOptions += "-debug:portable ";
+					}
+					else
+					{
+						otherOptions += "-debug:full ";
+					}
 				}
 				else
 				{
@@ -764,9 +823,14 @@ namespace System.Runtime.CompilerServices
 					Assert.Ignore($"Compilation with mcs ignored: test directory '{testBasePath}' needs to be checked out separately." + Environment.NewLine +
 			  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testBasePath}\"");
 				}
-				string mcsPath = (flags & CompilerOptions.UseMcsMask) switch {
-					CompilerOptions.UseMcs5_23 => Path.Combine(testBasePath, @"mcs\5.23\bin\mcs.bat"),
-					_ => Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat")
+				// On Windows the submodule's bat launchers run the bundled Windows-native Mono;
+				// elsewhere the bundled compilers (managed .NET Framework assemblies) are hosted
+				// by the system Mono runtime via WrapCompiler.
+				string mcsPath = (flags & CompilerOptions.UseMcsMask, OperatingSystem.IsWindows()) switch {
+					(CompilerOptions.UseMcs5_23, true) => Path.Combine(testBasePath, @"mcs\5.23\bin\mcs.bat"),
+					(CompilerOptions.UseMcs5_23, false) => Path.Combine(testBasePath, "mcs", "5.23", "lib", "mono", "4.5", "mcs.exe"),
+					(_, true) => Path.Combine(testBasePath, @"mcs\2.6.4\bin\gmcs.bat"),
+					(_, false) => Path.Combine(testBasePath, "mcs", "2.6.4", "lib", "mono", "2.0", "gmcs.exe")
 				};
 				string otherOptions = " -unsafe -o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+ " : "- ");
 
@@ -797,8 +861,7 @@ namespace System.Runtime.CompilerServices
 					otherOptions += " \"-d:" + string.Join(";", preprocessorSymbols) + "\" ";
 				}
 
-				var command = Cli.Wrap(mcsPath)
-					.WithArguments($"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
+				var command = WrapCompiler(mcsPath, $"{otherOptions}-out:\"{Path.GetFullPath(results.PathToAssembly)}\" {string.Join(" ", sourceFileNames.Select(fn => '"' + Path.GetFullPath(fn) + '"'))}")
 					.WithValidation(CommandResultValidation.None);
 				//Console.WriteLine($"\"{command.TargetFilePath}\" {command.Arguments}");
 
