@@ -1,6 +1,7 @@
 using System;
 #if CS100
 using System.Runtime.InteropServices;
+using System.Text;
 #endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -247,6 +248,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS100
 	internal class RecordStructs
 	{
+		public readonly record struct ReadonlyPoint(int X, int Y);
+
 		public record struct Base(string A);
 
 		public record CopyCtor(string A)
@@ -442,6 +445,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				: this(42, B)
 			{
 				C = 1.41;
+			}
+		}
+	}
+
+	internal class RecordsWithCustomSynthesizedMembers
+	{
+		public record WithCustomToString(int A)
+		{
+			public sealed override string ToString()
+			{
+				return "custom";
+			}
+		}
+
+		public record WithCustomPrintMembers(int A)
+		{
+			protected virtual bool PrintMembers(StringBuilder builder)
+			{
+				builder.Append("X");
+				return true;
 			}
 		}
 	}
