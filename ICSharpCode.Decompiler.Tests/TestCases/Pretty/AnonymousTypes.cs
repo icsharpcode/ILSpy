@@ -110,5 +110,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			v = init;
 		}
+
+		private static string NestedAnonymousTypeMembers()
+		{
+			var anon = new {
+				Outer = new {
+					Inner = 1
+				},
+				Arr = new[] {
+					new {
+						X = 1
+					}
+				}
+			};
+			return anon.Outer.Inner + anon.ToString() + anon.Arr[0].X;
+		}
+
+		private static object MemberProjection(Version v)
+		{
+			return new {
+				Major = v.Major,
+				Renamed = v.Minor
+			};
+		}
 	}
 }
