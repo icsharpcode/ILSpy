@@ -62,6 +62,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			await Task.Delay(100, cancellationToken);
 			yield return 2;
 		}
+
+		public static async IAsyncEnumerable<int> CountToWithConfigureAwait(int until)
+		{
+			for (int i = 0; i < until; i++)
+			{
+				yield return i;
+				await Task.Delay(10).ConfigureAwait(continueOnCapturedContext: false);
+			}
+		}
 	}
 
 	public struct TestStruct
