@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -182,6 +183,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		void IEnumerator.Reset()
 		{
 			throw new NotImplementedException();
+		}
+	}
+
+	public class T08_NullablePostconditionAttributes
+	{
+		public bool TryGet(string key, [MaybeNullWhen(false)] out string value)
+		{
+			value = null;
+			return false;
+		}
+
+		public static void ThrowIfNull([NotNull] object? o)
+		{
+			if (o == null)
+			{
+				throw new ArgumentNullException("o");
+			}
+		}
+
+		[return: MaybeNull]
+		public T FirstOrDefault<T>(IEnumerable<T> source)
+		{
+			return default(T);
 		}
 	}
 }
