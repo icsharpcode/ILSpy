@@ -170,6 +170,13 @@ namespace CustomAttributes
 		public static void UseGenericAttributeWithArg()
 		{
 		}
+		[Generic<List<int>>]
+		[Generic<Dictionary<string, List<int>>>]
+		[Generic<int[]>]
+		[Generic<StringComparison>(StringComparison.Ordinal)]
+		public static void UseGenericAttributeWithComplexTypes()
+		{
+		}
 #endif
 	}
 }
