@@ -61,7 +61,15 @@ namespace ICSharpCode.ILSpy.TextView
 		public static IHighlightingDefinition? GetByExtension(string fileExtension)
 		{
 			EnsureRegistered();
-			return HighlightingManager.Instance.GetDefinitionByExtension(fileExtension);
+			var definition = HighlightingManager.Instance.GetDefinitionByExtension(fileExtension);
+			if (definition != null)
+			{
+				// The lookup can also resolve AvaloniaEdit's built-in definitions (JSON, Markdown,
+				// JavaScript, ...) that resource text rendering relies on; those never pass through
+				// Load(), so theme them here. Registering is idempotent.
+				ThemeManager.Current.RegisterThemableDefinition(definition);
+			}
+			return definition;
 		}
 
 		static void Register(string name, string[] extensions, string resourceName)

@@ -21,9 +21,12 @@ using System.Composition;
 using System.IO;
 using System.Linq;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.Abstractions;
+
+using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -69,6 +72,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			catch (BadImageFormatException) { /* malformed — ignore */ }
 			catch (EndOfStreamException) { /* truncated — ignore */ }
+		}
+
+		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
+		{
+			EnsureLazyChildren();
+			base.Decompile(language, output, options);
+			WriteEntryList(output);
 		}
 	}
 }

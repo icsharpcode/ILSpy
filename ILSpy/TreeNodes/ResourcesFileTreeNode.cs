@@ -201,6 +201,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				smart.AddUIElement(() => new ResourceObjectTable(otherEntries));
 				output.WriteLine();
 			}
+			// Binary/stream entries are child nodes rather than table rows; list them by name so
+			// the container view shows the complete inventory.
+			WriteEntryList(output);
 		}
 	}
 }

@@ -246,4 +246,63 @@ public class ResourceFactoryTests
 		}
 		return ms.ToArray();
 	}
+
+	[AvaloniaTest]
+	[TestCase("Themes/Generic.baml")]
+	[TestCase("logo.png")]
+	[TestCase("favicon.ico")]
+	public void Byte_Array_Entries_Route_Through_The_Factory_Pipeline(string name)
+	{
+		// .resources / !AvaloniaResources containers unpack their entries as raw byte arrays.
+		// Those entries must go through the same factory dispatch as top-level resources, so a
+		// .baml entry gets the BAML-to-XAML decompiler view, an image its viewer, and so on —
+		// not the generic byte-count node.
+		EnsureComposition();
+
+		var node = ResourceEntryNode.Create(name, new byte[] { 0x00, 0x01 });
+
+		node.GetType().Should().NotBe(typeof(ResourceEntryNode),
+			$"entry '{name}' should be routed to a specialised node, not the generic entry node");
+	}
+
+	[AvaloniaTest]
+	public void Resources_File_Decompile_Lists_Stream_Entries()
+	{
+		// Binary entries inside a .resources file only show up as tree children; the container's
+		// text view must also list them by name so the content is discoverable without expanding
+		// the tree.
+		EnsureComposition();
+		var node = (ResourcesFileTreeNode)ResourceEntryNode.Create(
+			new ByteArrayResource("app.g.resources", BuildResources(
+				new (string, object)[] {
+					("assets/data.bin", new byte[] { 1, 2, 3 }),
+					("greeting", "hello"),
+				})));
+		node.EnsureLazyChildren();
+		var output = new AvaloniaEditTextOutput();
+		var language = AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
+
+		node.Decompile(language, output, new DecompilationOptions(new DecompilerSettings()));
+
+		output.GetText().Should().Contain("assets/data.bin");
+	}
+
+	[AvaloniaTest]
+	public void AvaloniaResources_Decompile_Lists_Packed_Entries()
+	{
+		// The !AvaloniaResources container packs files behind one index; its text view must
+		// enumerate the packed paths, mirroring the .resources entry listing.
+		EnsureComposition();
+		var node = (AvaloniaResourcesFileTreeNode)ResourceEntryNode.Create(
+			new ByteArrayResource("!AvaloniaResources", BuildAvaloniaResources(
+				("/App.axaml", Encoding.UTF8.GetBytes("<Application/>")),
+				("/assets/logo.png", new byte[] { 0x89, 0x50, 0x4E, 0x47 }))));
+		var output = new AvaloniaEditTextOutput();
+		var language = AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
+
+		node.Decompile(language, output, new DecompilationOptions(new DecompilerSettings()));
+
+		output.GetText().Should().Contain("/App.axaml");
+		output.GetText().Should().Contain("/assets/logo.png");
+	}
 }
