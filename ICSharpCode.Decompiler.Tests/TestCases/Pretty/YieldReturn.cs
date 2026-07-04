@@ -441,5 +441,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				yield return i;
 			}
 		}
+
+		internal static IEnumerable<T> GenericRepeat<T>(T value, int count)
+		{
+			for (int i = 0; i < count; i++)
+			{
+				yield return value;
+			}
+		}
 	}
 }
