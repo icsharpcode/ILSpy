@@ -21,7 +21,13 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
+using Avalonia.Threading;
+
+using AvaloniaEdit;
+using AvaloniaEdit.Document;
+using AvaloniaEdit.Rendering;
 
 using AwesomeAssertions;
 
@@ -110,5 +116,71 @@ public class CaretHighlightAdornerTests
 		adorner.Dismiss();
 		renderers.Should().NotContain(r => r is CaretHighlightAdorner,
 			"Dismiss unregisters the caret-highlight adorner from the text view");
+	}
+
+	/// <summary>
+	/// Counts how often AvaloniaEdit repaints the caret layer: background renderers are drawn
+	/// by the layer's Render pass, so a Draw call here means the layer visual was invalidated
+	/// and re-rendered.
+	/// </summary>
+	sealed class CaretLayerRepaintProbe : IBackgroundRenderer
+	{
+		public int DrawCount;
+		public KnownLayer Layer => KnownLayer.Caret;
+		public void Draw(AvaloniaEdit.Rendering.TextView textView, global::Avalonia.Media.DrawingContext drawingContext)
+			=> DrawCount++;
+	}
+
+	static void PumpRender()
+	{
+		Dispatcher.UIThread.RunJobs();
+		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+		Dispatcher.UIThread.RunJobs();
+	}
+
+	// Regression test: while the editor is unfocused (the debug-steps navigation case — focus
+	// stays in the Debug Steps panel), the caret is hidden and never blinks, so nothing else
+	// repaints the caret layer. TextView.InvalidateLayer only invalidates measure and never
+	// reaches the caret layer's own visual, so the adorner must invalidate the layer visuals
+	// itself — both to animate at all and, crucially, to erase the last painted frame on
+	// Dismiss. Without that, the final frame stays composited as a caret-sized black line
+	// fixed in the viewport until some unrelated action repaints the layer.
+	[AvaloniaTest]
+	public void Highlight_Start_And_Dismiss_Repaint_The_Caret_Layer_While_The_Editor_Is_Unfocused()
+	{
+		var editor = new TextEditor {
+			Document = new TextDocument("line one\nline two\nline three")
+		};
+		var window = new Window { Content = editor };
+		window.Show();
+		window.UpdateLayout();
+		editor.TextArea.TextView.EnsureVisualLines();
+
+		var probe = new CaretLayerRepaintProbe();
+		editor.TextArea.TextView.BackgroundRenderers.Add(probe);
+		PumpRender();
+
+		// Sanity check that the probe measures dirtiness, not a repaint-everything loop: an
+		// idle render tick must not repaint the caret layer, or the assertions below would
+		// pass vacuously.
+		int baseline = probe.DrawCount;
+		PumpRender();
+		probe.DrawCount.Should().Be(baseline,
+			"an idle render tick must not repaint the caret layer; the probe would be useless otherwise");
+
+		// The editor is deliberately NOT focused: the hidden caret never blinks, so the layer
+		// only repaints if the adorner invalidates it.
+		CaretHighlightAdorner.DisplayCaretHighlightAnimation(editor.TextArea);
+		PumpRender();
+		probe.DrawCount.Should().BeGreaterThan(baseline,
+			"starting the caret-highlight animation must repaint the caret layer even when the editor is unfocused");
+
+		var adorner = editor.TextArea.TextView.BackgroundRenderers
+			.OfType<CaretHighlightAdorner>().Single();
+		baseline = probe.DrawCount;
+		adorner.Dismiss();
+		PumpRender();
+		probe.DrawCount.Should().BeGreaterThan(baseline,
+			"dismissing the adorner must repaint the caret layer so its last painted frame is erased");
 	}
 }

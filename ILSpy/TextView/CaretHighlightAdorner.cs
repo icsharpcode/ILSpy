@@ -55,10 +55,11 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			this.textArea = textArea;
 
-			// Caret rect is in document coordinates; subtracting ScrollOffset converts to the
-			// viewport-relative space IBackgroundRenderer.Draw paints into.
+			// The rects are kept in document coordinates and translated by the live ScrollOffset
+			// on every Draw, so the highlight sticks to its text through any scrolling during the
+			// animation — in particular the deferred CenterLineInView post that debug-step
+			// navigation issues after starting the highlight.
 			var caretRect = textArea.Caret.CalculateCaretRectangle();
-			caretRect = caretRect.Translate(-textArea.TextView.ScrollOffset);
 			minRect = caretRect;
 
 			double growBy = Math.Max(caretRect.Width, caretRect.Height) * 0.25;
@@ -70,12 +71,26 @@ namespace ICSharpCode.ILSpy.TextView
 			var brush = textArea.TextView.GetValue(TextElement.ForegroundProperty) ?? Brushes.Black;
 			pen = new Pen(brush, 1).ToImmutable();
 
-			// The frame timer ticks at ~60 fps to invalidate the Caret layer so Draw re-runs with
+			// The frame timer ticks at ~60 fps to repaint the Caret layer so Draw re-runs with
 			// fresh elapsed time; the lifetime timer dismisses the adorner after one second.
 			frameTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) };
-			frameTimer.Tick += (_, _) => textArea.TextView.InvalidateLayer(KnownLayer.Caret);
+			frameTimer.Tick += (_, _) => InvalidateHostLayer();
 			lifetimeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(LifetimeMs) };
 			lifetimeTimer.Tick += (_, _) => Dismiss();
+		}
+
+		/// <summary>
+		/// Repaints the layer visual hosting this renderer. TextView.InvalidateLayer only
+		/// invalidates the TextView's measure (AvaloniaEdit 12.0.0) and never re-renders the
+		/// per-layer child controls, and the caret layer otherwise repaints only on caret
+		/// blinks (focused editor) or scroll changes — with focus elsewhere (e.g. the Debug
+		/// Steps panel) a painted frame would stay on screen indefinitely. The caret layer
+		/// control is internal to AvaloniaEdit, so every layer is asked to repaint.
+		/// </summary>
+		void InvalidateHostLayer()
+		{
+			foreach (var layer in textArea.TextView.Layers)
+				layer.InvalidateVisual();
 		}
 
 		public KnownLayer Layer => KnownLayer.Caret;
@@ -86,7 +101,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (ms >= LifetimeMs)
 				return;
 
-			// Bounce: 0..GrowDurationMs grows from min → max, GrowDurationMs..2× shrinks back.
+			// Bounce: 0..GrowDurationMs grows from min -> max, GrowDurationMs..2x shrinks back.
 			Rect rect;
 			if (ms < GrowDurationMs)
 				rect = Lerp(minRect, maxRect, ms / (double)GrowDurationMs);
@@ -94,6 +109,10 @@ namespace ICSharpCode.ILSpy.TextView
 				rect = Lerp(maxRect, minRect, (ms - GrowDurationMs) / (double)GrowDurationMs);
 			else
 				rect = minRect;
+
+			// minRect/maxRect are in document coordinates; Draw paints in viewport-relative
+			// space, so translate by the current scroll offset each frame.
+			rect = rect.Translate(-textView.ScrollOffset);
 
 			// Opacity holds at 1.0 until FadeBeginMs, then linear ramp to 0 over FadeDurationMs.
 			double opacity;
@@ -129,6 +148,9 @@ namespace ICSharpCode.ILSpy.TextView
 			textArea.TextView.BackgroundRenderers.Add(adorner);
 			adorner.frameTimer.Start();
 			adorner.lifetimeTimer.Start();
+			// Paint the first frame right away instead of waiting for the first timer tick;
+			// registration alone does not repaint the caret layer (see InvalidateHostLayer).
+			adorner.InvalidateHostLayer();
 		}
 
 		/// <summary>
@@ -141,6 +163,10 @@ namespace ICSharpCode.ILSpy.TextView
 			lifetimeTimer.Stop();
 			frameTimer.Stop();
 			textArea.TextView.BackgroundRenderers.Remove(this);
+			// Unregistering does not repaint the caret layer on its own; without an explicit
+			// repaint the last painted frame would stay visible until the caret blinks or the
+			// view scrolls (with focus in another panel: indefinitely).
+			InvalidateHostLayer();
 		}
 	}
 }
