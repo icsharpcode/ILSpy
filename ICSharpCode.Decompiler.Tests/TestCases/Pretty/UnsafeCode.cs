@@ -668,5 +668,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			UseArrayOfPointers(null);
 		}
+
+		public unsafe static int* PointerToPointer(int** pp)
+		{
+			*pp = null;
+			return pp[3] = *pp;
+		}
+
+		public unsafe static void FixedPointerToPointer(int*[] arr)
+		{
+			fixed (int** ptr = &arr[0])
+			{
+				*ptr = null;
+			}
+		}
 	}
 }
