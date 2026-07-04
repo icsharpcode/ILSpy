@@ -52,12 +52,37 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		public override void Method() { }
 	}
 
+	// Exercises local-reference output for local functions: the definition and every use site
+	// (specialized generic invocations and method-group references) must be written with equal
+	// reference objects, otherwise click-highlighting in the UI cannot match them (issue #2078).
+	internal class GenericLocalFunctionHost
+	{
+		public int Use()
+		{
+			Func<int, int> f = Identity<int>;
+			return Identity(42) + Identity("a").Length + f(0);
+
+			static T2 Identity<T2>(T2 value) => value;
+		}
+
+		// Inside a generic method, Roslyn prepends the enclosing method's type parameters to the
+		// compiler-generated method backing the local function, so every use site references a
+		// specialized method even when the local function's own type argument is a type parameter.
+		public T UseInGenericMethod<T>(T t)
+		{
+			return Echo(Echo(t));
+
+			static T2 Echo<T2>(T2 value) => value;
+		}
+	}
+
 	[TestFixture]
 	public class TextTokenWriterTests
 	{
 		sealed class ReferenceRecordingOutput : ITextOutput
 		{
 			public readonly List<(string Text, IMember Member)> MemberReferences = new();
+			public readonly List<(string Text, object Reference, bool IsDefinition)> LocalReferences = new();
 			public readonly List<bool> FoldStartDefaultCollapsed = new();
 			public int FoldEndCount;
 
@@ -77,7 +102,10 @@ namespace ICSharpCode.Decompiler.Tests.Output
 					MemberReferences.Add((text, member));
 			}
 
-			public void WriteLocalReference(string text, object reference, bool isDefinition = false) { }
+			public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+			{
+				LocalReferences.Add((text, reference, isDefinition));
+			}
 
 			public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 			{
@@ -90,11 +118,17 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			}
 		}
 
-		static List<(string Text, IMember Member)> DecompileAndCollectMemberReferences(Type type)
+		// The module must stay alive until the caller is done with the recorded reference
+		// objects: they are type-system entities that lazily read from the PE image, e.g.
+		// when NUnit formats an assertion message.
+		static PEFile OpenTestAssembly()
 		{
-			string assemblyPath = typeof(TextTokenWriterTests).Assembly.Location;
-			using var module = new PEFile(assemblyPath);
-			var resolver = new UniversalAssemblyResolver(assemblyPath, false, module.Metadata.DetectTargetFrameworkId());
+			return new PEFile(typeof(TextTokenWriterTests).Assembly.Location);
+		}
+
+		static ReferenceRecordingOutput DecompileAndCollectReferences(PEFile module, Type type)
+		{
+			var resolver = new UniversalAssemblyResolver(module.FileName, false, module.Metadata.DetectTargetFrameworkId());
 			var settings = new DecompilerSettings();
 			var decompiler = new CSharpDecompiler(module, resolver, settings);
 			var syntaxTree = decompiler.DecompileType(new FullTypeName(type.FullName));
@@ -102,7 +136,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var output = new ReferenceRecordingOutput();
 			var tokenWriter = new TextTokenWriter(output, settings);
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
-			return output.MemberReferences;
+			return output;
 		}
 
 		static string FormatMember(IMember member) => $"{member.DeclaringType?.Name}.{member.Name}";
@@ -110,7 +144,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[Test]
 		public void OverrideKeywordReferencesTheOverriddenBaseMember()
 		{
-			var references = DecompileAndCollectMemberReferences(typeof(OverrideLinkDerived));
+			using var module = OpenTestAssembly();
+			var references = DecompileAndCollectReferences(module, typeof(OverrideLinkDerived)).MemberReferences;
 
 			var overrideTargets = references.Where(r => r.Text == "override").Select(r => FormatMember(r.Member));
 			Assert.That(overrideTargets, Is.EquivalentTo(new[] {
@@ -122,7 +157,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[Test]
 		public void OverrideKeywordReferencesTheNearestOverriddenMember()
 		{
-			var references = DecompileAndCollectMemberReferences(typeof(OverrideLinkSecondLevel));
+			using var module = OpenTestAssembly();
+			var references = DecompileAndCollectReferences(module, typeof(OverrideLinkSecondLevel)).MemberReferences;
 
 			var overrideTargets = references.Where(r => r.Text == "override").Select(r => FormatMember(r.Member));
 			Assert.That(overrideTargets, Is.EquivalentTo(new[] {
@@ -133,7 +169,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[Test]
 		public void VirtualAndAbstractModifiersAreNotReferences()
 		{
-			var references = DecompileAndCollectMemberReferences(typeof(OverrideLinkBase));
+			using var module = OpenTestAssembly();
+			var references = DecompileAndCollectReferences(module, typeof(OverrideLinkBase)).MemberReferences;
 
 			Assert.That(references.Where(r => r.Text is "virtual" or "abstract" or "override"), Is.Empty);
 		}
@@ -191,6 +228,46 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 			Assert.That(output.FoldStartDefaultCollapsed, Has.Count.EqualTo(1));
 			Assert.That(output.FoldEndCount, Is.EqualTo(1));
+		}
+
+		[Test]
+		public void GenericLocalFunctionDefinitionAndUsesShareEqualReferenceObjects()
+		{
+			using var module = OpenTestAssembly();
+			var output = DecompileAndCollectReferences(module, typeof(GenericLocalFunctionHost));
+
+			Assert.Multiple(() => {
+				// Two invocations (with different inferred type arguments) and one method-group reference.
+				AssertLocalFunctionReferenceGroup(output, "Identity", expectedUses: 3);
+				// Two nested invocations whose type argument is the enclosing method's type parameter.
+				AssertLocalFunctionReferenceGroup(output, "Echo", expectedUses: 2);
+			});
+		}
+
+		// Runs inside Assert.Multiple: after a recorded assertion failure, bail out of the checks
+		// that would dereference the missing data instead of throwing.
+		static void AssertLocalFunctionReferenceGroup(ReferenceRecordingOutput output, string name, int expectedUses)
+		{
+			var references = output.LocalReferences.Where(r => r.Text == name).ToList();
+
+			var definitions = references.Where(r => r.IsDefinition).ToList();
+			Assert.That(definitions, Has.Count.EqualTo(1), $"{name}: definition count");
+			if (definitions.Count != 1)
+				return;
+			object definition = definitions[0].Reference;
+			Assert.That(definition, Is.InstanceOf<IMethod>(), $"{name}: definition reference type");
+			if (definition is not IMethod method)
+				return;
+			Assert.That(method.IsLocalFunction, Is.True, $"{name}: IsLocalFunction");
+
+			var uses = references.Where(r => !r.IsDefinition).ToList();
+			Assert.That(uses, Has.Count.EqualTo(expectedUses), $"{name}: use count");
+			foreach (var use in uses)
+			{
+				Assert.That(use.Reference, Is.EqualTo(definition), $"{name}: use equals definition");
+				Assert.That(definition, Is.EqualTo(use.Reference), $"{name}: definition equals use");
+				Assert.That(use.Reference.GetHashCode(), Is.EqualTo(definition.GetHashCode()), $"{name}: hash codes");
+			}
 		}
 	}
 }
