@@ -944,6 +944,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(null, (int? a) => a & (int?)2);
 			ToCode(null, (int? a) => a & a);
 		}
+
+		public void CheckedArithmetic()
+		{
+			checked
+			{
+				ToCode(null, (int a, int b) => a + b);
+				ToCode(null, (int a, int b) => a - b);
+				ToCode(null, (int a, int b) => a * b);
+				ToCode(null, (int a) => (short)a);
+			}
+		}
 	}
 
 	internal static class Extensions
