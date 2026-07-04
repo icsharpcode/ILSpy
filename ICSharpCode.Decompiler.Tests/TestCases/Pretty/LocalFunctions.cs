@@ -21,6 +21,7 @@ using System.Linq;
 #if CS90
 using System.Runtime.InteropServices;
 #endif
+using System.Threading.Tasks;
 
 namespace LocalFunctions
 {
@@ -667,6 +668,32 @@ namespace LocalFunctions
 				{
 					yield return i;
 				}
+			}
+		}
+
+		public static async Task<int> AsyncLocalFunction()
+		{
+			return await GetValueAsync() + await GetValueAsync();
+
+#if CS80
+			static async Task<int> GetValueAsync()
+#else
+			async Task<int> GetValueAsync()
+#endif
+			{
+				await Task.Yield();
+				return 1;
+			}
+		}
+
+		public static async Task<int> AsyncLocalFunctionWithCapture(int n)
+		{
+			return await AddAsync();
+
+			async Task<int> AddAsync()
+			{
+				await Task.Yield();
+				return n + 1;
 			}
 		}
 
