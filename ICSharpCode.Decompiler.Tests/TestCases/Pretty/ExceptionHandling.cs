@@ -500,6 +500,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #pragma warning restore CA2200 // Rethrow to preserve stack details
 			}
 		}
+
+		private static bool FilterWithSideEffect(Exception e, ref int log)
+		{
+			log++;
+			return e.Message.Length > 0;
+		}
+
+		public static void SideEffectingFilter()
+		{
+			int log = 0;
+			try
+			{
+				Console.WriteLine("try");
+			}
+			catch (Exception e) when (FilterWithSideEffect(e, ref log))
+			{
+				Console.WriteLine(log);
+			}
+		}
 #endif
 
 		public static void ContinueInCatchInForeach(int[] arr)
