@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -82,6 +83,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Field1 = ref v;
 			Field2 = ref v;
 			Field3 = ref v;
+		}
+	}
+
+	internal ref struct UnscopedRefStruct
+	{
+		private int val;
+
+		[UnscopedRef]
+		public ref int ByRefProperty => ref val;
+
+		[UnscopedRef]
+		public ref int ByRefAccess()
+		{
+			return ref val;
 		}
 	}
 }
