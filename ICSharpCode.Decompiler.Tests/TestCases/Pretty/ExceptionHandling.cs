@@ -501,5 +501,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+
+		public static void ContinueInCatchInForeach(int[] arr)
+		{
+			foreach (int value in arr)
+			{
+				try
+				{
+					Console.WriteLine(value);
+				}
+				catch (Exception)
+				{
+					continue;
+				}
+				Console.WriteLine("after");
+			}
+		}
 	}
 }
