@@ -294,5 +294,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 			a = num;
 		}
+#if CS110
+		public void CheckedCompoundAssign()
+		{
+			a += b;
+			a -= b;
+			checked
+			{
+				a += b;
+				a -= b;
+				a *= b;
+				a /= b;
+			}
+			// force end of checked block:
+			++a;
+		}
+#endif
 	}
 }
