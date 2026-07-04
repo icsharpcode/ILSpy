@@ -81,18 +81,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (HandleSimpleArrayInitializer(function, body, pos + 1, v, arrayLength, out var arrayValues, out var instructionsToRemove))
 					{
 						context.Step("HandleSimpleArrayInitializer: single-dim", inst);
-						var block = new Block(BlockKind.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
-						block.Instructions.AddRange(arrayValues.Select(
-							t => {
-								var (indices, value) = t;
-								if (value == null)
-									value = GetNullExpression(elementType);
-								return StElem(new LdLoc(tempStore), indices, value, elementType);
-							}
-						));
-						block.FinalInstruction = new LdLoc(tempStore);
+						var block = BuildSimpleArrayInitializerBlock(tempStore, elementType, arrayLength, arrayValues);
 						var newStore = new StLoc(v, block);
 						body.Instructions[pos] = newStore;
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
@@ -266,18 +256,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (HandleSimpleArrayInitializer(function, body, pos + 1, v, length, out var arrayValues, out var instructionsToRemove))
 				{
 					context.Step("HandleSimpleArrayInitializer: multi-dim", inst);
-					var block = new Block(BlockKind.ArrayInitializer);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-					block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, length.Select(l => new LdcI4(l)).ToArray())));
-					block.Instructions.AddRange(arrayValues.Select(
-						t => {
-							var (indices, value) = t;
-							if (value == null)
-								value = GetNullExpression(elementType);
-							return StElem(new LdLoc(tempStore), indices, value, elementType);
-						}
-					));
-					block.FinalInstruction = new LdLoc(tempStore);
+					var block = BuildSimpleArrayInitializerBlock(tempStore, elementType, length, arrayValues);
 					var newStore = new StLoc(v, block);
 					body.Instructions[pos] = newStore;
 					body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
@@ -826,6 +806,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				block.Instructions.Add(StElem(new LdLoc(v), indices.ToArray(), value, elementType));
 				indices.Clear();
+			}
+			block.FinalInstruction = new LdLoc(v);
+			return block;
+		}
+
+		static Block BuildSimpleArrayInitializerBlock(ILVariable v, IType elementType, int[] arrayLength, (ILInstruction[] Indices, ILInstruction Value)[] values)
+		{
+			var block = new Block(BlockKind.ArrayInitializer);
+			block.Instructions.Add(new StLoc(v, new NewArr(elementType, arrayLength.SelectArray(l => new LdcI4(l)))));
+			foreach (var (indices, value) in values)
+			{
+				block.Instructions.Add(StElem(new LdLoc(v), indices, value ?? GetNullExpression(elementType), elementType));
 			}
 			block.FinalInstruction = new LdLoc(v);
 			return block;
