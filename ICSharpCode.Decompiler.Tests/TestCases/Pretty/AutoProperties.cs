@@ -1,4 +1,7 @@
 using System;
+#if CS110 && NET70
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -68,6 +71,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		int Property { get; set; }
 	}
+#if CS110 && NET70
+	internal class RequiredMembersBase
+	{
+		public required int A { get; set; }
+
+		public RequiredMembersBase()
+		{
+		}
+
+		[SetsRequiredMembers]
+		public RequiredMembersBase(int seed)
+		{
+			A = seed;
+		}
+	}
+	internal class RequiredMembersDerived : RequiredMembersBase
+	{
+		public required int B { get; init; }
+	}
+	internal abstract class RequiredMembersGeneric<T>
+	{
+		public required T Value { get; set; }
+	}
+#endif
 #if !NET70
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
 	internal sealed class RequiredMemberAttribute : Attribute
