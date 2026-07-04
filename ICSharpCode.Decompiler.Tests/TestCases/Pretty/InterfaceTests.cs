@@ -104,6 +104,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public interface IB
 		{
 		}
+#if CS80 && !NET40
+		public interface IProtectedMembers
+		{
+			protected void ProtectedMethod();
+
+			protected internal void ProtectedInternalMethod()
+			{
+				ProtectedMethod();
+			}
+		}
+		public interface IStaticMembers
+		{
+			static int StaticProperty { get; set; }
+
+			static event EventHandler StaticEvent;
+		}
+		public interface IGenericWithDefaultImpl<T>
+		{
+			T Value { get; }
+
+			T DefaultGet<U>(U key) where U : T
+			{
+				return Value;
+			}
+		}
+#endif
 		public class C : IA2, IA, IB
 		{
 			int IA.Property1 {
