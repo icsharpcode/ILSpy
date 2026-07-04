@@ -576,6 +576,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ref o;
 		}
 #endif
+
+		private static void WhileDynamic(dynamic a)
+		{
+			while (a)
+			{
+				Console.WriteLine("x");
+			}
+		}
+
+#if CS60
+		private static void NullConditionalInvocation(dynamic a)
+		{
+			a?.Call();
+		}
+#endif
 	}
 
 	internal static class Extension
