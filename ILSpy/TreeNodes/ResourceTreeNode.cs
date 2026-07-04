@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler;
@@ -51,6 +52,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
+			using (var data = Resource.TryOpenStream())
+			{
+				if (data != null && ResourceEntryNode.WriteTextContent(Resource.Name, data, output))
+					return;
+			}
 			var sizeInBytes = Resource.TryGetLength();
 			var sizeInBytesText = sizeInBytes == null ? "" : ", " + sizeInBytes + " bytes";
 			language.WriteCommentLine(output, $"{Resource.Name} ({Resource.ResourceType}, {Resource.Attributes}{sizeInBytesText})");
@@ -62,6 +68,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				smart.AddButton(Images.Save, "Save", (_, _) => Save());
 				smart.WriteLine();
 			}
+		}
+
+		/// <summary>
+		/// Writes one line per child node so container resources (.resources, !AvaloniaResources)
+		/// show their inventory in the text view without the tree having to be expanded. Call
+		/// after <see cref="SharpTreeNode.EnsureLazyChildren"/>.
+		/// </summary>
+		private protected void WriteEntryList(ITextOutput output)
+		{
+			if (Children.Count == 0)
+				return;
+			output.WriteLine();
+			foreach (var child in Children.OfType<ILSpyTreeNode>())
+				output.WriteLine(child.Text?.ToString() ?? string.Empty);
 		}
 
 		public override bool Save()
