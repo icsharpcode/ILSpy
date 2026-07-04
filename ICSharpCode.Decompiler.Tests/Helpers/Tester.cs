@@ -422,6 +422,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				"System.Xml.dll",
 				"System.Xml.ReaderWriter.dll",
 				"System.ValueTuple.dll",
+				"System.Collections.NonGeneric.dll",
 				"Microsoft.CSharp.dll",
 				"Microsoft.VisualBasic.dll",
 			};
