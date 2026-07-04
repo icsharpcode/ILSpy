@@ -86,6 +86,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		internal static void ApplyDisplaySettings(Decompiler.DecompilerSettings settings, DisplaySettings display)
 		{
+			settings.ExpandXmlDocumentationComments = display.ExpandXmlDocumentationComments;
 			settings.ExpandUsingDeclarations = display.ExpandUsingDeclarations;
 			settings.ExpandMemberDefinitions = display.ExpandMemberDefinitions;
 			settings.FoldBraces = display.FoldBraces;

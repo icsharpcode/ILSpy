@@ -30,6 +30,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	/// <summary>Display settings that affect the rendered C# text layout.</summary>
 	public sealed record BookmarkRenderedLayoutSettings(
 		bool FoldBraces,
+		bool ExpandXmlDocumentationComments,
 		bool ExpandMemberDefinitions,
 		bool ExpandUsingDeclarations,
 		bool ShowDebugInfo,
@@ -40,6 +41,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		public static BookmarkRenderedLayoutSettings From(DisplaySettings display)
 			=> new(
 				display.FoldBraces,
+				display.ExpandXmlDocumentationComments,
 				display.ExpandMemberDefinitions,
 				display.ExpandUsingDeclarations,
 				display.ShowDebugInfo,
@@ -50,6 +52,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		public void ApplyTo(DisplaySettings display)
 		{
 			display.FoldBraces = FoldBraces;
+			display.ExpandXmlDocumentationComments = ExpandXmlDocumentationComments;
 			display.ExpandMemberDefinitions = ExpandMemberDefinitions;
 			display.ExpandUsingDeclarations = ExpandUsingDeclarations;
 			display.ShowDebugInfo = ShowDebugInfo;

@@ -2054,6 +2054,15 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("ExpandUsingDeclarationsAfterDecompilation", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Expand XML documentation comments after decompilation.
+        /// </summary>
+        public static string ExpandXmlDocumentationCommentsAfterDecompilation {
+            get {
+                return ResourceManager.GetString("ExpandXmlDocumentationCommentsAfterDecompilation", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to Extract all package entries.

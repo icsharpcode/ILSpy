@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// Comments and preprocessor directives attached to this node, kept off the child-index space.
 		// The holder lives in the annotation channel, so a node without trivia (the overwhelmingly
 		// common case) costs nothing extra, and CloneAnnotations copies it for free.
-		sealed class NodeTrivia : ICloneable
+		internal sealed class NodeTrivia : ICloneable
 		{
 			public List<Trivia>? Leading;
 			public List<Trivia>? Trailing;
@@ -105,10 +105,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public void AddLeadingTrivia(Trivia trivia)
 		{
-			if (trivia == null)
-				throw new ArgumentNullException(nameof(trivia));
 			NodeTrivia holder = GetOrCreateTrivia();
-			(holder.Leading ??= new List<Trivia>()).Add(trivia);
+			var list = holder.Leading ??= new List<Trivia>();
+			InsertTrivia(list, list.Count, trivia);
 		}
 
 		/// <summary>
@@ -117,18 +116,73 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// </summary>
 		public void PrependLeadingTrivia(Trivia trivia)
 		{
-			if (trivia == null)
-				throw new ArgumentNullException(nameof(trivia));
 			NodeTrivia holder = GetOrCreateTrivia();
-			(holder.Leading ??= new List<Trivia>()).Insert(0, trivia);
+			InsertTrivia(holder.Leading ??= new List<Trivia>(), 0, trivia);
 		}
 
 		public void AddTrailingTrivia(Trivia trivia)
 		{
+			NodeTrivia holder = GetOrCreateTrivia();
+			var list = holder.Trailing ??= new List<Trivia>();
+			InsertTrivia(list, list.Count, trivia);
+		}
+
+		// The single mutation path for attaching trivia: validate, insert, then reindex from the
+		// insertion point so every trivia's parent/list/index state is consistent for any position.
+		void InsertTrivia(List<Trivia> list, int index, Trivia trivia)
+		{
+			ValidateNewTrivia(trivia);
+			list.Insert(index, trivia);
+			ReindexTrivia(this, list, index);
+		}
+
+		void ValidateNewTrivia(Trivia trivia)
+		{
 			if (trivia == null)
 				throw new ArgumentNullException(nameof(trivia));
-			NodeTrivia holder = GetOrCreateTrivia();
-			(holder.Trailing ??= new List<Trivia>()).Add(trivia);
+			if (trivia == this)
+				throw new ArgumentException("Cannot add a node to itself as trivia.", nameof(trivia));
+			if (trivia.parent != null)
+				throw new ArgumentException("Node is already used in another tree.", nameof(trivia));
+		}
+
+		static void ReindexTrivia(AstNode parent, List<Trivia> list, int start)
+		{
+			for (int i = start; i < list.Count; i++)
+				list[i].SetTriviaParent(parent, list, i);
+		}
+
+		// Points the trivia held in this node's annotation back at this node. Clone needs this:
+		// the cloned NodeTrivia's deep-copied trivia still carry the source owner's parent state.
+		void ReparentTrivia()
+		{
+			var holder = Annotation<NodeTrivia>();
+			if (holder == null)
+				return;
+			if (holder.Leading != null)
+				ReindexTrivia(this, holder.Leading, 0);
+			if (holder.Trailing != null)
+				ReindexTrivia(this, holder.Trailing, 0);
+		}
+
+		// Deep-copies another node's trivia onto this node, appending to any trivia already present.
+		// The NodeTrivia holder must never be shared between nodes: each trivia's parent points at
+		// its single owning node, so an annotation-copying operation clones the trivia instead.
+		internal void CopyTriviaFrom(AstNode other)
+		{
+			var otherHolder = other.Annotation<NodeTrivia>();
+			if (otherHolder == null)
+				return;
+			if (otherHolder.Leading != null)
+			{
+				foreach (var trivia in otherHolder.Leading)
+					AddLeadingTrivia((Trivia)trivia.Clone());
+			}
+			if (otherHolder.Trailing != null)
+			{
+				foreach (var trivia in otherHolder.Trailing)
+					AddTrailingTrivia((Trivia)trivia.Clone());
+			}
 		}
 
 		NodeTrivia GetOrCreateTrivia()
@@ -151,6 +205,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				if (parent == null)
 					return null;
+				if (this is Trivia { triviaSiblings: { } siblings })
+					return childIndex + 1 < siblings.Count ? siblings[childIndex + 1] : null;
 				// Inline the validity check: sibling navigation is one of the hottest operations, and the
 				// indices are almost always already current, so skip the (non-inlinable) call when valid.
 				if (!parent.childIndicesValid)
@@ -170,6 +226,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				if (parent == null)
 					return null;
+				if (this is Trivia { triviaSiblings: { } siblings })
+					return childIndex > 0 ? siblings[childIndex - 1] : null;
 				if (!parent.childIndicesValid)
 					parent.EnsureChildIndices();
 				for (int i = childIndex - 1; i >= 0; i--)
@@ -440,6 +498,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			get {
 				if (parent == null)
 					return null;
+				// Trivia occupies no child slot; its childIndex indexes its owning trivia list instead.
+				if (this is Trivia { triviaSiblings: not null })
+					return null;
 				parent.EnsureChildIndices();
 				return parent.GetChildSlotInfo(childIndex);
 			}
@@ -524,6 +585,28 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				Debug.Assert(slot.ChildType.IsInstanceOfType(child), "child's type must be valid in its slot");
 				child.CheckInvariant();
 			}
+			var trivia = Annotation<NodeTrivia>();
+			if (trivia != null)
+			{
+				CheckTriviaInvariant(trivia.Leading);
+				CheckTriviaInvariant(trivia.Trailing);
+			}
+		}
+
+		// Trivia lives outside the slot space but carries the same parent/index invariants, scoped
+		// to the Leading/Trailing list that holds it.
+		[System.Diagnostics.Conditional("DEBUG")]
+		void CheckTriviaInvariant(List<Trivia>? list)
+		{
+			if (list == null)
+				return;
+			for (int i = 0; i < list.Count; i++)
+			{
+				Trivia t = list[i];
+				Debug.Assert(t.parent == this, "trivia's Parent must point back to its owning node");
+				Debug.Assert(t.triviaSiblings == list, "trivia's sibling list must be the list that holds it");
+				Debug.Assert(t.childIndex == i, "trivia's index must match its position in the trivia list");
+			}
 		}
 
 		// Self-reference and two-tree guards shared by the single-slot setters; lifts a node out of the
@@ -589,6 +672,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal void ClearParentAndIndex()
 		{
 			parent = null;
+			if (this is Trivia trivia)
+				trivia.triviaSiblings = null;
 			childIndex = -1;
 		}
 		#endregion
@@ -668,6 +753,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (parent == null)
 				return;
+			if (this is Trivia { triviaSiblings: { } siblings })
+			{
+				var oldParent = parent;
+				int oldIndex = childIndex;
+				siblings.RemoveAt(oldIndex);
+				ClearParentAndIndex();
+				ReindexTrivia(oldParent, siblings, oldIndex);
+				return;
+			}
 			parent.EnsureChildIndices();
 			CSharpSlotInfo kind = parent.GetChildSlotInfo(childIndex).Kind!;
 			AstNodeCollection? collection = parent.GetCollectionByKind(kind);
@@ -693,6 +787,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				throw new InvalidOperationException("Cannot replace the root node");
 			}
+			ThrowIfTrivia();
 			parent.EnsureChildIndices();
 			CSharpSlotInfo slot = parent.GetChildSlotInfo(childIndex);
 			// Because this method doesn't statically check the new node's type with the slot,
@@ -718,6 +813,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			parent.SetChild(childIndex, newNode);
 		}
 
+		// Attached trivia has no child slot to substitute into: its childIndex indexes the owning
+		// trivia list, which the slot arithmetic in ReplaceWith must never touch. Trivia is replaced
+		// by removing it and attaching new trivia to the owning node.
+		void ThrowIfTrivia()
+		{
+			if (this is Trivia { triviaSiblings: not null })
+				throw new InvalidOperationException("Cannot replace trivia; remove it and attach the replacement to the owning node instead.");
+		}
+
 		public AstNode? ReplaceWith(Func<AstNode, AstNode?> replaceFunction)
 		{
 			if (replaceFunction == null)
@@ -726,6 +830,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				throw new InvalidOperationException("Cannot replace the root node");
 			}
+			ThrowIfTrivia();
 			AstNode oldParent = parent;
 			AstNode? oldSuccessor = NextSibling;
 			CSharpSlotInfo? oldSlot = this.Slot;
@@ -760,11 +865,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			AstNode copy = (AstNode)MemberwiseClone();
 			copy.parent = null;
 			copy.childIndex = -1;
+			// MemberwiseClone copied the source's trivia-list reference; the copy is detached.
+			if (copy is Trivia copiedTrivia)
+				copiedTrivia.triviaSiblings = null;
 			// Deep-copy the children (CloneChildrenInto first drops the shallow field copies that
 			// MemberwiseClone left pointing at this node's children).
 			CloneChildrenInto(copy);
 			// Finally, clone the annotation, if necessary
 			copy.CloneAnnotations();
+			copy.ReparentTrivia();
 			return copy;
 		}
 
@@ -818,6 +927,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (NextSibling != null)
 				return NextSibling;
+			// Trivia navigation ends at its owning list: leading trivia precedes its owner in document
+			// order, so continuing into the owner's sibling space would skip the owner's whole subtree.
+			if (this is Trivia)
+				return null;
 			if (Parent != null)
 				return Parent.GetNextNode();
 			return null;
@@ -840,6 +953,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			if (PrevSibling != null)
 				return PrevSibling;
+			// Trivia navigation ends at its owning list; see GetNextNode.
+			if (this is Trivia)
+				return null;
 			if (Parent != null)
 				return Parent.GetPrevNode();
 			return null;

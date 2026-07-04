@@ -355,11 +355,13 @@ namespace ICSharpCode.Decompiler
 					output.Write("*/");
 					break;
 				case CommentType.Documentation:
-					bool isLastLine = !(nodeStack.Peek().NextSibling is Comment);
+					// Only a following documentation comment continues the fold: a regular comment in
+					// the same trivia list must not keep the fold open (it never calls MarkFoldEnd).
+					bool isLastLine = nodeStack.Peek().NextSibling is not Comment { CommentType: CommentType.Documentation };
 					if (!inDocumentationComment && !isLastLine)
 					{
 						inDocumentationComment = true;
-						output.MarkFoldStart("///" + content, true);
+						output.MarkFoldStart("///" + content, defaultCollapsed: !settings.ExpandXmlDocumentationComments);
 					}
 					output.Write("///");
 					output.Write(content);

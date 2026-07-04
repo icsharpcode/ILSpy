@@ -1351,6 +1351,20 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool expandXmlDocumentationComments = false;
+
+		[Browsable(false)]
+		public bool ExpandXmlDocumentationComments {
+			get { return expandXmlDocumentationComments; }
+			set {
+				if (expandXmlDocumentationComments != value)
+				{
+					expandXmlDocumentationComments = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool expandMemberDefinitions = false;
 
 		[Browsable(false)]

@@ -71,6 +71,8 @@
 					          Content="{x:Static res:Resources.HighlightMatchingBraces}" />
 					<CheckBox IsChecked="{Binding Settings.HighlightCurrentLine, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.HighlightCurrentLine}" />
+					<CheckBox IsChecked="{Binding Settings.ExpandXmlDocumentationComments, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.ExpandXmlDocumentationCommentsAfterDecompilation}" />
 					<CheckBox IsChecked="{Binding Settings.ExpandMemberDefinitions, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.ExpandMemberDefinitionsAfterDecompilation}" />
 					<CheckBox IsChecked="{Binding Settings.ExpandUsingDeclarations, Mode=TwoWay}"

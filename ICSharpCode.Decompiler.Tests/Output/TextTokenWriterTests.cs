@@ -23,6 +23,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -57,6 +58,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		sealed class ReferenceRecordingOutput : ITextOutput
 		{
 			public readonly List<(string Text, IMember Member)> MemberReferences = new();
+			public readonly List<bool> FoldStartDefaultCollapsed = new();
+			public int FoldEndCount;
 
 			public string IndentationString { get; set; } = "\t";
 			public void Indent() { }
@@ -75,8 +78,16 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			}
 
 			public void WriteLocalReference(string text, object reference, bool isDefinition = false) { }
-			public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false) { }
-			public void MarkFoldEnd() { }
+
+			public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
+			{
+				FoldStartDefaultCollapsed.Add(defaultCollapsed);
+			}
+
+			public void MarkFoldEnd()
+			{
+				FoldEndCount++;
+			}
 		}
 
 		static List<(string Text, IMember Member)> DecompileAndCollectMemberReferences(Type type)
@@ -125,6 +136,61 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			var references = DecompileAndCollectMemberReferences(typeof(OverrideLinkBase));
 
 			Assert.That(references.Where(r => r.Text is "virtual" or "abstract" or "override"), Is.Empty);
+		}
+
+		static ReferenceRecordingOutput WriteLeadingTrivia(DecompilerSettings settings, params Comment[] comments)
+		{
+			var output = new ReferenceRecordingOutput();
+			var writer = new TextTokenWriter(output, settings);
+			var node = new SyntaxTree();
+			foreach (var comment in comments)
+				node.AddLeadingTrivia(comment);
+			foreach (var comment in comments)
+			{
+				writer.StartNode(comment);
+				writer.WriteComment(comment.CommentType, comment.Content);
+				writer.EndNode(comment);
+			}
+			return output;
+		}
+
+		[TestCase(false, true)]
+		[TestCase(true, false)]
+		public void XmlDocumentationFoldDefaultFollowsSetting(bool expandXmlDocumentationComments, bool expectedDefaultCollapsed)
+		{
+			var settings = new DecompilerSettings {
+				ExpandXmlDocumentationComments = expandXmlDocumentationComments
+			};
+
+			var output = WriteLeadingTrivia(settings,
+				new Comment(" <summary>", CommentType.Documentation),
+				new Comment(" </summary>", CommentType.Documentation));
+
+			Assert.That(output.FoldStartDefaultCollapsed, Is.EqualTo(new[] { expectedDefaultCollapsed }));
+			Assert.That(output.FoldEndCount, Is.EqualTo(1));
+		}
+
+		[Test]
+		public void SingleDocumentationLineFollowedByRegularCommentOpensNoFold()
+		{
+			var output = WriteLeadingTrivia(new DecompilerSettings(),
+				new Comment(" <summary>single</summary>", CommentType.Documentation),
+				new Comment(" regular"));
+
+			Assert.That(output.FoldStartDefaultCollapsed, Is.Empty);
+			Assert.That(output.FoldEndCount, Is.Zero);
+		}
+
+		[Test]
+		public void DocumentationFoldClosesBeforeFollowingRegularComment()
+		{
+			var output = WriteLeadingTrivia(new DecompilerSettings(),
+				new Comment(" <summary>", CommentType.Documentation),
+				new Comment(" </summary>", CommentType.Documentation),
+				new Comment(" regular"));
+
+			Assert.That(output.FoldStartDefaultCollapsed, Has.Count.EqualTo(1));
+			Assert.That(output.FoldEndCount, Is.EqualTo(1));
 		}
 	}
 }

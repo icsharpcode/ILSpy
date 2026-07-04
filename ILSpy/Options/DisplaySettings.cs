@@ -58,6 +58,9 @@ namespace ICSharpCode.ILSpy.Options
 		bool foldBraces;
 
 		[ObservableProperty]
+		bool expandXmlDocumentationComments;
+
+		[ObservableProperty]
 		bool expandMemberDefinitions;
 
 		[ObservableProperty]
@@ -112,6 +115,7 @@ namespace ICSharpCode.ILSpy.Options
 			EnableWordWrap = (bool?)section.Attribute(nameof(EnableWordWrap)) ?? false;
 			SortResults = (bool?)section.Attribute(nameof(SortResults)) ?? true;
 			FoldBraces = (bool?)section.Attribute(nameof(FoldBraces)) ?? false;
+			ExpandXmlDocumentationComments = (bool?)section.Attribute(nameof(ExpandXmlDocumentationComments)) ?? false;
 			ExpandMemberDefinitions = (bool?)section.Attribute(nameof(ExpandMemberDefinitions)) ?? false;
 			ExpandUsingDeclarations = (bool?)section.Attribute(nameof(ExpandUsingDeclarations)) ?? false;
 			IndentationUseTabs = (bool?)section.Attribute(nameof(IndentationUseTabs)) ?? true;
@@ -139,6 +143,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue(nameof(EnableWordWrap), EnableWordWrap);
 			section.SetAttributeValue(nameof(SortResults), SortResults);
 			section.SetAttributeValue(nameof(FoldBraces), FoldBraces);
+			section.SetAttributeValue(nameof(ExpandXmlDocumentationComments), ExpandXmlDocumentationComments);
 			section.SetAttributeValue(nameof(ExpandMemberDefinitions), ExpandMemberDefinitions);
 			section.SetAttributeValue(nameof(ExpandUsingDeclarations), ExpandUsingDeclarations);
 			section.SetAttributeValue(nameof(IndentationUseTabs), IndentationUseTabs);

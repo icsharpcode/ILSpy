@@ -18,6 +18,8 @@
 
 #nullable enable
 
+using System.Collections.Generic;
+
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
@@ -29,6 +31,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	/// </summary>
 	public abstract class Trivia : AstNode
 	{
+		// The Leading or Trailing list of the owning node that currently holds this trivia (null while
+		// detached). Lives here rather than on AstNode so that plain nodes, which can never be trivia,
+		// do not pay for the field; AstNode's sibling navigation branches on it via a Trivia type test.
+		internal List<Trivia>? triviaSiblings;
+
 		TextLocation startLocation;
 		TextLocation endLocation;
 
@@ -58,6 +65,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		internal void SetEndLocation(TextLocation value)
 		{
 			this.endLocation = value;
+		}
+
+		internal void SetTriviaParent(AstNode newParent, List<Trivia> siblings, int index)
+		{
+			SetParent(newParent);
+			triviaSiblings = siblings;
+			childIndex = index;
 		}
 	}
 }
