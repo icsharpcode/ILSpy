@@ -95,6 +95,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			AstNode? result = TransformForeachOnArray(forStatement);
 			if (result != null)
 				return result;
+			result = TransformForeachOnInlineArray(forStatement);
+			if (result != null)
+				return result;
 			return base.VisitForStatement(forStatement);
 		}
 
@@ -381,6 +384,112 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
 			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
+			forStatement.ReplaceWith(foreachStmt);
+			context.EndStep(foreachStmt);
+			return foreachStmt;
+		}
+
+		static readonly ForStatement forOnInlineArrayPattern = new ForStatement {
+			Initializers = {
+				new ExpressionStatement(
+				new AssignmentExpression(
+					new NamedNode("indexVariable", new IdentifierExpression(Pattern.AnyString)),
+					new PrimitiveExpression(0)
+				))
+			},
+			Condition = new BinaryOperatorExpression(
+				new IdentifierExpressionBackreference("indexVariable"),
+				BinaryOperatorType.LessThan,
+				new NamedNode("length", new PrimitiveExpression(PrimitiveExpression.AnyValue))
+			),
+			Iterators = {
+				new ExpressionStatement(
+				new AssignmentExpression(
+					new IdentifierExpressionBackreference("indexVariable"),
+					new BinaryOperatorExpression(new IdentifierExpressionBackreference("indexVariable"), BinaryOperatorType.Add, new PrimitiveExpression(1))
+				))
+			},
+			EmbeddedStatement = new BlockStatement {
+				Statements = {
+					new ExpressionStatement(new AssignmentExpression(
+						new NamedNode("itemVariable", new IdentifierExpression(Pattern.AnyString)),
+						new NamedNode("elementAccess", new AnyNode())
+					)),
+					new Repeat(new AnyNode("statements"))
+				}
+			}
+		};
+
+		/// <summary>
+		/// Reconstructs a <c>foreach</c> over an inline array from the <c>for</c> loop the compiler
+		/// lowers it to: <c>for (i = 0; i &lt; N; i++) { item = &lt;PrivateImplementationDetails&gt;.InlineArrayElementRef(ref buffer, i); ... }</c>.
+		/// The rewrite is only sound because the loop bound <c>N</c> equals the inline array length,
+		/// which proves the index is always in range: <c>InlineArrayElementRef</c> is the compiler's
+		/// unchecked element accessor, whereas the C# inline-array indexer <c>buffer[i]</c> is
+		/// bounds-checked, so the two only agree when the index is provably in-bounds. A loop that
+		/// does not match this exact shape keeps the (unnameable but faithful) helper call.
+		/// </summary>
+		Statement? TransformForeachOnInlineArray(ForStatement forStatement)
+		{
+			if (!context.Settings.ForEachStatement || !context.Settings.InlineArrays)
+				return null;
+			Match m = forOnInlineArrayPattern.Match(forStatement);
+			if (!m.Success)
+				return null;
+			var itemVariable = m.Get<IdentifierExpression>("itemVariable").Single().GetILVariable();
+			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
+			if (itemVariable == null || indexVariable == null)
+				return null;
+
+			// The loop body must start with `item = InlineArrayElementRef(ref buffer, index)`.
+			if (m.Get<Expression>("elementAccess").Single() is not InvocationExpression elementAccess)
+				return null;
+			if (elementAccess.GetSymbol() is not IMethod { DeclaringType.FullName: "<PrivateImplementationDetails>" } helper)
+				return null;
+			if (helper.Name is not ("InlineArrayElementRef" or "InlineArrayElementRefReadOnly"))
+				return null;
+			if (elementAccess.Arguments.Count != 2)
+				return null;
+			// arg0: `ref buffer`, arg1: the loop index.
+			if (elementAccess.Arguments.First() is not DirectionExpression { Expression: IdentifierExpression bufferIdentifier })
+				return null;
+			var bufferVariable = bufferIdentifier.GetILVariable();
+			if (bufferVariable == null)
+				return null;
+			if (elementAccess.Arguments.Last() is not IdentifierExpression indexIdentifier
+				|| indexIdentifier.GetILVariable() != indexVariable)
+				return null;
+
+			// Soundness: the loop counts 0..length-1 over exactly the inline array's length, so the
+			// index is provably in range. Any other bound (or a non-inline-array buffer) is rejected.
+			if (bufferVariable.Type.GetInlineArrayLength() is not int arrayLength)
+				return null;
+			if (m.Get<PrimitiveExpression>("length").Single().Value is not int loopBound || loopBound != arrayLength)
+				return null;
+
+			if (!VariableCanBeUsedAsForeachLocal(itemVariable, forStatement))
+				return null;
+			// The index is a pure counter: stored at init + increment, loaded at the condition,
+			// the increment, and the element access; never captured by address.
+			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
+				return null;
+
+			context.Step("Introduce foreach over inline array", forStatement);
+			// Take the buffer reference for the `in` expression before dropping the element access.
+			var inExpression = bufferIdentifier.Detach();
+			// Reuse the loop body (preserving its annotations) after removing its leading
+			// `item = <PrivateImplementationDetails>.InlineArrayElementRef(ref buffer, i)` statement.
+			var body = (BlockStatement)forStatement.EmbeddedStatement;
+			body.Statements.First().Remove();
+			var foreachStmt = new ForeachStatement {
+				VariableType = context.Settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVariable.Type),
+				VariableDesignation = new SingleVariableDesignation { Identifier = itemVariable.Name! },
+				InExpression = inExpression,
+				EmbeddedStatement = body.Detach()
+			};
+			foreachStmt.CopyAnnotationsFrom(forStatement);
+			itemVariable.Kind = IL.VariableKind.ForeachLocal;
+			foreachStmt.VariableDesignation.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			forStatement.ReplaceWith(foreachStmt);
 			context.EndStep(foreachStmt);
 			return foreachStmt;
