@@ -1201,9 +1201,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				// if necessary.
 				if (!CanInferTypeArgumentsFromArguments(method, argumentList, expressionBuilder.typeInference))
 				{
-					requireTypeArguments = true;
-					typeArguments = method.TypeArguments.ToArray();
-					appliedRequireTypeArgumentsShortcut = true;
+					if (settings.AnonymousTypes
+						&& method.TypeArguments.Any(a => a.ContainsAnonymousType())
+						&& PinTypesOfNullArguments(argumentList)
+						&& CanInferTypeArgumentsFromArguments(method, argumentList, expressionBuilder.typeInference))
+					{
+						// Anonymous types cannot be written as explicit type arguments; instead the
+						// null arguments were rewritten so that all type arguments are inferable.
+						requireTypeArguments = false;
+						typeArguments = Empty<IType>.Array;
+					}
+					else
+					{
+						requireTypeArguments = true;
+						typeArguments = method.TypeArguments.ToArray();
+						appliedRequireTypeArgumentsShortcut = true;
+					}
 				}
 				else
 				{
@@ -1376,6 +1389,58 @@ namespace ICSharpCode.Decompiler.CSharp
 				argumentList.Arguments.SelectReadOnlyArray(a => a.ResolveResult), paramTypesInArgumentOrder,
 				out bool success);
 			return success;
+		}
+
+		/// <summary>
+		/// C# has no syntax to spell out an anonymous type, so a null literal cannot be given such
+		/// a type with a cast. The minimal expression that produces a null value of an anonymous
+		/// type is a conditional expression whose never-taken branch creates an instance of the
+		/// type: <c>true ? null : new { A = default(int) }</c>.
+		/// Replaces null-literal arguments of an anonymous type with such an expression, so that
+		/// type arguments involving anonymous types (which cannot be written explicitly either)
+		/// become inferable from the arguments.
+		/// Returns true, if at least one argument was replaced.
+		/// </summary>
+		private bool PinTypesOfNullArguments(ArgumentList argumentList)
+		{
+			bool anyArgumentReplaced = false;
+			for (int i = 0; i < argumentList.Length; i++)
+			{
+				IType expectedType = argumentList.ExpectedParameters[i].Type;
+				if (argumentList.Arguments[i].Expression is not NullReferenceExpression)
+					continue;
+				if (!expectedType.IsAnonymousType() || NewAnonymousTypeInstance(expectedType) is not NewObj newObj)
+					continue;
+				var nullLiteral = argumentList.Arguments[i];
+				argumentList.Arguments[i] = new ConditionalExpression(new PrimitiveExpression(true),
+						nullLiteral.Expression.Detach(), expressionBuilder.Translate(newObj, expectedType))
+					.WithILInstruction(nullLiteral.ILInstructions)
+					.WithRR(new ResolveResult(expectedType));
+				anyArgumentReplaced = true;
+			}
+			return anyArgumentReplaced;
+		}
+
+		/// <summary>
+		/// Builds a 'newobj' instruction creating an instance of the anonymous type
+		/// <paramref name="type"/> with default property values; translating it yields
+		/// object-initializer syntax, the only way to name the type in source code. Returns null
+		/// if a property type involves an anonymous type other than by direct nesting (e.g. an
+		/// array of anonymous type), because its default value expression would have to name it.
+		/// </summary>
+		private NewObj? NewAnonymousTypeInstance(IType type)
+		{
+			var newObj = new NewObj(type.GetConstructors().Single());
+			foreach (var parameter in newObj.Method.Parameters)
+			{
+				ILInstruction? argument = parameter.Type.IsAnonymousType()
+					? NewAnonymousTypeInstance(parameter.Type)
+					: parameter.Type.ContainsAnonymousType() ? null : new DefaultValue(parameter.Type);
+				if (argument == null)
+					return null;
+				newObj.Arguments.Add(argument);
+			}
+			return newObj;
 		}
 
 		private void CastArguments(IList<TranslatedExpression> arguments, IList<IParameter> expectedParameters)
