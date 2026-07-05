@@ -36,19 +36,31 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 			const uint CompressedDataMagic = 0x5A4C4158; // Magic used for Xamarin compressed module header ('XALZ', little-endian)
 			using var fileReader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
 			// Read compressed file header
-			if (stream.Length < sizeof(uint))
+			uint magic;
+			try
+			{
+				magic = fileReader.ReadUInt32();
+			}
+			catch (EndOfStreamException)
+			{
+				// Too short to contain the magic, so this cannot be an XALZ module; pass it through.
 				return null;
-			var magic = fileReader.ReadUInt32();
+			}
 			if (magic != CompressedDataMagic)
 				return null;
-			// The magic identifies this as an XALZ module, so it must carry the full 12-byte
-			// header: magic, descriptor table index, and uncompressed length. A shorter stream is
-			// a truncated/corrupt module; fail consistently instead of letting a later read throw
-			// EndOfStreamException.
-			if (stream.Length < 3 * sizeof(uint))
-				throw new InvalidDataException("Invalid Xamarin compressed module: truncated header.");
-			_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
-			uint declaredUncompressedLength = fileReader.ReadUInt32();
+			uint declaredUncompressedLength;
+			try
+			{
+				_ = fileReader.ReadUInt32(); // skip index into descriptor table, unused
+				declaredUncompressedLength = fileReader.ReadUInt32();
+			}
+			catch (EndOfStreamException ex)
+			{
+				// The magic identifies this as an XALZ module, so it must carry the full 12-byte
+				// header: magic, descriptor table index, and uncompressed length. A shorter stream
+				// is a truncated/corrupt module; fail consistently as InvalidDataException.
+				throw new InvalidDataException("Invalid Xamarin compressed module: truncated header.", ex);
+			}
 			// The compressed payload is whatever follows the 12-byte header, not the whole file.
 			long compressedLength = stream.Length - stream.Position;
 			// The declared uncompressed length is attacker-controlled. Reject implausible values
@@ -71,8 +83,18 @@ namespace ICSharpCode.ILSpyX.FileLoaders
 			var dst = pool.Rent(uncompressedLength);
 			try
 			{
-				// fileReader stream position is now at compressed module data
-				await stream.ReadExactlyAsync(src, 0, compressed).ConfigureAwait(false);
+				// fileReader stream position is now at compressed module data.
+				// stream.Length above is only a sizing hint; if the stream ends early (e.g. the
+				// file was truncated after the length was queried), treat that as corrupt input
+				// rather than surfacing EndOfStreamException.
+				try
+				{
+					await stream.ReadExactlyAsync(src, 0, compressed).ConfigureAwait(false);
+				}
+				catch (EndOfStreamException ex)
+				{
+					throw new InvalidDataException("Invalid Xamarin compressed module: truncated payload.", ex);
+				}
 				// Decompress; Decode returns the number of bytes written, or negative on failure.
 				// The header declares the exact decompressed size, so anything other than an exact
 				// match (a negative error code or a short, truncated decode) means the payload is
