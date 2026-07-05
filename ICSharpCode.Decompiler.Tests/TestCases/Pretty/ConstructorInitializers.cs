@@ -307,18 +307,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public int Leet;
 
-			// Value types chain via 'this = new TSelf(...)'; ChainedConstructorCallILOffset only
-			// reports reference-type chained calls, so the hoisted guard fold must locate the struct
-			// this(...) call itself, otherwise the guard survives and defeats the initializer.
-			public NullCheckedStructThisChain(string value)
+			// Value types chain via 'this = new TSelf(...)', an ordinary body statement, so the
+			// hoisted argument null-guard may legally precede it: the guard is deliberately not
+			// folded back and the chain is not lifted into a this(...) initializer.
 #if EXPECTED_OUTPUT
-				: this(0, (value ?? throw new ArgumentNullException("value")).Length, value.Length, "value")
+			public NullCheckedStructThisChain(string value)
+			{
+				if (value == null)
+				{
+					throw new ArgumentNullException("value");
+				}
+				this = new NullCheckedStructThisChain(0, value.Length, value.Length, "value");
+				Leet += value.Length;
+			}
 #else
+			public NullCheckedStructThisChain(string value)
 				: this(0, value?.Length ?? throw new ArgumentNullException("value"), value.Length, "value")
-#endif
 			{
 				Leet += value.Length;
 			}
+#endif
 
 			public NullCheckedStructThisChain(int a, int b, int c, string s)
 			{
@@ -331,16 +339,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public int Leet;
 
 			// Two reused parameters before a value-type this(...) chain produce two stacked hoisted
-			// guards; both must be folded.
-			public NullCheckedStructTwoArguments(string a, string b)
+			// guards; both stay in the body (see NullCheckedStructThisChain).
 #if EXPECTED_OUTPUT
-				: this((a ?? throw new ArgumentNullException("a")).Length, (b ?? throw new ArgumentNullException("b")).Length, b.Length, a)
+			public NullCheckedStructTwoArguments(string a, string b)
+			{
+				if (a == null)
+				{
+					throw new ArgumentNullException("a");
+				}
+				int length = a.Length;
+				if (b == null)
+				{
+					throw new ArgumentNullException("b");
+				}
+				this = new NullCheckedStructTwoArguments(length, b.Length, b.Length, a);
+				Leet += a.Length;
+			}
 #else
+			public NullCheckedStructTwoArguments(string a, string b)
 				: this(a?.Length ?? throw new ArgumentNullException("a"), b?.Length ?? throw new ArgumentNullException("b"), b.Length, a)
-#endif
 			{
 				Leet += a.Length;
 			}
+#endif
 
 			public NullCheckedStructTwoArguments(int a, int b, int c, string s)
 			{
