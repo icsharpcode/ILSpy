@@ -911,6 +911,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			finalStateKnown = true;
 			pos++;
 
+			// [optional] stfld <>u__N(ldloc this, ldnull)
+			// The hoisted-local cleanup may appear either before or after the combined-tokens disposal
+			// (the latter is present for async iterators with an [EnumeratorCancellation] token).
+			MatchHoistedLocalCleanup(block, ref pos);
+
 			if (pos + 2 == block.Instructions.Count && block.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
 			{
 				if (MatchDisposeCombinedTokens(blockContainer, condition, trueInst, falseInst, blocksAnalyzed, out var setResultAndExitBlock))
@@ -1088,6 +1093,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				finalState = newState;
 				finalStateKnown = true;
 			}
+
+			// [optional] stfld <>u__N(ldloc this, ldnull)
+			// The hoisted-local cleanup may appear either before or after the combined-tokens disposal
+			// (the latter is present for async iterators with an [EnumeratorCancellation] token).
+			MatchHoistedLocalCleanup(catchBlock, ref pos);
+
 			if (pos + 2 == catchBlock.Instructions.Count && catchBlock.MatchIfAtEndOfBlock(out var condition, out var trueInst, out var falseInst))
 			{
 				if (MatchDisposeCombinedTokens(handlerContainer, condition, trueInst, falseInst, blocksAnalyzed, out var setResultAndExitBlock))
