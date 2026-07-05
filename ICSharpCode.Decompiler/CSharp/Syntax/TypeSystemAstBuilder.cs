@@ -820,7 +820,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return attr;
 		}
 
-		private IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string? target = null)
+		internal IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string? target = null)
 		{
 			if (SortAttributes)
 				attributes = attributes.OrderBy(a => a, new DelegateComparer<IAttribute>((a, b) => CompareAttribute(a!, b!)));

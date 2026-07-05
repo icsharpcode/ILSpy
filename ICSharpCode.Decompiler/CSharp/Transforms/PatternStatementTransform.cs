@@ -134,6 +134,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return eventDeclaration;
 		}
 
+		public override AstNode VisitEventDeclaration(EventDeclaration eventDeclaration)
+		{
+			// A field-like event declaration hides its backing field; remove the field declaration
+			// if it was emitted because other members reference it. (This happens for events that
+			// CSharpDecompiler.DoDecompile already recognized as automatic: the backing field is
+			// hidden from the normal member list, but re-emitted via the work list when referenced.)
+			if (context.Settings.AutomaticEvents && eventDeclaration.GetSymbol() is IEvent symbol)
+			{
+				var fieldDecl = eventDeclaration.Parent?.Children.OfType<FieldDeclaration>()
+					.FirstOrDefault(fd => IsEventBackingFieldDeclaration(fd, symbol));
+				fieldDecl?.Remove();
+			}
+			return base.VisitEventDeclaration(eventDeclaration);
+		}
+
 		public override AstNode VisitMethodDeclaration(MethodDeclaration methodDeclaration)
 		{
 			return TransformDestructor(methodDeclaration) ?? base.VisitMethodDeclaration(methodDeclaration);
@@ -812,12 +827,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
+		static void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
 		{
 			RemoveCompilerGeneratedAttribute(attributeSections, "System.Runtime.CompilerServices.CompilerGeneratedAttribute");
 		}
 
-		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections, params string[] attributesToRemove)
+		static void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections, params string[] attributesToRemove)
 		{
 			foreach (AttributeSection section in attributeSections)
 			{
@@ -1160,9 +1175,29 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!CheckAutomaticEventV4AggressivelyInlined(ev) && !CheckAutomaticEventV4(ev) && !CheckAutomaticEventV2(ev) && !CheckAutomaticEventV4MCS(ev))
 					return null;
 			}
-			if (ev.AddAccessor is not { } addAccessor)
+			if (ev.AddAccessor is not { })
 				return null;
 			context.Step("Convert custom event to field-like event", ev);
+			var fieldDecl = ev.Parent?.Children.OfType<FieldDeclaration>()
+				.FirstOrDefault(fd => IsEventBackingFieldDeclaration(fd, symbol));
+			fieldDecl?.Remove();
+			EventDeclaration ed = ConvertToFieldLikeEvent(ev, fieldDecl);
+			ev.ReplaceWith(ed);
+			context.EndStep(ed);
+			return ed;
+		}
+
+		/// <summary>
+		/// Builds a field-like event declaration from a custom event declaration whose accessors
+		/// are compiler-generated: moves the event attributes, the add-accessor attributes
+		/// (as "method:" sections) and the backing-field attributes (as "field:" sections) over,
+		/// dropping the attributes the compiler puts on automatic events.
+		/// The caller is responsible for detaching <paramref name="backingFieldDecl"/> from the
+		/// syntax tree and for replacing <paramref name="ev"/> with the returned declaration.
+		/// </summary>
+		internal static EventDeclaration ConvertToFieldLikeEvent(CustomEventDeclaration ev, EntityDeclaration? backingFieldDecl)
+		{
+			var addAccessor = ev.AddAccessor!;
 			RemoveCompilerGeneratedAttribute(addAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
@@ -1176,36 +1211,30 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ed.Variables.Add(new VariableInitializer(ev.Name));
 			ed.CopyAnnotationsFrom(ev);
 
-			var fieldDecl = ev.Parent?.Children.OfType<FieldDeclaration>()
-				.FirstOrDefault(IsEventBackingField);
-			if (fieldDecl != null)
+			if (backingFieldDecl != null)
 			{
-				fieldDecl.Remove();
-				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.CompilerGenerated);
-				CSharpDecompiler.RemoveAttribute(fieldDecl, KnownAttribute.DebuggerBrowsable);
-				foreach (var section in fieldDecl.Attributes)
+				CSharpDecompiler.RemoveAttribute(backingFieldDecl, KnownAttribute.CompilerGenerated);
+				CSharpDecompiler.RemoveAttribute(backingFieldDecl, KnownAttribute.DebuggerBrowsable);
+				foreach (var section in backingFieldDecl.Attributes)
 				{
 					section.AttributeTarget = "field";
 					ed.Attributes.Add(section.Detach());
 				}
 			}
-
-			ev.ReplaceWith(ed);
-			context.EndStep(ed);
 			return ed;
+		}
 
-			bool IsEventBackingField(FieldDeclaration fd)
-			{
-				if (fd.Variables.Count > 1)
-					return false;
-				if (fd.GetSymbol() is not IField f)
-					return false;
-				if (f.ParentModule is not MetadataModule module)
-					return false;
-				return f.Accessibility == Accessibility.Private
-					&& symbol.ReturnType.Equals(f.ReturnType)
-					&& module.MetadataFile.PropertyAndEventBackingFieldLookup.IsEventBackingField((FieldDefinitionHandle)f.MetadataToken, out _);
-			}
+		static bool IsEventBackingFieldDeclaration(FieldDeclaration fd, IEvent ev)
+		{
+			if (fd.Variables.Count > 1)
+				return false;
+			if (fd.GetSymbol() is not IField f)
+				return false;
+			if (f.ParentModule is not MetadataModule module)
+				return false;
+			return f.Accessibility == Accessibility.Private
+				&& ev.ReturnType.Equals(f.ReturnType)
+				&& module.MetadataFile.PropertyAndEventBackingFieldLookup.IsEventBackingField((FieldDefinitionHandle)f.MetadataToken, out _);
 		}
 		#endregion
 
