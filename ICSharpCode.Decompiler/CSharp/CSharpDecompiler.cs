@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		/// <summary>
 		/// Decompiles the body of <paramref name="method"/> to ILAst for structural analysis,
-		/// e.g. for recognizing compiler-generated code (see RecordDecompiler).
+		/// e.g. for recognizing compiler-generated code (see RecordDecompiler, AutoEventDecompiler).
 		/// Runs the IL transform pipeline with a fixed set of decompiler settings, so the
 		/// resulting shape is independent of the user-visible settings, and stops before the
 		/// late transforms (variable naming etc.) that are only needed for code output.
@@ -2511,27 +2511,40 @@ namespace ICSharpCode.Decompiler.CSharp
 				bool adderHasBody = ev.CanAdd && ev.AddAccessor!.HasBody;
 				bool removerHasBody = ev.CanRemove && ev.RemoveAccessor!.HasBody;
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-				typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition!.Kind != TypeKind.Interface
-					|| ev.IsExplicitInterfaceImplementation
-					|| adderHasBody
-					|| removerHasBody;
+				IField? backingField = null;
+				bool isAutomaticEvent = adderHasBody && removerHasBody && decompileRun.Settings.AutomaticEvents
+					&& AutoEventDecompiler.IsAutomaticEvent(typeSystem, ev, CancellationToken, out backingField);
+				// A recognized automatic event is built in field-like form directly; its
+				// compiler-generated accessor bodies are never decompiled.
+				typeSystemAstBuilder.UseCustomEvents = !isAutomaticEvent
+					&& (ev.DeclaringTypeDefinition!.Kind != TypeKind.Interface
+						|| ev.IsExplicitInterfaceImplementation
+						|| adderHasBody
+						|| removerHasBody);
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 				int lastDot = ev.Name.LastIndexOf('.');
 				if (ev.IsExplicitInterfaceImplementation)
 				{
 					eventDecl.Name = ev.Name.Substring(lastDot + 1);
 				}
-				if (adderHasBody)
+				if (isAutomaticEvent)
 				{
-					DecompileBody(ev.AddAccessor!, ((CustomEventDeclaration)eventDecl).AddAccessor!, decompileRun, decompilationContext, null);
+					AutoEventDecompiler.AddFieldLikeEventAttributes((EventDeclaration)eventDecl, typeSystemAstBuilder, ev, backingField!);
 				}
-				if (removerHasBody)
+				else
 				{
-					DecompileBody(ev.RemoveAccessor!, ((CustomEventDeclaration)eventDecl).RemoveAccessor!, decompileRun, decompilationContext, null);
-				}
-				if (!adderHasBody && !removerHasBody && !ev.IsAbstract && ev.DeclaringType.Kind != TypeKind.Interface)
-				{
-					eventDecl.Modifiers |= Modifiers.Extern;
+					if (adderHasBody)
+					{
+						DecompileBody(ev.AddAccessor!, ((CustomEventDeclaration)eventDecl).AddAccessor!, decompileRun, decompilationContext, null);
+					}
+					if (removerHasBody)
+					{
+						DecompileBody(ev.RemoveAccessor!, ((CustomEventDeclaration)eventDecl).RemoveAccessor!, decompileRun, decompilationContext, null);
+					}
+					if (!adderHasBody && !removerHasBody && !ev.IsAbstract && ev.DeclaringType.Kind != TypeKind.Interface)
+					{
+						eventDecl.Modifiers |= Modifiers.Extern;
+					}
 				}
 				var accessor = metadata.GetMethodDefinition((MethodDefinitionHandle)(ev.AddAccessor ?? ev.RemoveAccessor)!.MetadataToken);
 				if (accessor.HasFlag(System.Reflection.MethodAttributes.Virtual) == accessor.HasFlag(System.Reflection.MethodAttributes.NewSlot))
