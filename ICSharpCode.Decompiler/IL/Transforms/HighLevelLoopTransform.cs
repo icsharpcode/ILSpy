@@ -395,6 +395,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// - increment block
 				if (incrementBlock.Instructions.Count <= 1 || loop.Blocks.Count < 3)
 					return false;
+				if (StoresRefLocalUsedAfterLoop(loop, incrementBlock))
+					return false;
 				context.Step("Transform to for loop: " + loop.EntryPoint.Label, loop);
 				// move the block to the end of the loop:
 				loop.Blocks.MoveElementToEnd(incrementBlock);
@@ -465,6 +467,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				loop.Kind = ContainerKind.For;
 			}
 			return true;
+		}
+
+		static bool StoresRefLocalUsedAfterLoop(BlockContainer loop, Block incrementBlock)
+		{
+			foreach (var store in incrementBlock.Instructions.SkipLast(1).SelectMany(inst => inst.Descendants).OfType<StLoc>())
+			{
+				var variable = store.Variable;
+				if (variable.Type.IsByRefLike && IsVariableUsedAfterLoop(loop, variable))
+					return true;
+			}
+			return false;
+		}
+
+		static bool IsVariableUsedAfterLoop(BlockContainer loop, ILVariable variable)
+		{
+			foreach (var use in variable.LoadInstructions.Concat<ILInstruction>(variable.AddressInstructions).Concat(variable.StoreInstructions.Cast<ILInstruction>()))
+			{
+				if (loop.GetCommonParent(use) is Block { Kind: BlockKind.ControlFlow } && loop.IsBefore(use))
+					return true;
+			}
+			return false;
 		}
 
 		bool IsAssignment(ILInstruction inst)
