@@ -133,5 +133,46 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Renamed = v.Minor
 			};
 		}
+
+		private void NullOfAnonymousType()
+		{
+			Identify(true ? null : new {
+				X = default(int),
+				Y = default(int)
+			});
+			Identify(true ? null : new {
+				N = default(int),
+				S = (string)null
+			});
+			Identify(true ? null : new {
+				Inner = new {
+					X = default(int)
+				}
+			});
+		}
+
+		private void NullOfAnonymousTypeNonGenericCall()
+		{
+#if OPT
+			MakeAction(new {
+				X = 0
+			})(null);
+#else
+			var action = MakeAction(new {
+				X = 0
+			});
+			action(null);
+#endif
+		}
+
+		private static void Identify<T>(T t)
+		{
+			Console.WriteLine(typeof(T).FullName);
+		}
+
+		private static Action<T> MakeAction<T>(T template)
+		{
+			return null;
+		}
 	}
 }
