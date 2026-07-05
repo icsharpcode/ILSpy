@@ -1,3 +1,9 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+//
+// Vendored from dotnet/runtime: the System.Numerics.BitOperations members used by this
+// project, as a polyfill for target frameworks that lack the type.
+
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
