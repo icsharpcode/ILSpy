@@ -518,6 +518,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				if (!MatchGetStaticFieldAddress(src, out var field))
 					return;
+				if (field.MetadataToken.IsNil)
+					return;
 				var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
 				if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 					return;
