@@ -688,6 +688,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task ExtensionMemberUseSites([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("Extension member use sites are not yet decompiled back to C# 14 member-access form. See https://github.com/icsharpcode/ILSpy/issues/829");
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.Preview | CompilerOptions.NullableEnable);
+		}
+
+		[Test]
 		public async Task NullPropagation([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
