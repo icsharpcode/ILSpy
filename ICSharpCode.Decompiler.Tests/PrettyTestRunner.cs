@@ -495,6 +495,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task PatternMatchingImprovements([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("C# 9 relational and combinator patterns are not yet fully supported by the decompiler. See https://github.com/icsharpcode/ILSpy/issues/829");
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task InitializerTests([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable);
