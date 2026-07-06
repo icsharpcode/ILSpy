@@ -483,6 +483,19 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task OutVariableFlows([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task ImprovedDefiniteAssignment([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("Improved definite assignment (C# 10) is not yet supported by the decompiler. See https://github.com/icsharpcode/ILSpy/issues/829");
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task PatternMatching([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
