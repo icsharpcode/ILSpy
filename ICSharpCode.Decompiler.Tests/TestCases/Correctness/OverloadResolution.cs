@@ -40,6 +40,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 #if CS90
 			NativeIntTests(new IntPtr(1), 2);
 #endif
+#if CS73
+			ImprovedOverloadCandidates();
+#endif
 			Issue2444.M2();
 			Issue2741.B.Test(new Issue2741.C());
 			ExtensionMethodDemo.Issue2165.Test();
@@ -405,6 +408,159 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void InVsRegularParam(int i)
 		{
 			Console.WriteLine("int " + i);
+		}
+#endif
+		#endregion
+
+		#region C# 7.3 improved overload candidates
+#if CS73
+		// C# 7.3 removes candidates with a static/instance mismatch (decided by the receiver
+		// form) and generic candidates with violated constraints, and prunes method group
+		// conversion candidates by return type. Each probe prints which overload actually ran,
+		// so a decompilation that re-binds any of these calls changes the output.
+		class ImprovedCandidatesStaticContext
+		{
+			public static string M(object o)
+			{
+				return "static M(object)";
+			}
+
+			public string M(string s)
+			{
+				return "instance M(string)";
+			}
+
+			public static string Call()
+			{
+				// instance overload pruned in static context
+				return M("x");
+			}
+		}
+
+		class ImprovedCandidatesInstanceReceiver
+		{
+			public static string M(string s)
+			{
+				return "static M(string)";
+			}
+
+			public string M(object o)
+			{
+				return "instance M(object)";
+			}
+
+			public string CallViaThis()
+			{
+				// static overload pruned because the receiver is an instance
+				return this.M("x");
+			}
+
+			public string CallSimpleName()
+			{
+				// a simple name fixes no receiver form: no pruning, static overload wins
+				return M("x");
+			}
+
+			public Func<string, string> MethodGroupViaType()
+			{
+				// instance overload pruned: binds the static overload
+				return ImprovedCandidatesInstanceReceiver.M;
+			}
+		}
+
+		class ImprovedCandidatesTypeReceiver
+		{
+			public string M(string s)
+			{
+				return "instance M(string)";
+			}
+
+			public static string M(object o)
+			{
+				return "static M(object)";
+			}
+
+			public static string Call()
+			{
+				// instance overload pruned because the receiver is a type
+				return ImprovedCandidatesTypeReceiver.M("x");
+			}
+		}
+
+		static class ImprovedCandidatesConstraints
+		{
+			public static string G<T>(T t) where T : struct
+			{
+				return "G<T> where T : struct";
+			}
+
+			public static string G(object o)
+			{
+				return "G(object)";
+			}
+
+			public static string H<T>(T t) where T : class
+			{
+				return "H<T> where T : class";
+			}
+
+			public static string H(long l)
+			{
+				return "H(long)";
+			}
+
+			public static string K<T>(T t) where T : Exception
+			{
+				return "K<T> where T : Exception";
+			}
+
+			public static string K(object o)
+			{
+				return "K(object)";
+			}
+
+			public static Func<string, string> MethodGroup()
+			{
+				// G<string> pruned from the method group: struct constraint violated
+				return G;
+			}
+		}
+
+		static class ImprovedCandidatesReturnType
+		{
+			public static void M(string s)
+			{
+			}
+
+			public static int M(object o)
+			{
+				return 42;
+			}
+
+			public static Func<string, int> MethodGroup()
+			{
+				// void M(string) pruned: return type does not match the delegate
+				return M;
+			}
+		}
+
+		static void ImprovedOverloadCandidates()
+		{
+			Console.WriteLine("ImprovedOverloadCandidates:");
+			Console.WriteLine(ImprovedCandidatesStaticContext.Call());
+			var instanceReceiver = new ImprovedCandidatesInstanceReceiver();
+			Console.WriteLine(instanceReceiver.CallViaThis());
+			Console.WriteLine(instanceReceiver.CallSimpleName());
+			Console.WriteLine(instanceReceiver.MethodGroupViaType()("a"));
+			Console.WriteLine(ImprovedCandidatesTypeReceiver.Call());
+			Console.WriteLine(ImprovedCandidatesConstraints.G("x"));
+			Console.WriteLine(ImprovedCandidatesConstraints.G(42));
+			Console.WriteLine(ImprovedCandidatesConstraints.G((int?)5));
+			Console.WriteLine(ImprovedCandidatesConstraints.H(42));
+			Console.WriteLine(ImprovedCandidatesConstraints.K("x"));
+			Console.WriteLine(ImprovedCandidatesConstraints.K(new InvalidOperationException("e")));
+			Console.WriteLine(ImprovedCandidatesConstraints.MethodGroup()("b"));
+			Console.WriteLine(ImprovedCandidatesReturnType.MethodGroup()("c"));
 		}
 #endif
 		#endregion
