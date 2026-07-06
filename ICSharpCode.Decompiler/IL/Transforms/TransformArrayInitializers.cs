@@ -93,11 +93,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out ILVariable finalStore, out values, out instructionsToRemove))
 					{
 						context.Step("HandleJaggedArrayInitializer: single-dim", inst);
-						var block = new Block(BlockKind.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
-						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
-						block.FinalInstruction = new LdLoc(tempStore);
+						var block = BuildSimpleArrayInitializerBlock(tempStore, elementType, arrayLength,
+							values.SelectWithIndex((i, value) => (new ILInstruction[] { new LdcI4(i) }, value)).ToArray());
 						var newStore = new StLoc(finalStore, block);
 						body.Instructions[pos] = newStore;
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
