@@ -795,6 +795,19 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task RefLocalsInIteratorsAndAsync([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task UnsafeInIteratorsAndAsync([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("Unsafe blocks and fixed statements in iterators and async methods (C# 13) are not yet decompiled into valid C#. See https://github.com/icsharpcode/ILSpy/issues/829");
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task ExpandParamsArgumentsDisabled([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => settings.ExpandParamsArguments = false);
