@@ -694,6 +694,19 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task NullCoalescingAssignment([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("Null-coalescing assignment is not yet supported by the decompiler. See https://github.com/icsharpcode/ILSpy/issues/2552");
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task NullCoalescingAssignmentDynamic([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task StringInterpolation([ValueSource(nameof(roslynOnlyWithNet40Options))] CompilerOptions cscOptions)
 		{
 			await Run(cscOptions: cscOptions);
