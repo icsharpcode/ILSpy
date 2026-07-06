@@ -225,6 +225,8 @@
     <None Include="TestCases\ILPretty\Unsafe.cs" />
     <Compile Remove="TestCases\ILPretty\WeirdEnums.cs" />
     <None Include="TestCases\ILPretty\WeirdEnums.cs" />
+    <Compile Remove="TestCases\Pretty\ImplicitIndexerInitializers.cs" />
+    <None Include="TestCases\Pretty\ImplicitIndexerInitializers.cs" />
     <Compile Remove="TestCases\Pretty\IndexRangeTest.cs" />
     <None Include="TestCases\Pretty\IndexRangeTest.cs" />
     <Compile Remove="TestCases\Pretty\MetadataAttributes.cs" />
