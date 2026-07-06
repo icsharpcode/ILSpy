@@ -428,28 +428,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			BlobReader blob = default;
 
-			if (lengthInstruction.MatchLdcI(out long byteCount))
+			if (lengthInstruction.MatchLdcI(out long byteCount)
+				&& !TryHandleLocAllocInitializerPrefix(block, ref pos, store, byteCount, ref blob, ref instructionsToRemove))
 			{
-				if (block.Instructions[pos].MatchInitblk(out var dest, out var value, out var size))
-				{
-					if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
-						return false;
-					instructionsToRemove++;
-					pos++;
-				}
-				else if (block.Instructions[pos].MatchCpblk(out dest, out var src, out size))
-				{
-					if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
-						return false;
-					if (!MatchGetStaticFieldAddress(src, out var field))
-						return false;
-					var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
-					if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
-						return false;
-					blob = fd.GetInitialValue(context.PEFile, context.TypeSystem);
-					instructionsToRemove++;
-					pos++;
-				}
+				return false;
 			}
 
 			for (int i = pos; i < block.Instructions.Count; i++)
@@ -480,22 +462,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					break;
 				}
-				// match the target
-				// should be either ldloc store (at offset 0)
-				// or binary.add(ldloc store, offset) where offset is either 'elementSize' or 'i * elementSize'
-				if (!target.MatchLdLoc(store))
+				if (!TryGetSequentialStoreOffset(target, store, elementType, minExpectedOffset, out var offset, out var abortTransform))
 				{
-					if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
+					if (abortTransform)
 						return false;
-					if (!left.MatchLdLoc(store))
-						break;
-					var offsetInst = PointerArithmeticOffset.Detect(right, elementType, ((BinaryNumericInstruction)target).CheckForOverflow);
-					if (offsetInst == null)
-						return false;
-					if (!offsetInst.MatchLdcI(out long offset) || offset < 0 || offset < minExpectedOffset)
-						break;
-					minExpectedOffset = offset;
+					break;
 				}
+				minExpectedOffset = offset;
 				if (values == null)
 				{
 					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, elementType, checkForOverflow: true);
@@ -524,6 +497,66 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructionsToRemove += elementCount;
 
 			return elementCount <= values.Length;
+		}
+
+		bool TryHandleLocAllocInitializerPrefix(Block block, ref int pos, ILVariable store, long byteCount, ref BlobReader blob, ref int instructionsToRemove)
+		{
+			// initblk(ldloc store, value, byteCount)
+			if (block.Instructions[pos].MatchInitblk(out var dest, out _, out var size))
+			{
+				if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
+					return false;
+				instructionsToRemove++;
+				pos++;
+				return true;
+			}
+
+			// cpblk(ldloc store, ldsflda/call get_Item(CreateSpan(field)) data, byteCount)
+			if (block.Instructions[pos].MatchCpblk(out dest, out var src, out size))
+			{
+				if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
+					return false;
+				if (!MatchGetStaticFieldAddress(src, out var field))
+					return false;
+				var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
+				if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
+					return false;
+				blob = fd.GetInitialValue(context.PEFile, context.TypeSystem);
+				instructionsToRemove++;
+				pos++;
+			}
+
+			return true;
+		}
+
+		static bool TryGetSequentialStoreOffset(ILInstruction target, ILVariable store, IType elementType, long minExpectedOffset, out long offset, out bool abortTransform)
+		{
+			offset = 0;
+			abortTransform = false;
+
+			// stobj T(ldloc store, value) writes at the current expected offset, initially 0.
+			if (target.MatchLdLoc(store))
+			{
+				offset = minExpectedOffset;
+				return true;
+			}
+
+			// stobj T(binary.add(ldloc store, offset), value)
+			// The offset is either sizeof(T) or an element index multiplied by sizeof(T).
+			if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
+			{
+				abortTransform = true;
+				return false;
+			}
+			if (!left.MatchLdLoc(store))
+				return false;
+			var offsetInst = PointerArithmeticOffset.Detect(right, elementType, ((BinaryNumericInstruction)target).CheckForOverflow);
+			if (offsetInst == null)
+			{
+				abortTransform = true;
+				return false;
+			}
+			return offsetInst.MatchLdcI(out offset) && offset >= 0 && offset >= minExpectedOffset;
 		}
 
 		ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
