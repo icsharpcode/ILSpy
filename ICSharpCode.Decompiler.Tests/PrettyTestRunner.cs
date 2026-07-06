@@ -576,6 +576,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task AsyncMethodBuilderOverride([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("Method-level AsyncMethodBuilder overrides are not yet supported by the decompiler. See https://github.com/icsharpcode/ILSpy/issues/829");
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task RuntimeAsync([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary("Async", cscOptions: cscOptions | CompilerOptions.EnableRuntimeAsync | CompilerOptions.Preview);
