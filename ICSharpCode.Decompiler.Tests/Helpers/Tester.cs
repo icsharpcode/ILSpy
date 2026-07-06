@@ -575,7 +575,16 @@ namespace System.Runtime.CompilerServices
 			{
 				string depSourcePath = Path.GetFullPath(Path.Combine(
 					Path.GetDirectoryName(sourceFileName), match.Groups[1].Value));
-				var depResults = await CompileCSharp(depSourcePath, flags | CompilerOptions.Library).ConfigureAwait(false);
+				// Compile the dependency next to the main output, so that the assembly resolver
+				// finds it when the main assembly is decompiled.
+				string depOutputFileName = null;
+				if (outputFileName != null)
+				{
+					depOutputFileName = Path.Combine(
+						Path.GetDirectoryName(Path.GetFullPath(outputFileName)),
+						Path.GetFileNameWithoutExtension(depSourcePath) + GetSuffix(flags | CompilerOptions.Library) + ".dll");
+				}
+				var depResults = await CompileCSharp(depSourcePath, flags | CompilerOptions.Library, depOutputFileName).ConfigureAwait(false);
 				dependencyAssemblies.Add(Path.GetFullPath(depResults.PathToAssembly));
 			}
 

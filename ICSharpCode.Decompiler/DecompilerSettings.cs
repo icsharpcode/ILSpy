@@ -177,10 +177,16 @@ namespace ICSharpCode.Decompiler
 				extensionMembers = false;
 				firstClassSpanTypes = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp15_0)
+			{
+				closedHierarchies = false;
+			}
 		}
 
 		public CSharp.LanguageVersion GetMinimumRequiredVersion()
 		{
+			if (closedHierarchies)
+				return CSharp.LanguageVersion.CSharp15_0;
 			if (extensionMembers || firstClassSpanTypes)
 				return CSharp.LanguageVersion.CSharp14_0;
 			if (paramsCollections)
@@ -2189,6 +2195,24 @@ namespace ICSharpCode.Decompiler
 				if (extensionMembers != value)
 				{
 					extensionMembers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool closedHierarchies = true;
+
+		/// <summary>
+		/// Gets/Sets whether the closed modifier should be reconstructed on closed hierarchies.
+		/// </summary>
+		[Category("C# 15.0 / VS 2026")]
+		[Description("DecompilerSettings.ClosedHierarchies")]
+		public bool ClosedHierarchies {
+			get { return closedHierarchies; }
+			set {
+				if (closedHierarchies != value)
+				{
+					closedHierarchies = value;
 					OnPropertyChanged();
 				}
 			}

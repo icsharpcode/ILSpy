@@ -1703,6 +1703,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					RemoveAttribute(typeDecl, KnownAttribute.Required);
 				}
+				if (settings.ClosedHierarchies && RemoveAttribute(typeDecl, KnownAttribute.Closed))
+				{
+					// closed classes are implicitly abstract
+					typeDecl.Modifiers |= Modifiers.Closed;
+					typeDecl.Modifiers &= ~Modifiers.Abstract;
+				}
 				if (typeDecl.ClassType == ClassType.Enum)
 				{
 					Debug.Assert(typeDef.Kind == TypeKind.Enum);
@@ -2006,6 +2012,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsConstructor && settings.RequiredMembers && RemoveCompilerFeatureRequiredAttribute(methodDecl, "RequiredMembers"))
 				{
 					RemoveObsoleteAttribute(methodDecl, "Constructors of types with required members are not supported in this version of your compiler.");
+				}
+				if (method.IsConstructor && settings.ClosedHierarchies)
+				{
+					RemoveCompilerFeatureRequiredAttribute(methodDecl, "ClosedClasses");
 				}
 				return methodDecl;
 

@@ -97,7 +97,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}
 
 				w.WriteElementString("OutputType", outputType);
-				w.WriteElementString("LangVersion", project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
+				// C# 15 is still in preview; the compiler only accepts -langversion:preview for it.
+				w.WriteElementString("LangVersion", project.LanguageVersion >= LanguageVersion.CSharp15_0
+					? "preview"
+					: project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
 				w.WriteElementString("CheckForOverflowUnderflow", project.CheckForOverflowUnderflow ? "true" : "false");
 
 				w.WriteElementString("AssemblyName", module.Name);

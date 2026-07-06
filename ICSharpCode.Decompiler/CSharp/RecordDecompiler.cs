@@ -200,7 +200,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				IMethod? chainedCtor = (IMethod?)FindChainedCtor(body)?.MemberDefinition;
 				ctorChainMap[method] = chainedCtor;
 
-				if (chainedCtor != null && chainedCtor.DeclaringTypeDefinition!.Equals(recordTypeDef))
+				if (chainedCtor != null && recordTypeDef.Equals(chainedCtor.DeclaringTypeDefinition))
 				{
 					continue;
 				}
@@ -233,7 +233,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// follow this rule.
 					// we don't have to check the full chain, because the C# compiler enforces that
 					// there are no loops in the ctor call graph.
-					if (target == null || !target.DeclaringTypeDefinition!.Equals(recordTypeDef))
+					if (target == null || !recordTypeDef.Equals(target.DeclaringTypeDefinition))
 					{
 						guessedPrimaryCtor = null;
 						break;
@@ -522,6 +522,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				case "System.Runtime.CompilerServices.CompilerGeneratedAttribute":
 					return true;
+				case "System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute":
+					// closed records carry CompilerFeatureRequired("ClosedClasses") on all constructors
+					return settings.ClosedHierarchies
+						&& attribute.FixedArguments.Length == 1
+						&& attribute.FixedArguments[0].Value is string feature
+						&& feature == "ClosedClasses";
 				default:
 					return false;
 			}
