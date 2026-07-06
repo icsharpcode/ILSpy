@@ -748,6 +748,19 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task TupleComparisons([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("Tuple comparisons are not yet supported by the decompiler. See https://github.com/icsharpcode/ILSpy/issues/829 and https://github.com/icsharpcode/ILSpy/issues/1822");
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task TupleComparisonsExpanded([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task NamedArguments([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
