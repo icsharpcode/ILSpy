@@ -428,10 +428,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			BlobReader blob = default;
 
-			if (lengthInstruction.MatchLdcI(out long byteCount)
-				&& !TryHandleLocAllocInitializerPrefix(block, ref pos, store, byteCount, ref blob, ref instructionsToRemove))
+			if (lengthInstruction.MatchLdcI(out long byteCount))
 			{
-				return false;
+				// An initblk/cpblk that does not fit the expected shape is left in place;
+				// the per-element stobj scan below then fails to match it and rejects the
+				// transform on its own.
+				HandleLocAllocInitializerPrefix(block, ref pos, store, byteCount, ref blob, ref instructionsToRemove);
 			}
 
 			for (int i = pos; i < block.Instructions.Count; i++)
@@ -499,34 +501,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return elementCount <= values.Length;
 		}
 
-		bool TryHandleLocAllocInitializerPrefix(Block block, ref int pos, ILVariable store, long byteCount, ref BlobReader blob, ref int instructionsToRemove)
+		void HandleLocAllocInitializerPrefix(Block block, ref int pos, ILVariable store, long byteCount, ref BlobReader blob, ref int instructionsToRemove)
 		{
 			// initblk(ldloc store, value, byteCount)
 			if (block.Instructions[pos].MatchInitblk(out var dest, out _, out var size))
 			{
 				if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
-					return false;
+					return;
 				instructionsToRemove++;
 				pos++;
-				return true;
+				return;
 			}
 
 			// cpblk(ldloc store, ldsflda/call get_Item(CreateSpan(field)) data, byteCount)
 			if (block.Instructions[pos].MatchCpblk(out dest, out var src, out size))
 			{
 				if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
-					return false;
+					return;
 				if (!MatchGetStaticFieldAddress(src, out var field))
-					return false;
+					return;
 				var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
 				if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
-					return false;
+					return;
 				blob = fd.GetInitialValue(context.PEFile, context.TypeSystem);
 				instructionsToRemove++;
 				pos++;
 			}
-
-			return true;
 		}
 
 		static bool TryGetSequentialStoreOffset(ILInstruction target, ILVariable store, IType elementType, long minExpectedOffset, out long offset, out bool abortTransform)
