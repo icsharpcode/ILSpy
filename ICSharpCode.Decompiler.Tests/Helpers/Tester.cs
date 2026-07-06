@@ -383,6 +383,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				"mscorlib.dll",
 				"System.dll",
 				"System.Collections.dll",
+				"System.Collections.Immutable.dll",
 				"System.Console.dll",
 				"System.Core.dll",
 				"System.Linq.dll",
