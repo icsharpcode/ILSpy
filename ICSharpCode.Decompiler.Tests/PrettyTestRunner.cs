@@ -652,6 +652,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task FileLocalTypes([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			Assert.Ignore("File-local types are not yet supported by the decompiler. See https://github.com/icsharpcode/ILSpy/issues/829");
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task Issue3610([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
