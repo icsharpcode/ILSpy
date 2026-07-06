@@ -462,13 +462,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					break;
 				}
-				if (!TryGetSequentialStoreOffset(target, store, elementType, minExpectedOffset, out var offset, out var abortTransform))
-				{
-					if (abortTransform)
-						return false;
+				var match = GetSequentialStoreOffset(target, store, elementType, ref minExpectedOffset);
+				if (match == SequentialStoreMatch.Abort)
+					return false;
+				if (match != SequentialStoreMatch.Matched)
 					break;
-				}
-				minExpectedOffset = offset;
 				if (values == null)
 				{
 					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, elementType, checkForOverflow: true);
@@ -529,34 +527,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool TryGetSequentialStoreOffset(ILInstruction target, ILVariable store, IType elementType, long minExpectedOffset, out long offset, out bool abortTransform)
+		enum SequentialStoreMatch
 		{
-			offset = 0;
-			abortTransform = false;
+			// The store belongs to the initializer sequence.
+			Matched,
+			// The store is not part of the sequence; it ends the scan, keeping what was matched.
+			SequenceEnd,
+			// The store's shape is unexpected; reject the whole transform.
+			Abort,
+		}
 
+		static SequentialStoreMatch GetSequentialStoreOffset(ILInstruction target, ILVariable store, IType elementType, ref long minExpectedOffset)
+		{
 			// stobj T(ldloc store, value) writes at the current expected offset, initially 0.
 			if (target.MatchLdLoc(store))
-			{
-				offset = minExpectedOffset;
-				return true;
-			}
+				return SequentialStoreMatch.Matched;
 
 			// stobj T(binary.add(ldloc store, offset), value)
 			// The offset is either sizeof(T) or an element index multiplied by sizeof(T).
 			if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
-			{
-				abortTransform = true;
-				return false;
-			}
+				return SequentialStoreMatch.Abort;
 			if (!left.MatchLdLoc(store))
-				return false;
+				return SequentialStoreMatch.SequenceEnd;
 			var offsetInst = PointerArithmeticOffset.Detect(right, elementType, ((BinaryNumericInstruction)target).CheckForOverflow);
 			if (offsetInst == null)
-			{
-				abortTransform = true;
-				return false;
-			}
-			return offsetInst.MatchLdcI(out offset) && offset >= 0 && offset >= minExpectedOffset;
+				return SequentialStoreMatch.Abort;
+			if (!offsetInst.MatchLdcI(out long offset) || offset < 0 || offset < minExpectedOffset)
+				return SequentialStoreMatch.SequenceEnd;
+			minExpectedOffset = offset;
+			return SequentialStoreMatch.Matched;
 		}
 
 		ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
