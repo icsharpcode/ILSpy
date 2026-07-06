@@ -440,6 +440,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				"System.Linq.Queryable.dll",
 				"System.IO.FileSystem.Watcher.dll",
 				"System.Memory.dll",
+				"System.ObjectModel.dll",
 				"System.Threading.dll",
 				"System.Threading.Thread.dll",
 				"System.Runtime.dll",
