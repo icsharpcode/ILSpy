@@ -227,6 +227,10 @@
     <None Include="TestCases\ILPretty\WeirdEnums.cs" />
     <Compile Remove="TestCases\Pretty\IndexRangeTest.cs" />
     <None Include="TestCases\Pretty\IndexRangeTest.cs" />
+    <Compile Remove="TestCases\Pretty\LockObject.cs" />
+    <None Include="TestCases\Pretty\LockObject.cs" />
+    <Compile Remove="TestCases\Pretty\LockObjectMonitorInterop.cs" />
+    <None Include="TestCases\Pretty\LockObjectMonitorInterop.cs" />
     <Compile Remove="TestCases\Pretty\MetadataAttributes.cs" />
     <None Include="TestCases\Pretty\MetadataAttributes.cs" />
     <Compile Remove="TestCases\Pretty\NullableRefTypes.cs" />
