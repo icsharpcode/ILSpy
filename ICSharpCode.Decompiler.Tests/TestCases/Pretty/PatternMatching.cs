@@ -753,6 +753,87 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+#if CS100
+		public void ExtendedPropertyPattern_StringLength(object x)
+		{
+#if EXPECTED_OUTPUT
+			if (x is X { Text: { Length: 0 } })
+#else
+			if (x is X { Text.Length: 0 })
+#endif
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void ExtendedPropertyPattern_StringLengthVar(object obj)
+		{
+#if EXPECTED_OUTPUT
+			if (obj is X { Text: { Length: var length } } x)
+#else
+			if (obj is X { Text.Length: var length } x)
+#endif
+			{
+				Console.WriteLine("Test " + x.I + ": " + length);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void ExtendedPropertyPattern_MixedWithConst(object obj)
+		{
+#if EXPECTED_OUTPUT
+			if (obj is X { I: 42, Text: { Length: 0 } } x)
+#else
+			if (obj is X { I: 42, Text.Length: 0 } x)
+#endif
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void ExtendedPropertyPattern_StructLink(object obj)
+		{
+#if EXPECTED_OUTPUT
+			if (obj is X x && x.CustomStruct.I == 42)
+#else
+			if (obj is X { CustomStruct.I: 42 } x)
+#endif
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+
+		public void ExtendedPropertyPattern_StructLinks2(object obj)
+		{
+#if EXPECTED_OUTPUT
+			if (obj is X { CustomStruct: { S2: { Text: "" } } } x)
+#else
+			if (obj is X { CustomStruct.S2.Text: "" } x)
+#endif
+			{
+				Console.WriteLine("Test " + x);
+			}
+			else
+			{
+				Console.WriteLine("not Test");
+			}
+		}
+#endif
 		private bool F()
 		{
 			return true;
