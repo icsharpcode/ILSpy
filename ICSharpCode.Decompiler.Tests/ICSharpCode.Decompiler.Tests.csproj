@@ -234,6 +234,8 @@
     <None Include="TestCases\ILPretty\Unsafe.cs" />
     <Compile Remove="TestCases\ILPretty\WeirdEnums.cs" />
     <None Include="TestCases\ILPretty\WeirdEnums.cs" />
+    <Compile Remove="TestCases\Pretty\FieldKeyword.cs" />
+    <None Include="TestCases\Pretty\FieldKeyword.cs" />
     <Compile Remove="TestCases\Pretty\IndexRangeTest.cs" />
     <None Include="TestCases\Pretty\IndexRangeTest.cs" />
     <Compile Remove="TestCases\Pretty\MetadataAttributes.cs" />
@@ -248,6 +250,8 @@
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
     <None Include="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoFieldKeyword.Expected.cs" />
+    <None Include="TestCases\Ugly\NoFieldKeyword.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoForEachStatement.Expected.cs" />
     <None Include="TestCases\Ugly\NoForEachStatement.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoLocalFunctions.Expected.cs" />

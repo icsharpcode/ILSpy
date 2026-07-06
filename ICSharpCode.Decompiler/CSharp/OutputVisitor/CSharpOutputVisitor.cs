@@ -236,11 +236,27 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					return false;
 				if (!(kind == Slots.Getter || kind == Slots.Setter))
 					return false;
-				bool isAutoProperty = accessor.Body is null
-					&& !accessor.Attributes.Any()
-					&& policy.AutoPropertyFormatting == PropertyFormatting.SingleLine;
-				return isAutoProperty;
+				if (accessor.Body is not null || accessor.Attributes.Any()
+					|| policy.AutoPropertyFormatting != PropertyFormatting.SingleLine)
+				{
+					return false;
+				}
+				// A bodiless accessor mixed into a multi-line property (the other accessor has
+				// a body, e.g. "get; set { ... }" with the field keyword) gets its own line;
+				// only single-line properties keep "get; set;" inline.
+				if (accessor.Parent is PropertyDeclaration pd)
+					return IsPrintedAsSingleLine(pd, policy.AutoPropertyFormatting);
+				return true;
 			}
+		}
+
+		internal static bool IsPrintedAsSingleLine(PropertyDeclaration propertyDeclaration, PropertyFormatting autoPropertyFormatting)
+		{
+			return autoPropertyFormatting == PropertyFormatting.SingleLine
+				&& (propertyDeclaration.Getter is null || propertyDeclaration.Getter.Body is null)
+				&& (propertyDeclaration.Setter is null || propertyDeclaration.Setter.Body is null)
+				&& (propertyDeclaration.Getter is null || !propertyDeclaration.Getter.Attributes.Any())
+				&& (propertyDeclaration.Setter is null || !propertyDeclaration.Setter.Attributes.Any());
 		}
 
 		/// <summary>
@@ -2659,12 +2675,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteIdentifier(propertyDeclaration.NameToken);
 			if (propertyDeclaration.ExpressionBody is null)
 			{
-				bool isSingleLine =
-					(policy.AutoPropertyFormatting == PropertyFormatting.SingleLine)
-					&& (propertyDeclaration.Getter is null || propertyDeclaration.Getter.Body is null)
-					&& (propertyDeclaration.Setter is null || propertyDeclaration.Setter.Body is null)
-					&& (propertyDeclaration.Getter is null || !propertyDeclaration.Getter.Attributes.Any())
-					&& (propertyDeclaration.Setter is null || !propertyDeclaration.Setter.Attributes.Any());
+				bool isSingleLine = IsPrintedAsSingleLine(propertyDeclaration, policy.AutoPropertyFormatting);
 				OpenBrace(isSingleLine ? BraceStyle.EndOfLine : policy.PropertyBraceStyle, newLine: !isSingleLine);
 				if (isSingleLine)
 					Space();

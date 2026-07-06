@@ -128,6 +128,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					this.currentLowerCaseTypeOrMemberNames = currentLowerCaseTypeOrMemberNames.ToImmutableHashSet();
 
+					if (context.Settings.FieldKeyword
+						&& function.Method?.AccessorOwner is IProperty { Parameters.Count: 0 })
+					{
+						// "field" is a keyword in C# 14 property accessors; a local of that name
+						// would shadow the backing field.
+						AddExistingName(reservedVariableNames, "field");
+					}
+
 					// handle implicit parameters of set or event accessors
 					if (function.Method != null && IsSetOrEventAccessor(function.Method) && function.Parameters.Count > 0)
 					{

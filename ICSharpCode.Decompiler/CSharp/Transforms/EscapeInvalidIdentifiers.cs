@@ -18,6 +18,7 @@
 
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -44,8 +45,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return false;
 		}
 
-		string ReplaceInvalid(string s)
+		string ReplaceInvalid(string s, ISet<string>? existingNames = null)
 		{
+			// A property backing field that stayed declared (the property is not an
+			// auto-property and the "field" keyword is unavailable or insufficient) gets a
+			// readable name instead of the generic escape of "<P>k__BackingField". The mapping
+			// is name-deterministic like the escape itself, so declarations and references
+			// stay consistent without symbol tracking.
+			if (s.StartsWith("<", System.StringComparison.Ordinal)
+				&& PatternStatementTransform.NameCouldBeBackingFieldOfAutomaticProperty(s, out string? propertyName))
+			{
+				var readable = ReplaceInvalid(propertyName) + "__BackingField";
+				// "P__BackingField" is a plausible identifier a human could have written, unlike
+				// the generic escape it replaces. If the tree already contains that name, the
+				// rename would produce two members with one name; fall back to the escape, which
+				// keeps the output compilable at the cost of readability.
+				if (existingNames?.Contains(readable) != true)
+					return readable;
+			}
 			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : string.Format("_{0:X4}", (int)ch)));
 			if (name.Length >= 1 && !(char.IsLetter(name[0]) || name[0] == '_'))
 				name = "_" + name;
@@ -54,9 +71,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
+			// Every name already in the tree, so the readable backing-field rename can detect
+			// that its target name is taken.
+			var existingNames = new HashSet<string>(
+				rootNode.DescendantsAndSelf.OfType<Identifier>().Select(i => i.Name), StringComparer.Ordinal);
 			foreach (var ident in rootNode.DescendantsAndSelf.OfType<Identifier>())
 			{
-				string newName = ReplaceInvalid(ident.Name);
+				string newName = ReplaceInvalid(ident.Name, existingNames);
 				if (newName != ident.Name)
 				{
 					context.Step($"Escape identifier '{ident.Name}'", ident);

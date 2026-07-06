@@ -69,6 +69,13 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		});
 
+		// the field keyword requires a C# 14 compiler
+		static readonly CompilerOptions[] roslynLatestOnlyOptions = Tester.SupportedOnCurrentPlatform(new[]
+		{
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		});
+
 		// top-level statements require C# 9 and cannot target .NET Framework 4.0
 		static readonly CompilerOptions[] topLevelProgramOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
@@ -109,6 +116,14 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp9_0) {
 				ExtensionMethods = false
+			});
+		}
+
+		[Test]
+		public async Task NoFieldKeyword([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				FieldKeyword = false
 			});
 		}
 
