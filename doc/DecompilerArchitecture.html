@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ILSpy Decompiler Architecture</title>
+<style>
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #59636e;
+  --accent: #0b5cad;
+  --border: #d1d9e0;
+  --code-bg: #f6f8fa;
+  --th-bg: #f6f8fa;
+  --box-bg: #eef5fd;   --box-stroke: #8fb8e0;   /* pipeline / neutral */
+  --box2-bg: #f5eefb;  --box2-stroke: #c3a5e0;  /* ILAst / IR */
+  --box3-bg: #edf9f1;  --box3-stroke: #93d0aa;  /* transforms */
+  --box4-bg: #fdf6e7;  --box4-stroke: #ddc282;  /* output */
+  --box5-bg: #fbeeee;  --box5-stroke: #dda2a2;  /* compiler-generated / external */
+  --edge: #59636e;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14181d;
+    --fg: #d7dde3;
+    --muted: #9aa4ae;
+    --accent: #6cb1f0;
+    --border: #3a4250;
+    --code-bg: #1d232b;
+    --th-bg: #1d232b;
+    --box-bg: #1b2938;  --box-stroke: #3e628a;
+    --box2-bg: #2a2136; --box2-stroke: #6b4f8a;
+    --box3-bg: #1c2f24; --box3-stroke: #3f7050;
+    --box4-bg: #33291a; --box4-stroke: #8a743f;
+    --box5-bg: #34211f; --box5-stroke: #8a4b45;
+    --edge: #9aa4ae;
+  }
+}
+html { background: var(--bg); }
+body {
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+  max-width: 52rem;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: -apple-system, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+}
+h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 .25rem; }
+h2 { font-size: 1.45rem; margin-top: 2.75rem; padding-bottom: .3rem; border-bottom: 1px solid var(--border); }
+h3 { font-size: 1.15rem; margin-top: 2rem; }
+h4 { font-size: 1rem; margin-top: 1.5rem; }
+p.subtitle { color: var(--muted); font-size: 1.05rem; margin-top: 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, pre {
+  font-family: ui-monospace, "Cascadia Code", Consolas, "Source Code Pro", monospace;
+  font-size: .875em;
+}
+code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: .08em .3em; }
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: .8rem 1rem;
+  overflow-x: auto;
+  line-height: 1.45;
+}
+pre code { background: none; border: none; padding: 0; font-size: 1em; }
+pre .cm { color: var(--muted); font-style: italic; }
+table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .92rem; }
+th, td { border: 1px solid var(--border); padding: .4rem .6rem; text-align: left; vertical-align: top; }
+th { background: var(--th-bg); }
+figure { margin: 1.75rem 0; }
+figure svg { width: 100%; height: auto; display: block; }
+figcaption { color: var(--muted); font-size: .875rem; margin-top: .5rem; text-align: center; }
+.toc { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.5rem; margin: 1.5rem 0; }
+.toc ol { margin: .25rem 0; padding-left: 1.4rem; }
+.toc > ol > li { margin: .3rem 0; }
+.note {
+  border-left: 4px solid var(--box-stroke);
+  background: var(--code-bg);
+  padding: .6rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0 6px 6px 0;
+}
+.filecite { color: var(--muted); font-size: .85rem; }
+.cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 700px) { .cols2 { grid-template-columns: 1fr; } }
+/* SVG diagram text */
+svg text { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 13px; fill: var(--fg); }
+svg text.small { font-size: 11px; fill: var(--muted); }
+svg text.mono { font-family: ui-monospace, Consolas, monospace; font-size: 11.5px; }
+svg text.title { font-weight: 600; }
+svg .lbl { font-size: 11px; fill: var(--muted); }
+@media print {
+  body { max-width: none; font-size: 11pt; }
+  h2 { break-before: page; }
+  h2:first-of-type, #s1 + h2 { break-before: auto; }
+  pre, figure, table { break-inside: avoid; }
+  .toc { break-after: page; }
+}
+</style>
+</head>
+<body>
+
+<h1>The ILSpy Decompiler: Architecture and Design</h1>
+<p class="subtitle">How <code>ICSharpCode.Decompiler</code> turns .NET assemblies back into C#</p>
+<p class="filecite">Describes the engine as found in this repository (July 2026). File paths are relative to
+<code>ICSharpCode.Decompiler/</code> unless stated otherwise.</p>
+
+<nav class="toc">
+<strong>Contents</strong>
+<ol>
+  <li><a href="#s1">Introduction and design goals</a></li>
+  <li><a href="#s2">The pipeline at a glance</a></li>
+  <li><a href="#s3">Inputs: metadata and the type system</a></li>
+  <li><a href="#s4">Front end: from IL bytes to ILAst</a></li>
+  <li><a href="#s5">The ILAst</a></li>
+  <li><a href="#s6">The IL transform pipeline</a>
+    <ol>
+      <li><a href="#s6-drivers">How transforms are driven</a></li>
+      <li><a href="#s6-phases">The pipeline, phase by phase</a></li>
+      <li><a href="#s6-statemachines">Deep dive: async and iterator state machines</a></li>
+      <li><a href="#s6-loops">Deep dive: loops and conditions</a></li>
+      <li><a href="#s6-sugar">Deep dive: where C# sugar is recognized</a></li>
+      <li><a href="#s6-flow">Supporting analyses and settings</a></li>
+    </ol>
+  </li>
+  <li><a href="#s7">Back end: translating ILAst to C#</a></li>
+  <li><a href="#s8">The C# AST and its transforms</a></li>
+  <li><a href="#s9">Output rendering</a></li>
+  <li><a href="#s10">Above a single method</a></li>
+  <li><a href="#s11">Cross-cutting themes and further exploration</a></li>
+  <li><a href="#appendix">Appendix: stage-to-code quick reference</a></li>
+</ol>
+</nav>
+
+<h2 id="s1">1. Introduction and design goals</h2>
+
+<p><code>ICSharpCode.Decompiler</code> is the engine behind ILSpy, <code>ilspycmd</code>, and the
+<code>ICSharpCode.ILSpyX</code> host library. Given a .NET assembly, it reconstructs C# source code
+that a developer can read &#8212; and, ideally, recompile. The engine is a plain class library with no
+UI dependencies; everything in this document lives in the <code>ICSharpCode.Decompiler</code> project.</p>
+
+<p>Decompilation is the inverse of a lossy process. The C# compiler erases most of what makes source
+code readable: expressions are flattened onto an evaluation stack, structured control flow becomes
+conditional branches, lambdas become classes with fields, <code>async</code>/<code>await</code> and
+<code>yield return</code> become state machines, and syntactic sugar of every kind is expanded into
+plain calls and branches. The decompiler's job is to run each of these expansions backwards &#8212;
+recognizing the compiler's output <em>patterns</em> and folding them back into the constructs that
+produced them. Almost everything in the architecture follows from that framing. Four design tenets
+recur throughout the codebase:</p>
+
+<ol>
+<li><p><strong>Round-trip correctness.</strong> The output must not merely look plausible; recompiling
+it should bind to the same members and produce the same behavior. This is enforced structurally: the
+decompiler embeds a complete C# semantic engine (name lookup, overload resolution, conversions, type
+inference) and <em>re-resolves its own output</em> while generating it. A cast or qualifier is emitted
+only when the resolver proves that omitting it would change meaning (<a href="#s7">section 7</a>).</p></li>
+
+<li><p><strong>Progressive raising through many small transforms.</strong> There is no single clever
+algorithm. Instead, a low-level intermediate representation (the <em>ILAst</em>) is raised step by step
+by roughly forty ordered IL transforms and fifteen C# AST transforms, each responsible for one
+pattern: one transform reconstructs loops, another <code>lock</code> statements, another string
+interpolation. Transforms are strict pattern matchers: they fire only on shapes the compiler is known
+to emit, and leave anything else untouched.</p></li>
+
+<li><p><strong>Robustness against arbitrary IL.</strong> Input assemblies may be hand-written,
+obfuscated, or invalid. The engine degrades gracefully instead of failing: unverifiable IL becomes
+<code>InvalidBranch</code>/<code>InvalidExpression</code> nodes with warnings, and a state-machine
+analysis that encounters something unexpected throws internally
+(<code>SymbolicAnalysisFailedException</code>) and simply leaves the method in its lower-level form.
+A method that cannot be prettified is still decompiled &#8212; just with gotos.</p></li>
+
+<li><p><strong>Trees with checked invariants.</strong> Both intermediate representations are strict
+trees whose nodes know their parents, children (in typed <em>slots</em>), result types, and originating
+IL offsets. In debug builds, <code>CheckInvariant</code> runs after every single transform, so a
+corrupting transform fails at its own doorstep rather than ten passes later.</p></li>
+</ol>
+
+<p>A fifth theme is configurability: <code>DecompilerSettings</code>
+(<span class="filecite">DecompilerSettings.cs</span>) exposes roughly 150 feature flags, and
+<code>SetLanguageVersion</code> switches them in blocks so the same pipeline can emit C#&nbsp;1
+through C#&nbsp;15 &#8212; a transform whose feature is disabled simply does nothing
+(<a href="#s6-flow">section 6.6</a>).</p>
+
+<h2 id="s2">2. The pipeline at a glance</h2>
+
+<p>The engine has two intermediate representations and three major stages. The <strong>front
+end</strong> reads metadata and IL bytes and produces the ILAst, a tree-shaped, typed form of IL.
+The <strong>middle end</strong> runs the IL transform pipeline, which raises the ILAst from
+&quot;structured assembly&quot; to something semantically equivalent to C#. The <strong>back
+end</strong> translates the ILAst into a C# syntax tree, prettifies it with AST transforms, and
+renders it to text.</p>
+
+<figure>
+<svg viewBox="0 0 920 470" role="img" aria-label="End-to-end pipeline diagram">
+  <defs>
+    <marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <!-- Row 1: inputs -->
+  <text x="10" y="18" class="lbl">INPUT</text>
+  <rect x="10" y="28" width="180" height="62" rx="8" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="100" y="53" text-anchor="middle" class="title">Assembly file</text>
+  <text x="100" y="72" text-anchor="middle" class="small">PE / WebCIL / bundle</text>
+
+  <rect x="250" y="28" width="200" height="62" rx="8" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="350" y="48" text-anchor="middle" class="title">Metadata layer</text>
+  <text x="350" y="66" text-anchor="middle" class="mono">PEFile : MetadataFile</text>
+  <text x="350" y="81" text-anchor="middle" class="small">System.Reflection.Metadata</text>
+
+  <rect x="510" y="28" width="200" height="62" rx="8" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="610" y="48" text-anchor="middle" class="title">Type system</text>
+  <text x="610" y="66" text-anchor="middle" class="mono">DecompilerTypeSystem</text>
+  <text x="610" y="81" text-anchor="middle" class="small">resolved types &amp; members</text>
+
+  <rect x="740" y="28" width="170" height="62" rx="8" fill="var(--box5-bg)" stroke="var(--box5-stroke)"/>
+  <text x="825" y="48" text-anchor="middle" class="title">Referenced assemblies</text>
+  <text x="825" y="66" text-anchor="middle" class="mono">UniversalAssemblyResolver</text>
+  <text x="825" y="81" text-anchor="middle" class="small">GAC / shared FX / NuGet</text>
+
+  <line x1="190" y1="59" x2="248" y2="59" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <line x1="450" y1="59" x2="508" y2="59" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <line x1="740" y1="59" x2="712" y2="59" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr1)"/>
+
+  <!-- elbow down to row 2 -->
+  <path d="M 610 90 L 610 122 L 100 122 L 100 148" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <text x="360" y="116" text-anchor="middle" class="small">per method: IL bytes + generic context</text>
+
+  <!-- Row 2: front + middle end -->
+  <text x="10" y="144" class="lbl">FRONT END + MIDDLE END</text>
+  <rect x="10" y="152" width="180" height="62" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="100" y="172" text-anchor="middle" class="title">ILReader</text>
+  <text x="100" y="190" text-anchor="middle" class="small">decodes IL, simulates the</text>
+  <text x="100" y="204" text-anchor="middle" class="small">evaluation stack</text>
+
+  <rect x="250" y="152" width="180" height="62" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="340" y="172" text-anchor="middle" class="title">BlockBuilder</text>
+  <text x="340" y="190" text-anchor="middle" class="small">blocks, containers,</text>
+  <text x="340" y="204" text-anchor="middle" class="small">try/catch nesting</text>
+
+  <rect x="490" y="152" width="170" height="62" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="575" y="172" text-anchor="middle" class="title">ILAst</text>
+  <text x="575" y="190" text-anchor="middle" class="mono">ILFunction</text>
+  <text x="575" y="204" text-anchor="middle" class="small">typed instruction tree</text>
+
+  <rect x="720" y="152" width="190" height="62" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="815" y="172" text-anchor="middle" class="title">IL transforms</text>
+  <text x="815" y="190" text-anchor="middle" class="small">~40 ordered passes:</text>
+  <text x="815" y="204" text-anchor="middle" class="small">state machines, loops, sugar</text>
+
+  <line x1="190" y1="183" x2="248" y2="183" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <line x1="430" y1="183" x2="488" y2="183" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <line x1="660" y1="183" x2="718" y2="183" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- elbow down to row 3 -->
+  <path d="M 815 214 L 815 246 L 115 246 L 115 272" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <text x="470" y="240" text-anchor="middle" class="small">raised ILAst (semantically C#-shaped)</text>
+
+  <!-- Row 3: back end -->
+  <text x="10" y="268" class="lbl">BACK END</text>
+  <rect x="10" y="276" width="210" height="62" rx="8" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="115" y="296" text-anchor="middle" class="title">Statement/Expression/</text>
+  <text x="115" y="312" text-anchor="middle" class="title">CallBuilder</text>
+  <text x="115" y="328" text-anchor="middle" class="small">resolver-checked translation</text>
+
+  <rect x="280" y="276" width="150" height="62" rx="8" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="355" y="299" text-anchor="middle" class="title">C# AST</text>
+  <text x="355" y="317" text-anchor="middle" class="mono">SyntaxTree</text>
+
+  <rect x="490" y="276" width="160" height="62" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="570" y="299" text-anchor="middle" class="title">AST transforms</text>
+  <text x="570" y="317" text-anchor="middle" class="small">15 prettification passes</text>
+
+  <rect x="710" y="276" width="200" height="62" rx="8" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="810" y="296" text-anchor="middle" class="title">OutputVisitor</text>
+  <text x="810" y="312" text-anchor="middle" class="small">parentheses, tokens,</text>
+  <text x="810" y="328" text-anchor="middle" class="small">formatting</text>
+
+  <line x1="220" y1="307" x2="278" y2="307" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <line x1="430" y1="307" x2="488" y2="307" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <line x1="650" y1="307" x2="708" y2="307" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+
+  <!-- output sink -->
+  <path d="M 810 338 L 810 380 L 520 380 L 520 402" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr1)"/>
+  <rect x="390" y="406" width="260" height="52" rx="8" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="520" y="427" text-anchor="middle" class="title">ITextOutput</text>
+  <text x="520" y="445" text-anchor="middle" class="small">plain text, or rich text with hyperlinks (UI)</text>
+
+  <!-- disassembler bypass -->
+  <rect x="30" y="392" width="240" height="52" rx="8" fill="var(--box5-bg)" stroke="var(--box5-stroke)"/>
+  <text x="150" y="412" text-anchor="middle" class="title">ReflectionDisassembler</text>
+  <text x="150" y="430" text-anchor="middle" class="small">IL view: metadata to text directly</text>
+  <line x1="270" y1="424" x2="388" y2="428" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr1)"/>
+</svg>
+<figcaption>Figure 1 &#8212; The decompilation pipeline. The IL disassembler is a parallel back end
+that shares only the output abstraction.</figcaption>
+</figure>
+
+<p>The orchestrator is <code>CSharpDecompiler</code>
+(<span class="filecite">CSharp/CSharpDecompiler.cs</span>), &quot;the main class of the C# decompiler
+engine.&quot; One instance wraps one assembly plus its type system and settings; instances are
+deliberately <em>not</em> thread-safe (parallel consumers such as the whole-project decompiler create
+one per thread). Its public surface offers several granularities:</p>
+
+<ul>
+<li><code>DecompileWholeModuleAsSingleFile()</code> / <code>DecompileWholeModuleAsString()</code></li>
+<li><code>DecompileType(FullTypeName)</code>, <code>DecompileTypes(...)</code></li>
+<li><code>Decompile(params EntityHandle[])</code> for arbitrary member sets</li>
+<li><code>DecompileModuleAndAssemblyAttributes()</code></li>
+</ul>
+
+<p>All of them funnel into the same per-member machinery. Each invocation creates a
+<code>DecompileRun</code> (<span class="filecite">DecompileRun.cs</span>), a scratchpad that travels
+through the whole pipeline: the settings, the cancellation token, the set of namespaces that will need
+<code>using</code> directives, the documentation provider, and caches such as per-type
+<code>RecordDecompiler</code> instances. Both transform stages see it &#8212; the IL transforms through
+<code>ILTransformContext</code>, the AST transforms through <code>TransformContext</code>.</p>
+
+<h3 id="s2-example">A running example</h3>
+
+<p>To keep the stages concrete, the next sections trace one small method through the pipeline:</p>
+
+<pre><code>static void Greet(bool polite)
+{
+    Console.WriteLine(polite ? "Good day!" : "Hi.");
+}</code></pre>
+
+<p>The C# compiler (release build) turns the conditional expression into branches. This is exactly the
+kind of information loss the pipeline has to undo &#8212; by the end of
+<a href="#s7">section 7</a> the ternary will have been reassembled:</p>
+
+<pre><code>ldarg.0
+brtrue.s  IL_000a
+ldstr     "Hi."
+br.s      IL_000f
+IL_000a: ldstr "Good day!"
+IL_000f: call  void System.Console::WriteLine(string)
+ret</code></pre>
+
+<h2 id="s3">3. Inputs: metadata and the type system</h2>
+
+<p>The decompiler does not work on raw metadata handles for long. Two layers turn a file on disk into
+semantic objects that the rest of the pipeline can reason about.</p>
+
+<h3>3.1 The metadata layer</h3>
+
+<p>The <code>Metadata/</code> namespace wraps <code>System.Reflection.Metadata</code> (SRM), the BCL's
+low-level metadata reader. The central abstraction is <code>MetadataFile</code>
+(<span class="filecite">Metadata/MetadataFile.cs</span>): one loaded module, exposing the SRM
+<code>MetadataReader</code>, method bodies by RVA (<code>GetMethodBody</code> returns an SRM
+<code>MethodBodyBlock</code>), and section data. <code>PEFile</code> is the ordinary
+portable-executable implementation over a <code>PEReader</code>; <code>WebCilFile</code> handles the
+WebAssembly packaging format; single-file bundles are unpacked by <code>SingleFileBundle</code>.
+Everything above this layer is format-agnostic.</p>
+
+<p>Referenced assemblies are located by an <code>IAssemblyResolver</code>. The default,
+<code>UniversalAssemblyResolver</code> (<span class="filecite">Metadata/UniversalAssemblyResolver.cs</span>,
+with <code>DotNetCorePathFinder</code>), searches the same universe the runtime would: framework
+directories, the GAC, .NET Core shared frameworks, and NuGet-style layouts, keyed off the target
+framework detected from the main module's attributes.</p>
+
+<h3>3.2 The type system</h3>
+
+<p><code>DecompilerTypeSystem</code> (<span class="filecite">TypeSystem/DecompilerTypeSystem.cs</span>)
+builds a resolved, semantic view over the main module and everything it references. Its
+initialization walks assembly references and module references, resolves each through the assembly
+resolver, follows type forwarders, and &#8212; on .NET Core and later &#8212; pulls in <em>implicit</em>
+references that metadata does not name explicitly. Each module is wrapped with
+<code>TypeSystemOptions</code>, a flags enum controlling how metadata is interpreted: whether
+<code>dynamic</code>, tuple names, <code>nint</code>, ref structs, extension methods and so on are
+surfaced as first-class types. The result is a <code>MetadataModule</code> per assembly &#8212; the
+object the IL reader uses to resolve every token it encounters.</p>
+
+<p>Why carry a full type system instead of raw handles? Because nearly every later stage needs real
+semantics: the IL transforms compare and substitute generic types, the expression builder performs
+member lookup and conversions, and the resolver (<a href="#s7">section 7</a>) runs actual C# overload
+resolution. The type system is the shared vocabulary; it is the same NRefactory-lineage design that
+once powered SharpDevelop's code completion, which is precisely why a complete C# resolver could be
+embedded on top of it.</p>
+
+<h2 id="s4">4. Front end: from IL bytes to ILAst</h2>
+
+<p>The front end proper is two classes: <code>ILReader</code>
+(<span class="filecite">IL/ILReader.cs</span>) decodes IL bytes into expression trees grouped into
+basic blocks, and <code>BlockBuilder</code> (<span class="filecite">IL/BlockBuilder.cs</span>)
+arranges those blocks into the nested container structure that models control flow. The output is a
+single <code>ILFunction</code> per method body.</p>
+
+<h3>4.1 Simulating the evaluation stack</h3>
+
+<p>IL is a stack machine: <code>ldarg.0; ldarg.1; add</code> pushes two values and replaces them with
+their sum. Stack code is hostile to source-level analysis &#8212; data flow is implicit in stack
+positions. The reader's core move is therefore an <em>abstract interpretation</em> of the evaluation
+stack at decode time, converting stack discipline into two explicit forms: expression <em>trees</em>
+where possible, and named <em>stack-slot variables</em> where values cross statement or block
+boundaries.</p>
+
+<p>Two structures are maintained while decoding (<span class="filecite">ILReader.cs</span>):</p>
+
+<ul>
+<li><code>expressionStack</code> &#8212; a transient list of not-yet-committed expression trees within
+the current block. When <code>add</code> is decoded, its two operands are popped from here and become
+its children; the new <code>BinaryNumericInstruction</code> is pushed back.</li>
+<li><code>currentStack</code> &#8212; an <code>ImmutableStack&lt;ILVariable&gt;</code> of virtual
+stack slots: values that survive past the point where trees can represent them.</li>
+</ul>
+
+<p><code>FlushExpressionStack()</code> converts the former into the latter. Each pending expression is
+committed as a statement that stores into a fresh variable of kind <code>StackSlot</code>:</p>
+
+<pre><code>IType type = compilation.FindType(inst.ResultType);
+var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
+currentStack = currentStack.Push(v);
+currentBlock.Block.Instructions.Add(new StLoc(v, inst).WithILRange(inst));</code></pre>
+
+<p>Later consumers read the value back with <code>ldloc S_0</code>. A flush happens at every block
+boundary and, crucially, whenever a decoded instruction is <em>not</em> pushed onto the expression
+stack &#8212; otherwise the side effects of the pending expressions could be reordered past the new
+instruction. Side-effect ordering is a load-bearing invariant here: the documentation on
+<code>Pop()</code> spells out that popped instructions must be evaluated in reverse pop order, and
+much of the later inlining machinery exists to safely undo the conservative flushes made now.</p>
+
+<h3>4.2 Worklist import and stack-type merging</h3>
+
+<p>Methods are imported block by block through a worklist. <code>ReadInstructions</code> seeds offset
+0 with an empty stack, precomputes branch targets (a <code>BitSet</code> via
+<code>ILParser.SetBranchTargets</code>), and dequeues blocks until done. A block ends where the next
+offset is a branch target, where an instruction may branch, or where the endpoint is unreachable;
+if execution falls through, an explicit <code>Branch</code> to the next offset is appended.
+<strong>Fall-through never survives</strong> &#8212; after the front end, every block ends in
+unconditional control flow, which is what lets later transforms reorder blocks freely.</p>
+
+<p>When several predecessors reach the same offset, their stack states must agree. Stack heights must
+match exactly; the per-slot <em>types</em> are merged over the <code>StackType</code> lattice
+(<span class="filecite">IL/StackType.cs</span>: <code>I4</code>, native <code>I</code>,
+<code>I8</code>, <code>F4</code>, <code>F8</code>, <code>O</code>, <code>Ref</code> &#8212; the CLI
+evaluation-stack types, deliberately ordered so that merging picks the larger). If a merge widens the
+input stack of a block that was already imported, that block is re-enqueued and imported again &#8212;
+a small dataflow fixpoint that terminates because the lattice is finite.</p>
+
+<p>Each predecessor initially creates its <em>own</em> stack-slot variable for a given slot. After
+import, <code>CheckOutgoingEdges</code> walks every control-flow edge and merges corresponding slots
+with a union-find structure; where the types differ but are compatible (<code>I4</code> vs native
+<code>I</code>, <code>F4</code> vs <code>F8</code>) it inserts an explicit conversion at the end of
+the predecessor block. A final visitor rewrites all loads and stores to the union-find representative
+and names the survivors <code>S_0, S_1, &hellip;</code></p>
+
+<p>Exception handlers get their stack seeded rather than inherited: for each catch/filter handler the
+reader creates an <code>ExceptionStackSlot</code> variable named <code>E_&lt;offset&gt;</code>
+representing the exception object the runtime pushes, so a handler body decodes exactly like normal
+code.</p>
+
+<h3>4.3 The running example through the reader</h3>
+
+<p>For <code>Greet</code>, the two <code>ldstr</code> instructions in the two branch arms each push a
+string that is still on the stack when the branches converge at <code>IL_000f</code>. Both sides
+flush, producing two stack-slot variables that the union-find then merges into one
+<code>S_0</code>:</p>
+
+<figure>
+<svg viewBox="0 0 880 330" role="img" aria-label="Stack simulation worked example">
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <!-- entry block -->
+  <rect x="300" y="16" width="280" height="66" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="440" y="36" text-anchor="middle" class="mono title">Block IL_0000</text>
+  <text x="440" y="54" text-anchor="middle" class="mono">if (ldarg polite) br IL_000a</text>
+  <text x="440" y="70" text-anchor="middle" class="mono">br IL_0003</text>
+
+  <!-- false arm -->
+  <rect x="80" y="140" width="290" height="66" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="225" y="160" text-anchor="middle" class="mono title">Block IL_0003</text>
+  <text x="225" y="178" text-anchor="middle" class="mono">stloc S_0(ldstr "Hi.")</text>
+  <text x="225" y="194" text-anchor="middle" class="mono">br IL_000f</text>
+
+  <!-- true arm -->
+  <rect x="510" y="140" width="290" height="66" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="655" y="160" text-anchor="middle" class="mono title">Block IL_000a</text>
+  <text x="655" y="178" text-anchor="middle" class="mono">stloc S_0(ldstr "Good day!")</text>
+  <text x="655" y="194" text-anchor="middle" class="mono">br IL_000f</text>
+
+  <!-- join block -->
+  <rect x="290" y="252" width="300" height="66" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="440" y="272" text-anchor="middle" class="mono title">Block IL_000f</text>
+  <text x="440" y="290" text-anchor="middle" class="mono">call WriteLine(ldloc S_0)</text>
+  <text x="440" y="306" text-anchor="middle" class="mono">leave IL_0000 (nop)</text>
+
+  <!-- edges -->
+  <path d="M 380 82 L 260 138" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <text x="280" y="112" text-anchor="middle" class="small">false (fall-through</text>
+  <text x="280" y="126" text-anchor="middle" class="small">made explicit)</text>
+  <path d="M 500 82 L 620 138" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <text x="600" y="112" text-anchor="middle" class="small">true</text>
+
+  <path d="M 250 206 L 350 250" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <path d="M 630 206 L 530 250" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr2)"/>
+  <text x="277" y="238" text-anchor="middle" class="small">stack: [S_0 : O]</text>
+  <text x="603" y="238" text-anchor="middle" class="small">stack: [S_0 : O]</text>
+  <text x="440" y="232" text-anchor="middle" class="small">two slots, merged by union-find</text>
+</svg>
+<figcaption>Figure 2 &#8212; <code>Greet</code> after the IL reader: an explicit CFG, expression
+trees inside blocks, and the on-stack string materialized as stack slot <code>S_0</code>.</figcaption>
+</figure>
+
+<p>Note what has already happened: <code>brtrue</code> became a structured
+<code>if&nbsp;(&hellip;)&nbsp;br</code> whose condition is a real expression tree,
+<code>ret</code> became <code>leave</code> of the function's main container, and all data flow is
+explicit. What has <em>not</em> happened yet: nothing knows this is a conditional expression &#8212;
+that is the transform pipeline's job.</p>
+
+<h3>4.4 BlockBuilder: containers and exception handlers</h3>
+
+<p><code>BlockBuilder</code> converts the reader's flat, offset-ordered block list into the nested
+structure described in <a href="#s5">section 5</a>. It works in three steps:</p>
+
+<ol>
+<li><strong><code>CreateContainerStructure</code></strong> reads the method's exception regions and
+builds the try/handler skeleton: each catch/filter region becomes a <code>TryCatch</code> with
+<code>TryCatchHandler</code> children (a plain catch gets the constant filter <code>ldc.i4 1</code>;
+a real filter gets its own container that must evaluate to <code>I4</code>), and fault/finally
+regions become <code>TryFault</code>/<code>TryFinally</code>. Regions are sorted outermost-first so
+nesting comes out right.</li>
+<li><strong><code>CreateBlocks</code></strong> walks the basic blocks in IL order, maintaining a stack
+of currently-open containers; when a block's offset enters a try or handler range, the corresponding
+container is pushed. This reconstructs proper lexical nesting from what is, in the file, just a table
+of offset ranges.</li>
+<li><strong><code>ConnectBranches</code></strong> resolves the symbolic branches: every
+<code>Branch</code> still carrying a target offset gets its <code>TargetBlock</code> reference;
+<code>leave</code> instructions with no explicit target (i.e. <code>endfinally</code>) are bound to
+the innermost finally/filter container. Anything unresolvable becomes an <code>InvalidBranch</code>
+&#8212; the graceful-degradation policy again. As a curiosity, the builder even synthesizes a
+dispatcher variable and switch to support VB's <code>On Error Resume Next</code>, which branches from
+a handler <em>back into</em> its try block.</li>
+</ol>
+
+<p>Finally, <code>ILReader.ReadIL</code> wraps the main container in an <code>ILFunction</code>,
+registers all variables, and topologically sorts each container's blocks (deleting unreachable ones).
+The front end is done; everything from here on is tree rewriting.</p>
+
+<h2 id="s5">5. The ILAst</h2>
+
+<p>The ILAst is the decompiler's central data structure &#8212; the representation on which all
+analysis and most transformation happens. It deserves a close look before we walk the pipeline that
+operates on it. (A two-paragraph summary also lives in <span class="filecite">doc/ILAst.txt</span>,
+repository root.)</p>
+
+<h3>5.1 The instruction model</h3>
+
+<p>Every node derives from <code>ILInstruction</code>
+(<span class="filecite">IL/Instructions/ILInstruction.cs</span>). Evaluating a node produces a value,
+<code>void</code>, a thrown exception, or the execution of a branch. The model's key properties:</p>
+
+<ul>
+<li><p><strong>Strict tree.</strong> A child belongs to exactly one parent
+(<code>ValidateChild</code> asserts &quot;ILAst must form a tree&quot;). This is what makes the
+stack-to-tree conversion sound and lets transforms move subtrees without aliasing surprises.
+Cross-references that would form a graph &#8212; branch targets, variables &#8212; are modeled as
+<em>references</em> (<code>Branch.TargetBlock</code>, <code>ILVariable</code>) rather than
+children.</p></li>
+
+<li><p><strong>Typed slots.</strong> Children are not a homogeneous list; each subclass stores them in
+named, typed slots (<code>Block.InstructionSlot</code>, <code>TryCatchHandler.BodySlot</code>,
+&hellip;). A slot's <code>SlotInfo</code> carries policy &#8212; notably <code>CanInlineInto</code>,
+which tells the inlining transform whether an expression may legally be moved into that position.</p></li>
+
+<li><p><strong>Everything knows its stack type.</strong> <code>ResultType</code> is abstract and
+mandatory; the reader warns whenever it would be <code>Unknown</code> on valid IL. Types stay explicit
+from the first minute, which is why no separate type-inference pass over the ILAst is needed.</p></li>
+
+<li><p><strong>Semantic flags.</strong> <code>InstructionFlags</code>
+(<span class="filecite">IL/InstructionFlags.cs</span>) &#8212; <code>MayThrow</code>,
+<code>SideEffect</code>, <code>MayReadLocals</code>/<code>MayWriteLocals</code>,
+<code>MayBranch</code>, <code>EndPointUnreachable</code>, <code>ControlFlow</code> &#8212; are computed
+bottom-up, cached, and invalidated up the parent chain on mutation. The <code>ControlFlow</code> flag
+carries the model's central evaluation-order guarantee: if it is <em>not</em> set, all descendants
+evaluate exactly once, left to right, in pre-order. Transforms lean on these flags constantly
+(&quot;may I move this expression past that one?&quot;).</p></li>
+
+<li><p><strong>IL provenance.</strong> Every node carries an <code>ILRange</code> interval of original
+IL offsets, set at decode time and unioned as trees are rebuilt. This survives all the way to the C#
+AST and is what makes sequence-point generation (<a href="#s9">section 9</a>) and ILSpy's
+click-to-navigate features possible.</p></li>
+</ul>
+
+<p>There are roughly 200 concrete instruction classes, and nearly all of their code is
+<strong>generated</strong>: <span class="filecite">IL/Instructions.tt</span> is a T4 template that
+declares each opcode's children, flags, and result type, and emits the constructors, child accessors,
+flag computation, visitor methods, <code>WriteTo</code> dumping, and structural
+<code>Match&hellip;</code> helpers into <span class="filecite">IL/Instructions.cs</span>. Keeping ~200
+node classes consistent by hand would be hopeless; the template makes the slot/flag/visitor machinery
+uniform by construction.</p>
+
+<h3>5.2 Variables</h3>
+
+<p><code>ILVariable</code> (<span class="filecite">IL/ILVariable.cs</span>) represents parameters,
+locals, and everything the pipeline invents along the way. Its <code>VariableKind</code> records the
+provenance and is itself a small history of the pipeline:</p>
+
+<table>
+<tr><th>Kind</th><th>Created by</th><th>Meaning</th></tr>
+<tr><td><code>Parameter</code>, <code>Local</code>, <code>PinnedLocal</code></td><td>IL reader</td>
+<td>From the method signature and local-variable signature; PDB names recovered when available.</td></tr>
+<tr><td><code>StackSlot</code>, <code>ExceptionStackSlot</code></td><td>IL reader</td>
+<td>Materialized evaluation-stack values (<code>S_n</code>) and handler exception objects (<code>E_n</code>).</td></tr>
+<tr><td><code>UsingLocal</code>, <code>ForeachLocal</code>, <code>PinnedRegionLocal</code>,
+<code>PatternLocal</code></td><td>IL transforms</td>
+<td>Variables promoted when a <code>using</code>/<code>foreach</code>/<code>fixed</code>/pattern construct is recognized.</td></tr>
+<tr><td><code>DisplayClassLocal</code>, <code>InitializerTarget</code>, <code>NamedArgument</code>,
+<code>DeconstructionInitTemporary</code></td><td>IL transforms</td>
+<td>Bookkeeping for closure elimination, object initializers, argument reordering, deconstruction.</td></tr>
+</table>
+
+<p>Variables track their load, store, and address-taken counts, which many transforms use as cheap
+preconditions (the inlining gate in <a href="#s6-phases">section 6.2</a> is literally &quot;one store,
+one use&quot;).</p>
+
+<h3>5.3 Control flow as nested containers</h3>
+
+<p>The ILAst does not keep a separate control-flow graph object; the CFG is embedded in the tree via
+two node types. A <code>Block</code> (<span class="filecite">IL/Instructions/Block.cs</span>) is a
+list of instructions plus a <code>FinalInstruction</code>; a <code>BlockContainer</code>
+(<span class="filecite">IL/Instructions/BlockContainer.cs</span>) owns a list of blocks and represents
+one <strong>single-entry control-flow region</strong>. The rules are strict:</p>
+
+<ul>
+<li>A <code>Branch</code> (goto) may only target a block <em>within the same container</em>.</li>
+<li>The only way out of a container is a <code>Leave</code> instruction, optionally carrying a result
+value. <code>ret</code> is simply <code>leave</code> of the outermost container;
+<code>endfinally</code> is a <code>leave</code> of the finally container.</li>
+<li>Every block must end in unconditional control flow &#8212; no implicit fall-through.</li>
+</ul>
+
+<p>Regions nest: exception handlers are containers from the start, and the transform pipeline
+introduces more &#8212; a detected loop becomes a nested container of <code>ContainerKind.Loop</code>
+(where <code>br entrypoint</code> now <em>means</em> <code>continue</code> and
+<code>leave</code> means <code>break</code>), a detected switch a container of
+<code>ContainerKind.Switch</code>. Structure discovery is thus literally the act of wrapping flat
+block lists into deeper container trees:</p>
+
+<figure>
+<svg viewBox="0 0 880 400" role="img" aria-label="Nested BlockContainer structure">
+  <defs>
+    <marker id="arr3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <!-- ILFunction -->
+  <rect x="10" y="10" width="860" height="380" rx="10" fill="none" stroke="var(--box2-stroke)" stroke-width="1.5"/>
+  <text x="26" y="34" class="mono title">ILFunction Greet(polite)</text>
+
+  <!-- main container -->
+  <rect x="26" y="48" width="828" height="326" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)" opacity="0.55"/>
+  <text x="42" y="72" class="mono">BlockContainer (main body)</text>
+
+  <!-- entry block -->
+  <rect x="46" y="88" width="180" height="44" rx="6" fill="var(--bg)" stroke="var(--box2-stroke)"/>
+  <text x="136" y="106" text-anchor="middle" class="mono">Block IL_0000</text>
+  <text x="136" y="122" text-anchor="middle" class="small">entry point</text>
+
+  <!-- loop container -->
+  <rect x="46" y="156" width="380" height="200" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="62" y="180" class="mono">BlockContainer (Kind = Loop)</text>
+  <rect x="66" y="196" width="160" height="40" rx="6" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <text x="146" y="220" text-anchor="middle" class="mono">Block (head)</text>
+  <rect x="66" y="266" width="160" height="40" rx="6" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <text x="146" y="290" text-anchor="middle" class="mono">Block (body)</text>
+  <!-- branch to head = continue -->
+  <path d="M 226 286 C 300 286 300 216 228 216" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <text x="320" y="255" text-anchor="middle" class="small">br head</text>
+  <text x="320" y="269" text-anchor="middle" class="small">= continue</text>
+  <path d="M 146 236 L 146 264" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- try/finally -->
+  <rect x="470" y="156" width="364" height="200" rx="8" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="486" y="180" class="mono">TryFinally</text>
+  <rect x="486" y="192" width="150" height="140" rx="6" fill="var(--bg)" stroke="var(--box4-stroke)"/>
+  <text x="561" y="212" text-anchor="middle" class="small">try:</text>
+  <text x="561" y="228" text-anchor="middle" class="mono">BlockContainer</text>
+  <rect x="500" y="244" width="122" height="34" rx="5" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="561" y="266" text-anchor="middle" class="mono">Block ...</text>
+  <rect x="660" y="192" width="150" height="140" rx="6" fill="var(--bg)" stroke="var(--box4-stroke)"/>
+  <text x="735" y="212" text-anchor="middle" class="small">finally:</text>
+  <text x="735" y="228" text-anchor="middle" class="mono">BlockContainer</text>
+  <rect x="674" y="244" width="122" height="34" rx="5" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="735" y="266" text-anchor="middle" class="mono">Block ...</text>
+  <text x="735" y="316" text-anchor="middle" class="small">leave (null) = endfinally</text>
+
+  <!-- edges from entry -->
+  <path d="M 136 132 L 136 154" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr3)"/>
+  <path d="M 226 110 L 630 110 L 630 154" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+  <!-- leave arrows -->
+  <path d="M 226 296 L 440 296 L 440 372" fill="none" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr3)"/>
+  <text x="345" y="316" text-anchor="middle" class="small">leave loop = break</text>
+  <text x="620" y="384" class="small">dashed = Leave (exits a container); solid = Branch (goto within container)</text>
+</svg>
+<figcaption>Figure 3 &#8212; The CFG lives in the tree: containers are single-entry regions,
+<code>Branch</code> stays inside, <code>Leave</code> crosses outward. Loops and switches are
+containers introduced by transforms.</figcaption>
+</figure>
+
+<p>This uniformity is a quiet superpower: <code>break</code>, <code>continue</code>,
+<code>return</code>, <code>goto</code>, and <code>endfinally</code> are all the <em>same two node
+types</em>, interpreted relative to the container structure. Transforms that restructure control flow
+never juggle label names or offset arithmetic &#8212; they move blocks between containers.</p>
+
+<h3>5.4 Nested functions</h3>
+
+<p>An <code>ILFunction</code> (<span class="filecite">IL/Instructions/ILFunction.cs</span>) is itself
+an instruction, and it has a <code>LocalFunctions</code> child collection. The reader only ever
+produces top-level functions; <em>transforms</em> grow the tree downward by re-invoking an
+<code>ILReader</code> on compiler-generated methods and grafting the result in with a specific
+<code>ILFunctionKind</code>:</p>
+
+<ul>
+<li><code>Delegate</code> &#8212; lambda/anonymous-method bodies, created by
+<code>DelegateConstruction</code>;</li>
+<li><code>LocalFunction</code> &#8212; created by <code>LocalFunctionDecompiler</code>;</li>
+<li><code>ExpressionTree</code> &#8212; created by <code>TransformExpressionTrees</code>, which
+rebuilds a lambda from <code>System.Linq.Expressions</code> factory calls.</li>
+</ul>
+
+<p>The result mirrors the original lexical nesting: one tree of functions, each with its own variable
+collection, body container, and (once closure analysis has run) a <code>CapturedVariables</code> set.
+Most IL transforms iterate <code>function.Descendants</code> and therefore recurse into nested
+functions automatically.</p>
+
+<h3>5.5 Pattern matching on the ILAst</h3>
+
+<p>Transforms recognize idioms structurally, and the ILAst gives them two tools. The generated code
+provides a <code>Match&hellip;</code> helper per instruction
+(<code>inst.MatchLdcI4(out int value)</code>, <code>MatchIfInstructionPositiveCondition(out cond, out
+trueInst, out falseInst)</code>, &hellip;) &#8212; the bread and butter of every transform. For larger
+shapes there is a small pattern facility (<span class="filecite">IL/Patterns/</span>) with wildcard
+nodes and capture groups whose <code>Match</code> result is an allocation-free struct, so speculative
+matching is cheap. (See also <span class="filecite">doc/ILAst Pattern Matching.md</span>.)</p>
+
+<h3>5.6 Invariants</h3>
+
+<p><code>CheckInvariant(ILPhase)</code> verifies parent/child consistency, flag correctness, and
+connectedness. The phase parameter exists because invariants tighten over time: in
+<code>ILPhase.InILReader</code>, branches may still point at offsets; from
+<code>ILPhase.Normal</code> on, the full rules apply. <code>ILFunction.RunTransforms</code> checks the
+invariant before and after <em>every</em> transform in debug builds &#8212; the practical reason the
+forty-pass pipeline stays debuggable.</p>
+
+<h2 id="s6">6. The IL transform pipeline</h2>
+
+<p>After the front end, <code>Greet</code> is correct but ugly: stack slots, explicit gotos, no
+ternary. The middle end fixes that. <code>CSharpDecompiler.GetILTransforms()</code>
+(<span class="filecite">CSharp/CSharpDecompiler.cs</span>) returns the ordered list of roughly forty
+transforms; <code>ILFunction.RunTransforms</code> executes them one after another on the method's
+<code>ILFunction</code>. Order is not incidental &#8212; the source is dotted with comments like
+&quot;must run after inlining but before loop detection,&quot; and this section preserves them,
+because the ordering constraints <em>are</em> the architecture.</p>
+
+<h3 id="s6-drivers">6.1 How transforms are driven</h3>
+
+<p>Three interfaces, three granularities (<span class="filecite">IL/Transforms/IILTransform.cs,
+BlockTransform.cs, StatementTransform.cs</span>):</p>
+
+<ul>
+<li><code>IILTransform.Run(ILFunction, ILTransformContext)</code> &#8212; sees the whole function
+(and, via <code>Descendants</code>, all nested functions). Most passes are these.</li>
+<li><code>IBlockTransform.Run(Block, BlockTransformContext)</code> &#8212; hosted by
+<code>BlockILTransform</code>, which builds a control-flow graph per container and walks the
+<strong>dominator tree in post-order</strong>. Post-order means a block is processed only after
+everything it dominates &#8212; so when loop detection or condition detection looks at a block, all
+nested structure inside it has already been built. A block transform may only modify its block and
+blocks dominated by it.</li>
+<li><code>IStatementTransform.Run(Block, pos, StatementTransformContext)</code> &#8212; hosted by
+<code>StatementTransform</code>, which runs a <em>set</em> of statement transforms over a sliding
+window: starting at the end of the block and walking positions downward, at each position every child
+transform runs in turn, and each may only touch <code>Instructions[pos..]</code>.</li>
+</ul>
+
+<figure>
+<svg viewBox="0 0 880 420" role="img" aria-label="Three-tier transform driver model">
+  <defs>
+    <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <!-- Tier 1 -->
+  <rect x="10" y="10" width="860" height="90" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="26" y="34" class="title">Tier 1: IILTransform &#8212; whole ILFunction</text>
+  <text x="26" y="56" class="small">runs once per function; iterates Descendants (including nested ILFunctions)</text>
+  <text x="26" y="76" class="mono small">SplitVariables, ILInlining, AsyncAwaitDecompiler, DelegateConstruction, ...</text>
+
+  <path d="M 440 100 L 440 126" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr4)"/>
+  <text x="452" y="118" class="small">BlockILTransform hosts tier 2</text>
+
+  <!-- Tier 2 -->
+  <rect x="10" y="130" width="860" height="130" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="26" y="154" class="title">Tier 2: IBlockTransform &#8212; per block, dominator tree post-order</text>
+  <text x="26" y="176" class="small">CFG built per BlockContainer; children of the dominator tree are finished first,</text>
+  <text x="26" y="192" class="small">so inner loops / nested ifs exist before the enclosing block is processed</text>
+  <text x="26" y="214" class="mono small">LoopDetection, ConditionDetection, LockTransform, UsingTransform</text>
+  <!-- mini dominator tree -->
+  <circle cx="760" cy="168" r="12" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <circle cx="720" cy="212" r="12" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <circle cx="800" cy="212" r="12" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <circle cx="680" cy="246" r="12" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <line x1="752" y1="178" x2="728" y2="202" stroke="var(--edge)"/>
+  <line x1="768" y1="178" x2="792" y2="202" stroke="var(--edge)"/>
+  <line x1="712" y1="222" x2="688" y2="236" stroke="var(--edge)"/>
+  <text x="760" y="172" text-anchor="middle" class="small">3</text>
+  <text x="720" y="216" text-anchor="middle" class="small">2</text>
+  <text x="800" y="216" text-anchor="middle" class="small">1</text>
+  <text x="680" y="250" text-anchor="middle" class="small">1</text>
+  <text x="742" y="252" class="small">visit order</text>
+
+  <path d="M 440 260 L 440 286" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr4)"/>
+  <text x="452" y="278" class="small">StatementTransform hosts tier 3</text>
+
+  <!-- Tier 3 -->
+  <rect x="10" y="290" width="860" height="120" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="26" y="314" class="title">Tier 3: IStatementTransform &#8212; sliding window inside one block</text>
+  <text x="26" y="336" class="small">pos walks from the last instruction to the first; at each pos all child transforms run;</text>
+  <text x="26" y="352" class="small">a transform may only modify Instructions[pos..]; RequestRerun() repeats a position</text>
+  <!-- window sketch -->
+  <rect x="560" y="322" width="46" height="20" rx="3" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <rect x="612" y="322" width="46" height="20" rx="3" fill="var(--bg)" stroke="var(--box3-stroke)"/>
+  <rect x="664" y="322" width="46" height="20" rx="3" fill="var(--accent)" opacity="0.35" stroke="var(--box3-stroke)"/>
+  <rect x="716" y="322" width="46" height="20" rx="3" fill="var(--accent)" opacity="0.35" stroke="var(--box3-stroke)"/>
+  <rect x="768" y="322" width="46" height="20" rx="3" fill="var(--accent)" opacity="0.35" stroke="var(--box3-stroke)"/>
+  <text x="687" y="316" class="small">pos</text>
+  <path d="M 700 352 L 640 352" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr4)"/>
+  <text x="712" y="356" class="small">window moves left</text>
+  <text x="26" y="392" class="mono small">ILInlining, ExpressionTransforms, TransformAssignment, NullCoalescingTransform, ...</text>
+</svg>
+<figcaption>Figure 4 &#8212; The three-tier driver. Each tier is hosted by a transform of the tier
+above it.</figcaption>
+</figure>
+
+<p>Why the sliding window? Because sugar nests. An object initializer can appear inside a collection
+initializer inside an array initializer; running whole-pass A then whole-pass B would require A to
+handle B's output and vice versa. Interleaving them per statement means each transform can assume
+that everything <em>later in the block</em> is already fully reduced &#8212; the array-initializer
+transform sees one statement per element even when the element contains an object initializer. The
+comment in the pipeline says it directly: &quot;pretty much all transforms that open up new expression
+inlining opportunities belong in this category.&quot; Coordination is via
+<code>StatementTransformContext.RequestRerun()</code>: a transform that changed something upstream
+asks for the position (or a higher one) to be revisited. Inlining runs first in the group precisely
+because it never needs a re-run itself &#8212; everyone else triggers it.</p>
+
+<p>All tiers share <code>ILTransformContext</code>: the function, type system, settings, debug info,
+cancellation token, and the <code>Stepper</code> instrumentation (<a href="#s11">section 11</a>). It
+can also create new <code>ILReader</code>s &#8212; the hook that lets transforms decompile
+<em>other</em> methods, which the state-machine and delegate transforms depend on.</p>
+
+<h3 id="s6-phases">6.2 The pipeline, phase by phase</h3>
+
+<p>The list below is <code>GetILTransforms()</code> verbatim, with the source's own ordering comments,
+grouped into six conceptual phases:</p>
+
+<figure>
+<svg viewBox="0 0 880 460" role="img" aria-label="Phases of the IL transform pipeline">
+  <defs>
+    <marker id="arr5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <rect x="10" y="10" width="420" height="60" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="24" y="34" class="title">1. Dataflow normalization</text>
+  <text x="24" y="54" class="small">simplify CFG, split variables, inline single-use stack slots</text>
+
+  <rect x="10" y="86" width="420" height="60" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="24" y="110" class="title">2. Regions &amp; state machines</text>
+  <text x="24" y="130" class="small">fixed regions; async/iterator state machines undone</text>
+
+  <rect x="10" y="162" width="420" height="60" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="24" y="186" class="title">3. Early expression cleanup &amp; switches</text>
+  <text x="24" y="206" class="small">dead init removal, dynamic call sites, switch detection</text>
+
+  <rect x="10" y="238" width="420" height="60" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="24" y="262" class="title">4. Loop detection</text>
+  <text x="24" y="282" class="small">natural loops via dominance; exit points; pattern matching</text>
+
+  <rect x="10" y="314" width="420" height="60" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="24" y="338" class="title">5. Conditions &amp; statement-level sugar</text>
+  <text x="24" y="358" class="small">if/else, lock, using; the interleaved sugar transforms</text>
+
+  <rect x="10" y="390" width="420" height="60" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="24" y="414" class="title">6. Final structuring</text>
+  <text x="24" y="434" class="small">lambdas, closures, for/while/do, nesting reduction, names</text>
+
+  <path d="M 220 70 L 220 84" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr5)"/>
+  <path d="M 220 146 L 220 160" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr5)"/>
+  <path d="M 220 222 L 220 236" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr5)"/>
+  <path d="M 220 298 L 220 312" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr5)"/>
+  <path d="M 220 374 L 220 388" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+  <!-- right-hand annotations -->
+  <text x="470" y="34" class="small">Greet: S_0 still present (two stores block inlining)</text>
+  <text x="470" y="110" class="small">Greet: no state machine; transforms no-op</text>
+  <text x="470" y="186" class="small">robustness: analysis failure = skip, keep gotos</text>
+  <text x="470" y="262" class="small">post-order: inner loops first</text>
+  <text x="470" y="338" class="small">Greet: if/else built, then folded into a ternary,</text>
+  <text x="470" y="354" class="small">then inlined into the WriteLine call</text>
+  <text x="470" y="414" class="small">Greet: nothing left to do but naming</text>
+</svg>
+<figcaption>Figure 5 &#8212; The six phases of the IL pipeline, with the running example's progress
+on the right.</figcaption>
+</figure>
+
+<h4>Phase 1 &#8212; dataflow normalization</h4>
+
+<pre><code>new ControlFlowSimplification(),
+<span class="cm">// Run SplitVariables only after ControlFlowSimplification duplicates return blocks,</span>
+<span class="cm">// so that the return variable is split and can be inlined.</span>
+new SplitVariables(),
+new ILInlining(),
+new InlineReturnTransform(), <span class="cm">// must run before DetectPinnedRegions</span>
+new RemoveInfeasiblePathTransform(),</code></pre>
+
+<p><strong><code>ControlFlowSimplification</code></strong>
+(<span class="filecite">IL/ControlFlow/ControlFlowSimplification.cs</span>) removes <code>nop</code>s,
+collapses branch chains, turns branches-to-return-blocks into returns, and merges blocks &#8212;
+mostly undoing debug-build codegen. <strong><code>SplitVariables</code></strong>
+(<span class="filecite">IL/Transforms/SplitVariables.cs</span>) performs live-range splitting: a local
+that the compiler reused for several independent purposes becomes several variables, one per
+independent def-use group (it bails conservatively whenever an address-of use is not fully
+understood). Splitting matters because it manufactures the &quot;one store, one load&quot; property
+that inlining needs. <strong><code>ILInlining</code></strong>
+(<span class="filecite">IL/Transforms/ILInlining.cs</span>) is then the workhorse of the entire
+pipeline: it moves the value of <code>stloc v(expr)</code> into the (unique) place where
+<code>v</code> is used, reversing the reader's conservative flushes. The gate is strict &#8212;
+exactly one store and exactly one use &#8212; and the search
+(<code>FindLoadInNext</code>) walks the next statement in evaluation order, answering
+<em>Found</em> (inline), <em>Stop</em> (a side effect or flag conflict blocks reordering), or
+<em>Continue</em>. Inlining runs again and again throughout the pipeline; nearly every other
+transform exists to unlock more of it.</p>
+
+<h4>Phase 2 &#8212; regions and state machines</h4>
+
+<pre><code>new DetectPinnedRegions(), <span class="cm">// must run after inlining but before non-critical control flow transforms</span>
+new YieldReturnDecompiler(), <span class="cm">// must run after inlining but before loop detection</span>
+new AsyncAwaitDecompiler(),  <span class="cm">// must run after inlining but before loop detection</span>
+new DetectCatchWhenConditionBlocks(), <span class="cm">// must run after inlining but before loop detection</span>
+new DetectExitPoints(),</code></pre>
+
+<p><strong><code>DetectPinnedRegions</code></strong> rebuilds <code>fixed</code> statements from
+pinned locals &#8212; it must run before any non-essential structure exists because pin lifetimes are
+a correctness matter, not cosmetics. The two state-machine decompilers get their own deep dive in
+<a href="#s6-statemachines">section 6.3</a>; the key scheduling fact is that both must run before
+loop detection &#8212; a state machine's dispatch loop must be dissolved before anyone mistakes it
+for a user loop. <strong><code>DetectCatchWhenConditionBlocks</code></strong> folds the filter-block
+pattern back into <code>catch&nbsp;&hellip;&nbsp;when&nbsp;(&hellip;)</code>, and
+<strong><code>DetectExitPoints</code></strong> rewrites branches that merely leave a container into
+explicit <code>leave</code> instructions, so later structure &quot;falls out of&quot; blocks instead
+of needing gotos.</p>
+
+<h4>Phase 3 &#8212; early expression cleanup and switches</h4>
+
+<pre><code>new LdLocaDupInitObjTransform(),
+new EarlyExpressionTransforms(),
+new SplitVariables(), <span class="cm">// split variables once again, because the stobj(ldloca V, ...) may open up new replacements</span>
+new RemoveDeadVariableInit(), <span class="cm">// must run after EarlyExpressionTransforms</span>
+new ControlFlowSimplification(), <span class="cm">// split variables may enable new branch to leave inlining</span>
+new DynamicCallSiteTransform(),
+new SwitchDetection(),
+new SwitchOnStringTransform(),
+new SwitchOnNullableTransform(),
+new SplitVariables(), <span class="cm">// split variables once again, because SwitchOnNullableTransform eliminates ldloca</span>
+new IntroduceRefReadOnlyModifierOnLocals(),</code></pre>
+
+<p>The repeated <code>SplitVariables</code>/<code>ControlFlowSimplification</code> entries illustrate
+the pipeline's rhythm: a structural transform eliminates an address-taken use, which lets splitting
+find more independent groups, which enables more inlining. <code>RemoveDeadVariableInit</code> uses
+definite-assignment analysis (<a href="#s6-flow">section 6.6</a>) to drop the compiler's defensive
+zero-initializations. <code>DynamicCallSiteTransform</code> collapses the <code>CallSite</code>
+caching boilerplate of <code>dynamic</code> back into first-class dynamic operations. The three switch
+transforms rebuild <code>SwitchInstruction</code>s from compare chains, from string-hash dispatch
+(including the dictionary form Roslyn emits for many labels), and from <code>Nullable&lt;T&gt;</code>
+switches respectively.</p>
+
+<h4>Phase 4 &#8212; loop detection</h4>
+
+<pre><code>new BlockILTransform { <span class="cm">// per-block transforms</span>
+    PostOrderTransforms = { new LoopDetection() }
+},
+new DetectExitPoints(), <span class="cm">// re-run after loop detection</span>
+new PatternMatchingTransform(), <span class="cm">// must run after LoopDetection and before ConditionDetection</span></code></pre>
+
+<p>Loop detection deliberately sits in its own <code>BlockILTransform</code>, before any
+<code>if</code> structure exists &#8212; the source comments that detecting loops after ifs
+&quot;might make our life introducing good exit points more difficult.&quot; Details in
+<a href="#s6-loops">section 6.4</a>. <code>PatternMatchingTransform</code> reconstructs C# type and
+value patterns (<code>x is string s</code>) from <code>isinst</code>/null-check shapes, and must see
+raw conditional branches &#8212; hence &quot;before ConditionDetection.&quot;</p>
+
+<h4>Phase 5 &#8212; conditions and statement-level sugar</h4>
+
+<pre><code>new BlockILTransform { <span class="cm">// per-block transforms</span>
+    PostOrderTransforms = {
+        new ConditionDetection(),
+        new LockTransform(),
+        new UsingTransform(),
+        <span class="cm">// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform</span>
+        <span class="cm">// and must run before NullCoalescingTransform</span>
+        new CachedDelegateInitialization(),
+        new StatementTransform(
+            <span class="cm">// per-block transforms that depend on each other, and thus need to</span>
+            <span class="cm">// run interleaved (statement by statement).</span>
+            <span class="cm">// Pretty much all transforms that open up new expression inlining</span>
+            <span class="cm">// opportunities belong in this category.</span>
+            new ILInlining() { options = InliningOptions.AllowInliningOfLdloca },
+            <span class="cm">// Inlining must be first, because it doesn't trigger re-runs.</span>
+            <span class="cm">// Any other transform that opens up new inlining opportunities should call RequestRerun().</span>
+            new ExpressionTransforms(),
+            new DynamicIsEventAssignmentTransform(),
+            new TransformAssignment(), <span class="cm">// inline and compound assignments</span>
+            new NullCoalescingTransform(),
+            new NullableLiftingStatementTransform(),
+            new NullPropagationStatementTransform(),
+            new TransformArrayInitializers(),
+            new TransformCollectionAndObjectInitializers(),
+            new TransformExpressionTrees(),
+            new IndexRangeTransform(),
+            new DeconstructionTransform(),
+            new NamedArgumentTransform(),
+            new RemoveUnconstrainedGenericReferenceTypeCheck(),
+            new UserDefinedLogicTransform(),
+            new InterpolatedStringTransform()
+        ),
+    }
+},</code></pre>
+
+<p>This is where most of C# reappears; <a href="#s6-sugar">section 6.5</a> catalogs the group.</p>
+
+<h4>Phase 6 &#8212; final structuring</h4>
+
+<pre><code>new ProxyCallReplacer(),
+new FixRemainingIncrements(),
+new CopyPropagation(),
+new DelegateConstruction(),
+new LocalFunctionDecompiler(),
+new TransformDisplayClassUsage(),
+new HighLevelLoopTransform(),
+new ReduceNestingTransform(),
+new RemoveRedundantReturn(),
+new IntroduceDynamicTypeOnLocals(),
+new IntroduceNativeIntTypeOnLocals(),
+new AssignVariableNames(),</code></pre>
+
+<p>The lambda cluster comes first: <strong><code>DelegateConstruction</code></strong> turns
+<code>new SomeDelegate(target)</code> over a compiler-generated method into a nested
+<code>ILFunction</code> (reading the target's IL via the context, as described in section 5.4), and
+<strong><code>LocalFunctionDecompiler</code></strong> does the same for C#&nbsp;7 local functions.
+<strong><code>TransformDisplayClassUsage</code></strong> then erases closures: a display class whose
+instance is default-constructed, never escapes, and is never an invocation target (guaranteed, since
+the lambdas over it were already rewritten) is scalar-replaced &#8212; its fields become plain locals
+of the enclosing function, recorded as captured variables of the nested ones.
+<strong><code>HighLevelLoopTransform</code></strong> classifies the loop containers built in phase 4
+into <code>while</code>, <code>do&hellip;while</code>, and <code>for</code>.
+<strong><code>ReduceNestingTransform</code></strong> restores source-like shape by duplicating
+keyword exits (<code>return</code>/<code>break</code>/<code>continue</code>) so a large
+<code>else</code> block can be flattened to statements following the <code>if</code>; and
+<strong><code>AssignVariableNames</code></strong> gives every surviving variable a readable name
+(PDB names when available, type-derived otherwise).</p>
+
+<h3 id="s6-statemachines">6.3 Deep dive: async and iterator state machines</h3>
+
+<p>Nothing the C# compiler does is more destructive to structure than the state-machine rewrites for
+<code>yield return</code> and <code>async</code>/<code>await</code>. The user's method body is moved
+into a <code>MoveNext()</code> method on a compiler-generated type; locals that live across
+suspension points become fields; control flow becomes a dispatch on a state field. Undoing this is
+the job of <code>YieldReturnDecompiler</code> and <code>AsyncAwaitDecompiler</code>
+(<span class="filecite">IL/ControlFlow/</span>), and they are the reason the transform context can
+spawn new IL readers:</p>
+
+<figure>
+<svg viewBox="0 0 880 470" role="img" aria-label="Async state machine splicing">
+  <defs>
+    <marker id="arr6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <!-- user method -->
+  <rect x="10" y="30" width="330" height="130" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="26" y="54" class="mono title">async Task M()  (the stub)</text>
+  <text x="26" y="78" class="mono small">sm.&lt;&gt;t__builder = Create();</text>
+  <text x="26" y="96" class="mono small">sm.&lt;&gt;1__state = -1;</text>
+  <text x="26" y="114" class="mono small">sm.&lt;&gt;t__builder.Start(ref sm);</text>
+  <text x="26" y="132" class="mono small">return sm.&lt;&gt;t__builder.Task;</text>
+
+  <!-- generated type -->
+  <rect x="540" y="10" width="330" height="170" rx="8" fill="var(--box5-bg)" stroke="var(--box5-stroke)"/>
+  <text x="556" y="34" class="mono title">struct &lt;M&gt;d__0 (compiler-generated)</text>
+  <text x="556" y="58" class="mono small">int &lt;&gt;1__state;</text>
+  <text x="556" y="76" class="mono small">AsyncTaskMethodBuilder &lt;&gt;t__builder;</text>
+  <text x="556" y="94" class="mono small">TaskAwaiter &lt;&gt;u__1;  + hoisted locals</text>
+  <text x="556" y="118" class="mono">void MoveNext() {</text>
+  <text x="572" y="136" class="mono small">switch (state) ... awaiter.GetResult() ...</text>
+  <text x="556" y="154" class="mono">}</text>
+
+  <line x1="340" y1="90" x2="538" y2="90" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr6)"/>
+  <text x="440" y="80" text-anchor="middle" class="small">(1) creation pattern</text>
+  <text x="440" y="106" text-anchor="middle" class="small">matched</text>
+
+  <!-- analysis pipeline -->
+  <rect x="470" y="216" width="400" height="150" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="486" y="240" class="title">AsyncAwaitDecompiler analysis</text>
+  <text x="486" y="264" class="small">(2) ILReader on MoveNext + EarlyILTransforms only</text>
+  <text x="486" y="284" class="small">(3) StateRangeAnalysis: which blocks belong to which state</text>
+  <text x="486" y="304" class="small">(4) DetectAwaitPattern: awaiter save / IsCompleted /</text>
+  <text x="502" y="320" class="small">AwaitUnsafeOnCompleted / GetResult per suspension point</text>
+  <text x="486" y="344" class="small">(5) TranslateFieldsToLocalAccess: hoisted fields become locals</text>
+
+  <path d="M 705 180 L 705 214" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr6)"/>
+
+  <!-- result -->
+  <rect x="10" y="390" width="620" height="66" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="26" y="414" class="mono title">M's ILFunction, body spliced back in</text>
+  <text x="26" y="436" class="mono small">await expressions in place; EarlyILTransforms re-run; AwaitInCatch/FinallyTransform</text>
+
+  <path d="M 470 340 L 320 340 L 320 388" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr6)"/>
+  <text x="392" y="332" text-anchor="middle" class="small">(6) InlineBodyOfMoveNext</text>
+  <path d="M 100 160 L 100 388" fill="none" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#arr6)"/>
+  <text x="108" y="280" class="small">stub replaced</text>
+</svg>
+<figcaption>Figure 6 &#8212; The async decompiler reads the generated <code>MoveNext</code> out of
+band, analyzes it symbolically, and splices the recovered body back into the user method.</figcaption>
+</figure>
+
+<p>Both decompilers share the same skeleton. First the <em>creation pattern</em> in the visible
+method is matched (which generated type, which state field, which builder/current field). Then the
+generated <code>MoveNext</code> is read with a fresh <code>ILReader</code> and only
+<code>EarlyILTransforms</code> (simplification + splitting + inlining) &#8212; a mini-pipeline that
+normalizes the body without building structure that would get in the way. The analysis core is
+<strong><code>StateRangeAnalysis</code></strong>, which symbolically executes the dispatch code to
+compute, for each block, the set of state values that can reach it (as <code>LongSet</code> ranges),
+and <strong><code>SymbolicExecution</code></strong>, a small abstract interpreter over values like
+&quot;the state field&quot;, &quot;this&quot;, or &quot;integer constant.&quot; For iterators this
+also recovers the mapping from states to enclosing <code>try</code> regions so
+<code>yield return</code> inside <code>try&hellip;finally</code> reconstructs correctly; for async,
+<code>DetectAwaitPattern</code> recognizes each suspension point's awaiter dance and replaces it with
+an <code>await</code> ILAst instruction. Finally field accesses are translated back to locals, the
+body replaces the stub, and control-flow cleanup re-runs over the newly created gotos
+(<code>AwaitInCatchTransform</code>/<code>AwaitInFinallyTransform</code> handle the especially gnarly
+C#&nbsp;6 await-in-catch codegen).</p>
+
+<p>The robustness policy is explicit here: every &quot;this is not what the C# compiler emits&quot;
+discovery throws <code>SymbolicAnalysisFailedException</code>, which the transform catches, leaving
+the method as an ordinary (if odd-looking) method that calls <code>MoveNext</code>. Obfuscated state
+machines degrade to readable-but-literal code instead of wrong code.</p>
+
+<h3 id="s6-loops">6.4 Deep dive: loops and conditions</h3>
+
+<p><strong>Loop detection</strong> (<span class="filecite">IL/ControlFlow/LoopDetection.cs</span>) is
+classic compiler theory run in reverse. Dominance is computed by the Cooper&ndash;Harvey&ndash;Kennedy
+&quot;simple, fast dominance&quot; algorithm (<span class="filecite">FlowAnalysis/Dominance.cs</span>).
+An edge <code>t&nbsp;&rarr;&nbsp;h</code> is a back edge iff <code>h</code> dominates <code>t</code>;
+the natural loop of that back edge is the smallest block set containing it with no external
+predecessors except the header's. Natural loops sharing a header are unioned, extended to include
+nested-loop blocks, then wrapped in a new <code>BlockContainer</code> of kind <code>Loop</code>.
+Because the driver visits the dominator tree post-order, inner loops always exist before the outer
+loop is formed. At this point every loop is still a <code>while (true)</code> with
+<code>leave</code>/<code>br</code> exits &#8212; classifying it as
+<code>while</code>/<code>do</code>/<code>for</code> happens much later
+(<code>HighLevelLoopTransform</code>), after conditions and sugar have cleaned up the loop's guts.</p>
+
+<p><strong><code>ConditionDetection</code></strong>
+(<span class="filecite">IL/ControlFlow/ConditionDetection.cs</span>) then builds
+<code>if</code>/<code>else</code>: for a block ending in <code>if (c) br A; br B</code>, blocks
+dominated by the current one are folded into the <code>IfInstruction</code>'s then/else children
+(post-order again guarantees they are already fully structured inside). The output intentionally
+prefers the source's IL order, so decompiled conditions usually read in the order the original code
+was written.</p>
+
+<p>In the running example, <code>ConditionDetection</code> turns the four blocks of Figure 2 into a
+single block:</p>
+
+<pre><code>if (ldarg polite) {
+    stloc S_0(ldstr "Good day!")
+} else {
+    stloc S_0(ldstr "Hi.")
+}
+call WriteLine(ldloc S_0)
+leave IL_0000</code></pre>
+
+<p>Then, inside the same phase-5 pass, the statement transforms finish the job:
+<code>ExpressionTransforms.HandleConditionalOperator</code> (step name &quot;conditional
+operator&quot;) recognizes an if/else whose two arms store to the same variable and fuses them into
+<code>stloc S_0(if (polite) &hellip; else &hellip;)</code> &#8212; the ILAst form of a ternary &#8212;
+and <code>ILInlining</code>, now seeing a single store and single load, inlines it into the call:</p>
+
+<pre><code>call WriteLine(if (ldarg polite) ldstr "Good day!" else ldstr "Hi.")
+leave IL_0000</code></pre>
+
+<p>The stack slot is gone, and the ILAst is now shaped exactly like the original source. Note the
+division of labor this example demonstrates: a <em>control-flow</em> transform created the structure,
+an <em>expression</em> transform recognized the idiom, and <em>inlining</em> stitched the result into
+its consumer &#8212; three small transforms, each trivial in isolation.</p>
+
+<h3 id="s6-sugar">6.5 Deep dive: where C# sugar is recognized</h3>
+
+<p>The interleaved statement group in phase 5, plus a few block transforms around it, is the map of
+&quot;which construct gets detected where&quot;:</p>
+
+<table>
+<tr><th>Transform</th><th>Reconstructs</th><th>Settings gate</th></tr>
+<tr><td><code>LockTransform</code></td><td><code>lock (x) { }</code> from <code>Monitor.Enter/Exit</code> try/finally</td><td><code>LockStatement</code></td></tr>
+<tr><td><code>UsingTransform</code></td><td><code>using</code> statements from <code>Dispose()</code> try/finally</td><td><code>UsingStatement</code></td></tr>
+<tr><td><code>CachedDelegateInitialization</code></td><td>removes <code>if (cache == null) cache = new D(...)</code></td><td><code>AnonymousMethods</code></td></tr>
+<tr><td><code>ExpressionTransforms</code></td><td>peephole cleanup; the conditional (ternary) operator; entry point into nullable lifting and null propagation</td><td>&#8212;</td></tr>
+<tr><td><code>TransformAssignment</code></td><td>compound assignment (<code>x += y</code>), increments (<code>x++</code>), inline assignment (<code>a = b = c</code>)</td><td><code>MakeAssignmentExpressions</code></td></tr>
+<tr><td><code>NullCoalescingTransform</code></td><td><code>??</code> for reference types</td><td><code>NullCoalescing</code>-related</td></tr>
+<tr><td><code>NullableLiftingStatementTransform</code></td><td>lifted operators over <code>Nullable&lt;T&gt;</code>, value-type <code>??</code></td><td><code>LiftNullables</code></td></tr>
+<tr><td><code>NullPropagationStatementTransform</code></td><td><code>?.</code> from <code>v != null ? v.M() : null</code></td><td><code>NullPropagation</code></td></tr>
+<tr><td><code>TransformArrayInitializers</code></td><td>array and <code>stackalloc</code> initializers (incl. the <code>InitializeArray</code> data-blob form)</td><td><code>ArrayInitializers</code></td></tr>
+<tr><td><code>TransformCollectionAndObjectInitializers</code></td><td><code>new T { ... }</code> object/collection initializers</td><td><code>ObjectOrCollectionInitializers</code></td></tr>
+<tr><td><code>TransformExpressionTrees</code></td><td>lambdas from <code>System.Linq.Expressions</code> factory-call trees</td><td><code>ExpressionTrees</code></td></tr>
+<tr><td><code>IndexRangeTransform</code></td><td><code>^</code> and <code>..</code> (System.Index/Range access)</td><td><code>Ranges</code></td></tr>
+<tr><td><code>DeconstructionTransform</code></td><td><code>(a, b) = ...</code> deconstruction</td><td><code>Deconstruction</code></td></tr>
+<tr><td><code>NamedArgumentTransform</code></td><td>named arguments (to preserve evaluation order without temps)</td><td><code>NamedArguments</code></td></tr>
+<tr><td><code>UserDefinedLogicTransform</code></td><td>user-defined <code>&amp;&amp;</code>/<code>||</code> via <code>op_True</code>/<code>op_BitwiseAnd</code></td><td>&#8212;</td></tr>
+<tr><td><code>InterpolatedStringTransform</code></td><td><code>$&quot;...&quot;</code> from <code>DefaultInterpolatedStringHandler</code> calls</td><td><code>StringInterpolation</code></td></tr>
+</table>
+
+<p>Not everything is done at the IL level: notably, <code>string.Concat</code> calls become the
+<code>+</code> operator, and <code>foreach</code>/<code>for</code>/query expressions are recognized
+only in the C# AST stage (<a href="#s8">section 8</a>) where operator syntax and statement patterns
+are directly expressible. As a rule of thumb: anything that changes <em>data flow or control
+flow</em> is an IL transform; anything that is purely <em>surface syntax</em> is an AST transform.</p>
+
+<h3 id="s6-flow">6.6 Supporting analyses and settings</h3>
+
+<p>The <code>FlowAnalysis/</code> namespace supplies the machinery the structural transforms lean on:
+<code>ControlFlowNode</code>/dominator computation (used by loop and switch detection and the block
+driver), and a generic forward dataflow framework, <code>DataFlowVisitor&lt;State&gt;</code>, whose
+state type must form a join-semilattice with finite height (there is a <code>MeetWith</code> for
+try/finally merging, too). Its two main instantiations are
+<code>DefiniteAssignmentVisitor</code> (&quot;is there a path from the entry that does not write this
+variable?&quot; &#8212; powering <code>RemoveDeadVariableInit</code>) and
+<code>ReachingDefinitionsVisitor</code> (which stores can reach a load &#8212; powering the
+correctness checks in inlining, copy propagation, and variable splitting via the related
+<code>GroupStores</code> analysis).</p>
+
+<p>Finally, settings. The transform <em>list</em> is fixed; behavior is gated inside each transform by
+<code>DecompilerSettings</code> flags, and <code>SetLanguageVersion</code> flips those flags in
+blocks: targeting C#&nbsp;4 switches off <code>asyncAwait</code>; targeting C#&nbsp;7 leaves
+<code>patternMatching</code> and <code>localFunctions</code> off; and so on up through the current
+C#&nbsp;15 features (e.g. <code>closedHierarchies</code>). The inverse,
+<code>GetMinimumRequiredVersion()</code>, reports the newest language feature actually used &#8212;
+which is how the UI can tell you what compiler a decompiled assembly needs. A disabled feature does
+not merely change printing: the pattern is simply never folded, so the underlying mechanism (the
+state machine, the display class) stays visible &#8212; decompiling with old settings is the
+supported way to <em>study</em> the compiler's lowering of new features.</p>
+
+<h2 id="s7">7. Back end: translating ILAst to C#</h2>
+
+<p>By the end of the IL pipeline, the ILAst is semantically C#-shaped but still an ILAst. The back end
+converts it into an actual C# syntax tree. Three cooperating classes do the work
+(<span class="filecite">CSharp/StatementBuilder.cs, ExpressionBuilder.cs, CallBuilder.cs</span>):
+<code>StatementBuilder</code> visits statement-level instructions (blocks, loops, try/catch, switch,
+stores) and produces C# statements; it owns an <code>ExpressionBuilder</code>, which visits
+value-producing instructions and produces C# expressions; call instructions are handed to
+<code>CallBuilder</code>, which is complicated enough to be its own type. Both builders are
+<code>ILVisitor</code>s with one method per ILAst opcode.</p>
+
+<h3>7.1 TranslatedExpression and the dual-annotation invariant</h3>
+
+<p><code>ExpressionBuilder</code> never returns a bare syntax node. Its result type,
+<code>TranslatedExpression</code> (<span class="filecite">CSharp/TranslatedExpression.cs</span>),
+pairs the expression with its <code>ResolveResult</code> &#8212; the semantic description of what the
+expression <em>means</em>: its type, its constant value if any, the member it binds to. Alongside it,
+annotations attach the originating <code>ILInstruction</code>s. The class documentation states the
+post-condition as a contract: every translated expression carries both annotations, and evaluating
+the C# expression must produce the same side effects and a similar value as the IL instruction it
+came from. Helper structs in <span class="filecite">CSharp/Annotations.cs</span>
+(<code>ExpressionWithResolveResult</code>, <code>ExpressionWithILInstruction</code>) form a small
+type-state machine, so <em>forgetting</em> an annotation is a compile error in the decompiler itself,
+not a latent bug. These annotations are not just bookkeeping: the resolve results feed every
+subsequent correctness check, and the IL instructions carry the offsets that become sequence points
+(<a href="#s9">section 9</a>) and navigation metadata.</p>
+
+<h3>7.2 ConvertTo: casts only when needed</h3>
+
+<p>IL is looser than C#: the evaluation stack knows <code>I4</code> where C# distinguishes
+<code>int</code>, <code>short</code>, <code>bool</code>, and enums; IL conversions are explicit
+opcodes where C# has implicit conversions and inference. The bridging method is
+<code>TranslatedExpression.ConvertTo(targetType, &hellip;)</code>, whose documented post-condition is
+that the result evaluates to the same value the IL <code>conv</code> instruction would produce. Its
+governing principle: <strong>emit nothing unless necessary</strong>. If the current type already
+matches (ignoring nullability and tuple-name differences), the expression is returned unchanged; with
+implicit conversions allowed, it will even strip a cast that turns out to be redundant. When a
+conversion <em>is</em> needed, it asks the resolver (<code>CSharpResolver.ResolveCast</code>) what
+that cast means: constant-foldable casts are folded, impossible direct casts are routed through
+<code>object</code>, and checked/unchecked context is recorded as an annotation for the
+<code>AddCheckedBlocks</code> AST transform to place <code>checked{}</code> regions later. Special
+cases abound &#8212; bool/integer bridging, native integers, enum/pointer conversions, managed
+references via <code>Unsafe.As</code> &#8212; but they all flow through the same
+resolver-consultation pattern.</p>
+
+<h3>7.3 The round-trip correctness model</h3>
+
+<p>Here is the back end's headline design decision. Printing a call is easy; printing a call that
+<em>recompiles to the same call</em> is not, because C# will run type inference, overload resolution,
+extension-method lookup and implicit conversions over whatever the decompiler writes. The defense is
+mechanical: the decompiler contains a complete C# semantic engine
+(<span class="filecite">CSharp/Resolver/</span> &#8212; <code>CSharpResolver</code>,
+<code>OverloadResolution</code> implementing the C# spec's algorithm, <code>MemberLookup</code>,
+<code>CSharpConversions</code>, <code>TypeInference</code>; a lineage inherited from NRefactory),
+and <code>CallBuilder</code> uses it as an oracle: after building a candidate call syntax, it
+re-resolves that syntax and checks whether it binds to exactly the member the IL called. If not, it
+repairs the syntax incrementally &#8212; least invasive fix first &#8212; and re-checks:</p>
+
+<figure>
+<svg viewBox="0 0 880 380" role="img" aria-label="CallBuilder round-trip repair loop">
+  <defs>
+    <marker id="arr7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <rect x="20" y="20" width="260" height="56" rx="8" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="150" y="44" text-anchor="middle" class="title">Build minimal call syntax</text>
+  <text x="150" y="62" text-anchor="middle" class="small">arguments ConvertTo parameter types</text>
+
+  <rect x="20" y="130" width="260" height="56" rx="8" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="150" y="154" text-anchor="middle" class="title">Re-resolve the syntax</text>
+  <text x="150" y="172" text-anchor="middle" class="mono small">OverloadResolution (spec 7.5)</text>
+
+  <path d="M 150 76 L 150 128" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr7)"/>
+
+  <!-- decision -->
+  <polygon points="150,220 265,268 150,316 35,268" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="150" y="262" text-anchor="middle" class="small">binds to the original</text>
+  <text x="150" y="280" text-anchor="middle" class="small">member &amp; form?</text>
+  <path d="M 150 186 L 150 218" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr7)"/>
+
+  <rect x="380" y="240" width="150" height="56" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="455" y="273" text-anchor="middle" class="title">Done</text>
+  <path d="M 265 268 L 378 268" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr7)"/>
+  <text x="315" y="260" text-anchor="middle" class="small">yes</text>
+
+  <!-- escalation ladder -->
+  <rect x="480" y="20" width="380" height="180" rx="8" fill="var(--box5-bg)" stroke="var(--box5-stroke)"/>
+  <text x="496" y="44" class="title">Apply the next least-invasive fix</text>
+  <text x="496" y="68" class="small">1. drop cosmetic named/optional-argument forms</text>
+  <text x="496" y="88" class="small">2. insert explicit casts on arguments</text>
+  <text x="496" y="108" class="small">3. qualify the target (this. / TypeName.)</text>
+  <text x="496" y="128" class="small">4. cast the target to the declaring type</text>
+  <text x="496" y="148" class="small">5. add explicit type arguments</text>
+  <text x="496" y="168" class="small">6. enforce explicit "in" modifiers</text>
+  <text x="496" y="190" class="small">exhausted: emit as-is (rare, pathological IL)</text>
+
+  <path d="M 150 316 L 150 348 L 670 348 L 670 202" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr7)"/>
+  <text x="180" y="340" class="small">no</text>
+  <path d="M 480 110 L 300 110 L 300 158 L 282 158" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr7)"/>
+  <text x="372" y="102" text-anchor="middle" class="small">retry</text>
+</svg>
+<figcaption>Figure 7 &#8212; The repair loop in <code>CallBuilder</code>
+(<code>GetRequiredTransformationsForCall</code>, with <code>IsUnambiguousCall</code> as the oracle).
+Parallel loops exist for property/indexer accessors and method-group references.</figcaption>
+</figure>
+
+<p>This is why decompiled code has casts exactly where they matter: a cast to select an overload, a
+<code>(IDisposable)</code> before a struct's explicit interface call, an explicit type argument where
+inference would pick differently &#8212; and nowhere else. It also explains an easily-missed cost
+profile: the decompiler runs real overload resolution for essentially every call it prints.</p>
+
+<h3>7.4 CallBuilder's other duties</h3>
+
+<p>Beyond the repair loop, <code>CallBuilder</code> decides the surface form of every invocation:
+collapsing accessor calls into property/indexer syntax, recognizing operator methods
+(<code>op_Addition</code> et al.) so they can later become operators, expanding or preserving
+<code>params</code> form, omitting trailing arguments that match parameter defaults (gated by
+<code>settings.OptionalArguments</code>), building delegate constructions and method-group
+references, and rendering tuple construction as tuple literals. IL's <code>tail.</code> prefix, which
+has no C# syntax, is surfaced honestly as a <code>/*tail.*/</code> comment.</p>
+
+<p>For the running example, <code>StatementBuilder</code> visits the <code>call</code> statement,
+<code>CallBuilder</code> resolves <code>Console.WriteLine</code> with a
+<code>ConditionalExpression</code> argument of type <code>string</code>, confirms via overload
+resolution that <code>WriteLine(string)</code> is selected unambiguously &#8212; no casts needed
+&#8212; and the tree for <code>Console.WriteLine(polite ? "Good day!" : "Hi.");</code> is complete.</p>
+
+<h2 id="s8">8. The C# AST and its transforms</h2>
+
+<h3>8.1 The syntax tree</h3>
+
+<p>The C# tree (<span class="filecite">CSharp/Syntax/</span>, rooted at <code>SyntaxTree</code>) uses
+the same architectural ideas as the ILAst: strict tree, typed slots, invariant checks after every
+transform. The mechanical per-node code &#8212; visitor dispatch, structural pattern matching
+(<code>DoMatch</code>), slot metadata, cloning &#8212; is emitted by a Roslyn source generator
+(<span class="filecite">ICSharpCode.Decompiler.Generators/DecompilerSyntaxTreeGenerator.cs</span>)
+from attributes on partial node classes; the ILAst uses a T4 template, the C# AST a source generator,
+but the philosophy is identical. One deliberate omission defines the design: <strong>nodes do not
+know operator precedence</strong>. The tree is pure structure, so transforms can rearrange it without
+ever reasoning about parentheses &#8212; those are reconstructed at output time
+(<a href="#s9">section 9</a>).</p>
+
+<p>Semantic linkage is again by annotation: every node can carry its <code>ResolveResult</code> /
+<code>ISymbol</code>, its <code>ILInstruction</code>s, and its <code>ILVariable</code>
+(<span class="filecite">CSharp/Annotations.cs</span>; accessors like <code>GetSymbol()</code>,
+<code>GetResolveResult()</code>). Purpose-built annotations mark recognized constructs for later
+passes &#8212; e.g. <code>ForeachAnnotation</code> ties the GetEnumerator/MoveNext/Current calls to a
+loop so <code>PatternStatementTransform</code> can rebuild <code>foreach</code>. Declarations and
+signatures, as opposed to bodies, are produced from type-system entities by
+<code>TypeSystemAstBuilder</code> (<span class="filecite">CSharp/Syntax/TypeSystemAstBuilder.cs</span>)
+&#8212; the same class that renders types everywhere in the output.</p>
+
+<h3>8.2 The AST transform pipeline</h3>
+
+<p><code>GetAstTransforms()</code> (<span class="filecite">CSharp/CSharpDecompiler.cs</span>), again
+verbatim with its ordering comments:</p>
+
+<pre><code>new PatternStatementTransform(),
+new ReplaceMethodCallsWithOperators(), <span class="cm">// must run before DeclareVariables.EnsureExpressionStatementsAreValid</span>
+new IntroduceUnsafeModifier(),
+new AddCheckedBlocks(),
+new DeclareVariables(), <span class="cm">// should run after most transforms that modify statements</span>
+new TransformFieldAndConstructorInitializers(), <span class="cm">// must run after DeclareVariables</span>
+new PrettifyAssignments(), <span class="cm">// must run after DeclareVariables</span>
+new IntroduceUsingDeclarations(),
+new IntroduceExtensionMethods(), <span class="cm">// must run after IntroduceUsingDeclarations</span>
+new IntroduceQueryExpressions(), <span class="cm">// must run after IntroduceExtensionMethods</span>
+new CombineQueryExpressions(),
+new NormalizeBlockStatements(),
+new FlattenSwitchBlocks(),
+new FixNameCollisions(),
+new AddXmlDocumentationTransform(),</code></pre>
+
+<p>In reading order:</p>
+
+<ul>
+<li><strong><code>PatternStatementTransform</code></strong> is the AST-level counterpart of the IL
+sugar transforms: it rebuilds <code>foreach</code> (from enumerator try/finally patterns, guided by
+<code>ForeachAnnotation</code>), <code>for</code> loops, automatic properties and events, and other
+statement idioms that are easier to see once real C# statements exist.</li>
+<li><strong><code>ReplaceMethodCallsWithOperators</code></strong> turns surviving operator-method
+calls into operators, <code>string.Concat</code> into <code>+</code>,
+<code>Type.GetTypeFromHandle(ldtoken&nbsp;&hellip;)</code> into <code>typeof</code>, and delegate
+<code>Combine</code>/<code>Remove</code> into <code>+=</code>/<code>-=</code>.</li>
+<li><strong><code>IntroduceUnsafeModifier</code></strong> and <strong><code>AddCheckedBlocks</code></strong>
+place <code>unsafe</code> modifiers and minimal-scope <code>checked</code>/<code>unchecked</code>
+blocks, consuming the annotations planted by <code>ConvertTo</code> and the arithmetic visitors.</li>
+<li><strong><code>DeclareVariables</code></strong> is the scope analysis: ILAst variables have no
+declaration site, so this pass computes, per variable, the narrowest insertion point covering all
+uses, merges declaration with first assignment where possible, and chooses <code>var</code> versus
+explicit types per settings. Several later transforms rely on declarations existing, hence its
+position.</li>
+<li><strong><code>TransformFieldAndConstructorInitializers</code></strong> hoists field
+initializations out of constructor bodies onto the field declarations and turns
+<code>this(&hellip;)</code>/<code>base(&hellip;)</code> calls into constructor initializers;
+<strong><code>PrettifyAssignments</code></strong> contracts <code>x = x + 1</code> to
+<code>x++</code> and friends (only safe now that variables are declared &#8212; the two
+<code>x</code>s might have been different ILAst variables).</li>
+<li><strong><code>IntroduceUsingDeclarations</code></strong> collects the namespaces recorded in the
+<code>DecompileRun</code>, emits <code>using</code> directives, shortens qualified names, and leaves
+anything that would become ambiguous fully qualified. Only after imports exist can
+<strong><code>IntroduceExtensionMethods</code></strong> rewrite
+<code>Enumerable.Where(xs, p)</code> to <code>xs.Where(p)</code>, and only after <em>that</em> can
+<strong><code>IntroduceQueryExpressions</code></strong> rebuild <code>from&nbsp;&hellip;
+select</code> query syntax (running the C# spec's query translation backwards), with
+<strong><code>CombineQueryExpressions</code></strong> merging nested queries and dissolving the
+compiler's transparent identifiers.</li>
+<li>The tail is cosmetic and correctness cleanup: <strong><code>NormalizeBlockStatements</code></strong>
+(brace style, redundant blocks), <strong><code>FlattenSwitchBlocks</code></strong>,
+<strong><code>FixNameCollisions</code></strong> (renames so the output still compiles &#8212; e.g. a
+backing field colliding with an event name), and
+<strong><code>AddXmlDocumentationTransform</code></strong>, which attaches <code>///</code> docs
+from the assembly's XML documentation file.</li>
+</ul>
+
+<p>After the last transform, <code>RunTransforms</code> runs two final visitors that prepare for
+printing: <code>InsertParenthesesVisitor</code> and <code>GenericGrammarAmbiguityVisitor</code> &#8212;
+which belong to the next section.</p>
+
+<h2 id="s9">9. Output rendering</h2>
+
+<p>Rendering is a pipeline of its own, and its stages are deliberately dumb &#8212; all intelligence
+was spent upstream:</p>
+
+<figure>
+<svg viewBox="0 0 880 430" role="img" aria-label="Output rendering stack">
+  <defs>
+    <marker id="arr8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge)"/>
+    </marker>
+  </defs>
+  <rect x="240" y="10" width="400" height="50" rx="8" fill="var(--box2-bg)" stroke="var(--box2-stroke)"/>
+  <text x="440" y="32" text-anchor="middle" class="title">SyntaxTree (annotated)</text>
+  <text x="440" y="49" text-anchor="middle" class="small">structure only; no parentheses, no tokens</text>
+
+  <rect x="240" y="86" width="400" height="56" rx="8" fill="var(--box3-bg)" stroke="var(--box3-stroke)"/>
+  <text x="440" y="108" text-anchor="middle" class="mono">InsertParenthesesVisitor</text>
+  <text x="440" y="126" text-anchor="middle" class="small">precedence-driven parens (+ readability mode); GenericGrammarAmbiguityVisitor</text>
+
+  <rect x="240" y="168" width="400" height="56" rx="8" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="440" y="190" text-anchor="middle" class="mono">CSharpOutputVisitor</text>
+  <text x="440" y="208" text-anchor="middle" class="small">tree walk, formatting policy (CSharpFormattingOptions), emits tokens</text>
+
+  <rect x="240" y="250" width="400" height="72" rx="8" fill="var(--box4-bg)" stroke="var(--box4-stroke)"/>
+  <text x="440" y="272" text-anchor="middle" class="title">TokenWriter decorator chain</text>
+  <text x="440" y="292" text-anchor="middle" class="mono small">InsertRequiredSpacesDecorator -&gt; [InsertMissingTokensDecorator] -&gt;</text>
+  <text x="440" y="310" text-anchor="middle" class="mono small">TextWriterTokenWriter | TextTokenWriter</text>
+
+  <path d="M 440 60 L 440 84" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr8)"/>
+  <path d="M 440 142 L 440 166" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr8)"/>
+  <path d="M 440 224 L 440 248" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr8)"/>
+
+  <!-- sinks -->
+  <rect x="80" y="360" width="320" height="56" rx="8" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="240" y="382" text-anchor="middle" class="mono">PlainTextOutput</text>
+  <text x="240" y="400" text-anchor="middle" class="small">CLI, tests, files (WholeProjectDecompiler)</text>
+
+  <rect x="480" y="360" width="320" height="56" rx="8" fill="var(--box-bg)" stroke="var(--box-stroke)"/>
+  <text x="640" y="382" text-anchor="middle" class="mono">rich ITextOutput (ILSpy UI)</text>
+  <text x="640" y="400" text-anchor="middle" class="small">syntax colors, hyperlinks, code folding</text>
+
+  <path d="M 380 322 L 260 358" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr8)"/>
+  <path d="M 500 322 L 620 358" fill="none" stroke="var(--edge)" stroke-width="1.5" marker-end="url(#arr8)"/>
+  <text x="440" y="348" text-anchor="middle" class="small">ITextOutput: WriteReference / MarkFoldStart hooks</text>
+</svg>
+<figcaption>Figure 8 &#8212; From tree to text. The decorator chain and the <code>ITextOutput</code>
+abstraction let plain-text and rich-UI rendering share one path.</figcaption>
+</figure>
+
+<p><strong>Parentheses last.</strong> Because the tree stores no precedence,
+<code>InsertParenthesesVisitor</code> (<span class="filecite">CSharp/OutputVisitor/</span>)
+reconstructs the required parentheses from precedence and associativity in one pass &#8212; and, in
+its <code>InsertParenthesesForReadability</code> mode (on by default in the decompiler), adds a few
+beyond the minimum, e.g. around nested ternaries. <code>GenericGrammarAmbiguityVisitor</code> handles
+the classic <code>F(a&lt;b, c&gt;(d))</code> ambiguity where a generic method call could parse as
+comparisons. Keeping this out of the transforms means fifteen passes never had to think about
+printing.</p>
+
+<p><strong>Tokens through decorators.</strong> <code>CSharpOutputVisitor</code> walks the tree and
+drives an abstract <code>TokenWriter</code>. Concrete writers are stacked:
+<code>InsertRequiredSpacesDecorator</code> guarantees token separation;
+<code>InsertMissingTokensDecorator</code> (optional) synthesizes punctuation tokens and records text
+locations back onto AST nodes when callers need source positions; the terminal writer either formats
+into a plain <code>TextWriter</code> or &#8212; via <code>TextTokenWriter</code>
+(<span class="filecite">Output/TextTokenWriter.cs</span>) &#8212; into an <code>ITextOutput</code>
+(<span class="filecite">Output/ITextOutput.cs</span>). <code>ITextOutput</code> is the UI extension
+point: its <code>WriteReference</code> and <code>MarkFoldStart/End</code> calls carry the semantic
+annotations (which member does this identifier refer to?) that ILSpy's text view turns into
+hyperlinks, tooltips, and folding, while <code>PlainTextOutput</code> simply discards them. The
+decompiler core never references a UI type.</p>
+
+<p><strong>Sequence points.</strong> Because every AST node still knows its
+<code>ILInstruction</code>s, and every ILAst node its IL offset ranges,
+<code>SequencePointBuilder</code> (<span class="filecite">CSharp/SequencePointBuilder.cs</span>) can
+walk the final tree and emit text-location&nbsp;&harr;&nbsp;IL-offset mappings per function. This
+feeds <span class="filecite">DebugInfo/PortablePdbWriter.cs</span>, which writes a portable PDB for
+the decompiled source &#8212; the basis for &quot;debug the decompiled code&quot; scenarios. The IL
+reader's <code>SequencePointCandidates</code> (offsets where the stack is empty, recorded back in the
+front end) help choose good statement boundaries. It is the payoff for threading
+<code>ILRange</code> provenance through every single stage.</p>
+
+<h2 id="s10">10. Above a single method</h2>
+
+<p>Everything so far decompiled one method body. The surrounding machinery assembles bodies into
+types, files, and projects.</p>
+
+<h3>10.1 Assembling type declarations</h3>
+
+<p><code>DoDecompileTypeDefinition</code> (<span class="filecite">CSharp/CSharpDecompiler.cs</span>)
+builds a type's declaration shell with <code>TypeSystemAstBuilder.ConvertEntity</code>, then
+decompiles each member in metadata order &#8212; running the full IL + AST pipeline per body &#8212;
+and inserts the results. Two filters decide what the reader never sees:</p>
+
+<ul>
+<li><strong><code>MemberIsHidden</code></strong> suppresses compiler-generated artifacts whose
+content has been folded elsewhere: state-machine types (consumed by the async/iterator decompilers),
+display classes (consumed by closure elimination), local-function methods, auto-property backing
+fields, fixed-buffer types. The checks mirror the transform settings &#8212; if
+<code>AnonymousMethods</code> is off, display classes stay visible, keeping the output
+self-consistent.</li>
+<li><strong><code>RecordDecompiler</code></strong> (<span class="filecite">CSharp/RecordDecompiler.cs</span>),
+instantiated per record type, verifies member-by-member that <code>Equals</code>,
+<code>GetHashCode</code>, <code>ToString</code>, <code>Deconstruct</code>, the copy constructor and
+<code>EqualityContract</code> match exactly what the compiler would synthesize &#8212; and only then
+hides them, so a concise <code>record</code> declaration is emitted. Hand-modified
+&quot;records&quot; keep their unusual members visible.</li>
+</ul>
+
+<h3>10.2 Whole projects</h3>
+
+<p><code>WholeProjectDecompiler</code> (<span class="filecite">CSharp/ProjectDecompiler/</span>)
+turns an assembly into a compilable Visual Studio project: it groups top-level types into files
+(namespaces as directories), decompiles files in parallel &#8212; one <code>CSharpDecompiler</code>
+per worker, since instances are single-threaded &#8212; extracts resources (<code>.resources</code>
+back into <code>.resx</code>), emits <code>AssemblyInfo</code>, and writes an SDK-style or legacy
+project file. Types that must share a file (partial classes, WinForms designer splits) are handled
+through <code>PartialTypeInfo</code>, which tells each per-file decompiler which members to emit and
+marks the type <code>partial</code>.</p>
+
+<h3>10.3 The other back end, and the hosts</h3>
+
+<p>The IL view in ILSpy is <em>not</em> this pipeline with different printing &#8212; it is a separate,
+much simpler back end: <code>ReflectionDisassembler</code>
+(<span class="filecite">Disassembler/ReflectionDisassembler.cs</span>) walks metadata and writes
+ILAsm text straight to an <code>ITextOutput</code>, with <code>ILStructure</code> recovering
+try/loop nesting for code folding. Sharing only the output abstraction keeps it dependable when the
+C# pipeline would balk.</p>
+
+<p>Hosts see all of this through a <em>language</em> layer: <code>ICSharpCode.ILSpyX</code> defines
+<code>ILanguage</code>, and the ILSpy app implements <code>CSharpLanguage</code> (wrapping
+<code>CSharpDecompiler</code> / <code>WholeProjectDecompiler</code>), <code>ILLanguage</code>
+(wrapping the disassembler), and the mixed/debug views. Every language writes to
+<code>ITextOutput</code>, which is what lets the same engine serve the WPF UI, headless tests, and
+<code>ilspycmd</code> unchanged.</p>
+
+<h2 id="s11">11. Cross-cutting themes and further exploration</h2>
+
+<p><strong>Invariants as a debugging strategy.</strong> Both trees validate themselves after every
+transform in debug builds. Combined with the strict-tree rule and slot typing, the common failure
+mode of a forty-pass pipeline &#8212; pass 12 corrupts, pass 31 crashes &#8212; largely disappears:
+the corrupting pass fails its own post-check.</p>
+
+<p><strong>Watching the pipeline run.</strong> Every transform reports steps through the
+<code>Stepper</code> (<span class="filecite">CSharp/CSharpDecompiler.cs</span>;
+<code>context.Step(&hellip;)</code> calls are compiled in only for builds with the
+<code>STEP</code> constant). ILSpy's <em>DebugSteps</em> pane consumes this to show the transform
+tree and let you re-run decompilation stopped after any step &#8212; the single most useful tool for
+understanding or debugging a transform. The textual ILAst dump (<code>WriteTo</code> on any
+instruction, options in <span class="filecite">IL/ILAstWritingOptions.cs</span>) is what this
+document's intermediate listings imitate, and the UI's &quot;ILAst&quot; language exposes it
+directly.</p>
+
+<p><strong>Tests as the real specification.</strong> The pattern each transform matches is defined,
+in practice, by the test suite: <span class="filecite">ICSharpCode.Decompiler.Tests</span> contains
+hundreds of &quot;pretty&quot; fixtures &#8212; C# source compiled by a matrix of compilers and
+options, decompiled, and diffed against expected output &#8212; plus round-trip tests that recompile
+the decompiler's output. When the C# compiler changes its codegen, these fixtures are where the new
+pattern lands first (see <span class="filecite">ICSharpCode.Decompiler.Tests/CLAUDE.md</span> for the
+fixture structure). A transform PR without a fixture is architecturally incomplete: the fixture
+<em>is</em> the pattern's definition.</p>
+
+<p><strong>Where to start reading code.</strong> A good first trace mirrors this document:
+<code>CSharpDecompiler.Decompile</code> &rarr; <code>ILReader.ReadIL</code> &rarr;
+<code>GetILTransforms()</code> (set a breakpoint in <code>ILFunction.RunTransforms</code>) &rarr;
+<code>StatementBuilder.ConvertAsBlock</code> &rarr; <code>GetAstTransforms()</code> &rarr;
+<code>CSharpOutputVisitor</code>. For any specific construct, find its transform in the phase tables
+above, then read the transform's tests.</p>
+
+<h2 id="appendix">Appendix: stage-to-code quick reference</h2>
+
+<table>
+<tr><th>Stage</th><th>Namespace / directory</th><th>Key classes</th></tr>
+<tr><td>Metadata loading</td><td><code>Metadata/</code></td>
+<td><code>MetadataFile</code>, <code>PEFile</code>, <code>WebCilFile</code>, <code>UniversalAssemblyResolver</code></td></tr>
+<tr><td>Type system</td><td><code>TypeSystem/</code></td>
+<td><code>DecompilerTypeSystem</code>, <code>MetadataModule</code>, <code>TypeSystemOptions</code></td></tr>
+<tr><td>IL reading</td><td><code>IL/</code></td>
+<td><code>ILReader</code>, <code>BlockBuilder</code></td></tr>
+<tr><td>ILAst model</td><td><code>IL/Instructions/</code> (generated from <code>Instructions.tt</code>)</td>
+<td><code>ILInstruction</code>, <code>ILFunction</code>, <code>Block</code>, <code>BlockContainer</code>, <code>ILVariable</code></td></tr>
+<tr><td>IL transforms</td><td><code>IL/Transforms/</code>, <code>IL/ControlFlow/</code></td>
+<td><code>ILInlining</code>, <code>SplitVariables</code>, <code>LoopDetection</code>, <code>ConditionDetection</code>,
+<code>AsyncAwaitDecompiler</code>, <code>YieldReturnDecompiler</code>, <code>TransformDisplayClassUsage</code></td></tr>
+<tr><td>Flow analyses</td><td><code>FlowAnalysis/</code></td>
+<td><code>Dominance</code>, <code>ControlFlowNode</code>, <code>DataFlowVisitor&lt;T&gt;</code>, <code>DefiniteAssignmentVisitor</code></td></tr>
+<tr><td>ILAst &rarr; C#</td><td><code>CSharp/</code></td>
+<td><code>StatementBuilder</code>, <code>ExpressionBuilder</code>, <code>CallBuilder</code>, <code>TranslatedExpression</code></td></tr>
+<tr><td>C# semantics</td><td><code>CSharp/Resolver/</code>, <code>Semantics/</code></td>
+<td><code>CSharpResolver</code>, <code>OverloadResolution</code>, <code>CSharpConversions</code>, <code>TypeInference</code></td></tr>
+<tr><td>C# syntax tree</td><td><code>CSharp/Syntax/</code></td>
+<td><code>AstNode</code>, <code>SyntaxTree</code>, <code>TypeSystemAstBuilder</code></td></tr>
+<tr><td>AST transforms</td><td><code>CSharp/Transforms/</code></td>
+<td><code>PatternStatementTransform</code>, <code>DeclareVariables</code>, <code>IntroduceUsingDeclarations</code>, <code>IntroduceQueryExpressions</code></td></tr>
+<tr><td>Rendering</td><td><code>CSharp/OutputVisitor/</code>, <code>Output/</code></td>
+<td><code>CSharpOutputVisitor</code>, <code>InsertParenthesesVisitor</code>, <code>TokenWriter</code>, <code>ITextOutput</code></td></tr>
+<tr><td>Debug info</td><td><code>DebugInfo/</code>, <code>CSharp/SequencePointBuilder.cs</code></td>
+<td><code>SequencePointBuilder</code>, <code>PortablePdbWriter</code>, <code>IDebugInfoProvider</code></td></tr>
+<tr><td>Projects &amp; types</td><td><code>CSharp/ProjectDecompiler/</code></td>
+<td><code>WholeProjectDecompiler</code>, <code>RecordDecompiler</code>, <code>PartialTypeInfo</code></td></tr>
+<tr><td>IL disassembly</td><td><code>Disassembler/</code></td>
+<td><code>ReflectionDisassembler</code>, <code>MethodBodyDisassembler</code>, <code>ILStructure</code></td></tr>
+</table>
+
+<p class="filecite" style="margin-top:2.5rem">This document was derived from the source code in this
+repository in July 2026. When the text and the code disagree, the code (and its tests) win &#8212;
+please update this file when the architecture moves.</p>
+
+</body>
+</html>
