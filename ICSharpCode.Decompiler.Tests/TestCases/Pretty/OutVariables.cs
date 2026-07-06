@@ -111,5 +111,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetTwo(out int a, out a);
 			return a;
 		}
+
+		private static void OutAndValue(out int a, int b)
+		{
+			a = b;
+		}
+
+		private static int UseAndReturn(out int a)
+		{
+			a = 1;
+			return a;
+		}
+
+		public static void SameVariableUsedInNestedCallArgument()
+		{
+			// CS8196 also applies when the second reference is nested within
+			// another argument of the declaring call.
+			OutAndValue(out int a, UseAndReturn(out a));
+			Console.WriteLine(a);
+		}
 	}
 }
