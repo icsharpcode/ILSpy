@@ -299,6 +299,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			return !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression);
 		}
 
+		/// <summary>
+		/// True when the field access has no target at all (already-collapsed `this` access) or
+		/// loads it from `this`, directly or through the address of `this` that a struct
+		/// accessor uses.
+		/// </summary>
+		static bool TargetIsThis(ILInstruction? targetInstruction)
+		{
+			return targetInstruction switch {
+				null => true,
+				var inst when inst.MatchLdThis() => true,
+				LdLoca { Variable.Kind: VariableKind.Parameter, Variable.Index: < 0 } => true,
+				_ => false,
+			};
+		}
+
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction? targetInstruction = null)
 		{
 			if (settings.AutomaticEvents && IsBackingFieldOfAutomaticEvent(field, out var ev))
@@ -317,6 +332,29 @@ namespace ICSharpCode.Decompiler.CSharp
 				return eventReference.WithRR(eventResolveResult);
 			}
 
+			if (settings.FieldKeyword
+				&& decompilationContext.CurrentMember is IProperty accessedProperty
+				&& accessedProperty.Parameters.Count == 0
+				// Ask exactly the question PatternStatementTransform asks when it decides whether
+				// the field declaration can go away. A looser test here prints `field` inside a
+				// property whose declaration then keeps explicit accessors and its field: on
+				// recompile the keyword binds to a freshly synthesized backing field while the
+				// original one stays declared and unwritten - silently different storage.
+				&& PatternStatementTransform.TryGetBackingField(accessedProperty, out var backingField)
+				&& field.MemberDefinition.Equals(backingField.MemberDefinition)
+				// Only THIS instance's field is the `field` keyword. IL can load another
+				// instance's backing field inside an accessor (weavers, obfuscators, hand-written
+				// IL); rendering that as `field` would redirect the access, and drop whatever
+				// side effect producing the target had.
+				&& (field.IsStatic || TargetIsThis(targetInstruction)))
+			{
+				// Inside its own property's get/set/init accessor (including nested lambdas and
+				// local functions), the backing field is the C# 14 "field" keyword. It must stay
+				// unqualified: "this.field" would refer to a real member named "field".
+				return new IdentifierExpression("field")
+					.WithRR(new MemberResolveResult(null, field));
+			}
+
 			var target = TranslateTarget(targetInstruction,
 				nonVirtualInvocation: true,
 				memberStatic: field.IsStatic,
@@ -332,6 +370,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& (property.CanSet || settings.GetterOnlyAutomaticProperties))
 			{
 				requireTarget = RequiresQualifier(property, target);
+			}
+			else if (settings.FieldKeyword && field.Name == "field"
+				&& decompilationContext.CurrentMember is IProperty { Parameters.Count: 0 })
+			{
+				// In a C# 14 property accessor a bare "field" identifier binds to the backing
+				// field keyword, so a genuine field of that name needs a qualifier.
+				requireTarget = true;
 			}
 			else
 			{

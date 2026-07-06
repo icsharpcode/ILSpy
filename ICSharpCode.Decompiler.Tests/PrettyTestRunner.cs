@@ -688,6 +688,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task FieldKeyword([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.NullableEnable);
+		}
+
+		[Test]
 		public async Task NullPropagation([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);

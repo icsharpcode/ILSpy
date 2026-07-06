@@ -855,6 +855,14 @@ namespace ICSharpCode.Decompiler
 		public partial bool FirstClassSpanTypes { get; set; }
 
 		/// <summary>
+		/// Gets/Sets whether property accessors should use the C# 14.0 "field" keyword to
+		/// refer to the compiler-generated backing field.
+		/// </summary>
+		[Description("DecompilerSettings.FieldKeyword")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp14_0)]
+		public partial bool FieldKeyword { get; set; }
+
+		/// <summary>
 		/// Gets/sets whether the decompiler should separate local variable declarations
 		/// from their initialization.
 		/// </summary>

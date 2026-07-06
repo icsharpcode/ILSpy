@@ -458,8 +458,14 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.UsePrimaryConstructorSyntaxForNonRecordTypes && IsPrimaryConstructorParameterBackingField(field, metadata))
 							return true;
-						if (settings.AutomaticProperties && module.PropertyAndEventBackingFieldLookup.IsPropertyBackingField(fieldHandle, out var propertyHandle))
+						if ((settings.AutomaticProperties || settings.FieldKeyword)
+							&& module.PropertyAndEventBackingFieldLookup.IsPropertyBackingField(fieldHandle, out var propertyHandle))
 						{
+							// GetterOnlyAutomaticProperties exists so output stays compilable on
+							// toolchains that predate C# 6 getter-only auto-properties. Switching it off
+							// is a stronger statement than leaving FieldKeyword at its default, and it
+							// wins: accessors needing the C# 14 field keyword would not compile on such
+							// a toolchain either.
 							if (!settings.GetterOnlyAutomaticProperties)
 							{
 								PropertyAccessors accessors = metadata.GetPropertyDefinition(propertyHandle).GetAccessors();
