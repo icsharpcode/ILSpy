@@ -1229,10 +1229,12 @@ its consumer &#8212; three small transforms, each trivial in isolation.</p>
 </table>
 
 <p>Not everything is done at the IL level: notably, <code>string.Concat</code> calls become the
-<code>+</code> operator, and <code>foreach</code>/<code>for</code>/query expressions are recognized
-only in the C# AST stage (<a href="#s8">section 8</a>) where operator syntax and statement patterns
-are directly expressible. As a rule of thumb: anything that changes <em>data flow or control
-flow</em> is an IL transform; anything that is purely <em>surface syntax</em> is an AST transform.</p>
+<code>+</code> operator and query expressions are rebuilt only in the C# AST stage
+(<a href="#s8">section 8</a>), where operator syntax is directly expressible; and the enumerator
+<code>foreach</code> idiom is reconstructed during the translation itself, by
+<code>StatementBuilder</code> (<a href="#s7">section 7.5</a>). As a rule of thumb: anything that
+changes <em>data flow or control flow</em> is an IL transform; anything that is purely <em>surface
+syntax</em> comes later, in the back end or the AST transforms.</p>
 
 <h3 id="s6-flow">6.6 Supporting analyses and settings</h3>
 
@@ -1264,7 +1266,7 @@ supported way to <em>study</em> the compiler's lowering of new features.</p>
 converts it into an actual C# syntax tree. Three cooperating classes do the work
 (<span class="filecite">CSharp/StatementBuilder.cs, ExpressionBuilder.cs, CallBuilder.cs</span>):
 <code>StatementBuilder</code> visits statement-level instructions (blocks, loops, try/catch, switch,
-stores) and produces C# statements; it owns an <code>ExpressionBuilder</code>, which visits
+stores) and produces C# statements (section 7.5); it owns an <code>ExpressionBuilder</code>, which visits
 value-producing instructions and produces C# expressions; call instructions are handed to
 <code>CallBuilder</code>, which is complicated enough to be its own type. Both builders are
 <code>ILVisitor</code>s with one method per ILAst opcode.</p>
@@ -1380,6 +1382,49 @@ collapsing accessor calls into property/indexer syntax, recognizing operator met
 references, and rendering tuple construction as tuple literals. IL's <code>tail.</code> prefix, which
 has no C# syntax, is surfaced honestly as a <code>/*tail.*/</code> comment.</p>
 
+<h3>7.5 StatementBuilder: the statement layer</h3>
+
+<p>Translation actually starts one level above the expressions: <code>CSharpDecompiler</code> hands
+the function body to <code>StatementBuilder.ConvertAsBlock</code>, and everything in sections
+7.1&#8211;7.4 runs in service of the statements built here. Much of <code>StatementBuilder</code> is
+a direct mapping, because the IL transforms have already produced high-level instructions and each
+gets its C# form: <code>TryCatch</code>/<code>TryFinally</code>/<code>TryFault</code> become
+<code>try</code> statements, <code>LockInstruction</code> becomes <code>lock</code>,
+<code>UsingInstruction</code> becomes <code>using</code>, <code>PinnedRegion</code> becomes
+<code>fixed</code>, <code>YieldReturn</code> becomes <code>yield return</code>. The interesting work
+is in control flow: a <code>BlockContainer</code> is rendered according to its
+<code>ContainerKind</code> &#8212; <code>Loop</code> as <code>while&nbsp;(true)</code>;
+<code>While</code>/<code>DoWhile</code>/<code>For</code> (classified by
+<code>HighLevelLoopTransform</code>) matched via <code>MatchConditionBlock</code> into the
+corresponding loop statement; a container whose entry point is a single
+<code>SwitchInstruction</code> as a <code>switch</code>. While converting, the builder tracks the
+current continue and break targets, so branches become <code>continue</code>/<code>break</code>
+keywords wherever the container structure allows; only branches no keyword can express survive as
+labels and <code>goto</code>.</p>
+
+<p>One language construct is detected here rather than in any transform: <strong>enumerator-based
+<code>foreach</code></strong>. When <code>VisitUsingInstruction</code> sees a <code>using</code> over
+a <code>GetEnumerator()</code> call whose body is a <code>while&nbsp;(MoveNext())</code> loop reading
+<code>Current</code>, <code>TransformToForeach</code> rebuilds the <code>foreach</code> statement:
+<code>DetectGetCurrentTransformation</code> classifies how the <code>Current</code> value flows into
+the body, the iteration variable becomes a <code>VariableKind.ForeachLocal</code>, and the declared
+element type is checked against what <code>foreach</code> would infer. The pattern lives at this
+stage because it is a <em>statement</em> shape &#8212; a <code>using</code> wrapping a
+<code>while</code> &#8212; that only exists once statements are being assembled; if any part of the
+idiom fails to hold, the code simply stays an explicit <code>using</code>+<code>while</code>, which
+remains correct. (The index-based <code>foreach</code> forms &#8212; over arrays, multi-dimensional
+arrays, and inline arrays &#8212; are recognized later, at the AST level; see
+<a href="#s8">section 8</a>.)</p>
+
+<p>The finished <code>ForeachStatement</code> is annotated with a <code>ForeachAnnotation</code>
+(<span class="filecite">CSharp/Annotations.cs</span>) recording the underlying
+<code>GetEnumerator</code>/<code>MoveNext</code>/<code>get_Current</code> IL calls. This annotation
+is not a hint for later folding &#8212; the statement is already in final form &#8212; it exists for
+debug-info generation: <code>SequencePointBuilder</code> reads it to map the <code>foreach</code>
+header back to the IL calls it stands for when emitting sequence points
+(<a href="#s9">section 9</a>). (<code>IntroduceUsingDeclarations</code> also consults it, to import
+the namespace of an extension <code>GetEnumerator</code> method.)</p>
+
 <p>For the running example, <code>StatementBuilder</code> visits the <code>call</code> statement,
 <code>CallBuilder</code> resolves <code>Console.WriteLine</code> with a
 <code>ConditionalExpression</code> argument of type <code>string</code>, confirms via overload
@@ -1404,9 +1449,11 @@ ever reasoning about parentheses &#8212; those are reconstructed at output time
 <p>Semantic linkage is again by annotation: every node can carry its <code>ResolveResult</code> /
 <code>ISymbol</code>, its <code>ILInstruction</code>s, and its <code>ILVariable</code>
 (<span class="filecite">CSharp/Annotations.cs</span>; accessors like <code>GetSymbol()</code>,
-<code>GetResolveResult()</code>). Purpose-built annotations mark recognized constructs for later
-passes &#8212; e.g. <code>ForeachAnnotation</code> ties the GetEnumerator/MoveNext/Current calls to a
-loop so <code>PatternStatementTransform</code> can rebuild <code>foreach</code>. Declarations and
+<code>GetResolveResult()</code>). Purpose-built annotations record how a construct was assembled
+&#8212; e.g. the <code>ForeachAnnotation</code> attached by <code>StatementBuilder</code>
+(<a href="#s7">section 7.5</a>) keeps a rebuilt <code>foreach</code>'s
+GetEnumerator/MoveNext/Current calls addressable for sequence-point generation
+(<a href="#s9">section 9</a>). Declarations and
 signatures, as opposed to bodies, are produced from type-system entities by
 <code>TypeSystemAstBuilder</code> (<span class="filecite">CSharp/Syntax/TypeSystemAstBuilder.cs</span>)
 &#8212; the same class that renders types everywhere in the output.</p>
@@ -1436,9 +1483,13 @@ new AddXmlDocumentationTransform(),</code></pre>
 
 <ul>
 <li><strong><code>PatternStatementTransform</code></strong> is the AST-level counterpart of the IL
-sugar transforms: it rebuilds <code>foreach</code> (from enumerator try/finally patterns, guided by
-<code>ForeachAnnotation</code>), <code>for</code> loops, automatic properties and events, and other
-statement idioms that are easier to see once real C# statements exist.</li>
+sugar transforms: it completes <code>for</code> loops (moving a preceding initializer statement into
+the <code>for</code> header, or converting a <code>while</code> of the right shape), rebuilds the
+index-based <code>foreach</code> forms &#8212; over arrays, multi-dimensional arrays, and inline
+arrays &#8212; from their <code>for</code>-loop lowering (the enumerator-based <code>foreach</code>
+was already built by <code>StatementBuilder</code>, <a href="#s7">section 7.5</a>), and recognizes
+automatic properties and events &#8212; member idioms that are easier to see once real C# syntax
+exists.</li>
 <li><strong><code>ReplaceMethodCallsWithOperators</code></strong> turns surviving operator-method
 calls into operators, <code>string.Concat</code> into <code>+</code>,
 <code>Type.GetTypeFromHandle(ldtoken&nbsp;&hellip;)</code> into <code>typeof</code>, and delegate
@@ -1557,8 +1608,11 @@ walk the final tree and emit text-location&nbsp;&harr;&nbsp;IL-offset mappings p
 feeds <span class="filecite">DebugInfo/PortablePdbWriter.cs</span>, which writes a portable PDB for
 the decompiled source &#8212; the basis for &quot;debug the decompiled code&quot; scenarios. The IL
 reader's <code>SequencePointCandidates</code> (offsets where the stack is empty, recorded back in the
-front end) help choose good statement boundaries. It is the payoff for threading
-<code>ILRange</code> provenance through every single stage.</p>
+front end) help choose good statement boundaries, and construct-level annotations fill in where one
+piece of syntax stands for several IL calls &#8212; <code>ForeachAnnotation</code>
+(<a href="#s7">section 7.5</a>) tells the builder which calls the <code>foreach</code> header
+corresponds to. It is the payoff for threading <code>ILRange</code> provenance through every single
+stage.</p>
 
 <h2 id="s10">10. Above a single method</h2>
 
