@@ -317,8 +317,9 @@ one per thread). Its public surface offers several granularities:</p>
 
 <p>All of them funnel into the same per-member machinery. Each invocation creates a
 <code>DecompileRun</code> (<span class="filecite">DecompileRun.cs</span>), a scratchpad that travels
-through the whole pipeline: the settings, the cancellation token, the set of namespaces that will need
-<code>using</code> directives, the documentation provider, and caches such as per-type
+through the whole pipeline: the settings, the cancellation token, the namespaces referenced by the
+IL (collected up front, before any transform runs; <a href="#s8">section 8</a> explains how they are
+used), the documentation provider, and caches such as per-type
 <code>RecordDecompiler</code> instances. Both transform stages see it &#8212; the IL transforms through
 <code>ILTransformContext</code>, the AST transforms through <code>TransformContext</code>.</p>
 
@@ -632,10 +633,14 @@ list of instructions plus a <code>FinalInstruction</code>; a <code>BlockContaine
 one <strong>single-entry control-flow region</strong>. The rules are strict:</p>
 
 <ul>
-<li>A <code>Branch</code> (goto) may only target a block <em>within the same container</em>.</li>
-<li>The only way out of a container is a <code>Leave</code> instruction, optionally carrying a result
-value. <code>ret</code> is simply <code>leave</code> of the outermost container;
-<code>endfinally</code> is a <code>leave</code> of the finally container.</li>
+<li>A <code>Branch</code> (goto) may target a block in its own container or in any
+<em>enclosing</em> container &#8212; branching outward implicitly leaves the inner container(s).
+What it can never do is jump <em>into</em> a container from outside, which is what keeps every
+container single-entry.</li>
+<li>A container is exited either by such an outward branch or by a <code>Leave</code> instruction
+naming it explicitly, the latter optionally carrying a result value. <code>ret</code> is simply
+<code>leave</code> of the outermost container; <code>endfinally</code> is a <code>leave</code> of the
+finally container.</li>
 <li>Every block must end in unconditional control flow &#8212; no implicit fall-through.</li>
 </ul>
 
@@ -701,11 +706,11 @@ block lists into deeper container trees:</p>
   <!-- leave arrows -->
   <path d="M 226 296 L 440 296 L 440 372" fill="none" stroke="var(--edge)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arr3)"/>
   <text x="345" y="316" text-anchor="middle" class="small">leave loop = break</text>
-  <text x="620" y="384" class="small">dashed = Leave (exits a container); solid = Branch (goto within container)</text>
+  <text x="620" y="384" class="small">dashed = Leave (exits a container); solid = Branch (goto)</text>
 </svg>
-<figcaption>Figure 3 &#8212; The CFG lives in the tree: containers are single-entry regions,
-<code>Branch</code> stays inside, <code>Leave</code> crosses outward. Loops and switches are
-containers introduced by transforms.</figcaption>
+<figcaption>Figure 3 &#8212; The CFG lives in the tree: containers are single-entry regions;
+<code>Branch</code> targets a block of the current or an enclosing container, <code>Leave</code>
+exits a named container. Loops and switches are containers introduced by transforms.</figcaption>
 </figure>
 
 <p>This uniformity is a quiet superpower: <code>break</code>, <code>continue</code>,
@@ -953,8 +958,10 @@ new DetectExitPoints(),</code></pre>
 pinned locals &#8212; it must run before any non-essential structure exists because pin lifetimes are
 a correctness matter, not cosmetics. The two state-machine decompilers get their own deep dive in
 <a href="#s6-statemachines">section 6.3</a>; the key scheduling fact is that both must run before
-loop detection &#8212; a state machine's dispatch loop must be dissolved before anyone mistakes it
-for a user loop. <strong><code>DetectCatchWhenConditionBlocks</code></strong> folds the filter-block
+loop detection: until the state machine is undone, a user loop containing <code>yield</code> or
+<code>await</code> has extra entry points &#8212; the resume paths that jump back into its middle
+after a suspension &#8212; so it is not a natural loop, and <code>LoopDetection</code> would not
+recognize it. <strong><code>DetectCatchWhenConditionBlocks</code></strong> folds the filter-block
 pattern back into <code>catch&nbsp;&hellip;&nbsp;when&nbsp;(&hellip;)</code>, and
 <strong><code>DetectExitPoints</code></strong> rewrites branches that merely leave a container into
 explicit <code>leave</code> instructions, so later structure &quot;falls out of&quot; blocks instead
@@ -1253,9 +1260,7 @@ correctness checks in inlining, copy propagation, and variable splitting via the
 <code>DecompilerSettings</code> flags, and <code>SetLanguageVersion</code> flips those flags in
 blocks: targeting C#&nbsp;4 switches off <code>asyncAwait</code>; targeting C#&nbsp;7 leaves
 <code>patternMatching</code> and <code>localFunctions</code> off; and so on up through the current
-C#&nbsp;15 features (e.g. <code>closedHierarchies</code>). The inverse,
-<code>GetMinimumRequiredVersion()</code>, reports the newest language feature actually used &#8212;
-which is how the UI can tell you what compiler a decompiled assembly needs. A disabled feature does
+C#&nbsp;15 features (e.g. <code>closedHierarchies</code>). A disabled feature does
 not merely change printing: the pattern is simply never folded, so the underlying mechanism (the
 state machine, the display class) stays visible &#8212; decompiling with old settings is the
 supported way to <em>study</em> the compiler's lowering of new features.</p>
@@ -1508,11 +1513,19 @@ initializations out of constructor bodies onto the field declarations and turns
 <strong><code>PrettifyAssignments</code></strong> contracts <code>x = x + 1</code> to
 <code>x++</code> and friends (only safe now that variables are declared &#8212; the two
 <code>x</code>s might have been different ILAst variables).</li>
-<li><strong><code>IntroduceUsingDeclarations</code></strong> collects the namespaces recorded in the
-<code>DecompileRun</code>, emits <code>using</code> directives, shortens qualified names, and leaves
-anything that would become ambiguous fully qualified. Only after imports exist can
+<li><strong><code>IntroduceUsingDeclarations</code></strong> collects the namespaces used by the
+final C# AST, emits <code>using</code> directives for them, shortens qualified names, and leaves
+anything that would become ambiguous fully qualified. Namespaces are actually collected
+<em>twice</em>: a superset was already gathered from the IL at the very start of the pipeline, into
+the <code>DecompileRun</code> (<a href="#s2">section 2</a>), because IL transforms need to know the
+eventual imports to answer ambiguity questions &#8212; null propagation, for example, may rewrite
+<code>a != null ? Extensions.Method(a) : null</code> to <code>a?.Method()</code> only if it can
+guarantee the extension-method form will resolve unambiguously. Since many compiler-generated calls
+have disappeared by the time the AST exists, the AST-derived set is a subset of the
+<code>DecompileRun</code>'s, and only this subset gets directives. Only after imports exist can
 <strong><code>IntroduceExtensionMethods</code></strong> rewrite
-<code>Enumerable.Where(xs, p)</code> to <code>xs.Where(p)</code>, and only after <em>that</em> can
+<code>Enumerable.Where(xs, p)</code> to <code>xs.Where(p)</code> (an ordering that predates the
+<code>DecompileRun</code> namespace superset), and only after <em>that</em> can
 <strong><code>IntroduceQueryExpressions</code></strong> rebuild <code>from&nbsp;&hellip;
 select</code> query syntax (running the C# spec's query translation backwards), with
 <strong><code>CombineQueryExpressions</code></strong> merging nested queries and dissolving the
