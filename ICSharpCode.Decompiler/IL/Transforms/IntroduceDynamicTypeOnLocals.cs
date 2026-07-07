@@ -46,18 +46,25 @@ namespace ICSharpCode.Decompiler.IL
 						continue;
 					foreach (var load in variable.LoadInstructions)
 					{
+						bool isDynamicUse;
 						if (load.Parent is DynamicInstruction dynamicInstruction)
 						{
 							var argumentInfo = dynamicInstruction.GetArgumentInfoOfChild(load.ChildIndex);
-							if (!argumentInfo.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType))
+							isDynamicUse = !argumentInfo.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType);
+						}
+						else
+						{
+							// awaiting a dynamic value: the awaited operand has type dynamic
+							isDynamicUse = load.Parent is Await { GetResultMethod.DeclaringType.Kind: TypeKind.Dynamic };
+						}
+						if (isDynamicUse)
+						{
+							variable.Type = SpecialType.Dynamic;
+							if (variable.Index.HasValue && variable.Kind == VariableKind.Local)
 							{
-								variable.Type = SpecialType.Dynamic;
-								if (variable.Index.HasValue && variable.Kind == VariableKind.Local)
-								{
-									dynamicVariables.Add(variable.Index.Value);
-								}
-								break;
+								dynamicVariables.Add(variable.Index.Value);
 							}
+							break;
 						}
 					}
 				}

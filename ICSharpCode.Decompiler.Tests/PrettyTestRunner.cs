@@ -489,6 +489,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task DynamicAwait([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task ExpressionTrees([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
