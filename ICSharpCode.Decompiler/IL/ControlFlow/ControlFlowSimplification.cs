@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		static bool CombineBlockWithNextBlock(BlockContainer container, Block block, ILTransformContext context)
+		internal static bool CombineBlockWithNextBlock(BlockContainer container, Block block, ILTransformContext context)
 		{
 			Debug.Assert(container == block.Parent);
 			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.

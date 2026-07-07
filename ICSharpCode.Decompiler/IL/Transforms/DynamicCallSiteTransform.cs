@@ -45,53 +45,43 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 
 			Dictionary<IField, CallSiteInfo> callsites = new Dictionary<IField, CallSiteInfo>();
-			HashSet<BlockContainer> modifiedContainers = new HashSet<BlockContainer>();
 
 			foreach (var block in function.Descendants.OfType<Block>())
 			{
-				if (block.Instructions.Count < 2)
-					continue;
-				// Check if, we deal with a callsite cache field null check:
-				// if (comp(ldsfld <>p__3 == ldnull)) br IL_000c
-				// br IL_002b
-				if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
-					continue;
-				if (!(block.Instructions.LastOrDefault() is Branch branchAfterInit))
-					continue;
-				if (!MatchCallSiteCacheNullCheck(ifInst.Condition, out var callSiteCacheField, out var callSiteDelegate, out bool invertBranches))
-					continue;
-				if (!ifInst.TrueInst.MatchBranch(out var trueBlock))
-					continue;
-				Block callSiteInitBlock, targetBlockAfterInit;
-				if (invertBranches)
-				{
-					callSiteInitBlock = branchAfterInit.TargetBlock;
-					targetBlockAfterInit = trueBlock;
-				}
-				else
-				{
-					callSiteInitBlock = trueBlock;
-					targetBlockAfterInit = branchAfterInit.TargetBlock;
-				}
-				if (!ScanCallSiteInitBlock(callSiteInitBlock, callSiteCacheField, callSiteDelegate, out var callSiteInfo, out var blockAfterInit))
-					continue;
-				if (targetBlockAfterInit != blockAfterInit)
-					continue;
-				callSiteInfo.DelegateType = callSiteDelegate;
-				callSiteInfo.ConditionalJumpToInit = ifInst;
-				callSiteInfo.Inverted = invertBranches;
-				callSiteInfo.BranchAfterInit = branchAfterInit;
-				callsites.Add(callSiteCacheField, callSiteInfo);
+				FindDynamicCallSitesInBlock(block, callsites, context);
 			}
 
-			var storesToRemove = new List<StLoc>();
+			var modifiedContainers = TransformCallSites((BlockContainer)function.Body, callsites, context);
 
-			foreach (var invokeCall in function.Descendants.OfType<CallVirt>())
+			foreach (var container in modifiedContainers)
+				container.SortBlocks(deleteUnreachableBlocks: true);
+		}
+
+		internal static void RunOnBasicBlock(Block block, ILTransformContext context)
+		{
+			if (!context.Settings.Dynamic)
+				return;
+
+			Dictionary<IField, CallSiteInfo> callsites = new Dictionary<IField, CallSiteInfo>();
+			FindDynamicCallSitesInBlock(block, callsites, context);
+			// Deleting the now-unreachable callsite-init blocks is deferred to the SortBlocks call
+			// at the end of AsyncAwaitDecompiler.AnalyzeStateMachine: this runs while that method is
+			// iterating over the container's blocks, so removing blocks here would corrupt the loop.
+			TransformCallSites((BlockContainer)block.Parent, callsites, context);
+		}
+
+		private static HashSet<BlockContainer> TransformCallSites(BlockContainer parent, Dictionary<IField, CallSiteInfo> callsites,
+			ILTransformContext context)
+		{
+			List<StLoc> storesToRemove = new();
+			HashSet<BlockContainer> modifiedContainers = new();
+
+			foreach (var invokeCall in parent.Descendants.OfType<CallVirt>())
 			{
 				if (invokeCall.Method.DeclaringType.Kind != TypeKind.Delegate || invokeCall.Method.Name != "Invoke" || invokeCall.Arguments.Count == 0)
 					continue;
 				var firstArgument = invokeCall.Arguments[0];
-				if (firstArgument.MatchLdLoc(out var stackSlot) && stackSlot.Kind == VariableKind.StackSlot && stackSlot.IsSingleDefinition)
+				if (firstArgument.MatchLdLoc(out var stackSlot) && IsSingleDefinitionTemporary(stackSlot))
 				{
 					firstArgument = ((StLoc)stackSlot.StoreInstructions[0]).Value;
 				}
@@ -120,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				foreach (var arg in deadArguments)
 				{
-					if (arg.MatchLdLoc(out var temporary) && temporary.Kind == VariableKind.StackSlot && temporary.IsSingleDefinition && temporary.LoadCount == 0)
+					if (arg.MatchLdLoc(out var temporary) && IsSingleDefinitionTemporary(temporary) && temporary.LoadCount == 0)
 					{
 						StLoc stLoc = (StLoc)temporary.StoreInstructions[0];
 						if (stLoc.Parent is Block storeParentBlock)
@@ -142,11 +132,61 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				parentBlock.Instructions.RemoveAt(inst.ChildIndex);
 			}
 
-			foreach (var container in modifiedContainers)
-				container.SortBlocks(deleteUnreachableBlocks: true);
+			return modifiedContainers;
 		}
 
-		ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
+		/// <summary>
+		/// A compiler-generated temporary the callsite invoke may load its target/cache through: a single-def
+		/// stack slot, or a single-def local spilled from a state-machine field. The latter arises when async
+		/// state-machine hoisting spills the callsite target/receiver across an await (the await appears in the
+		/// invoke's argument list). Ordinary user locals are excluded via the state-machine-field requirement.
+		/// </summary>
+		static bool IsSingleDefinitionTemporary(ILVariable variable)
+		{
+			if (!variable.IsSingleDefinition)
+				return false;
+			return variable.Kind == VariableKind.StackSlot
+				|| (variable.Kind == VariableKind.Local && variable.StateMachineField != null);
+		}
+
+		static void FindDynamicCallSitesInBlock(Block block, Dictionary<IField, CallSiteInfo> callsites, ILTransformContext context)
+		{
+			if (block.Instructions.Count < 2)
+				return;
+			// Check if, we deal with a callsite cache field null check:
+			// if (comp(ldsfld <>p__3 == ldnull)) br IL_000c
+			// br IL_002b
+			if (!(block.Instructions.SecondToLastOrDefault() is IfInstruction ifInst))
+				return;
+			if (!(block.Instructions.LastOrDefault() is Branch branchAfterInit))
+				return;
+			if (!MatchCallSiteCacheNullCheck(ifInst.Condition, out var callSiteCacheField, out var callSiteDelegate, out bool invertBranches))
+				return;
+			if (!ifInst.TrueInst.MatchBranch(out var trueBlock))
+				return;
+			Block callSiteInitBlock, targetBlockAfterInit;
+			if (invertBranches)
+			{
+				callSiteInitBlock = branchAfterInit.TargetBlock;
+				targetBlockAfterInit = trueBlock;
+			}
+			else
+			{
+				callSiteInitBlock = trueBlock;
+				targetBlockAfterInit = branchAfterInit.TargetBlock;
+			}
+			if (!ScanCallSiteInitBlock(callSiteInitBlock, callSiteCacheField, callSiteDelegate, out var callSiteInfo, out var blockAfterInit, context))
+				return;
+			if (targetBlockAfterInit != blockAfterInit)
+				return;
+			callSiteInfo.DelegateType = callSiteDelegate;
+			callSiteInfo.ConditionalJumpToInit = ifInst;
+			callSiteInfo.Inverted = invertBranches;
+			callSiteInfo.BranchAfterInit = branchAfterInit;
+			callsites.Add(callSiteCacheField, callSiteInfo);
+		}
+
+		static ILInstruction MakeDynamicInstruction(CallSiteInfo callsite, CallVirt targetInvokeCall, List<ILInstruction> deadArguments)
 		{
 			switch (callsite.Kind)
 			{
@@ -272,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit)
+		static bool ScanCallSiteInitBlock(Block callSiteInitBlock, IField callSiteCacheField, IType callSiteDelegateType, out CallSiteInfo callSiteInfo, out Block blockAfterInit, ILTransformContext context)
 		{
 			callSiteInfo = default(CallSiteInfo);
 			blockAfterInit = null;
@@ -397,7 +437,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[4 + typeArgumentsOffset].MatchStLoc(variable, out value))
 						return false;
-					if (!ExtractArgumentInfo(value, ref callSiteInfo, 5 + typeArgumentsOffset, variable))
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 5 + typeArgumentsOffset, variable, context))
 						return false;
 					return true;
 				case "GetMember":
@@ -436,7 +476,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[3].MatchStLoc(variable, out value))
 						return false;
-					if (!ExtractArgumentInfo(value, ref callSiteInfo, 4, variable))
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 4, variable, context))
 						return false;
 					return true;
 				case "GetIndex":
@@ -484,7 +524,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[2].MatchStLoc(variable, out value))
 						return false;
-					if (!ExtractArgumentInfo(value, ref callSiteInfo, 3, variable))
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 3, variable, context))
 						return false;
 					return true;
 				case "UnaryOperation":
@@ -523,7 +563,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!callSiteInitBlock.Instructions[3].MatchStLoc(variable, out value))
 						return false;
-					if (!ExtractArgumentInfo(value, ref callSiteInfo, 4, variable))
+					if (!ExtractArgumentInfo(value, ref callSiteInfo, 4, variable, context))
 						return false;
 					return true;
 				default:
@@ -531,7 +571,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool ExtractArgumentInfo(ILInstruction value, ref CallSiteInfo callSiteInfo, int instructionOffset, ILVariable variable)
+		static bool ExtractArgumentInfo(ILInstruction value, ref CallSiteInfo callSiteInfo, int instructionOffset, ILVariable variable, ILTransformContext context)
 		{
 			if (!(value is NewArr newArr2 && newArr2.Type.FullName == "Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo" && newArr2.Indices.Count == 1 && newArr2.Indices[0].MatchLdcI4(out var numberOfArguments)))
 				return false;
@@ -560,7 +600,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
+		static bool MatchCallSiteCacheNullCheck(ILInstruction condition, out IField callSiteCacheField, out IType callSiteDelegate, out bool invertBranches)
 		{
 			callSiteCacheField = null;
 			callSiteDelegate = null;
@@ -579,7 +619,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		struct CallSiteInfo
+		internal struct CallSiteInfo
 		{
 			public bool Inverted;
 			public ILInstruction BranchAfterInit;
@@ -596,7 +636,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public string MemberName;
 		}
 
-		enum BinderMethodKind
+		internal enum BinderMethodKind
 		{
 			BinaryOperation,
 			Convert,
