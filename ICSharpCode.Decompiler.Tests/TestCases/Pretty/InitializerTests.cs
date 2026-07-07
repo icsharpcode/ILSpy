@@ -515,6 +515,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 			X(Y(), new int[5] { a, 0, b, 0, c });
 		}
 
+		public static int[] DuplicateElementAssignment()
+		{
+			// A second store to an element that was already written must stop the array-initializer
+			// transform from folding these stores into a 'new int[] { ... }'. Doing so would drop the
+			// earlier store, which is a visible change when its value has side effects.
+			int[] array = new int[3];
+			array[0] = 1;
+			array[0] = 2;
+			array[1] = 3;
+			array[2] = 4;
+			return array;
+		}
+
 		public static void NestedArray(int a, int b, int c)
 		{
 			X(Y(), new int[3][] {
