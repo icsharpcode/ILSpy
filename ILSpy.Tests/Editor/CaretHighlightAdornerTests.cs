@@ -98,7 +98,7 @@ public class CaretHighlightAdornerTests
 		generator.References.Should().NotBeNull(
 			"DecompilerTextView assigns the live References collection on every ApplyDocument");
 		var memberDef = generator.References!
-			.FirstOrDefault(s => s.IsDefinition && !s.IsLocal && s.Reference != null);
+			.FirstOrDefault(s => s.IsDefinition && s.Kind == ReferenceMode.Link && s.Reference != null);
 		((object?)memberDef).Should().NotBeNull(
 			"the decompiled Enumerable class contains at least one member-definition reference");
 

@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler
 			Write(text);
 		}
 
-		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
 		{
 			Write(text);
 		}
@@ -224,7 +224,7 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.WriteLine());
 		}
 
-		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
 		{
 			actions.Add(target => target.WriteLocalReference(text, reference, isDefinition));
 		}

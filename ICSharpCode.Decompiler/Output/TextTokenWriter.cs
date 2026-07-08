@@ -81,8 +81,9 @@ namespace ICSharpCode.Decompiler
 					if (IsDynamicMemberReference(nodeStack.Peek()))
 					{
 						// A member synthesized for a dynamic access: show its signature on hover, but do not
-						// make it a navigation target (there is no real member to jump to) - like a local.
-						output.WriteLocalReference(name, m);
+						// make it a navigation target (there is no real member to jump to), and no occurrence
+						// highlight either - it is a distinct synthetic member at every use.
+						output.WriteLocalReference(name, m, isHoverOnly: true);
 					}
 					else
 					{
@@ -350,7 +351,7 @@ namespace ICSharpCode.Decompiler
 								return;
 							case IMember m:
 								if (IsDynamicMemberReference(node))
-									output.WriteLocalReference(token, m);
+									output.WriteLocalReference(token, m, isHoverOnly: true);
 								else
 									output.WriteReference(m, token, false);
 								return;
@@ -457,8 +458,8 @@ namespace ICSharpCode.Decompiler
 					break;
 				case "dynamic":
 					// dynamic has no metadata type definition; emit it as a hover-only reference (no navigation
-					// target) so it can carry a tooltip, like a local.
-					output.WriteLocalReference(type, SpecialType.Dynamic);
+					// target, no occurrence highlight) so it can still carry a tooltip.
+					output.WriteLocalReference(type, SpecialType.Dynamic, isHoverOnly: true);
 					return;
 				case "bool":
 				case "byte":

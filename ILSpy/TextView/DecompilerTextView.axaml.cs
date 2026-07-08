@@ -1202,10 +1202,15 @@ namespace ICSharpCode.ILSpy.TextView
 			if (DataContext is not DecompilerTabPageModel model || segment.Reference == null)
 				return;
 
+			// Hover-only references (synthesized dynamic members, the dynamic keyword) carry a tooltip
+			// but are neither navigable nor highlightable — a click does nothing.
+			if (segment.Kind == ReferenceMode.HoverOnly)
+				return;
+
 			// Local references stay inside this document — paint every match and let the user
 			// scrub through them. Cross-document references clear any existing marks since the
 			// view is about to refresh anyway.
-			if (segment.IsLocal)
+			if (segment.Kind == ReferenceMode.LocalHighlight)
 			{
 				HighlightLocalReferences(model, segment.Reference);
 				return;

@@ -72,7 +72,7 @@ public class ReferenceClickTests
 	{
 		var textView = view.Editor.TextArea.TextView;
 		var segment = tab.References!
-			.First(r => r.Reference != null && !r.IsLocal && !r.IsDefinition);
+			.First(r => r.Reference != null && r.Kind == ReferenceMode.Link && !r.IsDefinition);
 		var line = view.Editor.Document.GetLineByOffset(segment.StartOffset);
 		view.Editor.ScrollTo(line.LineNumber, segment.StartOffset - line.Offset + 1);
 		window.UpdateLayout();
