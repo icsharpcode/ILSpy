@@ -4348,7 +4348,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new IndexerExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Select(a => a.ResolveResult).ToArray(),
+					symbol: CreateDynamicIndexerSymbol(DynamicArgumentType(inst.ArgumentInfo[0]), inst.ArgumentInfo.Skip(1).ToArray())));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst, TranslationContext context)
@@ -4509,6 +4510,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			return constructor;
 		}
 
+		/// <summary>
+		/// Synthesizes the indexer for a dynamic index access (a[b]): an indexer on the target type whose
+		/// parameters are typed from the callsite delegate, so the brackets carry a hover tooltip.
+		/// </summary>
+		IMember CreateDynamicIndexerSymbol(IType declaringType, IReadOnlyList<CSharpArgumentInfo> argumentInfo)
+		{
+			var parameters = new IParameter[argumentInfo.Count];
+			for (int i = 0; i < argumentInfo.Count; i++)
+				parameters[i] = new DefaultParameter(DynamicArgumentType(argumentInfo[i]), argumentInfo[i].Name ?? string.Empty);
+			return new FakeProperty(compilation) {
+				Name = "Item",
+				IsIndexer = true,
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = declaringType,
+				Parameters = parameters,
+			};
+		}
+
 		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 			foreach (var (argument, info) in arguments.Zip(argumentInfo))
@@ -4575,7 +4594,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = new TranslatedExpression(arguments.Last());
 			var indexer = new IndexerExpression(target, arguments.SkipLast(1).Select(a => a.Expression))
 				.WithoutILInstruction()
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.SkipLast(1).Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.SkipLast(1).Select(a => a.ResolveResult).ToArray(),
+					symbol: CreateDynamicIndexerSymbol(DynamicArgumentType(inst.ArgumentInfo[0]), inst.ArgumentInfo.Skip(1).Take(inst.ArgumentInfo.Count - 2).ToArray())));
 			return Assignment(indexer, value).WithILInstruction(inst);
 		}
 

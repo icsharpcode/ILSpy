@@ -49,6 +49,11 @@ public class DynamicMemberSample
 	{
 		return d.Compute(1, "two", d);
 	}
+
+	public object Index(dynamic d)
+	{
+		return d[0];
+	}
 }
 
 /// <summary>
@@ -110,5 +115,27 @@ public class HoverOnlyReferenceTests
 			"dynamic Compute(int, string, dynamic)",
 			"each argument is typed from the callsite: the constants keep their compile-time type, "
 			+ "the dynamic argument stays dynamic");
+	}
+
+	[AvaloniaTest]
+	public async Task Dynamic_Index_Access_Is_A_HoverOnly_Indexer()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		await vm.OpenAssemblyAsync(typeof(DynamicMemberSample).Assembly.Location);
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"ILSpy.Tests",
+			"ICSharpCode.ILSpy.Tests.TextView",
+			"ICSharpCode.ILSpy.Tests.TextView.DynamicMemberSample");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// The brackets of d[0] carry a synthesized indexer.
+		var bracket = tab.References!.First(r => r.Reference is IProperty { IsIndexer: true });
+		bracket.Kind.Should().Be(ReferenceMode.HoverOnly, "the synthesized indexer has no metadata to jump to");
+
+		var ambience = new CSharpAmbience {
+			ConversionFlags = ConversionFlags.ShowReturnType | ConversionFlags.ShowParameterList,
+		};
+		ambience.ConvertSymbol((IProperty)bracket.Reference!).Should().Be("dynamic this[int]");
 	}
 }
