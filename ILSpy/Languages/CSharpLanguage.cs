@@ -288,6 +288,17 @@ namespace ICSharpCode.ILSpy.Languages
 			return new RichText(text, model);
 		}
 
+		public override RichText GetRichText(IType type)
+		{
+			ArgumentNullException.ThrowIfNull(type);
+			var output = new StringWriter();
+			var decoratedWriter = new TextWriterTokenWriter(output);
+			var writer = new CSharpHighlightingTokenWriter(TokenWriter.InsertRequiredSpaces(decoratedWriter), locatable: decoratedWriter);
+			var astBuilder = new TypeSystemAstBuilder { AlwaysUseShortTypeNames = true };
+			astBuilder.ConvertType(type).AcceptVisitor(new CSharpOutputVisitor(writer, FormattingOptionsFactory.CreateAllman()));
+			return new RichText(output.ToString(), writer.HighlightingModel);
+		}
+
 		static void EmboldenTypeNames(string text, RichTextModel model)
 		{
 			var highlighting = HighlightingManager.Instance.GetDefinition("C#");
