@@ -78,7 +78,16 @@ namespace ICSharpCode.Decompiler
 					output.WriteReference(t, name, false);
 					return;
 				case IMember m:
-					output.WriteReference(m, name, false);
+					if (IsDynamicMemberReference(nodeStack.Peek()))
+					{
+						// A member synthesized for a dynamic access: show its signature on hover, but do not
+						// make it a navigation target (there is no real member to jump to) - like a local.
+						output.WriteLocalReference(name, m);
+					}
+					else
+					{
+						output.WriteReference(m, name, false);
+					}
 					return;
 			}
 
@@ -138,6 +147,21 @@ namespace ICSharpCode.Decompiler
 				return null;
 
 			return symbol;
+		}
+
+		/// <summary>
+		/// True if the member reference at this node was synthesized for a dynamic member access/invocation.
+		/// Such members carry a hover tooltip but must not be navigation targets, since they do not exist in
+		/// metadata.
+		/// </summary>
+		static bool IsDynamicMemberReference(AstNode node)
+		{
+			if (node.Annotation<ResolveResult>() is CSharp.Resolver.DynamicMemberResolveResult)
+				return true;
+			if (node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression
+				&& node.Parent.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
+				return true;
+			return false;
 		}
 
 		object GetCurrentLocalReference()
