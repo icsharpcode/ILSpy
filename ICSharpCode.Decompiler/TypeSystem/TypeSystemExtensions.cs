@@ -732,6 +732,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return ((ConversionResolveResult)rr).Input.GetSymbol();
 			}
+			else if (rr is CSharp.Resolver.DynamicMemberResolveResult dynamicMember)
+			{
+				return dynamicMember.Symbol;
+			}
+			else if (rr is CSharp.Resolver.DynamicInvocationResolveResult dynamicInvocation)
+			{
+				return dynamicInvocation.Symbol;
+			}
 
 			return null;
 		}
