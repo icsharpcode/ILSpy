@@ -1471,6 +1471,14 @@ namespace ICSharpCode.ILSpy.TextView
 		internal HoverContent? BuildHoverContent(DecompilerTabPageModel model, ReferenceSegment segment)
 		{
 			var language = model.Language;
+			if (segment.Reference is Decompiler.IL.ILVariable variable && language != null)
+			{
+				// Local variables have no metadata symbol, so render the declared type and name directly.
+				string kind = variable.Kind == Decompiler.IL.VariableKind.Parameter ? "parameter" : "local variable";
+				var localRenderer = CreateTooltipRenderer();
+				localRenderer.AddSignatureBlock(new RichText($"({kind}) ") + language.GetRichText(variable.Type) + new RichText($" {variable.Name}"));
+				return new HoverContent(localRenderer.CreateView(), IsRich: true);
+			}
 			var resolved = ResolveEntity(model, segment.Reference);
 			switch (resolved)
 			{

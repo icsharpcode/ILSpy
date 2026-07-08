@@ -188,6 +188,12 @@ namespace ICSharpCode.ILSpy.Languages
 		public virtual RichText GetRichText(IEntity entity, ConversionFlags conversionFlags, bool boldTypeNames = false)
 			=> new(EntityToString(entity, conversionFlags));
 
+		/// <summary>
+		/// Renders a bare type (e.g. a local variable's type, or <c>dynamic</c>) as rich text for a hover.
+		/// </summary>
+		public virtual RichText GetRichText(IType type)
+			=> new(TypeToString(type));
+
 		public virtual void DecompileType(ITypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(type));
