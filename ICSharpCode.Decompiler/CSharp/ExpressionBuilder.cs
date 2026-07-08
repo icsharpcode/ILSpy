@@ -4386,7 +4386,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new InvocationExpression(targetExpr, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray(), symbol: CreateDynamicInvokeMemberSymbol(inst.Name, inst.ArgumentInfo[0], inst.ArgumentInfo.Skip(1).ToArray())));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray(), symbol: CreateDynamicInvokeMemberSymbol(inst.Name, inst.ArgumentInfo[0], inst.ArgumentInfo.Skip(1).ToArray(), inst.TypeArguments)));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
@@ -4461,7 +4461,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// typed by <see cref="DynamicArgumentType"/>, so the member reference carries a navigable symbol /
 		/// hover tooltip.
 		/// </summary>
-		IMember CreateDynamicInvokeMemberSymbol(string name, CSharpArgumentInfo targetInfo, IReadOnlyList<CSharpArgumentInfo> argumentInfo)
+		IMember CreateDynamicInvokeMemberSymbol(string name, CSharpArgumentInfo targetInfo, IReadOnlyList<CSharpArgumentInfo> argumentInfo, IReadOnlyList<IType> typeArguments)
 		{
 			var method = new FakeMethod(compilation, SymbolKind.Method) {
 				Name = name,
@@ -4475,7 +4475,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					parameters[i] = new DefaultParameter(DynamicArgumentType(argumentInfo[i]), argumentInfo[i].Name ?? string.Empty);
 				method.Parameters = parameters;
 			}
-			return method;
+			if (typeArguments.Count == 0)
+				return method;
+			// Explicit type arguments (a.Method<int>()): give the fake a matching set of type parameters,
+			// conventionally named T, T2, ..., and specialize it with the actual arguments like a real
+			// generic call would.
+			var typeParameters = new ITypeParameter[typeArguments.Count];
+			for (int i = 0; i < typeArguments.Count; i++)
+				typeParameters[i] = new DefaultTypeParameter(method, i, i == 0 ? "T" : "T" + (i + 1));
+			method.TypeParameters = typeParameters;
+			return SpecializedMethod.Create(method, new TypeParameterSubstitution(null, typeArguments));
 		}
 
 		/// <summary>
