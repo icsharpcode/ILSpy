@@ -355,6 +355,25 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
 			Assert.That(ambience.ConvertSymbol(method), Is.EqualTo("public dynamic dynamic.Compute(int, string, dynamic)"));
 		}
+		[Test]
+		public void DynamicIndexer()
+		{
+			// The shape ExpressionBuilder synthesizes for a[b]: an indexer with dynamic return, index
+			// parameters typed from the callsite delegate, declared on the dynamic type. It carries no
+			// accessors, which the ambience renders cleanly (no empty { } artifact).
+			var indexer = new FakeProperty(compilation) {
+				Name = "Item",
+				IsIndexer = true,
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = SpecialType.Dynamic,
+				Parameters = new IParameter[] { new DefaultParameter(compilation.FindType(KnownTypeCode.Int32), string.Empty) },
+			};
+			ambience.ConversionFlags = ConversionFlags.ShowReturnType | ConversionFlags.ShowParameterList;
+			Assert.That(ambience.ConvertSymbol(indexer), Is.EqualTo("dynamic this[int]"));
+
+			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
+			Assert.That(ambience.ConvertSymbol(indexer), Is.EqualTo("public dynamic dynamic.this[int]"));
+		}
 		#endregion
 
 		#region Test types

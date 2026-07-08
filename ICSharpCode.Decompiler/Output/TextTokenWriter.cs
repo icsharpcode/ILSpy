@@ -159,6 +159,10 @@ namespace ICSharpCode.Decompiler
 		{
 			if (node.Annotation<ResolveResult>() is CSharp.Resolver.DynamicMemberResolveResult)
 				return true;
+			// The node itself is a dynamic invocation/indexing (a.Method(b), a[b]): its parentheses/brackets
+			// carry the synthesized member.
+			if (node.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
+				return true;
 			if (node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression
 				&& node.Parent.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
 				return true;
