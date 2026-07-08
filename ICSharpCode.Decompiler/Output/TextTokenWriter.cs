@@ -446,6 +446,11 @@ namespace ICSharpCode.Decompiler
 					output.Write(type);
 					output.Write("()");
 					break;
+				case "dynamic":
+					// dynamic has no metadata type definition; emit it as a hover-only reference (no navigation
+					// target) so it can carry a tooltip, like a local.
+					output.WriteLocalReference(type, SpecialType.Dynamic);
+					return;
 				case "bool":
 				case "byte":
 				case "sbyte":
