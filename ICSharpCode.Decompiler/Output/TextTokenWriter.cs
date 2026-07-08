@@ -161,6 +161,12 @@ namespace ICSharpCode.Decompiler
 			if (node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression
 				&& node.Parent.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
 				return true;
+			// new T(dynamicArg): the object creation (or its type-name slot) is backed by a dynamic newobj,
+			// whose synthesized constructor has no metadata to navigate to.
+			if (node.Annotation<IL.DynamicInvokeConstructorInstruction>() != null)
+				return true;
+			if (node.Slot?.Kind == Slots.Type && node.Parent?.Annotation<IL.DynamicInvokeConstructorInstruction>() != null)
+				return true;
 			return false;
 		}
 
@@ -343,7 +349,10 @@ namespace ICSharpCode.Decompiler
 								output.WriteReference(t, token, false);
 								return;
 							case IMember m:
-								output.WriteReference(m, token, false);
+								if (IsDynamicMemberReference(node))
+									output.WriteLocalReference(token, m);
+								else
+									output.WriteReference(m, token, false);
 								return;
 						}
 					}
