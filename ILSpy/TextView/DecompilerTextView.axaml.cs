@@ -1479,6 +1479,13 @@ namespace ICSharpCode.ILSpy.TextView
 				localRenderer.AddSignatureBlock(new RichText($"({kind}) ") + language.GetRichText(variable.Type) + new RichText($" {variable.Name}"));
 				return new HoverContent(localRenderer.CreateView(), IsRich: true);
 			}
+			if (segment.Reference is IType { Kind: TypeKind.Dynamic } dynamicType && language != null)
+			{
+				// dynamic has no metadata entity; render the keyword as its own hover.
+				var dynamicRenderer = CreateTooltipRenderer();
+				dynamicRenderer.AddSignatureBlock(language.GetRichText(dynamicType));
+				return new HoverContent(dynamicRenderer.CreateView(), IsRich: true);
+			}
 			var resolved = ResolveEntity(model, segment.Reference);
 			switch (resolved)
 			{
