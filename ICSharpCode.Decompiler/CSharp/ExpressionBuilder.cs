@@ -4364,9 +4364,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!(inst.ArgumentInfo[0].HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType)))
 				return ErrorExpression("Could not detect static type for DynamicInvokeConstructorInstruction");
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
-			//var names = inst.ArgumentInfo.Skip(1).Select(a => a.Name).ToArray();
+			var constructor = CreateDynamicConstructorSymbol(constructorType, inst.ArgumentInfo.Skip(1).ToArray());
 			return new ObjectCreateExpression(ConvertType(constructorType), arguments.Select(a => a.Expression))
-				.WithILInstruction(inst).WithRR(new ResolveResult(constructorType));
+				.WithILInstruction(inst)
+				.WithRR(new CSharpInvocationResolveResult(new ResolveResult(constructorType), constructor, arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst, TranslationContext context)
@@ -4475,6 +4476,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				method.Parameters = parameters;
 			}
 			return method;
+		}
+
+		/// <summary>
+		/// Synthesizes the constructor for a dynamic object creation (<c>new T(b)</c> where an argument is
+		/// dynamic): a constructor on the created type with one parameter per argument typed by
+		/// <see cref="DynamicArgumentType"/>, so the type name and parentheses carry a hover tooltip.
+		/// </summary>
+		IMethod CreateDynamicConstructorSymbol(IType declaringType, IReadOnlyList<CSharpArgumentInfo> argumentInfo)
+		{
+			var constructor = new FakeMethod(compilation, SymbolKind.Constructor) {
+				Name = ".ctor",
+				DeclaringType = declaringType,
+				ReturnType = compilation.FindType(KnownTypeCode.Void),
+			};
+			if (argumentInfo.Count > 0)
+			{
+				var parameters = new IParameter[argumentInfo.Count];
+				for (int i = 0; i < argumentInfo.Count; i++)
+					parameters[i] = new DefaultParameter(DynamicArgumentType(argumentInfo[i]), argumentInfo[i].Name ?? string.Empty);
+				constructor.Parameters = parameters;
+			}
+			return constructor;
 		}
 
 		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
