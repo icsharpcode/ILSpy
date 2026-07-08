@@ -4356,7 +4356,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = TranslateDynamicTarget(inst.Target, inst.TargetArgumentInfo);
 			return new MemberReferenceExpression(target, inst.Name!)
 				.WithILInstruction(inst)
-				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name));
+				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name, CreateDynamicMemberSymbol(inst.Name!, inst.TargetArgumentInfo)));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst, TranslationContext context)
@@ -4385,7 +4385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new InvocationExpression(targetExpr, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray(), symbol: CreateDynamicInvokeMemberSymbol(inst.Name, inst.ArgumentInfo[0], inst.ArgumentInfo.Skip(1).ToArray())));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
@@ -4424,6 +4424,57 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			return translatedTarget;
+		}
+
+		/// <summary>
+		/// The type to show for a dynamic callsite argument: its recorded compile-time type when the runtime
+		/// binder was told to use it (statically-typed or constant arguments), otherwise <c>dynamic</c>.
+		/// </summary>
+		static IType DynamicArgumentType(CSharpArgumentInfo info)
+		{
+			if ((info.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType) || info.HasFlag(CSharpArgumentInfoFlags.Constant))
+				&& info.CompileTimeType != null)
+			{
+				return info.CompileTimeType;
+			}
+			return SpecialType.Dynamic;
+		}
+
+		/// <summary>
+		/// Synthesizes a member on the target type for a dynamic member access (a.Member), so the member
+		/// reference carries a navigable symbol / hover tooltip. Since the real member is unknown, this is a
+		/// <c>dynamic</c>-typed field named after the accessed member, declared on the target's compile-time type.
+		/// </summary>
+		IMember CreateDynamicMemberSymbol(string name, CSharpArgumentInfo targetInfo)
+		{
+			return new FakeField(compilation) {
+				Name = name,
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = DynamicArgumentType(targetInfo),
+			};
+		}
+
+		/// <summary>
+		/// Synthesizes a member on the target type for a dynamic member invocation (a.Method(b)): a
+		/// <c>dynamic</c>-returning method named after the invoked member, with one parameter per argument
+		/// typed by <see cref="DynamicArgumentType"/>, so the member reference carries a navigable symbol /
+		/// hover tooltip.
+		/// </summary>
+		IMember CreateDynamicInvokeMemberSymbol(string name, CSharpArgumentInfo targetInfo, IReadOnlyList<CSharpArgumentInfo> argumentInfo)
+		{
+			var method = new FakeMethod(compilation, SymbolKind.Method) {
+				Name = name,
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = DynamicArgumentType(targetInfo),
+			};
+			if (argumentInfo.Count > 0)
+			{
+				var parameters = new IParameter[argumentInfo.Count];
+				for (int i = 0; i < argumentInfo.Count; i++)
+					parameters[i] = new DefaultParameter(DynamicArgumentType(argumentInfo[i]), argumentInfo[i].Name ?? string.Empty);
+				method.Parameters = parameters;
+			}
+			return method;
 		}
 
 		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
@@ -4502,7 +4553,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
 			var member = new MemberReferenceExpression(target, inst.Name!)
 				.WithoutILInstruction()
-				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name));
+				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name, CreateDynamicMemberSymbol(inst.Name!, inst.TargetArgumentInfo)));
 			return Assignment(member, value).WithILInstruction(inst);
 		}
 
