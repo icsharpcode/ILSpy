@@ -323,6 +323,40 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		}
 		#endregion
 
+		#region Dynamic (synthesized member) tests
+		[Test]
+		public void DynamicType()
+		{
+			ambience.ConversionFlags = ConversionFlags.None;
+			Assert.That(ambience.ConvertType(SpecialType.Dynamic), Is.EqualTo("dynamic"));
+		}
+
+		[Test]
+		public void DynamicInvokeMember()
+		{
+			// The shape ExpressionBuilder synthesizes for a.Compute(1, "two", d): dynamic return,
+			// per-argument types from the callsite delegate (constants keep their compile-time type),
+			// declared on the dynamic type.
+			var method = new FakeMethod(compilation, SymbolKind.Method) {
+				Name = "Compute",
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = SpecialType.Dynamic,
+				Parameters = new IParameter[] {
+					new DefaultParameter(compilation.FindType(KnownTypeCode.Int32), string.Empty),
+					new DefaultParameter(compilation.FindType(KnownTypeCode.String), string.Empty),
+					new DefaultParameter(SpecialType.Dynamic, string.Empty),
+				},
+			};
+			ambience.ConversionFlags = ConversionFlags.ShowReturnType | ConversionFlags.ShowParameterList;
+			Assert.That(ambience.ConvertSymbol(method), Is.EqualTo("dynamic Compute(int, string, dynamic)"));
+
+			// The same member as DecompilerTextView.BuildHoverContent renders it (full hover form): the
+			// unnamed synthetic parameters collapse to their types, so there is no dangling-name artifact.
+			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
+			Assert.That(ambience.ConvertSymbol(method), Is.EqualTo("public dynamic dynamic.Compute(int, string, dynamic)"));
+		}
+		#endregion
+
 		#region Test types
 #pragma warning disable 169, 67
 

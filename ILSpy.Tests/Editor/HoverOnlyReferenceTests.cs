@@ -24,6 +24,9 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.Output;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -40,6 +43,11 @@ public class DynamicMemberSample
 	public object Get(dynamic d)
 	{
 		return d.Property;
+	}
+
+	public object Call(dynamic d)
+	{
+		return d.Compute(1, "two", d);
 	}
 }
 
@@ -75,5 +83,32 @@ public class HoverOnlyReferenceTests
 
 		navigated.Should().BeFalse("clicking a hover-only reference must not navigate");
 		view.LocalReferenceMarks.Should().BeEmpty("a hover-only reference must not highlight occurrences");
+	}
+
+	[AvaloniaTest]
+	public async Task Dynamic_Invoke_Member_Hover_Renders_Its_Synthesized_Signature()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		await vm.OpenAssemblyAsync(typeof(DynamicMemberSample).Assembly.Location);
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"ILSpy.Tests",
+			"ICSharpCode.ILSpy.Tests.TextView",
+			"ICSharpCode.ILSpy.Tests.TextView.DynamicMemberSample");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		// The 'Compute' hover target is the member synthesized for the dynamic call d.Compute(1, "two", d).
+		var compute = tab.References!
+			.Select(r => r.Reference)
+			.OfType<IMethod>()
+			.First(m => m.Name == "Compute");
+
+		var ambience = new CSharpAmbience {
+			ConversionFlags = ConversionFlags.ShowReturnType | ConversionFlags.ShowParameterList,
+		};
+		ambience.ConvertSymbol(compute).Should().Be(
+			"dynamic Compute(int, string, dynamic)",
+			"each argument is typed from the callsite: the constants keep their compile-time type, "
+			+ "the dynamic argument stays dynamic");
 	}
 }
