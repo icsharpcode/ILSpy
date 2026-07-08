@@ -24,7 +24,6 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 
@@ -33,51 +32,48 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.TextView;
 
 /// <summary>
-/// Sample type decompiled by <see cref="LocalReferenceHighlightTests"/>: a generic local
-/// function inside a generic method, so that every use site carries a specialized method
-/// instance while the declaration carries the unspecialized one (issue #2078).
+/// Sample type decompiled by <see cref="HoverOnlyReferenceTests"/>: a dynamic member access, whose
+/// synthesized member the decompiler renders as a hover-only reference.
 /// </summary>
-public class GenericLocalFunctionSample
+public class DynamicMemberSample
 {
-	public T Run<T>(T t)
+	public object Get(dynamic d)
 	{
-		return Echo(Echo(t));
-
-		static T2 Echo<T2>(T2 value) => value;
+		return d.Property;
 	}
 }
 
 /// <summary>
-/// Pins the local-reference highlighting for local functions: clicking any occurrence of a
-/// generic local function must paint the definition and every use site as one group.
+/// Pins the third reference mode. A member synthesized for a dynamic access shows a hover tooltip but
+/// is not a navigation target and, unlike a local variable, clicking it does not highlight occurrences
+/// (it is a distinct synthetic member at every use).
 /// </summary>
 [TestFixture]
-public class LocalReferenceHighlightTests
+public class HoverOnlyReferenceTests
 {
 	[AvaloniaTest]
-	public async Task Clicking_A_Generic_Local_Function_Use_Highlights_Definition_And_All_Uses()
+	public async Task Dynamic_Member_Is_HoverOnly_And_A_Click_Neither_Navigates_Nor_Highlights()
 	{
 		var (window, vm) = await TestHarness.BootAsync();
-		await vm.OpenAssemblyAsync(typeof(GenericLocalFunctionSample).Assembly.Location);
+		await vm.OpenAssemblyAsync(typeof(DynamicMemberSample).Assembly.Location);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"ILSpy.Tests",
 			"ICSharpCode.ILSpy.Tests.TextView",
-			"ICSharpCode.ILSpy.Tests.TextView.GenericLocalFunctionSample");
+			"ICSharpCode.ILSpy.Tests.TextView.DynamicMemberSample");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
 
-		var localFunctionSegments = tab.References!
-			.Where(r => r.Kind == ReferenceMode.LocalHighlight && r.Reference is IMethod { IsLocalFunction: true })
+		var hoverOnly = tab.References!
+			.Where(r => r.Kind == ReferenceMode.HoverOnly)
 			.ToList();
-		localFunctionSegments.Should().HaveCount(3, "the local function has one definition and two calls");
-		localFunctionSegments.Count(r => r.IsDefinition).Should().Be(1);
+		hoverOnly.Should().NotBeEmpty("the dynamic member access 'd.Property' is a hover-only reference");
 
-		var use = localFunctionSegments.First(r => !r.IsDefinition);
-		view.OnReferenceClicked(use);
+		var navigated = false;
+		tab.NavigateRequested += _ => navigated = true;
+		view.OnReferenceClicked(hoverOnly.First());
 
-		view.LocalReferenceMarks.Select(m => m.StartOffset).Should().BeEquivalentTo(
-			localFunctionSegments.Select(s => s.StartOffset),
-			"clicking a use must highlight the definition and every use");
+		navigated.Should().BeFalse("clicking a hover-only reference must not navigate");
+		view.LocalReferenceMarks.Should().BeEmpty("a hover-only reference must not highlight occurrences");
 	}
 }
