@@ -559,7 +559,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			}
 
-			if (TransformDynamicAddAssignOrRemoveAssign(inst))
+			if (TransformDynamicAddAssignOrRemoveAssign(inst, context))
 				return;
 			if (inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 			{
@@ -738,7 +738,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// dynamic.compound.op (dynamic.getmember Name(target), value)
 		/// </summary>
-		bool TransformDynamicAddAssignOrRemoveAssign(IfInstruction inst)
+		internal static bool TransformDynamicAddAssignOrRemoveAssign(IfInstruction inst, ILTransformContext context)
 		{
 			if (!inst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 				return false;
