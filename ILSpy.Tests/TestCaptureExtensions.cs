@@ -23,6 +23,7 @@ using System.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -111,7 +112,7 @@ public static class TestCapture
 		Directory.CreateDirectory(directory);
 		var fileName = $"{testName}_{step:D2}_{Sanitize(description)}.png";
 		step++;
-		frame.Save(Path.Combine(directory, fileName));
+		frame.Save(Path.Combine(directory, fileName), PngBitmapEncoderOptions.Default);
 	}
 
 	static Window? TryGetMainWindow()
