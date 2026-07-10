@@ -11,7 +11,7 @@
     <RoslynVersion>5.8.0-1.26302.115</RoslynVersion>
     <NetPackageVersion>10.0.9</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
-    <AvaloniaVersion>12.0.4</AvaloniaVersion>
+    <AvaloniaVersion>12.1.0</AvaloniaVersion>
     <DockVersion>12.0.0.2</DockVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -20,17 +20,17 @@
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Themes.Simple" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Headless.NUnit" Version="$(AvaloniaVersion)" />
-    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.11" />
+    <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.13" />
     <PackageVersion Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
     <PackageVersion Include="AvaloniaEdit.TextMate" Version="12.0.0" />
-    <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="12.0.0.1" />
-    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.2" />
+    <PackageVersion Include="Xaml.Behaviors.Avalonia" Version="12.0.5" />
+    <PackageVersion Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3" />
     <PackageVersion Include="Dock.Avalonia" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Avalonia.Themes.Simple" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Controls.Recycling" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="$(DockVersion)" />
-    <PackageVersion Include="ProDataGrid" Version="12.0.0" />
+    <PackageVersion Include="ProDataGrid" Version="12.0.4" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
     <PackageVersion Include="CliWrap" Version="3.10.2" />
