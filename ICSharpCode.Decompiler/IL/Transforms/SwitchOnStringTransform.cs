@@ -818,6 +818,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!newObj.Arguments[0].MatchLdcI4(out valuesLength))
 					return false;
 			}
+			if (valuesLength < 0)
+				return false;
 			values = new List<(string, int)>(valuesLength);
 			int i = 0;
 			while (MatchAddCall(dictionaryType, block.Instructions[i + 1], dictVar, out var index, out var value))
