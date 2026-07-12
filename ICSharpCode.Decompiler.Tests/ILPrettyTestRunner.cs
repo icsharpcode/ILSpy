@@ -268,6 +268,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task SwitchOnStringNegativeCharIndex()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task ConstantBlobs()
 		{
 			await Run();
