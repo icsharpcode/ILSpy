@@ -601,19 +601,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		// A by-ref-like local (a 'ref' local or a ref struct such as Span<T>) that is re-assigned to a value
 		// limited to a method-local's scope must have been declared 'scoped' for the original source to pass
-		// ref-safety (otherwise CS8374/CS8352). 'scoped' has no runtime effect, and such a local provably
+		// ref-safety (otherwise CS8374 for ref locals, or CS8347/CS8352 for ref structs). 'scoped' has no runtime effect, and such a local provably
 		// cannot escape the method, so restoring it is behavior-preserving and lets the code recompile.
-		static bool RequiresScopedModifier(ILVariable v)
-		{
-			if (v.StoreInstructions.Count < 2)
-				return false;
-			foreach (var store in v.StoreInstructions)
-			{
-				if (store is StLoc stloc && CapturesNarrowReference(stloc.Value))
-					return true;
-			}
-			return false;
-		}
+static bool RequiresScopedModifier(ILVariable variable)
+{
+	if (variable.StoreInstructions.Count < 2)
+		return false;
+	foreach (var store in variable.StoreInstructions)
+	{
+		if (store is StLoc stloc && CapturesNarrowReference(stloc.Value))
+			return true;
+	}
+	return false;
+}
 
 		// True if the stored ref / ref-struct value is limited to a method-local's scope: either the address
 		// of method-local storage (a narrow ref itself), or a call/newobj that passes such an address to a
