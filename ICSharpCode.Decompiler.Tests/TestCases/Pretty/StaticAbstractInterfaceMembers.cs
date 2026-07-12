@@ -223,4 +223,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 			++t;
 		}
 	}
+
+#if CS110
+	internal class ZZCheckedAndShiftOperatorTest
+	{
+		public interface IShifty<T> where T : IShifty<T>
+		{
+			static abstract T operator +(T l, T r);
+
+			static abstract T operator checked +(T l, T r);
+
+			static abstract T operator >>>(T l, int r);
+		}
+
+		public static T Add<T>(T a, T b) where T : IShifty<T>
+		{
+			return a + b;
+		}
+
+		public static T AddChecked<T>(T a, T b) where T : IShifty<T>
+		{
+			return checked(a + b);
+		}
+
+		public static T Shift<T>(T a) where T : IShifty<T>
+		{
+			return a >>> 3;
+		}
+
+		public static int UsePropertiesAsRValue<T>() where T : IAmSimple
+		{
+			return T.Capacity + T.Count;
+		}
+	}
+#endif
 }

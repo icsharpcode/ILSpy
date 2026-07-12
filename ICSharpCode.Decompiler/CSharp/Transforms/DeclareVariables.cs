@@ -710,7 +710,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						type = new SimpleType("var");
 						isOutVar = true;
 					}
-					else if (dirExpr.Annotation<UseImplicitlyTypedOutAnnotation>() != null)
+					else if (dirExpr.Annotation<UseImplicitlyTypedOutAnnotation>() != null
+						&& !IsReferencedWithinDeclaringCall(dirExpr, v))
 					{
 						type = new SimpleType("var");
 						isOutVar = true;
@@ -845,6 +846,45 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				oldNode.ReplaceWith(newNode);
 				context.EndStep(newNode);
 			}
+		}
+
+		/// <summary>
+		/// Gets whether the variable declared by <paramref name="dirExpr"/> is referenced again within
+		/// another argument of the call containing the declaration. In that case the declaration must use
+		/// the explicit type: referencing an implicitly-typed out variable is not permitted until overload
+		/// resolution of the declaring call has inferred its type (CS8196).
+		/// </summary>
+		bool IsReferencedWithinDeclaringCall(DirectionExpression dirExpr, VariableToDeclare v)
+		{
+			AstNode? call = dirExpr.Parent;
+			if (call == null)
+				return false;
+			for (AstNode? argument = call.FirstChild; argument != null; argument = argument.NextSibling)
+			{
+				if (argument == dirExpr)
+					continue;
+				foreach (AstNode node in argument.DescendantsAndSelf)
+				{
+					if (node is IdentifierExpression identifier && ResolveVariableToDeclare(identifier.GetILVariable()) == v)
+						return true;
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Maps an ILVariable to the variable declaration it will end up in, following merges
+		/// performed by ResolveCollisions.
+		/// </summary>
+		VariableToDeclare? ResolveVariableToDeclare(ILVariable? variable)
+		{
+			if (variable == null || !variableDict.TryGetValue(variable, out VariableToDeclare? v))
+				return null;
+			while (v.ReplacementDueToCollision is { } replacement)
+			{
+				v = replacement;
+			}
+			return v;
 		}
 
 		private bool CanBeDeclaredAsOutVariable(VariableToDeclare v, [NotNullWhen(true)] out DirectionExpression? dirExpr)

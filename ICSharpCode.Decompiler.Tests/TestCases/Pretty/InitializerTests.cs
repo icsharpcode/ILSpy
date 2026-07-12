@@ -458,6 +458,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 #if CS110 && !NET40
 		public static ReadOnlySpan<byte> UTF8Literal => "Hello, world!"u8;
 		public static ReadOnlySpan<byte> UTF8LiteralWithNullTerminator => "Hello, world!\0"u8;
+		public static ReadOnlySpan<byte> UTF8LiteralEmpty => ""u8;
+		public static ReadOnlySpan<byte> UTF8LiteralWithEscapeSequences => "line1\nline2\t\"quoted\"\\"u8;
 #endif
 		#endregion
 
@@ -511,6 +513,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static void Array2(int a, int b, int c)
 		{
 			X(Y(), new int[5] { a, 0, b, 0, c });
+		}
+
+		public static int[] DuplicateElementAssignment()
+		{
+			// A second store to an element that was already written must stop the array-initializer
+			// transform from folding these stores into a 'new int[] { ... }'. Doing so would drop the
+			// earlier store, which is a visible change when its value has side effects.
+			int[] array = new int[3];
+			array[0] = 1;
+			array[0] = 2;
+			array[1] = 3;
+			array[2] = 4;
+			return array;
 		}
 
 		public static void NestedArray(int a, int b, int c)
@@ -1257,6 +1272,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		}
 
 #if CS60
+		public static void RealDictionaryIndexInitializer()
+		{
+			X(Y(), new Dictionary<string, int> {
+				["a"] = 1,
+				["b"] = GetInt()
+			});
+		}
+
 		public static void SimpleDictInitializer()
 		{
 			X(Y(), new Data {

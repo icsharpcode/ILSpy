@@ -21,7 +21,6 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler;
 
 using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.TextView;
 
 using NUnit.Framework;
 
@@ -73,11 +72,20 @@ public class DisplaySettingsBridgeTests
 	[Test]
 	public void Expand_Flags_Still_Bridged()
 	{
-		var display = new DisplaySettings { ExpandUsingDeclarations = true, ExpandMemberDefinitions = true };
-		var settings = new DecompilerSettings { ExpandUsingDeclarations = false, ExpandMemberDefinitions = false };
+		var display = new DisplaySettings {
+			ExpandXmlDocumentationComments = true,
+			ExpandUsingDeclarations = true,
+			ExpandMemberDefinitions = true
+		};
+		var settings = new DecompilerSettings {
+			ExpandXmlDocumentationComments = false,
+			ExpandUsingDeclarations = false,
+			ExpandMemberDefinitions = false
+		};
 
 		SettingsService.ApplyDisplaySettings(settings, display);
 
+		settings.ExpandXmlDocumentationComments.Should().BeTrue();
 		settings.ExpandUsingDeclarations.Should().BeTrue();
 		settings.ExpandMemberDefinitions.Should().BeTrue();
 	}

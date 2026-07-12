@@ -76,7 +76,14 @@ namespace ICSharpCode.BamlDecompiler.Baml
 			return module;
 		}
 
-		ITypeDefinition InitType(IModule assembly, string ns, string name) => assembly.GetTypeDefinition(new TopLevelTypeName(ns, name));
+		ITypeDefinition InitType(IModule assembly, string ns, string name)
+		{
+			// A synthetic stand-in only materializes the types the BAML decompiler explicitly seeds
+			// here, keeping it bounded to the well-known set. Any other lookup on it returns null.
+			if (assembly is SyntheticWpfModule synthetic)
+				return synthetic.RegisterType(ns, name);
+			return assembly.GetTypeDefinition(new TopLevelTypeName(ns, name));
+		}
 		KnownMember InitMember(KnownTypes parent, string name, ITypeDefinition type) => new KnownMember(parent, types[parent], name, type);
 	}
 

@@ -1,3 +1,7 @@
+// Copyright (c) .NET Foundation and Contributors
+//
+// Vendored from Humanizr/Humanizer (https://github.com/Humanizr/Humanizer), MIT license.
+
 namespace Humanizer.Inflections;
 
 using CharSpan = System.ReadOnlySpan<System.Char>;

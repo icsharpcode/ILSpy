@@ -92,5 +92,43 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value2);
 			Console.WriteLine(value2);
 		}
+
+		private static void GetTwo(out int a, out int b)
+		{
+			a = 1;
+			b = 2;
+		}
+
+		public static void SameVariableUsedForTwoOutParameters()
+		{
+			// The declaration must use the explicit type: referencing an implicitly-typed
+			// out variable in another argument of the declaring call is an error (CS8196).
+			GetTwo(out int a, out a);
+		}
+
+		public static int SameVariableUsedForTwoOutParametersAndRead()
+		{
+			GetTwo(out int a, out a);
+			return a;
+		}
+
+		private static void OutAndValue(out int a, int b)
+		{
+			a = b;
+		}
+
+		private static int UseAndReturn(out int a)
+		{
+			a = 1;
+			return a;
+		}
+
+		public static void SameVariableUsedInNestedCallArgument()
+		{
+			// CS8196 also applies when the second reference is nested within
+			// another argument of the declaring call.
+			OutAndValue(out int a, UseAndReturn(out a));
+			Console.WriteLine(a);
+		}
 	}
 }

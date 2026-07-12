@@ -204,6 +204,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				   select (x);
 		}
 
+		public object SelectIntoContinuation()
+		{
+			return from c in customers
+				   select c.Name into n
+				   where n.Length > 3
+				   select n.ToUpper();
+		}
+
 #if CS60
 		private List<string> Issue2545(List<string> arglist)
 		{

@@ -2,26 +2,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <IsWindowsX64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == X64">true</IsWindowsX64>
-    <IsWindowsARM64 Condition="$([MSBuild]::IsOsPlatform('Windows')) And $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == ARM64">true</IsWindowsARM64>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net11.0-windows</TargetFramework>
-    <RuntimeIdentifier Condition="$(IsWindowsX64) == true">win-x64</RuntimeIdentifier>
-    <RuntimeIdentifier Condition="$(IsWindowsARM64) == true">win-arm64</RuntimeIdentifier>
+    <!-- Platform-agnostic BAML decompiler tests: they need no WPF, so they build and run on every
+         CI leg (including Linux/macOS). The WPF round-trip cases live in the Windows-only companion
+         project ILSpy.BamlDecompiler.Tests.Windows. -->
+    <TargetFramework>net11.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
 
     <EnableDefaultItems>false</EnableDefaultItems>
-    <UseWpf>true</UseWpf>
 
-    <ExtrasEnableDefaultPageItems>false</ExtrasEnableDefaultPageItems>
-    <ExtrasEnableDefaultResourceItems>false</ExtrasEnableDefaultResourceItems>
-
-    <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
-    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Strong-named with the shared snk so ICSharpCode.BamlDecompiler can grant InternalsVisibleTo
+         for the resilience tests, mirroring ICSharpCode.Decompiler.Tests. -->
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
@@ -45,83 +39,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ICSharpCode.Decompiler.Tests\ICSharpCode.Decompiler.Tests.csproj" />
+    <ProjectReference Include="..\ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="BamlSecurityTests.cs" />
-    <Compile Include="BamlTestRunner.cs" />
-    <Compile Include="Cases\AttachedEvent.xaml.cs">
-      <DependentUpon>AttachedEvent.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Cases\CustomControl.cs" />
-    <Compile Include="Cases\Issue1547.xaml.cs" />
-    <Compile Include="Cases\Issue2097.xaml.cs" />
-    <Compile Include="Cases\Issue2116.xaml.cs" />
-    <Compile Include="Cases\Issue3318.xaml.cs" />
-    <Compile Include="Cases\MyControl.xaml.cs">
-      <DependentUpon>MyControl.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Cases\ReadonlyProperty.xaml.cs" />
-    <Compile Include="Cases\Resources.xaml.cs">
-      <DependentUpon>Resources.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Cases\Simple.xaml.cs">
-      <DependentUpon>Simple.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Cases\SimpleNames.xaml.cs">
-      <DependentUpon>SimpleNames.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Mocks\AvalonDock.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Page Include="Cases\AttachedEvent.xaml" />
-    <Page Include="Cases\AvalonDockBrushes.xaml" />
-    <Page Include="Cases\AvalonDockCommon.xaml" />
-    <Page Include="Cases\EscapeSequence.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue1435.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue1546.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue1547.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue2052.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue2097.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue2116.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue3318.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Issue775.xaml">
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Cases\MarkupExtension.xaml" />
-    <Page Include="Cases\MyControl.xaml" />
-    <Page Include="Cases\NamespacePrefix.xaml" />
-    <Page Include="Cases\ReadonlyProperty.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Cases\Resources.xaml" />
-    <Page Include="Cases\Simple.xaml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Page>
-    <Page Include="Cases\SimpleDictionary.xaml" />
-    <Page Include="Cases\SimpleNames.xaml" />
-    <Page Include="Cases\SimplePropertyElement.xaml" />
-    <Page Include="Cases\Dictionary1.xaml" />
-    <Page Include="Cases\Issue445.xaml" />
+    <Compile Include="MissingReferencesTests.cs" />
   </ItemGroup>
 
 </Project>

@@ -937,6 +937,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 
+	internal class T04_LiftedCompoundAssignAndBoxing
+	{
+		public static int? CompoundAssign(int? x, int? y)
+		{
+			x += y;
+			x <<= 2;
+			return x;
+		}
+
+		public static object Box(int? x)
+		{
+			return x;
+		}
+
+		public static int? Unbox(object o)
+		{
+			return (int?)o;
+		}
+	}
+
 	// dummy structure for testing custom operators
 	[StructLayout(LayoutKind.Sequential, Size = 1)]
 	public struct TS

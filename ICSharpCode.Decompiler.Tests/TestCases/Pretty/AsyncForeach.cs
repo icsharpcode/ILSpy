@@ -51,5 +51,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return max;
 		}
+
+		public async Task<int> SumWithConfigureAwait(IAsyncEnumerable<int> items)
+		{
+			int sum = 0;
+			await foreach (int item in items.ConfigureAwait(continueOnCapturedContext: false))
+			{
+				sum += item;
+			}
+			return sum;
+		}
 	}
 }

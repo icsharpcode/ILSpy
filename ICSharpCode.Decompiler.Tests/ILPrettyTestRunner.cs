@@ -279,6 +279,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run();
 		}
 
+		[Test]
+		public async Task StackAllocDuplicateStore()
+		{
+			await Run();
+		}
+
 		[Test, Platform("Win")] // UseLegacyAssembler requires the .NET Framework ilasm
 		public async Task Unsafe()
 		{

@@ -192,7 +192,7 @@ namespace ICSharpCode.ILSpy.ImageList
 				return;
 			using var bmp = ImageListBitmap.Create(frame);
 			using var dst = File.Create(path);
-			bmp.Save(dst);
+			bmp.Save(dst, PngBitmapEncoderOptions.Default);
 		}
 	}
 

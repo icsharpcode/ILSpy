@@ -583,6 +583,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+
+#if ROSLYN
+		// The legacy csc lowering of await inside the null-coalescing operator is not
+		// reconstructed; the raw awaiter state machine leaks into the output.
+		public static async Task<int> AwaitInCoalesce(Task<int?> t, Task<int> u)
+		{
+			return (await t) ?? (await u);
+		}
+#endif
+
+		public static async Task DoWhileAwaitCondition(Func<Task<bool>> t)
+		{
+			do
+			{
+				Console.WriteLine("body");
+			} while (await t());
+		}
+
+#if CS70 && !NET40
+		// The legacy csc and Roslyn 1.x configurations compile against the legacy
+		// .NET Framework reference assemblies, which have no ValueTask.
+		public static async Task<int> AwaitValueTask(ValueTask<int> t)
+		{
+			return await t + 1;
+		}
+#endif
+
+#if CS100 && !NET40
+		public static async Task<string> AwaitInInterpolationHole(Task<int> t)
+		{
+			return $"val={await t,5:x} end";
+		}
+#endif
 	}
 
 	public struct AsyncInStruct

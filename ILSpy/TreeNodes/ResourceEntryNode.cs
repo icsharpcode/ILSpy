@@ -56,6 +56,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			using var data = OpenStream();
+			if (WriteTextContent(key, data, output))
+				return;
 			language.WriteCommentLine(output, $"{key} = {data.Length} bytes");
 			if (output is ISmartTextOutput smart)
 			{
@@ -63,6 +65,27 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				smart.AddButton(Images.Save, "Save", async (_, _) => await SaveAsync().ConfigureAwait(false));
 				smart.WriteLine();
 			}
+		}
+
+		/// <summary>
+		/// Renders a textual payload as the view's whole content and switches the text view's
+		/// highlighting to the detected format (XML, JSON, ...), mirroring how the XML/XAML
+		/// resource nodes present theirs. Returns false for binary payloads, which keep the
+		/// byte-count-plus-Save presentation instead.
+		/// </summary>
+		internal static bool WriteTextContent(string resourceName, Stream data, ITextOutput output)
+		{
+			var content = TextResourceDetector.TryDetectText(resourceName, data);
+			if (content == null)
+				return false;
+			output.Write(content.Text);
+			if (output is AvaloniaEditTextOutput aeto)
+			{
+				// An empty extension is a deliberate override to plain text: without it the tab
+				// would fall back to the active language's highlighting (e.g. C#).
+				aeto.SyntaxExtensionOverride = content.SyntaxExtension;
+			}
+			return true;
 		}
 
 		public override bool Save()
@@ -82,8 +105,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			src.CopyTo(dst);
 		}
 
+		/// <summary>
+		/// Creates the node for an entry unpacked from a container resource (.resources /
+		/// !AvaloniaResources). Dispatches through the factory pipeline so typed entries
+		/// (.baml, images, XML, ...) get their specialised nodes; unclaimed entries fall back
+		/// to this generic entry node.
+		/// </summary>
 		public static ILSpyTreeNode Create(string name, byte[] data)
-			=> new ResourceEntryNode(name, () => new MemoryStream(data));
+		{
+			var resource = new ByteArrayResource(name, data);
+			return ResourceNodeFactories
+				.Select(f => f.CreateNode(resource))
+				.OfType<ILSpyTreeNode>()
+				.FirstOrDefault()
+				?? new ResourceEntryNode(name, () => new MemoryStream(data));
+		}
 
 		/// <summary>
 		/// Walks <see cref="ILSpyTreeNode.ResourceNodeFactories"/> and returns the first node any

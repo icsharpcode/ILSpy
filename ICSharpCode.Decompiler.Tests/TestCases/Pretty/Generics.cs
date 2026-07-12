@@ -20,6 +20,27 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	internal class DerivedFromGenericBase : GenericBase<string>
+	{
+		public override string Get()
+		{
+			return "x";
+		}
+
+		public override void Set(string value)
+		{
+		}
+	}
+
+	internal abstract class GenericBase<T>
+	{
+		public abstract T Get();
+
+		public virtual void Set(T value)
+		{
+		}
+	}
+
 	internal class Generics
 	{
 		private class GenericClass<T>
@@ -357,4 +378,5 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		//#endif
 #endif
 	}
+
 }

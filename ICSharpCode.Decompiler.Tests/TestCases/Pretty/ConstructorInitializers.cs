@@ -69,6 +69,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		// Multiple constructors that do not chain with this and assign fields differently must not
+		// prevent the remaining constructor's this(...) chain from being lifted to an initializer.
+		public struct StructWithDivergentCtorsAndThisChain
+		{
+			public int X;
+			public int Y;
+
+			public StructWithDivergentCtorsAndThisChain(int x, int y)
+			{
+				X = x;
+				Y = y;
+			}
+
+			public StructWithDivergentCtorsAndThisChain(int x)
+			{
+				X = x;
+				Y = 0;
+			}
+
+			public StructWithDivergentCtorsAndThisChain(string s)
+				: this(s.Length)
+			{
+			}
+		}
+
 #if CS120
 		public struct Issue1743WithPrimaryCtor(int dummy1, int dummy2)
 		{
@@ -231,6 +256,191 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				this.parent = parent;
 			}
 		}
+
+#if CS70
+		public class NullCheckedArgumentBase
+		{
+			public NullCheckedArgumentBase(int a, int b, int c, string s)
+			{
+			}
+		}
+
+		public class NullCheckedArgumentChain : NullCheckedArgumentBase
+		{
+			public string Value;
+
+			// 'value?.Length ?? throw ...' combined with a later reuse of 'value' makes the compiler
+			// hoist the null-check in front of the chained constructor call. The decompiler must fold
+			// that guard back into the first argument as 'value ?? throw ...' rather than emit an
+			// illegal in-body 'base..ctor(...)' call.
+			public NullCheckedArgumentChain(string value)
+#if EXPECTED_OUTPUT
+				: base(0, (value ?? throw new ArgumentNullException("value")).Length, value.Length, "value")
+#else
+				: base(0, value?.Length ?? throw new ArgumentNullException("value"), value.Length, "value")
+#endif
+			{
+				Value = value;
+			}
+		}
+
+		public class NullCheckedArgumentThisChain
+		{
+			public string Value;
+
+			public NullCheckedArgumentThisChain(int a, int b, int c, string s)
+			{
+			}
+
+			public NullCheckedArgumentThisChain(string value)
+#if EXPECTED_OUTPUT
+				: this(0, (value ?? throw new ArgumentNullException("value")).Length, value.Length, "value")
+#else
+				: this(0, value?.Length ?? throw new ArgumentNullException("value"), value.Length, "value")
+#endif
+			{
+				Value = value;
+			}
+		}
+
+		public struct NullCheckedStructThisChain
+		{
+			public int Leet;
+
+			// Value types chain via 'this = new TSelf(...)', an ordinary body statement, so the
+			// hoisted argument null-guard may legally precede it: the guard is deliberately not
+			// folded back and the chain is not lifted into a this(...) initializer.
+#if EXPECTED_OUTPUT
+			public NullCheckedStructThisChain(string value)
+			{
+				if (value == null)
+				{
+					throw new ArgumentNullException("value");
+				}
+				this = new NullCheckedStructThisChain(0, value.Length, value.Length, "value");
+				Leet += value.Length;
+			}
+#else
+			public NullCheckedStructThisChain(string value)
+				: this(0, value?.Length ?? throw new ArgumentNullException("value"), value.Length, "value")
+			{
+				Leet += value.Length;
+			}
+#endif
+
+			public NullCheckedStructThisChain(int a, int b, int c, string s)
+			{
+				Leet = a + b + c;
+			}
+		}
+
+		public struct NullCheckedStructTwoArguments
+		{
+			public int Leet;
+
+			// Two reused parameters before a value-type this(...) chain produce two stacked hoisted
+			// guards; both stay in the body (see NullCheckedStructThisChain).
+#if EXPECTED_OUTPUT
+			public NullCheckedStructTwoArguments(string a, string b)
+			{
+				if (a == null)
+				{
+					throw new ArgumentNullException("a");
+				}
+				int length = a.Length;
+				if (b == null)
+				{
+					throw new ArgumentNullException("b");
+				}
+				this = new NullCheckedStructTwoArguments(length, b.Length, b.Length, a);
+				Leet += a.Length;
+			}
+#else
+			public NullCheckedStructTwoArguments(string a, string b)
+				: this(a?.Length ?? throw new ArgumentNullException("a"), b?.Length ?? throw new ArgumentNullException("b"), b.Length, a)
+			{
+				Leet += a.Length;
+			}
+#endif
+
+			public NullCheckedStructTwoArguments(int a, int b, int c, string s)
+			{
+				Leet = a + b + c;
+			}
+		}
+
+		public class NullCheckedTwoArguments : NullCheckedArgumentBase
+		{
+			// Two reused parameters produce two stacked hoisted guards before the chained call;
+			// each must be folded into the first argument that uses it.
+			public NullCheckedTwoArguments(string a, string b)
+#if EXPECTED_OUTPUT
+				: base((a ?? throw new ArgumentNullException("a")).Length, (b ?? throw new ArgumentNullException("b")).Length, a.Length, b)
+#else
+				: base(a?.Length ?? throw new ArgumentNullException("a"), b?.Length ?? throw new ArgumentNullException("b"), a.Length, b)
+#endif
+			{
+			}
+		}
+
+		public class NullCheckedNullableArgument : NullCheckedArgumentBase
+		{
+			// A nullable value type argument with 'value ?? throw ...' and a later reuse: here the
+			// compiler emits its own Nullable<T> copy plus a HasValue check in the middle of the
+			// argument evaluation (instead of hoisting a comparison against null), which the
+			// value-type throw-expression fold reassembles.
+			public NullCheckedNullableArgument(int? value)
+				: base(value ?? throw new ArgumentNullException("value"), value.Value, 0, "value")
+			{
+			}
+		}
+
+		public struct NullCheckedNullableStructThisChain
+		{
+			public int Leet;
+
+			public NullCheckedNullableStructThisChain(int? value)
+				: this(value ?? throw new ArgumentNullException("value"), value.Value, 0, "value")
+			{
+				Leet += value.Value;
+			}
+
+			public NullCheckedNullableStructThisChain(int a, int b, int c, string s)
+			{
+				Leet = a + b + c;
+			}
+		}
+
+		public class NullCheckedFirstArgument : NullCheckedArgumentBase
+		{
+			// The guarded parameter is used by the very first argument, so the fold targets argument
+			// index 0.
+			public NullCheckedFirstArgument(string value)
+#if EXPECTED_OUTPUT
+				: base((value ?? throw new ArgumentNullException("value")).Length, value.Length, 0, "value")
+#else
+				: base(value?.Length ?? throw new ArgumentNullException("value"), value.Length, 0, "value")
+#endif
+			{
+			}
+		}
+
+		public class NotHoistedBodyGuard
+		{
+			public string Value;
+
+			// An ordinary argument-validation guard runs after the (implicit) base call, so it must
+			// stay an in-body statement and must not be folded into an initializer.
+			public NotHoistedBodyGuard(string value)
+			{
+				if (value == null)
+				{
+					throw new ArgumentNullException("value");
+				}
+				Value = value;
+			}
+		}
+#endif
 
 #if CS100
 		public class PrimaryCtorClassThisChain(Guid id)

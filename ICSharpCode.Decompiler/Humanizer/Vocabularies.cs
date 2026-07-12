@@ -1,3 +1,7 @@
+// Copyright (c) .NET Foundation and Contributors
+//
+// Vendored from Humanizr/Humanizer (https://github.com/Humanizr/Humanizer), MIT license.
+
 using System;
 using System.Threading;
 

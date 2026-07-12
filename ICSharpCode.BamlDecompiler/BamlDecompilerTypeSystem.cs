@@ -40,6 +40,14 @@ namespace ICSharpCode.BamlDecompiler
 				"System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 			};
 
+		// The WPF assemblies whose types serialize under the presentation XML namespace. When one of
+		// these has to be synthesized (e.g. inspecting a WPF binary on a non-Windows machine), the
+		// synthetic module reproduces its XmlnsDefinitionAttribute mapping so known types still emit
+		// the clean presentation xmlns rather than a clr-namespace fallback.
+		static readonly HashSet<string> presentationXmlnsAssemblies = new(StringComparer.OrdinalIgnoreCase) {
+				"WindowsBase", "PresentationCore", "PresentationFramework", "PresentationUI"
+			};
+
 		public BamlDecompilerTypeSystem(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
 		{
 			if (mainModule == null)
@@ -69,9 +77,10 @@ namespace ICSharpCode.BamlDecompiler
 			{
 				assemblyReferenceQueue.Enqueue((true, mainModule, refs));
 			}
-			foreach (var bamlReference in defaultBamlReferences)
+			var defaultReferences = defaultBamlReferences.Select(AssemblyNameReference.Parse).ToArray();
+			foreach (var bamlReference in defaultReferences)
 			{
-				assemblyReferenceQueue.Enqueue((true, mainModule, AssemblyNameReference.Parse(bamlReference)));
+				assemblyReferenceQueue.Enqueue((true, mainModule, bamlReference));
 			}
 			var comparer = KeyComparer.Create(((bool IsAssembly, MetadataFile MainModule, object Reference) reference) =>
 				reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
@@ -113,6 +122,24 @@ namespace ICSharpCode.BamlDecompiler
 			}
 			var mainModuleWithOptions = mainModule.WithOptions(TypeSystemOptions.Default);
 			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(TypeSystemOptions.Default));
+			// Substitute a synthetic stand-in for every well-known BAML assembly that could not be
+			// resolved (e.g. WPF assemblies when inspecting a WPF binary on a machine without WPF).
+			// KnownThings assumes these assemblies are always present; the stand-in upholds that
+			// invariant so the BAML decompiler degrades gracefully instead of failing outright.
+			var resolvedAssemblyNames = new HashSet<string>(
+				referencedAssemblies.Select(file => file.Name), StringComparer.OrdinalIgnoreCase);
+			resolvedAssemblyNames.Add(mainModule.Name);
+			var syntheticReferences = new List<IModuleReference>();
+			foreach (var reference in defaultReferences)
+			{
+				if (resolvedAssemblyNames.Contains(reference.Name))
+					continue;
+				string presentationXmlns = presentationXmlnsAssemblies.Contains(reference.Name)
+					? XamlContext.KnownNamespace_Presentation
+					: null;
+				syntheticReferences.Add(SyntheticWpfModule.CreateReference(reference, presentationXmlns));
+			}
+			referencedAssembliesWithOptions = referencedAssembliesWithOptions.Concat(syntheticReferences);
 			// Primitive types are necessary to avoid assertions in ILReader.
 			// Fallback to MinimalCorlib to provide the primitive types.
 			if (!HasType(KnownTypeCode.Void) || !HasType(KnownTypeCode.Int32))

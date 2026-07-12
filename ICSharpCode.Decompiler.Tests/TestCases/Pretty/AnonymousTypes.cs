@@ -110,5 +110,69 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			v = init;
 		}
+
+		private static string NestedAnonymousTypeMembers()
+		{
+			var anon = new {
+				Outer = new {
+					Inner = 1
+				},
+				Arr = new[] {
+					new {
+						X = 1
+					}
+				}
+			};
+			return anon.Outer.Inner + anon.ToString() + anon.Arr[0].X;
+		}
+
+		private static object MemberProjection(Version v)
+		{
+			return new {
+				Major = v.Major,
+				Renamed = v.Minor
+			};
+		}
+
+		private void NullOfAnonymousType()
+		{
+			Identify(true ? null : new {
+				X = default(int),
+				Y = default(int)
+			});
+			Identify(true ? null : new {
+				N = default(int),
+				S = (string)null
+			});
+			Identify(true ? null : new {
+				Inner = new {
+					X = default(int)
+				}
+			});
+		}
+
+		private void NullOfAnonymousTypeNonGenericCall()
+		{
+#if OPT
+			MakeAction(new {
+				X = 0
+			})(null);
+#else
+			var action = MakeAction(new {
+				X = 0
+			});
+			action(null);
+#endif
+		}
+
+		private static void Identify<T>(T t)
+		{
+			Console.WriteLine(typeof(T).FullName);
+		}
+
+		private static Action<T> MakeAction<T>(T template)
+		{
+			return null;
+		}
 	}
 }

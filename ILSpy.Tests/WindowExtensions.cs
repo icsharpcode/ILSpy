@@ -24,6 +24,7 @@ using System.Runtime.CompilerServices;
 
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 
 namespace ICSharpCode.ILSpy.Tests;
@@ -43,7 +44,7 @@ public static class WindowExtensions
 
 		var fileName = $"ILSpy.Tests-{Sanitize(label)}-{DateTime.Now:HHmmss-fff}.png";
 		var path = Path.Combine(Path.GetTempPath(), fileName);
-		frame.Save(path);
+		frame.Save(path, PngBitmapEncoderOptions.Default);
 
 		try
 		{

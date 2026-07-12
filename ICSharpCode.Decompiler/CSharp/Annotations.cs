@@ -216,8 +216,13 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			foreach (object annotation in other.Annotations)
 			{
+				// The trivia holder must not be shared between nodes: each trivia's Parent points at
+				// its single owning node. Trivia is deep-copied onto the target instead.
+				if (annotation is AstNode.NodeTrivia)
+					continue;
 				node.AddAnnotation(annotation);
 			}
+			node.CopyTriviaFrom(other);
 			return node;
 		}
 

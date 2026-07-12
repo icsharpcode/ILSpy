@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
+using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 
 using ICSharpCode.ILSpy;
@@ -73,7 +74,7 @@ public class UseNestedNamespaceNodesScreenshot
 		}
 		var path = Path.Combine(Path.GetTempPath(),
 			$"ilspy-tree-{label}-{System.DateTime.Now:yyyyMMdd-HHmmss}.png");
-		frame.Save(path);
+		frame.Save(path, PngBitmapEncoderOptions.Default);
 		TestContext.WriteLine($"[{label}] saved {path}");
 	}
 }

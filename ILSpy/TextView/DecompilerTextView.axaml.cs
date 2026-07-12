@@ -348,6 +348,9 @@ namespace ICSharpCode.ILSpy.TextView
 		/// document, so an HTML copy can include it on top of the xshd syntax colours.</summary>
 		internal RichTextModel? SemanticHighlightingModel => boundModel?.HighlightingModel;
 
+		/// <summary>The currently painted local-reference highlight marks (test observability).</summary>
+		internal IReadOnlyList<TextMarker> LocalReferenceMarks => localReferenceMarks;
+
 		// ThemeManager.Current is a process-lived singleton, so subscribing to its ThemeChanged in
 		// the constructor and never detaching would root every DecompilerTextView for the lifetime of
 		// the process -- one leaked view per decompiler tab. Bind the handler to the visual-tree

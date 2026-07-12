@@ -90,6 +90,7 @@ jobs:
       run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
 
     - name: Execute unit tests
+      id: unit-tests
       run: >
         dotnet test --solution ilspy.sln
         --configuration ${{ matrix.configuration }}
@@ -102,6 +103,24 @@ jobs:
       with:
         name: test-results-${{ matrix.configuration }}
         path: 'test-results/${{ matrix.configuration }}/*.trx'
+
+    - name: Upload TestCases on test failure
+      uses: actions/upload-artifact@v7
+      if: failure() && steps.unit-tests.outcome == 'failure'
+      with:
+        name: testcases-${{ matrix.configuration }}
+        path: ICSharpCode.Decompiler.Tests/TestCases
+        compression-level: 9
+
+    # The Windows build compiles the WPF XAML fixtures into this assembly as BAML resources.
+    # Archiving it lets the BAML decompiler be exercised against real BAML on non-Windows hosts.
+    - name: Upload BamlDecompiler test binaries
+      uses: actions/upload-artifact@v7
+      if: failure() && steps.unit-tests.outcome == 'failure'
+      with:
+        name: bamldecompiler-tests-${{ matrix.configuration }}
+        path: ILSpy.BamlDecompiler.Tests.Windows\bin\${{ matrix.configuration }}\net11.0-windows\**
+        if-no-files-found: warn
 
     - name: Create Test Report
       uses: test-summary/action@v2
@@ -324,8 +343,16 @@ jobs:
         --results-directory test-results
 
     - name: Execute decompiler tests
+      id: decompiler-tests
       run: >
         dotnet test --project ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
+    - name: Execute BAML decompiler tests
+      run: >
+        dotnet test --project ILSpy.BamlDecompiler.Tests/ILSpy.BamlDecompiler.Tests.csproj
         --configuration Release
         --no-build --report-trx
         --results-directory test-results
@@ -336,6 +363,14 @@ jobs:
       with:
         name: test-results-${{ matrix.platform }}
         path: 'test-results/*.trx'
+
+    - name: Upload TestCases on test failure
+      uses: actions/upload-artifact@v7
+      if: failure() && steps.decompiler-tests.outcome == 'failure'
+      with:
+        name: testcases-${{ matrix.platform }}
+        path: ICSharpCode.Decompiler.Tests/TestCases
+        compression-level: 9
 
     - name: Create Test Report
       uses: test-summary/action@v2

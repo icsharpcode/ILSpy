@@ -81,18 +81,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (HandleSimpleArrayInitializer(function, body, pos + 1, v, arrayLength, out var arrayValues, out var instructionsToRemove))
 					{
 						context.Step("HandleSimpleArrayInitializer: single-dim", inst);
-						var block = new Block(BlockKind.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
-						block.Instructions.AddRange(arrayValues.Select(
-							t => {
-								var (indices, value) = t;
-								if (value == null)
-									value = GetNullExpression(elementType);
-								return StElem(new LdLoc(tempStore), indices, value, elementType);
-							}
-						));
-						block.FinalInstruction = new LdLoc(tempStore);
+						var block = BuildSimpleArrayInitializerBlock(tempStore, elementType, arrayLength, arrayValues);
 						var newStore = new StLoc(v, block);
 						body.Instructions[pos] = newStore;
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
@@ -103,11 +93,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out ILVariable finalStore, out values, out instructionsToRemove))
 					{
 						context.Step("HandleJaggedArrayInitializer: single-dim", inst);
-						var block = new Block(BlockKind.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
-						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
-						block.FinalInstruction = new LdLoc(tempStore);
+						var block = BuildSimpleArrayInitializerBlock(tempStore, elementType, arrayLength,
+							values.SelectWithIndex((i, value) => (new ILInstruction[] { new LdcI4(i) }, value)).ToArray());
 						var newStore = new StLoc(finalStore, block);
 						body.Instructions[pos] = newStore;
 						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
@@ -266,18 +254,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (HandleSimpleArrayInitializer(function, body, pos + 1, v, length, out var arrayValues, out var instructionsToRemove))
 				{
 					context.Step("HandleSimpleArrayInitializer: multi-dim", inst);
-					var block = new Block(BlockKind.ArrayInitializer);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-					block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, length.Select(l => new LdcI4(l)).ToArray())));
-					block.Instructions.AddRange(arrayValues.Select(
-						t => {
-							var (indices, value) = t;
-							if (value == null)
-								value = GetNullExpression(elementType);
-							return StElem(new LdLoc(tempStore), indices, value, elementType);
-						}
-					));
-					block.FinalInstruction = new LdLoc(tempStore);
+					var block = BuildSimpleArrayInitializerBlock(tempStore, elementType, length, arrayValues);
 					var newStore = new StLoc(v, block);
 					body.Instructions[pos] = newStore;
 					body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
@@ -450,26 +428,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (lengthInstruction.MatchLdcI(out long byteCount))
 			{
-				if (block.Instructions[pos].MatchInitblk(out var dest, out var value, out var size))
-				{
-					if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
-						return false;
-					instructionsToRemove++;
-					pos++;
-				}
-				else if (block.Instructions[pos].MatchCpblk(out dest, out var src, out size))
-				{
-					if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
-						return false;
-					if (!MatchGetStaticFieldAddress(src, out var field))
-						return false;
-					var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
-					if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
-						return false;
-					blob = fd.GetInitialValue(context.PEFile, context.TypeSystem);
-					instructionsToRemove++;
-					pos++;
-				}
+				// An initblk/cpblk that does not fit the expected shape is left in place;
+				// the per-element stobj scan below then fails to match it and rejects the
+				// transform on its own.
+				HandleLocAllocInitializerPrefix(block, ref pos, store, byteCount, ref blob, ref instructionsToRemove);
 			}
 
 			for (int i = pos; i < block.Instructions.Count; i++)
@@ -500,22 +462,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					break;
 				}
-				// match the target
-				// should be either ldloc store (at offset 0)
-				// or binary.add(ldloc store, offset) where offset is either 'elementSize' or 'i * elementSize'
-				if (!target.MatchLdLoc(store))
-				{
-					if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
-						return false;
-					if (!left.MatchLdLoc(store))
-						break;
-					var offsetInst = PointerArithmeticOffset.Detect(right, elementType, ((BinaryNumericInstruction)target).CheckForOverflow);
-					if (offsetInst == null)
-						return false;
-					if (!offsetInst.MatchLdcI(out long offset) || offset < 0 || offset < minExpectedOffset)
-						break;
-					minExpectedOffset = offset;
-				}
+				var match = GetSequentialStoreOffset(target, store, elementType, ref minExpectedOffset);
+				if (match == SequentialStoreMatch.Abort)
+					return false;
+				if (match != SequentialStoreMatch.Matched)
+					break;
 				if (values == null)
 				{
 					var countInstruction = PointerArithmeticOffset.Detect(lengthInstruction, elementType, checkForOverflow: true);
@@ -544,6 +495,67 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			instructionsToRemove += elementCount;
 
 			return elementCount <= values.Length;
+		}
+
+		void HandleLocAllocInitializerPrefix(Block block, ref int pos, ILVariable store, long byteCount, ref BlobReader blob, ref int instructionsToRemove)
+		{
+			// initblk(ldloc store, value, byteCount)
+			if (block.Instructions[pos].MatchInitblk(out var dest, out _, out var size))
+			{
+				if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
+					return;
+				instructionsToRemove++;
+				pos++;
+				return;
+			}
+
+			// cpblk(ldloc store, ldsflda/call get_Item(CreateSpan(field)) data, byteCount)
+			if (block.Instructions[pos].MatchCpblk(out dest, out var src, out size))
+			{
+				if (!dest.MatchLdLoc(store) || !size.MatchLdcI(byteCount))
+					return;
+				if (!MatchGetStaticFieldAddress(src, out var field))
+					return;
+				if (field.MetadataToken.IsNil)
+					return;
+				var fd = context.PEFile.Metadata.GetFieldDefinition((FieldDefinitionHandle)field.MetadataToken);
+				if (!fd.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
+					return;
+				blob = fd.GetInitialValue(context.PEFile, context.TypeSystem);
+				instructionsToRemove++;
+				pos++;
+			}
+		}
+
+		enum SequentialStoreMatch
+		{
+			// The store belongs to the initializer sequence.
+			Matched,
+			// The store is not part of the sequence; it ends the scan, keeping what was matched.
+			SequenceEnd,
+			// The store's shape is unexpected; reject the whole transform.
+			Abort,
+		}
+
+		static SequentialStoreMatch GetSequentialStoreOffset(ILInstruction target, ILVariable store, IType elementType, ref long minExpectedOffset)
+		{
+			// stobj T(ldloc store, value) writes at the current expected offset, initially 0.
+			if (target.MatchLdLoc(store))
+				return SequentialStoreMatch.Matched;
+
+			// stobj T(binary.add(ldloc store, offset), value)
+			// The offset is either sizeof(T) or an element index multiplied by sizeof(T).
+			if (!target.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
+				return SequentialStoreMatch.Abort;
+			if (!left.MatchLdLoc(store))
+				return SequentialStoreMatch.SequenceEnd;
+			var offsetInst = PointerArithmeticOffset.Detect(right, elementType, ((BinaryNumericInstruction)target).CheckForOverflow);
+			if (offsetInst == null)
+				return SequentialStoreMatch.Abort;
+			if (!offsetInst.MatchLdcI(out long offset) || offset < 0 || offset < minExpectedOffset)
+				return SequentialStoreMatch.SequenceEnd;
+			minExpectedOffset = offset;
+			return SequentialStoreMatch.Matched;
 		}
 
 		ILInstruction RewrapStore(ILVariable target, StObj storeInstruction, IType type)
@@ -826,6 +838,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 				block.Instructions.Add(StElem(new LdLoc(v), indices.ToArray(), value, elementType));
 				indices.Clear();
+			}
+			block.FinalInstruction = new LdLoc(v);
+			return block;
+		}
+
+		static Block BuildSimpleArrayInitializerBlock(ILVariable v, IType elementType, int[] arrayLength, (ILInstruction[] Indices, ILInstruction Value)[] values)
+		{
+			var block = new Block(BlockKind.ArrayInitializer);
+			block.Instructions.Add(new StLoc(v, new NewArr(elementType, arrayLength.SelectArray(l => new LdcI4(l)))));
+			foreach (var (indices, value) in values)
+			{
+				block.Instructions.Add(StElem(new LdLoc(v), indices, value ?? GetNullExpression(elementType), elementType));
 			}
 			block.FinalInstruction = new LdLoc(v);
 			return block;
