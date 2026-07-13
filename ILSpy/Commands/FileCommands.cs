@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.Commands
 	[method: ImportingConstructor]
 	sealed class OpenCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
 	{
-		public override async void Execute(object? parameter)
+		public override void Execute(object? parameter)
 		{
 			// Tests / scripted callers can pass paths directly and bypass the file picker.
 			if (parameter is string singlePath)
@@ -59,6 +59,11 @@ namespace ICSharpCode.ILSpy.Commands
 				return;
 			}
 
+			ExecuteAsync().HandleExceptions();
+		}
+
+		async Task ExecuteAsync()
+		{
 			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return;
@@ -236,7 +241,12 @@ namespace ICSharpCode.ILSpy.Commands
 		public override bool CanExecute(object? parameter)
 			=> assemblyTreeModel.SelectedItem is ILSpyTreeNode;
 
-		public override async void Execute(object? parameter)
+		public override void Execute(object? parameter)
+		{
+			ExecuteAsync().HandleExceptions();
+		}
+
+		async Task ExecuteAsync()
 		{
 			// Several selected assemblies export a Visual Studio solution (one project each),
 			// matching the Save Code context-menu entry.
