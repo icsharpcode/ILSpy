@@ -25,6 +25,7 @@ using System.Threading.Tasks;
 
 using global::Avalonia.Controls.ApplicationLifetimes;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -77,11 +78,58 @@ namespace ICSharpCode.ILSpy.Commands
 				return;
 
 			var settingsClone = settingsService.DecompilerSettings.Clone();
-			// Run in a dedicated frozen tab so browsing the tree while the export runs can't cancel it.
-			await dockWorkspace.RunInNewTabAsync(ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution, async (token, progress) => {
+			await RunExportAsync(assemblies, solutionMode, options, settingsClone, language, dockWorkspace).ConfigureAwait(true);
+		}
+
+		/// <summary>
+		/// Exports a single assembly as a decompiled project into <paramref name="outputDirectory"/>, using
+		/// the current decompiler settings (no export-dialog overrides, no PDB, no strong-name key). This is
+		/// the File -> Save Code -> .csproj path: it reuses the same <see cref="ProjectExporter"/> +
+		/// frozen-progress-tab machinery as the Export Project command, so a large assembly reports real
+		/// progress and can be cancelled, instead of running silently. The tab is titled the same way as the
+		/// Export Project command (see <see cref="RunExportAsync"/>) so the same operation reads the same
+		/// however it was started.
+		/// </summary>
+		public static Task ExportSingleAssemblyAsync(LoadedAssembly assembly, string outputDirectory,
+			DecompilerSettings settings, Language language, DockWorkspace dockWorkspace)
+		{
+			ArgumentNullException.ThrowIfNull(assembly);
+			ArgumentNullException.ThrowIfNull(settings);
+			ArgumentNullException.ThrowIfNull(dockWorkspace);
+
+			// Mirror the live settings into the options so ProjectExporter.ApplyOverrides is a no-op and the
+			// output matches the plain "Save Code" behaviour exactly, just with progress now surfaced.
+			var options = new ProjectExportOptions(
+				OutputDirectory: outputDirectory,
+				UseSdkStyleProjectFormat: settings.UseSdkStyleProjectFormat,
+				UseNestedDirectoriesForNamespaces: settings.UseNestedDirectoriesForNamespaces,
+				RemoveDeadCode: settings.RemoveDeadCode,
+				RemoveDeadStores: settings.RemoveDeadStores,
+				UseDebugSymbols: settings.UseDebugSymbols,
+				StrongNameKeyFile: null,
+				GeneratePdb: false,
+				EmbedSourceFilesInPdb: false);
+			return RunExportAsync(new List<LoadedAssembly> { assembly }, solutionMode: false, options,
+				settings.Clone(), language, dockWorkspace);
+		}
+
+		// Runs the export behind a dedicated frozen tab (so browsing the tree while it runs can't cancel it)
+		// and reports the result there, with an Open-folder button on success. Shared by the Export Project
+		// command and the Save Code -> .csproj path. The tab is titled after the assemblies being exported,
+		// joining their full tree-node labels the same way DecompilerTabPageModel.ComposeBaseTitle titles a
+		// multi-node decompile tab -- so a single-assembly export reads as that assembly and a solution
+		// export as its members, ellipsised on the tab with the full list shown as a tooltip.
+		static Task RunExportAsync(IReadOnlyList<LoadedAssembly> assemblies, bool solutionMode,
+			ProjectExportOptions options, DecompilerSettings settingsClone, Language language,
+			DockWorkspace dockWorkspace)
+		{
+			var title = assemblies.Count > 0
+				? string.Join(", ", assemblies.Select(a => a.Text))
+				: ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution;
+			return dockWorkspace.RunInNewTabAsync(title, async (token, progress) => {
 				var result = await ProjectExporter.ExportAsync(assemblies, solutionMode, options, settingsClone, language, progress, token)
 					.ConfigureAwait(false);
-				var o = new AvaloniaEditTextOutput { Title = ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution };
+				var o = new AvaloniaEditTextOutput { Title = title };
 				o.Write(result.StatusText);
 				o.WriteLine();
 				if (result.Success && Directory.Exists(options.OutputDirectory))

@@ -190,17 +190,40 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				+ $"|{language.Name} (*{language.FileExtension})|*{language.FileExtension}"
 				+ "|All files (*.*)|*.*";
 			var defaultName = WholeProjectDecompiler.CleanUpFileName(assembly.ShortName, language.ProjectFileExtension);
-			var path = await Commands.FilePickers.SaveAsync(filter, defaultName, "Save Code").ConfigureAwait(false);
+			var path = await Commands.FilePickers.SaveAsync(filter, defaultName, "Save Code").ConfigureAwait(true);
 			if (string.IsNullOrEmpty(path))
 				return;
 
 			var ext = Path.GetExtension(path);
 			var isProject = string.Equals(ext, language.ProjectFileExtension, StringComparison.OrdinalIgnoreCase);
 
-			var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+			var dockWorkspace = AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>();
+
+			// A whole-assembly .csproj export is the expensive case, so route it through the same
+			// determinate-progress export path as the Export Project command (a dedicated frozen tab, so
+			// browsing the tree while it runs can't cancel it).
+			if (isProject && dockWorkspace != null
+				&& Path.GetDirectoryName(path) is { Length: > 0 } projectDirectory)
+			{
+				var settings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+					?? new ICSharpCode.Decompiler.DecompilerSettings();
+				await Commands.ProjectExport.ExportSingleAssemblyAsync(
+					assembly, projectDirectory, settings, language, dockWorkspace).ConfigureAwait(true);
+				return;
+			}
+
+			// Single-file save: the same cancellable progress overlay normal decompilation uses.
+			if (dockWorkspace != null)
+			{
+				await Commands.SaveCodeHelper.SaveNodeToFileWithProgressAsync(this, language, path, dockWorkspace).ConfigureAwait(true);
+				return;
+			}
+
+			// No DockWorkspace (non-interactive host): fall back to a plain, non-cancellable write.
+			var fallbackSettings = AppEnv.AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
 				?? new ICSharpCode.Decompiler.DecompilerSettings();
 			await Task.Run(() => {
-				var options = new DecompilationOptions(settings) {
+				var options = new DecompilationOptions(fallbackSettings) {
 					FullDecompilation = true,
 					EscapeInvalidIdentifiers = true,
 				};
