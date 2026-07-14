@@ -5,13 +5,13 @@
   </PropertyGroup>
   <PropertyGroup>
     <RoslynVersion>5.7.0-1.26230.115</RoslynVersion>
-    <NetPackageVersion>10.0.8</NetPackageVersion>
+    <NetPackageVersion>10.0.10</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AvalonEdit" Version="6.3.1.120" />
     <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
-    <PackageVersion Include="CliWrap" Version="3.10.1" />
+    <PackageVersion Include="CliWrap" Version="3.10.2" />
     <PackageVersion Include="DataGridExtensions" Version="2.9.1" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
     <PackageVersion Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.72.1" />
@@ -33,14 +33,14 @@
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
     <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.142" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
-    <PackageVersion Include="NSubstitute" Version="5.3.0" />
+    <PackageVersion Include="NSubstitute" Version="6.0.0" />
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
-    <PackageVersion Include="NUnit" Version="4.6.0" />
+    <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
@@ -55,7 +55,7 @@
     <PackageVersion Include="TomsToolbox.Wpf.Composition" Version="$(TomsToolboxVersion)" />
     <PackageVersion Include="TomsToolbox.Wpf.Composition.AttributedModel" Version="$(TomsToolboxVersion)" />
     <PackageVersion Include="TomsToolbox.Wpf.Styles" Version="$(TomsToolboxVersion)" />
-    <PackageVersion Include="coverlet.MTP" Version="10.0.0" />
+    <PackageVersion Include="coverlet.MTP" Version="10.0.1" />
     <PackageVersion Include="System.Net.Http" Version="4.3.4" />
     <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
     <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
