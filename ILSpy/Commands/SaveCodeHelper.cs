@@ -68,6 +68,24 @@ namespace ICSharpCode.ILSpy.Commands
 			if (path == null)
 				return;
 
+			await SaveNodeToFileWithProgressAsync(node, language, path, dockWorkspace).ConfigureAwait(true);
+		}
+
+		/// <summary>
+		/// Decompiles <paramref name="node"/> into <paramref name="path"/> behind the active tab's
+		/// cancellable progress overlay, then shows a "decompilation complete" breadcrumb (with an
+		/// Open-folder button) in that tab. Shared by the generic Save Code fallback and the assembly
+		/// single-file save so both get the same progress/cancel UX. The caller has already settled on
+		/// <paramref name="path"/>; cancelling here means cancelling the decompilation from the overlay,
+		/// which leaves the tab's contents as they were.
+		/// </summary>
+		public static async Task SaveNodeToFileWithProgressAsync(ILSpyTreeNode node, Language language,
+			string path, DockWorkspace dockWorkspace)
+		{
+			ArgumentNullException.ThrowIfNull(node);
+			ArgumentNullException.ThrowIfNull(language);
+			ArgumentNullException.ThrowIfNull(dockWorkspace);
+
 			try
 			{
 				// Run the decompile-to-file behind the tab's cancellable progress overlay, then show a
