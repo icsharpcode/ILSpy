@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Composition;
-using System.Linq;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
@@ -35,7 +34,7 @@ namespace ICSharpCode.ILSpy.Commands
 	/// <c>AssemblyTreeNode</c> drives project / single-file selection, <c>ResourceTreeNode</c>
 	/// writes raw bytes, every other node falls through to the generic single-file decompile.</item>
 	/// <item>Several selected assemblies export a Visual Studio solution (one decompiled project
-	/// each) via <see cref="SolutionWriter"/>.</item>
+	/// each) via <see cref="ProjectExport.PromptAndExportSolutionAsync"/>.</item>
 	/// </list>
 	/// </summary>
 	[ExportContextMenuEntry(Header = nameof(Resources._SaveCode), Category = nameof(Resources.Save), Icon = "Images/Save", Order = 300)]
@@ -62,9 +61,9 @@ namespace ICSharpCode.ILSpy.Commands
 			if (nodes is not { Length: > 0 })
 				return;
 
-			if (SolutionExport.TryGetAssemblies(nodes, out var assemblies))
+			if (ProjectExport.TryGetSolutionAssemblies(nodes, out var assemblies))
 			{
-				SolutionExport.PromptAndExportAsync(assemblies, languageService.CurrentLanguage, dockWorkspace).HandleExceptions();
+				ProjectExport.PromptAndExportSolutionAsync(assemblies, languageService.CurrentLanguage, dockWorkspace).HandleExceptions();
 				return;
 			}
 
@@ -84,7 +83,7 @@ namespace ICSharpCode.ILSpy.Commands
 				return false;
 			if (selectedNodes.Length == 1)
 				return selectedNodes[0] is ILSpyTreeNode;
-			return SolutionExport.TryGetAssemblies(selectedNodes, out _);
+			return ProjectExport.TryGetSolutionAssemblies(selectedNodes, out _);
 		}
 	}
 }

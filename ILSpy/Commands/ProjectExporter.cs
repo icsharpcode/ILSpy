@@ -57,7 +57,8 @@ namespace ICSharpCode.ILSpy.Commands
 
 			if (solutionMode)
 			{
-				var solutionFilePath = Path.Combine(options.OutputDirectory, SolutionFileName(options.OutputDirectory));
+				var solutionFilePath = Path.Combine(options.OutputDirectory,
+					options.SolutionFileName ?? SolutionFileNameFor(options.OutputDirectory));
 				var solution = await SolutionWriter.CreateSolutionAsync(
 					solutionFilePath, language, assemblies, ct, settingsClone, options.StrongNameKeyFile, progress)
 					.ConfigureAwait(false);
@@ -159,8 +160,9 @@ namespace ICSharpCode.ILSpy.Commands
 			settings.UseDebugSymbols = options.UseDebugSymbols;
 		}
 
-		// The .sln is named after the chosen output folder, falling back to "Solution.sln".
-		static string SolutionFileName(string outputDirectory)
+		// The default .sln name when the caller does not supply one: after the chosen output folder,
+		// falling back to "Solution.sln".
+		static string SolutionFileNameFor(string outputDirectory)
 		{
 			var name = Path.GetFileName(outputDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 			return (string.IsNullOrEmpty(name) ? "Solution" : name) + ".sln";

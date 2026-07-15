@@ -19,10 +19,16 @@
 namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
-	/// The configuration chosen in the Export Project/Solution dialog and consumed by
-	/// <see cref="ProjectExporter"/>. The format/decompiler flags are applied onto a clone of the
-	/// live decompiler settings (never the persisted instance).
+	/// The configuration for one export run, consumed by <see cref="ProjectExporter"/>: chosen in the
+	/// Export Project/Solution dialog, or mirrored off the live settings by the Save Code paths. The
+	/// format/decompiler flags are applied onto a clone of the live decompiler settings (never the
+	/// persisted instance).
 	/// </summary>
+	/// <param name="SolutionFileName">
+	/// In solution mode, the name of the <c>.sln</c> to write inside <paramref name="OutputDirectory"/>.
+	/// <c>null</c> names it after that directory, which is what the dialog wants (it only asks for a
+	/// folder); Save Code sets it, because there the user picks the solution file itself.
+	/// </param>
 	public sealed record ProjectExportOptions(
 		string OutputDirectory,
 		bool UseSdkStyleProjectFormat,
@@ -32,5 +38,6 @@ namespace ICSharpCode.ILSpy.Commands
 		bool UseDebugSymbols,
 		string? StrongNameKeyFile,
 		bool GeneratePdb,
-		bool EmbedSourceFilesInPdb);
+		bool EmbedSourceFilesInPdb,
+		string? SolutionFileName = null);
 }

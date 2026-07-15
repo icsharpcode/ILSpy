@@ -38,10 +38,12 @@ namespace ICSharpCode.ILSpy.Tests.Commands;
 
 /// <summary>
 /// Every File -> Save Code path for an assembly runs behind a cancellable progress overlay, never a
-/// bare Task.Run: the .csproj export goes through <see cref="ProjectExport.ExportSingleAssemblyAsync"/>
-/// (the Export Project command's frozen determinate-progress tab), and the single-file save goes through
-/// <see cref="SaveCodeHelper.SaveNodeToFileWithProgressAsync"/> (the same overlay normal decompilation
-/// uses). These assert both paths write their output and surface a report/breadcrumb in a tab.
+/// bare Task.Run, and every one that decompiles a whole assembly shares the Export Project command's
+/// frozen determinate-progress tab: <see cref="ProjectExport.ExportSingleAssemblyAsync"/> for a
+/// .csproj, <see cref="ProjectExport.ExportSolutionAsync"/> for several assemblies as a .sln. The
+/// single-file save goes through <see cref="SaveCodeHelper.SaveNodeToFileWithProgressAsync"/> (the
+/// same overlay normal decompilation uses). These assert each path writes its output and surfaces a
+/// report/breadcrumb in a tab.
 /// </summary>
 [TestFixture]
 public class SaveCodeProjectExportTests
@@ -74,6 +76,53 @@ public class SaveCodeProjectExportTests
 			exportTab.Should().NotBeNull("the export runs in its own progress tab and shows the project-written report there");
 			exportTab!.Title.Should().Be(assembly.Text,
 				"a single-assembly export tab is titled after that assembly's tree-node label -- the same however it was started (Save Code or Export Project)");
+		}
+		finally
+		{
+			try
+			{ Directory.Delete(tempDir, recursive: true); }
+			catch { /* best-effort */ }
+		}
+	}
+
+	[AvaloniaTest]
+	public async Task Save_Several_Assemblies_Exports_A_Solution_Through_The_Export_Project_Tab()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var assemblies = new[] {
+			await vm.OpenFixtureAsync("FixtureA"),
+			await vm.OpenFixtureAsync("FixtureB"),
+		};
+		var dock = vm.DockWorkspace;
+
+		var language = AppComposition.Current.GetExport<LanguageService>()
+			.Languages.OfType<CSharpLanguage>().First();
+		var settings = AppComposition.Current.GetExport<SettingsService>().CreateEffectiveDecompilerSettings();
+
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpySaveSln_" + System.Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		// A name the output folder does not imply: Save Code lets the user pick the .sln file itself,
+		// unlike the Export Project dialog, which derives the name from the chosen folder.
+		var solutionPath = Path.Combine(tempDir, "Picked.sln");
+		try
+		{
+			await ProjectExport.ExportSolutionAsync(assemblies, solutionPath, settings, language, dock);
+
+			File.Exists(solutionPath).Should().BeTrue(
+				"the solution must land on the exact path picked in Save Code, not one derived from the folder");
+			foreach (var a in assemblies)
+			{
+				Directory.EnumerateFiles(Path.Combine(tempDir, a.ShortName), "*.csproj").Should().HaveCount(1,
+					$"each exported assembly gets its own project ({a.ShortName})");
+			}
+
+			var exportTab = dock.Documents!.VisibleDockables!.OfType<ContentTabPage>()
+				.Select(t => t.Content).OfType<DecompilerTabPageModel>()
+				.FirstOrDefault(d => d.Title == string.Join(", ", assemblies.Select(a => a.Text)));
+			exportTab.Should().NotBeNull(
+				"a solution export tab is titled after the assemblies being exported -- the same however it was started (Save Code or Export Project)");
+			exportTab!.Text.Should().Contain("Created the Visual Studio Solution file",
+				"the export runs in its own progress tab and reports there");
 		}
 		finally
 		{
