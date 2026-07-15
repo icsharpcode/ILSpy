@@ -240,9 +240,9 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			// Several selected assemblies export a Visual Studio solution (one project each),
 			// matching the Save Code context-menu entry.
-			if (SolutionExport.TryGetAssemblies(assemblyTreeModel.SelectedItems, out var assemblies))
+			if (ProjectExport.TryGetSolutionAssemblies(assemblyTreeModel.SelectedItems, out var assemblies))
 			{
-				await SolutionExport.PromptAndExportAsync(assemblies, languageService.CurrentLanguage, dockWorkspace);
+				await ProjectExport.PromptAndExportSolutionAsync(assemblies, languageService.CurrentLanguage, dockWorkspace);
 				return;
 			}
 

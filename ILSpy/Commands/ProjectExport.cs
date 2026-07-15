@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 using global::Avalonia.Controls.ApplicationLifetimes;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -40,10 +41,18 @@ using ICSharpCode.ILSpy.Views;
 namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
-	/// The shared launcher behind the dedicated "Export Project/Solution..." entry (File menu +
-	/// assembly context menu): recognises an exportable selection, shows
-	/// <see cref="ExportProjectDialog"/>, then runs <see cref="ProjectExporter"/> on a settings
-	/// clone behind the tab's cancellable progress UI and reports into the active decompiler tab.
+	/// The shared launcher for every flow that decompiles whole assemblies to disk. All of them
+	/// recognise their selection with <see cref="TryGetExportableAssemblies"/> and run
+	/// <see cref="ProjectExporter"/> on a settings clone behind a frozen progress tab
+	/// (<see cref="RunExportAsync"/>), differing only in how the target and options are chosen:
+	/// <list type="bullet">
+	/// <item>"Export Project/Solution..." (File menu + assembly context menu) asks
+	/// <see cref="ExportProjectDialog"/> for an output folder and per-run overrides.</item>
+	/// <item>Save Code on one assembly, with a project extension picked in the file dialog, exports
+	/// that project with the live settings (<see cref="ExportSingleAssemblyAsync"/>).</item>
+	/// <item>Save Code on several assemblies exports a solution to a picked <c>.sln</c> path, again
+	/// with the live settings (<see cref="PromptAndExportSolutionAsync"/>).</item>
+	/// </list>
 	/// </summary>
 	internal static class ProjectExport
 	{
@@ -65,6 +74,14 @@ namespace ICSharpCode.ILSpy.Commands
 			return true;
 		}
 
+		/// <summary>
+		/// True when <paramref name="nodes"/> is the selection shape Save Code maps onto a solution:
+		/// several assembly nodes that all loaded as valid assemblies.
+		/// </summary>
+		public static bool TryGetSolutionAssemblies(IReadOnlyList<SharpTreeNode>? nodes,
+			out List<LoadedAssembly> assemblies)
+			=> TryGetExportableAssemblies(nodes, out assemblies, out var solutionMode) && solutionMode;
+
 		public static async Task PromptAndExportAsync(IReadOnlyList<LoadedAssembly> assemblies,
 			bool solutionMode, Language language, DockWorkspace dockWorkspace, SettingsService settingsService)
 		{
@@ -82,13 +99,8 @@ namespace ICSharpCode.ILSpy.Commands
 		}
 
 		/// <summary>
-		/// Exports a single assembly as a decompiled project into <paramref name="outputDirectory"/>, using
-		/// the current decompiler settings (no export-dialog overrides, no PDB, no strong-name key). This is
-		/// the File -> Save Code -> .csproj path: it reuses the same <see cref="ProjectExporter"/> +
-		/// frozen-progress-tab machinery as the Export Project command, so a large assembly reports real
-		/// progress and can be cancelled, instead of running silently. The tab is titled the same way as the
-		/// Export Project command (see <see cref="RunExportAsync"/>) so the same operation reads the same
-		/// however it was started.
+		/// Exports a single assembly as a decompiled project into <paramref name="outputDirectory"/>.
+		/// This is the File -> Save Code path for a project extension.
 		/// </summary>
 		public static Task ExportSingleAssemblyAsync(LoadedAssembly assembly, string outputDirectory,
 			DecompilerSettings settings, Language language, DockWorkspace dockWorkspace)
@@ -97,9 +109,52 @@ namespace ICSharpCode.ILSpy.Commands
 			ArgumentNullException.ThrowIfNull(settings);
 			ArgumentNullException.ThrowIfNull(dockWorkspace);
 
-			// Mirror the live settings into the options so ProjectExporter.ApplyOverrides is a no-op and the
-			// output matches the plain "Save Code" behaviour exactly, just with progress now surfaced.
-			var options = new ProjectExportOptions(
+			return RunExportAsync(new List<LoadedAssembly> { assembly }, solutionMode: false,
+				OptionsFrom(settings, outputDirectory), settings.Clone(), language, dockWorkspace);
+		}
+
+		/// <summary>
+		/// Prompts for a target <c>.sln</c> file and exports <paramref name="assemblies"/> into it, one
+		/// decompiled project each. This is the File -> Save Code path for a multi-assembly selection.
+		/// Does nothing if the user cancels the picker.
+		/// </summary>
+		public static async Task PromptAndExportSolutionAsync(IReadOnlyList<LoadedAssembly> assemblies,
+			Language language, DockWorkspace dockWorkspace)
+		{
+			var path = await FilePickers.SaveAsync(
+				Resources.VisualStudioSolutionFileSlnAllFiles, "Solution.sln",
+				Resources._SaveCode).ConfigureAwait(true);
+			if (string.IsNullOrEmpty(path))
+				return;
+
+			var settings = AppComposition.TryGetExport<SettingsService>()?.CreateEffectiveDecompilerSettings()
+				?? new DecompilerSettings();
+			await ExportSolutionAsync(assemblies, path, settings, language, dockWorkspace).ConfigureAwait(true);
+		}
+
+		/// <summary>
+		/// Exports <paramref name="assemblies"/> as a solution written to <paramref name="solutionPath"/>,
+		/// one decompiled project each. Public so tests (and scripted callers) can bypass the file picker.
+		/// </summary>
+		public static Task ExportSolutionAsync(IReadOnlyList<LoadedAssembly> assemblies, string solutionPath,
+			DecompilerSettings settings, Language language, DockWorkspace dockWorkspace)
+		{
+			ArgumentNullException.ThrowIfNull(assemblies);
+			ArgumentNullException.ThrowIfNull(settings);
+			ArgumentNullException.ThrowIfNull(dockWorkspace);
+
+			var options = OptionsFrom(settings, Path.GetDirectoryName(solutionPath) ?? string.Empty,
+				Path.GetFileName(solutionPath));
+			return RunExportAsync(assemblies, solutionMode: true, options, settings.Clone(), language, dockWorkspace);
+		}
+
+		// The Save Code paths take the settings as they stand instead of asking for per-run overrides, so
+		// mirror those settings into the options: ProjectExporter.ApplyOverrides then leaves the settings
+		// clone alone and the output matches a plain decompile, only with progress surfaced. No PDB and no
+		// strong-name key either -- both are dialog-only features.
+		static ProjectExportOptions OptionsFrom(DecompilerSettings settings, string outputDirectory,
+			string? solutionFileName = null)
+			=> new(
 				OutputDirectory: outputDirectory,
 				UseSdkStyleProjectFormat: settings.UseSdkStyleProjectFormat,
 				UseNestedDirectoriesForNamespaces: settings.UseNestedDirectoriesForNamespaces,
@@ -108,24 +163,22 @@ namespace ICSharpCode.ILSpy.Commands
 				UseDebugSymbols: settings.UseDebugSymbols,
 				StrongNameKeyFile: null,
 				GeneratePdb: false,
-				EmbedSourceFilesInPdb: false);
-			return RunExportAsync(new List<LoadedAssembly> { assembly }, solutionMode: false, options,
-				settings.Clone(), language, dockWorkspace);
-		}
+				EmbedSourceFilesInPdb: false,
+				SolutionFileName: solutionFileName);
 
 		// Runs the export behind a dedicated frozen tab (so browsing the tree while it runs can't cancel it)
-		// and reports the result there, with an Open-folder button on success. Shared by the Export Project
-		// command and the Save Code -> .csproj path. The tab is titled after the assemblies being exported,
-		// joining their full tree-node labels the same way DecompilerTabPageModel.ComposeBaseTitle titles a
-		// multi-node decompile tab -- so a single-assembly export reads as that assembly and a solution
-		// export as its members, ellipsised on the tab with the full list shown as a tooltip.
+		// and reports the result there, with an Open-folder button on success. The tab is titled after the
+		// assemblies being exported, joining their full tree-node labels the same way
+		// DecompilerTabPageModel.ComposeBaseTitle titles a multi-node decompile tab -- so a single-assembly
+		// export reads as that assembly and a solution export as its members, ellipsised on the tab with the
+		// full list shown as a tooltip.
 		static Task RunExportAsync(IReadOnlyList<LoadedAssembly> assemblies, bool solutionMode,
 			ProjectExportOptions options, DecompilerSettings settingsClone, Language language,
 			DockWorkspace dockWorkspace)
 		{
 			var title = assemblies.Count > 0
 				? string.Join(", ", assemblies.Select(a => a.Text))
-				: ICSharpCode.ILSpy.Properties.Resources.ExportProjectSolution;
+				: Resources.ExportProjectSolution;
 			return dockWorkspace.RunInNewTabAsync(title, async (token, progress) => {
 				var result = await ProjectExporter.ExportAsync(assemblies, solutionMode, options, settingsClone, language, progress, token)
 					.ConfigureAwait(false);
