@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,9 +38,10 @@ namespace ICSharpCode.ILSpy.Commands
 	/// <summary>
 	/// The UI-agnostic engine behind the Export Project/Solution dialog. Unifies single-assembly
 	/// project export and multi-assembly solution export (the latter via <see cref="SolutionWriter"/>),
-	/// applies the dialog's overrides onto a settings clone, and optionally emits a portable PDB per
-	/// assembly. Returns a <see cref="SolutionExportResult"/> the caller surfaces in the text view.
-	/// Kept separate from the dialog so it is headless-testable.
+	/// applies the dialog's overrides onto a settings clone, skips (and reports) the entries with no code
+	/// behind them, and optionally emits a portable PDB per assembly. Returns a
+	/// <see cref="SolutionExportResult"/> the caller surfaces in the text view. Kept separate from the
+	/// dialog so it is headless-testable.
 	/// </summary>
 	internal static class ProjectExporter
 	{
@@ -55,26 +57,80 @@ namespace ICSharpCode.ILSpy.Commands
 
 			ApplyOverrides(settingsClone, options);
 
+			// Resolve each entry by awaiting its load. IsLoadedAsValidAssembly cannot stand in for this:
+			// it is a non-blocking status poll that reads false for a load still running or not yet
+			// started (LoadedAssembly builds its entries lazily), so filtering on it here would drop
+			// assemblies that decompile perfectly well once awaited. The callers' selection predicate has
+			// to poll -- it answers IsEnabled on the UI thread -- but this runs off it and can wait.
+			var loaded = await Task.WhenAll(assemblies.Select(async a => (
+				Assembly: a,
+				File: await a.GetMetadataFileOrNullAsync().ConfigureAwait(false)
+			))).ConfigureAwait(false);
+
+			// Anything without a PE image behind it has nothing to decompile: a file that failed to load,
+			// or one that carries metadata only (a standalone PDB, say). Leave those out and name them in
+			// the report, so a mixed selection still exports what it can and the user is told what is
+			// missing rather than having to notice it.
+			var exportable = loaded.Where(e => e.File is { IsMetadataOnly: false }).Select(e => e.Assembly).ToList();
+			var skipReport = SkipReport(loaded.Where(e => e.File is not { IsMetadataOnly: false }));
+			if (exportable.Count == 0)
+			{
+				return new SolutionExportResult(false,
+					"Nothing to export." + Environment.NewLine + skipReport);
+			}
+
 			if (solutionMode)
 			{
 				var solutionFilePath = Path.Combine(options.OutputDirectory,
 					options.SolutionFileName ?? SolutionFileNameFor(options.OutputDirectory));
 				var solution = await SolutionWriter.CreateSolutionAsync(
-					solutionFilePath, language, assemblies, ct, settingsClone, options.StrongNameKeyFile, progress)
+					solutionFilePath, language, exportable, ct, settingsClone, options.StrongNameKeyFile, progress)
 					.ConfigureAwait(false);
 
 				var report = new StringBuilder(solution.StatusText);
 				if (options.GeneratePdb && solution.Success)
 				{
-					await Task.Run(() => GeneratePdbs(assemblies,
+					await Task.Run(() => GeneratePdbs(exportable,
 						a => Path.Combine(options.OutputDirectory, a.ShortName), settingsClone, options, report, ct), ct)
 						.ConfigureAwait(false);
 				}
+				AppendSkipReport(report, skipReport);
 				return new SolutionExportResult(solution.Success, report.ToString());
 			}
 
-			return await Task.Run(() => ExportProject(assemblies[0], options, settingsClone, language, progress, ct), ct)
+			var projectResult = await Task
+				.Run(() => ExportProject(exportable[0], options, settingsClone, language, progress, ct), ct)
 				.ConfigureAwait(false);
+			if (skipReport.Length == 0)
+				return projectResult;
+
+			var projectReport = new StringBuilder(projectResult.StatusText);
+			AppendSkipReport(projectReport, skipReport);
+			return projectResult with { StatusText = projectReport.ToString() };
+		}
+
+		// One line per assembly left out of the export, saying which of the two reasons applies: a file
+		// that never loaded is a different problem from one that loaded and holds no code, and sending
+		// the user after a corrupt file that is not there wastes their time.
+		static string SkipReport(IEnumerable<(LoadedAssembly Assembly, MetadataFile? File)> skipped)
+		{
+			var report = new StringBuilder();
+			foreach (var (assembly, file) in skipped)
+			{
+				var reason = file == null
+					? "the assembly failed to load"
+					: "it holds metadata only, with no code to decompile";
+				report.AppendLine($"Skipped '{assembly.ShortName}': {reason}.");
+			}
+			return report.ToString();
+		}
+
+		static void AppendSkipReport(StringBuilder report, string skipReport)
+		{
+			if (skipReport.Length == 0)
+				return;
+			report.AppendLine();
+			report.Append(skipReport);
 		}
 
 		static SolutionExportResult ExportProject(LoadedAssembly assembly, ProjectExportOptions options,
@@ -160,9 +216,12 @@ namespace ICSharpCode.ILSpy.Commands
 			settings.UseDebugSymbols = options.UseDebugSymbols;
 		}
 
-		// The default .sln name when the caller does not supply one: after the chosen output folder,
-		// falling back to "Solution.sln".
-		static string SolutionFileNameFor(string outputDirectory)
+		/// <summary>
+		/// The <c>.sln</c> name used when <see cref="ProjectExportOptions.SolutionFileName"/> is unset:
+		/// after the chosen output folder, falling back to "Solution.sln". Internal so the export dialog
+		/// can show the same name as its watermark instead of predicting it.
+		/// </summary>
+		internal static string SolutionFileNameFor(string outputDirectory)
 		{
 			var name = Path.GetFileName(outputDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 			return (string.IsNullOrEmpty(name) ? "Solution" : name) + ".sln";

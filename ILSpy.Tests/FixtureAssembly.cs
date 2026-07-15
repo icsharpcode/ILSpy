@@ -17,9 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpyX;
@@ -92,5 +96,76 @@ public static class FixtureAssembly
 	{
 		ArgumentNullException.ThrowIfNull(vm);
 		return vm.OpenAssemblyAsync(Emit(name));
+	}
+
+	/// <summary>
+	/// Writes a standalone portable PDB to a temp file and returns its path. It carries a metadata
+	/// root but no PE image, so it loads as a metadata-only file -- the "(Debug Metadata)" entry
+	/// ILSpy shows for a .pdb opened on its own. Callers use it for the selection member that loads
+	/// successfully yet holds nothing to decompile.
+	/// </summary>
+	public static string EmitStandalonePdb(string name)
+	{
+		// An all-zero row count set describes an empty type system, which is all this needs: the file
+		// only has to be readable as metadata, not to match any particular assembly.
+		var pdbBuilder = new PortablePdbBuilder(
+			new MetadataBuilder(), ImmutableArray.CreateRange(new int[MetadataTokens.TableCount]), default);
+		var blob = new BlobBuilder();
+		pdbBuilder.Serialize(blob);
+
+		var dir = Path.Combine(Path.GetTempPath(), $"ILSpyPdbFixture_{Guid.NewGuid():N}");
+		Directory.CreateDirectory(dir);
+		var path = Path.Combine(dir, $"{name}.pdb");
+		File.WriteAllBytes(path, blob.ToArray());
+		return path;
+	}
+
+	/// <summary>
+	/// Opens a standalone portable PDB, returning it once it has loaded. It loads successfully but is
+	/// metadata-only, so the export paths have to tell it apart from both a real assembly and a file
+	/// that failed to load.
+	/// </summary>
+	public static async Task<LoadedAssembly> OpenMetadataOnlyFixtureAsync(this MainWindowViewModel vm, string name = "MetadataOnly")
+	{
+		ArgumentNullException.ThrowIfNull(vm);
+
+		var path = EmitStandalonePdb(name);
+		vm.AssemblyTreeModel.OpenFiles([path]);
+		await Waiters.WaitForAsync(
+			() => vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+				.Any(a => string.Equals(a.FileName, path, StringComparison.OrdinalIgnoreCase)),
+			description: $"metadata-only file '{path}' to appear in the active list");
+
+		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => string.Equals(a.FileName, path, StringComparison.OrdinalIgnoreCase));
+		await loaded.GetLoadResultAsync();
+		return loaded;
+	}
+
+	/// <summary>
+	/// Opens a file that is not a PE image at all, returning it once the load has failed. Callers use
+	/// it to build the mixed selections the export paths have to cope with. Unlike
+	/// <see cref="TestHarness.OpenAssemblyAsync"/> this waits on <see cref="LoadedAssembly.HasLoadError"/>
+	/// rather than the load result, which for such a file rethrows the load failure.
+	/// </summary>
+	public static async Task<LoadedAssembly> OpenBrokenFixtureAsync(this MainWindowViewModel vm, string name = "Broken")
+	{
+		ArgumentNullException.ThrowIfNull(vm);
+
+		var dir = Path.Combine(Path.GetTempPath(), $"ILSpyBrokenFixture_{Guid.NewGuid():N}");
+		Directory.CreateDirectory(dir);
+		var path = Path.Combine(dir, $"{name}.dll");
+		await File.WriteAllTextAsync(path, "not a real PE file");
+
+		vm.AssemblyTreeModel.OpenFiles([path]);
+		await Waiters.WaitForAsync(
+			() => vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+				.Any(a => string.Equals(a.FileName, path, StringComparison.OrdinalIgnoreCase)),
+			description: $"broken assembly '{path}' to appear in the active list");
+
+		var loaded = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
+			.First(a => string.Equals(a.FileName, path, StringComparison.OrdinalIgnoreCase));
+		await Waiters.WaitForAsync(() => loaded.HasLoadError, description: $"'{path}' to fail loading");
+		return loaded;
 	}
 }

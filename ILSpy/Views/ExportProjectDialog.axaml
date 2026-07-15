@@ -2,7 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:ICSharpCode.ILSpy.Views"
         x:Class="ICSharpCode.ILSpy.Views.ExportProjectDialog"
-        Width="560" Height="580" MinWidth="460" MinHeight="440"
+        Width="560" MinWidth="460" MinHeight="440" MaxHeight="900"
+        SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         Title="Export Project">
 	<DockPanel Margin="12">
@@ -11,13 +12,18 @@
 			<Button Name="ExportButton" Content="Export" IsDefault="True" MinWidth="80" />
 			<Button Name="CancelButton" Content="Cancel" IsCancel="True" MinWidth="80" />
 		</StackPanel>
-		<ScrollViewer HorizontalScrollBarVisibility="Disabled">
+		<ScrollViewer Name="OptionsScroll" HorizontalScrollBarVisibility="Disabled">
 			<StackPanel Spacing="6">
 				<TextBlock Text="Output location:" />
 				<Grid ColumnDefinitions="*,Auto">
 					<TextBox Grid.Column="0" Name="OutputBox" IsReadOnly="True" />
 					<Button Grid.Column="1" Name="BrowseOutputButton" Content="Browse..." Margin="6,0,0,0" />
 				</Grid>
+
+				<StackPanel Name="SolutionNamePanel" Spacing="6" IsVisible="False">
+					<TextBlock Text="Solution file name:" Margin="0,6,0,0" />
+					<TextBox Name="SolutionNameBox" />
+				</StackPanel>
 
 				<TextBlock Text="Projects to export:" Margin="0,6,0,0" />
 				<Border BorderBrush="#80808080" BorderThickness="1" Height="150">
