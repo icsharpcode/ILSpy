@@ -23,6 +23,7 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Platform.Storage;
 
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
@@ -99,11 +100,18 @@ namespace ICSharpCode.ILSpy.Views
 				UseDebugSymbolsCheck.IsChecked = settings.UseDebugSymbols;
 			}
 
+			// Naming the .sln is only a solution-mode question; a single project takes its name from the
+			// assembly. Left blank, the export falls back to naming it after the output folder, which the
+			// watermark spells out as the folder is picked.
+			SolutionNamePanel.IsVisible = solutionMode;
+			UpdateSolutionNameWatermark();
+
 			BrowseOutputButton.Click += async (_, _) => {
 				var folder = await FilePickers.PickFolderAsync("Select the export output folder");
 				if (!string.IsNullOrEmpty(folder))
 				{
 					OutputBox.Text = folder;
+					UpdateSolutionNameWatermark();
 					UpdateExportEnabled();
 				}
 			};
@@ -161,6 +169,29 @@ namespace ICSharpCode.ILSpy.Views
 			return rows;
 		}
 
+		/// <summary>
+		/// The <c>.sln</c> file name to export under, from what the user typed: <c>null</c> when the text
+		/// names nothing beyond the extension, so that <see cref="ProjectExporter"/> names it after the
+		/// output folder as it always has; otherwise the typed text reduced to a bare, valid file name
+		/// carrying a single <c>.sln</c> extension. Pure and side-effect free so it can be unit-tested
+		/// without the window.
+		/// </summary>
+		internal static string? NormalizeSolutionFileName(string? typedName)
+		{
+			var name = typedName?.Trim();
+			if (string.IsNullOrEmpty(name))
+				return null;
+			// CleanUpFileName appends the extension itself, so drop one the user already typed rather
+			// than ending up with "Solution.sln.sln".
+			if (name.EndsWith(".sln", System.StringComparison.OrdinalIgnoreCase))
+				name = name[..^4];
+			// Nothing but the extension is as blank as an empty box and defers the same way: an empty name
+			// reaching CleanUpFileName comes back as "-", which would export "-.sln".
+			if (string.IsNullOrWhiteSpace(name))
+				return null;
+			return WholeProjectDecompiler.CleanUpFileName(name, ".sln");
+		}
+
 		ProjectExportOptions BuildOptions()
 			=> new(
 				OutputBox.Text ?? string.Empty,
@@ -171,7 +202,13 @@ namespace ICSharpCode.ILSpy.Views
 				UseDebugSymbolsCheck.IsChecked == true,
 				string.IsNullOrEmpty(KeyFileBox.Text) ? null : KeyFileBox.Text,
 				GeneratePdbCheck.IsChecked == true,
-				EmbedSourceCheck.IsChecked == true);
+				EmbedSourceCheck.IsChecked == true,
+				solutionMode ? NormalizeSolutionFileName(SolutionNameBox.Text) : null);
+
+		// Show the name the export would pick for the current output folder, so leaving the box empty is
+		// an informed choice rather than a blank.
+		void UpdateSolutionNameWatermark()
+			=> SolutionNameBox.PlaceholderText = ProjectExporter.SolutionFileNameFor(OutputBox.Text ?? string.Empty);
 
 		void UpdateExportEnabled()
 			=> ExportButton.IsEnabled = !string.IsNullOrEmpty(OutputBox.Text) && !hasDuplicateConflict;

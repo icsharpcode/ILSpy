@@ -31,6 +31,7 @@ using ICSharpCode.ILSpy.Languages;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX.TreeView;
 
 using NUnit.Framework;
 
@@ -130,6 +131,37 @@ public class SaveCodeProjectExportTests
 			{ Directory.Delete(tempDir, recursive: true); }
 			catch { /* best-effort */ }
 		}
+	}
+
+	[AvaloniaTest]
+	public async Task A_Failed_Load_In_The_Selection_Does_Not_Disqualify_The_Solution_Export()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var good = await vm.OpenFixtureAsync("FixtureA");
+		var broken = await vm.OpenBrokenFixtureAsync();
+
+		// The selection Ctrl+S sees: two assembly nodes, one of which failed to load. Rejecting it
+		// here is what used to make Save Code fall through and quietly save the focused assembly
+		// alone; the exporter skips the unloadable one and reports it instead.
+		var nodes = new SharpTreeNode[] { new AssemblyTreeNode(good), new AssemblyTreeNode(broken) };
+
+		ProjectExport.TryGetSolutionAssemblies(nodes, out var assemblies).Should().BeTrue(
+			"an assembly that failed to load must not disqualify the whole selection");
+		assemblies.Should().BeEquivalentTo([good, broken],
+			"the exporter decides what to skip, so it has to see the failed load to report it");
+	}
+
+	[AvaloniaTest]
+	public async Task A_Selection_Where_Nothing_Loaded_Has_Nothing_To_Export()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var broken = await vm.OpenBrokenFixtureAsync("BrokenA");
+		var alsoBroken = await vm.OpenBrokenFixtureAsync("BrokenB");
+
+		var nodes = new SharpTreeNode[] { new AssemblyTreeNode(broken), new AssemblyTreeNode(alsoBroken) };
+
+		ProjectExport.TryGetSolutionAssemblies(nodes, out _).Should().BeFalse(
+			"a solution of nothing but failed loads would be empty; Save Code leaves the selection to the single-node path");
 	}
 
 	[AvaloniaTest]

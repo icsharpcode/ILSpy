@@ -57,8 +57,11 @@ namespace ICSharpCode.ILSpy.Commands
 	internal static class ProjectExport
 	{
 		/// <summary>
-		/// True when <paramref name="nodes"/> is one or more assembly nodes that all loaded as valid
-		/// assemblies. <paramref name="solutionMode"/> is set when more than one is selected.
+		/// True when <paramref name="nodes"/> is one or more assembly nodes, at least one of which loaded
+		/// as a valid assembly. Ones that failed to load stay in <paramref name="assemblies"/>: the dialog
+		/// badges them and <see cref="ProjectExporter"/> skips them with a line in the report, so a mixed
+		/// selection exports what it can instead of being turned away here.
+		/// <paramref name="solutionMode"/> is set when more than one node is selected.
 		/// </summary>
 		public static bool TryGetExportableAssemblies(IReadOnlyList<SharpTreeNode>? nodes,
 			out List<LoadedAssembly> assemblies, out bool solutionMode)
@@ -67,20 +70,37 @@ namespace ICSharpCode.ILSpy.Commands
 			solutionMode = false;
 			if (nodes is not { Count: > 0 })
 				return false;
-			if (!nodes.All(n => n is AssemblyTreeNode { LoadedAssembly.IsLoadedAsValidAssembly: true }))
+			if (!nodes.All(n => n is AssemblyTreeNode))
 				return false;
-			assemblies = nodes.OfType<AssemblyTreeNode>().Select(n => n.LoadedAssembly).ToList();
-			solutionMode = assemblies.Count > 1;
+
+			var selected = nodes.OfType<AssemblyTreeNode>().Select(n => n.LoadedAssembly).ToList();
+			// Nothing to write when every selected assembly failed to load.
+			if (!selected.Any(a => a.IsLoadedAsValidAssembly))
+				return false;
+
+			assemblies = selected;
+			solutionMode = selected.Count > 1;
 			return true;
 		}
 
 		/// <summary>
 		/// True when <paramref name="nodes"/> is the selection shape Save Code maps onto a solution:
-		/// several assembly nodes that all loaded as valid assemblies.
+		/// several assembly nodes, on the terms <see cref="TryGetExportableAssemblies"/> sets out -- the
+		/// ones that did not load ride along in <paramref name="assemblies"/> to be skipped and reported
+		/// by the exporter, rather than costing the whole selection its solution export.
 		/// </summary>
 		public static bool TryGetSolutionAssemblies(IReadOnlyList<SharpTreeNode>? nodes,
 			out List<LoadedAssembly> assemblies)
 			=> TryGetExportableAssemblies(nodes, out assemblies, out var solutionMode) && solutionMode;
+
+		/// <summary>
+		/// Awaits every assembly's load so a caller can read settled load state -- validity, metadata,
+		/// PDB eligibility -- without triggering or blocking on the lazy load itself. Uses the load
+		/// accessor that swallows load failures, so a broken assembly in the selection completes here
+		/// rather than faulting the whole batch.
+		/// </summary>
+		internal static Task EnsureAssembliesLoadedAsync(IReadOnlyList<LoadedAssembly> assemblies)
+			=> Task.WhenAll(assemblies.Select(a => a.GetMetadataFileOrNullAsync()));
 
 		public static async Task PromptAndExportAsync(IReadOnlyList<LoadedAssembly> assemblies,
 			bool solutionMode, Language language, DockWorkspace dockWorkspace, SettingsService settingsService)
@@ -88,6 +108,12 @@ namespace ICSharpCode.ILSpy.Commands
 			var owner = UiContext.MainWindow;
 			if (owner == null)
 				return;
+
+			// Settle every selected assembly's load before building the dialog: its preview rows badge
+			// each one (valid / not a valid assembly / PDB-eligible) off the load result. Awaiting here
+			// means those reads see a completed load, instead of the dialog blocking the UI thread to
+			// force one as it builds the rows.
+			await EnsureAssembliesLoadedAsync(assemblies).ConfigureAwait(true);
 
 			var dialog = new ExportProjectDialog(settingsService, assemblies, solutionMode);
 			var options = await dialog.ShowDialog<ProjectExportOptions?>(owner).ConfigureAwait(true);
