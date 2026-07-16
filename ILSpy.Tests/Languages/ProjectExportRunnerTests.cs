@@ -135,6 +135,67 @@ public class ProjectExportRunnerTests
 	}
 
 	[AvaloniaTest]
+	public async Task Solution_Progress_Is_Determinate_And_Counts_Files_Across_Projects()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var assemblies = await OpenFixtures(vm, 2);
+
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpyProjSlnProgress_" + System.Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		try
+		{
+			var progress = new RecordingProgress();
+			var result = await ProjectExporter.ExportAsync(assemblies, solutionMode: true, Options(tempDir),
+				new DecompilerSettings(), Language(), progress, CancellationToken.None);
+			result.Success.Should().BeTrue(result.StatusText);
+
+			progress.Reports.Should().NotBeEmpty();
+			progress.Reports.Max(p => p.TotalUnits).Should().BeGreaterThan(assemblies.Count,
+				"the bar counts the files of every project put together, not whole assemblies -- an assembly-granular "
+				+ "bar only moves when a project finishes, which for a solution of two is 0%, 50%, done");
+			progress.Reports.Should().Contain(p => p.TotalUnits > 0 && p.UnitsCompleted < p.TotalUnits,
+				"a determinate report has to arrive while work is still outstanding; reporting only on completion "
+				+ "leaves the tab showing an indeterminate spinner for the whole export");
+			progress.Reports.Should().Contain(p => p.Status != null && p.Status.Contains(assemblies[0].ShortName),
+				"the status names the projects being written");
+		}
+		finally
+		{
+			TryDelete(tempDir);
+		}
+	}
+
+	[AvaloniaTest]
+	public async Task Solution_Progress_Completes_Even_When_A_Project_Cannot_Be_Written()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var assemblies = await OpenFixtures(vm, 2);
+
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpyProjSlnStuck_" + System.Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		try
+		{
+			// A file where the second project's directory needs to go: that project bails out before it
+			// writes anything, which used to leave its share of the bar outstanding forever.
+			await File.WriteAllTextAsync(Path.Combine(tempDir, assemblies[1].ShortName), "in the way");
+
+			var progress = new RecordingProgress();
+			var result = await ProjectExporter.ExportAsync(assemblies, solutionMode: true, Options(tempDir),
+				new DecompilerSettings(), Language(), progress, CancellationToken.None);
+
+			result.Success.Should().BeFalse("a project that cannot be written is a failed export");
+			progress.Reports.Should().NotBeEmpty();
+			var last = progress.Reports[^1];
+			last.UnitsCompleted.Should().Be(last.TotalUnits,
+				"the bar has to close out when the export stops, even though one project never ran");
+		}
+		finally
+		{
+			TryDelete(tempDir);
+		}
+	}
+
+	[AvaloniaTest]
 	public async Task Solution_Mode_Skips_Assemblies_That_Failed_To_Load()
 	{
 		var (_, vm) = await TestHarness.BootAsync();
