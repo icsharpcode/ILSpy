@@ -43,13 +43,26 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.Languages;
 
+using TypeDefinitionHandle = System.Reflection.Metadata.TypeDefinitionHandle;
+
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	/// <summary>
+	/// Tree node representing an assembly.
+	/// This class is responsible for loading both namespace and type nodes.
+	/// </summary>
 	public sealed class AssemblyTreeNode : ILSpyTreeNode, IRichTextNode
 	{
 		readonly LoadedAssembly assembly;
 		string? loadError;
 		MetadataFile? cachedModule;
+
+		// Full (unescaped) namespace name -> node, and type handle -> node. Both are filled by the
+		// single pass in LoadChildren and are what make the Find* lookups O(1) and correct at any
+		// nesting depth: in nested-namespace mode the node for "System.Collections.Generic" is a
+		// descendant, not a child, so walking Children by name cannot find it.
+		readonly Dictionary<string, NamespaceTreeNode> namespaces = new(StringComparer.Ordinal);
+		readonly Dictionary<TypeDefinitionHandle, TypeTreeNode> typeDict = new();
 
 		public LoadedAssembly LoadedAssembly => assembly;
 
@@ -353,31 +366,25 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override bool IsAutoLoaded => assembly.IsAutoLoaded;
 
 		/// <summary>
-		/// Finds the <see cref="NamespaceTreeNode"/> for the given namespace string, or
-		/// <c>null</c> if no children are loaded yet or the namespace has no top-level types
-		/// in this assembly.
+		/// Finds the <see cref="NamespaceTreeNode"/> for the given full (unescaped) namespace
+		/// string, at any nesting depth, or <c>null</c> if the namespace has no top-level types in
+		/// this assembly. The empty string resolves to the global-namespace node.
 		/// </summary>
 		public NamespaceTreeNode? FindNamespaceNode(string namespaceName)
 		{
 			ArgumentNullException.ThrowIfNull(namespaceName);
 			EnsureLazyChildren();
-			return Children.OfType<NamespaceTreeNode>().FirstOrDefault(ns => ns.Name == namespaceName);
+			return namespaces.GetValueOrDefault(namespaceName);
 		}
 
 		/// <summary>
 		/// Finds the <see cref="TypeTreeNode"/> for the given top-level type definition.
-		/// Walks the assembly's namespaces (loading them as needed) and matches by
-		/// <see cref="TypeTreeNode.Handle"/>.
 		/// </summary>
 		public TypeTreeNode? FindTypeNode(ITypeDefinition type)
 		{
 			ArgumentNullException.ThrowIfNull(type);
-			var ns = FindNamespaceNode(type.Namespace);
-			if (ns == null)
-				return null;
-			ns.EnsureLazyChildren();
-			var handle = (System.Reflection.Metadata.TypeDefinitionHandle)type.MetadataToken;
-			return ns.Children.OfType<TypeTreeNode>().FirstOrDefault(n => n.Handle == handle);
+			EnsureLazyChildren();
+			return typeDict.GetValueOrDefault((TypeDefinitionHandle)type.MetadataToken);
 		}
 
 		protected override void LoadChildren()
@@ -438,56 +445,67 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (module.Resources.Any())
 				Children.Add(new ResourceListTreeNode(module));
 
-			var metadata = module.Metadata;
-			// Every top-level namespace string in the module — INCLUDING the empty string for
-			// types declared at module scope. The empty namespace becomes a NamespaceTreeNode
-			// whose Text renders as "-"; without that path, global-namespace types (every PE's
-			// <Module> pseudo-type plus any user-declared ones) would have no parent node to
-			// live under, and the long-standing tree shape would break.
-			var namespaces = metadata.TypeDefinitions
-				.Where(t => metadata.GetTypeDefinition(t).GetDeclaringType().IsNil)
-				.Select(t => metadata.GetString(metadata.GetTypeDefinition(t).Namespace))
-				.Distinct()
-				.OrderBy(ns => ns, NaturalStringComparer.Instance);
+			namespaces.Clear();
+			typeDict.Clear();
+			bool useNestedStructure = TryGetUseNestedNamespaceNodes();
 
-			if (TryGetUseNestedNamespaceNodes())
+			// The band is built from the type system rather than raw metadata: every TypeTreeNode is
+			// handed the resolved ITypeDefinition it renders from, so painting a cell never has to
+			// re-enter the settings-keyed type-system cache. Resolving the module's types is what the
+			// tree ends up doing anyway the moment a namespace is expanded.
+			if (module.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule is not MetadataModule mainModule)
+				return;
+
+			// One pass over the module's top-level types builds the entire namespace band, ordered by
+			// full reflection name. Sorting by the full name is what interleaves a namespace's types
+			// and its sub-namespaces into one alphabetical run: a sub-namespace node is attached the
+			// moment its first descendant type is reached, which lands it at its own alphabetical
+			// position among the sibling types.
+			//
+			// Every namespace string is represented — INCLUDING the empty string for types declared at
+			// module scope, which becomes a node whose Text renders as "-"; without it the global
+			// namespace's types (every PE's <Module> pseudo-type plus any user-declared ones) would
+			// have no parent node and the long-standing tree shape would break.
+			foreach (var type in mainModule.TopLevelTypeDefinitions
+				.OrderBy(t => t.ReflectionName, NaturalStringComparer.Instance))
 			{
-				// Build the nested chain: every dotted namespace string becomes a node whose
-				// parent is the namespace one segment shorter. Intermediate ancestors that
-				// don't appear in the namespaces list themselves (e.g. an assembly that has
-				// "System.Collections.Generic" but no types directly in "System") still get
-				// created — EnsureNested walks the parent chain.
-				var byFullName = new Dictionary<string, NamespaceTreeNode>(StringComparer.Ordinal);
-				foreach (var ns in namespaces)
-					EnsureNested(ns, byFullName);
-			}
-			else
-			{
-				foreach (var ns in namespaces)
-					Children.Add(new NamespaceTreeNode(ns, module));
+				var namespaceNode = GetOrCreateNamespaceTreeNode(type.Namespace);
+				var typeNode = new TypeTreeNode(type, module);
+				typeDict[(TypeDefinitionHandle)type.MetadataToken] = typeNode;
+				namespaceNode.Children.Add(typeNode);
 			}
 
-			NamespaceTreeNode EnsureNested(string fullNs, Dictionary<string, NamespaceTreeNode> byFullName)
+			// Attach the roots last, once they are fully populated. The filter cascade computes a
+			// node's IsHidden as "all children are hidden", which is vacuously true for an empty
+			// child collection — so a node attached while still empty latches hidden, stranding
+			// every namespace below it.
+			var roots = namespaces.Values
+				.Where(ns => ns.Children.Count > 0 && ns.Parent == null)
+				.OrderBy(ns => ns.Name, NaturalStringComparer.Instance)
+				.ToList();
+			foreach (var ns in roots)
+				Children.Add(ns);
+
+			NamespaceTreeNode GetOrCreateNamespaceTreeNode(string namespaceName)
 			{
-				if (byFullName.TryGetValue(fullNs, out var existing))
+				if (namespaces.TryGetValue(namespaceName, out var existing))
 					return existing;
-				int dot = fullNs.LastIndexOf('.');
 				NamespaceTreeNode node;
-				if (dot < 0)
+				int lastDot = useNestedStructure ? namespaceName.LastIndexOf('.') : -1;
+				if (lastDot < 0)
 				{
-					// Top-level: display equals full name. The empty-namespace case lands here
-					// too, mapping to the "-" display.
-					node = new NamespaceTreeNode(fullNs, module);
-					Children.Add(node);
+					// Flat mode, or a single-segment namespace: the display label is the full name.
+					node = new NamespaceTreeNode(namespaceName, module);
 				}
 				else
 				{
-					var parent = EnsureNested(fullNs.Substring(0, dot), byFullName);
-					var displayName = fullNs.Substring(dot + 1);
-					node = new NamespaceTreeNode(displayName, fullNs, module);
+					// Nested mode: hang the node off the namespace one segment shorter, creating
+					// that ancestor first if the module declares no types directly in it.
+					var parent = GetOrCreateNamespaceTreeNode(namespaceName.Substring(0, lastDot));
+					node = new NamespaceTreeNode(namespaceName.Substring(lastDot + 1), namespaceName, module);
 					parent.Children.Add(node);
 				}
-				byFullName[fullNs] = node;
+				namespaces.Add(namespaceName, node);
 				return node;
 			}
 		}

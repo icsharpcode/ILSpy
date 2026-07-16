@@ -170,20 +170,15 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module);
 			if (assembly == null)
 				return null;
-			assembly.EnsureLazyChildren();
 
 			var nesting = new Stack<ITypeDefinition>();
 			for (var current = type; current != null; current = current.DeclaringTypeDefinition)
 				nesting.Push(current);
 
-			var top = nesting.Pop();
-			var ns = assembly.Children.OfType<NamespaceTreeNode>()
-				.FirstOrDefault(n => n.Name == (top.Namespace ?? string.Empty));
-			if (ns == null)
-				return null;
-			ns.EnsureLazyChildren();
-			var typeNode = ns.Children.OfType<TypeTreeNode>()
-				.FirstOrDefault(t => t.Handle == top.MetadataToken);
+			// The assembly node indexes every top-level type it built, so this resolves regardless of
+			// how deep the type's namespace nests. Nested types are not in that index -- they are
+			// loaded lazily by their declaring type's node -- so walk the remaining chain by handle.
+			var typeNode = assembly.FindTypeNode(nesting.Pop());
 			while (typeNode != null && nesting.Count > 0)
 			{
 				typeNode.EnsureLazyChildren();

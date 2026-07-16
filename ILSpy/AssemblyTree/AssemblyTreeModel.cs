@@ -153,6 +153,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			this.settingsService = settingsService;
 			this.languageService = languageService;
 			languageService.PropertyChanged += (_, e) => {
+				// The language version feeds the effective decompiler settings, and through those the
+				// type system the tree's nodes hold their entities from.
+				if (e.PropertyName is nameof(LanguageService.CurrentLanguage) or nameof(LanguageService.CurrentVersion))
+					RebuildIfTypeSystemOptionsChanged();
 				if (e.PropertyName == nameof(LanguageService.CurrentLanguage) && Root != null)
 					NotifyTextChanged(Root);
 			};
@@ -252,8 +256,42 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				NotifyTextChanged(child);
 		}
 
+		// The type system each tree node resolved its entity from is keyed on the effective decompiler
+		// settings, and only one is cached per module: the moment those options change, the cached
+		// compilation is dropped and rebuilt, leaving every node holding an entity from a compilation
+		// that no longer exists. Rebuilding the loaded assembly nodes re-resolves them against the new
+		// one. Keyed on the options rather than the settings themselves because the Options page is
+		// live-apply -- most toggles (and every Display setting) leave the type system alone, and those
+		// must not cost a rebuild.
+		TypeSystemOptions? lastTypeSystemOptions;
+
+		void RebuildIfTypeSystemOptionsChanged()
+		{
+			if (Root == null)
+				return;
+			var options = DecompilerTypeSystem.GetOptions(settingsService.CreateEffectiveDecompilerSettings());
+			if (lastTypeSystemOptions == options)
+				return;
+			lastTypeSystemOptions = options;
+
+			// The rebuild replaces every node below an assembly, leaving the selection pointing at one
+			// that is no longer in the tree. Re-establish it from its path, the way Refresh does. That
+			// restores the expansion too: revealing the selected node expands its ancestors on the way
+			// to centring it.
+			var path = GetPathForNode(SelectedItem);
+			foreach (var assembly in Root.Children.OfType<TreeNodes.AssemblyTreeNode>())
+				assembly.ReloadChildren();
+			OnPropertyChanged(nameof(Root));
+			if (path is { Length: > 0 })
+				SelectNode(FindNodeByPath(path, returnBestMatch: true));
+		}
+
 		void OnSettingsChanged(object? sender, Util.SettingsChangedEventArgs e)
 		{
+			// A decompiler option can change the type system the tree's entities came from; the
+			// Display buckets below never do.
+			if (sender is Decompiler.DecompilerSettings or Options.DisplaySettings)
+				RebuildIfTypeSystemOptionsChanged();
 			if (sender is not Options.DisplaySettings)
 				return;
 			if (Root == null)
@@ -502,6 +540,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			using (AppEnv.AppLog.Phase("new AssemblyListTreeNode"))
 				assemblyListTreeNode = new AssemblyListTreeNode(list);
 			Root = assemblyListTreeNode;
+			// Baseline for RebuildIfTypeSystemOptionsChanged: whatever this tree's nodes will resolve
+			// their entities against. Recorded here rather than on the first settings change, so that a
+			// change arriving before any other has something to compare against.
+			lastTypeSystemOptions = DecompilerTypeSystem.GetOptions(settingsService.CreateEffectiveDecompilerSettings());
 			AppEnv.AppLog.Mark("Root assigned");
 			ScheduleBackgroundLoadSweep(list);
 		}
