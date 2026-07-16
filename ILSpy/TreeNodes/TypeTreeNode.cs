@@ -35,39 +35,38 @@ namespace ICSharpCode.ILSpy.TreeNodes
 {
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
+		readonly ITypeDefinition typeDefinition;
 		readonly TypeDefinitionHandle handle;
 		readonly MetadataFile module;
 
 		public TypeDefinitionHandle Handle => handle;
 		public MetadataFile Module => module;
 
-		// IEntity for the wrapped type. Resolution is lazy and may return null when the
-		// type system can't be built (e.g. broken assemblies); callers must handle null.
-		public IEntity? Member => ResolveTypeDefinition();
+		public ITypeDefinition TypeDefinition => typeDefinition;
 
-		public TypeTreeNode(TypeDefinitionHandle handle, MetadataFile module)
+		public IEntity Member => typeDefinition;
+
+		/// <summary>
+		/// The type is resolved once, by the parent <see cref="AssemblyTreeNode"/>'s single pass over
+		/// the module's type system, and held for the node's lifetime. Every member below reads it
+		/// without touching the per-module type-system cache again: that cache is keyed on the current
+		/// decompiler settings, so re-resolving on each property read would rebuild an effective
+		/// settings object and take its lock for every cell the tree paints.
+		/// </summary>
+		public TypeTreeNode(ITypeDefinition typeDefinition, MetadataFile module)
 		{
-			this.handle = handle;
+			this.typeDefinition = typeDefinition ?? throw new ArgumentNullException(nameof(typeDefinition));
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
+			this.handle = (TypeDefinitionHandle)typeDefinition.MetadataToken;
 			LazyLoading = true;
 		}
 
-		public override object Text {
-			get {
-				var typeDef = ResolveTypeDefinition();
-				string baseText = typeDef != null
-					? Language.TypeToString(typeDef, ConversionFlags.None)
-					: module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
-				return baseText + GetSuffixString(handle);
-			}
-		}
+		public override object Text
+			=> Language.TypeToString(typeDefinition, ConversionFlags.None) + GetSuffixString(handle);
 
 		public override object Icon {
 			get {
-				var typeDef = ResolveTypeDefinition();
-				if (typeDef == null)
-					return Images.Class;
-				var baseImage = typeDef.Kind switch {
+				var baseImage = typeDefinition.Kind switch {
 					TypeKind.Interface => Images.Interface,
 					TypeKind.Struct or TypeKind.Void => Images.Struct,
 					TypeKind.Delegate => Images.Delegate,
@@ -75,22 +74,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					_ => Images.Class,
 				};
 				return Images.GetIcon(baseImage,
-					Images.GetOverlay(typeDef.Accessibility), typeDef.IsStatic);
+					Images.GetOverlay(typeDefinition.Accessibility), typeDefinition.IsStatic);
 			}
 		}
 
 		public override bool CanExpandRecursively => true;
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
-		{
-			var typeDef = ResolveTypeDefinition();
-			if (typeDef != null)
-				language.DecompileType(typeDef, output, options);
-			else
-				language.WriteCommentLine(output, "(could not resolve type)");
-		}
+			=> language.DecompileType(typeDefinition, output, options);
 
-		public override bool IsPublicAPI => ResolveTypeDefinition()?.Accessibility switch {
+		public override bool IsPublicAPI => typeDefinition.Accessibility switch {
 			Accessibility.Public or Accessibility.Protected or Accessibility.ProtectedOrInternal => true,
 			_ => false,
 		};
@@ -99,12 +92,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			var typeDef = ResolveTypeDefinition();
-			if (typeDef == null)
-				return FilterResult.Match;
-			if (settings.SearchTermMatches(typeDef.Name))
+			if (settings.SearchTermMatches(typeDefinition.Name))
 			{
-				if (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(typeDef))
+				if (settings.ShowApiLevel == ApiVisibility.All || LanguageService.CurrentLanguage.ShowMember(typeDefinition))
 					return FilterResult.Match;
 				else
 					return FilterResult.Hidden;
@@ -117,11 +107,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		// Stable identity for SessionSettings.ActiveTreeViewPath. ReflectionName is
 		// language-independent.
-		public override string ToString()
-		{
-			var typeDef = ResolveTypeDefinition();
-			return typeDef?.ReflectionName ?? module.Metadata.GetString(module.Metadata.GetTypeDefinition(handle).Name);
-		}
+		public override string ToString() => typeDefinition.ReflectionName;
 
 		// Sealed / static / value-type / enum / delegate cannot be the base of another class,
 		// so a DerivedTypes child would always show up empty. Suppress it for those kinds.
@@ -135,19 +121,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			};
 		}
 
-		ITypeDefinition? ResolveTypeDefinition()
-		{
-			var typeSystem = module.GetTypeSystemWithCurrentOptionsOrNull();
-			if (typeSystem == null)
-				return null;
-			return ((MetadataModule)typeSystem.MainModule).GetDefinition(handle);
-		}
-
 		protected override void LoadChildren()
 		{
-			var typeDef = ResolveTypeDefinition();
-			if (typeDef == null)
-				return;
+			var typeDef = typeDefinition;
 
 			// Inheritance-relation siblings come first so they sit above the type's own members.
 			// BaseTypes is skipped for System.Object (no upstream chain) and for value types'
@@ -166,7 +142,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (var nestedType in typeDef.NestedTypes
 				.OrderBy(t => t.Name, NaturalStringComparer.Instance))
 			{
-				Children.Add(new TypeTreeNode((TypeDefinitionHandle)nestedType.MetadataToken, module));
+				Children.Add(new TypeTreeNode(nestedType, module));
 			}
 
 			// C# 14 explicit-extension declaration blocks surface as their own container nodes

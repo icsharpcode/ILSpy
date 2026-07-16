@@ -20,6 +20,7 @@ using System;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
@@ -29,6 +30,11 @@ using ICSharpCode.ILSpy.Languages;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
+	/// <summary>
+	/// Namespace node. The loading of the type nodes is handled by the parent AssemblyTreeNode,
+	/// which builds the whole namespace band in a single pass and populates each node before
+	/// attaching it to the tree.
+	/// </summary>
 	public sealed class NamespaceTreeNode : ILSpyTreeNode
 	{
 		readonly string name;
@@ -63,10 +69,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.name = displayName ?? throw new ArgumentNullException(nameof(displayName));
 			this.fullName = fullName ?? throw new ArgumentNullException(nameof(fullName));
 			this.module = module ?? throw new ArgumentNullException(nameof(module));
-			LazyLoading = true;
 		}
 
-		public override object Text => name.Length == 0 ? "-" : name;
+		// Namespace names come from the metadata string heap, which permits whitespace and control
+		// characters that would corrupt the tree row if rendered raw. Escaping is display-only:
+		// Name and FullName stay raw because they are the keys used to look namespaces up.
+		public override object Text => name.Length == 0 ? "-" : ILAmbience.EscapeName(name);
 
 		public override object Icon => Images.Namespace;
 
@@ -76,21 +84,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		// Uses the full dotted path so saved-and-restored selections survive a toggle of the
 		// nested-namespace setting.
 		public override string ToString() => fullName;
-
-		protected override void LoadChildren()
-		{
-			var metadata = module.Metadata;
-			var types = metadata.TypeDefinitions
-				.Where(t => {
-					var td = metadata.GetTypeDefinition(t);
-					return td.GetDeclaringType().IsNil
-						&& metadata.GetString(td.Namespace) == fullName;
-				})
-				.OrderBy(t => metadata.GetString(metadata.GetTypeDefinition(t).Name), NaturalStringComparer.Instance);
-
-			foreach (var t in types)
-				Children.Add(new TypeTreeNode(t, module));
-		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
@@ -107,18 +100,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.DecompileNamespace(name, types, output, options);
 		}
 
-		// A namespace counts as public-API iff at least one type it contains is public-API.
-		// Forces lazy children once so the aggregate is available before the cell template
-		// queries it for the gray-foreground binding; the result is cached because types
-		// don't change accessibility at runtime. Mirrors WPF's AssemblyTreeNode.SetPublicAPI
-		// recursive walk.
+		// A namespace counts as public-API iff at least one type it contains is public-API. The
+		// result is cached because types don't change accessibility at runtime.
 		bool? cachedIsPublicAPI;
 		public override bool IsPublicAPI {
 			get {
-				if (cachedIsPublicAPI is { } cached)
-					return cached;
-				EnsureLazyChildren();
-				cachedIsPublicAPI = Children.OfType<ILSpyTreeNode>().Any(c => c.IsPublicAPI);
+				cachedIsPublicAPI ??= Children.OfType<ILSpyTreeNode>().Any(c => c.IsPublicAPI);
 				return cachedIsPublicAPI.Value;
 			}
 		}
