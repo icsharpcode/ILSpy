@@ -716,7 +716,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			public bool IsEnabled(TextViewContext context) => true;
 
-			public async void Execute(TextViewContext context)
+			public void Execute(TextViewContext context)
+			{
+				ExecuteAsync(context).HandleExceptions();
+			}
+
+			async Task ExecuteAsync(TextViewContext context)
 			{
 				if (context.SelectedTreeNodes == null)
 					return;
