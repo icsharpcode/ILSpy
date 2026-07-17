@@ -96,8 +96,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			}
 			var types = typeSystem.MainModule.TypeDefinitions
-				.Where(t => t.Namespace == name && t.DeclaringTypeDefinition == null);
-			language.DecompileNamespace(name, types, output, options);
+				.Where(t => t.Namespace == fullName && t.DeclaringTypeDefinition == null);
+			language.DecompileNamespace(fullName, types, output, options);
 		}
 
 		// A namespace counts as public-API iff at least one type it contains is public-API. The

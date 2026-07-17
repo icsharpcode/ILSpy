@@ -72,8 +72,8 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			switch (node)
 			{
-				case NamespaceTreeNode ns when !string.IsNullOrEmpty(ns.Name):
-					return (MsdnPrefix + ns.Name).ToLowerInvariant();
+				case NamespaceTreeNode ns when !string.IsNullOrEmpty(ns.FullName):
+					return (MsdnPrefix + ns.FullName).ToLowerInvariant();
 				case IMemberTreeNode m when m.Member is { } entity:
 					// Reflection-name → docs path: backticks (generic arity) become hyphens,
 					// `+` (nested type) becomes `.`, and ".ctor" gets a "-ctor" tail because
@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.Commands
 			switch (node)
 			{
 				case NamespaceTreeNode ns:
-					return !string.IsNullOrEmpty(ns.Name);
+					return !string.IsNullOrEmpty(ns.FullName);
 				case IMemberTreeNode m when m.Member is { } entity:
 					if (!IsExternallyVisible(entity.Accessibility))
 						return false;

@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.Search
 		static string? Namespace(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes is { Length: > 0 } nodes && nodes.All(n => n is NamespaceTreeNode))
-				return nodes.OfType<NamespaceTreeNode>().FirstOrDefault()?.Name;
+				return nodes.OfType<NamespaceTreeNode>().FirstOrDefault()?.FullName;
 			return (context.Reference?.Reference as IEntity)?.Namespace;
 		}
 	}

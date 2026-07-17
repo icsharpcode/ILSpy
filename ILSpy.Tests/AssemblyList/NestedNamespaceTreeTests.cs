@@ -22,12 +22,14 @@ using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
 
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.Languages;
 using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
@@ -136,6 +138,36 @@ public class NestedNamespaceTreeTests
 			Assert.That(keys, Is.Ordered.Using(NaturalStringComparer.Instance),
 				"types and sub-namespaces share one alphabetical sequence; grouping the types "
 				+ "ahead of the namespaces breaks the ordering the WPF host had");
+		}
+		finally
+		{
+			ResetNestedMode();
+		}
+	}
+
+	[AvaloniaTest]
+	public async Task Decompiling_A_Nested_Namespace_Uses_Its_Full_Path_Not_The_Display_Label()
+	{
+		// In nested mode a NamespaceTreeNode's display label is only its last segment ("Generic"),
+		// while the metadata it has to query -- and the name it titles the output with -- is the full
+		// path ("System.Collections.Generic"). Decompiling by the label queries the wrong namespace,
+		// usually an empty one, and titles the output after the wrong name.
+
+		try
+		{
+			var (_, assemblyNode) = await BootNestedAsync(TreeNavigation.CoreLibName);
+
+			var generic = assemblyNode.Children.OfType<NamespaceTreeNode>()
+				.SelectMany(DescendantNamespaces)
+				.Single(ns => ns.FullName == "System.Collections.Generic");
+
+			var language = AppComposition.Current.GetExport<LanguageService>()
+				.Languages.OfType<CSharpLanguage>().First();
+			var output = new PlainTextOutput();
+			generic.Decompile(language, output, new DecompilationOptions(new DecompilerSettings()));
+
+			Assert.That(output.ToString(), Does.Contain("System.Collections.Generic"),
+				"the namespace is decompiled and titled by its full path, not the 'Generic' display label");
 		}
 		finally
 		{
