@@ -862,12 +862,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return newIdentifier;
 				}
 			}
-			if (context.Settings.AutomaticEvents)
-			{
-				var newIdentifier = ReplaceEventFieldAnnotation(identifier);
-				if (newIdentifier != null)
-					return newIdentifier;
-			}
 			return base.VisitIdentifier(identifier);
 		}
 
@@ -922,32 +916,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					parent.RemoveAnnotations<MemberResolveResult>();
 					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
 					return Identifier.Create(property.Name);
-				}
-			}
-			return null;
-		}
-
-		Identifier? ReplaceEventFieldAnnotation(Identifier identifier)
-		{
-			var parent = identifier.Parent;
-			if (parent == null)
-				return null;
-			var mrr = parent.Annotation<MemberResolveResult>();
-			if (mrr?.Member is not IField field || field.Accessibility != Accessibility.Private)
-				return null;
-			var module = field.ParentModule as MetadataModule;
-			if (module == null)
-				return null;
-			if (module.MetadataFile.PropertyAndEventBackingFieldLookup.IsEventBackingField((FieldDefinitionHandle)field.MetadataToken, out var eventHandle))
-			{
-				var eventDef = module.ResolveEntity(eventHandle) as IEvent;
-				if (eventDef != null && currentMethod?.AccessorOwner != eventDef)
-				{
-					context.Step("Replace event backing field use with event", identifier);
-					parent.RemoveAnnotations<MemberResolveResult>();
-					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, eventDef));
-					identifier.Name = eventDef.Name;
-					return identifier;
 				}
 			}
 			return null;

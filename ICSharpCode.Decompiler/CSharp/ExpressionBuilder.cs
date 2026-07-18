@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading;
@@ -300,6 +301,22 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction? targetInstruction = null)
 		{
+			if (settings.AutomaticEvents && IsBackingFieldOfAutomaticEvent(field, out var ev))
+			{
+				// The field-like event hides its backing field, so the reference is printed as
+				// the event; inside the declaring type that denotes the backing field.
+				var eventTarget = TranslateTarget(targetInstruction,
+					nonVirtualInvocation: true,
+					memberStatic: ev.IsStatic,
+					memberDeclaringType: ev.DeclaringType);
+				bool requireEventTarget = RequiresQualifier(ev, eventTarget);
+				var eventResolveResult = new MemberResolveResult(eventTarget.ResolveResult, ev);
+				Expression eventReference = requireEventTarget
+					? new MemberReferenceExpression(eventTarget, ev.Name)
+					: new IdentifierExpression(ev.Name);
+				return eventReference.WithRR(eventResolveResult);
+			}
+
 			var target = TranslateTarget(targetInstruction,
 				nonVirtualInvocation: true,
 				memberStatic: field.IsStatic,
@@ -377,6 +394,32 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			return expr;
+		}
+
+		// References to an automatic event's backing field are printed as the event. Gated on
+		// the AutoEventDecompiler verdict: a custom event is not usable as a value (#3858), and
+		// the field-identity check keeps same-typed sibling events apart (#3575). Within the
+		// event's own accessors the field is printed as-is.
+		bool IsBackingFieldOfAutomaticEvent(IField field, [NotNullWhen(true)] out IEvent? ev)
+		{
+			ev = null;
+			if (field.MetadataToken.IsNil || field.ParentModule is not MetadataModule module)
+				return false;
+			if (!module.MetadataFile.PropertyAndEventBackingFieldLookup.IsEventBackingField((FieldDefinitionHandle)field.MetadataToken, out var eventHandle))
+				return false;
+			ev = module.GetDefinition(eventHandle);
+			if (decompilationContext.CurrentMember is IMethod { AccessorOwner: IEvent owner } && owner.Equals(ev))
+			{
+				ev = null;
+				return false;
+			}
+			if (!AutoEventDecompiler.IsAutomaticEvent(typeSystem, ev, statementBuilder.decompileRun, cancellationToken, out var backingField)
+				|| !backingField.Equals(field.MemberDefinition))
+			{
+				ev = null;
+				return false;
+			}
+			return true;
 		}
 
 		TranslatedExpression IsType(IsInst inst)

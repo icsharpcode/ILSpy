@@ -64,10 +64,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly MetadataModule module;
 		readonly MetadataReader metadata;
 		readonly DecompilerSettings settings;
-		// Memoized AutoEventDecompiler verdicts (null = event is not automatic). The verdict is
-		// consumed both when the backing field is considered for hiding and when the event
-		// declaration is built; memoizing it guarantees the two decisions agree.
-		readonly Dictionary<IEvent, IField?> automaticEvents = new Dictionary<IEvent, IField?>();
 		SyntaxTree? syntaxTree;
 
 		List<IILTransform> ilTransforms = GetILTransforms();
@@ -1837,7 +1833,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				if (!module.MetadataFile.PropertyAndEventBackingFieldLookup.IsEventBackingField((FieldDefinitionHandle)field.MetadataToken, out var eventHandle))
 					return false;
-				if (IsAutomaticEvent(module.GetDefinition(eventHandle), out _))
+				if (AutoEventDecompiler.IsAutomaticEvent(typeSystem, module.GetDefinition(eventHandle), decompileRun, CancellationToken, out _))
 					return false;
 				// The field may be hidden for an unrelated reason as well; keep it hidden then.
 				var settingsWithoutAutomaticEvents = settings.Clone();
@@ -2530,20 +2526,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		/// <summary>
-		/// Determines whether <paramref name="ev"/> is an automatic event (see
-		/// <see cref="AutoEventDecompiler"/>), memoizing the verdict per event.
-		/// </summary>
-		bool IsAutomaticEvent(IEvent ev, [NotNullWhen(true)] out IField? backingField)
-		{
-			if (!automaticEvents.TryGetValue(ev, out backingField))
-			{
-				backingField = AutoEventDecompiler.IsAutomaticEvent(typeSystem, ev, CancellationToken, out var field) ? field : null;
-				automaticEvents.Add(ev, backingField);
-			}
-			return backingField != null;
-		}
-
 		EntityDeclaration DoDecompile(IEvent ev, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
@@ -2555,7 +2537,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				IField? backingField = null;
 				bool isAutomaticEvent = adderHasBody && removerHasBody && decompileRun.Settings.AutomaticEvents
-					&& IsAutomaticEvent(ev, out backingField);
+					&& AutoEventDecompiler.IsAutomaticEvent(typeSystem, ev, decompileRun, CancellationToken, out backingField);
 				// A recognized automatic event is built in field-like form directly; its
 				// compiler-generated accessor bodies are never decompiled.
 				typeSystemAstBuilder.UseCustomEvents = !isAutomaticEvent
