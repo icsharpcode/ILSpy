@@ -91,6 +91,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var customAttrs = metadata.GetModuleDefinition().GetCustomAttributes();
 			this.NullableContext = customAttrs.GetNullableContext(metadata) ?? Nullability.Oblivious;
 			this.minAccessibilityForNRT = FindMinimumAccessibilityForNRT(metadata, customAttrs);
+			this.UseUpdatedEscapeRules = HasRefSafetyRulesVersion(customAttrs, 11);
 			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
 
 			if (!options.HasFlag(TypeSystemOptions.Uncached))
@@ -111,6 +112,43 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public TypeSystemOptions TypeSystemOptions => options;
+
+		/// <summary>
+		/// Gets whether the module declares the C# 11 ref-safety rules.
+		/// </summary>
+		internal bool UseUpdatedEscapeRules { get; }
+
+		bool HasRefSafetyRulesVersion(CustomAttributeHandleCollection attributes, int expectedVersion)
+		{
+			foreach (var attributeHandle in attributes)
+			{
+				var attribute = metadata.GetCustomAttribute(attributeHandle);
+				if (!attribute.IsKnownAttribute(metadata, KnownAttribute.RefSafetyRules))
+					continue;
+
+				CustomAttributeValue<IType> value;
+				try
+				{
+					value = attribute.DecodeValue(Metadata.MetadataExtensions.MinimalAttributeTypeProvider);
+				}
+				catch (BadImageFormatException)
+				{
+					continue;
+				}
+				catch (Metadata.EnumUnderlyingTypeResolveException)
+				{
+					continue;
+				}
+				if (value.FixedArguments.Length == 1
+					&& value.FixedArguments[0].Value is int version)
+				{
+					// Roslyn recognizes exactly version 11; missing and unknown versions use legacy rules.
+					return version == expectedVersion;
+				}
+			}
+
+			return false;
+		}
 
 		#region IModule interface
 		public MetadataFile MetadataFile { get; }
