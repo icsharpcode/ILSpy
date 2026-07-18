@@ -6,12 +6,12 @@ internal class MemberInitializerEvents
 
 	public MemberInitializerEvents()
 	{
-		this.Changed?.Invoke(this, EventArgs.Empty);
+		Changed?.Invoke(this, EventArgs.Empty);
 	}
 
 	public MemberInitializerEvents(int value)
 	{
-		this.Changed?.Invoke(this, EventArgs.Empty);
+		Changed?.Invoke(this, EventArgs.Empty);
 	}
 
 	private static void Handler(object sender, EventArgs e)
