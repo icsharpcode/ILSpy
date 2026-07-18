@@ -1259,44 +1259,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Block? DecompileBody(IMethod method)
 		{
-			if (method == null || method.MetadataToken.IsNil)
+			if (method == null)
 				return null;
-			var metadata = typeSystem.MainModule.metadata;
-
-			var methodDefHandle = (MethodDefinitionHandle)method.MetadataToken;
-			var methodDef = metadata.GetMethodDefinition(methodDefHandle);
-			if (!methodDef.HasBody())
-				return null;
-
-			var genericContext = new GenericContext(
-				classTypeParameters: recordTypeDef.TypeParameters,
-				methodTypeParameters: null);
-			var body = typeSystem.MainModule.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
-			var ilReader = new ILReader(typeSystem.MainModule);
-			var il = ilReader.ReadIL(methodDefHandle, body, genericContext, ILFunctionKind.TopLevelFunction, cancellationToken);
-			var settings = new DecompilerSettings(LanguageVersion.CSharp1);
-			var transforms = CSharpDecompiler.GetILTransforms();
-			// Remove the last couple transforms -- we don't need variable names etc. here
-			int lastBlockTransform = transforms.FindLastIndex(t => t is BlockILTransform);
-			transforms.RemoveRange(lastBlockTransform + 1, transforms.Count - (lastBlockTransform + 1));
-			// Use CombineExitsTransform so that "return other != null && ...;" is a single statement even in release builds
-			transforms.Add(new CombineExitsTransform());
-			il.RunTransforms(transforms,
-				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
-					CancellationToken = cancellationToken
-				});
-			if (il.Body is BlockContainer container)
-			{
-				return container.EntryPoint;
-			}
-			else if (il.Body is Block block)
-			{
-				return block;
-			}
-			else
-			{
-				return null;
-			}
+			return CSharpDecompiler.DecompileBodyForAnalysis(method, typeSystem, cancellationToken);
 		}
 	}
 }
