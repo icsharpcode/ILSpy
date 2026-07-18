@@ -176,6 +176,56 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 		}
 
+		/// <summary>
+		/// Decompiles the body of <paramref name="method"/> to ILAst for structural analysis,
+		/// e.g. for recognizing compiler-generated code (see RecordDecompiler).
+		/// Runs the IL transform pipeline with a fixed set of decompiler settings, so the
+		/// resulting shape is independent of the user-visible settings, and stops before the
+		/// late transforms (variable naming etc.) that are only needed for code output.
+		/// </summary>
+		internal static Block? DecompileBodyForAnalysis(IMethod method, IDecompilerTypeSystem typeSystem, CancellationToken cancellationToken)
+		{
+			if (method.MetadataToken.IsNil)
+				return null;
+			var module = typeSystem.MainModule;
+			var metadata = module.metadata;
+
+			var methodDefHandle = (MethodDefinitionHandle)method.MetadataToken;
+			var methodDef = metadata.GetMethodDefinition(methodDefHandle);
+			if (!methodDef.HasBody())
+				return null;
+
+			var genericContext = new GenericContext(
+				classTypeParameters: method.DeclaringTypeDefinition?.TypeParameters,
+				methodTypeParameters: null);
+			var body = module.MetadataFile.GetMethodBody(methodDef.RelativeVirtualAddress);
+			var ilReader = new ILReader(module);
+			var il = ilReader.ReadIL(methodDefHandle, body, genericContext, ILFunctionKind.TopLevelFunction, cancellationToken);
+			var settings = new DecompilerSettings(LanguageVersion.CSharp1);
+			var transforms = GetILTransforms();
+			// Remove the last couple transforms -- we don't need variable names etc. here
+			int lastBlockTransform = transforms.FindLastIndex(t => t is BlockILTransform);
+			transforms.RemoveRange(lastBlockTransform + 1, transforms.Count - (lastBlockTransform + 1));
+			// Use CombineExitsTransform so that "return other != null && ...;" is a single statement even in release builds
+			transforms.Add(new CombineExitsTransform());
+			il.RunTransforms(transforms,
+				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
+					CancellationToken = cancellationToken
+				});
+			if (il.Body is BlockContainer container)
+			{
+				return container.EntryPoint;
+			}
+			else if (il.Body is Block block)
+			{
+				return block;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
 		List<IAstTransform> astTransforms = GetAstTransforms();
 
 		public Stepper Stepper { get; set; } = new Stepper();
