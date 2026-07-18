@@ -658,6 +658,65 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 
+		#region Lifetime annotations
+		internal static bool IsRefLikeOrAllowsRefLikeType(this IType type)
+		{
+			return type.IsByRefLike
+				|| type is ITypeParameter { AllowsRefLikeType: true };
+		}
+
+		/// <summary>
+		/// Gets the parameter's effective scope after applying implicit scope rules and
+		/// <c>UnscopedRefAttribute</c>.
+		/// </summary>
+		internal static ScopedKind GetEffectiveScope(this IParameter parameter)
+		{
+			LifetimeAnnotation lifetime = parameter.Lifetime;
+			if (lifetime.HasUnscopedRefAttribute)
+				return ScopedKind.None;
+
+			if (lifetime.DeclaredScope != ScopedKind.None)
+				return lifetime.DeclaredScope;
+
+			if (parameter.Owner?.ParentModule is MetadataModule module)
+			{
+				if ((module.TypeSystemOptions & TypeSystemOptions.ScopedRef) == 0)
+					return ScopedKind.None;
+
+				if (module.UseUpdatedEscapeRules && parameter.ReferenceKind == ReferenceKind.Out)
+					return ScopedKind.ScopedRef;
+			}
+
+			if (parameter.IsParams && parameter.Type.IsRefLikeOrAllowsRefLikeType())
+				return ScopedKind.ScopedValue;
+
+			return ScopedKind.None;
+		}
+
+		/// <summary>
+		/// Gets the effective scope of the implicit <c>this</c> parameter.
+		/// </summary>
+		internal static ScopedKind GetThisParameterScope(this IMethod method)
+		{
+			if (method.IsStatic || method.DeclaringTypeDefinition?.Kind != TypeKind.Struct)
+				return ScopedKind.None;
+
+			if (method.ParentModule is MetadataModule module)
+			{
+				if ((module.TypeSystemOptions & TypeSystemOptions.ScopedRef) == 0)
+					return ScopedKind.None;
+
+				bool hasUnscopedRefAttribute = method.HasAttribute(KnownAttribute.UnscopedRef)
+					|| method.AccessorOwner is IProperty property
+						&& property.HasAttribute(KnownAttribute.UnscopedRef);
+				if (hasUnscopedRefAttribute && module.UseUpdatedEscapeRules)
+					return ScopedKind.None;
+			}
+
+			return ScopedKind.ScopedRef;
+		}
+		#endregion
+
 		#region IParameter.IsDefaultValueAssignmentAllowed
 		/// <summary>
 		/// Checks if the parameter is allowed to be assigned a default value.
