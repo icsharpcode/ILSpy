@@ -33,4 +33,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			StaticAutomaticEvents.StaticEvent();
 		}
 	}
+	public class UnrecognizedCustomEvents
+	{
+		private Action UnusedEvent;
+		public event Action Unused {
+			add {
+				Console.WriteLine("add");
+			}
+			remove {
+				Console.WriteLine("remove");
+			}
+		}
+	}
 }
