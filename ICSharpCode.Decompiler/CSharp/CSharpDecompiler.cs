@@ -609,20 +609,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return metadata.GetString(field.Name).StartsWith("<>f__switch", StringComparison.Ordinal);
 		}
 
-		internal static bool IsEventBackingFieldName(string fieldName, string eventName, out int suffixLength)
-		{
-			suffixLength = 0;
-			if (fieldName == eventName)
-				return true;
-			var vbSuffixLength = "Event".Length;
-			if (fieldName.Length == eventName.Length + vbSuffixLength && fieldName.StartsWith(eventName, StringComparison.Ordinal) && fieldName.EndsWith("Event", StringComparison.Ordinal))
-			{
-				suffixLength = vbSuffixLength;
-				return true;
-			}
-			return false;
-		}
-
 		static bool IsAnonymousMethodCacheField(SRM.FieldDefinition field, MetadataReader metadata)
 		{
 			var name = metadata.GetString(field.Name);
@@ -2539,10 +2525,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				bool isAutomaticEvent = adderHasBody && removerHasBody && decompileRun.Settings.AutomaticEvents
 					&& AutoEventDecompiler.IsAutomaticEvent(typeSystem, ev, decompileRun, CancellationToken, out backingField);
 				// A recognized automatic event is built in field-like form directly; its
-				// compiler-generated accessor bodies are never decompiled.
+				// compiler-generated accessor bodies are never decompiled. Accessors without
+				// bodies (abstract, extern, interface members) cannot be expressed as custom
+				// accessors in C#, so only the field-like form is valid for them as well.
 				typeSystemAstBuilder.UseCustomEvents = !isAutomaticEvent
-					&& (ev.DeclaringTypeDefinition!.Kind != TypeKind.Interface
-						|| ev.IsExplicitInterfaceImplementation
+					&& (ev.IsExplicitInterfaceImplementation
 						|| adderHasBody
 						|| removerHasBody);
 				var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
