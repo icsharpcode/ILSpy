@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void Print()
 			{
-				Console.WriteLine(this.A);
+				Console.WriteLine(A);
 			}
 		}
 #endif

@@ -40,7 +40,21 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	static class AutoEventDecompiler
 	{
-		public static bool IsAutomaticEvent(IDecompilerTypeSystem typeSystem, IEvent ev, CancellationToken cancellationToken, [NotNullWhen(true)] out IField? backingField)
+		/// <summary>
+		/// Determines whether <paramref name="ev"/> is an automatic event, memoizing the verdict
+		/// in <paramref name="decompileRun"/> so that all consumers decide from the same analysis.
+		/// </summary>
+		public static bool IsAutomaticEvent(IDecompilerTypeSystem typeSystem, IEvent ev, DecompileRun decompileRun, CancellationToken cancellationToken, [NotNullWhen(true)] out IField? backingField)
+		{
+			if (!decompileRun.AutomaticEvents.TryGetValue(ev, out backingField))
+			{
+				backingField = IsAutomaticEvent(typeSystem, ev, cancellationToken, out var field) ? field : null;
+				decompileRun.AutomaticEvents.Add(ev, backingField);
+			}
+			return backingField != null;
+		}
+
+		static bool IsAutomaticEvent(IDecompilerTypeSystem typeSystem, IEvent ev, CancellationToken cancellationToken, [NotNullWhen(true)] out IField? backingField)
 		{
 			backingField = null;
 			if (ev.IsExplicitInterfaceImplementation || ev.DeclaringTypeDefinition == null)

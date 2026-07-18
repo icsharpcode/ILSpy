@@ -15,6 +15,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 	}
+	public class EventNameCollision
+	{
+		private event Action ChangedEvent;
+		public event Action Changed {
+			add {
+#if MCS2
+				ChangedEvent = (Action)Delegate.Combine(ChangedEvent, value);
+#else
+				ChangedEvent += value;
+#endif
+			}
+			remove {
+#if MCS2
+				ChangedEvent = (Action)Delegate.Remove(ChangedEvent, value);
+#else
+				ChangedEvent -= value;
+#endif
+			}
+		}
+		public void RaiseChanged()
+		{
+			if (ChangedEvent != null)
+			{
+				ChangedEvent();
+			}
+		}
+	}
 	public class GenericAutomaticEvents<T> where T : EventArgs
 	{
 		public event EventHandler<T> GenericEvent;
@@ -30,7 +57,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static event EventHandler StaticEventWithHandler;
 		public static void RaiseStaticEvent()
 		{
-			StaticAutomaticEvents.StaticEvent();
+			StaticEvent();
 		}
 	}
 	public class UnrecognizedCustomEvents
@@ -42,6 +69,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			remove {
 				Console.WriteLine("remove");
+			}
+		}
+		public void RaiseUnused()
+		{
+			if (UnusedEvent != null)
+			{
+				UnusedEvent();
 			}
 		}
 	}
