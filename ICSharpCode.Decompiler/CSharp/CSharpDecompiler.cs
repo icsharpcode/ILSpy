@@ -64,6 +64,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly MetadataModule module;
 		readonly MetadataReader metadata;
 		readonly DecompilerSettings settings;
+		// Memoized AutoEventDecompiler verdicts (null = event is not automatic). The verdict is
+		// consumed both when the backing field is considered for hiding and when the event
+		// declaration is built; memoizing it guarantees the two decisions agree.
+		readonly Dictionary<IEvent, IField?> automaticEvents = new Dictionary<IEvent, IField?>();
 		SyntaxTree? syntaxTree;
 
 		List<IILTransform> ilTransforms = GetILTransforms();
@@ -1711,7 +1715,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Decompile members that are not compiler-generated.
 				foreach (var entity in allOrderedEntities)
 				{
-					if (entity.MetadataToken.IsNil || MemberIsHidden(module.MetadataFile, entity.MetadataToken, settings))
+					if (entity.MetadataToken.IsNil)
+					{
+						continue;
+					}
+					if (MemberIsHidden(module.MetadataFile, entity.MetadataToken, settings)
+						&& !IsBackingFieldOfNonAutomaticEvent(entity))
 					{
 						continue;
 					}
@@ -1815,6 +1824,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				watch.Stop();
 				Instrumentation.DecompilerEventSource.Log.DoDecompileTypeDefinition(typeDef.FullName, watch.ElapsedMilliseconds);
+			}
+
+			// MemberIsHidden identifies event backing fields from the metadata name association
+			// alone. When the event's accessors turn out not to be compiler-generated, the event
+			// is decompiled with explicit accessors and no field-like declaration takes the
+			// field's place, so the field must stay in the output even if no decompiled body
+			// references it (referenced hidden members are re-added via the work list).
+			bool IsBackingFieldOfNonAutomaticEvent(IEntity entity)
+			{
+				if (entity is not IField field || !settings.AutomaticEvents)
+					return false;
+				if (!module.MetadataFile.PropertyAndEventBackingFieldLookup.IsEventBackingField((FieldDefinitionHandle)field.MetadataToken, out var eventHandle))
+					return false;
+				if (IsAutomaticEvent(module.GetDefinition(eventHandle), out _))
+					return false;
+				// The field may be hidden for an unrelated reason as well; keep it hidden then.
+				var settingsWithoutAutomaticEvents = settings.Clone();
+				settingsWithoutAutomaticEvents.AutomaticEvents = false;
+				return !MemberIsHidden(module.MetadataFile, field.MetadataToken, settingsWithoutAutomaticEvents);
 			}
 
 			void DoDecompileMember(IEntity entity, RecordDecompiler? recordDecompiler, PartialTypeInfo? partialType, ExtensionInfo? extensionInfo)
@@ -2502,6 +2530,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		/// <summary>
+		/// Determines whether <paramref name="ev"/> is an automatic event (see
+		/// <see cref="AutoEventDecompiler"/>), memoizing the verdict per event.
+		/// </summary>
+		bool IsAutomaticEvent(IEvent ev, [NotNullWhen(true)] out IField? backingField)
+		{
+			if (!automaticEvents.TryGetValue(ev, out backingField))
+			{
+				backingField = AutoEventDecompiler.IsAutomaticEvent(typeSystem, ev, CancellationToken, out var field) ? field : null;
+				automaticEvents.Add(ev, backingField);
+			}
+			return backingField != null;
+		}
+
 		EntityDeclaration DoDecompile(IEvent ev, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
@@ -2513,7 +2555,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 				IField? backingField = null;
 				bool isAutomaticEvent = adderHasBody && removerHasBody && decompileRun.Settings.AutomaticEvents
-					&& AutoEventDecompiler.IsAutomaticEvent(typeSystem, ev, CancellationToken, out backingField);
+					&& IsAutomaticEvent(ev, out backingField);
 				// A recognized automatic event is built in field-like form directly; its
 				// compiler-generated accessor bodies are never decompiled.
 				typeSystemAstBuilder.UseCustomEvents = !isAutomaticEvent
