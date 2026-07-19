@@ -18,7 +18,6 @@
 
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -52,23 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets or sets the scope explicitly encoded by <c>ScopedRefAttribute</c>.
 		/// Implicit and redundant scopedness is excluded.
 		/// </summary>
-		public ScopedKind DeclaredScope {
-			get {
-#pragma warning disable 618
-				if (ValueScoped)
-					return ScopedKind.ScopedValue;
-				if (RefScoped)
-					return ScopedKind.ScopedRef;
-#pragma warning restore 618
-				return ScopedKind.None;
-			}
-			set {
-#pragma warning disable 618
-				RefScoped = value != ScopedKind.None;
-				ValueScoped = value == ScopedKind.ScopedValue;
-#pragma warning restore 618
-			}
-		}
+		public ScopedKind DeclaredScope { get; set; }
 
 		/// <summary>
 		/// C# 11 scoped annotation: "scoped ref" (ScopedRefAttribute)
@@ -77,12 +60,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return DeclaredScope != ScopedKind.None; }
 			set { DeclaredScope = value ? ScopedKind.ScopedRef : ScopedKind.None; }
 		}
-
-		[Obsolete("Use ScopedRef property instead of directly accessing this field")]
-		public bool RefScoped;
-
-		[Obsolete("C# 11 preview: \"ref scoped\" no longer supported")]
-		public bool ValueScoped;
 
 		/// <summary>
 		/// Gets or sets whether <c>UnscopedRefAttribute</c> is present.
