@@ -174,5 +174,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return null;
 		}
+#if ROSLYN
+		private static TValue GetOrCreate<TKey, TValue>(TKey key, Func<TKey, int, TValue> factory)
+		{
+			return factory(key, 1);
+		}
+
+		private static int MixedLambdaParameters()
+		{
+			return GetOrCreate(new {
+				Value = 1
+			}, (item, context) => item.Value + context);
+		}
+#endif
 	}
 }
