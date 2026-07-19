@@ -114,21 +114,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		// C# 11 attributes:
 		Required,
+		UnscopedRef,
+		RefSafetyRules,
 
 		// C# 12 attributes:
 		InlineArray,
 
 		// C# 14 attributes:
 		ExtensionMarker,
-
-		// Lifetime attributes:
-		UnscopedRef,
-		RefSafetyRules,
 	}
 
 	public static class KnownAttributes
 	{
-		internal const int Count = (int)KnownAttribute.RefSafetyRules + 1;
+		internal const int Count = (int)KnownAttribute.ExtensionMarker + 1;
 
 		static readonly TopLevelTypeName[] typeNames = new TopLevelTypeName[Count]{
 			default,
@@ -200,13 +198,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new TopLevelTypeName("System.Runtime.InteropServices", "UnmanagedCallersOnlyAttribute"),
 			// C# 11 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "RequiredMemberAttribute"),
+			new TopLevelTypeName("System.Diagnostics.CodeAnalysis", "UnscopedRefAttribute"),
+			new TopLevelTypeName("System.Runtime.CompilerServices", "RefSafetyRulesAttribute"),
 			// C# 12 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "InlineArrayAttribute"),
 			// C# 14 attributes:
 			new TopLevelTypeName("System.Runtime.CompilerServices", "ExtensionMarkerAttribute"),
-			// Lifetime attributes:
-			new TopLevelTypeName("System.Diagnostics.CodeAnalysis", "UnscopedRefAttribute"),
-			new TopLevelTypeName("System.Runtime.CompilerServices", "RefSafetyRulesAttribute"),
 		};
 
 		public static ref readonly TopLevelTypeName GetTypeName(this KnownAttribute attr)
