@@ -20,6 +20,8 @@ using System;
 
 using Avalonia;
 
+using ICSharpCode.ILSpy.AppEnv;
+
 namespace ICSharpCode.ILSpy
 {
 	sealed class Program
@@ -28,8 +30,31 @@ namespace ICSharpCode.ILSpy
 		// SynchronizationContext-reliant code before AppMain is called: things aren't initialized
 		// yet and stuff might break.
 		[STAThread]
-		public static void Main(string[] args) => BuildAvaloniaApp()
-			.StartWithClassicDesktopLifetime(args);
+		public static void Main(string[] args)
+		{
+			// Single-instance gate runs before Avalonia starts: a second launch forwards its
+			// arguments to the running instance over a named pipe and exits here, so no second
+			// window opens.
+			if (!ShouldStartNewInstance(args))
+				return;
+
+			BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+		}
+
+		static bool ShouldStartNewInstance(string[] args)
+		{
+			try
+			{
+				var commandLineArguments = CommandLineArguments.Create(args);
+				App.ConfigureSettingsFilePathProvider(commandLineArguments);
+				return SingleInstance.TrySignalFirstInstance(commandLineArguments);
+			}
+			catch (Exception)
+			{
+				// Single-instance coordination must never prevent a normal launch.
+				return true;
+			}
+		}
 
 		// Avalonia configuration, don't remove; also used by visual designer.
 		public static AppBuilder BuildAvaloniaApp()

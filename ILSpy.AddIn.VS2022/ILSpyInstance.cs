@@ -80,11 +80,16 @@ namespace ICSharpCode.ILSpy.AddIn
 				argumentsToPass = $"@\"{filepath}\"";
 			}
 
+			// Target only this bundled ILSpy build: --instanceid names the exe we launch, so ILSpy
+			// reuses a running instance iff it is that same executable, and otherwise opens its own
+			// window instead of joining a different ILSpy the user may have open.
+			string instanceId = Path.GetFullPath(ilSpyExe);
+
 			var process = new Process() {
 				StartInfo = new ProcessStartInfo() {
 					FileName = ilSpyExe,
 					UseShellExecute = false,
-					Arguments = argumentsToPass
+					Arguments = $"--instanceid \"{instanceId}\" {argumentsToPass}"
 				}
 			};
 			process.Start();

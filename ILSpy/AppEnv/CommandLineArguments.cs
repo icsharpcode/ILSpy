@@ -35,6 +35,7 @@ namespace ICSharpCode.ILSpy.AppEnv
 		public string Language;
 		public bool NoActivate;
 		public string ConfigFile;
+		public string InstanceId;
 
 		public CommandLineApplication ArgumentsParser { get; }
 
@@ -79,6 +80,10 @@ namespace ICSharpCode.ILSpy.AppEnv
 					"Do not activate the existing ILSpy instance.",
 					CommandOptionType.NoValue);
 
+				var oInstanceId = app.Option<string>("--instanceid <NAME>",
+					"Only reuse a running ILSpy instance whose identity (its executable, or its own --instanceid) matches NAME; otherwise start a separate instance.",
+					CommandOptionType.SingleValue);
+
 				var files = app.Argument("Assemblies", "Assemblies to load", multipleValues: true);
 
 				app.Parse(arguments.ToArray());
@@ -90,6 +95,7 @@ namespace ICSharpCode.ILSpy.AppEnv
 				instance.Search = oSearch.ParsedValue;
 				instance.Language = oLanguage.ParsedValue;
 				instance.ConfigFile = oConfig.ParsedValue;
+				instance.InstanceId = oInstanceId.ParsedValue;
 
 				if (oNoActivate.HasValue())
 					instance.NoActivate = true;
