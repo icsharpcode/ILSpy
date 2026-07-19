@@ -24,6 +24,14 @@ using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	[StructLayout(LayoutKind.Sequential, Size = 1)]
+	internal struct PointerConstructor
+	{
+		public unsafe PointerConstructor(void* pointer)
+		{
+		}
+	}
+
 	internal class SizeofTest
 	{
 		private struct StructWithStaticField
@@ -682,5 +690,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				*ptr = null;
 			}
 		}
+	}
+
+	internal static class UnsafeObjectCreation
+	{
+		private unsafe static readonly PointerConstructor pointerConstructor = new PointerConstructor(null);
 	}
 }
