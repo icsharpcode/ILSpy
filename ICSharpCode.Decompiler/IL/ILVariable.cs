@@ -155,6 +155,16 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsRefReadOnly { get; internal set; }
 
 		/// <summary>
+		/// This variable must be declared with the C# <c>scoped</c> modifier.
+		/// </summary>
+		public bool IsScoped { get; internal set; }
+
+		/// <summary>
+		/// This variable must be declared with <c>scoped</c> when its declaration has no initializer.
+		/// </summary>
+		internal bool IsScopedWithoutInitializer { get; set; }
+
+		/// <summary>
 		/// The index of the local variable or parameter (depending on Kind)
 		/// 
 		/// For VariableKinds with "Local" in the name:
@@ -477,6 +487,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal void WriteDefinitionTo(ITextOutput output)
 		{
+			if (IsScoped)
+			{
+				output.Write("scoped ");
+			}
 			if (IsRefReadOnly)
 			{
 				output.Write("readonly ");
