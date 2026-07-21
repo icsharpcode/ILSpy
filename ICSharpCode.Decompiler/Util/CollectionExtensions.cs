@@ -254,6 +254,30 @@ namespace ICSharpCode.Decompiler.Util
 		}
 
 		/// <summary>
+		/// Filters out null elements, narrowing the element type to non-nullable.
+		/// </summary>
+		public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source) where T : class
+		{
+			foreach (var item in source)
+			{
+				if (item != null)
+					yield return item;
+			}
+		}
+
+		/// <summary>
+		/// Filters out null elements and unwraps the remaining values.
+		/// </summary>
+		public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> source) where T : struct
+		{
+			foreach (var item in source)
+			{
+				if (item.HasValue)
+					yield return item.GetValueOrDefault();
+			}
+		}
+
+		/// <summary>
 		/// The merge step of merge sort.
 		/// </summary>
 		public static IEnumerable<T> Merge<T>(this IEnumerable<T> input1, IEnumerable<T> input2, Comparison<T> comparison)
