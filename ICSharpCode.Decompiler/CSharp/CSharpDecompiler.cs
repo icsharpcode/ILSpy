@@ -2369,7 +2369,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					object? constantValue = field.GetConstantValue();
 					if (constantValue != null)
 					{
-						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType!, constantValue);
+						TypeCode underlyingTypeCode = ReflectionHelper.GetTypeCode(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType);
+						if (underlyingTypeCode is >= TypeCode.SByte and <= TypeCode.UInt64)
+						{
+							long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
+							enumDec.Initializer = typeSystemAstBuilder.ConvertEnumValue(decompilationContext.CurrentTypeDefinition, initValue, field);
+						}
+						else
+						{
+							// Unusual underlying types (bool, native int, ...) cannot be losslessly
+							// squeezed through the long-based member-reference beautification.
+							enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType!, constantValue);
+						}
 					}
 					enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 					enumDec.AddAnnotation(new MemberResolveResult(null, field));

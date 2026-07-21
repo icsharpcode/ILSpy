@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -1293,26 +1294,47 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return type.HasAttribute(KnownAttribute.Flags);
 		}
 
-		Expression ConvertEnumValue(IType type, long val)
+		/// <summary>
+		/// Converts a numeric enum value into its enum member representation, if possible.
+		/// Uses a series of enum members concatenated by <c>|</c>, if necessary.
+		/// Returns <c>(EnumType)value</c> (or the plain numeric value, if <paramref name="declaringEnumMember"/> is set), if it fails.
+		/// <para>
+		/// If <paramref name="declaringEnumMember"/> is set to a non-<see langword="null"/> value,
+		/// unqualified references are used and self references are avoided. Also, casts to EnumType are dropped.
+		/// </para>
+		/// </summary>
+		internal Expression ConvertEnumValue(IType type, long val, IField? declaringEnumMember = null)
 		{
 			ITypeDefinition enumDefinition = type.GetDefinition()!;
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
+			bool isFlags = IsFlagsEnum(enumDefinition);
 			var fields = enumDefinition.Fields
 				.Select(PrepareConstant)
-				.Where(f => f.field != null)
+				.WhereNotNull()
 				.ToArray();
-			foreach (var (value, field) in fields)
+			int declaringTokenRowNumber = declaringEnumMember == null ? int.MaxValue : MetadataTokens.GetRowNumber(declaringEnumMember.MetadataToken);
+			foreach (var (value, field, weight) in fields)
 			{
-				if (value == val)
+				// In a [Flags] enum declaration, only reference single-bit members directly:
+				// combined values are built from their flag components below (so that
+				// e.g. All = Item1 | Item2 | Item3), and zero members stay numeric, because
+				// mask-style enums routinely contain several unrelated zero members
+				// (e.g. MethodAttributes.PrivateScope/ReuseSlot).
+				if (value == val && (declaringEnumMember == null || !isFlags || weight == 1))
 				{
-					var mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
-					if (AddResolveResultAnnotations)
-						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
-					return mre;
+					if (field == declaringEnumMember || (declaringTokenRowNumber < MetadataTokens.GetRowNumber(field.MetadataToken)))
+					{
+						return ConvertConstantValue(enumDefinition.EnumUnderlyingType!, CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false));
+					}
+					return MakeEnumMemberReference(field);
 				}
 			}
-			if (IsFlagsEnum(enumDefinition))
+			if (isFlags)
 			{
+				// The complement of a byte- or ushort-based enum member is computed in int and
+				// therefore negative, which an enum member initializer cannot implicitly convert
+				// back to the underlying type -- the ~X form would not compile there.
+				bool complementCompiles = declaringEnumMember == null || enumBaseTypeCode is not (TypeCode.Byte or TypeCode.UInt16);
 				long enumValue = val;
 				Expression? expr = null;
 				long negatedEnumValue = ~val;
@@ -1333,14 +1355,17 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						break;
 				}
 				Expression? negatedExpr = null;
-				foreach (var (fieldValue, field) in fields.OrderByDescending(f => CalculateHammingWeight(unchecked((ulong)f.value))))
+				foreach (var (fieldValue, field, weight) in fields.OrderByDescending(f => f.weight))
 				{
-					if (fieldValue == 0)
+					if (fieldValue == 0 || field == declaringEnumMember)
 						continue;   // skip None enum value
+
+					if (declaringTokenRowNumber < MetadataTokens.GetRowNumber(field.MetadataToken))
+						continue;
 
 					if ((fieldValue & enumValue) == fieldValue)
 					{
-						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+						var fieldExpression = MakeEnumMemberReference(field);
 						if (expr == null)
 							expr = fieldExpression;
 						else
@@ -1348,9 +1373,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 						enumValue &= ~fieldValue;
 					}
-					if ((fieldValue & negatedEnumValue) == fieldValue)
+					if (complementCompiles && (fieldValue & negatedEnumValue) == fieldValue)
 					{
-						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+						var fieldExpression = MakeEnumMemberReference(field);
 						if (negatedExpr == null)
 							negatedExpr = fieldExpression;
 						else
@@ -1359,28 +1384,43 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						negatedEnumValue &= ~fieldValue;
 					}
 				}
-				if (enumValue == 0 && expr != null)
+				// A multi-bit value that lies entirely within a larger, previously declared member
+				// is usually a field encoding inside that mask (e.g. TypeAttributes.NestedPrivate
+				// within VisibilityMask), not a union of independent flags; keep it numeric.
+				bool isEncodedInEarlierMask = declaringEnumMember != null && fields.Any(
+					f => f.field != declaringEnumMember
+						&& MetadataTokens.GetRowNumber(f.field.MetadataToken) < declaringTokenRowNumber
+						&& (f.value & val) == val && f.value != val);
+				if (enumValue == 0 && expr != null && !isEncodedInEarlierMask)
 				{
 					if (!(negatedEnumValue == 0 && negatedExpr != null && negatedExpr.Descendants.Count() < expr.Descendants.Count()))
 					{
 						return expr;
 					}
 				}
-				if (negatedEnumValue == 0 && negatedExpr != null)
+				if (complementCompiles && negatedEnumValue == 0 && negatedExpr != null)
 				{
 					return new UnaryOperatorExpression(UnaryOperatorType.BitNot, negatedExpr);
 				}
 			}
-			return new CastExpression(ConvertType(type), new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)));
 
-			(long value, IField field) PrepareConstant(IField field)
+			var numericExpression = ConvertConstantValue(enumDefinition.EnumUnderlyingType!, CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false));
+			if (declaringEnumMember != null)
+			{
+				return numericExpression;
+			}
+			return new CastExpression(ConvertType(type), numericExpression);
+
+			(long value, IField field, int weight)? PrepareConstant(IField field)
 			{
 				if (!field.IsConst)
-					return (-1, null!);
+					return null;
 				object? constantValue = field.GetConstantValue();
 				if (constantValue == null)
-					return (-1, null!);
-				return ((long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, checkForOverflow: false), field);
+					return null;
+				var value = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, checkForOverflow: false);
+				var weight = CalculateHammingWeight(unchecked((ulong)value));
+				return (value, field, weight);
 			}
 
 			// see https://en.wikipedia.org/wiki/Hamming_weight
@@ -1394,6 +1434,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				x = (x & m2) + ((x >> 2) & m2); //put count of each 4 bits into those 4 bits 
 				x = (x + (x >> 4)) & m4;        //put count of each 8 bits into those 8 bits 
 				return unchecked((int)((x * h01) >> 56));  //returns left 8 bits of x + (x<<8) + (x<<16) + (x<<24) + ... 
+			}
+
+			Expression MakeEnumMemberReference(IField field)
+			{
+				if (declaringEnumMember == null)
+				{
+					var mre = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
+					if (AddResolveResultAnnotations)
+						mre.AddAnnotation(new MemberResolveResult(mre.Target.GetResolveResult(), field));
+					return mre;
+				}
+				else
+				{
+					var ie = new IdentifierExpression(field.Name);
+					if (AddResolveResultAnnotations)
+						ie.AddAnnotation(new MemberResolveResult(null, field));
+					return ie;
+				}
 			}
 		}
 
