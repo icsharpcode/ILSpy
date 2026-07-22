@@ -67,7 +67,13 @@ namespace ICSharpCode.Decompiler.Metadata
 #endif
 	}
 
-	public class AssemblyReferenceClassifier
+	public interface IAssemblyReferenceClassifier
+	{
+		bool IsGacAssembly(IAssemblyReference reference);
+		bool IsSharedAssembly(IAssemblyReference reference, [NotNullWhen(true)] out string? runtimePack);
+	}
+
+	public class AssemblyReferenceClassifier : IAssemblyReferenceClassifier
 	{
 		/// <summary>
 		/// For GAC assembly references, the WholeProjectDecompiler will omit the HintPath in the
