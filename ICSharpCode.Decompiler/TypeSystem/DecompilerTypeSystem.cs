@@ -287,8 +287,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		/// <returns>The number of referenced assemblies (including transitively pulled-in
-		/// type-forwarder targets) that were successfully resolved.</returns>
+		/// <returns>The number of references in the final set passed to Init(): distinct
+		/// resolved assemblies (same-name lower-version duplicates dropped) plus resolved
+		/// non-assembly modules.</returns>
 		private async Task<int> InitializeCoreAsync(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
 		{
 			// Load referenced assemblies and type-forwarder references.
@@ -415,7 +416,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
 			this.mainModule = (MetadataModule)base.MainModule;
-			return referencedAssemblies.Count;
+			return referencedAssembliesWithOptions.Count;
 
 			void AddToQueue(bool isAssembly, MetadataFile mainModule, object reference)
 			{
