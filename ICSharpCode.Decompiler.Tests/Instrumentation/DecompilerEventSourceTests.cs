@@ -121,22 +121,25 @@ namespace ICSharpCode.Decompiler.Tests.Instrumentation
 		[Test]
 		public void FiringEveryEventProducesNoEventSourceErrors()
 		{
+			// The provider is process-wide and other fixtures decompile in parallel, so every
+			// string payload carries this marker and the count assertions filter on it.
+			const string marker = "SchemaSmokeTest.";
 			using var listener = new RecordingListener(EventLevel.Verbose, EventKeywords.All);
 			var log = DecompilerEventSource.Log;
-			log.DecompileTypeStart("T");
-			log.DecompileTypeStop("T");
-			log.DecompileMemberStart("T.M", 0x06000001, (int)DecompiledMemberKind.Method, 42);
-			log.DecompileMemberStop("T.M", 0x06000001, (int)DecompiledMemberKind.Method);
-			log.TypeSystemInitStart("module");
-			log.TypeSystemInitStop("module", 3);
-			log.AssemblyResolveStart("System.Runtime");
-			log.AssemblyResolveStop("System.Runtime", "/path/System.Runtime.dll", true);
-			log.ProjectDecompilationStart("module");
-			log.ProjectDecompilationStop("module", 10, 2);
-			log.ProjectFileStart("File.cs", 5);
-			log.ProjectFileStop("File.cs");
-			log.ILTransformExecuted("ILInlining", 0x06000001, 0.5);
-			log.AstTransformExecuted("PatternStatementTransform", 1.5);
+			log.DecompileTypeStart(marker + "Type");
+			log.DecompileTypeStop(marker + "Type");
+			log.DecompileMemberStart(marker + "Type.M", 0x06000001, (int)DecompiledMemberKind.Method, 42);
+			log.DecompileMemberStop(marker + "Type.M", 0x06000001, (int)DecompiledMemberKind.Method);
+			log.TypeSystemInitStart(marker + "module");
+			log.TypeSystemInitStop(marker + "module", 3);
+			log.AssemblyResolveStart(marker + "Reference");
+			log.AssemblyResolveStop(marker + "Reference", marker + "Reference.dll", true);
+			log.ProjectDecompilationStart(marker + "module");
+			log.ProjectDecompilationStop(marker + "module", 10, 2);
+			log.ProjectFileStart(marker + "File.cs", 5);
+			log.ProjectFileStop(marker + "File.cs");
+			log.ILTransformExecuted(marker + "ILInlining", 0x06000001, 0.5);
+			log.AstTransformExecuted(marker + "PatternStatementTransform", 1.5);
 
 			// A mismatch between an [Event] method's signature and its WriteEvent call surfaces
 			// as an "EventSourceMessage" error event on the same provider.
@@ -153,7 +156,10 @@ namespace ICSharpCode.Decompiler.Tests.Instrumentation
 			};
 			foreach (string eventName in expected)
 			{
-				Assert.That(listener.EventsNamed(eventName), Has.Count.EqualTo(1), eventName);
+				var markedEvents = listener.EventsNamed(eventName)
+					.Where(p => p.Values.OfType<string>().Any(v => v.StartsWith(marker, StringComparison.Ordinal)))
+					.ToList();
+				Assert.That(markedEvents, Has.Count.EqualTo(1), eventName);
 			}
 		}
 

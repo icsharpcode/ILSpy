@@ -87,22 +87,28 @@ public class ILSpyXEventSourceTests
 	[Test]
 	public void FiringEveryEventProducesNoEventSourceErrors()
 	{
+		// The provider is process-wide and other tests load/search assemblies concurrently,
+		// so every string payload carries this marker and the count assertions filter on it.
+		// SnapshotLookupBuildStart/Stop have no string payload; their sentinel assemblyCount
+		// is distinctive enough (real snapshots in these tests stay far below it).
+		const string marker = "SchemaSmokeTest.";
+		const int lookupSentinel = 987654;
 		using var listener = new RecordingListener(EventLevel.Verbose, EventKeywords.All);
 		var log = ILSpyXEventSource.Log;
-		log.AssemblyLoadStart("test.dll");
-		log.AssemblyLoadStop("test.dll", "PEFileLoader", true);
-		log.AssemblyResolveStart("System.Runtime");
-		log.AssemblyResolveStop("System.Runtime", (int)AssemblyResolveOutcome.FoundInList);
-		log.SnapshotLookupBuildStart(10);
-		log.SnapshotLookupBuildStop(10);
-		log.DebugInfoLoadStart("test.dll");
-		log.DebugInfoLoadStop("test.dll", "PortableDebugInfoProvider");
-		log.SearchModuleStart("TestModule", "MemberSearchStrategy");
-		log.SearchModuleStop("TestModule", "MemberSearchStrategy");
-		log.AnalyzerScopeStart("MyNamespace.MyType");
-		log.AnalyzerScopeStop("MyNamespace.MyType", 3);
-		log.PackageOpened("app.zip", "zip", 12);
-		log.PackageEntryExtracted("lib/test.dll", 4096L, 0.5);
+		log.AssemblyLoadStart(marker + "test.dll");
+		log.AssemblyLoadStop(marker + "test.dll", "PEFileLoader", true);
+		log.AssemblyResolveStart(marker + "Reference");
+		log.AssemblyResolveStop(marker + "Reference", (int)AssemblyResolveOutcome.FoundInList);
+		log.SnapshotLookupBuildStart(lookupSentinel);
+		log.SnapshotLookupBuildStop(lookupSentinel);
+		log.DebugInfoLoadStart(marker + "test.dll");
+		log.DebugInfoLoadStop(marker + "test.dll", "PortableDebugInfoProvider");
+		log.SearchModuleStart(marker + "TestModule", "MemberSearchStrategy");
+		log.SearchModuleStop(marker + "TestModule", "MemberSearchStrategy");
+		log.AnalyzerScopeStart(marker + "MyType");
+		log.AnalyzerScopeStop(marker + "MyType", 3);
+		log.PackageOpened(marker + "app.zip", "zip", 12);
+		log.PackageEntryExtracted(marker + "lib/test.dll", 4096L, 0.5);
 
 		// A mismatch between an [Event] method's signature and its WriteEvent call surfaces
 		// as an "EventSourceMessage" error event on the same provider.
@@ -111,7 +117,6 @@ public class ILSpyXEventSourceTests
 		string[] expected = {
 			"AssemblyLoadStart", "AssemblyLoadStop",
 			"AssemblyResolveStart", "AssemblyResolveStop",
-			"SnapshotLookupBuildStart", "SnapshotLookupBuildStop",
 			"DebugInfoLoadStart", "DebugInfoLoadStop",
 			"SearchModuleStart", "SearchModuleStop",
 			"AnalyzerScopeStart", "AnalyzerScopeStop",
@@ -120,7 +125,18 @@ public class ILSpyXEventSourceTests
 		};
 		foreach (string eventName in expected)
 		{
-			Assert.That(listener.EventsNamed(eventName), Has.Count.EqualTo(1), eventName);
+			var markedEvents = listener.EventsNamed(eventName)
+				.Where(p => p.Values.OfType<string>().Any(v => v.StartsWith(marker, StringComparison.Ordinal)))
+				.ToList();
+			Assert.That(markedEvents, Has.Count.EqualTo(1), eventName);
+		}
+
+		foreach (string eventName in new[] { "SnapshotLookupBuildStart", "SnapshotLookupBuildStop" })
+		{
+			var markedEvents = listener.EventsNamed(eventName)
+				.Where(p => (int)p["assemblyCount"]! == lookupSentinel)
+				.ToList();
+			Assert.That(markedEvents, Has.Count.EqualTo(1), eventName);
 		}
 	}
 
