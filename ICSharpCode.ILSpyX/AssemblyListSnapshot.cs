@@ -28,6 +28,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpyX.Extensions;
 using ICSharpCode.ILSpyX.FileLoaders;
+using ICSharpCode.ILSpyX.Instrumentation;
 
 namespace ICSharpCode.ILSpyX
 {
@@ -79,73 +80,89 @@ namespace ICSharpCode.ILSpyX
 
 		private async Task<Dictionary<string, MetadataFile>> CreateLoadedAssemblyLookupAsync(bool shortNames)
 		{
-			var result = new Dictionary<string, MetadataFile>(StringComparer.OrdinalIgnoreCase);
-			foreach (LoadedAssembly loaded in assemblies)
+			ILSpyXEventSource.Log.SnapshotLookupBuildStart(assemblies.Length);
+			try
 			{
-				try
+				var result = new Dictionary<string, MetadataFile>(StringComparer.OrdinalIgnoreCase);
+				foreach (LoadedAssembly loaded in assemblies)
 				{
-					var module = await loaded.GetMetadataFileOrNullAsync().ConfigureAwait(false);
-					if (module == null)
-						continue;
-					var reader = module.Metadata;
-					if (reader == null || !reader.IsAssembly)
-						continue;
-					string tfm = await loaded.GetTargetFrameworkIdAsync().ConfigureAwait(false);
-					if (tfm.StartsWith(".NETFramework,Version=v4.", StringComparison.Ordinal))
+					try
 					{
-						tfm = ".NETFramework,Version=v4";
+						var module = await loaded.GetMetadataFileOrNullAsync().ConfigureAwait(false);
+						if (module == null)
+							continue;
+						var reader = module.Metadata;
+						if (reader == null || !reader.IsAssembly)
+							continue;
+						string tfm = await loaded.GetTargetFrameworkIdAsync().ConfigureAwait(false);
+						if (tfm.StartsWith(".NETFramework,Version=v4.", StringComparison.Ordinal))
+						{
+							tfm = ".NETFramework,Version=v4";
+						}
+						string key = tfm + ";"
+							+ (shortNames ? module.Name : module.FullName);
+						if (!result.ContainsKey(key))
+						{
+							result.Add(key, module);
+						}
 					}
-					string key = tfm + ";"
-						+ (shortNames ? module.Name : module.FullName);
-					if (!result.ContainsKey(key))
+					catch (BadImageFormatException)
 					{
-						result.Add(key, module);
+						continue;
 					}
 				}
-				catch (BadImageFormatException)
-				{
-					continue;
-				}
+				return result;
 			}
-			return result;
+			finally
+			{
+				ILSpyXEventSource.Log.SnapshotLookupBuildStop(assemblies.Length);
+			}
 		}
 
 		private async Task<Dictionary<string, List<(MetadataFile module, Version version)>>> CreateLoadedAssemblyShortNameGroupLookupAsync()
 		{
-			var result = new Dictionary<string, List<(MetadataFile module, Version version)>>(StringComparer.OrdinalIgnoreCase);
-
-			foreach (LoadedAssembly loaded in assemblies)
+			ILSpyXEventSource.Log.SnapshotLookupBuildStart(assemblies.Length);
+			try
 			{
-				try
+				var result = new Dictionary<string, List<(MetadataFile module, Version version)>>(StringComparer.OrdinalIgnoreCase);
+
+				foreach (LoadedAssembly loaded in assemblies)
 				{
-					var module = await loaded.GetMetadataFileOrNullAsync().ConfigureAwait(false);
-					var reader = module?.Metadata;
-					if (reader == null || !reader.IsAssembly)
-						continue;
-					var asmDef = reader.GetAssemblyDefinition();
-					var asmDefName = reader.GetString(asmDef.Name);
-
-					var line = (module!, version: asmDef.Version);
-
-					if (!result.TryGetValue(asmDefName, out var existing))
+					try
 					{
-						existing = new List<(MetadataFile module, Version version)>();
-						result.Add(asmDefName, existing);
-						existing.Add(line);
+						var module = await loaded.GetMetadataFileOrNullAsync().ConfigureAwait(false);
+						var reader = module?.Metadata;
+						if (reader == null || !reader.IsAssembly)
+							continue;
+						var asmDef = reader.GetAssemblyDefinition();
+						var asmDefName = reader.GetString(asmDef.Name);
+
+						var line = (module!, version: asmDef.Version);
+
+						if (!result.TryGetValue(asmDefName, out var existing))
+						{
+							existing = new List<(MetadataFile module, Version version)>();
+							result.Add(asmDefName, existing);
+							existing.Add(line);
+							continue;
+						}
+
+						int index = existing.BinarySearch(line.version, l => l.version);
+						index = index < 0 ? ~index : index + 1;
+						existing.Insert(index, line);
+					}
+					catch (BadImageFormatException)
+					{
 						continue;
 					}
+				}
 
-					int index = existing.BinarySearch(line.version, l => l.version);
-					index = index < 0 ? ~index : index + 1;
-					existing.Insert(index, line);
-				}
-				catch (BadImageFormatException)
-				{
-					continue;
-				}
+				return result;
 			}
-
-			return result;
+			finally
+			{
+				ILSpyXEventSource.Log.SnapshotLookupBuildStop(assemblies.Length);
+			}
 		}
 
 		/// <summary>

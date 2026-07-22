@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Extensions;
+using ICSharpCode.ILSpyX.Instrumentation;
 using ICSharpCode.ILSpyX.Search;
 
 using ICSharpCode.ILSpy.Languages;
@@ -158,6 +159,7 @@ namespace ICSharpCode.ILSpy.Search
 					}
 					if (module == null)
 						continue;
+					ILSpyXEventSource.Log.SearchModuleStart(module, strategy);
 					try
 					{
 						strategy.Search(module, ct);
@@ -171,6 +173,10 @@ namespace ICSharpCode.ILSpy.Search
 						// One bad assembly's strategy walker (malformed metadata, missing
 						// dependency, internal assert) — keep the run going instead of
 						// faulting the whole search.
+					}
+					finally
+					{
+						ILSpyXEventSource.Log.SearchModuleStop(module, strategy);
 					}
 				}
 			}
