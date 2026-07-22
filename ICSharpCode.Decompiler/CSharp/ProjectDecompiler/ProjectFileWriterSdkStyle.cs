@@ -190,7 +190,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static void WriteProjectInfo(XmlTextWriter xml, IProjectInfoProvider project)
 		{
-			xml.WriteElementString("LangVersion", project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
+			// C# 15 is still in preview; the compiler only accepts -langversion:preview for it.
+			xml.WriteElementString("LangVersion", project.LanguageVersion >= LanguageVersion.CSharp15_0
+				? "preview"
+				: project.LanguageVersion.ToString().Replace("CSharp", "").Replace('_', '.'));
 			xml.WriteElementString("AllowUnsafeBlocks", TrueString);
 			xml.WriteElementString("CheckForOverflowUnderflow", project.CheckForOverflowUnderflow ? TrueString : FalseString);
 

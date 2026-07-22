@@ -360,6 +360,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.CheckedOperators" xml:space="preserve">
     <value>User-defined checked operators</value>
   </data>
+  <data name="DecompilerSettings.ClosedHierarchies" xml:space="preserve">
+    <value>Use the closed modifier on closed hierarchies</value>
+  </data>
   <data name="DecompilerSettings.CovariantReturns" xml:space="preserve">
     <value>Covariant return types</value>
   </data>

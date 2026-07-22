@@ -221,6 +221,12 @@
     <None Include="TestCases\ILPretty\Unsafe.cs" />
     <Compile Remove="TestCases\ILPretty\WeirdEnums.cs" />
     <None Include="TestCases\ILPretty\WeirdEnums.cs" />
+    <Compile Remove="TestCases\Pretty\ClosedHierarchies.cs" />
+    <None Include="TestCases\Pretty\ClosedHierarchies.cs" />
+    <Compile Remove="TestCases\Pretty\ClosedHierarchiesCrossAssembly.cs" />
+    <None Include="TestCases\Pretty\ClosedHierarchiesCrossAssembly.cs" />
+    <Compile Remove="TestCases\Pretty\ClosedHierarchiesCrossAssembly.dep.cs" />
+    <None Include="TestCases\Pretty\ClosedHierarchiesCrossAssembly.dep.cs" />
     <Compile Remove="TestCases\Pretty\IndexRangeTest.cs" />
     <None Include="TestCases\Pretty\IndexRangeTest.cs" />
     <Compile Remove="TestCases\Pretty\MetadataAttributes.cs" />

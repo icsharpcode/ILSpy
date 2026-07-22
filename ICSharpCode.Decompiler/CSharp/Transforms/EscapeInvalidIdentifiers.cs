@@ -186,6 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			"System.Runtime.CompilerServices.CompilerFeatureRequiredAttribute",
 			"System.Runtime.CompilerServices.RequiredMemberAttribute",
 			"System.Runtime.CompilerServices.IsExternalInit",
+			"System.Runtime.CompilerServices.ClosedAttribute",
 		};
 
 		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
