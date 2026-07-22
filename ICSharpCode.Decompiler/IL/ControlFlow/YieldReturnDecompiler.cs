@@ -650,7 +650,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		BlockContainer AnalyzeMoveNext(ILFunction function)
 		{
 			context.StepStartGroup("AnalyzeMoveNext");
-			MethodDefinitionHandle moveNextMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => metadata.GetString(metadata.GetMethodDefinition(m).Name) == "MoveNext");
+			MethodDefinitionHandle moveNextMethod = metadata.GetTypeDefinition(enumeratorType).GetMethods().FirstOrDefault(m => IsMethod(m, "MoveNext"));
 			ILFunction moveNextFunction = CreateILAst(moveNextMethod, context);
 
 			function.MoveNextMethod = moveNextFunction.Method;
@@ -1303,7 +1303,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						int stateAfterBranch = newState;
 						if (Block.GetPredecessor(branch) is Call call
 							&& call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
-							&& call.Method.Name == "System.IDisposable.Dispose")
+							&& call.Method.MetadataToken == disposeMethod)
 						{
 							// pre-roslyn compiles "yield break;" into "Dispose(); goto return_false;",
 							// so convert the dispose call into a state transition to the final state
