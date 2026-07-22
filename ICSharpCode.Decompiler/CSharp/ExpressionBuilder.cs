@@ -2588,7 +2588,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
 				select ident).Any();
 			bool isAnonymousDelegate = delegateType.IsAnonymousDelegate();
-
+			if (!settings.LambdaOptionalAndParamsParameters || ame.Parameters.Any(p => p.Type is null))
+			{
+				// 'params' and parameter default values are only legal on the explicitly typed
+				// parameter list of a lambda, and only since C# 12. In any other context they are
+				// purely decorative anyway - the delegate type still provides both - so drop them
+				// to keep the parameter list legal.
+				foreach (var p in ame.Parameters)
+				{
+					p.IsParams = false;
+					p.DefaultExpression?.Detach();
+				}
+			}
 			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type is null))
 			{
@@ -2608,6 +2619,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				// cannot declare a return type when the body's type differs from the delegate's.
 				// This outranks the rendering preferences below - they may drop the parameter
 				// list, which would take the natural type with it.
+				isLambda = true;
+			}
+			else if (ame.Parameters.Any(p => p.IsParams || p.DefaultExpression is not null))
+			{
+				// 'params' and parameter default values cannot be declared on an anonymous method
+				// in any language version; only the lambda form is legal.
 				isLambda = true;
 			}
 			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ReferenceKind.None && !p.IsParams)

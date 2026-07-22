@@ -848,6 +848,14 @@ namespace ICSharpCode.Decompiler
 		public partial bool InlineArrays { get; set; }
 
 		/// <summary>
+		/// Gets/sets whether lambda parameter lists may declare 'params' and parameter default
+		/// values. When disabled, these modifiers are dropped from anonymous functions instead.
+		/// </summary>
+		[Description("DecompilerSettings.LambdaOptionalAndParamsParameters")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp12_0)]
+		public partial bool LambdaOptionalAndParamsParameters { get; set; }
+
+		/// <summary>
 		/// Gets/Sets whether C# 14.0 extension members should be transformed.
 		/// </summary>
 		[Description("DecompilerSettings.ExtensionMembers")]
