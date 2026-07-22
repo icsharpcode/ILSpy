@@ -570,7 +570,7 @@ namespace ICSharpCode.ILSpy.Languages
 				DecompilerSettings settings,
 				IAssemblyResolver resolver,
 				IProjectFileWriter? projectWriter,
-				AssemblyReferenceClassifier? assemblyReferenceClassifier,
+				IAssemblyReferenceClassifier? assemblyReferenceClassifier,
 				ICSharpCode.Decompiler.DebugInfo.IDebugInfoProvider? debugInfoProvider)
 				: base(settings, resolver, projectWriter!, assemblyReferenceClassifier!, debugInfoProvider!)
 			{

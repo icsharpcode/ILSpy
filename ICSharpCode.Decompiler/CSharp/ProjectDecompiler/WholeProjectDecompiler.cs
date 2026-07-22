@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public IAssemblyResolver AssemblyResolver { get; }
 
-		public AssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
+		public IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
 
 		public IDebugInfoProvider DebugInfoProvider { get; }
 
@@ -110,9 +110,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			DecompilerSettings settings,
 			IAssemblyResolver assemblyResolver,
 			IProjectFileWriter projectWriter,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
+			IAssemblyReferenceClassifier assemblyReferenceClassifier,
 			IDebugInfoProvider debugInfoProvider)
-			: this(settings, Guid.NewGuid(), assemblyResolver, projectWriter, assemblyReferenceClassifier, debugInfoProvider)
+			: this(settings, Guid.NewGuid(), assemblyResolver, projectWriter ?? (settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create()), assemblyReferenceClassifier ?? new AssemblyReferenceClassifier(), debugInfoProvider)
 		{
 		}
 
@@ -121,15 +121,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			Guid projectGuid,
 			IAssemblyResolver assemblyResolver,
 			IProjectFileWriter projectWriter,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
+			IAssemblyReferenceClassifier assemblyReferenceClassifier,
 			IDebugInfoProvider debugInfoProvider)
 		{
 			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			ProjectGuid = projectGuid;
 			AssemblyResolver = assemblyResolver ?? throw new ArgumentNullException(nameof(assemblyResolver));
-			AssemblyReferenceClassifier = assemblyReferenceClassifier ?? new AssemblyReferenceClassifier();
+			AssemblyReferenceClassifier = assemblyReferenceClassifier ?? throw new ArgumentNullException(nameof(assemblyReferenceClassifier));
 			DebugInfoProvider = debugInfoProvider;
-			this.projectWriter = projectWriter ?? (Settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create());
+			this.projectWriter = projectWriter ?? throw new ArgumentNullException(nameof(projectWriter));
 		}
 
 		// per-run members

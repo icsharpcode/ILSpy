@@ -290,8 +290,8 @@ namespace ICSharpCode.Decompiler.Roundtrip
 
 		class TestProjectDecompiler : WholeProjectDecompiler
 		{
-			public TestProjectDecompiler(Guid projectGuid, IAssemblyResolver resolver, AssemblyReferenceClassifier assemblyReferenceClassifier, DecompilerSettings settings)
-				: base(settings, projectGuid, resolver, null, assemblyReferenceClassifier, debugInfoProvider: null)
+			public TestProjectDecompiler(Guid projectGuid, IAssemblyResolver resolver, IAssemblyReferenceClassifier assemblyReferenceClassifier, DecompilerSettings settings)
+				: base(settings, projectGuid, resolver, settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Create() : ProjectFileWriterDefault.Create(), assemblyReferenceClassifier, debugInfoProvider: null)
 			{
 			}
 		}
