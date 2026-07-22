@@ -168,6 +168,7 @@ namespace ICSharpCode.Decompiler
 				refReadOnlyParameters = false;
 				usePrimaryConstructorSyntaxForNonRecordTypes = false;
 				inlineArrays = false;
+				lambdaOptionalAndParamsParameters = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp13_0)
 			{
@@ -186,7 +187,8 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp14_0;
 			if (paramsCollections)
 				return CSharp.LanguageVersion.CSharp13_0;
-			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes || inlineArrays)
+			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes || inlineArrays
+				|| lambdaOptionalAndParamsParameters)
 				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
@@ -2154,6 +2156,25 @@ namespace ICSharpCode.Decompiler
 				if (refReadOnlyParameters != value)
 				{
 					refReadOnlyParameters = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool lambdaOptionalAndParamsParameters = true;
+
+		/// <summary>
+		/// Gets/sets whether lambda parameter lists may declare 'params' and parameter default
+		/// values. When disabled, these modifiers are dropped from anonymous functions instead.
+		/// </summary>
+		[Category("C# 12.0 / VS 2022.8")]
+		[Description("DecompilerSettings.LambdaOptionalAndParamsParameters")]
+		public bool LambdaOptionalAndParamsParameters {
+			get { return lambdaOptionalAndParamsParameters; }
+			set {
+				if (lambdaOptionalAndParamsParameters != value)
+				{
+					lambdaOptionalAndParamsParameters = value;
 					OnPropertyChanged();
 				}
 			}
