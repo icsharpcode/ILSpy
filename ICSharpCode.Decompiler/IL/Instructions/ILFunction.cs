@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.Instrumentation;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -401,6 +402,7 @@ namespace ICSharpCode.Decompiler.IL
 		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context)
 		{
 			this.CheckInvariant(ILPhase.Normal);
+			bool traceTransforms = DecompilerEventSource.Log.IsTransformTracingEnabled();
 			foreach (var transform in transforms)
 			{
 				context.CancellationToken.ThrowIfCancellationRequested();
@@ -412,7 +414,10 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					context.StepStartGroup(transform.GetType().Name);
 				}
+				long traceStart = traceTransforms ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
 				transform.Run(this, context);
+				if (traceTransforms)
+					DecompilerEventSource.Log.ILTransformExecuted(transform, this, traceStart);
 				this.CheckInvariant(ILPhase.Normal);
 				context.StepEndGroup(keepIfEmpty: true);
 			}
