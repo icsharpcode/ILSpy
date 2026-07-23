@@ -96,9 +96,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 
 		protected internal override void Test(string test)
 		{
-			action = (string a) => {
-				base.Test(a);
-			};
+			action = (string a) => base.Test(a);
 			if (test.Equals(1))
 			{
 				throw new Exception("roslyn optimizes is inlining the assignment which lets the test fail");
@@ -119,9 +117,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		public Action<object> M(object state)
 		{
-			return (object x) => {
-				base.BaseCall(x, state, () => (object)null);
-			};
+			return (object x) => base.BaseCall(x, state, () => (object)null);
 		}
 	}
 
@@ -136,9 +132,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal override void Test(int a)
 		{
-			Action action = () => {
-				base.Test(a);
-			};
+			Action action = () => base.Test(a);
 			if (a.Equals(1))
 			{
 				throw new Exception("roslyn optimize is inlining the assignment which lets the test fail");

@@ -576,6 +576,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
+		/// <summary>
+		/// Whether the delegate this lambda was converted to returns void. The expression body of
+		/// such a lambda is a statement whose value is discarded, so turning the body into a block
+		/// must not wrap it in a return statement.
+		/// </summary>
+		static bool LambdaReturnsVoid(LambdaExpression lambda)
+		{
+			foreach (var annotation in lambda.Annotations.OfType<ResolveResult>())
+			{
+				// The anonymous-delegate path carries the lambda's own result inside a conversion.
+				var result = annotation is ConversionResolveResult conversion ? conversion.Input : annotation;
+				if (result is DecompiledLambdaResolveResult lambdaResult)
+					return lambdaResult.ReturnType.Kind == TypeKind.Void;
+			}
+			return false;
+		}
+
 		bool IsMatchingAssignment(VariableToDeclare v, [NotNullWhen(true)] out AssignmentExpression? assignment)
 		{
 			assignment = v.InsertionPoint.nextNode as AssignmentExpression;
@@ -720,11 +737,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (v.InsertionPoint.nextNode.Parent is LambdaExpression lambda)
 					{
 						Debug.Assert(lambda.Body is not BlockStatement);
-						lambda.Body = new BlockStatement() {
-							new ReturnStatement((Expression)lambda.Body.Detach())
-						};
+						var bodyExpression = (Expression)lambda.Body.Detach();
+						// A void-returning lambda's expression body is a discarded statement, not a
+						// returned value: "return expr;" there is CS8030 ("converted to a void
+						// returning delegate cannot return a value").
+						Statement bodyStatement = LambdaReturnsVoid(lambda)
+							? new ExpressionStatement(bodyExpression)
+							: new ReturnStatement(bodyExpression);
+						lambda.Body = new BlockStatement() { bodyStatement };
 					}
-					if (v.InsertionPoint.nextNode.Parent is ReturnStatement)
+					// Wrapping an expression body above puts the insertion point one level too deep:
+					// it still points at the expression, whose parent is now the wrapping statement
+					// (a return for a value-returning lambda, an expression statement for a void one).
+					if (v.InsertionPoint.nextNode.Parent is ReturnStatement or ExpressionStatement)
 					{
 						v.InsertionPoint = v.InsertionPoint.Up();
 					}

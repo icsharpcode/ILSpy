@@ -2662,11 +2662,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					inferredReturnType = lambda.Body!.GetResolveResult().Type;
 					naturalReturnType = inferredReturnType;
 				}
-				else if (isAnonymousDelegate && body.Statements.Count == 1
-					&& body.Statements.Single() is ExpressionStatement exprStmt)
+				else if (body.Statements.Count == 1 && body.Statements.Single() is ExpressionStatement exprStmt
+					&& !NeedsDeclarationInBody(function, exprStmt)
+					&& (isAnonymousDelegate || exprStmt.Expression.GetResolveResult().Type.Kind == TypeKind.Void))
 				{
 					// A single statement-expression can be the expression body of a void-returning
 					// lambda; its value (if any) is discarded, so the return type stays void.
+					// Discarding a value is only safe where the void-ness survives into the output:
+					// C# reads the expression's type as the lambda's return type, which picks a
+					// different natural type and a different overload. An anonymous delegate spells
+					// the return type out below; everywhere else the block body, which has no return
+					// statement, is what says the value is dropped.
 					lambda.Body = exprStmt.Expression.Detach();
 					inferredReturnType = compilation.FindType(KnownTypeCode.Void);
 					naturalReturnType = lambda.Body!.GetResolveResult().Type;
@@ -2752,6 +2758,51 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						return true;
 				}
+			}
+		}
+
+		/// <summary>
+		/// Whether the statement uses a variable that DeclareVariables may still have to declare,
+		/// which only a block body can host. Collapsing such a body to an expression pushes the
+		/// declaration inside the lambda when the block is rebuilt for it - turning a captured
+		/// variable into per-invocation state, which no longer round-trips.
+		/// </summary>
+		static bool NeedsDeclarationInBody(ILFunction function, ExpressionStatement statement)
+		{
+			// A deconstruction assignment produces the tuple it assigned from. Compiled as an
+			// expression body its value is discarded differently than in a block, and the IL that
+			// comes back no longer looks like one statement - so the shape would flip on every
+			// round trip. Keep the block, which is stable.
+			if (statement.Expression is AssignmentExpression { Left: TupleExpression })
+				return true;
+			foreach (var identifier in statement.DescendantsAndSelf.OfType<IdentifierExpression>())
+			{
+				if (identifier.GetResolveResult() is not ILVariableResolveResult { Variable: var variable })
+					continue;
+				// Parameters and this-references are never declared.
+				if (variable.Kind is not (VariableKind.Local or VariableKind.StackSlot))
+					continue;
+				// Not closure state: a declaration inside the lambda is correct.
+				if (variable.CaptureScope is null)
+					continue;
+				// Read (or written) elsewhere too, so the declaration lands in the shared scope
+				// no matter what this body looks like, and collapsing is safe.
+				if (!AllUsesAreInside(variable, function))
+					continue;
+				return true;
+			}
+			return false;
+
+			static bool AllUsesAreInside(ILVariable variable, ILFunction function)
+			{
+				foreach (var use in variable.LoadInstructions.Cast<ILInstruction>()
+					.Concat(variable.StoreInstructions.Cast<ILInstruction>())
+					.Concat(variable.AddressInstructions))
+				{
+					if (use.Ancestors.OfType<ILFunction>().FirstOrDefault() != function)
+						return false;
+				}
+				return true;
 			}
 		}
 

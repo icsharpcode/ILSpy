@@ -34,11 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public ParamsAction ParamsExpressionBody()
 		{
-#if CS140
-			return (params int[] xs) => {
-				Console.WriteLine(xs.Length);
-			};
-#elif EXPECTED_OUTPUT
+#if EXPECTED_OUTPUT && !CS140
 			return delegate (int[] xs) {
 				Console.WriteLine(xs.Length);
 			};
