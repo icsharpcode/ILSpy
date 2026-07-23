@@ -1014,6 +1014,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				WriteKeyword(LambdaExpression.AsyncModifier);
 				Space();
 			}
+			if (lambdaExpression.ReturnType is not null)
+			{
+				lambdaExpression.ReturnType.AcceptVisitor(this);
+				Space();
+			}
 			if (LambdaNeedsParenthesis(lambdaExpression))
 			{
 				WriteCommaSeparatedListInParenthesis(lambdaExpression.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
@@ -1038,6 +1043,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		protected bool LambdaNeedsParenthesis(LambdaExpression lambdaExpression)
 		{
+			if (lambdaExpression.ReturnType is not null)
+			{
+				// an explicit return type requires a parenthesized parameter list
+				return true;
+			}
 			if (lambdaExpression.Parameters.Count != 1)
 			{
 				return true;

@@ -29,7 +29,7 @@
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
-	/// <c>lambda_expression ::= attribute_section* 'async'? parameter* '=&gt;' ( block | expression )</c> (C# grammar §12.22.1)
+	/// <c>lambda_expression ::= attribute_section* 'async'? return_type? parameter* '=&gt;' ( block | expression )</c> (C# grammar §12.22.1)
 	/// </summary>
 	[DecompilerAstNode]
 	public sealed partial class LambdaExpression : Expression
@@ -40,6 +40,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public partial AstNodeCollection<AttributeSection> Attributes { get; }
 
 		public bool IsAsync { get; set; }
+
+		/// <summary>
+		/// The explicit return type (C# 10). Requires a parenthesized parameter list when present.
+		/// </summary>
+		[Slot("Type")]
+		public partial AstType? ReturnType { get; set; }
 
 		[Slot("Parameter")]
 		public partial AstNodeCollection<ParameterDeclaration> Parameters { get; }
