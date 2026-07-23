@@ -21,7 +21,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int VoidReturnType()
 		{
-			var anon = void (ref int x) => x++;
+			var anon = void (ref int x) => ++x;
 			Console.WriteLine("no inlining");
 			int arg = 3;
 			anon(ref arg);
