@@ -366,6 +366,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var toStringMethod = m.Get<Expression>("call").Single().GetSymbol() as IMethod;
 			var target = m.Get<Expression>("target").Single();
 			var type = target.GetResolveResult().Type;
+			if (type.IsByRefLike)
+			{
+				// ref structs cannot be converted to object for use with +
+				return expr;
+			}
 			if (!(isLastArgument || ToStringIsKnownEffectFree(type)))
 			{
 				// ToString() order of evaluation matters, see CheckArgumentsForStringConcat().
