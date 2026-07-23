@@ -104,6 +104,22 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		});
 
+		// Roslyn 4.14 does not emit ParamArrayAttribute on synthesized lambda methods, so tests
+		// pinning its round-trip need the current compiler only.
+		static readonly CompilerOptions[] roslynLatestOnlyOptions = Tester.SupportedOnCurrentPlatform(new[]
+		{
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		});
+
+		[Test]
+		public async Task NoLambdaOptionalAndParamsParameters([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp11_0) {
+				FileScopedNamespaces = false
+			});
+		}
+
 		[Test]
 		public async Task NoArrayInitializers([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
 		{
