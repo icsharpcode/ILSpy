@@ -2602,8 +2602,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inferredReturnType = lambda.Body!.GetResolveResult().Type;
 					naturalReturnType = inferredReturnType;
 				}
-				else if (isAnonymousDelegate && body.Statements.Count == 1
-					&& body.Statements.Single() is ExpressionStatement exprStmt)
+				else if (body.Statements.Count == 1 && body.Statements.Single() is ExpressionStatement exprStmt)
 				{
 					// A single statement-expression can be the expression body of a void-returning
 					// lambda; its value (if any) is discarded, so the return type stays void.

@@ -579,15 +579,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 
 		public static Action<int> StatementLambdaWithAttribute1()
 		{
-			return [return: My] (int x) => {
-				Console.WriteLine(x);
-			};
+			return [return: My] (int x) => Console.WriteLine(x);
 		}
 		public static Action<int> StatementLambdaWithAttribute2()
 		{
-			return ([My] int x) => {
-				Console.WriteLine(x);
-			};
+			return ([My] int x) => Console.WriteLine(x);
 		}
 
 		public static int LambdaWithAttributeOnAnonymousTypeParameter()
