@@ -1043,9 +1043,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		protected bool LambdaNeedsParenthesis(LambdaExpression lambdaExpression)
 		{
-			if (lambdaExpression.ReturnType is not null)
+			if (lambdaExpression.ReturnType is not null || lambdaExpression.Attributes.Count > 0)
 			{
-				// an explicit return type requires a parenthesized parameter list
+				// an explicit return type or attributes on the lambda require a parenthesized
+				// parameter list
 				return true;
 			}
 			if (lambdaExpression.Parameters.Count != 1)
@@ -1053,6 +1054,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				return true;
 			}
 			var p = lambdaExpression.Parameters.Single();
+			if (p.Attributes.Count > 0)
+			{
+				// parameter attributes have no unparenthesized form
+				return true;
+			}
 			return !(p.Type is null && p.ParameterModifier == ReferenceKind.None && !p.IsParams);
 		}
 

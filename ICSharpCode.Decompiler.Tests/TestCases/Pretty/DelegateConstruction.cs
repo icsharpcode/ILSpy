@@ -589,6 +589,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 				Console.WriteLine(x);
 			};
 		}
+
+		public static int LambdaWithAttributeOnAnonymousTypeParameter()
+		{
+			return new[] {
+				new {
+					X = 1
+				}
+			}.Select([My] (a) => a.X).Sum();
+		}
 #endif
 
 		public static void CallRecursiveDelegate(ref RefRecursiveDelegate d)
