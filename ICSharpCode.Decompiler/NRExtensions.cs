@@ -66,6 +66,22 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
+		public static bool IsAnonymousDelegate(this IType type)
+		{
+			if (type == null)
+				return false;
+			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName()
+				&& type.Kind == TypeKind.Delegate
+				&& (type.Name.Contains("AnonymousDelegate")
+					|| type.Name.StartsWith("<>A{", StringComparison.Ordinal)
+					|| type.Name.StartsWith("<>F{", StringComparison.Ordinal)))
+			{
+				ITypeDefinition td = type.GetDefinition();
+				return td != null && td.IsCompilerGenerated();
+			}
+			return false;
+		}
+
 		public static bool ContainsAnonymousType(this IType type)
 		{
 			var visitor = new ContainsAnonTypeVisitor();
@@ -73,14 +89,31 @@ namespace ICSharpCode.Decompiler
 			return visitor.ContainsAnonType;
 		}
 
+		public static bool ContainsAnonymousDelegate(this IType type)
+		{
+			var visitor = new ContainsAnonTypeVisitor();
+			type.AcceptVisitor(visitor);
+			return visitor.ContainsAnonDelegate;
+		}
+
+		public static bool ContainsAnonymousTypeOrDelegate(this IType type)
+		{
+			var visitor = new ContainsAnonTypeVisitor();
+			type.AcceptVisitor(visitor);
+			return visitor.ContainsAnonType || visitor.ContainsAnonDelegate;
+		}
+
 		class ContainsAnonTypeVisitor : TypeVisitor
 		{
 			public bool ContainsAnonType;
+			public bool ContainsAnonDelegate;
 
 			public override IType VisitOtherType(IType type)
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
+				if (IsAnonymousDelegate(type))
+					ContainsAnonDelegate = true;
 				return base.VisitOtherType(type);
 			}
 
@@ -88,6 +121,8 @@ namespace ICSharpCode.Decompiler
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
+				if (IsAnonymousDelegate(type))
+					ContainsAnonDelegate = true;
 				return base.VisitTypeDefinition(type);
 			}
 		}

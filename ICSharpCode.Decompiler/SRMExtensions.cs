@@ -485,6 +485,20 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
+		public static bool IsAnonymousDelegate(this TypeDefinition type, MetadataReader metadata)
+		{
+			string name = metadata.GetString(type.Name);
+			if (type.Namespace.IsNil && type.HasGeneratedName(metadata)
+				&& type.IsDelegate(metadata)
+				&& (name.Contains("AnonymousDelegate")
+					|| name.StartsWith("<>A{", StringComparison.Ordinal)
+					|| name.StartsWith("<>F{", StringComparison.Ordinal)))
+			{
+				return type.IsCompilerGenerated(metadata);
+			}
+			return false;
+		}
+
 		#region HasGeneratedName
 
 		public static bool IsGeneratedName(this StringHandle handle, MetadataReader metadata)

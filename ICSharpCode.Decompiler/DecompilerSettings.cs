@@ -152,6 +152,7 @@ namespace ICSharpCode.Decompiler
 				fileScopedNamespaces = false;
 				recordStructs = false;
 				structDefaultConstructorsAndFieldInitializers = false;
+				naturalTypeForLambdaAndMethodGroup = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp11_0)
 			{
@@ -189,7 +190,7 @@ namespace ICSharpCode.Decompiler
 				return CSharp.LanguageVersion.CSharp12_0;
 			if (scopedRef || requiredMembers || numericIntPtr || utf8StringLiterals || unsignedRightShift || checkedOperators)
 				return CSharp.LanguageVersion.CSharp11_0;
-			if (fileScopedNamespaces || recordStructs || structDefaultConstructorsAndFieldInitializers)
+			if (fileScopedNamespaces || recordStructs || structDefaultConstructorsAndFieldInitializers || naturalTypeForLambdaAndMethodGroup)
 				return CSharp.LanguageVersion.CSharp10_0;
 			if (nativeIntegers || initAccessors || functionPointers || forEachWithGetEnumeratorExtension
 				|| recordClasses || withExpressions || usePrimaryConstructorSyntax || covariantReturns
@@ -479,6 +480,24 @@ namespace ICSharpCode.Decompiler
 				if (fileScopedNamespaces != value)
 				{
 					fileScopedNamespaces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool naturalTypeForLambdaAndMethodGroup = true;
+
+		/// <summary>
+		/// Use C# 10 natural types for delegates and lambdas.
+		/// </summary>
+		[Category("C# 10.0 / VS 2022")]
+		[Description("DecompilerSettings.NaturalTypeForLambdaAndMethodGroup")]
+		public bool NaturalTypeForLambdaAndMethodGroup {
+			get { return naturalTypeForLambdaAndMethodGroup; }
+			set {
+				if (naturalTypeForLambdaAndMethodGroup != value)
+				{
+					naturalTypeForLambdaAndMethodGroup = value;
 					OnPropertyChanged();
 				}
 			}
