@@ -241,6 +241,8 @@
     <None Include="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoForEachStatement.Expected.cs" />
     <None Include="TestCases\Ugly\NoForEachStatement.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoLambdaOptionalAndParamsParameters.Expected.cs" />
+    <None Include="TestCases\Ugly\NoLambdaOptionalAndParamsParameters.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoLocalFunctions.Expected.cs" />
     <None Include="TestCases\Ugly\NoLocalFunctions.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoNewOfT.Expected.cs" />

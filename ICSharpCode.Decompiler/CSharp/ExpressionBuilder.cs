@@ -2534,13 +2534,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!settings.LambdaOptionalAndParamsParameters || ame.Parameters.Any(p => p.Type is null))
 			{
 				// 'params' and parameter default values are only legal on the explicitly typed
-				// parameter list of a lambda, and only since C# 12. In any other context they are
-				// purely decorative anyway - the delegate type still provides both - so drop them
-				// to keep the parameter list legal.
+				// parameter list of a lambda, and only since C# 12. Elsewhere, downgrade them to
+				// their underlying metadata attributes so the information is not lost.
 				foreach (var p in ame.Parameters)
 				{
-					p.IsParams = false;
-					p.DefaultExpression?.Detach();
+					if (p.IsParams)
+					{
+						p.IsParams = false;
+						p.Attributes.Add(new AttributeSection(new Syntax.Attribute {
+							Type = astBuilder.ConvertAttributeType(compilation.FindType(KnownAttribute.ParamArray))
+						}));
+					}
+					if (p.DefaultExpression is { } defaultValue)
+					{
+						defaultValue.Detach();
+						p.Attributes.Add(new AttributeSection(new Syntax.Attribute {
+							Type = astBuilder.ConvertAttributeType(compilation.FindType(KnownAttribute.Optional))
+						}));
+						var defaultParameterValue = new Syntax.Attribute {
+							Type = astBuilder.ConvertAttributeType(compilation.FindType(KnownAttribute.DefaultParameterValue))
+						};
+						defaultParameterValue.Arguments.Add(defaultValue);
+						p.Attributes.Add(new AttributeSection(defaultParameterValue));
+					}
 				}
 			}
 			bool isLambda = false;
