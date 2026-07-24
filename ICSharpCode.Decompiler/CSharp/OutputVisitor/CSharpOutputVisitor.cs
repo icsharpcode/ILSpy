@@ -870,11 +870,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StartNode(defaultValueExpression);
 
 			WriteKeyword(DefaultValueExpression.DefaultKeyword);
-			LPar();
-			Space(policy.SpacesWithinTypeOfParentheses);
-			defaultValueExpression.Type.AcceptVisitor(this);
-			Space(policy.SpacesWithinTypeOfParentheses);
-			RPar();
+			if (defaultValueExpression.Type is not null)
+			{
+				LPar();
+				Space(policy.SpacesWithinTypeOfParentheses);
+				defaultValueExpression.Type.AcceptVisitor(this);
+				Space(policy.SpacesWithinTypeOfParentheses);
+				RPar();
+			}
 
 			EndNode(defaultValueExpression);
 		}
