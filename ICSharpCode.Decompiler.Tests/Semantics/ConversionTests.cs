@@ -1592,6 +1592,18 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				Is.EqualTo(C.None));
 		}
 
+		[Test, Ignore("Known bug: CSharpConversions does not support nullable conversions derived from tuple conversions, but csc accepts them")]
+		public void LiftedTupleConversions()
+		{
+			// csc accepts the nullable conversions derived from tuple conversions:
+			//   (int, string) t = (1, "one");
+			//   (long, object)? a = t;
+			//   (int, string)? tn = t;
+			//   (long, object)? b = tn;
+			Assert.That(ImplicitConversion(typeof((int, string)), typeof((long, object)?)).IsValid, "(int, string) -> (long, object)?");
+			Assert.That(ImplicitConversion(typeof((int, string)?), typeof((long, object)?)).IsValid, "(int, string)? -> (long, object)?");
+		}
+
 		[Test]
 		public void UserDefinedImplicitConversion_OperatorDeclaredInBaseClassOfSource()
 		{
