@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -671,6 +672,23 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		public delegate void DStrInt(string s, int a);
 
+		public delegate int DStrIntRetInt(string s, int i);
+
+		public delegate int DRetInt();
+
+		public class GenericMethods
+		{
+			public static T F<T>(string s, T t)
+			{
+				return t;
+			}
+
+			public static T G<T>()
+			{
+				return default(T);
+			}
+		}
+
 		public class ObjParamInstance
 		{
 			public void F(object o) { }
@@ -962,6 +980,35 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			{
 				return null;
 			}
+		}
+
+		public class OperatorInBaseClass
+		{
+			public static implicit operator string(OperatorInBaseClass a)
+			{
+				return null;
+			}
+		}
+
+		public class DerivedFromOperatorInBaseClass : OperatorInBaseClass
+		{
+		}
+	}
+
+	/// <summary>
+	/// Fixture for boxing/unboxing conversions that involve variance on an implemented
+	/// interface (C# standard 10.2.9 and 10.3.7).
+	/// </summary>
+	public struct StructImplementingIEnumerableOfString : IEnumerable<string>
+	{
+		public IEnumerator<string> GetEnumerator()
+		{
+			return null;
+		}
+
+		IEnumerator IEnumerable.GetEnumerator()
+		{
+			return null;
 		}
 	}
 

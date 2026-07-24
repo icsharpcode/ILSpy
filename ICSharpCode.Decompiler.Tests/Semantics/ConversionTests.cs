@@ -123,13 +123,13 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		/// converts it to <paramref name="delegateType"/>.
 		/// </summary>
 		Conversion MethodGroupConversion(Type declaringType, string methodName, Type delegateType,
-			ResolveResult targetResult = null, IMethod[] extensionMethods = null)
+			ResolveResult targetResult = null, IMethod[] extensionMethods = null, IReadOnlyList<IType> typeArguments = null)
 		{
 			IType declaring = compilation.FindType(declaringType);
 			var mgrr = new MethodGroupResolveResult(
 				targetResult ?? new ResolveResult(declaring), methodName,
 				new[] { new MethodListWithDeclaringType(declaring, declaring.GetMethods(m => m.Name == methodName)) },
-				null);
+				typeArguments);
 			if (extensionMethods != null)
 			{
 				mgrr.extensionMethods = new List<List<IMethod>> { new List<IMethod>(extensionMethods) };
@@ -1383,6 +1383,374 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(!c.IsExplicit);
 			Assert.That(c.ConversionBeforeUserDefinedOperator, Is.EqualTo(C.IdentityConversion));
 			Assert.That(c.ConversionAfterUserDefinedOperator, Is.EqualTo(C.IdentityConversion));
+		}
+
+		[Test]
+		public void TupleIdentityConversionWithUnderlyingValueTuple()
+		{
+			// C# standard 10.2.2: identity conversion between a tuple type and the
+			// corresponding constructed ValueTuple<...> type
+			var intType = compilation.FindType(typeof(int));
+			var stringType = compilation.FindType(typeof(string));
+			IType tupleType = new TupleType(compilation, ImmutableArray.Create(intType, stringType), ImmutableArray.Create("a", "b"));
+			IType valueTupleType = compilation.FindType(typeof(ValueTuple<int, string>));
+			Assert.That(conversions.ImplicitConversion(tupleType, valueTupleType), Is.EqualTo(C.IdentityConversion));
+			Assert.That(conversions.ImplicitConversion(valueTupleType, tupleType), Is.EqualTo(C.IdentityConversion));
+		}
+
+		[Test]
+		public void IdentityConversionNullableReferenceType()
+		{
+			// C# standard 10.2.2: identity conversion between T and T? for any reference type T
+			IType stringType = compilation.FindType(KnownTypeCode.String);
+			IType nullableStringType = stringType.ChangeNullability(Nullability.Nullable);
+			Assert.That(conversions.ImplicitConversion(stringType, nullableStringType), Is.EqualTo(C.IdentityConversion));
+			Assert.That(conversions.ImplicitConversion(nullableStringType, stringType), Is.EqualTo(C.IdentityConversion));
+		}
+
+		[Test]
+		public void NumericConversionMatrix()
+		{
+			// C# standard 10.2.3 (implicit numeric conversions) and 10.3.2 (explicit numeric
+			// conversions). The implicit table below is transcribed from 10.2.3; every other
+			// pair of distinct numeric types must be an explicit numeric conversion.
+			var allNumericTypes = new[] {
+				typeof(sbyte), typeof(byte), typeof(short), typeof(ushort), typeof(int),
+				typeof(uint), typeof(long), typeof(ulong), typeof(char), typeof(float),
+				typeof(double), typeof(decimal)
+			};
+			var implicitConversions = new Dictionary<Type, Type[]> {
+				[typeof(sbyte)] = new[] { typeof(short), typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) },
+				[typeof(byte)] = new[] { typeof(short), typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal) },
+				[typeof(short)] = new[] { typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal) },
+				[typeof(ushort)] = new[] { typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal) },
+				[typeof(int)] = new[] { typeof(long), typeof(float), typeof(double), typeof(decimal) },
+				[typeof(uint)] = new[] { typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal) },
+				[typeof(long)] = new[] { typeof(float), typeof(double), typeof(decimal) },
+				[typeof(ulong)] = new[] { typeof(float), typeof(double), typeof(decimal) },
+				[typeof(char)] = new[] { typeof(ushort), typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(float), typeof(double), typeof(decimal) },
+				[typeof(float)] = new[] { typeof(double) },
+				[typeof(double)] = new Type[0],
+				[typeof(decimal)] = new Type[0],
+			};
+			foreach (Type from in allNumericTypes)
+			{
+				foreach (Type to in allNumericTypes)
+				{
+					string pair = from.Name + " -> " + to.Name;
+					if (from == to)
+					{
+						Assert.That(ImplicitConversion(from, to), Is.EqualTo(C.IdentityConversion), pair);
+					}
+					else if (Array.IndexOf(implicitConversions[from], to) >= 0)
+					{
+						Assert.That(ImplicitConversion(from, to), Is.EqualTo(C.ImplicitNumericConversion), pair);
+						Assert.That(ExplicitConversion(from, to), Is.EqualTo(C.ImplicitNumericConversion), pair);
+					}
+					else
+					{
+						Assert.That(ImplicitConversion(from, to), Is.EqualTo(C.None), pair);
+						Assert.That(ExplicitConversion(from, to), Is.EqualTo(C.ExplicitNumericConversion), pair);
+					}
+				}
+			}
+		}
+
+		[Test]
+		public void InterpolatedStringConversion()
+		{
+			// C# standard 10.2.5: an interpolated string expression converts to
+			// System.IFormattable and System.FormattableString
+			var interpolated = new InterpolatedStringResolveResult(compilation.FindType(KnownTypeCode.String),
+				"{0}", new ResolveResult(compilation.FindType(KnownTypeCode.Int32)));
+			Assert.That(conversions.ImplicitConversion(interpolated, compilation.FindType(KnownTypeCode.IFormattable)), Is.EqualTo(C.ImplicitInterpolatedStringConversion));
+			Assert.That(conversions.ImplicitConversion(interpolated, compilation.FindType(KnownTypeCode.FormattableString)), Is.EqualTo(C.ImplicitInterpolatedStringConversion));
+			Assert.That(conversions.ImplicitConversion(interpolated, compilation.FindType(KnownTypeCode.String)), Is.EqualTo(C.IdentityConversion));
+		}
+
+		[Test]
+		public void IdentityDerivedNullableConversion()
+		{
+			// C# standard 10.2.6/10.6.1: nullable conversion derived from the identity conversion
+			Assert.That(ImplicitConversion(typeof(int), typeof(int?)), Is.EqualTo(C.ImplicitNullableConversion));
+		}
+
+		[Test]
+		public void DelegateToSystemDelegateConversions()
+		{
+			// C# standard 10.2.8: from any delegate_type to System.Delegate and the
+			// interfaces it implements
+			Assert.That(ImplicitConversion(typeof(Action), typeof(Delegate)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(Action), typeof(MulticastDelegate)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(Action), typeof(ICloneable)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(Delegate), typeof(Action)), Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void ClassToBaseClassConversion()
+		{
+			// C# standard 10.2.8: from any class_type S to any class_type T, provided S is derived from T
+			Assert.That(ImplicitConversion(typeof(UserDefinedExplicitConversionTestCases.DerivedClass), typeof(UserDefinedExplicitConversionTestCases.BaseClass)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(UserDefinedExplicitConversionTestCases.BaseClass), typeof(UserDefinedExplicitConversionTestCases.DerivedClass)), Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void ArrayToIReadOnlyListConversion()
+		{
+			// C# standard 10.2.8: from S[] to IReadOnlyList<T> and its base interfaces
+			Assert.That(ImplicitConversion(typeof(string[]), typeof(IReadOnlyList<string>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(string[]), typeof(IReadOnlyList<object>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(string[]), typeof(IReadOnlyCollection<string>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(string[,]), typeof(IReadOnlyList<string>)), Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void VarianceConversionWithDynamicTypeArgument()
+		{
+			// C# standard 10.2.8: implicit reference conversion via a variance-convertible
+			// type where the type arguments differ by the object/dynamic identity conversion
+			Assert.That(ImplicitConversion(typeof(IEnumerable<string>), typeof(IEnumerable<dynamic>)), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(ImplicitConversion(typeof(List<string>), typeof(IEnumerable<dynamic>)), Is.EqualTo(C.ImplicitReferenceConversion));
+		}
+
+		[Test]
+		public void BoxingConversions()
+		{
+			// C# standard 10.2.9
+			Assert.That(ImplicitConversion(typeof(int), typeof(object)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(int), typeof(ValueType)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(StringComparison), typeof(Enum)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(int), typeof(IFormattable)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(int), typeof(IComparable<int>)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(int), typeof(IComparable<string>)), Is.EqualTo(C.None));
+			// nullable value types box to the reference types their underlying type boxes to
+			Assert.That(ImplicitConversion(typeof(int?), typeof(object)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(int?), typeof(IFormattable)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(StringComparison?), typeof(Enum)), Is.EqualTo(C.BoxingConversion));
+		}
+
+		[Test]
+		public void BoxingConversionViaVariance()
+		{
+			// C# standard 10.2.9: boxing to an interface that the implemented interface is
+			// variance-convertible to
+			Assert.That(ImplicitConversion(typeof(StructImplementingIEnumerableOfString), typeof(IEnumerable<string>)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(StructImplementingIEnumerableOfString), typeof(IEnumerable<object>)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(StructImplementingIEnumerableOfString), typeof(IEnumerable)), Is.EqualTo(C.BoxingConversion));
+			Assert.That(ImplicitConversion(typeof(StructImplementingIEnumerableOfString), typeof(IEnumerable<int>)), Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void ImplicitConstantExpressionConversionToUInt64()
+		{
+			// C# standard 10.2.11: an int constant expression converts to ulong
+			// provided its value is non-negative
+			Assert.That(IntegerLiteralConversion(0, typeof(ulong)));
+			Assert.That(IntegerLiteralConversion(200, typeof(ulong)));
+			Assert.That(!IntegerLiteralConversion(-1, typeof(ulong)));
+		}
+
+		[Test]
+		public void TypeParameterConversionViaVariance()
+		{
+			// C# standard 10.2.12 (last bullet group): conversions from T via a
+			// variance-convertible interface of its effective base class / interface set
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T",
+				constraints: new[] { compilation.FindType(typeof(List<string>)) });
+			Assert.That(conversions.ImplicitConversion(t, compilation.FindType(typeof(IEnumerable<object>))), Is.EqualTo(C.ImplicitReferenceConversion));
+
+			ITypeParameter t2 = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T",
+				constraints: new[] { compilation.FindType(typeof(IEnumerable<string>)) });
+			Assert.That(conversions.ImplicitConversion(t2, compilation.FindType(typeof(IEnumerable<object>))), Is.EqualTo(C.BoxingConversion));
+		}
+
+		[Test]
+		public void TupleLiteralConversions()
+		{
+			// C# standard 10.2.13: implicit conversion from a tuple literal, using the
+			// implicit conversions of the element expressions
+			var intType = compilation.FindType(KnownTypeCode.Int32);
+			var stringType = compilation.FindType(KnownTypeCode.String);
+			var byteType = compilation.FindType(KnownTypeCode.Byte);
+
+			// (2, null) -> (byte, string)
+			var literal = new TupleResolveResult(compilation, ImmutableArray.Create<ResolveResult>(
+				new ConstantResolveResult(intType, 2),
+				new ConstantResolveResult(SpecialType.NullType, null)));
+			Assert.That(conversions.ImplicitConversion(literal, new TupleType(compilation, ImmutableArray.Create(byteType, stringType))),
+				Is.EqualTo(C.TupleConversion(ImmutableArray.Create(C.ImplicitConstantExpressionConversion, C.NullLiteralConversion))));
+
+			// arity mismatch
+			Assert.That(conversions.ImplicitConversion(literal, new TupleType(compilation, ImmutableArray.Create(byteType, stringType, intType))),
+				Is.EqualTo(C.None));
+
+			// (300, null) -> (byte, string): 300 is out of range for byte
+			var literal2 = new TupleResolveResult(compilation, ImmutableArray.Create<ResolveResult>(
+				new ConstantResolveResult(intType, 300),
+				new ConstantResolveResult(SpecialType.NullType, null)));
+			Assert.That(conversions.ImplicitConversion(literal2, new TupleType(compilation, ImmutableArray.Create(byteType, stringType))),
+				Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void UserDefinedImplicitConversion_OperatorDeclaredInBaseClassOfSource()
+		{
+			// C# standard 10.5.4: the set of considered operator declarations includes the
+			// base classes of the source type
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.DerivedFromOperatorInBaseClass), typeof(string));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.DeclaringType.Name, Is.EqualTo("OperatorInBaseClass"));
+		}
+
+		[Test, Ignore("C# standard 10.2.16 is not implemented: CSharpConversions.ImplicitConversion has a TODO for default literal conversions, and no ResolveResult represents a typeless default literal")]
+		public void DefaultLiteralConversions()
+		{
+			// C# standard 10.2.16: an implicit conversion exists from a default_literal to
+			// any type, producing the default value of the inferred type. Once the semantic
+			// model gains a typeless default-literal ResolveResult, this test should assert
+			// that it converts to int, string, int? and type parameters.
+			Assert.Fail("Default literal conversions are not implemented.");
+		}
+
+		[Test, Ignore("C# standard 10.2.18 is not implemented: no ResolveResult represents a switch expression; the decompiler converts each arm separately in ILAst")]
+		public void SwitchExpressionConversion()
+		{
+			// C# standard 10.2.18: an implicit conversion exists from a switch_expression to
+			// every type T to which all arm expressions implicitly convert. Once the semantic
+			// model gains a switch-expression ResolveResult, this test should assert that the
+			// conversion exists iff every arm converts to the target type.
+			Assert.Fail("Switch expression conversions are not implemented.");
+		}
+
+		[Test]
+		public void ThrowExpressionConversion()
+		{
+			// C# standard 10.2.17: throw expressions convert to any type
+			Assert.That(conversions.ImplicitConversion(new ThrowResolveResult(), compilation.FindType(KnownTypeCode.String)), Is.EqualTo(C.ThrowExpressionConversion));
+			Assert.That(conversions.ImplicitConversion(new ThrowResolveResult(), compilation.FindType(KnownTypeCode.Int32)), Is.EqualTo(C.ThrowExpressionConversion));
+		}
+
+		[Test]
+		public void StandardImplicitConversions()
+		{
+			// C# standard 10.4.2: standard implicit conversions exclude user-defined conversions
+			Assert.That(conversions.StandardImplicitConversion(compilation.FindType(typeof(int)), compilation.FindType(typeof(long))), Is.EqualTo(C.ImplicitNumericConversion));
+			Assert.That(conversions.StandardImplicitConversion(compilation.FindType(typeof(string)), compilation.FindType(typeof(object))), Is.EqualTo(C.ImplicitReferenceConversion));
+			Assert.That(conversions.StandardImplicitConversion(compilation.FindType(typeof(DateTime)), compilation.FindType(typeof(DateTimeOffset))), Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void MethodGroupConversion_GenericMethodTypeInference()
+		{
+			// C# standard 10.8: delegate parameter types are used to infer the type
+			// arguments of a generic method group
+			// delegate int D(string s, int i);
+			// D d = F;  with  static T F<T>(string s, T t)  -- T=int is inferred
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.GenericMethods), "F",
+				typeof(MethodGroupConversionTestCases.DStrIntRetInt));
+			Assert.That(c.IsValid);
+			Assert.That(c.Method.TypeArguments.Single().IsKnownType(KnownTypeCode.Int32));
+		}
+
+		[Test]
+		public void MethodGroupConversion_GenericMethodExplicitTypeArguments()
+		{
+			// C# standard 10.8:
+			// delegate int E();
+			// E e = G<int>;  with  static T G<T>()
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.GenericMethods), "G",
+				typeof(MethodGroupConversionTestCases.DRetInt),
+				typeArguments: new[] { compilation.FindType(KnownTypeCode.Int32) });
+			Assert.That(c.IsValid);
+			Assert.That(c.Method.TypeArguments.Single().IsKnownType(KnownTypeCode.Int32));
+		}
+
+		[Test]
+		public void MethodGroupConversion_CannotInferFromReturnType()
+		{
+			// C# standard 10.8: the return type of the delegate is not used for inference
+			// E e = G;  with  static T G<T>()
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.GenericMethods), "G",
+				typeof(MethodGroupConversionTestCases.DRetInt));
+			Assert.That(!c.IsValid);
+		}
+
+		[Test]
+		public void AnonymousFunctionConversions()
+		{
+			// C# standard 10.7.1: compatibility of an anonymous function with a delegate type.
+			// TestLambda stands in for a lambda whose body is an expression of the given type;
+			// the signature checks under test here are performed by CSharpConversions itself.
+			IType intType = compilation.FindType(KnownTypeCode.Int32);
+			var intParam = new IParameter[] { new DefaultParameter(intType, "x") };
+
+			// (int x) => intExpr  is compatible with Func<int, int> and Func<int, double>
+			Assert.That(conversions.ImplicitConversion(new TestLambda(intType, intParam), compilation.FindType(typeof(Func<int, int>))).IsValid);
+			Assert.That(conversions.ImplicitConversion(new TestLambda(intType, intParam), compilation.FindType(typeof(Func<int, double>))).IsValid);
+			// parameter count mismatch
+			Assert.That(conversions.ImplicitConversion(new TestLambda(intType, intParam), compilation.FindType(typeof(Func<int>))), Is.EqualTo(C.None));
+			// an explicitly typed parameter must have the delegate's parameter type
+			Assert.That(conversions.ImplicitConversion(new TestLambda(intType, intParam), compilation.FindType(typeof(Func<double, int>))), Is.EqualTo(C.None));
+			// an implicitly typed parameter list is incompatible with ref/out parameters
+			Assert.That(conversions.ImplicitConversion(
+				new TestLambda(intType, new IParameter[] { new DefaultParameter(SpecialType.UnknownType, "x") }, isImplicitlyTyped: true),
+				compilation.FindType(typeof(MethodGroupConversionTestCases.DRefObj))), Is.EqualTo(C.None));
+			// an anonymous method without a signature accepts any parameter list without out parameters
+			Assert.That(conversions.ImplicitConversion(
+				new TestLambda(intType, hasParameterList: false, isAnonymousMethod: true),
+				compilation.FindType(typeof(Func<int, int>))).IsValid);
+		}
+
+		[Test]
+		public void LambdaToExpressionTreeConversion()
+		{
+			// C# standard 10.7.1: a lambda expression compatible with D is compatible with
+			// Expression<D>; anonymous methods are not.
+			IType intType = compilation.FindType(KnownTypeCode.Int32);
+			var intParam = new IParameter[] { new DefaultParameter(intType, "x") };
+			Assert.That(conversions.ImplicitConversion(new TestLambda(intType, intParam),
+				compilation.FindType(typeof(System.Linq.Expressions.Expression<Func<int, int>>))).IsValid);
+			Assert.That(conversions.ImplicitConversion(
+				new TestLambda(intType, hasParameterList: false, isAnonymousMethod: true),
+				compilation.FindType(typeof(System.Linq.Expressions.Expression<Func<int, int>>))), Is.EqualTo(C.None));
+		}
+
+		/// <summary>
+		/// Stands in for a lambda or anonymous method whose body is an expression of a fixed type.
+		/// </summary>
+		sealed class TestLambda : LambdaResolveResult
+		{
+			readonly IType bodyReturnType;
+			readonly IParameter[] parameters;
+
+			public TestLambda(IType bodyReturnType, IParameter[] parameters = null,
+				bool hasParameterList = true, bool isAnonymousMethod = false, bool isImplicitlyTyped = false)
+			{
+				this.bodyReturnType = bodyReturnType;
+				this.parameters = parameters ?? new IParameter[0];
+				this.HasParameterList = hasParameterList;
+				this.IsAnonymousMethod = isAnonymousMethod;
+				this.IsImplicitlyTyped = isImplicitlyTyped;
+			}
+
+			public override bool HasParameterList { get; }
+			public override bool IsAnonymousMethod { get; }
+			public override bool IsImplicitlyTyped { get; }
+			public override bool IsAsync => false;
+			public override IReadOnlyList<IParameter> Parameters => parameters;
+			public override IType ReturnType => bodyReturnType;
+			public override ResolveResult Body => null;
+
+			public override IType GetInferredReturnType(IType[] parameterTypes)
+			{
+				return bodyReturnType;
+			}
+
+			public override Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions)
+			{
+				return conversions.ImplicitConversion(bodyReturnType, returnType);
+			}
 		}
 	}
 }
