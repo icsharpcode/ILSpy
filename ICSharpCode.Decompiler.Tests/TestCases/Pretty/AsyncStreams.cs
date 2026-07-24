@@ -6,6 +6,12 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	public enum AsyncStreamColor
+	{
+		Red,
+		Green
+	}
+
 	public class AsyncStreams
 	{
 		public static async IAsyncEnumerable<int> CountTo(int until)
@@ -85,6 +91,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				await Task.Yield();
 			}
 		}
+
+		public static async IAsyncEnumerable<IAsyncStreamEntry> ConstrainedGenericYield<T>(IAsyncEnumerable<T> items) where T : IAsyncStreamEntry
+		{
+			await foreach (T item in items)
+			{
+				yield return item;
+			}
+		}
+
+		public static IEnumerable<object> BoxedValues()
+		{
+			yield return true;
+			yield return 'a';
+			yield return AsyncStreamColor.Green;
+		}
+
+		public static async IAsyncEnumerable<object> BoxedValuesAsync()
+		{
+			yield return true;
+			await Task.Yield();
+			yield return 'a';
+			yield return AsyncStreamColor.Green;
+		}
+	}
+
+	public interface IAsyncStreamEntry
+	{
 	}
 
 	public struct TestStruct
