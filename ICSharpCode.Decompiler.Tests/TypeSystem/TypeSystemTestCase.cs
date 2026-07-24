@@ -571,6 +571,410 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		public void Dispose() { }
 	}
 
+	/// <summary>
+	/// Fixtures for ConversionTest.MethodGroupConversion_* tests: delegate types and
+	/// per-test method sets, resolved through hand-built MethodGroupResolveResults.
+	/// </summary>
+	public static class MethodGroupConversionTestCases
+	{
+		public delegate void DVoid();
+
+		public class VoidStatic
+		{
+			public static void M() { }
+		}
+
+		public class VoidInstance
+		{
+			public void M() { }
+		}
+
+		public delegate object DObjInt(int argument);
+
+		public class ReturnObjectFromInt
+		{
+			public static object M(int argument)
+			{
+				return null;
+			}
+		}
+
+		public class ReturnIntFromInt
+		{
+			public static int M(int argument)
+			{
+				return 0;
+			}
+		}
+
+		public class ReturnStringFromInt
+		{
+			public static string M(int argument)
+			{
+				return null;
+			}
+		}
+
+		public delegate void DRefObj(ref object o);
+
+		public delegate void DObj(object o);
+
+		public delegate void DStr(string a);
+
+		public class RefObjParam
+		{
+			public static void M(ref object o) { }
+		}
+
+		public class RefDynamicParam
+		{
+			public static void M(ref dynamic o) { }
+		}
+
+		public class OutObjParam
+		{
+			public static void M(out object o)
+			{
+				o = null;
+			}
+		}
+
+		public class ObjParam
+		{
+			public static void M(object o) { }
+		}
+
+		public class DynamicParam
+		{
+			public static void M(dynamic o) { }
+		}
+
+		public class OverloadObjectOrOptionalString
+		{
+			public static void M(object x) { }
+			public static void M(string x = null) { }
+		}
+
+		public class OverloadObjectOrStringPlusOptional
+		{
+			public static void M(object x) { }
+			public static void M(string x, string y = null) { }
+		}
+
+		public class OverloadObjectOrParamsString
+		{
+			public static void M(object x) { }
+			public static void M(params string[] x) { }
+		}
+
+		public delegate void DInt(int a);
+
+		public delegate void DStrInt(string s, int a);
+
+		public class ObjParamInstance
+		{
+			public void F(object o) { }
+		}
+
+		public class ObjListParamInstance
+		{
+			public void F(List<object> l) { }
+		}
+
+		public class ObjReturnInstance
+		{
+			public object F()
+			{
+				return null;
+			}
+		}
+
+		public class DynamicParamInstance
+		{
+			public void F(dynamic o) { }
+		}
+
+		public class DynamicListParamInstance
+		{
+			public void F(List<dynamic> l) { }
+		}
+
+		public class DynamicReturnInstance
+		{
+			public dynamic F()
+			{
+				return null;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Extension method fixture for the ConversionTest.MethodGroupConversion_ExtensionMethod*
+	/// tests (extension methods require a top-level static class).
+	/// </summary>
+	public static class MethodGroupConversionExt
+	{
+		public static void M(this string s, int x) { }
+	}
+
+	/// <summary>
+	/// Fixtures for the ConversionTest.UserDefined* tests: types with user-defined implicit
+	/// conversion operators. Operator parameter names are significant, several tests assert
+	/// which operator was chosen by its parameter name.
+	/// </summary>
+	public static class UserDefinedConversionTestCases
+	{
+		public struct TFromUInt
+		{
+			public static implicit operator TFromUInt(uint a)
+			{
+				return default(TFromUInt);
+			}
+		}
+
+		public struct TFromString
+		{
+			public static implicit operator TFromString(string a)
+			{
+				return default(TFromString);
+			}
+		}
+
+		public struct SToNullableShort
+		{
+			public static implicit operator short?(SToNullableShort s)
+			{
+				return 0;
+			}
+		}
+
+		public class ConvertibleFromIntOrShort
+		{
+			public static implicit operator ConvertibleFromIntOrShort(int i)
+			{
+				return new ConvertibleFromIntOrShort();
+			}
+			public static implicit operator ConvertibleFromIntOrShort(short s)
+			{
+				return new ConvertibleFromIntOrShort();
+			}
+		}
+
+		public class ConvertibleFromLongOrUInt
+		{
+			public static implicit operator ConvertibleFromLongOrUInt(long l)
+			{
+				return new ConvertibleFromLongOrUInt();
+			}
+			public static implicit operator ConvertibleFromLongOrUInt(uint ui)
+			{
+				return new ConvertibleFromLongOrUInt();
+			}
+		}
+
+		public class ConvertibleFromULongOrInt
+		{
+			public static implicit operator ConvertibleFromULongOrInt(ulong l)
+			{
+				return new ConvertibleFromULongOrInt();
+			}
+			public static implicit operator ConvertibleFromULongOrInt(int ui)
+			{
+				return new ConvertibleFromULongOrInt();
+			}
+		}
+
+		public class ConvertibleToIntOrShort
+		{
+			public static implicit operator int(ConvertibleToIntOrShort i)
+			{
+				return 0;
+			}
+			public static implicit operator short(ConvertibleToIntOrShort s)
+			{
+				return 0;
+			}
+		}
+
+		public class ConvertibleToIntOrUShort
+		{
+			public static implicit operator int(ConvertibleToIntOrUShort i)
+			{
+				return 0;
+			}
+			public static implicit operator ushort(ConvertibleToIntOrUShort us)
+			{
+				return 0;
+			}
+		}
+
+		public class ConvertibleToUIntOrShort
+		{
+			public static implicit operator uint(ConvertibleToUIntOrShort i)
+			{
+				return 0;
+			}
+			public static implicit operator short(ConvertibleToUIntOrShort us)
+			{
+				return 0;
+			}
+		}
+
+		public class AmbiguousA
+		{
+			public static implicit operator AmbiguousB(AmbiguousA c)
+			{
+				return null;
+			}
+		}
+
+		public class AmbiguousB
+		{
+			public static implicit operator AmbiguousB(AmbiguousA c)
+			{
+				return null;
+			}
+		}
+
+		public struct NullableConvertible
+		{
+			public static implicit operator NullableConvertible(int i)
+			{
+				return default(NullableConvertible);
+			}
+			public static implicit operator NullableConvertible?(int? ni)
+			{
+				return default(NullableConvertible);
+			}
+		}
+
+		public class ConvertibleFromNullableLongOrNullableUInt
+		{
+			public static implicit operator ConvertibleFromNullableLongOrNullableUInt(long? l)
+			{
+				return new ConvertibleFromNullableLongOrNullableUInt();
+			}
+			public static implicit operator ConvertibleFromNullableLongOrNullableUInt(uint? ui)
+			{
+				return new ConvertibleFromNullableLongOrNullableUInt();
+			}
+		}
+
+		public class ToNullableIntOrShort
+		{
+			public static implicit operator int?(ToNullableIntOrShort i)
+			{
+				return 0;
+			}
+			public static implicit operator short(ToNullableIntOrShort s)
+			{
+				return 0;
+			}
+		}
+
+		public class ToShortOrNullableByte
+		{
+			public static implicit operator short(ToShortOrNullableByte s)
+			{
+				return 0;
+			}
+			public static implicit operator byte?(ToShortOrNullableByte b)
+			{
+				return 0;
+			}
+		}
+
+		public class ToByteOrNullableShort
+		{
+			public static implicit operator byte(ToByteOrNullableShort b)
+			{
+				return 0;
+			}
+			public static implicit operator short?(ToByteOrNullableShort s)
+			{
+				return 0;
+			}
+		}
+
+		public class FromIntOrNullableLong
+		{
+			public static implicit operator FromIntOrNullableLong(int i)
+			{
+				return new FromIntOrNullableLong();
+			}
+			public static implicit operator FromIntOrNullableLong(long? l)
+			{
+				return new FromIntOrNullableLong();
+			}
+		}
+
+		public class FromNullableIntOrLong
+		{
+			public static implicit operator FromNullableIntOrLong(int? i)
+			{
+				return new FromNullableIntOrLong();
+			}
+			public static implicit operator FromNullableIntOrLong(long l)
+			{
+				return new FromNullableIntOrLong();
+			}
+		}
+
+		public class FromNullableIntOrNullableLong
+		{
+			public static implicit operator FromNullableIntOrNullableLong(int? i)
+			{
+				return new FromNullableIntOrNullableLong();
+			}
+			public static implicit operator FromNullableIntOrNullableLong(long? l)
+			{
+				return new FromNullableIntOrNullableLong();
+			}
+		}
+
+		public class ConvertibleFromLong
+		{
+			public static implicit operator ConvertibleFromLong(long l)
+			{
+				return new ConvertibleFromLong();
+			}
+		}
+
+		public class ConvertibleToInt
+		{
+			public static implicit operator int(ConvertibleToInt i)
+			{
+				return 0;
+			}
+		}
+
+		public class ConvertibleToString
+		{
+			public static implicit operator string(ConvertibleToString a)
+			{
+				return null;
+			}
+		}
+
+		public class JsNumber
+		{
+			public static implicit operator JsNumber(int d)
+			{
+				return null;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Fixture for ConversionTest.ExpansiveInheritance: a contravariant interface whose
+	/// implementing interface expands the type argument recursively.
+	/// </summary>
+	public static class ExpansiveInheritanceTestCases
+	{
+		public interface A<in U> { }
+		public interface B<X> : A<A<B<X>>> { }
+	}
+
 	public class ClassWithAttributeOnTypeParameter<[Double(2)] T> { }
 
 	[Guid("790C6E0B-9194-4cc9-9426-A48A63185696"), InterfaceType(ComInterfaceType.InterfaceIsDual)]
