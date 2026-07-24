@@ -27,12 +27,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public Span<int> ScopedSpan(scoped Span<int> span)
 		{
-			return default(Span<int>);
+			return default;
 		}
 
 		public void OutSpan(out Span<int> span)
 		{
-			span = default(Span<int>);
+			span = default;
 		}
 
 		public void Calls()

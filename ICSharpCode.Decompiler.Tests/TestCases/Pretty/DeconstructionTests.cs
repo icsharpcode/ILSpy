@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public static implicit operator MyInt(int x)
 			{
-				return default(MyInt);
+				return default;
 			}
 		}
 
@@ -53,8 +53,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void Deconstruct(out T a, out T2 b)
 			{
-				a = default(T);
-				b = default(T2);
+				a = default;
+				b = default;
 			}
 		}
 
@@ -64,9 +64,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void Deconstruct(out T a, out T2 b, out T3 c)
 			{
-				a = default(T);
-				b = default(T2);
-				c = default(T3);
+				a = default;
+				b = default;
+				c = default;
 			}
 		}
 
@@ -135,12 +135,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private (T, T2) GetTuple<T, T2>()
 		{
-			return default((T, T2));
+			return default;
 		}
 
 		private (T, T2, T3) GetTuple<T, T2, T3>()
 		{
-			return default((T, T2, T3));
+			return default;
 		}
 
 		private AssignmentTargets Get(int i)

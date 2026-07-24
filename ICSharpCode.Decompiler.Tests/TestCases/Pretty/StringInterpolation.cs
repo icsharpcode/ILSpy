@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static TReturn Get<TReturn>()
 		{
-			return default(TReturn);
+			return default;
 		}
 	}
 }

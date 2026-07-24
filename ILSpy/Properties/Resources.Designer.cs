@@ -1641,6 +1641,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Use &quot;default&quot; literals without an explicit type.
+        /// </summary>
+        public static string DecompilerSettings_UseDefaultLiterals {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.UseDefaultLiterals", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use discards.
         /// </summary>
         public static string DecompilerSettings_UseDiscards {

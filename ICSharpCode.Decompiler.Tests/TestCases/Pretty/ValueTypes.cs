@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if !(ROSLYN && OPT) || COPY_PROPAGATION_FIXED
 		public static S InitObj1()
 		{
-			S result = default(S);
+			S result = default;
 			MakeArray();
 			return result;
 		}
@@ -142,12 +142,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static S InitObj2()
 		{
-			return default(S);
+			return default;
 		}
 
 		public static void InitObj3(out S p)
 		{
-			p = default(S);
+			p = default;
 		}
 
 		public static S CallValueTypeCtor()
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static T Get<T>()
 		{
-			return default(T);
+			return default;
 		}
 
 		public static void CallOnTemporary()

@@ -515,7 +515,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static T LastOrDefault<T>(IEnumerable<T> items)
 		{
-			T result = default(T);
+			T result = default;
 			foreach (T item in items)
 			{
 				result = item;

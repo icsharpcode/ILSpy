@@ -50,12 +50,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if !ROSLYN3
 			public static implicit operator TypeB_Issue3385(TypeA_Issue3385 a)
 			{
-				return default(TypeB_Issue3385);
+				return default;
 			}
 #else
 			public static implicit operator TypeB_Issue3385(in TypeA_Issue3385 a)
 			{
-				return default(TypeB_Issue3385);
+				return default;
 			}
 #endif
 		}
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void Issue3385()
 		{
 #if ROSLYN3
-			using (TypeA_Issue3385 a = default(TypeA_Issue3385))
+			using (TypeA_Issue3385 a = default)
 #else
 			using (TypeA_Issue3385 typeA_Issue = default(TypeA_Issue3385))
 #endif

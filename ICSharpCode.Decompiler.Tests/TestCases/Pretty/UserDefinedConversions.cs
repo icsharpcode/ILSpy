@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public static implicit operator C(bool b)
 			{
-				return default(C);
+				return default;
 			}
 		}
 
@@ -77,12 +77,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public static implicit operator C(bool b)
 			{
-				return default(C);
+				return default;
 			}
 
 			public static implicit operator C(A a)
 			{
-				return default(C);
+				return default;
 			}
 
 			public static bool operator ==(C a, C b)
@@ -141,12 +141,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public static implicit operator T(in int val)
 			{
-				return default(T);
+				return default;
 			}
 
 			public static explicit operator T(in long val)
 			{
-				return default(T);
+				return default;
 			}
 		}
 
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public static implicit operator T(in U u)
 			{
-				return default(T);
+				return default;
 			}
 
 			public static explicit operator int(in U u)
