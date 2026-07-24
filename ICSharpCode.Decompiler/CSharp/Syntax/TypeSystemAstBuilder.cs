@@ -2336,13 +2336,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (method.IsExtensionMethod && method.ReducedFrom == null && decl.Parameters.Any())
 				decl.Parameters.First().HasThisModifier = true;
 
-			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints && !method.IsOverride && !method.IsExplicitInterfaceImplementation)
+			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints)
 			{
-				foreach (ITypeParameter tp in method.TypeParameters)
+				if (method.IsOverride || method.IsExplicitInterfaceImplementation)
 				{
-					var constraint = ConvertTypeParameterConstraint(tp);
-					if (constraint != null)
-						decl.Constraints.Add(constraint);
+					// C# inherits the constraints of an override or explicit interface
+					// implementation from the base member and forbids restating them, with a
+					// single exception: a 'class', 'struct', or 'default' constraint may be given
+					// to disambiguate whether 'T?' denotes a nullable annotation or Nullable<T>.
+					AddNullabilityDisambiguatingConstraints(decl, method);
+				}
+				else
+				{
+					foreach (ITypeParameter tp in method.TypeParameters)
+					{
+						var constraint = ConvertTypeParameterConstraint(tp);
+						if (constraint != null)
+							decl.Constraints.Add(constraint);
+					}
 				}
 			}
 			decl.Body = GenerateBodyBlock();
@@ -2600,6 +2611,54 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				c.BaseTypes.Add(new PrimitiveType("allows ref struct"));
 			}
 			return c;
+		}
+
+		// The compiler records the inherited class/struct constraint flags on an override or
+		// explicit interface implementation in metadata, even though the source does not restate
+		// them, so the disambiguator can be derived from the method's own type parameters without
+		// resolving the base member. A disambiguator is required only where the type parameter
+		// itself carries a nullable annotation ('T?') in the signature: without it the compiler
+		// reads 'T?' as Nullable<T>. A struct-constrained parameter uses Nullable<T> rather than a
+		// nullable annotation, so it neither needs nor permits one.
+		void AddNullabilityDisambiguatingConstraints(MethodDeclaration decl, IMethod method)
+		{
+			if (method.TypeParameters.Count == 0)
+				return;
+			NullableTypeParameterCollector collector = new();
+			method.ReturnType.AcceptVisitor(collector);
+			foreach (IParameter p in method.Parameters)
+				p.Type.AcceptVisitor(collector);
+			if (collector.MethodTypeParameterIndices.Count == 0)
+				return;
+			foreach (ITypeParameter tp in method.TypeParameters)
+			{
+				if (!collector.MethodTypeParameterIndices.Contains(tp.Index) || tp.HasValueTypeConstraint)
+					continue;
+				Constraint c = new();
+				c.TypeParameter = MakeSimpleType(tp.Name);
+				// C# accepts only plain 'class' here, never 'class?'; the constraint's own
+				// nullability is inherited from the base member regardless.
+				c.BaseTypes.Add(new PrimitiveType(tp.HasReferenceTypeConstraint ? "class" : "default"));
+				decl.Constraints.Add(c);
+			}
+		}
+
+		// Collects the indices of a method's own type parameters that appear with a nullable
+		// annotation ('T?') anywhere in a visited type, including nested positions such as
+		// List<T?> or T?[].
+		sealed class NullableTypeParameterCollector : TypeVisitor
+		{
+			public readonly HashSet<int> MethodTypeParameterIndices = [];
+
+			public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+			{
+				if (type is NullabilityAnnotatedTypeParameter { Nullability: Nullability.Nullable } natp
+					&& natp.OriginalTypeParameter.OwnerType == SymbolKind.Method)
+				{
+					MethodTypeParameterIndices.Add(natp.OriginalTypeParameter.Index);
+				}
+				return base.VisitNullabilityAnnotatedType(type);
+			}
 		}
 
 		static bool IsObjectOrValueType(IType type)
