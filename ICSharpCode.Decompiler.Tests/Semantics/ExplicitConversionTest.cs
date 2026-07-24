@@ -731,6 +731,29 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(ExplicitConversion(typeof(IEnumerable<int>), typeof(StructImplementingIEnumerableOfString)), Is.EqualTo(C.None));
 		}
 
+		[Test, Ignore("Known bug: CSharpConversions does not support nullable conversions derived from tuple conversions, but csc accepts them")]
+		public void ExplicitLiftedTupleConversions()
+		{
+			// csc accepts the explicit nullable conversions derived from tuple conversions:
+			//   (int, string)? tn = ...;
+			//   (long, object) c = ((long, object))tn;
+			//   (int, string)? d = ((int, string)?)lo;  with lo of type (long, object)?
+			Assert.That(ExplicitConversion(typeof((int, string)?), typeof((long, object))).IsValid, "(int, string)? -> (long, object)");
+			Assert.That(ExplicitConversion(typeof((long, object)?), typeof((int, string)?)).IsValid, "(long, object)? -> (int, string)?");
+		}
+
+		[Test, Ignore("Known bug: CSharpConversions rejects explicit user-defined conversions to a nullable target when the operator result needs an explicit numeric conversion, but csc accepts them")]
+		public void UserDefinedExplicitConversion_ExplicitNumericConversionToNullableTarget()
+		{
+			// csc accepts:
+			//   int? d = (int?)new ImplicitToLong();       -- UD op to long, then explicit long -> int?
+			//   int? e = (int?)new ExplicitToLongOrUInt(); -- UD ops to long/uint, then explicit -> int?
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ImplicitToLong), typeof(int?));
+			Assert.That(c.IsValid, "(int?)ImplicitToLong");
+			var c2 = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitToLongOrUInt), typeof(int?));
+			Assert.That(c2.IsValid, "(int?)ExplicitToLongOrUInt");
+		}
+
 		[Test]
 		public void ExplicitTypeParameterConversionFromEffectiveBaseClass()
 		{
