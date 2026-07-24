@@ -38,4 +38,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="module">The module being decompiled.</param>
 		void Write(TextWriter target, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module);
 	}
+	public static class IProjectFileWriterExtensions
+	{
+		extension(IProjectFileWriter)
+		{
+			/// <summary>
+			/// Gets an instance of <see cref="IProjectFileWriter"/> based on the specified <paramref name="settings"/>.
+			/// </summary>
+			/// <param name="settings">The settings to use for getting the project file writer.</param>
+			/// <returns>An instance of <see cref="IProjectFileWriter"/>.</returns>
+			public static IProjectFileWriter FromSettings(DecompilerSettings settings)
+			{
+				return settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Default : ProjectFileWriterDefault.Instance;
+			}
+		}
+	}
 }
