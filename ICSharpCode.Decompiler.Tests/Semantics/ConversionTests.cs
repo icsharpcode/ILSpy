@@ -1297,25 +1297,28 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
+		/// <summary>
+		/// Creates a fake method named M with a single parameter of the given type.
+		/// </summary>
+		IMethod MakeUnaryMethod(Type parameterType)
+		{
+			var m = new FakeMethod(compilation, SymbolKind.Method);
+			m.Name = "M";
+			m.Parameters = new[] { new DefaultParameter(compilation.FindType(parameterType), "x", owner: m) };
+			return m;
+		}
+
 		[Test]
 		public void PreferUserDefinedConversionOverReferenceConversion()
 		{
 			// M(new AA()) with overloads M(object) and M(string), where AA has an implicit
 			// conversion to string, picks M(string) -- not because user-defined conversions
 			// are better, but because string is a better conversion target.
-			IMethod MakeM(Type parameterType)
-			{
-				var m = new FakeMethod(compilation, SymbolKind.Method);
-				m.Name = "M";
-				m.Parameters = new[] { new DefaultParameter(compilation.FindType(parameterType), "x", owner: m) };
-				return m;
-			}
-
 			var or = new OverloadResolution(compilation, new[] {
 				new ResolveResult(compilation.FindType(typeof(UserDefinedConversionTestCases.ConvertibleToString)))
 			});
-			IMethod mObject = MakeM(typeof(object));
-			IMethod mString = MakeM(typeof(string));
+			IMethod mObject = MakeUnaryMethod(typeof(object));
+			IMethod mString = MakeUnaryMethod(typeof(string));
 			Assert.That(or.AddCandidate(mObject), Is.EqualTo(OverloadResolutionErrors.None));
 			Assert.That(or.AddCandidate(mString), Is.EqualTo(OverloadResolutionErrors.None));
 			Assert.That(!or.IsAmbiguous);
@@ -1328,13 +1331,22 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Ambiguous conversions are a compiler error; but they are not
 			// preventing the overload from being chosen.
 
-			// M(new AmbiguousA()) with overloads M(AmbiguousB) and M(object) picks
-			// M(AmbiguousB) because AmbiguousB is a better conversion target than object,
-			// even though the user-defined conversion itself is ambiguous (declared both
-			// in AmbiguousA and AmbiguousB) and therefore invalid.
+			// The user-defined conversion AmbiguousA -> AmbiguousB is ambiguous (declared
+			// in both classes) and therefore invalid...
 			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.AmbiguousA), typeof(UserDefinedConversionTestCases.AmbiguousB));
 			Assert.That(c.IsUserDefined);
 			Assert.That(!c.IsValid);
+
+			// ...but M(new AmbiguousA()) with overloads M(AmbiguousB) and M(object) still
+			// picks M(AmbiguousB), because AmbiguousB is a better conversion target than object.
+			var or = new OverloadResolution(compilation, new[] {
+				new ResolveResult(compilation.FindType(typeof(UserDefinedConversionTestCases.AmbiguousA)))
+			});
+			IMethod mAmbiguousB = MakeUnaryMethod(typeof(UserDefinedConversionTestCases.AmbiguousB));
+			IMethod mObject = MakeUnaryMethod(typeof(object));
+			or.AddCandidate(mAmbiguousB);
+			or.AddCandidate(mObject);
+			Assert.That(or.BestCandidate, Is.SameAs(mAmbiguousB));
 		}
 
 		[Test]
