@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
@@ -104,6 +105,37 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			IType from2 = compilation.FindType(from).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			IType to2 = compilation.FindType(to).AcceptVisitor(new ReplaceSpecialTypesVisitor());
 			return conversions.ExplicitConversion(from2, to2);
+		}
+
+		/// <summary>
+		/// Converts a constant expression (e.g. an integer literal) to the target type.
+		/// </summary>
+		Conversion ConstantConversion(object value, Type to)
+		{
+			IType fromType = compilation.FindType(value.GetType());
+			IType to2 = compilation.FindType(to).AcceptVisitor(new ReplaceSpecialTypesVisitor());
+			return conversions.ImplicitConversion(new ConstantResolveResult(fromType, value), to2);
+		}
+
+		/// <summary>
+		/// Builds a MethodGroupResolveResult from all methods named <paramref name="methodName"/>
+		/// in <paramref name="declaringType"/> (as if the expression were "instance.M") and
+		/// converts it to <paramref name="delegateType"/>.
+		/// </summary>
+		Conversion MethodGroupConversion(Type declaringType, string methodName, Type delegateType,
+			ResolveResult targetResult = null, IMethod[] extensionMethods = null)
+		{
+			IType declaring = compilation.FindType(declaringType);
+			var mgrr = new MethodGroupResolveResult(
+				targetResult ?? new ResolveResult(declaring), methodName,
+				new[] { new MethodListWithDeclaringType(declaring, declaring.GetMethods(m => m.Name == methodName)) },
+				null);
+			if (extensionMethods != null)
+			{
+				mgrr.extensionMethods = new List<List<IMethod>> { new List<IMethod>(extensionMethods) };
+			}
+			IType dt = compilation.FindType(delegateType).AcceptVisitor(new ReplaceSpecialTypesVisitor());
+			return conversions.ImplicitConversion(mgrr, dt);
 		}
 
 		[Test]
@@ -688,161 +720,123 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(BetterConversion(typeof(sbyte), typeof(int?), typeof(uint?)), Is.EqualTo(0));
 		}
 
-		/* TODO: we should probably revive these tests somehow
 		[Test]
 		public void ExpansiveInheritance()
 		{
-			var a = new DefaultUnresolvedTypeDefinition(string.Empty, "A");
-			var b = new DefaultUnresolvedTypeDefinition(string.Empty, "B");
-			// interface A<in U>
-			a.Kind = TypeKind.Interface;
-			a.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.TypeDefinition, 0, "U") { Variance = VarianceModifier.Contravariant });
+			// interface A<in U> { }
 			// interface B<X> : A<A<B<X>>> { }
-			b.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.TypeDefinition, 0, "X"));
-			b.BaseTypes.Add(new ParameterizedTypeReference(
-				a, new[] { new ParameterizedTypeReference(
-					a, new [] { new ParameterizedTypeReference(
-						b, new [] { new TypeParameterReference(SymbolKind.TypeDefinition, 0) }
-					) } ) }));
+			// Finding a conversion B<double> -> A<B<string>> must terminate even though
+			// the base-type substitution keeps producing ever-larger types.
+			ITypeDefinition a = compilation.FindType(typeof(ExpansiveInheritanceTestCases.A<>)).GetDefinition();
+			ITypeDefinition b = compilation.FindType(typeof(ExpansiveInheritanceTestCases.B<>)).GetDefinition();
 
-			ICompilation compilation = TypeSystemHelper.CreateCompilation(a, b);
-			ITypeDefinition resolvedA = compilation.MainAssembly.GetTypeDefinition(a.FullTypeName);
-			ITypeDefinition resolvedB = compilation.MainAssembly.GetTypeDefinition(b.FullTypeName);
-
-			IType type1 = new ParameterizedType(resolvedB, new[] { compilation.FindType(KnownTypeCode.Double) });
-			IType type2 = new ParameterizedType(resolvedA, new[] { new ParameterizedType(resolvedB, new[] { compilation.FindType(KnownTypeCode.String) }) });
+			IType type1 = new ParameterizedType(b, ImmutableArray.Create(compilation.FindType(KnownTypeCode.Double)));
+			IType type2 = new ParameterizedType(a, ImmutableArray.Create<IType>(
+				new ParameterizedType(b, ImmutableArray.Create(compilation.FindType(KnownTypeCode.String)))));
 			Assert.That(!conversions.ImplicitConversion(type1, type2).IsValid);
 		}
 
 		[Test]
 		public void ImplicitTypeParameterConversion()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where T : U {
-		U u = $t$;
-	}
-}";
-			Assert.AreEqual(C.BoxingConversion, GetConversion(program));
+			// void M<T, U>(T t) where T : U  =>  "U u = t;" is a boxing conversion
+			// (e.g. T = int, U = object)
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U");
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", constraints: new[] { u });
+			Assert.That(conversions.ImplicitConversion(t, u), Is.EqualTo(C.BoxingConversion));
 		}
 
 		[Test]
 		public void InvalidImplicitTypeParameterConversion()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where U : T {
-		U u = $t$;
-	}
-}";
-			Assert.AreEqual(C.None, GetConversion(program));
+			// void M<T, U>(T t) where U : T  =>  "U u = t;" is invalid
+			// (the constraint points the wrong way)
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", constraints: new[] { t });
+			Assert.That(conversions.ImplicitConversion(t, u), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterArrayConversion()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T[] t) where T : U {
-		U[] u = $t$;
-	}
-}";
-			// invalid, e.g. T=int[], U=object[]
-			Assert.AreEqual(C.None, GetConversion(program));
+			// void M<T, U>(T[] t) where T : U  =>  "U[] u = t;" is invalid
+			// (e.g. T = int, U = object: int[] is not convertible to object[])
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U");
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", constraints: new[] { u });
+			Assert.That(conversions.ImplicitConversion(new ArrayType(compilation, t), new ArrayType(compilation, u)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterConversionWithClassConstraint()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where T : class, U where U : class {
-		U u = $t$;
-	}
-}";
-			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+			// void M<T, U>(T t) where T : class, U where U : class  =>  "U u = t;" is a reference conversion
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", hasReferenceTypeConstraint: true);
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", hasReferenceTypeConstraint: true, constraints: new[] { u });
+			Assert.That(conversions.ImplicitConversion(t, u), Is.EqualTo(C.ImplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterArrayConversionWithClassConstraint()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T[] t) where T : class, U where U : class {
-		U[] u = $t$;
-	}
-}";
-			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+			// void M<T, U>(T[] t) where T : class, U where U : class  =>  "U[] u = t;" is a
+			// covariant array conversion (both are known to be reference types)
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", hasReferenceTypeConstraint: true);
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", hasReferenceTypeConstraint: true, constraints: new[] { u });
+			Assert.That(conversions.ImplicitConversion(new ArrayType(compilation, t), new ArrayType(compilation, u)), Is.EqualTo(C.ImplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterConversionWithClassConstraintOnlyOnT()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where T : class, U {
-		U u = $t$;
-	}
-}";
-			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+			// void M<T, U>(T t) where T : class, U  =>  "U u = t;" is a reference conversion
+			// (T is known to be a reference type, so no boxing is involved)
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U");
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", hasReferenceTypeConstraint: true, constraints: new[] { u });
+			Assert.That(conversions.ImplicitConversion(t, u), Is.EqualTo(C.ImplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterArrayConversionWithClassConstraintOnlyOnT()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T[] t) where T : class, U {
-		U[] u = $t$;
-	}
-}";
-			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+			// void M<T, U>(T[] t) where T : class, U  =>  "U[] u = t;" is a covariant array conversion
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U");
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", hasReferenceTypeConstraint: true, constraints: new[] { u });
+			Assert.That(conversions.ImplicitConversion(new ArrayType(compilation, t), new ArrayType(compilation, u)), Is.EqualTo(C.ImplicitReferenceConversion));
 		}
 
 		[Test]
 		public void MethodGroupConversion_Void()
 		{
-			string program = @"using System;
-delegate void D();
-class Test {
-	D d = $M$;
-	public static void M() {}
-}";
-			var c = GetConversion(program);
+			// delegate void D();
+			// D d = M;  with  public static void M() {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.VoidStatic), "M",
+				typeof(MethodGroupConversionTestCases.DVoid));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 			Assert.That(!c.DelegateCapturesFirstArgument);
-			Assert.IsNotNull(c.Method);
+			Assert.That(c.Method, Is.Not.Null);
 		}
 
 		[Test]
 		public void MethodGroupConversion_Void_InstanceMethod()
 		{
-			string program = @"using System;
-delegate void D();
-class Test {
-	D d;
-	public void M() {
-		d = $M$;
-	}
-}";
-			var c = GetConversion(program);
+			// delegate void D();
+			// D d = M;  with  public void M() {}  (instance method)
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.VoidInstance), "M",
+				typeof(MethodGroupConversionTestCases.DVoid));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 			Assert.That(c.DelegateCapturesFirstArgument);
-			Assert.IsNotNull(c.Method);
+			Assert.That(c.Method, Is.Not.Null);
 		}
 
 		[Test]
 		public void MethodGroupConversion_MatchingSignature()
 		{
-			string program = @"using System;
-delegate object D(int argument);
-class Test {
-	D d = $M$;
-	public static object M(int argument) {}
-}";
-			var c = GetConversion(program);
+			// delegate object D(int argument);
+			// D d = M;  with  public static object M(int argument) {...}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ReturnObjectFromInt), "M",
+				typeof(MethodGroupConversionTestCases.DObjInt));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
@@ -850,13 +844,12 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_InvalidReturnType()
 		{
-			string program = @"using System;
-delegate object D(int argument);
-class Test {
-	D d = $M$;
-	public static int M(int argument) {}
-}";
-			var c = GetConversion(program);
+			// delegate object D(int argument);
+			// D d = M;  with  public static int M(int argument) {...}
+			// int -> object is a boxing conversion, not an identity/reference conversion,
+			// so the method is not delegate-compatible.
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ReturnIntFromInt), "M",
+				typeof(MethodGroupConversionTestCases.DObjInt));
 			Assert.That(!c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
@@ -864,13 +857,10 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_CovariantReturnType()
 		{
-			string program = @"using System;
-delegate object D(int argument);
-class Test {
-	D d = $M$;
-	public static string M(int argument) {}
-}";
-			var c = GetConversion(program);
+			// delegate object D(int argument);
+			// D d = M;  with  public static string M(int argument) {...}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ReturnStringFromInt), "M",
+				typeof(MethodGroupConversionTestCases.DObjInt));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
@@ -878,13 +868,10 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_RefArgumentTypesEqual()
 		{
-			string program = @"using System;
-delegate void D(ref object o);
-class Test {
-	D d = $M$;
-	public static void M(ref object o) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(ref object o);
+			// D d = M;  with  public static void M(ref object o) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.RefObjParam), "M",
+				typeof(MethodGroupConversionTestCases.DRefObj));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
@@ -892,66 +879,54 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_RefArgumentObjectVsDynamic()
 		{
-			string program = @"using System;
-delegate void D(ref object o);
-class Test {
-	D d = $M$;
-	public static void M(ref dynamic o) {}
-}";
-			var c = GetConversion(program);
-			Assert.That(!c.IsValid);
+			// delegate void D(ref object o);
+			// D d = M;  with  public static void M(ref dynamic o) {}
+			// ref parameters require an identity conversion, and object <-> dynamic IS an
+			// identity conversion, so this is valid (Roslyn accepts it; the original
+			// NRefactory test expected invalid, which matched pre-Roslyn csc behavior).
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.RefDynamicParam), "M",
+				typeof(MethodGroupConversionTestCases.DRefObj));
+			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
 
 		[Test]
 		public void MethodGroupConversion_RefVsOut()
 		{
-			string program = @"using System;
-delegate void D(ref object o);
-class Test {
-	D d = $M$;
-	public static void M(out object o) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(ref object o);
+			// D d = M;  with  public static void M(out object o) {...}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.OutObjParam), "M",
+				typeof(MethodGroupConversionTestCases.DRefObj));
 			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_RefVsNormal()
 		{
-			string program = @"using System;
-delegate void D(ref object o);
-class Test {
-	D d = $M$;
-	public static void M(object o) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(ref object o);
+			// D d = M;  with  public static void M(object o) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ObjParam), "M",
+				typeof(MethodGroupConversionTestCases.DRefObj));
 			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_NormalVsOut()
 		{
-			string program = @"using System;
-delegate void D(object o);
-class Test {
-	D d = $M$;
-	public static void M(out object o) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(object o);
+			// D d = M;  with  public static void M(out object o) {...}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.OutObjParam), "M",
+				typeof(MethodGroupConversionTestCases.DObj));
 			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_MatchingNormalParameter()
 		{
-			string program = @"using System;
-delegate void D(object o);
-class Test {
-	D d = $M$;
-	public static void M(object o) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(object o);
+			// D d = M;  with  public static void M(object o) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ObjParam), "M",
+				typeof(MethodGroupConversionTestCases.DObj));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
@@ -959,13 +934,11 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_IdentityConversion()
 		{
-			string program = @"using System;
-delegate void D(object o);
-class Test {
-	D d = $M$;
-	public static void M(dynamic o) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(object o);
+			// D d = M;  with  public static void M(dynamic o) {}
+			// object -> dynamic is an identity conversion, so M is delegate-compatible.
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.DynamicParam), "M",
+				typeof(MethodGroupConversionTestCases.DObj));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
@@ -973,95 +946,77 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_Contravariance()
 		{
-			string program = @"using System;
-delegate void D(string o);
-class Test {
-	D d = $M$;
-	public static void M(object o) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(string o);
+			// D d = M;  with  public static void M(object o) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ObjParam), "M",
+				typeof(MethodGroupConversionTestCases.DStr));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
-
 		}
 
 		[Test, Ignore("Not sure if this conversion should be valid or not... NR and mcs both accept it as valid, csc treats it as invalid")]
 		public void MethodGroupConversion_NoContravarianceDynamic()
 		{
-			string program = @"using System;
-delegate void D(string o);
-class Test {
-	D d = $M$;
-	public static void M(dynamic o) {}
-}";
-			var c = GetConversion(program);
-			//Assert.IsFrue(c.IsValid);
+			// delegate void D(string o);
+			// D d = M;  with  public static void M(dynamic o) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.DynamicParam), "M",
+				typeof(MethodGroupConversionTestCases.DStr));
+			//Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 		}
 
 		[Test]
 		public void MethodGroupConversion_ExactMatchIsBetter()
 		{
-			string program = @"using System;
-class Test {
-	delegate void D(string a);
-	D d = $M$;
-	static void M(object x) {}
-	static void M(string x = null) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(string a);
+			// D d = M;  with  static void M(object x) {}  and  static void M(string x = null) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.OverloadObjectOrOptionalString), "M",
+				typeof(MethodGroupConversionTestCases.DStr));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
-			Assert.AreEqual("System.String", c.Method.Parameters.Single().Type.FullName);
+			Assert.That(c.Method.Parameters.Single().Type.FullName, Is.EqualTo("System.String"));
 		}
 
 		[Test]
 		public void MethodGroupConversion_CannotLeaveOutOptionalParameters()
 		{
-			string program = @"using System;
-class Test {
-	delegate void D(string a);
-	D d = $M$;
-	static void M(object x) {}
-	static void M(string x, string y = null) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(string a);
+			// D d = M;  with  static void M(object x) {}  and  static void M(string x, string y = null) {}
+			// The two-parameter overload cannot bind to a one-parameter delegate.
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.OverloadObjectOrStringPlusOptional), "M",
+				typeof(MethodGroupConversionTestCases.DStr));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
-			Assert.AreEqual("System.Object", c.Method.Parameters.Single().Type.FullName);
+			Assert.That(c.Method.Parameters.Single().Type.FullName, Is.EqualTo("System.Object"));
 		}
 
 		[Test]
 		public void MethodGroupConversion_CannotUseExpandedParams()
 		{
-			string program = @"using System;
-class Test {
-	delegate void D(string a);
-	D d = $M$;
-	static void M(object x) {}
-	static void M(params string[] x) {}
-}";
-			var c = GetConversion(program);
+			// delegate void D(string a);
+			// D d = M;  with  static void M(object x) {}  and  static void M(params string[] x) {}
+			// The params overload only matches in expanded form, which method group
+			// conversions do not use.
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.OverloadObjectOrParamsString), "M",
+				typeof(MethodGroupConversionTestCases.DStr));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
-			Assert.AreEqual("System.Object", c.Method.Parameters.Single().Type.FullName);
+			Assert.That(c.Method.Parameters.Single().Type.FullName, Is.EqualTo("System.Object"));
 		}
 
 		[Test]
 		public void MethodGroupConversion_ExtensionMethod()
 		{
-			string program = @"using System;
-static class Ext {
-	public static void M(this string s, int x) {}
-}
-class Test {
-	delegate void D(int a);
-	void F() {
-		string s = """";
-		D d = $s.M$;
-	}
-}";
-			var c = GetConversion(program);
+			// static class Ext { public static void M(this string s, int x) {} }
+			// delegate void D(int a);
+			// string s = ""; D d = s.M;
+			IType stringType = compilation.FindType(KnownTypeCode.String);
+			IMethod extensionMethod = compilation.FindType(typeof(MethodGroupConversionExt))
+				.GetMethods(m => m.Name == "M").Single();
+			var c = MethodGroupConversion(typeof(string), "M",
+				typeof(MethodGroupConversionTestCases.DInt),
+				targetResult: new ResolveResult(stringType),
+				extensionMethods: new[] { extensionMethod });
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 			Assert.That(c.DelegateCapturesFirstArgument);
@@ -1070,17 +1025,11 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_ExtensionMethodUsedAsStaticMethod()
 		{
-			string program = @"using System;
-static class Ext {
-	public static void M(this string s, int x) {}
-}
-class Test {
-	delegate void D(string s, int a);
-	void F() {
-		D d = $Ext.M$;
-	}
-}";
-			var c = GetConversion(program);
+			// static class Ext { public static void M(this string s, int x) {} }
+			// delegate void D(string s, int a);
+			// D d = Ext.M;
+			var c = MethodGroupConversion(typeof(MethodGroupConversionExt), "M",
+				typeof(MethodGroupConversionTestCases.DStrInt));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsMethodGroupConversion);
 			Assert.That(!c.DelegateCapturesFirstArgument);
@@ -1089,102 +1038,63 @@ class Test {
 		[Test]
 		public void MethodGroupConversion_ObjectToDynamic()
 		{
-			string program = @"using System;
-class Test {
-	public void F(object o) {}
-	public void M() {
-		Action<dynamic> x = $F$;
-	}
-}";
-			var c = GetConversion(program);
+			// Action<dynamic> x = F;  with  public void F(object o) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ObjParamInstance), "F",
+				typeof(Action<dynamic>));
 			Assert.That(c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_ObjectToDynamicGenericArgument()
 		{
-			string program = @"using System;
-using System.Collections.Generic;
-class Test {
-	public void F(List<object> l) {}
-	public void M() {
-		Action<List<dynamic>> x = $F$;
-	}
-}";
-			var c = GetConversion(program);
+			// Action<List<dynamic>> x = F;  with  public void F(List<object> l) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ObjListParamInstance), "F",
+				typeof(Action<List<dynamic>>));
 			Assert.That(c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_ObjectToDynamicReturnValue()
 		{
-			string program = @"using System;
-class Test {
-	public object F() {}
-	public void M() {
-		Func<dynamic> x = $F$;
-	}
-}";
-			var c = GetConversion(program);
+			// Func<dynamic> x = F;  with  public object F() {...}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.ObjReturnInstance), "F",
+				typeof(Func<dynamic>));
 			Assert.That(c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_DynamicToObject()
 		{
-			string program = @"using System;
-class Test {
-	public void F(dynamic o) {}
-	public void M() {
-		Action<object> x = $F$;
-	}
-}";
-			var c = GetConversion(program);
+			// Action<object> x = F;  with  public void F(dynamic o) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.DynamicParamInstance), "F",
+				typeof(Action<object>));
 			Assert.That(c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_DynamicToObjectGenericArgument()
 		{
-			string program = @"using System;
-using System.Collections.Generic;
-class Test {
-	public void F(List<dynamic> l) {}
-	public void M() {
-		Action<List<object>> x = $F$;
-	}
-}";
-			var c = GetConversion(program);
+			// Action<List<object>> x = F;  with  public void F(List<dynamic> l) {}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.DynamicListParamInstance), "F",
+				typeof(Action<List<object>>));
 			Assert.That(c.IsValid);
 		}
 
 		[Test]
 		public void MethodGroupConversion_DynamicToObjectReturnValue()
 		{
-			string program = @"using System;
-class Test {
-	public dynamic F() {}
-	public void M() {
-		Func<object> x = $F$;
-	}
-}";
-			var c = GetConversion(program);
+			// Func<object> x = F;  with  public dynamic F() {...}
+			var c = MethodGroupConversion(typeof(MethodGroupConversionTestCases.DynamicReturnInstance), "F",
+				typeof(Func<object>));
 			Assert.That(c.IsValid);
 		}
 
 		[Test]
 		public void UserDefined_IntLiteral_ViaUInt_ToCustomStruct()
 		{
-			string program = @"using System;
-struct T {
-	public static implicit operator T(uint a) { return new T(); }
-}
-class Test {
-	static void M() {
-		T t = $1$;
-	}
-}";
-			var c = GetConversion(program);
+			// struct T { public static implicit operator T(uint a) {...} }
+			// T t = 1;
+			var c = ConstantConversion(1, typeof(UserDefinedConversionTestCases.TFromUInt));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
 		}
@@ -1192,17 +1102,9 @@ class Test {
 		[Test]
 		public void UserDefined_NullLiteral_ViaString_ToCustomStruct()
 		{
-			string program = @"using System;
-struct T {
-	public static implicit operator T(string a) { return new T(); }
-
-}
-class Test {
-	static void M() {
-		T t = $null$;
-	}
-}";
-			var c = GetConversion(program);
+			// struct T { public static implicit operator T(string a) {...} }
+			// T t = null;
+			var c = ImplicitConversion(typeof(Null), typeof(UserDefinedConversionTestCases.TFromString));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
 		}
@@ -1210,17 +1112,9 @@ class Test {
 		[Test]
 		public void UserDefined_CanUseLiftedEvenIfReturnTypeAlreadyNullable()
 		{
-			string program = @"using System;
-struct S {
-	public static implicit operator short?(S s) { return 0; }
-}
-
-class Test {
-	static void M(S? s) {
-		int? i = $s$;
-	}
-}";
-			var c = GetConversion(program);
+			// struct S { public static implicit operator short?(S s) {...} }
+			// int? i = s;  with s of type S?
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.SToNullableShort?), typeof(int?));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
 			Assert.That(c.IsLifted);
@@ -1229,285 +1123,157 @@ class Test {
 		[Test]
 		public void UserDefinedImplicitConversion_PicksExactSourceTypeIfPossible()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator Convertible(int i) {return new Convertible(); }
-	public static implicit operator Convertible(short s) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		Convertible a = $33$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators from int ("i") and short ("s");
+			// Convertible a = 33;
+			var c = ConstantConversion(33, typeof(UserDefinedConversionTestCases.ConvertibleFromIntOrShort));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("i", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_PicksMostEncompassedSourceType()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator Convertible(long l) {return new Convertible(); }
-	public static implicit operator Convertible(uint ui) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		Convertible a = $(ushort)33$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators from long ("l") and uint ("ui");
+			// Convertible a = (ushort)33;
+			var c = ConstantConversion((ushort)33, typeof(UserDefinedConversionTestCases.ConvertibleFromLongOrUInt));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("ui", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ui"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_NoMostEncompassedSourceTypeIsInvalid()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator Convertible(ulong l) {return new Convertible(); }
-	public static implicit operator Convertible(int ui) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		Convertible a = $(ushort)33$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators from ulong and int; neither source type encompasses
+			// the other, so the conversion from ushort is ambiguous.
+			var c = ConstantConversion((ushort)33, typeof(UserDefinedConversionTestCases.ConvertibleFromULongOrInt));
 			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_PicksExactTargetTypeIfPossible()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator int(Convertible i) {return 0; }
-	public static implicit operator short(Convertible s) {return 0; }
-}
-class Test {
-	public void M() {
-		int a = $new Convertible()$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators to int ("i") and short ("s");
+			// int a = new Convertible();
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.ConvertibleToIntOrShort), typeof(int));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("i", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_PicksMostEncompassingTargetType()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator int(Convertible i) {return 0; }
-	public static implicit operator ushort(Convertible us) {return 0; }
-}
-class Test {
-	public void M() {
-		ulong a = $new Convertible()$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators to int ("i") and ushort ("us");
+			// ulong a = new Convertible();  -- only ushort converts implicitly to ulong
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.ConvertibleToIntOrUShort), typeof(ulong));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("us", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("us"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_NoMostEncompassingTargetTypeIsInvalid()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator uint(Convertible i) {return 0; }
-	public static implicit operator short(Convertible us) {return 0; }
-}
-class Test {
-	public void M() {
-		long a = $new Convertible()$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators to uint and short; neither target type encompasses
+			// the other, so the conversion to long is ambiguous.
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.ConvertibleToUIntOrShort), typeof(long));
 			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_AmbiguousIsInvalid()
 		{
-			string program = @"using System;
-class Convertible1 {
-	public static implicit operator Convertible2(Convertible1 c) {return 0; }
-}
-class Convertible2 {
-	public static implicit operator Convertible2(Convertible1 c) {return 0; }
-}
-class Test {
-	public void M() {
-		Convertible2 a = $new Convertible1()$;
-	}
-}";
-			var c = GetConversion(program);
+			// Both AmbiguousA and AmbiguousB declare implicit operator AmbiguousB(AmbiguousA).
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.AmbiguousA), typeof(UserDefinedConversionTestCases.AmbiguousB));
 			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_DefinedNullableTakesPrecedenceOverLifted()
 		{
-			string program = @"using System;
-struct Convertible {
-	public static implicit operator Convertible(int i) {return new Convertible(); }
-	public static implicit operator Convertible?(int? ni) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		Convertible? a = $(int?)33$;
-	}
-}";
-			var c = GetConversion(program);
+			// struct Convertible declares operators from int ("i") and from int? ("ni");
+			// Convertible? a = (int?)33;  -- the user-defined nullable operator wins over
+			// the lifted form of the int operator.
+			var c = ImplicitConversion(typeof(int?), typeof(UserDefinedConversionTestCases.NullableConvertible?));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
 			Assert.That(!c.IsLifted);
-			Assert.AreEqual("ni", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ni"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_UIntConstant()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator Convertible(long l) {return new Convertible(); }
-	public static implicit operator Convertible(uint ui) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		Convertible a = $33$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators from long ("l") and uint ("ui");
+			// Convertible a = 33;  -- the constant 33 converts to uint, which is more specific
+			var c = ConstantConversion(33, typeof(UserDefinedConversionTestCases.ConvertibleFromLongOrUInt));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("ui", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ui"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_NullableUIntConstant()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator Convertible(long? l) {return new Convertible(); }
-	public static implicit operator Convertible(uint? ui) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		Convertible a = $33$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has operators from long? ("l") and uint? ("ui");
+			// Convertible a = 33;
+			var c = ConstantConversion(33, typeof(UserDefinedConversionTestCases.ConvertibleFromNullableLongOrNullableUInt));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("ui", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ui"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_UseShortResult_BecauseNullableCannotBeUnpacked()
 		{
-			string program = @"using System;
-class Test {
-	public static implicit operator int?(Test i) { return 0; }
-	public static implicit operator short(Test s) { return 0; }
-}
-class Program {
-	public static void Main(string[] args)
-	{
-		int x = $new Test()$;
-	}
-}";
-			var c = GetConversion(program);
+			// operators to int? ("i") and short ("s");
+			// int x = new Test();  -- int? cannot be unpacked to int, so short is used
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.ToNullableIntOrShort), typeof(int));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("System.Int16", c.Method.ReturnType.FullName);
+			Assert.That(c.Method.ReturnType.FullName, Is.EqualTo("System.Int16"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_Short_Or_NullableByte_Target()
 		{
-			string program = @"using System;
-class Test {
-	public static implicit operator short(Test s) { return 0; }
-	public static implicit operator byte?(Test b) { return 0; }
-}
-class Program {
-	public static void Main(string[] args)
-	{
-		int? x = $new Test()$;
-	}
-}";
-			var c = GetConversion(program);
+			// operators to short ("s") and byte? ("b");
+			// int? x = new Test();
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.ToShortOrNullableByte), typeof(int?));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("System.Int16", c.Method.ReturnType.FullName);
+			Assert.That(c.Method.ReturnType.FullName, Is.EqualTo("System.Int16"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_Byte_Or_NullableShort_Target()
 		{
-			string program = @"using System;
-class Test {
-	public static implicit operator byte(Test b) { return 0; }
-	public static implicit operator short?(Test s) { return 0; }
-}
-class Program {
-	public static void Main(string[] args)
-	{
-		int? x = $new Test()$;
-	}
-}";
-			var c = GetConversion(program);
+			// operators to byte ("b") and short? ("s");
+			// int? x = new Test();
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.ToByteOrNullableShort), typeof(int?));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("s", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("s"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_Int_Or_NullableLong_Source()
 		{
-			string program = @"using System;
-class Test {
-	public static implicit operator Test(int i) { return new Test(); }
-	public static implicit operator Test(long? l) { return new Test(); }
-}
-class Program {
-	static void Main() {
-		short s = 0;
-		Test t = $s$;
-	}
-}";
-			var c = GetConversion(program);
+			// operators from int ("i") and long? ("l"); source is short
+			var c = ImplicitConversion(typeof(short), typeof(UserDefinedConversionTestCases.FromIntOrNullableLong));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("i", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void UserDefinedImplicitConversion_NullableInt_Or_Long_Source()
 		{
-			string program = @"using System;
-class Test {
-	public static implicit operator Test(int? i) { return new Test(); }
-	public static implicit operator Test(long l) { return new Test(); }
-}
-class Program {
-	static void Main() {
-		short s = 0;
-		Test t = $s$;
-	}
-}";
-			var c = GetConversion(program);
+			// operators from int? ("i") and long ("l"); source is short:
+			// neither int? nor long is more specific, so the conversion is ambiguous
+			var c = ImplicitConversion(typeof(short), typeof(UserDefinedConversionTestCases.FromNullableIntOrLong));
 			Assert.That(!c.IsValid);
 			Assert.That(c.IsUserDefined);
 		}
@@ -1515,17 +1281,8 @@ class Program {
 		[Test]
 		public void UserDefinedImplicitConversion_NullableInt_Or_Long_Constant_Source()
 		{
-			string program = @"using System;
-class Test {
-	public static implicit operator Test(int? i) { return new Test(); }
-	public static implicit operator Test(long l) { return new Test(); }
-}
-class Program {
-	static void Main() {
-		Test t = $1$;
-	}
-}";
-			var c = GetConversion(program);
+			// operators from int? ("i") and long ("l"); source is the constant 1
+			var c = ConstantConversion(1, typeof(UserDefinedConversionTestCases.FromNullableIntOrLong));
 			Assert.That(!c.IsValid);
 			Assert.That(c.IsUserDefined);
 		}
@@ -1533,44 +1290,36 @@ class Program {
 		[Test]
 		public void UserDefinedImplicitConversion_NullableInt_Or_NullableLong_Source()
 		{
-			string program = @"using System;
-class Test {
-	public static implicit operator Test(int? i) { return new Test(); }
-	public static implicit operator Test(long? l) { return new Test(); }
-}
-class Program {
-	static void Main() {
-		short s = 0;
-		Test t = $s$;
-	}
-}";
-			var c = GetConversion(program);
+			// operators from int? ("i") and long? ("l"); source is short
+			var c = ImplicitConversion(typeof(short), typeof(UserDefinedConversionTestCases.FromNullableIntOrNullableLong));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsUserDefined);
-			Assert.AreEqual("i", c.Method.Parameters[0].Name);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void PreferUserDefinedConversionOverReferenceConversion()
 		{
-			// actually this is not because user-defined conversions are better;
-			// but because string is a better conversion target
-			string program = @"
-class AA {
-	public static implicit operator string(AA a) { return null; }
-}
-class Test {
-	static void M(object obj) {}
-	static void M(string str) {}
-	
-	static void Main() {
-		$M(new AA())$;
-	}
-}";
+			// M(new AA()) with overloads M(object) and M(string), where AA has an implicit
+			// conversion to string, picks M(string) -- not because user-defined conversions
+			// are better, but because string is a better conversion target.
+			IMethod MakeM(Type parameterType)
+			{
+				var m = new FakeMethod(compilation, SymbolKind.Method);
+				m.Name = "M";
+				m.Parameters = new[] { new DefaultParameter(compilation.FindType(parameterType), "x", owner: m) };
+				return m;
+			}
 
-			var rr = Resolve<CSharpInvocationResolveResult>(program);
-			Assert.That(!rr.IsError);
-			Assert.AreEqual("str", rr.Member.Parameters[0].Name);
+			var or = new OverloadResolution(compilation, new[] {
+				new ResolveResult(compilation.FindType(typeof(UserDefinedConversionTestCases.ConvertibleToString)))
+			});
+			IMethod mObject = MakeM(typeof(object));
+			IMethod mString = MakeM(typeof(string));
+			Assert.That(or.AddCandidate(mObject), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(or.AddCandidate(mString), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(!or.IsAmbiguous);
+			Assert.That(or.BestCandidate, Is.SameAs(mString));
 		}
 
 		[Test]
@@ -1579,25 +1328,11 @@ class Test {
 			// Ambiguous conversions are a compiler error; but they are not
 			// preventing the overload from being chosen.
 
-			// The user-defined conversion wins because BB is a better conversion target than object.
-			string program = @"
-class AA {
-	public static implicit operator BB(AA a) { return null; }
-}
-class BB {
-	public static implicit operator BB(AA a) { return null; }
-}
-
-class Test {
-	static void M(BB b) {}
-	static void M(object o) {}
-	
-	static void Main() {
-		M($new AA()$);
-	}
-}";
-
-			var c = GetConversion(program);
+			// M(new AmbiguousA()) with overloads M(AmbiguousB) and M(object) picks
+			// M(AmbiguousB) because AmbiguousB is a better conversion target than object,
+			// even though the user-defined conversion itself is ambiguous (declared both
+			// in AmbiguousA and AmbiguousB) and therefore invalid.
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.AmbiguousA), typeof(UserDefinedConversionTestCases.AmbiguousB));
 			Assert.That(c.IsUserDefined);
 			Assert.That(!c.IsValid);
 		}
@@ -1605,17 +1340,8 @@ class Test {
 		[Test]
 		public void UserDefinedImplicitConversion_ConversionBeforeUserDefinedOperatorIsCorrect()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator Convertible(long l) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		int i = 33;
-		Convertible a = $i$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has an operator from long; converting an int goes int -> long -> Convertible.
+			var c = ImplicitConversion(typeof(int), typeof(UserDefinedConversionTestCases.ConvertibleFromLong));
 			Assert.That(c.IsValid);
 			Assert.That(c.ConversionBeforeUserDefinedOperator.IsImplicit);
 			Assert.That(c.ConversionBeforeUserDefinedOperator.IsNumericConversion);
@@ -1626,16 +1352,8 @@ class Test {
 		[Test]
 		public void UserDefinedImplicitConversion_ConversionAfterUserDefinedOperatorIsCorrect()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator int(Convertible i) {return 0; }
-}
-class Test {
-	public void M() {
-		long a = $new Convertible()$;
-	}
-}";
-			var c = GetConversion(program);
+			// Convertible has an operator to int; converting to long goes Convertible -> int -> long.
+			var c = ImplicitConversion(typeof(UserDefinedConversionTestCases.ConvertibleToInt), typeof(long));
 			Assert.That(c.IsValid);
 			Assert.That(c.ConversionBeforeUserDefinedOperator.IsIdentityConversion);
 			Assert.That(c.ConversionAfterUserDefinedOperator.IsImplicit);
@@ -1647,24 +1365,12 @@ class Test {
 		public void UserDefinedImplicitConversion_IsImplicit()
 		{
 			// Bug icsharpcode/NRefactory#183: conversions from constant expressions were incorrectly marked as explicit
-			string program = @"using System;
-	class Test {
-		void Hello(JsNumber3 x) {
-			Hello($7$);
-		}
-	}
-	public class JsNumber3 {
-		public static implicit operator JsNumber3(int d) {
-			return null;
-		}
-	}";
-			var c = GetConversion(program);
+			var c = ConstantConversion(7, typeof(UserDefinedConversionTestCases.JsNumber));
 			Assert.That(c.IsValid);
 			Assert.That(c.IsImplicit);
 			Assert.That(!c.IsExplicit);
-			Assert.AreEqual(Conversion.IdentityConversion, c.ConversionBeforeUserDefinedOperator);
-			Assert.AreEqual(Conversion.IdentityConversion, c.ConversionAfterUserDefinedOperator);
+			Assert.That(c.ConversionBeforeUserDefinedOperator, Is.EqualTo(C.IdentityConversion));
+			Assert.That(c.ConversionAfterUserDefinedOperator, Is.EqualTo(C.IdentityConversion));
 		}
-		*/
 	}
 }
