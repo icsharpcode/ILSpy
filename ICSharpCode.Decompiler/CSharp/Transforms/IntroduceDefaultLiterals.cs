@@ -62,6 +62,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			IType type = defaultValueExpression.Type.GetResolveResult().Type;
 			if (type.Kind is TypeKind.Unknown or TypeKind.None)
 				return;
+			if (defaultValueExpression.Annotation<UseImplicitlyTypedDefaultAnnotation>() != null
+				&& IsInArgumentPosition(defaultValueExpression))
+			{
+				// CallBuilder verified via overload resolution that the untyped literal
+				// selects the same member; the annotation only counts if the expression
+				// is still in an argument position (transforms may have moved it, e.g.
+				// into an operator operand, where the untyped literal would be invalid).
+				context.Step("Replace argument default(" + type.Name + ") with default literal", defaultValueExpression);
+				defaultValueExpression.Type = null;
+				return;
+			}
 			IType? targetType = GetTargetType(defaultValueExpression);
 			if (targetType == null)
 				return;
@@ -72,6 +83,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			context.Step("Replace default(" + type.Name + ") with default literal", defaultValueExpression);
 			defaultValueExpression.Type = null;
+		}
+
+		static bool IsInArgumentPosition(Expression expression)
+		{
+			AstNode node = expression;
+			if (node.Parent is NamedArgumentExpression)
+				node = node.Parent;
+			return node.Slot?.Kind == Slots.Argument
+				&& node.Parent is (InvocationExpression or ObjectCreateExpression);
 		}
 
 		IType? GetTargetType(DefaultValueExpression defaultValueExpression)

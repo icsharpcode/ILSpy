@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			public bool AddNamesToPrimitiveValues;
 			public bool UseImplicitlyTypedOut;
+			public bool UseImplicitlyTypedDefault;
 			public bool IsExpandedForm;
 			public int Length => Arguments.Length;
 
@@ -91,10 +92,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				return argumentNames;
 			}
 
-			public IList<ResolveResult> GetArgumentResolveResults(int skipCount = 0)
+			public IList<ResolveResult> GetArgumentResolveResults(int skipCount = 0, bool substituteDefaultLiterals = false)
 			{
 				var expectedParameters = ExpectedParameters;
 				var useImplicitlyTypedOut = UseImplicitlyTypedOut;
+				// Untyped default literals are only substituted for overload resolution rechecks;
+				// the final resolve results keep the typed constants, which transforms such as
+				// ReplaceMethodCallsWithOperators pattern-match on.
+				var useImplicitlyTypedDefault = substituteDefaultLiterals && UseImplicitlyTypedDefault;
 
 				return Arguments
 					.SelectWithIndex(GetResolveResult)
@@ -107,8 +112,23 @@ namespace ICSharpCode.Decompiler.CSharp
 					var param = expectedParameters[index];
 					if (useImplicitlyTypedOut && param.ReferenceKind == ReferenceKind.Out && expression.Type is ByReferenceType brt)
 						return new OutVarResolveResult(brt.ElementType);
+					if (useImplicitlyTypedDefault && IsImplicitlyTypedDefaultCandidate(param, expression))
+						return new DefaultLiteralResolveResult();
 					return expression.ResolveResult;
 				}
+			}
+
+			/// <summary>
+			/// Gets whether the argument is a default value expression that can be passed to
+			/// overload resolution as an untyped default literal. Requires an identity
+			/// conversion to the parameter type: with any weaker conversion the literal would
+			/// change the value (e.g. a boxing target turns a boxed struct into null).
+			/// </summary>
+			static bool IsImplicitlyTypedDefaultCandidate(IParameter param, TranslatedExpression expression)
+			{
+				return param.ReferenceKind == ReferenceKind.None
+					&& expression.Expression is DefaultValueExpression
+					&& expression.Type.Equals(param.Type);
 			}
 
 			public IList<ResolveResult> GetArgumentResolveResultsDirect(int skipCount = 0)
@@ -124,25 +144,42 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				var argumentNames = GetArgumentNames(skipCount);
 				int argumentCount = GetActualArgumentCount();
+				var arguments = Arguments;
+				var expectedParameters = ExpectedParameters;
 				var useImplicitlyTypedOut = UseImplicitlyTypedOut;
+				var useImplicitlyTypedDefault = UseImplicitlyTypedDefault;
 				if (argumentNames == null)
 				{
-					return Arguments.Skip(skipCount).Take(argumentCount).Select(arg => AddAnnotations(arg.Expression));
+					return arguments.SelectWithIndex((index, arg) => (index, arg)).Skip(skipCount).Take(argumentCount)
+						.Select(p => AddAnnotations(p.index, p.arg));
 				}
 				else
 				{
 					Debug.Assert(skipCount == 0);
-					return Arguments.Take(argumentCount).Zip(argumentNames.Take(argumentCount),
-						(arg, name) => {
+					return arguments.SelectWithIndex((index, arg) => (index, arg)).Take(argumentCount)
+						.Zip(argumentNames.Take(argumentCount),
+						(p, name) => {
 							if (name == null)
-								return AddAnnotations(arg.Expression);
+								return AddAnnotations(p.index, p.arg);
 							else
-								return new NamedArgumentExpression(name, AddAnnotations(arg.Expression));
+								return new NamedArgumentExpression(name, AddAnnotations(p.index, p.arg));
 						});
 				}
 
-				Expression AddAnnotations(Expression expression)
+				Expression AddAnnotations(int index, TranslatedExpression argument)
 				{
+					var expression = argument.Expression;
+					if (useImplicitlyTypedDefault
+						&& expression is DefaultValueExpression { Type: not null }
+						&& IsImplicitlyTypedDefaultCandidate(expectedParameters[index], argument))
+					{
+						// The type is not removed here: later transforms may move the
+						// expression out of the argument position (e.g. into an operator
+						// operand, where the untyped literal would be invalid).
+						// IntroduceDefaultLiterals only acts on the annotation if the
+						// expression is still an argument.
+						expression.AddAnnotation(UseImplicitlyTypedDefaultAnnotation.Instance);
+					}
 					if (!useImplicitlyTypedOut)
 						return expression;
 					if (expression.GetResolveResult() is ByReferenceResolveResult { ReferenceKind: ReferenceKind.Out } brrr)
@@ -419,6 +456,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				argumentList.FirstOptionalArgumentIndex = -1;
 				argumentList.AddNamesToPrimitiveValues = false;
 				argumentList.UseImplicitlyTypedOut = false;
+				argumentList.UseImplicitlyTypedDefault = false;
 				int regularParameterCount = ((VarArgInstanceMethod)method).RegularParameterCount;
 				var argListArg = new UndocumentedExpression();
 				argListArg.UndocumentedExpressionType = UndocumentedExpressionType.ArgList;
@@ -696,6 +734,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			argumentList.ArgumentNames = null;
 			argumentList.AddNamesToPrimitiveValues = false;
 			argumentList.UseImplicitlyTypedOut = false;
+			argumentList.UseImplicitlyTypedDefault = false;
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
 				ref argumentList, CallTransformation.None, out _);
 			Debug.Assert((transform & ~(CallTransformation.NoOptionalArgumentAllowed | CallTransformation.NoNamedArgsForPrettiness)) == 0);
@@ -1039,6 +1078,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			list.IsPrimitiveValue = isPrimitiveValue;
 			list.FirstOptionalArgumentIndex = firstOptionalArgumentIndex;
 			list.UseImplicitlyTypedOut = true;
+			// Operator method calls may later be rewritten to operator syntax by
+			// ReplaceMethodCallsWithOperators, where a default literal operand would be invalid.
+			list.UseImplicitlyTypedDefault = expressionBuilder.settings.DefaultLiterals && !method.IsOperator;
 			list.AddNamesToPrimitiveValues = expressionBuilder.settings.NamedArguments && expressionBuilder.settings.NonTrailingNamedArguments;
 			return list;
 		}
@@ -1236,7 +1278,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool skipTargetCast = method.Accessibility <= Accessibility.Protected && expressionBuilder.IsBaseTypeOfCurrentType(method.DeclaringTypeDefinition);
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
-				argumentList.GetArgumentResolveResults().ToArray(), argumentList.GetArgumentNames(), argumentList.FirstOptionalArgumentIndex, out foundMethod,
+				argumentList.GetArgumentResolveResults(substituteDefaultLiterals: true).ToArray(), argumentList.GetArgumentNames(), argumentList.FirstOptionalArgumentIndex, out foundMethod,
 				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
 			{
 				switch (errors)
@@ -1273,6 +1315,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						else if (argumentList.FirstOptionalArgumentIndex >= 0)
 						{
 							argumentList.FirstOptionalArgumentIndex = -1;
+						}
+						else if (argumentList.UseImplicitlyTypedDefault)
+						{
+							// Prefer restoring explicitly typed default expressions over
+							// more invasive fixes like casting all arguments.
+							argumentList.UseImplicitlyTypedDefault = false;
 						}
 						else if (!argumentsCasted)
 						{
@@ -1854,6 +1902,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							});
 					}
 				}
+				argumentList.UseImplicitlyTypedDefault = false;
 				return atce.WithRR(new CSharpInvocationResolveResult(
 					target, method, argumentList.GetArgumentResolveResults(),
 					isExpandedForm: argumentList.IsExpandedForm, argumentToParameterMap: argumentList.ArgumentToParameterMap
@@ -1862,7 +1911,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 			{
 				while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array,
-					argumentList.GetArgumentResolveResults().ToArray(),
+					argumentList.GetArgumentResolveResults(substituteDefaultLiterals: true).ToArray(),
 					argumentList.GetArgumentNames(), argumentList.FirstOptionalArgumentIndex, out _,
 					out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
 				{
@@ -1874,6 +1923,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (argumentList.FirstOptionalArgumentIndex >= 0)
 					{
 						argumentList.FirstOptionalArgumentIndex = -1;
+						continue;
+					}
+					if (argumentList.UseImplicitlyTypedDefault)
+					{
+						argumentList.UseImplicitlyTypedDefault = false;
 						continue;
 					}
 					CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);

@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 		{
 			public Func<TCaptured> GetFunc(Func<TNonCaptured, TCaptured> f)
 			{
-				TCaptured captured = f(default(TNonCaptured));
+				TCaptured captured = f(default);
 				return delegate {
 					Console.WriteLine(captured.GetType().FullName);
 					return captured;

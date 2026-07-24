@@ -363,4 +363,13 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		public static readonly UseImplicitlyTypedOutAnnotation Instance = new UseImplicitlyTypedOutAnnotation();
 	}
+
+	/// <summary>
+	/// Annotates a DefaultValueExpression in an argument position if overload resolution
+	/// determined that the untyped default literal would select the same member.
+	/// </summary>
+	public class UseImplicitlyTypedDefaultAnnotation
+	{
+		public static readonly UseImplicitlyTypedDefaultAnnotation Instance = new UseImplicitlyTypedDefaultAnnotation();
+	}
 }

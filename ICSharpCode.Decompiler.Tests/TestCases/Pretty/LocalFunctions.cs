@@ -155,7 +155,7 @@ namespace LocalFunctions
 				int StaticInvokeAsFunc2<T>(Func<T, int> func)
 #endif
 				{
-					return func(default(T));
+					return func(default);
 				}
 #if CS80
 				static int StaticMethod<T3>() where T3 : struct

@@ -34,6 +34,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public struct OtherData
+		{
+			public int Field;
+		}
+
 		public int this[Data d] => d.Field;
 
 		public int DeclarationWithInitializer()
@@ -65,14 +70,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return default;
 		}
 
-		public string ArgumentsStayTyped()
+		public string AmbiguousArgumentStaysTyped()
 		{
 			return Overloaded(default(Data));
 		}
 
-		public int UnambiguousArgumentStaysTyped()
+		public string BetterConversionTargetArgument()
 		{
-			return Single(default(Data));
+			return OverloadedNullable(default);
+		}
+
+		public int UnambiguousArgument()
+		{
+			return Single(default);
+		}
+
+		public string BoxedArgumentStaysTyped()
+		{
+			return Boxed(default(Data));
 		}
 
 		public int IndexerArgumentStaysTyped()
@@ -96,12 +111,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return data.Field;
 		}
 
+		private string Boxed(object o)
+		{
+			return o.ToString();
+		}
+
 		private string Overloaded(Data x)
 		{
 			return "Data";
 		}
 
-		private string Overloaded(Data? x)
+		private string Overloaded(OtherData x)
+		{
+			return "OtherData";
+		}
+
+		private string OverloadedNullable(Data x)
+		{
+			return "Data";
+		}
+
+		private string OverloadedNullable(Data? x)
 		{
 			return "Data?";
 		}
