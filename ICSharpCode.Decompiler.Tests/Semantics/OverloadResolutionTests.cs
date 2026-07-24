@@ -22,6 +22,7 @@ using System.Linq;
 using System.Linq.Expressions;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -346,6 +347,110 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			{
 				Method(a => a.ToString());
 			}
+		}
+
+		OverloadResolution ResolveWithDefaultLiteralArgument(params IMethod[] candidates)
+		{
+			var or = new OverloadResolution(compilation, new ResolveResult[] { new DefaultLiteralResolveResult() });
+			foreach (var candidate in candidates)
+			{
+				Assert.That(or.AddCandidate(candidate), Is.EqualTo(OverloadResolutionErrors.None));
+			}
+			return or;
+		}
+
+		[Test]
+		public void DefaultLiteralArgumentPrefersBetterConversionTarget()
+		{
+			// csc resolves M(default) by the better conversion target:
+			// M(int)/M(long) -> int; M(object)/M(string) -> string; M(int)/M(int?) -> int
+			var mInt = MakeMethod(typeof(int));
+			var or = ResolveWithDefaultLiteralArgument(mInt, MakeMethod(typeof(long)));
+			Assert.That(!or.IsAmbiguous);
+			Assert.That(or.BestCandidate, Is.SameAs(mInt));
+
+			var mString = MakeMethod(typeof(string));
+			or = ResolveWithDefaultLiteralArgument(MakeMethod(typeof(object)), mString);
+			Assert.That(!or.IsAmbiguous);
+			Assert.That(or.BestCandidate, Is.SameAs(mString));
+
+			mInt = MakeMethod(typeof(int));
+			or = ResolveWithDefaultLiteralArgument(mInt, MakeMethod(typeof(int?)));
+			Assert.That(!or.IsAmbiguous);
+			Assert.That(or.BestCandidate, Is.SameAs(mInt));
+		}
+
+		[Test]
+		public void DefaultLiteralArgumentWithoutBetterConversionTargetIsAmbiguous()
+		{
+			// csc: M(default) with M(int)/M(string) is CS0121
+			var or = ResolveWithDefaultLiteralArgument(MakeMethod(typeof(int)), MakeMethod(typeof(string)));
+			Assert.That(or.IsAmbiguous);
+		}
+
+		[Test]
+		public void DefaultLiteralArgumentDoesNotParticipateInTypeInference()
+		{
+			// csc: G(default) with G<T>(T) is CS0411 (cannot infer the type argument)
+			var m = compilation.FindType(typeof(DefaultLiteralGenericTestCase)).GetMethods(m2 => m2.Name == "G").Single();
+			var or = new OverloadResolution(compilation, new ResolveResult[] { new DefaultLiteralResolveResult() });
+			Assert.That(or.AddCandidate(m), Is.EqualTo(OverloadResolutionErrors.TypeInferenceFailed));
+			Assert.That(!or.FoundApplicableCandidate);
+		}
+
+		class DefaultLiteralGenericTestCase
+		{
+			public static T G<T>(T x)
+			{
+				return x;
+			}
+
+			public static T H<T>(T a, T b)
+			{
+				return a;
+			}
+		}
+
+		[Test]
+		public void DefaultLiteralArgumentRidesAlongInTypeInference()
+		{
+			// csc: F("x", default) with F<T>(T, T) infers T=string;
+			// F(default, default) is CS0411.
+			var m = compilation.FindType(typeof(DefaultLiteralGenericTestCase)).GetMethods(m2 => m2.Name == "H").Single();
+			var or = new OverloadResolution(compilation, new ResolveResult[] {
+				new ResolveResult(compilation.FindType(KnownTypeCode.String)),
+				new DefaultLiteralResolveResult()
+			});
+			Assert.That(or.AddCandidate(m), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(or.FoundApplicableCandidate);
+			Assert.That(((IMethod)or.GetBestCandidateWithSubstitutedTypeArguments()).TypeArguments.Single().IsKnownType(KnownTypeCode.String));
+
+			or = new OverloadResolution(compilation, new ResolveResult[] {
+				new DefaultLiteralResolveResult(),
+				new DefaultLiteralResolveResult()
+			});
+			Assert.That(or.AddCandidate(m), Is.EqualTo(OverloadResolutionErrors.TypeInferenceFailed));
+		}
+
+		[Test]
+		public void BinaryOperatorWithDefaultLiteralOperand()
+		{
+			// csc: "i == default" uses the int equality operator, "s == default" the string one;
+			// "default == default" is an error (CS8315).
+			var resolver = new CSharpResolver(compilation);
+			var i = new ResolveResult(compilation.FindType(KnownTypeCode.Int32));
+			var s = new ResolveResult(compilation.FindType(KnownTypeCode.String));
+
+			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, i, new DefaultLiteralResolveResult());
+			Assert.That(!rr.IsError);
+			Assert.That(rr.Type.IsKnownType(KnownTypeCode.Boolean));
+
+			rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, s, new DefaultLiteralResolveResult());
+			Assert.That(!rr.IsError);
+			Assert.That(rr.Type.IsKnownType(KnownTypeCode.Boolean));
+
+			rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, new DefaultLiteralResolveResult(), new DefaultLiteralResolveResult());
+			Assert.That(rr.IsError);
 		}
 	}
 }
