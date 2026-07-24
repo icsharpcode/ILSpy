@@ -18,7 +18,6 @@
 
 #nullable enable
 
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -36,23 +35,36 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		RefReadOnly,
 	}
 
+	/// <summary>
+	/// Describes which part of a parameter or local is restricted to the current scope.
+	/// </summary>
+	public enum ScopedKind : byte
+	{
+		None,
+		ScopedRef,
+		ScopedValue,
+	}
+
 	public struct LifetimeAnnotation
 	{
+		/// <summary>
+		/// Gets or sets the scope explicitly encoded by <c>ScopedRefAttribute</c>.
+		/// Implicit and redundant scopedness is excluded.
+		/// </summary>
+		public ScopedKind DeclaredScope { get; set; }
+
 		/// <summary>
 		/// C# 11 scoped annotation: "scoped ref" (ScopedRefAttribute)
 		/// </summary>
 		public bool ScopedRef {
-#pragma warning disable 618
-			get { return RefScoped; }
-			set { RefScoped = value; }
-#pragma warning restore 618
+			get { return DeclaredScope != ScopedKind.None; }
+			set { DeclaredScope = value ? ScopedKind.ScopedRef : ScopedKind.None; }
 		}
 
-		[Obsolete("Use ScopedRef property instead of directly accessing this field")]
-		public bool RefScoped;
-
-		[Obsolete("C# 11 preview: \"ref scoped\" no longer supported")]
-		public bool ValueScoped;
+		/// <summary>
+		/// Gets or sets whether <c>UnscopedRefAttribute</c> is present.
+		/// </summary>
+		public bool HasUnscopedRefAttribute { get; set; }
 	}
 
 	public interface IParameter : IVariable
