@@ -125,17 +125,29 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 				var metadata = module.metadata;
 				var parameterDef = metadata.GetParameter(handle);
-				if ((module.TypeSystemOptions & TypeSystemOptions.ParamsCollections) != 0
-					&& parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ParamCollection))
+				var attributes = parameterDef.GetCustomAttributes();
+				bool hasUnscopedRefAttribute = attributes.HasKnownAttribute(metadata, KnownAttribute.UnscopedRef);
+				bool isParamsCollection = (module.TypeSystemOptions & TypeSystemOptions.ParamsCollections) != 0
+					&& attributes.HasKnownAttribute(metadata, KnownAttribute.ParamCollection);
+				ScopedKind declaredScope = ScopedKind.None;
+				if (!hasUnscopedRefAttribute
+					&& !isParamsCollection
+					&& attributes.HasKnownAttribute(metadata, KnownAttribute.ScopedRef))
 				{
-					// params collections are implicitly scoped
-					return default;
+					if (ReferenceKind != ReferenceKind.None)
+					{
+						declaredScope = ScopedKind.ScopedRef;
+					}
+					else if (Type.IsRefLikeOrAllowsRefLikeType())
+					{
+						declaredScope = ScopedKind.ScopedValue;
+					}
 				}
-				if (parameterDef.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.ScopedRef))
-				{
-					return new LifetimeAnnotation { ScopedRef = true };
-				}
-				return default;
+
+				return new LifetimeAnnotation {
+					DeclaredScope = declaredScope,
+					HasUnscopedRefAttribute = hasUnscopedRefAttribute
+				};
 			}
 		}
 
