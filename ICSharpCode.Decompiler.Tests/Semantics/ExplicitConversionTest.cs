@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
@@ -286,656 +287,416 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(ExplicitConversion(typeof(Enum), typeof(int?)), Is.EqualTo(C.None));
 		}
 
-		/* TODO: we should probably revive these tests somehow
-		Conversion ResolveCast(string program)
+		/// <summary>
+		/// Converts a constant expression (e.g. an integer literal) to the target type.
+		/// </summary>
+		Conversion ExplicitConstantConversion(object value, Type to)
 		{
-			return Resolve<ConversionResolveResult>(program).Conversion;
+			IType fromType = compilation.FindType(value.GetType());
+			IType to2 = compilation.FindType(to).AcceptVisitor(new ConversionTest.ReplaceSpecialTypesVisitor());
+			return conversions.ExplicitConversion(new ConstantResolveResult(fromType, value), to2);
 		}
 
 		[Test]
 		public void ObjectToTypeParameter()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T>(object o) {
-		T t = $(T)o$;
-	}
-}";
-			Assert.AreEqual(C.UnboxingConversion, ResolveCast(program));
+			// void M<T>(object o) { T t = (T)o; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			Assert.That(conversions.ExplicitConversion(compilation.FindType(KnownTypeCode.Object), t), Is.EqualTo(C.UnboxingConversion));
 		}
 
 		[Test]
 		public void UnrelatedClassToTypeParameter()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T>(string o) {
-		T t = $(T)o$;
-	}
-}";
-			Assert.AreEqual(C.None, ResolveCast(program));
+			// void M<T>(string o) { T t = (T)o; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			Assert.That(conversions.ExplicitConversion(compilation.FindType(KnownTypeCode.String), t), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void IntefaceToTypeParameter()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T>(IDisposable o) {
-		T t = $(T)o$;
-	}
-}";
-			Assert.AreEqual(C.UnboxingConversion, ResolveCast(program));
+			// void M<T>(IDisposable o) { T t = (T)o; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			Assert.That(conversions.ExplicitConversion(compilation.FindType(typeof(IDisposable)), t), Is.EqualTo(C.UnboxingConversion));
 		}
 
 		[Test]
 		public void TypeParameterToInterface()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T>(T t) {
-		IDisposable d = $(IDisposable)t$;
-	}
-}";
-			Assert.AreEqual(C.BoxingConversion, ResolveCast(program));
+			// void M<T>(T t) { IDisposable d = (IDisposable)t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			Assert.That(conversions.ExplicitConversion(t, compilation.FindType(typeof(IDisposable))), Is.EqualTo(C.BoxingConversion));
 		}
 
 		[Test]
 		public void ValueTypeToTypeParameter()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T>(ValueType o) where T : struct {
-		T t = $(T)o$;
-	}
-}";
-			Assert.AreEqual(C.UnboxingConversion, ResolveCast(program));
+			// void M<T>(ValueType o) where T : struct { T t = (T)o; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", hasValueTypeConstraint: true);
+			Assert.That(conversions.ExplicitConversion(compilation.FindType(typeof(ValueType)), t), Is.EqualTo(C.UnboxingConversion));
 		}
 
 		[Test]
 		public void InvalidTypeParameterConversion()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) {
-		U u = $(U)t$;
-	}
-}";
-			Assert.AreEqual(C.None, ResolveCast(program));
+			// void M<T, U>(T t) { U u = (U)t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U");
+			Assert.That(conversions.ExplicitConversion(t, u), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void TypeParameterConversion1()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where T : U {
-		U u = $(U)t$;
-	}
-}";
-			Assert.AreEqual(C.BoxingConversion, ResolveCast(program));
+			// void M<T, U>(T t) where T : U { U u = (U)t; }
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U");
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", constraints: new[] { u });
+			Assert.That(conversions.ExplicitConversion(t, u), Is.EqualTo(C.BoxingConversion));
 		}
 
 		[Test]
 		public void TypeParameterConversion1Array()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T[] t) where T : U {
-		U[] u = $(U[])t$;
-	}
-}";
-			Assert.AreEqual(C.None, ResolveCast(program));
+			// void M<T, U>(T[] t) where T : U { U[] u = (U[])t; }
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U");
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", constraints: new[] { u });
+			Assert.That(conversions.ExplicitConversion(new ArrayType(compilation, t), new ArrayType(compilation, u)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void TypeParameterConversion2()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where U : T {
-		U u = $(U)t$;
-	}
-}";
-			Assert.AreEqual(C.UnboxingConversion, ResolveCast(program));
+			// void M<T, U>(T t) where U : T { U u = (U)t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", constraints: new[] { t });
+			Assert.That(conversions.ExplicitConversion(t, u), Is.EqualTo(C.UnboxingConversion));
 		}
 
 		[Test]
 		public void TypeParameterConversion2Array()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T[] t) where U : T {
-		U[] u = $(U[])t$;
-	}
-}";
-			Assert.AreEqual(C.None, ResolveCast(program));
+			// void M<T, U>(T[] t) where U : T { U[] u = (U[])t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", constraints: new[] { t });
+			Assert.That(conversions.ExplicitConversion(new ArrayType(compilation, t), new ArrayType(compilation, u)), Is.EqualTo(C.None));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterConversionWithClassConstraint()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where T : class where U : class, T {
-		U u = $(U)t$;
-	}
-}";
-			Assert.AreEqual(C.ExplicitReferenceConversion, ResolveCast(program));
+			// void M<T, U>(T t) where T : class where U : class, T { U u = (U)t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", hasReferenceTypeConstraint: true);
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", hasReferenceTypeConstraint: true, constraints: new[] { t });
+			Assert.That(conversions.ExplicitConversion(t, u), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterArrayConversionWithClassConstraint()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T[] t) where T : class where U : class, T {
-		U[] u = $(U[])t$;
-	}
-}";
-			Assert.AreEqual(C.ExplicitReferenceConversion, ResolveCast(program));
+			// void M<T, U>(T[] t) where T : class where U : class, T { U[] u = (U[])t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T", hasReferenceTypeConstraint: true);
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", hasReferenceTypeConstraint: true, constraints: new[] { t });
+			Assert.That(conversions.ExplicitConversion(new ArrayType(compilation, t), new ArrayType(compilation, u)), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterConversionWithClassConstraintOnlyOnT()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T t) where U : class, T {
-		U u = $(U)t$;
-	}
-}";
-			Assert.AreEqual(C.ExplicitReferenceConversion, ResolveCast(program));
+			// void M<T, U>(T t) where U : class, T { U u = (U)t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", hasReferenceTypeConstraint: true, constraints: new[] { t });
+			Assert.That(conversions.ExplicitConversion(t, u), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
 
 		[Test]
 		public void ImplicitTypeParameterArrayConversionWithClassConstraintOnlyOnT()
 		{
-			string program = @"using System;
-class Test {
-	public void M<T, U>(T[] t) where U : class, T {
-		U[] u = $(U[])t$;
-	}
-}";
-			Assert.AreEqual(C.ExplicitReferenceConversion, ResolveCast(program));
+			// void M<T, U>(T[] t) where U : class, T { U[] u = (U[])t; }
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeParameter u = new DefaultTypeParameter(compilation, SymbolKind.Method, 1, "U", hasReferenceTypeConstraint: true, constraints: new[] { t });
+			Assert.That(conversions.ExplicitConversion(new ArrayType(compilation, t), new ArrayType(compilation, u)), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
 
 		[Test]
 		public void SimpleUserDefinedConversion()
 		{
-			var rr = Resolve<ConversionResolveResult>(@"
-class C1 {}
-class C2 {
-	public static explicit operator C1(C2 c2) {
-		return null;
-	}
-}
-class C {
-	public void M() {
-		var c2 = new C2();
-		C1 c1 = $(C1)c2$;
-	}
-}");
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("op_Explicit", rr.Conversion.Method.Name);
+			// C1 c1 = (C1)c2;  with  explicit operator C1(C2 c2)
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.SimpleSource),
+				typeof(UserDefinedExplicitConversionTestCases.SimpleTarget));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Name, Is.EqualTo("op_Explicit"));
 		}
 
 		[Test]
 		public void ExplicitReferenceConversionFollowedByUserDefinedConversion()
 		{
-			var rr = Resolve<ConversionResolveResult>(@"
-		class B {}
-		class S : B {}
-		class T {
-			public static explicit operator T(S s) { return null; }
-		}
-		class Test {
-			void Run(B b) {
-				T t = $(T)b$;
-			}
-		}");
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("B", rr.Input.Type.Name);
+			// class S : B, explicit operator T(S s);
+			// T t = (T)b;  with b of type B needs the explicit reference conversion B -> S first
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.BaseClass),
+				typeof(UserDefinedExplicitConversionTestCases.TFromDerived));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
 		}
 
 		[Test]
 		public void ImplicitUserDefinedConversionFollowedByExplicitNumericConversion()
 		{
-			var rr = Resolve<ConversionResolveResult>(@"
-		struct T {
-			public static implicit operator float(T t) { return 0; }
-		}
-		class Test {
-			void Run(T t) {
-				int x = $(int)t$;
-			}
-		}");
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
+			// struct T { implicit operator float(T t) }
+			// int x = (int)t;
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.TImplicitToFloat), typeof(int));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
 			// even though the user-defined conversion is implicit, the combined conversion is explicit
-			Assert.That(rr.Conversion.IsExplicit);
+			Assert.That(c.IsExplicit);
 		}
 
 		[Test]
 		public void BothDirectConversionAndBaseClassConversionAvailable()
 		{
-			var rr = Resolve<ConversionResolveResult>(@"
-		class B {}
-		class S : B {}
-		class T {
-			public static explicit operator T(S s) { return null; }
-			public static explicit operator T(B b) { return null; }
-		}
-		class Test {
-			void Run(B b) {
-				T t = $(T)b$;
-			}
-		}");
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("b", rr.Conversion.Method.Parameters.Single().Name);
+			// class S : B, T with explicit operators from S ("s") and from B ("b");
+			// T t = (T)b;  picks the operator from B
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.BaseClass),
+				typeof(UserDefinedExplicitConversionTestCases.TFromDerivedOrBase));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters.Single().Name, Is.EqualTo("b"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_PicksExactSourceTypeIfPossible()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator Convertible(int i) {return new Convertible(); }
-	public static explicit operator Convertible(short s) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		var a = $(Convertible)33$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators from int ("i") and short ("s");
+			// (Convertible)33
+			var c = ExplicitConstantConversion(33, typeof(UserDefinedExplicitConversionTestCases.ExplicitFromIntOrShort));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_PicksMostEncompassedSourceTypeIfPossible()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator Convertible(long l) {return new Convertible(); }
-	public static explicit operator Convertible(uint ui) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		var a = $(Convertible)(ushort)33$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators from long ("l") and uint ("ui");
+			// (Convertible)(ushort)33
+			var c = ExplicitConstantConversion((ushort)33, typeof(UserDefinedExplicitConversionTestCases.ExplicitFromLongOrUInt));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ui"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_PicksMostEncompassingSourceType()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator Convertible(int i) {return new Convertible(); }
-	public static explicit operator Convertible(ushort us) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		var a = $(Convertible)(long)33$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators from int ("i") and ushort ("us");
+			// (Convertible)(long)33
+			var c = ExplicitConstantConversion((long)33, typeof(UserDefinedExplicitConversionTestCases.ExplicitFromIntOrUShort));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_NoMostEncompassingSourceTypeIsInvalid()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator Convertible(uint i) {return new Convertible(); }
-	public static explicit operator Convertible(short us) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		var a = $(Convertible)(long)33$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(!rr.Conversion.IsValid);
+			// explicit operators from uint and short; neither source type encompasses the
+			// other, so the conversion from long is ambiguous.
+			var c = ExplicitConstantConversion((long)33, typeof(UserDefinedExplicitConversionTestCases.ExplicitFromUIntOrShort));
+			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_PicksExactTargetTypeIfPossible()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator int(Convertible i) {return 0; }
-	public static explicit operator short(Convertible s) {return 0; }
-}
-class Test {
-	public void M() {
-		var a = $(int)new Convertible()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators to int ("i") and short ("s");
+			// (int)new Convertible()
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitToIntOrShort), typeof(int));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_PicksMostEncompassingTargetTypeIfPossible()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator int(Convertible i) {return 0; }
-	public static explicit operator ushort(Convertible us) {return 0; }
-}
-class Test {
-	public void M() {
-		var a = $(ulong)new Convertible()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("us", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators to int ("i") and ushort ("us");
+			// (ulong)new Convertible()
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitToIntOrUShort), typeof(ulong));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("us"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_PicksMostEncompassedTargetType()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator long(Convertible l) { return 0; }
-	public static explicit operator uint(Convertible ui) { return 0; }
-}
-class Test {
-	public void M() {
-		var a = $(ushort)new Convertible()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators to long ("l") and uint ("ui");
+			// (ushort)new Convertible()
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitToLongOrUInt), typeof(ushort));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ui"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_NoMostEncompassedTargetTypeIsInvalid()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator ulong(Convertible l) { return 0; }
-	public static explicit operator int(Convertible ui) { return 0; }
-}
-class Test {
-	public void M() {
-		var a = $(ushort)new Convertible()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(!rr.Conversion.IsValid);
+			// explicit operators to ulong and int; neither target type encompasses the
+			// other, so the conversion to ushort is ambiguous.
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitToULongOrInt), typeof(ushort));
+			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_AmbiguousIsInvalid()
 		{
-			string program = @"using System;
-class Convertible1 {
-	public static explicit operator Convertible2(Convertible1 c) {return 0; }
-}
-class Convertible2 {
-	public static explicit operator Convertible2(Convertible1 c) {return 0; }
-}
-class Test {
-	public void M() {
-		var a = $(Convertible2)new Convertible1()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(!rr.Conversion.IsValid);
+			// Both ExplicitAmbiguousA and ExplicitAmbiguousB declare
+			// explicit operator ExplicitAmbiguousB(ExplicitAmbiguousA).
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitAmbiguousA),
+				typeof(UserDefinedExplicitConversionTestCases.ExplicitAmbiguousB));
+			Assert.That(!c.IsValid);
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_Lifted()
 		{
-			string program = @"using System;
-struct Convertible {
-	public static explicit operator Convertible(int i) {return new Convertible(); }
-}
-class Test {
-	public void M(int? i) {
-		 a = $(Convertible?)i$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.That(rr.Conversion.IsLifted);
+			// struct Convertible { explicit operator Convertible(int i) }
+			// (Convertible?)i  with i of type int?
+			var c = ExplicitConversion(typeof(int?), typeof(UserDefinedExplicitConversionTestCases.ExplicitFromInt?));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.IsLifted);
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversionFollowedByImplicitNullableConversion()
 		{
-			string program = @"using System;
-struct Convertible {
-	public static explicit operator Convertible(int i) {return new Convertible(); }
-}
-class Test {
-	public void M(int i) {
-		 a = $(Convertible?)i$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.That(!rr.Conversion.IsLifted);
+			// struct Convertible { explicit operator Convertible(int i) }
+			// (Convertible?)i  with i of type int
+			var c = ExplicitConversion(typeof(int), typeof(UserDefinedExplicitConversionTestCases.ExplicitFromInt?));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(!c.IsLifted);
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_ExplicitNullable_ThenUserDefined()
 		{
-			string program = @"using System;
-struct Convertible {
-	public static explicit operator Convertible(int i) {return new Convertible(); }
-	public static explicit operator Convertible?(int? ni) {return new Convertible(); }
-}
-class Test {
-	public void M(int? i) {
-		 a = $(Convertible)i$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.That(!rr.Conversion.IsLifted);
-			Assert.AreEqual("i", rr.Conversion.Method.Parameters[0].Name);
+			// struct Convertible with explicit operators from int ("i") and from int? ("ni");
+			// (Convertible)i  with i of type int? unwraps the nullable and uses the int operator
+			var c = ExplicitConversion(typeof(int?), typeof(UserDefinedExplicitConversionTestCases.ExplicitNullableConvertible));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(!c.IsLifted);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("i"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_DefinedNullableTakesPrecedenceOverLifted()
 		{
-			string program = @"using System;
-struct Convertible {
-	public static explicit operator Convertible(int i) {return new Convertible(); }
-	public static explicit operator Convertible?(int? ni) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		 a = $(Convertible?)(int?)33$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.That(!rr.Conversion.IsLifted);
-			Assert.AreEqual("ni", rr.Conversion.Method.Parameters[0].Name);
+			// struct Convertible with explicit operators from int ("i") and from int? ("ni");
+			// (Convertible?)(int?)33  -- the user-defined nullable operator wins over the
+			// lifted form of the int operator.
+			var c = ExplicitConversion(typeof(int?), typeof(UserDefinedExplicitConversionTestCases.ExplicitNullableConvertible?));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(!c.IsLifted);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ni"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_UIntConstant()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator Convertible(long l) {return new Convertible(); }
-	public static explicit operator Convertible(uint ui) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		var a = $(Convertible)33$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators from long ("l") and uint ("ui");
+			// (Convertible)33  -- the constant 33 converts to uint, which is more specific
+			var c = ExplicitConstantConversion(33, typeof(UserDefinedExplicitConversionTestCases.ExplicitFromLongOrUInt));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ui"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_NullableUIntConstant()
 		{
-			string program = @"using System;
-class Convertible {
-	public static explicit operator Convertible(long? l) {return new Convertible(); }
-	public static explicit operator Convertible(uint? ui) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		Convertible a = $(Convertible)33$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("ui", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators from long? ("l") and uint? ("ui");
+			// (Convertible)33
+			var c = ExplicitConstantConversion(33, typeof(UserDefinedExplicitConversionTestCases.ExplicitFromNullableLongOrNullableUInt));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ui"));
 		}
 
 		[Test]
 		public void UseDefinedExplicitConversion_Lifted()
 		{
-			string program = @"
-struct Convertible {
-	public static explicit operator Convertible(int i) { return new Convertible(); }
-}
-class Test {
-	public void M(int? i) {
-		a = $(Convertible?)i$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.That(rr.Conversion.IsLifted);
-			Assert.That(rr.Input is LocalResolveResult);
+			// Same conversion as UserDefinedExplicitConversion_Lifted, but through the
+			// ResolveResult-based entry point (the original test cast a local variable).
+			var c = conversions.ExplicitConversion(
+				new ResolveResult(compilation.FindType(typeof(int?))),
+				compilation.FindType(typeof(UserDefinedExplicitConversionTestCases.ExplicitFromInt?)));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.IsLifted);
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_Short_Or_NullableByte_Target()
 		{
-			string program = @"using System;
-class Test {
-	public static explicit operator short(Test s) { return 0; }
-	public static explicit operator byte?(Test b) { return 0; }
-}
-class Program {
-	public static void Main(string[] args)
-	{
-		int? x = $(int?)new Test()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("System.Int16", rr.Conversion.Method.ReturnType.FullName);
+			// explicit operators to short ("s") and byte? ("b");
+			// (int?)new Test()
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitToShortOrNullableByte), typeof(int?));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.ReturnType.FullName, Is.EqualTo("System.Int16"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_Byte_Or_NullableShort_Target()
 		{
-			string program = @"using System;
-class Test {
-	public static explicit operator byte(Test b) { return 0; }
-	public static explicit operator short?(Test s) { return 0; }
-}
-class Program {
-	public static void Main(string[] args)
-	{
-		int? x = $(int?)new Test()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("s", rr.Conversion.Method.Parameters[0].Name);
+			// explicit operators to byte ("b") and short? ("s");
+			// (int?)new Test()
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitToByteOrNullableShort), typeof(int?));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("s"));
 		}
 
 		[Test]
 		public void ExplicitConversionOperatorsCanOverrideApplicableImplicitOnes()
 		{
-			string program = @"
-struct Convertible {
-	public static explicit operator int(Convertible ci) {return 0; }
-	public static implicit operator short(Convertible cs) {return 0; }
-}
-class Test {
-	static void Main() {
-		int i = $(int)new Convertible()$; // csc uses the explicit conversion operator
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.IsUserDefined);
-			Assert.AreEqual("ci", rr.Conversion.Method.Parameters[0].Name);
+			// struct Convertible { explicit operator int(Convertible ci); implicit operator short(Convertible cs); }
+			// int i = (int)new Convertible();  -- csc uses the explicit conversion operator
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ExplicitIntImplicitShort), typeof(int));
+			Assert.That(c.IsValid);
+			Assert.That(c.IsUserDefined);
+			Assert.That(c.Method.Parameters[0].Name, Is.EqualTo("ci"));
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_ConversionBeforeUserDefinedOperatorIsCorrect()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator Convertible(int l) {return new Convertible(); }
-}
-class Test {
-	public void M() {
-		long i = 33;
-		Convertible a = $(Convertible)i$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsValid);
-			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsExplicit);
-			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsNumericConversion);
-			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsIdentityConversion);
+			// implicit operator Convertible(int l); casting a long goes long -> int -> Convertible,
+			// with an explicit numeric conversion before the operator.
+			var c = ExplicitConversion(typeof(long), typeof(UserDefinedExplicitConversionTestCases.ImplicitFromInt));
+			Assert.That(c.IsValid);
+			Assert.That(c.ConversionBeforeUserDefinedOperator.IsValid);
+			Assert.That(c.ConversionBeforeUserDefinedOperator.IsExplicit);
+			Assert.That(c.ConversionBeforeUserDefinedOperator.IsNumericConversion);
+			Assert.That(c.ConversionAfterUserDefinedOperator.IsIdentityConversion);
 		}
 
 		[Test]
 		public void UserDefinedExplicitConversion_ConversionAfterUserDefinedOperatorIsCorrect()
 		{
-			string program = @"using System;
-class Convertible {
-	public static implicit operator long(Convertible i) {return 0; }
-}
-class Test {
-	public void M() {
-		int a = $(int)new Convertible()$;
-	}
-}";
-			var rr = Resolve<ConversionResolveResult>(program);
-			Assert.That(rr.Conversion.IsValid);
-			Assert.That(rr.Conversion.ConversionBeforeUserDefinedOperator.IsIdentityConversion);
-			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsValid);
-			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsExplicit);
-			Assert.That(rr.Conversion.ConversionAfterUserDefinedOperator.IsNumericConversion);
-		}*/
+			// implicit operator long(Convertible i); casting to int goes Convertible -> long -> int,
+			// with an explicit numeric conversion after the operator.
+			var c = ExplicitConversion(typeof(UserDefinedExplicitConversionTestCases.ImplicitToLong), typeof(int));
+			Assert.That(c.IsValid);
+			Assert.That(c.ConversionBeforeUserDefinedOperator.IsIdentityConversion);
+			Assert.That(c.ConversionAfterUserDefinedOperator.IsValid);
+			Assert.That(c.ConversionAfterUserDefinedOperator.IsExplicit);
+			Assert.That(c.ConversionAfterUserDefinedOperator.IsNumericConversion);
+		}
 	}
 }
