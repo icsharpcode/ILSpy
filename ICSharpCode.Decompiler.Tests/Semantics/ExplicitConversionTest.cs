@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -697,6 +698,50 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(c.ConversionAfterUserDefinedOperator.IsValid);
 			Assert.That(c.ConversionAfterUserDefinedOperator.IsExplicit);
 			Assert.That(c.ConversionAfterUserDefinedOperator.IsNumericConversion);
+		}
+
+		[Test]
+		public void EnumerationConversionsWithFloatingPointTypes()
+		{
+			// C# standard 10.3.3: explicit enumeration conversions include float and double
+			var explicitEnumerationConversion = C.EnumerationConversion(false, false);
+			Assert.That(ExplicitConversion(typeof(float), typeof(StringComparison)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(double), typeof(StringComparison)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(float)), Is.EqualTo(explicitEnumerationConversion));
+			Assert.That(ExplicitConversion(typeof(StringComparison), typeof(double)), Is.EqualTo(explicitEnumerationConversion));
+		}
+
+		[Test]
+		public void ExplicitTupleConversions()
+		{
+			// C# standard 10.3.6: explicit tuple conversion with explicit element conversions
+			Assert.That(ExplicitConversion(typeof((long, object)), typeof((int, string))),
+				Is.EqualTo(C.TupleConversion(ImmutableArray.Create(C.ExplicitNumericConversion, C.ExplicitReferenceConversion))));
+			// arity mismatch
+			Assert.That(ExplicitConversion(typeof((long, object)), typeof(ValueTuple<int>)), Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void UnboxingConversionViaVariance()
+		{
+			// C# standard 10.3.7: unboxing from an interface that is variance-convertible
+			// to/from an interface implemented by the value type
+			Assert.That(ExplicitConversion(typeof(IEnumerable<string>), typeof(StructImplementingIEnumerableOfString)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<object>), typeof(StructImplementingIEnumerableOfString)), Is.EqualTo(C.UnboxingConversion));
+			Assert.That(ExplicitConversion(typeof(IEnumerable<int>), typeof(StructImplementingIEnumerableOfString)), Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void ExplicitTypeParameterConversionFromEffectiveBaseClass()
+		{
+			// C# standard 10.3.8: for T known to be a reference type, explicit reference
+			// conversions exist from the effective base class (and its base classes) to T,
+			// and from T to interfaces it does not implement
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T",
+				constraints: new[] { compilation.FindType(typeof(StringComparer)) });
+			Assert.That(conversions.ExplicitConversion(compilation.FindType(typeof(StringComparer)), t), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(conversions.ExplicitConversion(compilation.FindType(KnownTypeCode.Object), t), Is.EqualTo(C.ExplicitReferenceConversion));
+			Assert.That(conversions.ExplicitConversion(t, compilation.FindType(typeof(IConvertible))), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
 	}
 }
