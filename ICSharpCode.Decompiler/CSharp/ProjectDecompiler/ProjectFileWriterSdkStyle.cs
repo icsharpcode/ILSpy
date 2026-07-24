@@ -328,7 +328,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				{
 					continue;
 				}
-				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
+				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string? runtimePack) && targetPacks.Contains(runtimePack))
 				{
 					continue;
 				}
