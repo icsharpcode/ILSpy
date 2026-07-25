@@ -2615,15 +2615,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		// A disambiguator is required only where the type parameter itself carries a nullable
 		// annotation ('T?') in the signature: without it the compiler reads 'T?' as Nullable<T>.
-		// Which one is legal follows from whether the inherited constraints make the type
-		// parameter a reference type, a value type, or neither:
-		//   - a value type uses Nullable<T> rather than a nullable annotation, so it neither
-		//     needs nor permits a disambiguator;
-		//   - a reference type requires 'class';
-		//   - anything else requires 'default'.
 		// The inherited constraints are re-emitted on the override's own type parameters in
-		// metadata, so this classification does not depend on resolving the base member. The
-		// restated disambiguator itself is not, hence it must be derived rather than read back.
+		// metadata, so which disambiguator is legal follows from them without resolving the base
+		// member. The restated disambiguator leaves no metadata trace of its own, hence it must be
+		// derived rather than read back.
 		void AddNullabilityDisambiguatingConstraints(MethodDeclaration decl, IMethod method)
 		{
 			if (method.TypeParameters.Count == 0)
@@ -2636,19 +2631,27 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return;
 			foreach (ITypeParameter tp in method.TypeParameters)
 			{
-				if (!collector.NullableTypeParameters.Contains(tp))
-					continue;
-				bool? isReferenceType = tp.IsReferenceType;
-				if (isReferenceType == false)
+				if (!collector.NullableTypeParameters.Contains(tp) || GetNullabilityDisambiguator(tp) is not string keyword)
 					continue;
 				Constraint c = new();
 				c.TypeParameter = MakeSimpleType(tp.Name);
-				// C# accepts only plain 'class' here, never 'class?'; the constraint's own
-				// nullability is inherited from the base member regardless.
-				c.BaseTypes.Add(new PrimitiveType(isReferenceType == true ? "class" : "default"));
+				c.BaseTypes.Add(new PrimitiveType(keyword));
 				decl.Constraints.Add(c);
 			}
 		}
+
+		// Returns the constraint that keeps 'T?' meaning a nullable annotation on an override or
+		// explicit interface implementation, or null where the type parameter neither needs nor
+		// permits one.
+		static string? GetNullabilityDisambiguator(ITypeParameter tp) => tp.IsReferenceType switch {
+			// C# accepts only plain 'class' here, never 'class?'; the constraint's own nullability
+			// is inherited from the base member regardless.
+			true => "class",
+			// Constrained to neither a reference type nor a value type.
+			null => "default",
+			// A value type uses Nullable<T> rather than a nullable annotation.
+			false => null
+		};
 
 		// Collects the type parameters of one method that appear with a nullable annotation ('T?')
 		// anywhere in a visited type, including nested positions such as List<T?> or T?[]. Type
