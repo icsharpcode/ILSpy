@@ -433,7 +433,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedStatement VisitYieldReturn(YieldReturn inst)
 		{
-			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
+			var elementType = currentFunction.AsyncReturnType
+				?? currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out _);
 			var expr = exprBuilder.Translate(inst.Value, typeHint: elementType)
 				.ConvertTo(elementType, exprBuilder, allowImplicitConversion: true);
 			return new YieldReturnStatement {
