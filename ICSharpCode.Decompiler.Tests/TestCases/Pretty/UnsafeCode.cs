@@ -547,7 +547,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private unsafe void Issue990()
 		{
+#if CS71
 			Data data = default;
+#else
+			Data data = default(Data);
+#endif
 			Data* ptr = &data;
 			ConvertIntToFloat(ptr->Position.GetHashCode());
 		}
@@ -562,7 +566,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static T Get<T>()
 		{
+#if CS71
 			return default;
+#else
+			return default(T);
+#endif
 		}
 
 		private unsafe static ResultStruct NestedFixedBlocks(byte[] array)

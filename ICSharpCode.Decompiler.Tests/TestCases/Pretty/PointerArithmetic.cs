@@ -56,7 +56,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe static void AssignmentGuidPointerToDateTimePointerDefault(Guid* ptr)
 		{
+#if CS71
 			((DateTime*)ptr)[2] = default;
+#else
+			((DateTime*)ptr)[2] = default(DateTime);
+#endif
 		}
 
 		public unsafe static void AssignmentGuidPointerToDateTimePointer_2(Guid* ptr)
@@ -66,7 +70,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe static void AssignmentGuidPointerToDateTimePointerDefault_2(Guid* ptr)
 		{
+#if CS71
 			*(DateTime*)(ptr + 2) = default;
+#else
+			*(DateTime*)(ptr + 2) = default(DateTime);
+#endif
 		}
 
 		public unsafe static DateTime AccessGuidPointerToDateTimePointer(Guid* ptr)

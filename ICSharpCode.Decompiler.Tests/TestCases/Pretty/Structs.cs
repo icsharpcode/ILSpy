@@ -30,7 +30,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if CS100
 		public StructWithDefaultCtor M()
 		{
+#if CS71
 			return default;
+#else
+			return default(StructWithDefaultCtor);
+#endif
 		}
 
 		public StructWithDefaultCtor M2()

@@ -33,12 +33,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public static Maybe<TResult> Select<T, TResult>(this Maybe<T> a, Func<T, TResult> fn)
 		{
+#if CS71
 			return default;
+#else
+			return default(Maybe<TResult>);
+#endif
 		}
 
 		public static Maybe<T> Where<T>(this Maybe<T> a, Func<T, bool> predicate)
 		{
+#if CS71
 			return default;
+#else
+			return default(Maybe<T>);
+#endif
 		}
 	}
 

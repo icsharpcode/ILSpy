@@ -50,7 +50,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public readonly int ReadonlyIntVal;
 			public MyClass Field;
 			public MyStruct? Property1 => null;
+#if CS71
 			public MyStruct Property2 => default;
+#else
+			public MyStruct Property2 => default(MyStruct);
+#endif
 			public MyStruct? this[int index] => null;
 			public MyStruct? Method1(int arg)
 			{
@@ -58,7 +62,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			public MyStruct Method2(int arg)
 			{
+#if CS71
 				return default;
+#else
+				return default(MyStruct);
+#endif
 			}
 
 			public void Done()

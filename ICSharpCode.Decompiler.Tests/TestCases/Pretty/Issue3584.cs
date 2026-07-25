@@ -14,7 +14,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			get {
 				if (i >= Length || i < 0)
 				{
+#if CS71
 					return default;
+#else
+					return default(T);
+#endif
 				}
 				if (results[i] != null && results[i].Equals(default(T)))
 				{
