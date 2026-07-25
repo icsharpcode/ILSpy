@@ -2613,49 +2613,57 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return c;
 		}
 
-		// The compiler records the inherited class/struct constraint flags on an override or
-		// explicit interface implementation in metadata, even though the source does not restate
-		// them, so the disambiguator can be derived from the method's own type parameters without
-		// resolving the base member. A disambiguator is required only where the type parameter
-		// itself carries a nullable annotation ('T?') in the signature: without it the compiler
-		// reads 'T?' as Nullable<T>. A struct-constrained parameter uses Nullable<T> rather than a
-		// nullable annotation, so it neither needs nor permits one.
+		// A disambiguator is required only where the type parameter itself carries a nullable
+		// annotation ('T?') in the signature: without it the compiler reads 'T?' as Nullable<T>.
+		// Which one is legal follows from whether the inherited constraints make the type
+		// parameter a reference type, a value type, or neither:
+		//   - a value type uses Nullable<T> rather than a nullable annotation, so it neither
+		//     needs nor permits a disambiguator;
+		//   - a reference type requires 'class';
+		//   - anything else requires 'default'.
+		// The inherited constraints are re-emitted on the override's own type parameters in
+		// metadata, so this classification does not depend on resolving the base member. The
+		// restated disambiguator itself is not, hence it must be derived rather than read back.
 		void AddNullabilityDisambiguatingConstraints(MethodDeclaration decl, IMethod method)
 		{
 			if (method.TypeParameters.Count == 0)
 				return;
-			NullableTypeParameterCollector collector = new();
+			NullableTypeParameterCollector collector = new(method.TypeParameters);
 			method.ReturnType.AcceptVisitor(collector);
 			foreach (IParameter p in method.Parameters)
 				p.Type.AcceptVisitor(collector);
-			if (collector.MethodTypeParameterIndices.Count == 0)
+			if (collector.NullableTypeParameters.Count == 0)
 				return;
 			foreach (ITypeParameter tp in method.TypeParameters)
 			{
-				if (!collector.MethodTypeParameterIndices.Contains(tp.Index) || tp.HasValueTypeConstraint)
+				if (!collector.NullableTypeParameters.Contains(tp))
+					continue;
+				bool? isReferenceType = tp.IsReferenceType;
+				if (isReferenceType == false)
 					continue;
 				Constraint c = new();
 				c.TypeParameter = MakeSimpleType(tp.Name);
 				// C# accepts only plain 'class' here, never 'class?'; the constraint's own
 				// nullability is inherited from the base member regardless.
-				c.BaseTypes.Add(new PrimitiveType(tp.HasReferenceTypeConstraint ? "class" : "default"));
+				c.BaseTypes.Add(new PrimitiveType(isReferenceType == true ? "class" : "default"));
 				decl.Constraints.Add(c);
 			}
 		}
 
-		// Collects the indices of a method's own type parameters that appear with a nullable
-		// annotation ('T?') anywhere in a visited type, including nested positions such as
-		// List<T?> or T?[].
-		sealed class NullableTypeParameterCollector : TypeVisitor
+		// Collects the type parameters of one method that appear with a nullable annotation ('T?')
+		// anywhere in a visited type, including nested positions such as List<T?> or T?[]. Type
+		// parameters of any other owner are ignored: a specialized signature can substitute a
+		// foreign type parameter that happens to share an index with one of this method's own.
+		sealed class NullableTypeParameterCollector(IReadOnlyList<ITypeParameter> typeParameters) : TypeVisitor
 		{
-			public readonly HashSet<int> MethodTypeParameterIndices = [];
+			public readonly HashSet<ITypeParameter> NullableTypeParameters = [];
 
 			public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
 			{
 				if (type is NullabilityAnnotatedTypeParameter { Nullability: Nullability.Nullable } natp
-					&& natp.OriginalTypeParameter.OwnerType == SymbolKind.Method)
+					&& typeParameters.Contains(natp.OriginalTypeParameter))
 				{
-					MethodTypeParameterIndices.Add(natp.OriginalTypeParameter.Index);
+					NullableTypeParameters.Add(natp.OriginalTypeParameter);
 				}
 				return base.VisitNullabilityAnnotatedType(type);
 			}
