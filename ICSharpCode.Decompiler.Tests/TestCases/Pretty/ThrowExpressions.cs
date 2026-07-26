@@ -200,5 +200,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 
 		}
+
+		public static int TernaryThrow(bool cond)
+		{
+			return cond ? 1 : throw new InvalidOperationException();
+		}
 	}
 }

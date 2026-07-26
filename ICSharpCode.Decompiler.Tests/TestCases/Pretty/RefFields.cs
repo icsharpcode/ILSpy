@@ -44,6 +44,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			span = ScopedSpan(span);
 			OutSpan(out span);
 		}
+
+		public int ScopedRefLocal(bool b, ref int x)
+		{
+			int num = 42;
+			scoped ref int reference = ref x;
+			if (b)
+			{
+				reference = ref num;
+			}
+			return reference;
+		}
+
+		public int ScopedRefStructLocal(bool b)
+		{
+			int value = 7;
+			scoped Span<int> span = CreateWithoutCapture(ref value);
+			if (b)
+			{
+				span = CreateAndCapture(ref value);
+			}
+			return span[0];
+		}
 	}
 
 	internal ref struct RefFields

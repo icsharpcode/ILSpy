@@ -27,6 +27,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public delegate int D(int p = 10);
 
+		public delegate int ParamsDelegate(params int[] xs);
+
 		public enum MyEnum
 		{
 			A,
@@ -328,6 +330,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			d();
 			d(42);
+		}
+#endif
+#if CS130
+		public static ParamsDelegate LambdaWithParamsArray()
+		{
+			return (params int[] xs) => xs.Length;
 		}
 #endif
 	}

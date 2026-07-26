@@ -344,5 +344,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (int)a == 0;
 		}
+
+		public static bool ReferenceEqualityStrings(string a, string b)
+		{
+			return (object)a == (object)b;
+		}
+
+		public static bool ReferenceInequalityStrings(string a, string b)
+		{
+			return (object)a != (object)b;
+		}
 	}
 }

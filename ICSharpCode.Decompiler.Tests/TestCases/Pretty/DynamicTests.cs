@@ -2,6 +2,9 @@ using System;
 #if CS120
 using System.Collections.Generic;
 #endif
+#if !NET40
+using System.Threading.Tasks;
+#endif
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {

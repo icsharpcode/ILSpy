@@ -40,6 +40,13 @@ namespace CustomAttributes
 			{
 			}
 		}
+		[AttributeUsage(AttributeTargets.All)]
+		public class ParamsArrayAttribute : Attribute
+		{
+			public ParamsArrayAttribute(params int[] values)
+			{
+			}
+		}
 #if CS110
 		[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
 		public class GenericAttribute<T> : Attribute
@@ -178,5 +185,13 @@ namespace CustomAttributes
 		{
 		}
 #endif
+		[ParamsArray(1, 2, 3)]
+		public static void UseParamsAttributeExpanded()
+		{
+		}
+		[ParamsArray]
+		public static void UseParamsAttributeEmpty()
+		{
+		}
 	}
 }

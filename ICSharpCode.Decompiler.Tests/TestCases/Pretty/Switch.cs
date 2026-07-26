@@ -544,6 +544,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static string SwitchOverStringWithEmptyCase(string text)
+		{
+			Console.WriteLine("SwitchOverStringWithEmptyCase: " + text);
+			switch (text)
+			{
+				case "":
+					return "empty";
+				case " ":
+					return "space";
+				case null:
+					return "null";
+				case "First case":
+					return "Text1";
+				default:
+					return "Default";
+			}
+		}
+
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
@@ -1743,6 +1761,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				default:
 					return "Default";
 			}
+		}
+
+		public static bool IsPatternOverReadOnlySpanChar(ReadOnlySpan<char> text)
+		{
+			return text is "hello";
+		}
+
+		public static bool OrPatternOverReadOnlySpanChar(ReadOnlySpan<char> text)
+		{
+			return text is "hello" or "hi";
 		}
 #endif
 

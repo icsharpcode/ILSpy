@@ -61,5 +61,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return sum;
 		}
+
+		public async Task<int> SumNamedTupleElements(IAsyncEnumerable<(int A, string B)> items)
+		{
+			int sum = 0;
+			await foreach (var item in items)
+			{
+				sum += item.A + item.B.Length;
+			}
+			return sum;
+		}
 	}
 }

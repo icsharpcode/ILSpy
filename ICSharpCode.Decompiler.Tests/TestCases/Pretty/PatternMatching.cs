@@ -33,6 +33,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public object Obj { get; set; }
 		}
 
+#if CS80
+		public struct DeconstructablePoint
+		{
+			public int X;
+			public int Y;
+
+			public void Deconstruct(out int x, out int y)
+			{
+				x = X;
+				y = Y;
+			}
+		}
+#endif
+
 		public void SimpleTypePattern(object x)
 		{
 			if (x is string value)
@@ -333,6 +347,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 #if CS80
+		public void PositionalPattern(object obj)
+		{
+			if (obj is DeconstructablePoint(0, var y))
+			{
+				Console.WriteLine(y);
+			}
+			else
+			{
+				Console.WriteLine("no match");
+			}
+		}
+
 		public void RecursivePattern_Type(object x)
 		{
 			if (x is X { Obj: string obj })

@@ -616,6 +616,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return $"val={await t,5:x} end";
 		}
 #endif
+
+		public static async Task<int> MultiAwaitInExpression(Task<int> a, Task<int> b, Task<int> c)
+		{
+			return await a + await b * await c - await a;
+		}
+
+#if CS60
+		public static async Task NestedAwaitHandlers(Task t)
+		{
+			try
+			{
+				await t;
+			}
+			catch (Exception ex)
+			{
+				try
+				{
+					await Task.Delay(ex.Message.Length);
+				}
+				finally
+				{
+					await Task.Yield();
+				}
+			}
+		}
+#endif
 	}
 
 	public struct AsyncInStruct

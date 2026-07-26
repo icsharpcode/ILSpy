@@ -326,5 +326,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return x?.ToString();
 #endif
 		}
+
+		private bool TwoChainsInShortCircuitAnd(MyClass a, MyClass b)
+		{
+			return a?.Field?.IntVal > 0 && b?.Property?.Text?.Length == 3;
+		}
 	}
 }

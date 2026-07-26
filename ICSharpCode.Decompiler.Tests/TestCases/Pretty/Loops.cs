@@ -1084,5 +1084,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					throw new NotImplementedException();
 			}
 		}
+
+		public static int ForWithCommaLists(int n)
+		{
+			int num = 0;
+			for (int i = 0, j = n; i < j; i++, j--)
+			{
+				num += i * j;
+			}
+			return num;
+		}
 	}
 }

@@ -114,6 +114,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			yield return 'a';
 			yield return AsyncStreamColor.Green;
 		}
+
+		public static async IAsyncEnumerable<int> CancellationAndAwaitInFinally([EnumeratorCancellation] CancellationToken cancellationToken)
+		{
+			int handle = await OpenAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			try
+			{
+				yield return handle;
+				await WorkAsync(cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			}
+			finally
+			{
+				await CloseAsync(handle, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
+			}
+		}
+
+		private static async Task<int> OpenAsync(CancellationToken ct)
+		{
+			await Task.Yield();
+			return 1;
+		}
+
+		private static async Task WorkAsync(CancellationToken ct)
+		{
+			await Task.Yield();
+		}
+
+		private static async Task CloseAsync(int h, CancellationToken ct)
+		{
+			await Task.Yield();
+		}
 	}
 
 	public interface IAsyncStreamEntry

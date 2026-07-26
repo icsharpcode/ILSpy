@@ -354,6 +354,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			M2<RefLocalsAndReturns>(this);
 		}
 
+		public static void ConditionalRefInAssignmentTarget(bool b, int[] x, int[] y)
+		{
+			(b ? ref x[0] : ref y[0]) = 5;
+		}
+
 #if CS120
 		public ref readonly int M(in int x)
 		{

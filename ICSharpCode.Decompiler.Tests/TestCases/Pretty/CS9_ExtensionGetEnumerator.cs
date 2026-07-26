@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -14,6 +15,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		public class WithStructEnumerator
+		{
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		public struct StructEnumerator
+		{
+			public int Current => 0;
+
+			public bool MoveNext()
+			{
+				return false;
+			}
+		}
+
 		public void Test(NonGeneric c)
 		{
 			foreach (object item in c)
@@ -23,6 +39,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		public void Test(Generic<int> c)
+		{
+			foreach (int item in c)
+			{
+				Console.WriteLine(item);
+			}
+		}
+
+		public void Test(WithStructEnumerator c)
 		{
 			foreach (int item in c)
 			{
@@ -49,6 +73,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static IEnumerator<T> GetEnumerator<T>(this CS9_ExtensionGetEnumerator.Generic<T> c)
 		{
 			throw null;
+		}
+		public static CS9_ExtensionGetEnumerator.StructEnumerator GetEnumerator(this CS9_ExtensionGetEnumerator.WithStructEnumerator c)
+		{
+			return default(CS9_ExtensionGetEnumerator.StructEnumerator);
 		}
 #if !NET40
 		public static IAsyncEnumerator<T> GetAsyncEnumerator<T>(this CS9_ExtensionGetEnumerator.Generic<T> c)

@@ -128,6 +128,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UsePointer(ptr);
 		}
 
+		public unsafe string SimpleStackAllocEnum()
+		{
+			DayOfWeek* ptr = stackalloc DayOfWeek[3] {
+				DayOfWeek.Monday,
+				DayOfWeek.Tuesday,
+				DayOfWeek.Friday
+			};
+			Console.WriteLine(*ptr);
+			return UsePointer((byte*)ptr);
+		}
+
 		public unsafe string SimpleStackAllocChar()
 		{
 			char* ptr = stackalloc char[4] { '1', '2', '3', '4' };
@@ -371,6 +382,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void Issue2103d()
 		{
 			Console.WriteLine((stackalloc byte[3])[1]);
+		}
+
+		public unsafe int PointerStackAllocSingleUse()
+		{
+			int* ptr = stackalloc int[4];
+			return *ptr;
+		}
+
+		public unsafe int PointerStackAllocInitializerSingleUse()
+		{
+			int* ptr = stackalloc int[3] { 7, 8, 9 };
+			return *ptr;
 		}
 
 		public string UseSpan(Span<int> span)

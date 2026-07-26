@@ -45,6 +45,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public string S = "abc";
 		}
 
+		public record FieldBeforeProperty(int ID, string Text)
+		{
+			public int Field;
+
+			public int Property { get; set; }
+		}
+
 		public record Interface(int B) : IRecord;
 
 		public interface IRecord

@@ -411,6 +411,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return a == 'A';
 		}
 
+		public void Char_Local_Add(char c)
+		{
+			c++;
+			Console.WriteLine(c++);
+			Console.WriteLine(++c);
+			c--;
+			Console.WriteLine(c--);
+			Console.WriteLine(--c);
+		}
+
 		public void Int32_Local_Add(int i)
 		{
 			i++;

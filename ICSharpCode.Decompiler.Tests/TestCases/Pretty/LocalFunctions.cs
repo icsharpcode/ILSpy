@@ -697,6 +697,20 @@ namespace LocalFunctions
 			}
 		}
 
+		public static int LocalFunctionWithOptionalAndParams()
+		{
+			return Local(5) + Local(2, 3, 4);
+
+#if CS80
+			static int Local(int x = 5, params int[] rest)
+#else
+			int Local(int x = 5, params int[] rest)
+#endif
+			{
+				return x + rest.Length;
+			}
+		}
+
 		public void WriteCapturedParameter(int i)
 		{
 			ParamWrite();

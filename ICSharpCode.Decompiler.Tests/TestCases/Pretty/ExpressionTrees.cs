@@ -207,6 +207,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		internal class TypeWithNestedMembers
+		{
+			public SimpleType Nested = new SimpleType();
+
+			public List<int> List = new List<int>();
+		}
+
 		internal class SimpleTypeWithMultipleCtors
 		{
 			public SimpleTypeWithMultipleCtors()
@@ -954,6 +961,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				ToCode(null, (int a, int b) => a * b);
 				ToCode(null, (int a) => (short)a);
 			}
+		}
+
+		public void MemberAndListBindings()
+		{
+			ToCode(null, () => new TypeWithNestedMembers {
+				Nested = {
+					Field = 2
+				},
+				List = { 1, 2 }
+			});
 		}
 	}
 

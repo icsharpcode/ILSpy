@@ -130,5 +130,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 		}
+
+		public int HashCodeAccumulator(int type, string text)
+		{
+			int num = 1688038063;
+			num = num * -1521134295 + type.GetHashCode();
+			return num * -1521134295 + text.GetHashCode();
+		}
 	}
 }
