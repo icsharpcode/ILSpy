@@ -19,10 +19,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -37,6 +40,8 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 	{
 		public interface ICo<out T> { }
 		public interface IContra<in T> { }
+		public interface IInv<T> { }
+		public class DoubleImpl : IInv<int>, IInv<string> { }
 
 		public struct ConvertibleToString
 		{
@@ -61,6 +66,14 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 		ICompilation compilation;
 		TypeInference ti;
+
+		// The legacy reference mscorlib used by the main compilation predates
+		// System.ValueTuple, so tuple-related tests resolve against a .NET ref assembly.
+		static readonly Lazy<ICompilation> tupleCompilation = new Lazy<ICompilation>(
+			delegate {
+				string path = Path.Combine(Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
+				return new SimpleCompilation(new PEFile(path, new FileStream(path, FileMode.Open, FileAccess.Read)));
+			});
 
 		[OneTimeSetUp]
 		public void OneTimeSetUp()
@@ -608,6 +621,399 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				out success);
 			Assert.That(!success);
 		}
+
+		#region Input type inferences (spec 12.6.3.7)
+		[Test]
+		public void RefParameterUsesExactInference()
+		{
+			// Signature:  M<T>(ref List<T> x)
+			// Invocation: M(ref listOfString);
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition listType = compilation.FindType(typeof(List<>)).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ByReferenceResolveResult(new ResolveResult(compilation.FindType(typeof(List<string>))), ReferenceKind.Ref) },
+					new IType[] { new ByReferenceType(new ParameterizedType(listType, new[] { T })) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.String) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void RefParameterDoesNotUseLowerBoundInference()
+		{
+			// Signature:  M<T>(ref IList<T> x)
+			// Invocation: M(ref listOfString); with a List<string> variable
+			// A reference parameter requires an exact inference, so the base-type walk
+			// of lower-bound inference must not apply and no bound is found for T.
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition ilistType = compilation.FindType(KnownTypeCode.IListOfT).GetDefinition();
+
+			bool success;
+			ti.InferTypeArguments(new ITypeParameter[] { T },
+				new[] { new ByReferenceResolveResult(new ResolveResult(compilation.FindType(typeof(List<string>))), ReferenceKind.Ref) },
+				new IType[] { new ByReferenceType(new ParameterizedType(ilistType, new[] { T })) },
+				out success);
+			Assert.That(!success);
+		}
+
+		[Test]
+		[Ignore("Not implemented: a value argument passed to an 'in' parameter must produce a lower-bound inference (spec 12.6.3.7); currently no bound at all is inferred because every by-reference parameter takes the exact-inference path.")]
+		public void InParameterWithValueArgumentUsesLowerBoundInference()
+		{
+			// Signature:  M<T>(in T x)
+			// Invocation: M(5); -> rvalue argument, T = int
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(compilation.FindType(KnownTypeCode.Int32)) },
+					new IType[] { new ByReferenceType(T) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.Int32) }));
+			Assert.That(success);
+		}
+		#endregion
+
+		#region Tuple literal inferences (spec 12.6.3.7)
+		[Test]
+		[Ignore("Not implemented: elementwise input type inference from a tuple literal (spec 12.6.3.7); the literal is currently inferred through its tuple type, which makes conflicting exact element bounds instead of elementwise lower-bound inferences.")]
+		public void TupleLiteralInputTypeInference()
+		{
+			// Signature:  M<T>((T, T) t)
+			// Invocation: M((1, 2L)); -> csc infers T = long
+			// A tuple literal infers elementwise: a lower-bound inference is made from
+			// each element to the corresponding element type, giving the bounds
+			// { int, long } and the fixed type long. Treating the literal like a value
+			// of type (int, long) would instead produce conflicting exact bounds.
+			var comp = tupleCompilation.Value;
+			var inference = new TypeInference(comp);
+			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
+			var tupleOfTT = new TupleType(comp, ImmutableArray.Create<IType>(T, T));
+			var literal = new TupleResolveResult(comp, ImmutableArray.Create<ResolveResult>(
+				new ResolveResult(comp.FindType(KnownTypeCode.Int32)),
+				new ResolveResult(comp.FindType(KnownTypeCode.Int64))));
+
+			bool success;
+			Assert.That(
+				inference.InferTypeArguments(new ITypeParameter[] { T },
+					new ResolveResult[] { literal },
+					new IType[] { tupleOfTT },
+					out success),
+				Is.EqualTo(new[] { comp.FindType(KnownTypeCode.Int64) }));
+			Assert.That(success);
+		}
+		#endregion
+
+		#region Explicit parameter type inferences (spec 12.6.3.9)
+		[Test]
+		public void ExplicitLambdaParameterTypesGiveExactBounds()
+		{
+			// Signature:  M<T>(Func<T, bool> f)
+			// Invocation: M((string s) => true);
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			IType stringType = compilation.FindType(KnownTypeCode.String);
+			IType boolType = compilation.FindType(KnownTypeCode.Boolean);
+			IType[] parameterTypes = {
+				new ParameterizedType(compilation.FindType(typeof(Func<,>)).GetDefinition(),
+					new IType[] { T, boolType })
+			};
+			ResolveResult[] arguments = {
+				new MockExplicitLambda(new[] { stringType }, boolType)
+			};
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T }, arguments, parameterTypes, out success),
+				Is.EqualTo(new[] { stringType }));
+			Assert.That(success);
+		}
+		#endregion
+
+		#region Exact inferences (spec 12.6.3.10)
+		[Test]
+		public void ExactInferenceUnwrapsNullable()
+		{
+			// Signature:  M<T>(ref T? x)
+			// Invocation: M(ref nullableInt); -> T = int
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition nullableType = compilation.FindType(KnownTypeCode.NullableOfT).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ByReferenceResolveResult(new ResolveResult(compilation.FindType(typeof(int?))), ReferenceKind.Ref) },
+					new IType[] { new ByReferenceType(new ParameterizedType(nullableType, new[] { T })) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.Int32) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void ExactInferenceOnArrayElements()
+		{
+			// Signature:  M<T>(ref T[] x)
+			// Invocation: M(ref stringArray); -> T = string
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			IType stringType = compilation.FindType(KnownTypeCode.String);
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ByReferenceResolveResult(new ResolveResult(new ArrayType(compilation, stringType)), ReferenceKind.Ref) },
+					new IType[] { new ByReferenceType(new ArrayType(compilation, T)) },
+					out success),
+				Is.EqualTo(new[] { stringType }));
+			Assert.That(success);
+		}
+		#endregion
+
+		#region Lower-bound inferences (spec 12.6.3.11)
+		[Test]
+		public void ArrayToCollection()
+		{
+			ITypeParameter tp = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			IType stringType = compilation.FindType(KnownTypeCode.String);
+			ITypeDefinition collectionType = compilation.FindType(KnownTypeCode.ICollectionOfT).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new[] { tp },
+					new[] { new ResolveResult(new ArrayType(compilation, stringType)) },
+					new IType[] { new ParameterizedType(collectionType, new[] { tp }) },
+					out success),
+				Is.EqualTo(new[] { stringType }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void ArrayToReadOnlyCollection()
+		{
+			ITypeParameter tp = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			IType stringType = compilation.FindType(KnownTypeCode.String);
+			ITypeDefinition rocType = compilation.FindType(KnownTypeCode.IReadOnlyCollectionOfT).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new[] { tp },
+					new[] { new ResolveResult(new ArrayType(compilation, stringType)) },
+					new IType[] { new ParameterizedType(rocType, new[] { tp }) },
+					out success),
+				Is.EqualTo(new[] { stringType }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void LowerBoundInferenceRequiresUniqueBaseType()
+		{
+			// Signature:  M<T>(IInv<T> x)
+			// Invocation: M(new DoubleImpl()); with DoubleImpl : IInv<int>, IInv<string>
+			// No inference is made because the implemented IInv<> instantiation is
+			// not unique, so T has no bounds and inference fails.
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition invType = compilation.FindType(typeof(IInv<>)).GetDefinition();
+
+			bool success;
+			ti.InferTypeArguments(new ITypeParameter[] { T },
+				new[] { new ResolveResult(compilation.FindType(typeof(DoubleImpl))) },
+				new IType[] { new ParameterizedType(invType, new[] { T }) },
+				out success);
+			Assert.That(!success);
+		}
+
+		[Test]
+		public void LowerBoundInferenceValueTypeElementIsExact()
+		{
+			// Signature:  M<T>(IEnumerable<T> a, T b)
+			// Invocation: M(intSequence, 2L);
+			// Even though IEnumerable<T> is covariant, the element type int is a value
+			// type, so an exact inference is made for it. The lower bound long is not
+			// implicitly convertible to the exact bound int, so inference fails.
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition enumerableType = compilation.FindType(KnownTypeCode.IEnumerableOfT).GetDefinition();
+
+			bool success;
+			ti.InferTypeArguments(new ITypeParameter[] { T },
+				new[] {
+					new ResolveResult(compilation.FindType(typeof(IEnumerable<int>))),
+					new ResolveResult(compilation.FindType(KnownTypeCode.Int64))
+				},
+				new IType[] {
+					new ParameterizedType(enumerableType, new[] { T }),
+					T
+				},
+				out success);
+			Assert.That(!success);
+		}
+		#endregion
+
+		#region Upper-bound inferences (spec 12.6.3.12)
+		[Test]
+		public void UpperBoundInferenceKeepsDirectionForCovariance()
+		{
+			// Signature:  M<T>(IContra<ICo<T>> x)
+			// Invocation: M(default(IContra<ICo<string>>)); -> T = string
+			// The contravariant outer interface turns the element inference into an
+			// upper-bound inference from ICo<string> to ICo<T>; the covariant inner
+			// interface keeps the upper-bound direction for T.
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition contraType = compilation.FindType(typeof(IContra<>)).GetDefinition();
+			ITypeDefinition coType = compilation.FindType(typeof(ICo<>)).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(compilation.FindType(typeof(IContra<ICo<string>>))) },
+					new IType[] { new ParameterizedType(contraType, new IType[] { new ParameterizedType(coType, new[] { T }) }) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.String) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void UpperBoundInferenceFlipsToLowerBoundForContravariance()
+		{
+			// Signature:  M<T>(IContra<IContra<T>> x)
+			// Invocation: M(default(IContra<IContra<string>>)); -> T = string
+			// Two levels of contravariance: the upper-bound inference from
+			// IContra<string> to IContra<T> flips back to a lower-bound inference
+			// from string to T.
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition contraType = compilation.FindType(typeof(IContra<>)).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(compilation.FindType(typeof(IContra<IContra<string>>))) },
+					new IType[] { new ParameterizedType(contraType, new IType[] { new ParameterizedType(contraType, new[] { T }) }) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.String) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void UpperBoundInferenceOnArrayElements()
+		{
+			// Signature:  M<T>(IContra<T[]> x)
+			// Invocation: M(default(IContra<string[]>)); -> T = string
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition contraType = compilation.FindType(typeof(IContra<>)).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(compilation.FindType(typeof(IContra<string[]>))) },
+					new IType[] { new ParameterizedType(contraType, new IType[] { new ArrayType(compilation, T) }) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.String) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void UpperBoundInferenceFromArrayInterfaceToArray()
+		{
+			// Signature:  M<T>(IContra<T[]> x)
+			// Invocation: M(default(IContra<IEnumerable<string>>)); -> T = string
+			// Upper-bound inference from IEnumerable<string> to T[] uses the
+			// array-interface rule elementwise.
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition contraType = compilation.FindType(typeof(IContra<>)).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(compilation.FindType(typeof(IContra<IEnumerable<string>>))) },
+					new IType[] { new ParameterizedType(contraType, new IType[] { new ArrayType(compilation, T) }) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.String) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void UpperBoundInferenceUnwrapsNullable()
+		{
+			// Signature:  M<T>(IContra<T?> x)
+			// Invocation: M(default(IContra<int?>)); -> T = int
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition contraType = compilation.FindType(typeof(IContra<>)).GetDefinition();
+			ITypeDefinition nullableType = compilation.FindType(KnownTypeCode.NullableOfT).GetDefinition();
+
+			bool success;
+			Assert.That(
+				ti.InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(compilation.FindType(typeof(IContra<int?>))) },
+					new IType[] { new ParameterizedType(contraType, new IType[] { new ParameterizedType(nullableType, new[] { T }) }) },
+					out success),
+				Is.EqualTo(new[] { compilation.FindType(KnownTypeCode.Int32) }));
+			Assert.That(success);
+		}
+		#endregion
+
+		#region Fixing (spec 12.6.3.13)
+		[Test]
+		public void FixingFailsOnConflictingExactBounds()
+		{
+			// Signature:  M<T>(ref List<T> a, ref List<T> b)
+			// Invocation: M(ref listOfString, ref listOfObject);
+			var T = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			ITypeDefinition listType = compilation.FindType(typeof(List<>)).GetDefinition();
+			var refListOfT = new ByReferenceType(new ParameterizedType(listType, new[] { T }));
+
+			bool success;
+			ti.InferTypeArguments(new ITypeParameter[] { T },
+				new[] {
+					new ByReferenceResolveResult(new ResolveResult(compilation.FindType(typeof(List<string>))), ReferenceKind.Ref),
+					new ByReferenceResolveResult(new ResolveResult(compilation.FindType(typeof(List<object>))), ReferenceKind.Ref)
+				},
+				new IType[] { refListOfT, refListOfT },
+				out success);
+			Assert.That(!success);
+		}
+		#endregion
+
+		#region Best common type (spec 12.6.3.17)
+		[Test]
+		public void BestCommonTypeIntAndShort()
+		{
+			bool success;
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(compilation.FindType(KnownTypeCode.Int16)),
+					new ResolveResult(compilation.FindType(KnownTypeCode.Int32))
+				}, out success),
+				Is.EqualTo(compilation.FindType(KnownTypeCode.Int32)));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void BestCommonTypeNullAndString()
+		{
+			bool success;
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(SpecialType.NullType),
+					new ResolveResult(compilation.FindType(KnownTypeCode.String))
+				}, out success),
+				Is.EqualTo(compilation.FindType(KnownTypeCode.String)));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void BestCommonTypeStringAndObject()
+		{
+			bool success;
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(compilation.FindType(KnownTypeCode.String)),
+					new ResolveResult(compilation.FindType(KnownTypeCode.Object))
+				}, out success),
+				Is.EqualTo(compilation.FindType(KnownTypeCode.Object)));
+			Assert.That(success);
+		}
+		#endregion
 
 		#region FindTypeInBounds
 		IType[] Resolve(params Type[] types)
