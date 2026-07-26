@@ -222,5 +222,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return null;
 			}
 		}
+#if CS130
+		public class BaseWithAllowsRefStruct
+		{
+			public virtual void Annotated<T>(T? value) where T : allows ref struct
+			{
+			}
+
+			public virtual void Plain<T>(T value) where T : allows ref struct
+			{
+			}
+		}
+
+		public class DerivedWithAllowsRefStruct : BaseWithAllowsRefStruct
+		{
+			public override void Annotated<T>(T? value) where T : default
+			{
+			}
+
+			public override void Plain<T>(T value)
+			{
+			}
+		}
+#endif
 	}
 }

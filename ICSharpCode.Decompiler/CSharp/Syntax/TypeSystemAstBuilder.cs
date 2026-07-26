@@ -2619,6 +2619,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// metadata, so which disambiguator is legal follows from them without resolving the base
 		// member. The restated disambiguator leaves no metadata trace of its own, hence it must be
 		// derived rather than read back.
+		// The clause is built here rather than through ConvertTypeParameterConstraint, which also
+		// prints 'allows ref struct' from the byreflike flag. That flag is re-emitted on the
+		// override's own type parameter as well, and restating it is CS0460.
 		void AddNullabilityDisambiguatingConstraints(MethodDeclaration decl, IMethod method)
 		{
 			if (method.TypeParameters.Count == 0)
