@@ -105,11 +105,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				WriteMiscellaneousPropertyGroup(xml, files);
 			}
-			if (WriteCustomPropertyGroup != null)
+			var writeCustomPropertyGroup = WriteCustomPropertyGroup;
+			if (writeCustomPropertyGroup != null)
 			{
 				using (new Group(xml, "PropertyGroup"))
 				{
-					WriteCustomPropertyGroup.Invoke(xml, project, files, module);
+					writeCustomPropertyGroup.Invoke(xml, project, files, module);
 				}
 			}
 			using (new Group(xml, "ItemGroup"))
@@ -120,11 +121,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				WriteReferences(xml, module, project);
 			}
-			if (WriteCustomItemGroup != null)
+			var writeCustomItemGroup = WriteCustomItemGroup;
+			if (writeCustomItemGroup != null)
 			{
 				using (new Group(xml, "ItemGroup"))
 				{
-					WriteCustomItemGroup.Invoke(xml, project, files, module);
+					writeCustomItemGroup.Invoke(xml, project, files, module);
 				}
 			}
 
