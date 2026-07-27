@@ -53,6 +53,17 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task NegativeConstants()
+		{
+			await Run();
+			// CodeAssert ignores comments, so pin the hexadecimal rendering explicitly.
+			string result = File.ReadAllText(Path.Combine(TestCasePath, nameof(NegativeConstants) + ".result.il"));
+			Assert.That(result, Does.Contain("ldc.i4 -501 // 0xfffffe0b"));
+			Assert.That(result, Does.Contain("ldc.i8 -2 // 0xfffffffffffffffe"));
+			Assert.That(result, Does.Contain("ldc.i4 300\r\n").Or.Contain("ldc.i4 300\n"));
+		}
+
+		[Test]
 		public async Task GenericConstraints()
 		{
 			await Run();
