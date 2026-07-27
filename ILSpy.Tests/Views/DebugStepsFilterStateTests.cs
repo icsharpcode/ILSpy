@@ -18,10 +18,12 @@
 
 #if DEBUG
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
@@ -98,6 +100,46 @@ public class DebugStepsFilterStateTests
 		StepNodeViewModel node => node.Description,
 		_ => null,
 	};
+
+	[AvaloniaTest]
+	public Task Clearing_The_Filter_Centers_The_Selected_Step()
+	{
+		// A tree tall enough that the selected step sits far outside the initial viewport, so
+		// centering requires an actual scroll rather than being satisfied trivially.
+		var group = new Stepper.Node("TransformGroup");
+		for (int i = 0; i < 60; i++)
+		{
+			group.Children.Add(new Stepper.Node($"{i}: Step number {i}"));
+		}
+		var vm = new DebugStepsPaneModel();
+		SetSteps(vm, new[] { group });
+		vm.IsAvailable = true;
+		var window = new Window { Width = 400, Height = 300, Content = new DebugSteps { DataContext = vm } };
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+		var tree = window.GetVisualDescendants().OfType<TreeView>().First();
+
+		vm.FilterText = "number 42";
+		Dispatcher.UIThread.RunJobs();
+		var leaf = RowFor(tree, "42: Step number 42");
+		tree.SelectedItem = leaf.DataContext;
+		Dispatcher.UIThread.RunJobs();
+
+		vm.FilterText = "";
+		Dispatcher.UIThread.RunJobs();
+		Dispatcher.UIThread.RunJobs();
+
+		var scrollViewer = tree.GetVisualDescendants().OfType<ScrollViewer>().First();
+		scrollViewer.Offset.Y.Should().BeGreaterThan(0,
+			"revealing a selected step deep in the tree must scroll the viewport");
+		var rowCenter = leaf.TranslatePoint(new Point(0, leaf.Bounds.Height / 2), scrollViewer)!.Value.Y;
+		var viewportCenter = scrollViewer.Viewport.Height / 2;
+		Math.Abs(rowCenter - viewportCenter).Should().BeLessThan(leaf.Bounds.Height * 1.5,
+			"the selected step must end up roughly centered in the viewport");
+
+		window.Close();
+		return Task.CompletedTask;
+	}
 
 	[AvaloniaTest]
 	public Task Manual_Expansion_Survives_A_Filter_Round_Trip()
