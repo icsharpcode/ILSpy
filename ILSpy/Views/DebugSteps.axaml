@@ -3,14 +3,10 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:ICSharpCode.ILSpy.ViewModels"
-             xmlns:views="using:ICSharpCode.ILSpy.Views"
              xmlns:il="using:ICSharpCode.Decompiler.IL"
              mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
              x:Class="ICSharpCode.ILSpy.Views.DebugSteps"
              x:DataType="vm:DebugStepsPaneModel">
-	<UserControl.Resources>
-		<views:DebugStepFilterConverter x:Key="StepFilter" />
-	</UserControl.Resources>
 	<Panel>
 	<TextBlock IsVisible="{Binding !IsAvailable}"
 	           HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -47,17 +43,12 @@
 		          DoubleTapped="OnTreeDoubleTapped"
 		          x:CompileBindings="False">
 			<TreeView.Styles>
-				<!-- Hide rows that neither match the filter nor lead to a match, and expand the tree
-				     while filtering so surviving matches under transform groups stay visible. -->
+				<!-- Each row's visibility and expansion are owned by its StepNodeViewModel, where the
+				     pane's filter logic maintains them; expansion is two-way so the user's expander
+				     gestures flow back into the view-model instead of dying with the container. -->
 				<Style Selector="TreeViewItem">
-					<Setter Property="IsVisible">
-						<MultiBinding Converter="{StaticResource StepFilter}">
-							<Binding />
-							<Binding Path="DataContext.FilterText" RelativeSource="{RelativeSource AncestorType=TreeView}" />
-						</MultiBinding>
-					</Setter>
-					<Setter Property="IsExpanded"
-					        Value="{Binding DataContext.IsFiltering, RelativeSource={RelativeSource AncestorType=TreeView}}" />
+					<Setter Property="IsVisible" Value="{Binding IsVisible}" />
+					<Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
 				</Style>
 			</TreeView.Styles>
 			<TreeView.ItemTemplate>
