@@ -762,6 +762,9 @@ Are you sure you want to continue?</value>
   <data name="HighlightMatchingBraces" xml:space="preserve">
     <value>Highlight matching braces</value>
   </data>
+  <data name="HighlightMemberReferences" xml:space="preserve">
+    <value>Single-click highlights member references (Ctrl+Click navigates)</value>
+  </data>
   <data name="ILSpyAboutPageTxt" xml:space="preserve">
     <value>ILSpyAboutPage.txt</value>
   </data>

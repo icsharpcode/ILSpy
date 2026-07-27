@@ -2209,6 +2209,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Single-click highlights member references (Ctrl+Click navigates).
+        /// </summary>
+        public static string HighlightMemberReferences {
+            get {
+                return ResourceManager.GetString("HighlightMemberReferences", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ILSpyAboutPage.txt.
         /// </summary>
         public static string ILSpyAboutPageTxt {

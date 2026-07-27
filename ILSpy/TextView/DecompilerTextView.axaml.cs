@@ -185,7 +185,9 @@ namespace ICSharpCode.ILSpy.TextView
 		// with a null target slip through unconditionally otherwise.
 		void SetupElementGenerators()
 		{
-			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null);
+			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null) {
+				QueryCursor = OnReferenceQueryCursor
+			};
 			Editor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 
 			uiElementGenerator = new UIElementGenerator();
@@ -249,7 +251,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// bubbling further now that it has been consumed as a link click.
 			Editor.TextArea.ClearSelection();
 			e.Handled = true;
-			OnReferenceClicked(segment);
+			OnReferenceClicked(segment, e.KeyModifiers.HasFlag(KeyModifiers.Control));
 		}
 
 		// Background renderers that live for the view's lifetime: the local-reference highlight (marks
@@ -360,13 +362,25 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			base.OnAttachedToVisualTree(e);
 			ICSharpCode.ILSpy.Themes.ThemeManager.Current.ThemeChanged += OnThemeChangedRebuildHighlighting;
+			// Ctrl toggles between highlight and navigate for reference clicks; listen at the
+			// top level because the keyboard focus is usually elsewhere while hovering.
+			cursorKeyEventSource = global::Avalonia.Controls.TopLevel.GetTopLevel(this);
+			cursorKeyEventSource?.AddHandler(KeyDownEvent, OnTopLevelKeyDownForReferenceCursor, RoutingStrategies.Tunnel, handledEventsToo: true);
+			cursorKeyEventSource?.AddHandler(KeyUpEvent, OnTopLevelKeyUpForReferenceCursor, RoutingStrategies.Tunnel, handledEventsToo: true);
 		}
 
 		protected override void OnDetachedFromVisualTree(global::Avalonia.VisualTreeAttachmentEventArgs e)
 		{
 			ICSharpCode.ILSpy.Themes.ThemeManager.Current.ThemeChanged -= OnThemeChangedRebuildHighlighting;
+			cursorKeyEventSource?.RemoveHandler(KeyDownEvent, OnTopLevelKeyDownForReferenceCursor);
+			cursorKeyEventSource?.RemoveHandler(KeyUpEvent, OnTopLevelKeyUpForReferenceCursor);
+			cursorKeyEventSource = null;
+			cursorQueryElement = null;
+			cursorQuerySegment = null;
 			base.OnDetachedFromVisualTree(e);
 		}
+
+		global::Avalonia.Controls.TopLevel? cursorKeyEventSource;
 
 		// A theme switch re-colours the shared named HighlightingColors in place, but the
 		// semantic RichTextModel cloned them at decompile time (RichTextModel.SetHighlighting
@@ -1197,7 +1211,54 @@ namespace ICSharpCode.ILSpy.TextView
 			return model.References.FindSegmentsContaining(offset).FirstOrDefault();
 		}
 
-		internal void OnReferenceClicked(ReferenceSegment segment)
+		/// <summary>
+		/// True when a plain click on <paramref name="segment"/> paints the occurrence
+		/// highlight instead of navigating: the member-highlight setting is enabled, Ctrl is
+		/// not held, and the reference is a member, type or unresolved entity reference.
+		/// </summary>
+		bool ShouldHighlightInsteadOfNavigate(ReferenceSegment segment, bool ctrlHeld)
+		{
+			return !ctrlHeld
+				&& segment.Kind == ReferenceMode.Link
+				&& currentDisplaySettings is { HighlightMemberReferences: true }
+				&& segment.Reference is IMember or IType or EntityReference;
+		}
+
+		InputElement? cursorQueryElement;
+		ReferenceSegment? cursorQuerySegment;
+
+		void OnReferenceQueryCursor(InputElement element, ReferenceSegment segment, KeyModifiers modifiers)
+		{
+			cursorQueryElement = element;
+			cursorQuerySegment = segment;
+			ApplyReferenceCursor(modifiers.HasFlag(KeyModifiers.Control));
+		}
+
+		// The hand cursor promises navigation: show it only when a click would actually
+		// navigate. Re-evaluated on pointer moves and on Ctrl presses/releases while a
+		// reference is under the pointer.
+		void ApplyReferenceCursor(bool ctrlHeld)
+		{
+			if (cursorQueryElement == null || cursorQuerySegment == null)
+				return;
+			bool navigates = cursorQuerySegment.Kind == ReferenceMode.Link
+				&& !ShouldHighlightInsteadOfNavigate(cursorQuerySegment, ctrlHeld);
+			cursorQueryElement.Cursor = new Cursor(navigates ? StandardCursorType.Hand : StandardCursorType.Arrow);
+		}
+
+		void OnTopLevelKeyDownForReferenceCursor(object? sender, KeyEventArgs e)
+		{
+			if (e.Key is Key.LeftCtrl or Key.RightCtrl)
+				ApplyReferenceCursor(ctrlHeld: true);
+		}
+
+		void OnTopLevelKeyUpForReferenceCursor(object? sender, KeyEventArgs e)
+		{
+			if (e.Key is Key.LeftCtrl or Key.RightCtrl)
+				ApplyReferenceCursor(ctrlHeld: false);
+		}
+
+		internal void OnReferenceClicked(ReferenceSegment segment, bool ctrlHeld = false)
 		{
 			if (DataContext is not DecompilerTabPageModel model || segment.Reference == null)
 				return;
@@ -1211,6 +1272,15 @@ namespace ICSharpCode.ILSpy.TextView
 			// scrub through them. Cross-document references clear any existing marks since the
 			// view is about to refresh anyway.
 			if (segment.Kind == ReferenceMode.LocalHighlight)
+			{
+				HighlightLocalReferences(model, segment.Reference);
+				return;
+			}
+			// With the member-highlight setting enabled, a plain click on a member or type
+			// reference paints all its occurrences in this view instead of navigating;
+			// Ctrl+Click keeps the navigation behavior. Opcode references always navigate:
+			// highlighting every occurrence of an IL opcode would be noise.
+			if (ShouldHighlightInsteadOfNavigate(segment, ctrlHeld))
 			{
 				HighlightLocalReferences(model, segment.Reference);
 				return;
@@ -1245,11 +1315,47 @@ namespace ICSharpCode.ILSpy.TextView
 				return;
 			foreach (var r in model.References)
 			{
-				if (!ReferenceEquals(reference, r.Reference) && !reference.Equals(r.Reference))
+				if (!AreSameReference(reference, r.Reference))
 					continue;
 				var mark = textMarkerService.Create(r.StartOffset, r.Length);
 				mark.BackgroundColor = r.IsDefinition ? LocalDefinitionBackground : LocalMatchBackground;
 				localReferenceMarks.Add(mark);
+			}
+		}
+
+		internal static bool AreSameReference(object reference, object? candidate)
+		{
+			if (candidate == null)
+				return false;
+			if (ReferenceEquals(reference, candidate) || reference.Equals(candidate))
+				return true;
+			// Member and type references compare by definition: a use site carries a
+			// specialized instance (e.g. List<int>.Add) while the declaration carries
+			// the unspecialized definition, and their Equals treats them as different.
+			var a = NormalizeToEntity(reference);
+			var b = NormalizeToEntity(candidate);
+			if (a != null && b != null)
+			{
+				// Generated members carry a nil token; falling through to the token comparison
+				// would conflate any two of them from the same module.
+				return !a.MetadataToken.IsNil
+					&& a.MetadataToken == b.MetadataToken
+					&& a.ParentModule?.MetadataFile != null
+					&& a.ParentModule.MetadataFile == b.ParentModule?.MetadataFile;
+			}
+			// IL and metadata views carry unresolved entity references; compare them
+			// structurally instead of resolving, which would build a type system per call.
+			if (reference is EntityReference unresolvedA && candidate is EntityReference unresolvedB)
+				return unresolvedA.Module == unresolvedB.Module && unresolvedA.Handle == unresolvedB.Handle;
+			return false;
+
+			static IEntity? NormalizeToEntity(object reference)
+			{
+				return reference switch {
+					IMember member => member.MemberDefinition,
+					IType type => type.GetDefinition(),
+					_ => null,
+				};
 			}
 		}
 
@@ -1373,6 +1479,15 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextViewPointerMoved(object? sender, PointerEventArgs e)
 		{
+			// The reference elements report QueryCursor only while the pointer is over them;
+			// once it moves elsewhere inside the text view, drop the cached query so Ctrl
+			// transitions cannot repaint a reference the pointer has already left.
+			if (cursorQueryElement is { IsPointerOver: false })
+			{
+				cursorQueryElement = null;
+				cursorQuerySegment = null;
+			}
+
 			if (!richPopup.IsOpen)
 				return;
 			// While the rich popup is open, PointerMoved drives the WPF "distance corridor" —
@@ -1387,6 +1502,11 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextViewPointerExited(object? sender, PointerEventArgs e)
 		{
+			// The pointer is no longer over a reference, so Ctrl transitions must not
+			// repaint the last hovered element's cursor.
+			cursorQueryElement = null;
+			cursorQuerySegment = null;
+
 			// Don't close the rich popup if the pointer just moved from the editor onto the
 			// popup itself — the user is reaching for it. The overlay popup delivers the
 			// editor's exit BEFORE the popup child's IsPointerOver flips, so the flag alone

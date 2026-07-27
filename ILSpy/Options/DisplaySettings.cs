@@ -102,6 +102,9 @@ namespace ICSharpCode.ILSpy.Options
 		[ObservableProperty]
 		bool enableOmnibar;
 
+		[ObservableProperty]
+		bool highlightMemberReferences;
+
 		public XName SectionName => "DisplaySettings";
 
 		public void LoadFromXml(XElement section)
@@ -129,6 +132,7 @@ namespace ICSharpCode.ILSpy.Options
 			StyleWindowTitleBar = (bool?)section.Attribute(nameof(StyleWindowTitleBar)) ?? false;
 			DecodeCustomAttributeBlobs = (bool?)section.Attribute(nameof(DecodeCustomAttributeBlobs)) ?? false;
 			EnableOmnibar = (bool?)section.Attribute(nameof(EnableOmnibar)) ?? false;
+			HighlightMemberReferences = (bool?)section.Attribute(nameof(HighlightMemberReferences)) ?? false;
 		}
 
 		public XElement SaveToXml()
@@ -157,6 +161,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue(nameof(StyleWindowTitleBar), StyleWindowTitleBar);
 			section.SetAttributeValue(nameof(DecodeCustomAttributeBlobs), DecodeCustomAttributeBlobs);
 			section.SetAttributeValue(nameof(EnableOmnibar), EnableOmnibar);
+			section.SetAttributeValue(nameof(HighlightMemberReferences), HighlightMemberReferences);
 			return section;
 		}
 	}
