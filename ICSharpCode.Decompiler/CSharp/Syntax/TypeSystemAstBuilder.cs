@@ -2342,13 +2342,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (method.IsExtensionMethod && method.ReducedFrom == null && decl.Parameters.Any())
 				decl.Parameters.First().HasThisModifier = true;
 
-			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints && !method.IsOverride && !method.IsExplicitInterfaceImplementation)
+			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints)
 			{
-				foreach (ITypeParameter tp in method.TypeParameters)
+				if (method.IsOverride || method.IsExplicitInterfaceImplementation)
 				{
-					var constraint = ConvertTypeParameterConstraint(tp);
-					if (constraint != null)
-						decl.Constraints.Add(constraint);
+					// C# inherits the constraints of an override or explicit interface
+					// implementation from the base member and forbids restating them, with a
+					// single exception: a 'class', 'struct', or 'default' constraint may be given
+					// to disambiguate whether 'T?' denotes a nullable annotation or Nullable<T>.
+					AddNullabilityDisambiguatingConstraints(decl, method);
+				}
+				else
+				{
+					foreach (ITypeParameter tp in method.TypeParameters)
+					{
+						var constraint = ConvertTypeParameterConstraint(tp);
+						if (constraint != null)
+							decl.Constraints.Add(constraint);
+					}
 				}
 			}
 			decl.Body = GenerateBodyBlock();
@@ -2606,6 +2617,68 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				c.BaseTypes.Add(new PrimitiveType("allows ref struct"));
 			}
 			return c;
+		}
+
+		// A disambiguator is required only where the type parameter itself carries a nullable
+		// annotation ('T?') in the signature: without it the compiler reads 'T?' as Nullable<T>.
+		// The inherited constraints are re-emitted on the override's own type parameters in
+		// metadata, so which disambiguator is legal follows from them without resolving the base
+		// member. The restated disambiguator leaves no metadata trace of its own, hence it must be
+		// derived rather than read back.
+		// The clause is built here rather than through ConvertTypeParameterConstraint, which also
+		// prints 'allows ref struct' from the byreflike flag. That flag is re-emitted on the
+		// override's own type parameter as well, and restating it is CS0460.
+		void AddNullabilityDisambiguatingConstraints(MethodDeclaration decl, IMethod method)
+		{
+			if (method.TypeParameters.Count == 0)
+				return;
+			NullableTypeParameterCollector collector = new(method.TypeParameters);
+			method.ReturnType.AcceptVisitor(collector);
+			foreach (IParameter p in method.Parameters)
+				p.Type.AcceptVisitor(collector);
+			if (collector.NullableTypeParameters.Count == 0)
+				return;
+			foreach (ITypeParameter tp in method.TypeParameters)
+			{
+				if (!collector.NullableTypeParameters.Contains(tp) || GetNullabilityDisambiguator(tp) is not string keyword)
+					continue;
+				Constraint c = new();
+				c.TypeParameter = MakeSimpleType(tp.Name);
+				c.BaseTypes.Add(new PrimitiveType(keyword));
+				decl.Constraints.Add(c);
+			}
+		}
+
+		// Returns the constraint that keeps 'T?' meaning a nullable annotation on an override or
+		// explicit interface implementation, or null where the type parameter neither needs nor
+		// permits one.
+		static string? GetNullabilityDisambiguator(ITypeParameter tp) => tp.IsReferenceType switch {
+			// C# accepts only plain 'class' here, never 'class?'; the constraint's own nullability
+			// is inherited from the base member regardless.
+			true => "class",
+			// Constrained to neither a reference type nor a value type.
+			null => "default",
+			// A value type uses Nullable<T> rather than a nullable annotation.
+			false => null
+		};
+
+		// Collects the type parameters of one method that appear with a nullable annotation ('T?')
+		// anywhere in a visited type, including nested positions such as List<T?> or T?[]. Type
+		// parameters of any other owner are ignored: a specialized signature can substitute a
+		// foreign type parameter that happens to share an index with one of this method's own.
+		sealed class NullableTypeParameterCollector(IReadOnlyList<ITypeParameter> typeParameters) : TypeVisitor
+		{
+			public readonly HashSet<ITypeParameter> NullableTypeParameters = [];
+
+			public override IType VisitNullabilityAnnotatedType(NullabilityAnnotatedType type)
+			{
+				if (type is NullabilityAnnotatedTypeParameter { Nullability: Nullability.Nullable } natp
+					&& typeParameters.Contains(natp.OriginalTypeParameter))
+				{
+					NullableTypeParameters.Add(natp.OriginalTypeParameter);
+				}
+				return base.VisitNullabilityAnnotatedType(type);
+			}
 		}
 
 		static bool IsObjectOrValueType(IType type)
