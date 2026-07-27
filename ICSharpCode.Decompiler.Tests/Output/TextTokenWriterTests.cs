@@ -107,6 +107,10 @@ namespace ICSharpCode.Decompiler.Tests.Output
 				LocalReferences.Add((text, reference, isDefinition));
 			}
 
+			public void MarkDefinitionStart()
+			{
+			}
+
 			public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 			{
 				FoldStartDefaultCollapsed.Add(defaultCollapsed);

@@ -534,6 +534,13 @@ namespace ICSharpCode.Decompiler
 					lastUsingDeclaration = false;
 				}
 			}
+			if (node is EntityDeclaration)
+			{
+				// The declaration's logical region starts here, before its documentation
+				// comments and attributes are written; the body fold marked later refers
+				// back to this position for group toggling in the UI.
+				output.MarkDefinitionStart();
+			}
 			nodeStack.Push(node);
 		}
 
