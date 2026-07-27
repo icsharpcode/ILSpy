@@ -422,11 +422,23 @@ namespace ICSharpCode.Decompiler.Disassembler
 						break;
 					case OperandType.I:
 						output.Write(' ');
-						DisassemblerHelpers.WriteOperand(output, blob.ReadInt32());
+						int operand32 = blob.ReadInt32();
+						DisassemblerHelpers.WriteOperand(output, operand32);
+						if (operand32 < 0)
+						{
+							// A negative operand is usually the two's-complement rendering of a bit
+							// mask or high unsigned constant; show the hexadecimal form alongside.
+							output.Write($" // 0x{unchecked((uint)operand32):x8}");
+						}
 						break;
 					case OperandType.I8:
 						output.Write(' ');
-						DisassemblerHelpers.WriteOperand(output, blob.ReadInt64());
+						long operand64 = blob.ReadInt64();
+						DisassemblerHelpers.WriteOperand(output, operand64);
+						if (operand64 < 0)
+						{
+							output.Write($" // 0x{unchecked((ulong)operand64):x16}");
+						}
 						break;
 					case OperandType.ShortR:
 						output.Write(' ');
