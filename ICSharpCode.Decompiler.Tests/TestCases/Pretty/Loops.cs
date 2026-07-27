@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
@@ -71,6 +72,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 
 			public CustomStructEnumerator GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		public sealed class CustomSealedClassEnumerator
+		{
+			public object Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomSealedClassEnumerator GetEnumerator()
 			{
 				return this;
 			}
@@ -360,15 +385,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		// TODO : Needs additional pattern detection
-		// CustomStructEnumerator does not implement IDisposable
-		// No try-finally-Dispose is generated.
-		//public void ForEachOnCustomStructEnumerator(CustomStructEnumerator e)
-		//{
-		//	foreach (object item in e) {
-		//		Console.WriteLine(item);
-		//	}
-		//}
+		// CustomStructEnumerator does not implement IDisposable,
+		// so no try-finally-Dispose is generated around the loop.
+		public void ForEachOnCustomStructEnumerator(CustomStructEnumerator e)
+		{
+			foreach (object item in e)
+			{
+				Console.WriteLine(item);
+			}
+		}
+
+		// CustomSealedClassEnumerator is sealed and does not implement IDisposable,
+		// so no try-finally-Dispose is generated around the loop.
+		public void ForEachOnCustomSealedClassEnumerator(CustomSealedClassEnumerator e)
+		{
+			foreach (object item in e)
+			{
+				Console.WriteLine(item);
+			}
+		}
+
+		// SerializationInfoEnumerator is a sealed class and does not implement IDisposable.
+		public void Issue1603(SerializationInfo info)
+		{
+			foreach (SerializationEntry item in info)
+			{
+				Console.WriteLine(item.Name);
+			}
+		}
 
 		public void ForEachOnGenericCustomClassEnumerator<T>(CustomClassEnumerator<T> e)
 		{
@@ -378,15 +422,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		// TODO : Needs additional pattern detection
-		// CustomStructEnumerator does not implement IDisposable
-		// No try-finally-Dispose is generated.
-		//public void ForEachOnGenericCustomStructEnumerator<T>(CustomStructEnumerator<T> e)
-		//{
-		//	foreach (T item in e) {
-		//		Console.WriteLine(item);
-		//	}
-		//}
+		// CustomStructEnumerator<T> does not implement IDisposable,
+		// so no try-finally-Dispose is generated around the loop.
+		public void ForEachOnGenericCustomStructEnumerator<T>(CustomStructEnumerator<T> e)
+		{
+			foreach (T item in e)
+			{
+				Console.WriteLine(item);
+			}
+		}
 
 		public void ForEachOnCustomClassEnumeratorWithIDisposable(CustomClassEnumeratorWithIDisposable e)
 		{
