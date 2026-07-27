@@ -126,6 +126,7 @@
     <None Include="TestCases\ILPretty\Issue2104.il" />
     <None Include="TestCases\ILPretty\Issue3421.il" />
     <None Include="TestCases\ILPretty\WeirdEnums.il" />
+    <None Include="TestCases\ILPretty\EnumArithmeticOutOfRange.il" />
     <None Include="TestCases\ILPretty\ConstantBlobs.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Debug.il" />
     <None Include="TestCases\ILPretty\CS1xSwitch_Release.il" />
@@ -199,6 +200,8 @@
     <Compile Remove="TestCases\ILPretty\InstanceOperatorCall.cs" />
     <None Include="TestCases\ILPretty\InstanceOperatorCall.cs" />
     <None Include="TestCases\ILPretty\InstanceOperatorCall.il" />
+    <Compile Remove="TestCases\ILPretty\EnumArithmeticOutOfRange.cs" />
+    <None Include="TestCases\ILPretty\EnumArithmeticOutOfRange.cs" />
     <Compile Remove="TestCases\ILPretty\EmptyBodies.cs" />
     <None Include="TestCases\ILPretty\EmptyBodies.cs" />
     <Compile Remove="TestCases\ILPretty\TruncatedAccessorBody.cs" />

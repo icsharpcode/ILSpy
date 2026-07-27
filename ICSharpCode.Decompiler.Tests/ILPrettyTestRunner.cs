@@ -360,6 +360,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task EnumArithmeticOutOfRange()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task GuessAccessors()
 		{
 			await Run();
