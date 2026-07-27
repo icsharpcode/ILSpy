@@ -3,6 +3,7 @@
 		"path": "ILSpy.sln",
 		"projects": [
 			"ICSharpCode.ILSpyCmd\\ICSharpCode.ILSpyCmd.csproj",
+			"ICSharpCode.ILSpyCmd.Tests\\ICSharpCode.ILSpyCmd.Tests.csproj",
 			"ICSharpCode.Decompiler.PowerShell\\ICSharpCode.Decompiler.PowerShell.csproj",
 			"ICSharpCode.Decompiler.TestRunner\\ICSharpCode.Decompiler.TestRunner.csproj",
 			"ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",

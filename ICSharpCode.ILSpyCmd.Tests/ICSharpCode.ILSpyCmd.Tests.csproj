@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <LangVersion>preview</LangVersion>
+
+    <IsPackable>false</IsPackable>
+
+    <GenerateTestingPlatformEntryPoint>true</GenerateTestingPlatformEntryPoint>
+    <StartupObject>ICSharpCode.ILSpyCmd.Tests.MicrosoftTestingPlatformEntryPoint</StartupObject>
+    <OutputType>Exe</OutputType>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NUnit" />
+    <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+    <PackageReference Include="Microsoft.Testing.Extensions.VSTestBridge" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.ILSpyCmd\ICSharpCode.ILSpyCmd.csproj" />
+  </ItemGroup>
+
+</Project>

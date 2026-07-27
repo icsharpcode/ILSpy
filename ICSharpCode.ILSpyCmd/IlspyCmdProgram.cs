@@ -23,7 +23,9 @@ using System.IO;
 using System.IO.Compression;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using System.Globalization;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,6 +35,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
@@ -104,6 +107,9 @@ Examples:
 
 		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue)]
 		public string TypeName { get; }
+
+		[Option("-m|--member <doc-id-or-token>", "The single member to decompile: an XML documentation id string (e.g. \"M:System.String.Concat(System.String,System.String)\", as also accepted by the UI's --navigateto option) or a metadata token (e.g. 0x06000005).", CommandOptionType.SingleValue)]
+		public string MemberIdString { get; }
 
 		[Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue)]
 		public bool ShowILCodeFlag { get; }
@@ -359,11 +365,22 @@ Examples:
 				}
 				else
 				{
+					if (MemberIdString != null && TypeName != null)
+					{
+						app.Error.WriteLine("The --type and --member options are mutually exclusive.");
+						return ProgramExitCodes.EX_USAGE;
+					}
+
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
 						output = File.CreateText(Path.Combine(outputDirectory,
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".decompiled.cs"));
+					}
+
+					if (MemberIdString != null)
+					{
+						return DecompileMember(fileName, output, MemberIdString);
 					}
 
 					return Decompile(fileName, output, TypeName);
@@ -617,6 +634,84 @@ Examples:
 
 			output.Write(decompiler.DecompileTypeAsString(typeDefinition.FullTypeName));
 			return 0;
+		}
+
+		int DecompileMember(string assemblyFileName, TextWriter output, string idOrToken)
+		{
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+
+			if (!TryResolveMember(decompiler.TypeSystem, idOrToken, out EntityHandle handle, out string error))
+			{
+				Console.Error.WriteLine(error);
+				return ProgramExitCodes.EX_DATAERR;
+			}
+
+			output.Write(decompiler.DecompileAsString(handle));
+			return 0;
+		}
+
+		/// <summary>
+		/// Resolves a member reference supplied on the command line: either an XML
+		/// documentation id string ("M:...", "P:...", "F:...", "E:..." or "T:...") or a
+		/// metadata token in hexadecimal "0x06000005" form. Documentation id strings use
+		/// the same syntax as the compiler-generated documentation files and the UI's
+		/// --navigateto option.
+		/// </summary>
+		static bool TryResolveMember(IDecompilerTypeSystem typeSystem, string idOrToken, out EntityHandle handle, out string error)
+		{
+			handle = default;
+			error = null;
+			string trimmed = idOrToken.Trim();
+
+			if (trimmed.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+			{
+				if (!int.TryParse(trimmed.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int tokenValue))
+				{
+					error = $"'{trimmed}' is not a valid metadata token; expected a hexadecimal value like 0x06000005.";
+					return false;
+				}
+				var metadata = typeSystem.MainModule.MetadataFile.Metadata;
+				var candidate = MetadataTokens.EntityHandle(tokenValue);
+				int rowNumber = tokenValue & 0x00ffffff;
+				int rowCount = candidate.Kind switch {
+					HandleKind.TypeDefinition => metadata.TypeDefinitions.Count,
+					HandleKind.FieldDefinition => metadata.FieldDefinitions.Count,
+					HandleKind.MethodDefinition => metadata.MethodDefinitions.Count,
+					HandleKind.PropertyDefinition => metadata.PropertyDefinitions.Count,
+					HandleKind.EventDefinition => metadata.EventDefinitions.Count,
+					_ => 0,
+				};
+				if (rowNumber < 1 || rowNumber > rowCount)
+				{
+					error = $"Metadata token {trimmed} does not reference a type or member of this module.";
+					return false;
+				}
+				handle = candidate;
+				return true;
+			}
+
+			IEntity entity;
+			try
+			{
+				entity = IdStringProvider.FindEntity(trimmed, new SimpleTypeResolveContext(typeSystem.MainModule));
+			}
+			catch (ReflectionNameParseException ex)
+			{
+				error = $"'{trimmed}' is not a valid documentation id string: {ex.Message}";
+				return false;
+			}
+			if (entity == null || entity.MetadataToken.IsNil)
+			{
+				error = $"Member '{trimmed}' was not found in this module. Expected an XML documentation id string (e.g. \"M:System.String.Concat(System.String,System.String)\") or a metadata token (e.g. 0x06000005).";
+				return false;
+			}
+			if (entity.ParentModule != typeSystem.MainModule)
+			{
+				error = $"Member '{trimmed}' is defined in '{entity.ParentModule?.AssemblyName}', not in this module.";
+				return false;
+			}
+			handle = entity.MetadataToken;
+			return true;
 		}
 
 		/// <summary>

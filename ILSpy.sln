@@ -49,6 +49,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy.BamlDecompiler.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILSpy.BamlDecompiler.Tests.Windows", "ILSpy.BamlDecompiler.Tests.Windows\ILSpy.BamlDecompiler.Tests.Windows.csproj", "{7A5C3CEF-0744-4643-BA1E-7AE6610FF269}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.ILSpyCmd.Tests", "ICSharpCode.ILSpyCmd.Tests\ICSharpCode.ILSpyCmd.Tests.csproj", "{042FE5F2-3C0A-4B99-A268-D1917CC67B47}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -239,6 +241,18 @@ Global
 		{7A5C3CEF-0744-4643-BA1E-7AE6610FF269}.Release|x64.Build.0 = Release|Any CPU
 		{7A5C3CEF-0744-4643-BA1E-7AE6610FF269}.Release|x86.ActiveCfg = Release|Any CPU
 		{7A5C3CEF-0744-4643-BA1E-7AE6610FF269}.Release|x86.Build.0 = Release|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Debug|x64.Build.0 = Debug|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Debug|x86.Build.0 = Debug|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Release|x64.ActiveCfg = Release|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Release|x64.Build.0 = Release|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Release|x86.ActiveCfg = Release|Any CPU
+		{042FE5F2-3C0A-4B99-A268-D1917CC67B47}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
