@@ -350,6 +350,13 @@ jobs:
         --no-build --report-trx
         --results-directory test-results
 
+    - name: Execute ilspycmd tests
+      run: >
+        dotnet test --project ICSharpCode.ILSpyCmd.Tests/ICSharpCode.ILSpyCmd.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
     - name: Execute BAML decompiler tests
       run: >
         dotnet test --project ILSpy.BamlDecompiler.Tests/ILSpy.BamlDecompiler.Tests.csproj

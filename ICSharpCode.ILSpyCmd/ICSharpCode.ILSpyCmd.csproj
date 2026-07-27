@@ -71,4 +71,8 @@
     </ReadLinesFromFile>
   </Target>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="ICSharpCode.ILSpyCmd.Tests" />
+  </ItemGroup>
+
 </Project>
