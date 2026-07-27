@@ -443,8 +443,22 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>Toggles the innermost fold containing the caret (the "Toggle folding" command / Ctrl+M).</summary>
 		public void ToggleFoldingAtCaret() => ToggleFoldingAt(Editor.TextArea.Caret.Offset);
 
-		/// <summary>Toggles the innermost fold containing <paramref name="offset"/>. The right-click menu
-		/// passes the offset under the pointer so it acts on the clicked line, not the caret line.</summary>
+		/// <summary>The offset where a fold's logical region begins: definition folds reach back to
+		/// their entity's first character (leading documentation comments and attributes included);
+		/// every other fold starts at its own first character.</summary>
+		static int GetLogicalStart(FoldingSection folding)
+		{
+			return folding.Tag is DefinitionNewFolding definition
+				? Math.Min(definition.DefinitionStartOffset, folding.StartOffset)
+				: folding.StartOffset;
+		}
+
+		/// <summary>Toggles the fold whose logical region innermost-contains <paramref name="offset"/>.
+		/// The right-click menu passes the offset under the pointer so it acts on the clicked line,
+		/// not the caret line. A definition fold's logical region includes its header and leading
+		/// documentation, so toggling from the header line targets the member (not the enclosing
+		/// type), and the member's documentation folds toggle together with it. With the caret
+		/// inside the documentation, the doc fold itself is the innermost region and toggles alone.</summary>
 		public void ToggleFoldingAt(int offset)
 		{
 			if (activeFoldingManager is not { } mgr)
@@ -452,30 +466,49 @@ namespace ICSharpCode.ILSpy.TextView
 			FoldingSection? target = null;
 			foreach (var f in mgr.AllFoldings)
 			{
-				if (f.StartOffset <= offset && offset <= f.EndOffset)
+				if (GetLogicalStart(f) > offset || offset > f.EndOffset)
+					continue;
+				if (target == null
+					|| GetLogicalStart(f) > GetLogicalStart(target)
+					|| (GetLogicalStart(f) == GetLogicalStart(target) && f.EndOffset < target.EndOffset))
 				{
-					if (target == null || f.StartOffset > target.StartOffset)
-						target = f;
+					target = f;
 				}
 			}
-			if (target != null)
-				target.IsFolded = !target.IsFolded;
+			if (target == null)
+				return;
+			bool folded = !target.IsFolded;
+			target.IsFolded = folded;
+			// Drag the attached leading folds (XML documentation) along with their member.
+			int logicalStart = GetLogicalStart(target);
+			if (logicalStart < target.StartOffset)
+			{
+				foreach (var f in mgr.AllFoldings)
+				{
+					if (f != target && f.StartOffset >= logicalStart && f.EndOffset <= target.StartOffset)
+						f.IsFolded = folded;
+				}
+			}
 		}
 
-		/// <summary>Collapses every fold when any is open, otherwise expands them all ("Toggle all folding"
-		/// / Ctrl+Shift+M).</summary>
+		/// <summary>Sets all folds to the same state ("Toggle all folding" / Ctrl+Shift+M), with
+		/// Visual Studio's Toggle All Outlining parity: a mixed state expands everything, a uniform
+		/// state flips.</summary>
 		public void ToggleAllFoldings()
 		{
 			if (activeFoldingManager is not { } mgr)
 				return;
-			bool anyOpen = false;
+			bool anyOpen = false, anyFolded = false;
 			foreach (var f in mgr.AllFoldings)
 			{
-				if (!f.IsFolded)
-				{ anyOpen = true; break; }
+				if (f.IsFolded)
+					anyFolded = true;
+				else
+					anyOpen = true;
 			}
+			bool folded = anyOpen && anyFolded ? false : anyOpen;
 			foreach (var f in mgr.AllFoldings)
-				f.IsFolded = anyOpen;
+				f.IsFolded = folded;
 		}
 
 		void OnEditorKeyDownForZoom(object? sender, KeyEventArgs e)

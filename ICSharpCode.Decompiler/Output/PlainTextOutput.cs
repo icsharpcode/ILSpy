@@ -152,6 +152,10 @@ namespace ICSharpCode.Decompiler
 			Write(text);
 		}
 
+		void ITextOutput.MarkDefinitionStart()
+		{
+		}
+
 		void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed, bool isDefinition)
 		{
 		}
@@ -199,9 +203,14 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.MarkFoldEnd());
 		}
 
+		public void MarkDefinitionStart()
+		{
+			actions.Add(target => target.MarkDefinitionStart());
+		}
+
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{
-			actions.Add(target => target.MarkFoldStart(collapsedText, defaultCollapsed));
+			actions.Add(target => target.MarkFoldStart(collapsedText, defaultCollapsed, isDefinition));
 		}
 
 		public void Unindent()
