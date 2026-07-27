@@ -2510,6 +2510,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 				result.Add(accessorDecl);
+				result.AddRange(AddInterfaceImplHelpers(accessorDecl, accessor, typeSystemAstBuilder));
 			}
 			return result;
 		}
