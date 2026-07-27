@@ -32,6 +32,12 @@ Public Class ParameterizedProperties
 		End Get
 	End Property
 
+	Public WriteOnly Property SetOnly(index As Integer) As Integer
+		Set(value As Integer)
+			_field = index + value
+		End Set
+	End Property
+
 	<Obsolete("read-write parameterized property")>
 	Public Property Attributed(index As Integer) As Integer
 		Get
@@ -39,6 +45,18 @@ Public Class ParameterizedProperties
 		End Get
 		Set(value As Integer)
 		End Set
+	End Property
+
+	Public ReadOnly Property Overloaded(a As Integer) As Integer
+		Get
+			Return a
+		End Get
+	End Property
+
+	Public ReadOnly Property Overloaded(a As Integer, b As Integer) As Integer
+		Get
+			Return a + b
+		End Get
 	End Property
 
 	Public Sub Use()
@@ -50,4 +68,41 @@ Public Class ParameterizedProperties
 		p.IndexedValue(7) = 8
 		_field = p.IndexedValue(9)
 	End Sub
+End Class
+
+Public Class ParameterizedBase
+	Public Overridable Property Virt(index As Integer) As Integer
+		Get
+			Return index
+		End Get
+		Set(value As Integer)
+		End Set
+	End Property
+End Class
+
+Public Class ParameterizedDerived
+	Inherits ParameterizedBase
+
+	Public Overrides Property Virt(index As Integer) As Integer
+		Get
+			Return index + 1
+		End Get
+		Set(value As Integer)
+		End Set
+	End Property
+End Class
+
+Public Class RenamedImplementation
+	Implements IParameterized
+
+	Private _value As Integer
+
+	Public Property Renamed(index As Integer) As Integer Implements IParameterized.IndexedValue
+		Get
+			Return _value
+		End Get
+		Set(value As Integer)
+			_value = value
+		End Set
+	End Property
 End Class
