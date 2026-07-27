@@ -1709,6 +1709,26 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
+			if ((rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
+				|| !IsCompatibleWithSign(rr.Type, inst.Sign))
+				&& op is BinaryOperatorType.Add or BinaryOperatorType.Subtract
+				&& (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum))
+			{
+				// enum +/- constant did not resolve (e.g. an int constant whose numeric value
+				// does not fit the unsigned underlying type, issue #1142); the IL constant is
+				// the enum's bit pattern, so retry with it reinterpreted in the enum type
+				// before falling back to integer arithmetic with casts.
+				var adjustedLeft = AdjustConstantExpressionToType(left, right.Type);
+				var adjustedRight = AdjustConstantExpressionToType(right, left.Type);
+				var adjustedRR = resolverWithOverflowCheck.ResolveBinaryOperator(op, adjustedLeft.ResolveResult, adjustedRight.ResolveResult);
+				if (!(adjustedRR.IsError || NullableType.GetUnderlyingType(adjustedRR.Type).GetStackType() != inst.UnderlyingResultType
+					|| !IsCompatibleWithSign(adjustedRR.Type, inst.Sign)))
+				{
+					left = adjustedLeft;
+					right = adjustedRight;
+					rr = adjustedRR;
+				}
+			}
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
 				|| !IsCompatibleWithSign(rr.Type, inst.Sign))
 			{
@@ -4003,7 +4023,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else if (typeHint.Kind == TypeKind.Enum || typeHint.IsKnownType(KnownTypeCode.Char) || typeHint.IsCSharpSmallIntegerType())
 			{
-				var castRR = resolver.WithCheckForOverflow(true).ResolveCast(typeHint, rr);
+				// An IL constant is a bit pattern: converting it to an integer type at least as
+				// wide only reinterprets it, which is lossless even where the numeric value
+				// changes sign (e.g. int -501 for a uint-based enum member 0xfffffe0b, or for a
+				// ulong-based one where the IL sign-extends it with conv.i8). Only narrowing can
+				// lose information, so limit the overflow check to that case.
+				bool mayBeLossy = !rr.Type.GetStackType().IsIntegerType() || rr.Type.GetSize() > typeHint.GetSize();
+				var castRR = resolver.WithCheckForOverflow(mayBeLossy).ResolveCast(typeHint, rr);
 				if (castRR.IsCompileTimeConstant && !castRR.IsError)
 				{
 					rr = castRR;

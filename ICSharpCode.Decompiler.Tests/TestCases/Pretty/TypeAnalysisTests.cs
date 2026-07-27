@@ -245,6 +245,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return byteArray[(ushort)i];
 		}
 
+		public void EnumSubtractionWithHighBitValues(UIntEnum value)
+		{
+			if (value - UIntEnum.Val1 <= 4)
+			{
+				Console.WriteLine(value - UIntEnum.Val1);
+			}
+		}
+
+		public void EnumSubtractionWithHighBitValues16(UShortEnum value)
+		{
+			// A 16-bit enum member always fits its underlying type as a positive constant,
+			// so the compiler emits it as such and enum-minus-underlying resolves right away.
+			if ((int)(value - 65035) <= 4)
+			{
+				Console.WriteLine((int)(value - 65035));
+			}
+		}
+
+		public void EnumSubtractionWithHighBitValues64(ULongEnum value)
+		{
+			if (value - ULongEnum.Val1 <= 4)
+			{
+				Console.WriteLine(value - ULongEnum.Val1);
+			}
+		}
+
+		public void EnumSubtractionWithZeroExtendedValue(ULongEnum value)
+		{
+			// Val3 is emitted as a zero-extended uint constant (ldc.i4.m1 + conv.u8), so it
+			// must not be reinterpreted as the sign-extended long -1.
+			Console.WriteLine((ulong)(value - uint.MaxValue));
+		}
+
 		public StringComparison EnumDiffNumber(StringComparison data)
 		{
 			return data - 1;
@@ -344,5 +377,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (int)a == 0;
 		}
+	}
+
+	public enum UIntEnum : uint
+	{
+		Val1 = 4294966795u,
+		Val2 = 4294966799u
+	}
+
+	public enum ULongEnum : ulong
+	{
+		Val1 = 18446744073709551115uL,
+		Val2 = 18446744073709551119uL,
+		Val3 = 4294967295uL
+	}
+
+	public enum UShortEnum : ushort
+	{
+		Val1 = 65035,
+		Val2 = 65039
 	}
 }
