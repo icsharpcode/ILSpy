@@ -207,6 +207,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public abstract class MethodChainBase
+		{
+			public virtual T? DependentOnClassConstrained<T, U>(T? value, U other) where T : U where U : class
+			{
+				return value;
+			}
+
+			public virtual T? DependentOnClassType<T, U>(T? value, U other) where T : U where U : Node
+			{
+				return value;
+			}
+		}
+
+		public sealed class MethodChainDerived : MethodChainBase
+		{
+			public override T? DependentOnClassConstrained<T, U>(T? value, U other) where T : default
+			{
+				return value;
+			}
+
+			public override T? DependentOnClassType<T, U>(T? value, U other) where T : class
+			{
+				return value;
+			}
+		}
+
 		public class ContainerBase<TOuter> where TOuter : class
 		{
 			public virtual TOuter? Pick<TItem>(TItem item)
