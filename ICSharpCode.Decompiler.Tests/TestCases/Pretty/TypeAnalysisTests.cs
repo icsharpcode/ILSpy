@@ -245,6 +245,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return byteArray[(ushort)i];
 		}
 
+		public void EnumSubtractionWithHighBitValues(UIntEnum value)
+		{
+			if (value - UIntEnum.Val1 <= 4)
+			{
+				Console.WriteLine(value - UIntEnum.Val1);
+			}
+		}
+
 		public StringComparison EnumDiffNumber(StringComparison data)
 		{
 			return data - 1;
@@ -344,5 +352,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (int)a == 0;
 		}
+	}
+
+	public enum UIntEnum : uint
+	{
+		Val1 = 4294966795u,
+		Val2 = 4294966799u
 	}
 }
