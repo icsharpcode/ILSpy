@@ -708,6 +708,122 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 		#endregion
 
+		#region Tuple element name merging
+		// The C# standard does not mention tuple element names in type inference;
+		// csc merges names when bounds differ only by them: names are kept where all
+		// bounds agree and dropped where they conflict (MergeTupleNames in Roslyn's
+		// MethodTypeInference.cs).
+
+		TupleType MakeTupleType(ICompilation comp, params string[] elementNames)
+		{
+			return new TupleType(comp,
+				ImmutableArray.Create(comp.FindType(KnownTypeCode.Int32), comp.FindType(KnownTypeCode.String)),
+				ImmutableArray.CreateRange(elementNames));
+		}
+
+		[Test]
+		public void BestCommonTypeMergesTupleElementNames()
+		{
+			// var m = cond ? (a: 1, b: "x") : (a: 2, c: "y"); -> (int a, string)
+			var comp = tupleCompilation.Value;
+			var inference = new TypeInference(comp);
+
+			bool success;
+			Assert.That(
+				inference.GetBestCommonType(new[] {
+					new ResolveResult(MakeTupleType(comp, "a", "b")),
+					new ResolveResult(MakeTupleType(comp, "a", "c"))
+				}, out success),
+				Is.EqualTo(MakeTupleType(comp, "a", null)));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void FixingMergesTupleElementNamesOfExactAndLowerBounds()
+		{
+			// Signature:  M<T>(IList<T> x, T y)
+			// Invocation: M(listOfAB, valueAC); -> T = (int a, string)
+			var comp = tupleCompilation.Value;
+			var inference = new TypeInference(comp);
+			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
+			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
+
+			bool success;
+			Assert.That(
+				inference.InferTypeArguments(new ITypeParameter[] { T },
+					new[] {
+						new ResolveResult(new ParameterizedType(listType, new[] { MakeTupleType(comp, "a", "b") })),
+						new ResolveResult(MakeTupleType(comp, "a", "c"))
+					},
+					new IType[] {
+						new ParameterizedType(listType, new[] { T }),
+						T
+					},
+					out success),
+				Is.EqualTo(new[] { MakeTupleType(comp, "a", null) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void FixingMergesNestedTupleElementNames()
+		{
+			// Signature:  M<T>(T x, T y)
+			// Invocation: M(listOfAB, listOfAC);   -> T = IList<(int a, string)>
+			//             M(arrayOfAB, arrayOfAC); -> T = (int a, string)[]
+			var comp = tupleCompilation.Value;
+			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
+
+			IType InferSingle(IType argType1, IType argType2)
+			{
+				var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
+				var result = new TypeInference(comp).InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(argType1), new ResolveResult(argType2) },
+					new IType[] { T, T },
+					out bool success);
+				Assert.That(success);
+				return result.Single();
+			}
+
+			Assert.That(
+				InferSingle(
+					new ParameterizedType(listType, new[] { MakeTupleType(comp, "a", "b") }),
+					new ParameterizedType(listType, new[] { MakeTupleType(comp, "a", "c") })),
+				Is.EqualTo(new ParameterizedType(listType, new[] { MakeTupleType(comp, "a", null) })));
+
+			Assert.That(
+				InferSingle(
+					new ArrayType(comp, MakeTupleType(comp, "a", "b")),
+					new ArrayType(comp, MakeTupleType(comp, "a", "c"))),
+				Is.EqualTo(new ArrayType(comp, MakeTupleType(comp, "a", null))));
+		}
+
+		[Test]
+		[Ignore("Not implemented: AddExactBound compares bounds with name-sensitive equality, so two exact bounds that differ only in tuple element names count as conflicting before any merging can happen; csc merges them (verified: M<T>(ref T, ref T) with (int a, string b)/(int a, string c) compiles, T = (int a, string)).")]
+		public void FixingMergesTupleElementNamesOfMultipleExactBounds()
+		{
+			// Signature:  M<T>(ref T x, ref T y)
+			// Invocation: M(ref ab, ref ac); -> T = (int a, string)
+			var comp = tupleCompilation.Value;
+			var inference = new TypeInference(comp);
+			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
+
+			bool success;
+			Assert.That(
+				inference.InferTypeArguments(new ITypeParameter[] { T },
+					new[] {
+						new ByReferenceResolveResult(new ResolveResult(MakeTupleType(comp, "a", "b")), ReferenceKind.Ref),
+						new ByReferenceResolveResult(new ResolveResult(MakeTupleType(comp, "a", "c")), ReferenceKind.Ref)
+					},
+					new IType[] {
+						new ByReferenceType(T),
+						new ByReferenceType(T)
+					},
+					out success),
+				Is.EqualTo(new[] { MakeTupleType(comp, "a", null) }));
+			Assert.That(success);
+		}
+		#endregion
+
 		#region Explicit parameter type inferences (spec 12.6.3.9)
 		[Test]
 		public void ExplicitLambdaParameterTypesGiveExactBounds()
