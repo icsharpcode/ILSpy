@@ -158,6 +158,7 @@
     <None Include="TestCases\Disassembler\Pretty\SecurityDeclarations.il" />
     <None Include="TestCases\ILPretty\Issue1038.il" />
     <None Include="TestCases\ILPretty\Issue1145.il" />
+    <None Include="TestCases\ILPretty\NoAccessorProperties.il" />
     <None Include="TestCases\ILPretty\Issue1047.il" />
     <None Include="TestCases\ILPretty\Issue959.il" />
   </ItemGroup>
@@ -202,6 +203,8 @@
     <None Include="TestCases\ILPretty\FSharpUsing_Release.cs" />
     <Compile Remove="TestCases\ILPretty\GuessAccessors.cs" />
     <None Include="TestCases\ILPretty\GuessAccessors.cs" />
+    <Compile Remove="TestCases\ILPretty\NoAccessorProperties.cs" />
+    <None Include="TestCases\ILPretty\NoAccessorProperties.cs" />
     <Compile Remove="TestCases\ILPretty\Issue1145.cs" />
     <None Include="TestCases\ILPretty\Issue1145.cs" />
     <Compile Remove="TestCases\ILPretty\Issue1325.cs" />
