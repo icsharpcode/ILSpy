@@ -1871,6 +1871,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return ConvertDestructor((IMethod)entity);
 				case SymbolKind.Accessor:
 					IMethod accessor = (IMethod)entity;
+					if (accessor.AccessorOwner is IProperty owner && owner.IsParameterizedProperty())
+					{
+						// C# cannot represent the parameterized property itself; its accessors
+						// are declared as ordinary methods.
+						return ConvertMethod(accessor);
+					}
 					Accessibility ownerAccessibility = accessor.AccessorOwner?.Accessibility ?? Accessibility.None;
 					return ConvertAccessor(accessor, accessor.AccessorKind, ownerAccessibility, false)!;
 				default:
