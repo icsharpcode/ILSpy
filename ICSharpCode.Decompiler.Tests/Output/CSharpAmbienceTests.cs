@@ -374,6 +374,25 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
 			Assert.That(ambience.ConvertSymbol(indexer), Is.EqualTo("public dynamic dynamic.this[int]"));
 		}
+
+		[Test]
+		public void ParameterizedProperty()
+		{
+			// A named property with parameters (VB.NET parameterized property); C# has no
+			// syntax for it, but signature surfaces show the parameter list in parentheses.
+			var property = new FakeProperty(compilation) {
+				Name = "Data",
+				ReturnType = compilation.FindType(KnownTypeCode.Int32),
+				DeclaringType = SpecialType.Dynamic,
+				Parameters = new IParameter[] { new DefaultParameter(compilation.FindType(KnownTypeCode.Int32), "index") },
+			};
+
+			ambience.ConversionFlags = ILSpyMainTreeViewMemberFlags;
+			Assert.That(ambience.ConvertSymbol(property), Is.EqualTo("Data(int) : int"));
+
+			ambience.ConversionFlags = ConversionFlags.All & ~(ConversionFlags.ShowBody | ConversionFlags.PlaceReturnTypeAfterParameterList);
+			Assert.That(ambience.ConvertSymbol(property), Is.EqualTo("public int dynamic.Data(int index)"));
+		}
 		#endregion
 
 		#region Test types
