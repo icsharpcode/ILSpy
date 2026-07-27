@@ -148,6 +148,7 @@
     <None Include="TestCases\VBPretty\Issue1906.vb" />
     <None Include="TestCases\VBPretty\Issue2192.vb" />
     <None Include="TestCases\VBPretty\Select.vb" />
+    <None Include="TestCases\VBPretty\ParameterizedProperties.vb" />
     <None Include="TestCases\ILPretty\Unsafe.il" />
     <None Include="TestCases\ILPretty\Issue1389.il" />
     <None Include="TestCases\ILPretty\SequenceOfNestedIfs.il" />
