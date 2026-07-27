@@ -172,6 +172,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
+		/// Gets whether the property is a parameterized property that is not an indexer,
+		/// i.e. a named property with parameters (a VB.NET parameterized property or a
+		/// C++/CLI indexed property). C# has no syntax for declaring or using such a
+		/// property; only its accessor methods can be represented.
+		/// </summary>
+		public static bool IsParameterizedProperty(this IProperty property)
+		{
+			return property.SymbolKind == SymbolKind.Property && property.Parameters.Count > 0;
+		}
+
+		/// <summary>
 		/// Gets whether the type is an open type (contains type parameters).
 		/// </summary>
 		/// <example>

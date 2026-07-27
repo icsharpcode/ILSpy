@@ -1338,7 +1338,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					case HandleKind.PropertyDefinition:
 						IProperty property = module.GetDefinition((PropertyDefinitionHandle)entity);
 						parentExtensionInfo = property.ResolveExtensionInfo();
-						syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property), parentExtensionInfo));
+						if (property.IsParameterizedProperty())
+						{
+							syntaxTree.Members.AddRange(DecompileParameterizedProperty(property, decompileRun, new SimpleTypeResolveContext(property), parentExtensionInfo));
+						}
+						else
+						{
+							syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property), parentExtensionInfo));
+						}
 						if (first)
 						{
 							parentTypeDef = property.DeclaringTypeDefinition;
@@ -1869,6 +1876,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							return;
 						}
+						if (property.IsParameterizedProperty())
+						{
+							foreach (var accessorDecl in DecompileParameterizedProperty(property, decompileRun, decompilationContext, null))
+							{
+								entityMap.Add(property, accessorDecl);
+								EnqueueReferencedMembers(accessorDecl);
+							}
+							return;
+						}
 						entityDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property), null);
 						entityMap.Add(property, entityDecl);
 						break;
@@ -1897,19 +1913,24 @@ namespace ICSharpCode.Decompiler.CSharp
 						throw new ArgumentOutOfRangeException("Unexpected member type");
 				}
 
-				foreach (var node in entityDecl.Descendants)
+				EnqueueReferencedMembers(entityDecl);
+
+				void EnqueueReferencedMembers(EntityDeclaration decl)
 				{
-					var rr = node.GetResolveResult();
-					if (rr is MemberResolveResult mrr
-						&& mrr.Member.DeclaringTypeDefinition == typeDef
-						&& !(mrr.Member is IMethod { IsLocalFunction: true }))
+					foreach (var node in decl.Descendants)
 					{
-						workList.Enqueue(mrr.Member);
-					}
-					else if (rr is TypeResolveResult trr
-						&& trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
-					{
-						workList.Enqueue(trr.Type.GetDefinition()!);
+						var rr = node.GetResolveResult();
+						if (rr is MemberResolveResult mrr
+							&& mrr.Member.DeclaringTypeDefinition == typeDef
+							&& !(mrr.Member is IMethod { IsLocalFunction: true }))
+						{
+							workList.Enqueue(mrr.Member);
+						}
+						else if (rr is TypeResolveResult trr
+							&& trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
+						{
+							workList.Enqueue(trr.Type.GetDefinition()!);
+						}
 					}
 				}
 			}
@@ -2047,7 +2068,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					methodDecl.Modifiers |= Modifiers.Extern;
 				}
-				if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation
+				// Accessors qualify only when they are emitted as ordinary methods (parameterized
+				// properties); an Accessor node cannot carry the 'new' modifier.
+				if ((method.SymbolKind == SymbolKind.Method || (method.SymbolKind == SymbolKind.Accessor && methodDecl is MethodDeclaration))
+					&& !method.IsExplicitInterfaceImplementation
 					&& methodDefinition.HasFlag(System.Reflection.MethodAttributes.Virtual) == methodDefinition.HasFlag(System.Reflection.MethodAttributes.NewSlot))
 				{
 					SetNewModifier(methodDecl);
@@ -2454,6 +2478,40 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Decompiles a parameterized property (a named property with parameters, e.g. from
+		/// VB.NET) into declarations of its accessor methods, because C# has no syntax for
+		/// such properties. The property-level attributes are placed on the first accessor
+		/// under the 'property:' attribute target, which is not valid for methods and is
+		/// therefore ignored by the C# compiler (CS0657): recompilation neither loses the
+		/// attributes from the source nor misapplies them to the accessor method.
+		/// </summary>
+		List<EntityDeclaration> DecompileParameterizedProperty(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo? extensionInfo)
+		{
+			var result = new List<EntityDeclaration>(2);
+			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
+			foreach (var accessor in new[] { property.Getter, property.Setter })
+			{
+				if (accessor == null)
+					continue;
+				var accessorDecl = DoDecompile(accessor, decompileRun, decompilationContext.WithCurrentMember(accessor), extensionInfo);
+				if (result.Count == 0)
+				{
+					accessorDecl.AddLeadingTrivia(new Comment($" C# has no syntax for parameterized property '{property.Name}'."));
+					var attributes = property.GetAttributes().Select(typeSystemAstBuilder.ConvertAttribute).ToList();
+					if (attributes.Count > 0)
+					{
+						var attrSection = new AttributeSection { AttributeTarget = "property" };
+						attrSection.Attributes.AddRange(attributes);
+						accessorDecl.Attributes.InsertAfter(null, attrSection);
+						accessorDecl.AddLeadingTrivia(new Comment(" Its 'property:' attributes below are ignored by the compiler (CS0657)."));
+					}
+				}
+				result.Add(accessorDecl);
+			}
+			return result;
 		}
 
 		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo? extensionInfo)

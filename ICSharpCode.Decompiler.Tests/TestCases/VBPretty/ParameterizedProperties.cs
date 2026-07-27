@@ -3,8 +3,7 @@ using System;
 
 public interface IParameterized
 {
-	// C# has no syntax for parameterized properties; the accessors of
-	// property 'IndexedValue' are emitted as ordinary methods.
+	// C# has no syntax for parameterized property 'IndexedValue'.
 	int get_IndexedValue(int index);
 	void set_IndexedValue(int index, int Value);
 }
@@ -13,8 +12,7 @@ public class ParameterizedProperties : IParameterized
 {
 	private int _field;
 
-	// C# has no syntax for parameterized properties; the accessors of
-	// property 'SharedProp' are emitted as ordinary methods.
+	// C# has no syntax for parameterized property 'SharedProp'.
 	public static int get_SharedProp(int index)
 	{
 		return index;
@@ -24,8 +22,7 @@ public class ParameterizedProperties : IParameterized
 	{
 	}
 
-	// C# has no syntax for parameterized properties; the accessors of
-	// property 'IndexedValue' are emitted as ordinary methods.
+	// C# has no syntax for parameterized property 'IndexedValue'.
 	public int get_IndexedValue(int index)
 	{
 		return _field;
@@ -36,16 +33,14 @@ public class ParameterizedProperties : IParameterized
 		_field = value;
 	}
 
-	// C# has no syntax for parameterized properties; the accessors of
-	// property 'ReadOnlyProp' are emitted as ordinary methods.
+	// C# has no syntax for parameterized property 'ReadOnlyProp'.
 	public int get_ReadOnlyProp(int index)
 	{
 		return index;
 	}
 
-	// C# has no syntax for parameterized properties; the accessors of
-	// property 'Attributed' are emitted as ordinary methods. The property's
-	// attributes are kept below under the inert 'property:' target (CS0657).
+	// C# has no syntax for parameterized property 'Attributed'.
+	// Its 'property:' attributes below are ignored by the compiler (CS0657).
 	[property: Obsolete("read-write parameterized property")]
 	public int get_Attributed(int index)
 	{
