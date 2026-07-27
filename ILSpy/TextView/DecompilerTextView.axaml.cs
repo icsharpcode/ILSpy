@@ -1551,7 +1551,15 @@ namespace ICSharpCode.ILSpy.TextView
 				// XmlDocLoader handles every layout the decompiler library knows about: .xml
 				// beside the .dll, .NET Framework reference-assemblies paths, and (recently)
 				// the modern .NET ref pack at dotnet/packs/Microsoft.NETCore.App.Ref/...
-				var documentation = XmlDocLoader.LoadDocumentation(metadata)?.GetDocumentation(entity.GetIdString());
+				var provider = XmlDocLoader.LoadDocumentation(metadata);
+				var documentation = provider?.GetDocumentation(entity.GetIdString());
+				if (documentation == null && entity is IMethod { AccessorOwner: IProperty owner })
+				{
+					// Accessors of parameterized properties appear as ordinary methods in the
+					// C# output; show the owning property's documentation for them.
+					documentation = provider?.GetDocumentation(owner.GetIdString());
+					entity = owner;
+				}
 				if (documentation == null)
 					return;
 				renderer.AddXmlDocumentation(documentation, entity, resolver: ResolveDocReference);

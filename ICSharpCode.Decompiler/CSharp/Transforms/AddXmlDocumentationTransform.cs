@@ -47,6 +47,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!(entityDecl.GetSymbol() is IEntity entity))
 						continue;
 					string doc = provider.GetDocumentation(entity);
+					if (doc == null && entity is IMethod { AccessorOwner: IProperty owner } accessor
+						&& owner.IsParameterizedProperty() && accessor.Equals(owner.Getter ?? owner.Setter))
+					{
+						// A parameterized property is decompiled to its accessor methods; show the
+						// property's documentation on the first accessor.
+						doc = provider.GetDocumentation(owner);
+					}
 					if (doc != null)
 					{
 						context.Step("Add XML documentation", entityDecl);
