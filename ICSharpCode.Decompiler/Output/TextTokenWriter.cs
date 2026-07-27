@@ -283,6 +283,17 @@ namespace ICSharpCode.Decompiler
 					output.WriteReference(member, keyword);
 					return;
 				}
+				// As primary expressions, 'this' and 'base' reference the current and the
+				// base type respectively, matching IDE go-to-definition behavior.
+				if (nodeStack.Peek() is ThisReferenceExpression or BaseReferenceExpression)
+				{
+					var type = ((Expression)nodeStack.Peek()).GetResolveResult().Type;
+					if (type.Kind != TypeKind.Unknown)
+					{
+						output.WriteReference(type, keyword);
+						return;
+					}
+				}
 			}
 			// Make the 'override' modifier a reference to the nearest overridden member,
 			// so that go-to-definition on 'override' navigates to the base member.
