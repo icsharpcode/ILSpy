@@ -134,6 +134,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public IRelayCommand ShowStateAfterCommand { get; }
 		public IRelayCommand DebugStepCommand { get; }
 
+		/// <summary>
+		/// Raised after a filter change re-arranged the tree while a step is selected and still
+		/// visible. Scrolling is a view concern (it needs containers and a ScrollViewer), so the
+		/// view listens and centers the selected row in its viewport.
+		/// </summary>
+		public event System.EventHandler? SelectionRevealRequested;
+
 		/// <summary>Design-time / fallback ctor — no dependencies wired.</summary>
 		public DebugStepsPaneModel()
 		{
@@ -281,6 +288,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 				string filter = FilterText!.Trim();
 				foreach (var step in Steps)
 					ApplyFilterToNode(step, filter);
+				if (SelectedStep is { IsVisible: true })
+					SelectionRevealRequested?.Invoke(this, System.EventArgs.Empty);
 			}
 			else if (filterSnapshotTaken)
 			{
@@ -289,6 +298,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 					RestoreExpansion(step);
 				for (var ancestor = SelectedStep?.Parent; ancestor != null; ancestor = ancestor.Parent)
 					ancestor.IsExpanded = true;
+				if (SelectedStep != null)
+					SelectionRevealRequested?.Invoke(this, System.EventArgs.Empty);
 			}
 		}
 
