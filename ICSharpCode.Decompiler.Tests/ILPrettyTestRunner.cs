@@ -160,6 +160,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task NoAccessorProperties()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task Issue1145()
 		{
 			await Run();
