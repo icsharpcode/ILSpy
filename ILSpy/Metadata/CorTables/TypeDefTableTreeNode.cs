@@ -44,9 +44,33 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 		protected override IReadOnlyList<TypeDefEntry> LoadTable()
 		{
 			var list = new List<TypeDefEntry>();
-			foreach (var row in metadataFile.Metadata.TypeDefinitions)
-				list.Add(new TypeDefEntry(metadataFile, row));
+			var metadata = metadataFile.Metadata;
+			// FieldList/MethodList are read from the raw rows: the computed member ranges
+			// (TypeDefinition.GetFields/GetMethods) are empty for a memberless type, but the
+			// stored column value is the running list position (the next type's first member
+			// row, or one past the member table's end), never 0. Reading relative to the row
+			// end avoids re-deriving the widths of the preceding string-heap and coded-index
+			// columns. With a FieldPtr/MethodPtr indirection present, the list columns index
+			// the pointer table, whose row count also governs the column width.
+			int fieldListWidth = ListColumnWidth(metadata, TableIndex.FieldPtr, TableIndex.Field);
+			int methodListWidth = ListColumnWidth(metadata, TableIndex.MethodPtr, TableIndex.MethodDef);
+			int rowSize = metadata.GetTableRowSize(TableIndex.TypeDef);
+			int tableOffset = metadata.GetTableMetadataOffset(TableIndex.TypeDef);
+			var reader = metadata.AsBlobReader();
+			foreach (var row in metadata.TypeDefinitions)
+			{
+				reader.Offset = tableOffset + rowSize * MetadataTokens.GetRowNumber(row) - fieldListWidth - methodListWidth;
+				int fieldList = fieldListWidth == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				int methodList = methodListWidth == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				list.Add(new TypeDefEntry(metadataFile, row, fieldList, methodList));
+			}
 			return list;
+
+			static int ListColumnWidth(MetadataReader metadata, TableIndex ptrTable, TableIndex memberTable)
+			{
+				var indexed = metadata.GetTableRowCount(ptrTable) > 0 ? ptrTable : memberTable;
+				return metadata.GetTableRowCount(indexed) <= ushort.MaxValue ? 2 : 4;
+			}
 		}
 
 		public sealed class TypeDefEntry
@@ -103,35 +127,40 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int FieldList => MetadataTokens.GetToken(typeDef.GetFields().FirstOrDefault());
+			public int FieldList => 0x04000000 | fieldList;
 
 			string? fieldListTooltip;
 			public string? FieldListTooltip {
 				get {
 					var @field = typeDef.GetFields().FirstOrDefault();
 					if (@field.IsNil)
-						return null;
+						return "(type has no fields; the stored value is the start of its empty field list: the next type's first field row, or one past the end of the Field table)";
 					return GenerateTooltip(ref fieldListTooltip, metadataFile, @field);
 				}
 			}
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int MethodList => MetadataTokens.GetToken(typeDef.GetMethods().FirstOrDefault());
+			public int MethodList => 0x06000000 | methodList;
 
 			string? methodListTooltip;
 			public string? MethodListTooltip {
 				get {
 					var method = typeDef.GetMethods().FirstOrDefault();
 					if (method.IsNil)
-						return null;
+						return "(type has no methods; the stored value is the start of its empty method list: the next type's first method row, or one past the end of the MethodDef table)";
 					return GenerateTooltip(ref methodListTooltip, metadataFile, method);
 				}
 			}
 
-			public TypeDefEntry(MetadataFile metadataFile, TypeDefinitionHandle handle)
+			readonly int fieldList;
+			readonly int methodList;
+
+			public TypeDefEntry(MetadataFile metadataFile, TypeDefinitionHandle handle, int fieldList, int methodList)
 			{
 				this.metadataFile = metadataFile;
 				this.handle = handle;
+				this.fieldList = fieldList;
+				this.methodList = methodList;
 				typeDef = metadataFile.Metadata.GetTypeDefinition(handle);
 			}
 		}
