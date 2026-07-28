@@ -41,8 +41,24 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 		protected override IReadOnlyList<MethodDefEntry> LoadTable()
 		{
 			var list = new List<MethodDefEntry>();
-			foreach (var row in metadataFile.Metadata.MethodDefinitions)
-				list.Add(new MethodDefEntry(metadataFile, row));
+			var metadata = metadataFile.Metadata;
+			// ParamList is read from the raw row: the computed range (GetParameters) is empty
+			// for a parameterless method, but the stored value is the running list position
+			// (the next method's first Param row, or one past the Param table's end), never 0.
+			// It is the last column, so it sits at the end of the row; with a ParamPtr
+			// indirection present, the column indexes the pointer table, whose row count also
+			// governs the column width.
+			var indexedTable = metadata.GetTableRowCount(TableIndex.ParamPtr) > 0 ? TableIndex.ParamPtr : TableIndex.Param;
+			int paramListWidth = metadata.GetTableRowCount(indexedTable) <= ushort.MaxValue ? 2 : 4;
+			int rowSize = metadata.GetTableRowSize(TableIndex.MethodDef);
+			int tableOffset = metadata.GetTableMetadataOffset(TableIndex.MethodDef);
+			var reader = metadata.AsBlobReader();
+			foreach (var row in metadata.MethodDefinitions)
+			{
+				reader.Offset = tableOffset + rowSize * MetadataTokens.GetRowNumber(row) - paramListWidth;
+				int paramList = paramListWidth == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				list.Add(new MethodDefEntry(metadataFile, row, paramList));
+			}
 			return list;
 		}
 
@@ -94,20 +110,23 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 			public string? SignatureTooltip => GenerateTooltip(ref signatureTooltip, metadataFile, handle);
 
 			[ColumnInfo("X8", Kind = ColumnKind.Token)]
-			public int ParamList => MetadataTokens.GetToken(methodDef.GetParameters().FirstOrDefault());
+			public int ParamList => 0x08000000 | paramList;
 
 			string? paramListTooltip;
 			public string? ParamListTooltip {
 				get {
 					var param = methodDef.GetParameters().FirstOrDefault();
 					if (param.IsNil)
-						return null;
+						return "(method has no Param rows; the stored value is the start of its empty parameter list: the next method's first Param row, or one past the end of the Param table)";
 					return GenerateTooltip(ref paramListTooltip, metadataFile, param);
 				}
 			}
 
-			public MethodDefEntry(MetadataFile metadataFile, MethodDefinitionHandle handle)
+			readonly int paramList;
+
+			public MethodDefEntry(MetadataFile metadataFile, MethodDefinitionHandle handle, int paramList)
 			{
+				this.paramList = paramList;
 				this.metadataFile = metadataFile;
 				this.handle = handle;
 				methodDef = metadataFile.Metadata.GetMethodDefinition(handle);
