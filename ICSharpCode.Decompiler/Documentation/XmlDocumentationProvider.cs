@@ -337,7 +337,18 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			if (entity == null)
 				throw new ArgumentNullException(nameof(entity));
-			return GetDocumentation(entity.GetIdString());
+			var module = entity.ParentModule?.MetadataFile;
+			if (module == null || entity.MetadataToken.IsNil)
+				return null;
+			// The member keys depend on the compiler that wrote the xml file (C# vs the
+			// MSVC C++/CLI dialect), so try each candidate form.
+			foreach (var idString in IdStringProvider.GetIdStringCandidates(module, entity.MetadataToken))
+			{
+				string documentation = GetDocumentation(idString);
+				if (documentation != null)
+					return documentation;
+			}
+			return null;
 		}
 
 		string GetDocumentation(string key, bool allowReload)
