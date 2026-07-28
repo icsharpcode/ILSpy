@@ -2164,6 +2164,25 @@ namespace ModreqParams
 			});
 		}
 
+		[Test]
+		public async Task MsvcCppCliXml_DocumentationLookup()
+		{
+			var pe = await AssembleIdStringProbe();
+			string xmlPath = Path.Combine(Tester.TesterPath, "../../../../Documentation/IdStringProbe.xml");
+			var provider = new XmlDocumentationProvider(xmlPath);
+			var compilation = new SimpleCompilation(pe, MinimalCorlib.Instance);
+			var probeType = compilation.MainModule.TopLevelTypeDefinitions.Single(t => t.Name == "IdProbe");
+
+			var volatileMethod = probeType.Methods.Single(m => m.Name == "TakesVolatilePtr");
+			Assert.That(provider.GetDocumentation(volatileMethod), Does.Contain("volatile int pointer parameter"));
+
+			var indexer = probeType.Properties.Single(p => p.Name == "Item");
+			Assert.That(provider.GetDocumentation(indexer), Does.Contain("indexed property with a long parameter"));
+
+			var enumeratorMethod = probeType.Methods.Single(m => m.Name == "TakesEnumerator");
+			Assert.That(provider.GetDocumentation(enumeratorMethod), Does.Contain("nested type of a generic instantiation"));
+		}
+
 		#endregion
 
 		#region Hand-built metadata helpers

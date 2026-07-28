@@ -1705,12 +1705,12 @@ namespace ICSharpCode.ILSpy.TextView
 				// beside the .dll, .NET Framework reference-assemblies paths, and (recently)
 				// the modern .NET ref pack at dotnet/packs/Microsoft.NETCore.App.Ref/...
 				var provider = XmlDocLoader.LoadDocumentation(metadata);
-				var documentation = provider?.GetDocumentation(entity.GetIdString());
+				var documentation = provider?.GetDocumentation(entity);
 				if (documentation == null && entity is IMethod { AccessorOwner: IProperty owner })
 				{
 					// Accessors of parameterized properties appear as ordinary methods in the
 					// C# output; show the owning property's documentation for them.
-					documentation = provider?.GetDocumentation(owner.GetIdString());
+					documentation = provider?.GetDocumentation(owner);
 					entity = owner;
 				}
 				if (documentation == null)
