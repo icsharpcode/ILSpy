@@ -34,7 +34,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -781,63 +780,67 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		internal static IEntity? FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
-			ITypeReference typeRef;
-			IMemberReference? memberRef = null;
-			if (navigateTo.StartsWith("T:", StringComparison.Ordinal))
-			{
-				typeRef = IdStringProvider.ParseTypeName(navigateTo);
-			}
-			else
-			{
-				memberRef = IdStringProvider.ParseMemberIdString(navigateTo);
-				typeRef = memberRef.DeclaringTypeReference;
-			}
-			foreach (var asm in relevantAssemblies)
-			{
-				var module = asm.GetMetadataFileOrNull();
-				if (module != null && CanResolveTypeInPEFile(module, typeRef, out var typeHandle))
-				{
-					ICompilation compilation = typeHandle.Kind == HandleKind.ExportedType
-						? new DecompilerTypeSystem(module, module.GetAssemblyResolver())
-						: new SimpleCompilation((PEFile)module, MinimalCorlib.Instance);
-					return memberRef == null
-						? typeRef.Resolve(new SimpleTypeResolveContext(compilation)) as ITypeDefinition
-						: memberRef.Resolve(new SimpleTypeResolveContext(compilation));
-				}
-			}
-			return null;
+			// Reference assemblies are skipped so the search keeps looking for another
+			// assembly that might have a usable definition.
+			IReadOnlyList<MetadataFile> modules = [.. from asm in relevantAssemblies let mod = asm.GetMetadataFileOrNull() where mod != null && !mod.IsReferenceAssembly() select mod];
+			var (module, handle) = IdStringProvider.FindEntity(navigateTo, modules);
+			if (module == null || handle.IsNil)
+				(module, handle) = FindMemberViaTypeForwarders(navigateTo, modules);
+			if (module == null || handle.IsNil)
+				return null;
+			var metadataModule = module.GetLoadedAssembly().GetTypeSystemOrNull()?.MainModule as MetadataModule;
+			if (metadataModule == null)
+				return null;
+			return metadataModule.ResolveEntity(handle);
 		}
 
-		static bool CanResolveTypeInPEFile(MetadataFile module, ITypeReference typeRef, out EntityHandle typeHandle)
+		/// <summary>
+		/// A member ID whose declaring type is present in the given modules only as a type
+		/// forwarder cannot be found by <see cref="IdStringProvider.FindEntity"/> alone:
+		/// the member rows live in the assembly the forwarder points to. Resolve that
+		/// assembly and search the member there.
+		/// </summary>
+		static (MetadataFile? Module, EntityHandle Handle) FindMemberViaTypeForwarders(string navigateTo, IReadOnlyList<MetadataFile> modules)
 		{
-			// Reference assemblies are skipped so the loop keeps looking for an actual definition.
-			if (module.IsReferenceAssembly())
+			if (navigateTo.Length < 2 || navigateTo[1] != ':' || navigateTo.StartsWith("T:", StringComparison.Ordinal))
+				return default;
+			int parenPos = navigateTo.IndexOf('(');
+			if (parenPos < 0)
+				parenPos = navigateTo.LastIndexOf('~');
+			if (parenPos < 0)
+				parenPos = navigateTo.Length;
+			int dotPos = navigateTo.LastIndexOf('.', parenPos - 1);
+			if (dotPos <= 2)
+				return default;
+			string declaringTypeId = "T:" + navigateTo[2..dotPos];
+			// Forwarder chains are short; the bound only guards against cycles.
+			for (int depth = 0; depth < 16; depth++)
 			{
-				typeHandle = default;
-				return false;
+				var (module, typeHandle) = IdStringProvider.FindEntity(declaringTypeId, modules);
+				if (module == null || typeHandle.Kind != HandleKind.ExportedType)
+					return default;
+				var target = ResolveForwarderTarget(module, (ExportedTypeHandle)typeHandle);
+				if (target == null)
+					return default;
+				modules = [target];
+				var result = IdStringProvider.FindEntity(navigateTo, modules);
+				if (!result.Handle.IsNil)
+					return result;
 			}
+			return default;
+		}
 
-			switch (typeRef)
-			{
-				case GetPotentiallyNestedClassTypeReference topLevelType:
-					typeHandle = topLevelType.ResolveInPEFile(module);
-					return !typeHandle.IsNil;
-				case NestedTypeReference nestedType:
-					if (!CanResolveTypeInPEFile(module, nestedType.DeclaringTypeReference, out typeHandle))
-						return false;
-					if (typeHandle.Kind == HandleKind.ExportedType)
-						return true;
-					var typeDef = module.Metadata.GetTypeDefinition((TypeDefinitionHandle)typeHandle);
-					typeHandle = typeDef.GetNestedTypes().FirstOrDefault(t => {
-						var td = module.Metadata.GetTypeDefinition(t);
-						var typeName = ReflectionHelper.SplitTypeParameterCountFromReflectionName(module.Metadata.GetString(td.Name), out int typeParameterCount);
-						return nestedType.AdditionalTypeParameterCount == typeParameterCount && nestedType.Name == typeName;
-					});
-					return !typeHandle.IsNil;
-				default:
-					typeHandle = default;
-					return false;
-			}
+		static MetadataFile? ResolveForwarderTarget(MetadataFile module, ExportedTypeHandle handle)
+		{
+			var metadata = module.Metadata;
+			var implementation = metadata.GetExportedType(handle).Implementation;
+			// Nested forwarded types point at their enclosing forwarder entry.
+			while (implementation.Kind == HandleKind.ExportedType)
+				implementation = metadata.GetExportedType((ExportedTypeHandle)implementation).Implementation;
+			if (implementation.Kind != HandleKind.AssemblyReference)
+				return null;
+			var assemblyReference = new Decompiler.Metadata.AssemblyReference(module, (AssemblyReferenceHandle)implementation);
+			return module.GetAssemblyResolver().Resolve(assemblyReference);
 		}
 
 		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly>? loadedAssemblies = null, bool focusNode = true)
