@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Documentation
 	{
 		#region GetIdString
 		/// <summary>
-		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity,
+		/// Gets the ID string (C# 4.0 spec, section A.3.1) for the specified entity,
 		/// in the form the C# compiler writes into xml documentation files.
 		/// </summary>
 		public static string GetIdString(this MetadataFile module, EntityHandle handle)
@@ -171,7 +171,7 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 
 		/// <summary>
-		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity.
+		/// Gets the ID string (C# 4.0 spec, section A.3.1) for the specified entity.
 		/// </summary>
 		/// <remarks>
 		/// The ID string is computed from the entity's metadata; for specialized members
@@ -1038,10 +1038,10 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// 
 		/// Examples:
 		///   "System.Collections.Generic.Dictionary`2.KeyCollection"
-		///   → [{Name="System.Collections.Generic.Dictionary", TPC=2}, {Name="KeyCollection", TPC=0}]
+		///   -> [{Name="System.Collections.Generic.Dictionary", TPC=2}, {Name="KeyCollection", TPC=0}]
 		///   
 		///   "Outer.Inner{System.Int32}"
-		///   → [{Name="Outer", TPC=0}, {Name="Inner", TPC=1}]
+		///   -> [{Name="Outer", TPC=0}, {Name="Inner", TPC=1}]
 		/// </summary>
 		static List<TypeNamePart> ParseTypeNameParts(string typeName)
 		{
@@ -1109,13 +1109,15 @@ namespace ICSharpCode.Decompiler.Documentation
 				{
 					char c = typeName[pos];
 					if (c == '{')
+					{
 						depth++;
+					}
 					else if (c == '}')
 					{
 						if (depth == 0)
 						{
 							pos++;
-							break;
+							return count;
 						}
 						depth--;
 					}
@@ -1125,7 +1127,7 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 					pos++;
 				}
-				return count;
+				throw new ReflectionNameParseException(pos, "Expected '}'");
 			}
 
 			return 0;

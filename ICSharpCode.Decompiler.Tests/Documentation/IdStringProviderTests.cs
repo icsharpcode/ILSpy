@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Tests.Documentation
 	{
 		// ----------------------------------------------------------------
 		// Test assembly source.
-		// Mirrors the C# spec §D.3 / §D.5 examples and adds edge cases.
+		// Mirrors the C# spec sections D.3 and D.5 examples and adds edge cases.
 		// ----------------------------------------------------------------
 
 		private const string testSource = """
@@ -259,7 +259,7 @@ namespace DefaultInterfaceMethods
 
 namespace RecordTests
 {
-    // Record class — generates Equals, GetHashCode, ToString, PrintMembers,
+    // Record class - generates Equals, GetHashCode, ToString, PrintMembers,
     // Deconstruct, op_Equality, op_Inequality, Clone, copy ctor
     record RecordClass(int X, string Y);
 
@@ -526,7 +526,7 @@ namespace ModreqParams
 				"Test source has compilation errors:\n" +
 				string.Join("\n", diagnostics.Select(d => d.ToString())));
 
-			// Build the Roslyn ID → symbol map
+			// Build the Roslyn ID -> symbol map
 			roslynIdMap = new Dictionary<string, Microsoft.CodeAnalysis.ISymbol>();
 			CollectSymbols(roslynCompilation.GlobalNamespace);
 
@@ -660,7 +660,7 @@ namespace ModreqParams
 		private void AssertIdString(IEntity entity, string expectedId)
 		{
 			Assert.That(roslynIdMap.ContainsKey(expectedId), Is.True,
-				$"Expected ID '{expectedId}' not found in Roslyn ID map — " +
+				$"Expected ID '{expectedId}' not found in Roslyn ID map - " +
 				$"is the expected string correct?");
 			string decompilerId = IdStringProvider.GetIdString(entity.ParentModule.MetadataFile, entity.MetadataToken);
 			Assert.That(decompilerId, Is.EqualTo(expectedId), "Decompiler ID mismatch");
@@ -1225,6 +1225,16 @@ namespace ModreqParams
 				"GetIdString on found entity does not match the input ID string");
 		}
 
+		[TestCase("T:Acme.MyList{")]
+		[TestCase("T:Acme.MyList{System.Int32")]
+		[TestCase("T:Acme.MyList{Acme.MyList{System.Int32}")]
+		[TestCase("M:Acme.MyList{.Test")]
+		public void FindEntity_UnbalancedBraces_Throws(string idString)
+		{
+			Assert.Throws<ReflectionNameParseException>(
+				() => IdStringProvider.FindEntity(idString, new[] { decompilerTypeSystem.MainModule.MetadataFile }));
+		}
+
 		#endregion
 
 		#region Exhaustive Roslyn cross-check
@@ -1410,7 +1420,7 @@ namespace ModreqParams
 		[Test]
 		public void Dynamic_Parameter()
 		{
-			// dynamic → System.Object in ID strings
+			// dynamic -> System.Object in ID strings
 			var method = FindMethod("DynamicTests.DynamicMethods", "TakesDynamic");
 			AssertIdString(method, "M:DynamicTests.DynamicMethods.TakesDynamic(System.Object)");
 		}
@@ -1766,7 +1776,7 @@ namespace ModreqParams
 		[Test]
 		public void Overload_ByRef()
 		{
-			// ref int and out int both produce System.Int32@ — but they're different methods
+			// ref int and out int both produce System.Int32@ - but they're different methods
 			// The ID string includes the @, making ref/out/in look the same in the ID.
 			// Each overload of ByRef that takes ref/out int should still be distinguishable
 			// from the one that takes plain int.
