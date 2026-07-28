@@ -2112,6 +2112,46 @@ namespace ModreqParams
 			Assert.That(idString, Is.EqualTo("M:Host.M(System.Int32^)"));
 		}
 
+		[Test]
+		public void FindEntity_ModifiedSignature()
+		{
+			var pe = BuildAssemblyWithMethodSignature((metadata, parameter) => {
+				parameter.CustomModifiers().AddModifier(
+					AddCompilerServicesTypeRef(metadata, "IsConst"), isOptional: true);
+				parameter.Type().Int32();
+			});
+			var (module, handle) = IdStringProvider.FindEntity(
+				"M:Host.M(System.Int32!System.Runtime.CompilerServices.IsConst)", new MetadataFile[] { pe });
+			Assert.That(module, Is.SameAs(pe));
+			Assert.That(handle, Is.EqualTo((EntityHandle)MetadataTokens.MethodDefinitionHandle(1)));
+		}
+
+		[Test]
+		public void FindEntity_PrefersDialectConsistentMatch()
+		{
+			// Overloads that differ only in a custom modifier (C++/CLI 'char*' vs
+			// 'signed char*'): the C#/Roslyn form of the modified overload collapses to
+			// the unmodified overload's ID, so a naive first-match lookup would resolve
+			// "M:Host.M(System.SByte*)" to the modified overload declared first. The
+			// dialect-consistent two-pass match must pick the unmodified overload.
+			var pe = BuildAssemblyWithMethods(
+				(metadata, parameter) => {
+					var pointee = parameter.Type().Pointer();
+					pointee.CustomModifiers().AddModifier(
+						AddCompilerServicesTypeRef(metadata, "IsSignUnspecifiedByte"), isOptional: true);
+					pointee.SByte();
+				},
+				(metadata, parameter) => parameter.Type().Pointer().SByte());
+
+			var (_, plainHandle) = IdStringProvider.FindEntity(
+				"M:Host.M(System.SByte*)", new MetadataFile[] { pe });
+			Assert.That(plainHandle, Is.EqualTo((EntityHandle)MetadataTokens.MethodDefinitionHandle(2)));
+
+			var (_, modifiedHandle) = IdStringProvider.FindEntity(
+				"M:Host.M(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte*)", new MetadataFile[] { pe });
+			Assert.That(modifiedHandle, Is.EqualTo((EntityHandle)MetadataTokens.MethodDefinitionHandle(1)));
+		}
+
 		#endregion
 
 		#region MSVC C++/CLI dialect fixture
