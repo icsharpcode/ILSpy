@@ -2119,6 +2119,60 @@ namespace ModreqParams
 			Assert.That(modifiedHandle, Is.EqualTo((EntityHandle)MetadataTokens.MethodDefinitionHandle(1)));
 		}
 
+		[Test]
+		public void DocumentationLookup_DoesNotFallBackToSiblingKey()
+		{
+			// The Roslyn form of the modified overload equals the only key of the
+			// unmodified overload. Such an assembly cannot come from the C# compiler, so
+			// its xml file uses the C++/CLI dialect, where that key documents the
+			// unmodified overload: the modified overload's candidates must omit it, and
+			// its documentation lookup must miss instead of showing the sibling's text.
+			var pe = BuildAssemblyWithMethods(
+				(metadata, parameter) => {
+					var pointee = parameter.Type().Pointer();
+					pointee.CustomModifiers().AddModifier(
+						AddCompilerServicesTypeRef(metadata, "IsSignUnspecifiedByte"), isOptional: true);
+					pointee.SByte();
+				},
+				(metadata, parameter) => parameter.Type().Pointer().SByte());
+
+			Assert.That(pe.GetIdStringCandidates(MetadataTokens.MethodDefinitionHandle(1)),
+				Is.EqualTo(new[] { "M:Host.M(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte*)" }));
+			Assert.That(pe.GetIdStringCandidates(MetadataTokens.MethodDefinitionHandle(2)),
+				Is.EqualTo(new[] { "M:Host.M(System.SByte*)" }));
+
+			string xmlPath = Path.Combine(Path.GetTempPath(),
+				"IdStringSiblingGuard_" + Guid.NewGuid().ToString("N") + ".xml");
+			File.WriteAllText(xmlPath, """
+				<?xml version="1.0"?>
+				<doc>
+					<assembly><name>test</name></assembly>
+					<members>
+						<member name="M:Host.M(System.SByte*)">
+							<summary>plain overload</summary>
+						</member>
+					</members>
+				</doc>
+				""");
+			try
+			{
+				var provider = new XmlDocumentationProvider(xmlPath);
+				var compilation = new SimpleCompilation(pe, MinimalCorlib.Instance);
+				var host = compilation.MainModule.TopLevelTypeDefinitions.Single(t => t.Name == "Host");
+				var modified = host.Methods.Single(
+					m => m.MetadataToken == (EntityHandle)MetadataTokens.MethodDefinitionHandle(1));
+				var plain = host.Methods.Single(
+					m => m.MetadataToken == (EntityHandle)MetadataTokens.MethodDefinitionHandle(2));
+
+				Assert.That(provider.GetDocumentation(plain), Does.Contain("plain overload"));
+				Assert.That(provider.GetDocumentation(modified), Is.Null);
+			}
+			finally
+			{
+				File.Delete(xmlPath);
+			}
+		}
+
 		#endregion
 
 		#region MSVC C++/CLI dialect fixture
