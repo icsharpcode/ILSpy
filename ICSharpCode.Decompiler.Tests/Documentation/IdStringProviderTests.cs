@@ -1185,6 +1185,48 @@ namespace ModreqParams
 
 		#endregion
 
+		#region FindEntity round-trip
+
+		[TestCase("T:Color")]
+		[TestCase("T:Acme.Widget")]
+		[TestCase("T:Acme.Widget.NestedClass")]
+		[TestCase("T:Acme.MyList`1")]
+		[TestCase("T:Acme.MyList`1.Helper`2")]
+		[TestCase("F:Acme.Widget.message")]
+		[TestCase("F:Acme.Widget.PI")]
+		[TestCase("M:Acme.Widget.#ctor")]
+		[TestCase("M:Acme.Widget.#ctor(System.String)")]
+		[TestCase("M:Acme.Widget.#cctor")]
+		[TestCase("M:Acme.Widget.Finalize")]
+		[TestCase("M:Acme.Widget.M0")]
+		[TestCase("M:Acme.Widget.M1(System.Char,System.Single@,Acme.ValueType@,System.Int32@)")]
+		[TestCase("M:Acme.Widget.M2(System.Int16[],System.Int32[0:,0:],System.Int64[][])")]
+		[TestCase("M:Acme.Widget.M3(System.Int64[][],Acme.Widget[0:,0:,0:][])")]
+		[TestCase("M:Acme.Widget.M6(System.Int32,System.Object[])")]
+		[TestCase("M:Acme.MyList`1.Test(`0)")]
+		[TestCase("M:Acme.UseList.Process(Acme.MyList{System.Int32})")]
+		[TestCase("M:Acme.UseList.GetValues``1(``0)")]
+		[TestCase("P:Acme.Widget.Width")]
+		[TestCase("P:Acme.Widget.Item(System.Int32)")]
+		[TestCase("P:Acme.Widget.Item(System.String,System.Int32)")]
+		[TestCase("E:Acme.Widget.AnEvent")]
+		[TestCase("M:Acme.Widget.op_UnaryPlus(Acme.Widget)")]
+		[TestCase("M:Acme.Widget.op_Addition(Acme.Widget,Acme.Widget)")]
+		[TestCase("M:Acme.Widget.op_Explicit(Acme.Widget)~System.Int32")]
+		[TestCase("M:Acme.Widget.op_Implicit(Acme.Widget)~System.Int64")]
+		[TestCase("M:NestedGenericInstantiations.Consumer.TakesInner(NestedGenericInstantiations.Outer{System.Int32}.Inner)")]
+		[TestCase("M:NestedGenericInstantiations.Consumer.TakesInner2(NestedGenericInstantiations.Outer{System.Int32}.Inner2{System.String})")]
+		[TestCase("M:CheckedOperators.Money.op_CheckedExplicit(CheckedOperators.Money)~System.Int32")]
+		public void FindEntity_RoundTrip(string idString)
+		{
+			var (_, handle) = IdStringProvider.FindEntity(idString, new[] { decompilerTypeSystem.MainModule.MetadataFile });
+			Assert.That(handle.IsNil, Is.False, $"FindEntity returned null for '{idString}'");
+			Assert.That(IdStringProvider.GetIdString(decompilerTypeSystem.MainModule.MetadataFile, handle), Is.EqualTo(idString),
+				"GetIdString on found entity does not match the input ID string");
+		}
+
+		#endregion
+
 		#region Exhaustive Roslyn cross-check
 
 		[Test]
@@ -1273,81 +1315,6 @@ namespace ModreqParams
 				foreach (var evt in type.Events)
 					AssertMatchesRoslyn(evt);
 			}
-		}
-
-		#endregion
-
-		#region FindEntity round-trip
-
-		[TestCase("T:Color")]
-		[TestCase("T:Acme.Widget")]
-		[TestCase("T:Acme.Widget.NestedClass")]
-		[TestCase("T:Acme.MyList`1")]
-		[TestCase("T:Acme.MyList`1.Helper`2")]
-		[TestCase("F:Acme.Widget.message")]
-		[TestCase("F:Acme.Widget.PI")]
-		[TestCase("M:Acme.Widget.#ctor")]
-		[TestCase("M:Acme.Widget.#ctor(System.String)")]
-		[TestCase("M:Acme.Widget.#cctor")]
-		[TestCase("M:Acme.Widget.Finalize")]
-		[TestCase("M:Acme.Widget.M0")]
-		[TestCase("M:Acme.Widget.M1(System.Char,System.Single@,Acme.ValueType@,System.Int32@)")]
-		[TestCase("M:Acme.Widget.M2(System.Int16[],System.Int32[0:,0:],System.Int64[][])")]
-		[TestCase("M:Acme.Widget.M3(System.Int64[][],Acme.Widget[0:,0:,0:][])")]
-		[TestCase("M:Acme.Widget.M6(System.Int32,System.Object[])")]
-		[TestCase("M:Acme.MyList`1.Test(`0)")]
-		[TestCase("M:Acme.UseList.Process(Acme.MyList{System.Int32})")]
-		[TestCase("M:Acme.UseList.GetValues``1(``0)")]
-		[TestCase("P:Acme.Widget.Width")]
-		[TestCase("P:Acme.Widget.Item(System.Int32)")]
-		[TestCase("P:Acme.Widget.Item(System.String,System.Int32)")]
-		[TestCase("E:Acme.Widget.AnEvent")]
-		[TestCase("M:Acme.Widget.op_UnaryPlus(Acme.Widget)")]
-		[TestCase("M:Acme.Widget.op_Addition(Acme.Widget,Acme.Widget)")]
-		[TestCase("M:Acme.Widget.op_Explicit(Acme.Widget)~System.Int32")]
-		[TestCase("M:Acme.Widget.op_Implicit(Acme.Widget)~System.Int64")]
-		[TestCase("M:NestedGenericInstantiations.Consumer.TakesInner(NestedGenericInstantiations.Outer{System.Int32}.Inner)")]
-		[TestCase("M:NestedGenericInstantiations.Consumer.TakesInner2(NestedGenericInstantiations.Outer{System.Int32}.Inner2{System.String})")]
-		[TestCase("M:CheckedOperators.Money.op_CheckedExplicit(CheckedOperators.Money)~System.Int32")]
-		public void FindEntity_RoundTrip(string idString)
-		{
-			var (_, handle) = IdStringProvider.FindEntity(idString, new[] { decompilerTypeSystem.MainModule.MetadataFile });
-			Assert.That(handle.IsNil, Is.False, $"FindEntity returned null for '{idString}'");
-			Assert.That(IdStringProvider.GetIdString(decompilerTypeSystem.MainModule.MetadataFile, handle), Is.EqualTo(idString),
-				"GetIdString on found entity does not match the input ID string");
-		}
-
-		#endregion
-
-		#region ParseTypeName
-
-		[TestCase("System.Int32")]
-		[TestCase("System.String")]
-		[TestCase("Acme.Widget")]
-		[TestCase("Acme.MyList`1")]
-		[TestCase("Acme.MyList`1.Helper`2")]
-		[TestCase("System.Int32[]")]
-		[TestCase("System.Int32[0:,0:]")]
-		[TestCase("System.Int32*")]
-		[TestCase("System.Int32@")]
-		[TestCase("Acme.MyList{System.Int32}")]
-		[TestCase("`0")]
-		[TestCase("``0")]
-		[TestCase("T:System.Int32")]
-		[TestCase("T:Acme.Widget")]
-		public void ParseTypeName_DoesNotThrow(string typeName)
-		{
-			Assert.DoesNotThrow(() => IdStringProvider.ParseTypeName(typeName));
-		}
-
-		[TestCase("")]
-		[TestCase("`")]
-		[TestCase("{")]
-		[TestCase("Foo{")]
-		public void ParseTypeName_InvalidInput_Throws(string typeName)
-		{
-			Assert.Throws<ReflectionNameParseException>(
-				() => IdStringProvider.ParseTypeName(typeName));
 		}
 
 		#endregion
@@ -2202,6 +2169,21 @@ namespace ModreqParams
 					Assert.That(candidates, Does.Contain(name), name);
 				}
 			});
+		}
+
+		[Test]
+		public async Task MsvcCppCliXml_FindEntityResolvesDefaultIndexer()
+		{
+			// The 'default' key does not equal the property's metadata name (Item), so the
+			// member-name narrowing must fall back to the unfiltered scan.
+			var pe = await AssembleIdStringProbe();
+			var (module, handle) = IdStringProvider.FindEntity(
+				"P:IdProbe.default(System.Int32!System.Runtime.CompilerServices.IsLong)",
+				new MetadataFile[] { pe });
+			Assert.That(module, Is.SameAs((MetadataFile)pe));
+			Assert.That(handle.Kind, Is.EqualTo(HandleKind.PropertyDefinition));
+			var propertyName = pe.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle).Name;
+			Assert.That(pe.Metadata.GetString(propertyName), Is.EqualTo("Item"));
 		}
 
 		[Test]

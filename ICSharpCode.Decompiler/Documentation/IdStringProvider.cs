@@ -658,209 +658,6 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 		#endregion
 
-		#region ParseMemberName
-		/// <summary>
-		/// Parse the ID string into a member reference.
-		/// </summary>
-		/// <param name="memberIdString">The ID string representing the member (with "M:", "F:", "P:" or "E:" prefix).</param>
-		/// <returns>A member reference that represents the ID string.</returns>
-		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
-		/// <remarks>
-		/// The member reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
-		/// and if the member is not found there,
-		/// it will look in all other assemblies of the compilation.
-		/// </remarks>
-		public static IMemberReference ParseMemberIdString(string memberIdString)
-		{
-			if (memberIdString == null)
-				throw new ArgumentNullException(nameof(memberIdString));
-			if (memberIdString.Length < 2 || memberIdString[1] != ':')
-				throw new ReflectionNameParseException(0, "Missing type tag");
-			char typeChar = memberIdString[0];
-			int parenPos = memberIdString.IndexOf('(');
-			if (parenPos < 0)
-				parenPos = memberIdString.LastIndexOf('~');
-			if (parenPos < 0)
-				parenPos = memberIdString.Length;
-			int dotPos = memberIdString.LastIndexOf('.', parenPos - 1);
-			if (dotPos < 0)
-				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
-			string typeName = memberIdString.Substring(0, dotPos);
-			int pos = 2;
-			ITypeReference typeReference = ParseTypeName(typeName, ref pos);
-			if (pos != typeName.Length)
-				throw new ReflectionNameParseException(pos, "Expected end of type name");
-			//			string memberName = memberIDString.Substring(dotPos + 1, parenPos - (dotPos + 1));
-			//			pos = memberName.LastIndexOf("``");
-			//			if (pos > 0)
-			//				memberName = memberName.Substring(0, pos);
-			//			memberName = memberName.Replace('#', '.');
-			return new IdStringMemberReference(typeReference, typeChar, memberIdString);
-		}
-		#endregion
-
-		#region ParseTypeName
-		/// <summary>
-		/// Parse the ID string type name into a type reference.
-		/// </summary>
-		/// <param name="typeName">The ID string representing the type (the "T:" prefix is optional).</param>
-		/// <returns>A type reference that represents the ID string.</returns>
-		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid</exception>
-		/// <remarks>
-		/// <para>
-		/// The type reference will look in <see cref="ITypeResolveContext.CurrentModule"/> first,
-		/// and if the type is not found there,
-		/// it will look in all other assemblies of the compilation.
-		/// </para>
-		/// <para>
-		/// If the type is open (contains type parameters '`0' or '``0'),
-		/// an <see cref="ITypeResolveContext"/> with the appropriate CurrentTypeDefinition/CurrentMember is required
-		/// to resolve the reference to the ITypeParameter.
-		/// </para>
-		/// </remarks>
-		public static ITypeReference ParseTypeName(string typeName)
-		{
-			if (typeName == null)
-				throw new ArgumentNullException(nameof(typeName));
-			int pos = 0;
-			if (typeName.StartsWith("T:", StringComparison.Ordinal))
-				pos = 2;
-			ITypeReference r = ParseTypeName(typeName, ref pos);
-			if (pos < typeName.Length)
-				throw new ReflectionNameParseException(pos, "Expected end of type name");
-			return r;
-		}
-
-		static bool IsIDStringSpecialCharacter(char c)
-		{
-			switch (c)
-			{
-				case ':':
-				case '{':
-				case '}':
-				case '[':
-				case ']':
-				case '(':
-				case ')':
-				case '`':
-				case '*':
-				case '@':
-				case ',':
-					return true;
-				default:
-					return false;
-			}
-		}
-
-		static ITypeReference ParseTypeName(string typeName, ref int pos)
-		{
-			string reflectionTypeName = typeName;
-			if (pos == typeName.Length)
-				throw new ReflectionNameParseException(pos, "Unexpected end");
-			ITypeReference result;
-			if (reflectionTypeName[pos] == '`')
-			{
-				// type parameter reference
-				pos++;
-				if (pos == reflectionTypeName.Length)
-					throw new ReflectionNameParseException(pos, "Unexpected end");
-				if (reflectionTypeName[pos] == '`')
-				{
-					// method type parameter reference
-					pos++;
-					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
-					result = TypeParameterReference.Create(SymbolKind.Method, index);
-				}
-				else
-				{
-					// class type parameter reference
-					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
-					result = TypeParameterReference.Create(SymbolKind.TypeDefinition, index);
-				}
-			}
-			else
-			{
-				// not a type parameter reference: read the actual type name
-				List<ITypeReference> typeArguments = new List<ITypeReference>();
-				string typeNameWithoutSuffix = ReadTypeName(typeName, ref pos, true, out int typeParameterCount, typeArguments);
-				result = new GetPotentiallyNestedClassTypeReference(typeNameWithoutSuffix, typeParameterCount);
-				while (pos < typeName.Length && typeName[pos] == '.')
-				{
-					pos++;
-					string nestedTypeName = ReadTypeName(typeName, ref pos, false, out typeParameterCount, typeArguments);
-					result = new NestedTypeReference(result, nestedTypeName, typeParameterCount);
-				}
-				if (typeArguments.Count > 0)
-				{
-					result = new ParameterizedTypeReference(result, typeArguments);
-				}
-			}
-			while (pos < typeName.Length)
-			{
-				switch (typeName[pos])
-				{
-					case '[':
-						int dimensions = 1;
-						do
-						{
-							pos++;
-							if (pos == typeName.Length)
-								throw new ReflectionNameParseException(pos, "Unexpected end");
-							if (typeName[pos] == ',')
-								dimensions++;
-						} while (typeName[pos] != ']');
-						result = new ArrayTypeReference(result, dimensions);
-						break;
-					case '*':
-						result = new PointerTypeReference(result);
-						break;
-					case '@':
-						result = new ByReferenceTypeReference(result);
-						break;
-					default:
-						return result;
-				}
-				pos++;
-			}
-			return result;
-		}
-
-		static string ReadTypeName(string typeName, ref int pos, bool allowDottedName, out int typeParameterCount, List<ITypeReference> typeArguments)
-		{
-			int startPos = pos;
-			// skip the simple name portion:
-			while (pos < typeName.Length && !IsIDStringSpecialCharacter(typeName[pos]) && (allowDottedName || typeName[pos] != '.'))
-				pos++;
-			if (pos == startPos)
-				throw new ReflectionNameParseException(pos, "Expected type name");
-			string shortTypeName = typeName.Substring(startPos, pos - startPos);
-			// read type arguments:
-			typeParameterCount = 0;
-			if (pos < typeName.Length && typeName[pos] == '`')
-			{
-				// unbound generic type
-				pos++;
-				typeParameterCount = ReflectionHelper.ReadTypeParameterCount(typeName, ref pos);
-			}
-			else if (pos < typeName.Length && typeName[pos] == '{')
-			{
-				// bound generic type
-				do
-				{
-					pos++;
-					typeArguments.Add(ParseTypeName(typeName, ref pos));
-					typeParameterCount++;
-					if (pos == typeName.Length)
-						throw new ReflectionNameParseException(pos, "Unexpected end");
-				} while (typeName[pos] == ',');
-				if (typeName[pos] != '}')
-					throw new ReflectionNameParseException(pos, "Expected '}'");
-				pos++;
-			}
-			return shortTypeName;
-		}
-		#endregion
-
 		#region FindEntity
 		/// <summary>
 		/// Finds the entity in the given type resolve context.
@@ -875,14 +672,69 @@ namespace ICSharpCode.Decompiler.Documentation
 				throw new ArgumentNullException(nameof(idString));
 			if (context == null)
 				throw new ArgumentNullException(nameof(context));
-			if (idString.StartsWith("T:", StringComparison.Ordinal))
+			if (idString.Length < 2 || idString[1] != ':')
+				throw new ReflectionNameParseException(0, "Missing type tag");
+
+			if (idString[0] == 'T')
+				return FindTypeDefinition(idString.Substring(2), context);
+
+			int dotPos = FindMemberNameDot(idString);
+			if (dotPos <= 2)
+				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
+			var declaringType = FindTypeDefinition(idString.Substring(2, dotPos - 2), context);
+			if (declaringType?.ParentModule is not MetadataModule metadataModule)
+				return null;
+			var typeDef = metadataModule.MetadataFile.Metadata.GetTypeDefinition(
+				(TypeDefinitionHandle)declaringType.MetadataToken);
+			var handle = FindMemberInType(metadataModule.MetadataFile, typeDef, idString[0], idString);
+			return handle.IsNil ? null : metadataModule.ResolveEntity(handle);
+		}
+
+		/// <summary>
+		/// Resolves a type name from an ID string (without the "T:" prefix) in the given
+		/// type resolve context, trying all namespace/type-name boundary splits.
+		/// </summary>
+		static ITypeDefinition FindTypeDefinition(string typeName, ITypeResolveContext context)
+		{
+			var parts = ParseTypeNameParts(typeName);
+			string[] dotParts = parts[0].Name.Split('.');
+
+			for (int i = dotParts.Length - 1; i >= 0; i--)
 			{
-				return ParseTypeName(idString.Substring(2)).Resolve(context).GetDefinition();
+				string ns = string.Join(".", dotParts, 0, i);
+				string name = dotParts[i];
+				int topLevelTpc = (i == dotParts.Length - 1) ? parts[0].TypeParameterCount : 0;
+				var typeDef = context.Compilation.FindType(new TopLevelTypeName(ns, name, topLevelTpc)).GetDefinition();
+
+				for (int j = i + 1; j < dotParts.Length && typeDef != null; j++)
+				{
+					int tpc = (j == dotParts.Length - 1 && parts.Count == 1) ? parts[0].TypeParameterCount : 0;
+					typeDef = FindNestedType(typeDef, dotParts[j], tpc);
+				}
+				for (int j = 1; j < parts.Count && typeDef != null; j++)
+				{
+					typeDef = FindNestedType(typeDef, parts[j].Name, parts[j].TypeParameterCount);
+				}
+
+				if (typeDef != null)
+					return typeDef;
 			}
-			else
+
+			return null;
+		}
+
+		static ITypeDefinition FindNestedType(ITypeDefinition declaringType, string name, int additionalTypeParameterCount)
+		{
+			foreach (var nested in declaringType.NestedTypes)
 			{
-				return ParseMemberIdString(idString).Resolve(context);
+				var def = nested.GetDefinition();
+				if (def != null && def.Name == name
+					&& def.TypeParameterCount - declaringType.TypeParameterCount == additionalTypeParameterCount)
+				{
+					return def;
+				}
 			}
+			return null;
 		}
 
 		/// <summary>
@@ -1000,16 +852,55 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 
 		/// <summary>
+		/// Extracts the member-name portion of a member ID string and undoes the name
+		/// mangling, approximating the metadata name to narrow candidates with. The result
+		/// can disagree with the actual metadata name (a 'default' indexer key, or names
+		/// that genuinely contain mangled characters), so a miss with the filter must fall
+		/// back to an unfiltered scan.
+		/// </summary>
+		static string GetApproximateMemberName(string idString)
+		{
+			int dotPos = FindMemberNameDot(idString);
+			if (dotPos < 0)
+				return null;
+			int end = idString.Length;
+			int parenPos = idString.IndexOf('(', dotPos);
+			if (parenPos >= 0)
+				end = parenPos;
+			else if ((parenPos = idString.LastIndexOf('~')) > dotPos)
+				end = parenPos;
+			string name = idString.Substring(dotPos + 1, end - dotPos - 1);
+			int arityMarker = name.IndexOf("``", StringComparison.Ordinal);
+			if (arityMarker >= 0)
+				name = name.Substring(0, arityMarker);
+			return name.Replace('#', '.').Replace('{', '<').Replace('}', '>');
+		}
+
+		/// <summary>
 		/// Searches for a member within a resolved type definition by computing the ID
 		/// string of each member and comparing, so that IDs in either dialect (e.g. crefs
-		/// from MSVC-generated xml files) resolve. The dialects are matched in two passes
-		/// over the whole member list, most specific first: the stripped C#/Roslyn form of
-		/// one member can equal the C++/CLI-dialect key of a different member (overloads
-		/// differing only in a custom modifier), so mixing dialects within a single pass
-		/// could resolve to the wrong member.
+		/// from MSVC-generated xml files) resolve. Candidates are first narrowed by the
+		/// member name; the dialects are matched in two passes over the whole member list,
+		/// most specific first: the stripped C#/Roslyn form of one member can equal the
+		/// C++/CLI-dialect key of a different member (overloads differing only in a custom
+		/// modifier), so mixing dialects within a single pass could resolve to the wrong
+		/// member.
 		/// </summary>
 		static EntityHandle FindMemberInType(MetadataFile module, TypeDefinition typeDef, char typeChar, string idString)
 		{
+			string nameFilter = GetApproximateMemberName(idString);
+			var handle = FindMemberInType(module, typeDef, typeChar, idString, nameFilter);
+			if (handle.IsNil && nameFilter != null)
+				handle = FindMemberInType(module, typeDef, typeChar, idString, nameFilter: null);
+			return handle;
+		}
+
+		static EntityHandle FindMemberInType(MetadataFile module, TypeDefinition typeDef, char typeChar, string idString, string nameFilter)
+		{
+			var metadata = module.Metadata;
+			bool NameMatches(StringHandle name)
+				=> nameFilter == null || metadata.StringComparer.Equals(name, nameFilter);
+
 			for (int pass = 0; pass < 2; pass++)
 			{
 				bool cppCliDialect = pass == 0;
@@ -1018,32 +909,44 @@ namespace ICSharpCode.Decompiler.Documentation
 					case 'F':
 						foreach (var handle in typeDef.GetFields())
 						{
-							if (GetIdString(module, handle, cppCliDialect) == idString)
+							if (NameMatches(metadata.GetFieldDefinition(handle).Name)
+								&& GetIdString(module, handle, cppCliDialect) == idString)
+							{
 								return handle;
+							}
 						}
 						break;
 
 					case 'M':
 						foreach (var handle in typeDef.GetMethods())
 						{
-							if (GetIdString(module, handle, cppCliDialect) == idString)
+							if (NameMatches(metadata.GetMethodDefinition(handle).Name)
+								&& GetIdString(module, handle, cppCliDialect) == idString)
+							{
 								return handle;
+							}
 						}
 						break;
 
 					case 'P':
 						foreach (var handle in typeDef.GetProperties())
 						{
-							if (GetIdString(module, handle, cppCliDialect) == idString)
+							if (NameMatches(metadata.GetPropertyDefinition(handle).Name)
+								&& GetIdString(module, handle, cppCliDialect) == idString)
+							{
 								return handle;
+							}
 						}
 						break;
 
 					case 'E':
 						foreach (var handle in typeDef.GetEvents())
 						{
-							if (GetIdString(module, handle, cppCliDialect) == idString)
+							if (NameMatches(metadata.GetEventDefinition(handle).Name)
+								&& GetIdString(module, handle, cppCliDialect) == idString)
+							{
 								return handle;
+							}
 						}
 						break;
 				}
@@ -1239,6 +1142,27 @@ namespace ICSharpCode.Decompiler.Documentation
 					return nestedHandle;
 			}
 			return default;
+		}
+
+		static bool IsIDStringSpecialCharacter(char c)
+		{
+			switch (c)
+			{
+				case ':':
+				case '{':
+				case '}':
+				case '[':
+				case ']':
+				case '(':
+				case ')':
+				case '`':
+				case '*':
+				case '@':
+				case ',':
+					return true;
+				default:
+					return false;
+			}
 		}
 		#endregion
 	}
