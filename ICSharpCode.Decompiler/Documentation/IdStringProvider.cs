@@ -56,15 +56,76 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// it contains character sequences Roslyn never writes, so it can only match
 		/// MSVC-generated keys; the stripped Roslyn form of one member can collide with the
 		/// key of a different member in an MSVC-generated file (e.g. overloads differing
-		/// only in a custom modifier).
+		/// only in a custom modifier). When such a colliding sibling overload exists, the
+		/// Roslyn form is omitted entirely: assemblies containing such overloads cannot
+		/// come from the C# compiler, so their xml files use the C++/CLI dialect, where
+		/// that key documents the sibling.
 		/// </summary>
 		public static IEnumerable<string> GetIdStringCandidates(this MetadataFile module, EntityHandle handle)
 		{
 			string primary = GetIdString(module, handle, cppCliDialect: false);
 			string cppCli = GetIdString(module, handle, cppCliDialect: true);
-			if (cppCli != primary)
-				yield return cppCli;
-			yield return primary;
+			if (cppCli == primary)
+			{
+				yield return primary;
+				yield break;
+			}
+			yield return cppCli;
+			if (!RoslynFormBelongsToSibling(module, handle, primary))
+				yield return primary;
+		}
+
+		/// <summary>
+		/// True when the C#/Roslyn-form ID of <paramref name="handle"/> equals the
+		/// C++/CLI-form ID of a same-named sibling member of the same type (only members
+		/// with a signature portion can diverge, so only methods and properties are
+		/// checked). Keys embed the declaring type and member name, so no other member
+		/// can own the string.
+		/// </summary>
+		static bool RoslynFormBelongsToSibling(MetadataFile module, EntityHandle handle, string roslynForm)
+		{
+			var metadata = module.Metadata;
+			switch (handle.Kind)
+			{
+				case HandleKind.MethodDefinition:
+				{
+					var methodHandle = (MethodDefinitionHandle)handle;
+					var methodDef = metadata.GetMethodDefinition(methodHandle);
+					string name = metadata.GetString(methodDef.Name);
+					foreach (var sibling in metadata.GetTypeDefinition(methodDef.GetDeclaringType()).GetMethods())
+					{
+						if (sibling == methodHandle
+							|| !metadata.StringComparer.Equals(metadata.GetMethodDefinition(sibling).Name, name))
+						{
+							continue;
+						}
+						if (GetIdString(module, sibling, cppCliDialect: true) == roslynForm)
+							return true;
+					}
+					return false;
+				}
+
+				case HandleKind.PropertyDefinition:
+				{
+					var propertyHandle = (PropertyDefinitionHandle)handle;
+					string name = metadata.GetString(metadata.GetPropertyDefinition(propertyHandle).Name);
+					var declaringType = FindDeclaringTypeOfProperty(metadata, propertyHandle);
+					foreach (var sibling in metadata.GetTypeDefinition(declaringType).GetProperties())
+					{
+						if (sibling == propertyHandle
+							|| !metadata.StringComparer.Equals(metadata.GetPropertyDefinition(sibling).Name, name))
+						{
+							continue;
+						}
+						if (GetIdString(module, sibling, cppCliDialect: true) == roslynForm)
+							return true;
+					}
+					return false;
+				}
+
+				default:
+					return false;
+			}
 		}
 
 		static string GetIdString(MetadataFile module, EntityHandle handle, bool cppCliDialect)
