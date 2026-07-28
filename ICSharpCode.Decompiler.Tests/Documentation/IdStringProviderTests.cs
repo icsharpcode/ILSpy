@@ -2042,6 +2042,63 @@ namespace ModreqParams
 		}
 
 		[Test]
+		public void Modifier_Optional()
+		{
+			// The C#/Roslyn form ignores custom modifiers; the MSVC C++/CLI form renders
+			// modopt as '!' + modifier following the modified type, as C++/CLI 'const int'
+			// parameters show (see https://github.com/icsharpcode/ILSpy/issues/2728).
+			var pe = BuildAssemblyWithMethodSignature((metadata, parameter) => {
+				parameter.CustomModifiers().AddModifier(
+					AddCompilerServicesTypeRef(metadata, "IsConst"), isOptional: true);
+				parameter.Type().Int32();
+			});
+			Assert.That(pe.GetIdString(MetadataTokens.MethodDefinitionHandle(1)),
+				Is.EqualTo("M:Host.M(System.Int32)"));
+			Assert.That(pe.GetIdStringCandidates(MetadataTokens.MethodDefinitionHandle(1)),
+				Is.EqualTo(new[] {
+					"M:Host.M(System.Int32!System.Runtime.CompilerServices.IsConst)",
+					"M:Host.M(System.Int32)",
+				}));
+		}
+
+		[Test]
+		public void Modifier_Required()
+		{
+			// The C#/Roslyn form ignores modreq (e.g. modreq(InAttribute) on virtual 'in'
+			// parameters is documented as T@); the MSVC form renders modreq(IsVolatile)
+			// with '|' as observed in MSVC-generated xml doc files.
+			var pe = BuildAssemblyWithMethodSignature((metadata, parameter) => {
+				parameter.CustomModifiers().AddModifier(
+					AddCompilerServicesTypeRef(metadata, "IsVolatile"), isOptional: false);
+				parameter.Type().Int32();
+			});
+			Assert.That(pe.GetIdString(MetadataTokens.MethodDefinitionHandle(1)),
+				Is.EqualTo("M:Host.M(System.Int32)"));
+			Assert.That(pe.GetIdStringCandidates(MetadataTokens.MethodDefinitionHandle(1)),
+				Is.EqualTo(new[] {
+					"M:Host.M(System.Int32|System.Runtime.CompilerServices.IsVolatile)",
+					"M:Host.M(System.Int32)",
+				}));
+		}
+
+		[Test]
+		public void Modifier_OptionalUnderPointer()
+		{
+			// C++/CLI 'char*' emits int8 modopt(IsSignUnspecifiedByte)*, rendered by MSVC as
+			// System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte*
+			var pe = BuildAssemblyWithMethodSignature((metadata, parameter) => {
+				var pointee = parameter.Type().Pointer();
+				pointee.CustomModifiers().AddModifier(
+					AddCompilerServicesTypeRef(metadata, "IsSignUnspecifiedByte"), isOptional: true);
+				pointee.SByte();
+			});
+			Assert.That(pe.GetIdString(MetadataTokens.MethodDefinitionHandle(1)),
+				Is.EqualTo("M:Host.M(System.SByte*)"));
+			Assert.That(pe.GetIdStringCandidates(MetadataTokens.MethodDefinitionHandle(1)),
+				Does.Contain("M:Host.M(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte*)"));
+		}
+
+		[Test]
 		public void Pinned_Suffix()
 		{
 			// ELEMENT_TYPE_PINNED is represented as '^' following the modified type per the
@@ -2057,7 +2114,67 @@ namespace ModreqParams
 
 		#endregion
 
+		#region MSVC C++/CLI dialect fixture
+
+		// IdStringProbe.il is the trimmed disassembly of an MSVC-compiled C++/CLI assembly
+		// and IdStringProbe.xml the unmodified xml doc file MSVC generated for it; every
+		// member key MSVC wrote must be reachable through the ID string candidates.
+
+		static async Task<PEFile> AssembleIdStringProbe()
+		{
+			string dir = Path.Combine(Tester.TesterPath, "../../../../Documentation");
+			string dll = await Tester.AssembleIL(Path.Combine(dir, "IdStringProbe.il"), AssemblerOptions.Library);
+			return new PEFile(dll);
+		}
+
+		static HashSet<string> CollectIdStringCandidates(PEFile pe)
+		{
+			var md = pe.Metadata;
+			var candidates = new HashSet<string>();
+			foreach (var th in md.TypeDefinitions)
+			{
+				var td = md.GetTypeDefinition(th);
+				if (md.GetString(td.Name) == "<Module>")
+					continue;
+				candidates.UnionWith(pe.GetIdStringCandidates(th));
+				foreach (var h in td.GetMethods())
+					candidates.UnionWith(pe.GetIdStringCandidates(h));
+				foreach (var h in td.GetProperties())
+					candidates.UnionWith(pe.GetIdStringCandidates(h));
+				foreach (var h in td.GetEvents())
+					candidates.UnionWith(pe.GetIdStringCandidates(h));
+				foreach (var h in td.GetFields())
+					candidates.UnionWith(pe.GetIdStringCandidates(h));
+			}
+			return candidates;
+		}
+
+		[Test]
+		public async Task MsvcCppCliXml_AllMemberIdsCovered()
+		{
+			var pe = await AssembleIdStringProbe();
+			var candidates = CollectIdStringCandidates(pe);
+			string xmlPath = Path.Combine(Tester.TesterPath, "../../../../Documentation/IdStringProbe.xml");
+			Assert.Multiple(() => {
+				foreach (var member in System.Xml.Linq.XDocument.Load(xmlPath).Descendants("member"))
+				{
+					string name = member.Attribute("name").Value;
+					Assert.That(candidates, Does.Contain(name), name);
+				}
+			});
+		}
+
+		#endregion
+
 		#region Hand-built metadata helpers
+
+		static TypeReferenceHandle AddCompilerServicesTypeRef(MetadataBuilder metadata, string name)
+		{
+			var mscorlib = metadata.AddAssemblyReference(metadata.GetOrAddString("mscorlib"),
+				new Version(4, 0, 0, 0), default, default, 0, default);
+			return metadata.AddTypeReference(mscorlib,
+				metadata.GetOrAddString("System.Runtime.CompilerServices"), metadata.GetOrAddString(name));
+		}
 
 		static PEFile BuildAssemblyWithMethodSignature(Action<MetadataBuilder, ParameterTypeEncoder> encodeParameter)
 		{

@@ -36,9 +36,38 @@ namespace ICSharpCode.Decompiler.Documentation
 	{
 		#region GetIdString
 		/// <summary>
-		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity.
+		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity,
+		/// in the form the C# compiler writes into xml documentation files.
 		/// </summary>
 		public static string GetIdString(this MetadataFile module, EntityHandle handle)
+		{
+			return GetIdString(module, handle, cppCliDialect: false);
+		}
+
+		/// <summary>
+		/// Gets the ID string candidates for the entity, most specific first: the MSVC
+		/// C++/CLI (ECMA-372-style) form when it differs from the C#/Roslyn form, then the
+		/// C#/Roslyn form. Documentation lookup should try the candidates in order, so that
+		/// xml doc files written by either compiler can be matched. The dialects differ in
+		/// signatures only: Roslyn ignores custom modifiers and strips the arity marker of
+		/// instantiated generic types, while MSVC renders modifiers ('!' or '|' followed by
+		/// the modifier type), keeps arity markers, and refers to a default indexed
+		/// property as 'default'. The C++/CLI form comes first because wherever it differs
+		/// it contains character sequences Roslyn never writes, so it can only match
+		/// MSVC-generated keys; the stripped Roslyn form of one member can collide with the
+		/// key of a different member in an MSVC-generated file (e.g. overloads differing
+		/// only in a custom modifier).
+		/// </summary>
+		public static IEnumerable<string> GetIdStringCandidates(this MetadataFile module, EntityHandle handle)
+		{
+			string primary = GetIdString(module, handle, cppCliDialect: false);
+			string cppCli = GetIdString(module, handle, cppCliDialect: true);
+			if (cppCli != primary)
+				yield return cppCli;
+			yield return primary;
+		}
+
+		static string GetIdString(MetadataFile module, EntityHandle handle, bool cppCliDialect)
 		{
 			if (handle.IsNil)
 				throw new ArgumentException("The handle must not be nil.", nameof(handle));
@@ -60,12 +89,12 @@ namespace ICSharpCode.Decompiler.Documentation
 
 				case HandleKind.MethodDefinition:
 					b.Append("M:");
-					AppendMethodIdString(b, metadata, (MethodDefinitionHandle)handle);
+					AppendMethodIdString(b, metadata, (MethodDefinitionHandle)handle, cppCliDialect);
 					break;
 
 				case HandleKind.PropertyDefinition:
 					b.Append("P:");
-					AppendPropertyIdString(b, metadata, (PropertyDefinitionHandle)handle);
+					AppendPropertyIdString(b, metadata, (PropertyDefinitionHandle)handle, cppCliDialect);
 					break;
 
 				case HandleKind.EventDefinition:
@@ -154,7 +183,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			b.Append(metadata.GetString(fieldDef.Name));
 		}
 
-		static void AppendMethodIdString(StringBuilder b, MetadataReader metadata, MethodDefinitionHandle handle)
+		static void AppendMethodIdString(StringBuilder b, MetadataReader metadata, MethodDefinitionHandle handle, bool cppCliDialect)
 		{
 			var methodDef = metadata.GetMethodDefinition(handle);
 			var declaringType = methodDef.GetDeclaringType();
@@ -175,7 +204,7 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			// Parameters
 			var signature = methodDef.DecodeSignature(
-				new IdStringSignatureTypeProvider(),
+				new IdStringSignatureTypeProvider(cppCliDialect),
 				new MetadataGenericContext(handle, metadata));
 			AppendParameterList(b, signature.ParameterTypes);
 
@@ -202,7 +231,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 		}
 
-		static void AppendPropertyIdString(StringBuilder b, MetadataReader metadata, PropertyDefinitionHandle handle)
+		static void AppendPropertyIdString(StringBuilder b, MetadataReader metadata, PropertyDefinitionHandle handle, bool cppCliDialect)
 		{
 			var propertyDef = metadata.GetPropertyDefinition(handle);
 
@@ -211,13 +240,47 @@ namespace ICSharpCode.Decompiler.Documentation
 			b.Append('.');
 
 			var signature = propertyDef.DecodeSignature(
-				new IdStringSignatureTypeProvider(),
+				new IdStringSignatureTypeProvider(cppCliDialect),
 				new MetadataGenericContext(declaringType, metadata));
 
-			b.Append(metadata.GetString(propertyDef.Name).Replace('.', '#').Replace('<', '{').Replace('>', '}'));
+			string name = metadata.GetString(propertyDef.Name);
+			// The MSVC xml doc generator refers to a type's default indexed property by the
+			// C++/CLI keyword 'default' instead of the property's metadata name.
+			if (cppCliDialect && signature.ParameterTypes.Length > 0
+				&& name == GetDefaultMemberName(metadata, declaringType))
+			{
+				b.Append("default");
+			}
+			else
+			{
+				b.Append(name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
+			}
 
 			// Indexers have parameters
 			AppendParameterList(b, signature.ParameterTypes);
+		}
+
+		static string GetDefaultMemberName(MetadataReader metadata, TypeDefinitionHandle declaringType)
+		{
+			foreach (var h in metadata.GetTypeDefinition(declaringType).GetCustomAttributes())
+			{
+				var customAttribute = metadata.GetCustomAttribute(h);
+				if (!customAttribute.IsKnownAttribute(metadata, KnownAttribute.DefaultMember))
+					continue;
+				try
+				{
+					var value = customAttribute.DecodeValue(Metadata.MetadataExtensions.MinimalAttributeTypeProvider);
+					if (value.FixedArguments.Length == 1 && value.FixedArguments[0].Value is string name)
+						return name;
+				}
+				catch (BadImageFormatException)
+				{
+				}
+				catch (Metadata.EnumUnderlyingTypeResolveException)
+				{
+				}
+			}
+			return null;
 		}
 
 		static TypeDefinitionHandle FindDeclaringTypeOfProperty(MetadataReader metadata, PropertyDefinitionHandle propertyHandle)
@@ -278,10 +341,15 @@ namespace ICSharpCode.Decompiler.Documentation
 		static bool IsAsciiDigit(char c) => c >= '0' && c <= '9';
 
 		/// <summary>
-		/// Signature type provider that produces ID string fragments.
+		/// Signature type provider that produces ID string fragments. With
+		/// <paramref name="cppCliDialect"/> set, produces the MSVC C++/CLI form
+		/// (custom modifiers rendered, arity markers kept on generic instantiations)
+		/// instead of the C#/Roslyn form.
 		/// </summary>
-		readonly struct IdStringSignatureTypeProvider : ISignatureTypeProvider<string, MetadataGenericContext>
+		readonly struct IdStringSignatureTypeProvider(bool cppCliDialect) : ISignatureTypeProvider<string, MetadataGenericContext>
 		{
+			readonly bool cppCliDialect = cppCliDialect;
+
 			public string GetPrimitiveType(PrimitiveTypeCode typeCode)
 			{
 				return typeCode switch {
@@ -370,6 +438,10 @@ namespace ICSharpCode.Decompiler.Documentation
 					}
 					else
 					{
+						// MSVC keeps the arity marker in front of the argument list
+						// (List`1{System.Int32}); Roslyn strips it (List{System.Int32}).
+						if (cppCliDialect)
+							sb.Append(genericType, i, markerEnd - i);
 						sb.Append('{');
 						for (int k = 0; k < arity; k++)
 						{
@@ -459,10 +531,18 @@ namespace ICSharpCode.Decompiler.Documentation
 
 			public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
 			{
-				// Custom modifiers are not part of the ID string: Roslyn ignores them (e.g. a
-				// virtual method's 'in' parameter carries modreq(InAttribute) but is
-				// documented as T@).
-				return unmodifiedType;
+				// Roslyn ignores custom modifiers entirely (e.g. a virtual method's 'in'
+				// parameter carries modreq(InAttribute) but is documented as T@).
+				if (!cppCliDialect)
+					return unmodifiedType;
+				// The MSVC xml doc generator renders a modifier after the modified type,
+				// e.g. System.Int32!System.Runtime.CompilerServices.IsConst for a C++/CLI
+				// 'const int' parameter. Its documented mapping is '!' for modopt and '|'
+				// for modreq, but observed output uses '|' only for modreq(IsVolatile);
+				// modreq(IsByValue) on conversion operator operands is rendered with '!'.
+				char prefix = isRequired && modifier == "System.Runtime.CompilerServices.IsVolatile"
+					? '|' : '!';
+				return unmodifiedType + prefix + modifier;
 			}
 
 			public string GetPinnedType(string elementType)
