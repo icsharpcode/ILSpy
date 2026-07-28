@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 {
@@ -166,13 +167,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			Console.WriteLine("{0} {1}", field1, field2);
 		}
 
-//		public void Test9()
-//		{
-//			Program thisField = this;
-//			int field1 = 1;
-//			string field2 = "Hello World!";
-//			thisField = new Program();
-//			Console.WriteLine("{0} {1}", this, thisField);
-//		}
+		public void Test9()
+		{
+			Program thisField = this;
+			int field1 = 1;
+			string field2 = "Hello World!";
+			thisField = new Program();
+			Console.WriteLine("{0} {1}", this, thisField);
+		}
+
+		public void Test10()
+		{
+			Program thisField = this;
+			int field1 = 1;
+			string field2 = "Hello World!";
+			Interlocked.Exchange(ref thisField, new Program());
+			Console.WriteLine("{0} {1}", this, thisField);
+		}
 	}
 }

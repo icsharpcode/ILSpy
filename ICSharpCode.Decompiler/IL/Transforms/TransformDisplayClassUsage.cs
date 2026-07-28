@@ -227,6 +227,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							variable = AddVariable(container, null, field);
 						}
+						if (variable.CanPropagate && !IsReadOnlyOrInitializerUse(ldflda, variable))
+						{
+							// The field is mutated after initialization (stored again, or its address
+							// escapes). Propagation is only sound if the store can be redirected to
+							// the propagated variable: possible for parameters (their remaining uses
+							// are restricted in ResolveVariableToPropagate), but not for 'this' and
+							// not for a variable that is itself a scalar-replaced display class.
+							var propagatedVariable = variable.GetOrDeclare();
+							if (propagatedVariable.IsThis() || displayClasses.ContainsKey(propagatedVariable))
+							{
+								variable.Propagate(null);
+							}
+						}
 						container.VariablesToDeclare[keyField] = variable;
 						return true;
 					case StObj stobj when stobj.MatchStObj(out var target, out ILInstruction value, out _) && value == use:
@@ -242,6 +255,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					default:
 						return false;
 				}
+			}
+		}
+
+		/// <summary>
+		/// True when the given field access is a plain read or one of the recorded
+		/// initializer stores; false for any other store or for an escaping address.
+		/// </summary>
+		static bool IsReadOnlyOrInitializerUse(LdFlda ldflda, VariableToDeclare variable)
+		{
+			switch (ldflda.Parent)
+			{
+				case LdObj:
+					return true;
+				case StObj store when store.Target == ldflda:
+					return variable.Initializers.Contains(store);
+				default:
+					return false;
 			}
 		}
 
