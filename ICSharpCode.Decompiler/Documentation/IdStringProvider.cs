@@ -804,6 +804,353 @@ namespace ICSharpCode.Decompiler.Documentation
 				return ParseMemberIdString(idString).Resolve(context);
 			}
 		}
+
+		/// <summary>
+		/// Finds the entity with the given ID string in the provided modules.
+		/// </summary>
+		/// <param name="idString">ID string of the entity (e.g., "T:System.String", "M:System.String.Contains(System.String)").</param>
+		/// <param name="modules">The list of modules to search, in priority order.</param>
+		/// <returns>
+		/// A tuple of (MetadataFile, EntityHandle) for the found entity.
+		/// Returns default if the entity is not found.
+		/// </returns>
+		/// <exception cref="ReflectionNameParseException">The syntax of the ID string is invalid.</exception>
+		/// <remarks>
+		/// <para>
+		/// The ID string format cannot represent all names valid in metadata: GetIdString
+		/// emits raw metadata names, but a name that itself contains ID string special
+		/// characters (e.g. a dot in a type name) is ambiguous when parsed back, because
+		/// namespace/type-name splits are only tried at dots. Function pointer parameter
+		/// types render as empty (matching Roslyn), so overloads differing only by a
+		/// function pointer type share an ID and resolve to the first candidate.
+		/// </para>
+		/// <para>
+		/// A type only present as a type forwarder is returned as its ExportedType handle;
+		/// members of such a type are not followed into the target assembly unless that
+		/// assembly is itself part of <paramref name="modules"/>.
+		/// </para>
+		/// </remarks>
+		public static (MetadataFile Module, EntityHandle Handle) FindEntity(string idString, IReadOnlyList<MetadataFile> modules)
+		{
+			if (idString == null)
+				throw new ArgumentNullException(nameof(idString));
+			if (modules == null)
+				throw new ArgumentNullException(nameof(modules));
+			if (idString.Length < 2 || idString[1] != ':')
+				throw new ReflectionNameParseException(0, "Missing type tag");
+
+			char typeChar = idString[0];
+
+			if (typeChar == 'T')
+			{
+				return FindTypeDefinition(idString.Substring(2), modules);
+			}
+			else
+			{
+				return FindMember(typeChar, idString, modules);
+			}
+		}
+
+		/// <summary>
+		/// Resolves a type name from an ID string to a TypeDefinitionHandle or ExportedTypeHandle.
+		/// Tries all possible namespace/type-name boundary splits (mirrors the algorithm from
+		/// GetPotentiallyNestedClassTypeReference.ResolveInPEFile).
+		/// </summary>
+		static (MetadataFile, EntityHandle) FindTypeDefinition(string typeName, IReadOnlyList<MetadataFile> modules)
+		{
+			var parts = ParseTypeNameParts(typeName);
+
+			foreach (var module in modules)
+			{
+				if (module == null)
+					continue;
+				var result = ResolveTypeInModule(parts, module);
+				if (!result.IsNil)
+					return (module, result);
+			}
+
+			return default;
+		}
+
+		/// <summary>
+		/// Finds a member (field, method, property, event) by its ID string.
+		/// First resolves the declaring type, then enumerates candidate members
+		/// and compares their computed ID strings.
+		/// </summary>
+		/// <summary>
+		/// Finds the '.' separating the declaring type name from the member name: the last
+		/// '.' before '(' or '~' or end-of-string. Returns a negative value if there is none.
+		/// </summary>
+		static int FindMemberNameDot(string idString)
+		{
+			int parenPos = idString.IndexOf('(');
+			if (parenPos < 0)
+				parenPos = idString.LastIndexOf('~');
+			if (parenPos < 0)
+				parenPos = idString.Length;
+			return idString.LastIndexOf('.', parenPos - 1);
+		}
+
+		static (MetadataFile, EntityHandle) FindMember(char typeChar, string idString, IReadOnlyList<MetadataFile> modules)
+		{
+			int dotPos = FindMemberNameDot(idString);
+			if (dotPos < 0)
+				throw new ReflectionNameParseException(0, "Could not find '.' separating type name from member name");
+
+			// The type name portion is from index 2 (after "X:") to dotPos.
+			string typeName = idString.Substring(2, dotPos - 2);
+			var typeParts = ParseTypeNameParts(typeName);
+
+			foreach (var module in modules)
+			{
+				if (module == null)
+					continue;
+
+				var typeHandle = ResolveTypeInModule(typeParts, module);
+				if (typeHandle.IsNil || typeHandle.Kind != HandleKind.TypeDefinition)
+					continue;
+
+				var typeDef = module.Metadata.GetTypeDefinition((TypeDefinitionHandle)typeHandle);
+				EntityHandle memberHandle = FindMemberInType(module, typeDef, typeChar, idString);
+				if (!memberHandle.IsNil)
+					return (module, memberHandle);
+			}
+
+			return default;
+		}
+
+		/// <summary>
+		/// Searches for a member within a resolved type definition by computing
+		/// the ID string of each candidate and comparing.
+		/// </summary>
+		static EntityHandle FindMemberInType(MetadataFile module, TypeDefinition typeDef, char typeChar, string idString)
+		{
+			switch (typeChar)
+			{
+				case 'F':
+					foreach (var handle in typeDef.GetFields())
+					{
+						if (GetIdString(module, handle) == idString)
+							return handle;
+					}
+					break;
+
+				case 'M':
+					foreach (var handle in typeDef.GetMethods())
+					{
+						if (GetIdString(module, handle) == idString)
+							return handle;
+					}
+					break;
+
+				case 'P':
+					foreach (var handle in typeDef.GetProperties())
+					{
+						if (GetIdString(module, handle) == idString)
+							return handle;
+					}
+					break;
+
+				case 'E':
+					foreach (var handle in typeDef.GetEvents())
+					{
+						if (GetIdString(module, handle) == idString)
+							return handle;
+					}
+					break;
+			}
+
+			return default;
+		}
+		#endregion
+
+		#region Type Name Parsing and Resolution
+		/// <summary>
+		/// Represents a parsed segment of a potentially nested type name in an ID string.
+		/// The first part's Name may contain dots (namespace + top-level type name);
+		/// subsequent parts are nested type names without dots.
+		/// </summary>
+		struct TypeNamePart
+		{
+			public string Name;
+			public int TypeParameterCount;
+		}
+
+		/// <summary>
+		/// Parses a type name (without the "T:" prefix) into its constituent parts,
+		/// handling nested types separated by '.', and generic arity via `n or {args}.
+		/// 
+		/// The first part's Name contains the full dotted name (namespace + top-level type),
+		/// because we don't know where the namespace ends. Resolution will try all splits.
+		/// 
+		/// Examples:
+		///   "System.Collections.Generic.Dictionary`2.KeyCollection"
+		///   → [{Name="System.Collections.Generic.Dictionary", TPC=2}, {Name="KeyCollection", TPC=0}]
+		///   
+		///   "Outer.Inner{System.Int32}"
+		///   → [{Name="Outer", TPC=0}, {Name="Inner", TPC=1}]
+		/// </summary>
+		static List<TypeNamePart> ParseTypeNameParts(string typeName)
+		{
+			var parts = new List<TypeNamePart>();
+			int pos = 0;
+
+			string firstName = ReadTypeNameSegment(typeName, ref pos, allowDots: true);
+			int firstTpc = ReadTypeParameterCountFromIdString(typeName, ref pos);
+			parts.Add(new TypeNamePart { Name = firstName, TypeParameterCount = firstTpc });
+
+			while (pos < typeName.Length && typeName[pos] == '.')
+			{
+				pos++;
+				string nestedName = ReadTypeNameSegment(typeName, ref pos, allowDots: false);
+				int nestedTpc = ReadTypeParameterCountFromIdString(typeName, ref pos);
+				parts.Add(new TypeNamePart { Name = nestedName, TypeParameterCount = nestedTpc });
+			}
+
+			return parts;
+		}
+
+		/// <summary>
+		/// Reads a type name segment (no special characters). If allowDots is true,
+		/// dots are included in the segment (for the top-level name which includes namespace).
+		/// </summary>
+		static string ReadTypeNameSegment(string typeName, ref int pos, bool allowDots)
+		{
+			int start = pos;
+			while (pos < typeName.Length)
+			{
+				char c = typeName[pos];
+				if (IsIDStringSpecialCharacter(c))
+					break;
+				if (!allowDots && c == '.')
+					break;
+				pos++;
+			}
+			if (pos == start)
+				throw new ReflectionNameParseException(pos, "Expected type name");
+			return typeName.Substring(start, pos - start);
+		}
+
+		/// <summary>
+		/// Reads a type parameter count from the current position in an ID string.
+		/// Handles both `n (unbound) and {T1,T2,...} (bound) syntax.
+		/// For bound syntax, counts the arguments without fully parsing them
+		/// (we only need the arity for type definition lookup).
+		/// </summary>
+		static int ReadTypeParameterCountFromIdString(string typeName, ref int pos)
+		{
+			if (pos >= typeName.Length)
+				return 0;
+
+			if (typeName[pos] == '`')
+			{
+				pos++;
+				return ReflectionHelper.ReadTypeParameterCount(typeName, ref pos);
+			}
+			else if (typeName[pos] == '{')
+			{
+				int count = 1;
+				int depth = 0;
+				pos++; // skip '{'
+				while (pos < typeName.Length)
+				{
+					char c = typeName[pos];
+					if (c == '{')
+						depth++;
+					else if (c == '}')
+					{
+						if (depth == 0)
+						{
+							pos++;
+							break;
+						}
+						depth--;
+					}
+					else if (c == ',' && depth == 0)
+					{
+						count++;
+					}
+					pos++;
+				}
+				return count;
+			}
+
+			return 0;
+		}
+
+		/// <summary>
+		/// Attempts to resolve a parsed type name within a single module.
+		/// The first part's Name is a dotted name like "A.B.C", and we try all possible
+		/// splits between namespace and top-level type name, from right to left.
+		/// For each candidate top-level type, we walk the nested types.
+		/// Also checks type forwarders.
+		/// </summary>
+		static EntityHandle ResolveTypeInModule(List<TypeNamePart> parts, MetadataFile module)
+		{
+			var metadata = module.Metadata;
+			string topLevelDottedName = parts[0].Name;
+			string[] dotParts = topLevelDottedName.Split('.');
+
+			for (int i = dotParts.Length - 1; i >= 0; i--)
+			{
+				string ns = string.Join(".", dotParts, 0, i);
+				string name = dotParts[i];
+				int topLevelTpc = (i == dotParts.Length - 1) ? parts[0].TypeParameterCount : 0;
+				var topLevelName = new TopLevelTypeName(ns, name, topLevelTpc);
+
+				var typeHandle = module.GetTypeDefinition(topLevelName);
+
+				// Walk remaining dotParts as nested types, then explicit nested parts
+				for (int j = i + 1; j < dotParts.Length && !typeHandle.IsNil; j++)
+				{
+					int tpc = (j == dotParts.Length - 1 && parts.Count == 1) ? parts[0].TypeParameterCount : 0;
+					typeHandle = FindNestedType(metadata, typeHandle, dotParts[j], tpc);
+				}
+
+				// Walk explicit nested parts (from '.' after `n or {args})
+				for (int j = 1; j < parts.Count && !typeHandle.IsNil; j++)
+				{
+					typeHandle = FindNestedType(metadata, typeHandle, parts[j].Name, parts[j].TypeParameterCount);
+				}
+
+				if (!typeHandle.IsNil)
+					return typeHandle;
+
+				// Try as type forwarder with the same structure
+				FullTypeName fullTypeName = topLevelName;
+				for (int j = i + 1; j < dotParts.Length; j++)
+				{
+					int tpc = (j == dotParts.Length - 1 && parts.Count == 1) ? parts[0].TypeParameterCount : 0;
+					fullTypeName = fullTypeName.NestedType(dotParts[j], tpc);
+				}
+				for (int j = 1; j < parts.Count; j++)
+				{
+					fullTypeName = fullTypeName.NestedType(parts[j].Name, parts[j].TypeParameterCount);
+				}
+				var exportedType = module.GetTypeForwarder(fullTypeName);
+				if (!exportedType.IsNil)
+					return exportedType;
+			}
+
+			return default;
+		}
+
+		/// <summary>
+		/// Finds a nested type by name and type parameter count within a type definition.
+		/// Returns a nil handle if not found.
+		/// </summary>
+		static TypeDefinitionHandle FindNestedType(MetadataReader metadata, TypeDefinitionHandle declaringTypeHandle, string name, int typeParameterCount)
+		{
+			var typeDef = metadata.GetTypeDefinition(declaringTypeHandle);
+			string lookupName = typeParameterCount > 0 ? name + "`" + typeParameterCount : name;
+			foreach (var nestedHandle in typeDef.GetNestedTypes())
+			{
+				var nestedDef = metadata.GetTypeDefinition(nestedHandle);
+				if (metadata.StringComparer.Equals(nestedDef.Name, lookupName))
+					return nestedHandle;
+			}
+			return default;
+		}
 		#endregion
 	}
 }

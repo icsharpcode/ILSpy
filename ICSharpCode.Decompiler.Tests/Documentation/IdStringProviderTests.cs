@@ -38,6 +38,8 @@ using Microsoft.CodeAnalysis.CSharp;
 
 using NUnit.Framework;
 
+using DecompilerSymbolKind = ICSharpCode.Decompiler.TypeSystem.SymbolKind;
+
 namespace ICSharpCode.Decompiler.Tests.Documentation
 {
 	[TestFixture]
@@ -648,6 +650,7 @@ namespace ModreqParams
 				string.Join("\n", roslynIdMap.Keys
 					.Where(k => k.Contains(entity.Name))
 					.Take(10)));
+			AssertIdentifiesEntity(entity, decompilerId);
 		}
 
 		/// <summary>
@@ -661,6 +664,71 @@ namespace ModreqParams
 				$"is the expected string correct?");
 			string decompilerId = IdStringProvider.GetIdString(entity.ParentModule.MetadataFile, entity.MetadataToken);
 			Assert.That(decompilerId, Is.EqualTo(expectedId), "Decompiler ID mismatch");
+			AssertIdentifiesEntity(entity, decompilerId);
+		}
+
+		/// <summary>
+		/// Assert that <paramref name="idString"/> names <paramref name="entity"/> and not some
+		/// other member. The Roslyn ID map spans every referenced assembly, so mere membership
+		/// in it also accepts the ID of an unrelated member that happens to exist - an ID naming
+		/// the wrong overload, the wrong arity or a member of a different type would pass. Both
+		/// directions are checked: the symbol Roslyn files under the ID has to be of the
+		/// entity's kind, and resolving the ID back through FindEntity has to land on exactly
+		/// this entity's metadata token - or, where the format cannot tell two members apart,
+		/// on a member that carries the very same ID.
+		/// </summary>
+		private void AssertIdentifiesEntity(IEntity entity, string idString)
+		{
+			var module = entity.ParentModule.MetadataFile;
+			var roslynSymbol = roslynIdMap[idString];
+			Assert.That(roslynSymbol.Kind, Is.EqualTo(ExpectedRoslynKind(entity.SymbolKind)),
+				$"ID '{idString}' is filed by Roslyn under a {roslynSymbol.Kind} " +
+				$"('{roslynSymbol.ToDisplayString()}'), but it was generated for the " +
+				$"{entity.SymbolKind} '{entity.FullName}'.");
+
+			var (resolvedModule, resolvedHandle) = IdStringProvider.FindEntity(idString, new[] { module });
+			Assert.That(resolvedHandle.IsNil, Is.False,
+				$"ID '{idString}' generated for '{entity.FullName}' does not resolve back to any member.");
+			Assert.That(resolvedModule, Is.SameAs(module));
+			if (resolvedHandle.Equals(entity.MetadataToken))
+				return;
+
+			// Some IDs cannot name a single member because the format cannot express the
+			// signature: Roslyn renders a function-pointer parameter as nothing at all, so
+			// TakesFnPtr(delegate*<int, string>) and TakesFnPtr(delegate*<int, int>) both come
+			// out as 'M:C.TakesFnPtr()'. Resolution can then only return the first member
+			// carrying the key, so require that the member it returned really does carry it;
+			// a resolution that picked a member with a different ID is still a failure.
+			string resolvedId = IdStringProvider.GetIdString(module, resolvedHandle);
+			Assert.That(resolvedId, Is.EqualTo(idString),
+				$"ID '{idString}' was generated for '{entity.FullName}' " +
+				$"(token {MetadataTokens.GetToken(entity.MetadataToken):X8}) but names " +
+				$"'{DescribeHandle(module, resolvedHandle)}' " +
+				$"(token {MetadataTokens.GetToken(resolvedHandle):X8}), whose own ID is " +
+				$"'{resolvedId}'.");
+		}
+
+		/// <summary>The Roslyn symbol kind an entity of the given kind must be filed under.</summary>
+		private static Microsoft.CodeAnalysis.SymbolKind ExpectedRoslynKind(DecompilerSymbolKind kind) => kind switch {
+			DecompilerSymbolKind.TypeDefinition => Microsoft.CodeAnalysis.SymbolKind.NamedType,
+			DecompilerSymbolKind.Field => Microsoft.CodeAnalysis.SymbolKind.Field,
+			DecompilerSymbolKind.Property or DecompilerSymbolKind.Indexer => Microsoft.CodeAnalysis.SymbolKind.Property,
+			DecompilerSymbolKind.Event => Microsoft.CodeAnalysis.SymbolKind.Event,
+			_ => Microsoft.CodeAnalysis.SymbolKind.Method,
+		};
+
+		/// <summary>Names the member a handle points at, for assertion messages.</summary>
+		private static string DescribeHandle(MetadataFile module, EntityHandle handle)
+		{
+			var metadata = module.Metadata;
+			return handle.Kind switch {
+				HandleKind.TypeDefinition => metadata.GetString(metadata.GetTypeDefinition((TypeDefinitionHandle)handle).Name),
+				HandleKind.MethodDefinition => metadata.GetString(metadata.GetMethodDefinition((MethodDefinitionHandle)handle).Name),
+				HandleKind.FieldDefinition => metadata.GetString(metadata.GetFieldDefinition((FieldDefinitionHandle)handle).Name),
+				HandleKind.PropertyDefinition => metadata.GetString(metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle).Name),
+				HandleKind.EventDefinition => metadata.GetString(metadata.GetEventDefinition((EventDefinitionHandle)handle).Name),
+				_ => handle.Kind.ToString(),
+			};
 		}
 
 		#region Types
@@ -1149,6 +1217,23 @@ namespace ModreqParams
 		}
 
 		[Test]
+		public void FunctionPointerParameters_ShareOneIdString()
+		{
+			// Roslyn renders a function-pointer parameter as nothing at all, so overloads that
+			// differ only in one collapse onto a single key with an empty parameter list. The
+			// generator reproduces that instead of inventing a distinguishable key: this is the
+			// key the C# compiler writes into the documentation file, so it is the one a lookup
+			// has to produce and a cref has to resolve against.
+			var overloads = FindType("FnPtrs.FnPtrParameters").Methods
+				.Where(m => m.Name == "TakesFnPtr")
+				.ToList();
+			Assert.That(overloads, Has.Count.EqualTo(2),
+				"the fixture declares two overloads differing only in their function-pointer parameter");
+			foreach (var overload in overloads)
+				AssertIdString(overload, "M:FnPtrs.FnPtrParameters.TakesFnPtr()");
+		}
+
+		[Test]
 		public void AllFields_MatchRoslyn()
 		{
 			foreach (var type in decompilerTypeSystem.MainModule.TypeDefinitions)
@@ -1188,6 +1273,48 @@ namespace ModreqParams
 				foreach (var evt in type.Events)
 					AssertMatchesRoslyn(evt);
 			}
+		}
+
+		#endregion
+
+		#region FindEntity round-trip
+
+		[TestCase("T:Color")]
+		[TestCase("T:Acme.Widget")]
+		[TestCase("T:Acme.Widget.NestedClass")]
+		[TestCase("T:Acme.MyList`1")]
+		[TestCase("T:Acme.MyList`1.Helper`2")]
+		[TestCase("F:Acme.Widget.message")]
+		[TestCase("F:Acme.Widget.PI")]
+		[TestCase("M:Acme.Widget.#ctor")]
+		[TestCase("M:Acme.Widget.#ctor(System.String)")]
+		[TestCase("M:Acme.Widget.#cctor")]
+		[TestCase("M:Acme.Widget.Finalize")]
+		[TestCase("M:Acme.Widget.M0")]
+		[TestCase("M:Acme.Widget.M1(System.Char,System.Single@,Acme.ValueType@,System.Int32@)")]
+		[TestCase("M:Acme.Widget.M2(System.Int16[],System.Int32[0:,0:],System.Int64[][])")]
+		[TestCase("M:Acme.Widget.M3(System.Int64[][],Acme.Widget[0:,0:,0:][])")]
+		[TestCase("M:Acme.Widget.M6(System.Int32,System.Object[])")]
+		[TestCase("M:Acme.MyList`1.Test(`0)")]
+		[TestCase("M:Acme.UseList.Process(Acme.MyList{System.Int32})")]
+		[TestCase("M:Acme.UseList.GetValues``1(``0)")]
+		[TestCase("P:Acme.Widget.Width")]
+		[TestCase("P:Acme.Widget.Item(System.Int32)")]
+		[TestCase("P:Acme.Widget.Item(System.String,System.Int32)")]
+		[TestCase("E:Acme.Widget.AnEvent")]
+		[TestCase("M:Acme.Widget.op_UnaryPlus(Acme.Widget)")]
+		[TestCase("M:Acme.Widget.op_Addition(Acme.Widget,Acme.Widget)")]
+		[TestCase("M:Acme.Widget.op_Explicit(Acme.Widget)~System.Int32")]
+		[TestCase("M:Acme.Widget.op_Implicit(Acme.Widget)~System.Int64")]
+		[TestCase("M:NestedGenericInstantiations.Consumer.TakesInner(NestedGenericInstantiations.Outer{System.Int32}.Inner)")]
+		[TestCase("M:NestedGenericInstantiations.Consumer.TakesInner2(NestedGenericInstantiations.Outer{System.Int32}.Inner2{System.String})")]
+		[TestCase("M:CheckedOperators.Money.op_CheckedExplicit(CheckedOperators.Money)~System.Int32")]
+		public void FindEntity_RoundTrip(string idString)
+		{
+			var (_, handle) = IdStringProvider.FindEntity(idString, new[] { decompilerTypeSystem.MainModule.MetadataFile });
+			Assert.That(handle.IsNil, Is.False, $"FindEntity returned null for '{idString}'");
+			Assert.That(IdStringProvider.GetIdString(decompilerTypeSystem.MainModule.MetadataFile, handle), Is.EqualTo(idString),
+				"GetIdString on found entity does not match the input ID string");
 		}
 
 		#endregion
