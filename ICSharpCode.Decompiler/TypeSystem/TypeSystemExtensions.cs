@@ -485,8 +485,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences, (c, t) => t.Resolve(c));
 		}
 
-		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
-		// contains nulls when there are resolve errors.
 		#endregion
 
 		#region IAssembly.GetTypeDefinition()
