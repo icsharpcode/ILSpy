@@ -451,6 +451,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				"Microsoft.VisualBasic.dll",
 			};
 
+		public static IReadOnlyList<string> CoreDefaultReferences => coreDefaultReferences;
+
 		static readonly Dictionary<string, Lazy<string>> targetFrameworkAttributeSnippetFiles = new() {
 			{ CurrentNetCoreAppVersion, new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(CurrentNetCoreAppVersion)) },
 			{ ".NETCoreApp,Version=v9.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v9.0")) },

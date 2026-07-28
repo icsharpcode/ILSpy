@@ -18,9 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Immutable;
+using System.Reflection.Metadata;
 using System.Text;
 
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -36,66 +38,440 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <summary>
 		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity.
 		/// </summary>
+		public static string GetIdString(this MetadataFile module, EntityHandle handle)
+		{
+			if (handle.IsNil)
+				throw new ArgumentException("The handle must not be nil.", nameof(handle));
+
+			var metadata = module.Metadata;
+			var b = new StringBuilder();
+
+			switch (handle.Kind)
+			{
+				case HandleKind.TypeDefinition:
+					b.Append("T:");
+					AppendTypeDefinitionName(b, metadata, (TypeDefinitionHandle)handle);
+					break;
+
+				case HandleKind.FieldDefinition:
+					b.Append("F:");
+					AppendFieldIdString(b, metadata, (FieldDefinitionHandle)handle);
+					break;
+
+				case HandleKind.MethodDefinition:
+					b.Append("M:");
+					AppendMethodIdString(b, metadata, (MethodDefinitionHandle)handle);
+					break;
+
+				case HandleKind.PropertyDefinition:
+					b.Append("P:");
+					AppendPropertyIdString(b, metadata, (PropertyDefinitionHandle)handle);
+					break;
+
+				case HandleKind.EventDefinition:
+					b.Append("E:");
+					AppendEventIdString(b, metadata, (EventDefinitionHandle)handle);
+					break;
+
+				default:
+					throw new ArgumentException($"Unsupported handle kind: {handle.Kind}", nameof(handle));
+			}
+
+			return b.ToString();
+		}
+
+		/// <summary>
+		/// Gets the ID string (C# 4.0 spec, §A.3.1) for the specified entity.
+		/// </summary>
+		/// <remarks>
+		/// The ID string is computed from the entity's metadata; for specialized members
+		/// it describes the underlying member definition.
+		/// </remarks>
 		public static string GetIdString(this IEntity entity)
 		{
-			StringBuilder b = new StringBuilder();
-			switch (entity.SymbolKind)
+			if (entity == null)
+				throw new ArgumentNullException(nameof(entity));
+			var module = entity.ParentModule?.MetadataFile;
+			if (module == null || entity.MetadataToken.IsNil)
+				throw new NotSupportedException("Cannot compute an ID string for an entity that is not backed by metadata.");
+			return GetIdString(module, entity.MetadataToken);
+		}
+
+		/// <summary>
+		/// Appends the fully qualified name of a type definition, handling nested types.
+		/// The metadata name already contains the `n arity suffix for generic types.
+		/// </summary>
+		static void AppendTypeDefinitionName(StringBuilder b, MetadataReader metadata, TypeDefinitionHandle handle)
+		{
+			var typeDef = metadata.GetTypeDefinition(handle);
+			var declaringType = typeDef.GetDeclaringType();
+
+			if (declaringType.IsNil)
 			{
-				case SymbolKind.TypeDefinition:
-					b.Append("T:");
-					AppendTypeName(b, (ITypeDefinition)entity, false);
-					return b.ToString();
-				case SymbolKind.Field:
-					b.Append("F:");
-					break;
-				case SymbolKind.Property:
-				case SymbolKind.Indexer:
-					b.Append("P:");
-					break;
-				case SymbolKind.Event:
-					b.Append("E:");
-					break;
-				default:
-					b.Append("M:");
-					break;
+				var ns = metadata.GetString(typeDef.Namespace);
+				if (!string.IsNullOrEmpty(ns))
+				{
+					b.Append(ns);
+					b.Append('.');
+				}
+				b.Append(metadata.GetString(typeDef.Name));
 			}
-			IMember member = (IMember)entity;
-			if (member.DeclaringType != null)
+			else
 			{
-				AppendTypeName(b, member.DeclaringType, false);
+				AppendTypeDefinitionName(b, metadata, declaringType);
 				b.Append('.');
+				b.Append(metadata.GetString(typeDef.Name));
 			}
-			if (member.IsExplicitInterfaceImplementation && member.Name.IndexOf('.') < 0 && member.ExplicitlyImplementedInterfaceMembers.Count() == 1)
+		}
+
+		static void AppendTypeReferenceName(StringBuilder b, MetadataReader metadata, TypeReference typeRef)
+		{
+			if (typeRef.ResolutionScope.Kind == HandleKind.TypeReference)
 			{
-				AppendTypeName(b, member.ExplicitlyImplementedInterfaceMembers.First().DeclaringType, true);
-				b.Append('#');
+				var outerRef = metadata.GetTypeReference((TypeReferenceHandle)typeRef.ResolutionScope);
+				AppendTypeReferenceName(b, metadata, outerRef);
+				b.Append('.');
+				b.Append(metadata.GetString(typeRef.Name));
 			}
-			b.Append(member.Name.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
-			IMethod method = member as IMethod;
-			if (method != null && method.TypeParameters.Count > 0)
+			else
+			{
+				var ns = metadata.GetString(typeRef.Namespace);
+				if (!string.IsNullOrEmpty(ns))
+				{
+					b.Append(ns);
+					b.Append('.');
+				}
+				b.Append(metadata.GetString(typeRef.Name));
+			}
+		}
+
+		static void AppendFieldIdString(StringBuilder b, MetadataReader metadata, FieldDefinitionHandle handle)
+		{
+			var fieldDef = metadata.GetFieldDefinition(handle);
+			var declaringType = fieldDef.GetDeclaringType();
+			AppendTypeDefinitionName(b, metadata, declaringType);
+			b.Append('.');
+			b.Append(metadata.GetString(fieldDef.Name));
+		}
+
+		static void AppendMethodIdString(StringBuilder b, MetadataReader metadata, MethodDefinitionHandle handle)
+		{
+			var methodDef = metadata.GetMethodDefinition(handle);
+			var declaringType = methodDef.GetDeclaringType();
+
+			AppendTypeDefinitionName(b, metadata, declaringType);
+			b.Append('.');
+
+			var methodName = metadata.GetString(methodDef.Name);
+			b.Append(methodName.Replace('.', '#').Replace('<', '{').Replace('>', '}'));
+
+			// Method type parameter count
+			var genericParams = methodDef.GetGenericParameters();
+			if (genericParams.Count > 0)
 			{
 				b.Append("``");
-				b.Append(method.TypeParameters.Count);
+				b.Append(genericParams.Count);
 			}
-			IParameterizedMember parameterizedMember = member as IParameterizedMember;
-			if (parameterizedMember != null && parameterizedMember.Parameters.Count > 0)
+
+			// Parameters
+			var signature = methodDef.DecodeSignature(
+				new IdStringSignatureTypeProvider(),
+				new MetadataGenericContext(handle, metadata));
+			AppendParameterList(b, signature.ParameterTypes);
+
+			// Return type for conversion operators
+			if (methodName is "op_Implicit" or "op_Explicit" or "op_CheckedExplicit")
+			{
+				b.Append('~');
+				b.Append(signature.ReturnType);
+			}
+		}
+
+		static void AppendParameterList(StringBuilder b, ImmutableArray<string> parameters)
+		{
+			if (parameters.Length > 0)
 			{
 				b.Append('(');
-				var parameters = parameterizedMember.Parameters;
-				for (int i = 0; i < parameters.Count; i++)
+				for (int i = 0; i < parameters.Length; i++)
 				{
 					if (i > 0)
 						b.Append(',');
-					AppendTypeName(b, parameters[i].Type, false);
+					b.Append(parameters[i]);
 				}
 				b.Append(')');
 			}
-			if (member.SymbolKind == SymbolKind.Operator && (member.Name == "op_Implicit" || member.Name == "op_Explicit"))
+		}
+
+		static void AppendPropertyIdString(StringBuilder b, MetadataReader metadata, PropertyDefinitionHandle handle)
+		{
+			var propertyDef = metadata.GetPropertyDefinition(handle);
+
+			var declaringType = FindDeclaringTypeOfProperty(metadata, handle);
+			AppendTypeDefinitionName(b, metadata, declaringType);
+			b.Append('.');
+
+			var signature = propertyDef.DecodeSignature(
+				new IdStringSignatureTypeProvider(),
+				new MetadataGenericContext(declaringType, metadata));
+
+			b.Append(metadata.GetString(propertyDef.Name).Replace('.', '#').Replace('<', '{').Replace('>', '}'));
+
+			// Indexers have parameters
+			AppendParameterList(b, signature.ParameterTypes);
+		}
+
+		static TypeDefinitionHandle FindDeclaringTypeOfProperty(MetadataReader metadata, PropertyDefinitionHandle propertyHandle)
+		{
+			var accessors = metadata.GetPropertyDefinition(propertyHandle).GetAccessors();
+			var accessor = !accessors.Getter.IsNil ? accessors.Getter
+				: !accessors.Setter.IsNil ? accessors.Setter
+				: accessors.Others.Length > 0 ? accessors.Others[0]
+				: default;
+			if (!accessor.IsNil)
+				return metadata.GetMethodDefinition(accessor).GetDeclaringType();
+			// Accessor-less properties are invalid metadata; fall back to scanning all types.
+			foreach (var typeHandle in metadata.TypeDefinitions)
 			{
-				b.Append('~');
-				AppendTypeName(b, member.ReturnType, false);
+				var typeDef = metadata.GetTypeDefinition(typeHandle);
+				foreach (var ph in typeDef.GetProperties())
+				{
+					if (ph == propertyHandle)
+						return typeHandle;
+				}
 			}
-			return b.ToString();
+			return default;
+		}
+
+		static void AppendEventIdString(StringBuilder b, MetadataReader metadata, EventDefinitionHandle handle)
+		{
+			var eventDef = metadata.GetEventDefinition(handle);
+
+			var declaringType = FindDeclaringTypeOfEvent(metadata, handle);
+			AppendTypeDefinitionName(b, metadata, declaringType);
+			b.Append('.');
+			b.Append(metadata.GetString(eventDef.Name).Replace('.', '#').Replace('<', '{').Replace('>', '}'));
+		}
+
+		static TypeDefinitionHandle FindDeclaringTypeOfEvent(MetadataReader metadata, EventDefinitionHandle eventHandle)
+		{
+			var accessors = metadata.GetEventDefinition(eventHandle).GetAccessors();
+			var accessor = !accessors.Adder.IsNil ? accessors.Adder
+				: !accessors.Remover.IsNil ? accessors.Remover
+				: !accessors.Raiser.IsNil ? accessors.Raiser
+				: accessors.Others.Length > 0 ? accessors.Others[0]
+				: default;
+			if (!accessor.IsNil)
+				return metadata.GetMethodDefinition(accessor).GetDeclaringType();
+			// Accessor-less events are invalid metadata; fall back to scanning all types.
+			foreach (var typeHandle in metadata.TypeDefinitions)
+			{
+				var typeDef = metadata.GetTypeDefinition(typeHandle);
+				foreach (var eh in typeDef.GetEvents())
+				{
+					if (eh == eventHandle)
+						return typeHandle;
+				}
+			}
+			return default;
+		}
+
+		static bool IsAsciiDigit(char c) => c >= '0' && c <= '9';
+
+		/// <summary>
+		/// Signature type provider that produces ID string fragments.
+		/// </summary>
+		readonly struct IdStringSignatureTypeProvider : ISignatureTypeProvider<string, MetadataGenericContext>
+		{
+			public string GetPrimitiveType(PrimitiveTypeCode typeCode)
+			{
+				return typeCode switch {
+					PrimitiveTypeCode.Void => "System.Void",
+					PrimitiveTypeCode.Boolean => "System.Boolean",
+					PrimitiveTypeCode.Char => "System.Char",
+					PrimitiveTypeCode.SByte => "System.SByte",
+					PrimitiveTypeCode.Byte => "System.Byte",
+					PrimitiveTypeCode.Int16 => "System.Int16",
+					PrimitiveTypeCode.UInt16 => "System.UInt16",
+					PrimitiveTypeCode.Int32 => "System.Int32",
+					PrimitiveTypeCode.UInt32 => "System.UInt32",
+					PrimitiveTypeCode.Int64 => "System.Int64",
+					PrimitiveTypeCode.UInt64 => "System.UInt64",
+					PrimitiveTypeCode.Single => "System.Single",
+					PrimitiveTypeCode.Double => "System.Double",
+					PrimitiveTypeCode.String => "System.String",
+					PrimitiveTypeCode.Object => "System.Object",
+					PrimitiveTypeCode.IntPtr => "System.IntPtr",
+					PrimitiveTypeCode.UIntPtr => "System.UIntPtr",
+					PrimitiveTypeCode.TypedReference => "System.TypedReference",
+					_ => throw new ArgumentOutOfRangeException(nameof(typeCode))
+				};
+			}
+
+			public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+			{
+				var sb = new StringBuilder();
+				AppendTypeDefinitionName(sb, reader, handle);
+				return sb.ToString();
+			}
+
+			public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+			{
+				var sb = new StringBuilder();
+				var typeRef = reader.GetTypeReference(handle);
+				AppendTypeReferenceName(sb, reader, typeRef);
+				return sb.ToString();
+			}
+
+			public string GetTypeFromSpecification(MetadataReader reader, MetadataGenericContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
+			{
+				var typeSpec = reader.GetTypeSpecification(handle);
+				return typeSpec.DecodeSignature(this, genericContext);
+			}
+
+			public string GetGenericTypeParameter(MetadataGenericContext genericContext, int index)
+			{
+				return "`" + index;
+			}
+
+			public string GetGenericMethodParameter(MetadataGenericContext genericContext, int index)
+			{
+				return "``" + index;
+			}
+
+			public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
+			{
+				// The generic arguments must be distributed to their nesting level:
+				// "Ns.Outer`1.Inner`2" + [A, B, C] => "Ns.Outer{A}.Inner{B,C}".
+				// The uninstantiated name carries a `k arity marker at every generic
+				// nesting level and the arguments are ordered outermost-first, so each
+				// marker consumes the next k arguments.
+				var sb = new StringBuilder(genericType.Length + typeArguments.Length * 16);
+				int nextArgument = 0;
+				for (int i = 0; i < genericType.Length; i++)
+				{
+					char c = genericType[i];
+					if (c != '`' || i + 1 >= genericType.Length || !IsAsciiDigit(genericType[i + 1]))
+					{
+						sb.Append(c);
+						continue;
+					}
+					int markerEnd = i + 1;
+					int arity = 0;
+					while (markerEnd < genericType.Length && IsAsciiDigit(genericType[markerEnd]))
+					{
+						arity = arity * 10 + (genericType[markerEnd] - '0');
+						markerEnd++;
+					}
+					if (arity > typeArguments.Length - nextArgument)
+					{
+						// The name does not follow the `k arity convention; keep the
+						// marker verbatim rather than inventing an argument split.
+						sb.Append(genericType, i, markerEnd - i);
+					}
+					else
+					{
+						sb.Append('{');
+						for (int k = 0; k < arity; k++)
+						{
+							if (k > 0)
+								sb.Append(',');
+							sb.Append(typeArguments[nextArgument++]);
+						}
+						sb.Append('}');
+					}
+					i = markerEnd - 1;
+				}
+				if (nextArgument < typeArguments.Length)
+				{
+					// Arity markers did not account for all arguments; append the
+					// remainder so no argument is silently dropped.
+					sb.Append('{');
+					for (int k = nextArgument; k < typeArguments.Length; k++)
+					{
+						if (k > nextArgument)
+							sb.Append(',');
+						sb.Append(typeArguments[k]);
+					}
+					sb.Append('}');
+				}
+				return sb.ToString();
+			}
+
+			public string GetArrayType(string elementType, ArrayShape shape)
+			{
+				// C# 4.0 spec, section A.3.1: each dimension is rendered as
+				// "lowerbound:size", omitting either part when it is unspecified.
+				// Compilers emit neither bound for single-dimensional arrays and
+				// a zero lower bound with unspecified size ("0:") otherwise.
+				var sb = new StringBuilder(elementType);
+				sb.Append('[');
+				if (shape.Rank > 1 || shape.LowerBounds.Length > 0 || shape.Sizes.Length > 0)
+				{
+					for (int i = 0; i < shape.Rank; i++)
+					{
+						if (i > 0)
+							sb.Append(',');
+						if (i < shape.LowerBounds.Length)
+						{
+							sb.Append(shape.LowerBounds[i]);
+							sb.Append(':');
+						}
+						if (i < shape.Sizes.Length)
+							sb.Append(shape.Sizes[i]);
+					}
+				}
+				sb.Append(']');
+				return sb.ToString();
+			}
+
+			public string GetSZArrayType(string elementType)
+			{
+				return elementType + "[]";
+			}
+
+			public string GetPointerType(string elementType)
+			{
+				return elementType + "*";
+			}
+
+			public string GetByReferenceType(string elementType)
+			{
+				return elementType + "@";
+			}
+
+			public string GetFunctionPointerType(MethodSignature<string> signature)
+			{
+				//var sb = new StringBuilder("method ");
+				//sb.Append(signature.ReturnType);
+				//sb.Append(" *(");
+				//for (int i = 0; i < signature.ParameterTypes.Length; i++)
+				//{
+				//	if (i > 0)
+				//		sb.Append(',');
+				//	sb.Append(signature.ParameterTypes[i]);
+				//}
+				//sb.Append(')');
+				//return sb.ToString();
+				// The C# spec does not define a syntax for function pointer types in ID strings
+				// Roslyn just returns an empty string, so we'll do the same to avoid confusion.
+				return "";
+			}
+
+			public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
+			{
+				// Custom modifiers are not part of the ID string: Roslyn ignores them (e.g. a
+				// virtual method's 'in' parameter carries modreq(InAttribute) but is
+				// documented as T@).
+				return unmodifiedType;
+			}
+
+			public string GetPinnedType(string elementType)
+			{
+				// '^' following the modified type, per the MSVC xml doc format. Pinned
+				// types cannot occur in member signatures, only in local variable
+				// signatures, so no compiler ever generates this in an ID string.
+				return elementType + "^";
+			}
 		}
 		#endregion
 
