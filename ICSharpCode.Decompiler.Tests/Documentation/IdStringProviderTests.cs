@@ -2191,11 +2191,30 @@ namespace ModreqParams
 		// and IdStringProbe.xml the unmodified xml doc file MSVC generated for it; every
 		// member key MSVC wrote must be reachable through the ID string candidates.
 
-		static async Task<PEFile> AssembleIdStringProbe()
+		// Assembled once per test run: ilasm writes its output next to the input, so the
+		// .il is copied to a unique temp path first (no output in the source tree), and
+		// the result is shared because re-assembling to the same path would fail on
+		// Windows with a sharing violation while an earlier test's PEFile holds the
+		// previous output open.
+		static readonly Lazy<Task<PEFile>> idStringProbeAssembly = new(async () => {
+			string sourcePath = Path.Combine(Tester.TesterPath, "../../../../Documentation/IdStringProbe.il");
+			string tempPath = Path.Combine(Path.GetTempPath(),
+				"IdStringProbe_" + Guid.NewGuid().ToString("N") + ".il");
+			File.Copy(sourcePath, tempPath);
+			try
+			{
+				string dll = await Tester.AssembleIL(tempPath, AssemblerOptions.Library);
+				return new PEFile(dll);
+			}
+			finally
+			{
+				File.Delete(tempPath);
+			}
+		});
+
+		static Task<PEFile> AssembleIdStringProbe()
 		{
-			string dir = Path.Combine(Tester.TesterPath, "../../../../Documentation");
-			string dll = await Tester.AssembleIL(Path.Combine(dir, "IdStringProbe.il"), AssemblerOptions.Library);
-			return new PEFile(dll);
+			return idStringProbeAssembly.Value;
 		}
 
 		static HashSet<string> CollectIdStringCandidates(PEFile pe)
