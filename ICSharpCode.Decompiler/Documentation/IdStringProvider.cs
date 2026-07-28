@@ -1000,44 +1000,53 @@ namespace ICSharpCode.Decompiler.Documentation
 		}
 
 		/// <summary>
-		/// Searches for a member within a resolved type definition by computing
-		/// the ID string of each candidate and comparing.
+		/// Searches for a member within a resolved type definition by computing the ID
+		/// string of each member and comparing, so that IDs in either dialect (e.g. crefs
+		/// from MSVC-generated xml files) resolve. The dialects are matched in two passes
+		/// over the whole member list, most specific first: the stripped C#/Roslyn form of
+		/// one member can equal the C++/CLI-dialect key of a different member (overloads
+		/// differing only in a custom modifier), so mixing dialects within a single pass
+		/// could resolve to the wrong member.
 		/// </summary>
 		static EntityHandle FindMemberInType(MetadataFile module, TypeDefinition typeDef, char typeChar, string idString)
 		{
-			switch (typeChar)
+			for (int pass = 0; pass < 2; pass++)
 			{
-				case 'F':
-					foreach (var handle in typeDef.GetFields())
-					{
-						if (GetIdString(module, handle) == idString)
-							return handle;
-					}
-					break;
+				bool cppCliDialect = pass == 0;
+				switch (typeChar)
+				{
+					case 'F':
+						foreach (var handle in typeDef.GetFields())
+						{
+							if (GetIdString(module, handle, cppCliDialect) == idString)
+								return handle;
+						}
+						break;
 
-				case 'M':
-					foreach (var handle in typeDef.GetMethods())
-					{
-						if (GetIdString(module, handle) == idString)
-							return handle;
-					}
-					break;
+					case 'M':
+						foreach (var handle in typeDef.GetMethods())
+						{
+							if (GetIdString(module, handle, cppCliDialect) == idString)
+								return handle;
+						}
+						break;
 
-				case 'P':
-					foreach (var handle in typeDef.GetProperties())
-					{
-						if (GetIdString(module, handle) == idString)
-							return handle;
-					}
-					break;
+					case 'P':
+						foreach (var handle in typeDef.GetProperties())
+						{
+							if (GetIdString(module, handle, cppCliDialect) == idString)
+								return handle;
+						}
+						break;
 
-				case 'E':
-					foreach (var handle in typeDef.GetEvents())
-					{
-						if (GetIdString(module, handle) == idString)
-							return handle;
-					}
-					break;
+					case 'E':
+						foreach (var handle in typeDef.GetEvents())
+						{
+							if (GetIdString(module, handle, cppCliDialect) == idString)
+								return handle;
+						}
+						break;
+				}
 			}
 
 			return default;
