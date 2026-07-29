@@ -121,8 +121,10 @@ namespace ICSharpCode.ILSpy.Metadata
 		/// in the decompiler-view-styled AvaloniaEdit editor: text payloads are mostly code,
 		/// so they get syntax colours (selected by <paramref name="highlightExtension"/>,
 		/// e.g. ".cs" or ".json"; <see langword="null"/> stays plain) and line virtualization
-		/// keeps large embedded-source documents cheap. Height is bounded so the host row
-		/// cannot grow unbounded; the editor scrolls internally.
+		/// keeps large embedded-source documents cheap. Height is bounded in both directions:
+		/// capped so the host row cannot grow unbounded (the editor scrolls internally), and
+		/// floored so a short payload still reads as a details area rather than a squeezed
+		/// one-line strip.
 		/// </summary>
 		public static Control BuildTextBlob(string text, string? highlightExtension = null)
 		{
@@ -131,6 +133,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				Text = text,
 				IsReadOnly = true,
 				WordWrap = true,
+				MinHeight = 100,
 				MaxHeight = 400,
 			};
 			if (highlightExtension != null)
