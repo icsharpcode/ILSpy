@@ -23,6 +23,8 @@ using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.VisualTree;
 
@@ -244,6 +246,50 @@ public class MetadataRowDetailsTests
 			window.Close();
 			settings.SelectedFont = originalFont;
 			settings.SelectedFontSize = originalSize;
+		}
+	}
+
+	[AvaloniaTest]
+	public void Text_Blob_Editor_Carries_Its_Own_Copy_And_Select_All_Context_Menu()
+	{
+		// Without a menu of its own, a right-click inside the details editor inherits the
+		// metadata grid's cell-oriented context menu, whose Copy entries are bound to the
+		// hovered DataGridCell and therefore permanently disabled inside the details area.
+		// The editor must instead offer the decompiler-view editor menu shape: Copy
+		// following the selection, plus Select All.
+		var editor = (DecompilerTextEditor)MetadataRowDetails.BuildTextBlob("class C { }", ".cs");
+		var window = new Window { Content = editor };
+		window.Show();
+		try
+		{
+			var menu = editor.ContextMenu;
+			menu.Should().NotBeNull("the editor must not inherit the metadata grid's cell menu");
+
+			// Raise the context-request gesture (what a right-click produces) rather than
+			// calling menu.Open(): only the gesture path raises ContextMenu.Opening, where
+			// the enablement of Copy is decided.
+			editor.RaiseEvent(new ContextRequestedEventArgs());
+			menu!.IsOpen.Should().BeTrue();
+			var items = menu.Items.OfType<MenuItem>().ToList();
+			items.Should().HaveCount(2);
+			var copy = items[0];
+			var selectAll = items[1];
+			copy.Header.Should().Be("Copy");
+			selectAll.Header.Should().Be("Select All");
+			copy.IsEnabled.Should().BeFalse("nothing is selected yet");
+			menu.Close();
+
+			editor.Select(0, 5);
+			editor.RaiseEvent(new ContextRequestedEventArgs());
+			copy.IsEnabled.Should().BeTrue("a non-empty selection makes Copy actionable");
+			menu.Close();
+
+			selectAll.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+			editor.SelectionLength.Should().Be(editor.Text.Length);
+		}
+		finally
+		{
+			window.Close();
 		}
 	}
 

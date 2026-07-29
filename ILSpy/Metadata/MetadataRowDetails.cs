@@ -24,6 +24,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
+using Avalonia.Input;
 
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -138,7 +139,37 @@ namespace ICSharpCode.ILSpy.Metadata
 			};
 			if (highlightExtension != null)
 				editor.SyntaxHighlighting = HighlightingService.GetByExtension(highlightExtension);
+			editor.ContextMenu = BuildEditorContextMenu(editor);
 			return editor;
+		}
+
+		/// <summary>
+		/// Editor context menu matching the decompiler view's editor entries (Copy / Select
+		/// All). The metadata grid's own context menu copies the hovered cell, which never
+		/// exists inside the details area — without a menu of its own the editor would
+		/// inherit those permanently disabled entries.
+		/// </summary>
+		static ContextMenu BuildEditorContextMenu(DecompilerTextEditor editor)
+		{
+			var copy = new MenuItem {
+				Header = Properties.Resources.Copy,
+				InputGesture = new KeyGesture(Key.C, KeyModifiers.Control),
+			};
+			copy.Click += (_, _) => {
+				// Copy as text + syntax-coloured HTML; fall back to plain copy.
+				if (!HtmlClipboardCopy.Copy(editor))
+					editor.Copy();
+			};
+			var selectAll = new MenuItem {
+				Header = Properties.Resources.Select,
+				InputGesture = new KeyGesture(Key.A, KeyModifiers.Control),
+			};
+			selectAll.Click += (_, _) => editor.SelectAll();
+			var menu = new ContextMenu();
+			menu.Opening += (_, _) => copy.IsEnabled = editor.SelectionLength > 0;
+			menu.Items.Add(copy);
+			menu.Items.Add(selectAll);
+			return menu;
 		}
 
 		/// <summary>
