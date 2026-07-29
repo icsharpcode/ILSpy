@@ -617,8 +617,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void ApplyAllDisplaySettings(DisplaySettings s)
 		{
-			ApplyDisplaySetting(s, nameof(DisplaySettings.SelectedFont));
-			ApplyDisplaySetting(s, nameof(DisplaySettings.SelectedFontSize));
+			// Font family/size and the themed background/selection are not handled here:
+			// DecompilerTextEditor itself follows those settings, shared with every other
+			// surface hosting the editor (metadata row details).
 			ApplyDisplaySetting(s, nameof(DisplaySettings.ShowLineNumbers));
 			ApplyDisplaySetting(s, nameof(DisplaySettings.EnableWordWrap));
 			ApplyDisplaySetting(s, nameof(DisplaySettings.HighlightCurrentLine));
@@ -631,14 +632,6 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			switch (propertyName)
 			{
-				case nameof(DisplaySettings.SelectedFont):
-					if (!string.IsNullOrEmpty(s.SelectedFont))
-						Editor.FontFamily = new FontFamily(s.SelectedFont);
-					break;
-				case nameof(DisplaySettings.SelectedFontSize):
-					if (s.SelectedFontSize > 0)
-						Editor.FontSize = s.SelectedFontSize;
-					break;
 				case nameof(DisplaySettings.ShowLineNumbers):
 					Editor.ShowLineNumbers = s.ShowLineNumbers;
 					break;

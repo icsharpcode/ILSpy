@@ -22,10 +22,8 @@ using System.Collections.Generic;
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
-using Avalonia.Media;
 
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -120,11 +118,11 @@ namespace ICSharpCode.ILSpy.Metadata
 
 		/// <summary>
 		/// Read-only, word-wrapped view of a decoded text blob (source, JSON, hex), rendered
-		/// in the theme-aware AvaloniaEdit editor: text payloads are mostly code, so they get
-		/// syntax colours (selected by <paramref name="highlightExtension"/>, e.g. ".cs" or
-		/// ".json"; <see langword="null"/> stays plain) and line virtualization keeps large
-		/// embedded-source documents cheap. Height is bounded so the host row cannot grow
-		/// unbounded; the editor scrolls internally.
+		/// in the decompiler-view-styled AvaloniaEdit editor: text payloads are mostly code,
+		/// so they get syntax colours (selected by <paramref name="highlightExtension"/>,
+		/// e.g. ".cs" or ".json"; <see langword="null"/> stays plain) and line virtualization
+		/// keeps large embedded-source documents cheap. Height is bounded so the host row
+		/// cannot grow unbounded; the editor scrolls internally.
 		/// </summary>
 		public static Control BuildTextBlob(string text, string? highlightExtension = null)
 		{
@@ -134,12 +132,9 @@ namespace ICSharpCode.ILSpy.Metadata
 				IsReadOnly = true,
 				WordWrap = true,
 				MaxHeight = 400,
-				FontFamily = new FontFamily("Consolas, Menlo, Monospace"),
-				FontSize = 13,
 			};
 			if (highlightExtension != null)
 				editor.SyntaxHighlighting = HighlightingService.GetByExtension(highlightExtension);
-			editor.Bind(TemplatedControl.BackgroundProperty, editor.GetResourceObservable("ILSpy.EditorBackground"));
 			return editor;
 		}
 

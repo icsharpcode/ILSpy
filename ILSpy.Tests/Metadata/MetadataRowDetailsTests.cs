@@ -28,6 +28,7 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
@@ -196,6 +197,53 @@ public class MetadataRowDetailsTests
 
 		var unknown = (DecompilerTextEditor)MetadataRowDetails.BuildTextBlob("text", ".xyz");
 		unknown.SyntaxHighlighting.Should().BeNull("an unrecognized extension degrades to plain text");
+	}
+
+	[AvaloniaTest]
+	public void Text_Blob_Editor_Uses_The_Decompiler_View_Styling()
+	{
+		// The details editor is a second surface showing code, so it must look like the main
+		// decompiler view: the user-selected editor font (applied live, the same way the text
+		// view reacts to the Options page), the flat square-cornered selection highlight, and
+		// the themed editor background.
+		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
+		var originalFont = settings.SelectedFont;
+		var originalSize = settings.SelectedFontSize;
+		var editor = (DecompilerTextEditor)MetadataRowDetails.BuildTextBlob("class C { }", ".cs");
+		var window = new Window { Content = editor };
+		try
+		{
+			settings.SelectedFont = "Liberation Mono";
+			settings.SelectedFontSize = 17;
+			window.Show();
+
+			editor.FontFamily.Name.Should().Be("Liberation Mono",
+				"the details editor renders in the user-selected editor font");
+			editor.FontSize.Should().Be(17);
+
+			settings.SelectedFontSize = 21;
+			editor.FontSize.Should().Be(21, "font settings apply live while the details row is open");
+
+			editor.TextArea.SelectionCornerRadius.Should().Be(0,
+				"selection styling matches the decompiler view (flat, square corners)");
+			window.TryFindResource("ILSpy.EditorSelectionBrush", window.ActualThemeVariant, out var selectionBrush)
+				.Should().BeTrue();
+			editor.TextArea.SelectionBrush.Should().Be(selectionBrush);
+			window.TryFindResource("ILSpy.EditorBackground", window.ActualThemeVariant, out var background)
+				.Should().BeTrue();
+			editor.Background.Should().Be(background);
+
+			window.Close();
+			settings.SelectedFontSize = 13;
+			editor.FontSize.Should().Be(21,
+				"an editor detached by row recycling must stop tracking the settings instance");
+		}
+		finally
+		{
+			window.Close();
+			settings.SelectedFont = originalFont;
+			settings.SelectedFontSize = originalSize;
+		}
 	}
 
 	[AvaloniaTest]
