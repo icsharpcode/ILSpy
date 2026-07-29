@@ -37,6 +37,7 @@ using ICSharpCode.Decompiler.Metadata;
 
 using ICSharpCode.ILSpy.Metadata;
 using ICSharpCode.ILSpy.Metadata.DebugTables;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
@@ -58,23 +59,28 @@ public class CustomDebugInformationRowDetailsTests
 	{
 		// Synthesize a standalone portable PDB whose CustomDebugInformation table holds one
 		// row per row-details scenario: a text kind (Source Link), an unrecognized kind
-		// GUID, embedded source in both formats (raw and DEFLATE), and the four structured
-		// kinds that parse into typed rows. Parents use ascending MethodDef tokens so the
-		// (parent-sorted) table preserves this row order.
+		// GUID, the four structured kinds that parse into typed rows, and embedded source in
+		// both formats (raw and DEFLATE), each parented to a document whose name carries the
+		// source-language extension. MetadataBuilder sorts the table by its
+		// HasCustomDebugInformation coded index on serialize, interleaving method- and
+		// document-parented rows, so tests locate rows by kind GUID rather than by position.
 		var builder = new MetadataBuilder();
 
-		AddRow(1, KnownGuids.SourceLink, Encoding.UTF8.GetBytes(SourceLinkJson));
-		AddRow(2, UnknownKindGuid, new byte[] { 0x01, 0x02, 0x03 });
-		AddRow(3, KnownGuids.EmbeddedSource, new byte[] { 0x00, 0x00, 0x00, 0x00, 0x41 });
-		AddRow(4, KnownGuids.StateMachineHoistedLocalScopes, HoistedScopesBlob((0, 10), (16, 32)));
-		AddRow(5, KnownGuids.CompilationOptions, NullTerminatedStrings("language", "C#", "version", "2"));
-		AddRow(6, KnownGuids.CompilationMetadataReferences, MetadataReferenceBlob(
+		var csharpDocument = AddDocument("/src/Example.cs", KnownGuids.CSharpLanguageGuid);
+		var vbDocument = AddDocument("/src/Module1.vb", KnownGuids.VBLanguageGuid);
+
+		AddRow(MethodRow(1), KnownGuids.SourceLink, Encoding.UTF8.GetBytes(SourceLinkJson));
+		AddRow(MethodRow(2), UnknownKindGuid, new byte[] { 0x01, 0x02, 0x03 });
+		AddRow(MethodRow(3), KnownGuids.StateMachineHoistedLocalScopes, HoistedScopesBlob((0, 10), (16, 32)));
+		AddRow(MethodRow(4), KnownGuids.CompilationOptions, NullTerminatedStrings("language", "C#", "version", "2"));
+		AddRow(MethodRow(5), KnownGuids.CompilationMetadataReferences, MetadataReferenceBlob(
 			"System.Runtime.dll", "global", flags: 1, timestamp: 0x12345678, fileSize: 1024, ReferenceMvid));
-		AddRow(7, KnownGuids.TupleElementNames, NullTerminatedStrings("Item1", "Name"));
-		AddRow(8, KnownGuids.EmbeddedSource, EmbeddedSourceDeflateBlob);
+		AddRow(MethodRow(6), KnownGuids.TupleElementNames, NullTerminatedStrings("Item1", "Name"));
+		AddRow(csharpDocument, KnownGuids.EmbeddedSource, new byte[] { 0x00, 0x00, 0x00, 0x00, 0x41 });
+		AddRow(vbDocument, KnownGuids.EmbeddedSource, EmbeddedSourceDeflateBlob);
 
 		var rowCounts = new int[MetadataTokens.TableCount];
-		rowCounts[(int)TableIndex.MethodDef] = 8;
+		rowCounts[(int)TableIndex.MethodDef] = 6;
 		var pdbBuilder = new PortablePdbBuilder(builder, rowCounts.ToImmutableArray(), entryPoint: default);
 		var blob = new BlobBuilder();
 		pdbBuilder.Serialize(blob);
@@ -82,12 +88,24 @@ public class CustomDebugInformationRowDetailsTests
 		var provider = MetadataReaderProvider.FromPortablePdbImage(blob.ToImmutableArray());
 		return new MetadataFile(MetadataFile.MetadataFileKind.ProgramDebugDatabase, "synthetic.pdb", provider);
 
-		void AddRow(int methodRow, Guid kind, byte[] value)
+		static EntityHandle MethodRow(int methodRow)
+			=> MetadataTokens.EntityHandle(TableIndex.MethodDef, methodRow);
+
+		void AddRow(EntityHandle parent, Guid kind, byte[] value)
 		{
 			builder.AddCustomDebugInformation(
-				MetadataTokens.EntityHandle(TableIndex.MethodDef, methodRow),
+				parent,
 				builder.GetOrAddGuid(kind),
 				builder.GetOrAddBlob(value));
+		}
+
+		DocumentHandle AddDocument(string name, Guid language)
+		{
+			return builder.AddDocument(
+				builder.GetOrAddDocumentName(name),
+				builder.GetOrAddGuid(KnownGuids.HashAlgorithmSHA256),
+				builder.GetOrAddBlob(new byte[32]),
+				builder.GetOrAddGuid(language));
 		}
 	}
 
@@ -156,6 +174,13 @@ public class CustomDebugInformationRowDetailsTests
 			.Select(h => new CustomDebugInformationEntry(metadataFile, h))
 			.ToList();
 
+	static CustomDebugInformationEntry ByKind(IEnumerable<CustomDebugInformationEntry> entries, Guid kind)
+		=> entries.Single(e => e.KindGUID == kind);
+
+	/// <summary>The embedded-source rows in table order: raw (".cs" document) first, DEFLATE (".vb" document) second.</summary>
+	static List<CustomDebugInformationEntry> EmbeddedSourceRows(IEnumerable<CustomDebugInformationEntry> entries)
+		=> entries.Where(e => e.KindGUID == KnownGuids.EmbeddedSource).ToList();
+
 	[Test]
 	public void Offset_And_Split_Kind_Columns_Match_The_Tables_Conventions()
 	{
@@ -166,12 +191,10 @@ public class CustomDebugInformationRowDetailsTests
 		var metadataFile = BuildPdbFixture();
 		var entries = LoadEntries(metadataFile);
 
-		entries[0].Kind.Should().BePositive("the Kind column is the 1-based GUID heap offset");
-		entries[0].KindGUID.Should().Be(KnownGuids.SourceLink);
-		entries[0].KindString.Should().Be("Source Link (C# / VB)");
-		entries[1].KindGUID.Should().Be(UnknownKindGuid);
-		entries[1].KindString.Should().Be("Unknown");
-		entries[3].KindString.Should().Be("State Machine Hoisted Local Scopes (C# / VB)");
+		ByKind(entries, KnownGuids.SourceLink).Kind.Should().BePositive("the Kind column is the 1-based GUID heap offset");
+		ByKind(entries, KnownGuids.SourceLink).KindString.Should().Be("Source Link (C# / VB)");
+		ByKind(entries, UnknownKindGuid).KindString.Should().Be("Unknown");
+		ByKind(entries, KnownGuids.StateMachineHoistedLocalScopes).KindString.Should().Be("State Machine Hoisted Local Scopes (C# / VB)");
 
 		int rowSize = metadataFile.Metadata.GetTableRowSize(TableIndex.CustomDebugInformation);
 		entries[0].Offset.Should().BePositive("the table lives at a real offset inside the PDB metadata");
@@ -186,21 +209,25 @@ public class CustomDebugInformationRowDetailsTests
 		var metadataFile = BuildPdbFixture();
 		var entries = LoadEntries(metadataFile);
 
-		entries[3].RowDetails.Should().BeAssignableTo<IEnumerable<HoistedLocalScopeDetail>>()
+		ByKind(entries, KnownGuids.StateMachineHoistedLocalScopes).RowDetails
+			.Should().BeAssignableTo<IEnumerable<HoistedLocalScopeDetail>>()
 			.Which.Should().Equal(
 				new HoistedLocalScopeDetail(0, 10),
 				new HoistedLocalScopeDetail(16, 32));
 
-		entries[4].RowDetails.Should().BeAssignableTo<IEnumerable<CompilationOptionDetail>>()
+		ByKind(entries, KnownGuids.CompilationOptions).RowDetails
+			.Should().BeAssignableTo<IEnumerable<CompilationOptionDetail>>()
 			.Which.Should().Equal(
 				new CompilationOptionDetail("language", "C#"),
 				new CompilationOptionDetail("version", "2"));
 
-		entries[5].RowDetails.Should().BeAssignableTo<IEnumerable<MetadataReferenceDetail>>()
+		ByKind(entries, KnownGuids.CompilationMetadataReferences).RowDetails
+			.Should().BeAssignableTo<IEnumerable<MetadataReferenceDetail>>()
 			.Which.Should().Equal(
 				new MetadataReferenceDetail("System.Runtime.dll", "global", 1, 0x12345678, 1024, ReferenceMvid));
 
-		entries[6].RowDetails.Should().BeAssignableTo<IEnumerable<TupleElementNameDetail>>()
+		ByKind(entries, KnownGuids.TupleElementNames).RowDetails
+			.Should().BeAssignableTo<IEnumerable<TupleElementNameDetail>>()
 			.Which.Should().Equal(
 				new TupleElementNameDetail("Item1"),
 				new TupleElementNameDetail("Name"));
@@ -212,18 +239,25 @@ public class CustomDebugInformationRowDetailsTests
 		var metadataFile = BuildPdbFixture();
 		var entries = LoadEntries(metadataFile);
 
-		entries[0].RowDetails.Should().Be(SourceLinkJson, "source link blobs are UTF-8 JSON");
-		entries[1].RowDetails.Should().Be("01-02-03", "unrecognized kinds degrade to a hex dump");
+		ByKind(entries, KnownGuids.SourceLink).RowDetails.Should().Be(new TextBlobDetail(SourceLinkJson, ".json"),
+			"source link blobs are UTF-8 JSON");
+		ByKind(entries, UnknownKindGuid).RowDetails.Should().Be(new TextBlobDetail("01-02-03"),
+			"unrecognized kinds degrade to a plain hex dump");
 	}
 
 	[Test]
 	public void RowDetails_Decodes_Embedded_Source_To_The_Document_Text()
 	{
+		// The parent document's file extension travels with the decoded text so the details
+		// area can highlight the source in its own language.
 		var metadataFile = BuildPdbFixture();
 		var entries = LoadEntries(metadataFile);
 
-		entries[2].RowDetails.Should().Be("A", "a zero format header means the document bytes follow uncompressed");
-		entries[7].RowDetails.Should().Be(EmbeddedSourceText, "a positive format header means the document is DEFLATE-compressed");
+		var embedded = EmbeddedSourceRows(entries);
+		embedded[0].RowDetails.Should().Be(new TextBlobDetail("A", ".cs"),
+			"a zero format header means the document bytes follow uncompressed");
+		embedded[1].RowDetails.Should().Be(new TextBlobDetail(EmbeddedSourceText, ".vb"),
+			"a positive format header means the document is DEFLATE-compressed");
 	}
 
 	[Test]
@@ -232,9 +266,11 @@ public class CustomDebugInformationRowDetailsTests
 		var metadataFile = BuildPdbFixture();
 		var entries = LoadEntries(metadataFile);
 
-		entries[0].Info.Should().BeNull("only embedded source carries a format header to summarize");
-		entries[2].Info.Should().Be("Raw, 5 bytes");
-		entries[7].Info.Should().Be(
+		ByKind(entries, KnownGuids.SourceLink).Info.Should().BeNull(
+			"only embedded source carries a format header to summarize");
+		var embedded = EmbeddedSourceRows(entries);
+		embedded[0].Info.Should().Be("Raw, 5 bytes");
+		embedded[1].Info.Should().Be(
 			$"DEFLATE, {EmbeddedSourceDeflateBlob.Length} bytes, {Encoding.UTF8.GetByteCount(EmbeddedSourceText)} uncompressed");
 	}
 
@@ -242,8 +278,8 @@ public class CustomDebugInformationRowDetailsTests
 	public void Tab_Configures_Selection_Driven_Row_Details_That_Route_By_Blob_Shape()
 	{
 		// The details area swaps presentation per row: text blobs land in a read-only
-		// TextBox, structured kinds in a sub-grid. Selection drives visibility, so scanning
-		// the table with the arrow keys previews each blob.
+		// syntax-highlighting editor, structured kinds in a sub-grid. Selection drives
+		// visibility, so scanning the table with the arrow keys previews each blob.
 		var metadataFile = BuildPdbFixture();
 		var node = new CustomDebugInformationTableTreeNode(metadataFile);
 		var tab = (MetadataTablePageModel)node.CreateTab();
@@ -252,13 +288,16 @@ public class CustomDebugInformationRowDetailsTests
 		tab.RowDetailsTemplate.Should().NotBeNull();
 
 		var entries = tab.Items.Cast<CustomDebugInformationEntry>().ToList();
-		var shell = tab.RowDetailsTemplate!.Build(entries[0])
+		var sourceLink = ByKind(entries, KnownGuids.SourceLink);
+		var shell = tab.RowDetailsTemplate!.Build(sourceLink)
 			.Should().BeOfType<MetadataRowDetailsControl>().Subject;
 
-		shell.DataContext = entries[0];
-		shell.Content.Should().BeOfType<TextBox>().Which.Text.Should().Be(SourceLinkJson);
+		shell.DataContext = sourceLink;
+		var editor = shell.Content.Should().BeOfType<DecompilerTextEditor>().Subject;
+		editor.Text.Should().Be(SourceLinkJson);
+		editor.SyntaxHighlighting.Should().NotBeNull("source-link JSON gets JSON highlighting");
 
-		shell.DataContext = entries[4];
+		shell.DataContext = ByKind(entries, KnownGuids.CompilationOptions);
 		var optionsGrid = shell.Content.Should().BeOfType<DataGrid>().Subject;
 		((IEnumerable)optionsGrid.ItemsSource!).Cast<CompilationOptionDetail>().Should().HaveCount(2);
 	}

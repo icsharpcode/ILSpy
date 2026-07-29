@@ -29,6 +29,7 @@ using Avalonia.VisualTree;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Views;
 
@@ -172,10 +173,36 @@ public class MetadataRowDetailsTests
 	}
 
 	[AvaloniaTest]
+	public void Text_Blob_Is_A_Read_Only_Editor_With_Extension_Driven_Highlighting()
+	{
+		// Text payloads are code (embedded source, source-link JSON): they render in the
+		// theme-aware AvaloniaEdit editor, which adds syntax colours and virtualizes long
+		// documents, while staying read-only but selectable. The optional extension picks
+		// the highlighting; without one (hex dumps) the text stays plain.
+		var editor = MetadataRowDetails.BuildTextBlob("class C { }", ".cs")
+			.Should().BeOfType<DecompilerTextEditor>().Subject;
+		editor.Text.Should().Be("class C { }");
+		editor.IsReadOnly.Should().BeTrue();
+		editor.WordWrap.Should().BeTrue();
+		editor.MaxHeight.Should().Be(400, "the host row must stay bounded; the editor scrolls internally");
+		editor.SyntaxHighlighting.Should().NotBeNull();
+		editor.SyntaxHighlighting!.Name.Should().Be("C#");
+
+		var json = (DecompilerTextEditor)MetadataRowDetails.BuildTextBlob("{ }", ".json");
+		json.SyntaxHighlighting.Should().NotBeNull("AvaloniaEdit ships a built-in JSON definition");
+
+		var plain = (DecompilerTextEditor)MetadataRowDetails.BuildTextBlob("01-02-03");
+		plain.SyntaxHighlighting.Should().BeNull();
+
+		var unknown = (DecompilerTextEditor)MetadataRowDetails.BuildTextBlob("text", ".xyz");
+		unknown.SyntaxHighlighting.Should().BeNull("an unrecognized extension degrades to plain text");
+	}
+
+	[AvaloniaTest]
 	public async Task Double_Tap_Inside_The_Details_Area_Does_Not_Resolve_To_An_Activatable_Row()
 	{
 		// Row activation navigates away from the metadata view. A double-click inside the
-		// details area (e.g. word-selection in an embedded-source TextBox, or a click in the
+		// details area (e.g. word-selection in an embedded-source editor, or a click in the
 		// flags sub-grid) is interacting with the details content, not requesting navigation,
 		// so the row-resolution walk must reject sources under the details presenter.
 		var (window, vm) = await TestHarness.BootAsync();

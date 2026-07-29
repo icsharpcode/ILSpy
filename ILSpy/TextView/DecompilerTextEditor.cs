@@ -36,11 +36,6 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	public class DecompilerTextEditor : TextEditor
 	{
-		public DecompilerTextEditor()
-		{
-			ThemeManager.Current.ThemeChanged += OnThemeChanged;
-		}
-
 		// Avalonia resolves the control template via the runtime type; subclasses of a
 		// templated control inherit the base template only when StyleKeyOverride is
 		// pointed at the base. Without this override AvaloniaEdit's template doesn't
@@ -58,6 +53,13 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			// Already-painted lines cache their colour decisions; a Redraw discards those
 			// caches and re-runs the colorizer pipeline against the new IsDarkTheme value.
+			TextArea?.TextView?.Redraw();
+		}
+
+		protected override void OnAttachedToVisualTree(global::Avalonia.VisualTreeAttachmentEventArgs e)
+		{
+			base.OnAttachedToVisualTree(e);
+			ThemeManager.Current.ThemeChanged += OnThemeChanged;
 			TextArea?.TextView?.Redraw();
 		}
 
