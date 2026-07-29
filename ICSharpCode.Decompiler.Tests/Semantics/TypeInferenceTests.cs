@@ -798,7 +798,92 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
-		[Ignore("Not implemented: AddExactBound compares bounds with name-sensitive equality, so two exact bounds that differ only in tuple element names count as conflicting before any merging can happen; csc merges them (verified: M<T>(ref T, ref T) with (int a, string b)/(int a, string c) compiles, T = (int a, string)).")]
+		public void FixingMergesTupleElementNamesAcrossLowerAndUpperBounds()
+		{
+			// Signature:  M<T>(T x, Action<T> y)
+			// Invocation: M(listOfAB, actionOfListOfAC); -> T = IList<(int a, string)>
+			// Action<in T> is contravariant, so the second argument produces an upper bound
+			// while the first produces a lower bound.
+			var comp = tupleCompilation.Value;
+			var inference = new TypeInference(comp);
+			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
+			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
+			ITypeDefinition actionType = comp.FindType(typeof(Action<>)).GetDefinition();
+			IType listOfAC = new ParameterizedType(listType, new[] { MakeTupleType(comp, "a", "c") });
+
+			bool success;
+			Assert.That(
+				inference.InferTypeArguments(new ITypeParameter[] { T },
+					new[] {
+						new ResolveResult(new ParameterizedType(listType, new[] { MakeTupleType(comp, "a", "b") })),
+						new ResolveResult(new ParameterizedType(actionType, new[] { listOfAC }))
+					},
+					new IType[] {
+						T,
+						new ParameterizedType(actionType, new IType[] { T })
+					},
+					out success),
+				Is.EqualTo(new[] { new ParameterizedType(listType, new[] { MakeTupleType(comp, "a", null) }) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void FixingMergesTupleElementNamesThroughEqualNullabilityAnnotations()
+		{
+			// Signature:  M<T>(T x, T y)
+			// Invocation: M(nullableListOfAB, nullableListOfAC); -> T = IList<(int a, string)>?
+			//             M(nullableArrayOfAB, nullableArrayOfAC); -> T = (int a, string)[]?
+			var comp = tupleCompilation.Value;
+			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
+
+			IType InferSingle(IType argType1, IType argType2)
+			{
+				var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
+				var result = new TypeInference(comp).InferTypeArguments(new ITypeParameter[] { T },
+					new[] { new ResolveResult(argType1), new ResolveResult(argType2) },
+					new IType[] { T, T },
+					out bool success);
+				Assert.That(success);
+				return result.Single();
+			}
+
+			IType NullableListOf(TupleType elementType)
+				=> new ParameterizedType(listType, new[] { elementType }).ChangeNullability(Nullability.Nullable);
+			IType NullableArrayOf(TupleType elementType)
+				=> new ArrayType(comp, elementType, 1, Nullability.Nullable);
+
+			Assert.That(
+				InferSingle(NullableListOf(MakeTupleType(comp, "a", "b")), NullableListOf(MakeTupleType(comp, "a", "c"))),
+				Is.EqualTo(NullableListOf(MakeTupleType(comp, "a", null))));
+
+			Assert.That(
+				InferSingle(NullableArrayOf(MakeTupleType(comp, "a", "b")), NullableArrayOf(MakeTupleType(comp, "a", "c"))),
+				Is.EqualTo(NullableArrayOf(MakeTupleType(comp, "a", null))));
+		}
+
+		[Test]
+		public void FixingDoesNotMergeBoundsThatDifferInNullability()
+		{
+			// Signature:  M<T>(T x, T y)
+			// Invocation: M(nullableArrayOfString, arrayOfString);
+			// Merging nullability requires the variance of the position, which this
+			// implementation does not track, so such bounds stay distinct and fixing fails
+			// (csc infers string[]?).
+			var comp = tupleCompilation.Value;
+			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
+			IType stringType = comp.FindType(KnownTypeCode.String);
+
+			new TypeInference(comp).InferTypeArguments(new ITypeParameter[] { T },
+				new[] {
+					new ResolveResult(new ArrayType(comp, stringType, 1, Nullability.Nullable)),
+					new ResolveResult(new ArrayType(comp, stringType))
+				},
+				new IType[] { T, T },
+				out bool success);
+			Assert.That(success, Is.False);
+		}
+
+		[Test]
 		public void FixingMergesTupleElementNamesOfMultipleExactBounds()
 		{
 			// Signature:  M<T>(ref T x, ref T y)
