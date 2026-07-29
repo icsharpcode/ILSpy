@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="module">The module being decompiled.</param>
 		void Write(TextWriter target, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module);
 	}
-	public static class IProjectFileWriterExtensions
+	public static class ProjectFileWriterExtensions
 	{
 		extension(IProjectFileWriter)
 		{
