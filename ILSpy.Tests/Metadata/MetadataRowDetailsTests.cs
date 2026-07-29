@@ -23,6 +23,7 @@ using System.Threading.Tasks;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Layout;
 using Avalonia.VisualTree;
 
 using AwesomeAssertions;
@@ -145,6 +146,29 @@ public class MetadataRowDetailsTests
 		tab.IsRowDetailsVisible!(dllCharacteristics).Should().BeTrue();
 		entries.Where(e => e != dllCharacteristics).Should()
 			.OnlyContain(e => !tab.IsRowDetailsVisible!(e));
+	}
+
+	[AvaloniaTest]
+	public void Details_Content_Stretches_Across_The_Full_Row_Width()
+	{
+		// The details area spans the host row, and its content fills it: a capped or
+		// left-pinned control would leave dead space to the right of the blob text or
+		// sub-grid columns.
+		var text = MetadataRowDetails.BuildTextBlob("blob text");
+		text.HorizontalAlignment.Should().Be(HorizontalAlignment.Stretch);
+		text.MaxWidth.Should().Be(double.PositiveInfinity, "the text blob must not cap its width");
+
+		var flagsGrid = (DataGrid)MetadataRowDetails.BuildFlagsGrid(new List<BitEntry> { new(true, "<0001> bit") });
+		flagsGrid.HorizontalAlignment.Should().Be(HorizontalAlignment.Stretch);
+		flagsGrid.Columns[^1].Width.UnitType.Should().Be(DataGridLengthUnitType.Star,
+			"the meaning column takes the leftover width");
+
+		var detailsGrid = (DataGrid)MetadataRowDetails.BuildDetailsGrid(
+			new List<BitEntry> { new(true, "<0001> bit") },
+			("Value", nameof(BitEntry.Value)), ("Meaning", nameof(BitEntry.Meaning)));
+		detailsGrid.HorizontalAlignment.Should().Be(HorizontalAlignment.Stretch);
+		detailsGrid.Columns[^1].Width.UnitType.Should().Be(DataGridLengthUnitType.Star,
+			"the last column takes the leftover width");
 	}
 
 	[AvaloniaTest]

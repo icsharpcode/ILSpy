@@ -24,7 +24,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
-using Avalonia.Layout;
 using Avalonia.Media;
 
 using ICSharpCode.ILSpy.ViewModels;
@@ -105,6 +104,7 @@ namespace ICSharpCode.ILSpy.Metadata
 			grid.Columns.Add(new DataGridTextColumn {
 				Binding = new Binding(nameof(BitEntry.Meaning)),
 				IsReadOnly = true,
+				Width = new DataGridLength(1, DataGridLengthUnitType.Star),
 			});
 			return grid;
 		}
@@ -117,9 +117,7 @@ namespace ICSharpCode.ILSpy.Metadata
 				Text = text,
 				IsReadOnly = true,
 				TextWrapping = TextWrapping.Wrap,
-				MaxWidth = 800,
 				MaxHeight = 400,
-				HorizontalAlignment = HorizontalAlignment.Left,
 			};
 		}
 
@@ -143,6 +141,10 @@ namespace ICSharpCode.ILSpy.Metadata
 					IsReadOnly = true,
 				});
 			}
+			// The last column absorbs the leftover width so the sub-grid fills the host row
+			// instead of ending in dead space after its auto-sized columns.
+			if (grid.Columns.Count > 0)
+				grid.Columns[^1].Width = new DataGridLength(1, DataGridLengthUnitType.Star);
 			return grid;
 		}
 
@@ -154,7 +156,6 @@ namespace ICSharpCode.ILSpy.Metadata
 			CanUserReorderColumns = false,
 			CanUserSortColumns = false,
 			SelectionMode = DataGridSelectionMode.Single,
-			HorizontalAlignment = HorizontalAlignment.Left,
 		};
 	}
 }
