@@ -898,11 +898,56 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   <data name="OpenFrom" xml:space="preserve">
     <value>Open From GAC</value>
   </data>
+  <data name="OpenFromProcess_AddEntryAssembly" xml:space="preserve">
+    <value>Add _Entry Assembly</value>
+  </data>
+  <data name="OpenFromProcess_AddSelected" xml:space="preserve">
+    <value>_Add Selected</value>
+  </data>
+  <data name="OpenFromProcess_Architecture" xml:space="preserve">
+    <value>Architecture</value>
+  </data>
+  <data name="OpenFromProcess_Assemblies" xml:space="preserve">
+    <value>Assemblies loaded in the selected process:</value>
+  </data>
+  <data name="OpenFromProcess_EntryAssembly" xml:space="preserve">
+    <value>Entry Assembly</value>
+  </data>
+  <data name="OpenFromProcess_Filter" xml:space="preserve">
+    <value>_Filter:</value>
+  </data>
+  <data name="OpenFromProcess_InMemoryAssembly" xml:space="preserve">
+    <value>(loaded from memory - cannot be opened)</value>
+  </data>
+  <data name="OpenFromProcess_Location" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="OpenFromProcess_Pid" xml:space="preserve">
+    <value>PID</value>
+  </data>
+  <data name="OpenFromProcess_Process" xml:space="preserve">
+    <value>Process</value>
+  </data>
+  <data name="OpenFromProcess_Refresh" xml:space="preserve">
+    <value>_Refresh</value>
+  </data>
+  <data name="OpenFromProcess_Runtime" xml:space="preserve">
+    <value>Runtime</value>
+  </data>
+  <data name="OpenFromProcess_Title" xml:space="preserve">
+    <value>Open from Running Process</value>
+  </data>
+  <data name="OpenFromProcess_VisibilityHint" xml:space="preserve">
+    <value>Only .NET processes of the current user are listed. Processes started with diagnostics disabled do not appear.</value>
+  </data>
   <data name="OpenFrom_GAC" xml:space="preserve">
     <value>Open from _GAC...</value>
   </data>
   <data name="OpenFrom_NuGetFeed" xml:space="preserve">
     <value>Open from _NuGet feed...</value>
+  </data>
+  <data name="OpenFrom_RunningProcess" xml:space="preserve">
+    <value>Open from running _process...</value>
   </data>
   <data name="OpenListDialog__Delete" xml:space="preserve">
     <value>_Delete</value>

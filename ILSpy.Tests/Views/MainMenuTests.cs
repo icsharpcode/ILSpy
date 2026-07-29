@@ -79,6 +79,33 @@ public class MainMenuTests
 	}
 
 	[AvaloniaTest]
+	public void OpenFromRunningProcess_item_sits_between_NuGet_feed_and_Reload_and_works_on_every_OS()
+	{
+		var window = new Window();
+		MainMenu.Attach(window);
+
+		var menu = NativeMenu.GetMenu(window);
+		menu.Should().NotBeNull();
+
+		var process = Find(menu!, i => i.Header?.Contains("running", StringComparison.OrdinalIgnoreCase) == true);
+		process.Should().NotBeNull("the File menu must contain an 'Open from running process' item");
+		process!.IsEnabled.Should().BeTrue(
+			"the runtime's diagnostics endpoint answers on Windows, Linux and macOS alike");
+
+		var fileSubmenu = menu!.Items.OfType<NativeMenuItem>()
+			.Select(i => i.Menu)
+			.First(m => m != null && m.Items.OfType<NativeMenuItem>()
+				.Any(i => i.Header?.Contains("GAC", StringComparison.OrdinalIgnoreCase) == true));
+		var items = fileSubmenu!.Items.OfType<NativeMenuItem>().ToList();
+		int nugetIndex = items.FindIndex(i => i.Header?.Contains("NuGet feed", StringComparison.OrdinalIgnoreCase) == true);
+		int processIndex = items.FindIndex(i => i.Header?.Contains("running", StringComparison.OrdinalIgnoreCase) == true);
+		int reloadIndex = items.FindIndex(i => i.Header?.Contains("Reload", StringComparison.OrdinalIgnoreCase) == true);
+
+		processIndex.Should().BeGreaterThan(nugetIndex, "it joins the group of open-from sources at its end");
+		processIndex.Should().BeLessThan(reloadIndex, "Reload ends the open group");
+	}
+
+	[AvaloniaTest]
 	public void OpenFromGac_item_enabled_state_follows_the_command()
 	{
 		var window = new Window();
