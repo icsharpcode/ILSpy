@@ -63,15 +63,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public static ProjectFileWriterSdkStyle Default { get; } = new();
 
-		/// <summary>
-		/// Occurs when a custom property group can be written to the project file.
-		/// </summary>
-		protected event Action<XmlTextWriter, IProjectInfoProvider, IEnumerable<ProjectItemInfo>, MetadataFile>? WriteCustomPropertyGroup;
-		/// <summary>
-		/// Occurs when a custom item group can be written to the project file.
-		/// </summary>
-		protected event Action<XmlTextWriter, IProjectInfoProvider, IEnumerable<ProjectItemInfo>, MetadataFile>? WriteCustomItemGroup;
-
 		/// <inheritdoc />
 		public void Write(
 			TextWriter target,
@@ -105,12 +96,15 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				WriteMiscellaneousPropertyGroup(xml, files);
 			}
-			var writeCustomPropertyGroup = WriteCustomPropertyGroup;
-			if (writeCustomPropertyGroup != null)
+			var customProperties = GetCustomProperties(project, files, module);
+			if (customProperties != null)
 			{
 				using (new Group(xml, "PropertyGroup"))
 				{
-					writeCustomPropertyGroup.Invoke(xml, project, files, module);
+					foreach (var (name, value) in customProperties)
+					{
+						xml.WriteElementString(name, value);
+					}
 				}
 			}
 			using (new Group(xml, "ItemGroup"))
@@ -120,14 +114,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			using (new Group(xml, "ItemGroup"))
 			{
 				WriteReferences(xml, module, project);
-			}
-			var writeCustomItemGroup = WriteCustomItemGroup;
-			if (writeCustomItemGroup != null)
-			{
-				using (new Group(xml, "ItemGroup"))
-				{
-					writeCustomItemGroup.Invoke(xml, project, files, module);
-				}
 			}
 
 			xml.WriteEndElement();
@@ -254,6 +240,18 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (files.Any(t => t.ItemType == "EmbeddedResource"))
 				xml.WriteElementString("RootNamespace", string.Empty);
 			// TODO: We should add CustomToolNamespace for resources, otherwise we should add empty RootNamespace
+		}
+
+		/// <summary>
+		/// Gets custom properties to be added to the project file. Override this method to provide additional properties.
+		/// </summary>
+		/// <param name="project">The project information provider.</param>
+		/// <param name="files">The collection of project item information.</param>
+		/// <param name="module">The metadata file representing the module.</param>
+		/// <returns>An enumerable of custom properties as name-value pairs. Null if no custom properties are provided.</returns>
+		protected virtual IEnumerable<(string, string)>? GetCustomProperties(IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module)
+		{
+			return null;
 		}
 
 		static void WriteResources(XmlTextWriter xml, IEnumerable<ProjectItemInfo> files)
