@@ -34,6 +34,7 @@ using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Languages;
 using ICSharpCode.ILSpy.NuGetFeeds;
+using ICSharpCode.ILSpy.Processes;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Views;
 
@@ -150,6 +151,30 @@ namespace ICSharpCode.ILSpy.Commands
 			var path = await dlg.ShowDialog<string?>(owner);
 			if (!string.IsNullOrEmpty(path))
 				assemblyTreeModel.OpenFiles(new[] { path });
+		}
+	}
+
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.OpenFrom_RunningProcess), MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
+	[Shared]
+	[method: ImportingConstructor]
+	sealed class OpenFromRunningProcessCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand
+	{
+		public override void Execute(object? parameter)
+		{
+			var owner = UiContext.MainWindow;
+			if (owner == null)
+				return;
+			ShowAsync(owner).HandleExceptions();
+		}
+
+		async Task ShowAsync(global::Avalonia.Controls.Window owner)
+		{
+			// A fresh explorer per invocation: it holds no cache worth keeping alive, and
+			// the process list is stale the moment the dialog closes anyway.
+			var dlg = new Views.OpenFromProcessDialog(new ProcessExplorer());
+			var paths = await dlg.ShowDialog<string[]?>(owner);
+			if (paths is { Length: > 0 })
+				assemblyTreeModel.OpenFiles(paths);
 		}
 	}
 

@@ -2624,6 +2624,141 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Open from running _process....
+        /// </summary>
+        public static string OpenFrom_RunningProcess {
+            get {
+                return ResourceManager.GetString("OpenFrom_RunningProcess", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Add _Entry Assembly.
+        /// </summary>
+        public static string OpenFromProcess_AddEntryAssembly {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_AddEntryAssembly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Add Selected.
+        /// </summary>
+        public static string OpenFromProcess_AddSelected {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_AddSelected", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Architecture.
+        /// </summary>
+        public static string OpenFromProcess_Architecture {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Architecture", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Assemblies loaded in the selected process:.
+        /// </summary>
+        public static string OpenFromProcess_Assemblies {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Assemblies", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Entry Assembly.
+        /// </summary>
+        public static string OpenFromProcess_EntryAssembly {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_EntryAssembly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Filter:.
+        /// </summary>
+        public static string OpenFromProcess_Filter {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Filter", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to (loaded from memory - cannot be opened).
+        /// </summary>
+        public static string OpenFromProcess_InMemoryAssembly {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_InMemoryAssembly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Location.
+        /// </summary>
+        public static string OpenFromProcess_Location {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Location", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to PID.
+        /// </summary>
+        public static string OpenFromProcess_Pid {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Pid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Process.
+        /// </summary>
+        public static string OpenFromProcess_Process {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Process", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to _Refresh.
+        /// </summary>
+        public static string OpenFromProcess_Refresh {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Refresh", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Runtime.
+        /// </summary>
+        public static string OpenFromProcess_Runtime {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Runtime", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open from Running Process.
+        /// </summary>
+        public static string OpenFromProcess_Title {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Only .NET processes of the current user are listed. Processes started with diagnostics disabled do not appear..
+        /// </summary>
+        public static string OpenFromProcess_VisibilityHint {
+            get {
+                return ResourceManager.GetString("OpenFromProcess_VisibilityHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to _Delete.
         /// </summary>
         public static string OpenListDialog__Delete {
