@@ -76,7 +76,7 @@ namespace ICSharpCode.ILSpy.Metadata.DebugTables
 		static Control? BuildRowDetailsContent(object? item)
 		{
 			return (item as CustomDebugInformationEntry)?.RowDetails switch {
-				string text => MetadataRowDetails.BuildTextBlob(text),
+				TextBlobDetail blob => MetadataRowDetails.BuildTextBlob(blob.Text, blob.HighlightExtension),
 				IReadOnlyList<HoistedLocalScopeDetail> rows => MetadataRowDetails.BuildDetailsGrid(rows,
 					("Start Offset", nameof(HoistedLocalScopeDetail.StartOffset)),
 					("Length", nameof(HoistedLocalScopeDetail.Length))),
@@ -197,9 +197,11 @@ namespace ICSharpCode.ILSpy.Metadata.DebugTables
 
 			/// <summary>
 			/// Parsed view of the Value blob for the row-details area. Structured kinds become
-			/// typed row lists, source-link blobs the decoded JSON text, embedded source the
-			/// (decompressed) document text, everything else (including malformed blobs) a hex
-			/// dump. Cached — the details area re-requests it on every selection change.
+			/// typed row lists; text payloads become a <see cref="TextBlobDetail"/> — source-link
+			/// blobs the decoded JSON, embedded source the (decompressed) document text tagged
+			/// with its document's file extension, everything else (including malformed blobs)
+			/// a plain hex dump. Cached — the details area re-requests it on every selection
+			/// change.
 			/// </summary>
 			public object? RowDetails {
 				get {
@@ -215,7 +217,7 @@ namespace ICSharpCode.ILSpy.Metadata.DebugTables
 					}
 					catch (Exception ex) when (ex is BadImageFormatException or InvalidDataException)
 					{
-						return rowDetails = metadataFile.Metadata.GetBlobReader(debugInfo.Value).ToHexString();
+						return rowDetails = new TextBlobDetail(metadataFile.Metadata.GetBlobReader(debugInfo.Value).ToHexString());
 					}
 				}
 			}
@@ -231,13 +233,13 @@ namespace ICSharpCode.ILSpy.Metadata.DebugTables
 					return list;
 				}
 				if (kind == KnownGuids.SourceLink)
-					return reader.ReadUTF8(reader.RemainingBytes);
+					return new TextBlobDetail(reader.ReadUTF8(reader.RemainingBytes), ".json");
 				if (kind == KnownGuids.EmbeddedSource)
 				{
 					var embeddedSourceFormat = reader.ReadInt32();
 
 					if (embeddedSourceFormat < 0) // unknown format, show raw data as hex
-						return reader.ToHexString();
+						return new TextBlobDetail(reader.ToHexString());
 
 					var embeddedSourceBytes = reader.ReadBytes(reader.RemainingBytes);
 					Stream embeddedSourceByteStream = new MemoryStream(embeddedSourceBytes);
@@ -245,8 +247,10 @@ namespace ICSharpCode.ILSpy.Metadata.DebugTables
 					if (embeddedSourceFormat > 0) // positive length means the data is compressed using DEFLATE
 						embeddedSourceByteStream = new System.IO.Compression.DeflateStream(embeddedSourceByteStream, System.IO.Compression.CompressionMode.Decompress);
 
-					var textReader = new StreamReader(embeddedSourceByteStream, detectEncodingFromByteOrderMarks: true);
-					return textReader.ReadToEnd();
+					// Disposing the reader disposes the whole wrapped chain (DeflateStream's
+					// inflater would otherwise wait for its finalizer).
+					using var textReader = new StreamReader(embeddedSourceByteStream, detectEncodingFromByteOrderMarks: true);
+					return new TextBlobDetail(textReader.ReadToEnd(), GetEmbeddedSourceExtension());
 				}
 				if (kind == KnownGuids.CompilationOptions)
 				{
@@ -281,7 +285,21 @@ namespace ICSharpCode.ILSpy.Metadata.DebugTables
 						list.Add(new TupleElementNameDetail(reader.ReadUTF8StringNullTerminated()));
 					return list;
 				}
-				return reader.ToHexString();
+				return new TextBlobDetail(reader.ToHexString());
+			}
+
+			string? GetEmbeddedSourceExtension()
+			{
+				// The parent of an embedded-source row is the Document whose text the blob
+				// holds; the document name's file extension selects the syntax highlighting
+				// for the decoded source.
+				if (debugInfo.Parent.Kind != HandleKind.Document)
+					return null;
+				var document = metadataFile.Metadata.GetDocument((DocumentHandle)debugInfo.Parent);
+				if (document.Name.IsNil)
+					return null;
+				string extension = Path.GetExtension(metadataFile.Metadata.GetString(document.Name));
+				return string.IsNullOrEmpty(extension) ? null : extension;
 			}
 
 			public CustomDebugInformationEntry(MetadataFile metadataFile, CustomDebugInformationHandle handle)

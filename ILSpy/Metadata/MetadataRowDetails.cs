@@ -22,10 +22,12 @@ using System.Collections.Generic;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Media;
 
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -55,6 +57,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				Content = contentFactory(change.NewValue);
 		}
 	}
+
+	/// <summary>
+	/// Decoded text payload of a row (embedded source, source-link JSON, hex dump), tagged
+	/// with the file extension (".cs", ".json") that selects the syntax highlighting for its
+	/// display, or <see langword="null"/> for plain text.
+	/// </summary>
+	public sealed record TextBlobDetail(string Text, string? HighlightExtension = null);
 
 	/// <summary>
 	/// Factories for the row-details area of metadata grids: the DataContext-tracking shell
@@ -109,16 +118,29 @@ namespace ICSharpCode.ILSpy.Metadata
 			return grid;
 		}
 
-		/// <summary>Read-only, word-wrapped view of a decoded text blob (source, JSON, hex).</summary>
-		public static Control BuildTextBlob(string text)
+		/// <summary>
+		/// Read-only, word-wrapped view of a decoded text blob (source, JSON, hex), rendered
+		/// in the theme-aware AvaloniaEdit editor: text payloads are mostly code, so they get
+		/// syntax colours (selected by <paramref name="highlightExtension"/>, e.g. ".cs" or
+		/// ".json"; <see langword="null"/> stays plain) and line virtualization keeps large
+		/// embedded-source documents cheap. Height is bounded so the host row cannot grow
+		/// unbounded; the editor scrolls internally.
+		/// </summary>
+		public static Control BuildTextBlob(string text, string? highlightExtension = null)
 		{
 			ArgumentNullException.ThrowIfNull(text);
-			return new TextBox {
+			var editor = new DecompilerTextEditor {
 				Text = text,
 				IsReadOnly = true,
-				TextWrapping = TextWrapping.Wrap,
+				WordWrap = true,
 				MaxHeight = 400,
+				FontFamily = new FontFamily("Consolas, Menlo, Monospace"),
+				FontSize = 13,
 			};
+			if (highlightExtension != null)
+				editor.SyntaxHighlighting = HighlightingService.GetByExtension(highlightExtension);
+			editor.Bind(TemplatedControl.BackgroundProperty, editor.GetResourceObservable("ILSpy.EditorBackground"));
+			return editor;
 		}
 
 		/// <summary>
