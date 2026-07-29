@@ -2,15 +2,15 @@
 
 To install:
 
-```
+``` bash
 dotnet tool install --global ilspycmd
 ```
 
 Help output (`ilspycmd --help`):
 
-```
-ilspycmd: 10.1.0.8361
-ICSharpCode.Decompiler: 10.1.0.8361
+``` text
+ilspycmd: 11.0.0.9283
+ICSharpCode.Decompiler: 11.0.0.9283
 
 dotnet tool for decompiling .NET assemblies and generating portable PDBs
 
@@ -26,6 +26,9 @@ Options:
   -p|--project                            Decompile assembly as compilable project. This requires the output directory
                                           option.
   -t|--type <type-name>                   The fully qualified name of the type to decompile.
+  -m|--member <doc-id-or-token>           The single member to decompile: an XML documentation id string (e.g.
+                                          "M:System.String.Concat(System.String,System.String)", as also accepted by the
+                                          UI's --navigateto option) or a metadata token (e.g. 0x06000005).
   -il|--ilcode                            Show IL code.
   --il-sequence-points                    Show IL with sequence points. Implies -il.
   -genpdb|--generate-pdb                  Generate PDB.
@@ -43,7 +46,7 @@ Options:
                                           CSharp11_0, CSharp12_0, CSharp13_0, Preview or Latest
                                           Allowed values are: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6,
                                           CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp10_0,
-                                          CSharp11_0, CSharp12_0, CSharp13_0, CSharp14_0, Preview, Latest.
+                                          CSharp11_0, CSharp12_0, CSharp13_0, CSharp14_0, CSharp15_0, Preview, Latest.
                                           Default value is: Latest.
   --ilspy-settingsfile <path>             Path to an ILSpy settings file.
   -ds|--decompiler-setting <value>        Set a decompiler setting. Use multiple times to set multiple settings.
