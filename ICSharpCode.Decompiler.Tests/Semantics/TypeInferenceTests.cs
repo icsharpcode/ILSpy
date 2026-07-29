@@ -765,7 +765,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
-		[Ignore("Not implemented: AddExactBound compares bounds with name-sensitive equality, so two exact bounds that differ only in tuple element names count as conflicting before any merging can happen; csc merges them (verified: M<T>(ref T, ref T) with (int a, string b)/(int a, string c) compiles, T = (int a, string)).")]
 		public void FixingMergesTupleElementNamesOfMultipleExactBounds()
 		{
 			// Signature:  M<T>(ref T x, ref T y)
