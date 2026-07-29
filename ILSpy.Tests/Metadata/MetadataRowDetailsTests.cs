@@ -186,6 +186,7 @@ public class MetadataRowDetailsTests
 		editor.IsReadOnly.Should().BeTrue();
 		editor.WordWrap.Should().BeTrue();
 		editor.MaxHeight.Should().Be(400, "the host row must stay bounded; the editor scrolls internally");
+		editor.MinHeight.Should().Be(100, "a short payload must still get a recognisable details area, not a squeezed strip");
 		editor.SyntaxHighlighting.Should().NotBeNull();
 		editor.SyntaxHighlighting!.Name.Should().Be("C#");
 
