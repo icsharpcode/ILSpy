@@ -184,5 +184,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			Interlocked.Exchange(ref thisField, new Program());
 			Console.WriteLine("{0} {1}", this, thisField);
 		}
+
+		public void Test11()
+		{
+			int field1 = 1;
+			string field2 = "Hello World!";
+			Console.WriteLine("{0} {1} {2}", this, field1, field2);
+		}
 	}
 }
