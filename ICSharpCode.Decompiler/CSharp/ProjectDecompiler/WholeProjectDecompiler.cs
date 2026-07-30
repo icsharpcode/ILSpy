@@ -41,6 +41,8 @@ using ICSharpCode.Decompiler.Util;
 
 using static ICSharpCode.Decompiler.Metadata.MetadataExtensions;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
 	/// <summary>
@@ -75,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
 
-		public IDebugInfoProvider DebugInfoProvider { get; }
+		public IDebugInfoProvider? DebugInfoProvider { get; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
@@ -89,17 +91,17 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// This property is set by DecompileProject() and protected so that overridden protected members
 		/// can access it.
 		/// </remarks>
-		public string TargetDirectory { get; protected set; }
+		public string TargetDirectory { get; protected set; } = string.Empty;
 
 		/// <summary>
 		/// Path to the snk file to use for signing.
 		/// <c>null</c> to not sign.
 		/// </summary>
-		public string StrongNameKeyFile { get; set; }
+		public string? StrongNameKeyFile { get; set; }
 
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 
-		public IProgress<DecompilationProgress> ProgressIndicator { get; set; }
+		public IProgress<DecompilationProgress>? ProgressIndicator { get; set; }
 		#endregion
 
 		public WholeProjectDecompiler(IAssemblyResolver assemblyResolver)
@@ -110,9 +112,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public WholeProjectDecompiler(
 			DecompilerSettings settings,
 			IAssemblyResolver assemblyResolver,
-			IProjectFileWriter projectWriter,
-			IAssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			IProjectFileWriter? projectWriter,
+			IAssemblyReferenceClassifier? assemblyReferenceClassifier,
+			IDebugInfoProvider? debugInfoProvider)
 			: this(settings, Guid.NewGuid(), assemblyResolver, projectWriter ?? IProjectFileWriter.FromSettings(settings), assemblyReferenceClassifier ?? new AssemblyReferenceClassifier(), debugInfoProvider)
 		{
 		}
@@ -123,7 +125,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			IAssemblyResolver assemblyResolver,
 			IProjectFileWriter projectWriter,
 			IAssemblyReferenceClassifier assemblyReferenceClassifier,
-			IDebugInfoProvider debugInfoProvider)
+			IDebugInfoProvider? debugInfoProvider)
 		{
 			Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			ProjectGuid = projectGuid;
@@ -355,7 +357,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
-				Stream stream = r.TryOpenStream();
+				Stream? stream = r.TryOpenStream();
 				if (stream == null)
 					continue;
 
@@ -373,12 +375,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							foreach (var (name, value) in resourcesFile)
 							{
 								string fileName = SanitizeFileName(name);
-								string dirName = Path.GetDirectoryName(fileName);
+								string? dirName = Path.GetDirectoryName(fileName);
 								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 								{
 									CreateDirectory(Path.Combine(TargetDirectory, dirName));
 								}
-								Stream entryStream = (Stream)value;
+								Stream entryStream = (Stream)value!;
 								entryStream.Position = 0;
 								individualResources.AddRange(
 									WriteResourceToFile(fileName, name, entryStream));
@@ -495,14 +497,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (resources == null)
 				yield break;
 
-			byte[] appIcon = CreateApplicationIcon(resources);
+			byte[]? appIcon = CreateApplicationIcon(resources);
 			if (appIcon != null)
 			{
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
 				yield return new ProjectItemInfo("ApplicationIcon", "app.ico");
 			}
 
-			byte[] appManifest = CreateApplicationManifest(resources);
+			byte[]? appManifest = CreateApplicationManifest(resources);
 			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
 			{
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
@@ -520,7 +522,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const int RT_ICON = 3;
 		const int RT_GROUP_ICON = 14;
 
-		unsafe static byte[] CreateApplicationIcon(Win32ResourceDirectory resources)
+		unsafe static byte[]? CreateApplicationIcon(Win32ResourceDirectory resources)
 		{
 			var iconGroup = resources.Find(new Win32ResourceName(RT_GROUP_ICON))?.FirstDirectory()?.FirstData()?.Data;
 			if (iconGroup == null)
@@ -598,7 +600,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		const int RT_MANIFEST = 24;
 
-		unsafe static byte[] CreateApplicationManifest(Win32ResourceDirectory resources)
+		unsafe static byte[]? CreateApplicationManifest(Win32ResourceDirectory resources)
 		{
 			return resources.Find(new Win32ResourceName(RT_MANIFEST))?.FirstDirectory()?.FirstData()?.Data;
 		}
@@ -641,12 +643,12 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Cleans up a node name for use as a file name.
 		/// </summary>
-		public static string CleanUpFileName(string text, string extension)
+		public static string CleanUpFileName(string text, string? extension)
 		{
-			Debug.Assert(!string.IsNullOrEmpty(extension));
-			if (!extension.StartsWith("."))
-				extension = "." + extension;
-			text = text + extension;
+			if (string.IsNullOrEmpty(extension) || extension.StartsWith("."))
+				text = $"{text}{extension}";
+			else
+				text = $"{text}.{extension}";
 
 			return CleanUpName(text, separateAtDots: false, treatAsFileName: !string.IsNullOrEmpty(extension), treatAsPath: false);
 		}
@@ -668,7 +670,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		static string CleanUpName(string text, bool separateAtDots, bool treatAsFileName, bool treatAsPath)
 		{
-			string extension = null;
+			string? extension = null;
 			int currentSegmentLength = 0;
 			// Extract extension from the end of the name, if valid
 			if (treatAsFileName)
@@ -864,9 +866,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 	public record struct ProjectItemInfo(string ItemType, string FileName)
 	{
-		public List<PartialTypeInfo> PartialTypes { get; set; } = null;
+		public List<PartialTypeInfo>? PartialTypes { get; set; } = null;
 
-		public Dictionary<string, string> AdditionalProperties { get; set; } = null;
+		public Dictionary<string, string>? AdditionalProperties { get; set; } = null;
 
 		public ProjectItemInfo With(string name, string value)
 		{
