@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ObjectOrReadOnlySpan((object)arr);
 			ObjectOrReadOnlySpanChar((object)str);
 			EnumerableOrReadOnlySpan((IEnumerable<int>)arr);
-			StringOrReadOnlySpanChar(str.AsSpan());
+			StringOrReadOnlySpanChar((ReadOnlySpan<char>)str);
 		}
 	}
 

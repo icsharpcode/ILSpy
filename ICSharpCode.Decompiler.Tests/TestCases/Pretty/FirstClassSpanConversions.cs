@@ -64,8 +64,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static int StringToReadOnlySpanCharLocal(string s)
 		{
+			// The local is read twice so it survives decompilation; a single-use span local is
+			// inlined into its consumer by general decompiler policy, independent of this feature.
 			ReadOnlySpan<char> readOnlySpan = s;
-			return readOnlySpan.Length;
+			return readOnlySpan.Length + readOnlySpan.Length;
 		}
 
 		public static void VarianceReadOnlySpan(ReadOnlySpan<Derived> s)

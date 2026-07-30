@@ -803,7 +803,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task FirstClassSpanConversions([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			Assert.Ignore("Implicit span conversions (C# 14 first-class span types) are not yet folded by the decompiler. See https://github.com/icsharpcode/ILSpy/issues/829");
 			await RunForLibrary(cscOptions: cscOptions);
 		}
 
