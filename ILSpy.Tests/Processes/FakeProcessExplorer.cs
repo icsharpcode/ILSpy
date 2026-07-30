@@ -41,7 +41,12 @@ sealed class FakeProcessExplorer : IProcessExplorer
 	public Exception? ProcessesException { get; set; }
 	public Exception? ModulesException { get; set; }
 
-	/// <summary>When set, module queries wait for it before returning.</summary>
+	/// <summary>
+	/// When set, module queries wait for it before returning. The wait deliberately ignores
+	/// the cancellation token: the real explorer parks on socket I/O on a thread-pool thread,
+	/// so cancelling it does not complete the query inline on the cancelling thread. A gate
+	/// that did would hide state a cancelled query leaves behind.
+	/// </summary>
 	public TaskCompletionSource? ModulesGate { get; set; }
 
 	public CancellationToken LastModulesToken { get; private set; }
@@ -69,7 +74,7 @@ sealed class FakeProcessExplorer : IProcessExplorer
 		if (ModulesException != null)
 			throw ModulesException;
 		if (ModulesGate != null)
-			await ModulesGate.Task.WaitAsync(cancellationToken);
+			await ModulesGate.Task;
 		await Task.Yield();
 		cancellationToken.ThrowIfCancellationRequested();
 		return ModulesByPid.TryGetValue(process.Pid, out var modules)

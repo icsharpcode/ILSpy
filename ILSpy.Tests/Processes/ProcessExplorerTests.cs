@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,8 +53,77 @@ public class ProcessExplorerTests
 		var self = processes.Should().ContainSingle(p => p.Pid == Environment.ProcessId).Subject;
 		self.Kind.Should().Be(RuntimeKind.CoreClr);
 		self.ProcessName.Should().NotBeNullOrWhiteSpace();
-		self.EntryAssemblyName.Should().Be(Assembly.GetEntryAssembly()!.GetName().Name);
-		self.RuntimeVersion.Should().NotBeNullOrWhiteSpace();
+		// A null here means the process was listed but did not answer: the diagnostics query
+		// failed or ran out its budget. It is not an "unknown entry assembly" - the runtime
+		// always knows its own.
+		self.EntryAssemblyName.Should().Be(Assembly.GetEntryAssembly()!.GetName().Name,
+			"the runtime answered the process-info query");
+		self.RuntimeVersion.Should().NotBeNullOrWhiteSpace(
+			"the runtime answered the process-info query");
+	}
+
+	[Test]
+	public void Every_Way_An_Endpoint_Can_Fail_To_Answer_Counts_As_Unreachable()
+	{
+		// One process that cannot be reached must cost that one row, not the listing: the
+		// queries run concurrently, so an exception that escapes the classification fails the
+		// whole enumeration and the dialog shows an empty machine.
+		ProcessExplorer.IsUnreachable(new SocketException((int)SocketError.ConnectionRefused))
+			.Should().BeTrue("a refused unix socket - a stale file, or a runtime already torn down");
+		ProcessExplorer.IsUnreachable(new IOException("broken pipe")).Should().BeTrue();
+		ProcessExplorer.IsUnreachable(new EndOfStreamException()).Should().BeTrue();
+		ProcessExplorer.IsUnreachable(new TimeoutException()).Should().BeTrue("a named pipe with no server");
+		ProcessExplorer.IsUnreachable(new UnauthorizedAccessException()).Should().BeTrue("another user's endpoint");
+
+		ProcessExplorer.IsUnreachable(new InvalidDataException("the reader misread a block"))
+			.Should().BeFalse("a defect in this code must not be disguised as an unreachable process");
+	}
+
+	[Test]
+	[Platform(Exclude = "Win", Reason = "Unix domain sockets are the transport being planted; Windows uses named pipes.")]
+	public async Task A_Socket_That_Refuses_The_Connection_Costs_One_Row_Not_The_Listing()
+	{
+		// The reachable case is covered above; this is the same scan with one endpoint that
+		// exists as a file but has nobody listening behind it - what a process leaves behind
+		// when it exits between the port scan and the connect.
+		using var child = StartNonDotNetChildProcess();
+		string socketPath = Path.Combine(Path.GetTempPath(), $"dotnet-diagnostic-{child.Id}-1-socket");
+		using var abandoned = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+		abandoned.Bind(new UnixDomainSocketEndPoint(socketPath));
+		try
+		{
+			// Not listening, so a connect is refused. Asserted directly, because a planted
+			// socket that failed some other way would make the scan below prove nothing.
+			var connect = async () => await DiagnosticsIpcClient.ConnectAsync(child.Id, CancellationToken.None);
+			await connect.Should().ThrowAsync<SocketException>(
+				"a bound socket with no listener refuses connections");
+
+			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+			var processes = await Explorer.GetProcessesAsync(cts.Token);
+
+			processes.Should().Contain(p => p.Pid == Environment.ProcessId,
+				"the reachable processes must still be listed");
+			processes.Should().Contain(p => p.Pid == child.Id && p.EntryAssemblyName == null,
+				"the unreachable one is listed without the metadata only its runtime could give");
+		}
+		finally
+		{
+			abandoned.Close();
+			File.Delete(socketPath);
+			child.Kill(entireProcessTree: true);
+		}
+	}
+
+	/// <summary>
+	/// A live process that hosts no .NET runtime, so the only diagnostics endpoint it appears
+	/// to have is the one the test plants for it.
+	/// </summary>
+	static System.Diagnostics.Process StartNonDotNetChildProcess()
+	{
+		var child = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+			"/bin/sh", "-c \"sleep 120\"") { UseShellExecute = false });
+		child.Should().NotBeNull();
+		return child!;
 	}
 
 	[Test]

@@ -91,6 +91,7 @@ public class MainMenuTests
 		process.Should().NotBeNull("the File menu must contain an 'Open from running process' item");
 		process!.IsEnabled.Should().BeTrue(
 			"the runtime's diagnostics endpoint answers on Windows, Linux and macOS alike");
+		process.Icon.Should().NotBeNull("the other entries of the open-from group all carry an icon");
 
 		var fileSubmenu = menu!.Items.OfType<NativeMenuItem>()
 			.Select(i => i.Menu)

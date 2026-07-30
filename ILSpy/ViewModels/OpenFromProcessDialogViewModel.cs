@@ -90,10 +90,11 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		partial void OnFilterTextChanged(string value) => ApplyFilter();
 
-		partial void OnSelectedProcessChanged(ProcessRowViewModel? value) => _ = LoadModulesAsync(value);
+		partial void OnSelectedProcessChanged(ProcessRowViewModel? value)
+			=> LoadModulesAsync(value).HandleExceptions();
 
 		[RelayCommand]
-		void Refresh() => _ = RefreshAsync();
+		void Refresh() => RefreshAsync().HandleExceptions();
 
 		bool CanAddSelectedModules => SelectedModules.Any(m => !m.IsInMemory);
 
@@ -120,13 +121,28 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// <summary>Cancels every in-flight query; called when the dialog closes.</summary>
 		public void CancelAllOperations()
 		{
-			refreshCts?.Cancel();
-			modulesCts?.Cancel();
+			CancelAndDispose(ref refreshCts);
+			CancelAndDispose(ref modulesCts);
+		}
+
+		/// <summary>
+		/// Cancels a query's token source and lets go of it. Disposing straight after
+		/// cancelling is safe because the cancellation callbacks have already run by then, and
+		/// the method that owns the source only ever reads
+		/// <see cref="CancellationTokenSource.IsCancellationRequested"/> afterwards, which
+		/// stays valid on a disposed source.
+		/// </summary>
+		static void CancelAndDispose(ref CancellationTokenSource? source)
+		{
+			var previous = source;
+			source = null;
+			previous?.Cancel();
+			previous?.Dispose();
 		}
 
 		async Task RefreshAsync()
 		{
-			refreshCts?.Cancel();
+			CancelAndDispose(ref refreshCts);
 			var cts = refreshCts = new CancellationTokenSource();
 			IsLoadingProcesses = true;
 			try
@@ -136,10 +152,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					return;
 
 				ErrorMessage = null;
-				SelectedProcess = null;
-				allProcesses.Clear();
-				allProcesses.AddRange(processes.Select(p => new ProcessRowViewModel(p)));
-				ApplyFilter();
+				ReplaceProcesses(processes);
 			}
 			catch (OperationCanceledException)
 			{
@@ -148,8 +161,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			catch (Exception ex)
 			{
 				ErrorMessage = ex.Message;
-				allProcesses.Clear();
-				ApplyFilter();
+				ReplaceProcesses(Array.Empty<RunningDotNetProcess>());
 			}
 			finally
 			{
@@ -158,16 +170,54 @@ namespace ICSharpCode.ILSpy.ViewModels
 			}
 		}
 
+		/// <summary>
+		/// Puts a freshly scanned list in place of the current one. The selection goes first:
+		/// the rows it pointed into are about to be gone, and a selection left behind keeps the
+		/// entry-assembly button armed against a process nobody can see any more. The failure
+		/// path empties the list the same way, for the same reason.
+		/// </summary>
+		void ReplaceProcesses(IReadOnlyList<RunningDotNetProcess> processes)
+		{
+			SelectedProcess = null;
+			allProcesses.Clear();
+			allProcesses.AddRange(processes.Select(p => new ProcessRowViewModel(p)));
+			ApplyFilter();
+		}
+
+		/// <summary>
+		/// Brings the bound collection in line with what the filter admits, by removing and
+		/// inserting rows rather than rebuilding it. Clearing it would make the grid drop its
+		/// selection and write that null back through the two-way binding - discarding the
+		/// assembly list of a process the newly typed filter still matches.
+		/// </summary>
 		void ApplyFilter()
 		{
-			Processes.Clear();
-			foreach (var process in allProcesses.Where(p => p.Matches(FilterText)))
-				Processes.Add(process);
+			var matching = allProcesses.Where(p => p.Matches(FilterText)).ToList();
+			var admitted = new HashSet<ProcessRowViewModel>(matching);
+			// A selection the filter no longer admits is dropped here rather than left to the
+			// grid, which holds on to a removed row: the assembly pane must not go on
+			// describing a process that is no longer in the list.
+			if (SelectedProcess != null && !admitted.Contains(SelectedProcess))
+				SelectedProcess = null;
+			for (int i = Processes.Count - 1; i >= 0; i--)
+			{
+				if (!admitted.Contains(Processes[i]))
+					Processes.RemoveAt(i);
+			}
+			// What is left is the matching rows in their original relative order, so any row
+			// missing at position i belongs exactly there.
+			for (int i = 0; i < matching.Count; i++)
+			{
+				if (i >= Processes.Count)
+					Processes.Add(matching[i]);
+				else if (!ReferenceEquals(Processes[i], matching[i]))
+					Processes.Insert(i, matching[i]);
+			}
 		}
 
 		async Task LoadModulesAsync(ProcessRowViewModel? process)
 		{
-			modulesCts?.Cancel();
+			CancelAndDispose(ref modulesCts);
 			var cts = modulesCts = new CancellationTokenSource();
 			int generation = ++modulesGeneration;
 
@@ -175,7 +225,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 			SelectedModules.Clear();
 			SetEntryAssemblyPath(null);
 			if (process == null)
+			{
+				// Nothing is selected, so nothing is loading. The query just cancelled cannot
+				// say so on its way out: its generation has been superseded, which is what the
+				// guard below tests.
+				IsLoadingModules = false;
 				return;
+			}
 
 			IsLoadingModules = true;
 			try

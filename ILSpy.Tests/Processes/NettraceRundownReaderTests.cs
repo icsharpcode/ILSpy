@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -43,14 +44,36 @@ public class NettraceRundownReaderTests
 {
 	static MemoryStream? rundown;
 
+	// Kept alive for the fixture's lifetime: an assembly the runtime has collected is no
+	// longer in the rundown.
+	static Assembly? inMemoryFixture;
+
+	const string InMemoryFixtureName = "ILSpy.Tests.InMemoryRundownFixture";
+
 	/// <summary>
-	/// Collecting a rundown takes a moment, so every test in this fixture shares one.
+	/// Collecting a rundown takes a moment, so every test in this fixture shares one. The
+	/// in-memory assembly is emitted first, so the one rundown covers both the ordinary
+	/// file-backed modules and an assembly that has no file anywhere.
 	/// </summary>
 	[OneTimeSetUp]
 	public async Task CollectRundownOfTheTestHost()
 	{
+		inMemoryFixture = EmitAssemblyWithNoFile();
 		using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
 		rundown = await DiagnosticsIpcClient.CollectModuleRundownAsync(Environment.ProcessId, cts.Token);
+	}
+
+	/// <summary>
+	/// An assembly that exists only in this process's memory - the case a user hits with
+	/// <c>Assembly.Load(byte[])</c>, a dynamic proxy, or a source generator's scratch
+	/// assembly. It is what the reader must classify as unopenable.
+	/// </summary>
+	static Assembly EmitAssemblyWithNoFile()
+	{
+		var name = new AssemblyName(InMemoryFixtureName);
+		var builder = AssemblyBuilder.DefineDynamicAssembly(name, AssemblyBuilderAccess.Run);
+		builder.DefineDynamicModule(InMemoryFixtureName);
+		return builder;
 	}
 
 	[OneTimeTearDown]
@@ -106,12 +129,51 @@ public class NettraceRundownReaderTests
 		// the rundown rather than enumerating native modules.
 		File.Exists(NativeRuntimeHost.FullPath).Should().BeTrue(
 			"the runtime host of the current process is the native module to look for");
+		modules.Should().NotContain(m => string.Equals(m.Path, NativeRuntimeHost.FullPath, StringComparison.OrdinalIgnoreCase));
 
-		modules.Select(m => m.Name).Should().NotContain(
-			name => name.StartsWith("coreclr", StringComparison.OrdinalIgnoreCase)
-				|| name.StartsWith("libcoreclr", StringComparison.OrdinalIgnoreCase)
-				|| name.StartsWith("hostfxr", StringComparison.OrdinalIgnoreCase)
-				|| name.StartsWith("kernel32", StringComparison.OrdinalIgnoreCase));
+		// Stated as the property itself rather than as a list of names to keep out: any native
+		// module the reader starts admitting fails this, not just the ones thought of here.
+		foreach (var module in modules.Where(m => !m.IsInMemory))
+		{
+			ProcessExplorer.IsManagedAssembly(module.Path!).Should().BeTrue(
+				$"'{module.Name}' was listed as an assembly loaded in the process");
+		}
+	}
+
+	[Test]
+	public void An_Assembly_With_No_File_Is_Listed_But_Marked_Unopenable()
+	{
+		var modules = NettraceRundownReader.ReadModules(Rundown());
+
+		inMemoryFixture.Should().NotBeNull("the fixture assembly is emitted before the rundown is collected");
+		var emitted = modules.Should().ContainSingle(m => m.Name.StartsWith(InMemoryFixtureName, StringComparison.Ordinal),
+			"an assembly the runtime holds only in memory is still worth showing").Subject;
+		emitted.IsInMemory.Should().BeTrue();
+		emitted.Path.Should().BeNull("there is no file to open, which is what the dialog tells the user");
+	}
+
+	[Test]
+	public void A_Payload_That_Ends_Inside_A_String_Is_Rejected()
+	{
+		// "ab", filling the payload exactly, with no terminator - what a payload whose layout
+		// does not match what its event id promised looks like. The reader must stop at the
+		// payload's end rather than hunt for a zero word through the rest of the stream.
+		var unterminated = new byte[] { 0x61, 0, 0x62, 0 };
+		using var reader = new BinaryReader(new MemoryStream(unterminated));
+
+		var read = () => NettraceRundownReader.ReadUtf16NullTerminated(reader, unterminated.Length);
+
+		read.Should().Throw<InvalidDataException>().WithMessage("*unterminated*");
+	}
+
+	[Test]
+	public void A_Terminated_String_Inside_Its_Payload_Reads_Back()
+	{
+		var terminated = new byte[] { 0x61, 0, 0x62, 0, 0, 0, 0xFF, 0xFF };
+		using var reader = new BinaryReader(new MemoryStream(terminated));
+
+		NettraceRundownReader.ReadUtf16NullTerminated(reader, terminated.Length).Should().Be("ab");
+		reader.BaseStream.Position.Should().Be(6, "the terminator is consumed and the rest is left alone");
 	}
 
 	[Test]

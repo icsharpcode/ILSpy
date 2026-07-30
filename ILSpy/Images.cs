@@ -69,6 +69,7 @@ namespace ICSharpCode.ILSpy
 		public static readonly IImage Search = LoadSvg(nameof(Search));
 		public static readonly IImage Library = LoadSvg(nameof(Library));
 		public static readonly IImage NuGet = LoadPng(nameof(NuGet));
+		public static readonly IImage Process = LoadSvg(nameof(Process));
 		public static readonly IImage MetadataFile = LoadSvg(nameof(MetadataFile));
 		public static readonly IImage WebAssemblyFile = LoadSvg("WebAssembly");
 		public static readonly IImage ProgramDebugDatabase = LoadSvg(nameof(ProgramDebugDatabase));
