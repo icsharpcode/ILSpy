@@ -202,5 +202,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			Interlocked.Exchange(ref displayClass.thisField, new Program());
 			Console.WriteLine("{0} {1}", this, displayClass.thisField);
 		}
+
+		public void Test11()
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = this,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			Console.WriteLine("{0} {1} {2}", displayClass.thisField, displayClass.field1, displayClass.field2);
+		}
 	}
 }

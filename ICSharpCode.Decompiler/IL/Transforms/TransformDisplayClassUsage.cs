@@ -820,12 +820,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						context.Step($"Remove initializer of {inst.Variable.Name}", inst);
 						ILInstruction firstInlinedStore = null;
+						// Stores are appended after the initializer, in source order; a store that
+						// is dropped must not leave a gap, so the position is tracked separately
+						// from the loop index.
+						int insertionIndex = inst.ChildIndex;
 						for (int i = 1; i < initBlock.Instructions.Count; i++)
 						{
 							var stobj = (StObj)initBlock.Instructions[i];
 							var variable = displayClass.VariablesToDeclare[(IField)((LdFlda)stobj.Target).Field.MemberDefinition];
+							// A propagated field is replaced by the variable it was initialized from,
+							// so keeping its initializer would assign that variable to itself - and
+							// where the variable is 'this', the result is not even valid C#. Stores
+							// outside an object-initializer block are dropped in VisitStObj under the
+							// same condition.
+							if (variable.CanPropagate && variable.Initializers.Contains(stobj))
+								continue;
 							var inlinedStore = new StLoc(variable.GetOrDeclare(), stobj.Value).WithILRange(stobj);
-							parentBlock.Instructions.Insert(inst.ChildIndex + i, inlinedStore);
+							parentBlock.Instructions.Insert(++insertionIndex, inlinedStore);
 							firstInlinedStore ??= inlinedStore;
 						}
 						context.EndStep(firstInlinedStore);
