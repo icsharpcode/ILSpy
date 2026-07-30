@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						{
 							variable = AddVariable(container, null, field);
 						}
-						if (variable.CanPropagate && !IsReadOnlyOrInitializerUse(ldflda, variable))
+						if (variable.CanPropagate && !IsPlainReadOrInitializerStore(ldflda, variable))
 						{
 							// The field is mutated after initialization (stored again, or its address
 							// escapes). Propagation is only sound if the store can be redirected to
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// True when the given field access is a plain read or one of the recorded
 		/// initializer stores; false for any other store or for an escaping address.
 		/// </summary>
-		static bool IsReadOnlyOrInitializerUse(LdFlda ldflda, VariableToDeclare variable)
+		static bool IsPlainReadOrInitializerStore(LdFlda ldflda, VariableToDeclare variable)
 		{
 			switch (ldflda.Parent)
 			{
