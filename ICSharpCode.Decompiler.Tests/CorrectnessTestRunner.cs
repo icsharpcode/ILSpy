@@ -28,7 +28,9 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
 {
-	[TestFixture, Parallelizable(ParallelScope.All)]
+	// Order(2) enqueues these long compile+execute tests right after the roundtrip fixture,
+	// ahead of unordered fixtures, so they do not straggle at the end of a parallel run.
+	[TestFixture, Parallelizable(ParallelScope.All), Order(2)]
 	public class CorrectnessTestRunner
 	{
 		static readonly string TestCasePath = Tester.TestCasePath + "/Correctness";
