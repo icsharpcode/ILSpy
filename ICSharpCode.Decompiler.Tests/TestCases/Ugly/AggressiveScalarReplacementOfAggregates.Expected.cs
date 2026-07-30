@@ -191,5 +191,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			string field2 = "Hello World!";
 			Console.WriteLine("{0} {1} {2}", this, field1, field2);
 		}
+
+		public void Test12(Program other)
+		{
+			int field1 = 1;
+			string field2 = "Hello World!";
+			other = new Program();
+			Console.WriteLine("{0} {1}", this, other);
+		}
+
+		public void Test13(Program other)
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = other,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			Invoke(delegate {
+				displayClass.thisField = new Program();
+			});
+			Console.WriteLine("{0} {1}", this, displayClass.thisField);
+		}
+
+		private static void Invoke(Action action)
+		{
+			action();
+		}
 	}
 }
