@@ -123,6 +123,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			AcceptInReadOnlySpan(a);
 		}
+
+		public static void ByValueOrIn(ReadOnlySpan<int> s)
+		{
+		}
+
+		public static void ByValueOrIn(in ReadOnlySpan<int> s)
+		{
+		}
+
+		public static void CallByValueOrIn(ReadOnlySpan<int> s, int[] a)
+		{
+			// Without 'in' the by-value overload is the better parameter-passing choice, also
+			// through the span conversion; with 'in' only the in-overload binds, so the
+			// keyword must survive decompilation.
+			ByValueOrIn(s);
+			ByValueOrIn(in s);
+			ByValueOrIn(a);
+		}
 	}
 
 	internal static class FirstClassSpanConversionsExtensions
