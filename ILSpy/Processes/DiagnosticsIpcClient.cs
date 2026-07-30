@@ -74,52 +74,85 @@ namespace ICSharpCode.ILSpy.Processes
 		// ample; oversizing it would make the target runtime reserve memory for nothing.
 		const uint CircularBufferMB = 16;
 
-		static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(2);
+		// Generous for what it covers - a healthy runtime answers a status query in
+		// milliseconds - because the only thing on the other side of it is a runtime that will
+		// never answer at all: one suspended on a startup diagnostic port, or wedged. A tighter
+		// budget buys nothing and turns a loaded machine into a process listed without its
+		// metadata.
+		static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(10);
 		// A rundown walks every loaded module and assembly, so it takes measurably longer
 		// than a status query - and longer still on a large process.
 		static readonly TimeSpan RundownTimeout = TimeSpan.FromSeconds(30);
 
-		public static async Task<DotNetProcessInfo> GetProcessInfoAsync(int pid, CancellationToken cancellationToken)
+		public static Task<DotNetProcessInfo> GetProcessInfoAsync(int pid, CancellationToken cancellationToken)
+			=> GetProcessInfoAsync(pid, CommandTimeout, cancellationToken);
+
+		/// <summary>
+		/// Overload with an explicit budget, so a test can pin the timeout behavior without
+		/// waiting out the production one.
+		/// </summary>
+		internal static async Task<DotNetProcessInfo> GetProcessInfoAsync(
+			int pid, TimeSpan commandTimeout, CancellationToken cancellationToken)
 		{
 			try
 			{
-				return await QueryProcessInfoAsync(pid, ProcessInfo2CommandId, cancellationToken).ConfigureAwait(false);
+				return await QueryProcessInfoAsync(pid, ProcessInfo2CommandId, commandTimeout, cancellationToken).ConfigureAwait(false);
 			}
 			catch (Exception ex) when (ex is IOException or EndOfStreamException)
 			{
 				// ProcessInfo2 needs .NET 6+; a .NET Core 3.x/5 runtime answers with an
 				// unknown-command error. The original ProcessInfo works from 3.0 on.
-				return await QueryProcessInfoAsync(pid, ProcessInfoCommandId, cancellationToken).ConfigureAwait(false);
+				return await QueryProcessInfoAsync(pid, ProcessInfoCommandId, commandTimeout, cancellationToken).ConfigureAwait(false);
 			}
 		}
 
-		static async Task<DotNetProcessInfo> QueryProcessInfoAsync(int pid, byte commandId, CancellationToken cancellationToken)
+		static Task<DotNetProcessInfo> QueryProcessInfoAsync(
+			int pid, byte commandId, TimeSpan commandTimeout, CancellationToken cancellationToken)
+			=> WithBudgetAsync(pid, commandTimeout, cancellationToken, async token => {
+				Stream stream = await ConnectAsync(pid, token).ConfigureAwait(false);
+				await using (stream.ConfigureAwait(false))
+				{
+					byte[] request = DiagnosticsIpcMessage.EncodeRequest(ProcessCommandSet, commandId, ReadOnlySpan<byte>.Empty);
+					await stream.WriteAsync(request, token).ConfigureAwait(false);
+					byte[] payload = await DiagnosticsIpcMessage.ReadResponseAsync(stream, token).ConfigureAwait(false);
+
+					using var reader = new BinaryReader(new MemoryStream(payload));
+					long reportedPid = reader.ReadInt64();
+					var runtimeCookie = new Guid(reader.ReadBytes(16));
+					string? commandLine = DiagnosticsIpcMessage.ReadString(reader);
+					string? operatingSystem = DiagnosticsIpcMessage.ReadString(reader);
+					string? architecture = DiagnosticsIpcMessage.ReadString(reader);
+					string? entryAssembly = null;
+					string? clrVersion = null;
+					if (commandId == ProcessInfo2CommandId)
+					{
+						entryAssembly = DiagnosticsIpcMessage.ReadString(reader);
+						clrVersion = DiagnosticsIpcMessage.ReadString(reader);
+					}
+					return new DotNetProcessInfo(reportedPid, runtimeCookie, commandLine,
+						operatingSystem, architecture, entryAssembly, clrVersion);
+				}
+			});
+
+		/// <summary>
+		/// Runs one command under a budget, turning an expired budget into a
+		/// <see cref="TimeoutException"/> that names the process. The conversion is what keeps
+		/// the two outcomes apart: callers are expected to swallow cancellation, because that
+		/// is the dialog closing, and a target that never answered must not vanish with it.
+		/// </summary>
+		static async Task<T> WithBudgetAsync<T>(int pid, TimeSpan budget,
+			CancellationToken cancellationToken, Func<CancellationToken, Task<T>> command)
 		{
 			using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-			timeout.CancelAfter(CommandTimeout);
-
-			Stream stream = await ConnectAsync(pid, timeout.Token).ConfigureAwait(false);
-			await using (stream.ConfigureAwait(false))
+			timeout.CancelAfter(budget);
+			try
 			{
-				byte[] request = DiagnosticsIpcMessage.EncodeRequest(ProcessCommandSet, commandId, ReadOnlySpan<byte>.Empty);
-				await stream.WriteAsync(request, timeout.Token).ConfigureAwait(false);
-				byte[] payload = await DiagnosticsIpcMessage.ReadResponseAsync(stream, timeout.Token).ConfigureAwait(false);
-
-				using var reader = new BinaryReader(new MemoryStream(payload));
-				long reportedPid = reader.ReadInt64();
-				var runtimeCookie = new Guid(reader.ReadBytes(16));
-				string? commandLine = DiagnosticsIpcMessage.ReadString(reader);
-				string? operatingSystem = DiagnosticsIpcMessage.ReadString(reader);
-				string? architecture = DiagnosticsIpcMessage.ReadString(reader);
-				string? entryAssembly = null;
-				string? clrVersion = null;
-				if (commandId == ProcessInfo2CommandId)
-				{
-					entryAssembly = DiagnosticsIpcMessage.ReadString(reader);
-					clrVersion = DiagnosticsIpcMessage.ReadString(reader);
-				}
-				return new DotNetProcessInfo(reportedPid, runtimeCookie, commandLine,
-					operatingSystem, architecture, entryAssembly, clrVersion);
+				return await command(timeout.Token).ConfigureAwait(false);
+			}
+			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+			{
+				throw new TimeoutException(
+					$"Process {pid} did not answer its diagnostics endpoint within {budget.TotalSeconds:0.###} seconds.");
 			}
 		}
 
@@ -143,42 +176,39 @@ namespace ICSharpCode.ILSpy.Processes
 			}
 		}
 
-		static async Task<MemoryStream> CollectAsync(int pid, byte commandId, CancellationToken cancellationToken)
-		{
-			using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-			timeout.CancelAfter(RundownTimeout);
-
-			Stream session = await ConnectAsync(pid, timeout.Token).ConfigureAwait(false);
-			await using (session.ConfigureAwait(false))
-			{
-				byte[] request = DiagnosticsIpcMessage.EncodeRequest(
-					EventPipeCommandSet, commandId, BuildCollectTracingPayload(commandId));
-				await session.WriteAsync(request, timeout.Token).ConfigureAwait(false);
-
-				byte[] response = await DiagnosticsIpcMessage.ReadResponseAsync(session, timeout.Token).ConfigureAwait(false);
-				if (response.Length < sizeof(ulong))
-					throw new IOException("The runtime did not return an EventPipe session id.");
-				ulong sessionId = BinaryPrimitives.ReadUInt64LittleEndian(response);
-
-				// The nettrace stream must be drained while the session is stopped: the
-				// runtime writes the rundown into the same connection, and a full buffer
-				// would block the stop from completing.
-				var trace = new MemoryStream();
-				Task drain = session.CopyToAsync(trace, timeout.Token);
-				try
+		static Task<MemoryStream> CollectAsync(int pid, byte commandId, CancellationToken cancellationToken)
+			=> WithBudgetAsync(pid, RundownTimeout, cancellationToken, async token => {
+				Stream session = await ConnectAsync(pid, token).ConfigureAwait(false);
+				await using (session.ConfigureAwait(false))
 				{
-					await StopTracingAsync(pid, sessionId, timeout.Token).ConfigureAwait(false);
-					await drain.ConfigureAwait(false);
+					byte[] request = DiagnosticsIpcMessage.EncodeRequest(
+						EventPipeCommandSet, commandId, BuildCollectTracingPayload(commandId));
+					await session.WriteAsync(request, token).ConfigureAwait(false);
+
+					byte[] response = await DiagnosticsIpcMessage.ReadResponseAsync(session, token).ConfigureAwait(false);
+					if (response.Length < sizeof(ulong))
+						throw new IOException("The runtime did not return an EventPipe session id.");
+					ulong sessionId = BinaryPrimitives.ReadUInt64LittleEndian(response);
+
+					// The nettrace stream must be drained while the session is stopped: the
+					// runtime writes the rundown into the same connection, and a full buffer
+					// would block the stop from completing.
+					var trace = new MemoryStream();
+					Task drain = session.CopyToAsync(trace, token);
+					try
+					{
+						await StopTracingAsync(pid, sessionId, token).ConfigureAwait(false);
+						await drain.ConfigureAwait(false);
+					}
+					catch
+					{
+						await trace.DisposeAsync().ConfigureAwait(false);
+						throw;
+					}
+					trace.Position = 0;
+					return trace;
 				}
-				catch
-				{
-					await trace.DisposeAsync().ConfigureAwait(false);
-					throw;
-				}
-				trace.Position = 0;
-				return trace;
-			}
-		}
+			});
 
 		static async Task StopTracingAsync(int pid, ulong sessionId, CancellationToken cancellationToken)
 		{

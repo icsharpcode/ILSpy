@@ -108,4 +108,35 @@ public class DiagnosticsIpcClientTests
 			"ProcessInfo2 reports the managed entry-point assembly, not the native host");
 		info.ClrVersion.Should().NotBeNullOrWhiteSpace();
 	}
+
+	[Test]
+	public async Task An_Endpoint_That_Accepts_But_Never_Answers_Is_Reported_As_A_Timeout()
+	{
+		// A suspended runtime behaves this way, and so does one whose diagnostics server is
+		// wedged. The budget must expire into something that names the process, rather than
+		// into a bare cancellation that reads like the caller changed its mind.
+		using var endpoint = new HungDiagnosticsEndpoint(pid: HungEndpointPid);
+
+		var query = async () => await DiagnosticsIpcClient.GetProcessInfoAsync(
+			HungEndpointPid, TimeSpan.FromMilliseconds(250), CancellationToken.None);
+
+		(await query.Should().ThrowAsync<TimeoutException>())
+			.WithMessage($"*{HungEndpointPid}*", "the message must say which process went quiet");
+	}
+
+	[Test]
+	public async Task Caller_Cancellation_Is_Not_Disguised_As_A_Timeout()
+	{
+		using var endpoint = new HungDiagnosticsEndpoint(pid: HungEndpointPid + 1);
+		using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+		var query = async () => await DiagnosticsIpcClient.GetProcessInfoAsync(
+			HungEndpointPid + 1, TimeSpan.FromMinutes(5), cts.Token);
+
+		await query.Should().ThrowAsync<OperationCanceledException>(
+			"the dialog closing is not the target's fault");
+	}
+
+	// No process has this id; the endpoint below is a fake one standing at its name.
+	const int HungEndpointPid = 0x7FFF_0000;
 }

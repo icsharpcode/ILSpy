@@ -102,10 +102,10 @@ namespace ICSharpCode.ILSpy.Processes
 						SkipTraceObject(reader);
 						break;
 					case "MetadataBlock":
-						ReadBlock(reader, (payload, id, _) => ReadMetadataEvent(payload, id, metadata));
+						ReadBlock(reader, (payload, id, end) => ReadMetadataEvent(payload, id, end, metadata));
 						break;
 					case "EventBlock":
-						ReadBlock(reader, (payload, id, _) => ReadEvent(payload, id, metadata, modules, assemblyNames));
+						ReadBlock(reader, (payload, id, end) => ReadEvent(payload, id, end, metadata, modules, assemblyNames));
 						break;
 					default:
 						// StackBlock, SPBlock and any block type added later: the block is
@@ -182,9 +182,10 @@ namespace ICSharpCode.ILSpy.Processes
 
 		/// <summary>
 		/// Walks the event blobs of a metadata or event block, handing each one's payload to
-		/// <paramref name="onEvent"/> together with its metadata id.
+		/// <paramref name="onEvent"/> together with its metadata id and the stream position
+		/// where that payload ends - the bound every field read out of it must respect.
 		/// </summary>
-		static void ReadBlock(BinaryReader reader, Action<BinaryReader, int, int> onEvent)
+		static void ReadBlock(BinaryReader reader, Action<BinaryReader, int, long> onEvent)
 		{
 			long blockEnd = BeginBlock(reader, out bool compressed);
 
@@ -203,7 +204,7 @@ namespace ICSharpCode.ILSpy.Processes
 				long payloadEnd = reader.BaseStream.Position + payloadSize;
 				if (payloadEnd > blockEnd)
 					throw new InvalidDataException("A Nettrace event payload runs past the end of its block.");
-				onEvent(reader, metadataId, payloadSize);
+				onEvent(reader, metadataId, payloadEnd);
 				reader.BaseStream.Seek(payloadEnd, SeekOrigin.Begin);
 
 				if (!compressed)
@@ -307,20 +308,20 @@ namespace ICSharpCode.ILSpy.Processes
 		/// An event in a metadata block describes an event type: which provider and event
 		/// name a metadata id stands for in the event blocks that follow.
 		/// </summary>
-		static void ReadMetadataEvent(BinaryReader reader, int metadataId, Dictionary<int, EventMetadata> metadata)
+		static void ReadMetadataEvent(BinaryReader reader, int metadataId, long payloadEnd, Dictionary<int, EventMetadata> metadata)
 		{
 			if (metadataId != 0)
 				return; // Only the metadata records themselves are of interest here.
 			int id = reader.ReadInt32();
-			string providerName = ReadUtf16NullTerminated(reader);
+			string providerName = ReadUtf16NullTerminated(reader, payloadEnd);
 			int eventId = reader.ReadInt32();
-			ReadUtf16NullTerminated(reader); // event name, empty for manifest-based providers
+			ReadUtf16NullTerminated(reader, payloadEnd); // event name, empty for manifest-based providers
 			reader.ReadInt64(); // keywords
 			int version = reader.ReadInt32();
 			metadata[id] = new EventMetadata(providerName, eventId, version);
 		}
 
-		static void ReadEvent(BinaryReader reader, int metadataId, Dictionary<int, EventMetadata> metadata,
+		static void ReadEvent(BinaryReader reader, int metadataId, long payloadEnd, Dictionary<int, EventMetadata> metadata,
 			List<ModuleRecord> modules, Dictionary<long, string> assemblyNames)
 		{
 			if (!metadata.TryGetValue(metadataId, out var meta))
@@ -335,8 +336,8 @@ namespace ICSharpCode.ILSpy.Processes
 				long assemblyId = reader.ReadInt64();
 				reader.ReadInt32(); // module flags
 				reader.ReadInt32(); // reserved
-				string ilPath = ReadUtf16NullTerminated(reader);
-				string nativePath = ReadUtf16NullTerminated(reader);
+				string ilPath = ReadUtf16NullTerminated(reader, payloadEnd);
+				string nativePath = ReadUtf16NullTerminated(reader, payloadEnd);
 				modules.Add(new ModuleRecord(assemblyId, ilPath, nativePath));
 			}
 			else if (IsAssemblyEvent(meta))
@@ -346,7 +347,7 @@ namespace ICSharpCode.ILSpy.Processes
 				if (meta.Version >= 1)
 					reader.ReadInt64(); // binding id
 				reader.ReadInt32(); // assembly flags
-				string fullName = ReadUtf16NullTerminated(reader);
+				string fullName = ReadUtf16NullTerminated(reader, payloadEnd);
 				if (fullName.Length > 0)
 				{
 					// "Foo, Version=1.0.0.0, Culture=..." - the simple name is enough to
@@ -369,16 +370,23 @@ namespace ICSharpCode.ILSpy.Processes
 			_ => false,
 		};
 
-		static string ReadUtf16NullTerminated(BinaryReader reader)
+		/// <summary>
+		/// Reads a UTF-16 string terminated by a zero word, refusing to read past
+		/// <paramref name="payloadEnd"/>. The bound is what keeps a payload whose layout does
+		/// not match what its event id promised from being followed out of its own event and
+		/// through the rest of the stream in search of a terminator.
+		/// </summary>
+		internal static string ReadUtf16NullTerminated(BinaryReader reader, long payloadEnd)
 		{
 			var builder = new StringBuilder();
-			while (true)
+			while (reader.BaseStream.Position + sizeof(ushort) <= payloadEnd)
 			{
 				ushort c = reader.ReadUInt16();
 				if (c == 0)
 					return builder.ToString();
 				builder.Append((char)c);
 			}
+			throw new InvalidDataException("A Nettrace event payload ends inside an unterminated string.");
 		}
 
 		static IReadOnlyList<ProcessModuleInfo> BuildModuleList(

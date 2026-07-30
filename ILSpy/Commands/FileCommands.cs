@@ -154,7 +154,7 @@ namespace ICSharpCode.ILSpy.Commands
 		}
 	}
 
-	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.OpenFrom_RunningProcess), MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
+	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources.OpenFrom_RunningProcess), MenuIcon = "Images/Process", MenuCategory = nameof(Resources.Open), MenuOrder = 1.7)]
 	[Shared]
 	[method: ImportingConstructor]
 	sealed class OpenFromRunningProcessCommand(AssemblyTreeModel assemblyTreeModel) : SimpleCommand

@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -76,16 +77,10 @@ namespace ICSharpCode.ILSpy.Processes
 				return new RunningDotNetProcess(pid, processName, RuntimeKind.CoreClr,
 					info.ClrVersion, info.Architecture, info.CommandLine, info.EntryAssemblyName);
 			}
-			catch (Exception ex) when (ex is IOException or TimeoutException or UnauthorizedAccessException)
+			catch (Exception ex) when (IsUnreachable(ex))
 			{
 				// The endpoint exists but did not answer - a suspended runtime, a stale
 				// transport, or a process shutting down. Still worth listing.
-				return new RunningDotNetProcess(pid, processName, RuntimeKind.CoreClr,
-					RuntimeVersion: null, Architecture: null, CommandLine: null, EntryAssemblyName: null);
-			}
-			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-			{
-				// The per-command timeout fired rather than the caller cancelling.
 				return new RunningDotNetProcess(pid, processName, RuntimeKind.CoreClr,
 					RuntimeVersion: null, Architecture: null, CommandLine: null, EntryAssemblyName: null);
 			}
@@ -118,6 +113,23 @@ namespace ICSharpCode.ILSpy.Processes
 				return null;
 			}
 		}
+
+		/// <summary>
+		/// Whether an exception means "that process did not answer" rather than "this code is
+		/// wrong". Such a process is still listed, only without the metadata that none but its
+		/// own runtime could supply; anything else propagates, because a process explorer that
+		/// swallows its own defects reports an empty machine.
+		/// </summary>
+		/// <remarks>
+		/// The endpoints are queried concurrently, so this classification decides between
+		/// losing one row and losing the listing. Both transports are covered:
+		/// <see cref="Win32Exception"/> is the base of <see cref="System.Net.Sockets.SocketException"/>
+		/// and thus not an <see cref="IOException"/> - a unix socket file whose runtime is gone
+		/// refuses the connection and raises it - while a Windows named pipe with no server
+		/// behind it surfaces as <see cref="TimeoutException"/>.
+		/// </remarks>
+		internal static bool IsUnreachable(Exception ex)
+			=> ex is IOException or Win32Exception or TimeoutException or UnauthorizedAccessException;
 
 		/// <summary>
 		/// Whether the file at <paramref name="path"/> is a managed assembly, i.e. a PE image

@@ -44,8 +44,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public string? EntryAssembly => Process.EntryAssemblyName;
 
-		public string? CommandLine => Process.CommandLine;
-
 		/// <summary>
 		/// The runtime flavor and version, e.g. ".NET 10.0.3" or ".NET Framework 4.8.9032.0".
 		/// </summary>

@@ -261,6 +261,47 @@ public class OpenFromProcessDialogViewModelTests
 	}
 
 	[AvaloniaTest]
+	public async Task Refreshing_While_Assemblies_Are_Loading_Stops_The_Progress_Bar()
+	{
+		var (vm, explorer) = CreateViewModel();
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.Processes.Count == 2);
+		explorer.ModulesGate = new TaskCompletionSource();
+		vm.SelectedProcess = vm.Processes[0];
+		await Waiters.WaitForAsync(() => vm.IsLoadingModules);
+
+		// Refresh drops the selection, so no assembly list is being loaded any more - while
+		// the query that was in flight has been superseded and can no longer report that it
+		// stopped. Something has to turn the indicator off, or it animates over an empty pane
+		// until the user selects another process.
+		explorer.ModulesGate = null;
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.SelectedProcess == null && vm.Processes.Count == 2);
+
+		vm.IsLoadingModules.Should().BeFalse("nothing is loading, so nothing may animate");
+	}
+
+	[AvaloniaTest]
+	public async Task A_Failed_Scan_Leaves_Nothing_Selected_To_Act_On()
+	{
+		var (vm, explorer) = CreateViewModel();
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.Processes.Count == 2);
+		vm.SelectedProcess = vm.Processes[0];
+		await Waiters.WaitForAsync(() => vm.AddEntryAssemblyCommand.CanExecute(null));
+
+		explorer.ProcessesException = new IOException("the diagnostics port is unreachable");
+		vm.RefreshCommand.Execute(null);
+		await Waiters.WaitForAsync(() => vm.ErrorMessage != null);
+
+		// The list the selection pointed into has just been emptied; leaving the selection
+		// behind keeps the entry-assembly button armed against a row nobody can see.
+		vm.Processes.Should().BeEmpty();
+		vm.SelectedProcess.Should().BeNull();
+		vm.AddEntryAssemblyCommand.CanExecute(null).Should().BeFalse();
+	}
+
+	[AvaloniaTest]
 	public async Task Closing_The_Dialog_Cancels_Work_Still_In_Flight()
 	{
 		var (vm, explorer) = CreateViewModel();

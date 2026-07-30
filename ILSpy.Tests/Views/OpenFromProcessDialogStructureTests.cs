@@ -128,6 +128,55 @@ public class OpenFromProcessDialogStructureTests
 	}
 
 	[AvaloniaTest]
+	public async Task Filtering_Keeps_A_Selected_Process_That_Still_Matches()
+	{
+		// Only reproducible with the grid attached: the view model alone never sees the
+		// selection being written back, because it is the grid that pushes it.
+		var explorer = new FakeProcessExplorer();
+		explorer.ProcessesToReturn.Add(FakeProcessExplorer.Process(100, "ILSpy", "ILSpy"));
+		explorer.ProcessesToReturn.Add(FakeProcessExplorer.Process(200, "dotnet", "MyTool"));
+		explorer.ModulesByPid[100] = new[] {
+			new ICSharpCode.ILSpy.Processes.ProcessModuleInfo("A.dll", @"C:\a\A.dll", IsInMemory: false),
+		};
+		var dialog = CreateDialog(explorer);
+		dialog.Show();
+		var vm = (OpenFromProcessDialogViewModel)dialog.DataContext!;
+		await Waiters.WaitForAsync(() => vm.Processes.Count == 2);
+		dialog.FindControl<DataGrid>("ProcessesGrid")!.SelectedItem = vm.Processes[0];
+		await Waiters.WaitForAsync(() => vm.Modules.Count == 1);
+
+		// One keystroke that narrows the list without excluding the selected row.
+		vm.FilterText = "ILSpy";
+
+		vm.Processes.Should().ContainSingle().Which.Pid.Should().Be(100);
+		vm.SelectedProcess.Should().NotBeNull("the selected process still matches what was typed");
+		vm.Modules.Should().ContainSingle("its assembly list must survive a keystroke");
+	}
+
+	[AvaloniaTest]
+	public async Task Filtering_Out_The_Selected_Process_Clears_Its_Assemblies()
+	{
+		var explorer = new FakeProcessExplorer();
+		explorer.ProcessesToReturn.Add(FakeProcessExplorer.Process(100, "ILSpy", "ILSpy"));
+		explorer.ProcessesToReturn.Add(FakeProcessExplorer.Process(200, "dotnet", "MyTool"));
+		explorer.ModulesByPid[100] = new[] {
+			new ICSharpCode.ILSpy.Processes.ProcessModuleInfo("A.dll", @"C:\a\A.dll", IsInMemory: false),
+		};
+		var dialog = CreateDialog(explorer);
+		dialog.Show();
+		var vm = (OpenFromProcessDialogViewModel)dialog.DataContext!;
+		await Waiters.WaitForAsync(() => vm.Processes.Count == 2);
+		dialog.FindControl<DataGrid>("ProcessesGrid")!.SelectedItem = vm.Processes[0];
+		await Waiters.WaitForAsync(() => vm.Modules.Count == 1);
+
+		vm.FilterText = "dotnet";
+
+		await Waiters.WaitForAsync(() => vm.SelectedProcess == null);
+		vm.Modules.Should().BeEmpty("the assemblies of a process that is no longer listed are stale");
+		vm.IsLoadingModules.Should().BeFalse();
+	}
+
+	[AvaloniaTest]
 	public async Task Error_Bar_Shows_The_ViewModels_Error_Message()
 	{
 		var dialog = CreateDialog();
