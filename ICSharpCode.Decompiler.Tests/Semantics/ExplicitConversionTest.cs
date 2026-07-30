@@ -766,5 +766,53 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(conversions.ExplicitConversion(compilation.FindType(KnownTypeCode.Object), t), Is.EqualTo(C.ExplicitReferenceConversion));
 			Assert.That(conversions.ExplicitConversion(t, compilation.FindType(typeof(IConvertible))), Is.EqualTo(C.ExplicitReferenceConversion));
 		}
+
+		#region First-class span conversions
+		// The legacy reference mscorlib predates Span<T>, so the span tests resolve against a
+		// .NET ref assembly.
+		static readonly Lazy<ICompilation> spanCompilation = new Lazy<ICompilation>(
+			delegate {
+				string path = System.IO.Path.Combine(
+					Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
+				return new SimpleCompilation(
+					new Decompiler.Metadata.PEFile(path, new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read)));
+			});
+
+		Conversion SpanExplicitConversion(Type from, Type to)
+		{
+			var c = spanCompilation.Value;
+			return CSharpConversions.Get(c).ExplicitConversion(c.FindType(from), c.FindType(to));
+		}
+
+		[Test]
+		public void ExplicitSpanConversion_CovariantArrayToSpan()
+		{
+			// C# 14 first-class spans: an explicit span conversion exists from an array to
+			// Span<U>/ReadOnlySpan<U> when an explicit reference conversion relates the element
+			// types, and user-defined operators are not considered for such pairs. Roslyn
+			// compiles '(Span<string>)objectArray', and reports CS0266 (explicit conversion
+			// exists) for 'Span<object> s = stringArray;'.
+			var downcast = SpanExplicitConversion(typeof(object[]), typeof(Span<string>));
+			Assert.That(downcast.IsValid);
+			Assert.That(!downcast.IsUserDefined);
+
+			var downcastRos = SpanExplicitConversion(typeof(object[]), typeof(ReadOnlySpan<string>));
+			Assert.That(downcastRos.IsValid);
+			Assert.That(!downcastRos.IsUserDefined);
+
+			var upcast = SpanExplicitConversion(typeof(string[]), typeof(Span<object>));
+			Assert.That(upcast.IsValid);
+			Assert.That(!upcast.IsUserDefined);
+		}
+
+		[Test]
+		public void NoExplicitSpanConversionWithoutElementReferenceConversion()
+		{
+			// Roslyn: CS0030 - int[] and Span<long>/ReadOnlySpan<long> are unrelated; the
+			// user-defined operator route (op_Implicit(long[])) must not resurrect the cast.
+			Assert.That(!SpanExplicitConversion(typeof(int[]), typeof(Span<long>)).IsValid);
+			Assert.That(!SpanExplicitConversion(typeof(int[]), typeof(ReadOnlySpan<long>)).IsValid);
+		}
+		#endregion
 	}
 }

@@ -1361,5 +1361,112 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				Is.EqualTo(Resolve(typeof(List<string>), typeof(List<Version>), typeof(Collection<string>), typeof(Collection<Version>), typeof(ReadOnlyCollection<string>), typeof(ReadOnlyCollection<Version>), typeof(System.Runtime.CompilerServices.ReadOnlyCollectionBuilder<string>), typeof(System.Runtime.CompilerServices.ReadOnlyCollectionBuilder<Version>))));
 		}
 		#endregion
+
+		#region First-class span type inference
+		// The legacy reference mscorlib predates Span<T>, so these tests resolve against a
+		// .NET ref assembly, like the tuple tests above.
+		static readonly Lazy<ICompilation> spanCompilation = new Lazy<ICompilation>(
+			delegate {
+				string path = Path.Combine(Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
+				return new SimpleCompilation(new PEFile(path, new FileStream(path, FileMode.Open, FileAccess.Read)));
+			});
+
+		IType[] InferSpan(Func<ICompilation, ITypeParameter, IType[]> parameterTypes,
+			Func<ICompilation, ResolveResult[]> arguments, out bool success)
+		{
+			var c = spanCompilation.Value;
+			var inference = new TypeInference(c);
+			ITypeParameter tp = new DefaultTypeParameter(c, SymbolKind.Method, 0, "T");
+			return inference.InferTypeArguments(new[] { tp }, arguments(c), parameterTypes(c, tp), out success);
+		}
+
+		static ParameterizedType SpanOf(ICompilation c, IType element)
+			=> new ParameterizedType(c.FindType(KnownTypeCode.SpanOfT).GetDefinition(), new[] { element });
+
+		static ParameterizedType ReadOnlySpanOf(ICompilation c, IType element)
+			=> new ParameterizedType(c.FindType(KnownTypeCode.ReadOnlySpanOfT).GetDefinition(), new[] { element });
+
+		[Test]
+		public void SpanArgumentAloneInfersItsElementType()
+		{
+			bool success;
+			Assert.That(
+				InferSpan(
+					(c, tp) => new IType[] { SpanOf(c, tp) },
+					c => new[] { new ResolveResult(SpanOf(c, c.FindType(KnownTypeCode.String))) },
+					out success),
+				Is.EqualTo(new[] { spanCompilation.Value.FindType(KnownTypeCode.String) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void SpanArgumentGivesAnExactBound_ConflictingLowerBoundFailsInference()
+		{
+			// M<T>(Span<T>, T) called with (Span<string>, object): Span<T> is invariant, so the
+			// span argument contributes an EXACT bound (C# 14 spec, 12.6.3.10: "If V is a
+			// Span<V1>, then an exact inference is made"). The conflicting lower bound object
+			// must fail inference; Roslyn reports CS0411 for this call.
+			bool success;
+			InferSpan(
+				(c, tp) => new IType[] { SpanOf(c, tp), tp },
+				c => new[] {
+					new ResolveResult(SpanOf(c, c.FindType(KnownTypeCode.String))),
+					new ResolveResult(c.FindType(KnownTypeCode.Object))
+				},
+				out success);
+			Assert.That(success, Is.False);
+		}
+
+		[Test]
+		public void ArrayArgumentForSpanParameterGivesAnExactBound_ConflictingLowerBoundFailsInference()
+		{
+			// Same as above with a string[] argument: the array-to-Span conversion requires
+			// identity element types, so the bound is exact. Roslyn reports CS0411.
+			bool success;
+			InferSpan(
+				(c, tp) => new IType[] { SpanOf(c, tp), tp },
+				c => new[] {
+					new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.String))),
+					new ResolveResult(c.FindType(KnownTypeCode.Object))
+				},
+				out success);
+			Assert.That(success, Is.False);
+		}
+
+		[Test]
+		public void SpanArgumentForReadOnlySpanParameterGivesALowerBound()
+		{
+			// M<T>(ReadOnlySpan<T>, T) called with (Span<string>, object): ReadOnlySpan is
+			// covariance-convertible, the span argument contributes a LOWER bound, and T=object
+			// wins. Roslyn compiles this with T=object.
+			bool success;
+			Assert.That(
+				InferSpan(
+					(c, tp) => new IType[] { ReadOnlySpanOf(c, tp), tp },
+					c => new[] {
+						new ResolveResult(SpanOf(c, c.FindType(KnownTypeCode.String))),
+						new ResolveResult(c.FindType(KnownTypeCode.Object))
+					},
+					out success),
+				Is.EqualTo(new[] { spanCompilation.Value.FindType(KnownTypeCode.Object) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void ArrayArgumentForReadOnlySpanParameterGivesALowerBound()
+		{
+			bool success;
+			Assert.That(
+				InferSpan(
+					(c, tp) => new IType[] { ReadOnlySpanOf(c, tp), tp },
+					c => new[] {
+						new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.String))),
+						new ResolveResult(c.FindType(KnownTypeCode.Object))
+					},
+					out success),
+				Is.EqualTo(new[] { spanCompilation.Value.FindType(KnownTypeCode.Object) }));
+			Assert.That(success);
+		}
+		#endregion
 	}
 }

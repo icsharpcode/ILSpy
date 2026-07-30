@@ -207,6 +207,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public bool AllowImplicitIn { get; set; } = true;
 
 		/// <summary>
+		/// Gets/Sets whether an extension method receiver may bind through an implicit span
+		/// conversion. True for invocations; false when resolving a method group conversion,
+		/// where C# 14 does not consider span conversions.
+		/// </summary>
+		public bool AllowSpanConversionOnExtensionReceiver { get; set; } = true;
+
+		/// <summary>
 		/// Gets/Sets whether ConversionResolveResults created by this OverloadResolution
 		/// instance apply overflow checking.
 		/// The default value is false.
@@ -711,8 +718,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (IsExtensionMethodInvocation && parameterIndex == 0)
 				{
 					// First parameter to extension method must be an identity, reference, boxing or span conversion
-					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion || c == Conversion.ImplicitSpanConversion))
+					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion
+						|| (c == Conversion.ImplicitSpanConversion && AllowSpanConversionOnExtensionReceiver)))
+					{
 						candidate.AddError(OverloadResolutionErrors.ArgumentTypeMismatch);
+					}
 				}
 				else
 				{
