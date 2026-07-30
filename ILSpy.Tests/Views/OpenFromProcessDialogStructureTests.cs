@@ -35,9 +35,9 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.Views;
 
 /// <summary>
-/// Pins the process-explorer dialog's shape: a filter box, a process grid above an
-/// assembly grid, and the buttons that drive it. Everything is reachable by button - the
-/// dialog carries no context menu - and the assembly grid allows multi-select so several
+/// Pins the process-explorer dialog's shape: a filter box, a process list above an
+/// assembly list, and the buttons that drive it. Everything is reachable by button - the
+/// dialog carries no context menu - and the assembly list allows multi-select so several
 /// assemblies can be added in one go.
 /// </summary>
 [TestFixture]
@@ -67,8 +67,8 @@ public class OpenFromProcessDialogStructureTests
 		var dialog = CreateDialog();
 
 		dialog.FindControl<TextBox>("FilterBox").Should().NotBeNull("long process lists need filtering");
-		dialog.FindControl<DataGrid>("ProcessesGrid").Should().NotBeNull();
-		dialog.FindControl<DataGrid>("ModulesGrid").Should().NotBeNull("the selected process's assemblies are listed");
+		dialog.FindControl<ListBox>("ProcessesList").Should().NotBeNull();
+		dialog.FindControl<ListBox>("ModulesList").Should().NotBeNull("the selected process's assemblies are listed");
 		dialog.FindControl<TextBlock>("VisibilityHint").Should().NotBeNull(
 			"the dialog states which processes it cannot show");
 
@@ -80,11 +80,12 @@ public class OpenFromProcessDialogStructureTests
 	[AvaloniaTest]
 	public void Several_Assemblies_Can_Be_Selected_At_Once()
 	{
-		var grid = CreateDialog().FindControl<DataGrid>("ModulesGrid")!;
+		var dialog = CreateDialog();
 
-		grid.SelectionMode.Should().Be(DataGridSelectionMode.Extended,
+		dialog.FindControl<ListBox>("ModulesList")!.SelectionMode.Should().Be(SelectionMode.Multiple,
 			"adding several assemblies of one process in one go is the common case");
-		grid.IsReadOnly.Should().BeTrue("the grid lists assemblies, it does not edit them");
+		dialog.FindControl<ListBox>("ProcessesList")!.SelectionMode.Should().Be(SelectionMode.Single,
+			"one process at a time drives the assembly list below");
 	}
 
 	[AvaloniaTest]
@@ -99,7 +100,7 @@ public class OpenFromProcessDialogStructureTests
 		await Waiters.WaitForAsync(() => explorer.ProcessCalls > 0);
 		var vm = (OpenFromProcessDialogViewModel)dialog.DataContext!;
 		await Waiters.WaitForAsync(() => vm.Processes.Count == 1);
-		dialog.FindControl<DataGrid>("ProcessesGrid")!.ItemsSource.Should().BeSameAs(vm.Processes);
+		dialog.FindControl<ListBox>("ProcessesList")!.ItemsSource.Should().BeSameAs(vm.Processes);
 	}
 
 	[AvaloniaTest]
@@ -119,19 +120,19 @@ public class OpenFromProcessDialogStructureTests
 		vm.SelectedProcess = vm.Processes[0];
 		await Waiters.WaitForAsync(() => vm.Modules.Count == 2);
 
-		var grid = dialog.FindControl<DataGrid>("ModulesGrid")!;
-		grid.SelectedItems.Add(vm.Modules[0]);
+		var list = dialog.FindControl<ListBox>("ModulesList")!;
+		list.SelectedItems!.Add(vm.Modules[0]);
 		await Waiters.WaitForAsync(() => vm.SelectedModules.Count == 1);
 
 		vm.SelectedModules.Single().Name.Should().Be("A.dll",
-			"the grid's selection is what the Add button acts on");
+			"the list's selection is what the Add button acts on");
 	}
 
 	[AvaloniaTest]
 	public async Task Filtering_Keeps_A_Selected_Process_That_Still_Matches()
 	{
-		// Only reproducible with the grid attached: the view model alone never sees the
-		// selection being written back, because it is the grid that pushes it.
+		// Only reproducible with the list attached: the view model alone never sees the
+		// selection being written back, because it is the list that pushes it.
 		var explorer = new FakeProcessExplorer();
 		explorer.ProcessesToReturn.Add(FakeProcessExplorer.Process(100, "ILSpy", "ILSpy"));
 		explorer.ProcessesToReturn.Add(FakeProcessExplorer.Process(200, "dotnet", "MyTool"));
@@ -142,7 +143,7 @@ public class OpenFromProcessDialogStructureTests
 		dialog.Show();
 		var vm = (OpenFromProcessDialogViewModel)dialog.DataContext!;
 		await Waiters.WaitForAsync(() => vm.Processes.Count == 2);
-		dialog.FindControl<DataGrid>("ProcessesGrid")!.SelectedItem = vm.Processes[0];
+		dialog.FindControl<ListBox>("ProcessesList")!.SelectedItem = vm.Processes[0];
 		await Waiters.WaitForAsync(() => vm.Modules.Count == 1);
 
 		// One keystroke that narrows the list without excluding the selected row.
@@ -166,7 +167,7 @@ public class OpenFromProcessDialogStructureTests
 		dialog.Show();
 		var vm = (OpenFromProcessDialogViewModel)dialog.DataContext!;
 		await Waiters.WaitForAsync(() => vm.Processes.Count == 2);
-		dialog.FindControl<DataGrid>("ProcessesGrid")!.SelectedItem = vm.Processes[0];
+		dialog.FindControl<ListBox>("ProcessesList")!.SelectedItem = vm.Processes[0];
 		await Waiters.WaitForAsync(() => vm.Modules.Count == 1);
 
 		vm.FilterText = "dotnet";

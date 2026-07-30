@@ -6,6 +6,28 @@
         Width="850" Height="560" MinWidth="500" MinHeight="360"
         WindowStartupLocation="CenterOwner"
         CanResize="True">
+	<!-- Both lists are ListBoxes rather than DataGrids. A DataGrid derives its scroll extent
+	     from the current scroll offset, so an offset that is briefly too large inflates the
+	     extent, which permits a larger offset again: with a trackpad, whose events are
+	     fractions of a row, the end of the list runs away from the user and the rows jump.
+	     A ListBox's virtualizing panel keeps the extent a function of the items alone.
+	     The cost is that the columns are laid out here instead of by the control, so the
+	     header row below repeats the item templates' column widths - keep them in step. Only
+	     the last column is star-sized, so the vertical scroll bar's width comes off that
+	     column's right edge, where a left-aligned string shows no seam. -->
+	<Window.Styles>
+		<!-- Rows sit flush under the header: the item padding here is the header's Margin. -->
+		<Style Selector="ListBox.columns > ListBoxItem">
+			<Setter Property="Padding" Value="4,2" />
+		</Style>
+		<!-- A cell's text is shorter than the row height the MinHeight below reserves. Left to
+		     stretch, it renders against the top of the row and leaves all of the slack under
+		     itself, which the selection highlight makes obvious. -->
+		<Style Selector="ListBox.columns TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+	</Window.Styles>
+
 	<Grid Margin="12,8" RowDefinitions="Auto,2*,Auto,Auto,3*,Auto,Auto,Auto" RowSpacing="6">
 		<Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
 			<Label Grid.Column="0" Name="FilterLabel" Target="{Binding #FilterBox}"
@@ -15,29 +37,42 @@
 			        Command="{Binding RefreshCommand}" />
 		</Grid>
 
-		<DataGrid Grid.Row="1" Name="ProcessesGrid"
-		          ItemsSource="{Binding Processes}"
-		          SelectedItem="{Binding SelectedProcess}"
-		          AutoGenerateColumns="False"
-		          CanUserResizeColumns="True"
-		          CanUserSortColumns="True"
-		          GridLinesVisibility="None"
-		          HeadersVisibility="Column"
-		          IsReadOnly="True"
-		          SelectionMode="Single">
-			<DataGrid.Columns>
-				<DataGridTextColumn Width="200" CanUserSort="True" x:CompileBindings="False"
-				                    Binding="{Binding ProcessName}" />
-				<DataGridTextColumn Width="70" CanUserSort="True" x:CompileBindings="False"
-				                    Binding="{Binding Pid}" />
-				<DataGridTextColumn Width="150" CanUserSort="True" x:CompileBindings="False"
-				                    Binding="{Binding Runtime}" />
-				<DataGridTextColumn Width="90" CanUserSort="True" x:CompileBindings="False"
-				                    Binding="{Binding Architecture}" />
-				<DataGridTextColumn Width="*" CanUserSort="True" x:CompileBindings="False"
-				                    Binding="{Binding EntryAssembly}" />
-			</DataGrid.Columns>
-		</DataGrid>
+		<Grid Grid.Row="1" RowDefinitions="Auto,*">
+			<Border Grid.Row="0" Background="{DynamicResource ILSpy.WindowBackground}"
+			        BorderBrush="{DynamicResource ILSpy.InputBorder}" BorderThickness="1">
+				<Grid ColumnDefinitions="200,70,150,90,*" Margin="4,2">
+					<TextBlock Grid.Column="0" Name="ProcessColumnHeader" />
+					<TextBlock Grid.Column="1" Name="PidColumnHeader" />
+					<TextBlock Grid.Column="2" Name="RuntimeColumnHeader" />
+					<TextBlock Grid.Column="3" Name="ArchitectureColumnHeader" />
+					<TextBlock Grid.Column="4" Name="EntryAssemblyColumnHeader" />
+				</Grid>
+			</Border>
+			<ListBox Grid.Row="1" Name="ProcessesList" Classes="columns"
+			         ItemsSource="{Binding Processes}"
+			         SelectedItem="{Binding SelectedProcess, Mode=TwoWay}"
+			         SelectionMode="Single"
+			         Background="{DynamicResource ILSpy.PaneBackground}"
+			         BorderBrush="{DynamicResource ILSpy.InputBorder}"
+			         BorderThickness="1,0,1,1"
+			         Padding="0"
+			         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+				<ListBox.ItemTemplate>
+					<DataTemplate x:DataType="vm:ProcessRowViewModel">
+						<!-- Trimming keeps a long value inside its column: a Grid does not clip
+						     its children, so untrimmed text would paint over the next column.
+						     MinHeight holds the row height the dialog had as a grid. -->
+						<Grid ColumnDefinitions="200,70,150,90,*" MinHeight="20">
+							<TextBlock Grid.Column="0" Text="{Binding ProcessName}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="1" Text="{Binding Pid}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="2" Text="{Binding Runtime}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="3" Text="{Binding Architecture}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="4" Text="{Binding EntryAssembly}" TextTrimming="CharacterEllipsis" />
+						</Grid>
+					</DataTemplate>
+				</ListBox.ItemTemplate>
+			</ListBox>
+		</Grid>
 
 		<ProgressBar Grid.Row="1" Name="ProcessesLoadingBar" Height="6"
 		             VerticalAlignment="Bottom" IsIndeterminate="True"
@@ -45,24 +80,32 @@
 
 		<TextBlock Grid.Row="2" Name="ModulesHeader" Margin="0,4,0,0" />
 
-		<Grid Grid.Row="4" RowDefinitions="*,Auto">
-			<DataGrid Grid.Row="0" Name="ModulesGrid"
-			          ItemsSource="{Binding Modules}"
-			          AutoGenerateColumns="False"
-			          CanUserResizeColumns="True"
-			          CanUserSortColumns="True"
-			          GridLinesVisibility="None"
-			          HeadersVisibility="Column"
-			          IsReadOnly="True"
-			          SelectionMode="Extended">
-				<DataGrid.Columns>
-					<DataGridTextColumn Width="260" CanUserSort="True" x:CompileBindings="False"
-					                    Binding="{Binding Name}" />
-					<DataGridTextColumn Width="*" CanUserSort="True" x:CompileBindings="False"
-					                    Binding="{Binding Location}" />
-				</DataGrid.Columns>
-			</DataGrid>
-			<ProgressBar Grid.Row="0" Name="ModulesLoadingBar" Height="6"
+		<Grid Grid.Row="4" RowDefinitions="Auto,*">
+			<Border Grid.Row="0" Background="{DynamicResource ILSpy.WindowBackground}"
+			        BorderBrush="{DynamicResource ILSpy.InputBorder}" BorderThickness="1">
+				<Grid ColumnDefinitions="260,*" Margin="4,2">
+					<TextBlock Grid.Column="0" Name="AssemblyColumnHeader" />
+					<TextBlock Grid.Column="1" Name="LocationColumnHeader" />
+				</Grid>
+			</Border>
+			<ListBox Grid.Row="1" Name="ModulesList" Classes="columns"
+			         ItemsSource="{Binding Modules}"
+			         SelectionMode="Multiple"
+			         Background="{DynamicResource ILSpy.PaneBackground}"
+			         BorderBrush="{DynamicResource ILSpy.InputBorder}"
+			         BorderThickness="1,0,1,1"
+			         Padding="0"
+			         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+				<ListBox.ItemTemplate>
+					<DataTemplate x:DataType="vm:ProcessModuleRowViewModel">
+						<Grid ColumnDefinitions="260,*" MinHeight="20">
+							<TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="1" Text="{Binding Location}" TextTrimming="CharacterEllipsis" />
+						</Grid>
+					</DataTemplate>
+				</ListBox.ItemTemplate>
+			</ListBox>
+			<ProgressBar Grid.Row="1" Name="ModulesLoadingBar" Height="6"
 			             VerticalAlignment="Bottom" IsIndeterminate="True"
 			             IsVisible="{Binding IsLoadingModules}" />
 		</Grid>
