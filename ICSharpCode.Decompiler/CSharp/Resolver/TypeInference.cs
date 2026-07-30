@@ -771,11 +771,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case (ArrayType arrU, ArrayType arrV) when arrU.Dimensions == arrV.Dimensions:
 					MakeLowerBoundInference(arrU.ElementType, arrV.ElementType);
 					return;
+				// Span<T> is invariant, so even in a lower-bound context a Span<V1> target
+				// contributes an exact element inference (C# 14 spec, 12.6.3.10).
 				case (ArrayType arrU, ParameterizedType spanV) when compilation.TypeSystemOptions.HasFlag(TypeSystemOptions.FirstClassSpanTypes) && spanV.IsKnownType(KnownTypeCode.SpanOfT):
-					MakeLowerBoundInference(arrU.ElementType, spanV.TypeArguments[0]);
+					MakeExactInference(arrU.ElementType, spanV.TypeArguments[0]);
 					return;
 				case (ParameterizedType spanU, ParameterizedType spanV) when compilation.TypeSystemOptions.HasFlag(TypeSystemOptions.FirstClassSpanTypes) && spanU.IsKnownType(KnownTypeCode.SpanOfT) && spanV.IsKnownType(KnownTypeCode.SpanOfT):
-					MakeLowerBoundInference(spanU.TypeArguments[0], spanV.TypeArguments[0]);
+					MakeExactInference(spanU.TypeArguments[0], spanV.TypeArguments[0]);
 					return;
 				case (ArrayType arrU, ParameterizedType rosV) when compilation.TypeSystemOptions.HasFlag(TypeSystemOptions.FirstClassSpanTypes) && rosV.IsKnownType(KnownTypeCode.ReadOnlySpanOfT):
 					MakeLowerBoundInference(arrU.ElementType, rosV.TypeArguments[0]);

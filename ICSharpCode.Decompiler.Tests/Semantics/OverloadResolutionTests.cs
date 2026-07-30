@@ -18,10 +18,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Tests.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -347,5 +349,76 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				Method(a => a.ToString());
 			}
 		}
+
+		#region First-class span betterness
+
+		public struct ConvertibleToBothReadOnlySpans
+		{
+			public static implicit operator ReadOnlySpan<int>(ConvertibleToBothReadOnlySpans c)
+			{
+				return default;
+			}
+
+			public static implicit operator ReadOnlySpan<long>(ConvertibleToBothReadOnlySpans c)
+			{
+				return default;
+			}
+		}
+
+		// The legacy reference mscorlib predates Span<T>, so span tests resolve against a
+		// .NET ref assembly; the test assembly itself provides the operator fixture above.
+		static readonly Lazy<ICompilation> spanCompilation = new Lazy<ICompilation>(
+			delegate {
+				string path = Path.Combine(
+					Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
+				return new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
+					new PEFile(path, new FileStream(path, FileMode.Open, FileAccess.Read)));
+			});
+
+		static IMethod MakeMethodIn(ICompilation c, params Type[] parameterTypes)
+		{
+			var m = new FakeMethod(c, SymbolKind.Method);
+			m.Name = "Method";
+			m.Parameters = parameterTypes
+				.Select(t => (IParameter)new DefaultParameter(c.FindType(t), string.Empty, owner: m))
+				.ToList();
+			return m;
+		}
+
+		[Test]
+		public void ReadOnlySpanOverloadsWithUnrelatedElementTypesAreAmbiguous()
+		{
+			// C# 14 spec, 12.6.4.7: ReadOnlySpan<E1> is a better conversion target than
+			// ReadOnlySpan<E2> only if an implicit conversion exists from ReadOnlySpan<E1>
+			// to ReadOnlySpan<E2> - the span types, not the element types. No span conversion
+			// relates ReadOnlySpan<int> and ReadOnlySpan<long>, so neither target is better
+			// and the call is ambiguous; Roslyn reports CS0121.
+			var c = spanCompilation.Value;
+			var r = new OverloadResolution(c, new[] {
+				new ResolveResult(c.FindType(typeof(ConvertibleToBothReadOnlySpans)))
+			});
+			Assert.That(r.AddCandidate(MakeMethodIn(c, typeof(ReadOnlySpan<int>))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(MakeMethodIn(c, typeof(ReadOnlySpan<long>))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.IsAmbiguous);
+		}
+
+		[Test]
+		public void ReadOnlySpanOfStringPreferredOverReadOnlySpanOfObject()
+		{
+			// The positive direction of the same rule: string[] converts to both targets, and
+			// the covariant span conversion ReadOnlySpan<string> -> ReadOnlySpan<object>
+			// exists, so ReadOnlySpan<string> is the better target.
+			var c = spanCompilation.Value;
+			var r = new OverloadResolution(c, new[] {
+				new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.String)))
+			});
+			var better = MakeMethodIn(c, typeof(ReadOnlySpan<string>));
+			Assert.That(r.AddCandidate(better), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.AddCandidate(MakeMethodIn(c, typeof(ReadOnlySpan<object>))), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(!r.IsAmbiguous);
+			Assert.That(r.BestCandidate, Is.SameAs(better));
+		}
+
+		#endregion
 	}
 }

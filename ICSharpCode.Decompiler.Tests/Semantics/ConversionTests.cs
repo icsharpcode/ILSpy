@@ -1764,5 +1764,84 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				return conversions.ImplicitConversion(bodyReturnType, returnType);
 			}
 		}
+
+		#region First-class span conversions
+		// The legacy reference mscorlib predates Span<T>, so the span tests resolve against a
+		// .NET ref assembly; the test assembly provides the extension-method fixture.
+		static readonly Lazy<ICompilation> spanCompilation = new Lazy<ICompilation>(
+			delegate {
+				string path = System.IO.Path.Combine(
+					Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
+				return new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
+					new Decompiler.Metadata.PEFile(path, new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read)));
+			});
+
+		Conversion SpanConversion(Type from, Type to)
+		{
+			var c = spanCompilation.Value;
+			return CSharpConversions.Get(c).ImplicitConversion(c.FindType(from), c.FindType(to));
+		}
+
+		[Test]
+		public void ImplicitSpanConversions()
+		{
+			Assert.That(SpanConversion(typeof(string), typeof(ReadOnlySpan<char>)), Is.EqualTo(C.ImplicitSpanConversion),
+				"the span conversion must win over String's own op_Implicit: user-defined conversions are not considered between span-convertible types");
+			Assert.That(SpanConversion(typeof(string[]), typeof(Span<string>)), Is.EqualTo(C.ImplicitSpanConversion));
+			Assert.That(SpanConversion(typeof(string[]), typeof(ReadOnlySpan<object>)), Is.EqualTo(C.ImplicitSpanConversion));
+			Assert.That(SpanConversion(typeof(Span<string>), typeof(ReadOnlySpan<object>)), Is.EqualTo(C.ImplicitSpanConversion));
+			Assert.That(SpanConversion(typeof(ReadOnlySpan<string>), typeof(ReadOnlySpan<object>)), Is.EqualTo(C.ImplicitSpanConversion));
+		}
+
+		[Test]
+		public void NoImplicitSpanConversionWithoutElementCovariance()
+		{
+			// Roslyn: CS0029 - no conversion at all relates these.
+			Assert.That(SpanConversion(typeof(int[]), typeof(ReadOnlySpan<long>)), Is.EqualTo(C.None));
+
+			// Roslyn: CS0266 - only an EXPLICIT (span) conversion exists. In particular the
+			// user-defined route via Span<object>.op_Implicit(object[]) plus array covariance
+			// must not be considered, because a span conversion exists for the pair.
+			Assert.That(SpanConversion(typeof(string[]), typeof(Span<object>)), Is.EqualTo(C.None));
+		}
+
+		Conversion SpanMethodGroupConversion(ResolveResult target, Type delegateType)
+		{
+			var c = spanCompilation.Value;
+			var extensionMethod = c.FindType(typeof(SpanReceiverExtensionTestCase))
+				.GetMethods(m => m.Name == "M").Single();
+			var mgrr = new MethodGroupResolveResult(
+				target, "M",
+				new[] { new MethodListWithDeclaringType(target.Type, target.Type.GetMethods(m => m.Name == "M")) },
+				typeArguments: null);
+			mgrr.extensionMethods = new List<List<IMethod>> { new List<IMethod> { extensionMethod } };
+			return CSharpConversions.Get(c).ImplicitConversion(mgrr, c.FindType(delegateType));
+		}
+
+		[Test]
+		public void MethodGroupConversion_SpanConversionOnTheReceiverIsNotConsidered()
+		{
+			// C# 14 first-class spans: "span conversion is not considered when overload
+			// resolution is performed for a method group conversion". For 'str.M' with M being
+			// an extension on ReadOnlySpan<char>, Roslyn reports CS0123, even though the
+			// invocation 'str.M()' is legal.
+			var c = spanCompilation.Value;
+			var conversion = SpanMethodGroupConversion(
+				new ResolveResult(c.FindType(KnownTypeCode.String)), typeof(Action));
+			Assert.That(conversion, Is.EqualTo(C.None));
+		}
+
+		[Test]
+		public void MethodGroupConversion_IdentityReceiverOnSpanExtensionStillConverts()
+		{
+			// Guard for the rule above: with an identity-typed receiver the method group
+			// conversion stays legal.
+			var c = spanCompilation.Value;
+			var conversion = SpanMethodGroupConversion(
+				new ResolveResult(c.FindType(typeof(ReadOnlySpan<char>))), typeof(Action));
+			Assert.That(conversion.IsMethodGroupConversion);
+			Assert.That(conversion.IsValid);
+		}
+		#endregion
 	}
 }

@@ -250,7 +250,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 															bool allowExpandingParams = true,
 															bool allowOptionalParameters = true,
 															bool allowImplicitIn = true,
-															bool checkForOverflow = false, CSharpConversions conversions = null)
+															bool checkForOverflow = false, CSharpConversions conversions = null,
+															bool allowSpanConversionOnExtensionReceiver = true)
 		{
 			Log.WriteLine("Performing overload resolution for " + this);
 			Log.WriteCollection("  Arguments: ", arguments);
@@ -288,6 +289,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					extOr.IsExtensionMethodInvocation = true;
 					extOr.CheckForOverflow = checkForOverflow;
 					extOr.AllowImplicitIn = allowImplicitIn;
+					extOr.AllowSpanConversionOnExtensionReceiver = allowSpanConversionOnExtensionReceiver;
 
 					foreach (var g in extensionMethods)
 					{
