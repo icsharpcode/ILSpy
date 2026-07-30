@@ -1252,18 +1252,19 @@ public class AssemblyTreeTests
 		// tab opens with the supplied node decompiled, the existing tab keeps its content,
 		// and the assembly-tree selection is pulled across to the new tab's source node
 		// (the active tab and the tree are kept in lockstep).
-		var (window, vm) = await TestHarness.BootAsync(3);
+		var (window, vm) = await TestHarness.BootAsync();
+		var testAssembly = await vm.OpenAssemblyAsync(typeof(TabOpeningFixture).Assembly.Location);
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+			testAssembly.ShortName, "ICSharpCode.ILSpy.Tests", "ICSharpCode.ILSpy.Tests.TabOpeningFixture");
 		typeNode.IsExpanded = true;
 		var pinned = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(TabOpeningFixture.PinnedMethod));
 		var newTabTarget = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.Single(m => m.MethodDefinition.Name == nameof(TabOpeningFixture.NewTabMethod));
 		vm.AssemblyTreeModel.SelectNode(pinned);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("asenumerable-in-first-tab");
+		TestCapture.Step("fixture-pinned-method-in-first-tab");
 
 		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<AssemblyListPane>().Any());
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -1276,11 +1277,11 @@ public class AssemblyTreeTests
 		await Waiters.WaitForAsync(
 			() => (documents.VisibleDockables?.Count ?? 0) > initialCount);
 		var newTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("empty-spawned-in-new-tab");
+		TestCapture.Step("fixture-new-tab-method-spawned-in-new-tab");
 		ReferenceEquals(newTab, firstTab).Should().BeFalse(
 			"a fresh decompiler tab must be created instead of reusing the existing one");
-		newTab.Text.Should().Contain("Empty");
-		firstTab.Text.Should().Contain("AsEnumerable");
+		newTab.Text.Should().Contain(nameof(TabOpeningFixture.NewTabMethod));
+		firstTab.Text.Should().Contain(nameof(TabOpeningFixture.PinnedMethod));
 		// Selection has moved to the new tab's source node — the active tab and the
 		// assembly-tree selection stay in lockstep.
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, newTabTarget).Should().BeTrue(
@@ -1808,5 +1809,18 @@ public class AssemblyTreeTests
 			"Load Dependencies must resolve referenced assemblies and keep them in the list");
 		added.Should().OnlyContain(a => a.IsAutoLoaded,
 			"freshly resolved dependencies are auto-loaded");
+	}
+}
+
+sealed class TabOpeningFixture
+{
+	public int PinnedMethod()
+	{
+		return 1;
+	}
+
+	public int NewTabMethod()
+	{
+		return 2;
 	}
 }
