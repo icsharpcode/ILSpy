@@ -5,6 +5,7 @@
         x:DataType="vm:OpenFromProcessDialogViewModel"
         Width="850" Height="560" MinWidth="500" MinHeight="360"
         WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
         CanResize="True">
 	<!-- Both lists are ListBoxes rather than DataGrids. A DataGrid derives its scroll extent
 	     from the current scroll offset, so an offset that is briefly too large inflates the

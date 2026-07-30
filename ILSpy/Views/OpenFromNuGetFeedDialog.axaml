@@ -6,6 +6,7 @@
         x:DataType="vm:OpenFromNuGetFeedDialogViewModel"
         Width="1000" Height="650" MinWidth="700" MinHeight="400"
         WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
         CanResize="True">
 	<Grid Margin="12,8" RowDefinitions="Auto,*,Auto,Auto" RowSpacing="8">
 
