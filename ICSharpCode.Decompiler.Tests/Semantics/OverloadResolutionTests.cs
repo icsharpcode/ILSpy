@@ -402,16 +402,19 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(r.IsAmbiguous);
 		}
 
-		static IMethod MakeInMethodIn(ICompilation c, Type parameterType)
+		static IMethod MakeByRefMethodIn(ICompilation c, Type parameterType, ReferenceKind kind)
 		{
 			var m = new FakeMethod(c, SymbolKind.Method);
 			m.Name = "Method";
 			m.Parameters = new List<IParameter> {
 				new DefaultParameter(new ByReferenceType(c.FindType(parameterType)), string.Empty,
-					owner: m, referenceKind: ReferenceKind.In)
+					owner: m, referenceKind: kind)
 			};
 			return m;
 		}
+
+		static IMethod MakeInMethodIn(ICompilation c, Type parameterType)
+			=> MakeByRefMethodIn(c, parameterType, ReferenceKind.In);
 
 		[Test]
 		public void InReadOnlySpanParameter_BindsAnArrayWithoutInButNotWithIn()
@@ -469,6 +472,29 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 					Is.EqualTo(OverloadResolutionErrors.None));
 				Assert.That(!r.IsAmbiguous, $"argument {arg.Type}");
 				Assert.That(r.BestCandidate, Is.SameAs(byValue), $"argument {arg.Type}");
+			}
+		}
+
+		[Test]
+		public void RefAndOutParametersNeverBindThroughASpanConversion()
+		{
+			// Roslyn: CS1503 for both 'M(ref arr)' against 'ref ReadOnlySpan<int>' and
+			// 'M(out arr)' against 'out ReadOnlySpan<int>' - ref and out demand the
+			// parameter's own type; the span conversion does not apply. A value argument
+			// without the keyword is a passing-mode mismatch regardless of conversions.
+			var c = spanCompilation.Value;
+			var arrayArg = new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.Int32)));
+			foreach (var kind in new[] { ReferenceKind.Ref, ReferenceKind.Out })
+			{
+				var byRefArgument = new OverloadResolution(c, new[] {
+					new ByReferenceResolveResult(arrayArg, kind)
+				});
+				Assert.That(byRefArgument.AddCandidate(MakeByRefMethodIn(c, typeof(ReadOnlySpan<int>), kind)),
+					Is.Not.EqualTo(OverloadResolutionErrors.None), kind.ToString());
+
+				var valueArgument = new OverloadResolution(c, new[] { arrayArg });
+				Assert.That(valueArgument.AddCandidate(MakeByRefMethodIn(c, typeof(ReadOnlySpan<int>), kind)),
+					Is.Not.EqualTo(OverloadResolutionErrors.None), kind.ToString());
 			}
 		}
 

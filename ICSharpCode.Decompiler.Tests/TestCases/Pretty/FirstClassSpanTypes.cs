@@ -104,6 +104,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		public static void RefSpanOrByValue(ref ReadOnlySpan<int> s)
+		{
+		}
+
+		public static void RefSpanOrByValue(ReadOnlySpan<int> s)
+		{
+		}
+
+		public static void OutSpanOrByValue(out ReadOnlySpan<int> s)
+		{
+			s = default(ReadOnlySpan<int>);
+		}
+
+		public static void OutSpanOrByValue(ReadOnlySpan<int> s)
+		{
+		}
+
 		public static void GenericArrayOrReadOnlySpan<T>(T[] a)
 		{
 		}
@@ -159,10 +176,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ReadOnlySpanOfObjectOrString(strArr);
 			StringOrReadOnlySpanChar(str);
 			ParamsArrayOrParamsReadOnlySpan(arr);
+			ParamsArrayOrParamsReadOnlySpan(1, 2, 3);
 			GenericArrayOrReadOnlySpan(arr);
 			InferFromReadOnlySpan(arr);
 			InferFromReadOnlySpan(span);
 			arr.ExtensionOnReadOnlySpan();
+		}
+
+		public static void CallRefOutOrByValue(int[] arr)
+		{
+			// A span conversion never binds a ref or out parameter: without the keyword the
+			// by-value overload wins, with the keyword only the ref/out overload is
+			// applicable and the keyword must survive decompilation.
+			ReadOnlySpan<int> s = arr;
+			RefSpanOrByValue(arr);
+			RefSpanOrByValue(ref s);
+			OutSpanOrByValue(arr);
+			OutSpanOrByValue(out s);
 		}
 
 		public static void CallLosersWithExplicitConversions(int[] arr, string str)
