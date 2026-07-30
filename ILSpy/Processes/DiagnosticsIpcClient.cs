@@ -202,13 +202,50 @@ namespace ICSharpCode.ILSpy.Processes
 					}
 					catch
 					{
-						await trace.DisposeAsync().ConfigureAwait(false);
+						await AbandonCollectionAsync(session, drain, trace).ConfigureAwait(false);
 						throw;
 					}
 					trace.Position = 0;
 					return trace;
 				}
 			});
+
+		/// <summary>
+		/// Winds up a collection that failed partway through, in the one order that works. The
+		/// session connection goes first, because the drain is parked on a read of it and after
+		/// the failure nothing else will ever end that read. Then the drain itself, whose own
+		/// failure is no more than a symptom of the one already on its way to the caller - but
+		/// which has to be awaited all the same: a faulted task nobody awaited is raised by the
+		/// finalizer as <see cref="TaskScheduler.UnobservedTaskException"/>, so abandoning it
+		/// here reports the same failure a second time, minutes later and out of context. The
+		/// half-copied trace goes last, once nothing is writing into it any more.
+		/// </summary>
+		/// <remarks>
+		/// Disposing the session twice is harmless - the caller's <c>await using</c> does it
+		/// again on the way out - and doing it here is what makes the drain finishable at all.
+		/// </remarks>
+		internal static async Task AbandonCollectionAsync(Stream session, Task drain, MemoryStream trace)
+		{
+			await SuppressFailureAsync(session.DisposeAsync().AsTask()).ConfigureAwait(false);
+			await SuppressFailureAsync(drain).ConfigureAwait(false);
+			await trace.DisposeAsync().ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Awaits <paramref name="task"/> for its completion alone, discarding how it ended.
+		/// </summary>
+		static async Task SuppressFailureAsync(Task task)
+		{
+			try
+			{
+				await task.ConfigureAwait(false);
+			}
+			catch (Exception)
+			{
+				// Discarded by design: this runs while another failure is propagating, and the
+				// only purpose of the await is to leave nothing running or unobserved behind.
+			}
+		}
 
 		static async Task StopTracingAsync(int pid, ulong sessionId, CancellationToken cancellationToken)
 		{

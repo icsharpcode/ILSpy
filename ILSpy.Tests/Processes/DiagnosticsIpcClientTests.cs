@@ -137,6 +137,28 @@ public class DiagnosticsIpcClientTests
 			"the dialog closing is not the target's fault");
 	}
 
+	[Test]
+	public async Task A_Collection_That_Fails_Midway_Waits_For_Its_Own_Drain()
+	{
+		// A target that exits partway through its rundown fails the stop command, and the
+		// dialog reports that. What must not follow is a second report of the same event: the
+		// task draining the trace connection faults as soon as that connection is torn down,
+		// and a faulted task nobody awaited reaches TaskScheduler.UnobservedTaskException by
+		// way of the finalizer - which this app turns into a crash dialog, long after the
+		// error bar already explained the failure correctly.
+		using var session = new BlockedConnection();
+		var trace = new MemoryStream();
+		Task drain = session.CopyToAsync(trace);
+		drain.IsCompleted.Should().BeFalse(
+			"the connection says nothing until it is torn down, which is the situation being wound up");
+
+		await DiagnosticsIpcClient.AbandonCollectionAsync(session, drain, trace);
+
+		drain.IsCompleted.Should().BeTrue(
+			"a drain still running once the failure path is done with it is a drain nobody will ever await");
+		trace.CanRead.Should().BeFalse("the half-copied trace of a failed collection is dropped");
+	}
+
 	// No process has this id; the endpoint below is a fake one standing at its name.
 	const int HungEndpointPid = 0x7FFF_0000;
 }
