@@ -304,6 +304,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task SpanConversionOperatorMismatch()
+		{
+			await Run(settings: new DecompilerSettings { FileScopedNamespaces = false, FirstClassSpanTypes = true });
+		}
+
+		[Test]
 		public async Task ConstantBlobs()
 		{
 			await Run();

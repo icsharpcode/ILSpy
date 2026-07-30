@@ -329,6 +329,30 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& method.Parameters[0].Type.IsKnownType(KnownTypeCode.String);
 		}
 
+		/// <summary>
+		/// Matches MemoryExtensions.AsSpan(string), the helper the C# 14 compiler emits for the
+		/// implicit span conversion from string to ReadOnlySpan&lt;char&gt;.
+		/// </summary>
+		internal static bool IsStringToReadOnlySpanCharAsSpan(IMethod method)
+		{
+			return method is { IsStatic: true, Name: "AsSpan", Parameters.Count: 1, TypeArguments.Count: 0 }
+				&& method.DeclaringType.FullName == "System.MemoryExtensions"
+				&& method.ReturnType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+				&& method.ReturnType.TypeArguments[0].IsKnownType(KnownTypeCode.Char)
+				&& method.Parameters[0].Type.IsKnownType(KnownTypeCode.String);
+		}
+
+		/// <summary>
+		/// Matches ReadOnlySpan&lt;To&gt;.CastUp&lt;From&gt;(ReadOnlySpan&lt;From&gt;), the helper the
+		/// C# 14 compiler emits for the covariant implicit span conversion.
+		/// </summary>
+		internal static bool IsReadOnlySpanCastUp(IMethod method)
+		{
+			return method is { IsStatic: true, Name: "CastUp", Parameters.Count: 1, TypeArguments.Count: 1 }
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+				&& method.Parameters[0].Type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT);
+		}
+
 		public ExpressionWithResolveResult Build(OpCode callOpCode, IMethod method,
 			IReadOnlyList<ILInstruction> callArguments,
 			IReadOnlyList<int>? argumentToParameterMap = null,
@@ -479,6 +503,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				argumentList.CheckNoNamedOrOptionalArguments();
 				return HandleImplicitConversion(method, argumentList.Arguments[0]);
+			}
+
+			if (settings.FirstClassSpanTypes && argumentList.Length == 1
+				&& (IsStringToReadOnlySpanCharAsSpan(method) || IsReadOnlySpanCastUp(method)))
+			{
+				// The C# 14 compiler emits these helpers for implicit span conversions; fold the
+				// call back into the conversion. Only safe when the conversion actually applies
+				// to this argument type - otherwise keep the call (e.g. AsSpan on a null literal).
+				var spanConv = CSharpConversions.Get(expressionBuilder.compilation)
+					.ImplicitConversion(argumentList.Arguments[0].Type, method.ReturnType);
+				if (spanConv.IsImplicitSpanConversion)
+				{
+					argumentList.CheckNoNamedOrOptionalArguments();
+					return HandleImplicitConversion(method, argumentList.Arguments[0]);
+				}
 			}
 
 			if (settings.InlineArrays
@@ -1024,6 +1063,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (parameter.ReferenceKind != ReferenceKind.None)
 				{
 					arg = ExpressionBuilder.ChangeDirectionExpressionTo(arg, parameter.ReferenceKind, callArguments[i] is AddressOf);
+					// An rvalue bound to an 'in' parameter loses its DirectionExpression above and
+					// is an ordinary value expression: give a span conversion the same chance to
+					// become implicit that by-value arguments get from the ConvertTo call above.
+					if (arg.Expression is not DirectionExpression
+						&& parameter.Type.SkipModifiers() is ByReferenceType brt
+						&& arg.ResolveResult is ConversionResolveResult { Conversion.IsImplicitSpanConversion: true })
+					{
+						arg = arg.ConvertTo(brt.ElementType, expressionBuilder, allowImplicitConversion: true);
+					}
 				}
 
 				arguments.Add(arg);
@@ -1535,7 +1583,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			var conversions = CSharpConversions.Get(expressionBuilder.compilation);
 			IType targetType = method.ReturnType;
 			var conv = conversions.ImplicitConversion(argument.Type, targetType);
-			if (!(conv.IsUserDefined && conv.IsValid && conv.Method.Equals(method, NormalizeTypeVisitor.TypeErasure)))
+			// The compiler emits an implicit span conversion as a call to one of the span types'
+			// own members, so such a call is the conversion and folding it back is exact. Any
+			// other method reaching this point is a user-defined conversion operator, which only
+			// the user-defined conversion resolving to that very operator may be folded into.
+			bool spanConversionMember = method.DeclaringType.IsKnownType(KnownTypeCode.SpanOfT)
+				|| method.DeclaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+				|| IsStringToReadOnlySpanCharAsSpan(method);
+			bool directlyConvertible = conv.IsValid
+				&& (conv.IsUserDefined
+					? conv.Method.Equals(method, NormalizeTypeVisitor.TypeErasure)
+					: conv.IsImplicitSpanConversion && spanConversionMember);
+			if (!directlyConvertible)
 			{
 				// implicit conversion to targetType isn't directly possible, so first insert a cast to the argument type
 				argument = argument.ConvertTo(method.Parameters[0].Type, expressionBuilder);

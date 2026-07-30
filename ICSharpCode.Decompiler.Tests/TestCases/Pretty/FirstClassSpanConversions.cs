@@ -30,6 +30,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		internal class SpanConvertible
+		{
+			public static implicit operator ReadOnlySpan<int>(SpanConvertible c)
+			{
+				return default(ReadOnlySpan<int>);
+			}
+		}
+
+		internal class DerivedSpanConvertible : SpanConvertible
+		{
+		}
+
 		public static void AcceptReadOnlySpanChar(ReadOnlySpan<char> s)
 		{
 		}
@@ -64,8 +76,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static int StringToReadOnlySpanCharLocal(string s)
 		{
+			// The local is read twice so it survives decompilation; a single-use span local is
+			// inlined into its consumer by general decompiler policy, independent of this feature.
 			ReadOnlySpan<char> readOnlySpan = s;
-			return readOnlySpan.Length;
+			return readOnlySpan.Length + readOnlySpan.Length;
 		}
 
 		public static void VarianceReadOnlySpan(ReadOnlySpan<Derived> s)
@@ -86,6 +100,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void CovariantArrayToReadOnlySpan(Derived[] a)
 		{
 			AcceptReadOnlySpanBase(a);
+		}
+
+		public static ReadOnlySpan<Base> CovariantArrayThroughOperator(Derived[] a)
+		{
+			// ReadOnlySpan<Base>.op_Implicit(Base[]) applied to a Derived[]: array covariance
+			// means the IL passes the argument without a cast instruction, and the span
+			// conversion the call performs relates exactly these two types.
+			return a;
+		}
+
+		public static ReadOnlySpan<int> UserDefinedOperatorToSpan(DerivedSpanConvertible c)
+		{
+			// The operator is declared on the base type, so the conversion is user-defined even
+			// though its target is a span type. Only the user-defined conversion that resolves
+			// to this very operator may be folded into the cast; a span conversion never applies
+			// to a source type outside the language's own span-convertible set.
+			return c;
 		}
 
 		public static void InArgument(int[] a)
