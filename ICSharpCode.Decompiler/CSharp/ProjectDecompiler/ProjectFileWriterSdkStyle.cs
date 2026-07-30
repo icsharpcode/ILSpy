@@ -26,12 +26,14 @@ using System.Xml;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
 
+#nullable enable
+
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
 	/// <summary>
 	/// A <see cref="IProjectFileWriter"/> implementation that creates the projects in the SDK style format.
 	/// </summary>
-	sealed class ProjectFileWriterSdkStyle : IProjectFileWriter
+	public class ProjectFileWriterSdkStyle : IProjectFileWriter
 	{
 		const string AspNetCorePrefix = "Microsoft.AspNetCore";
 		const string PresentationFrameworkName = "PresentationFramework";
@@ -57,10 +59,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		enum ProjectType { Default, WinForms, Wpf, Web }
 
 		/// <summary>
-		/// Creates a new instance of the <see cref="ProjectFileWriterSdkStyle"/> class.
+		/// Gets the default instance of the <see cref="ProjectFileWriterSdkStyle"/> class.
 		/// </summary>
-		/// <returns>A new instance of the <see cref="ProjectFileWriterSdkStyle"/> class.</returns>
-		public static IProjectFileWriter Create() => new ProjectFileWriterSdkStyle();
+		public static ProjectFileWriterSdkStyle Default { get; } = new();
 
 		/// <inheritdoc />
 		public void Write(
@@ -76,36 +77,49 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module)
+		void Write(XmlTextWriter xml, IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module)
 		{
 			xml.WriteStartElement("Project");
 
 			var projectType = GetProjectType(module);
 			xml.WriteAttributeString("Sdk", GetSdkString(projectType));
 
-			PlaceIntoTag("PropertyGroup", xml, () => WriteAssemblyInfo(xml, module, project, projectType));
-			PlaceIntoTag("PropertyGroup", xml, () => WriteProjectInfo(xml, project));
-			PlaceIntoTag("PropertyGroup", xml, () => WriteMiscellaneousPropertyGroup(xml, files));
-			PlaceIntoTag("ItemGroup", xml, () => WriteResources(xml, files));
-			PlaceIntoTag("ItemGroup", xml, () => WriteReferences(xml, module, project, projectType));
+			using (new Group(xml, "PropertyGroup"))
+			{
+				WriteAssemblyInfo(xml, module, project, projectType);
+			}
+			using (new Group(xml, "PropertyGroup"))
+			{
+				WriteProjectInfo(xml, project);
+			}
+			using (new Group(xml, "PropertyGroup"))
+			{
+				WriteMiscellaneousPropertyGroup(xml, files);
+			}
+			var customProperties = GetCustomProperties(project, files, module);
+			if (customProperties != null)
+			{
+				using (new Group(xml, "PropertyGroup"))
+				{
+					foreach (var (name, value) in customProperties)
+					{
+						xml.WriteElementString(name, value);
+					}
+				}
+			}
+			using (new Group(xml, "ItemGroup"))
+			{
+				WriteResources(xml, files);
+			}
+			using (new Group(xml, "ItemGroup"))
+			{
+				WriteReferences(xml, module, project);
+			}
 
 			xml.WriteEndElement();
 		}
 
-		static void PlaceIntoTag(string tagName, XmlTextWriter xml, Action content)
-		{
-			xml.WriteStartElement(tagName);
-			try
-			{
-				content();
-			}
-			finally
-			{
-				xml.WriteEndElement();
-			}
-		}
-
-		static void WriteAssemblyInfo(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project, ProjectType projectType)
+		void WriteAssemblyInfo(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project, ProjectType projectType)
 		{
 			xml.WriteElementString("AssemblyName", module.Name);
 
@@ -116,9 +130,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			CorFlags flags;
 			if (module is PEFile { Reader.PEHeaders: var headers } peFile)
 			{
-				WriteOutputType(xml, headers.IsDll, headers.PEHeader.Subsystem, projectType);
+				WriteOutputType(xml, headers.IsDll, headers.PEHeader!.Subsystem, projectType);
 				platformName = TargetServices.GetPlatformName(peFile);
-				flags = headers.CorHeader.Flags;
+				flags = headers.CorHeader!.Flags;
 			}
 			else
 			{
@@ -129,16 +143,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			WriteDesktopExtensions(xml, projectType);
 
-			var targetFramework = TargetServices.DetectTargetFramework(module);
-			if (targetFramework.Identifier == ".NETFramework" && targetFramework.VersionNumber == 200)
-				targetFramework = TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
-
-			if (targetFramework.Moniker == null)
-			{
-				throw new NotSupportedException($"Cannot decompile this assembly to a SDK style project. Use default project format instead.");
-			}
-
-			xml.WriteElementString("TargetFramework", targetFramework.Moniker);
+			xml.WriteElementString("TargetFramework", GetTargetFrameworkMoniker(module, project));
 
 			// 'AnyCPU' is default, so only need to specify platform if it differs
 			if (platformName != AnyCpuString)
@@ -150,6 +155,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				xml.WriteElementString("Prefer32Bit", TrueString);
 			}
+		}
+
+		/// <summary>
+		/// Gets the target framework moniker for the specified module and project.
+		/// </summary>
+		/// <param name="module">The module for which to get the target framework moniker.</param>
+		/// <param name="project">The project information provider.</param>
+		/// <returns>The target framework moniker.</returns>
+		/// <exception cref="NotSupportedException">Thrown if the target framework moniker cannot be determined.</exception>
+		protected virtual string GetTargetFrameworkMoniker(MetadataFile module, IProjectInfoProvider project)
+		{
+			var targetFramework = TargetServices.DetectTargetFramework(module);
+			if (targetFramework.Identifier == ".NETFramework" && targetFramework.VersionNumber == 200)
+				targetFramework = TargetServices.DetectTargetFrameworkNET20(module, project.AssemblyResolver, targetFramework);
+
+			if (targetFramework.Moniker == null)
+			{
+				throw new NotSupportedException($"Cannot decompile this assembly to a SDK style project. Use default project format instead.");
+			}
+
+			return targetFramework.Moniker;
 		}
 
 		static void WriteOutputType(XmlTextWriter xml, bool isDll, Subsystem moduleSubsystem, ProjectType projectType)
@@ -216,6 +242,18 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			// TODO: We should add CustomToolNamespace for resources, otherwise we should add empty RootNamespace
 		}
 
+		/// <summary>
+		/// Gets custom properties to be added to the project file. Override this method to provide additional properties.
+		/// </summary>
+		/// <param name="project">The project information provider.</param>
+		/// <param name="files">The collection of project item information.</param>
+		/// <param name="module">The metadata file representing the module.</param>
+		/// <returns>An enumerable of custom properties as name-value pairs. Null if no custom properties are provided.</returns>
+		protected virtual IEnumerable<(string, string)>? GetCustomProperties(IProjectInfoProvider project, IEnumerable<ProjectItemInfo> files, MetadataFile module)
+		{
+			return null;
+		}
+
 		static void WriteResources(XmlTextWriter xml, IEnumerable<ProjectItemInfo> files)
 		{
 			// remove phase
@@ -251,14 +289,28 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		static void WriteReferences(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project, ProjectType projectType)
+		void WriteReferences(XmlTextWriter xml, MetadataFile module, IProjectInfoProvider project)
+		{
+			foreach (var reference in GetReferences(module, project))
+			{
+				WriteReference(xml, reference, project);
+			}
+		}
+
+		/// <summary>
+		/// Gets the assembly references for the specified module and project, excluding implicit references and shared assemblies.
+		/// </summary>
+		/// <param name="module">The module for which to get the assembly references.</param>
+		/// <param name="project">The project information provider.</param>
+		/// <returns>An enumerable of assembly references.</returns>
+		protected virtual IEnumerable<AssemblyReference> GetReferences(MetadataFile module, IProjectInfoProvider project)
 		{
 			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
 			var targetPacks = new HashSet<string>();
 			if (isNetCoreApp)
 			{
 				targetPacks.Add("Microsoft.NETCore.App");
-				switch (projectType)
+				switch (GetProjectType(module))
 				{
 					case ProjectType.WinForms:
 					case ProjectType.Wpf:
@@ -270,25 +322,38 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						break;
 				}
 			}
-
-			foreach (var reference in module.AssemblyReferences.Where(r => !ImplicitReferences.Contains(r.Name)))
+			foreach (var reference in module.AssemblyReferences)
 			{
-				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string runtimePack) && targetPacks.Contains(runtimePack))
+				if (ImplicitReferences.Contains(reference.Name))
 				{
 					continue;
 				}
-
-				xml.WriteStartElement("Reference");
-				xml.WriteAttributeString("Include", reference.Name);
-
-				var asembly = project.AssemblyResolver.Resolve(reference);
-				if (asembly != null && !project.AssemblyReferenceClassifier.IsGacAssembly(reference))
+				if (isNetCoreApp && project.AssemblyReferenceClassifier.IsSharedAssembly(reference, out string? runtimePack) && targetPacks.Contains(runtimePack))
 				{
-					xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, asembly.FileName));
+					continue;
 				}
-
-				xml.WriteEndElement();
+				yield return reference;
 			}
+		}
+
+		/// <summary>
+		/// Writes an assembly reference to the project file.
+		/// </summary>
+		/// <param name="xml">The XML writer used to write the project file.</param>
+		/// <param name="reference">The assembly reference to write.</param>
+		/// <param name="project">The project information provider.</param>
+		protected virtual void WriteReference(XmlTextWriter xml, AssemblyReference reference, IProjectInfoProvider project)
+		{
+			xml.WriteStartElement("Reference");
+			xml.WriteAttributeString("Include", reference.Name);
+
+			var assembly = project.AssemblyResolver.Resolve(reference);
+			if (assembly != null && !project.AssemblyReferenceClassifier.IsGacAssembly(reference))
+			{
+				xml.WriteElementString("HintPath", FileUtility.GetRelativePath(project.TargetDirectory, assembly.FileName));
+			}
+
+			xml.WriteEndElement();
 		}
 
 		static string GetSdkString(ProjectType projectType)
@@ -326,6 +391,22 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 
 			return ProjectType.Default;
+		}
+
+		readonly struct Group : IDisposable
+		{
+			readonly XmlTextWriter xml;
+
+			public Group(XmlTextWriter xml, string name)
+			{
+				this.xml = xml;
+				xml.WriteStartElement(name);
+			}
+
+			public void Dispose()
+			{
+				xml.WriteEndElement();
+			}
 		}
 	}
 }
