@@ -5,6 +5,7 @@
         Width="560" MinWidth="460" MinHeight="440" MaxHeight="900"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
         Title="Export Project">
 	<DockPanel Margin="12">
 		<StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right"

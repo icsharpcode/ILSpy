@@ -3,6 +3,7 @@
         x:Class="ICSharpCode.ILSpy.Views.ManageAssemblyListsDialog"
         Width="480" Height="350" MinWidth="480" MinHeight="250"
         WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
         Title="Manage Assembly Lists">
 	<Grid Margin="12,8" ColumnDefinitions="*,Auto" RowDefinitions="*,Auto">
 		<ListBox Grid.Row="0" Grid.Column="0" Name="ListsBox" Margin="0,8,8,8" SelectionMode="Single" />
