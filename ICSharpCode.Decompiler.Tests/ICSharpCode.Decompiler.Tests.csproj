@@ -59,6 +59,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- NUnit's default worker count (one per logical CPU) underutilizes the machine because
+         most matrix tests block on child processes (csc/vbc/ilasm/msbuild/test runners).
+         LevelOfParallelism only accepts a constant, so compute 2x logical CPUs at build time;
+         the machine building the tests is the machine running them. -->
+    <AssemblyAttribute Include="NUnit.Framework.LevelOfParallelism">
+      <_Parameter1>$([MSBuild]::Multiply($([System.Environment]::ProcessorCount), 2))</_Parameter1>
+      <_Parameter1_TypeName>System.Int32</_Parameter1_TypeName>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DiffLib" />
     <PackageReference Include="CliWrap" />
     <PackageReference Include="Microsoft.Extensions.Configuration" />

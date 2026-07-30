@@ -22,7 +22,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
+using NUnit.Framework;
+
 #endregion
+
+// Fixtures without their own Parallelizable attribute run concurrently with other fixtures;
+// tests within such a fixture still run sequentially. Fixtures that share process-global
+// state must opt out individually with [NonParallelizable].
+[assembly: Parallelizable(ParallelScope.Fixtures)]
 
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
