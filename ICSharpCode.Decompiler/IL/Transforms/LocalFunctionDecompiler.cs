@@ -732,8 +732,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (function.DeclarationScope == null)
 				function.DeclarationScope = closureVar.CaptureScope;
-			else if (!IsInNestedLocalFunction(function.DeclarationScope, closureVar.CaptureScope.Ancestors.OfType<ILFunction>().First()))
+			else if (closureVar.CaptureScope.IsDescendantOf(function.DeclarationScope))
+			{
+				// The closures captured by one local function are nested in one another: a
+				// local function declared inside a lambda still reaches the enclosing method's
+				// closure, but not the other way round. Where one capture scope contains the
+				// other, the declaration belongs in the inner one; taking the common ancestor
+				// would move the function out of the lambda owning the deeper closure and
+				// leave the variables captured there out of scope.
+				function.DeclarationScope = closureVar.CaptureScope;
+			}
+			else if (!function.DeclarationScope.IsDescendantOf(closureVar.CaptureScope)
+				&& !IsInNestedLocalFunction(function.DeclarationScope, closureVar.CaptureScope.Ancestors.OfType<ILFunction>().First()))
+			{
 				function.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(function.DeclarationScope, closureVar.CaptureScope);
+			}
 			return true;
 
 			ILInstruction GetClosureInitializer(ILVariable variable)
