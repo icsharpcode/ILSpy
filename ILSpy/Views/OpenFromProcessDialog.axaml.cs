@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.Views
 	/// <summary>
 	/// "Open from Running Process" dialog: lists the running .NET processes, shows the
 	/// assemblies loaded in the selected one, and closes with the paths to open - either the
-	/// assemblies picked in the grid or the process's entry assembly, which for a modern app
+	/// assemblies picked in the list or the process's entry assembly, which for a modern app
 	/// is the dll behind its native host. Closes with null when cancelled; all behavior lives
 	/// in <see cref="OpenFromProcessDialogViewModel"/>.
 	/// </summary>
@@ -67,12 +67,13 @@ namespace ICSharpCode.ILSpy.Views
 
 			SetColumnHeaders();
 
-			// A DataGrid's multi-selection is not bindable, so the grid pushes it into the
-			// view model, which is what the Add button's command acts on.
-			var modulesGrid = this.FindControl<DataGrid>("ModulesGrid")!;
-			modulesGrid.SelectionChanged += (_, _) => {
+			// A multi-selection is not bindable, so the list pushes it into the view model,
+			// which is what the Add button's command acts on.
+			var modulesList = this.FindControl<ListBox>("ModulesList")!;
+			modulesList.SelectionChanged += (_, _) => {
 				viewModel.SelectedModules.Clear();
-				foreach (var module in modulesGrid.SelectedItems.OfType<ProcessModuleRowViewModel>())
+				foreach (var module in modulesList.SelectedItems?.OfType<ProcessModuleRowViewModel>()
+					?? Enumerable.Empty<ProcessModuleRowViewModel>())
 					viewModel.SelectedModules.Add(module);
 			};
 
@@ -88,16 +89,14 @@ namespace ICSharpCode.ILSpy.Views
 
 		void SetColumnHeaders()
 		{
-			var processes = this.FindControl<DataGrid>("ProcessesGrid")!;
-			processes.Columns[0].Header = Loc.OpenFromProcess_Process;
-			processes.Columns[1].Header = Loc.OpenFromProcess_Pid;
-			processes.Columns[2].Header = Loc.OpenFromProcess_Runtime;
-			processes.Columns[3].Header = Loc.OpenFromProcess_Architecture;
-			processes.Columns[4].Header = Loc.OpenFromProcess_EntryAssembly;
+			this.FindControl<TextBlock>("ProcessColumnHeader")!.Text = Loc.OpenFromProcess_Process;
+			this.FindControl<TextBlock>("PidColumnHeader")!.Text = Loc.OpenFromProcess_Pid;
+			this.FindControl<TextBlock>("RuntimeColumnHeader")!.Text = Loc.OpenFromProcess_Runtime;
+			this.FindControl<TextBlock>("ArchitectureColumnHeader")!.Text = Loc.OpenFromProcess_Architecture;
+			this.FindControl<TextBlock>("EntryAssemblyColumnHeader")!.Text = Loc.OpenFromProcess_EntryAssembly;
 
-			var modules = this.FindControl<DataGrid>("ModulesGrid")!;
-			modules.Columns[0].Header = Loc.Assembly;
-			modules.Columns[1].Header = Loc.OpenFromProcess_Location;
+			this.FindControl<TextBlock>("AssemblyColumnHeader")!.Text = Loc.Assembly;
+			this.FindControl<TextBlock>("LocationColumnHeader")!.Text = Loc.OpenFromProcess_Location;
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
