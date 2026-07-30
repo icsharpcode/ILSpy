@@ -402,6 +402,92 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(r.IsAmbiguous);
 		}
 
+		static IMethod MakeInMethodIn(ICompilation c, Type parameterType)
+		{
+			var m = new FakeMethod(c, SymbolKind.Method);
+			m.Name = "Method";
+			m.Parameters = new List<IParameter> {
+				new DefaultParameter(new ByReferenceType(c.FindType(parameterType)), string.Empty,
+					owner: m, referenceKind: ReferenceKind.In)
+			};
+			return m;
+		}
+
+		[Test]
+		public void InReadOnlySpanParameter_BindsAnArrayWithoutInButNotWithIn()
+		{
+			// Roslyn: OnlyIn(arr) compiles - a value argument may bind to an 'in' parameter
+			// through the implicit span conversion (a temporary is created). OnlyIn(in arr)
+			// is CS1503: an explicit 'in' argument must have the parameter's own type.
+			var c = spanCompilation.Value;
+			var arrayArg = new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.Int32)));
+
+			var implicitIn = new OverloadResolution(c, new[] { arrayArg });
+			Assert.That(implicitIn.AddCandidate(MakeInMethodIn(c, typeof(ReadOnlySpan<int>))),
+				Is.EqualTo(OverloadResolutionErrors.None));
+
+			var explicitIn = new OverloadResolution(c, new[] {
+				new ByReferenceResolveResult(arrayArg, ReferenceKind.In)
+			});
+			Assert.That(explicitIn.AddCandidate(MakeInMethodIn(c, typeof(ReadOnlySpan<int>))),
+				Is.Not.EqualTo(OverloadResolutionErrors.None));
+		}
+
+		[Test]
+		public void InReadOnlySpanParameter_BindsAnIdentityArgumentWithAndWithoutIn()
+		{
+			var c = spanCompilation.Value;
+			var rosArg = new ResolveResult(c.FindType(typeof(ReadOnlySpan<int>)));
+
+			var implicitIn = new OverloadResolution(c, new[] { rosArg });
+			Assert.That(implicitIn.AddCandidate(MakeInMethodIn(c, typeof(ReadOnlySpan<int>))),
+				Is.EqualTo(OverloadResolutionErrors.None));
+
+			var explicitIn = new OverloadResolution(c, new[] {
+				new ByReferenceResolveResult(rosArg, ReferenceKind.In)
+			});
+			Assert.That(explicitIn.AddCandidate(MakeInMethodIn(c, typeof(ReadOnlySpan<int>))),
+				Is.EqualTo(OverloadResolutionErrors.None));
+		}
+
+		[Test]
+		public void ByValueOverloadPreferredOverInOverload_WithoutInAtTheCall()
+		{
+			// Roslyn: for F(ReadOnlySpan<int>) vs F(in ReadOnlySpan<int>), a call without 'in'
+			// picks the by-value overload - both for an identity argument and through the
+			// span conversion from int[].
+			var c = spanCompilation.Value;
+			foreach (var arg in new[] {
+				new ResolveResult(c.FindType(typeof(ReadOnlySpan<int>))),
+				new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.Int32)))
+			})
+			{
+				var r = new OverloadResolution(c, new[] { arg });
+				var byValue = MakeMethodIn(c, typeof(ReadOnlySpan<int>));
+				Assert.That(r.AddCandidate(byValue), Is.EqualTo(OverloadResolutionErrors.None));
+				Assert.That(r.AddCandidate(MakeInMethodIn(c, typeof(ReadOnlySpan<int>))),
+					Is.EqualTo(OverloadResolutionErrors.None));
+				Assert.That(!r.IsAmbiguous, $"argument {arg.Type}");
+				Assert.That(r.BestCandidate, Is.SameAs(byValue), $"argument {arg.Type}");
+			}
+		}
+
+		[Test]
+		public void InOverloadIsTheOnlyCandidateWithInAtTheCall()
+		{
+			// Roslyn: F(in ros) picks the in-overload; the by-value overload cannot take an
+			// 'in' argument.
+			var c = spanCompilation.Value;
+			var r = new OverloadResolution(c, new[] {
+				new ByReferenceResolveResult(new ResolveResult(c.FindType(typeof(ReadOnlySpan<int>))), ReferenceKind.In)
+			});
+			Assert.That(r.AddCandidate(MakeMethodIn(c, typeof(ReadOnlySpan<int>))),
+				Is.Not.EqualTo(OverloadResolutionErrors.None));
+			var inOverload = MakeInMethodIn(c, typeof(ReadOnlySpan<int>));
+			Assert.That(r.AddCandidate(inOverload), Is.EqualTo(OverloadResolutionErrors.None));
+			Assert.That(r.BestCandidate, Is.SameAs(inOverload));
+		}
+
 		[Test]
 		public void ReadOnlySpanOfStringPreferredOverReadOnlySpanOfObject()
 		{
