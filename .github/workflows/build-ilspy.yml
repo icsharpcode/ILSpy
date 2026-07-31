@@ -282,13 +282,15 @@ jobs:
         path: ICSharpCode.ILSpyCmd\bin\Release\ilspycmd*.nupkg
         if-no-files-found: error
 
-  # Linux and macOS build the desktop solution filter, run the UI and decompiler tests on
-  # their own platform, and package self-contained Release bundles. NuGet packing and all
-  # Windows-specific packaging stay in the Windows job above. The decompiler tests need the
-  # ILSpy-tests submodule (the TargetNet40 configs compile against its legacy reference
-  # assemblies even on non-Windows); configs that genuinely need Windows (legacy csc, mcs,
-  # 32-bit, roundtrip) self-exclude via Tester.SupportedOnCurrentPlatform and
-  # [Platform("Win")]. ILSpy.Tests.Windows runs only in the Windows job by design.
+  # Linux and macOS build the desktop solution filter, run the UI tests on their own
+  # platform, and package self-contained Release bundles. NuGet packing and all
+  # Windows-specific packaging stay in the Windows job above. The decompiler tests run on
+  # Linux but not macOS (already covered by Windows + Linux; they dominate the runtime of
+  # the slowest job); they need the ILSpy-tests submodule (the TargetNet40 configs compile
+  # against its legacy reference assemblies even on non-Windows); configs that genuinely
+  # need Windows (legacy csc, mcs, 32-bit, roundtrip) self-exclude via
+  # Tester.SupportedOnCurrentPlatform and [Platform("Win")]. ILSpy.Tests.Windows runs only
+  # in the Windows job by design.
 
   Desktop:
     needs: Gate
@@ -354,6 +356,7 @@ jobs:
 
     - name: Execute decompiler tests
       id: decompiler-tests
+      if: matrix.platform != 'macos'
       run: >
         dotnet test --project ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj
         --configuration Release
