@@ -15,8 +15,32 @@ env:
   StagingDirectory: buildartifacts
 
 jobs:
+  # Skip push builds for branches whose open PR (base master/release/*) already builds
+  # them via the pull_request trigger. Pushes to master/release/* always build (they publish).
+  Gate:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+    - id: check
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        prs=0
+        case "$GITHUB_EVENT_NAME/$GITHUB_REF_NAME" in
+          push/master|push/release/*) ;;
+          push/*) prs=$(gh api -X GET "repos/$GITHUB_REPOSITORY/pulls" -f state=open \
+            -f head="$GITHUB_REPOSITORY_OWNER:$GITHUB_REF_NAME" \
+            --jq 'map(select(.base.ref == "master" or (.base.ref | startswith("release/")))) | length') ;;
+        esac
+        echo "run=$([ "$prs" = 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
   Build:
     name: Desktop (Windows)
+    needs: Gate
+    if: needs.Gate.outputs.run == 'true'
     permissions:
       packages: write  # for dotnet nuget push
     runs-on: windows-2025-vs2026
@@ -283,6 +307,8 @@ jobs:
   # [Platform("Win")]. ILSpy.Tests.Windows runs only in the Windows job by design.
 
   Desktop:
+    needs: Gate
+    if: needs.Gate.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
