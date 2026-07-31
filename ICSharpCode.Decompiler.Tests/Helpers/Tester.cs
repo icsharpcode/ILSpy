@@ -232,6 +232,23 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 
 		/// <summary>
+		/// Whether to pass the undocumented /shared switch, which makes the compiler use the
+		/// VBCSCompiler compiler server and so avoids paying compiler startup per invocation.
+		/// The dotnet-hosted Roslyn 2.x build cannot start its compiler server under a current
+		/// 'dotnet' host (the roll-forward in WrapCompiler applies to csc/vbc itself, not to
+		/// the server process the client tries to spawn), so with /shared every invocation
+		/// first waits out the client's full 20-second new-server connection timeout before
+		/// falling back to a sub-second in-process compile. Only the dotnet-hosted Roslyn 3.0+
+		/// builds get the switch on non-Windows platforms; the Mono-hosted 1.x compilers skip
+		/// it too rather than rely on the server protocol working under Mono.
+		/// </summary>
+		static bool UseCompilerServer(string roslynVersion)
+		{
+			return OperatingSystem.IsWindows()
+				|| Version.Parse(RoslynToolset.SanitizeVersion(roslynVersion)).Major > 2;
+		}
+
+		/// <summary>
 		/// Wraps an external compiler invocation. The .NET Framework builds of the Roslyn
 		/// compilers (csc.exe/vbc.exe) are directly executable on Windows and are hosted by
 		/// Mono elsewhere; the .NET builds ship as a .dll that must be launched through the
@@ -717,11 +734,12 @@ namespace System.Runtime.CompilerServices
 
 				HashSet<string> noWarn = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-				// note: the /shared switch is undocumented. It allows us to use the VBCSCompiler.exe compiler
-				// server to speed up testing
 				if (roslynVersion != "legacy")
 				{
-					otherOptions += "/shared ";
+					if (UseCompilerServer(roslynVersion))
+					{
+						otherOptions += "/shared ";
+					}
 					var version = Version.Parse(RoslynToolset.SanitizeVersion(roslynVersion));
 					if (!targetNet40 && version.Major > 2)
 					{
