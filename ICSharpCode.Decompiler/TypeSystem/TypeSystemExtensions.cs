@@ -890,6 +890,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ns;
 		}
 
+		/// <summary>
+		/// Returns the <see cref="ExtensionInfo"/> of the container type the member's extension
+		/// block belongs to, or null if the member is not part of an extension block. Fields and
+		/// events always return null: extension blocks cannot declare them.
+		/// </summary>
 		public static ExtensionInfo? ResolveExtensionInfo(this IMember member)
 		{
 			if (member is null)
@@ -898,7 +903,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			var td = member.DeclaringTypeDefinition;
 			Debug.Assert(td != null, "IMember.DeclaringTypeDefinition should never be null");
-			return td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
+			var info = td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
+			if (info == null)
+				return null;
+			// The container's info only applies to members declared in one of its extension
+			// blocks; members of other nested types must not pick it up.
+			IMethod? method = member switch {
+				IMethod m => m,
+				IProperty p => p.Getter ?? p.Setter,
+				_ => null
+			};
+			if (method == null || info.InfoOfExtensionMember((IMethod)method.MemberDefinition) == null)
+				return null;
+			return info;
 		}
 	}
 }
