@@ -135,9 +135,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					}
 				}
 
-				// note: the /shared switch is undocumented. It allows us to use the VBCSCompiler.exe compiler
-				// server to speed up testing
-				if (roslynVersion != "legacy")
+				// See UseCompilerServer for why /shared is not passed to every compiler.
+				if (roslynVersion != "legacy" && UseCompilerServer(roslynVersion))
 				{
 					otherOptions += "/shared ";
 				}
