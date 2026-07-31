@@ -1299,8 +1299,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			bool first = true;
 			ITypeDefinition? parentTypeDef = null;
-			ExtensionInfo? parentExtensionInfo = null;
-
 			foreach (var entity in definitions)
 			{
 				switch (entity.Kind)
@@ -1319,8 +1317,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case HandleKind.MethodDefinition:
 						IMethod method = module.GetDefinition((MethodDefinitionHandle)entity);
-						parentExtensionInfo = method.ResolveExtensionInfo();
-						syntaxTree.Members.Add(DoDecompile(method, decompileRun, new SimpleTypeResolveContext(method), parentExtensionInfo));
+						syntaxTree.Members.Add(DoDecompile(method, decompileRun, new SimpleTypeResolveContext(method), method.ResolveExtensionInfo()));
 						if (first)
 						{
 							parentTypeDef = method.DeclaringTypeDefinition;
@@ -1337,14 +1334,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case HandleKind.PropertyDefinition:
 						IProperty property = module.GetDefinition((PropertyDefinitionHandle)entity);
-						parentExtensionInfo = property.ResolveExtensionInfo();
+						var propertyExtensionInfo = property.ResolveExtensionInfo();
 						if (property.IsParameterizedProperty())
 						{
-							syntaxTree.Members.AddRange(DecompileParameterizedProperty(property, decompileRun, new SimpleTypeResolveContext(property), parentExtensionInfo));
+							syntaxTree.Members.AddRange(DecompileParameterizedProperty(property, decompileRun, new SimpleTypeResolveContext(property), propertyExtensionInfo));
 						}
 						else
 						{
-							syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property), parentExtensionInfo));
+							syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property), propertyExtensionInfo));
 						}
 						if (first)
 						{

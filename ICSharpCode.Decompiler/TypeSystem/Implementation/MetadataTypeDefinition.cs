@@ -153,12 +153,16 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				if ((module.TypeSystemOptions & TypeSystemOptions.ExtensionMembers) == 0)
 					return null;
 				var extensionInfo = LazyInit.VolatileRead(ref this.extensionInfo);
-				if (extensionInfo != null)
-					return extensionInfo;
-				extensionInfo = new ExtensionInfo(module, this);
-				if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) != 0)
-					return extensionInfo;
-				return LazyInit.GetOrSet(ref this.extensionInfo, extensionInfo);
+				if (extensionInfo == null)
+				{
+					extensionInfo = new ExtensionInfo(module, this);
+					if ((module.TypeSystemOptions & TypeSystemOptions.Uncached) == 0)
+						extensionInfo = LazyInit.GetOrSet(ref this.extensionInfo, extensionInfo);
+				}
+				// A static class whose extension methods all use the classic "this" parameter
+				// syntax carries [Extension] but has no extension blocks; it is not an
+				// extension container.
+				return extensionInfo.ExtensionGroups.Count > 0 ? extensionInfo : null;
 			}
 		}
 
