@@ -1,0 +1,323 @@
+// Copyright (c) 2026 Christoph Wille
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
+using System.Buffers.Binary;
+using System.IO;
+using System.IO.Pipes;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace ICSharpCode.ILSpy.Processes
+{
+	/// <summary>
+	/// A CoreCLR runtime's answer to a diagnostics process-info query. Entry assembly and
+	/// CLR version are only served by runtimes that understand ProcessInfo2 (.NET 6+); for
+	/// older runtimes they are null and the rest comes from the ProcessInfo fallback.
+	/// </summary>
+	internal sealed record DotNetProcessInfo(
+		long Pid,
+		Guid RuntimeCookie,
+		string? CommandLine,
+		string? OperatingSystemName,
+		string? Architecture,
+		string? EntryAssemblyName,
+		string? ClrVersion);
+
+	/// <summary>
+	/// Speaks the diagnostics IPC protocol to a single CoreCLR process, over the transport
+	/// found by <see cref="DiagnosticsPortScanner"/>. Every call opens a fresh connection
+	/// (the protocol is one-command-per-connection) and is bounded by a timeout so a hung
+	/// target cannot stall the caller.
+	/// </summary>
+	internal static class DiagnosticsIpcClient
+	{
+		const byte ProcessCommandSet = 0x04;
+		const byte ProcessInfoCommandId = 0x00;
+		const byte ProcessInfo2CommandId = 0x04;
+
+		const byte EventPipeCommandSet = 0x02;
+		const byte StopTracingCommandId = 0x01;
+		const byte CollectTracing2CommandId = 0x03;
+		const byte CollectTracing4CommandId = 0x05;
+
+		// Which rundown events the runtime emits when the session stops. The runtime's own
+		// default (0x80020139) additionally asks for the JIT, NGen and IL-to-native-map
+		// rundown, which in a process that has been running for a while outweighs the module
+		// list by orders of magnitude - enough to overrun the session buffer and cost the
+		// loader events this feature exists to read. These bits ask for the loader rundown
+		// and the stop-time ("end") emission of it, and nothing else.
+		const ulong LoaderRundownKeyword = 0x80000108;
+
+		const string RuntimeProviderName = "Microsoft-Windows-DotNETRuntime";
+		const ulong LoaderKeyword = 0x8;
+		const uint InformationalLevel = 4;
+		const uint NetTraceFormat = 1;
+		// The session only ever carries loader events plus the rundown, so a small buffer is
+		// ample; oversizing it would make the target runtime reserve memory for nothing.
+		const uint CircularBufferMB = 16;
+
+		// Generous for what it covers - a healthy runtime answers a status query in
+		// milliseconds - because the only thing on the other side of it is a runtime that will
+		// never answer at all: one suspended on a startup diagnostic port, or wedged. A tighter
+		// budget buys nothing and turns a loaded machine into a process listed without its
+		// metadata.
+		static readonly TimeSpan CommandTimeout = TimeSpan.FromSeconds(10);
+		// A rundown walks every loaded module and assembly, so it takes measurably longer
+		// than a status query - and longer still on a large process.
+		static readonly TimeSpan RundownTimeout = TimeSpan.FromSeconds(30);
+
+		public static Task<DotNetProcessInfo> GetProcessInfoAsync(int pid, CancellationToken cancellationToken)
+			=> GetProcessInfoAsync(pid, CommandTimeout, cancellationToken);
+
+		/// <summary>
+		/// Overload with an explicit budget, so a test can pin the timeout behavior without
+		/// waiting out the production one.
+		/// </summary>
+		internal static async Task<DotNetProcessInfo> GetProcessInfoAsync(
+			int pid, TimeSpan commandTimeout, CancellationToken cancellationToken)
+		{
+			try
+			{
+				return await QueryProcessInfoAsync(pid, ProcessInfo2CommandId, commandTimeout, cancellationToken).ConfigureAwait(false);
+			}
+			catch (Exception ex) when (ex is IOException or EndOfStreamException)
+			{
+				// ProcessInfo2 needs .NET 6+; a .NET Core 3.x/5 runtime answers with an
+				// unknown-command error. The original ProcessInfo works from 3.0 on.
+				return await QueryProcessInfoAsync(pid, ProcessInfoCommandId, commandTimeout, cancellationToken).ConfigureAwait(false);
+			}
+		}
+
+		static Task<DotNetProcessInfo> QueryProcessInfoAsync(
+			int pid, byte commandId, TimeSpan commandTimeout, CancellationToken cancellationToken)
+			=> WithBudgetAsync(pid, commandTimeout, cancellationToken, async token => {
+				Stream stream = await ConnectAsync(pid, token).ConfigureAwait(false);
+				await using (stream.ConfigureAwait(false))
+				{
+					byte[] request = DiagnosticsIpcMessage.EncodeRequest(ProcessCommandSet, commandId, ReadOnlySpan<byte>.Empty);
+					await stream.WriteAsync(request, token).ConfigureAwait(false);
+					byte[] payload = await DiagnosticsIpcMessage.ReadResponseAsync(stream, token).ConfigureAwait(false);
+
+					using var reader = new BinaryReader(new MemoryStream(payload));
+					long reportedPid = reader.ReadInt64();
+					var runtimeCookie = new Guid(reader.ReadBytes(16));
+					string? commandLine = DiagnosticsIpcMessage.ReadString(reader);
+					string? operatingSystem = DiagnosticsIpcMessage.ReadString(reader);
+					string? architecture = DiagnosticsIpcMessage.ReadString(reader);
+					string? entryAssembly = null;
+					string? clrVersion = null;
+					if (commandId == ProcessInfo2CommandId)
+					{
+						entryAssembly = DiagnosticsIpcMessage.ReadString(reader);
+						clrVersion = DiagnosticsIpcMessage.ReadString(reader);
+					}
+					return new DotNetProcessInfo(reportedPid, runtimeCookie, commandLine,
+						operatingSystem, architecture, entryAssembly, clrVersion);
+				}
+			});
+
+		/// <summary>
+		/// Runs one command under a budget, turning an expired budget into a
+		/// <see cref="TimeoutException"/> that names the process. The conversion is what keeps
+		/// the two outcomes apart: callers are expected to swallow cancellation, because that
+		/// is the dialog closing, and a target that never answered must not vanish with it.
+		/// </summary>
+		static async Task<T> WithBudgetAsync<T>(int pid, TimeSpan budget,
+			CancellationToken cancellationToken, Func<CancellationToken, Task<T>> command)
+		{
+			using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			timeout.CancelAfter(budget);
+			try
+			{
+				return await command(timeout.Token).ConfigureAwait(false);
+			}
+			catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+			{
+				throw new TimeoutException(
+					$"Process {pid} did not answer its diagnostics endpoint within {budget.TotalSeconds:0.###} seconds.");
+			}
+		}
+
+		/// <summary>
+		/// Runs a minimal EventPipe session against <paramref name="pid"/> purely to obtain
+		/// its rundown: the runtime emits one event per loaded module and assembly when the
+		/// session stops. The returned stream is the raw nettrace container, positioned at 0.
+		/// </summary>
+		public static async Task<MemoryStream> CollectModuleRundownAsync(int pid, CancellationToken cancellationToken)
+		{
+			try
+			{
+				return await CollectAsync(pid, CollectTracing4CommandId, cancellationToken).ConfigureAwait(false);
+			}
+			catch (Exception ex) when (ex is IOException or EndOfStreamException)
+			{
+				// Selecting the rundown events by keyword needs a runtime that knows
+				// CollectTracing4; an older one answers with an unknown-command error and
+				// only offers the all-or-nothing rundown.
+				return await CollectAsync(pid, CollectTracing2CommandId, cancellationToken).ConfigureAwait(false);
+			}
+		}
+
+		static Task<MemoryStream> CollectAsync(int pid, byte commandId, CancellationToken cancellationToken)
+			=> WithBudgetAsync(pid, RundownTimeout, cancellationToken, async token => {
+				Stream session = await ConnectAsync(pid, token).ConfigureAwait(false);
+				await using (session.ConfigureAwait(false))
+				{
+					byte[] request = DiagnosticsIpcMessage.EncodeRequest(
+						EventPipeCommandSet, commandId, BuildCollectTracingPayload(commandId));
+					await session.WriteAsync(request, token).ConfigureAwait(false);
+
+					byte[] response = await DiagnosticsIpcMessage.ReadResponseAsync(session, token).ConfigureAwait(false);
+					if (response.Length < sizeof(ulong))
+						throw new IOException("The runtime did not return an EventPipe session id.");
+					ulong sessionId = BinaryPrimitives.ReadUInt64LittleEndian(response);
+
+					// The nettrace stream must be drained while the session is stopped: the
+					// runtime writes the rundown into the same connection, and a full buffer
+					// would block the stop from completing.
+					var trace = new MemoryStream();
+					Task drain = session.CopyToAsync(trace, token);
+					try
+					{
+						await StopTracingAsync(pid, sessionId, token).ConfigureAwait(false);
+						await drain.ConfigureAwait(false);
+					}
+					catch
+					{
+						await AbandonCollectionAsync(session, drain, trace).ConfigureAwait(false);
+						throw;
+					}
+					trace.Position = 0;
+					return trace;
+				}
+			});
+
+		/// <summary>
+		/// Winds up a collection that failed partway through, in the one order that works. The
+		/// session connection goes first, because the drain is parked on a read of it and after
+		/// the failure nothing else will ever end that read. Then the drain itself, whose own
+		/// failure is no more than a symptom of the one already on its way to the caller - but
+		/// which has to be awaited all the same: a faulted task nobody awaited is raised by the
+		/// finalizer as <see cref="TaskScheduler.UnobservedTaskException"/>, so abandoning it
+		/// here reports the same failure a second time, minutes later and out of context. The
+		/// half-copied trace goes last, once nothing is writing into it any more.
+		/// </summary>
+		/// <remarks>
+		/// Disposing the session twice is harmless - the caller's <c>await using</c> does it
+		/// again on the way out - and doing it here is what makes the drain finishable at all.
+		/// </remarks>
+		internal static async Task AbandonCollectionAsync(Stream session, Task drain, MemoryStream trace)
+		{
+			await SuppressFailureAsync(session.DisposeAsync().AsTask()).ConfigureAwait(false);
+			await SuppressFailureAsync(drain).ConfigureAwait(false);
+			await trace.DisposeAsync().ConfigureAwait(false);
+		}
+
+		/// <summary>
+		/// Awaits <paramref name="task"/> for its completion alone, discarding how it ended.
+		/// </summary>
+		static async Task SuppressFailureAsync(Task task)
+		{
+			try
+			{
+				await task.ConfigureAwait(false);
+			}
+			catch (Exception)
+			{
+				// Discarded by design: this runs while another failure is propagating, and the
+				// only purpose of the await is to leave nothing running or unobserved behind.
+			}
+		}
+
+		static async Task StopTracingAsync(int pid, ulong sessionId, CancellationToken cancellationToken)
+		{
+			Stream stream = await ConnectAsync(pid, cancellationToken).ConfigureAwait(false);
+			await using (stream.ConfigureAwait(false))
+			{
+				var payload = new byte[sizeof(ulong)];
+				BinaryPrimitives.WriteUInt64LittleEndian(payload, sessionId);
+				byte[] request = DiagnosticsIpcMessage.EncodeRequest(EventPipeCommandSet, StopTracingCommandId, payload);
+				await stream.WriteAsync(request, cancellationToken).ConfigureAwait(false);
+				await DiagnosticsIpcMessage.ReadResponseAsync(stream, cancellationToken).ConfigureAwait(false);
+			}
+		}
+
+		static byte[] BuildCollectTracingPayload(byte commandId)
+		{
+			using var buffer = new MemoryStream();
+			using (var writer = new BinaryWriter(buffer, Encoding.Unicode, leaveOpen: true))
+			{
+				writer.Write(CircularBufferMB);
+				writer.Write(NetTraceFormat);
+				// Rundown is what makes this a snapshot of everything already loaded rather
+				// than a recording of what loads from now on.
+				if (commandId == CollectTracing4CommandId)
+				{
+					writer.Write(LoaderRundownKeyword);
+					writer.Write(false); // no stack walks: the call stacks are pure overhead here
+				}
+				else
+				{
+					writer.Write(true);
+				}
+				writer.Write(1u); // one provider follows
+				writer.Write(LoaderKeyword);
+				writer.Write(InformationalLevel);
+				DiagnosticsIpcMessage.WriteString(writer, RuntimeProviderName);
+				DiagnosticsIpcMessage.WriteString(writer, null); // no filter data
+			}
+			return buffer.ToArray();
+		}
+
+		internal static async Task<Stream> ConnectAsync(int pid, CancellationToken cancellationToken)
+		{
+			if (OperatingSystem.IsWindows())
+			{
+				var pipe = new NamedPipeClientStream(".", "dotnet-diagnostic-" + pid,
+					PipeDirection.InOut, PipeOptions.Asynchronous);
+				try
+				{
+					await pipe.ConnectAsync(cancellationToken).ConfigureAwait(false);
+					return pipe;
+				}
+				catch
+				{
+					await pipe.DisposeAsync().ConfigureAwait(false);
+					throw;
+				}
+			}
+
+			string socketPath = DiagnosticsPortScanner.GetUnixSocketPath(pid)
+				?? throw new IOException($"Process {pid} exposes no diagnostics socket.");
+			var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+			try
+			{
+				await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath), cancellationToken).ConfigureAwait(false);
+				return new NetworkStream(socket, ownsSocket: true);
+			}
+			catch
+			{
+				socket.Dispose();
+				throw;
+			}
+		}
+	}
+}

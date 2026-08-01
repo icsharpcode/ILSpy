@@ -226,18 +226,18 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 
 		public void WriteReference(MetadataFile metadata, Handle handle, string text, string protocol = "decompile", bool isDefinition = false)
-			=> AddReference(text, new EntityReference(metadata, handle, protocol), local: false, isDefinition);
+			=> AddReference(text, new EntityReference(metadata, handle, protocol), ReferenceMode.Link, isDefinition);
 
 		public void WriteReference(IType type, string text, bool isDefinition = false)
-			=> AddReference(text, type, local: false, isDefinition);
+			=> AddReference(text, type, ReferenceMode.Link, isDefinition);
 
 		public void WriteReference(IMember member, string text, bool isDefinition = false)
-			=> AddReference(text, member, local: false, isDefinition);
+			=> AddReference(text, member, ReferenceMode.Link, isDefinition);
 
-		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
-			=> AddReference(text, reference, local: true, isDefinition);
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
+			=> AddReference(text, reference, isHoverOnly ? ReferenceMode.HoverOnly : ReferenceMode.LocalHighlight, isDefinition);
 
-		void AddReference(string text, object reference, bool local, bool isDefinition)
+		void AddReference(string text, object reference, ReferenceMode kind, bool isDefinition)
 		{
 			WriteIndentIfNeeded();
 			int start = builder.Length;
@@ -249,22 +249,40 @@ namespace ICSharpCode.ILSpy.TextView
 				StartOffset = start,
 				EndOffset = end,
 				Reference = reference,
-				IsLocal = local,
+				Kind = kind,
 				IsDefinition = isDefinition,
 			});
+		}
+
+		int pendingDefinitionStart = -1;
+
+		public void MarkDefinitionStart()
+		{
+			pendingDefinitionStart = builder.Length;
 		}
 
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{
 			WriteIndentIfNeeded();
-			openFoldings.Push((
-				new NewFolding {
+			NewFolding folding;
+			if (isDefinition && pendingDefinitionStart >= 0)
+			{
+				// The definition's logical region reaches back to the entity's first output
+				// character, so leading documentation folds count as part of the group.
+				folding = new DefinitionNewFolding {
 					StartOffset = builder.Length,
-					Name = collapsedText,
-					DefaultClosed = defaultCollapsed,
-					IsDefinition = isDefinition,
-				},
-				lineNumber));
+					DefinitionStartOffset = pendingDefinitionStart,
+				};
+				pendingDefinitionStart = -1;
+			}
+			else
+			{
+				folding = new NewFolding { StartOffset = builder.Length };
+			}
+			folding.Name = collapsedText;
+			folding.DefaultClosed = defaultCollapsed;
+			folding.IsDefinition = isDefinition;
+			openFoldings.Push((folding, lineNumber));
 		}
 
 		public void MarkFoldEnd()

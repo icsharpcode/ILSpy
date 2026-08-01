@@ -63,7 +63,23 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if ((flags & CompilerOptions.UseRoslynMask) != 0 && targetFramework != null)
 				{
 					var coreRefAsmPath = RefAssembliesToolset.GetPath(targetFramework);
-					references = coreDefaultReferences.Select(r => "-r:\"" + r + "\"");
+					// On Windows vbc.exe binds the core library through its implicit desktop SDK
+					// path, so the plain reference list works. Without that implicit SDK, the
+					// netcore-2.2 reference set needs the same reference list as the C# side
+					// (System.Private.CoreLib plus the facade assemblies): its facades are split
+					// across many files and vbc only binds special types like System.Void from an
+					// assembly that defines them rather than following type forwards.
+					IEnumerable<string> referenceNames = !OperatingSystem.IsWindows() && targetFramework == ".NETCoreApp,Version=v2.2"
+						? core220DefaultReferences
+						: coreDefaultReferences;
+					if (!OperatingSystem.IsWindows() && targetFramework == ".NETCoreApp,Version=v2.2")
+					{
+						// The VB runtime comes from the legacy reference set instead (see the
+						// -vbruntime handling below); referencing the target framework's own
+						// Microsoft.VisualBasic as well would be a BC32210 identity conflict.
+						referenceNames = referenceNames.Where(r => r != "Microsoft.VisualBasic.dll");
+					}
+					references = referenceNames.Select(r => "-r:\"" + r + "\"");
 					libPath = coreRefAsmPath;
 				}
 				else
@@ -79,7 +95,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				if (flags.HasFlag(CompilerOptions.ReferenceVisualBasic))
 				{
-					references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
+					// In the non-Windows netcore-2.2 configuration the VB runtime comes in via
+					// -vbruntime (see below); also referencing the reference set's own
+					// Microsoft.VisualBasic facade would be a BC32210 identity conflict.
+					if (OperatingSystem.IsWindows() || targetFramework != ".NETCoreApp,Version=v2.2")
+					{
+						references = references.Concat(new[] { "-r:\"Microsoft.VisualBasic.dll\"" });
+					}
 				}
 				string otherOptions = $"-nologo -noconfig " +
 					"-optioninfer+ -optionexplicit+ " +
@@ -100,13 +122,21 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 						// In the .NET reference packs Microsoft.VisualBasic.dll is a
 						// type-forwarding facade, and vbc does not follow forwards when binding
 						// its runtime helpers (e.g. ProjectData); point it at the implementation.
-						otherOptions += $"-vbruntime:\"{Path.Combine(libPath, "Microsoft.VisualBasic.Core.dll")}\" ";
+						// Before .NET Core 3.0 there is no Microsoft.VisualBasic.Core.dll and the
+						// core build of the VB runtime is a trimmed-down subset (no UBound etc.);
+						// use the legacy reference set's desktop implementation instead, which is
+						// also what vbc.exe on Windows implicitly uses as its default VB runtime.
+						string vbRuntime = Path.Combine(libPath, "Microsoft.VisualBasic.Core.dll");
+						if (!File.Exists(vbRuntime))
+						{
+							vbRuntime = Path.Combine(RefAssembliesToolset.GetPath("legacy"), "Microsoft.VisualBasic.dll");
+						}
+						otherOptions += $"-vbruntime:\"{vbRuntime}\" ";
 					}
 				}
 
-				// note: the /shared switch is undocumented. It allows us to use the VBCSCompiler.exe compiler
-				// server to speed up testing
-				if (roslynVersion != "legacy")
+				// See UseCompilerServer for why /shared is not passed to every compiler.
+				if (roslynVersion != "legacy" && UseCompilerServer(roslynVersion))
 				{
 					otherOptions += "/shared ";
 				}

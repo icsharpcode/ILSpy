@@ -89,8 +89,7 @@ public class FrozenTabRefreshTests
 		await Waiters.WaitForAsync(
 			() => !frozen.IsDecompiling && !preview.IsDecompiling
 				&& frozen.Text != frozenCSharp && preview.Text != previewCSharp,
-			TimeSpan.FromSeconds(15),
-			"both the frozen tab and the preview tab to re-decompile after the language change");
+			description: "both the frozen tab and the preview tab to re-decompile after the language change");
 
 		frozen.Language.Name.Should().Be("IL",
 			"the frozen tab must adopt the newly selected language");
@@ -115,8 +114,7 @@ public class FrozenTabRefreshTests
 		await Waiters.WaitForAsync(
 			() => !frozen.IsDecompiling && !preview.IsDecompiling
 				&& frozen.Text != frozenBefore && preview.Text != previewBefore,
-			TimeSpan.FromSeconds(15),
-			"both the frozen tab and the preview tab to re-decompile after the display-setting change");
+			description: "both the frozen tab and the preview tab to re-decompile after the display-setting change");
 
 		frozen.Text.Should().NotBe(frozenBefore,
 			"the frozen tab must re-render with the new indentation setting");

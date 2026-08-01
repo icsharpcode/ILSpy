@@ -3,6 +3,7 @@
         x:Class="ICSharpCode.ILSpy.Views.CreateListDialog"
         Width="320" Height="160" CanResize="False"
         WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
         Title="ILSpy">
 	<Grid Margin="12,8" RowDefinitions="Auto,Auto,*,Auto">
 		<TextBlock Grid.Row="0" Text="Enter the name of the list:" Margin="0,0,0,6" />

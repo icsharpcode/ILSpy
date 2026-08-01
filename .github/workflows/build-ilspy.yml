@@ -15,8 +15,16 @@ env:
   StagingDirectory: buildartifacts
 
 jobs:
+  # Skip push builds for branches whose open PR already builds them; see pr-build-gate.yml.
+  Gate:
+    permissions:
+      pull-requests: read
+    uses: ./.github/workflows/pr-build-gate.yml
+
   Build:
     name: Desktop (Windows)
+    needs: Gate
+    if: needs.Gate.outputs.run == 'true'
     permissions:
       packages: write  # for dotnet nuget push
     runs-on: windows-2025-vs2026
@@ -42,7 +50,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v5
+    - uses: actions/setup-dotnet@v6
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -274,15 +282,19 @@ jobs:
         path: ICSharpCode.ILSpyCmd\bin\Release\ilspycmd*.nupkg
         if-no-files-found: error
 
-  # Linux and macOS build the desktop solution filter, run the UI and decompiler tests on
-  # their own platform, and package self-contained Release bundles. NuGet packing and all
-  # Windows-specific packaging stay in the Windows job above. The decompiler tests need the
-  # ILSpy-tests submodule (the TargetNet40 configs compile against its legacy reference
-  # assemblies even on non-Windows); configs that genuinely need Windows (legacy csc, mcs,
-  # 32-bit, roundtrip) self-exclude via Tester.SupportedOnCurrentPlatform and
-  # [Platform("Win")]. ILSpy.Tests.Windows runs only in the Windows job by design.
+  # Linux and macOS build the desktop solution filter, run the UI tests on their own
+  # platform, and package self-contained Release bundles. NuGet packing and all
+  # Windows-specific packaging stay in the Windows job above. The decompiler tests run on
+  # Linux but not macOS (already covered by Windows + Linux; they dominate the runtime of
+  # the slowest job); they need the ILSpy-tests submodule (the TargetNet40 configs compile
+  # against its legacy reference assemblies even on non-Windows); configs that genuinely
+  # need Windows (legacy csc, mcs, 32-bit, roundtrip) self-exclude via
+  # Tester.SupportedOnCurrentPlatform and [Platform("Win")]. ILSpy.Tests.Windows runs only
+  # in the Windows job by design.
 
   Desktop:
+    needs: Gate
+    if: needs.Gate.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -306,7 +318,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v5
+    - uses: actions/setup-dotnet@v6
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -344,8 +356,16 @@ jobs:
 
     - name: Execute decompiler tests
       id: decompiler-tests
+      if: matrix.platform != 'macos'
       run: >
         dotnet test --project ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
+    - name: Execute ilspycmd tests
+      run: >
+        dotnet test --project ICSharpCode.ILSpyCmd.Tests/ICSharpCode.ILSpyCmd.Tests.csproj
         --configuration Release
         --no-build --report-trx
         --results-directory test-results

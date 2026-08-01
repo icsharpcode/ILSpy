@@ -32,13 +32,16 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 	/// <summary>
 	/// A <see cref="IProjectFileWriter"/> implementation that creates the projects in the default format.
 	/// </summary>
-	sealed class ProjectFileWriterDefault : IProjectFileWriter
+	public sealed class ProjectFileWriterDefault : IProjectFileWriter
 	{
 		/// <summary>
-		/// Creates a new instance of the <see cref="ProjectFileWriterDefault"/> class.
+		/// Gets the singleton instance of the <see cref="ProjectFileWriterDefault"/> class.
 		/// </summary>
-		/// <returns>A new instance of the <see cref="ProjectFileWriterDefault"/> class.</returns>
-		public static IProjectFileWriter Create() => new ProjectFileWriterDefault();
+		public static ProjectFileWriterDefault Instance { get; } = new();
+
+		ProjectFileWriterDefault()
+		{
+		}
 
 		/// <inheritdoc />
 		public void Write(

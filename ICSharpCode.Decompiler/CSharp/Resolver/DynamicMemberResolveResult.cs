@@ -39,10 +39,17 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly string Member;
 
-		public DynamicMemberResolveResult(ResolveResult target, string member) : base(SpecialType.Dynamic)
+		/// <summary>
+		/// Synthesized member (a <c>dynamic</c> field on the <c>dynamic</c> type) representing the accessed
+		/// member, so the member reference carries a navigable symbol / hover tooltip. May be null.
+		/// </summary>
+		public readonly IMember Symbol;
+
+		public DynamicMemberResolveResult(ResolveResult target, string member, IMember symbol = null) : base(SpecialType.Dynamic)
 		{
 			this.Target = target;
 			this.Member = member;
+			this.Symbol = symbol;
 		}
 
 		public override string ToString()

@@ -4,4 +4,7 @@
         "ILSpy-tests/**": true
     },
     "dotnet.defaultSolution": "ILSpy.sln",
+    "dotrush.roslyn.projectOrSolutionFiles": [
+        "ILSpy.sln"
+    ],
 }

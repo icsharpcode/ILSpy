@@ -192,6 +192,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 
+		public override bool VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression)
+		{
+			bool result = base.VisitObjectCreateExpression(objectCreateExpression);
+			if (HasUnsafeResolveResult(objectCreateExpression))
+				return true;
+			return result;
+		}
+
 		public override bool VisitFixedVariableInitializer(FixedVariableInitializer fixedVariableInitializer)
 		{
 			base.VisitFixedVariableInitializer(fixedVariableInitializer);

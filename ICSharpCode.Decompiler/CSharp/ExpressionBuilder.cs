@@ -1650,22 +1650,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						right.ResolveResult));
 				}
 			}
-			if (op.IsBitwise()
-				&& left.Type.IsKnownType(KnownTypeCode.Boolean)
-				&& right.Type.IsKnownType(KnownTypeCode.Boolean)
-				&& SemanticHelper.IsPure(inst.Right.Flags))
-			{
-				// Undo the C# compiler's optimization of "a && b" to "a & b".
-				if (op == BinaryOperatorType.BitwiseAnd)
-				{
-					op = BinaryOperatorType.ConditionalAnd;
-				}
-				else if (op == BinaryOperatorType.BitwiseOr)
-				{
-					op = BinaryOperatorType.ConditionalOr;
-				}
-			}
-
 			if (op.IsBitwise() && (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum))
 			{
 				left = AdjustConstantExpressionToType(left, right.Type);
@@ -4361,7 +4345,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new IndexerExpression(target, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.Select(a => a.ResolveResult).ToArray(),
+					symbol: CreateDynamicIndexerSymbol(DynamicArgumentType(inst.ArgumentInfo[0]), inst.ArgumentInfo.Skip(1).ToArray())));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicGetMemberInstruction(DynamicGetMemberInstruction inst, TranslationContext context)
@@ -4369,7 +4354,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = TranslateDynamicTarget(inst.Target, inst.TargetArgumentInfo);
 			return new MemberReferenceExpression(target, inst.Name!)
 				.WithILInstruction(inst)
-				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name));
+				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name, CreateDynamicMemberSymbol(inst.Name!, inst.TargetArgumentInfo)));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeConstructorInstruction(DynamicInvokeConstructorInstruction inst, TranslationContext context)
@@ -4377,9 +4362,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!(inst.ArgumentInfo[0].HasFlag(CSharpArgumentInfoFlags.IsStaticType) && IL.Transforms.TransformExpressionTrees.MatchGetTypeFromHandle(inst.Arguments[0], out var constructorType)))
 				return ErrorExpression("Could not detect static type for DynamicInvokeConstructorInstruction");
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
-			//var names = inst.ArgumentInfo.Skip(1).Select(a => a.Name).ToArray();
+			var constructor = CreateDynamicConstructorSymbol(constructorType, inst.ArgumentInfo.Skip(1).ToArray());
 			return new ObjectCreateExpression(ConvertType(constructorType), arguments.Select(a => a.Expression))
-				.WithILInstruction(inst).WithRR(new ResolveResult(constructorType));
+				.WithILInstruction(inst)
+				.WithRR(new CSharpInvocationResolveResult(new ResolveResult(constructorType), constructor, arguments.Select(a => a.ResolveResult).ToArray()));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst, TranslationContext context)
@@ -4398,7 +4384,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arguments = TranslateDynamicArguments(inst.Arguments.Skip(1), inst.ArgumentInfo.Skip(1)).ToList();
 			return new InvocationExpression(targetExpr, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray(), symbol: CreateDynamicInvokeMemberSymbol(inst.Name, inst.ArgumentInfo[0], inst.ArgumentInfo.Skip(1).ToArray(), inst.TypeArguments)));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
@@ -4437,6 +4423,106 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			return translatedTarget;
+		}
+
+		/// <summary>
+		/// The type to show for a dynamic callsite argument: its recorded compile-time type when the runtime
+		/// binder was told to use it (statically-typed or constant arguments), otherwise <c>dynamic</c>.
+		/// </summary>
+		static IType DynamicArgumentType(CSharpArgumentInfo info)
+		{
+			if ((info.HasFlag(CSharpArgumentInfoFlags.UseCompileTimeType) || info.HasFlag(CSharpArgumentInfoFlags.Constant))
+				&& info.CompileTimeType != null)
+			{
+				return info.CompileTimeType;
+			}
+			return SpecialType.Dynamic;
+		}
+
+		/// <summary>
+		/// Synthesizes a member on the target type for a dynamic member access (a.Member), so the member
+		/// reference carries a navigable symbol / hover tooltip. Since the real member is unknown, this is a
+		/// <c>dynamic</c>-typed field named after the accessed member, declared on the target's compile-time type.
+		/// </summary>
+		IMember CreateDynamicMemberSymbol(string name, CSharpArgumentInfo targetInfo)
+		{
+			return new FakeField(compilation) {
+				Name = name,
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = DynamicArgumentType(targetInfo),
+			};
+		}
+
+		/// <summary>
+		/// Synthesizes a member on the target type for a dynamic member invocation (a.Method(b)): a
+		/// <c>dynamic</c>-returning method named after the invoked member, with one parameter per argument
+		/// typed by <see cref="DynamicArgumentType"/>, so the member reference carries a navigable symbol /
+		/// hover tooltip.
+		/// </summary>
+		IMember CreateDynamicInvokeMemberSymbol(string name, CSharpArgumentInfo targetInfo, IReadOnlyList<CSharpArgumentInfo> argumentInfo, IReadOnlyList<IType> typeArguments)
+		{
+			var method = new FakeMethod(compilation, SymbolKind.Method) {
+				Name = name,
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = DynamicArgumentType(targetInfo),
+			};
+			if (argumentInfo.Count > 0)
+			{
+				var parameters = new IParameter[argumentInfo.Count];
+				for (int i = 0; i < argumentInfo.Count; i++)
+					parameters[i] = new DefaultParameter(DynamicArgumentType(argumentInfo[i]), argumentInfo[i].Name ?? string.Empty);
+				method.Parameters = parameters;
+			}
+			if (typeArguments.Count == 0)
+				return method;
+			// Explicit type arguments (a.Method<int>()): give the fake a matching set of type parameters,
+			// conventionally named T, T2, ..., and specialize it with the actual arguments like a real
+			// generic call would.
+			var typeParameters = new ITypeParameter[typeArguments.Count];
+			for (int i = 0; i < typeArguments.Count; i++)
+				typeParameters[i] = new DefaultTypeParameter(method, i, i == 0 ? "T" : "T" + (i + 1));
+			method.TypeParameters = typeParameters;
+			return SpecializedMethod.Create(method, new TypeParameterSubstitution(null, typeArguments));
+		}
+
+		/// <summary>
+		/// Synthesizes the constructor for a dynamic object creation (<c>new T(b)</c> where an argument is
+		/// dynamic): a constructor on the created type with one parameter per argument typed by
+		/// <see cref="DynamicArgumentType"/>, so the type name and parentheses carry a hover tooltip.
+		/// </summary>
+		IMethod CreateDynamicConstructorSymbol(IType declaringType, IReadOnlyList<CSharpArgumentInfo> argumentInfo)
+		{
+			var constructor = new FakeMethod(compilation, SymbolKind.Constructor) {
+				Name = ".ctor",
+				DeclaringType = declaringType,
+				ReturnType = compilation.FindType(KnownTypeCode.Void),
+			};
+			if (argumentInfo.Count > 0)
+			{
+				var parameters = new IParameter[argumentInfo.Count];
+				for (int i = 0; i < argumentInfo.Count; i++)
+					parameters[i] = new DefaultParameter(DynamicArgumentType(argumentInfo[i]), argumentInfo[i].Name ?? string.Empty);
+				constructor.Parameters = parameters;
+			}
+			return constructor;
+		}
+
+		/// <summary>
+		/// Synthesizes the indexer for a dynamic index access (a[b]): an indexer on the target type whose
+		/// parameters are typed from the callsite delegate, so the brackets carry a hover tooltip.
+		/// </summary>
+		IMember CreateDynamicIndexerSymbol(IType declaringType, IReadOnlyList<CSharpArgumentInfo> argumentInfo)
+		{
+			var parameters = new IParameter[argumentInfo.Count];
+			for (int i = 0; i < argumentInfo.Count; i++)
+				parameters[i] = new DefaultParameter(DynamicArgumentType(argumentInfo[i]), argumentInfo[i].Name ?? string.Empty);
+			return new FakeProperty(compilation) {
+				Name = "Item",
+				IsIndexer = true,
+				ReturnType = SpecialType.Dynamic,
+				DeclaringType = declaringType,
+				Parameters = parameters,
+			};
 		}
 
 		IEnumerable<TranslatedExpression> TranslateDynamicArguments(IEnumerable<ILInstruction> arguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
@@ -4505,7 +4591,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = new TranslatedExpression(arguments.Last());
 			var indexer = new IndexerExpression(target, arguments.SkipLast(1).Select(a => a.Expression))
 				.WithoutILInstruction()
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.SkipLast(1).Select(a => a.ResolveResult).ToArray()));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Indexing, arguments.SkipLast(1).Select(a => a.ResolveResult).ToArray(),
+					symbol: CreateDynamicIndexerSymbol(DynamicArgumentType(inst.ArgumentInfo[0]), inst.ArgumentInfo.Skip(1).Take(inst.ArgumentInfo.Count - 2).ToArray())));
 			return Assignment(indexer, value).WithILInstruction(inst);
 		}
 
@@ -4515,7 +4602,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = TranslateDynamicArgument(inst.Value, inst.ValueArgumentInfo);
 			var member = new MemberReferenceExpression(target, inst.Name!)
 				.WithoutILInstruction()
-				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name));
+				.WithRR(new DynamicMemberResolveResult(target.ResolveResult, inst.Name, CreateDynamicMemberSymbol(inst.Name!, inst.TargetArgumentInfo)));
 			return Assignment(member, value).WithILInstruction(inst);
 		}
 

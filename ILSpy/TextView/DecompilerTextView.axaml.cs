@@ -185,7 +185,9 @@ namespace ICSharpCode.ILSpy.TextView
 		// with a null target slip through unconditionally otherwise.
 		void SetupElementGenerators()
 		{
-			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null);
+			referenceElementGenerator = new ReferenceElementGenerator(static segment => segment.Reference != null) {
+				QueryCursor = OnReferenceQueryCursor
+			};
 			Editor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 
 			uiElementGenerator = new UIElementGenerator();
@@ -249,7 +251,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// bubbling further now that it has been consumed as a link click.
 			Editor.TextArea.ClearSelection();
 			e.Handled = true;
-			OnReferenceClicked(segment);
+			OnReferenceClicked(segment, e.KeyModifiers.HasFlag(KeyModifiers.Control));
 		}
 
 		// Background renderers that live for the view's lifetime: the local-reference highlight (marks
@@ -360,13 +362,25 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			base.OnAttachedToVisualTree(e);
 			ICSharpCode.ILSpy.Themes.ThemeManager.Current.ThemeChanged += OnThemeChangedRebuildHighlighting;
+			// Ctrl toggles between highlight and navigate for reference clicks; listen at the
+			// top level because the keyboard focus is usually elsewhere while hovering.
+			cursorKeyEventSource = global::Avalonia.Controls.TopLevel.GetTopLevel(this);
+			cursorKeyEventSource?.AddHandler(KeyDownEvent, OnTopLevelKeyDownForReferenceCursor, RoutingStrategies.Tunnel, handledEventsToo: true);
+			cursorKeyEventSource?.AddHandler(KeyUpEvent, OnTopLevelKeyUpForReferenceCursor, RoutingStrategies.Tunnel, handledEventsToo: true);
 		}
 
 		protected override void OnDetachedFromVisualTree(global::Avalonia.VisualTreeAttachmentEventArgs e)
 		{
 			ICSharpCode.ILSpy.Themes.ThemeManager.Current.ThemeChanged -= OnThemeChangedRebuildHighlighting;
+			cursorKeyEventSource?.RemoveHandler(KeyDownEvent, OnTopLevelKeyDownForReferenceCursor);
+			cursorKeyEventSource?.RemoveHandler(KeyUpEvent, OnTopLevelKeyUpForReferenceCursor);
+			cursorKeyEventSource = null;
+			cursorQueryElement = null;
+			cursorQuerySegment = null;
 			base.OnDetachedFromVisualTree(e);
 		}
+
+		global::Avalonia.Controls.TopLevel? cursorKeyEventSource;
 
 		// A theme switch re-colours the shared named HighlightingColors in place, but the
 		// semantic RichTextModel cloned them at decompile time (RichTextModel.SetHighlighting
@@ -443,8 +457,22 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>Toggles the innermost fold containing the caret (the "Toggle folding" command / Ctrl+M).</summary>
 		public void ToggleFoldingAtCaret() => ToggleFoldingAt(Editor.TextArea.Caret.Offset);
 
-		/// <summary>Toggles the innermost fold containing <paramref name="offset"/>. The right-click menu
-		/// passes the offset under the pointer so it acts on the clicked line, not the caret line.</summary>
+		/// <summary>The offset where a fold's logical region begins: definition folds reach back to
+		/// their entity's first character (leading documentation comments and attributes included);
+		/// every other fold starts at its own first character.</summary>
+		static int GetLogicalStart(FoldingSection folding)
+		{
+			return folding.Tag is DefinitionNewFolding definition
+				? Math.Min(definition.DefinitionStartOffset, folding.StartOffset)
+				: folding.StartOffset;
+		}
+
+		/// <summary>Toggles the fold whose logical region innermost-contains <paramref name="offset"/>.
+		/// The right-click menu passes the offset under the pointer so it acts on the clicked line,
+		/// not the caret line. A definition fold's logical region includes its header and leading
+		/// documentation, so toggling from the header line targets the member (not the enclosing
+		/// type), and the member's documentation folds toggle together with it. With the caret
+		/// inside the documentation, the doc fold itself is the innermost region and toggles alone.</summary>
 		public void ToggleFoldingAt(int offset)
 		{
 			if (activeFoldingManager is not { } mgr)
@@ -452,30 +480,49 @@ namespace ICSharpCode.ILSpy.TextView
 			FoldingSection? target = null;
 			foreach (var f in mgr.AllFoldings)
 			{
-				if (f.StartOffset <= offset && offset <= f.EndOffset)
+				if (GetLogicalStart(f) > offset || offset > f.EndOffset)
+					continue;
+				if (target == null
+					|| GetLogicalStart(f) > GetLogicalStart(target)
+					|| (GetLogicalStart(f) == GetLogicalStart(target) && f.EndOffset < target.EndOffset))
 				{
-					if (target == null || f.StartOffset > target.StartOffset)
-						target = f;
+					target = f;
 				}
 			}
-			if (target != null)
-				target.IsFolded = !target.IsFolded;
+			if (target == null)
+				return;
+			bool folded = !target.IsFolded;
+			target.IsFolded = folded;
+			// Drag the attached leading folds (XML documentation) along with their member.
+			int logicalStart = GetLogicalStart(target);
+			if (logicalStart < target.StartOffset)
+			{
+				foreach (var f in mgr.AllFoldings)
+				{
+					if (f != target && f.StartOffset >= logicalStart && f.EndOffset <= target.StartOffset)
+						f.IsFolded = folded;
+				}
+			}
 		}
 
-		/// <summary>Collapses every fold when any is open, otherwise expands them all ("Toggle all folding"
-		/// / Ctrl+Shift+M).</summary>
+		/// <summary>Sets all folds to the same state ("Toggle all folding" / Ctrl+Shift+M), with
+		/// Visual Studio's Toggle All Outlining parity: a mixed state expands everything, a uniform
+		/// state flips.</summary>
 		public void ToggleAllFoldings()
 		{
 			if (activeFoldingManager is not { } mgr)
 				return;
-			bool anyOpen = false;
+			bool anyOpen = false, anyFolded = false;
 			foreach (var f in mgr.AllFoldings)
 			{
-				if (!f.IsFolded)
-				{ anyOpen = true; break; }
+				if (f.IsFolded)
+					anyFolded = true;
+				else
+					anyOpen = true;
 			}
+			bool folded = anyOpen && anyFolded ? false : anyOpen;
 			foreach (var f in mgr.AllFoldings)
-				f.IsFolded = anyOpen;
+				f.IsFolded = folded;
 		}
 
 		void OnEditorKeyDownForZoom(object? sender, KeyEventArgs e)
@@ -570,8 +617,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void ApplyAllDisplaySettings(DisplaySettings s)
 		{
-			ApplyDisplaySetting(s, nameof(DisplaySettings.SelectedFont));
-			ApplyDisplaySetting(s, nameof(DisplaySettings.SelectedFontSize));
+			// Font family/size and the themed background/selection are not handled here:
+			// DecompilerTextEditor itself follows those settings, shared with every other
+			// surface hosting the editor (metadata row details).
 			ApplyDisplaySetting(s, nameof(DisplaySettings.ShowLineNumbers));
 			ApplyDisplaySetting(s, nameof(DisplaySettings.EnableWordWrap));
 			ApplyDisplaySetting(s, nameof(DisplaySettings.HighlightCurrentLine));
@@ -584,14 +632,6 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			switch (propertyName)
 			{
-				case nameof(DisplaySettings.SelectedFont):
-					if (!string.IsNullOrEmpty(s.SelectedFont))
-						Editor.FontFamily = new FontFamily(s.SelectedFont);
-					break;
-				case nameof(DisplaySettings.SelectedFontSize):
-					if (s.SelectedFontSize > 0)
-						Editor.FontSize = s.SelectedFontSize;
-					break;
 				case nameof(DisplaySettings.ShowLineNumbers):
 					Editor.ShowLineNumbers = s.ShowLineNumbers;
 					break;
@@ -1197,15 +1237,76 @@ namespace ICSharpCode.ILSpy.TextView
 			return model.References.FindSegmentsContaining(offset).FirstOrDefault();
 		}
 
-		internal void OnReferenceClicked(ReferenceSegment segment)
+		/// <summary>
+		/// True when a plain click on <paramref name="segment"/> paints the occurrence
+		/// highlight instead of navigating: the member-highlight setting is enabled, Ctrl is
+		/// not held, and the reference is a member, type or unresolved entity reference.
+		/// </summary>
+		bool ShouldHighlightInsteadOfNavigate(ReferenceSegment segment, bool ctrlHeld)
+		{
+			return !ctrlHeld
+				&& segment.Kind == ReferenceMode.Link
+				&& currentDisplaySettings is { HighlightMemberReferences: true }
+				&& segment.Reference is IMember or IType or EntityReference;
+		}
+
+		InputElement? cursorQueryElement;
+		ReferenceSegment? cursorQuerySegment;
+
+		void OnReferenceQueryCursor(InputElement element, ReferenceSegment segment, KeyModifiers modifiers)
+		{
+			cursorQueryElement = element;
+			cursorQuerySegment = segment;
+			ApplyReferenceCursor(modifiers.HasFlag(KeyModifiers.Control));
+		}
+
+		// The hand cursor promises navigation: show it only when a click would actually
+		// navigate. Re-evaluated on pointer moves and on Ctrl presses/releases while a
+		// reference is under the pointer.
+		void ApplyReferenceCursor(bool ctrlHeld)
+		{
+			if (cursorQueryElement == null || cursorQuerySegment == null)
+				return;
+			bool navigates = cursorQuerySegment.Kind == ReferenceMode.Link
+				&& !ShouldHighlightInsteadOfNavigate(cursorQuerySegment, ctrlHeld);
+			cursorQueryElement.Cursor = new Cursor(navigates ? StandardCursorType.Hand : StandardCursorType.Arrow);
+		}
+
+		void OnTopLevelKeyDownForReferenceCursor(object? sender, KeyEventArgs e)
+		{
+			if (e.Key is Key.LeftCtrl or Key.RightCtrl)
+				ApplyReferenceCursor(ctrlHeld: true);
+		}
+
+		void OnTopLevelKeyUpForReferenceCursor(object? sender, KeyEventArgs e)
+		{
+			if (e.Key is Key.LeftCtrl or Key.RightCtrl)
+				ApplyReferenceCursor(ctrlHeld: false);
+		}
+
+		internal void OnReferenceClicked(ReferenceSegment segment, bool ctrlHeld = false)
 		{
 			if (DataContext is not DecompilerTabPageModel model || segment.Reference == null)
+				return;
+
+			// Hover-only references (synthesized dynamic members, the dynamic keyword) carry a tooltip
+			// but are neither navigable nor highlightable — a click does nothing.
+			if (segment.Kind == ReferenceMode.HoverOnly)
 				return;
 
 			// Local references stay inside this document — paint every match and let the user
 			// scrub through them. Cross-document references clear any existing marks since the
 			// view is about to refresh anyway.
-			if (segment.IsLocal)
+			if (segment.Kind == ReferenceMode.LocalHighlight)
+			{
+				HighlightLocalReferences(model, segment.Reference);
+				return;
+			}
+			// With the member-highlight setting enabled, a plain click on a member or type
+			// reference paints all its occurrences in this view instead of navigating;
+			// Ctrl+Click keeps the navigation behavior. Opcode references always navigate:
+			// highlighting every occurrence of an IL opcode would be noise.
+			if (ShouldHighlightInsteadOfNavigate(segment, ctrlHeld))
 			{
 				HighlightLocalReferences(model, segment.Reference);
 				return;
@@ -1240,11 +1341,47 @@ namespace ICSharpCode.ILSpy.TextView
 				return;
 			foreach (var r in model.References)
 			{
-				if (!ReferenceEquals(reference, r.Reference) && !reference.Equals(r.Reference))
+				if (!AreSameReference(reference, r.Reference))
 					continue;
 				var mark = textMarkerService.Create(r.StartOffset, r.Length);
 				mark.BackgroundColor = r.IsDefinition ? LocalDefinitionBackground : LocalMatchBackground;
 				localReferenceMarks.Add(mark);
+			}
+		}
+
+		internal static bool AreSameReference(object reference, object? candidate)
+		{
+			if (candidate == null)
+				return false;
+			if (ReferenceEquals(reference, candidate) || reference.Equals(candidate))
+				return true;
+			// Member and type references compare by definition: a use site carries a
+			// specialized instance (e.g. List<int>.Add) while the declaration carries
+			// the unspecialized definition, and their Equals treats them as different.
+			var a = NormalizeToEntity(reference);
+			var b = NormalizeToEntity(candidate);
+			if (a != null && b != null)
+			{
+				// Generated members carry a nil token; falling through to the token comparison
+				// would conflate any two of them from the same module.
+				return !a.MetadataToken.IsNil
+					&& a.MetadataToken == b.MetadataToken
+					&& a.ParentModule?.MetadataFile != null
+					&& a.ParentModule.MetadataFile == b.ParentModule?.MetadataFile;
+			}
+			// IL and metadata views carry unresolved entity references; compare them
+			// structurally instead of resolving, which would build a type system per call.
+			if (reference is EntityReference unresolvedA && candidate is EntityReference unresolvedB)
+				return unresolvedA.Module == unresolvedB.Module && unresolvedA.Handle == unresolvedB.Handle;
+			return false;
+
+			static IEntity? NormalizeToEntity(object reference)
+			{
+				return reference switch {
+					IMember member => member.MemberDefinition,
+					IType type => type.GetDefinition(),
+					_ => null,
+				};
 			}
 		}
 
@@ -1368,6 +1505,15 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextViewPointerMoved(object? sender, PointerEventArgs e)
 		{
+			// The reference elements report QueryCursor only while the pointer is over them;
+			// once it moves elsewhere inside the text view, drop the cached query so Ctrl
+			// transitions cannot repaint a reference the pointer has already left.
+			if (cursorQueryElement is { IsPointerOver: false })
+			{
+				cursorQueryElement = null;
+				cursorQuerySegment = null;
+			}
+
 			if (!richPopup.IsOpen)
 				return;
 			// While the rich popup is open, PointerMoved drives the WPF "distance corridor" —
@@ -1382,6 +1528,11 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextViewPointerExited(object? sender, PointerEventArgs e)
 		{
+			// The pointer is no longer over a reference, so Ctrl transitions must not
+			// repaint the last hovered element's cursor.
+			cursorQueryElement = null;
+			cursorQuerySegment = null;
+
 			// Don't close the rich popup if the pointer just moved from the editor onto the
 			// popup itself — the user is reaching for it. The overlay popup delivers the
 			// editor's exit BEFORE the popup child's IsPointerOver flips, so the flag alone
@@ -1471,6 +1622,21 @@ namespace ICSharpCode.ILSpy.TextView
 		internal HoverContent? BuildHoverContent(DecompilerTabPageModel model, ReferenceSegment segment)
 		{
 			var language = model.Language;
+			if (segment.Reference is Decompiler.IL.ILVariable variable && language != null)
+			{
+				// Local variables have no metadata symbol, so render the declared type and name directly.
+				string kind = variable.Kind == Decompiler.IL.VariableKind.Parameter ? "parameter" : "local variable";
+				var localRenderer = CreateTooltipRenderer();
+				localRenderer.AddSignatureBlock(new RichText($"({kind}) ") + language.GetRichText(variable.Type) + new RichText($" {variable.Name}"));
+				return new HoverContent(localRenderer.CreateView(), IsRich: true);
+			}
+			if (segment.Reference is IType { Kind: TypeKind.Dynamic } dynamicType && language != null)
+			{
+				// dynamic has no metadata entity; render the keyword as its own hover.
+				var dynamicRenderer = CreateTooltipRenderer();
+				dynamicRenderer.AddSignatureBlock(language.GetRichText(dynamicType));
+				return new HoverContent(dynamicRenderer.CreateView(), IsRich: true);
+			}
 			var resolved = ResolveEntity(model, segment.Reference);
 			switch (resolved)
 			{
@@ -1531,7 +1697,15 @@ namespace ICSharpCode.ILSpy.TextView
 				// XmlDocLoader handles every layout the decompiler library knows about: .xml
 				// beside the .dll, .NET Framework reference-assemblies paths, and (recently)
 				// the modern .NET ref pack at dotnet/packs/Microsoft.NETCore.App.Ref/...
-				var documentation = XmlDocLoader.LoadDocumentation(metadata)?.GetDocumentation(entity.GetIdString());
+				var provider = XmlDocLoader.LoadDocumentation(metadata);
+				var documentation = provider?.GetDocumentation(entity);
+				if (documentation == null && entity is IMethod { AccessorOwner: IProperty owner })
+				{
+					// Accessors of parameterized properties appear as ordinary methods in the
+					// C# output; show the owning property's documentation for them.
+					documentation = provider?.GetDocumentation(owner);
+					entity = owner;
+				}
 				if (documentation == null)
 					return;
 				renderer.AddXmlDocumentation(documentation, entity, resolver: ResolveDocReference);

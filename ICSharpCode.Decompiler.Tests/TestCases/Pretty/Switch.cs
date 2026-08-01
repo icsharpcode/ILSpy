@@ -1282,7 +1282,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #if ROSLYN || OPT
 		public static void SingleIf1(int i, bool a)
 		{
-			if (i == 1 || (i == 2 && a))
+			if (i == 1 || ((i == 2) & a))
 			{
 				Console.WriteLine(1);
 			}
@@ -1292,7 +1292,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIf2(int i, bool a, bool b)
 		{
-			if (i == 1 || (i == 2 && a) || (i == 3 && b))
+			if (i == 1 || ((i == 2) & a) || ((i == 3) & b))
 			{
 				Console.WriteLine(1);
 			}
@@ -1301,7 +1301,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIf3(int i, bool a, bool b)
 		{
-			if (a || i == 1 || (i == 2 && b))
+			if (a || i == 1 || ((i == 2) & b))
 			{
 				Console.WriteLine(1);
 			}
@@ -1310,7 +1310,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SingleIf4(int i, bool a)
 		{
-			if (i == 1 || i == 2 || (i != 3 && a) || i != 4)
+			if (i == 1 || i == 2 || ((i != 3) & a) || i != 4)
 			{
 				Console.WriteLine(1);
 			}

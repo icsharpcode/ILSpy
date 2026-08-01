@@ -326,13 +326,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 #endif
 
-		public void PreferLogicalToBitwise(bool a, bool b, int i, float f)
+		public void BitwiseBooleanOperators(bool a, bool b, int i, float f)
 		{
-			B(a && b);
+			B(a & b);
+			B(a & (i == 1));
+			B((i == 1) & a);
+			B((i > i - 3) & a);
+			B((f < 0.1f) & a);
+			B(a | b);
 			B(a && i == 1);
-			B(i == 1 && a);
-			B(i > i - 3 && a);
-			B(f < 0.1f && a);
+			B(a || i == 1);
+		}
+
+		public bool BitwiseOrWithComparisons(char c)
+		{
+			return (c == 'a') | (c == 'b');
 		}
 	}
 }

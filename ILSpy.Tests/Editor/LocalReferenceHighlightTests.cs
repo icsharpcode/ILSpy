@@ -68,7 +68,7 @@ public class LocalReferenceHighlightTests
 		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
 
 		var localFunctionSegments = tab.References!
-			.Where(r => r.IsLocal && r.Reference is IMethod { IsLocalFunction: true })
+			.Where(r => r.Kind == ReferenceMode.LocalHighlight && r.Reference is IMethod { IsLocalFunction: true })
 			.ToList();
 		localFunctionSegments.Should().HaveCount(3, "the local function has one definition and two calls");
 		localFunctionSegments.Count(r => r.IsDefinition).Should().Be(1);

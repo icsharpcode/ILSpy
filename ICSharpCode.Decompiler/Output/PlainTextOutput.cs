@@ -147,9 +147,13 @@ namespace ICSharpCode.Decompiler
 			Write(text);
 		}
 
-		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
 		{
 			Write(text);
+		}
+
+		void ITextOutput.MarkDefinitionStart()
+		{
 		}
 
 		void ITextOutput.MarkFoldStart(string collapsedText, bool defaultCollapsed, bool isDefinition)
@@ -199,9 +203,14 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.MarkFoldEnd());
 		}
 
+		public void MarkDefinitionStart()
+		{
+			actions.Add(target => target.MarkDefinitionStart());
+		}
+
 		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)
 		{
-			actions.Add(target => target.MarkFoldStart(collapsedText, defaultCollapsed));
+			actions.Add(target => target.MarkFoldStart(collapsedText, defaultCollapsed, isDefinition));
 		}
 
 		public void Unindent()
@@ -224,7 +233,7 @@ namespace ICSharpCode.Decompiler
 			actions.Add(target => target.WriteLine());
 		}
 
-		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
 		{
 			actions.Add(target => target.WriteLocalReference(text, reference, isDefinition));
 		}

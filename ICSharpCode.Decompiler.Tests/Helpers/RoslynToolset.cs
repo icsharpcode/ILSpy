@@ -149,14 +149,33 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		// In the .NET ("netcore") build of the compiler toolset the executables live in a
 		// "bincore" subfolder of the tasks directory, as .dlls launched through the dotnet host.
+		// The old Microsoft.Net.Compilers packages (Roslyn 1.x/2.x) have no .NET build; they
+		// only ship .NET Framework executables, which non-Windows platforms host with Mono.
 		public string GetCSharpCompiler(string version)
 		{
-			return GetCompiler(OperatingSystem.IsWindows() ? "csc.exe" : "bincore/csc.dll", version);
+			return GetHostedCompiler(version, "csc");
 		}
 
 		public string GetVBCompiler(string version)
 		{
-			return GetCompiler(OperatingSystem.IsWindows() ? "vbc.exe" : "bincore/vbc.dll", version);
+			return GetHostedCompiler(version, "vbc");
+		}
+
+		string GetHostedCompiler(string version, string name)
+		{
+			if (!OperatingSystem.IsWindows())
+			{
+				// The installed path may point directly at a dotnet-hosted compiler directory
+				// (e.g. Microsoft.NETCore.Compilers' tools/bincore) or at a tasks directory
+				// with a bincore subfolder (Microsoft.Net.Compilers.Toolset).
+				string dll = GetCompiler($"{name}.dll", version);
+				if (File.Exists(dll))
+					return dll;
+				dll = GetCompiler($"bincore/{name}.dll", version);
+				if (File.Exists(dll))
+					return dll;
+			}
+			return GetCompiler($"{name}.exe", version);
 		}
 
 		string GetCompiler(string compiler, string version)

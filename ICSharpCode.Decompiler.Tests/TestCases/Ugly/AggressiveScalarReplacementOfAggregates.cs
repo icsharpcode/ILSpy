@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 {
@@ -180,15 +181,69 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			Console.WriteLine("{0} {1}", displayClass.field1, displayClass.field2);
 		}
 
-		//		public void Test9()
-		//		{
-		//			DisplayClass displayClass = new DisplayClass {
-		//				thisField = this,
-		//				field1 = 1,
-		//				field2 = "Hello World!"
-		//			};
-		//			displayClass.thisField = new Program();
-		//			Console.WriteLine("{0} {1}", this, displayClass.thisField);
-		//		}
+		public void Test9()
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = this,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			displayClass.thisField = new Program();
+			Console.WriteLine("{0} {1}", this, displayClass.thisField);
+		}
+
+		public void Test10()
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = this,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			Interlocked.Exchange(ref displayClass.thisField, new Program());
+			Console.WriteLine("{0} {1}", this, displayClass.thisField);
+		}
+
+		public void Test11()
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = this,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			Console.WriteLine("{0} {1} {2}", displayClass.thisField, displayClass.field1, displayClass.field2);
+		}
+
+		// The one case where mutation and propagation still coexist: the field is initialized
+		// from a parameter that is loaded exactly once, so the store can be redirected to it.
+		public void Test12(Program other)
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = other,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			displayClass.thisField = new Program();
+			Console.WriteLine("{0} {1}", this, displayClass.thisField);
+		}
+
+		// The same mutation from inside a lambda: capturing the display class keeps it
+		// materialized, so propagation never arises here.
+		public void Test13(Program other)
+		{
+			DisplayClass displayClass = new DisplayClass {
+				thisField = other,
+				field1 = 1,
+				field2 = "Hello World!"
+			};
+			Invoke(delegate {
+				displayClass.thisField = new Program();
+			});
+			Console.WriteLine("{0} {1}", this, displayClass.thisField);
+		}
+
+		private static void Invoke(Action action)
+		{
+			action();
+		}
 	}
 }

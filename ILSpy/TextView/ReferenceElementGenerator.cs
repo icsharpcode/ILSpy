@@ -18,6 +18,8 @@
 
 using System;
 
+using Avalonia.Input;
+
 using AvaloniaEdit.Document;
 using AvaloniaEdit.Rendering;
 
@@ -32,6 +34,12 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly Predicate<ReferenceSegment> isLink;
 
 		public TextSegmentCollection<ReferenceSegment>? References { get; set; }
+
+		/// <summary>
+		/// Lets the hosting view decide the cursor for a reference under the pointer,
+		/// factoring in key modifiers and settings. Falls back to hand-for-links when unset.
+		/// </summary>
+		public Action<InputElement, ReferenceSegment, KeyModifiers>? QueryCursor { get; set; }
 
 		public ReferenceElementGenerator(Predicate<ReferenceSegment> isLink)
 		{

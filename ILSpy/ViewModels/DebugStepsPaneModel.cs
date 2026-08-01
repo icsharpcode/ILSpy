@@ -81,16 +81,31 @@ namespace ICSharpCode.ILSpy.ViewModels
 		object? options;
 
 		/// <summary>
-		/// Currently displayed list of recorded transform steps. Re-assigned (not mutated)
-		/// whenever the active step provider's <see cref="Stepper"/> reports a new run, so
-		/// late-binding views pick up the latest list via the observable change.
+		/// The recorded transform steps currently backing <see cref="Steps"/>. Tracked so that
+		/// re-assignments of the same run (each step replay pumps StepperUpdated with the same
+		/// list instance) don't rebuild the wrapper tree and thereby wipe its expansion and
+		/// selection state.
+		/// </summary>
+		IList<Stepper.Node>? stepsSource;
+
+		/// <summary>
+		/// True while the wrapper tree holds a pre-filter expansion snapshot, i.e. from the first
+		/// non-empty <see cref="FilterText"/> until the filter is cleared or the tree is rebuilt.
+		/// </summary>
+		bool filterSnapshotTaken;
+
+		/// <summary>
+		/// Currently displayed tree of recorded transform steps, wrapped with per-row UI state.
+		/// Re-assigned (not mutated) whenever the active step provider's <see cref="Stepper"/>
+		/// reports a new run, so late-binding views pick up the latest tree via the observable
+		/// change.
 		/// </summary>
 		[ObservableProperty]
-		IList<Stepper.Node>? steps;
+		IReadOnlyList<StepNodeViewModel>? steps;
 
 		/// <summary>Two-way bound to the TreeView's selected item.</summary>
 		[ObservableProperty]
-		Stepper.Node? selectedStep;
+		StepNodeViewModel? selectedStep;
 
 		/// <summary>
 		/// True while the current language is an <see cref="IDebugStepProvider"/>. When false,
@@ -109,8 +124,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 		string? filterText;
 
 		/// <summary>
-		/// True while <see cref="FilterText"/> is non-empty. Drives auto-expansion of the tree so that
-		/// matches nested under transform groups are revealed rather than hidden in collapsed groups.
+		/// True while <see cref="FilterText"/> is non-empty. A filter session is transient: the
+		/// expansion states are snapshotted when it starts and restored when it ends, so filtering
+		/// never destroys the tree state the user built up manually.
 		/// </summary>
 		public bool IsFiltering => !string.IsNullOrWhiteSpace(FilterText);
 
@@ -118,13 +134,20 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public IRelayCommand ShowStateAfterCommand { get; }
 		public IRelayCommand DebugStepCommand { get; }
 
+		/// <summary>
+		/// Raised after a filter change re-arranged the tree while a step is selected and still
+		/// visible. Scrolling is a view concern (it needs containers and a ScrollViewer), so the
+		/// view listens and centers the selected row in its viewport.
+		/// </summary>
+		public event System.EventHandler? SelectionRevealRequested;
+
 		/// <summary>Design-time / fallback ctor — no dependencies wired.</summary>
 		public DebugStepsPaneModel()
 		{
 			Id = PaneContentId;
 			Title = "Debug Steps";
-			ShowStateBeforeCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: false, SelectedStep?.BeginStep));
-			ShowStateAfterCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.EndStep ?? int.MaxValue, isDebug: false, SelectedStep?.BeginStep));
+			ShowStateBeforeCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.Step.BeginStep ?? int.MaxValue, isDebug: false, SelectedStep?.Step.BeginStep));
+			ShowStateAfterCommand = new RelayCommand(() => RequestRedecompile(SelectedStep?.Step.EndStep ?? int.MaxValue, isDebug: false, SelectedStep?.Step.BeginStep));
 			DebugStepCommand = new RelayCommand(() => {
 				// "Debug this step" relies on Stepper.Step calling Debugger.Break() when
 				// step == StepLimit — which is a silent no-op without a debugger attached.
@@ -137,7 +160,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 					if (!System.Diagnostics.Debugger.Launch())
 						AppEnv.AppLog.Mark("DebugStep: Debugger.Launch returned false; the upcoming Stepper.Step break is a no-op without a debugger attached.");
 				}
-				RequestRedecompile(SelectedStep?.BeginStep ?? int.MaxValue, isDebug: true, SelectedStep?.BeginStep);
+				RequestRedecompile(SelectedStep?.Step.BeginStep ?? int.MaxValue, isDebug: true, SelectedStep?.Step.BeginStep);
 			});
 		}
 
@@ -183,14 +206,14 @@ namespace ICSharpCode.ILSpy.ViewModels
 			{
 				// Same language instance — just refresh the steps in case a decompile happened
 				// while we were detached.
-				Steps = activeLanguage!.Stepper.Steps;
+				SetStepsSource(activeLanguage!.Stepper.Steps);
 				IsAvailable = true;
 				return;
 			}
 			DetachFromLanguage();
 			activeLanguage = language;
 			language.StepperUpdated += OnStepperUpdated;
-			Steps = language.Stepper.Steps;
+			SetStepsSource(language.Stepper.Steps);
 			Options = language.StepOptions;
 			IsAvailable = true;
 		}
@@ -198,7 +221,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		void DetachFromLanguage()
 		{
 			IsAvailable = false;
-			Steps = null;
+			SetStepsSource(null);
 			if (activeLanguage != null)
 			{
 				activeLanguage.StepperUpdated -= OnStepperUpdated;
@@ -212,10 +235,106 @@ namespace ICSharpCode.ILSpy.ViewModels
 			Dispatcher.UIThread.Post(() => {
 				if (activeLanguage != null)
 				{
-					Steps = activeLanguage.Stepper.Steps;
+					SetStepsSource(activeLanguage.Stepper.Steps);
 					lastSelectedStep = int.MaxValue;
 				}
 			});
+		}
+
+		/// <summary>
+		/// Replaces the displayed step tree with a wrapper tree over <paramref name="source"/>.
+		/// A reference-equal source is a no-op: step replays re-report the same run, and
+		/// rebuilding the wrappers then would discard the expansion and selection state the
+		/// user is navigating with.
+		/// </summary>
+		public void SetStepsSource(IList<Stepper.Node>? source)
+		{
+			if (ReferenceEquals(stepsSource, source))
+				return;
+			stepsSource = source;
+			filterSnapshotTaken = false;
+			Steps = source == null ? null : StepNodeViewModel.Wrap(source);
+			if (Steps != null && IsFiltering)
+				ApplyFilter();
+		}
+
+		partial void OnFilterTextChanged(string? value)
+		{
+			ApplyFilter();
+		}
+
+		/// <summary>
+		/// Reflects the current <see cref="FilterText"/> in the wrapper tree's per-row state.
+		/// Entering a filter session snapshots each row's expansion first; every filter change
+		/// hides non-matching rows and expands the groups on the path to each match; leaving the
+		/// session restores the snapshot and then re-expands the selected step's ancestors so the
+		/// selection never vanishes into a collapsed group.
+		/// </summary>
+		void ApplyFilter()
+		{
+			if (Steps == null)
+			{
+				filterSnapshotTaken = false;
+				return;
+			}
+			if (IsFiltering)
+			{
+				if (!filterSnapshotTaken)
+				{
+					filterSnapshotTaken = true;
+					foreach (var step in Steps)
+						SnapshotExpansion(step);
+				}
+				string filter = FilterText!.Trim();
+				foreach (var step in Steps)
+					ApplyFilterToNode(step, filter);
+				if (SelectedStep is { IsVisible: true })
+					SelectionRevealRequested?.Invoke(this, System.EventArgs.Empty);
+			}
+			else if (filterSnapshotTaken)
+			{
+				filterSnapshotTaken = false;
+				foreach (var step in Steps)
+					RestoreExpansion(step);
+				for (var ancestor = SelectedStep?.Parent; ancestor != null; ancestor = ancestor.Parent)
+					ancestor.IsExpanded = true;
+				if (SelectedStep != null)
+					SelectionRevealRequested?.Invoke(this, System.EventArgs.Empty);
+			}
+		}
+
+		static void SnapshotExpansion(StepNodeViewModel node)
+		{
+			node.ExpansionBeforeFilter = node.IsExpanded;
+			foreach (var child in node.Children)
+				SnapshotExpansion(child);
+		}
+
+		static void RestoreExpansion(StepNodeViewModel node)
+		{
+			node.IsVisible = true;
+			if (node.ExpansionBeforeFilter is bool expanded)
+				node.IsExpanded = expanded;
+			node.ExpansionBeforeFilter = null;
+			foreach (var child in node.Children)
+				RestoreExpansion(child);
+		}
+
+		/// <summary>
+		/// Applies the filter to one subtree: a row stays visible when its description — or a
+		/// descendant's — contains the filter (ordinal, case-insensitive), and a group with a
+		/// surviving descendant is expanded so the path to every match is open.
+		/// </summary>
+		static bool ApplyFilterToNode(StepNodeViewModel node, string filter)
+		{
+			bool descendantMatches = false;
+			foreach (var child in node.Children)
+				descendantMatches |= ApplyFilterToNode(child, filter);
+			bool selfMatches = node.Description.Contains(filter, System.StringComparison.OrdinalIgnoreCase);
+			node.IsVisible = selfMatches || descendantMatches;
+			if (descendantMatches)
+				node.IsExpanded = true;
+			return selfMatches || descendantMatches;
 		}
 
 		void OnSelectionChanged(object? sender, AssemblyTreeSelectionChangedEventArgs e)
@@ -237,7 +356,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 			void ClearSteps()
 			{
-				Steps = null;
+				SetStepsSource(null);
 				lastSelectedStep = int.MaxValue;
 			}
 		}

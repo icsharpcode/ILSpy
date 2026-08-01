@@ -272,6 +272,26 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string? FindAssemblyFile(IAssemblyReference name)
 		{
+#if VSADDIN
+			// The VS add-in compiles this file without the Instrumentation sources.
+			return FindAssemblyFileCore(name);
+#else
+			Instrumentation.DecompilerEventSource.Log.AssemblyResolveStart(name);
+			string? resolvedFile = null;
+			try
+			{
+				resolvedFile = FindAssemblyFileCore(name);
+				return resolvedFile;
+			}
+			finally
+			{
+				Instrumentation.DecompilerEventSource.Log.AssemblyResolveStop(name, resolvedFile);
+			}
+#endif
+		}
+
+		string? FindAssemblyFileCore(IAssemblyReference name)
+		{
 			if (name.IsWindowsRuntime)
 			{
 				return FindWindowsMetadataFile(name);

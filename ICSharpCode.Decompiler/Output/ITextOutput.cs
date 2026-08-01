@@ -36,9 +36,15 @@ namespace ICSharpCode.Decompiler
 		void WriteReference(MetadataFile metadata, Handle handle, string text, string protocol = "decompile", bool isDefinition = false);
 		void WriteReference(IType type, string text, bool isDefinition = false);
 		void WriteReference(IMember member, string text, bool isDefinition = false);
-		void WriteLocalReference(string text, object reference, bool isDefinition = false);
+		void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false);
 
 		void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false);
+		/// <summary>
+		/// Marks the position where an entity declaration begins. The next fold marked with
+		/// isDefinition: true logically extends back to this position, so that leading
+		/// documentation comments and attributes count as part of the definition's region.
+		/// </summary>
+		void MarkDefinitionStart();
 		void MarkFoldEnd();
 	}
 

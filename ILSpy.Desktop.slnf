@@ -5,6 +5,7 @@
 			"ICSharpCode.BamlDecompiler\\ICSharpCode.BamlDecompiler.csproj",
 			"ICSharpCode.Decompiler.TestRunner\\ICSharpCode.Decompiler.TestRunner.csproj",
 			"ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
+			"ICSharpCode.ILSpyCmd.Tests\\ICSharpCode.ILSpyCmd.Tests.csproj",
 			"ICSharpCode.Decompiler\\ICSharpCode.Decompiler.csproj",
 			"ICSharpCode.ILSpyX\\ICSharpCode.ILSpyX.csproj",
 			"ILSpy.BamlDecompiler.Tests\\ILSpy.BamlDecompiler.Tests.csproj",

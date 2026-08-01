@@ -158,7 +158,9 @@ try {
 	}
     
 	foreach ($file in $templateFiles) {
-		[string]$in = (Get-Content $file.Input) -Join [System.Environment]::NewLine;
+		# Force CRLF regardless of platform: the repo's .cs files are CRLF, and the format
+		# hook flags the generated file on every run if it is written with LF on Linux.
+		[string]$in = (Get-Content $file.Input) -Join "`r`n";
 
 		$out = $in.Replace('$INSERTVERSION$', $fullVersionNumber);
 		$out = $out.Replace('$INSERTMAJORVERSION$', $major);
@@ -173,7 +175,7 @@ try {
 		$out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
 		$out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
-		if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join [System.Environment]::NewLine) -ne $out)) {
+		if ((-not (Test-File $file.Output)) -or (((Get-Content $file.Output) -Join "`r`n") -ne $out)) {
 			$utf8NoBom = New-Object System.Text.UTF8Encoding($false);
 			[System.IO.File]::WriteAllText($file.Output, $out, $utf8NoBom);
 		}

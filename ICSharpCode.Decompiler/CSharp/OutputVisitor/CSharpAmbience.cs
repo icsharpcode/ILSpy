@@ -148,6 +148,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					var subst = new TypeParameterSubstitution(extensionGroup.TypeParameters, null);
 					parameters = extensionGroup.Marker.Specialize(subst).Parameters.Select(p => astBuilder.ConvertParameter(p));
 				}
+				else if (symbol is IProperty { SymbolKind: SymbolKind.Property } parameterizedProperty)
+				{
+					// C# property syntax has no parameter list, so the converted node carries
+					// none; parameterized properties take theirs from the symbol.
+					parameters = parameterizedProperty.Parameters.Select(p => astBuilder.ConvertParameter(p));
+				}
 				else
 				{
 					parameters = node.GetChildren(Slots.Parameter);
@@ -256,6 +262,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case SymbolKind.Operator:
 				case SymbolKind.Constructor:
 				case SymbolKind.Destructor:
+				case SymbolKind.Property when ((IProperty)e).Parameters.Count > 0:
 					return (ConversionFlags & ConversionFlags.ShowParameterList) != 0;
 				default:
 					return false;

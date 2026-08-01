@@ -1,0 +1,130 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ICSharpCode.ILSpy.ViewModels"
+        x:Class="ICSharpCode.ILSpy.Views.OpenFromProcessDialog"
+        x:DataType="vm:OpenFromProcessDialogViewModel"
+        Width="850" Height="560" MinWidth="500" MinHeight="360"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        CanResize="True">
+	<!-- Both lists are ListBoxes rather than DataGrids. A DataGrid derives its scroll extent
+	     from the current scroll offset, so an offset that is briefly too large inflates the
+	     extent, which permits a larger offset again: with a trackpad, whose events are
+	     fractions of a row, the end of the list runs away from the user and the rows jump.
+	     A ListBox's virtualizing panel keeps the extent a function of the items alone.
+	     The cost is that the columns are laid out here instead of by the control, so the
+	     header row below repeats the item templates' column widths - keep them in step. Only
+	     the last column is star-sized, so the vertical scroll bar's width comes off that
+	     column's right edge, where a left-aligned string shows no seam. -->
+	<Window.Styles>
+		<!-- Rows sit flush under the header: the item padding here is the header's Margin. -->
+		<Style Selector="ListBox.columns > ListBoxItem">
+			<Setter Property="Padding" Value="4,2" />
+		</Style>
+		<!-- A cell's text is shorter than the row height the MinHeight below reserves. Left to
+		     stretch, it renders against the top of the row and leaves all of the slack under
+		     itself, which the selection highlight makes obvious. -->
+		<Style Selector="ListBox.columns TextBlock">
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+	</Window.Styles>
+
+	<Grid Margin="12,8" RowDefinitions="Auto,2*,Auto,Auto,3*,Auto,Auto,Auto" RowSpacing="6">
+		<Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
+			<Label Grid.Column="0" Name="FilterLabel" Target="{Binding #FilterBox}"
+			       VerticalAlignment="Center" Margin="0,0,8,0" />
+			<TextBox Grid.Column="1" Name="FilterBox" Text="{Binding FilterText}" />
+			<Button Grid.Column="2" Name="RefreshButton" MinWidth="90" Margin="6,0,0,0"
+			        Command="{Binding RefreshCommand}" />
+		</Grid>
+
+		<Grid Grid.Row="1" RowDefinitions="Auto,*">
+			<Border Grid.Row="0" Background="{DynamicResource ILSpy.WindowBackground}"
+			        BorderBrush="{DynamicResource ILSpy.InputBorder}" BorderThickness="1">
+				<Grid ColumnDefinitions="200,70,150,90,*" Margin="4,2">
+					<TextBlock Grid.Column="0" Name="ProcessColumnHeader" />
+					<TextBlock Grid.Column="1" Name="PidColumnHeader" />
+					<TextBlock Grid.Column="2" Name="RuntimeColumnHeader" />
+					<TextBlock Grid.Column="3" Name="ArchitectureColumnHeader" />
+					<TextBlock Grid.Column="4" Name="EntryAssemblyColumnHeader" />
+				</Grid>
+			</Border>
+			<ListBox Grid.Row="1" Name="ProcessesList" Classes="columns"
+			         ItemsSource="{Binding Processes}"
+			         SelectedItem="{Binding SelectedProcess, Mode=TwoWay}"
+			         SelectionMode="Single"
+			         Background="{DynamicResource ILSpy.PaneBackground}"
+			         BorderBrush="{DynamicResource ILSpy.InputBorder}"
+			         BorderThickness="1,0,1,1"
+			         Padding="0"
+			         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+				<ListBox.ItemTemplate>
+					<DataTemplate x:DataType="vm:ProcessRowViewModel">
+						<!-- Trimming keeps a long value inside its column: a Grid does not clip
+						     its children, so untrimmed text would paint over the next column.
+						     MinHeight holds the row height the dialog had as a grid. -->
+						<Grid ColumnDefinitions="200,70,150,90,*" MinHeight="20">
+							<TextBlock Grid.Column="0" Text="{Binding ProcessName}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="1" Text="{Binding Pid}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="2" Text="{Binding Runtime}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="3" Text="{Binding Architecture}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="4" Text="{Binding EntryAssembly}" TextTrimming="CharacterEllipsis" />
+						</Grid>
+					</DataTemplate>
+				</ListBox.ItemTemplate>
+			</ListBox>
+		</Grid>
+
+		<ProgressBar Grid.Row="1" Name="ProcessesLoadingBar" Height="6"
+		             VerticalAlignment="Bottom" IsIndeterminate="True"
+		             IsVisible="{Binding IsLoadingProcesses}" />
+
+		<TextBlock Grid.Row="2" Name="ModulesHeader" Margin="0,4,0,0" />
+
+		<Grid Grid.Row="4" RowDefinitions="Auto,*">
+			<Border Grid.Row="0" Background="{DynamicResource ILSpy.WindowBackground}"
+			        BorderBrush="{DynamicResource ILSpy.InputBorder}" BorderThickness="1">
+				<Grid ColumnDefinitions="260,*" Margin="4,2">
+					<TextBlock Grid.Column="0" Name="AssemblyColumnHeader" />
+					<TextBlock Grid.Column="1" Name="LocationColumnHeader" />
+				</Grid>
+			</Border>
+			<ListBox Grid.Row="1" Name="ModulesList" Classes="columns"
+			         ItemsSource="{Binding Modules}"
+			         SelectionMode="Multiple"
+			         Background="{DynamicResource ILSpy.PaneBackground}"
+			         BorderBrush="{DynamicResource ILSpy.InputBorder}"
+			         BorderThickness="1,0,1,1"
+			         Padding="0"
+			         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+				<ListBox.ItemTemplate>
+					<DataTemplate x:DataType="vm:ProcessModuleRowViewModel">
+						<Grid ColumnDefinitions="260,*" MinHeight="20">
+							<TextBlock Grid.Column="0" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+							<TextBlock Grid.Column="1" Text="{Binding Location}" TextTrimming="CharacterEllipsis" />
+						</Grid>
+					</DataTemplate>
+				</ListBox.ItemTemplate>
+			</ListBox>
+			<ProgressBar Grid.Row="1" Name="ModulesLoadingBar" Height="6"
+			             VerticalAlignment="Bottom" IsIndeterminate="True"
+			             IsVisible="{Binding IsLoadingModules}" />
+		</Grid>
+
+		<Border Grid.Row="5" Name="ErrorBar" Padding="8,4" Margin="0,4,0,0"
+		        Background="#33FF0000" CornerRadius="3"
+		        IsVisible="{Binding ErrorMessage, Converter={x:Static ObjectConverters.IsNotNull}}">
+			<TextBlock Text="{Binding ErrorMessage}" TextWrapping="Wrap" />
+		</Border>
+
+		<TextBlock Grid.Row="6" Name="VisibilityHint" TextWrapping="Wrap" Opacity="0.7" Margin="0,2,0,0" />
+
+		<StackPanel Grid.Row="7" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+			<Button Name="AddEntryAssemblyButton" MinWidth="140"
+			        Command="{Binding AddEntryAssemblyCommand}" />
+			<Button Name="AddSelectedButton" IsDefault="True" MinWidth="110"
+			        Command="{Binding AddSelectedModulesCommand}" />
+			<Button Name="CancelButton" IsCancel="True" MinWidth="72" />
+		</StackPanel>
+	</Grid>
+</Window>

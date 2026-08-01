@@ -69,5 +69,53 @@ namespace ICSharpCode.Decompiler.Tests
 			Assert.That(code, Does.Contain("Number = 42"));
 			Assert.That(code, Does.Contain("Text = \"hello\""));
 		}
+
+		[Test]
+		public async Task NestedTypeMemberInClassicExtensionClass()
+		{
+			// #3938: [Extension] on the container alone must not make members of an ordinary
+			// nested type extension members; here the container has no extension blocks at all.
+			await DecompileNestedGetMethod("ClassicExtensions").ConfigureAwait(false);
+		}
+
+		[Test]
+		public async Task NestedTypeMemberInExtensionBlockContainer()
+		{
+			// Same as above, but the container also has a real C# 14 extension block whose
+			// ExtensionInfo must not be attributed to the nested type's members.
+			await DecompileNestedGetMethod("BlockExtensions").ConfigureAwait(false);
+		}
+
+		static async Task DecompileNestedGetMethod(string containerName)
+		{
+			var csFile = Path.Combine(TestCasePath, "ExtensionContainerNestedType.cs");
+			var compilation = await Tester.CompileCSharp(csFile, CompilerOptions.UseRoslynLatest | CompilerOptions.Optimize | CompilerOptions.Library).ConfigureAwait(false);
+			try
+			{
+				var settings = new DecompilerSettings();
+				using var file = new FileStream(compilation.PathToAssembly, FileMode.Open, FileAccess.Read);
+				var module = new PEFile(compilation.PathToAssembly, file, PEStreamOptions.PrefetchEntireImage);
+				var targetFramework = module.Metadata.DetectTargetFrameworkId();
+				var resolver = new UniversalAssemblyResolver(compilation.PathToAssembly, false, targetFramework, null, PEStreamOptions.PrefetchMetadata);
+				resolver.AddSearchDirectory(Tester.RefAssembliesToolset.GetPath(targetFramework));
+				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
+				var decompiler = new CSharpDecompiler(typeSystem, settings);
+
+				var getMethod = typeSystem.MainModule.TypeDefinitions
+					.Single(t => t.Name == containerName)
+					.NestedTypes.Single(t => t.Name == "Nested")
+					.Methods.Single(m => m.Name == "Get");
+
+				var code = decompiler.Decompile(getMethod.MetadataToken).ToString();
+
+				Assert.That(code, Does.Contain("return 42;"));
+				// The nested type's method must not be rendered inside an extension block.
+				Assert.That(code, Does.Not.Contain("extension("));
+			}
+			finally
+			{
+				compilation.DeleteTempFiles();
+			}
+		}
 	}
 }

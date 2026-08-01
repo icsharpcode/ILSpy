@@ -78,7 +78,17 @@ namespace ICSharpCode.Decompiler
 					output.WriteReference(t, name, false);
 					return;
 				case IMember m:
-					output.WriteReference(m, name, false);
+					if (IsDynamicMemberReference(nodeStack.Peek()))
+					{
+						// A member synthesized for a dynamic access: show its signature on hover, but do not
+						// make it a navigation target (there is no real member to jump to), and no occurrence
+						// highlight either - it is a distinct synthetic member at every use.
+						output.WriteLocalReference(name, m, isHoverOnly: true);
+					}
+					else
+					{
+						output.WriteReference(m, name, false);
+					}
 					return;
 			}
 
@@ -138,6 +148,31 @@ namespace ICSharpCode.Decompiler
 				return null;
 
 			return symbol;
+		}
+
+		/// <summary>
+		/// True if the member reference at this node was synthesized for a dynamic member access/invocation.
+		/// Such members carry a hover tooltip but must not be navigation targets, since they do not exist in
+		/// metadata.
+		/// </summary>
+		static bool IsDynamicMemberReference(AstNode node)
+		{
+			if (node.Annotation<ResolveResult>() is CSharp.Resolver.DynamicMemberResolveResult)
+				return true;
+			// The node itself is a dynamic invocation/indexing (a.Method(b), a[b]): its parentheses/brackets
+			// carry the synthesized member.
+			if (node.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
+				return true;
+			if (node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression
+				&& node.Parent.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
+				return true;
+			// new T(dynamicArg): the object creation (or its type-name slot) is backed by a dynamic newobj,
+			// whose synthesized constructor has no metadata to navigate to.
+			if (node.Annotation<IL.DynamicInvokeConstructorInstruction>() != null)
+				return true;
+			if (node.Slot?.Kind == Slots.Type && node.Parent?.Annotation<IL.DynamicInvokeConstructorInstruction>() != null)
+				return true;
+			return false;
 		}
 
 		object GetCurrentLocalReference()
@@ -248,6 +283,17 @@ namespace ICSharpCode.Decompiler
 					output.WriteReference(member, keyword);
 					return;
 				}
+				// As primary expressions, 'this' and 'base' reference the current and the
+				// base type respectively, matching IDE go-to-definition behavior.
+				if (nodeStack.Peek() is ThisReferenceExpression or BaseReferenceExpression)
+				{
+					var type = ((Expression)nodeStack.Peek()).GetResolveResult().Type;
+					if (type.Kind != TypeKind.Unknown)
+					{
+						output.WriteReference(type, keyword);
+						return;
+					}
+				}
 			}
 			// Make the 'override' modifier a reference to the nearest overridden member,
 			// so that go-to-definition on 'override' navigates to the base member.
@@ -319,7 +365,10 @@ namespace ICSharpCode.Decompiler
 								output.WriteReference(t, token, false);
 								return;
 							case IMember m:
-								output.WriteReference(m, token, false);
+								if (IsDynamicMemberReference(node))
+									output.WriteLocalReference(token, m, isHoverOnly: true);
+								else
+									output.WriteReference(m, token, false);
 								return;
 						}
 					}
@@ -422,6 +471,11 @@ namespace ICSharpCode.Decompiler
 					output.Write(type);
 					output.Write("()");
 					break;
+				case "dynamic":
+					// dynamic has no metadata type definition; emit it as a hover-only reference (no navigation
+					// target, no occurrence highlight) so it can still carry a tooltip.
+					output.WriteLocalReference(type, SpecialType.Dynamic, isHoverOnly: true);
+					return;
 				case "bool":
 				case "byte":
 				case "sbyte":
@@ -479,6 +533,13 @@ namespace ICSharpCode.Decompiler
 					firstUsingDeclaration = false;
 					lastUsingDeclaration = false;
 				}
+			}
+			if (node is EntityDeclaration)
+			{
+				// The declaration's logical region starts here, before its documentation
+				// comments and attributes are written; the body fold marked later refers
+				// back to this position for group toggling in the UI.
+				output.MarkDefinitionStart();
 			}
 			nodeStack.Push(node);
 		}

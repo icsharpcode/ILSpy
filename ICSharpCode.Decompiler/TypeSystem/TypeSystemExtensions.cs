@@ -172,6 +172,17 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
+		/// Gets whether the property is a parameterized property that is not an indexer,
+		/// i.e. a named property with parameters (a VB.NET parameterized property or a
+		/// C++/CLI indexed property). C# has no syntax for declaring or using such a
+		/// property; only its accessor methods can be represented.
+		/// </summary>
+		public static bool IsParameterizedProperty(this IProperty property)
+		{
+			return property.SymbolKind == SymbolKind.Property && property.Parameters.Count > 0;
+		}
+
+		/// <summary>
 		/// Gets whether the type is an open type (contains type parameters).
 		/// </summary>
 		/// <example>
@@ -474,8 +485,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return new ProjectedList<ITypeResolveContext, ITypeReference, IType>(context, typeReferences, (c, t) => t.Resolve(c));
 		}
 
-		// There is intentionally no Resolve() overload for IList<IMemberReference>: the resulting IList<Member> would
-		// contains nulls when there are resolve errors.
 		#endregion
 
 		#region IAssembly.GetTypeDefinition()
@@ -732,6 +741,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return ((ConversionResolveResult)rr).Input.GetSymbol();
 			}
+			else if (rr is CSharp.Resolver.DynamicMemberResolveResult dynamicMember)
+			{
+				return dynamicMember.Symbol;
+			}
+			else if (rr is CSharp.Resolver.DynamicInvocationResolveResult dynamicInvocation)
+			{
+				return dynamicInvocation.Symbol;
+			}
 
 			return null;
 		}
@@ -873,6 +890,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return ns;
 		}
 
+		/// <summary>
+		/// Returns the <see cref="ExtensionInfo"/> of the container type the member's extension
+		/// block belongs to, or null if the member is not part of an extension block. Fields and
+		/// events always return null: extension blocks cannot declare them.
+		/// </summary>
 		public static ExtensionInfo? ResolveExtensionInfo(this IMember member)
 		{
 			if (member is null)
@@ -881,7 +903,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			var td = member.DeclaringTypeDefinition;
 			Debug.Assert(td != null, "IMember.DeclaringTypeDefinition should never be null");
-			return td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
+			var info = td.DeclaringTypeDefinition?.ExtensionInfo ?? td.DeclaringTypeDefinition?.DeclaringTypeDefinition?.ExtensionInfo;
+			if (info == null)
+				return null;
+			// The container's info only applies to members declared in one of its extension
+			// blocks; members of other nested types must not pick it up.
+			IMethod? method = member switch {
+				IMethod m => m,
+				IProperty p => p.Getter ?? p.Setter,
+				_ => null
+			};
+			if (method == null || info.InfoOfExtensionMember((IMethod)method.MemberDefinition) == null)
+				return null;
+			return info;
 		}
 	}
 }

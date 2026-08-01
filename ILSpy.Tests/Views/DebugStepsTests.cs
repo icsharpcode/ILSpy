@@ -19,7 +19,6 @@
 #if DEBUG
 
 using System;
-using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -173,7 +172,7 @@ public class DebugStepsTests
 				"nested C# debug steps must describe individual AST mutation points");
 
 		var collectedSteps = debugStepsVm.Steps;
-		var replayStep = transformGroupWithChanges.Children.First();
+		var replayStep = transformGroupWithChanges.Children.First().Step;
 		var tab = vm.DockWorkspace.ActiveDecompilerTab!;
 
 		await tab.RestartDecompileWithStepLimit(replayStep.BeginStep, isDebug: false, replayStep.BeginStep);
@@ -240,14 +239,14 @@ public class DebugStepsTests
 
 		// The first leaf step that acts on a concrete instruction; a step whose Position is null
 		// (e.g. an empty transform group) has nothing to highlight and is not what a user replays.
-		static Stepper.Node? FirstLeafStep(System.Collections.Generic.IEnumerable<Stepper.Node> steps)
+		static Stepper.Node? FirstLeafStep(System.Collections.Generic.IEnumerable<StepNodeViewModel> steps)
 		{
 			foreach (var step in steps)
 			{
 				if (step.Children.Count == 0)
 				{
-					if (step.Position != null)
-						return step;
+					if (step.Step.Position != null)
+						return step.Step;
 					continue;
 				}
 				var leaf = FirstLeafStep(step.Children);
@@ -347,40 +346,44 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public Task DebugStepFilter_Keeps_Matches_And_The_Path_To_Them()
 	{
-		var converter = new DebugStepFilterConverter();
+		var vm = new DebugStepsPaneModel();
 		var matchingLeaf = new Stepper.Node("3: Introduce query continuation");
 		var otherLeaf = new Stepper.Node("4: Flatten switch section block");
 		var group = new Stepper.Node("CombineQueryExpressions");
 		group.Children.Add(matchingLeaf);
 		group.Children.Add(otherLeaf);
+		vm.SetStepsSource(new[] { group });
 
-		// An empty filter shows every row.
-		Filter(group, "").Should().BeTrue();
-		Filter(otherLeaf, "  ").Should().BeTrue();
-		// A group survives because a descendant matches, keeping the path to the match.
-		Filter(group, "continuation").Should().BeTrue();
-		// The matching leaf survives, case-insensitively.
-		Filter(matchingLeaf, "CONTINUATION").Should().BeTrue();
-		// A sibling that neither matches nor leads to a match is hidden.
-		Filter(otherLeaf, "continuation").Should().BeFalse();
+		var groupVm = vm.Steps![0];
+
+		// Matching is case-insensitive; a group survives because a descendant matches (keeping
+		// the path to the match open), while a sibling that neither matches nor leads to a
+		// match is hidden.
+		vm.FilterText = "CONTINUATION";
+		groupVm.IsVisible.Should().BeTrue();
+		groupVm.IsExpanded.Should().BeTrue();
+		groupVm.Children[0].IsVisible.Should().BeTrue();
+		groupVm.Children[1].IsVisible.Should().BeFalse();
+
+		// A whitespace-only filter counts as empty and shows every row again.
+		vm.FilterText = "  ";
+		groupVm.IsVisible.Should().BeTrue();
+		groupVm.Children[0].IsVisible.Should().BeTrue();
+		groupVm.Children[1].IsVisible.Should().BeTrue();
 		return Task.CompletedTask;
-
-		bool Filter(Stepper.Node node, string filter)
-			=> (bool)converter.Convert(new object?[] { node, filter }, typeof(bool), null, CultureInfo.InvariantCulture);
 	}
 
 	[AvaloniaTest]
 	public Task DebugSteps_View_Loads_With_Filter_Applied()
 	{
-		// Guards the filter wiring in the XAML -- a MultiBinding inside a TreeViewItem style Setter
-		// plus the RelativeSource lookups -- against a structural break that x:CompileBindings="False"
-		// would not catch at build time. Realising the view with a populated tree and a live filter
-		// must not throw.
+		// Guards the filter wiring in the XAML -- the per-row style Setter bindings -- against a
+		// structural break that x:CompileBindings="False" would not catch at build time.
+		// Realising the view with a populated tree and a live filter must not throw.
 		var vm = new DebugStepsPaneModel();
 		var group = new Stepper.Node("CombineQueryExpressions");
 		group.Children.Add(new Stepper.Node("3: Introduce query continuation"));
 		group.Children.Add(new Stepper.Node("4: Flatten switch section block"));
-		vm.Steps = new[] { group };
+		vm.SetStepsSource(new[] { group });
 		vm.IsAvailable = true;
 
 		var window = new Window { Width = 400, Height = 300, Content = new DebugSteps { DataContext = vm } };
@@ -483,7 +486,7 @@ public class DebugStepsTests
 		debugStepsVm.IsAvailable.Should().BeTrue("C# provides debug steps");
 
 		// Simulate a populated tree from the C# run, then flip to the disassembler language.
-		debugStepsVm.Steps = new[] { new Stepper.Node("stale") };
+		debugStepsVm.SetStepsSource(new[] { new Stepper.Node("stale") });
 		languageService.CurrentLanguage = languageService.Languages.OfType<ILLanguage>().First(l => l.Name == "IL");
 		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 

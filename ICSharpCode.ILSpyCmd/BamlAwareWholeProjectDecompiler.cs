@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpyCmd
 		public BamlAwareWholeProjectDecompiler(
 			DecompilerSettings settings,
 			IAssemblyResolver assemblyResolver,
-			AssemblyReferenceClassifier assemblyReferenceClassifier,
+			IAssemblyReferenceClassifier assemblyReferenceClassifier,
 			IDebugInfoProvider debugInfoProvider,
 			BamlDecompilerTypeSystem bamlTypeSystem,
 			BamlDecompilerSettings bamlSettings)

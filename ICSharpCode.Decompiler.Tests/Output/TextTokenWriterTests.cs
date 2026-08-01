@@ -102,9 +102,13 @@ namespace ICSharpCode.Decompiler.Tests.Output
 					MemberReferences.Add((text, member));
 			}
 
-			public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+			public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
 			{
 				LocalReferences.Add((text, reference, isDefinition));
+			}
+
+			public void MarkDefinitionStart()
+			{
 			}
 
 			public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false, bool isDefinition = false)

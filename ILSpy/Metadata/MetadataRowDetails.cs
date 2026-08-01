@@ -24,9 +24,9 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
-using Avalonia.Layout;
-using Avalonia.Media;
+using Avalonia.Input;
 
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.Metadata
@@ -56,6 +56,13 @@ namespace ICSharpCode.ILSpy.Metadata
 				Content = contentFactory(change.NewValue);
 		}
 	}
+
+	/// <summary>
+	/// Decoded text payload of a row (embedded source, source-link JSON, hex dump), tagged
+	/// with the file extension (".cs", ".json") that selects the syntax highlighting for its
+	/// display, or <see langword="null"/> for plain text.
+	/// </summary>
+	public sealed record TextBlobDetail(string Text, string? HighlightExtension = null);
 
 	/// <summary>
 	/// Factories for the row-details area of metadata grids: the DataContext-tracking shell
@@ -105,22 +112,64 @@ namespace ICSharpCode.ILSpy.Metadata
 			grid.Columns.Add(new DataGridTextColumn {
 				Binding = new Binding(nameof(BitEntry.Meaning)),
 				IsReadOnly = true,
+				Width = new DataGridLength(1, DataGridLengthUnitType.Star),
 			});
 			return grid;
 		}
 
-		/// <summary>Read-only, word-wrapped view of a decoded text blob (source, JSON, hex).</summary>
-		public static Control BuildTextBlob(string text)
+		/// <summary>
+		/// Read-only, word-wrapped view of a decoded text blob (source, JSON, hex), rendered
+		/// in the decompiler-view-styled AvaloniaEdit editor: text payloads are mostly code,
+		/// so they get syntax colours (selected by <paramref name="highlightExtension"/>,
+		/// e.g. ".cs" or ".json"; <see langword="null"/> stays plain) and line virtualization
+		/// keeps large embedded-source documents cheap. Height is bounded in both directions:
+		/// capped so the host row cannot grow unbounded (the editor scrolls internally), and
+		/// floored so a short payload still reads as a details area rather than a squeezed
+		/// one-line strip.
+		/// </summary>
+		public static Control BuildTextBlob(string text, string? highlightExtension = null)
 		{
 			ArgumentNullException.ThrowIfNull(text);
-			return new TextBox {
+			var editor = new DecompilerTextEditor {
 				Text = text,
 				IsReadOnly = true,
-				TextWrapping = TextWrapping.Wrap,
-				MaxWidth = 800,
+				WordWrap = true,
+				MinHeight = 100,
 				MaxHeight = 400,
-				HorizontalAlignment = HorizontalAlignment.Left,
 			};
+			if (highlightExtension != null)
+				editor.SyntaxHighlighting = HighlightingService.GetByExtension(highlightExtension);
+			editor.ContextMenu = BuildEditorContextMenu(editor);
+			return editor;
+		}
+
+		/// <summary>
+		/// Editor context menu matching the decompiler view's editor entries (Copy / Select
+		/// All). The metadata grid's own context menu copies the hovered cell, which never
+		/// exists inside the details area — without a menu of its own the editor would
+		/// inherit those permanently disabled entries.
+		/// </summary>
+		static ContextMenu BuildEditorContextMenu(DecompilerTextEditor editor)
+		{
+			var copy = new MenuItem {
+				Header = Properties.Resources.Copy,
+				InputGesture = new KeyGesture(Key.C, KeyModifiers.Control),
+			};
+			copy.Click += (_, _) => {
+				// Copy as text + syntax-coloured HTML; fall back to plain copy.
+				if (!HtmlClipboardCopy.Copy(editor))
+					editor.Copy();
+			};
+			var selectAll = new MenuItem {
+				Header = Properties.Resources.Select,
+				InputGesture = new KeyGesture(Key.A, KeyModifiers.Control),
+			};
+			selectAll.Click += (_, _) => editor.SelectAll();
+			var menu = new ContextMenu();
+			menu.Opening += (_, _) => copy.IsEnabled = editor.SelectionLength > 0;
+			menu.Items.Add(copy);
+			menu.Items.Add(selectAll);
+			return menu;
 		}
 
 		/// <summary>
@@ -143,6 +192,10 @@ namespace ICSharpCode.ILSpy.Metadata
 					IsReadOnly = true,
 				});
 			}
+			// The last column absorbs the leftover width so the sub-grid fills the host row
+			// instead of ending in dead space after its auto-sized columns.
+			if (grid.Columns.Count > 0)
+				grid.Columns[^1].Width = new DataGridLength(1, DataGridLengthUnitType.Star);
 			return grid;
 		}
 
@@ -154,7 +207,6 @@ namespace ICSharpCode.ILSpy.Metadata
 			CanUserReorderColumns = false,
 			CanUserSortColumns = false,
 			SelectionMode = DataGridSelectionMode.Single,
-			HorizontalAlignment = HorizontalAlignment.Left,
 		};
 	}
 }

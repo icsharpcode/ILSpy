@@ -38,6 +38,20 @@ namespace ICSharpCode.ILSpy.AppEnv
 		/// <summary>The main window's clipboard, or null when unavailable.</summary>
 		public static IClipboard? Clipboard => MainWindow?.Clipboard;
 
+		/// <summary>
+		/// Brings the main window to the foreground, restoring it if minimized. Used when a second
+		/// launch forwards its arguments to this instance. Best-effort: a window manager may still
+		/// deny the focus change (e.g. X11 focus-stealing prevention). Call on the UI thread.
+		/// </summary>
+		public static void ActivateMainWindow()
+		{
+			if (MainWindow is not { } window)
+				return;
+			if (window.WindowState == WindowState.Minimized)
+				window.WindowState = WindowState.Normal;
+			window.Activate();
+		}
+
 		/// <summary>Requests application shutdown on the desktop lifetime; a no-op elsewhere.</summary>
 		public static void Shutdown()
 			=> (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();

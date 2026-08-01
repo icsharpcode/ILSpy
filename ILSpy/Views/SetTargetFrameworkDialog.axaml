@@ -3,6 +3,7 @@
         x:Class="ICSharpCode.ILSpy.Views.SetTargetFrameworkDialog"
         Width="360" SizeToContent="Height" CanResize="False"
         WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
         Title="ILSpy">
 	<Grid Margin="12,10" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
 		<TextBlock Grid.Row="0" Name="PromptText" Margin="0,0,0,6" TextWrapping="Wrap" />

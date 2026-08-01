@@ -3,23 +3,12 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:ae="using:AvaloniaEdit"
-             xmlns:aeediting="using:AvaloniaEdit.Editing"
              xmlns:textView="using:ICSharpCode.ILSpy.TextView"
              xmlns:omnibar="using:ICSharpCode.ILSpy.Controls.Omnibar"
              mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="400"
              Name="self"
              x:Class="ICSharpCode.ILSpy.TextView.DecompilerTextView"
              x:DataType="textView:DecompilerTabPageModel">
-
-	<!-- Selected-text highlighting (ports icsharpcode/ILSpy#2938): keep the syntax colours of
-	     selected text by leaving SelectionForeground unset, and draw a flat, translucent
-	     highlight (square corners, no border) instead of recolouring the run. -->
-	<UserControl.Styles>
-		<Style Selector="aeediting|TextArea">
-			<Setter Property="SelectionCornerRadius" Value="0" />
-			<Setter Property="SelectionBrush" Value="{DynamicResource ILSpy.EditorSelectionBrush}" />
-		</Style>
-	</UserControl.Styles>
 
 	<DockPanel>
 	<!-- Breadcrumb / search bar atop the editor (EditorBar-style): shows the decompiled node's
@@ -30,13 +19,11 @@
 	     progress bar + cancel button while a decompilation is in flight. -->
 	<Grid>
 		<!-- DecompilerTextEditor subclasses ae:TextEditor to install ThemeAwareHighlightingColorizer
-		     and to redraw the text view when the active theme variant changes. -->
+		     and carries the shared decompiler-view styling: themed background and selection
+		     highlight, user-selected editor font, redraw on theme-variant changes. -->
 		<textView:DecompilerTextEditor Name="Editor"
 		                               IsReadOnly="True"
-		                               ShowLineNumbers="True"
-		                               Background="{DynamicResource ILSpy.EditorBackground}"
-		                               FontFamily="Consolas, Menlo, Monospace"
-		                               FontSize="13" />
+		                               ShowLineNumbers="True" />
 		<Border Name="WaitAdorner"
 		        Background="{DynamicResource ILSpy.EditorWaitAdornerBackground}"
 		        IsVisible="{Binding IsDecompiling}">

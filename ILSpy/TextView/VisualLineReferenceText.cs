@@ -49,9 +49,16 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (e.Source is InputElement inputElement)
 			{
-				inputElement.Cursor = new Cursor(referenceSegment.IsLocal
-					? StandardCursorType.Arrow
-					: StandardCursorType.Hand);
+				if (parent.QueryCursor != null)
+				{
+					parent.QueryCursor(inputElement, referenceSegment, e.KeyModifiers);
+				}
+				else
+				{
+					inputElement.Cursor = new Cursor(referenceSegment.Kind == ReferenceMode.Link
+						? StandardCursorType.Hand
+						: StandardCursorType.Arrow);
+				}
 			}
 			// Do NOT set e.Handled = true — AvaloniaEdit's TextView.OnPointerMoved invokes
 			// OnQueryCursor with the live PointerEventArgs, and marking it handled there

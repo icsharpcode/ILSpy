@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		{
 		}
 
-		public void WriteLocalReference(string text, object reference, bool isDefinition = false)
+		public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
 		{
 		}
 

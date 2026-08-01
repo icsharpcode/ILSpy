@@ -20,14 +20,17 @@ using System;
 using System.Composition.Hosting;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.Settings;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Themes;
 using ICSharpCode.ILSpy.Views;
 
@@ -57,22 +60,7 @@ namespace ICSharpCode.ILSpy
 
 			CommandLineArguments = CommandLineArguments.Create(Environment.GetCommandLineArgs()[1..]);
 
-			ILSpySettings.SettingsFilePathProvider = () => {
-				if (App.CommandLineArguments.ConfigFile != null)
-					return App.CommandLineArguments.ConfigFile;
-
-				var assemblyLocation = typeof(MainWindow).Assembly.Location;
-				if (!String.IsNullOrWhiteSpace(assemblyLocation))
-				{
-					var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
-					Debug.Assert(assemblyDirectory != null);
-					string localPath = Path.Combine(assemblyDirectory, "ILSpy.xml");
-					if (File.Exists(localPath))
-						return localPath;
-				}
-
-				return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode", "ILSpy.xml");
-			};
+			ConfigureSettingsFilePathProvider(CommandLineArguments);
 
 			try
 			{
@@ -125,9 +113,50 @@ namespace ICSharpCode.ILSpy
 					catch { /* persistence must never block shutdown */ }
 					Composition?.Dispose();
 				};
+
+				// A second launch forwards its command-line arguments to this instance over the
+				// single-instance pipe (see Program.Main); open them in this window rather than
+				// letting a second process start. No-op when single-instance is not in force.
+				SingleInstance.NewInstanceDetected += OnNewInstanceDetected;
 			}
 
 			base.OnFrameworkInitializationCompleted();
+		}
+
+		// Resolves where ILSpy.xml is loaded from. Shared by normal startup and the single-instance
+		// gate in Program.Main, which reads the settings before Avalonia starts.
+		internal static void ConfigureSettingsFilePathProvider(CommandLineArguments commandLineArguments)
+		{
+			ILSpySettings.SettingsFilePathProvider = () => {
+				if (commandLineArguments.ConfigFile != null)
+					return commandLineArguments.ConfigFile;
+
+				var assemblyLocation = typeof(MainWindow).Assembly.Location;
+				if (!String.IsNullOrWhiteSpace(assemblyLocation))
+				{
+					var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
+					Debug.Assert(assemblyDirectory != null);
+					string localPath = Path.Combine(assemblyDirectory, "ILSpy.xml");
+					if (File.Exists(localPath))
+						return localPath;
+				}
+
+				return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ICSharpCode", "ILSpy.xml");
+			};
+		}
+
+		// Raised on the single-instance listener thread; marshal to the UI thread before touching
+		// the model or the window.
+		static void OnNewInstanceDetected(string[] forwardedArguments)
+			=> Dispatcher.UIThread.Post(() => HandleForwardedArgumentsAsync(forwardedArguments).HandleExceptions());
+
+		static async Task HandleForwardedArgumentsAsync(string[] forwardedArguments)
+		{
+			var args = CommandLineArguments.Create(forwardedArguments);
+			if (Composition?.GetExport<AssemblyTreeModel>() is { } assemblyTreeModel)
+				await assemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+			if (!args.NoActivate)
+				UiContext.ActivateMainWindow();
 		}
 
 		// Effective UI culture is process-wide. Setting it on startup means a changed CurrentCulture

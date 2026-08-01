@@ -160,6 +160,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task NoAccessorProperties()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task Issue1145()
 		{
 			await Run();
@@ -197,6 +203,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public async Task Issue1454()
+		{
+			await Run();
+		}
+
+		[Test]
+		public async Task Issue1638()
 		{
 			await Run();
 		}

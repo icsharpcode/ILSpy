@@ -433,7 +433,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedStatement VisitYieldReturn(YieldReturn inst)
 		{
-			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out var isGeneric);
+			var elementType = currentFunction.AsyncReturnType
+				?? currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem, true, out _);
 			var expr = exprBuilder.Translate(inst.Value, typeHint: elementType)
 				.ConvertTo(elementType, exprBuilder, allowImplicitConversion: true);
 			return new YieldReturnStatement {
@@ -605,49 +606,128 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		Statement? TransformToForeach(UsingInstruction inst, Expression resource)
+		bool MatchGetEnumeratorPattern(Expression resource, out Match m, out bool isAsync)
 		{
-			if (!settings.ForEachStatement)
-			{
-				return null;
-			}
-			Match m;
+			isAsync = false;
 			if (settings.ExtensionMethods && settings.ForEachWithGetEnumeratorExtension)
 			{
-				// Check if the using resource matches the GetEnumerator pattern ...
+				// Check if the resource expression matches the GetEnumerator pattern ...
 				m = getEnumeratorPattern.Match(resource);
 				if (!m.Success)
 				{
 					// ... or the extension GetEnumeratorPattern.
 					m = extensionGetEnumeratorPattern.Match(resource);
 					if (!m.Success)
-						return null;
+						return false;
 					// Validate that the invocation is an extension method invocation.
 					if (!(resource.GetSymbol() is IMethod method
 						&& exprBuilder.resolver.CanTransformToExtensionMethodCall(method, true)))
 					{
-						return null;
+						return false;
 					}
 				}
 			}
 			else
 			{
-				// Check if the using resource matches the GetEnumerator pattern.
+				// Check if the resource expression matches the GetEnumerator pattern.
 				m = getEnumeratorPattern.Match(resource);
 				if (!m.Success)
-					return null;
+					return false;
 			}
+			isAsync = ((MemberReferenceExpression)((InvocationExpression)resource).Target).MemberName == "GetAsyncEnumerator";
+			return true;
+		}
+
+		Statement? TransformToForeach(UsingInstruction inst, Expression resource)
+		{
+			if (!settings.ForEachStatement)
+			{
+				return null;
+			}
+			if (!MatchGetEnumeratorPattern(resource, out Match m, out bool isAsync))
+				return null;
 			// The using body must be a BlockContainer.
 			if (!(inst.Body is BlockContainer container))
 				return null;
-			bool isAsync = ((MemberReferenceExpression)((InvocationExpression)resource).Target).MemberName == "GetAsyncEnumerator";
 			if (isAsync != inst.IsAsync)
 				return null;
-			// The using-variable is the enumerator.
-			var enumeratorVar = inst.Variable;
 			// If there's another BlockContainer nested in this container and it only has one child block, unwrap it.
 			// If there's an extra leave inside the block, extract it into optionalReturnAfterLoop.
 			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalLeaveAfterLoop);
+			// The using-variable is the enumerator.
+			return TransformToForeach(container, loopContainer, optionalLeaveAfterLoop, inst.Variable, isAsync, m, inst.ResourceExpression);
+		}
+
+		/// <summary>
+		/// Transforms the bare pattern 'enumerator = collection.GetEnumerator(); while (enumerator.MoveNext()) { ... }'
+		/// (without any using/try-finally) into a foreach statement. The compiler emits this shape when the
+		/// enumerator type can never require disposal: a struct or a sealed class that does not implement
+		/// IDisposable.
+		/// The pattern spans two consecutive instructions; on success, <paramref name="i"/> is advanced
+		/// past the loop container.
+		/// </summary>
+		Statement? TransformToForeachWithoutDispose(Block block, ref int i)
+		{
+			if (!(block.Instructions[i] is StLoc storeInst
+				&& i + 1 < block.Instructions.Count
+				&& block.Instructions[i + 1] is BlockContainer { Kind: ContainerKind.While } loopContainer))
+			{
+				return null;
+			}
+			var transformed = TransformToForeachWithoutDispose(storeInst, loopContainer);
+			if (transformed == null)
+				return null;
+			i++;
+			return transformed.WithILInstruction(loopContainer);
+		}
+
+		Statement? TransformToForeachWithoutDispose(StLoc storeInst, BlockContainer loopContainer)
+		{
+			if (!settings.ForEachStatement)
+				return null;
+			var enumeratorVar = storeInst.Variable;
+			if (!(enumeratorVar.Kind == VariableKind.Local || enumeratorVar.Kind == VariableKind.StackSlot))
+				return null;
+			if (!EnumeratorTypeCanNeverBeDisposable(enumeratorVar.Type))
+				return null;
+			// The enumerator variable must not be used outside of the loop.
+			if (!VariableIsOnlyUsedInBlock(storeInst, loopContainer, loopContainer))
+				return null;
+			var resource = exprBuilder.Translate(storeInst.Value).Expression;
+			if (!MatchGetEnumeratorPattern(resource, out Match m, out bool isAsync))
+				return null;
+			// Async enumerators always implement IAsyncDisposable, so they cannot occur in this pattern.
+			if (isAsync)
+				return null;
+			return TransformToForeach(loopContainer, loopContainer, null, enumeratorVar, isAsync: false, m, storeInst.Value);
+		}
+
+		bool EnumeratorTypeCanNeverBeDisposable(IType type)
+		{
+			ITypeDefinition? typeDef = type.GetDefinition();
+			if (typeDef == null)
+				return false;
+			switch (typeDef.Kind)
+			{
+				case TypeKind.Struct:
+					// A ref struct may use pattern-based disposal via a Dispose method.
+					if (typeDef.IsByRefLike)
+						return false;
+					break;
+				case TypeKind.Class:
+					// A non-sealed class would be enumerated with a
+					// 'finally { (enumerator as IDisposable)?.Dispose(); }' block instead.
+					if (!typeDef.IsSealed)
+						return false;
+					break;
+				default:
+					return false;
+			}
+			return !type.GetAllBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.IDisposable));
+		}
+
+		Statement? TransformToForeach(BlockContainer container, BlockContainer loopContainer, Leave? optionalLeaveAfterLoop, ILVariable enumeratorVar, bool isAsync, Match m, ILInstruction resourceExpression)
+		{
 			// Detect whether we're dealing with a while loop with multiple embedded statements.
 			if (loopContainer.Kind != ContainerKind.While)
 				return null;
@@ -781,7 +861,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				InExpression = collectionExpr.Detach(),
 				EmbeddedStatement = foreachBody
 			};
-			foreachStmt.AddAnnotation(new ForeachAnnotation(inst.ResourceExpression, conditionInst, singleGetter));
+			foreachStmt.AddAnnotation(new ForeachAnnotation(resourceExpression, conditionInst, singleGetter));
 			foreachStmt.CopyAnnotationsFrom(whileLoop);
 			// If there was an optional return statement, return it as well.
 			// If there were labels or any other statements in the whileLoopBlock, move them after the foreach
@@ -1203,9 +1283,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				return Default(block);
 			// Block without container
 			BlockStatement blockStatement = new BlockStatement();
-			foreach (var inst in block.Instructions)
+			for (int i = 0; i < block.Instructions.Count; i++)
 			{
-				blockStatement.Add(Convert(inst));
+				if (TransformToForeachWithoutDispose(block, ref i) is Statement foreachStmt)
+				{
+					blockStatement.Add(foreachStmt);
+					continue;
+				}
+				blockStatement.Add(Convert(block.Instructions[i]));
 			}
 			if (block.FinalInstruction.OpCode != OpCode.Nop)
 				blockStatement.Add(Convert(block.FinalInstruction));
@@ -1450,15 +1535,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					// If there are any incoming branches to this block, add a label:
 					blockStatement.Add(new LabelStatement { Label = EnsureUniqueLabel(block) });
 				}
-				foreach (var inst in block.Instructions)
+				for (int i = 0; i < block.Instructions.Count; i++)
 				{
+					var inst = block.Instructions[i];
 					if (!isLoop && inst is Leave leave && IsFinalLeave(leave))
 					{
 						// skip the final 'leave' instruction and just fall out of the BlockStatement
 						blockStatement.AddAnnotation(new ImplicitReturnAnnotation(leave));
 						continue;
 					}
-					var stmt = Convert(inst);
+					Statement stmt = TransformToForeachWithoutDispose(block, ref i) ?? Convert(inst);
 					if (stmt is BlockStatement b)
 					{
 						foreach (var nested in b.Statements)

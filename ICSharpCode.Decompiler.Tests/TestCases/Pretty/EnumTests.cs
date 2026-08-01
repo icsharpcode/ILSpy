@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Item0 = 0,
 			Item1 = 1,
 			Item2A = 2,
-			Item2B = 2
+			Item2B = Item2A
 		}
 
 		public enum LongBasedEnum : long
@@ -88,7 +88,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Item1 = 1,
 			Item2 = 2,
 			Item3 = 4,
-			All = 7
+			All = Item1 | Item2 | Item3
+		}
+
+		[Flags]
+		public enum SelfReferentialEnum
+		{
+			None = 0,
+			Item1 = 1,
+			Item2 = Item1,
+			Item3 = 3
 		}
 
 		[Flags]
@@ -100,6 +109,78 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public enum NegativeValueWithoutFlags
 		{
 			Value = -2147483647
+		}
+
+		public enum NonFlagsDuplicateItems
+		{
+			OK = 200,
+			Default = OK,
+			NoContent = 204
+		}
+
+		public enum ZeroDuplicateItems
+		{
+			Unknown = 0,
+			Default = Unknown
+		}
+
+		[Flags]
+		public enum ZeroDuplicateFlags
+		{
+			None = 0,
+			Default = 0,
+			Item1 = 1
+		}
+
+		[Flags]
+		public enum MaskFamilyFlags
+		{
+			VisibilityMask = 7,
+			NotPublic = 0,
+			Public = 1,
+			NestedPublic = 2,
+			NestedPrivate = 3,
+			LayoutMask = 0x18,
+			AutoLayout = 0,
+			SequentialLayout = 8,
+			ExplicitLayout = 0x10
+		}
+
+		[Flags]
+		public enum UnsignedFlags : uint
+		{
+			None = 0u,
+			Item1 = 1u,
+			Item2 = 2u,
+			Item3 = 4u,
+			All = uint.MaxValue,
+			NotItem1 = ~Item1
+		}
+
+		[Flags]
+		public enum ByteFlags : byte
+		{
+			None = 0,
+			Item1 = 1,
+			Item2 = 2,
+			NotItem2 = 0xFD
+		}
+
+		[Flags]
+		public enum ShortFlags : short
+		{
+			None = 0,
+			Item1 = 1,
+			NotItem1 = ~Item1
+		}
+
+		[Flags]
+		public enum FlagsWithNegation
+		{
+			None = 0,
+			Item1 = 1,
+			Item2 = 2,
+			NotItem1 = ~Item1
 		}
 
 		public AttributeTargets SingleEnumValue()
@@ -140,6 +221,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public object PreservingTypeWhenBoxedTwoEnum()
 		{
 			return AttributeTargets.Class | AttributeTargets.Delegate;
+		}
+
+		public SimpleFlagsEnum SignedEnumComplement()
+		{
+			return ~SimpleFlagsEnum.Item1;
+		}
+
+		public UnsignedFlags UnsignedEnumComplement()
+		{
+			return ~UnsignedFlags.Item2;
+		}
+
+		public ByteFlags ByteEnumComplement()
+		{
+			return ~ByteFlags.Item1;
 		}
 
 		public void EnumInNotZeroCheck(SimpleEnum value, NoZero value2)

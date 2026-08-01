@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        "IdStringProbe"
+    </assembly>
+    <members>
+        <member name="M:GBoxUser.Use(GBox`1{System.Int32})">
+            <summary>generic instantiation in a signature; expected GBox{System.Int32}</summary>
+        </member>
+        <member name="T:GBoxUser">
+            <summary>Consumer of an instantiated generic type.</summary>
+        </member>
+        <member name="M:GBox`1.Hold(`0)">
+            <summary>method on a generic type taking T; expected grave-accent zero</summary>
+        </member>
+        <member name="T:GBox`1">
+            <summary>Generic ref class; arity in the type ID.</summary>
+        </member>
+        <member name="P:IdProbe.default(System.Int32!System.Runtime.CompilerServices.IsLong)">
+            <summary>indexed property with a long parameter; modopt inside the indexer parentheses</summary>
+        </member>
+        <member name="M:IdProbe.op_Explicit(IdProbe!System.Runtime.CompilerServices.IsByValue)~System.Int32">
+            <summary>conversion operator with a by-value ref-class parameter; the MSVC docs show IdProbe!IsByValue and a '~' return type</summary>
+        </member>
+        <member name="M:IdProbe.Gen``1(``0)">
+            <summary>generic method; expected arity marker and grave-accent parameter encoding</summary>
+        </member>
+        <member name="M:IdProbe.TakesEnumerator(System.Collections.Generic.List`1{System.Int32}.Enumerator)">
+            <summary>nested type of a generic instantiation; how does MSVC distribute the type arguments?</summary>
+        </member>
+        <member name="M:IdProbe.TakesArray2(System.Int32[0:,0:])">
+            <summary>two-dimensional managed array parameter; expected System.Int32[0:,0:]</summary>
+        </member>
+        <member name="M:IdProbe.TakesNativeRef(System.Int32*!System.Runtime.CompilerServices.IsImplicitlyDereferenced)">
+            <summary>native reference parameter under /clr; representation evidence</summary>
+        </member>
+        <member name="M:IdProbe.TakesConstTrackingRef(System.Int32!System.Runtime.CompilerServices.IsConst@)">
+            <summary>const tracking reference parameter; modifier placement relative to the '@'</summary>
+        </member>
+        <member name="M:IdProbe.TakesTrackingRef(System.Int32@)">
+            <summary>tracking reference parameter; expected System.Int32@</summary>
+        </member>
+        <member name="M:IdProbe.TakesConstVolatilePtr(System.Int32|System.Runtime.CompilerServices.IsVolatile!System.Runtime.CompilerServices.IsConst*)">
+            <summary>const volatile int pointer parameter; modreq and modopt mixed on one type</summary>
+        </member>
+        <member name="M:IdProbe.TakesVolatilePtr(System.Int32|System.Runtime.CompilerServices.IsVolatile*)">
+            <summary>volatile int pointer parameter; modreq(IsVolatile): the open question is whether MSVC renders '|', '!', or omits it</summary>
+        </member>
+        <member name="M:IdProbe.TakesConstCharPtr(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte!System.Runtime.CompilerServices.IsConst*)">
+            <summary>const char pointer parameter; IsConst and IsSignUnspecifiedByte together (modifier ordering)</summary>
+        </member>
+        <member name="M:IdProbe.TakesCharPtr(System.SByte!System.Runtime.CompilerServices.IsSignUnspecifiedByte*)">
+            <summary>char pointer parameter; modopt(IsSignUnspecifiedByte) under a pointer</summary>
+        </member>
+        <member name="M:IdProbe.TakesULong(System.UInt32!System.Runtime.CompilerServices.IsLong)">
+            <summary>unsigned long parameter; modopt(IsLong) on UInt32</summary>
+        </member>
+        <member name="M:IdProbe.TakesLong(System.Int32!System.Runtime.CompilerServices.IsLong)">
+            <summary>long parameter; modopt(IsLong) on Int32</summary>
+        </member>
+        <member name="M:IdProbe.ConstValue(System.Int32!System.Runtime.CompilerServices.IsConst)">
+            <summary>const int parameter; known baseline: System.Int32!System.Runtime.CompilerServices.IsConst</summary>
+        </member>
+        <member name="T:IdProbe">
+            <summary>Probe class.</summary>
+        </member>
+    </members>
+</doc>

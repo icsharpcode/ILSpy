@@ -40,6 +40,7 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.Instrumentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -760,13 +761,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			// The tree handed to the pipeline must already be well-formed; check it once up front so a
 			// malformed builder output is caught here rather than blamed on the first transform (DEBUG only).
 			rootNode.CheckInvariant();
+			bool traceTransforms = DecompilerEventSource.Log.IsTransformTracingEnabled();
 			try
 			{
 				foreach (var transform in astTransforms)
 				{
 					CancellationToken.ThrowIfCancellationRequested();
 					context.StepStartGroup(transform.GetType().Name);
+					long traceStart = traceTransforms ? Stopwatch.GetTimestamp() : 0;
 					transform.Run(rootNode, context);
+					if (traceTransforms)
+						DecompilerEventSource.Log.AstTransformExecuted(transform, traceStart);
 					// Verify the slot structure survived the transform (DEBUG only); mirrors the IL
 					// pipeline's per-transform ILInstruction.CheckInvariant.
 					rootNode.CheckInvariant();
@@ -1294,8 +1299,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			bool first = true;
 			ITypeDefinition? parentTypeDef = null;
-			ExtensionInfo? parentExtensionInfo = null;
-
 			foreach (var entity in definitions)
 			{
 				switch (entity.Kind)
@@ -1314,8 +1317,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case HandleKind.MethodDefinition:
 						IMethod method = module.GetDefinition((MethodDefinitionHandle)entity);
-						parentExtensionInfo = method.ResolveExtensionInfo();
-						syntaxTree.Members.Add(DoDecompile(method, decompileRun, new SimpleTypeResolveContext(method), parentExtensionInfo));
+						syntaxTree.Members.Add(DoDecompile(method, decompileRun, new SimpleTypeResolveContext(method), method.ResolveExtensionInfo()));
 						if (first)
 						{
 							parentTypeDef = method.DeclaringTypeDefinition;
@@ -1332,8 +1334,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 					case HandleKind.PropertyDefinition:
 						IProperty property = module.GetDefinition((PropertyDefinitionHandle)entity);
-						parentExtensionInfo = property.ResolveExtensionInfo();
-						syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property), parentExtensionInfo));
+						var propertyExtensionInfo = property.ResolveExtensionInfo();
+						if (property.IsParameterizedProperty())
+						{
+							syntaxTree.Members.AddRange(DecompileParameterizedProperty(property, decompileRun, new SimpleTypeResolveContext(property), propertyExtensionInfo));
+						}
+						else
+						{
+							syntaxTree.Members.Add(DoDecompile(property, decompileRun, new SimpleTypeResolveContext(property), propertyExtensionInfo));
+						}
 						if (first)
 						{
 							parentTypeDef = property.DeclaringTypeDefinition;
@@ -1621,7 +1630,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, DecompileRun decompileRun, ITypeResolveContext decompilationContext, bool asExtension = false)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			DecompilerEventSource.Log.DecompileTypeStart(typeDef);
 			var entityMap = new MultiDictionary<IEntity, EntityDeclaration>();
 			var workList = new Queue<IEntity>();
 			TypeSystemAstBuilder typeSystemAstBuilder;
@@ -1804,8 +1813,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			finally
 			{
-				watch.Stop();
-				Instrumentation.DecompilerEventSource.Log.DoDecompileTypeDefinition(typeDef.FullName, watch.ElapsedMilliseconds);
+				DecompilerEventSource.Log.DecompileTypeStop(typeDef);
 			}
 
 			// MemberIsHidden identifies event backing fields from the metadata name association
@@ -1865,6 +1873,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							return;
 						}
+						if (property.IsParameterizedProperty())
+						{
+							foreach (var accessorDecl in DecompileParameterizedProperty(property, decompileRun, decompilationContext, null))
+							{
+								entityMap.Add(property, accessorDecl);
+								EnqueueReferencedMembers(accessorDecl);
+							}
+							return;
+						}
 						entityDecl = DoDecompile(property, decompileRun, decompilationContext.WithCurrentMember(property), null);
 						entityMap.Add(property, entityDecl);
 						break;
@@ -1893,19 +1910,24 @@ namespace ICSharpCode.Decompiler.CSharp
 						throw new ArgumentOutOfRangeException("Unexpected member type");
 				}
 
-				foreach (var node in entityDecl.Descendants)
+				EnqueueReferencedMembers(entityDecl);
+
+				void EnqueueReferencedMembers(EntityDeclaration decl)
 				{
-					var rr = node.GetResolveResult();
-					if (rr is MemberResolveResult mrr
-						&& mrr.Member.DeclaringTypeDefinition == typeDef
-						&& !(mrr.Member is IMethod { IsLocalFunction: true }))
+					foreach (var node in decl.Descendants)
 					{
-						workList.Enqueue(mrr.Member);
-					}
-					else if (rr is TypeResolveResult trr
-						&& trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
-					{
-						workList.Enqueue(trr.Type.GetDefinition()!);
+						var rr = node.GetResolveResult();
+						if (rr is MemberResolveResult mrr
+							&& mrr.Member.DeclaringTypeDefinition == typeDef
+							&& !(mrr.Member is IMethod { IsLocalFunction: true }))
+						{
+							workList.Enqueue(mrr.Member);
+						}
+						else if (rr is TypeResolveResult trr
+							&& trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
+						{
+							workList.Enqueue(trr.Type.GetDefinition()!);
+						}
 					}
 				}
 			}
@@ -2014,7 +2036,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IMethod method, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo? extensionInfo)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			DecompilerEventSource.Log.DecompileMemberStart(method, DecompiledMemberKind.Method);
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -2043,7 +2065,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					methodDecl.Modifiers |= Modifiers.Extern;
 				}
-				if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation
+				// Accessors qualify only when they are emitted as ordinary methods (parameterized
+				// properties); an Accessor node cannot carry the 'new' modifier.
+				if ((method.SymbolKind == SymbolKind.Method || (method.SymbolKind == SymbolKind.Accessor && methodDecl is MethodDeclaration))
+					&& !method.IsExplicitInterfaceImplementation
 					&& methodDefinition.HasFlag(System.Reflection.MethodAttributes.Virtual) == methodDefinition.HasFlag(System.Reflection.MethodAttributes.NewSlot))
 				{
 					SetNewModifier(methodDecl);
@@ -2087,8 +2112,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			finally
 			{
-				watch.Stop();
-				Instrumentation.DecompilerEventSource.Log.DoDecompileMethod(method.FullName, watch.ElapsedMilliseconds);
+				DecompilerEventSource.Log.DecompileMemberStop(method, DecompiledMemberKind.Method);
 			}
 		}
 
@@ -2359,7 +2383,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		EntityDeclaration DoDecompile(IField field, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			DecompilerEventSource.Log.DecompileMemberStart(field, DecompiledMemberKind.Field);
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -2369,7 +2393,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					object? constantValue = field.GetConstantValue();
 					if (constantValue != null)
 					{
-						enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType!, constantValue);
+						TypeCode underlyingTypeCode = ReflectionHelper.GetTypeCode(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType);
+						if (underlyingTypeCode is >= TypeCode.SByte and <= TypeCode.UInt64)
+						{
+							long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false);
+							enumDec.Initializer = typeSystemAstBuilder.ConvertEnumValue(decompilationContext.CurrentTypeDefinition, initValue, field);
+						}
+						else
+						{
+							// Unusual underlying types (bool, native int, ...) cannot be losslessly
+							// squeezed through the long-based member-reference beautification.
+							enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType!, constantValue);
+						}
 					}
 					enumDec.Attributes.AddRange(field.GetAttributes().Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 					enumDec.AddAnnotation(new MemberResolveResult(null, field));
@@ -2421,8 +2456,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			finally
 			{
-				watch.Stop();
-				Instrumentation.DecompilerEventSource.Log.DoDecompileField(field.FullName, watch.ElapsedMilliseconds);
+				DecompilerEventSource.Log.DecompileMemberStop(field, DecompiledMemberKind.Field);
 			}
 		}
 
@@ -2443,10 +2477,45 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
+		/// <summary>
+		/// Decompiles a parameterized property (a named property with parameters, e.g. from
+		/// VB.NET) into declarations of its accessor methods, because C# has no syntax for
+		/// such properties. The property-level attributes are placed on the first accessor
+		/// under the 'property:' attribute target, which is not valid for methods and is
+		/// therefore ignored by the C# compiler (CS0657): recompilation neither loses the
+		/// attributes from the source nor misapplies them to the accessor method.
+		/// </summary>
+		List<EntityDeclaration> DecompileParameterizedProperty(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo? extensionInfo)
+		{
+			var result = new List<EntityDeclaration>(2);
+			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
+			foreach (var accessor in new[] { property.Getter, property.Setter })
+			{
+				if (accessor == null)
+					continue;
+				var accessorDecl = DoDecompile(accessor, decompileRun, decompilationContext.WithCurrentMember(accessor), extensionInfo);
+				if (result.Count == 0)
+				{
+					accessorDecl.AddLeadingTrivia(new Comment($" C# has no syntax for parameterized property '{property.Name}'."));
+					var attributes = property.GetAttributes().Select(typeSystemAstBuilder.ConvertAttribute).ToList();
+					if (attributes.Count > 0)
+					{
+						var attrSection = new AttributeSection { AttributeTarget = "property" };
+						attrSection.Attributes.AddRange(attributes);
+						accessorDecl.Attributes.InsertAfter(null, attrSection);
+						accessorDecl.AddLeadingTrivia(new Comment(" Its 'property:' attributes below are ignored by the compiler (CS0657)."));
+					}
+				}
+				result.Add(accessorDecl);
+				result.AddRange(AddInterfaceImplHelpers(accessorDecl, accessor, typeSystemAstBuilder));
+			}
+			return result;
+		}
+
 		EntityDeclaration DoDecompile(IProperty property, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo? extensionInfo)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			DecompilerEventSource.Log.DecompileMemberStart(property, DecompiledMemberKind.Property);
 			try
 			{
 				var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
@@ -2507,15 +2576,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			finally
 			{
-				watch.Stop();
-				Instrumentation.DecompilerEventSource.Log.DoDecompileProperty(property.FullName, watch.ElapsedMilliseconds);
+				DecompilerEventSource.Log.DecompileMemberStop(property, DecompiledMemberKind.Property);
 			}
 		}
 
 		EntityDeclaration DoDecompile(IEvent ev, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
-			var watch = System.Diagnostics.Stopwatch.StartNew();
+			DecompilerEventSource.Log.DecompileMemberStart(ev, DecompiledMemberKind.Event);
 			try
 			{
 				bool adderHasBody = ev.CanAdd && ev.AddAccessor!.HasBody;
@@ -2570,8 +2638,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			finally
 			{
-				watch.Stop();
-				Instrumentation.DecompilerEventSource.Log.DoDecompileEvent(ev.FullName, watch.ElapsedMilliseconds);
+				DecompilerEventSource.Log.DecompileMemberStop(ev, DecompiledMemberKind.Event);
 			}
 		}
 

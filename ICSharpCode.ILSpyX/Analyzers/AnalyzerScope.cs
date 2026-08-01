@@ -24,6 +24,7 @@ using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.ILSpyX.Instrumentation;
 
 namespace ICSharpCode.ILSpyX.Analyzers
 {
@@ -56,6 +57,14 @@ namespace ICSharpCode.ILSpyX.Analyzers
 
 		public IEnumerable<MetadataFile> GetModulesInScope(CancellationToken ct)
 		{
+			var modules = GetModulesInScopeCore(ct);
+			if (!ILSpyXEventSource.Log.IsAnalyzerTracingEnabled())
+				return modules;
+			return TraceModulesInScope(modules);
+		}
+
+		IEnumerable<MetadataFile> GetModulesInScopeCore(CancellationToken ct)
+		{
 			if (IsLocal)
 				return new[] { TypeScope.ParentModule!.MetadataFile! };
 
@@ -63,6 +72,30 @@ namespace ICSharpCode.ILSpyX.Analyzers
 				return GetModuleAndAnyFriends(TypeScope, ct);
 
 			return GetReferencingModules(TypeScope.ParentModule!.MetadataFile!, ct);
+		}
+
+		/// <summary>
+		/// Wraps the lazily-evaluated scope enumeration in an AnalyzerScope trace span, so the
+		/// span covers the actual scan work (which happens during enumeration, not when
+		/// GetModulesInScope returns).
+		/// </summary>
+		IEnumerable<MetadataFile> TraceModulesInScope(IEnumerable<MetadataFile> modules)
+		{
+			string entityName = typeScope.FullName;
+			ILSpyXEventSource.Log.AnalyzerScopeStart(entityName);
+			int count = 0;
+			try
+			{
+				foreach (var module in modules)
+				{
+					count++;
+					yield return module;
+				}
+			}
+			finally
+			{
+				ILSpyXEventSource.Log.AnalyzerScopeStop(entityName, count);
+			}
 		}
 
 		public IEnumerable<MetadataFile> GetAllModules()

@@ -10,7 +10,15 @@ permissions:
   contents: read
 
 jobs:
+  # Skip push builds for branches whose open PR already builds them; see pr-build-gate.yml.
+  gate:
+    permissions:
+      pull-requests: read
+    uses: ./.github/workflows/pr-build-gate.yml
+
   build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +27,7 @@ jobs:
         fetch-depth: 0
         persist-credentials: false
         
-    - uses: actions/setup-dotnet@v5
+    - uses: actions/setup-dotnet@v6
       with:
         dotnet-version: '11.0.x'
         dotnet-quality: 'preview'

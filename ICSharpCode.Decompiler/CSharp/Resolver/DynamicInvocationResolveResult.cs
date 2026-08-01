@@ -72,12 +72,20 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		public readonly IList<ResolveResult> InitializerStatements;
 
-		public DynamicInvocationResolveResult(ResolveResult target, DynamicInvocationType invocationType, IList<ResolveResult> arguments, IList<ResolveResult> initializerStatements = null) : base(SpecialType.Dynamic)
+		/// <summary>
+		/// Synthesized member (a <c>dynamic</c> method on the <c>dynamic</c> type) representing the invoked
+		/// member, so the member reference carries a navigable symbol / hover tooltip. Only set for an
+		/// invoke-member (<c>a.Method(b)</c>); null for a plain invoke or an indexer. May be null.
+		/// </summary>
+		public readonly IMember Symbol;
+
+		public DynamicInvocationResolveResult(ResolveResult target, DynamicInvocationType invocationType, IList<ResolveResult> arguments, IList<ResolveResult> initializerStatements = null, IMember symbol = null) : base(SpecialType.Dynamic)
 		{
 			this.Target = target;
 			this.InvocationType = invocationType;
 			this.Arguments = arguments ?? EmptyList<ResolveResult>.Instance;
 			this.InitializerStatements = initializerStatements ?? EmptyList<ResolveResult>.Instance;
+			this.Symbol = symbol;
 		}
 
 		public override string ToString()

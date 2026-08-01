@@ -21,14 +21,30 @@ using AvaloniaEdit.Document;
 namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
-	/// A clickable region in the decompiled text. <see cref="Reference"/> identifies the target;
-	/// <see cref="IsLocal"/> distinguishes local-variable references (highlight-only) from
-	/// cross-document ones; <see cref="IsDefinition"/> marks the spot where the entity is declared.
+	/// How a <see cref="ReferenceSegment"/> behaves when the user interacts with it.
+	/// </summary>
+	public enum ReferenceMode
+	{
+		/// <summary>A navigable reference (real members/types): hand cursor, click navigates.</summary>
+		Link,
+		/// <summary>A local-variable reference: arrow cursor, click highlights all its occurrences.</summary>
+		LocalHighlight,
+		/// <summary>
+		/// A reference that only shows a hover tooltip (synthesized dynamic members, the dynamic keyword):
+		/// arrow cursor, click does nothing, no occurrence highlight. It has no metadata to navigate to.
+		/// </summary>
+		HoverOnly,
+	}
+
+	/// <summary>
+	/// A region in the decompiled text with hover/interaction behavior. <see cref="Reference"/> identifies
+	/// the target; <see cref="Kind"/> selects the interaction mode; <see cref="IsDefinition"/> marks the
+	/// spot where the entity is declared.
 	/// </summary>
 	public sealed class ReferenceSegment : TextSegment
 	{
 		public object? Reference;
-		public bool IsLocal;
+		public ReferenceMode Kind;
 		public bool IsDefinition;
 	}
 }

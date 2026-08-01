@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
+using ICSharpCode.Decompiler.Instrumentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -274,6 +275,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		private async Task InitializeAsync(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
 		{
+			DecompilerEventSource.Log.TypeSystemInitStart(mainModule.Name);
+			int referencedAssembliesResolved = 0;
+			try
+			{
+				referencedAssembliesResolved = await InitializeCoreAsync(mainModule, assemblyResolver).ConfigureAwait(false);
+			}
+			finally
+			{
+				DecompilerEventSource.Log.TypeSystemInitStop(mainModule.Name, referencedAssembliesResolved);
+			}
+		}
+
+		/// <returns>The number of references in the final set passed to Init(): distinct
+		/// resolved assemblies (same-name lower-version duplicates dropped) plus resolved
+		/// non-assembly modules.</returns>
+		private async Task<int> InitializeCoreAsync(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
+		{
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<MetadataFile>();
@@ -398,6 +416,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				Init(mainModuleWithOptions, referencedAssembliesWithOptions);
 			}
 			this.mainModule = (MetadataModule)base.MainModule;
+			return referencedAssembliesWithOptions.Count;
 
 			void AddToQueue(bool isAssembly, MetadataFile mainModule, object reference)
 			{
