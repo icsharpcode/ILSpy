@@ -6,6 +6,15 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
+	static class KeyValuePairExtensions
+	{
+		public static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> pair, out TKey key, out TValue value)
+		{
+			key = pair.Key;
+			value = pair.Value;
+		}
+	}
+
 	class DeconstructionTests
 	{
 		public static void Main()
@@ -137,6 +146,81 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NullReferenceException_RefLocalReferencesArrayElement_Deconstruction(out _, null);
 			DeconstructTupleSameVar(("a", "b"));
 			DeconstructTupleListForEachSameVar(new List<(string, string)> { ("a", "b") });
+			StructDeconstruction_Assignment(new NestedInner { Value = 7 });
+			NestedDeconstruction_Assignment(new NestedOuter { Value = 42 });
+			NestedDeconstruction_ForEach(new List<NestedOuter> {
+				new NestedOuter { Value = 1 },
+				new NestedOuter { Value = 2 }
+			});
+			NestedDeconstruction_DiscardedElement(new KeyValuePair<object, DiscardData>("key", default(DiscardData)));
+		}
+
+		public struct DiscardData
+		{
+			public void Deconstruct(out object o1, out object o2)
+			{
+				Console.WriteLine("DiscardData.Deconstruct");
+				o1 = 1;
+				o2 = 2;
+			}
+		}
+
+		public void NestedDeconstruction_DiscardedElement(KeyValuePair<object, DiscardData> pair)
+		{
+			Console.WriteLine("NestedDeconstruction_DiscardedElement:");
+			var (key, (value, _)) = pair;
+			Console.WriteLine(key);
+			Console.WriteLine(value);
+		}
+
+		public struct NestedInner
+		{
+			public int Value;
+
+			public void Deconstruct(out int a, out int b)
+			{
+				Console.WriteLine("NestedInner.Deconstruct");
+				a = Value + 1;
+				b = Value + 2;
+			}
+		}
+
+		public struct NestedOuter
+		{
+			public int Value;
+
+			public void Deconstruct(out int x, out NestedInner inner)
+			{
+				Console.WriteLine("NestedOuter.Deconstruct");
+				x = Value;
+				inner = new NestedInner { Value = Value * 10 };
+			}
+		}
+
+		public void StructDeconstruction_Assignment(NestedInner s)
+		{
+			Console.WriteLine("StructDeconstruction_Assignment:");
+			var (a, b) = s;
+			Console.WriteLine(a);
+			Console.WriteLine(b);
+		}
+
+		public void NestedDeconstruction_Assignment(NestedOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_Assignment:");
+			var (x, (a, b)) = o;
+			Console.WriteLine(x);
+			Console.WriteLine(a);
+			Console.WriteLine(b);
+		}
+
+		public void NestedDeconstruction_ForEach(IEnumerable<NestedOuter> items)
+		{
+			Console.WriteLine("NestedDeconstruction_ForEach:");
+			foreach (var (x, (a, b)) in items)
+			{
+				Console.WriteLine(x + a + b);
+			}
 		}
 
 		public void Property_NoDeconstruction_SwappedAssignments()

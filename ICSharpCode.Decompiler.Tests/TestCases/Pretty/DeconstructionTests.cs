@@ -70,6 +70,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public struct StructDeconstructionSource<T, T2>
+		{
+			public int Dummy { get; set; }
+
+			public void Deconstruct(out T a, out T2 b)
+			{
+				a = default(T);
+				b = default(T2);
+			}
+		}
+
 		private class AssignmentTargets
 		{
 			public int IntField;
@@ -126,6 +137,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private DeconstructionSource<T, T2, T3> GetSource<T, T2, T3>()
 		{
 			return null;
+		}
+
+		private StructDeconstructionSource<T, T2> GetStructSource<T, T2>()
+		{
+			return default(StructDeconstructionSource<T, T2>);
 		}
 
 		private ref T GetRef<T>()
@@ -297,6 +313,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			};
 			Console.WriteLine(myInt3);
 			Console.WriteLine(myInt4);
+		}
+
+		public void LocalVariable_NoConversion_Struct_Custom()
+		{
+			var (value, value2) = GetStructSource<string, int>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
 		}
 
 		public void Property_NoConversion_Custom()
