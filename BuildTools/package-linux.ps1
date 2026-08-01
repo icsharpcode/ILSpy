@@ -62,7 +62,9 @@ Write-Host "created $zipPath"
 # Both dpkg and rpm reject '-' inside a version (it separates the package revision in deb
 # and is illegal in the rpm Version tag). '~' is legal in both and sorts *before* the
 # plain version, which is the correct semantic for pre-release suffixes like '-preview1'.
-$pkgVersion = $Version -replace '-', '~'
+# CI versions can also embed a branch name (e.g. 'avalonia12_1_1'); dpkg only accepts
+# alphanumerics and '.+~' there, so map every other character (underscores etc.) to '.'.
+$pkgVersion = $Version -replace '-', '~' -replace '[^A-Za-z0-9.+~]', '.'
 
 # Shared payload layout for both package formats: the app in /opt/ilspy, a launcher
 # symlink on PATH, and desktop integration files.
