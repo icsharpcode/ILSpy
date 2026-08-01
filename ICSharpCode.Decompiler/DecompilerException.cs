@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler
 
 #if NET5_0_OR_GREATER
 		[UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "All uses of the MethodInfo returned from frame.GetMethod() are null-checked.")]
-#endif	
+#endif
 		static string GetStackTrace(Exception exception)
 		{
 			// Output stacktrace in custom format (very similar to Exception.StackTrace
