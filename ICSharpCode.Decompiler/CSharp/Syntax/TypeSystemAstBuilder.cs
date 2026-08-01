@@ -1992,8 +1992,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			if (this.ShowBaseTypes)
 			{
+				MemberLookup baseListLookup = new MemberLookup(typeDefinition.DeclaringTypeDefinition, typeDefinition.ParentModule);
 				foreach (IType baseType in typeDefinition.DirectBaseTypes)
 				{
+					// Interfaces enter the interface-impl metadata transitively, so entries the
+					// base list cannot name can be dropped; a base class was always written
+					// explicitly and stays even if C# could not name it.
+					if (baseType.Kind == TypeKind.Interface && !BaseTypeAccessibleFrom(baseType, typeDefinition, baseListLookup))
+					{
+						continue;
+					}
 					if (typeDefinition.Kind == TypeKind.Enum && baseType.IsKnownType(KnownTypeCode.Enum))
 					{
 						// if the declared type is an enum, replace all references to System.Enum with the enum-underlying type
@@ -2037,6 +2045,47 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				}
 			}
 			return decl;
+		}
+
+		bool BaseTypeAccessibleFrom(IType baseType, ITypeDefinition currentType, MemberLookup lookup)
+		{
+			// Every type the base-list reference names must be nameable there, including
+			// type arguments ('class SubF : F, IWrap<F.IFoo>' fails like F.IFoo itself would).
+			var visitor = new BaseListNameabilityVisitor(currentType, lookup);
+			baseType.AcceptVisitor(visitor);
+			return visitor.AllNameable;
+		}
+
+		sealed class BaseListNameabilityVisitor(ITypeDefinition currentType, MemberLookup lookup) : TypeVisitor
+		{
+			public bool AllNameable = true;
+
+			public override IType VisitTypeDefinition(ITypeDefinition type)
+			{
+				AllNameable &= TypeDefinitionNameableInBaseList(type, currentType, lookup);
+				return base.VisitTypeDefinition(type);
+			}
+		}
+
+		static bool TypeDefinitionNameableInBaseList(ITypeDefinition? td, ITypeDefinition currentType, MemberLookup lookup)
+		{
+			if (td == null)
+				return true;
+			// A type may name its own nested types (and those of its enclosing types) in its
+			// base list regardless of accessibility, e.g. 'class F : F.IFoo'.
+			for (var t = currentType; t != null; t = t.DeclaringTypeDefinition)
+			{
+				if (td.DeclaringTypeDefinition?.Equals(t) == true)
+					return true;
+			}
+			// Everything else resolves in the enclosing scope: 'class SubF : F, F.IFoo' is
+			// CS0122 even though F.IFoo is accessible inside SubF's body. Protected access
+			// through the enclosing types' inheritance chains remains available, which
+			// MemberLookup grants for type definitions regardless of allowProtectedAccess.
+			if (!lookup.IsAccessible(td, false))
+				return false;
+			// Naming 'A.I' also requires 'A' to be nameable.
+			return TypeDefinitionNameableInBaseList(td.DeclaringTypeDefinition, currentType, lookup);
 		}
 
 		DelegateDeclaration ConvertDelegate(IMethod invokeMethod, Modifiers modifiers)
