@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		// C# 4.0 spec: §7.7.3 Logical negation operator
+		// C# spec (draft-v11): §12.9.4 Logical negation operator
 		OperatorMethod[]? logicalNegationOperators;
 
 		public OperatorMethod[] LogicalNegationOperators {

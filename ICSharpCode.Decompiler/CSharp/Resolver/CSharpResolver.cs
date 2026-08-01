@@ -337,7 +337,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 
-			// C# 4.0 spec: §7.3.3 Unary operator overload resolution
+			// C# spec (draft-v11): §12.4.4 Unary operator overload resolution
 			string overloadableOperatorName = GetOverloadableOperatorName(op);
 			if (overloadableOperatorName == null)
 			{
@@ -426,8 +426,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case UnaryOperatorType.Decrement:
 				case UnaryOperatorType.PostIncrement:
 				case UnaryOperatorType.PostDecrement:
-					// C# 4.0 spec: §7.6.9 Postfix increment and decrement operators
-					// C# 4.0 spec: §7.7.5 Prefix increment and decrement operators
+					// C# spec (draft-v11): §12.8.16 Postfix increment and decrement operators
+					// C# spec (draft-v11): §12.9.7 Prefix increment and decrement operators
 					TypeCode code = ReflectionHelper.GetTypeCode(type);
 					if ((code >= TypeCode.Char && code <= TypeCode.Decimal) || type.Kind == TypeKind.Enum || type.Kind == TypeKind.Pointer || type.IsCSharpNativeIntegerType())
 						return UnaryOperatorResolveResult(expression.Type, op, expression, isNullable);
@@ -535,7 +535,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region UnaryNumericPromotion
 		ResolveResult UnaryNumericPromotion(UnaryOperatorType op, ref IType type, bool isNullable, ResolveResult expression)
 		{
-			// C# 4.0 spec: §7.3.6.1
+			// C# spec (draft-v11): §12.4.7.2 Unary numeric promotions
 			TypeCode code = ReflectionHelper.GetTypeCode(type);
 			if (isNullable && type.Kind == TypeKind.Null)
 				code = TypeCode.SByte; // cause promotion of null to int32
@@ -1064,7 +1064,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region BinaryNumericPromotion
 		bool BinaryNumericPromotion(bool isNullable, ref ResolveResult lhs, ref ResolveResult rhs, bool allowNullableConstants)
 		{
-			// C# 4.0 spec: §7.3.6.2
+			// C# spec (draft-v11): §12.4.7.3 Binary numeric promotions
 			var lhsUType = NullableType.GetUnderlyingType(lhs.Type);
 			var rhsUType = NullableType.GetUnderlyingType(rhs.Type);
 			TypeCode lhsCode = ReflectionHelper.GetTypeCode(lhsUType);
@@ -1288,7 +1288,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// However, we must not use those as user-defined operators (we would skip numeric promotion).
 				return EmptyList<IMethod>.Instance;
 			}
-			// C# 4.0 spec: §7.3.5 Candidate user-defined operators
+			// C# spec (draft-v11): §12.4.6 Candidate user-defined operators
 			var operators = type.GetMethods(m => m.IsOperator && m.Name == operatorName).ToList();
 			LiftUserDefinedOperators(operators);
 			return operators;
@@ -1396,7 +1396,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public ResolveResult ResolveCast(IType targetType, ResolveResult expression)
 		{
-			// C# 4.0 spec: §7.7.6 Cast expressions
+			// C# spec (draft-v11): §12.9.8 Cast expressions
 			Conversion c = conversions.ExplicitConversion(expression, targetType);
 			if (expression.IsCompileTimeConstant && !c.IsUserDefined)
 			{

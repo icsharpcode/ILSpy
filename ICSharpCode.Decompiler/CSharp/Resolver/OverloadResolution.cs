@@ -29,7 +29,7 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	/// <summary>
-	/// C# overload resolution (C# 4.0 spec: §7.5).
+	/// C# overload resolution (C# spec draft-v11: §12.6.4).
 	/// </summary>
 	public class OverloadResolution
 	{
@@ -390,8 +390,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		#region MapCorrespondingParameters
 		void MapCorrespondingParameters(Candidate candidate)
 		{
-			// C# 4.0 spec: §7.5.1.1 Corresponding parameters
-			// Updated for C# 7.2 non-trailing named arguments
+			// C# spec (draft-v11): §12.6.2.2 Corresponding parameters
+			// (includes the non-trailing named arguments rule from C# 7.2)
 			candidate.ArgumentToParameterMap = new int[arguments.Length];
 			bool hasPositionalArgument = false;
 			// go backwards, so that hasPositionalArgument tells us whether there
