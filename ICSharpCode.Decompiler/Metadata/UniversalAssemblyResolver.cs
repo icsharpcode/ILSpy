@@ -418,6 +418,16 @@ namespace ICSharpCode.Decompiler.Metadata
 			return path ?? version?.ToString() ?? ".";
 		}
 
+#if NET5_0_OR_GREATER
+		[UnconditionalSuppressMessage("SingleFile", "IL3002:Avoid calling members marked with 'RequiresAssemblyFilesAttribute' when publishing as a single-file", Justification = "This method returns null when the module has no file path.")]
+#endif
+		static string? GetSystemObjectModuleFullyQualifiedName()
+		{
+			// FullyQualifiedName returns "<Unknown>" for modules with no file path.
+			string? path = typeof(object).Module.FullyQualifiedName;
+			return path is "<Unknown>" ? null : path;
+		}
+
 		string? ResolveInternal(IAssemblyReference name)
 		{
 			if (name == null)
@@ -428,12 +438,14 @@ namespace ICSharpCode.Decompiler.Metadata
 				return assembly;
 
 			string[] framework_dirs;
-			string framework_dir;
+			string? framework_dir;
 
 			switch (decompilerRuntime)
 			{
 				case DecompilerRuntime.Mono:
-					framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+					framework_dir = Path.GetDirectoryName(GetSystemObjectModuleFullyQualifiedName());
+					if (string.IsNullOrEmpty(framework_dir))
+						goto NotFound;
 					framework_dirs = new[] { framework_dir, Path.Combine(framework_dir, "Facades") };
 					break;
 				case DecompilerRuntime.NETCoreApp:
@@ -454,7 +466,9 @@ namespace ICSharpCode.Decompiler.Metadata
 					framework_dirs = new[] { framework_dir };
 					break;
 				default:
-					framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+					framework_dir = Path.GetDirectoryName(GetSystemObjectModuleFullyQualifiedName());
+					if (string.IsNullOrEmpty(framework_dir))
+						goto NotFound;
 					framework_dirs = new[] { framework_dir };
 					break;
 			}
@@ -494,12 +508,15 @@ namespace ICSharpCode.Decompiler.Metadata
 				// regardless of the requested version (the runtime itself rolls forward in the
 				// same way). Without this, e.g. the type-forwards of a netstandard facade
 				// (pointing to a versioned System.Runtime) are unresolvable on such hosts.
-				string runtimeDir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+				string? runtimeDir = Path.GetDirectoryName(GetSystemObjectModuleFullyQualifiedName());
+				if (string.IsNullOrEmpty(runtimeDir))
+					goto NotFound;
 				assembly = SearchDirectory(name, runtimeDir);
 				if (assembly != null)
 					return assembly;
 			}
 
+			NotFound:
 			if (throwOnError)
 				throw new ResolutionException(name, null, null);
 			return null;
@@ -562,7 +579,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (decompilerRuntime != DecompilerRuntime.NETCoreApp)
 			{
 				if (corlib.Version == version || IsSpecialVersionOrRetargetable(reference))
-					return typeof(object).Module.FullyQualifiedName;
+					return GetSystemObjectModuleFullyQualifiedName();
 			}
 
 			if (reference.PublicKeyToken == null)
@@ -649,7 +666,10 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? GetMonoMscorlibBasePath(Version version)
 		{
-			var path = Directory.GetParent(typeof(object).Module.FullyQualifiedName)!.Parent!.FullName;
+			string? corLibModulePath = GetSystemObjectModuleFullyQualifiedName();
+			if (corLibModulePath == null)
+				return null;
+			var path = Directory.GetParent(corLibModulePath)!.Parent!.FullName;
 			if (version.Major == 1)
 				path = Path.Combine(path, "1.0");
 			else if (version.Major == 2)
@@ -710,11 +730,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			return paths;
 		}
 
-		static string GetCurrentMonoGac()
+		static string? GetCurrentMonoGac()
 		{
+			string? corlibModulePath = GetSystemObjectModuleFullyQualifiedName();
+			if (string.IsNullOrEmpty(corlibModulePath))
+				return null;
 			return Path.Combine(
 				Directory.GetParent(
-					Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!)!.FullName,
+					Path.GetDirectoryName(corlibModulePath)!)!.FullName,
 				"gac");
 		}
 
