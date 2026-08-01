@@ -11,8 +11,8 @@
     <RoslynVersion>5.9.0-1.26359.118</RoslynVersion>
     <NetPackageVersion>10.0.10</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
-    <AvaloniaVersion>12.1.0</AvaloniaVersion>
-    <DockVersion>12.0.0.2</DockVersion>
+    <AvaloniaVersion>12.1.1</AvaloniaVersion>
+    <DockVersion>12.1.0</DockVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Avalonia (ILSpy port) -->
@@ -32,8 +32,8 @@
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="$(DockVersion)" />
     <PackageVersion Include="ProDataGrid" Version="12.0.4" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageVersion Include="AwesomeAssertions" Version="9.4.0" />
-    <PackageVersion Include="CliWrap" Version="3.10.2" />
+    <PackageVersion Include="AwesomeAssertions" Version="9.5.0" />
+    <PackageVersion Include="CliWrap" Version="3.10.4" />
     <PackageVersion Include="DiffLib" Version="2025.0.0" />
     <PackageVersion Include="ILCompiler.Reflection.ReadyToRun.Experimental" Version="10.0.0-rtm.25531.102" />
     <PackageVersion Include="Iced" Version="1.21.0" />
@@ -61,8 +61,8 @@
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.1.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.1.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.3" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.3.3" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="NSubstitute" Version="6.0.0" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
