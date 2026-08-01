@@ -22,32 +22,14 @@ using System.Threading.Tasks;
 
 using NUnit.Framework;
 
+using static ICSharpCode.ILSpyCmd.Tests.CliTestRunner;
+
 namespace ICSharpCode.ILSpyCmd.Tests
 {
 	[TestFixture]
 	public class ILSpyCmdMemberOptionTests
 	{
 		static readonly string testAssemblyPath = typeof(ILSpyCmdMemberOptionTests).Assembly.Location;
-
-		static async Task<(int ExitCode, string Output, string Error)> RunAsync(params string[] args)
-		{
-			var originalOut = Console.Out;
-			var originalError = Console.Error;
-			var stdout = new StringWriter();
-			var stderr = new StringWriter();
-			try
-			{
-				Console.SetOut(stdout);
-				Console.SetError(stderr);
-				int exitCode = await ILSpyCmdProgram.Main(args);
-				return (exitCode, stdout.ToString(), stderr.ToString());
-			}
-			finally
-			{
-				Console.SetOut(originalOut);
-				Console.SetError(originalError);
-			}
-		}
 
 		[Test]
 		public async Task MethodByDocumentationIdString()
