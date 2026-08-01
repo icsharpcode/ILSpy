@@ -136,6 +136,12 @@ Examples:
 		[Option("--decompile-baml", "When used with -p, decompile BAML resources to XAML files (Page items) instead of leaving them as raw byte streams.", CommandOptionType.NoValue)]
 		public bool DecompileBamlFlag { get; }
 
+		[Option("--dump-table <table>", "Dump a metadata table: prints RID, token, names, heap offsets and coded indexes of every row. <table> is the ECMA-335 table name (e.g. TypeDef, Property, MethodSemantics; case-insensitive) or table number (decimal or 0x-prefixed hex, e.g. 0x17).", CommandOptionType.SingleValue)]
+		public string DumpTableName { get; }
+
+		[Option("--json", "Output as JSON. Currently only supported together with --dump-table.", CommandOptionType.NoValue)]
+		public bool JsonOutputFlag { get; }
+
 		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
 				Environment.NewLine
 				+ "ICSharpCode.Decompiler: " +
@@ -232,6 +238,12 @@ Examples:
 			if (outputDirectory != null)
 			{
 				Directory.CreateDirectory(outputDirectory);
+			}
+
+			if (JsonOutputFlag && DumpTableName == null)
+			{
+				app.Error.WriteLine("The --json option is currently only supported together with --dump-table.");
+				return ProgramExitCodes.EX_USAGE;
 			}
 
 			try
@@ -362,6 +374,27 @@ Examples:
 				else if (ResourceName != null)
 				{
 					return ExtractResource(fileName, ResourceName, output, outputDirectory, app);
+				}
+				else if (DumpTableName != null)
+				{
+					if (!MetadataTableDumper.TryParseTableName(DumpTableName, out var table))
+					{
+						app.Error.WriteLine($"Unknown metadata table '{DumpTableName}'.");
+						app.Error.WriteLine($"Supported tables: {MetadataTableDumper.SupportedTableNames}");
+						return ProgramExitCodes.EX_USAGE;
+					}
+
+					if (outputDirectory != null)
+					{
+						// per-file writer, disposed here: the shared 'output' is only closed once
+						// at the end of the run, which would lose the buffered tail of every file
+						// but the last when dumping multiple assemblies
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						using var tableOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + $".{table}.{(JsonOutputFlag ? "json" : "txt")}");
+						return MetadataTableDumper.DumpTable(fileName, tableOutput, table, JsonOutputFlag);
+					}
+
+					return MetadataTableDumper.DumpTable(fileName, output, table, JsonOutputFlag);
 				}
 				else
 				{
