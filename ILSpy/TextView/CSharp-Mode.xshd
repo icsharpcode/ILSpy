@@ -117,7 +117,10 @@
 		</Span>
 		
 		<Span color="Char">
-			<Begin>'</Begin>
+			<!-- Not preceded by an identifier character: names compiled from F# and
+			     obfuscated assemblies may contain apostrophes (e.g. x'), which must not
+			     start a char literal (issue #3652). -->
+			<Begin>(?&lt;![\w'])'</Begin>
 			<End>'</End>
 			<RuleSet>
 				<!-- span for escape sequences -->
