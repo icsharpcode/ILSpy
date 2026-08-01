@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	}
 
 	/// <summary>
-	/// Implements C# 4.0 Type Inference (§7.5.2).
+	/// Implements C# type inference (C# spec draft-v11: §12.6.3).
 	/// </summary>
 	public sealed class TypeInference
 	{
@@ -318,7 +318,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		bool PhaseTwo()
 		{
-			// C# 4.0 spec: §7.5.2.2 The second phase
+			// C# spec (draft-v11): §12.6.3.3 The second phase
 			Log.WriteLine("Phase Two");
 			// All unfixed type variables Xi which do not depend on any Xj are fixed.
 			List<TP> typeParametersToFix = new List<TP>();
@@ -373,30 +373,30 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			else
 			{
-				// Otherwise, for all arguments ei with corresponding parameter type Ti
+				// Otherwise, for all arguments ei with corresponding parameter type Ti
 				for (int i = 0; i < arguments.Length; i++)
 				{
 					ResolveResult Ei = arguments[i];
 					IType Ti = parameterTypes[i];
-					// where the output types (§7.4.2.4) contain unfixed type variables Xj
-					// but the input types (§7.4.2.3) do not
+					// where the output types (§12.6.3.5) contain unfixed type variables Xj
+					// but the input types (§12.6.3.4) do not
 					if (OutputTypeContainsUnfixed(Ei, Ti) && !InputTypesContainsUnfixed(Ei, Ti))
 					{
-						// an output type inference (§7.4.2.6) is made for ei with type Ti.
+						// an output type inference (§12.6.3.8) is made for ei with type Ti.
 						Log.WriteLine("MakeOutputTypeInference for argument #" + i);
 						MakeOutputTypeInference(Ei, Ti);
 					}
 				}
-				// Then the second phase is repeated.
+				// Then the second phase is repeated.
 				return PhaseTwo();
 			}
 		}
 		#endregion
 
-		#region Input Types / Output Types (§7.5.2.3 + §7.5.2.4)
+		#region Input Types / Output Types (§12.6.3.4 + §12.6.3.5)
 		IType[] InputTypes(ResolveResult e, IType t)
 		{
-			// C# 4.0 spec: §7.5.2.3 Input types
+			// C# spec (draft-v11): §12.6.3.4 Input types
 			LambdaResolveResult lrr = e as LambdaResolveResult;
 			if (lrr != null && lrr.IsImplicitlyTyped || e is MethodGroupResolveResult)
 			{
@@ -416,7 +416,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		IType[] OutputTypes(ResolveResult e, IType t)
 		{
-			// C# 4.0 spec: §7.5.2.4 Output types
+			// C# spec (draft-v11): §12.6.3.5 Output types
 			LambdaResolveResult lrr = e as LambdaResolveResult;
 			if (lrr != null || e is MethodGroupResolveResult)
 			{
@@ -465,8 +465,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 
-		#region DependsOn (§7.5.2.5)
-		// C# 4.0 spec: §7.5.2.5 Dependance
+		#region DependsOn (§12.6.3.6)
+		// C# spec (draft-v11): §12.6.3.6 Dependence
 
 		void CalculateDependencyMatrix()
 		{
@@ -522,8 +522,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		void MakeOutputTypeInference(ResolveResult e, IType t)
 		{
 			Log.WriteLine(" MakeOutputTypeInference from " + e + " to " + t);
-			// If E is an anonymous function with inferred return type  U (§7.5.2.12) and T is a delegate type or expression
-			// tree type with return type Tb, then a lower-bound inference (§7.5.2.9) is made from U to Tb.
+			// If E is an anonymous function with inferred return type  U (§12.6.3.14) and T is a delegate type or expression
+			// tree type with return type Tb, then a lower-bound inference (§12.6.3.11) is made from U to Tb.
 			LambdaResolveResult lrr = e as LambdaResolveResult;
 			if (lrr != null)
 			{
@@ -610,10 +610,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 
-		#region MakeExplicitParameterTypeInference (§7.5.2.7)
+		#region MakeExplicitParameterTypeInference (§12.6.3.9)
 		void MakeExplicitParameterTypeInference(LambdaResolveResult e, IType t)
 		{
-			// C# 4.0 spec: §7.5.2.7 Explicit parameter type inferences
+			// C# spec (draft-v11): §12.6.3.9 Explicit parameter type inferences
 			if (e.IsImplicitlyTyped || !e.HasParameterList)
 				return;
 			Log.WriteLine(" MakeExplicitParameterTypeInference from " + e + " to " + t);
@@ -728,10 +728,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 
-		#region MakeLowerBoundInference (§7.5.2.9)
+		#region MakeLowerBoundInference (§12.6.3.11)
 		/// <summary>
 		/// Make lower bound inference from U to V.
-		/// C# 4.0 spec: §7.5.2.9 Lower-bound inferences
+		/// C# spec (draft-v11): §12.6.3.11 Lower-bound inferences
 		/// </summary>
 		void MakeLowerBoundInference(IType U, IType V)
 		{
@@ -961,7 +961,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 
-		#region Fixing (§7.5.2.11)
+		#region Fixing (§12.6.3.13)
 		bool Fix(TP tp)
 		{
 			Log.WriteLine(" Trying to fix " + tp);
@@ -996,7 +996,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		#region Finding the best common type of a set of expresssions
 		/// <summary>
-		/// Gets the best common type (C# 4.0 spec: §7.5.2.14) of a set of expressions.
+		/// Gets the best common type (C# spec draft-v11: §12.6.3.17) of a set of expressions.
 		/// </summary>
 		public IType GetBestCommonType(IList<ResolveResult> expressions, out bool success)
 		{
@@ -1071,7 +1071,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Log.WriteCollection("FindTypesInBound, LowerBounds=", lowerBounds);
 			Log.WriteCollection("FindTypesInBound, UpperBounds=", upperBounds);
 
-			// First try the Fixing algorithm from the C# spec (§7.5.2.11)
+			// First try the Fixing algorithm from the C# spec (§12.6.3.13)
 			List<IType> candidateTypes = lowerBounds.Union(upperBounds)
 				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c).IsValid))
 				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b).IsValid))
@@ -1079,9 +1079,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			Log.WriteCollection("FindTypesInBound, Candidates=", candidateTypes);
 
-			// According to the C# specification, we need to pick the most specific
-			// of the candidate types. (the type which has conversions to all others)
-			// However, csc actually seems to choose the least specific.
+			// C# spec (draft-v11) §12.6.3.13: the result is the unique candidate type
+			// to which there is an implicit conversion from all the other candidate types.
 			candidateTypes = candidateTypes.Where(
 				c => candidateTypes.All(o => conversions.ImplicitConversion(o, c).IsValid)
 			).ToList();
