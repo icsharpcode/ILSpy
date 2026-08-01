@@ -350,36 +350,54 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static IEnumerable<(Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle Association)> GetMethodSemantics(this MetadataReader metadata)
 		{
-			int offset = metadata.GetTableMetadataOffset(TableIndex.MethodSemantics);
-			int rowSize = metadata.GetTableRowSize(TableIndex.MethodSemantics);
 			int rowCount = metadata.GetTableRowCount(TableIndex.MethodSemantics);
+			var reader = metadata.AsBlobReader();
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.MethodSemantics);
 
-			bool methodSmall = metadata.GetTableRowCount(TableIndex.MethodDef) <= ushort.MaxValue;
-			bool assocSmall = metadata.GetTableRowCount(TableIndex.Property) <= ushort.MaxValue && metadata.GetTableRowCount(TableIndex.Event) <= ushort.MaxValue;
-			int assocOffset = (methodSmall ? 2 : 4) + 2;
-			for (int row = 0; row < rowCount; row++)
+			int methodSize = SimpleIndexSize(metadata, TableIndex.MethodDef);
+			// HasSemantics coded index: 1 tag bit over Event (tag 0) and Property (tag 1).
+			int assocSize = CodedIndexSize(metadata, 1, TableIndex.Event, TableIndex.Property);
+			for (int rid = 1; rid <= rowCount; rid++)
 			{
-				yield return Read(row);
-			}
-
-			(Handle Handle, MethodSemanticsAttributes Semantics, MethodDefinitionHandle Method, EntityHandle Association) Read(int row)
-			{
-				var span = metadata.AsReadOnlySpan();
-				var methodDefSpan = span.Slice(offset + rowSize * row + 2);
-				int methodDef = methodSmall ? BinaryPrimitives.ReadUInt16LittleEndian(methodDefSpan) : (int)BinaryPrimitives.ReadUInt32LittleEndian(methodDefSpan);
-				var assocSpan = span.Slice(assocOffset);
-				int assocDef = assocSmall ? BinaryPrimitives.ReadUInt16LittleEndian(assocSpan) : (int)BinaryPrimitives.ReadUInt32LittleEndian(assocSpan);
+				var semantics = (MethodSemanticsAttributes)reader.ReadUInt16();
+				int methodRow = methodSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				int assocTag = assocSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
 				EntityHandle propOrEvent;
-				if ((assocDef & 0x1) == 1)
+				if ((assocTag & 0x1) == 1)
 				{
-					propOrEvent = MetadataTokens.PropertyDefinitionHandle(assocDef >> 1);
+					propOrEvent = MetadataTokens.PropertyDefinitionHandle(assocTag >> 1);
 				}
 				else
 				{
-					propOrEvent = MetadataTokens.EventDefinitionHandle(assocDef >> 1);
+					propOrEvent = MetadataTokens.EventDefinitionHandle(assocTag >> 1);
 				}
-				return (MetadataTokens.Handle(0x18000000 | (row + 1)), (MethodSemanticsAttributes)(BinaryPrimitives.ReadUInt16LittleEndian(span)), MetadataTokens.MethodDefinitionHandle(methodDef), propOrEvent);
+				yield return (MetadataTokens.Handle(((int)TableIndex.MethodSemantics << 24) | rid), semantics, MetadataTokens.MethodDefinitionHandle(methodRow), propOrEvent);
 			}
+		}
+
+		/// <summary>
+		/// Size in bytes of a column indexing <paramref name="table"/> directly
+		/// (ECMA-335 II.24.2.6: 2 bytes while the table has fewer than 2^16 rows).
+		/// </summary>
+		static int SimpleIndexSize(MetadataReader metadata, TableIndex table)
+		{
+			return metadata.GetTableRowCount(table) < (1 << 16) ? 2 : 4;
+		}
+
+		/// <summary>
+		/// Size in bytes of a coded-index column over <paramref name="tables"/> with
+		/// <paramref name="tagBits"/> tag bits (ECMA-335 II.24.2.6: 2 bytes while every
+		/// indexed table has fewer than 2^(16 - tagBits) rows).
+		/// </summary>
+		static int CodedIndexSize(MetadataReader metadata, int tagBits, params TableIndex[] tables)
+		{
+			int smallLimit = 1 << (16 - tagBits);
+			foreach (var table in tables)
+			{
+				if (metadata.GetTableRowCount(table) >= smallLimit)
+					return 4;
+			}
+			return 2;
 		}
 
 		public static IEnumerable<EntityHandle> GetFieldLayouts(this MetadataReader metadata)
