@@ -994,7 +994,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 
-		#region Finding the best common type of a set of expresssions
+		#region Finding the best common type of a set of expressions
 		/// <summary>
 		/// Gets the best common type (C# spec draft-v11: §12.6.3.17) of a set of expressions.
 		/// </summary>
