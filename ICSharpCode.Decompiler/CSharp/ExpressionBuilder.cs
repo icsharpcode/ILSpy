@@ -4885,6 +4885,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			IType rhsType = inst.Pattern.Variable.Type;
 			var rhs = Translate(inst.Pattern.TestedOperand, rhsType);
+			if (rhs.Expression is DirectionExpression dirExpr)
+			{
+				// Deconstructing a value type takes the address of the deconstructed value:
+				// (ref x) => x
+				rhs = rhs.UnwrapChild(dirExpr.Expression);
+			}
 			rhs = rhs.ConvertTo(rhsType, this); // TODO allowImplicitConversion
 			var assignments = inst.Assignments.Instructions;
 			int assignmentPos = 0;

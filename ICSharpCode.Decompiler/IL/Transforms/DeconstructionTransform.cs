@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Resources;
 
@@ -390,26 +391,63 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (deconstructionResults != null)
 			{
-				int i = previousIndex + 1;
-				while (i < deconstructionResults.Length)
+				foreach (var v in deconstructionResults)
 				{
-					var v = deconstructionResults[i];
-					// this should only happen in release mode, where usually the last deconstruction element
-					// is not stored to a temporary, if it is used directly (and only once!)
-					// after the deconstruction.
-					if (v?.LoadCount == 1)
-					{
-						delayedActions += (DeconstructInstruction deconstructInst) => {
-							var freshVar = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
-							deconstructInst.Assignments.Instructions.Add(new StLoc(freshVar, new LdLoc(v)));
-							v.LoadInstructions[0].Variable = freshVar;
-						};
-					}
-					i++;
+					// In optimized code a deconstruction element is not stored to a temporary,
+					// if it is used directly (and only once!) after the deconstruction. This
+					// happens for trailing elements, but also for leading elements, e.g., when
+					// a nested deconstruction copies the inner element to a temporary before
+					// the elements preceding it are used. Forward such elements through a fresh
+					// variable assigned inside the deconstruction, so that every pattern
+					// variable's load is a descendant of the deconstruct instruction.
+					// The assignment is inserted in pattern order, because StatementBuilder and
+					// ExpressionBuilder pair pattern variables with assignments positionally.
+					// LoadCount must be read eagerly, at match time: for a tuple deconstruction
+					// the elements are the fresh "E_i" variables created in FindIndex, whose
+					// loads only materialize when the delayed ReplaceWith actions run, so
+					// LoadCount is still 0 here and forwarding never fires on that path. That
+					// is load-bearing, not incidental: the fresh variables are never registered
+					// in deconstructionResultsLookup, so GetAssignmentIndex could not position
+					// a forwarding assignment among a tuple's assignments.
+					if (v?.LoadCount != 1)
+						continue;
+					delayedActions += (DeconstructInstruction deconstructInst) => {
+						var load = v.LoadInstructions[0];
+						if (load.IsDescendantOf(deconstructInst))
+							return;
+						// MatchDeconstruction registered every deconstruction result in the
+						// lookup, and the tuple path never gets here (see above); a miss would
+						// leave the load outside the deconstruct instruction, i.e. a malformed
+						// pattern, because the transform is already committed at this point.
+						bool isDeconstructionResult = deconstructionResultsLookup.TryGetValue(v, out int index);
+						Debug.Assert(isDeconstructionResult);
+						var freshVar = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
+						var instructions = deconstructInst.Assignments.Instructions;
+						int insertPos = 0;
+						while (insertPos < instructions.Count && GetAssignmentIndex(instructions[insertPos]) < index)
+							insertPos++;
+						instructions.Insert(insertPos, new StLoc(freshVar, new LdLoc(v)));
+						load.Variable = freshVar;
+					};
 				}
 			}
 
 			return startPos != pos;
+
+			int GetAssignmentIndex(ILInstruction inst)
+			{
+				if (DeconstructInstruction.IsAssignment(inst, context.TypeSystem, out _, out var value)
+					&& value.MatchLdLoc(out var inputVariable))
+				{
+					if (deconstructionResultsLookup.TryGetValue(inputVariable, out int index))
+						return index;
+					// Forwarding assignments produced for conversions load a fresh variable;
+					// their pattern index is that of the conversion output they store to.
+					if (inst is StLoc stLoc && deconstructionResultsLookup.TryGetValue(stLoc.Variable, out index))
+						return index;
+				}
+				return int.MaxValue;
+			}
 
 			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction> delayedActions)
 			{
