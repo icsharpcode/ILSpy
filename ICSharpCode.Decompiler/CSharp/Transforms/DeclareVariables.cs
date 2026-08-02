@@ -24,6 +24,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
@@ -639,12 +640,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					// 'int v; v = expr;' can be combined to 'int v = expr;'
 					AstType type;
+					// A 'Delegate d = M;' or 'object o = M;' local keeps its declared type (it is not
+					// re-inferable from the method group), but the explicit delegate construction is
+					// dropped when the group's natural type produces the same delegate.
+					bool unwrapDelegateConstruction = assignment.Right is ObjectCreateExpression { Arguments: { Count: 1 } } oce
+						&& oce.Arguments.Single().Annotation<MethodGroupNaturalTypeAnnotation>() != null
+						&& (v.Type.IsKnownType(KnownTypeCode.Delegate) || v.Type.IsKnownType(KnownTypeCode.Object));
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType())
 					{
 						type = new SimpleType("var");
 					}
 					else if (context.Settings.NaturalTypeForLambdaAndMethodGroup && v.Type.ContainsAnonymousDelegate())
 					{
+						type = new SimpleType("var");
+					}
+					else if (assignment.Right.Annotation<MethodGroupNaturalTypeAnnotation>() is { } naturalType
+						&& NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(naturalType.DelegateType, v.Type))
+					{
+						// The initializer is a bare method group whose natural type is the
+						// variable's type, so 'var' re-infers the same delegate type.
 						type = new SimpleType("var");
 					}
 					else
@@ -660,7 +674,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						type.AddTrailingTrivia(new Comment("pinned", CommentType.MultiLine));
 					}
 					replacements.Add((v.InsertionPoint.nextNode, () => {
-						var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
+						Expression initializer = unwrapDelegateConstruction
+							? ((ObjectCreateExpression)assignment.Right).Arguments.Single().Detach()
+							: assignment.Right.Detach();
+						var vds = new VariableDeclarationStatement(type, v.Name, initializer);
 						var init = vds.Variables.Single();
 						init.AddAnnotation(assignment.Left.GetResolveResult());
 						foreach (object annotation in assignment.Left.Annotations.Concat(assignment.Annotations))
