@@ -165,6 +165,14 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		}, executesCompiledOutput: true);
 
+		static readonly CompilerOptions[] roslyn4OrNewerOptions = Tester.SupportedOnCurrentPlatform(new[]
+		{
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		}, executesCompiledOutput: true);
+
 		[Test]
 		public async Task Comparisons([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
@@ -285,6 +293,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public async Task OverloadResolution([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
+		[Test]
+		public async Task MethodGroupNaturalType([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
 		}
