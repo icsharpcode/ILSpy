@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 			}
-			if (context.Settings.IntroduceIncrementAndDecrement && assignment.Operator == AssignmentOperatorType.Add || assignment.Operator == AssignmentOperatorType.Subtract)
+			if (context.Settings.IntroduceIncrementAndDecrement && assignment.Operator is AssignmentOperatorType.Add or AssignmentOperatorType.Subtract)
 			{
 				// detect increment/decrement; ++/-- on float/double compiles to the same IL as
 				// adding/subtracting a constant 1 (which both types represent exactly), so a
