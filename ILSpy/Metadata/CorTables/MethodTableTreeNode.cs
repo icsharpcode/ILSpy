@@ -41,23 +41,13 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 		protected override IReadOnlyList<MethodDefEntry> LoadTable()
 		{
 			var list = new List<MethodDefEntry>();
-			var metadata = metadataFile.Metadata;
-			// ParamList is read from the raw row: the computed range (GetParameters) is empty
-			// for a parameterless method, but the stored value is the running list position
-			// (the next method's first Param row, or one past the Param table's end), never 0.
-			// It is the last column, so it sits at the end of the row; with a ParamPtr
-			// indirection present, the column indexes the pointer table, whose row count also
-			// governs the column width.
-			var indexedTable = metadata.GetTableRowCount(TableIndex.ParamPtr) > 0 ? TableIndex.ParamPtr : TableIndex.Param;
-			int paramListWidth = metadata.GetTableRowCount(indexedTable) <= ushort.MaxValue ? 2 : 4;
-			int rowSize = metadata.GetTableRowSize(TableIndex.MethodDef);
-			int tableOffset = metadata.GetTableMetadataOffset(TableIndex.MethodDef);
-			var reader = metadata.AsBlobReader();
-			foreach (var row in metadata.MethodDefinitions)
+			// ParamList comes from the raw row (GetMethodDefParamLists): the computed range
+			// (GetParameters) is empty for a parameterless method, but the stored value is the
+			// running list position (the next method's first Param row, or one past the Param
+			// table's end), never 0.
+			foreach (var (handle, paramList) in metadataFile.Metadata.GetMethodDefParamLists())
 			{
-				reader.Offset = tableOffset + rowSize * MetadataTokens.GetRowNumber(row) - paramListWidth;
-				int paramList = paramListWidth == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new MethodDefEntry(metadataFile, row, paramList));
+				list.Add(new MethodDefEntry(metadataFile, handle, paramList));
 			}
 			return list;
 		}

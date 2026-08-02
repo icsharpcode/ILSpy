@@ -44,33 +44,15 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 		protected override IReadOnlyList<TypeDefEntry> LoadTable()
 		{
 			var list = new List<TypeDefEntry>();
-			var metadata = metadataFile.Metadata;
-			// FieldList/MethodList are read from the raw rows: the computed member ranges
-			// (TypeDefinition.GetFields/GetMethods) are empty for a memberless type, but the
-			// stored column value is the running list position (the next type's first member
-			// row, or one past the member table's end), never 0. Reading relative to the row
-			// end avoids re-deriving the widths of the preceding string-heap and coded-index
-			// columns. With a FieldPtr/MethodPtr indirection present, the list columns index
-			// the pointer table, whose row count also governs the column width.
-			int fieldListWidth = ListColumnWidth(metadata, TableIndex.FieldPtr, TableIndex.Field);
-			int methodListWidth = ListColumnWidth(metadata, TableIndex.MethodPtr, TableIndex.MethodDef);
-			int rowSize = metadata.GetTableRowSize(TableIndex.TypeDef);
-			int tableOffset = metadata.GetTableMetadataOffset(TableIndex.TypeDef);
-			var reader = metadata.AsBlobReader();
-			foreach (var row in metadata.TypeDefinitions)
+			// FieldList/MethodList come from the raw rows (GetTypeDefListColumns): the computed
+			// member ranges (TypeDefinition.GetFields/GetMethods) are empty for a memberless type,
+			// but the stored column value is the running list position (the next type's first
+			// member row, or one past the member table's end), never 0.
+			foreach (var (handle, fieldList, methodList) in metadataFile.Metadata.GetTypeDefListColumns())
 			{
-				reader.Offset = tableOffset + rowSize * MetadataTokens.GetRowNumber(row) - fieldListWidth - methodListWidth;
-				int fieldList = fieldListWidth == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				int methodList = methodListWidth == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new TypeDefEntry(metadataFile, row, fieldList, methodList));
+				list.Add(new TypeDefEntry(metadataFile, handle, fieldList, methodList));
 			}
 			return list;
-
-			static int ListColumnWidth(MetadataReader metadata, TableIndex ptrTable, TableIndex memberTable)
-			{
-				var indexed = metadata.GetTableRowCount(ptrTable) > 0 ? ptrTable : memberTable;
-				return metadata.GetTableRowCount(indexed) <= ushort.MaxValue ? 2 : 4;
-			}
 		}
 
 		public sealed class TypeDefEntry

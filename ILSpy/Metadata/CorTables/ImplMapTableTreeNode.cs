@@ -40,23 +40,10 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 		protected override IReadOnlyList<ImplMapEntry> LoadTable()
 		{
 			var list = new List<ImplMapEntry>();
-			var metadata = metadataFile.Metadata;
-			var length = metadata.GetTableRowCount(TableIndex.ImplMap);
-			var reader = metadata.AsBlobReader();
-			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.ImplMap);
-			int moduleRefSize = metadata.GetTableRowCount(TableIndex.ModuleRef) < ushort.MaxValue ? 2 : 4;
-			int memberForwardedTagSize = metadata.ComputeCodedTokenSize(32768, TableMask.MethodDef | TableMask.Field);
-			int stringHandleSize = metadata.GetHeapSize(HeapIndex.String) < ushort.MaxValue ? 2 : 4;
-			for (int rid = 1; rid <= length; rid++)
+			int rid = 0;
+			foreach (var (mappingFlags, memberForwarded, importName, importScope) in metadataFile.Metadata.GetImplMaps())
 			{
-				MethodImportAttributes mappingFlags = (MethodImportAttributes)reader.ReadUInt16();
-				uint memberForwardedTag = (uint)(memberForwardedTagSize == 2 ? reader.ReadUInt16() : reader.ReadInt32());
-				int importNameOffset = stringHandleSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				int importScopeRow = moduleRefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new ImplMapEntry(metadataFile, rid, mappingFlags,
-					MetadataReaderHelpers.FromMemberForwardedTag(memberForwardedTag),
-					MetadataTokens.StringHandle(importNameOffset),
-					MetadataTokens.ModuleReferenceHandle(importScopeRow)));
+				list.Add(new ImplMapEntry(metadataFile, ++rid, mappingFlags, memberForwarded, importName, importScope));
 			}
 			return list;
 		}
