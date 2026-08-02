@@ -39,19 +39,10 @@ namespace ICSharpCode.ILSpy.Metadata.CorTables
 		protected override IReadOnlyList<FieldMarshalEntry> LoadTable()
 		{
 			var list = new List<FieldMarshalEntry>();
-			var metadata = metadataFile.Metadata;
-			var length = metadata.GetTableRowCount(TableIndex.FieldMarshal);
-			var reader = metadata.AsBlobReader();
-			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.FieldMarshal);
-			int hasFieldMarshalRefSize = metadata.ComputeCodedTokenSize(32768, TableMask.Field | TableMask.Param);
-			int blobHeapSize = metadata.GetHeapSize(HeapIndex.Blob) < ushort.MaxValue ? 2 : 4;
-			for (int rid = 1; rid <= length; rid++)
+			int rid = 0;
+			foreach (var (parent, nativeType) in metadataFile.Metadata.GetFieldMarshals())
 			{
-				uint parentTag = (uint)(hasFieldMarshalRefSize == 2 ? reader.ReadUInt16() : reader.ReadInt32());
-				int blobOffset = blobHeapSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
-				list.Add(new FieldMarshalEntry(metadataFile, rid,
-					MetadataReaderHelpers.FromHasFieldMarshalTag(parentTag),
-					MetadataTokens.BlobHandle(blobOffset)));
+				list.Add(new FieldMarshalEntry(metadataFile, ++rid, parent, nativeType));
 			}
 			return list;
 		}
