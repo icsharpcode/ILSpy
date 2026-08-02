@@ -107,6 +107,10 @@ namespace ICSharpCode.Decompiler
 				patternMatching = false;
 				useRefLocalsForAccurateOrderOfEvaluation = false;
 			}
+			if (languageVersion < CSharp.LanguageVersion.CSharp7_1)
+			{
+				defaultLiterals = false;
+			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp7_2)
 			{
 				introduceReadonlyAndInModifiers = false;
@@ -204,7 +208,8 @@ namespace ICSharpCode.Decompiler
 			if (introduceRefModifiersOnStructs || introduceReadonlyAndInModifiers
 				|| nonTrailingNamedArguments || refExtensionMethods || introducePrivateProtectedAccessibilty)
 				return CSharp.LanguageVersion.CSharp7_2;
-			// C# 7.1 missing
+			if (defaultLiterals)
+				return CSharp.LanguageVersion.CSharp7_1;
 			if (outVariables || throwExpressions || tupleTypes || tupleConversions
 				|| discards || localFunctions || deconstruction || patternMatching || useRefLocalsForAccurateOrderOfEvaluation)
 				return CSharp.LanguageVersion.CSharp7;
@@ -1641,6 +1646,25 @@ namespace ICSharpCode.Decompiler
 				if (throwExpressions != value)
 				{
 					throwExpressions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool defaultLiterals = true;
+
+		/// <summary>
+		/// Gets/Sets whether "default" literals without an explicit type should be used
+		/// where the target type of the expression is explicit in the surrounding syntax.
+		/// </summary>
+		[Category("C# 7.1 / VS 2017.3")]
+		[Description("DecompilerSettings.UseDefaultLiterals")]
+		public bool DefaultLiterals {
+			get { return defaultLiterals; }
+			set {
+				if (defaultLiterals != value)
+				{
+					defaultLiterals = value;
 					OnPropertyChanged();
 				}
 			}

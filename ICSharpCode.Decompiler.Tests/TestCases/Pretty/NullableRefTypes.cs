@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public static TValue? Default<TValue>()
 		{
-			return default(TValue);
+			return default;
 		}
 
 		public static void CallDefault()
@@ -205,7 +205,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		[return: MaybeNull]
 		public T FirstOrDefault<T>(IEnumerable<T> source)
 		{
-			return default(T);
+			return default;
 		}
 	}
 }

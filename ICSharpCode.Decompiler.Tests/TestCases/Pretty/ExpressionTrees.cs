@@ -966,7 +966,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static DateTime ParseDateTime(this object str)
 		{
+#if CS71
+			return default;
+#else
 			return default(DateTime);
+#endif
 		}
 	}
 }

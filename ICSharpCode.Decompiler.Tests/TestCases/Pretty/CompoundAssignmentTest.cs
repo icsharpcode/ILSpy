@@ -4257,7 +4257,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void CustomStructAddTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p += default(CustomStruct);
 			num += default(CustomStruct);
 			Use(ref num);
@@ -4284,7 +4288,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructSubtractTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p -= default(CustomStruct);
 			num -= default(CustomStruct);
 			Use(ref num);
@@ -4311,7 +4319,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructMultiplyTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p *= default(CustomStruct);
 			num *= default(CustomStruct);
 			Use(ref num);
@@ -4338,7 +4350,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructDivideTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p /= default(CustomStruct);
 			num /= default(CustomStruct);
 			Use(ref num);
@@ -4365,7 +4381,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructModulusTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p %= default(CustomStruct);
 			num %= default(CustomStruct);
 			Use(ref num);
@@ -4392,7 +4412,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructLeftShiftTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p <<= 5;
 			num <<= 5;
 			Use(ref num);
@@ -4419,7 +4443,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructRightShiftTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p >>= 5;
 			num >>= 5;
 			Use(ref num);
@@ -4472,7 +4500,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructBitAndTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p &= default(CustomStruct);
 			num &= default(CustomStruct);
 			Use(ref num);
@@ -4499,7 +4531,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructBitOrTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p |= default(CustomStruct);
 			num |= default(CustomStruct);
 			Use(ref num);
@@ -4526,7 +4562,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructBitXorTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			p ^= default(CustomStruct);
 			num ^= default(CustomStruct);
 			Use(ref num);
@@ -4553,7 +4593,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructPostIncTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			X(p++);
 			X(num++);
 			Use(ref num);
@@ -4580,7 +4624,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructPreIncTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			X(++p);
 			X(++num);
 			Use(ref num);
@@ -4606,7 +4654,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void CustomStructPostDecTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			X(p--);
 			X(num--);
 			Use(ref num);
@@ -4633,7 +4685,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CustomStructPreDecTest(CustomStruct p, CustomClass c, CustomStruct2 s)
 		{
+#if CS71
+			CustomStruct num = default;
+#else
 			CustomStruct num = default(CustomStruct);
+#endif
 			X(--p);
 			X(--num);
 			Use(ref num);

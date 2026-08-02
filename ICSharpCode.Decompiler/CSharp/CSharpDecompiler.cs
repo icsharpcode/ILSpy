@@ -244,6 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DeclareVariables(), // should run after most transforms that modify statements
 				new TransformFieldAndConstructorInitializers(), // must run after DeclareVariables
 				new PrettifyAssignments(), // must run after DeclareVariables
+				new IntroduceDefaultLiterals(), // must run after DeclareVariables and TransformFieldAndConstructorInitializers
 				new IntroduceUsingDeclarations(),
 				new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
 				new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods

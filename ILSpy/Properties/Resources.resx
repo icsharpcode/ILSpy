@@ -576,6 +576,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UnsignedRightShift" xml:space="preserve">
     <value>Unsigned right shift (&gt;&gt;&gt;)</value>
   </data>
+  <data name="DecompilerSettings.UseDefaultLiterals" xml:space="preserve">
+    <value>Use "default" literals without an explicit type</value>
+  </data>
   <data name="DecompilerSettings.UseDiscards" xml:space="preserve">
     <value>Use discards</value>
   </data>

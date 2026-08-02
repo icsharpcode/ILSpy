@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.StaticAbstractInterfaceM
 		}
 		static virtual implicit operator T(string s)
 		{
-			return default(T);
+			return default;
 		}
 		static virtual explicit operator string(T t)
 		{
