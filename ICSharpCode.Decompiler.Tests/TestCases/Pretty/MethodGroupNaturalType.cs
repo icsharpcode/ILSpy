@@ -106,4 +106,130 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return result;
 		}
 	}
+
+	internal class MethodGroups
+	{
+		public static int Square(int x)
+		{
+			return x * x;
+		}
+
+		public object InstanceBeforeExtensionScope()
+		{
+			var result = new Receiver().Basic;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object PruneByGenericArity()
+		{
+			var result = new Receiver().ByArity<object>;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object PruneByConstraint()
+		{
+			var result = new Receiver().ByConstraint<int>;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object ExtensionScopeOnly()
+		{
+			var result = new Receiver().ExtensionOnly;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object PruneStaticOnInstanceReceiver()
+		{
+			var result = new MixedStaticInstance().Mixed;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object PruneInstanceOnTypeReceiver()
+		{
+			var result = MixedStaticInstance.Mixed;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object NaturalTypeAssignedToDelegate()
+		{
+#if OPT
+			var result = Square;
+#else
+			Delegate result = Square;
+#endif
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object NaturalTypeAssignedToObject()
+		{
+#if OPT
+			var result = Square;
+#else
+#pragma warning disable CS8974 // Converting method group to non-delegate type
+			object result = Square;
+#pragma warning restore CS8974
+#endif
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public int InvokeInferredMethodGroup()
+		{
+			var func = Square;
+			Console.WriteLine("no inlining");
+			return func(21);
+		}
+	}
+
+	internal class MixedStaticInstance
+	{
+		public void Mixed()
+		{
+		}
+
+		public static void Mixed(int i)
+		{
+		}
+	}
+
+	internal class Receiver
+	{
+		public void Basic()
+		{
+		}
+
+		public void ByArity<T>()
+		{
+		}
+
+		public void ByArity(int i)
+		{
+		}
+
+		public void ByConstraint<T>(T t) where T : class
+		{
+		}
+	}
+
+	internal static class ReceiverExtensions
+	{
+		public static void Basic(this Receiver r, int i)
+		{
+		}
+
+		public static void ByConstraint<T>(this Receiver r, T t)
+		{
+		}
+
+		public static void ExtensionOnly(this Receiver r, int i)
+		{
+		}
+	}
 }
