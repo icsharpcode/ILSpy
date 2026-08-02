@@ -130,7 +130,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 #endif
+		// mcs 2.6.4 emits interface-impl rows depth-first and explicit implementations
+		// ahead of ordinary members.
+#if MCS2 && EXPECTED_OUTPUT
+		public class C : IA, IA2, IB
+#else
 		public class C : IA2, IA, IB
+#endif
 		{
 			int IA.Property1 {
 				get {
@@ -157,14 +163,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				remove {
 				}
 			}
-			public int Finalize()
-			{
-				return 0;
-			}
+#if MCS2 && EXPECTED_OUTPUT
 			void IA.Method()
 			{
 				throw new NotImplementedException();
 			}
+#endif
+			public int Finalize()
+			{
+				return 0;
+			}
+#if !(MCS2 && EXPECTED_OUTPUT)
+			void IA.Method()
+			{
+				throw new NotImplementedException();
+			}
+#endif
 		}
 
 		internal interface IInterfacesCannotDeclareDtors
@@ -172,7 +186,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int Finalize();
 		}
 
-#if ROSLYN
+		// Naming your own nested interface in the base list is a Roslyn-era relaxation
+		// shared by mcs 5.23; the legacy csc rejects it with CS0146, mcs 2.6.4 with CS0122.
+#if ROSLYN || MCS5
 		private class Issue3230_F : Issue3230_F.IFoo
 		{
 			protected interface IFoo
