@@ -347,6 +347,14 @@ namespace ICSharpCode.Decompiler
 		public partial bool ParamsCollections { get; set; }
 
 		/// <summary>
+		/// Use the C# 13 method group natural type improvements: candidates are pruned
+		/// scope-by-scope before the natural type is determined.
+		/// </summary>
+		[Description("DecompilerSettings.MethodGroupNaturalTypeImprovements")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp13_0)]
+		public partial bool MethodGroupNaturalTypeImprovements { get; set; }
+
+		/// <summary>
 		/// Decompile lock statements.
 		/// </summary>
 		[Description("DecompilerSettings.DetectLockStatements")]

@@ -489,6 +489,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.LambdaOptionalAndParamsParameters" xml:space="preserve">
     <value>'params' and optional parameters in lambdas</value>
   </data>
+  <data name="DecompilerSettings.MethodGroupNaturalTypeImprovements" xml:space="preserve">
+    <value>Use C# 13 method group natural type improvements</value>
+  </data>
   <data name="DecompilerSettings.NativeIntegers" xml:space="preserve">
     <value>Use nint/nuint types</value>
   </data>

@@ -2587,7 +2587,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				let v = ident.GetILVariable()
 				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
 				select ident).Any();
-			bool isAnonymousDelegate = delegateType.IsAnonymousDelegate();
+			bool isAnonymousDelegate = settings.NaturalTypeForLambdaAndMethodGroup && delegateType.IsAnonymousDelegate();
 			if (!settings.LambdaOptionalAndParamsParameters || ame.Parameters.Any(p => p.Type is null))
 			{
 				// 'params' and parameter default values are only legal on the explicitly typed

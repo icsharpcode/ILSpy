@@ -1371,6 +1371,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to Use C# 13 method group natural type improvements.
+        /// </summary>
+        public static string DecompilerSettings_MethodGroupNaturalTypeImprovements {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.MethodGroupNaturalTypeImprovements", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Use nint/nuint types.
         /// </summary>
         public static string DecompilerSettings_NativeIntegers {

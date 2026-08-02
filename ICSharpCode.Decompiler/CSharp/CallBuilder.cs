@@ -2143,7 +2143,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// method group ('var f = M;'). Without a target type there is nothing to re-infer generic
 			// type arguments from, so a generic method group must spell them explicitly.
 			var targetExpression = BuildDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg,
-				forceTypeArguments: delegateType.IsAnonymousDelegate());
+				forceTypeArguments: settings.NaturalTypeForLambdaAndMethodGroup && delegateType.IsAnonymousDelegate());
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(delegateType), targetExpression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
