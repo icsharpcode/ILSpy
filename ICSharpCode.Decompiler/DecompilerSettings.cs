@@ -173,6 +173,7 @@ namespace ICSharpCode.Decompiler
 			if (languageVersion < CSharp.LanguageVersion.CSharp13_0)
 			{
 				paramsCollections = false;
+				methodGroupNaturalTypeImprovements = false;
 			}
 			if (languageVersion < CSharp.LanguageVersion.CSharp14_0)
 			{
@@ -185,7 +186,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (extensionMembers || firstClassSpanTypes)
 				return CSharp.LanguageVersion.CSharp14_0;
-			if (paramsCollections)
+			if (paramsCollections || methodGroupNaturalTypeImprovements)
 				return CSharp.LanguageVersion.CSharp13_0;
 			if (refReadOnlyParameters || usePrimaryConstructorSyntaxForNonRecordTypes || inlineArrays
 				|| lambdaOptionalAndParamsParameters)
@@ -916,6 +917,25 @@ namespace ICSharpCode.Decompiler
 				if (paramsCollections != value)
 				{
 					paramsCollections = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool methodGroupNaturalTypeImprovements = true;
+
+		/// <summary>
+		/// Use the C# 13 method group natural type improvements: candidates are pruned
+		/// scope-by-scope before the natural type is determined.
+		/// </summary>
+		[Category("C# 13.0 / VS 2022.12")]
+		[Description("DecompilerSettings.MethodGroupNaturalTypeImprovements")]
+		public bool MethodGroupNaturalTypeImprovements {
+			get { return methodGroupNaturalTypeImprovements; }
+			set {
+				if (methodGroupNaturalTypeImprovements != value)
+				{
+					methodGroupNaturalTypeImprovements = value;
 					OnPropertyChanged();
 				}
 			}

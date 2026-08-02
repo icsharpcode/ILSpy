@@ -2530,7 +2530,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				attributeSections.Add(new AttributeSection(astBuilder.ConvertAttribute(attr)) { AttributeTarget = "return" });
 			}
 
-			bool isAnonymousDelegate = delegateType.IsAnonymousDelegate();
+			bool isAnonymousDelegate = settings.NaturalTypeForLambdaAndMethodGroup && delegateType.IsAnonymousDelegate();
 			if (!settings.LambdaOptionalAndParamsParameters || ame.Parameters.Any(p => p.Type is null))
 			{
 				// 'params' and parameter default values are only legal on the explicitly typed
