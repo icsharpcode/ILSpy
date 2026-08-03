@@ -4406,11 +4406,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void DecimalAddTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			p += 5m;
 			num += 5m;
 			Use(ref num);
@@ -4437,11 +4433,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void DecimalSubtractTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			p -= 5m;
 			num -= 5m;
 			Use(ref num);
@@ -4468,11 +4460,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void DecimalMultiplyTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			p *= 5m;
 			num *= 5m;
 			Use(ref num);
@@ -4499,11 +4487,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void DecimalDivideTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			p /= 5m;
 			num /= 5m;
 			Use(ref num);
@@ -4530,11 +4514,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void DecimalModulusTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			p %= 5m;
 			num %= 5m;
 			Use(ref num);
@@ -4561,11 +4541,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void DecimalPostIncTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			X(p++);
 			X(num++);
 			Use(ref num);
@@ -4592,11 +4568,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void DecimalPreIncTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			X(++p);
 			X(++num);
 			Use(ref num);
@@ -4622,11 +4594,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 		public static void DecimalPostDecTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			X(p--);
 			X(num--);
 			Use(ref num);
@@ -4653,11 +4621,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void DecimalPreDecTest(decimal p, CustomClass c, CustomStruct2 s)
 		{
-#if LEGACY_CSC
 			decimal num = 0m;
-#else
-			decimal num = default(decimal);
-#endif
 			X(--p);
 			X(--num);
 			Use(ref num);

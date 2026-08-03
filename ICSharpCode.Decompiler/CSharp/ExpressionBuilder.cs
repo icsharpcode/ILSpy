@@ -697,6 +697,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new CastExpression(ConvertType(type), expr.WithRR(crr))
 					.WithRR(new ConversionResolveResult(type, crr, Conversion.NullLiteralConversion));
 			}
+			else if (type.IsKnownType(KnownTypeCode.Decimal))
+			{
+				expr = new PrimitiveExpression(0m);
+				constantType = type;
+				constantValue = 0m;
+				return expr.WithRR(new ConstantResolveResult(constantType, constantValue));
+			}
 			else
 			{
 				expr = new DefaultValueExpression(ConvertType(type));

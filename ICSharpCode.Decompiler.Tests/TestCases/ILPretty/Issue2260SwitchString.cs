@@ -16,7 +16,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 					break;
 				case "stock_qty":
 					{
-						decimal result2 = default(decimal);
+						decimal result2 = 0m;
 						if (!decimal.TryParse(s, out result2))
 						{
 							new object();
@@ -29,12 +29,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 					}
 				case "new_price":
 					{
-						decimal num = default(decimal);
+						decimal num = 0m;
 						break;
 					}
 				case "new_price4":
 					{
-						decimal result4 = default(decimal);
+						decimal result4 = 0m;
 						if (decimal.TryParse(s, out result4) && !(result4 < 0m))
 						{
 						}
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 					}
 				case "new_price1":
 					{
-						decimal result3 = default(decimal);
+						decimal result3 = 0m;
 						if (!decimal.TryParse(s, out result3))
 						{
 							new object();
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 					}
 				case "new_price2":
 					{
-						decimal result = default(decimal);
+						decimal result = 0m;
 						if (!decimal.TryParse(s, out result))
 						{
 							new object();
