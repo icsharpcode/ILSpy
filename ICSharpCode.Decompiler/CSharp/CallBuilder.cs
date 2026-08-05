@@ -2175,12 +2175,22 @@ namespace ICSharpCode.Decompiler.CSharp
 					targetExpression.Expression.AddAnnotation(new MethodGroupNaturalTypeAnnotation(delegateType));
 				}
 			}
+			var conversion = new ConversionResolveResult(
+				delegateType,
+				targetExpression.ResolveResult,
+				Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, false));
+			if (naturalTypes && isAnonymousDelegate)
+			{
+				// An anonymous delegate type cannot be named, so the delegate creation cannot be
+				// spelled either. The method group's natural type carries the conversion, which is
+				// permitted wherever the target is the delegate type itself or a base type of it.
+				var methodGroup = targetExpression.Expression;
+				methodGroup.RemoveAnnotations<ResolveResult>();
+				return methodGroup.WithILInstruction(inst).WithRR(conversion);
+			}
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(delegateType), targetExpression)
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(
-					delegateType,
-					targetExpression.ResolveResult,
-					Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, false)));
+				.WithRR(conversion);
 			return oce;
 		}
 

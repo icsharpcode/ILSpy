@@ -4,6 +4,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class MethodGroupNaturalType
 	{
+		private object anonymousDelegate;
+
 		private static void RefAction(ref int x)
 		{
 		}
@@ -129,6 +131,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			var result = SeventeenParametersVoid;
 			Console.WriteLine("no inlining");
 			return result;
+		}
+
+		public void AssignedToObjectField()
+		{
+			anonymousDelegate = (ref int x) => x;
+		}
+
+		public object ReturnedAsObject()
+		{
+			return (ref int x) => x;
+		}
+
+		public Delegate ReturnedAsDelegate()
+		{
+			return RefFunc;
 		}
 
 		public object CapturedMethodGroup()

@@ -2731,6 +2731,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				isAnonymousMethod: !isLambda,
 				isImplicitlyTyped: ame.Parameters.Any(p => p.Type is null));
 
+			if (isAnonymousDelegate)
+			{
+				// An anonymous delegate type cannot be named, so no cast to it can be written.
+				// Carrying the conversion on the anonymous function itself keeps the site typed
+				// as the delegate, which converts on to any base type of it without a cast.
+				return replacement.WithILInstruction(function)
+					.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
+			}
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
 				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
