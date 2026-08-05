@@ -645,8 +645,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal static bool IsTransparentIdentifier(string identifier)
 		{
-			return identifier.StartsWith("<>", StringComparison.Ordinal)
-				&& (identifier.Contains("TransparentIdentifier") || identifier.Contains("TranspIdent"));
+			if (identifier.StartsWith("<>", StringComparison.Ordinal))
+			{
+				return identifier.Contains("TransparentIdentifier") || identifier.Contains("TranspIdent");
+			}
+			// The VB compiler names the carriers of its query range variables
+			// $VB$It, $VB$It1, $VB$It2 and $VB$ItAnonymous.
+			return identifier.StartsWith("$VB$It", StringComparison.Ordinal);
 		}
 		#endregion
 
