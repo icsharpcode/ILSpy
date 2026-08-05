@@ -1613,6 +1613,35 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		/// <summary>
+		/// Gets whether the method is the managed entry point of the module, or - for an async
+		/// top-level program - the method holding the top-level statements, which the
+		/// compiler-generated entry point only awaits.
+		/// </summary>
+		bool IsEntryPoint(IMethod method)
+		{
+			var corHeader = module.MetadataFile.CorHeader;
+			if (corHeader == null)
+				return false;
+			// the entry point of a multi-module assembly is in another module, and the token is
+			// then a File token instead of a method definition
+			var entryPoint = MetadataTokenHelpers.EntityHandleOrNil(corHeader.EntryPointTokenOrRelativeVirtualAddress);
+			if (entryPoint.IsNil || entryPoint.Kind != HandleKind.MethodDefinition)
+				return false;
+			if (method.MetadataToken == entryPoint)
+				return true;
+			// An async top-level program compiles to '<Main>$' holding the statements plus a
+			// '<Main>' entry point that awaits it. The latter is hidden, so the name has to be
+			// given to the former; without AsyncAwait it stays visible and keeps the name.
+			if (!settings.AsyncAwait
+				|| !AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(module.MetadataFile, (MethodDefinitionHandle)entryPoint))
+			{
+				return false;
+			}
+			return method.Name == "<Main>$"
+				&& method.DeclaringTypeDefinition?.MetadataToken == metadata.GetMethodDefinition((MethodDefinitionHandle)entryPoint).GetDeclaringType();
+		}
+
 		void FixParameterNames(EntityDeclaration entity)
 		{
 			int i = 0;
@@ -2045,6 +2074,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (methodDecl is not OperatorDeclaration && method.IsExplicitInterfaceImplementation && lastDot >= 0)
 				{
 					methodDecl.Name = method.Name.Substring(lastDot + 1);
+				}
+				if (method.HasGeneratedName() && IsEntryPoint(method))
+				{
+					// Roslyn names the entry point of a top-level program '<Main>$', which cannot be
+					// declared in C#. Only a method called 'Main' is accepted as an entry point, so
+					// without this the decompiled program does not compile (CS5001).
+					methodDecl.Name = "Main";
 				}
 				FixParameterNames(methodDecl);
 				var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
