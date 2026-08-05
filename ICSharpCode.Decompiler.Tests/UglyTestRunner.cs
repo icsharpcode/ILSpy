@@ -69,6 +69,15 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		});
 
+		// top-level statements require C# 9 and cannot target .NET Framework 4.0
+		static readonly CompilerOptions[] topLevelProgramOptions = Tester.SupportedOnCurrentPlatform(new[]
+		{
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		});
+
 		static readonly CompilerOptions[] defaultOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.None,
@@ -139,6 +148,22 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task NoNewOfT([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp1));
+		}
+
+		// Top-level statements are not reconstructed; the entry point becomes an ordinary method,
+		// which C# only accepts as an entry point if it is called 'Main'. Compiled as executables,
+		// because top-level statements require one and the entry point token has to be set.
+
+		[Test]
+		public async Task TopLevelProgram([ValueSource(nameof(topLevelProgramOptions))] CompilerOptions cscOptions)
+		{
+			await Run(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task TopLevelProgramAsync([ValueSource(nameof(topLevelProgramOptions))] CompilerOptions cscOptions)
+		{
+			await Run(cscOptions: cscOptions);
 		}
 
 		async Task RunForLibrary([CallerMemberName] string testName = null, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)

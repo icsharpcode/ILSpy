@@ -247,6 +247,16 @@
     <None Include="TestCases\Ugly\NoNewOfT.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
     <None Include="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
+    <!-- top-level statements: neither the input nor the expected output can be compiled
+         into the test assembly, which is a library and has its own entry point rules -->
+    <Compile Remove="TestCases\Ugly\TopLevelProgram.cs" />
+    <None Include="TestCases\Ugly\TopLevelProgram.cs" />
+    <Compile Remove="TestCases\Ugly\TopLevelProgram.Expected.cs" />
+    <None Include="TestCases\Ugly\TopLevelProgram.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\TopLevelProgramAsync.cs" />
+    <None Include="TestCases\Ugly\TopLevelProgramAsync.cs" />
+    <Compile Remove="TestCases\Ugly\TopLevelProgramAsync.Expected.cs" />
+    <None Include="TestCases\Ugly\TopLevelProgramAsync.Expected.cs" />
     <Compile Remove="TestCases\VBPretty\VBCompoundAssign.cs" />
     <None Include="TestCases\VBPretty\VBCompoundAssign.cs" />
   </ItemGroup>
