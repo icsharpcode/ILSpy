@@ -489,9 +489,20 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsGeneratedName(this StringHandle handle, MetadataReader metadata)
 		{
-			return !handle.IsNil
-				&& (metadata.GetString(handle).StartsWith("<", StringComparison.Ordinal)
-				|| metadata.GetString(handle).Contains("$"));
+			return !handle.IsNil && IsGeneratedName(metadata.GetString(handle));
+		}
+
+		/// <summary>
+		/// Detects the mangled names compilers give to entities that have no user-written
+		/// declaration. The C# compiler prefixes them with '&lt;', the VB compiler separates
+		/// the parts with '$' (VB$AnonymousType_0, VB$StateMachine_1_Foo). Neither character
+		/// is legal in a C# or VB identifier.
+		/// Note that a name may legitimately contain '&lt;' without being generated: explicit
+		/// implementations of generic interface members are named after the interface.
+		/// </summary>
+		internal static bool IsGeneratedName(string name)
+		{
+			return name.StartsWith("<", StringComparison.Ordinal) || name.Contains("$");
 		}
 
 		public static bool HasGeneratedName(this MethodDefinitionHandle handle, MetadataReader metadata)
