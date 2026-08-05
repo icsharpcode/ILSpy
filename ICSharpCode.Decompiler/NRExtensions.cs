@@ -96,15 +96,27 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
+		/// <summary>
+		/// The C# compiler names a synthesized delegate type &lt;&gt;A when it returns void and
+		/// &lt;&gt;F otherwise, followed by a bit pattern of the by-reference parameters, but only
+		/// when there are any: a signature that needs a synthesized type solely because it has
+		/// more than 16 parameters is passed entirely by value and carries no suffix. Signatures
+		/// with default values or params arrays get a &lt;&gt;f__AnonymousDelegateN name instead.
+		/// </summary>
+		internal static bool IsAnonymousDelegateName(string name)
+		{
+			return name.Contains("AnonymousDelegate")
+				|| name.StartsWith("<>A", StringComparison.Ordinal)
+				|| name.StartsWith("<>F", StringComparison.Ordinal);
+		}
+
 		public static bool IsAnonymousDelegate(this IType type)
 		{
 			if (type == null)
 				return false;
 			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName()
 				&& type.Kind == TypeKind.Delegate
-				&& (type.Name.Contains("AnonymousDelegate")
-					|| type.Name.StartsWith("<>A{", StringComparison.Ordinal)
-					|| type.Name.StartsWith("<>F{", StringComparison.Ordinal)))
+				&& IsAnonymousDelegateName(type.Name))
 			{
 				ITypeDefinition td = type.GetDefinition();
 				return td != null && td.IsCompilerGenerated();

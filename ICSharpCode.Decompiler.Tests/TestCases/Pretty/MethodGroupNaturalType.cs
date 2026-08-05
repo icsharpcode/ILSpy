@@ -32,6 +32,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return x + y;
 		}
 
+		private static void SixteenParameters(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16)
+		{
+		}
+
+		private static int SeventeenParameters(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17)
+		{
+			return a1;
+		}
+
+		private static void SeventeenParametersVoid(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13, int a14, int a15, int a16, int a17)
+		{
+		}
+
 		private int InstanceRef(ref int x)
 		{
 			return x;
@@ -95,6 +108,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("no inlining");
 			int arg = 0;
 			return anon(ref arg);
+		}
+
+		public object ArityWithinActionFamily()
+		{
+			var result = SixteenParameters;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object ArityBeyondFuncFamily()
+		{
+			var result = SeventeenParameters;
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object ArityBeyondActionFamily()
+		{
+			var result = SeventeenParametersVoid;
+			Console.WriteLine("no inlining");
+			return result;
 		}
 
 		public object CapturedMethodGroup()

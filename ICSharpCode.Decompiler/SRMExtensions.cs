@@ -504,9 +504,7 @@ namespace ICSharpCode.Decompiler
 			string name = metadata.GetString(type.Name);
 			if (type.Namespace.IsNil && type.HasGeneratedName(metadata)
 				&& type.IsDelegate(metadata)
-				&& (name.Contains("AnonymousDelegate")
-					|| name.StartsWith("<>A{", StringComparison.Ordinal)
-					|| name.StartsWith("<>F{", StringComparison.Ordinal)))
+				&& NRExtensions.IsAnonymousDelegateName(name))
 			{
 				return type.IsCompilerGenerated(metadata);
 			}
