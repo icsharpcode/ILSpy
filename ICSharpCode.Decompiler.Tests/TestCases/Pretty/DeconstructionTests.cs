@@ -22,6 +22,14 @@ using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
+	public class DeconstructionBase
+	{
+	}
+
+	public class DeconstructionDerived : DeconstructionBase
+	{
+	}
+
 	public static class DeconstructionExt
 	{
 		public static void Deconstruct<K, V>(this KeyValuePair<K, V> pair, out K key, out V value)
@@ -34,6 +42,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			item1 = tuple.Item1;
 			item2 = tuple.Item2;
+		}
+
+		public static void Deconstruct(this DeconstructionBase b, out int a, out int c)
+		{
+			a = 1;
+			c = 2;
+		}
+
+		public static void Deconstruct(this DeconstructionDerived d, out int a, out int c)
+		{
+			a = 3;
+			c = 4;
+		}
+	}
+
+	public class DeconstructionOuter
+	{
+		public void Deconstruct(out int x, out DeconstructionDerived d)
+		{
+			x = 1;
+			d = new DeconstructionDerived();
 		}
 	}
 
@@ -529,6 +558,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// The store opcode is sign-agnostic - stind.i4 reports int for a uint target and
 		// stind.i1 reports sbyte for a byte one - so the element type of the target cannot
 		// be taken from it: doing so refuses every one of these deconstructions.
+		// The IL calls the extension declared on the base type, forced by the cast. Folding
+		// this into a nested designation would rebind Deconstruct on the element's static
+		// type, where the extension declared on the derived type wins and returns different
+		// values, so the call has to stay explicit.
+		public void Nested_CompetingExtensionDeconstruct(DeconstructionOuter o)
+		{
+			o.Deconstruct(out var x, out var d);
+			((DeconstructionBase)d).Deconstruct(out int a, out int c);
+			Console.WriteLine(x);
+			Console.WriteLine(a);
+			Console.WriteLine(c);
+		}
+
 		public unsafe void Pointer_NoConversion_Tuple_UInt(uint* p)
 		{
 			int value;

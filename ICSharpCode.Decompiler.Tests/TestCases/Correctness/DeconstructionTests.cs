@@ -168,6 +168,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NestedDeconstruction_Conversions_AfterAllDeconstructCalls();
 			NestedDeconstruction_TypedDeclaration_Conversions(new NestedOuter { Value = 5 });
 			NestedDeconstruction_DiscardWithSideEffectTargets();
+			NestedDeconstruction_HiddenDeconstructMethod(default(HidingOuter));
 			NestedDeconstruction_SystemTupleSource(Tuple.Create(8, new NestedInner { Value = 4 }));
 			NestedDeconstruction_CheckedConversions(new NestedOuter { Value = 9 });
 			NestedDeconstruction_GenericConstraintSource(new ConstrainedSource { Value = 11 });
@@ -301,6 +302,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("NestedDeconstruction_DiscardWithSideEffectTargets:");
 			(Get(0).IntProperty, (_, Get(1).My)) = new NestedOuter { Value = 31 };
+		}
+
+		public class HidingBase
+		{
+			public int Value;
+
+			public void Deconstruct(out string a, out double b)
+			{
+				Console.WriteLine("HidingBase.Deconstruct");
+				a = "base" + Value;
+				b = 0.5;
+			}
+		}
+
+		public class HidingDerived : HidingBase
+		{
+			public new void Deconstruct(out string a, out double b)
+			{
+				Console.WriteLine("HidingDerived.Deconstruct");
+				a = "derived";
+				b = 99.5;
+			}
+		}
+
+		public struct HidingOuter
+		{
+			public void Deconstruct(out int x, out HidingDerived d)
+			{
+				Console.WriteLine("HidingOuter.Deconstruct");
+				x = 1;
+				d = new HidingDerived { Value = 5 };
+			}
+		}
+
+		// The base-typed view forces the call to bind to HidingBase.Deconstruct; a nested
+		// designation cannot express that, because it rebinds on the element's static type,
+		// where the hiding method wins.
+		public void NestedDeconstruction_HiddenDeconstructMethod(HidingOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_HiddenDeconstructMethod:");
+			var (_, d) = o;
+			HidingBase b = d;
+			var (a, c) = b;
+			Console.WriteLine(a);
+			Console.WriteLine(c);
 		}
 
 		public int Side()
