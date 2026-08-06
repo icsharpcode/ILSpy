@@ -20,11 +20,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Resources;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -33,8 +31,47 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
-	/// 
+	/// Detects that a run of statements is a lowered deconstruction assignment - rooted in a
+	/// Deconstruct call or in tuple element reads, including nested designations - and folds
+	/// it into a single DeconstructInstruction.
 	/// </summary>
+	/*
+		stloc tuple(call MakeIntIntTuple(ldloc this))
+	----
+		stloc myInt(call op_Implicit(ldfld Item2(ldloca tuple)))
+		stloc a(ldfld Item1(ldloca tuple))
+		stloc b(ldloc myInt)
+	==>
+		deconstruct {
+			init:
+				<empty>
+			deconstruct:
+				match.deconstruct(temp = ldloca tuple) {
+					match(result0 = deconstruct.result 0(temp)),
+					match(result1 = deconstruct.result 1(temp))
+				}
+			conversions: {
+				stloc conv2(call op_Implicit(ldloc result1))
+			}
+			assignments: {
+				stloc a(ldloc result0)
+				stloc b(ldloc conv2)
+			}
+		}
+
+		A nested designation over Deconstruct calls (var (x, (a, b)) = o;) chains the calls,
+		with a defensive copy for struct elements:
+			call Deconstruct(ldloc o, ldloca x', ldloca inner)
+			call Deconstruct(ldloca inner, ldloca a', ldloca b')
+			...conversions/assignments over the leaves x', a', b'...
+
+		A nested designation over tuples (var (x, (a, b)) = t;) is lowered to one temporary
+		per nested designation, followed by element reads in depth-first leaf order:
+			stloc inner(ldobj(ldflda Item2(ldloca t)))
+			stloc x(ldobj(ldflda Item1(ldloca t)))
+			stloc a(ldobj(ldflda Item1(ldloca inner)))
+			stloc b(ldobj(ldflda Item2(ldloca inner)))
+	 * */
 	class DeconstructionTransform : IStatementTransform
 	{
 		StatementTransformContext context = null!;
@@ -43,30 +80,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILVariable? tupleVariable;
 		TupleType? tupleType;
 
-		/*
-			stloc tuple(call MakeIntIntTuple(ldloc this))
-		----
-			stloc myInt(call op_Implicit(ldfld Item2(ldloca tuple)))
-			stloc a(ldfld Item1(ldloca tuple))
-			stloc b(ldloc myInt)
-		==>
-			deconstruct {
-				init:
-					<empty>
-				deconstruct:
-					match.deconstruct(temp = ldloca tuple) {
-						match(result0 = deconstruct.result 0(temp)),
-						match(result1 = deconstruct.result 1(temp))
-					}
-				conversions: {
-					stloc conv2(call op_Implicit(ldloc result1))
-				}
-				assignments: {
-					stloc a(ldloc result0)
-					stloc b(ldloc conv2)
-				}
-			}
-		 * */
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (!context.Settings.Deconstruction)
@@ -97,120 +110,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.deconstructionResults = null!;
 		}
 
-		struct ConversionInfo
-		{
-			public IType? inputType;
-			public Conv? conv;
-		}
-
 		/// <summary>
-		/// Get index of deconstruction result or tuple element
-		/// Returns -1 on failure.
-		/// </summary>
-		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction>? delayedActions)
-		{
-			delayedActions = null;
-			if (inst.MatchLdLoc(out var v))
-			{
-				if (!deconstructionResultsLookup.TryGetValue(v, out int index))
-					return -1;
-				return index;
-			}
-			if (inst.MatchLdFld(out _, out _))
-			{
-				if (!TupleTransform.MatchTupleFieldAccess((LdFlda)((LdObj)inst).Target, out var tupleType, out var target, out int index))
-					return -1;
-				// Item fields are one-based, we use zero-based indexing.
-				index--;
-				// normalize tuple type
-				tupleType = TupleType.FromUnderlyingType(context.TypeSystem, tupleType);
-				if (!target.MatchLdLoca(out v))
-					return -1;
-				if (this.tupleVariable == null)
-				{
-					this.tupleVariable = v;
-					this.tupleType = (TupleType)tupleType;
-					this.deconstructionResults = new ILVariable[this.tupleType.Cardinality];
-				}
-				if (this.tupleType!.Cardinality < 2)
-					return -1;
-				if (v != tupleVariable || !this.tupleType.Equals(tupleType))
-					return -1;
-				if (this.deconstructionResults[index] == null)
-				{
-					var freshVar = new ILVariable(VariableKind.StackSlot, this.tupleType.ElementTypes[index]) { Name = "E_" + index };
-					delayedActions += _ => context.Function.Variables.Add(freshVar);
-					this.deconstructionResults[index] = freshVar;
-				}
-				delayedActions += _ => {
-					inst.ReplaceWith(new LdLoc(this.deconstructionResults[index]!));
-				};
-				return index;
-			}
-			return -1;
-		}
-
-		/// <summary>
-		/// stloc v(value)
-		/// expr(..., deconstruct { ... }, ...)
+		/// call Deconstruct(target, ldloca out0, ...) [+ nested Deconstruct calls]
+		///   | stloc temp(ldobj(ldflda ItemN(ldloca tuple))) ... [nested tuple designations]
+		/// stloc conv0(conv(...)) ...
+		/// assignments ...
 		/// =>
-		/// expr(..., deconstruct { init: stloc v(value) ... }, ...)
+		/// deconstruct { init: pattern: conversions: assignments: }   (see class comment)
 		/// </summary>
-		bool InlineDeconstructionInitializer(Block block, int pos)
-		{
-			if (!block.Instructions[pos].MatchStLoc(out var v, out var value))
-				return false;
-			if (!(v.IsSingleDefinition && v.LoadCount == 1))
-				return false;
-			if (pos + 1 >= block.Instructions.Count)
-				return false;
-			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 1], v, value, InliningOptions.FindDeconstruction);
-			if (result.Type != ILInlining.FindResultType.Deconstruction)
-				return false;
-			var deconstruction = (DeconstructInstruction)result.LoadInst;
-			LdLoc loadInst = v.LoadInstructions[0];
-			if (!loadInst.IsDescendantOf(deconstruction.Assignments))
-				return false;
-			if (loadInst.SlotInfo == StObj.TargetSlot)
-			{
-				if (value.OpCode == OpCode.LdFlda || value.OpCode == OpCode.LdElema)
-					return false;
-			}
-			if (deconstruction.Init.Count > 0)
-			{
-				var a = deconstruction.Init[0].Variable.LoadInstructions.Single();
-				var b = v.LoadInstructions.Single();
-				if (!b.IsBefore(a))
-					return false;
-			}
-			context.Step("InlineDeconstructionInitializer", block.Instructions[pos]);
-			deconstruction.Init.Insert(0, (StLoc)block.Instructions[pos]);
-			block.Instructions.RemoveAt(pos);
-			v.Kind = VariableKind.DeconstructionInitTemporary;
-			return true;
-		}
-
 		bool TransformDeconstruction(Block block, int pos)
 		{
 			int startPos = pos;
-			Action<DeconstructInstruction>? delayedActions = null;
-			if (MatchDeconstruction(block.Instructions[pos], out IMethod? deconstructMethod,
-				out ILInstruction? rootTestedOperand))
+			// Blocks are processed back to front, so the inner parts of a nested deconstruction
+			// are visited before the position its matching starts at; matching them on their own
+			// would consume the pattern piecemeal. Defer to the enclosing attempt where one
+			// exists (see the guard for the precision guarantees).
+			if (IsConsumableByEnclosingDeconstruction(block, pos))
+				return false;
+			if (!MatchDeconstructionSequence(block, startPos, out pos, out var rootCall,
+				out var rootTestedOperand, out var conversionStLocs, out var delayedActions))
 			{
-				pos++;
+				return false;
 			}
-			if (!MatchConversions(block, ref pos, out var conversions, out var conversionStLocs, ref delayedActions))
-				return false;
-
-			if (!MatchAssignments(block, ref pos, conversions, conversionStLocs, ref delayedActions,
-				allowUnrelatedAssignments: deconstructMethod != null))
-				return false;
-			// first tuple element may not be discarded,
-			// otherwise we would run this transform on a suffix of the actual pattern.
-			if (deconstructionResults[0] == null)
-				return false;
 			context.Step("Deconstruction", block.Instructions[startPos]);
 			DeconstructInstruction replacement = new DeconstructInstruction();
+			IMethod? deconstructMethod = rootCall?.Method;
 			IType deconstructedType;
 			if (deconstructMethod == null)
 			{
@@ -229,31 +153,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			var rootTempVariable = context.Function.RegisterVariable(VariableKind.PatternLocal, deconstructedType);
-			replacement.Pattern = new MatchInstruction(rootTempVariable, deconstructMethod, rootTestedOperand!) {
-				IsDeconstructCall = deconstructMethod != null,
-				IsDeconstructTuple = this.tupleType != null
-			};
-			int index = 0;
-			foreach (ILVariable? v in deconstructionResults)
+			if (rootCall != null)
 			{
-				var result = v;
-				if (result == null)
+				replacement.Pattern = BuildPatternMatch(rootCall, rootTempVariable, rootTestedOperand!);
+			}
+			else
+			{
+				replacement.Pattern = new MatchInstruction(rootTempVariable, method: null, rootTestedOperand!) {
+					IsDeconstructTuple = true
+				};
+				for (int i = 0; i < deconstructionResults.Length; i++)
 				{
-					var freshVar = new ILVariable(VariableKind.PatternLocal, this.tupleType!.ElementTypes[index]) { Name = "E_" + index };
-					context.Function.Variables.Add(freshVar);
-					result = freshVar;
+					var result = deconstructionResults[i];
+					if (result == null)
+					{
+						var freshVar = new ILVariable(VariableKind.PatternLocal, this.tupleType!.ElementTypes[i]) { Name = "E_" + i };
+						context.Function.Variables.Add(freshVar);
+						result = freshVar;
+					}
+					else
+					{
+						result.Kind = VariableKind.PatternLocal;
+					}
+					replacement.Pattern.SubPatterns.Add(
+						new MatchInstruction(
+							result,
+							new DeconstructResultInstruction(i, result.StackType, new LdLoc(rootTempVariable))
+						)
+					);
 				}
-				else
-				{
-					result.Kind = VariableKind.PatternLocal;
-				}
-				replacement.Pattern.SubPatterns.Add(
-					new MatchInstruction(
-						result,
-						new DeconstructResultInstruction(index, result.StackType, new LdLoc(rootTempVariable))
-					)
-				);
-				index++;
 			}
 			replacement.Conversions = new Block(BlockKind.DeconstructionConversions);
 			foreach (var convInst in conversionStLocs)
@@ -268,45 +196,313 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchDeconstruction(ILInstruction inst, [NotNullWhen(true)] out IMethod? deconstructMethod,
-			[NotNullWhen(true)] out ILInstruction? testedOperand)
+		/// <summary>
+		/// Matches the full statement sequence of one deconstruction, starting at startPos:
+		///   [Deconstruct call + nested calls | nested tuple designation temporaries]
+		///   [conversions]
+		///   [assignments]
+		/// On success, endPos is the position after the last consumed statement.
+		/// The block is not modified; all rewrites are accumulated in delayedActions.
+		/// </summary>
+		bool MatchDeconstructionSequence(Block block, int startPos, out int endPos,
+			out DeconstructionCall? rootCall, out ILInstruction? rootTestedOperand,
+			out List<StLoc> conversionStLocs, out Action<DeconstructInstruction>? delayedActions)
+		{
+			Reset();
+			endPos = startPos;
+			int pos = startPos;
+			delayedActions = null;
+			MatchDeconstruction(block, ref pos, out rootCall, out rootTestedOperand);
+			if (!MatchConversions(block, ref pos, out var conversions, out conversionStLocs, ref delayedActions))
+				return false;
+			if (!MatchAssignments(block, ref pos, conversions, conversionStLocs, ref delayedActions,
+				allowUnrelatedAssignments: rootCall != null, out bool anyAssignments))
+			{
+				return false;
+			}
+			// Without any assignment the statement is a plain Deconstruct call, unless a nested
+			// deconstruction was consumed: then all leaves are single-use elements handled by
+			// the forwarding fixup in MatchAssignments.
+			if (!anyAssignments && !(rootCall != null && rootCall.NestedCalls.Any(c => c != null)))
+				return false;
+			// first tuple element may not be discarded,
+			// otherwise we would run this transform on a suffix of the actual pattern.
+			if (deconstructionResults[0] == null)
+				return false;
+			endPos = pos;
+			return true;
+		}
+
+		/// <summary>
+		/// stloc v(value)
+		/// expr(..., deconstruct { ... }, ...)
+		/// =>
+		/// expr(..., deconstruct { init: stloc v(value) ... }, ...)
+		/// </summary>
+		bool InlineDeconstructionInitializer(Block block, int pos)
+		{
+			if (!block.Instructions[pos].MatchStLoc(out var v, out var value))
+				return false;
+			if (!(v.IsSingleDefinition && v.LoadInstructions is [var loadInst]))
+				return false;
+			if (pos + 1 >= block.Instructions.Count)
+				return false;
+			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 1], v, value, InliningOptions.FindDeconstruction);
+			if (result.Type != ILInlining.FindResultType.Deconstruction)
+				return false;
+			var deconstruction = (DeconstructInstruction)result.LoadInst;
+			if (!loadInst.IsDescendantOf(deconstruction.Assignments))
+				return false;
+			if (loadInst.SlotInfo == StObj.TargetSlot)
+			{
+				if (value.OpCode == OpCode.LdFlda || value.OpCode == OpCode.LdElema)
+					return false;
+			}
+			if (deconstruction.Init.Count > 0)
+			{
+				var a = deconstruction.Init[0].Variable.LoadInstructions.Single();
+				if (!loadInst.IsBefore(a))
+					return false;
+			}
+			context.Step("InlineDeconstructionInitializer", block.Instructions[pos]);
+			deconstruction.Init.Insert(0, (StLoc)block.Instructions[pos]);
+			block.Instructions.RemoveAt(pos);
+			v.Kind = VariableKind.DeconstructionInitTemporary;
+			return true;
+		}
+
+		/// <summary>
+		/// Whether the statement at pos belongs to a deconstruction whose matching starts at an
+		/// earlier position in the block, in either nesting shape:
+		///
+		///   call Deconstruct(..., ldloca inner, ...)             at enclosingPos
+		///   ...
+		///   call Deconstruct(ldloc(a) inner, ...)                at pos
+		///
+		///   stloc temp(ldobj(ldflda ItemN(ldloc(a) outer)))      at enclosingPos
+		///   ...
+		///   stloc x([conv](ldobj(ldflda ItemK(ldloc(a) temp))))  at pos
+		///
+		/// Both shapes are decided by the same dry run of the enclosing match: only a match that
+		/// reaches beyond pos absorbs the statement there. A barrier statement between the two
+		/// positions, an element with uses the nesting cannot consume, or a conversion or
+		/// assignment the enclosing pattern does not account for makes the dry run stop short,
+		/// and the deconstruction at pos is then still transformed on its own. What the dry run
+		/// cannot promise is that the enclosing attempt still matches once the walk reaches it:
+		/// the positions in between are visited first and may rewrite the block. The back-to-front
+		/// walk gives this position no second chance, but losing the match there only costs
+		/// sugar, never correctness.
+		/// </summary>
+		bool IsConsumableByEnclosingDeconstruction(Block block, int pos)
+		{
+			if (!TryFindEnclosingDeconstructionCall(block, pos, out int enclosingPos))
+				return false;
+			// The dry run leaves the matcher state behind, which is safe because it runs before
+			// the attempt at this position, and both that attempt and Run reset it. It does not
+			// modify the block: all rewrites are delayed actions.
+			return MatchDeconstructionSequence(block, enclosingPos, out int endPos, out _, out _, out _, out _)
+				&& endPos > pos;
+		}
+
+		/// <summary>
+		/// call Deconstruct(..., ldloca v, ...)                  at enclosingPos
+		/// [stloc copy(ldloc v)]                                 defensive copy of a struct element
+		/// ...
+		/// call Deconstruct(ldloc(a) v|copy, ...)                at pos
+		/// </summary>
+		static bool TryFindEnclosingDeconstructionCall(Block block, int pos, out int enclosingPos)
+		{
+			enclosingPos = -1;
+			if (!(block.Instructions[pos] is CallInstruction call))
+				return false;
+			if (!MatchInstruction.IsDeconstructMethod(call.Method) || call.Arguments.Count == 0)
+				return false;
+			var target = call.Arguments[0];
+			if (!MatchLdLocOrLdLoca(target, out var v))
+				return false;
+			// look through the defensive copy of a struct element
+			if (v.StoreInstructions is [StLoc copy] && copy.Value.MatchLdLoc(out var copySource))
+			{
+				v = copySource;
+			}
+			// StoreCount also counts the initial value of parameters, on purpose
+			if (v.StoreCount != 0)
+				return false;
+			if (!(v.AddressInstructions is [{ Parent: CallInstruction enclosingCall } addressLoad]
+				&& addressLoad.ChildIndex > 0
+				&& MatchInstruction.IsDeconstructMethod(enclosingCall.Method)))
+			{
+				return false;
+			}
+			if (enclosingCall.Parent != block)
+				return false;
+			enclosingPos = enclosingCall.ChildIndex;
+			return enclosingPos >= 0 && enclosingPos < pos;
+		}
+
+		/// <summary>
+		/// A matched Deconstruct call: one node of the (possibly nested) deconstruction pattern.
+		/// </summary>
+		sealed class DeconstructionCall
+		{
+			public IMethod Method = null!;
+			/// <summary>Pattern variable of this match node; null for the root (which gets a fresh temp).</summary>
+			public ILVariable? Receiver;
+			/// <summary>The out-argument variable per element.</summary>
+			public ILVariable[] Results = null!;
+			/// <summary>Nested deconstruction per element; null = leaf element.</summary>
+			public DeconstructionCall?[] NestedCalls = null!;
+		}
+
+		/// <summary>
+		/// call Deconstruct(target, ldloca x, ldloca inner)      the root call, at pos
+		/// [nested Deconstruct calls, see MatchNestedDeconstructions]
+		/// On success, the leaf out-variables carry flat indices in depth-first order: this is
+		/// the order in which StatementBuilder/ExpressionBuilder pair pattern variables with
+		/// assignments, so the index checks in MatchConversions/MatchAssignments work unchanged
+		/// for nested patterns.
+		/// </summary>
+		void MatchDeconstruction(Block block, ref int pos, out DeconstructionCall? rootCall,
+			out ILInstruction? testedOperand)
+		{
+			rootCall = MatchDeconstructionCall(block.Instructions[pos], out testedOperand);
+			if (rootCall == null)
+				return;
+			pos++;
+			MatchNestedDeconstructions(block, ref pos, rootCall);
+			// Assign flat indices to the leaves in depth-first order: this is the order in which
+			// StatementBuilder/ExpressionBuilder pair pattern variables with assignments, so the
+			// index checks in MatchConversions/MatchAssignments work unchanged for nested patterns.
+			var leaves = new List<ILVariable>();
+			CollectLeaves(rootCall, leaves);
+			deconstructionResults = leaves.ToArray();
+			for (int i = 0; i < deconstructionResults.Length; i++)
+			{
+				deconstructionResultsLookup.Add(deconstructionResults[i]!, i);
+			}
+
+			static void CollectLeaves(DeconstructionCall call, List<ILVariable> leaves)
+			{
+				for (int i = 0; i < call.Results.Length; i++)
+				{
+					if (call.NestedCalls[i] is DeconstructionCall nested)
+						CollectLeaves(nested, leaves);
+					else
+						leaves.Add(call.Results[i]);
+				}
+			}
+		}
+
+		/// <summary>
+		/// call(virt) Deconstruct(target, ldloca out0, ldloca out1, ...)
+		/// where every out-argument is a single-use temporary.
+		/// </summary>
+		DeconstructionCall? MatchDeconstructionCall(ILInstruction inst, out ILInstruction? testedOperand)
 		{
 			testedOperand = null;
-			deconstructMethod = null;
-			deconstructionResults = null!;
 			if (!(inst is CallInstruction call))
-				return false;
+				return null;
 			if (!MatchInstruction.IsDeconstructMethod(call.Method))
-				return false;
+				return null;
 			if (call.Method.IsStatic || call.Method.DeclaringType.IsReferenceType == false)
 			{
 				if (!(call is Call))
-					return false;
+					return null;
 			}
 			else
 			{
 				if (!(call is CallVirt))
-					return false;
+					return null;
 			}
 			if (call.Arguments.Count < 3)
-				return false;
-			deconstructionResults = new ILVariable[call.Arguments.Count - 1];
-			for (int i = 0; i < deconstructionResults.Length; i++)
+				return null;
+			var results = new ILVariable[call.Arguments.Count - 1];
+			for (int i = 0; i < results.Length; i++)
 			{
 				if (!call.Arguments[i + 1].MatchLdLoca(out var v))
-					return false;
+					return null;
 				// TODO v.LoadCount may be 2 if the deconstruction is assigned to a tuple variable
 				// or 0? because of discards
 				if (!(v.StoreCount == 0 && v.AddressCount == 1 && v.LoadCount <= 1))
-					return false;
-				deconstructionResultsLookup.Add(v, i);
-				deconstructionResults[i] = v;
+					return null;
+				results[i] = v;
 			}
 			testedOperand = call.Arguments[0];
-			deconstructMethod = call.Method;
-			return true;
+			return new DeconstructionCall {
+				Method = call.Method,
+				Results = results,
+				NestedCalls = new DeconstructionCall[results.Length]
+			};
 		}
 
+		/// <summary>
+		/// Per element of the parent call, in order:
+		///   [stloc copy(ldloc result)]                          defensive copy for a struct element
+		///   call Deconstruct(ldloc(a) result|copy, ldloca ...)  recursing into its elements
+		/// C# evaluates nested Deconstruct calls left-to-right, directly after the parent call,
+		/// before any conversions or assignments: the elements are visited depth-first, and the
+		/// stack of pending elements takes the place of recursing into a matched nested call.
+		/// </summary>
+		void MatchNestedDeconstructions(Block block, ref int pos, DeconstructionCall rootCall)
+		{
+			var pendingElements = new Stack<(DeconstructionCall Call, int ElementIndex)>();
+			pendingElements.Push((rootCall, 0));
+			while (pendingElements.Count > 0)
+			{
+				var (parent, i) = pendingElements.Pop();
+				if (i + 1 < parent.Results.Length)
+					pendingElements.Push((parent, i + 1));
+				ILVariable result = parent.Results[i];
+				int savedPos = pos;
+				ILVariable receiver = result;
+				var inst = block.Instructions.ElementAtOrDefault(pos);
+				if (inst != null && inst.MatchStLoc(out var copy, out var copiedValue)
+					&& copiedValue.MatchLdLoc(result)
+					&& copy.StoreCount == 1
+					&& copy.LoadCount + copy.AddressCount == 1)
+				{
+					receiver = copy;
+					pos++;
+					inst = block.Instructions.ElementAtOrDefault(pos);
+				}
+				var nested = inst == null ? null : MatchDeconstructionCall(inst, out _);
+				if (nested == null || !IsReceiverReference(((CallInstruction)inst!).Arguments[0], receiver))
+				{
+					pos = savedPos;
+					continue;
+				}
+				if (receiver != result && result.LoadCount != 1)
+				{
+					// the copy must be the element's only use
+					pos = savedPos;
+					continue;
+				}
+				pos++;
+				nested.Receiver = receiver;
+				parent.NestedCalls[i] = nested;
+				// its elements are evaluated before the parent's remaining ones
+				pendingElements.Push((nested, 0));
+			}
+
+			static bool IsReceiverReference(ILInstruction target, ILVariable receiver)
+			{
+				return MatchLdLocOrLdLoca(target, out var v) && v == receiver;
+			}
+		}
+
+		struct ConversionInfo
+		{
+			public IType? inputType;
+			public Conv? conv;
+		}
+
+		/// <summary>
+		/// stloc conv0(conv(FindIndex-resolvable value))
+		/// stloc conv1(conv(...))
+		/// ...
+		/// The run of single-use conversion temporaries following the deconstruction, in flat
+		/// leaf index order.
+		/// </summary>
 		bool MatchConversions(Block block, ref int pos,
 			out Dictionary<ILVariable, ConversionInfo> conversions,
 			out List<StLoc> conversionStLocs,
@@ -334,6 +530,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		/// <summary>
+		/// stloc output(conv(input))
+		/// </summary>
 		bool MatchConversion(ILInstruction? inst, [NotNullWhen(true)] out ILInstruction? inputInstruction,
 			[NotNullWhen(true)] out ILVariable? outputVariable, out ConversionInfo info)
 		{
@@ -354,12 +553,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		/// <summary>
+		/// assignment(FindIndex-resolvable value)                see MatchAssignment
+		/// ...
+		/// The run of assignments following the conversions, in flat leaf index order.
+		/// Single-use elements without an assignment are forwarded through a fresh variable
+		/// assigned inside the deconstruction.
+		/// </summary>
 		bool MatchAssignments(Block block, ref int pos,
 			Dictionary<ILVariable, ConversionInfo> conversions,
 			List<StLoc> conversionStLocs,
 			ref Action<DeconstructInstruction>? delayedActions,
-			bool allowUnrelatedAssignments)
+			bool allowUnrelatedAssignments,
+			out bool anyAssignments)
 		{
+			anyAssignments = false;
 			int previousIndex = -1;
 			int conversionStLocIndex = 0;
 			int startPos = pos;
@@ -450,7 +658,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			return startPos != pos;
+			anyAssignments = startPos != pos;
+			return true;
 
 			int GetAssignmentIndex(ILInstruction inst)
 			{
@@ -490,6 +699,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		/// <summary>
+		/// stloc v(value) | stobj(target, value) | call set_Property(target, value)
+		/// or the result-used form
+		///   stloc s(Block CallInlineAssign { call set_Property(target, stloc tmp(value)); final: ldloc tmp })
+		/// where the setter call is moved into the assignments block.
+		/// </summary>
 		bool MatchAssignment(ILInstruction? inst, [NotNullWhen(true)] out IType? targetType, [NotNullWhen(true)] out ILInstruction? valueInst, [NotNullWhen(true)] out Action<DeconstructInstruction>? addAssignment)
 		{
 			targetType = null;
@@ -525,6 +740,50 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		/// <summary>
+		/// ldloc result                                          a registered result or conversion output
+		/// ldobj(ldflda ItemN(ldloc(a) v))                       an element read of the tuple
+		/// Resolves the value of a conversion or assignment to its element index.
+		/// Returns -1 on failure.
+		/// </summary>
+		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction>? delayedActions)
+		{
+			delayedActions = null;
+			if (inst.MatchLdLoc(out var v))
+			{
+				if (!deconstructionResultsLookup.TryGetValue(v, out int index))
+					return -1;
+				return index;
+			}
+			if (!MatchTupleElementRead(inst, out var container, out var containerType, out int elementIndex))
+				return -1;
+			var normalizedType = TupleType.FromUnderlyingType(context.TypeSystem, containerType);
+			if (this.tupleVariable == null)
+			{
+				this.tupleVariable = container;
+				this.tupleType = (TupleType)normalizedType;
+				this.deconstructionResults = new ILVariable[this.tupleType.Cardinality];
+			}
+			if (this.tupleType!.Cardinality < 2)
+				return -1;
+			if (container != tupleVariable || !this.tupleType.Equals(normalizedType))
+				return -1;
+			if (this.deconstructionResults[elementIndex] == null)
+			{
+				var freshVar = new ILVariable(VariableKind.StackSlot, this.tupleType.ElementTypes[elementIndex]) { Name = "E_" + elementIndex };
+				delayedActions += _ => context.Function.Variables.Add(freshVar);
+				this.deconstructionResults[elementIndex] = freshVar;
+			}
+			delayedActions += _ => {
+				inst.ReplaceWith(new LdLoc(this.deconstructionResults[elementIndex]!));
+			};
+			return elementIndex;
+		}
+
+		/// <summary>
+		/// Gets whether the matched conv instruction (or its absence) is the lowering of the
+		/// implicit conversion from the input type to the assignment's target type.
+		/// </summary>
 		bool IsCompatibleImplicitConversion(IType targetType, ConversionInfo conversionInfo)
 		{
 			var c = CSharpConversions.Get(context.TypeSystem)
@@ -554,6 +813,73 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Builds, recursing into nested calls:
+		/// match.deconstruct[Method] (matchVariable = testedOperand) {
+		///     match(result_i = deconstruct.result i(ldloc matchVariable)),
+		///     match.deconstruct[...] (receiver_j = deconstruct.result j(ldloc matchVariable)) { ... }
+		/// }
+		/// </summary>
+		MatchInstruction BuildPatternMatch(DeconstructionCall call, ILVariable matchVariable, ILInstruction testedOperand)
+		{
+			matchVariable.Kind = VariableKind.PatternLocal;
+			var match = new MatchInstruction(matchVariable, call.Method, testedOperand) {
+				IsDeconstructCall = true
+			};
+			for (int i = 0; i < call.Results.Length; i++)
+			{
+				var nested = call.NestedCalls[i];
+				if (nested != null)
+				{
+					var receiver = nested.Receiver!;
+					match.SubPatterns.Add(BuildPatternMatch(nested, receiver,
+						new DeconstructResultInstruction(i, receiver.StackType, new LdLoc(matchVariable))));
+				}
+				else
+				{
+					var result = call.Results[i];
+					result.Kind = VariableKind.PatternLocal;
+					match.SubPatterns.Add(
+						new MatchInstruction(
+							result,
+							new DeconstructResultInstruction(i, result.StackType, new LdLoc(matchVariable))
+						)
+					);
+				}
+			}
+			return match;
+		}
+
+		/// <summary>
+		/// ldobj(ldflda ItemN(ldloc(a) container))
+		/// The returned index is zero-based; Rest chains of long tuples are flattened.
+		/// Non-escaping element reads may have been rewritten from ldloca to ldloc,
+		/// so both load kinds are accepted.
+		/// </summary>
+		static bool MatchTupleElementRead(ILInstruction inst, [NotNullWhen(true)] out ILVariable? container, [NotNullWhen(true)] out IType? containerType, out int index)
+		{
+			container = null;
+			containerType = null;
+			index = -1;
+			if (!(inst is LdObj ldobj && ldobj.Target is LdFlda ldflda))
+				return false;
+			if (ldobj.UnalignedPrefix != 0 || ldobj.IsVolatile)
+				return false;
+			if (!TupleTransform.MatchTupleFieldAccess(ldflda, out containerType, out var target, out int position))
+				return false;
+			// Item fields are one-based, we use zero-based indexing.
+			index = position - 1;
+			return MatchLdLocOrLdLoca(target, out container);
+		}
+
+		/// <summary>
+		/// ldloc variable | ldloca variable
+		/// </summary>
+		static bool MatchLdLocOrLdLoca(ILInstruction inst, [NotNullWhen(true)] out ILVariable? variable)
+		{
+			return inst.MatchLdLoc(out variable) || inst.MatchLdLoca(out variable);
 		}
 	}
 }

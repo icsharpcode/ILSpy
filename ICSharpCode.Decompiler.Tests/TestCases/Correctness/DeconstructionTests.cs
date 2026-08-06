@@ -15,6 +15,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 	}
 
+	static class TupleClassExtensions
+	{
+		public static void Deconstruct<T1, T2>(this Tuple<T1, T2> tuple, out T1 item1, out T2 item2)
+		{
+			item1 = tuple.Item1;
+			item2 = tuple.Item2;
+		}
+	}
+
 	class DeconstructionTests
 	{
 		public static void Main()
@@ -153,6 +162,206 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				new NestedOuter { Value = 2 }
 			});
 			NestedDeconstruction_DiscardedElement(new KeyValuePair<object, DiscardData>("key", default(DiscardData)));
+			NestedDeconstruction_ClassInner(new ClassInnerOuter { Value = 7 });
+			NestedDeconstruction_Depth3(new DeepOuter { Value = 3 });
+			NestedDeconstruction_LhsSideEffects_DeconstructionOrder_Assignments();
+			NestedDeconstruction_Conversions_AfterAllDeconstructCalls();
+			NestedDeconstruction_TypedDeclaration_Conversions(new NestedOuter { Value = 5 });
+			NestedDeconstruction_DiscardWithSideEffectTargets();
+			NestedDeconstruction_SystemTupleSource(Tuple.Create(8, new NestedInner { Value = 4 }));
+			NestedDeconstruction_CheckedConversions(new NestedOuter { Value = 9 });
+			NestedDeconstruction_GenericConstraintSource(new ConstrainedSource { Value = 11 });
+			NestedDeconstruction_InParameterSource(new NestedOuter { Value = 12 });
+			NestedDeconstruction_ConditionalSource(c: true, new NestedOuter { Value = 13 }, new NestedOuter { Value = 14 });
+			NestedDeconstruction_TupleOuterConversions((15, new NestedInner { Value = 6 }));
+			NestedDeconstruction_TypedConversions_UnrelatedCallAfter(new NestedOuter { Value = 16 });
+			NestedDeconstruction_NullableConversions(new NestedOuter { Value = 17 });
+			NestedDeconstruction_MyIntConversionOnNestedLeaves(new NestedOuter { Value = 18 });
+			NestedDeconstruction_ForEachDictionary_Conversions(new Dictionary<string, NestedInner> {
+				{ "k1", new NestedInner { Value = 19 } }
+			});
+		}
+
+		public class ConstrainedSource
+		{
+			public int Value;
+
+			public void Deconstruct(out int a, out NestedInner inner)
+			{
+				Console.WriteLine("ConstrainedSource.Deconstruct");
+				a = Value;
+				inner = new NestedInner { Value = Value * 10 };
+			}
+		}
+
+		public void NestedDeconstruction_SystemTupleSource(Tuple<int, NestedInner> tup)
+		{
+			Console.WriteLine("NestedDeconstruction_SystemTupleSource:");
+			(long x, (long a, long b)) = tup;
+			int z = Side();
+			Console.WriteLine(x + " " + a + " " + b + " " + z);
+		}
+
+		public void NestedDeconstruction_CheckedConversions(NestedOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_CheckedConversions:");
+			checked
+			{
+				(long x, (long a, long b)) = o;
+				Console.WriteLine(x + " " + a + " " + b);
+			}
+		}
+
+		public void NestedDeconstruction_GenericConstraintSource<T>(T o) where T : ConstrainedSource
+		{
+			Console.WriteLine("NestedDeconstruction_GenericConstraintSource:");
+			var (a, (c, d)) = o;
+			Console.WriteLine(a + " " + c + " " + d);
+		}
+
+		public void NestedDeconstruction_InParameterSource(in NestedOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_InParameterSource:");
+			(long x, (long a, long b)) = o;
+			Console.WriteLine(x + " " + a + " " + b);
+		}
+
+		public void NestedDeconstruction_ConditionalSource(bool c, NestedOuter o1, NestedOuter o2)
+		{
+			Console.WriteLine("NestedDeconstruction_ConditionalSource:");
+			(long x, (int a, int b)) = c ? o1 : o2;
+			int z = Side();
+			Console.WriteLine(x + " " + a + " " + b + " " + z);
+		}
+
+		public void NestedDeconstruction_TupleOuterConversions((int, NestedInner) tup)
+		{
+			Console.WriteLine("NestedDeconstruction_TupleOuterConversions:");
+			(long x, (long a, long b)) = tup;
+			Console.WriteLine(x + " " + a + " " + b);
+		}
+
+		public void NestedDeconstruction_TypedConversions_UnrelatedCallAfter(NestedOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_TypedConversions_UnrelatedCallAfter:");
+			(long x, (long a, long b)) = o;
+			int z = Side();
+			Console.WriteLine(x + " " + a + " " + b + " " + z);
+		}
+
+		public void NestedDeconstruction_NullableConversions(NestedOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_NullableConversions:");
+			(long? x, (long? a, int? b)) = o;
+			Console.WriteLine(x + " " + a + " " + b);
+		}
+
+		public void NestedDeconstruction_MyIntConversionOnNestedLeaves(NestedOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_MyIntConversionOnNestedLeaves:");
+			(MyInt x, (MyInt a, long b)) = o;
+			Console.WriteLine(x + " " + a + " " + b);
+		}
+
+		public void NestedDeconstruction_ForEachDictionary_Conversions(Dictionary<string, NestedInner> d)
+		{
+			Console.WriteLine("NestedDeconstruction_ForEachDictionary_Conversions:");
+			foreach ((string k, (long a, long b)) in d)
+			{
+				Console.WriteLine(k + " " + a + " " + b);
+			}
+		}
+
+		// The evaluation order of a deconstruction-assignment is: (1) all side-effects of
+		// the left-hand-side targets, (2) all Deconstruct invocations, (3) conversions,
+		// (4) assignments. Get(i), the Deconstruct methods, MyInt's implicit conversions,
+		// and the property setters all print, so any phase reordering breaks the output diff.
+		public void NestedDeconstruction_LhsSideEffects_DeconstructionOrder_Assignments()
+		{
+			Console.WriteLine("NestedDeconstruction_LhsSideEffects_DeconstructionOrder_Assignments:");
+			(Get(0).IntProperty, (Get(1).IntProperty, Get(2).IntProperty)) = new NestedOuter { Value = 11 };
+		}
+
+		public void NestedDeconstruction_Conversions_AfterAllDeconstructCalls()
+		{
+			Console.WriteLine("NestedDeconstruction_Conversions_AfterAllDeconstructCalls:");
+			(Get(0).My, (Get(1).IntProperty, Get(2).My)) = new NestedOuter { Value = 21 };
+		}
+
+		public void NestedDeconstruction_TypedDeclaration_Conversions(NestedOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_TypedDeclaration_Conversions:");
+			(MyInt x, (long a, MyInt b)) = o;
+			Console.WriteLine(x);
+			Console.WriteLine(a);
+			Console.WriteLine(b);
+		}
+
+		public void NestedDeconstruction_DiscardWithSideEffectTargets()
+		{
+			Console.WriteLine("NestedDeconstruction_DiscardWithSideEffectTargets:");
+			(Get(0).IntProperty, (_, Get(1).My)) = new NestedOuter { Value = 31 };
+		}
+
+		public int Side()
+		{
+			Console.WriteLine("Side()");
+			return 5;
+		}
+
+		public class NestedClassInner
+		{
+			public int Value;
+
+			public void Deconstruct(out int a, out int b)
+			{
+				Console.WriteLine("NestedClassInner.Deconstruct");
+				a = Value + 1;
+				b = Value + 2;
+			}
+		}
+
+		public struct ClassInnerOuter
+		{
+			public int Value;
+
+			public void Deconstruct(out int x, out NestedClassInner inner)
+			{
+				Console.WriteLine("ClassInnerOuter.Deconstruct");
+				x = Value;
+				inner = new NestedClassInner { Value = Value * 10 };
+			}
+		}
+
+		public void NestedDeconstruction_ClassInner(ClassInnerOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_ClassInner:");
+			var (x, (a, b)) = o;
+			Console.WriteLine(x);
+			Console.WriteLine(a);
+			Console.WriteLine(b);
+		}
+
+		public struct DeepOuter
+		{
+			public int Value;
+
+			public void Deconstruct(out int x, out ClassInnerOuter mid)
+			{
+				Console.WriteLine("DeepOuter.Deconstruct");
+				x = Value;
+				mid = new ClassInnerOuter { Value = Value * 100 };
+			}
+		}
+
+		public void NestedDeconstruction_Depth3(DeepOuter o)
+		{
+			Console.WriteLine("NestedDeconstruction_Depth3:");
+			var (x, (y, (a, b))) = o;
+			Console.WriteLine(x);
+			Console.WriteLine(y);
+			Console.WriteLine(a);
+			Console.WriteLine(b);
 		}
 
 		public struct DiscardData

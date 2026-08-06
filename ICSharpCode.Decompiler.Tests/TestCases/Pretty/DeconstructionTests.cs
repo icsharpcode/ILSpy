@@ -29,6 +29,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			key = pair.Key;
 			value = pair.Value;
 		}
+
+		public static void Deconstruct<T1, T2>(this Tuple<T1, T2> tuple, out T1 item1, out T2 item2)
+		{
+			item1 = tuple.Item1;
+			item2 = tuple.Item2;
+		}
 	}
 
 	internal class DeconstructionTests
@@ -159,9 +165,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return default((T, T2, T3));
 		}
 
+		private List<T> GetList<T>()
+		{
+			return null;
+		}
+
 		private int GetInt()
 		{
 			return 0;
+		}
+
+		private Tuple<T, T2> GetTupleClass<T, T2>()
+		{
+			return null;
+		}
+
+		private Dictionary<string, T> GetStringDictionary<T>()
+		{
+			return null;
 		}
 
 		private AssignmentTargets Get(int i)
@@ -336,6 +357,167 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value2);
 		}
 
+		public void LocalVariable_Nested_ClassInner()
+		{
+			var (myInt3, (myInt4, value)) = GetSource<MyInt?, DeconstructionSource<MyInt, int>>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(myInt4);
+			Console.WriteLine(value);
+		}
+
+		public void LocalVariable_Nested_StructInner()
+		{
+			var (myInt3, (myInt4, value)) = GetSource<MyInt?, StructDeconstructionSource<MyInt, int>>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(myInt4);
+			Console.WriteLine(value);
+		}
+
+		public void LocalVariable_Nested_StructOuterAndInner()
+		{
+			var (myInt3, (myInt4, value)) = GetStructSource<MyInt?, StructDeconstructionSource<MyInt, int>>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(myInt4);
+			Console.WriteLine(value);
+		}
+
+		public void LocalVariable_Nested_BothElementsNested()
+		{
+			var ((myInt3, value), (myInt4, value2)) = GetSource<DeconstructionSource<MyInt?, int>, StructDeconstructionSource<MyInt, int>>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(value);
+			Console.WriteLine(myInt4);
+			Console.WriteLine(value2);
+		}
+
+		public void LocalVariable_Nested_Depth3()
+		{
+			var (myInt3, (myInt4, (value, value2))) = GetSource<MyInt?, DeconstructionSource<MyInt, StructDeconstructionSource<int, int>>>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(myInt4);
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
+
+		public void LocalVariable_Nested_DiscardInnerElement()
+		{
+			var (myInt3, (myInt4, _)) = GetSource<MyInt?, StructDeconstructionSource<MyInt, int>>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(myInt4);
+		}
+
+		public void LocalVariable_Nested_SystemTupleSource()
+		{
+			var (myInt3, (myInt4, value)) = GetTupleClass<MyInt?, DeconstructionSource<MyInt, int>>();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(myInt4);
+			Console.WriteLine(value);
+		}
+
+		// Nested deconstruction of a tuple element (ldfld chains, no Deconstruct call)
+		// is not re-sugared: var (value, (value2, value3)) = GetTuple<int, (int, int)>();
+		public void LocalVariable_Nested_TupleInner()
+		{
+			(int, (int, int)) tuple = GetTuple<int, (int, int)>();
+			(int, int) item = tuple.Item2;
+			var (value, _) = tuple;
+			var (value2, value3) = item;
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+		}
+
+		public void ForEach_Nested_TupleInner()
+		{
+			foreach (var item2 in GetList<(int, (int, int))>())
+			{
+				(int, int) item = item2.Item2;
+				var (value, _) = item2;
+				var (value2, value3) = item;
+				Console.WriteLine(value);
+				Console.WriteLine(value2);
+				Console.WriteLine(value3);
+			}
+		}
+
+		public void LocalVariable_Nested_TypedConversions_UnrelatedCallAfter()
+		{
+			long value;
+			MyInt myInt2;
+			long value2;
+			(value, (myInt2, value2)) = GetSource<int, DeconstructionSource<MyInt, int>>();
+			int value3 = GetInt();
+			Console.WriteLine(value);
+			Console.WriteLine(myInt2);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+		}
+
+		public void LocalVariable_Nested_IntToLongConversion()
+		{
+			int value;
+			MyInt myInt2;
+			long value2;
+			(value, (myInt2, value2)) = GetSource<int, DeconstructionSource<MyInt, int>>();
+			Console.WriteLine(value);
+			Console.WriteLine(myInt2);
+			Console.WriteLine(value2);
+		}
+
+		public void LocalVariable_Nested_ElementDeconstructedAfterBarrier()
+		{
+			GetSource<MyInt?, DeconstructionSource<MyInt, int>>().Deconstruct(out var a, out var b);
+			Console.WriteLine(a);
+			var (myInt2, value) = b;
+			Console.WriteLine(myInt2);
+			Console.WriteLine(value);
+		}
+
+		public void LocalVariable_Nested_OuterElementUsedTwice()
+		{
+			GetSource<MyInt?, DeconstructionSource<MyInt, int>>().Deconstruct(out var a, out var b);
+			var (myInt2, value) = b;
+			Console.WriteLine(a);
+			Console.WriteLine(a);
+			Console.WriteLine(myInt2);
+			Console.WriteLine(value);
+		}
+
+		public void ForEach_Nested()
+		{
+			foreach (var (myInt3, (myInt4, value)) in GetList<StructDeconstructionSource<MyInt?, DeconstructionSource<MyInt, int>>>())
+			{
+				Console.WriteLine(myInt3);
+				Console.WriteLine(myInt4);
+				Console.WriteLine(value);
+			}
+		}
+
+		public void ForEach_Nested_KeyValuePair()
+		{
+			foreach (var (value, (myInt2, value2)) in GetStringDictionary<StructDeconstructionSource<MyInt, int>>())
+			{
+				Console.WriteLine(value);
+				Console.WriteLine(myInt2);
+				Console.WriteLine(value2);
+			}
+		}
+
+		public void Property_Nested_NoConversion()
+		{
+			(Get(0).Int, (Get(1).My, Get(2).String)) = GetSource<int, DeconstructionSource<MyInt, string>>();
+		}
+
+		public void Property_Nested_IntToLongConversion()
+		{
+			(Get(0).Int, (Get(1).My, Get(2).Long)) = GetSource<int, DeconstructionSource<MyInt, int>>();
+		}
+
+		public void Property_Nested_DiscardInnerElement()
+		{
+			(Get(0).NMy, (_, Get(1).My)) = GetSource<MyInt?, DeconstructionSource<int, MyInt>>();
+		}
+
 		public unsafe void Pointer_NoConversion_Tuple(int* p)
 		{
 			int value;
@@ -360,6 +542,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int value;
 			(*p, value) = GetTuple<byte, int>();
 			Console.WriteLine(value);
+			Console.WriteLine(value);
+		}
+
+		public unsafe void Pointer_Nested_Custom(int* p)
+		{
+			MyInt myInt2;
+			int value;
+			(*p, (myInt2, value)) = GetSource<int, DeconstructionSource<MyInt, int>>();
+			Console.WriteLine(myInt2);
 			Console.WriteLine(value);
 		}
 
