@@ -52,5 +52,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return new int[10][,];
 		}
+
+		// The dimensions multiply to more than int.MaxValue; the initializer transform
+		// must cope with that instead of overflowing while sizing its element list.
+		public int[,] DimensionsExceedingIntRange()
+		{
+			int[,] array = new int[65536, 65536];
+			array[0, 0] = 1;
+			array[0, 1] = 2;
+			return array;
+		}
 	}
 }

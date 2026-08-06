@@ -594,7 +594,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			instructionsToRemove = 0;
 			int elementCount = 0;
-			int length = arrayLength.Aggregate(1, (t, l) => t * l);
+			// The dimensions come from the IL and need not multiply within int range.
+			// This is only a capacity hint, so saturate rather than overflow.
+			int length = arrayLength.Aggregate(1, (t, l) => (int)Math.Min((long)t * l, int.MaxValue));
 			// Cannot pre-allocate the result array, because we do not know yet,
 			// whether there is in fact an array initializer.
 			// To prevent excessive allocations, use min(|block|, arraySize) als initial capacity.
