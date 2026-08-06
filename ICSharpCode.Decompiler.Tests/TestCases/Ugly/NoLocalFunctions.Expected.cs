@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		private static void SimpleCapture()
 		{
-			_003C_003Ec__DisplayClass1_0 _003C_003Ec__DisplayClass1_1 = default(_003C_003Ec__DisplayClass1_0);
-			_003C_003Ec__DisplayClass1_1.x = 1;
-			_003CSimpleCapture_003Eg__F_007C1_0(ref _003C_003Ec__DisplayClass1_1);
+			_003C_003Ec__DisplayClass1_0 obj = default(_003C_003Ec__DisplayClass1_0);
+			obj.x = 1;
+			_003CSimpleCapture_003Eg__F_007C1_0(ref obj);
 		}
 
 		private static void SimpleCaptureWithRef()
@@ -56,9 +56,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 			obj.x = 1;
 			new Handle(new Func<int>(obj._003CSimpleCaptureWithRef_003Eg__F_007C0));
 #else
-			_003C_003Ec__DisplayClass2_0 _003C_003Ec__DisplayClass2_1 = new _003C_003Ec__DisplayClass2_0();
-			_003C_003Ec__DisplayClass2_1.x = 1;
-			Handle handle = new Handle(new Func<int>(_003C_003Ec__DisplayClass2_1._003CSimpleCaptureWithRef_003Eg__F_007C0));
+			_003C_003Ec__DisplayClass2_0 obj = new _003C_003Ec__DisplayClass2_0();
+			obj.x = 1;
+			Handle handle = new Handle(new Func<int>(obj._003CSimpleCaptureWithRef_003Eg__F_007C0));
 #endif
 		}
 

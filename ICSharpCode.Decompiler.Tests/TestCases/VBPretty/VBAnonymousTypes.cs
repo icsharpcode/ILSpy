@@ -1,21 +1,71 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 using Microsoft.VisualBasic.CompilerServices;
 
+// A VB anonymous type. Its properties are settable and only those declared 'Key'
+// take part in Equals and GetHashCode, so it cannot be written as a C# anonymous
+// type and is declared here instead.
+[CompilerGenerated]
+[DebuggerDisplay("Value={Value}, Name={Name}")]
+internal sealed class VB_AnonymousType_0<T0, T1>
+{
+#if !OPT
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+#endif
+	private T0 _Value;
+
+#if !OPT
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+#endif
+	private T1 _Name;
+
+	public T0 Value {
+		get {
+			return _Value;
+		}
+		set {
+			_Value = value;
+		}
+	}
+
+	public T1 Name {
+		get {
+			return _Name;
+		}
+		set {
+			_Name = value;
+		}
+	}
+
+#if !OPT
+	[DebuggerHidden]
+#endif
+	public VB_AnonymousType_0(T0 Value, T1 Name)
+	{
+		_Value = Value;
+		_Name = Name;
+	}
+
+#if !OPT
+	[DebuggerHidden]
+#endif
+	public override string ToString()
+	{
+		return string.Format(null, "{{ Value = {0}, Name = {1} }}", new object[2] { _Value, _Name });
+	}
+}
 [StandardModule]
 public sealed class VBAnonymousTypes
 {
 	public static void MutableAnonymousType()
 	{
-		var anon = new {
-			Value = 1,
-			Name = "test"
-		};
-		Console.WriteLine(anon.Value);
-		Console.WriteLine(anon.Name);
+		VB_AnonymousType_0<int, string> obj = new VB_AnonymousType_0<int, string>(1, "test");
+		Console.WriteLine(obj.Value);
+		Console.WriteLine(obj.Name);
 	}
 
 	public static void KeyAnonymousType()
