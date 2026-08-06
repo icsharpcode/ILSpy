@@ -169,6 +169,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NestedDeconstruction_TypedDeclaration_Conversions(new NestedOuter { Value = 5 });
 			NestedDeconstruction_DiscardWithSideEffectTargets();
 			NestedDeconstruction_HiddenDeconstructMethod(default(HidingOuter));
+			NestedDeconstruction_TupleWithCustomElement((7, new NestedInner { Value = 3 }));
 			NestedDeconstruction_SystemTupleSource(Tuple.Create(8, new NestedInner { Value = 4 }));
 			NestedDeconstruction_CheckedConversions(new NestedOuter { Value = 9 });
 			NestedDeconstruction_GenericConstraintSource(new ConstrainedSource { Value = 11 });
@@ -353,6 +354,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("Side()");
 			return 5;
+		}
+
+		// A tuple deconstruction whose element is custom-deconstructed, followed by an
+		// unrelated assignment: the tuple part must not be consumed into a pattern rooted
+		// in the element's Deconstruct call.
+		public void NestedDeconstruction_TupleWithCustomElement((int, NestedInner) tup)
+		{
+			Console.WriteLine("NestedDeconstruction_TupleWithCustomElement:");
+			var (x, (_, _)) = tup;
+			int z = Side();
+			Console.WriteLine(x * x + z);
 		}
 
 		public class NestedClassInner
