@@ -136,6 +136,7 @@
     <None Include="TestCases\ILPretty\FSharpUsing.fs" />
     <None Include="TestCases\ILPretty\FSharpUsing_Debug.il" />
     <None Include="TestCases\ILPretty\DirectCallToExplicitInterfaceImpl.il" />
+    <None Include="TestCases\ILPretty\TruncatedAccessorBody.il" />
     <None Include="TestCases\ILPretty\FSharpUsing_Release.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
@@ -195,6 +196,8 @@
     <None Include="TestCases\ILPretty\CallIndirect.cs" />
     <Compile Remove="TestCases\ILPretty\EmptyBodies.cs" />
     <None Include="TestCases\ILPretty\EmptyBodies.cs" />
+    <Compile Remove="TestCases\ILPretty\TruncatedAccessorBody.cs" />
+    <None Include="TestCases\ILPretty\TruncatedAccessorBody.cs" />
     <Compile Remove="TestCases\ILPretty\FSharpLoops_Debug.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
     <Compile Remove="TestCases\ILPretty\FSharpLoops_Release.cs" />

@@ -476,25 +476,38 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			signature.Reset();
 
+			// The shortest possible forwarding stub loads every argument with a one-byte
+			// ldarg.N; the longest uses the four-byte ldarg form. Both end in call + ret.
+			int minimumMethodSize = 1 * (parameterCount + 1) + 5 + 1;
 			int maximumMethodSize = 4 * (parameterCount + 1) + 5 + 1;
 
 			var body = module.Reader.GetMethodBody(method.RelativeVirtualAddress);
 			var reader = body.GetILReader();
 
-			if (reader.RemainingBytes > maximumMethodSize)
+			// Reference assemblies keep the method RVA but strip the body, so a body far
+			// too short for the stub must be rejected before any of the reads below.
+			if (reader.RemainingBytes < minimumMethodSize || reader.RemainingBytes > maximumMethodSize)
 				return false;
 
 			for (int i = 0; i < parameterCount + 1; i++)
 			{
 				int index;
+				// The long ldarg forms are wider than the one byte per argument that the
+				// minimum size accounts for, so the body can still run out mid-loop.
+				if (reader.RemainingBytes < 1)
+					return false;
 				switch (reader.DecodeOpCode())
 				{
 					case ILOpCode.Ldarg:
+						if (reader.RemainingBytes < 2)
+							return false;
 						index = reader.ReadUInt16();
 						if (index != i)
 							return false;
 						break;
 					case ILOpCode.Ldarg_s:
+						if (reader.RemainingBytes < 1)
+							return false;
 						index = reader.ReadByte();
 						if (index != i)
 							return false;
@@ -519,6 +532,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 				}
 			}
+
+			// call <4-byte token> + ret
+			if (reader.RemainingBytes < 6)
+				return false;
 
 			if (reader.DecodeOpCode() != ILOpCode.Call)
 				return false;
