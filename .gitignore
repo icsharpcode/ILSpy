@@ -25,3 +25,10 @@ DecompilerTests.config.json
 # Claude Code local session/skills directory
 /.claude/
 /.understand-anything
+# graphify: machine-local extraction caches and resolved interpreter paths.
+# The published graph artifacts under /graphify-out/ are tracked; these are not,
+# because they key off absolute paths on the machine that ran the extraction.
+/graphify-out/cache/
+/graphify-out/__pycache__/
+/graphify-out/.graphify_*
+**/ICSharpCode.Decompiler/graphify-out/
