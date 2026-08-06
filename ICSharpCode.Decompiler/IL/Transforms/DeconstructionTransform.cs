@@ -202,7 +202,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchConversions(block, ref pos, out var conversions, out var conversionStLocs, ref delayedActions))
 				return false;
 
-			if (!MatchAssignments(block, ref pos, conversions, conversionStLocs, ref delayedActions))
+			if (!MatchAssignments(block, ref pos, conversions, conversionStLocs, ref delayedActions,
+				allowUnrelatedAssignments: deconstructMethod != null))
 				return false;
 			// first tuple element may not be discarded,
 			// otherwise we would run this transform on a suffix of the actual pattern.
@@ -356,7 +357,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool MatchAssignments(Block block, ref int pos,
 			Dictionary<ILVariable, ConversionInfo> conversions,
 			List<StLoc> conversionStLocs,
-			ref Action<DeconstructInstruction>? delayedActions)
+			ref Action<DeconstructInstruction>? delayedActions,
+			bool allowUnrelatedAssignments)
 		{
 			int previousIndex = -1;
 			int conversionStLocIndex = 0;
@@ -364,6 +366,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			while (MatchAssignment(block.Instructions.ElementAtOrDefault(pos), out var targetType, out var valueInst, out var addAssignment))
 			{
 				int index = FindIndex(valueInst, out var tupleAccessAdjustment);
+				if (index < 0 && allowUnrelatedAssignments)
+				{
+					// For a Deconstruct call the element list is fixed by the call's
+					// out-arguments, so an assignment whose value is unrelated to the
+					// deconstruction just ends the pattern and stays after the deconstruct
+					// instruction. (For tuples the elements are discovered from the
+					// assignments, so ending early would misread a suffix as the pattern:
+					// keep rejecting there.)
+					break;
+				}
 				if (index <= previousIndex)
 					return false;
 				AddMissingAssignmentsForConversions(index, ref delayedActions);
