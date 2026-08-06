@@ -508,11 +508,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Debug.Assert(method.DeclaringTypeDefinition == recordTypeDef);
 
+			// Sealing a record after it was compiled leaves the copy constructor protected
+			// where a sealed record would have got a private one. Accept either, matching
+			// what IsGeneratedCopyConstructor already allows.
 			return method.IsConstructor
 				&& method.Parameters.Count == 1
-				&& (recordTypeDef.IsSealed
-				? (method.Accessibility == Accessibility.Private)
-				: (method.Accessibility == Accessibility.Protected))
+				&& (method.Accessibility == Accessibility.Protected
+				|| (isSealed && method.Accessibility == Accessibility.Private))
 				&& IsRecordType(method.Parameters[0].Type);
 		}
 
