@@ -1724,7 +1724,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// we just keep the last partial product of these matrices.
 		static (long Num, long Den) FractionApprox(double value, int maxDenominator)
 		{
-			if (value > 0x7FFFFFFF)
+			// The range check has to be on the magnitude: the sign is stripped below, so a
+			// large negative value would otherwise reach the continued-fraction loop and
+			// overflow the terms it accumulates.
+			if (Math.Abs(value) > 0x7FFFFFFF)
 				return (0, 0);
 
 			double startValue = value;
