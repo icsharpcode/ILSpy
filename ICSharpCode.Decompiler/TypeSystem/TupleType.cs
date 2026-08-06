@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static TupleType FromUnderlyingType(ICompilation compilation, IType type)
 		{
 			var elementTypes = GetTupleElementTypes(type);
-			if (elementTypes.Length > 0)
+			if (!elementTypes.IsDefaultOrEmpty)
 			{
 				return new TupleType(
 					compilation,
