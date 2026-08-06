@@ -76,9 +76,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		StatementTransformContext context = null!;
 		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new Dictionary<ILVariable, int>();
+		readonly Dictionary<ILVariable, TupleNode> tupleNodes = new Dictionary<ILVariable, TupleNode>();
 		ILVariable?[] deconstructionResults = null!;
-		ILVariable? tupleVariable;
-		TupleType? tupleType;
+		TupleNode? tupleRoot;
 		bool rootedInDeconstructCall;
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
@@ -106,8 +106,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		private void Reset()
 		{
 			this.deconstructionResultsLookup.Clear();
-			this.tupleVariable = null;
-			this.tupleType = null;
+			this.tupleNodes.Clear();
+			this.tupleRoot = null;
 			this.deconstructionResults = null!;
 			this.rootedInDeconstructCall = false;
 		}
@@ -140,8 +140,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IType deconstructedType;
 			if (deconstructMethod == null)
 			{
-				deconstructedType = this.tupleType!;
-				rootTestedOperand = new LdLoc(this.tupleVariable!);
+				deconstructedType = tupleRoot!.Type;
+				rootTestedOperand = new LdLoc(tupleRoot.Variable);
 			}
 			else
 			{
@@ -161,29 +161,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else
 			{
-				replacement.Pattern = new MatchInstruction(rootTempVariable, method: null, rootTestedOperand!) {
-					IsDeconstructTuple = true
-				};
-				for (int i = 0; i < deconstructionResults.Length; i++)
-				{
-					var result = deconstructionResults[i];
-					if (result == null)
-					{
-						var freshVar = new ILVariable(VariableKind.PatternLocal, this.tupleType!.ElementTypes[i]) { Name = "E_" + i };
-						context.Function.Variables.Add(freshVar);
-						result = freshVar;
-					}
-					else
-					{
-						result.Kind = VariableKind.PatternLocal;
-					}
-					replacement.Pattern.SubPatterns.Add(
-						new MatchInstruction(
-							result,
-							new DeconstructResultInstruction(i, result.StackType, new LdLoc(rootTempVariable))
-						)
-					);
-				}
+				replacement.Pattern = BuildTuplePatternMatch(tupleRoot!, rootTempVariable, rootTestedOperand!);
 			}
 			replacement.Conversions = new Block(BlockKind.DeconstructionConversions);
 			foreach (var convInst in conversionStLocs)
@@ -210,29 +188,61 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			out DeconstructionCall? rootCall, out ILInstruction? rootTestedOperand,
 			out List<StLoc> conversionStLocs, out Action<DeconstructInstruction>? delayedActions)
 		{
-			Reset();
-			endPos = startPos;
-			int pos = startPos;
-			delayedActions = null;
-			MatchDeconstruction(block, ref pos, out rootCall, out rootTestedOperand);
-			if (!MatchConversions(block, ref pos, out var conversions, out conversionStLocs, ref delayedActions))
-				return false;
-			if (!MatchAssignments(block, ref pos, conversions, conversionStLocs, ref delayedActions,
-				allowUnrelatedAssignments: rootCall != null, out bool anyAssignments))
+			HashSet<ILVariable>? doNotNest = null;
+			while (true)
 			{
-				return false;
+				Reset();
+				endPos = startPos;
+				int pos = startPos;
+				delayedActions = null;
+				MatchDeconstruction(block, ref pos, out rootCall, out rootTestedOperand);
+				if (rootCall == null)
+					MatchNestedTupleDesignations(block, ref pos, doNotNest);
+				if (!MatchConversions(block, ref pos, out var conversions, out conversionStLocs, ref delayedActions))
+					return false;
+				if (!MatchAssignments(block, ref pos, conversions, conversionStLocs, ref delayedActions,
+					allowUnrelatedAssignments: rootCall != null, out bool anyAssignments))
+				{
+					return false;
+				}
+				// Without any assignment the statement is a plain Deconstruct call, unless a nested
+				// deconstruction was consumed: then all leaves are single-use elements handled by
+				// the forwarding fixup in MatchAssignments.
+				if (!anyAssignments && !(rootCall != null && rootCall.NestedCalls.Any(c => c != null)))
+					return false;
+				// first tuple element may not be discarded,
+				// otherwise we would run this transform on a suffix of the actual pattern.
+				if (deconstructionResults[0] == null)
+					return false;
+				// A nested tuple designation only holds if the pattern consumed every read of
+				// its temporary; a remaining read means the value escapes the designation.
+				// Retry with the variable as a plain designator leaf, which restores the flat
+				// deconstruction the escaping read needs.
+				var escaped = EscapedTupleNodes();
+				if (escaped == null)
+				{
+					endPos = pos;
+					return true;
+				}
+				doNotNest ??= new HashSet<ILVariable>();
+				doNotNest.UnionWith(escaped);
 			}
-			// Without any assignment the statement is a plain Deconstruct call, unless a nested
-			// deconstruction was consumed: then all leaves are single-use elements handled by
-			// the forwarding fixup in MatchAssignments.
-			if (!anyAssignments && !(rootCall != null && rootCall.NestedCalls.Any(c => c != null)))
-				return false;
-			// first tuple element may not be discarded,
-			// otherwise we would run this transform on a suffix of the actual pattern.
-			if (deconstructionResults[0] == null)
-				return false;
-			endPos = pos;
-			return true;
+
+			List<ILVariable>? EscapedTupleNodes()
+			{
+				List<ILVariable>? escaped = null;
+				foreach (var node in tupleNodes.Values)
+				{
+					if (node == tupleRoot)
+						continue;
+					if (node.MatchedAccessCount != node.Variable.LoadCount + node.Variable.AddressCount)
+					{
+						escaped ??= new List<ILVariable>();
+						escaped.Add(node.Variable);
+					}
+				}
+				return escaped;
+			}
 		}
 
 		/// <summary>
@@ -297,8 +307,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool IsConsumableByEnclosingDeconstruction(Block block, int pos)
 		{
-			if (!TryFindEnclosingDeconstructionCall(block, pos, out int enclosingPos))
+			if (!TryFindEnclosingDeconstructionCall(block, pos, out int enclosingPos)
+				&& !TryFindEnclosingTupleDesignation(block, pos, out enclosingPos))
+			{
 				return false;
+			}
 			// The dry run leaves the matcher state behind, which is safe because it runs before
 			// the attempt at this position, and both that attempt and Run reset it. It does not
 			// modify the block: all rewrites are delayed actions.
@@ -340,6 +353,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			enclosingPos = enclosingCall.ChildIndex;
 			return enclosingPos >= 0 && enclosingPos < pos;
+		}
+
+		/// <summary>
+		/// stloc temp(ldobj(ldflda ItemN(ldloc(a) outer)))       at enclosingPos
+		/// ...
+		/// stloc x([conv](ldobj(ldflda ItemK(ldloc(a) temp))))   at pos
+		/// The statement at pos reads an element of a tuple stored by an earlier statement that
+		/// is itself an element read, i.e. a candidate nested designation temporary. The
+		/// enclosing pattern's matching starts at the first store of the run that store belongs
+		/// to, because the temporaries of a nested designation are stored back to back.
+		/// </summary>
+		static bool TryFindEnclosingTupleDesignation(Block block, int pos, out int enclosingPos)
+		{
+			enclosingPos = -1;
+			if (!block.Instructions[pos].MatchStLoc(out _, out var value))
+				return false;
+			if (value is Conv conv)
+				value = conv.Argument;
+			if (!MatchTupleElementRead(value, out var container, out _, out _))
+				return false;
+			if (!(container.StoreInstructions is [StLoc store]) || store.Parent != block)
+				return false;
+			if (!MatchTupleElementStore(store, out _, out _, out _, out _))
+				return false;
+			enclosingPos = store.ChildIndex;
+			while (enclosingPos > 0 && MatchTupleElementStore(block.Instructions[enclosingPos - 1], out _, out _, out _, out _))
+				enclosingPos--;
+			return enclosingPos < pos;
 		}
 
 		/// <summary>
@@ -525,6 +566,137 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// is only certain when the element type is the receiver type itself.
 				return method.IsStatic
 					&& NormalizeTypeVisitor.TypeErasure.EquivalentTypes(elementType, method.Parameters[0].Type);
+			}
+		}
+
+		/// <summary>
+		/// A tuple variable being deconstructed: one node of the (possibly nested) designation.
+		/// Nested nodes are the temporaries a nested tuple designation is lowered to.
+		/// </summary>
+		sealed class TupleNode
+		{
+			public readonly ILVariable Variable;
+			public readonly TupleType Type;
+			/// <summary>Nested designation per element; null = leaf element.</summary>
+			public readonly TupleNode[] NestedElements;
+			/// <summary>Flat leaf index (depth-first) of each element.</summary>
+			public int[] ElementFlatIndex = null!;
+			/// <summary>Number of element reads of <see cref="Variable"/> consumed by the pattern.</summary>
+			public int MatchedAccessCount;
+
+			public TupleNode(ILVariable variable, TupleType type)
+			{
+				Variable = variable;
+				Type = type;
+				NestedElements = new TupleNode[type.Cardinality];
+			}
+		}
+
+		/// <summary>
+		/// stloc temp(ldobj(ldflda ItemN(ldloc(a) container)))   one per nested designation
+		/// ...
+		/// The temporaries a nested tuple designation is lowered to: parents before children,
+		/// all evaluated before any conversions or assignments. The consumed variables form the
+		/// tuple node tree rooted at the outermost tuple.
+		/// </summary>
+		void MatchNestedTupleDesignations(Block block, ref int pos, HashSet<ILVariable>? doNotNest)
+		{
+			while (MatchTupleElementStore(block.Instructions.ElementAtOrDefault(pos),
+				out var temp, out var container, out var containerType, out int index))
+			{
+				if (doNotNest != null && doNotNest.Contains(temp))
+					break;
+				if (!(temp.StoreCount == 1 && temp.LoadCount + temp.AddressCount >= 1))
+					break;
+				// Every use of the temporary must itself be a tuple element read,
+				// 'ldobj(ldflda ItemK(...temp...))', so that the pattern can consume them all;
+				// reads it does not consume are rejected by the escape check afterwards.
+				if (!AllUsesAreTupleElementReads(temp))
+					break;
+				var containerNode = ResolveTupleContainer(container, containerType);
+				if (containerNode == null)
+					break;
+				if (index >= containerNode.NestedElements.Length || containerNode.NestedElements[index] != null)
+					break;
+				// The container's element type is authoritative for the temporary's tuple type:
+				// a stack slot's own type can be imprecise. A temporary with a precise type must
+				// agree with the element type.
+				var elementType = containerNode.Type.ElementTypes[index];
+				if (TupleType.GetTupleElementTypes(elementType).IsDefaultOrEmpty)
+					break;
+				var tempType = TupleType.FromUnderlyingType(context.TypeSystem, elementType);
+				if (tempType == null || tempType.Cardinality < 2)
+					break;
+				if (!TupleType.GetTupleElementTypes(temp.Type).IsDefaultOrEmpty
+					&& !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(elementType, temp.Type))
+				{
+					break;
+				}
+				var node = new TupleNode(temp, tempType);
+				containerNode.NestedElements[index] = node;
+				// The temporary's store reads one element of the container.
+				containerNode.MatchedAccessCount++;
+				this.tupleNodes.Add(temp, node);
+				InitializeFlatLeafIndices();
+				pos++;
+			}
+
+			static bool AllUsesAreTupleElementReads(ILVariable temp)
+			{
+				foreach (var use in temp.AddressInstructions.Concat<ILInstruction>(temp.LoadInstructions))
+				{
+					if (!(use.Parent is LdFlda elementAccess && elementAccess.Parent is LdObj))
+						return false;
+				}
+				return true;
+			}
+		}
+
+		/// <summary>
+		/// Resolves the container of a tuple element access against the tree of tuple nodes;
+		/// the first access establishes its container as the root. Returns null if the
+		/// container is not part of the tree or its type does not fit a deconstruction.
+		/// </summary>
+		TupleNode? ResolveTupleContainer(ILVariable container, IType containerType)
+		{
+			var normalizedType = TupleType.FromUnderlyingType(context.TypeSystem, containerType);
+			if (normalizedType == null || normalizedType.Cardinality < 2)
+				return null;
+			if (tupleRoot == null)
+			{
+				tupleRoot = new TupleNode(container, normalizedType);
+				tupleNodes.Add(container, tupleRoot);
+				InitializeFlatLeafIndices();
+			}
+			if (!tupleNodes.TryGetValue(container, out var node))
+				return null;
+			return node.Type.Equals(normalizedType) ? node : null;
+		}
+
+		/// <summary>
+		/// Assigns depth-first flat leaf indices to every element of the tuple node tree and
+		/// allocates the flat results array. Depth-first order is the order in which the
+		/// consumers pair pattern variables with conversions and assignments. Called whenever
+		/// the tree grows; the results array is still empty then, because the tree is complete
+		/// before MatchConversions/MatchAssignments start populating it.
+		/// </summary>
+		void InitializeFlatLeafIndices()
+		{
+			int totalLeaves = AssignFlatIndices(tupleRoot!, 0);
+			this.deconstructionResults = new ILVariable[totalLeaves];
+
+			static int AssignFlatIndices(TupleNode node, int nextLeafIndex)
+			{
+				node.ElementFlatIndex = new int[node.Type.Cardinality];
+				for (int i = 0; i < node.Type.Cardinality; i++)
+				{
+					node.ElementFlatIndex[i] = nextLeafIndex;
+					if (node.NestedElements[i] != null)
+						nextLeafIndex = AssignFlatIndices(node.NestedElements[i], nextLeafIndex);
+					else
+						nextLeafIndex++;
+				}
+				return nextLeafIndex;
 			}
 		}
 
@@ -780,8 +952,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <summary>
 		/// ldloc result                                          a registered result or conversion output
-		/// ldobj(ldflda ItemN(ldloc(a) v))                       an element read of the tuple
-		/// Resolves the value of a conversion or assignment to its element index.
+		/// ldobj(ldflda ItemN(ldloc(a) v))                       an element read on the tuple node tree
+		/// Resolves the value of a conversion or assignment to its flat leaf index.
 		/// Returns -1 on failure.
 		/// </summary>
 		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction>? delayedActions)
@@ -793,6 +965,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return -1;
 				return index;
 			}
+			if (!MatchTupleElementRead(inst, out var container, out var containerType, out int elementIndex))
+				return -1;
 			if (rootedInDeconstructCall)
 			{
 				// A pattern rooted in a Deconstruct call must not absorb tuple element
@@ -800,29 +974,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// bookkeeping and destroy the rewritten tuple access on failure.
 				return -1;
 			}
-			if (!MatchTupleElementRead(inst, out var container, out var containerType, out int elementIndex))
+			var node = ResolveTupleContainer(container, containerType);
+			if (node == null)
 				return -1;
-			var normalizedType = TupleType.FromUnderlyingType(context.TypeSystem, containerType);
-			if (this.tupleVariable == null)
+			if (elementIndex >= node.NestedElements.Length || node.NestedElements[elementIndex] != null)
 			{
-				this.tupleVariable = container;
-				this.tupleType = (TupleType)normalizedType;
-				this.deconstructionResults = new ILVariable[this.tupleType.Cardinality];
+				// The element is bound to a nested designation; a direct read of it would
+				// be a second consumption of the same element.
+				return -1;
 			}
-			if (this.tupleType!.Cardinality < 2)
-				return -1;
-			if (container != tupleVariable || !this.tupleType.Equals(normalizedType))
-				return -1;
-			if (this.deconstructionResults[elementIndex] == null)
+			int flatIndex = node.ElementFlatIndex[elementIndex];
+			node.MatchedAccessCount++;
+			if (this.deconstructionResults[flatIndex] == null)
 			{
-				var freshVar = new ILVariable(VariableKind.StackSlot, this.tupleType.ElementTypes[elementIndex]) { Name = "E_" + elementIndex };
+				var freshVar = new ILVariable(VariableKind.StackSlot, node.Type.ElementTypes[elementIndex]) { Name = "E_" + flatIndex };
 				delayedActions += _ => context.Function.Variables.Add(freshVar);
-				this.deconstructionResults[elementIndex] = freshVar;
+				this.deconstructionResults[flatIndex] = freshVar;
 			}
 			delayedActions += _ => {
-				inst.ReplaceWith(new LdLoc(this.deconstructionResults[elementIndex]!));
+				inst.ReplaceWith(new LdLoc(this.deconstructionResults[flatIndex]!));
 			};
-			return elementIndex;
+			return flatIndex;
 		}
 
 		/// <summary>
@@ -898,6 +1070,57 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
+		/// Builds, recursing into nested designations:
+		/// match.tuple (matchVariable = testedOperand) {
+		///     match(result_i = deconstruct.result i(ldloc matchVariable)),
+		///     match.tuple (temp_j = deconstruct.result j(ldloc matchVariable)) { ... }
+		/// }
+		/// Unassigned leaf elements get a fresh, load-free pattern variable (a discard).
+		/// </summary>
+		MatchInstruction BuildTuplePatternMatch(TupleNode node, ILVariable matchVariable, ILInstruction testedOperand)
+		{
+			matchVariable.Kind = VariableKind.PatternLocal;
+			var match = new MatchInstruction(matchVariable, method: null, testedOperand) {
+				IsDeconstructTuple = true
+			};
+			for (int i = 0; i < node.Type.Cardinality; i++)
+			{
+				var nested = node.NestedElements[i];
+				if (nested != null)
+				{
+					// A stack-slot temporary can have an imprecise type; the match variable of
+					// a tuple pattern must have the tuple type.
+					if (TupleType.GetTupleElementTypes(nested.Variable.Type).IsDefaultOrEmpty)
+						nested.Variable.Type = nested.Type;
+					match.SubPatterns.Add(BuildTuplePatternMatch(nested, nested.Variable,
+						new DeconstructResultInstruction(i, nested.Variable.StackType, new LdLoc(matchVariable))));
+				}
+				else
+				{
+					int flatIndex = node.ElementFlatIndex[i];
+					var result = deconstructionResults[flatIndex];
+					if (result == null)
+					{
+						var freshVar = new ILVariable(VariableKind.PatternLocal, node.Type.ElementTypes[i]) { Name = "E_" + flatIndex };
+						context.Function.Variables.Add(freshVar);
+						result = freshVar;
+					}
+					else
+					{
+						result.Kind = VariableKind.PatternLocal;
+					}
+					match.SubPatterns.Add(
+						new MatchInstruction(
+							result,
+							new DeconstructResultInstruction(i, result.StackType, new LdLoc(matchVariable))
+						)
+					);
+				}
+			}
+			return match;
+		}
+
+		/// <summary>
 		/// ldobj(ldflda ItemN(ldloc(a) container))
 		/// The returned index is zero-based; Rest chains of long tuples are flattened.
 		/// Non-escaping element reads may have been rewritten from ldloca to ldloc,
@@ -917,6 +1140,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Item fields are one-based, we use zero-based indexing.
 			index = position - 1;
 			return MatchLdLocOrLdLoca(target, out container);
+		}
+
+		/// <summary>
+		/// stloc temp(ldobj(ldflda ItemN(ldloc(a) container)))
+		/// The store of a nested tuple designation temporary.
+		/// </summary>
+		static bool MatchTupleElementStore(ILInstruction? inst, [NotNullWhen(true)] out ILVariable? temp, [NotNullWhen(true)] out ILVariable? container, [NotNullWhen(true)] out IType? containerType, out int index)
+		{
+			if (inst is StLoc store && MatchTupleElementRead(store.Value, out container, out containerType, out index))
+			{
+				temp = store.Variable;
+				return true;
+			}
+			temp = null;
+			container = null;
+			containerType = null;
+			index = -1;
+			return false;
 		}
 
 		/// <summary>

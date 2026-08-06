@@ -182,6 +182,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NestedDeconstruction_ForEachDictionary_Conversions(new Dictionary<string, NestedInner> {
 				{ "k1", new NestedInner { Value = 19 } }
 			});
+			NestedTupleDeconstruction_Values((20, (21, 22)));
+			NestedTupleDeconstruction_Depth3((23, (24, (25, 26))));
+			NestedTupleDeconstruction_Conversions((27, (28, 29)));
+			NestedTupleDeconstruction_ElementUsedOutside((30, (31, 32)));
+			NestedTupleDeconstruction_ForEach(new List<(int, (int, int))> {
+				(33, (34, 35)),
+				(36, (37, 38))
+			});
+		}
+
+		public void NestedTupleDeconstruction_Values((int, (int, int)) t)
+		{
+			Console.WriteLine("NestedTupleDeconstruction_Values:");
+			var (x, (a, b)) = t;
+			Console.WriteLine(x + " " + a + " " + b);
+		}
+
+		public void NestedTupleDeconstruction_Depth3((int, (int, (int, int))) t)
+		{
+			Console.WriteLine("NestedTupleDeconstruction_Depth3:");
+			var (x, (a, (b, c))) = t;
+			Console.WriteLine(x + " " + a + " " + b + " " + c);
+		}
+
+		public void NestedTupleDeconstruction_Conversions((int, (int, int)) t)
+		{
+			Console.WriteLine("NestedTupleDeconstruction_Conversions:");
+			(long x, (long a, long b)) = t;
+			Console.WriteLine(x + " " + a + " " + b);
+		}
+
+		public void NestedTupleDeconstruction_ElementUsedOutside((int, (int, int)) t)
+		{
+			Console.WriteLine("NestedTupleDeconstruction_ElementUsedOutside:");
+			var (x, inner) = t;
+			Console.WriteLine(x + " " + inner.Item1 + " " + inner.Item2);
+		}
+
+		public void NestedTupleDeconstruction_ForEach(List<(int, (int, int))> list)
+		{
+			Console.WriteLine("NestedTupleDeconstruction_ForEach:");
+			foreach (var (x, (a, b)) in list)
+			{
+				Console.WriteLine(x + " " + a + " " + b);
+			}
 		}
 
 		public class ConstrainedSource

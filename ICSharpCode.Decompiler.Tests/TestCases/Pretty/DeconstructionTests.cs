@@ -443,26 +443,64 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value);
 		}
 
-		// Nested deconstruction of a tuple element (ldfld chains, no Deconstruct call)
-		// is not re-sugared: var (value, (value2, value3)) = GetTuple<int, (int, int)>();
 		public void LocalVariable_Nested_TupleInner()
 		{
-			(int, (int, int)) tuple = GetTuple<int, (int, int)>();
-			(int, int) item = tuple.Item2;
-			var (value, _) = tuple;
-			var (value2, value3) = item;
+			var (value, (value2, value3)) = GetTuple<int, (int, int)>();
 			Console.WriteLine(value);
 			Console.WriteLine(value2);
 			Console.WriteLine(value3);
 		}
 
+		public void LocalVariable_Nested_TupleInner_Depth3()
+		{
+			var (value, (value2, (value3, value4))) = GetTuple<int, (int, (int, int))>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+			Console.WriteLine(value4);
+		}
+
+		public void LocalVariable_Nested_TupleInner_BothElements()
+		{
+			var ((value, value2), (value3, value4)) = GetTuple<(int, int), (int, int)>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+			Console.WriteLine(value4);
+		}
+
+		public void LocalVariable_Nested_TupleInner_Conversions()
+		{
+			int value;
+			long value2;
+			long value3;
+			(value, (value2, value3)) = GetTuple<int, (int, int)>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+		}
+
+		// The element variable escapes the deconstruction, so it must stay a designator
+		// leaf instead of becoming a nested designation.
+		public void LocalVariable_TupleInner_ElementUsedOutside()
+		{
+#if OPT
+			(int, (int, int)) tuple = GetTuple<int, (int, int)>();
+			int item = tuple.Item1;
+			(int, int) item2 = tuple.Item2;
+			Console.WriteLine(item);
+			Console.WriteLine(item2.Item1);
+#else
+			var (value, tuple2) = GetTuple<int, (int, int)>();
+			Console.WriteLine(value);
+			Console.WriteLine(tuple2.Item1);
+#endif
+		}
+
 		public void ForEach_Nested_TupleInner()
 		{
-			foreach (var item2 in GetList<(int, (int, int))>())
+			foreach (var (value, (value2, value3)) in GetList<(int, (int, int))>())
 			{
-				(int, int) item = item2.Item2;
-				var (value, _) = item2;
-				var (value2, value3) = item;
 				Console.WriteLine(value);
 				Console.WriteLine(value2);
 				Console.WriteLine(value3);
