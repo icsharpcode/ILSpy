@@ -130,6 +130,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task TruncatedAccessorBody()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task EvalOrder()
 		{
 			await Run();
