@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILVariable?[] deconstructionResults = null!;
 		ILVariable? tupleVariable;
 		TupleType? tupleType;
+		bool rootedInDeconstructCall;
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
@@ -108,6 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.tupleVariable = null;
 			this.tupleType = null;
 			this.deconstructionResults = null!;
+			this.rootedInDeconstructCall = false;
 		}
 
 		/// <summary>
@@ -368,6 +370,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			rootCall = MatchDeconstructionCall(block.Instructions[pos], out testedOperand);
 			if (rootCall == null)
 				return;
+			rootedInDeconstructCall = true;
 			pos++;
 			MatchNestedDeconstructions(block, ref pos, rootCall);
 			// Assign flat indices to the leaves in depth-first order: this is the order in which
@@ -789,6 +792,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!deconstructionResultsLookup.TryGetValue(v, out int index))
 					return -1;
 				return index;
+			}
+			if (rootedInDeconstructCall)
+			{
+				// A pattern rooted in a Deconstruct call must not absorb tuple element
+				// accesses: discovering the tuple here would overwrite the call's result
+				// bookkeeping and destroy the rewritten tuple access on failure.
+				return -1;
 			}
 			if (!MatchTupleElementRead(inst, out var container, out var containerType, out int elementIndex))
 				return -1;
