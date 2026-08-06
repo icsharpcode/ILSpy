@@ -16,10 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Resources;
 
@@ -34,11 +37,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	class DeconstructionTransform : IStatementTransform
 	{
-		StatementTransformContext context;
+		StatementTransformContext context = null!;
 		readonly Dictionary<ILVariable, int> deconstructionResultsLookup = new Dictionary<ILVariable, int>();
-		ILVariable[] deconstructionResults;
-		ILVariable tupleVariable;
-		TupleType tupleType;
+		ILVariable?[] deconstructionResults = null!;
+		ILVariable? tupleVariable;
+		TupleType? tupleType;
 
 		/*
 			stloc tuple(call MakeIntIntTuple(ldloc this))
@@ -81,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			finally
 			{
-				this.context = null;
+				this.context = null!;
 				Reset();
 			}
 		}
@@ -91,20 +94,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.deconstructionResultsLookup.Clear();
 			this.tupleVariable = null;
 			this.tupleType = null;
-			this.deconstructionResults = null;
+			this.deconstructionResults = null!;
 		}
 
 		struct ConversionInfo
 		{
-			public IType inputType;
-			public Conv conv;
+			public IType? inputType;
+			public Conv? conv;
 		}
 
 		/// <summary>
 		/// Get index of deconstruction result or tuple element
 		/// Returns -1 on failure.
 		/// </summary>
-		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction> delayedActions)
+		int FindIndex(ILInstruction inst, out Action<DeconstructInstruction>? delayedActions)
 		{
 			delayedActions = null;
 			if (inst.MatchLdLoc(out var v))
@@ -129,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					this.tupleType = (TupleType)tupleType;
 					this.deconstructionResults = new ILVariable[this.tupleType.Cardinality];
 				}
-				if (this.tupleType.Cardinality < 2)
+				if (this.tupleType!.Cardinality < 2)
 					return -1;
 				if (v != tupleVariable || !this.tupleType.Equals(tupleType))
 					return -1;
@@ -140,7 +143,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					this.deconstructionResults[index] = freshVar;
 				}
 				delayedActions += _ => {
-					inst.ReplaceWith(new LdLoc(this.deconstructionResults[index]));
+					inst.ReplaceWith(new LdLoc(this.deconstructionResults[index]!));
 				};
 				return index;
 			}
@@ -190,9 +193,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformDeconstruction(Block block, int pos)
 		{
 			int startPos = pos;
-			Action<DeconstructInstruction> delayedActions = null;
-			if (MatchDeconstruction(block.Instructions[pos], out IMethod deconstructMethod,
-				out ILInstruction rootTestedOperand))
+			Action<DeconstructInstruction>? delayedActions = null;
+			if (MatchDeconstruction(block.Instructions[pos], out IMethod? deconstructMethod,
+				out ILInstruction? rootTestedOperand))
 			{
 				pos++;
 			}
@@ -210,8 +213,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IType deconstructedType;
 			if (deconstructMethod == null)
 			{
-				deconstructedType = this.tupleType;
-				rootTestedOperand = new LdLoc(this.tupleVariable);
+				deconstructedType = this.tupleType!;
+				rootTestedOperand = new LdLoc(this.tupleVariable!);
 			}
 			else
 			{
@@ -225,17 +228,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			var rootTempVariable = context.Function.RegisterVariable(VariableKind.PatternLocal, deconstructedType);
-			replacement.Pattern = new MatchInstruction(rootTempVariable, deconstructMethod, rootTestedOperand) {
+			replacement.Pattern = new MatchInstruction(rootTempVariable, deconstructMethod, rootTestedOperand!) {
 				IsDeconstructCall = deconstructMethod != null,
 				IsDeconstructTuple = this.tupleType != null
 			};
 			int index = 0;
-			foreach (ILVariable v in deconstructionResults)
+			foreach (ILVariable? v in deconstructionResults)
 			{
 				var result = v;
 				if (result == null)
 				{
-					var freshVar = new ILVariable(VariableKind.PatternLocal, this.tupleType.ElementTypes[index]) { Name = "E_" + index };
+					var freshVar = new ILVariable(VariableKind.PatternLocal, this.tupleType!.ElementTypes[index]) { Name = "E_" + index };
 					context.Function.Variables.Add(freshVar);
 					result = freshVar;
 				}
@@ -264,12 +267,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchDeconstruction(ILInstruction inst, out IMethod deconstructMethod,
-			out ILInstruction testedOperand)
+		bool MatchDeconstruction(ILInstruction inst, [NotNullWhen(true)] out IMethod? deconstructMethod,
+			[NotNullWhen(true)] out ILInstruction? testedOperand)
 		{
 			testedOperand = null;
 			deconstructMethod = null;
-			deconstructionResults = null;
+			deconstructionResults = null!;
 			if (!(inst is CallInstruction call))
 				return false;
 			if (!MatchInstruction.IsDeconstructMethod(call.Method))
@@ -306,7 +309,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool MatchConversions(Block block, ref int pos,
 			out Dictionary<ILVariable, ConversionInfo> conversions,
 			out List<StLoc> conversionStLocs,
-			ref Action<DeconstructInstruction> delayedActions)
+			ref Action<DeconstructInstruction>? delayedActions)
 		{
 			conversions = new Dictionary<ILVariable, ConversionInfo>();
 			conversionStLocs = new List<StLoc>();
@@ -330,11 +333,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchConversion(ILInstruction inst, out ILInstruction inputInstruction,
-			out ILVariable outputVariable, out ConversionInfo info)
+		bool MatchConversion(ILInstruction? inst, [NotNullWhen(true)] out ILInstruction? inputInstruction,
+			[NotNullWhen(true)] out ILVariable? outputVariable, out ConversionInfo info)
 		{
 			info = default;
 			inputInstruction = null;
+			outputVariable = null;
+			if (inst == null)
+				return false;
 			if (!inst.MatchStLoc(out outputVariable, out var value))
 				return false;
 			if (!(value is Conv conv))
@@ -350,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool MatchAssignments(Block block, ref int pos,
 			Dictionary<ILVariable, ConversionInfo> conversions,
 			List<StLoc> conversionStLocs,
-			ref Action<DeconstructInstruction> delayedActions)
+			ref Action<DeconstructInstruction>? delayedActions)
 		{
 			int previousIndex = -1;
 			int conversionStLocIndex = 0;
@@ -374,7 +380,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					&& conversionInfo.conv == null)
 				{
 					delayedActions += _ => {
-						assignmentTarget.Type = conversionInfo.inputType;
+						assignmentTarget.Type = conversionInfo.inputType!;
 					};
 				}
 				else
@@ -449,7 +455,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return int.MaxValue;
 			}
 
-			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction> delayedActions)
+			void AddMissingAssignmentsForConversions(int index, ref Action<DeconstructInstruction>? delayedActions)
 			{
 				while (conversionStLocIndex < conversionStLocs.Count)
 				{
@@ -472,7 +478,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchAssignment(ILInstruction inst, out IType targetType, out ILInstruction valueInst, out Action<DeconstructInstruction> addAssignment)
+		bool MatchAssignment(ILInstruction? inst, [NotNullWhen(true)] out IType? targetType, [NotNullWhen(true)] out ILInstruction? valueInst, [NotNullWhen(true)] out Action<DeconstructInstruction>? addAssignment)
 		{
 			targetType = null;
 			valueInst = null;
