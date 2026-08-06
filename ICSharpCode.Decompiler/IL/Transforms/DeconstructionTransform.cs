@@ -477,6 +477,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					pos = savedPos;
 					continue;
 				}
+				if (!BindsOnElementType(nested.Method, result.Type))
+				{
+					// A nested designation rebinds Deconstruct on the element's static type
+					// when recompiled; if that picks a different method (member hiding), the
+					// call must stay explicit, where a cast can preserve the binding.
+					pos = savedPos;
+					continue;
+				}
 				pos++;
 				nested.Receiver = receiver;
 				parent.NestedCalls[i] = nested;
@@ -487,6 +495,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			static bool IsReceiverReference(ILInstruction target, ILVariable receiver)
 			{
 				return MatchLdLocOrLdLoca(target, out var v) && v == receiver;
+			}
+
+			static bool BindsOnElementType(IMethod method, IType elementType)
+			{
+				int outParamCount = method.Parameters.Count - (method.IsStatic ? 1 : 0);
+				IType type = elementType;
+				while (type != null)
+				{
+					if (!method.IsStatic && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(type, method.DeclaringType))
+						return true;
+					if (type.GetMethods(m => m.Name == "Deconstruct", GetMemberOptions.IgnoreInheritedMembers)
+						.Any(m => !m.IsStatic && m.Parameters.Count == outParamCount))
+					{
+						// An instance Deconstruct of the same arity is declared on a type more
+						// derived than the called method's declaring type: it hides the called
+						// method (and wins over a called extension method).
+						return false;
+					}
+					type = type.DirectBaseTypes.FirstOrDefault(t => t.Kind == TypeKind.Class)!;
+				}
+				// The chain ended without seeing the declaring type, so an instance method's
+				// binding cannot be verified. An extension method is reached by its receiver
+				// type, and one declared on a more derived type wins over it; which extensions
+				// are in scope where the output is compiled is not known here, so the binding
+				// is only certain when the element type is the receiver type itself.
+				return method.IsStatic
+					&& NormalizeTypeVisitor.TypeErasure.EquivalentTypes(elementType, method.Parameters[0].Type);
 			}
 		}
 
