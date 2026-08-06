@@ -202,5 +202,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double Double_Negated_E = -Math.E;
 		public const double Double_Negated_BeforeE = -2.7182818284590446;
 		public const double Double_Negated_AfterE = -2.7182818284590455;
+
+		// Values of either sign whose ratio to PI or E is outside the range expressible as
+		// a fraction must be left alone rather than run through the approximation.
+		public const double Double_TooLargeForFraction = 3085105840164255.5;
+		public const double Double_Negated_TooLargeForFraction = -3085105840164255.5;
 	}
 }
