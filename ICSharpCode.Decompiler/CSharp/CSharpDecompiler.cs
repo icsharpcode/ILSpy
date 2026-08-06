@@ -250,6 +250,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new CombineQueryExpressions(),
 				new NormalizeBlockStatements(),
 				new FlattenSwitchBlocks(),
+				new RenameVisualBasicAnonymousTypes(), // must run before FixNameCollisions
 				new FixNameCollisions(),
 				new AddXmlDocumentationTransform(),
 			};

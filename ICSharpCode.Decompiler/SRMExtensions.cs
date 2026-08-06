@@ -474,13 +474,27 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		/// <summary>
+		/// See NRExtensions.HasOnlyReadOnlyProperties: an anonymous type with a settable property
+		/// cannot be written as a C# anonymous type, so its declaration must not be hidden.
+		/// </summary>
+		static bool HasOnlyReadOnlyProperties(TypeDefinition type, MetadataReader metadata)
+		{
+			foreach (var handle in type.GetProperties())
+			{
+				if (!metadata.GetPropertyDefinition(handle).GetAccessors().Setter.IsNil)
+					return false;
+			}
+			return true;
+		}
+
 		public static bool IsAnonymousType(this TypeDefinition type, MetadataReader metadata)
 		{
 			string name = metadata.GetString(type.Name);
 			if (type.Namespace.IsNil && type.HasGeneratedName(metadata)
 				&& (name.Contains("AnonType") || name.Contains("AnonymousType")))
 			{
-				return type.IsCompilerGenerated(metadata);
+				return type.IsCompilerGenerated(metadata) && HasOnlyReadOnlyProperties(type, metadata);
 			}
 			return false;
 		}

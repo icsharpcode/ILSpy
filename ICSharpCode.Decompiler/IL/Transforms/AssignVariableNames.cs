@@ -882,6 +882,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (name.Length == 0)
 				return "obj";
+			if (!IsValidName(name))
+			{
+				// A name taken from metadata may be legal there but not in C#; VB, for one,
+				// separates the parts of its generated names with '$'.
+				return null;
+			}
 			string lowerCaseName = char.ToLower(name[0]) + name.Substring(1);
 			if (CSharp.OutputVisitor.CSharpOutputVisitor.IsKeyword(lowerCaseName))
 				return null;

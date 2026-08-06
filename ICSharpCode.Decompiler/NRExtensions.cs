@@ -53,6 +53,36 @@ namespace ICSharpCode.Decompiler
 			return SRMExtensions.IsGeneratedName(type.Name);
 		}
 
+		/// <summary>
+		/// A C# anonymous type is immutable and compares all of its members, so only an anonymous
+		/// type with no settable property can be written as one. The C# compiler emits nothing
+		/// else, but VB's properties are settable unless declared 'Key', and only 'Key' members
+		/// take part in Equals/GetHashCode: those types keep their own declaration.
+		/// </summary>
+		static bool HasOnlyReadOnlyProperties(ITypeDefinition type)
+		{
+			foreach (var property in type.Properties)
+			{
+				if (property.CanSet)
+					return false;
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// An anonymous type that keeps its own declaration because it cannot be written as a C#
+		/// anonymous type: a VB anonymous type with at least one settable, non-'Key' property.
+		/// </summary>
+		public static bool IsAnonymousTypeDeclaredAsNamedType(this ITypeDefinition type)
+		{
+			return type != null
+				&& string.IsNullOrEmpty(type.Namespace)
+				&& type.HasGeneratedName()
+				&& (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType"))
+				&& type.IsCompilerGenerated()
+				&& !HasOnlyReadOnlyProperties(type);
+		}
+
 		public static bool IsAnonymousType(this IType type)
 		{
 			if (type == null)
@@ -61,7 +91,7 @@ namespace ICSharpCode.Decompiler
 				&& (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType")))
 			{
 				ITypeDefinition td = type.GetDefinition();
-				return td != null && td.IsCompilerGenerated();
+				return td != null && td.IsCompilerGenerated() && HasOnlyReadOnlyProperties(td);
 			}
 			return false;
 		}
