@@ -322,6 +322,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value2);
 		}
 
+		public unsafe void Pointer_NoConversion_Tuple(int* p)
+		{
+			int value;
+			(*p, value) = GetTuple<int, int>();
+			Console.WriteLine(value);
+			Console.WriteLine(value);
+		}
+
+		// The store opcode is sign-agnostic - stind.i4 reports int for a uint target and
+		// stind.i1 reports sbyte for a byte one - so the element type of the target cannot
+		// be taken from it: doing so refuses every one of these deconstructions.
+		public unsafe void Pointer_NoConversion_Tuple_UInt(uint* p)
+		{
+			int value;
+			(*p, value) = GetTuple<uint, int>();
+			Console.WriteLine(value);
+			Console.WriteLine(value);
+		}
+
+		public unsafe void Pointer_NoConversion_Tuple_Byte(byte* p)
+		{
+			int value;
+			(*p, value) = GetTuple<byte, int>();
+			Console.WriteLine(value);
+			Console.WriteLine(value);
+		}
+
 		public void Property_NoConversion_Custom()
 		{
 			(Get(0).NMy, Get(1).My) = GetSource<MyInt?, MyInt>();
