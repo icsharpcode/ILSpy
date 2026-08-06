@@ -159,6 +159,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return default((T, T2, T3));
 		}
 
+		private int GetInt()
+		{
+			return 0;
+		}
+
 		private AssignmentTargets Get(int i)
 		{
 			return null;
@@ -169,6 +174,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			var (myInt3, myInt4) = GetSource<MyInt?, MyInt>();
 			Console.WriteLine(myInt3);
 			Console.WriteLine(myInt4);
+		}
+
+		public void LocalVariable_NoConversion_Custom_UnrelatedAssignmentAfter()
+		{
+			var (myInt3, myInt4) = GetSource<MyInt?, MyInt>();
+			int value = GetInt();
+			Console.WriteLine(myInt3);
+			Console.WriteLine(myInt4);
+			Console.WriteLine(value);
 		}
 
 		public void LocalVariable_NoConversion_Tuple()
