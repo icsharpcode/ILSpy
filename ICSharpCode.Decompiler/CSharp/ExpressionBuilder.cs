@@ -2543,6 +2543,26 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
+			// 'params' and parameter default values are part of the delegate's signature, and it
+			// is the delegate's Invoke method that call sites bind against. An anonymous function's
+			// own method does not reliably carry them - Roslyn 4.14 emits no ParamArrayAttribute
+			// there - so take them from Invoke, keeping declaration and call sites consistent.
+			var invokeParameters = delegateType.GetDelegateInvokeMethod()?.Parameters;
+			if (invokeParameters?.Count == ame.Parameters.Count)
+			{
+				int parameterIndex = 0;
+				foreach (var pd in ame.Parameters)
+				{
+					var invokeParameter = invokeParameters[parameterIndex++];
+					pd.IsParams |= invokeParameter.IsParams;
+					if (pd.DefaultExpression is null
+						&& astBuilder.ConvertParameter(invokeParameter).DefaultExpression is { } defaultValue)
+					{
+						defaultValue.Detach();
+						pd.DefaultExpression = defaultValue;
+					}
+				}
+			}
 			var builder = new StatementBuilder(
 				typeSystem,
 				this.decompilationContext,

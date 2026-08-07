@@ -12,35 +12,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public ParamsAction ParamsStatementBody()
 		{
-#if CS140
 			return (params int[] xs) => {
 				total += xs.Length;
 				Console.WriteLine(xs.Length);
 			};
-#elif EXPECTED_OUTPUT
-			// Roslyn 4.14 does not emit ParamArrayAttribute on the lambda's method, so the
-			// 'params' modifier cannot be recovered from metadata.
-			return delegate (int[] xs) {
-				total += xs.Length;
-				Console.WriteLine(xs.Length);
-			};
-#else
-			return (params int[] xs) => {
-				total += xs.Length;
-				Console.WriteLine(xs.Length);
-			};
-#endif
 		}
 
 		public ParamsAction ParamsExpressionBody()
 		{
-#if EXPECTED_OUTPUT && !CS140
-			return delegate (int[] xs) {
-				Console.WriteLine(xs.Length);
-			};
-#else
 			return (params int[] xs) => Console.WriteLine(xs.Length);
-#endif
 		}
 
 		public OptionalFunc OptionalStatementBody()

@@ -74,12 +74,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			var optionalParameter = (int x = 5) => x * 2;
 			Console.WriteLine("optional parameter: " + optionalParameter() + " " + optionalParameter(7));
 
-#if CS140
-			// Roslyn 4.14 emits no ParamArrayAttribute on a lambda's method, so 'params' cannot
-			// be recovered there and the decompiled call would no longer bind in expanded form.
 			var paramsParameter = (params int[] xs) => xs.Length;
 			Console.WriteLine("params parameter: " + paramsParameter(1, 2, 3));
-#endif
 		}
 	}
 }
