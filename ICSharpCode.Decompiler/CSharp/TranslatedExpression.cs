@@ -652,6 +652,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				return newTargetType.IsKnownType(KnownTypeCode.FormattableString)
 					|| newTargetType.IsKnownType(KnownTypeCode.IFormattable);
 			}
+			if (conversion.IsImplicitSpanConversion)
+			{
+				// Implicit span conversions compose: if the input converts to the new target
+				// directly, the result is the same span the two-step path produces.
+				return conversions.IdentityConversion(oldTargetType, newTargetType)
+					|| conversions.ImplicitConversion(inputType, newTargetType).IsImplicitSpanConversion;
+			}
 			return conversions.IdentityConversion(oldTargetType, newTargetType);
 		}
 

@@ -573,6 +573,18 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 	}
 
 	/// <summary>
+	/// Extension method on a span receiver, for the method-group-conversion span tests:
+	/// an invocation may reach it through the implicit span conversion of the receiver,
+	/// a method group conversion may not.
+	/// </summary>
+	public static class SpanReceiverExtensionTestCase
+	{
+		public static void M(this ReadOnlySpan<char> receiver)
+		{
+		}
+	}
+
+	/// <summary>
 	/// Fixtures for ConversionTest.MethodGroupConversion_* tests: delegate types and
 	/// per-test method sets, resolved through hand-built MethodGroupResolveResults.
 	/// </summary>
