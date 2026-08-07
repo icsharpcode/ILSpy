@@ -469,6 +469,60 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value4);
 		}
 
+		// Both sources are already materialized, so the element stores of the two
+		// deconstructions are adjacent with nothing in between. Locating the enclosing
+		// designation of the second one must not walk into the first one's stores.
+		public void LocalVariable_Nested_TupleInner_AfterAdjacentDeconstruction((int, (int, int)) source, (int, (int, int)) source2)
+		{
+			var (value, (value2, value3)) = source;
+			var (value4, (value5, value6)) = source2;
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+			Console.WriteLine(value4);
+			Console.WriteLine(value5);
+			Console.WriteLine(value6);
+		}
+
+		// A statement that is not part of the designation sits between the temporary and
+		// the reads of it, so the enclosing pattern cannot reach them; they have to be
+		// reconstructed on their own rather than deferred to a match that never happens.
+		public void LocalVariable_Nested_TupleInner_BarrierBeforeInnerReads((int, (int, int)) source)
+		{
+			(int, int) item = source.Item2;
+			Console.WriteLine(source.Item1);
+			var (value, value2) = item;
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
+
+		// Same, but the barrier sits between the temporary and the outer element read.
+		public void LocalVariable_Nested_TupleInner_BarrierAfterTemporary((int, (int, int)) source)
+		{
+			(int, int) item = source.Item2;
+			Console.WriteLine(GetInt());
+			var (value, _) = source;
+			var (value2, value3) = item;
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+		}
+
+		// Same, but the preceding statements are plain element reads that keep the inner
+		// tuple whole, so they are element stores without being a deconstruction. Locating
+		// the enclosing designation walks back over them; the run they belong to is itself
+		// a deconstruction, so both are reconstructed.
+		public void LocalVariable_Nested_TupleInner_AfterAdjacentElementReads((int, (int, int)) source, (int, (int, int)) source2)
+		{
+			var (value, tuple2) = source;
+			var (value2, (value3, value4)) = source2;
+			Console.WriteLine(value);
+			Console.WriteLine(tuple2);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+			Console.WriteLine(value4);
+		}
+
 		public void LocalVariable_Nested_TupleInner_Conversions()
 		{
 			int value;

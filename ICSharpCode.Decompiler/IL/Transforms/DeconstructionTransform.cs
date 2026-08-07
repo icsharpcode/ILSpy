@@ -288,35 +288,49 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// earlier position in the block, in either nesting shape:
 		///
 		///   call Deconstruct(..., ldloca inner, ...)             at enclosingPos
-		///   ...
-		///   call Deconstruct(ldloc(a) inner, ...)                at pos
+		///   [stloc copy(ldloc inner)]                            defensive copy of a struct element
+		///   call Deconstruct(ldloc(a) inner|copy, ...)           at pos
 		///
-		///   stloc temp(ldobj(ldflda ItemN(ldloc(a) outer)))      at enclosingPos
+		///   stloc temp(ldobj(ldflda ItemN(ldloc(a) outer)))      earlier in the block
 		///   ...
 		///   stloc x([conv](ldobj(ldflda ItemK(ldloc(a) temp))))  at pos
 		///
-		/// Both shapes are decided by the same dry run of the enclosing match: only a match that
-		/// reaches beyond pos absorbs the statement there. A barrier statement between the two
-		/// positions, an element with uses the nesting cannot consume, or a conversion or
-		/// assignment the enclosing pattern does not account for makes the dry run stop short,
-		/// and the deconstruction at pos is then still transformed on its own. What the dry run
-		/// cannot promise is that the enclosing attempt still matches once the walk reaches it:
-		/// the positions in between are visited first and may rewrite the block. The back-to-front
-		/// walk gives this position no second chance, but losing the match there only costs
-		/// sugar, never correctness.
+		/// The chained calls are emitted back to back, so an enclosing call that is not the
+		/// preceding statement has something between it and pos that stops it from reaching
+		/// here; the deconstruction at pos is then matched on its own. Nested designation
+		/// temporaries are stored before the enclosing run's own element reads, so the two are
+		/// not adjacent and only the store has to be found.
+		///
+		/// Deferring is worth it only if the enclosing attempt can succeed, so the constraint
+		/// MatchDeconstructionCall places on out-parameters is checked here as well: without it
+		/// an element used more than once would defer this position to an attempt that then
+		/// rejects the call, and the back-to-front walk gives it no second chance.
+		///
+		/// Getting this wrong costs sugar, never correctness: the statement at pos is either
+		/// folded into the enclosing deconstruction or decompiled as the explicit calls and
+		/// element reads it came from.
 		/// </summary>
 		bool IsConsumableByEnclosingDeconstruction(Block block, int pos)
 		{
-			if (!TryFindEnclosingDeconstructionCall(block, pos, out int enclosingPos)
-				&& !TryFindEnclosingTupleDesignation(block, pos, out enclosingPos))
+			if (TryFindEnclosingDeconstructionCall(block, pos, out int enclosingPos))
 			{
-				return false;
+				if (enclosingPos != pos - 1
+					&& !(enclosingPos == pos - 2 && block.Instructions[pos - 1] is StLoc { Value: LdLoc }))
+				{
+					return false;
+				}
+				var enclosingCall = (CallInstruction)block.Instructions[enclosingPos];
+				for (int i = 1; i < enclosingCall.Arguments.Count; i++)
+				{
+					if (!enclosingCall.Arguments[i].MatchLdLoca(out var outParam)
+						|| !(outParam.StoreCount == 0 && outParam.AddressCount == 1 && outParam.LoadCount <= 1))
+					{
+						return false;
+					}
+				}
+				return true;
 			}
-			// The dry run leaves the matcher state behind, which is safe because it runs before
-			// the attempt at this position, and both that attempt and Run reset it. It does not
-			// modify the block: all rewrites are delayed actions.
-			return MatchDeconstructionSequence(block, enclosingPos, out int endPos, out _, out _, out _, out _)
-				&& endPos > pos;
+			return HasEnclosingTupleDesignation(block, pos);
 		}
 
 		/// <summary>
@@ -356,17 +370,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// stloc temp(ldobj(ldflda ItemN(ldloc(a) outer)))       at enclosingPos
+		/// stloc temp(ldobj(ldflda ItemN(ldloc(a) outer)))       earlier in the block
 		/// ...
 		/// stloc x([conv](ldobj(ldflda ItemK(ldloc(a) temp))))   at pos
 		/// The statement at pos reads an element of a tuple stored by an earlier statement that
-		/// is itself an element read, i.e. a candidate nested designation temporary. The
-		/// enclosing pattern's matching starts at the first store of the run that store belongs
-		/// to, because the temporaries of a nested designation are stored back to back.
+		/// is itself an element read, i.e. a candidate nested designation temporary.
 		/// </summary>
-		static bool TryFindEnclosingTupleDesignation(Block block, int pos, out int enclosingPos)
+		static bool HasEnclosingTupleDesignation(Block block, int pos)
 		{
-			enclosingPos = -1;
 			if (!block.Instructions[pos].MatchStLoc(out _, out var value))
 				return false;
 			if (value is Conv conv)
@@ -377,10 +388,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!MatchTupleElementStore(store, out _, out _, out _, out _))
 				return false;
-			enclosingPos = store.ChildIndex;
-			while (enclosingPos > 0 && MatchTupleElementStore(block.Instructions[enclosingPos - 1], out _, out _, out _, out _))
-				enclosingPos--;
-			return enclosingPos < pos;
+			if (store.ChildIndex >= pos)
+				return false;
+			// The temporaries and element reads of one designation are stored back to back.
+			// A statement of any other kind in between stops the enclosing pattern from
+			// reaching this position, and deferring to it would lose the deconstruction here
+			// as well, because the back-to-front walk does not come back.
+			for (int between = store.ChildIndex + 1; between < pos; between++)
+			{
+				if (!MatchTupleElementStore(block.Instructions[between], out _, out _, out _, out _))
+					return false;
+			}
+			return true;
 		}
 
 		/// <summary>
