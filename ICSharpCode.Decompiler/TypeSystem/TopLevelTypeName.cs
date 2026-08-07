@@ -46,18 +46,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public TopLevelTypeName(string reflectionName)
 		{
+			// Locate both separators up front so that namespaceName and name are each cut
+			// exactly once, without an intermediate string still carrying the arity suffix.
 			int pos = reflectionName.LastIndexOf('.');
-			if (pos < 0)
+			int tick = reflectionName.LastIndexOf('`');
+			if (tick > pos && ReflectionHelper.TryParseTypeParameterCount(reflectionName, tick + 1, out typeParameterCount))
 			{
-				namespaceName = string.Empty;
-				name = reflectionName;
+				name = reflectionName.Substring(pos + 1, tick - pos - 1);
 			}
 			else
 			{
-				namespaceName = reflectionName.Substring(0, pos);
+				typeParameterCount = 0;
 				name = reflectionName.Substring(pos + 1);
 			}
-			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out typeParameterCount);
+			namespaceName = pos < 0 ? string.Empty : reflectionName.Substring(0, pos);
 		}
 
 		public string Namespace {
