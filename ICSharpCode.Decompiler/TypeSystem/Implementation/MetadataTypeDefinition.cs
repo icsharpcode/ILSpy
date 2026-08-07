@@ -393,9 +393,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var typeDefinition = metadata.GetTypeDefinition(handle);
 
+#pragma warning disable SYSLIB0050 // Type or member is obsolete
 			// SerializableAttribute
 			if ((typeDefinition.Attributes & TypeAttributes.Serializable) != 0)
 				b.Add(KnownAttribute.Serializable);
+#pragma warning restore SYSLIB0050 // Type or member is obsolete
 
 			// ComImportAttribute
 			if ((typeDefinition.Attributes & TypeAttributes.Import) != 0)

@@ -59,6 +59,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" SetTargetFramework="TargetFramework=netstandard2.0" />
     <ProjectReference Include="..\ILSpy.Tests\ILSpy.Tests.csproj" />
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
   </ItemGroup>
