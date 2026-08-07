@@ -210,22 +210,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// the forwarding fixup in MatchAssignments.
 				if (!anyAssignments && !(rootCall != null && rootCall.NestedCalls.Any(c => c != null)))
 					return false;
+				// A nested tuple designation only holds if the pattern consumed every read of
+				// its temporary; a remaining read means the value escapes the designation.
+				// Retry with the variable as a plain designator leaf, which restores the flat
+				// deconstruction the escaping read needs. This has to be decided before the
+				// leaf check below: every leaf of a wrongly nested first element precedes the
+				// assigned ones, so that check would report the pattern as starting mid-way
+				// and give up on a designation the retry can still make work.
+				var escaped = EscapedTupleNodes();
+				if (escaped != null)
+				{
+					doNotNest ??= new HashSet<ILVariable>();
+					doNotNest.UnionWith(escaped);
+					continue;
+				}
 				// first tuple element may not be discarded,
 				// otherwise we would run this transform on a suffix of the actual pattern.
 				if (deconstructionResults[0] == null)
 					return false;
-				// A nested tuple designation only holds if the pattern consumed every read of
-				// its temporary; a remaining read means the value escapes the designation.
-				// Retry with the variable as a plain designator leaf, which restores the flat
-				// deconstruction the escaping read needs.
-				var escaped = EscapedTupleNodes();
-				if (escaped == null)
-				{
-					endPos = pos;
-					return true;
-				}
-				doNotNest ??= new HashSet<ILVariable>();
-				doNotNest.UnionWith(escaped);
+				endPos = pos;
+				return true;
 			}
 
 			List<ILVariable>? EscapedTupleNodes()

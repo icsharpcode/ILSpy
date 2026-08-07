@@ -551,6 +551,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #endif
 		}
 
+		// Same, but the escaping element is in the first position. Every leaf of the
+		// wrongly nested node precedes the assigned ones there, so the retry that demotes
+		// it has to be reached before the pattern is judged to start mid-way.
+		public void LocalVariable_TupleInner_FirstElementUsedOutside()
+		{
+			var (tuple2, value) = GetTuple<(int, int), int>();
+			Console.WriteLine(tuple2.Item1);
+			Console.WriteLine(value);
+		}
+
 		public void ForEach_Nested_TupleInner()
 		{
 			foreach (var (value, (value2, value3)) in GetList<(int, (int, int))>())
