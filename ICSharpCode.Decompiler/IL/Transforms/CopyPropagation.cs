@@ -168,6 +168,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				// We are copying an expression from far away, reusing the ILRange would result in incorrect sequence points.
 				clone.SetILRange(new Interval());
+				if (!context.Settings.UseRefLocalsForAccurateOrderOfEvaluation
+					&& expr.SlotInfo == StObj.TargetSlot && clone.HasDirectFlag(InstructionFlags.MayThrow)
+					&& !expr.Parent.SatisfiesSlotRestrictionForInlining(expr.ChildIndex, clone))
+				{
+					// A LdFlda/LdElema used as StObj target has to delay its exception, because C#
+					// computes the value to be stored before dereferencing the target. Accept the
+					// changed point at which the exception is thrown in order to avoid introducing a
+					// ref local. This mirrors InliningOptions.AllowChangingOrderOfEvaluationForExceptions
+					// in ILInlining, and is bound to the same setting: callers of the public Propagate()
+					// reach this code path without passing through CanPerformCopyPropagation, so the
+					// setting has to be honored here rather than assumed.
+					if (clone is LdFlda ldflda)
+						ldflda.DelayExceptions = true;
+					else if (clone is LdElema ldelema)
+						ldelema.DelayExceptions = true;
+				}
 				expr.ReplaceWith(clone);
 			}
 			block.Instructions.RemoveAt(i);
