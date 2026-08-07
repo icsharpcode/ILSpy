@@ -23,8 +23,6 @@ using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-using AvaloniaEdit.Rendering;
-
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -97,11 +95,11 @@ public class BookmarkNavigationViewTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		view = await window.WaitForComponent<DecompilerTextView>();
-		// Wait until the one-shot highlight has registered, then assert without any further delay: the
-		// adorner self-dismisses after an ~800 ms lifetime, so a fixed-length pump on a loaded CI runner
-		// can outlast it and observe an empty collection. The same deferred apply also lands the caret.
-		await Waiters.WaitForAsync(() => view.Editor.TextArea.TextView.BackgroundRenderers
-			.OfType<LineHighlightAdorner>().Any());
+		// Wait until the one-shot highlight has played. The adorner itself self-dismisses after an
+		// ~800 ms lifetime and a stalled CI dispatcher can register and dismiss it inside a single
+		// pump, so polling the renderer collection can miss the entire play; LastHighlightPlayedLine
+		// is the view's persistent record of it. The same deferred apply also lands the caret.
+		await Waiters.WaitForAsync(() => view.LastHighlightPlayedLine != null);
 
 		int targetLine = view.GetLineForBookmark(bookmark) ?? -1;
 		targetLine.Should().BeGreaterThan(1, "the bookmark resolves to a line below the top in the freshly shown document");
@@ -110,9 +108,9 @@ public class BookmarkNavigationViewTests
 		view.Editor.TextArea.Caret.Line.Should().Be(targetLine,
 			"bookmark navigation from non-decompiler content must scroll to the saved line");
 
-		// P2: the one-shot line highlight is playing on the freshly shown view.
-		view.Editor.TextArea.TextView.BackgroundRenderers.OfType<LineHighlightAdorner>()
-			.Should().ContainSingle("the destination line must be highlighted after the content switch");
+		// P2: the one-shot line highlight played on the freshly shown view, on the right line.
+		view.LastHighlightPlayedLine.Should().Be(targetLine,
+			"the destination line must be highlighted after the content switch");
 	}
 
 	// Regression: when the active tab is frozen, navigating to a bookmark in a different node must
@@ -160,21 +158,21 @@ public class BookmarkNavigationViewTests
 		var activeModel = vm.DockWorkspace.ActiveDecompilerTab;
 		activeModel.Should().NotBeNull("navigation must surface a decompiler tab");
 
-		// Wait until the fresh preview's view exists and its one-shot highlight has registered, then
-		// assert without any further delay: the adorner self-dismisses after an ~800 ms lifetime, so a
-		// fixed-length pump on a loaded CI runner can outlast it and observe an empty collection.
+		// Wait until the fresh preview's view exists and its one-shot highlight has played. The
+		// adorner itself self-dismisses after an ~800 ms lifetime and a stalled CI dispatcher can
+		// register and dismiss it inside a single pump, so polling the renderer collection can miss
+		// the entire play; LastHighlightPlayedLine is the view's persistent record of it.
 		DecompilerTextView? ActiveView() => window.GetVisualDescendants().OfType<DecompilerTextView>()
 			.FirstOrDefault(v => ReferenceEquals(v.DataContext, activeModel));
-		await Waiters.WaitForAsync(() => ActiveView()?.Editor.TextArea.TextView.BackgroundRenderers
-			.OfType<LineHighlightAdorner>().Any() == true);
+		await Waiters.WaitForAsync(() => ActiveView()?.LastHighlightPlayedLine != null);
 		var activeView = ActiveView()!;
 
 		int targetLine = activeView.GetLineForBookmark(bookmark) ?? -1;
 		targetLine.Should().BeGreaterThan(1, "the fresh preview shows System.String with the bookmarked line below the top");
 		activeView.Editor.TextArea.Caret.Line.Should().Be(targetLine,
 			"opening a fresh preview for a frozen-tab navigation must still scroll to the bookmark");
-		activeView.Editor.TextArea.TextView.BackgroundRenderers.OfType<LineHighlightAdorner>()
-			.Should().ContainSingle("the destination line must be highlighted in the fresh preview");
+		activeView.LastHighlightPlayedLine.Should().Be(targetLine,
+			"the destination line must be highlighted in the fresh preview");
 	}
 
 	// Regression: a bookmark re-anchors by token/IL offset, so a decompiler-setting change that
