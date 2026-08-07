@@ -853,8 +853,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				pos--;
 			if (pos < name.Length)
 			{
-				if (int.TryParse(name.Substring(pos), out number))
+				// The loop above guarantees name[pos..] is all ASCII digits;
+				// accumulate the value inline, giving up on int overflow.
+				long value = 0;
+				for (int i = pos; i < name.Length; i++)
 				{
+					value = value * 10 + (name[i] - '0');
+					if (value > int.MaxValue)
+						break;
+				}
+				if (value <= int.MaxValue)
+				{
+					number = (int)value;
 					return name.Substring(0, pos);
 				}
 			}
