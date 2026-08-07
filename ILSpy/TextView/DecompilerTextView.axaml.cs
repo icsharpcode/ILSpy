@@ -843,6 +843,13 @@ namespace ICSharpCode.ILSpy.TextView
 			return false;
 		}
 
+		// The last line the one-shot navigation highlight was played on in this view, or null when
+		// none has played yet. The adorner itself self-dismisses after its ~800 ms lifetime, so an
+		// observer polling the renderer collection can miss the entire play when the dispatcher
+		// stalls (a headless test on a loaded CI runner); this record is the persistent evidence
+		// that the highlight ran, and where.
+		internal int? LastHighlightPlayedLine { get; private set; }
+
 		void ScrollToLine(int line, Bookmarks.BookmarkViewState? viewState = null)
 		{
 			var document = Editor.Document;
@@ -862,6 +869,7 @@ namespace ICSharpCode.ILSpy.TextView
 					RestoreBookmarkFoldings(viewState);
 				CenterLineInView(document, line);
 				LineHighlightAdorner.DisplayLineHighlight(Editor.TextArea, line);
+				LastHighlightPlayedLine = line;
 				bookmarkMargin?.PulseLine(line);
 			}, DispatcherPriority.Background);
 		}
