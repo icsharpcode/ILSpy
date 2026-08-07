@@ -1,0 +1,2917 @@
+{
+  "CSharp/Annotations.cs": {
+    "mtime": 1783839113.968619,
+    "ast_hash": "a38edada953b1f4af48e8785ab12f4fd",
+    "semantic_hash": "a38edada953b1f4af48e8785ab12f4fd"
+  },
+  "CSharp/AutoEventDecompiler.cs": {
+    "mtime": 1784794597.233599,
+    "ast_hash": "2a5a55cf90b9345cf7607608be0ee83d",
+    "semantic_hash": "2a5a55cf90b9345cf7607608be0ee83d"
+  },
+  "CSharp/CSharpDecompiler.cs": {
+    "mtime": 1786018530.1841238,
+    "ast_hash": "db9a06b3d5a4cff843d62a29256de081",
+    "semantic_hash": "db9a06b3d5a4cff843d62a29256de081"
+  },
+  "CSharp/CSharpLanguageVersion.cs": {
+    "mtime": 1782583629.712751,
+    "ast_hash": "e179fb1dfe10535403122719b33c07e4",
+    "semantic_hash": "e179fb1dfe10535403122719b33c07e4"
+  },
+  "CSharp/CallBuilder.cs": {
+    "mtime": 1783839113.9691453,
+    "ast_hash": "84b1e1b68443695ff7521621ed4df251",
+    "semantic_hash": "84b1e1b68443695ff7521621ed4df251"
+  },
+  "CSharp/ExpressionBuilder.cs": {
+    "mtime": 1785911489.2316775,
+    "ast_hash": "8be8892669f4aa18bf16253692101121",
+    "semantic_hash": "8be8892669f4aa18bf16253692101121"
+  },
+  "CSharp/OutputVisitor/CSharpAmbience.cs": {
+    "mtime": 1785214355.9135196,
+    "ast_hash": "90c53be6a4a9a2a243905e69d0897f30",
+    "semantic_hash": "90c53be6a4a9a2a243905e69d0897f30"
+  },
+  "CSharp/OutputVisitor/CSharpFormattingOptions.cs": {
+    "mtime": 1782583629.7137408,
+    "ast_hash": "4f2b5ef3febfc8553713d7a22138f7a1",
+    "semantic_hash": "4f2b5ef3febfc8553713d7a22138f7a1"
+  },
+  "CSharp/OutputVisitor/CSharpOutputVisitor.cs": {
+    "mtime": 1782583629.714047,
+    "ast_hash": "bb71ee4db4070b412cd25c3a1206ff08",
+    "semantic_hash": "bb71ee4db4070b412cd25c3a1206ff08"
+  },
+  "CSharp/OutputVisitor/FormattingOptionsFactory.cs": {
+    "mtime": 1782583629.714267,
+    "ast_hash": "af098e116834e5c88978f60a2b1e10aa",
+    "semantic_hash": "af098e116834e5c88978f60a2b1e10aa"
+  },
+  "CSharp/OutputVisitor/GenericGrammarAmbiguityVisitor.cs": {
+    "mtime": 1782583629.7143595,
+    "ast_hash": "edee61ab71066625f7a33ac7201c387d",
+    "semantic_hash": "edee61ab71066625f7a33ac7201c387d"
+  },
+  "CSharp/OutputVisitor/ITokenWriter.cs": {
+    "mtime": 1782583629.7146096,
+    "ast_hash": "567faa65ef3fb40855071c6d4d7087bf",
+    "semantic_hash": "567faa65ef3fb40855071c6d4d7087bf"
+  },
+  "CSharp/OutputVisitor/InsertMissingTokensDecorator.cs": {
+    "mtime": 1782583629.7147057,
+    "ast_hash": "4dab1a4aca4ccdbc5667113099104201",
+    "semantic_hash": "4dab1a4aca4ccdbc5667113099104201"
+  },
+  "CSharp/OutputVisitor/InsertParenthesesVisitor.cs": {
+    "mtime": 1782583629.714825,
+    "ast_hash": "b0f7f4d542ff4f92617a777c218d6375",
+    "semantic_hash": "b0f7f4d542ff4f92617a777c218d6375"
+  },
+  "CSharp/OutputVisitor/InsertRequiredSpacesDecorator.cs": {
+    "mtime": 1782583629.714913,
+    "ast_hash": "267bd4b6fc1a6eda26e4ecb3e5f5b435",
+    "semantic_hash": "267bd4b6fc1a6eda26e4ecb3e5f5b435"
+  },
+  "CSharp/OutputVisitor/TextWriterTokenWriter.cs": {
+    "mtime": 1782583629.7150195,
+    "ast_hash": "bd62429fce8bc84692d9f31c48e4860a",
+    "semantic_hash": "bd62429fce8bc84692d9f31c48e4860a"
+  },
+  "CSharp/ProjectDecompiler/IProjectFileWriter.cs": {
+    "mtime": 1785500298.7826836,
+    "ast_hash": "cb3fa89390699444da6a2ad24332fbb5",
+    "semantic_hash": "cb3fa89390699444da6a2ad24332fbb5"
+  },
+  "CSharp/ProjectDecompiler/IProjectInfoProvider.cs": {
+    "mtime": 1785500298.7828104,
+    "ast_hash": "25353249a4e8fcc958fe73e50f113944",
+    "semantic_hash": "25353249a4e8fcc958fe73e50f113944"
+  },
+  "CSharp/ProjectDecompiler/ProjectFileWriterDefault.cs": {
+    "mtime": 1785500298.7829692,
+    "ast_hash": "bda76f534040365d48c5d4a047bb9767",
+    "semantic_hash": "bda76f534040365d48c5d4a047bb9767"
+  },
+  "CSharp/ProjectDecompiler/ProjectFileWriterSdkStyle.cs": {
+    "mtime": 1785500298.783077,
+    "ast_hash": "16890f81d0a56360f28e795568bbc5f1",
+    "semantic_hash": "16890f81d0a56360f28e795568bbc5f1"
+  },
+  "CSharp/ProjectDecompiler/TargetFramework.cs": {
+    "mtime": 1781109418.684074,
+    "ast_hash": "d9c5cd5e105de4859630cce021247c55",
+    "semantic_hash": "d9c5cd5e105de4859630cce021247c55"
+  },
+  "CSharp/ProjectDecompiler/TargetServices.cs": {
+    "mtime": 1781109418.6841648,
+    "ast_hash": "b5f16fcb2097dbc57d33e446e8c91425",
+    "semantic_hash": "b5f16fcb2097dbc57d33e446e8c91425"
+  },
+  "CSharp/ProjectDecompiler/WholeProjectDecompiler.cs": {
+    "mtime": 1785500298.7832065,
+    "ast_hash": "405637106cdfde2ab7f698464af28052",
+    "semantic_hash": "405637106cdfde2ab7f698464af28052"
+  },
+  "CSharp/RecordDecompiler.cs": {
+    "mtime": 1784794597.235004,
+    "ast_hash": "3e9fe6b8b87002461b9f031fcae11012",
+    "semantic_hash": "3e9fe6b8b87002461b9f031fcae11012"
+  },
+  "CSharp/RequiredNamespaceCollector.cs": {
+    "mtime": 1783839113.9699419,
+    "ast_hash": "62bd23eace6662b8577733c2a0093136",
+    "semantic_hash": "62bd23eace6662b8577733c2a0093136"
+  },
+  "CSharp/Resolver/AliasNamespaceResolveResult.cs": {
+    "mtime": 1781109418.6846125,
+    "ast_hash": "a15230d7fa5bf7a0cf97e2170ab26de6",
+    "semantic_hash": "a15230d7fa5bf7a0cf97e2170ab26de6"
+  },
+  "CSharp/Resolver/AliasTypeResolveResult.cs": {
+    "mtime": 1781109418.68467,
+    "ast_hash": "ed9891cf49ace62735c57946b90db4ae",
+    "semantic_hash": "ed9891cf49ace62735c57946b90db4ae"
+  },
+  "CSharp/Resolver/AwaitResolveResult.cs": {
+    "mtime": 1781109418.684731,
+    "ast_hash": "eacb4d6d69d3feebaf083d2469bd0deb",
+    "semantic_hash": "eacb4d6d69d3feebaf083d2469bd0deb"
+  },
+  "CSharp/Resolver/CSharpConversions.cs": {
+    "mtime": 1785655264.775675,
+    "ast_hash": "b2ab446fb6eb31ccff5a5562e63c2044",
+    "semantic_hash": "b2ab446fb6eb31ccff5a5562e63c2044"
+  },
+  "CSharp/Resolver/CSharpInvocationResolveResult.cs": {
+    "mtime": 1781109418.6850169,
+    "ast_hash": "ab9efe67a9121a311e817cc6749e3ee1",
+    "semantic_hash": "ab9efe67a9121a311e817cc6749e3ee1"
+  },
+  "CSharp/Resolver/CSharpOperators.cs": {
+    "mtime": 1785655264.7759385,
+    "ast_hash": "dac48cb74798e5aa8a5b15c185ffa4b0",
+    "semantic_hash": "dac48cb74798e5aa8a5b15c185ffa4b0"
+  },
+  "CSharp/Resolver/CSharpResolver.cs": {
+    "mtime": 1785655264.7762227,
+    "ast_hash": "e7ed8b1e19f197cffb1b75724c7f57af",
+    "semantic_hash": "e7ed8b1e19f197cffb1b75724c7f57af"
+  },
+  "CSharp/Resolver/DynamicInvocationResolveResult.cs": {
+    "mtime": 1784794597.2352822,
+    "ast_hash": "173c84f0ea5ad83cf56d7ed1dab46fac",
+    "semantic_hash": "173c84f0ea5ad83cf56d7ed1dab46fac"
+  },
+  "CSharp/Resolver/DynamicMemberResolveResult.cs": {
+    "mtime": 1784794597.235368,
+    "ast_hash": "3dca0ef6227994b066236a01f7e6205c",
+    "semantic_hash": "3dca0ef6227994b066236a01f7e6205c"
+  },
+  "CSharp/Resolver/LambdaResolveResult.cs": {
+    "mtime": 1781109418.685837,
+    "ast_hash": "db6bffbb733f03e43309fffa34de4028",
+    "semantic_hash": "db6bffbb733f03e43309fffa34de4028"
+  },
+  "CSharp/Resolver/Log.cs": {
+    "mtime": 1781109418.6858966,
+    "ast_hash": "d47afdf9c690e400d1e6551674e43baf",
+    "semantic_hash": "d47afdf9c690e400d1e6551674e43baf"
+  },
+  "CSharp/Resolver/MemberLookup.cs": {
+    "mtime": 1781109418.6860185,
+    "ast_hash": "37d57c57c3f234cb93d0e6c454581962",
+    "semantic_hash": "37d57c57c3f234cb93d0e6c454581962"
+  },
+  "CSharp/Resolver/MethodGroupResolveResult.cs": {
+    "mtime": 1781109418.68616,
+    "ast_hash": "11a82e8e8196b44858deb6934d64577d",
+    "semantic_hash": "11a82e8e8196b44858deb6934d64577d"
+  },
+  "CSharp/Resolver/NameLookupMode.cs": {
+    "mtime": 1781109418.6862302,
+    "ast_hash": "4007b6b39734b6711fa48ca88b7a33af",
+    "semantic_hash": "4007b6b39734b6711fa48ca88b7a33af"
+  },
+  "CSharp/Resolver/OverloadResolution.cs": {
+    "mtime": 1785655264.7763963,
+    "ast_hash": "8b528f5a1ca5a84678688c777d8ad7e1",
+    "semantic_hash": "8b528f5a1ca5a84678688c777d8ad7e1"
+  },
+  "CSharp/Resolver/OverloadResolutionErrors.cs": {
+    "mtime": 1781109418.6864765,
+    "ast_hash": "5b83450287ddd45de34cdc58388055b5",
+    "semantic_hash": "5b83450287ddd45de34cdc58388055b5"
+  },
+  "CSharp/Resolver/TypeInference.cs": {
+    "mtime": 1785655264.7765608,
+    "ast_hash": "685d122546d591fb84f072d924cc19c8",
+    "semantic_hash": "685d122546d591fb84f072d924cc19c8"
+  },
+  "CSharp/SequencePointBuilder.cs": {
+    "mtime": 1782759897.5961561,
+    "ast_hash": "cdd90e4f85c2f178197fb2365241aa34",
+    "semantic_hash": "cdd90e4f85c2f178197fb2365241aa34"
+  },
+  "CSharp/StatementBuilder.cs": {
+    "mtime": 1785214355.9137852,
+    "ast_hash": "85bc1722118df02ba349b9a56f5cb2c3",
+    "semantic_hash": "85bc1722118df02ba349b9a56f5cb2c3"
+  },
+  "CSharp/Syntax/AstNode.cs": {
+    "mtime": 1783839113.9703739,
+    "ast_hash": "890571b212d4dcfc9007864136afb1f8",
+    "semantic_hash": "890571b212d4dcfc9007864136afb1f8"
+  },
+  "CSharp/Syntax/AstNodeCollection.cs": {
+    "mtime": 1782583629.7159927,
+    "ast_hash": "a17734c3d769f69c9ff80df7b59641ce",
+    "semantic_hash": "a17734c3d769f69c9ff80df7b59641ce"
+  },
+  "CSharp/Syntax/AstType.cs": {
+    "mtime": 1782583629.7160861,
+    "ast_hash": "5833dcda2c9ed51df1fe19bde4ff7efc",
+    "semantic_hash": "5833dcda2c9ed51df1fe19bde4ff7efc"
+  },
+  "CSharp/Syntax/CSharpSlotInfo.cs": {
+    "mtime": 1782583629.7161388,
+    "ast_hash": "9804483a98f42d5d272f08e41700fd93",
+    "semantic_hash": "9804483a98f42d5d272f08e41700fd93"
+  },
+  "CSharp/Syntax/ComposedType.cs": {
+    "mtime": 1782583629.7162266,
+    "ast_hash": "b9b2c1720f646d512ee4fc8f9cf63fae",
+    "semantic_hash": "b9b2c1720f646d512ee4fc8f9cf63fae"
+  },
+  "CSharp/Syntax/DepthFirstAstVisitor.cs": {
+    "mtime": 1782583629.7163868,
+    "ast_hash": "ecb091cc6a7c10d84ba6d4f4ecc6e930",
+    "semantic_hash": "ecb091cc6a7c10d84ba6d4f4ecc6e930"
+  },
+  "CSharp/Syntax/DocumentationReference.cs": {
+    "mtime": 1782583629.7164693,
+    "ast_hash": "6fc1db8b22fcafe59d16bff8b420f0c8",
+    "semantic_hash": "6fc1db8b22fcafe59d16bff8b420f0c8"
+  },
+  "CSharp/Syntax/Expressions/AnonymousMethodExpression.cs": {
+    "mtime": 1782583629.7165499,
+    "ast_hash": "13d7dd355e87841cde288aceae0bbf24",
+    "semantic_hash": "13d7dd355e87841cde288aceae0bbf24"
+  },
+  "CSharp/Syntax/Expressions/AnonymousTypeCreateExpression.cs": {
+    "mtime": 1782583629.716646,
+    "ast_hash": "ddd36ccdb1eac1fbd076de3591c5f4ea",
+    "semantic_hash": "ddd36ccdb1eac1fbd076de3591c5f4ea"
+  },
+  "CSharp/Syntax/Expressions/ArrayCreateExpression.cs": {
+    "mtime": 1782583629.7167625,
+    "ast_hash": "61aef01286f636089b655e714547560e",
+    "semantic_hash": "61aef01286f636089b655e714547560e"
+  },
+  "CSharp/Syntax/Expressions/ArrayInitializerExpression.cs": {
+    "mtime": 1782583629.7168422,
+    "ast_hash": "3f6942ab8c8b0fdb88a3aa0b5c83d79f",
+    "semantic_hash": "3f6942ab8c8b0fdb88a3aa0b5c83d79f"
+  },
+  "CSharp/Syntax/Expressions/AsExpression.cs": {
+    "mtime": 1782583629.7169187,
+    "ast_hash": "26e14217bdcbe9b67d7e5ceaeb6fc099",
+    "semantic_hash": "26e14217bdcbe9b67d7e5ceaeb6fc099"
+  },
+  "CSharp/Syntax/Expressions/AssignmentExpression.cs": {
+    "mtime": 1782583629.7170796,
+    "ast_hash": "b9f564d3388b86595dbb37db2586449a",
+    "semantic_hash": "b9f564d3388b86595dbb37db2586449a"
+  },
+  "CSharp/Syntax/Expressions/BaseReferenceExpression.cs": {
+    "mtime": 1782583629.717163,
+    "ast_hash": "f46816298357a4bf45b5c0c8e6c5c7d5",
+    "semantic_hash": "f46816298357a4bf45b5c0c8e6c5c7d5"
+  },
+  "CSharp/Syntax/Expressions/BinaryOperatorExpression.cs": {
+    "mtime": 1782583629.7172918,
+    "ast_hash": "8fd9d222674acb5f868ec987e11d1fc6",
+    "semantic_hash": "8fd9d222674acb5f868ec987e11d1fc6"
+  },
+  "CSharp/Syntax/Expressions/CastExpression.cs": {
+    "mtime": 1782583629.717375,
+    "ast_hash": "a33ca00eb62d7bceb4b974e8cbeb8ab5",
+    "semantic_hash": "a33ca00eb62d7bceb4b974e8cbeb8ab5"
+  },
+  "CSharp/Syntax/Expressions/CheckedExpression.cs": {
+    "mtime": 1782583629.7174623,
+    "ast_hash": "561021be92f6c326d091ebcdda8b7124",
+    "semantic_hash": "561021be92f6c326d091ebcdda8b7124"
+  },
+  "CSharp/Syntax/Expressions/ConditionalExpression.cs": {
+    "mtime": 1782583629.7176795,
+    "ast_hash": "f584132cfa945af231f47dca967de12e",
+    "semantic_hash": "f584132cfa945af231f47dca967de12e"
+  },
+  "CSharp/Syntax/Expressions/DeclarationExpression.cs": {
+    "mtime": 1782583629.7177637,
+    "ast_hash": "cfb9d899cd4bf5ce7414149c438baf72",
+    "semantic_hash": "cfb9d899cd4bf5ce7414149c438baf72"
+  },
+  "CSharp/Syntax/Expressions/DefaultValueExpression.cs": {
+    "mtime": 1782583629.7178576,
+    "ast_hash": "555e939aa26ff6c5c0b6ee0aecb80ed0",
+    "semantic_hash": "555e939aa26ff6c5c0b6ee0aecb80ed0"
+  },
+  "CSharp/Syntax/Expressions/DirectionExpression.cs": {
+    "mtime": 1782583629.717954,
+    "ast_hash": "f93b0821b8177263e9f8633d11e762af",
+    "semantic_hash": "f93b0821b8177263e9f8633d11e762af"
+  },
+  "CSharp/Syntax/Expressions/ErrorExpression.cs": {
+    "mtime": 1782583629.718038,
+    "ast_hash": "b1c25f5635a973976886a383b7174771",
+    "semantic_hash": "b1c25f5635a973976886a383b7174771"
+  },
+  "CSharp/Syntax/Expressions/Expression.cs": {
+    "mtime": 1782583629.7181299,
+    "ast_hash": "97536b54ab21366929aa0364b4e28f93",
+    "semantic_hash": "97536b54ab21366929aa0364b4e28f93"
+  },
+  "CSharp/Syntax/Expressions/IdentifierExpression.cs": {
+    "mtime": 1782583629.7182305,
+    "ast_hash": "8eb87ed64ed6119a109d738f54464ef5",
+    "semantic_hash": "8eb87ed64ed6119a109d738f54464ef5"
+  },
+  "CSharp/Syntax/Expressions/IndexerExpression.cs": {
+    "mtime": 1782583629.7183113,
+    "ast_hash": "42c1ea6ce1be78e3c224ab815ae6e970",
+    "semantic_hash": "42c1ea6ce1be78e3c224ab815ae6e970"
+  },
+  "CSharp/Syntax/Expressions/InterpolatedStringExpression.cs": {
+    "mtime": 1783839113.9712045,
+    "ast_hash": "fbebf115e8a905e3c589e18642cda26f",
+    "semantic_hash": "fbebf115e8a905e3c589e18642cda26f"
+  },
+  "CSharp/Syntax/Expressions/InvocationExpression.cs": {
+    "mtime": 1782583629.7185264,
+    "ast_hash": "5aa950ac4da22a67da90e93feff17d0c",
+    "semantic_hash": "5aa950ac4da22a67da90e93feff17d0c"
+  },
+  "CSharp/Syntax/Expressions/IsExpression.cs": {
+    "mtime": 1782583629.718604,
+    "ast_hash": "2a49b0fe35d8caf1337ce06c71dbe560",
+    "semantic_hash": "2a49b0fe35d8caf1337ce06c71dbe560"
+  },
+  "CSharp/Syntax/Expressions/LambdaExpression.cs": {
+    "mtime": 1782583629.7186909,
+    "ast_hash": "b5022b2e0aa6f5b8a58eb0d1be47ef0e",
+    "semantic_hash": "b5022b2e0aa6f5b8a58eb0d1be47ef0e"
+  },
+  "CSharp/Syntax/Expressions/MemberReferenceExpression.cs": {
+    "mtime": 1782583629.718771,
+    "ast_hash": "c3bb9046287995bd46cb24e55f4f1114",
+    "semantic_hash": "c3bb9046287995bd46cb24e55f4f1114"
+  },
+  "CSharp/Syntax/Expressions/NamedArgumentExpression.cs": {
+    "mtime": 1782583629.7188563,
+    "ast_hash": "be68f28ed3a770778202174f8460f66c",
+    "semantic_hash": "be68f28ed3a770778202174f8460f66c"
+  },
+  "CSharp/Syntax/Expressions/NamedExpression.cs": {
+    "mtime": 1782583629.7189384,
+    "ast_hash": "067a8a9df8ad2f791520869e748005e6",
+    "semantic_hash": "067a8a9df8ad2f791520869e748005e6"
+  },
+  "CSharp/Syntax/Expressions/NullReferenceExpression.cs": {
+    "mtime": 1782583629.719325,
+    "ast_hash": "65a58cd04848b555604f985e5ab4abdf",
+    "semantic_hash": "65a58cd04848b555604f985e5ab4abdf"
+  },
+  "CSharp/Syntax/Expressions/ObjectCreateExpression.cs": {
+    "mtime": 1782583629.7194483,
+    "ast_hash": "c09a7719859163cc2674da68a0f3e856",
+    "semantic_hash": "c09a7719859163cc2674da68a0f3e856"
+  },
+  "CSharp/Syntax/Expressions/OutVarDeclarationExpression.cs": {
+    "mtime": 1782583629.7195404,
+    "ast_hash": "cd82d861e12866da1a5a842ced3f299c",
+    "semantic_hash": "cd82d861e12866da1a5a842ced3f299c"
+  },
+  "CSharp/Syntax/Expressions/ParenthesizedExpression.cs": {
+    "mtime": 1782583629.719623,
+    "ast_hash": "294b64742f99a6fdcb6db33d8a26a4d3",
+    "semantic_hash": "294b64742f99a6fdcb6db33d8a26a4d3"
+  },
+  "CSharp/Syntax/Expressions/PointerReferenceExpression.cs": {
+    "mtime": 1782583629.7197075,
+    "ast_hash": "026976330c97518ff77e65d6c220ee9f",
+    "semantic_hash": "026976330c97518ff77e65d6c220ee9f"
+  },
+  "CSharp/Syntax/Expressions/PrimitiveExpression.cs": {
+    "mtime": 1782583629.719802,
+    "ast_hash": "2cce37f1c7455543abf5aa43d0acf493",
+    "semantic_hash": "2cce37f1c7455543abf5aa43d0acf493"
+  },
+  "CSharp/Syntax/Expressions/QueryExpression.cs": {
+    "mtime": 1782583629.7199237,
+    "ast_hash": "d99464b50ad8336b75d50cd28a920cbc",
+    "semantic_hash": "d99464b50ad8336b75d50cd28a920cbc"
+  },
+  "CSharp/Syntax/Expressions/RecursivePatternExpression.cs": {
+    "mtime": 1782583629.7200103,
+    "ast_hash": "2bc79923eee59b1f1671b789e92ce01d",
+    "semantic_hash": "2bc79923eee59b1f1671b789e92ce01d"
+  },
+  "CSharp/Syntax/Expressions/SizeOfExpression.cs": {
+    "mtime": 1782583629.7200925,
+    "ast_hash": "d8d09b4c406f437e17a63e70594adeaf",
+    "semantic_hash": "d8d09b4c406f437e17a63e70594adeaf"
+  },
+  "CSharp/Syntax/Expressions/StackAllocExpression.cs": {
+    "mtime": 1782583629.7201838,
+    "ast_hash": "0c1b4007b867d641ed669fc1799e271a",
+    "semantic_hash": "0c1b4007b867d641ed669fc1799e271a"
+  },
+  "CSharp/Syntax/Expressions/SwitchExpression.cs": {
+    "mtime": 1782583629.72027,
+    "ast_hash": "b8f73b7826141dd6a120d4739f39dd71",
+    "semantic_hash": "b8f73b7826141dd6a120d4739f39dd71"
+  },
+  "CSharp/Syntax/Expressions/ThisReferenceExpression.cs": {
+    "mtime": 1782583629.7203553,
+    "ast_hash": "7cd327a3ecfc9dd425f0cdff911daf1d",
+    "semantic_hash": "7cd327a3ecfc9dd425f0cdff911daf1d"
+  },
+  "CSharp/Syntax/Expressions/ThrowExpression.cs": {
+    "mtime": 1782583629.7204468,
+    "ast_hash": "3efbc9e7de4fdb7158499b271e35cc04",
+    "semantic_hash": "3efbc9e7de4fdb7158499b271e35cc04"
+  },
+  "CSharp/Syntax/Expressions/TupleExpression.cs": {
+    "mtime": 1782583629.720534,
+    "ast_hash": "fd62234524ec80eee74b20db2eb0f803",
+    "semantic_hash": "fd62234524ec80eee74b20db2eb0f803"
+  },
+  "CSharp/Syntax/Expressions/TypeOfExpression.cs": {
+    "mtime": 1782583629.720619,
+    "ast_hash": "9f8b5dd518dc7e7bf3da91555f8c72e6",
+    "semantic_hash": "9f8b5dd518dc7e7bf3da91555f8c72e6"
+  },
+  "CSharp/Syntax/Expressions/TypeReferenceExpression.cs": {
+    "mtime": 1782583629.7207093,
+    "ast_hash": "f3cb125069f6f36928a684f3ee6bca8b",
+    "semantic_hash": "f3cb125069f6f36928a684f3ee6bca8b"
+  },
+  "CSharp/Syntax/Expressions/UnaryOperatorExpression.cs": {
+    "mtime": 1782583629.7207992,
+    "ast_hash": "4534b85ea6b6e0a7306520dabeffdd78",
+    "semantic_hash": "4534b85ea6b6e0a7306520dabeffdd78"
+  },
+  "CSharp/Syntax/Expressions/UncheckedExpression.cs": {
+    "mtime": 1782583629.7208858,
+    "ast_hash": "b4d8a7d0b086fb7e4f029bbe7d2d5791",
+    "semantic_hash": "b4d8a7d0b086fb7e4f029bbe7d2d5791"
+  },
+  "CSharp/Syntax/Expressions/UndocumentedExpression.cs": {
+    "mtime": 1782583629.7209775,
+    "ast_hash": "40d46d501d8ede4df2075b3a5468fb87",
+    "semantic_hash": "40d46d501d8ede4df2075b3a5468fb87"
+  },
+  "CSharp/Syntax/Expressions/WithInitializerExpression.cs": {
+    "mtime": 1782583629.7210639,
+    "ast_hash": "80de3af42ab70bbdc16f73947f5adc95",
+    "semantic_hash": "80de3af42ab70bbdc16f73947f5adc95"
+  },
+  "CSharp/Syntax/FunctionPointerAstType.cs": {
+    "mtime": 1782583629.72123,
+    "ast_hash": "de69ce3a1c33210f8c18ade917ea8322",
+    "semantic_hash": "de69ce3a1c33210f8c18ade917ea8322"
+  },
+  "CSharp/Syntax/GeneralScope/Attribute.cs": {
+    "mtime": 1782583629.7213109,
+    "ast_hash": "bef57d98bd2ca5f833a3c73aae073b2f",
+    "semantic_hash": "bef57d98bd2ca5f833a3c73aae073b2f"
+  },
+  "CSharp/Syntax/GeneralScope/AttributeSection.cs": {
+    "mtime": 1782583629.721395,
+    "ast_hash": "16576103871f64efd0a959d66098baeb",
+    "semantic_hash": "16576103871f64efd0a959d66098baeb"
+  },
+  "CSharp/Syntax/GeneralScope/Comment.cs": {
+    "mtime": 1782583629.7215033,
+    "ast_hash": "d580e69bec06045dc3ce45e5469d65ed",
+    "semantic_hash": "d580e69bec06045dc3ce45e5469d65ed"
+  },
+  "CSharp/Syntax/GeneralScope/Constraint.cs": {
+    "mtime": 1782583629.7215757,
+    "ast_hash": "4f85b14d7628130bf9f4037a2cbb89b1",
+    "semantic_hash": "4f85b14d7628130bf9f4037a2cbb89b1"
+  },
+  "CSharp/Syntax/GeneralScope/DelegateDeclaration.cs": {
+    "mtime": 1782583629.7216468,
+    "ast_hash": "f59f38a0460e1d98fba1b8cf3d9b25d3",
+    "semantic_hash": "f59f38a0460e1d98fba1b8cf3d9b25d3"
+  },
+  "CSharp/Syntax/GeneralScope/ExternAliasDeclaration.cs": {
+    "mtime": 1782583629.7217295,
+    "ast_hash": "3d9fd15cf435533b6e05a7cb9845630c",
+    "semantic_hash": "3d9fd15cf435533b6e05a7cb9845630c"
+  },
+  "CSharp/Syntax/GeneralScope/NamespaceDeclaration.cs": {
+    "mtime": 1782583629.7218049,
+    "ast_hash": "06578845480cdacbd4525c987b4db985",
+    "semantic_hash": "06578845480cdacbd4525c987b4db985"
+  },
+  "CSharp/Syntax/GeneralScope/PreProcessorDirective.cs": {
+    "mtime": 1782583629.7218862,
+    "ast_hash": "eb9baf9460bb938c71875c3bfc3286bc",
+    "semantic_hash": "eb9baf9460bb938c71875c3bfc3286bc"
+  },
+  "CSharp/Syntax/GeneralScope/Trivia.cs": {
+    "mtime": 1783839113.97137,
+    "ast_hash": "80059b001a4377b02080997c88a0b776",
+    "semantic_hash": "80059b001a4377b02080997c88a0b776"
+  },
+  "CSharp/Syntax/GeneralScope/TypeDeclaration.cs": {
+    "mtime": 1782583629.7220175,
+    "ast_hash": "f2016a4dc03318c9f2631634b6ae2ae1",
+    "semantic_hash": "f2016a4dc03318c9f2631634b6ae2ae1"
+  },
+  "CSharp/Syntax/GeneralScope/TypeParameterDeclaration.cs": {
+    "mtime": 1782583629.7220995,
+    "ast_hash": "8e19f08adea20a3c91bf76a1c82fcfc2",
+    "semantic_hash": "8e19f08adea20a3c91bf76a1c82fcfc2"
+  },
+  "CSharp/Syntax/GeneralScope/UsingAliasDeclaration.cs": {
+    "mtime": 1782583629.7222044,
+    "ast_hash": "001cb47361afd4cfea9a9033779594e7",
+    "semantic_hash": "001cb47361afd4cfea9a9033779594e7"
+  },
+  "CSharp/Syntax/GeneralScope/UsingDeclaration.cs": {
+    "mtime": 1782583629.7222874,
+    "ast_hash": "04a8a574d4f20fb76f3894f0fe2c2354",
+    "semantic_hash": "04a8a574d4f20fb76f3894f0fe2c2354"
+  },
+  "CSharp/Syntax/IAnnotatable.cs": {
+    "mtime": 1782583629.7224078,
+    "ast_hash": "ac1b9bb49ff22406c09bd04ec685a459",
+    "semantic_hash": "ac1b9bb49ff22406c09bd04ec685a459"
+  },
+  "CSharp/Syntax/Identifier.cs": {
+    "mtime": 1782583629.7224908,
+    "ast_hash": "2278921d23a7c9f88f14b0779973884a",
+    "semantic_hash": "2278921d23a7c9f88f14b0779973884a"
+  },
+  "CSharp/Syntax/InvocationAstType.cs": {
+    "mtime": 1782583629.722571,
+    "ast_hash": "1338d05f57f93f5a49e3e51cf8debcfd",
+    "semantic_hash": "1338d05f57f93f5a49e3e51cf8debcfd"
+  },
+  "CSharp/Syntax/MemberType.cs": {
+    "mtime": 1782583629.7226484,
+    "ast_hash": "910f17021a813d4ba209b55194f4a887",
+    "semantic_hash": "910f17021a813d4ba209b55194f4a887"
+  },
+  "CSharp/Syntax/Modifiers.cs": {
+    "mtime": 1782583629.7227237,
+    "ast_hash": "5c1430a77dab391eeda9a4c7059596b3",
+    "semantic_hash": "5c1430a77dab391eeda9a4c7059596b3"
+  },
+  "CSharp/Syntax/PatternMatching/AnyNode.cs": {
+    "mtime": 1782583629.7228053,
+    "ast_hash": "a8bf97d007eeb18272860ec4b5614eda",
+    "semantic_hash": "a8bf97d007eeb18272860ec4b5614eda"
+  },
+  "CSharp/Syntax/PatternMatching/AnyNodeOrNull.cs": {
+    "mtime": 1782583629.722912,
+    "ast_hash": "bc190f32d4c7b80c777a0a454d93c237",
+    "semantic_hash": "bc190f32d4c7b80c777a0a454d93c237"
+  },
+  "CSharp/Syntax/PatternMatching/Backreference.cs": {
+    "mtime": 1782583629.7229886,
+    "ast_hash": "a801d84f2f8e1af4978113fd40b3819d",
+    "semantic_hash": "a801d84f2f8e1af4978113fd40b3819d"
+  },
+  "CSharp/Syntax/PatternMatching/BacktrackingInfo.cs": {
+    "mtime": 1782583629.7230625,
+    "ast_hash": "fab4470fbe9bfad0a43156200141651a",
+    "semantic_hash": "fab4470fbe9bfad0a43156200141651a"
+  },
+  "CSharp/Syntax/PatternMatching/Choice.cs": {
+    "mtime": 1782583629.723136,
+    "ast_hash": "99ec0b6ae2152e1279ff41301d583249",
+    "semantic_hash": "99ec0b6ae2152e1279ff41301d583249"
+  },
+  "CSharp/Syntax/PatternMatching/INode.cs": {
+    "mtime": 1782583629.723214,
+    "ast_hash": "c1403f56790b5d72fb78de9563617151",
+    "semantic_hash": "c1403f56790b5d72fb78de9563617151"
+  },
+  "CSharp/Syntax/PatternMatching/IPatternPlaceholder.cs": {
+    "mtime": 1782583629.7232754,
+    "ast_hash": "93843906e6826ab4df3c9830c5d2b8e1",
+    "semantic_hash": "93843906e6826ab4df3c9830c5d2b8e1"
+  },
+  "CSharp/Syntax/PatternMatching/IdentifierExpressionBackreference.cs": {
+    "mtime": 1782583629.723335,
+    "ast_hash": "13726163215b4d41e58e3c35c4a9fd56",
+    "semantic_hash": "13726163215b4d41e58e3c35c4a9fd56"
+  },
+  "CSharp/Syntax/PatternMatching/Match.cs": {
+    "mtime": 1782583629.7234192,
+    "ast_hash": "3f0ec9f4e6c4021e2a379bb4dd1460ae",
+    "semantic_hash": "3f0ec9f4e6c4021e2a379bb4dd1460ae"
+  },
+  "CSharp/Syntax/PatternMatching/NamedNode.cs": {
+    "mtime": 1782583629.7234945,
+    "ast_hash": "a5a8b1edde780a8738a078afa366e205",
+    "semantic_hash": "a5a8b1edde780a8738a078afa366e205"
+  },
+  "CSharp/Syntax/PatternMatching/OptionalNode.cs": {
+    "mtime": 1782583629.7235749,
+    "ast_hash": "f82704a4576f8d8602750b130bb24fc9",
+    "semantic_hash": "f82704a4576f8d8602750b130bb24fc9"
+  },
+  "CSharp/Syntax/PatternMatching/Pattern.cs": {
+    "mtime": 1782583629.7236562,
+    "ast_hash": "f31296cd74b5888cbb64a6979567c8a4",
+    "semantic_hash": "f31296cd74b5888cbb64a6979567c8a4"
+  },
+  "CSharp/Syntax/PatternMatching/Repeat.cs": {
+    "mtime": 1782583629.7237391,
+    "ast_hash": "feb5cba9fc55249ab753b2810b8ff448",
+    "semantic_hash": "feb5cba9fc55249ab753b2810b8ff448"
+  },
+  "CSharp/Syntax/PrimitiveType.cs": {
+    "mtime": 1782583629.7238183,
+    "ast_hash": "128664ba7fd89a6e13e07d192328442e",
+    "semantic_hash": "128664ba7fd89a6e13e07d192328442e"
+  },
+  "CSharp/Syntax/SimpleType.cs": {
+    "mtime": 1782583629.7240052,
+    "ast_hash": "988e9dfbaccba78489e1e6d3ddfbde5f",
+    "semantic_hash": "988e9dfbaccba78489e1e6d3ddfbde5f"
+  },
+  "CSharp/Syntax/Statements/BlockStatement.cs": {
+    "mtime": 1782583629.7241077,
+    "ast_hash": "3311a2469b2493626befb1c4f0c9bd5d",
+    "semantic_hash": "3311a2469b2493626befb1c4f0c9bd5d"
+  },
+  "CSharp/Syntax/Statements/BreakStatement.cs": {
+    "mtime": 1782583629.7242174,
+    "ast_hash": "03ad2490b0686b3764de035e4641b0ff",
+    "semantic_hash": "03ad2490b0686b3764de035e4641b0ff"
+  },
+  "CSharp/Syntax/Statements/CheckedStatement.cs": {
+    "mtime": 1782583629.7243226,
+    "ast_hash": "e0034f8ef1e2237e1bde7bbb8d021bed",
+    "semantic_hash": "e0034f8ef1e2237e1bde7bbb8d021bed"
+  },
+  "CSharp/Syntax/Statements/ContinueStatement.cs": {
+    "mtime": 1782583629.724494,
+    "ast_hash": "f0fdd639de84ed217842903bc050d6dc",
+    "semantic_hash": "f0fdd639de84ed217842903bc050d6dc"
+  },
+  "CSharp/Syntax/Statements/DoWhileStatement.cs": {
+    "mtime": 1782583629.724569,
+    "ast_hash": "65d217290efbca84f0f3f106336b6ac9",
+    "semantic_hash": "65d217290efbca84f0f3f106336b6ac9"
+  },
+  "CSharp/Syntax/Statements/EmptyStatement.cs": {
+    "mtime": 1782583629.7246501,
+    "ast_hash": "ff312ac9a0d94b7e9c09aad6b01d9e75",
+    "semantic_hash": "ff312ac9a0d94b7e9c09aad6b01d9e75"
+  },
+  "CSharp/Syntax/Statements/ExpressionStatement.cs": {
+    "mtime": 1782583629.7247272,
+    "ast_hash": "d213fcef519e965657248f33125bce22",
+    "semantic_hash": "d213fcef519e965657248f33125bce22"
+  },
+  "CSharp/Syntax/Statements/FixedStatement.cs": {
+    "mtime": 1782583629.7249186,
+    "ast_hash": "79c88d6d46d485b6d3b29237176eb4c1",
+    "semantic_hash": "79c88d6d46d485b6d3b29237176eb4c1"
+  },
+  "CSharp/Syntax/Statements/ForStatement.cs": {
+    "mtime": 1782583629.7249973,
+    "ast_hash": "fa2a398d97b7883299dc01afd412295f",
+    "semantic_hash": "fa2a398d97b7883299dc01afd412295f"
+  },
+  "CSharp/Syntax/Statements/ForeachStatement.cs": {
+    "mtime": 1782583629.7251546,
+    "ast_hash": "3d726640681809458459cd1604be68fc",
+    "semantic_hash": "3d726640681809458459cd1604be68fc"
+  },
+  "CSharp/Syntax/Statements/GotoStatement.cs": {
+    "mtime": 1782583629.7252288,
+    "ast_hash": "4453db946325f437f208d5653007c55e",
+    "semantic_hash": "4453db946325f437f208d5653007c55e"
+  },
+  "CSharp/Syntax/Statements/IfElseStatement.cs": {
+    "mtime": 1782583629.7252963,
+    "ast_hash": "d9bb056f19b1dfdbdea73c29d6a48af4",
+    "semantic_hash": "d9bb056f19b1dfdbdea73c29d6a48af4"
+  },
+  "CSharp/Syntax/Statements/LabelStatement.cs": {
+    "mtime": 1782583629.725373,
+    "ast_hash": "9291d2e8515e81b4c9843d90d532b0f4",
+    "semantic_hash": "9291d2e8515e81b4c9843d90d532b0f4"
+  },
+  "CSharp/Syntax/Statements/LocalFunctionDeclarationStatement.cs": {
+    "mtime": 1782583629.7254612,
+    "ast_hash": "7a1060dcb50f4faa0a90adbc73b96e48",
+    "semantic_hash": "7a1060dcb50f4faa0a90adbc73b96e48"
+  },
+  "CSharp/Syntax/Statements/LockStatement.cs": {
+    "mtime": 1782583629.7256618,
+    "ast_hash": "bf6a79eada88406c53aa176c8d42ce2b",
+    "semantic_hash": "bf6a79eada88406c53aa176c8d42ce2b"
+  },
+  "CSharp/Syntax/Statements/ReturnStatement.cs": {
+    "mtime": 1782583629.7257447,
+    "ast_hash": "b8d6538c97eeb36bdf346d09ecfd7be0",
+    "semantic_hash": "b8d6538c97eeb36bdf346d09ecfd7be0"
+  },
+  "CSharp/Syntax/Statements/Statement.cs": {
+    "mtime": 1782583629.725947,
+    "ast_hash": "be988df61ce95d271a05daa8bc30d4eb",
+    "semantic_hash": "be988df61ce95d271a05daa8bc30d4eb"
+  },
+  "CSharp/Syntax/Statements/SwitchStatement.cs": {
+    "mtime": 1782583629.7260332,
+    "ast_hash": "c05036eaec887307e7f5fe295adf0cff",
+    "semantic_hash": "c05036eaec887307e7f5fe295adf0cff"
+  },
+  "CSharp/Syntax/Statements/ThrowStatement.cs": {
+    "mtime": 1782583629.726189,
+    "ast_hash": "7d21cae9c4015bb2bf177ce38e12705e",
+    "semantic_hash": "7d21cae9c4015bb2bf177ce38e12705e"
+  },
+  "CSharp/Syntax/Statements/TryCatchStatement.cs": {
+    "mtime": 1782583629.7262623,
+    "ast_hash": "528ed1fbdef78a880396eb04e4274bbb",
+    "semantic_hash": "528ed1fbdef78a880396eb04e4274bbb"
+  },
+  "CSharp/Syntax/Statements/UncheckedStatement.cs": {
+    "mtime": 1782583629.7263477,
+    "ast_hash": "f34fb03df8ee55a1672fb409e0fc4411",
+    "semantic_hash": "f34fb03df8ee55a1672fb409e0fc4411"
+  },
+  "CSharp/Syntax/Statements/UnsafeStatement.cs": {
+    "mtime": 1782583629.7264998,
+    "ast_hash": "7b6b0f70caf2940360adde834087fafa",
+    "semantic_hash": "7b6b0f70caf2940360adde834087fafa"
+  },
+  "CSharp/Syntax/Statements/UsingStatement.cs": {
+    "mtime": 1782583629.7266784,
+    "ast_hash": "f59a26ba3cdb03de86fccff9fc421e96",
+    "semantic_hash": "f59a26ba3cdb03de86fccff9fc421e96"
+  },
+  "CSharp/Syntax/Statements/VariableDeclarationStatement.cs": {
+    "mtime": 1782583629.7267635,
+    "ast_hash": "dfce961d20000112a3c6d3f2ae84b0e6",
+    "semantic_hash": "dfce961d20000112a3c6d3f2ae84b0e6"
+  },
+  "CSharp/Syntax/Statements/WhileStatement.cs": {
+    "mtime": 1782583629.7268314,
+    "ast_hash": "4775cba2c32dd05b580830931f6d622a",
+    "semantic_hash": "4775cba2c32dd05b580830931f6d622a"
+  },
+  "CSharp/Syntax/Statements/YieldBreakStatement.cs": {
+    "mtime": 1782583629.7269015,
+    "ast_hash": "34bdc963fa94f48cdb786a002c154d2c",
+    "semantic_hash": "34bdc963fa94f48cdb786a002c154d2c"
+  },
+  "CSharp/Syntax/Statements/YieldReturnStatement.cs": {
+    "mtime": 1782583629.7275515,
+    "ast_hash": "a6ebafcd0be1210051e114eb37376d27",
+    "semantic_hash": "a6ebafcd0be1210051e114eb37376d27"
+  },
+  "CSharp/Syntax/SyntaxExtensions.cs": {
+    "mtime": 1782583629.7276864,
+    "ast_hash": "5153679f887702589849f54cf95fcbe3",
+    "semantic_hash": "5153679f887702589849f54cf95fcbe3"
+  },
+  "CSharp/Syntax/SyntaxTree.cs": {
+    "mtime": 1782583629.7277863,
+    "ast_hash": "0be91de2c1b42d8822d8f22099f65933",
+    "semantic_hash": "0be91de2c1b42d8822d8f22099f65933"
+  },
+  "CSharp/Syntax/TextLocation.cs": {
+    "mtime": 1782583629.7278829,
+    "ast_hash": "41b37ef32a039b88c8867fa3233ea228",
+    "semantic_hash": "41b37ef32a039b88c8867fa3233ea228"
+  },
+  "CSharp/Syntax/Tokens.cs": {
+    "mtime": 1782583629.7279356,
+    "ast_hash": "441133a8d35b79367e296e9a67395cd9",
+    "semantic_hash": "441133a8d35b79367e296e9a67395cd9"
+  },
+  "CSharp/Syntax/TupleAstType.cs": {
+    "mtime": 1782583629.7281132,
+    "ast_hash": "af6e6bd52ed2f710dbdc9025608deb60",
+    "semantic_hash": "af6e6bd52ed2f710dbdc9025608deb60"
+  },
+  "CSharp/Syntax/TypeMembers/Accessor.cs": {
+    "mtime": 1782583629.7281928,
+    "ast_hash": "07ae3785bc19b903144f03021934876e",
+    "semantic_hash": "07ae3785bc19b903144f03021934876e"
+  },
+  "CSharp/Syntax/TypeMembers/ConstructorDeclaration.cs": {
+    "mtime": 1782583629.7282681,
+    "ast_hash": "03bfa104dbe1f79b412a2591e89e8990",
+    "semantic_hash": "03bfa104dbe1f79b412a2591e89e8990"
+  },
+  "CSharp/Syntax/TypeMembers/DestructorDeclaration.cs": {
+    "mtime": 1782583629.7283397,
+    "ast_hash": "c3e4f142cdf18ba9fa050903036ac5bd",
+    "semantic_hash": "c3e4f142cdf18ba9fa050903036ac5bd"
+  },
+  "CSharp/Syntax/TypeMembers/EntityDeclaration.cs": {
+    "mtime": 1782583629.7284122,
+    "ast_hash": "1c0a7808f999a0cbcc02dc594aa87543",
+    "semantic_hash": "1c0a7808f999a0cbcc02dc594aa87543"
+  },
+  "CSharp/Syntax/TypeMembers/EnumMemberDeclaration.cs": {
+    "mtime": 1782583629.7284832,
+    "ast_hash": "c01d6bee89a8c7d452ed22713b87c5e9",
+    "semantic_hash": "c01d6bee89a8c7d452ed22713b87c5e9"
+  },
+  "CSharp/Syntax/TypeMembers/EventDeclaration.cs": {
+    "mtime": 1782583629.7285557,
+    "ast_hash": "362fe2104c32b907d28568221f79c55b",
+    "semantic_hash": "362fe2104c32b907d28568221f79c55b"
+  },
+  "CSharp/Syntax/TypeMembers/ExtensionDeclaration.cs": {
+    "mtime": 1782583629.7286353,
+    "ast_hash": "e87df2dfe402fdb4c6fa951ae8302c35",
+    "semantic_hash": "e87df2dfe402fdb4c6fa951ae8302c35"
+  },
+  "CSharp/Syntax/TypeMembers/FieldDeclaration.cs": {
+    "mtime": 1782583629.7287126,
+    "ast_hash": "764b6978bbbfffc40c2d0cc425f39f15",
+    "semantic_hash": "764b6978bbbfffc40c2d0cc425f39f15"
+  },
+  "CSharp/Syntax/TypeMembers/FixedFieldDeclaration.cs": {
+    "mtime": 1782583629.7288592,
+    "ast_hash": "2f14a75e4232a5bb098ff18e371f331a",
+    "semantic_hash": "2f14a75e4232a5bb098ff18e371f331a"
+  },
+  "CSharp/Syntax/TypeMembers/FixedVariableInitializer.cs": {
+    "mtime": 1782583629.728964,
+    "ast_hash": "18937995ae67c3ef97f6fd92a314e3f3",
+    "semantic_hash": "18937995ae67c3ef97f6fd92a314e3f3"
+  },
+  "CSharp/Syntax/TypeMembers/IndexerDeclaration.cs": {
+    "mtime": 1782583629.7290611,
+    "ast_hash": "819f901b9e60b124a71b04793c964e7f",
+    "semantic_hash": "819f901b9e60b124a71b04793c964e7f"
+  },
+  "CSharp/Syntax/TypeMembers/MethodDeclaration.cs": {
+    "mtime": 1782583629.7291398,
+    "ast_hash": "7d125738ef76c4eda799d3c8007554de",
+    "semantic_hash": "7d125738ef76c4eda799d3c8007554de"
+  },
+  "CSharp/Syntax/TypeMembers/OperatorDeclaration.cs": {
+    "mtime": 1782583629.7292697,
+    "ast_hash": "9b46375821cf1e9b92c046f27ceb1fe5",
+    "semantic_hash": "9b46375821cf1e9b92c046f27ceb1fe5"
+  },
+  "CSharp/Syntax/TypeMembers/ParameterDeclaration.cs": {
+    "mtime": 1782583629.7293472,
+    "ast_hash": "8866ba2f6ba6c299cd967952aa69a3ea",
+    "semantic_hash": "8866ba2f6ba6c299cd967952aa69a3ea"
+  },
+  "CSharp/Syntax/TypeMembers/PropertyDeclaration.cs": {
+    "mtime": 1782583629.7294304,
+    "ast_hash": "e4e62cea4879592f749c83c73d12fd9a",
+    "semantic_hash": "e4e62cea4879592f749c83c73d12fd9a"
+  },
+  "CSharp/Syntax/TypeMembers/VariableInitializer.cs": {
+    "mtime": 1782583629.7295117,
+    "ast_hash": "8d806b011ecb0cdc918fa0b73f96b66e",
+    "semantic_hash": "8d806b011ecb0cdc918fa0b73f96b66e"
+  },
+  "CSharp/Syntax/TypeSystemAstBuilder.cs": {
+    "mtime": 1785675140.8254042,
+    "ast_hash": "5cb98cb92ae972c9e63dce52ed052f30",
+    "semantic_hash": "5cb98cb92ae972c9e63dce52ed052f30"
+  },
+  "CSharp/Syntax/VariableDesignation.cs": {
+    "mtime": 1782583629.7298453,
+    "ast_hash": "e3cdfe1cb167323c904a6d611a62fa63",
+    "semantic_hash": "e3cdfe1cb167323c904a6d611a62fa63"
+  },
+  "CSharp/Transforms/AddCheckedBlocks.cs": {
+    "mtime": 1783839113.9717302,
+    "ast_hash": "dbfbe7294dd95f5a37d45f6052cbc48f",
+    "semantic_hash": "dbfbe7294dd95f5a37d45f6052cbc48f"
+  },
+  "CSharp/Transforms/AddXmlDocumentationTransform.cs": {
+    "mtime": 1785214355.9146297,
+    "ast_hash": "aef94013690da02960b59f912a6d96c5",
+    "semantic_hash": "aef94013690da02960b59f912a6d96c5"
+  },
+  "CSharp/Transforms/CombineQueryExpressions.cs": {
+    "mtime": 1783839113.9722488,
+    "ast_hash": "4e0808a8934fd2af3326cb470e458f7d",
+    "semantic_hash": "4e0808a8934fd2af3326cb470e458f7d"
+  },
+  "CSharp/Transforms/ContextTrackingVisitor.cs": {
+    "mtime": 1782583629.7302964,
+    "ast_hash": "36e4e3b8a348eb692bbfc77fd983d6c1",
+    "semantic_hash": "36e4e3b8a348eb692bbfc77fd983d6c1"
+  },
+  "CSharp/Transforms/CustomPatterns.cs": {
+    "mtime": 1782583629.7303884,
+    "ast_hash": "1c2f4fe9205395507c6b9f5d8639b4bc",
+    "semantic_hash": "1c2f4fe9205395507c6b9f5d8639b4bc"
+  },
+  "CSharp/Transforms/DeclareVariables.cs": {
+    "mtime": 1783839113.97241,
+    "ast_hash": "5b3076b808a3b15a8c7bc9ebf911f663",
+    "semantic_hash": "5b3076b808a3b15a8c7bc9ebf911f663"
+  },
+  "CSharp/Transforms/EscapeInvalidIdentifiers.cs": {
+    "mtime": 1783839113.9727554,
+    "ast_hash": "accd64acd5e44c6c8e543a2aadef1533",
+    "semantic_hash": "accd64acd5e44c6c8e543a2aadef1533"
+  },
+  "CSharp/Transforms/FixNameCollisions.cs": {
+    "mtime": 1783839113.9729514,
+    "ast_hash": "66be05a659e616f54c4f6f29ff62ba80",
+    "semantic_hash": "66be05a659e616f54c4f6f29ff62ba80"
+  },
+  "CSharp/Transforms/FlattenSwitchBlocks.cs": {
+    "mtime": 1783839113.9730265,
+    "ast_hash": "a98599009a1f0e2043220af3601df6af",
+    "semantic_hash": "a98599009a1f0e2043220af3601df6af"
+  },
+  "CSharp/Transforms/IAstTransform.cs": {
+    "mtime": 1782583629.730969,
+    "ast_hash": "567d98d47b18295881a91c29cdc6b53d",
+    "semantic_hash": "567d98d47b18295881a91c29cdc6b53d"
+  },
+  "CSharp/Transforms/IntroduceExtensionMethods.cs": {
+    "mtime": 1783839113.9731257,
+    "ast_hash": "2965dc9f688f0fd99189a356844111f9",
+    "semantic_hash": "2965dc9f688f0fd99189a356844111f9"
+  },
+  "CSharp/Transforms/IntroduceQueryExpressions.cs": {
+    "mtime": 1783839113.9732318,
+    "ast_hash": "5f90c6003c4ad3f2d6df118816b2ac63",
+    "semantic_hash": "5f90c6003c4ad3f2d6df118816b2ac63"
+  },
+  "CSharp/Transforms/IntroduceUnsafeModifier.cs": {
+    "mtime": 1784794597.2360208,
+    "ast_hash": "14c52f0bdc56af5e36c61d7c543568b2",
+    "semantic_hash": "14c52f0bdc56af5e36c61d7c543568b2"
+  },
+  "CSharp/Transforms/IntroduceUsingDeclarations.cs": {
+    "mtime": 1783839113.9737694,
+    "ast_hash": "e1c1bada44aad034a2014da2f9faa27f",
+    "semantic_hash": "e1c1bada44aad034a2014da2f9faa27f"
+  },
+  "CSharp/Transforms/NormalizeBlockStatements.cs": {
+    "mtime": 1783839113.9738681,
+    "ast_hash": "40069a50bdfe40861a7f0d340d94cd02",
+    "semantic_hash": "40069a50bdfe40861a7f0d340d94cd02"
+  },
+  "CSharp/Transforms/PatternStatementTransform.cs": {
+    "mtime": 1784794597.2363927,
+    "ast_hash": "b06ee5e73a3f158498da9adf99c5daf5",
+    "semantic_hash": "b06ee5e73a3f158498da9adf99c5daf5"
+  },
+  "CSharp/Transforms/PrettifyAssignments.cs": {
+    "mtime": 1785911489.232079,
+    "ast_hash": "42ab8fdffe4e2773af773f00aad4943b",
+    "semantic_hash": "42ab8fdffe4e2773af773f00aad4943b"
+  },
+  "CSharp/Transforms/RemoveCLSCompliantAttribute.cs": {
+    "mtime": 1782583629.7318249,
+    "ast_hash": "413de4f65b3e551d73f5cf368ef11da1",
+    "semantic_hash": "413de4f65b3e551d73f5cf368ef11da1"
+  },
+  "CSharp/Transforms/ReplaceMethodCallsWithOperators.cs": {
+    "mtime": 1785214355.9150245,
+    "ast_hash": "9b8f564a017b275b31873a3137eccd2e",
+    "semantic_hash": "9b8f564a017b275b31873a3137eccd2e"
+  },
+  "CSharp/Transforms/TransformContext.cs": {
+    "mtime": 1783839113.9749334,
+    "ast_hash": "23c9dbc105dc1a851885f9a6a40d8f89",
+    "semantic_hash": "23c9dbc105dc1a851885f9a6a40d8f89"
+  },
+  "CSharp/Transforms/TransformFieldAndConstructorInitializers.cs": {
+    "mtime": 1783839113.9750526,
+    "ast_hash": "70486911dc8e03c8739da361e8a74399",
+    "semantic_hash": "70486911dc8e03c8739da361e8a74399"
+  },
+  "CSharp/TranslatedExpression.cs": {
+    "mtime": 1782583629.7323105,
+    "ast_hash": "8852d952847a1aea046c4dfb2c85f55e",
+    "semantic_hash": "8852d952847a1aea046c4dfb2c85f55e"
+  },
+  "CSharp/TranslatedStatement.cs": {
+    "mtime": 1783839113.9751322,
+    "ast_hash": "8fc82c7cc7bc5aa962deb0671fe4419b",
+    "semantic_hash": "8fc82c7cc7bc5aa962deb0671fe4419b"
+  },
+  "CSharp/TranslationContext.cs": {
+    "mtime": 1782583629.7326732,
+    "ast_hash": "9136abaf6931366cd2ee0e4f10bcf208",
+    "semantic_hash": "9136abaf6931366cd2ee0e4f10bcf208"
+  },
+  "CSharp/TypeSystem/CSharpTypeResolveContext.cs": {
+    "mtime": 1781109418.7014327,
+    "ast_hash": "a92f4c3bdc1a0444efd053cf01d66390",
+    "semantic_hash": "a92f4c3bdc1a0444efd053cf01d66390"
+  },
+  "CSharp/TypeSystem/UsingScope.cs": {
+    "mtime": 1781109418.7015107,
+    "ast_hash": "fb5315b51505f8e984aa509c5ee3955f",
+    "semantic_hash": "fb5315b51505f8e984aa509c5ee3955f"
+  },
+  "DebugInfo/AsyncDebugInfo.cs": {
+    "mtime": 1783839113.975307,
+    "ast_hash": "7afdf019290469afb72887785d67331f",
+    "semantic_hash": "7afdf019290469afb72887785d67331f"
+  },
+  "DebugInfo/DebugInfoGenerator.cs": {
+    "mtime": 1782583629.7328253,
+    "ast_hash": "569199cea1531a3908da13e6c8abeb0b",
+    "semantic_hash": "569199cea1531a3908da13e6c8abeb0b"
+  },
+  "DebugInfo/IDebugInfoProvider.cs": {
+    "mtime": 1783839113.9753797,
+    "ast_hash": "4d8218e0c032a15842e74488cbd881ff",
+    "semantic_hash": "4d8218e0c032a15842e74488cbd881ff"
+  },
+  "DebugInfo/ImportScopeInfo.cs": {
+    "mtime": 1781109418.7018898,
+    "ast_hash": "22bfc11c7eba4786ead754656263d8ca",
+    "semantic_hash": "22bfc11c7eba4786ead754656263d8ca"
+  },
+  "DebugInfo/KnownGuids.cs": {
+    "mtime": 1783839113.9754608,
+    "ast_hash": "1d6f4042de8aaeb9ab0bb52a287ad629",
+    "semantic_hash": "1d6f4042de8aaeb9ab0bb52a287ad629"
+  },
+  "DebugInfo/PortablePdbWriter.cs": {
+    "mtime": 1782759897.5966444,
+    "ast_hash": "a27388f20230f09ce86cdab0ee63e8c7",
+    "semantic_hash": "a27388f20230f09ce86cdab0ee63e8c7"
+  },
+  "DebugInfo/SequencePoint.cs": {
+    "mtime": 1781109418.7021263,
+    "ast_hash": "0298ebe9fd2a75c82eb2655237196bd6",
+    "semantic_hash": "0298ebe9fd2a75c82eb2655237196bd6"
+  },
+  "DebugSteps/Stepper.cs": {
+    "mtime": 1783839113.9755628,
+    "ast_hash": "895db5cdc680917414f9edec008cb1a3",
+    "semantic_hash": "895db5cdc680917414f9edec008cb1a3"
+  },
+  "DecompilationProgress.cs": {
+    "mtime": 1781109418.7021954,
+    "ast_hash": "4c73e35ea1a619b73608f8e3a47a6f8d",
+    "semantic_hash": "4c73e35ea1a619b73608f8e3a47a6f8d"
+  },
+  "DecompileRun.cs": {
+    "mtime": 1784794597.2366269,
+    "ast_hash": "6e5d8aabd7bdd96b8482399e80b98b95",
+    "semantic_hash": "6e5d8aabd7bdd96b8482399e80b98b95"
+  },
+  "DecompilerException.cs": {
+    "mtime": 1781109418.7023327,
+    "ast_hash": "21567ceb8dee24eb5fd107f102991a65",
+    "semantic_hash": "21567ceb8dee24eb5fd107f102991a65"
+  },
+  "DecompilerSettings.cs": {
+    "mtime": 1783839113.975822,
+    "ast_hash": "2aa055ab512735ac971f5c3aa79d3fad",
+    "semantic_hash": "2aa055ab512735ac971f5c3aa79d3fad"
+  },
+  "Disassembler/DisassemblerHelpers.cs": {
+    "mtime": 1781109418.7027242,
+    "ast_hash": "a336db19067e977eac90c2f6315bcadb",
+    "semantic_hash": "a336db19067e977eac90c2f6315bcadb"
+  },
+  "Disassembler/DisassemblerSignatureTypeProvider.cs": {
+    "mtime": 1781109418.7028644,
+    "ast_hash": "a32fd245237e12943717315256a0ad37",
+    "semantic_hash": "a32fd245237e12943717315256a0ad37"
+  },
+  "Disassembler/IEntityProcessor.cs": {
+    "mtime": 1781109418.7029095,
+    "ast_hash": "0ae67301bd15c32da0d09713fff4f42f",
+    "semantic_hash": "0ae67301bd15c32da0d09713fff4f42f"
+  },
+  "Disassembler/ILParser.cs": {
+    "mtime": 1781109418.7029686,
+    "ast_hash": "7c735e0d71d8f6ecdae2322045979894",
+    "semantic_hash": "7c735e0d71d8f6ecdae2322045979894"
+  },
+  "Disassembler/ILStructure.cs": {
+    "mtime": 1781109418.7030869,
+    "ast_hash": "b6e222bb4ffdbdae6a9b6bb19e966842",
+    "semantic_hash": "b6e222bb4ffdbdae6a9b6bb19e966842"
+  },
+  "Disassembler/MethodBodyDisassembler.cs": {
+    "mtime": 1781109418.7031753,
+    "ast_hash": "b96309fcb8f2186ffec87f544f4a1153",
+    "semantic_hash": "b96309fcb8f2186ffec87f544f4a1153"
+  },
+  "Disassembler/OpCodeInfo.cs": {
+    "mtime": 1781109418.70324,
+    "ast_hash": "b58e36f1f1f2605aae3ced278e41b109",
+    "semantic_hash": "b58e36f1f1f2605aae3ced278e41b109"
+  },
+  "Disassembler/ReflectionDisassembler.cs": {
+    "mtime": 1781109418.7034183,
+    "ast_hash": "35d0d7f5d405792850867248d731caf8",
+    "semantic_hash": "35d0d7f5d405792850867248d731caf8"
+  },
+  "Disassembler/SortByNameProcessor.cs": {
+    "mtime": 1781109418.7034965,
+    "ast_hash": "6b3341bcf2f8111833ad4712a9f139c8",
+    "semantic_hash": "6b3341bcf2f8111833ad4712a9f139c8"
+  },
+  "Documentation/IdStringProvider.cs": {
+    "mtime": 1785500298.7834682,
+    "ast_hash": "f8b3fc4468b68346ea4debf12f568b88",
+    "semantic_hash": "f8b3fc4468b68346ea4debf12f568b88"
+  },
+  "Documentation/XmlDocLoader.cs": {
+    "mtime": 1781452071.5434732,
+    "ast_hash": "0bd214d5eea584e34cb187b40f0f50a9",
+    "semantic_hash": "0bd214d5eea584e34cb187b40f0f50a9"
+  },
+  "Documentation/XmlDocumentationElement.cs": {
+    "mtime": 1781109418.7039366,
+    "ast_hash": "73df5a7dbabf182fa0f7dc42c55e8af1",
+    "semantic_hash": "73df5a7dbabf182fa0f7dc42c55e8af1"
+  },
+  "Documentation/XmlDocumentationProvider.cs": {
+    "mtime": 1785500298.7836115,
+    "ast_hash": "82226b9b89ddecac7513147c45a155de",
+    "semantic_hash": "82226b9b89ddecac7513147c45a155de"
+  },
+  "FlowAnalysis/ControlFlowNode.cs": {
+    "mtime": 1781109418.7041302,
+    "ast_hash": "601cac9b19ffb0a82ae61b9da2483624",
+    "semantic_hash": "601cac9b19ffb0a82ae61b9da2483624"
+  },
+  "FlowAnalysis/DataFlowVisitor.cs": {
+    "mtime": 1781109418.7042391,
+    "ast_hash": "3a351688c196dbbd01cb2c7e07ee4a12",
+    "semantic_hash": "3a351688c196dbbd01cb2c7e07ee4a12"
+  },
+  "FlowAnalysis/DefiniteAssignmentVisitor.cs": {
+    "mtime": 1781109418.7043757,
+    "ast_hash": "620beb175adbe2c692a6029608b649cf",
+    "semantic_hash": "620beb175adbe2c692a6029608b649cf"
+  },
+  "FlowAnalysis/Dominance.cs": {
+    "mtime": 1781109418.704447,
+    "ast_hash": "7010f4aca5135568e8a1ebc656b25f5f",
+    "semantic_hash": "7010f4aca5135568e8a1ebc656b25f5f"
+  },
+  "FlowAnalysis/ReachingDefinitionsVisitor.cs": {
+    "mtime": 1781109418.7045488,
+    "ast_hash": "2ffb7f41d442b1fe32f989035285aead",
+    "semantic_hash": "2ffb7f41d442b1fe32f989035285aead"
+  },
+  "Humanizer/StringHumanizeExtensions.cs": {
+    "mtime": 1783839113.975917,
+    "ast_hash": "0a18df8eeca6f0a7ce8f27df3905bf9c",
+    "semantic_hash": "0a18df8eeca6f0a7ce8f27df3905bf9c"
+  },
+  "Humanizer/Vocabularies.cs": {
+    "mtime": 1783839113.9761193,
+    "ast_hash": "259d152ea0dc6dd184827a9d726474f7",
+    "semantic_hash": "259d152ea0dc6dd184827a9d726474f7"
+  },
+  "Humanizer/Vocabulary.cs": {
+    "mtime": 1783839113.9763498,
+    "ast_hash": "dbb31d4ae851076e86d1e3142802b1a8",
+    "semantic_hash": "dbb31d4ae851076e86d1e3142802b1a8"
+  },
+  "ICSharpCode.Decompiler.csproj": {
+    "mtime": 1784133595.7929468,
+    "ast_hash": "da13018a1b28a552c71690083f0556c9",
+    "semantic_hash": "da13018a1b28a552c71690083f0556c9"
+  },
+  "IL/BlockBuilder.cs": {
+    "mtime": 1781109418.7053127,
+    "ast_hash": "99008421d7ca919606a3ef9a80be4a98",
+    "semantic_hash": "99008421d7ca919606a3ef9a80be4a98"
+  },
+  "IL/ControlFlow/AsyncAwaitDecompiler.cs": {
+    "mtime": 1783839113.9766536,
+    "ast_hash": "2a44eb880c3328b37f235125288ffdb2",
+    "semantic_hash": "2a44eb880c3328b37f235125288ffdb2"
+  },
+  "IL/ControlFlow/AwaitInCatchTransform.cs": {
+    "mtime": 1781109418.7056353,
+    "ast_hash": "6e2ba88e94b3afd327ee5f5d2d33cfad",
+    "semantic_hash": "6e2ba88e94b3afd327ee5f5d2d33cfad"
+  },
+  "IL/ControlFlow/AwaitInFinallyTransform.cs": {
+    "mtime": 1781109418.705717,
+    "ast_hash": "f66df7ed7bfa992ab34997de170be1ba",
+    "semantic_hash": "f66df7ed7bfa992ab34997de170be1ba"
+  },
+  "IL/ControlFlow/ConditionDetection.cs": {
+    "mtime": 1781109418.7058184,
+    "ast_hash": "7f94c398a935e76c839512b256d07207",
+    "semantic_hash": "7f94c398a935e76c839512b256d07207"
+  },
+  "IL/ControlFlow/ControlFlowGraph.cs": {
+    "mtime": 1783839113.976981,
+    "ast_hash": "c367622dfd78537d69bcfbe084b856d2",
+    "semantic_hash": "c367622dfd78537d69bcfbe084b856d2"
+  },
+  "IL/ControlFlow/ControlFlowSimplification.cs": {
+    "mtime": 1783839113.9771004,
+    "ast_hash": "09eb7b75371a7777d9fc82a6efda532f",
+    "semantic_hash": "09eb7b75371a7777d9fc82a6efda532f"
+  },
+  "IL/ControlFlow/DetectPinnedRegions.cs": {
+    "mtime": 1781109418.706124,
+    "ast_hash": "ae12538c73cfdb5ce9a45b3ff61a492b",
+    "semantic_hash": "ae12538c73cfdb5ce9a45b3ff61a492b"
+  },
+  "IL/ControlFlow/ExitPoints.cs": {
+    "mtime": 1781109418.7062514,
+    "ast_hash": "fb0d4e57b7c0cf9a485a6f8dbc29818b",
+    "semantic_hash": "fb0d4e57b7c0cf9a485a6f8dbc29818b"
+  },
+  "IL/ControlFlow/LoopDetection.cs": {
+    "mtime": 1781109418.7063656,
+    "ast_hash": "92b4ba7fddc00d2f8c43b02b7986d78f",
+    "semantic_hash": "92b4ba7fddc00d2f8c43b02b7986d78f"
+  },
+  "IL/ControlFlow/RemoveRedundantReturn.cs": {
+    "mtime": 1781109418.7064333,
+    "ast_hash": "e7d3853b97d357b52b9c40d3a0c10d2d",
+    "semantic_hash": "e7d3853b97d357b52b9c40d3a0c10d2d"
+  },
+  "IL/ControlFlow/RuntimeAsyncExceptionRewriteTransform.cs": {
+    "mtime": 1781109418.7066193,
+    "ast_hash": "1fe45d5e6d8f9765f943a84d734ffca1",
+    "semantic_hash": "1fe45d5e6d8f9765f943a84d734ffca1"
+  },
+  "IL/ControlFlow/RuntimeAsyncManualAwaitTransform.cs": {
+    "mtime": 1781109418.7067132,
+    "ast_hash": "30d18dcb7aeee360deafd891c5a07cb2",
+    "semantic_hash": "30d18dcb7aeee360deafd891c5a07cb2"
+  },
+  "IL/ControlFlow/StateRangeAnalysis.cs": {
+    "mtime": 1781109418.7068381,
+    "ast_hash": "95efa779becc9f0e45935239b65a3248",
+    "semantic_hash": "95efa779becc9f0e45935239b65a3248"
+  },
+  "IL/ControlFlow/SwitchAnalysis.cs": {
+    "mtime": 1783839113.977318,
+    "ast_hash": "c9df1ea0e57a960e0e0f8f255672b864",
+    "semantic_hash": "c9df1ea0e57a960e0e0f8f255672b864"
+  },
+  "IL/ControlFlow/SwitchDetection.cs": {
+    "mtime": 1781452071.5438528,
+    "ast_hash": "b255ece7268d48054b6fc52959dee8a9",
+    "semantic_hash": "b255ece7268d48054b6fc52959dee8a9"
+  },
+  "IL/ControlFlow/SymbolicExecution.cs": {
+    "mtime": 1781109418.7071013,
+    "ast_hash": "1bb258a7aa2574aeb83f5267db0a420f",
+    "semantic_hash": "1bb258a7aa2574aeb83f5267db0a420f"
+  },
+  "IL/ControlFlow/YieldReturnDecompiler.cs": {
+    "mtime": 1784794597.2369106,
+    "ast_hash": "da20c902d11833d0381ba60d2dcbf6a3",
+    "semantic_hash": "da20c902d11833d0381ba60d2dcbf6a3"
+  },
+  "IL/ILAmbience.cs": {
+    "mtime": 1782583629.7334585,
+    "ast_hash": "13ec9d3500fd9c276a7e65ae91d81b14",
+    "semantic_hash": "13ec9d3500fd9c276a7e65ae91d81b14"
+  },
+  "IL/ILAstWritingOptions.cs": {
+    "mtime": 1781109418.7074025,
+    "ast_hash": "361af1d62de6236c3c19c3b6813e79df",
+    "semantic_hash": "361af1d62de6236c3c19c3b6813e79df"
+  },
+  "IL/ILInstructionExtensions.cs": {
+    "mtime": 1783839113.9774122,
+    "ast_hash": "7cc803783e384dced8e36f286baf8bc5",
+    "semantic_hash": "7cc803783e384dced8e36f286baf8bc5"
+  },
+  "IL/ILReader.cs": {
+    "mtime": 1781109418.707651,
+    "ast_hash": "41b25535c2c7dc4a94f51df9877e72e9",
+    "semantic_hash": "41b25535c2c7dc4a94f51df9877e72e9"
+  },
+  "IL/ILTypeExtensions.cs": {
+    "mtime": 1781109418.7077212,
+    "ast_hash": "948b8b3581ca0b5c85b49c321fbfcaf9",
+    "semantic_hash": "948b8b3581ca0b5c85b49c321fbfcaf9"
+  },
+  "IL/ILVariable.cs": {
+    "mtime": 1781109418.7078006,
+    "ast_hash": "9b047a0d2d9f5c7a189e47949a5a7b9a",
+    "semantic_hash": "9b047a0d2d9f5c7a189e47949a5a7b9a"
+  },
+  "IL/InstructionFlags.cs": {
+    "mtime": 1781109418.7078605,
+    "ast_hash": "bb425d7468e3e0abd194c514d7cea3d1",
+    "semantic_hash": "bb425d7468e3e0abd194c514d7cea3d1"
+  },
+  "IL/InstructionOutputExtensions.cs": {
+    "mtime": 1781109418.707948,
+    "ast_hash": "3b35bcfc03ebfc0d7262975055201093",
+    "semantic_hash": "3b35bcfc03ebfc0d7262975055201093"
+  },
+  "IL/Instructions.cs": {
+    "mtime": 1783839113.9779313,
+    "ast_hash": "1f8b02ddbef8b7a6d808b1f0ba1efcfe",
+    "semantic_hash": "1f8b02ddbef8b7a6d808b1f0ba1efcfe"
+  },
+  "IL/Instructions/Await.cs": {
+    "mtime": 1781109418.7087536,
+    "ast_hash": "2b7e0476740ae8c4714048417431cec6",
+    "semantic_hash": "2b7e0476740ae8c4714048417431cec6"
+  },
+  "IL/Instructions/BinaryNumericInstruction.cs": {
+    "mtime": 1783839113.9784193,
+    "ast_hash": "5fb81a40c3f04fb1936606bca2ae9e2e",
+    "semantic_hash": "5fb81a40c3f04fb1936606bca2ae9e2e"
+  },
+  "IL/Instructions/Block.cs": {
+    "mtime": 1783839113.9785302,
+    "ast_hash": "bb69d3b13ab5b2ae238a99ad1f8922f5",
+    "semantic_hash": "bb69d3b13ab5b2ae238a99ad1f8922f5"
+  },
+  "IL/Instructions/BlockContainer.cs": {
+    "mtime": 1783839113.978667,
+    "ast_hash": "d9bc4a2c094bd3a84638d9887b4808c1",
+    "semantic_hash": "d9bc4a2c094bd3a84638d9887b4808c1"
+  },
+  "IL/Instructions/Branch.cs": {
+    "mtime": 1783839113.9789934,
+    "ast_hash": "c57284259e2aefe8e3104c4a8dac5dd0",
+    "semantic_hash": "c57284259e2aefe8e3104c4a8dac5dd0"
+  },
+  "IL/Instructions/CallIndirect.cs": {
+    "mtime": 1783839113.979206,
+    "ast_hash": "dc2dea3b894c3c0afb40b7b660993ff7",
+    "semantic_hash": "dc2dea3b894c3c0afb40b7b660993ff7"
+  },
+  "IL/Instructions/CallInstruction.cs": {
+    "mtime": 1783839113.9794805,
+    "ast_hash": "c1cee80a64f9553df8a4f98bf282f82c",
+    "semantic_hash": "c1cee80a64f9553df8a4f98bf282f82c"
+  },
+  "IL/Instructions/Comp.cs": {
+    "mtime": 1783839113.979587,
+    "ast_hash": "ee4bfcc1ae367fa0d4d3903032648cda",
+    "semantic_hash": "ee4bfcc1ae367fa0d4d3903032648cda"
+  },
+  "IL/Instructions/CompoundAssignmentInstruction.cs": {
+    "mtime": 1783839113.9797015,
+    "ast_hash": "64838c0dc8613c9ec203337da5a6f850",
+    "semantic_hash": "64838c0dc8613c9ec203337da5a6f850"
+  },
+  "IL/Instructions/Conv.cs": {
+    "mtime": 1783839113.979831,
+    "ast_hash": "0cd26821b9caa33e1e019e150853a340",
+    "semantic_hash": "0cd26821b9caa33e1e019e150853a340"
+  },
+  "IL/Instructions/DeconstructInstruction.cs": {
+    "mtime": 1783839113.97995,
+    "ast_hash": "907ad554dbc54335daf77e337a071317",
+    "semantic_hash": "907ad554dbc54335daf77e337a071317"
+  },
+  "IL/Instructions/DeconstructResultInstruction.cs": {
+    "mtime": 1783839113.9800303,
+    "ast_hash": "01750153243ff144011cdb78624c45f2",
+    "semantic_hash": "01750153243ff144011cdb78624c45f2"
+  },
+  "IL/Instructions/DefaultValue.cs": {
+    "mtime": 1781109418.709682,
+    "ast_hash": "facd8c65e238131c6739bdda7163554d",
+    "semantic_hash": "facd8c65e238131c6739bdda7163554d"
+  },
+  "IL/Instructions/DynamicInstructions.cs": {
+    "mtime": 1783839113.9801404,
+    "ast_hash": "61e6a0ef76f1083b44382b8fb715b39b",
+    "semantic_hash": "61e6a0ef76f1083b44382b8fb715b39b"
+  },
+  "IL/Instructions/ExpressionTreeCast.cs": {
+    "mtime": 1783839113.9802387,
+    "ast_hash": "25cc29141a4a1b2b22badafd53c86702",
+    "semantic_hash": "25cc29141a4a1b2b22badafd53c86702"
+  },
+  "IL/Instructions/ILFunction.cs": {
+    "mtime": 1784794597.23711,
+    "ast_hash": "345844e6c4d058cf6c718523733d430a",
+    "semantic_hash": "345844e6c4d058cf6c718523733d430a"
+  },
+  "IL/Instructions/ILInstruction.cs": {
+    "mtime": 1783839113.980589,
+    "ast_hash": "bc7a0df4cca0076656d4b1b8818cc376",
+    "semantic_hash": "bc7a0df4cca0076656d4b1b8818cc376"
+  },
+  "IL/Instructions/ILVariableCollection.cs": {
+    "mtime": 1781109418.7100978,
+    "ast_hash": "d49a6d607815ffb2a5bf9cc6be512197",
+    "semantic_hash": "d49a6d607815ffb2a5bf9cc6be512197"
+  },
+  "IL/Instructions/IfInstruction.cs": {
+    "mtime": 1783839113.9808338,
+    "ast_hash": "374773c82bac0525089a6e6eec181153",
+    "semantic_hash": "374773c82bac0525089a6e6eec181153"
+  },
+  "IL/Instructions/InstructionCollection.cs": {
+    "mtime": 1781109418.7102864,
+    "ast_hash": "2afef51aeb65524c483a484f9ac2b6b1",
+    "semantic_hash": "2afef51aeb65524c483a484f9ac2b6b1"
+  },
+  "IL/Instructions/IsInst.cs": {
+    "mtime": 1781109418.7103617,
+    "ast_hash": "7bab6aa85a79200973ba683033a65263",
+    "semantic_hash": "7bab6aa85a79200973ba683033a65263"
+  },
+  "IL/Instructions/LdFlda.cs": {
+    "mtime": 1781109418.7104137,
+    "ast_hash": "7fbb89c6f4eb3ec8c9fde6fff15ee789",
+    "semantic_hash": "7fbb89c6f4eb3ec8c9fde6fff15ee789"
+  },
+  "IL/Instructions/LdLen.cs": {
+    "mtime": 1783839113.9809465,
+    "ast_hash": "0d785ddbd65ca7f27ced6554fc32bb36",
+    "semantic_hash": "0d785ddbd65ca7f27ced6554fc32bb36"
+  },
+  "IL/Instructions/Leave.cs": {
+    "mtime": 1783839113.9811597,
+    "ast_hash": "8a76bb40c1563395d6f3074f002bbfdb",
+    "semantic_hash": "8a76bb40c1563395d6f3074f002bbfdb"
+  },
+  "IL/Instructions/LockInstruction.cs": {
+    "mtime": 1783839113.9812531,
+    "ast_hash": "5dcd44073bbe58d23fe4f19741bb2e50",
+    "semantic_hash": "5dcd44073bbe58d23fe4f19741bb2e50"
+  },
+  "IL/Instructions/LogicInstructions.cs": {
+    "mtime": 1781109418.7108915,
+    "ast_hash": "b223755054dc0b82f79f80c2fcdde141",
+    "semantic_hash": "b223755054dc0b82f79f80c2fcdde141"
+  },
+  "IL/Instructions/MatchInstruction.cs": {
+    "mtime": 1783839113.9813724,
+    "ast_hash": "5c765ff0c68945de3e52d576f437c4ad",
+    "semantic_hash": "5c765ff0c68945de3e52d576f437c4ad"
+  },
+  "IL/Instructions/MemoryInstructions.cs": {
+    "mtime": 1783839113.9816906,
+    "ast_hash": "ee02f2ccfe848a3a38f513bb914f6847",
+    "semantic_hash": "ee02f2ccfe848a3a38f513bb914f6847"
+  },
+  "IL/Instructions/NullCoalescingInstruction.cs": {
+    "mtime": 1783839113.9817748,
+    "ast_hash": "5ab833386daa0267fcc1079fbe848d8c",
+    "semantic_hash": "5ab833386daa0267fcc1079fbe848d8c"
+  },
+  "IL/Instructions/NullableInstructions.cs": {
+    "mtime": 1783839113.9819937,
+    "ast_hash": "bf8f8839bc2e8ababb9e988b4d8149ce",
+    "semantic_hash": "bf8f8839bc2e8ababb9e988b4d8149ce"
+  },
+  "IL/Instructions/PatternMatching.cs": {
+    "mtime": 1781109418.711281,
+    "ast_hash": "32ffa6f52e5122e7989d67bebebe918c",
+    "semantic_hash": "32ffa6f52e5122e7989d67bebebe918c"
+  },
+  "IL/Instructions/SimpleInstruction.cs": {
+    "mtime": 1783839113.98209,
+    "ast_hash": "316999589608c31aab7d6e0cc0dd8eaa",
+    "semantic_hash": "316999589608c31aab7d6e0cc0dd8eaa"
+  },
+  "IL/Instructions/StLoc.cs": {
+    "mtime": 1781109418.7113922,
+    "ast_hash": "102fd208a37f204aa7a813d9a9b55218",
+    "semantic_hash": "102fd208a37f204aa7a813d9a9b55218"
+  },
+  "IL/Instructions/StringToInt.cs": {
+    "mtime": 1783839113.9821649,
+    "ast_hash": "67970aad65de3fbcbc25102ab44ec3f4",
+    "semantic_hash": "67970aad65de3fbcbc25102ab44ec3f4"
+  },
+  "IL/Instructions/SwitchInstruction.cs": {
+    "mtime": 1783839113.982666,
+    "ast_hash": "9d6448a32f792942ac2995dda724f7a7",
+    "semantic_hash": "9d6448a32f792942ac2995dda724f7a7"
+  },
+  "IL/Instructions/TryInstruction.cs": {
+    "mtime": 1783839113.9828458,
+    "ast_hash": "a4d50171ad34b3b3e1075a69e3cf7dd4",
+    "semantic_hash": "a4d50171ad34b3b3e1075a69e3cf7dd4"
+  },
+  "IL/Instructions/UnaryInstruction.cs": {
+    "mtime": 1783839113.9830065,
+    "ast_hash": "92b4e4b2de194ca7202c7417192de03d",
+    "semantic_hash": "92b4e4b2de194ca7202c7417192de03d"
+  },
+  "IL/Instructions/UsingInstruction.cs": {
+    "mtime": 1783839113.9830813,
+    "ast_hash": "d0afc20379cec0912e27e7f739abb97d",
+    "semantic_hash": "d0afc20379cec0912e27e7f739abb97d"
+  },
+  "IL/Patterns/AnyNode.cs": {
+    "mtime": 1783839113.9831724,
+    "ast_hash": "3a7078ae82ef4b95c6bf61f865aa7d4e",
+    "semantic_hash": "3a7078ae82ef4b95c6bf61f865aa7d4e"
+  },
+  "IL/Patterns/ListMatch.cs": {
+    "mtime": 1781109418.712101,
+    "ast_hash": "98b5cef5824e229d2d562a77c88e870e",
+    "semantic_hash": "98b5cef5824e229d2d562a77c88e870e"
+  },
+  "IL/Patterns/Match.cs": {
+    "mtime": 1781109418.7121499,
+    "ast_hash": "bd5e7b50a7704a20a26915dd0110a10b",
+    "semantic_hash": "bd5e7b50a7704a20a26915dd0110a10b"
+  },
+  "IL/PointerArithmeticOffset.cs": {
+    "mtime": 1781109418.7122107,
+    "ast_hash": "86133a8f74b145aa4d3f762c7acb457b",
+    "semantic_hash": "86133a8f74b145aa4d3f762c7acb457b"
+  },
+  "IL/PrimitiveType.cs": {
+    "mtime": 1781109418.7122579,
+    "ast_hash": "ad5d0457f31bd9ed14348e024da816f6",
+    "semantic_hash": "ad5d0457f31bd9ed14348e024da816f6"
+  },
+  "IL/SemanticHelper.cs": {
+    "mtime": 1781109418.71257,
+    "ast_hash": "9c7da46e1d37c4b2f635199ba0483c05",
+    "semantic_hash": "9c7da46e1d37c4b2f635199ba0483c05"
+  },
+  "IL/SlotInfo.cs": {
+    "mtime": 1781109418.71264,
+    "ast_hash": "b6c34b27c158ff1b9304de987d2fbe16",
+    "semantic_hash": "b6c34b27c158ff1b9304de987d2fbe16"
+  },
+  "IL/StackType.cs": {
+    "mtime": 1781109418.7126992,
+    "ast_hash": "c9a88bafc8714c04e52dbd04a8b4f411",
+    "semantic_hash": "c9a88bafc8714c04e52dbd04a8b4f411"
+  },
+  "IL/Transforms/AssignVariableNames.cs": {
+    "mtime": 1781109418.7128506,
+    "ast_hash": "912d1fb3385aafa7bea392cfa8eb1acd",
+    "semantic_hash": "912d1fb3385aafa7bea392cfa8eb1acd"
+  },
+  "IL/Transforms/BlockTransform.cs": {
+    "mtime": 1783839113.9843318,
+    "ast_hash": "b3fefc7f4e61ceda9bb16a20323978d1",
+    "semantic_hash": "b3fefc7f4e61ceda9bb16a20323978d1"
+  },
+  "IL/Transforms/CachedDelegateInitialization.cs": {
+    "mtime": 1783839113.9844873,
+    "ast_hash": "034e62116d5c241232f06933dc1ff532",
+    "semantic_hash": "034e62116d5c241232f06933dc1ff532"
+  },
+  "IL/Transforms/CachedReadOnlySpanInitialization.cs": {
+    "mtime": 1784133595.793049,
+    "ast_hash": "3195f0114284b2c0f2449a9f82ee5e4a",
+    "semantic_hash": "3195f0114284b2c0f2449a9f82ee5e4a"
+  },
+  "IL/Transforms/CombineExitsTransform.cs": {
+    "mtime": 1781109418.7130668,
+    "ast_hash": "5576fb480b0ccc8f00875dc9d5344cee",
+    "semantic_hash": "5576fb480b0ccc8f00875dc9d5344cee"
+  },
+  "IL/Transforms/CopyPropagation.cs": {
+    "mtime": 1783839113.9847174,
+    "ast_hash": "af5b4abc1e15b5f00a63150634084374",
+    "semantic_hash": "af5b4abc1e15b5f00a63150634084374"
+  },
+  "IL/Transforms/DeconstructionTransform.cs": {
+    "mtime": 1785764571.5032568,
+    "ast_hash": "1e8a5ecd55ce2b7da50bada64513d303",
+    "semantic_hash": "1e8a5ecd55ce2b7da50bada64513d303"
+  },
+  "IL/Transforms/DelegateConstruction.cs": {
+    "mtime": 1783839113.9851034,
+    "ast_hash": "853a7125e5f7512fee5853f8826749aa",
+    "semantic_hash": "853a7125e5f7512fee5853f8826749aa"
+  },
+  "IL/Transforms/DetectCatchWhenConditionBlocks.cs": {
+    "mtime": 1783839113.985212,
+    "ast_hash": "ea18dbe2296ca1b8f43ca84193781778",
+    "semantic_hash": "ea18dbe2296ca1b8f43ca84193781778"
+  },
+  "IL/Transforms/DynamicCallSiteTransform.cs": {
+    "mtime": 1783839113.9853237,
+    "ast_hash": "91306800d6c75357de20fe28dcd228c8",
+    "semantic_hash": "91306800d6c75357de20fe28dcd228c8"
+  },
+  "IL/Transforms/DynamicIsEventAssignmentTransform.cs": {
+    "mtime": 1783839113.9854593,
+    "ast_hash": "b8c13fe3057dba23de52dd6867fc5598",
+    "semantic_hash": "b8c13fe3057dba23de52dd6867fc5598"
+  },
+  "IL/Transforms/EarlyExpressionTransforms.cs": {
+    "mtime": 1783839113.9856577,
+    "ast_hash": "80eea8d8acd6775970210857c61991dd",
+    "semantic_hash": "80eea8d8acd6775970210857c61991dd"
+  },
+  "IL/Transforms/ExpressionTransforms.cs": {
+    "mtime": 1783839113.9858005,
+    "ast_hash": "f8dcf5363b27ef054c0ea119cdf366d4",
+    "semantic_hash": "f8dcf5363b27ef054c0ea119cdf366d4"
+  },
+  "IL/Transforms/FixRemainingIncrements.cs": {
+    "mtime": 1783839113.9858937,
+    "ast_hash": "8fa83954ff7782b1e60443a7f71db54e",
+    "semantic_hash": "8fa83954ff7782b1e60443a7f71db54e"
+  },
+  "IL/Transforms/HighLevelLoopTransform.cs": {
+    "mtime": 1783839113.9860096,
+    "ast_hash": "6d52840c74c841d0c66d1cf5e2b6420b",
+    "semantic_hash": "6d52840c74c841d0c66d1cf5e2b6420b"
+  },
+  "IL/Transforms/IILTransform.cs": {
+    "mtime": 1783839113.986317,
+    "ast_hash": "e82a3b97015b2a904ed2da7bf3074b4b",
+    "semantic_hash": "e82a3b97015b2a904ed2da7bf3074b4b"
+  },
+  "IL/Transforms/ILExtraction.cs": {
+    "mtime": 1781109418.7142017,
+    "ast_hash": "bb52fa2dbefe9ad0dea891d76d0dd68c",
+    "semantic_hash": "bb52fa2dbefe9ad0dea891d76d0dd68c"
+  },
+  "IL/Transforms/ILInlining.cs": {
+    "mtime": 1783839113.986563,
+    "ast_hash": "1a0dfdf35a33d39f619c0842e570dd72",
+    "semantic_hash": "1a0dfdf35a33d39f619c0842e570dd72"
+  },
+  "IL/Transforms/IndexRangeTransform.cs": {
+    "mtime": 1783839113.9866934,
+    "ast_hash": "bc131a17507b11d30977038894fcb718",
+    "semantic_hash": "bc131a17507b11d30977038894fcb718"
+  },
+  "IL/Transforms/InlineArrayTransform.cs": {
+    "mtime": 1783839113.987015,
+    "ast_hash": "a5b866882395b4c93b97bdf3e556f39d",
+    "semantic_hash": "a5b866882395b4c93b97bdf3e556f39d"
+  },
+  "IL/Transforms/InlineReturnTransform.cs": {
+    "mtime": 1781109418.7145884,
+    "ast_hash": "e80cbea41578ded2b3347b37dbdc0f50",
+    "semantic_hash": "e80cbea41578ded2b3347b37dbdc0f50"
+  },
+  "IL/Transforms/InterpolatedStringTransform.cs": {
+    "mtime": 1783839113.9872317,
+    "ast_hash": "1054c390a0439ab5174c8de5c3b8e944",
+    "semantic_hash": "1054c390a0439ab5174c8de5c3b8e944"
+  },
+  "IL/Transforms/IntroduceDynamicTypeOnLocals.cs": {
+    "mtime": 1783839113.987325,
+    "ast_hash": "cb34709384866d5f62b0687340f65563",
+    "semantic_hash": "cb34709384866d5f62b0687340f65563"
+  },
+  "IL/Transforms/IntroduceNativeIntTypeOnLocals.cs": {
+    "mtime": 1781109418.714758,
+    "ast_hash": "628e5da9955bc02b47dee0b2ab5fcac8",
+    "semantic_hash": "628e5da9955bc02b47dee0b2ab5fcac8"
+  },
+  "IL/Transforms/IntroduceRefReadOnlyModifierOnLocals.cs": {
+    "mtime": 1781109418.7148101,
+    "ast_hash": "74f1096f866b854ae5f289be4817c98d",
+    "semantic_hash": "74f1096f866b854ae5f289be4817c98d"
+  },
+  "IL/Transforms/LdLocaDupInitObjTransform.cs": {
+    "mtime": 1783839113.9874244,
+    "ast_hash": "570d7ae6976298c61b6a64c9a116a3cd",
+    "semantic_hash": "570d7ae6976298c61b6a64c9a116a3cd"
+  },
+  "IL/Transforms/LocalFunctionDecompiler.cs": {
+    "mtime": 1783839113.9875658,
+    "ast_hash": "2007dde56d5b258ac387f82196f7a627",
+    "semantic_hash": "2007dde56d5b258ac387f82196f7a627"
+  },
+  "IL/Transforms/LockTransform.cs": {
+    "mtime": 1783839113.9877098,
+    "ast_hash": "0bab3d32a62d514b776a90a2c504ca1a",
+    "semantic_hash": "0bab3d32a62d514b776a90a2c504ca1a"
+  },
+  "IL/Transforms/NamedArgumentTransform.cs": {
+    "mtime": 1783839113.9879222,
+    "ast_hash": "dbbaa7c1c7da58db52169237543736ae",
+    "semantic_hash": "dbbaa7c1c7da58db52169237543736ae"
+  },
+  "IL/Transforms/NullCoalescingTransform.cs": {
+    "mtime": 1783839113.9880326,
+    "ast_hash": "951196a69bb3bc3a713185bdc2fd1a78",
+    "semantic_hash": "951196a69bb3bc3a713185bdc2fd1a78"
+  },
+  "IL/Transforms/NullPropagationTransform.cs": {
+    "mtime": 1783839113.9881485,
+    "ast_hash": "9f88532f2bb8375f8099812cbffe7a47",
+    "semantic_hash": "9f88532f2bb8375f8099812cbffe7a47"
+  },
+  "IL/Transforms/NullableLiftingTransform.cs": {
+    "mtime": 1783839113.9882913,
+    "ast_hash": "9b629810536f1f9447db9b1170668ddb",
+    "semantic_hash": "9b629810536f1f9447db9b1170668ddb"
+  },
+  "IL/Transforms/PatternMatchingTransform.cs": {
+    "mtime": 1783839113.9884346,
+    "ast_hash": "ef395e26f23bf84fc587cab3257ae4e1",
+    "semantic_hash": "ef395e26f23bf84fc587cab3257ae4e1"
+  },
+  "IL/Transforms/ProxyCallReplacer.cs": {
+    "mtime": 1783839113.9886706,
+    "ast_hash": "491ff1b00060f723ce4ce54544ab63f7",
+    "semantic_hash": "491ff1b00060f723ce4ce54544ab63f7"
+  },
+  "IL/Transforms/ReduceNestingTransform.cs": {
+    "mtime": 1784794597.2372367,
+    "ast_hash": "536e43158ab6a97a9d5d4842b220e803",
+    "semantic_hash": "536e43158ab6a97a9d5d4842b220e803"
+  },
+  "IL/Transforms/RemoveDeadVariableInit.cs": {
+    "mtime": 1783839113.988988,
+    "ast_hash": "5817f0d07ee767e4f4f2f3c7c00cc413",
+    "semantic_hash": "5817f0d07ee767e4f4f2f3c7c00cc413"
+  },
+  "IL/Transforms/RemoveInfeasiblePathTransform.cs": {
+    "mtime": 1783839113.9890678,
+    "ast_hash": "dea6bb3085c649253cb0370baba50b53",
+    "semantic_hash": "dea6bb3085c649253cb0370baba50b53"
+  },
+  "IL/Transforms/RemoveUnconstrainedGenericReferenceTypeCheck.cs": {
+    "mtime": 1783839113.9892824,
+    "ast_hash": "6f183915a7fb418f4cbfe20c14f8b3a8",
+    "semantic_hash": "6f183915a7fb418f4cbfe20c14f8b3a8"
+  },
+  "IL/Transforms/SplitVariables.cs": {
+    "mtime": 1781109418.7160416,
+    "ast_hash": "bffd96c2a361e470103b7490518a80e7",
+    "semantic_hash": "bffd96c2a361e470103b7490518a80e7"
+  },
+  "IL/Transforms/StatementTransform.cs": {
+    "mtime": 1781109418.7163718,
+    "ast_hash": "bbc3356b0ef9f85c6509981da45f9f60",
+    "semantic_hash": "bbc3356b0ef9f85c6509981da45f9f60"
+  },
+  "IL/Transforms/SwitchOnNullableTransform.cs": {
+    "mtime": 1781109418.716616,
+    "ast_hash": "8a4a1d3f3b84464a815f51358429a3ee",
+    "semantic_hash": "8a4a1d3f3b84464a815f51358429a3ee"
+  },
+  "IL/Transforms/SwitchOnStringTransform.cs": {
+    "mtime": 1784133595.7932673,
+    "ast_hash": "daa955f562fc5fac9f02a7bcd8423e5b",
+    "semantic_hash": "daa955f562fc5fac9f02a7bcd8423e5b"
+  },
+  "IL/Transforms/TransformArrayInitializers.cs": {
+    "mtime": 1783839113.9898372,
+    "ast_hash": "94f525a1e56da26b6a48db95d021ba15",
+    "semantic_hash": "94f525a1e56da26b6a48db95d021ba15"
+  },
+  "IL/Transforms/TransformAssignment.cs": {
+    "mtime": 1783839113.9901106,
+    "ast_hash": "c10910ac97bfd81a271dfb8e7a67ca13",
+    "semantic_hash": "c10910ac97bfd81a271dfb8e7a67ca13"
+  },
+  "IL/Transforms/TransformCollectionAndObjectInitializers.cs": {
+    "mtime": 1783839113.990224,
+    "ast_hash": "7b9af99cd2def6a41690e6d73ebf303c",
+    "semantic_hash": "7b9af99cd2def6a41690e6d73ebf303c"
+  },
+  "IL/Transforms/TransformDisplayClassUsage.cs": {
+    "mtime": 1785500298.7838852,
+    "ast_hash": "e3eb040de83d29c7dd7a65a83b42138b",
+    "semantic_hash": "e3eb040de83d29c7dd7a65a83b42138b"
+  },
+  "IL/Transforms/TransformExpressionTrees.cs": {
+    "mtime": 1783839113.9905396,
+    "ast_hash": "20ef133fb3d1f732e9ae40b51669088e",
+    "semantic_hash": "20ef133fb3d1f732e9ae40b51669088e"
+  },
+  "IL/Transforms/TupleTransform.cs": {
+    "mtime": 1781109418.7176044,
+    "ast_hash": "6193b4d143d66ed1ad295d8cb4c61036",
+    "semantic_hash": "6193b4d143d66ed1ad295d8cb4c61036"
+  },
+  "IL/Transforms/UserDefinedLogicTransform.cs": {
+    "mtime": 1783839113.9906561,
+    "ast_hash": "5e4425a8c6118e3100986e16625c3baa",
+    "semantic_hash": "5e4425a8c6118e3100986e16625c3baa"
+  },
+  "IL/Transforms/UsingTransform.cs": {
+    "mtime": 1783839113.9907634,
+    "ast_hash": "51dfa0067e09d404cd0bf3e86a92b23c",
+    "semantic_hash": "51dfa0067e09d404cd0bf3e86a92b23c"
+  },
+  "Instrumentation/DecompilerEventSource.cs": {
+    "mtime": 1784794597.2374084,
+    "ast_hash": "b802a048e39b5f82fff2f90c53c4c7fb",
+    "semantic_hash": "b802a048e39b5f82fff2f90c53c4c7fb"
+  },
+  "Metadata/AssemblyReferences.cs": {
+    "mtime": 1785500298.7841914,
+    "ast_hash": "455e422ad6bde55d5d8203a56df7f086",
+    "semantic_hash": "455e422ad6bde55d5d8203a56df7f086"
+  },
+  "Metadata/CodeMappingInfo.cs": {
+    "mtime": 1781109418.7181695,
+    "ast_hash": "059c5b7e48d0b755f8b3cc5980c0f6c5",
+    "semantic_hash": "059c5b7e48d0b755f8b3cc5980c0f6c5"
+  },
+  "Metadata/CustomAttributeDecoder.cs": {
+    "mtime": 1781109418.7182364,
+    "ast_hash": "ae575297b76ae46808c3e53a7a70978e",
+    "semantic_hash": "ae575297b76ae46808c3e53a7a70978e"
+  },
+  "Metadata/DotNetCorePathFinder.cs": {
+    "mtime": 1781109418.7183478,
+    "ast_hash": "950f4958b3f0c214120f8c5bc077e0a2",
+    "semantic_hash": "950f4958b3f0c214120f8c5bc077e0a2"
+  },
+  "Metadata/DotNetCorePathFinderExtensions.cs": {
+    "mtime": 1781109418.7184591,
+    "ast_hash": "a14b1c416c1263b0a160d21a782c90e5",
+    "semantic_hash": "a14b1c416c1263b0a160d21a782c90e5"
+  },
+  "Metadata/EnumUnderlyingTypeResolveException.cs": {
+    "mtime": 1781109418.7186046,
+    "ast_hash": "f608b950fa0020e0e351facc07e300ea",
+    "semantic_hash": "f608b950fa0020e0e351facc07e300ea"
+  },
+  "Metadata/ExportedTypeMetadata.cs": {
+    "mtime": 1781109418.7186558,
+    "ast_hash": "974a45b6f99c07dea3d4cb9e7ce03f50",
+    "semantic_hash": "974a45b6f99c07dea3d4cb9e7ce03f50"
+  },
+  "Metadata/FindTypeDecoder.cs": {
+    "mtime": 1781109418.7187145,
+    "ast_hash": "5a1c6e626b4fc9f82a34ec8b025ee6ac",
+    "semantic_hash": "5a1c6e626b4fc9f82a34ec8b025ee6ac"
+  },
+  "Metadata/FullTypeNameSignatureDecoder.cs": {
+    "mtime": 1781109418.718763,
+    "ast_hash": "16ab2a9f5d744bb1a3a447be8c541e91",
+    "semantic_hash": "16ab2a9f5d744bb1a3a447be8c541e91"
+  },
+  "Metadata/ILOpCodes.cs": {
+    "mtime": 1781109418.718865,
+    "ast_hash": "e4ab740f8203886356e23a251a098a14",
+    "semantic_hash": "e4ab740f8203886356e23a251a098a14"
+  },
+  "Metadata/LightJson/JsonArray.cs": {
+    "mtime": 1781109418.7190118,
+    "ast_hash": "8d13253187b063de04aa39c29ce4111e",
+    "semantic_hash": "8d13253187b063de04aa39c29ce4111e"
+  },
+  "Metadata/LightJson/JsonObject.cs": {
+    "mtime": 1781109418.7190673,
+    "ast_hash": "6dff1cdba8e0849a5c41a53522f22243",
+    "semantic_hash": "6dff1cdba8e0849a5c41a53522f22243"
+  },
+  "Metadata/LightJson/JsonValue.cs": {
+    "mtime": 1781109418.7191486,
+    "ast_hash": "ed1d718d2efc34e66a01c71912d72f35",
+    "semantic_hash": "ed1d718d2efc34e66a01c71912d72f35"
+  },
+  "Metadata/LightJson/JsonValueType.cs": {
+    "mtime": 1781109418.7192032,
+    "ast_hash": "daa4afbc1175cfa88fcd59f854b8c1f0",
+    "semantic_hash": "daa4afbc1175cfa88fcd59f854b8c1f0"
+  },
+  "Metadata/LightJson/Serialization/JsonParseException.cs": {
+    "mtime": 1781109418.7192955,
+    "ast_hash": "186047efca1f217ea1103a0206123ce7",
+    "semantic_hash": "186047efca1f217ea1103a0206123ce7"
+  },
+  "Metadata/LightJson/Serialization/JsonReader.cs": {
+    "mtime": 1781109418.7194057,
+    "ast_hash": "a5d66dbb103c179c3174167c7400dd28",
+    "semantic_hash": "a5d66dbb103c179c3174167c7400dd28"
+  },
+  "Metadata/LightJson/Serialization/TextPosition.cs": {
+    "mtime": 1781109418.7194512,
+    "ast_hash": "842143385568d0bd9284e92058aace8c",
+    "semantic_hash": "842143385568d0bd9284e92058aace8c"
+  },
+  "Metadata/LightJson/Serialization/TextScanner.cs": {
+    "mtime": 1781109418.71951,
+    "ast_hash": "c4e971db25d3a85b3e099e6e483f8e68",
+    "semantic_hash": "c4e971db25d3a85b3e099e6e483f8e68"
+  },
+  "Metadata/MemberReferenceMetadata.cs": {
+    "mtime": 1781109418.7195694,
+    "ast_hash": "a25c8b568e0f457f37d9888e6df3b030",
+    "semantic_hash": "a25c8b568e0f457f37d9888e6df3b030"
+  },
+  "Metadata/MetadataExtensions.cs": {
+    "mtime": 1785675140.82614,
+    "ast_hash": "935074798364974a114d654c9d677fb2",
+    "semantic_hash": "935074798364974a114d654c9d677fb2"
+  },
+  "Metadata/MetadataFile.cs": {
+    "mtime": 1781109418.7197616,
+    "ast_hash": "cdc217fca695b82fd1e347be8d21cc7a",
+    "semantic_hash": "cdc217fca695b82fd1e347be8d21cc7a"
+  },
+  "Metadata/MetadataGenericContext.cs": {
+    "mtime": 1781109418.7198107,
+    "ast_hash": "7edb6d0d93742655747d798d85ff695e",
+    "semantic_hash": "7edb6d0d93742655747d798d85ff695e"
+  },
+  "Metadata/MetadataTokenHelpers.cs": {
+    "mtime": 1781109418.7199435,
+    "ast_hash": "903dee4e283bfcc6a80201aaa4cc75b1",
+    "semantic_hash": "903dee4e283bfcc6a80201aaa4cc75b1"
+  },
+  "Metadata/MethodSemanticsLookup.cs": {
+    "mtime": 1781109418.7199981,
+    "ast_hash": "8c29a8d49b066d368bb4887052b67ca8",
+    "semantic_hash": "8c29a8d49b066d368bb4887052b67ca8"
+  },
+  "Metadata/ModuleReferenceMetadata.cs": {
+    "mtime": 1781109418.720051,
+    "ast_hash": "7fefbae83c3b086952438e0f7250b492",
+    "semantic_hash": "7fefbae83c3b086952438e0f7250b492"
+  },
+  "Metadata/OperandType.cs": {
+    "mtime": 1781109418.720106,
+    "ast_hash": "2326238346bb078421442b693b1cf110",
+    "semantic_hash": "2326238346bb078421442b693b1cf110"
+  },
+  "Metadata/PEFile.cs": {
+    "mtime": 1781109418.720175,
+    "ast_hash": "438ddb5c978423153a5960f2e9641517",
+    "semantic_hash": "438ddb5c978423153a5960f2e9641517"
+  },
+  "Metadata/PropertyAndEventBackingFieldLookup.cs": {
+    "mtime": 1781109418.7202308,
+    "ast_hash": "de3a5759b4cb737677c0fb7ca136301c",
+    "semantic_hash": "de3a5759b4cb737677c0fb7ca136301c"
+  },
+  "Metadata/ReferenceLoadInfo.cs": {
+    "mtime": 1781109418.7202795,
+    "ast_hash": "70143deaa247bf3fe92264d6fe7b4b88",
+    "semantic_hash": "70143deaa247bf3fe92264d6fe7b4b88"
+  },
+  "Metadata/Resource.cs": {
+    "mtime": 1781109418.7203362,
+    "ast_hash": "053c88c1a12c7848fc9e0ab3f25eb23e",
+    "semantic_hash": "053c88c1a12c7848fc9e0ab3f25eb23e"
+  },
+  "Metadata/SignatureBlobComparer.cs": {
+    "mtime": 1781109418.7204413,
+    "ast_hash": "ac3010a52d168a698ff863cb21686806",
+    "semantic_hash": "ac3010a52d168a698ff863cb21686806"
+  },
+  "Metadata/TypeReferenceMetadata.cs": {
+    "mtime": 1781109418.720486,
+    "ast_hash": "e21f6611b88a809d77b746c4aca8a778",
+    "semantic_hash": "e21f6611b88a809d77b746c4aca8a778"
+  },
+  "Metadata/UniversalAssemblyResolver.cs": {
+    "mtime": 1784794597.2375543,
+    "ast_hash": "42024e5a82d9bd30ec3c73b4d593103d",
+    "semantic_hash": "42024e5a82d9bd30ec3c73b4d593103d"
+  },
+  "Metadata/UnresolvedAssemblyNameReference.cs": {
+    "mtime": 1781109418.7207139,
+    "ast_hash": "60a48b86d4dff7d2d72491506c4412f1",
+    "semantic_hash": "60a48b86d4dff7d2d72491506c4412f1"
+  },
+  "Metadata/WebCilFile.cs": {
+    "mtime": 1783839113.9913816,
+    "ast_hash": "da1bac03d694d44cc20d7026b37995a5",
+    "semantic_hash": "da1bac03d694d44cc20d7026b37995a5"
+  },
+  "NRExtensions.cs": {
+    "mtime": 1781109418.720863,
+    "ast_hash": "a8b5e7914bc14fea820649b0228ff840",
+    "semantic_hash": "a8b5e7914bc14fea820649b0228ff840"
+  },
+  "NRTAttributes.cs": {
+    "mtime": 1781109418.7209053,
+    "ast_hash": "3234b01280b032f8ba2427a055194fcd",
+    "semantic_hash": "3234b01280b032f8ba2427a055194fcd"
+  },
+  "Output/IAmbience.cs": {
+    "mtime": 1781109418.7209861,
+    "ast_hash": "4592519c8c594350d7f716c6ab7200f8",
+    "semantic_hash": "4592519c8c594350d7f716c6ab7200f8"
+  },
+  "Output/INodeTrackingOutput.cs": {
+    "mtime": 1783839113.9914432,
+    "ast_hash": "da1320bdb761d4becc96477e9d1803cd",
+    "semantic_hash": "da1320bdb761d4becc96477e9d1803cd"
+  },
+  "Output/ITextOutput.cs": {
+    "mtime": 1785253130.9939098,
+    "ast_hash": "bb5f2047362b178c2af00ab25885f7db",
+    "semantic_hash": "bb5f2047362b178c2af00ab25885f7db"
+  },
+  "Output/PlainTextOutput.cs": {
+    "mtime": 1785253130.9941616,
+    "ast_hash": "ec70335a4d1bc29be9e9bf433a8b1bfd",
+    "semantic_hash": "ec70335a4d1bc29be9e9bf433a8b1bfd"
+  },
+  "Output/TextOutputWriter.cs": {
+    "mtime": 1781109418.7211542,
+    "ast_hash": "e3a16684306484535428a6bc2c530c88",
+    "semantic_hash": "e3a16684306484535428a6bc2c530c88"
+  },
+  "Output/TextTokenWriter.cs": {
+    "mtime": 1785253130.9942913,
+    "ast_hash": "cd6b7b0689662e9d1120148e5cae73f2",
+    "semantic_hash": "cd6b7b0689662e9d1120148e5cae73f2"
+  },
+  "PartialTypeInfo.cs": {
+    "mtime": 1781109418.721295,
+    "ast_hash": "4efebb9de97aca3cb65fe978adf2a81f",
+    "semantic_hash": "4efebb9de97aca3cb65fe978adf2a81f"
+  },
+  "Properties/AssemblyInfo.cs": {
+    "mtime": 1783839113.9916446,
+    "ast_hash": "1655832acbe810a5968f45dab0f31c25",
+    "semantic_hash": "1655832acbe810a5968f45dab0f31c25"
+  },
+  "Properties/DecompilerVersionInfo.template.cs": {
+    "mtime": 1785500298.7844412,
+    "ast_hash": "6c809e969affdb4bbb6193ee0b346097",
+    "semantic_hash": "6c809e969affdb4bbb6193ee0b346097"
+  },
+  "SRMExtensions.cs": {
+    "mtime": 1783839113.9917467,
+    "ast_hash": "98d048f7b499f661ff0fef7db9d75a0e",
+    "semantic_hash": "98d048f7b499f661ff0fef7db9d75a0e"
+  },
+  "SRMHacks.cs": {
+    "mtime": 1783839113.9918306,
+    "ast_hash": "a720e0f149cae3a295fc5ee81b6d58af",
+    "semantic_hash": "a720e0f149cae3a295fc5ee81b6d58af"
+  },
+  "Semantics/AmbiguousResolveResult.cs": {
+    "mtime": 1781109418.7216277,
+    "ast_hash": "9ae7241b236b459c56960f38297e554d",
+    "semantic_hash": "9ae7241b236b459c56960f38297e554d"
+  },
+  "Semantics/ArrayAccessResolveResult.cs": {
+    "mtime": 1781109418.721676,
+    "ast_hash": "939bb5e3a1d014810508adf5cf88e9b0",
+    "semantic_hash": "939bb5e3a1d014810508adf5cf88e9b0"
+  },
+  "Semantics/ArrayCreateResolveResult.cs": {
+    "mtime": 1781109418.7217302,
+    "ast_hash": "f76b8d15e5bad39e0ac896240031a1a3",
+    "semantic_hash": "f76b8d15e5bad39e0ac896240031a1a3"
+  },
+  "Semantics/ByReferenceResolveResult.cs": {
+    "mtime": 1781109418.7217765,
+    "ast_hash": "040601a74f2548ce07365caabbc726a9",
+    "semantic_hash": "040601a74f2548ce07365caabbc726a9"
+  },
+  "Semantics/ConstantResolveResult.cs": {
+    "mtime": 1781109418.7218218,
+    "ast_hash": "b9f9f653aeb8a80fbf52c89f48c8b8ef",
+    "semantic_hash": "b9f9f653aeb8a80fbf52c89f48c8b8ef"
+  },
+  "Semantics/Conversion.cs": {
+    "mtime": 1781109418.7219095,
+    "ast_hash": "eea14d2eb18841bfb158ee1280c46f76",
+    "semantic_hash": "eea14d2eb18841bfb158ee1280c46f76"
+  },
+  "Semantics/ConversionResolveResult.cs": {
+    "mtime": 1781109418.7219608,
+    "ast_hash": "bb7e13978fd4e04dee23aeafad7560eb",
+    "semantic_hash": "bb7e13978fd4e04dee23aeafad7560eb"
+  },
+  "Semantics/ErrorResolveResult.cs": {
+    "mtime": 1781109418.722002,
+    "ast_hash": "3d9e0d45952106a6e251dedfae4f80c1",
+    "semantic_hash": "3d9e0d45952106a6e251dedfae4f80c1"
+  },
+  "Semantics/ForEachResolveResult.cs": {
+    "mtime": 1781109418.722048,
+    "ast_hash": "0366a1a8b85135178995d011450147f0",
+    "semantic_hash": "0366a1a8b85135178995d011450147f0"
+  },
+  "Semantics/InitializedObjectResolveResult.cs": {
+    "mtime": 1781109418.7220933,
+    "ast_hash": "c42efcfcebd7f396a656ed0ffc7c958e",
+    "semantic_hash": "c42efcfcebd7f396a656ed0ffc7c958e"
+  },
+  "Semantics/InterpolatedStringResolveResult.cs": {
+    "mtime": 1781109418.7221425,
+    "ast_hash": "567be5a1c631b8f31cf8ad5cb4d9f970",
+    "semantic_hash": "567be5a1c631b8f31cf8ad5cb4d9f970"
+  },
+  "Semantics/InvocationResolveResult.cs": {
+    "mtime": 1781109418.7221978,
+    "ast_hash": "5c86bea019e1fe08f197a0f63c33d265",
+    "semantic_hash": "5c86bea019e1fe08f197a0f63c33d265"
+  },
+  "Semantics/LocalResolveResult.cs": {
+    "mtime": 1781109418.7222486,
+    "ast_hash": "bd5df96e6d7f1246076008c0c220478b",
+    "semantic_hash": "bd5df96e6d7f1246076008c0c220478b"
+  },
+  "Semantics/MemberResolveResult.cs": {
+    "mtime": 1781109418.7222989,
+    "ast_hash": "03e3c875bbfdba36e4d7559c676fed1f",
+    "semantic_hash": "03e3c875bbfdba36e4d7559c676fed1f"
+  },
+  "Semantics/NamedArgumentResolveResult.cs": {
+    "mtime": 1781109418.7223523,
+    "ast_hash": "4902b2c8c9d991c0bb09ff51cb33b532",
+    "semantic_hash": "4902b2c8c9d991c0bb09ff51cb33b532"
+  },
+  "Semantics/NamespaceResolveResult.cs": {
+    "mtime": 1781109418.7223978,
+    "ast_hash": "5769fc42a37c199e6a936bba8369a810",
+    "semantic_hash": "5769fc42a37c199e6a936bba8369a810"
+  },
+  "Semantics/OperatorResolveResult.cs": {
+    "mtime": 1781109418.7224526,
+    "ast_hash": "4cbec37f98013a4124a1370c1885c1d1",
+    "semantic_hash": "4cbec37f98013a4124a1370c1885c1d1"
+  },
+  "Semantics/OutVarResolveResult.cs": {
+    "mtime": 1781109418.7225018,
+    "ast_hash": "4f8d6af305712e6df3818b9af2b140c4",
+    "semantic_hash": "4f8d6af305712e6df3818b9af2b140c4"
+  },
+  "Semantics/ResolveResult.cs": {
+    "mtime": 1781109418.7225506,
+    "ast_hash": "e53910add1340f52b601d081ca0eef1b",
+    "semantic_hash": "e53910add1340f52b601d081ca0eef1b"
+  },
+  "Semantics/SizeOfResolveResult.cs": {
+    "mtime": 1781109418.722595,
+    "ast_hash": "f6e81249489e8217dabcdb68347a71da",
+    "semantic_hash": "f6e81249489e8217dabcdb68347a71da"
+  },
+  "Semantics/ThisResolveResult.cs": {
+    "mtime": 1781109418.7226343,
+    "ast_hash": "7f164bbb13d9662f96d839119731e3e1",
+    "semantic_hash": "7f164bbb13d9662f96d839119731e3e1"
+  },
+  "Semantics/ThrowResolveResult.cs": {
+    "mtime": 1781109418.7226844,
+    "ast_hash": "52c9d86dfeb868844ce1fc7de133a65c",
+    "semantic_hash": "52c9d86dfeb868844ce1fc7de133a65c"
+  },
+  "Semantics/TupleResolveResult.cs": {
+    "mtime": 1781109418.7227335,
+    "ast_hash": "bc71b1fb42ff58dadd7d8f33fe885f07",
+    "semantic_hash": "bc71b1fb42ff58dadd7d8f33fe885f07"
+  },
+  "Semantics/TypeIsResolveResult.cs": {
+    "mtime": 1781109418.7227767,
+    "ast_hash": "833b3eac7ebd6ff8bfdd046ec40a569c",
+    "semantic_hash": "833b3eac7ebd6ff8bfdd046ec40a569c"
+  },
+  "Semantics/TypeOfResolveResult.cs": {
+    "mtime": 1781109418.7228365,
+    "ast_hash": "bb43d4754d5472f51ab7b7dcb05a8503",
+    "semantic_hash": "bb43d4754d5472f51ab7b7dcb05a8503"
+  },
+  "Semantics/TypeResolveResult.cs": {
+    "mtime": 1781109418.7228796,
+    "ast_hash": "17e820cb833525cc290b5d5a08f7d1fa",
+    "semantic_hash": "17e820cb833525cc290b5d5a08f7d1fa"
+  },
+  "Semantics/UnknownMemberResolveResult.cs": {
+    "mtime": 1781109418.7229397,
+    "ast_hash": "28465f49b66c7b678d4b100a8740e789",
+    "semantic_hash": "28465f49b66c7b678d4b100a8740e789"
+  },
+  "SingleFileBundle.cs": {
+    "mtime": 1782624298.876688,
+    "ast_hash": "4f79a31a73b5ff80d8956c98b29c073f",
+    "semantic_hash": "4f79a31a73b5ff80d8956c98b29c073f"
+  },
+  "Solution/ProjectId.cs": {
+    "mtime": 1781109418.7230728,
+    "ast_hash": "8f31a0c042830dbdd7817348ab3d2f9a",
+    "semantic_hash": "8f31a0c042830dbdd7817348ab3d2f9a"
+  },
+  "Solution/ProjectItem.cs": {
+    "mtime": 1781109418.7231224,
+    "ast_hash": "085a2170e2090c4b5cbf670d6973291d",
+    "semantic_hash": "085a2170e2090c4b5cbf670d6973291d"
+  },
+  "Solution/SolutionCreator.cs": {
+    "mtime": 1781109418.7232387,
+    "ast_hash": "681c3a4b3a726b87db3c8821ab850666",
+    "semantic_hash": "681c3a4b3a726b87db3c8821ab850666"
+  },
+  "TypeSystem/Accessibility.cs": {
+    "mtime": 1781109418.723335,
+    "ast_hash": "932172a9e003320aa64acb8ff3540e30",
+    "semantic_hash": "932172a9e003320aa64acb8ff3540e30"
+  },
+  "TypeSystem/ApplyAttributeTypeVisitor.cs": {
+    "mtime": 1781109418.7234216,
+    "ast_hash": "a06093d38d79b1aad8e2f2e354fd206c",
+    "semantic_hash": "a06093d38d79b1aad8e2f2e354fd206c"
+  },
+  "TypeSystem/ArrayType.cs": {
+    "mtime": 1781109418.7234871,
+    "ast_hash": "750287fd28ff3601c16ae6c36c3f3dd5",
+    "semantic_hash": "750287fd28ff3601c16ae6c36c3f3dd5"
+  },
+  "TypeSystem/AssemblyQualifiedTypeName.cs": {
+    "mtime": 1781109418.7235463,
+    "ast_hash": "59d2b452f147dbbf5e87d8916e466526",
+    "semantic_hash": "59d2b452f147dbbf5e87d8916e466526"
+  },
+  "TypeSystem/ByReferenceType.cs": {
+    "mtime": 1781109418.7235954,
+    "ast_hash": "db4168f7a721e3c1a30d6697f511caef",
+    "semantic_hash": "db4168f7a721e3c1a30d6697f511caef"
+  },
+  "TypeSystem/ComHelper.cs": {
+    "mtime": 1781109418.7236364,
+    "ast_hash": "cb8121ee17acd76ffa38ca52cc17703a",
+    "semantic_hash": "cb8121ee17acd76ffa38ca52cc17703a"
+  },
+  "TypeSystem/DecompilerTypeSystem.cs": {
+    "mtime": 1784794597.2383687,
+    "ast_hash": "f3a20e4de547ec467be1c9f5d48fc54d",
+    "semantic_hash": "f3a20e4de547ec467be1c9f5d48fc54d"
+  },
+  "TypeSystem/ExtensionInfo.cs": {
+    "mtime": 1781109418.723825,
+    "ast_hash": "f85b7feacb3ec5ae38c406ace2df5bb9",
+    "semantic_hash": "f85b7feacb3ec5ae38c406ace2df5bb9"
+  },
+  "TypeSystem/FullTypeName.cs": {
+    "mtime": 1781109418.7239275,
+    "ast_hash": "24b1c797ddf5f22264086ba6d56dc573",
+    "semantic_hash": "24b1c797ddf5f22264086ba6d56dc573"
+  },
+  "TypeSystem/FunctionPointerType.cs": {
+    "mtime": 1781109418.724036,
+    "ast_hash": "7e3cd44c058ed8e027009c38e552a56d",
+    "semantic_hash": "7e3cd44c058ed8e027009c38e552a56d"
+  },
+  "TypeSystem/GenericContext.cs": {
+    "mtime": 1781109418.7240844,
+    "ast_hash": "8775be16373b97278258eb80c5b82bc2",
+    "semantic_hash": "8775be16373b97278258eb80c5b82bc2"
+  },
+  "TypeSystem/IAssembly.cs": {
+    "mtime": 1781109418.724138,
+    "ast_hash": "362a983c01886f38c3fc23fc7c79f265",
+    "semantic_hash": "362a983c01886f38c3fc23fc7c79f265"
+  },
+  "TypeSystem/IAttribute.cs": {
+    "mtime": 1781109418.7241983,
+    "ast_hash": "28c5f9eb53a0a102908843130f01b708",
+    "semantic_hash": "28c5f9eb53a0a102908843130f01b708"
+  },
+  "TypeSystem/ICodeContext.cs": {
+    "mtime": 1781109418.7242422,
+    "ast_hash": "ec2b539602fd523822fcdbf30dfa1d18",
+    "semantic_hash": "ec2b539602fd523822fcdbf30dfa1d18"
+  },
+  "TypeSystem/ICompilation.cs": {
+    "mtime": 1781109418.7242951,
+    "ast_hash": "29c695240a38b4197e804c70acf647d5",
+    "semantic_hash": "29c695240a38b4197e804c70acf647d5"
+  },
+  "TypeSystem/IDecompilerTypeSystem.cs": {
+    "mtime": 1781109418.724359,
+    "ast_hash": "617c31247c4c50fbadce90f0308ad1d7",
+    "semantic_hash": "617c31247c4c50fbadce90f0308ad1d7"
+  },
+  "TypeSystem/IEntity.cs": {
+    "mtime": 1781109418.7244062,
+    "ast_hash": "7a06a9cc6d0bf8ab2f3d5f63c6b13c46",
+    "semantic_hash": "7a06a9cc6d0bf8ab2f3d5f63c6b13c46"
+  },
+  "TypeSystem/IEvent.cs": {
+    "mtime": 1781109418.7244542,
+    "ast_hash": "3be7a269550011c185744d03ef53b9ca",
+    "semantic_hash": "3be7a269550011c185744d03ef53b9ca"
+  },
+  "TypeSystem/IField.cs": {
+    "mtime": 1781109418.724496,
+    "ast_hash": "a1c647e087d8885b8cef82ab7928b5e0",
+    "semantic_hash": "a1c647e087d8885b8cef82ab7928b5e0"
+  },
+  "TypeSystem/IFreezable.cs": {
+    "mtime": 1781109418.7245479,
+    "ast_hash": "56fd0450cf8ceafdd211ee776534d628",
+    "semantic_hash": "56fd0450cf8ceafdd211ee776534d628"
+  },
+  "TypeSystem/IInterningProvider.cs": {
+    "mtime": 1781109418.7246065,
+    "ast_hash": "c97a4d9fec54edea477e7fd86ed6373e",
+    "semantic_hash": "c97a4d9fec54edea477e7fd86ed6373e"
+  },
+  "TypeSystem/IMember.cs": {
+    "mtime": 1785500298.7847219,
+    "ast_hash": "adef927903f58f450dd7c4a729dae6f3",
+    "semantic_hash": "adef927903f58f450dd7c4a729dae6f3"
+  },
+  "TypeSystem/IMethod.cs": {
+    "mtime": 1781109418.7247334,
+    "ast_hash": "bbd3246cb75e0aecbbe72c8027181c65",
+    "semantic_hash": "bbd3246cb75e0aecbbe72c8027181c65"
+  },
+  "TypeSystem/INamedElement.cs": {
+    "mtime": 1781109418.7249837,
+    "ast_hash": "77d79baa7f72db179dcb4b9e2cc55418",
+    "semantic_hash": "77d79baa7f72db179dcb4b9e2cc55418"
+  },
+  "TypeSystem/INamespace.cs": {
+    "mtime": 1781109418.725128,
+    "ast_hash": "db3f43583e7079cfeb1d10672f5bd216",
+    "semantic_hash": "db3f43583e7079cfeb1d10672f5bd216"
+  },
+  "TypeSystem/IParameter.cs": {
+    "mtime": 1781109418.7252064,
+    "ast_hash": "143d682c17a9287294170cc1d834b3b6",
+    "semantic_hash": "143d682c17a9287294170cc1d834b3b6"
+  },
+  "TypeSystem/IParameterizedMember.cs": {
+    "mtime": 1781109418.7252605,
+    "ast_hash": "ce9d119e34a012acfa5fcc37eefc1a69",
+    "semantic_hash": "ce9d119e34a012acfa5fcc37eefc1a69"
+  },
+  "TypeSystem/IProperty.cs": {
+    "mtime": 1781109418.7253122,
+    "ast_hash": "f08eecfcbac53d65b6c231566f4c643f",
+    "semantic_hash": "f08eecfcbac53d65b6c231566f4c643f"
+  },
+  "TypeSystem/ISupportsInterning.cs": {
+    "mtime": 1781109418.7253642,
+    "ast_hash": "1f2ca7275049d7f4378b79bd8544c233",
+    "semantic_hash": "1f2ca7275049d7f4378b79bd8544c233"
+  },
+  "TypeSystem/ISymbol.cs": {
+    "mtime": 1781109418.7254174,
+    "ast_hash": "cbee61d2da845851aa47484b198371cd",
+    "semantic_hash": "cbee61d2da845851aa47484b198371cd"
+  },
+  "TypeSystem/IType.cs": {
+    "mtime": 1781109418.7255025,
+    "ast_hash": "8cc9a82e7e7a80d537f7420856115810",
+    "semantic_hash": "8cc9a82e7e7a80d537f7420856115810"
+  },
+  "TypeSystem/ITypeDefinition.cs": {
+    "mtime": 1781109418.7255812,
+    "ast_hash": "e945c63daf0474f6d1655cc0dacbb1d0",
+    "semantic_hash": "e945c63daf0474f6d1655cc0dacbb1d0"
+  },
+  "TypeSystem/ITypeDefinitionOrUnknown.cs": {
+    "mtime": 1781109418.7256434,
+    "ast_hash": "75613468dfed52fd29b621e07be6c8c6",
+    "semantic_hash": "75613468dfed52fd29b621e07be6c8c6"
+  },
+  "TypeSystem/ITypeParameter.cs": {
+    "mtime": 1781109418.7256985,
+    "ast_hash": "5bbc6cb745797dc52facfc2833ebcdd2",
+    "semantic_hash": "5bbc6cb745797dc52facfc2833ebcdd2"
+  },
+  "TypeSystem/ITypeReference.cs": {
+    "mtime": 1781109418.7257571,
+    "ast_hash": "1fcebe0428d54ab318e70b23c8f3a86b",
+    "semantic_hash": "1fcebe0428d54ab318e70b23c8f3a86b"
+  },
+  "TypeSystem/IVariable.cs": {
+    "mtime": 1781109418.7258139,
+    "ast_hash": "97ea180064959977b1e436593499119a",
+    "semantic_hash": "97ea180064959977b1e436593499119a"
+  },
+  "TypeSystem/Implementation/AbstractFreezable.cs": {
+    "mtime": 1781109418.725903,
+    "ast_hash": "dc951b74219df392cf28a43d3255affc",
+    "semantic_hash": "dc951b74219df392cf28a43d3255affc"
+  },
+  "TypeSystem/Implementation/AbstractType.cs": {
+    "mtime": 1781109418.7259798,
+    "ast_hash": "7b0029947060ed1b9b0b179670e7d772",
+    "semantic_hash": "7b0029947060ed1b9b0b179670e7d772"
+  },
+  "TypeSystem/Implementation/AbstractTypeParameter.cs": {
+    "mtime": 1781109418.7260783,
+    "ast_hash": "38c18ef50118ec92a8b9a41df679ead8",
+    "semantic_hash": "38c18ef50118ec92a8b9a41df679ead8"
+  },
+  "TypeSystem/Implementation/AttributeListBuilder.cs": {
+    "mtime": 1781109418.7261627,
+    "ast_hash": "9d45af84be81c57271839c1e340b2d81",
+    "semantic_hash": "9d45af84be81c57271839c1e340b2d81"
+  },
+  "TypeSystem/Implementation/BaseTypeCollector.cs": {
+    "mtime": 1781109418.726228,
+    "ast_hash": "c8167c177f743468ee29eb29731177de",
+    "semantic_hash": "c8167c177f743468ee29eb29731177de"
+  },
+  "TypeSystem/Implementation/CustomAttribute.cs": {
+    "mtime": 1781109418.7262805,
+    "ast_hash": "92b1d8f0caae393839b1eacde23a61ff",
+    "semantic_hash": "92b1d8f0caae393839b1eacde23a61ff"
+  },
+  "TypeSystem/Implementation/DecimalConstantHelper.cs": {
+    "mtime": 1781109418.7263303,
+    "ast_hash": "d841ad8cf7d104ed7b1629cbe9984b7e",
+    "semantic_hash": "d841ad8cf7d104ed7b1629cbe9984b7e"
+  },
+  "TypeSystem/Implementation/DecoratedType.cs": {
+    "mtime": 1783839113.9922638,
+    "ast_hash": "5fdf53170446c7003b451f1bdc081e31",
+    "semantic_hash": "5fdf53170446c7003b451f1bdc081e31"
+  },
+  "TypeSystem/Implementation/DefaultAssemblyReference.cs": {
+    "mtime": 1781109418.72644,
+    "ast_hash": "90334386c67e0126231c476c1b6defef",
+    "semantic_hash": "90334386c67e0126231c476c1b6defef"
+  },
+  "TypeSystem/Implementation/DefaultAttribute.cs": {
+    "mtime": 1781109418.7265906,
+    "ast_hash": "ef848bba393cbe9f12bea4c6341bb5de",
+    "semantic_hash": "ef848bba393cbe9f12bea4c6341bb5de"
+  },
+  "TypeSystem/Implementation/DefaultParameter.cs": {
+    "mtime": 1781109418.72665,
+    "ast_hash": "afda64c85569633638348b182e36c24b",
+    "semantic_hash": "afda64c85569633638348b182e36c24b"
+  },
+  "TypeSystem/Implementation/DefaultTypeParameter.cs": {
+    "mtime": 1781109418.7267256,
+    "ast_hash": "2caf56480c9758bc009bd10717422aac",
+    "semantic_hash": "2caf56480c9758bc009bd10717422aac"
+  },
+  "TypeSystem/Implementation/DefaultVariable.cs": {
+    "mtime": 1781109418.7267852,
+    "ast_hash": "f40dcad215ac13085ff459c932341e10",
+    "semantic_hash": "f40dcad215ac13085ff459c932341e10"
+  },
+  "TypeSystem/Implementation/DummyTypeParameter.cs": {
+    "mtime": 1781109418.7268543,
+    "ast_hash": "df04fc95f028673fe5e0c7bb2d4c706e",
+    "semantic_hash": "df04fc95f028673fe5e0c7bb2d4c706e"
+  },
+  "TypeSystem/Implementation/FakeMember.cs": {
+    "mtime": 1781109418.7269237,
+    "ast_hash": "83c944df7ed2e83ba4d16cf27cf6936f",
+    "semantic_hash": "83c944df7ed2e83ba4d16cf27cf6936f"
+  },
+  "TypeSystem/Implementation/GetMembersHelper.cs": {
+    "mtime": 1781109418.727015,
+    "ast_hash": "07a2825cad60069e26af4e18e5d93c7a",
+    "semantic_hash": "07a2825cad60069e26af4e18e5d93c7a"
+  },
+  "TypeSystem/Implementation/KnownAttributes.cs": {
+    "mtime": 1781109418.72714,
+    "ast_hash": "a0d41bfa9433fe8014ef72790d41893b",
+    "semantic_hash": "a0d41bfa9433fe8014ef72790d41893b"
+  },
+  "TypeSystem/Implementation/KnownTypeCache.cs": {
+    "mtime": 1781109418.727197,
+    "ast_hash": "6e531d1774bdc54895e5ed27f8c61470",
+    "semantic_hash": "6e531d1774bdc54895e5ed27f8c61470"
+  },
+  "TypeSystem/Implementation/LocalFunctionMethod.cs": {
+    "mtime": 1783839113.9924994,
+    "ast_hash": "ecce3cde7208bff4cd3ebc3030061f92",
+    "semantic_hash": "ecce3cde7208bff4cd3ebc3030061f92"
+  },
+  "TypeSystem/Implementation/MergedNamespace.cs": {
+    "mtime": 1781109418.7273238,
+    "ast_hash": "3dd3541db25c37684d0b376091268d1d",
+    "semantic_hash": "3dd3541db25c37684d0b376091268d1d"
+  },
+  "TypeSystem/Implementation/MetadataEvent.cs": {
+    "mtime": 1781109418.7274053,
+    "ast_hash": "da11fea5d63d63f44067592420d633a8",
+    "semantic_hash": "da11fea5d63d63f44067592420d633a8"
+  },
+  "TypeSystem/Implementation/MetadataField.cs": {
+    "mtime": 1781109418.7275605,
+    "ast_hash": "f859f2c3503a40a4ea8227485c50bfd5",
+    "semantic_hash": "f859f2c3503a40a4ea8227485c50bfd5"
+  },
+  "TypeSystem/Implementation/MetadataMethod.cs": {
+    "mtime": 1781109418.7276447,
+    "ast_hash": "618e80993da51f44fa6e21c8d0eb6076",
+    "semantic_hash": "618e80993da51f44fa6e21c8d0eb6076"
+  },
+  "TypeSystem/Implementation/MetadataNamespace.cs": {
+    "mtime": 1781109418.7277052,
+    "ast_hash": "205e7c262adb8fe3780cba5d90756baf",
+    "semantic_hash": "205e7c262adb8fe3780cba5d90756baf"
+  },
+  "TypeSystem/Implementation/MetadataParameter.cs": {
+    "mtime": 1781109418.7277749,
+    "ast_hash": "63006789346e02d8bc3fb2a6dd7c7ba9",
+    "semantic_hash": "63006789346e02d8bc3fb2a6dd7c7ba9"
+  },
+  "TypeSystem/Implementation/MetadataProperty.cs": {
+    "mtime": 1781109418.7278886,
+    "ast_hash": "f385a8d3b7a1194320ed7f5588d2fa1c",
+    "semantic_hash": "f385a8d3b7a1194320ed7f5588d2fa1c"
+  },
+  "TypeSystem/Implementation/MetadataTypeDefinition.cs": {
+    "mtime": 1785500298.7848783,
+    "ast_hash": "25ae7cb335fdffd299473aa9f1a7f794",
+    "semantic_hash": "25ae7cb335fdffd299473aa9f1a7f794"
+  },
+  "TypeSystem/Implementation/MetadataTypeParameter.cs": {
+    "mtime": 1781109418.7280943,
+    "ast_hash": "0be4f088a2c3ab6ffbcac486abd51c55",
+    "semantic_hash": "0be4f088a2c3ab6ffbcac486abd51c55"
+  },
+  "TypeSystem/Implementation/MinimalCorlib.cs": {
+    "mtime": 1781109418.7282097,
+    "ast_hash": "4b920bfbdc5c4eb72f40a267a39d7fa5",
+    "semantic_hash": "4b920bfbdc5c4eb72f40a267a39d7fa5"
+  },
+  "TypeSystem/Implementation/NestedTypeReference.cs": {
+    "mtime": 1781109418.728266,
+    "ast_hash": "e1f8b21afbb3a0dd4b187e43c17cd2b2",
+    "semantic_hash": "e1f8b21afbb3a0dd4b187e43c17cd2b2"
+  },
+  "TypeSystem/Implementation/NullabilityAnnotatedType.cs": {
+    "mtime": 1783839113.993011,
+    "ast_hash": "4f0e54df5517db277791c87179b51e15",
+    "semantic_hash": "4f0e54df5517db277791c87179b51e15"
+  },
+  "TypeSystem/Implementation/PinnedType.cs": {
+    "mtime": 1781109418.728373,
+    "ast_hash": "0ff6fd98f383888d428042e3ad26eba2",
+    "semantic_hash": "0ff6fd98f383888d428042e3ad26eba2"
+  },
+  "TypeSystem/Implementation/SimpleCompilation.cs": {
+    "mtime": 1781109418.7284336,
+    "ast_hash": "df385601eb80e6cfafc103541cda6c6a",
+    "semantic_hash": "df385601eb80e6cfafc103541cda6c6a"
+  },
+  "TypeSystem/Implementation/SpecializedEvent.cs": {
+    "mtime": 1781109418.728487,
+    "ast_hash": "d9befc86d3f8db14919029d40adfef81",
+    "semantic_hash": "d9befc86d3f8db14919029d40adfef81"
+  },
+  "TypeSystem/Implementation/SpecializedField.cs": {
+    "mtime": 1781109418.7285378,
+    "ast_hash": "bc00ee279521109654c6b8bf5306cf70",
+    "semantic_hash": "bc00ee279521109654c6b8bf5306cf70"
+  },
+  "TypeSystem/Implementation/SpecializedMember.cs": {
+    "mtime": 1781109418.7286553,
+    "ast_hash": "4f33fff20414d0c322a7a28a8b87cdeb",
+    "semantic_hash": "4f33fff20414d0c322a7a28a8b87cdeb"
+  },
+  "TypeSystem/Implementation/SpecializedMethod.cs": {
+    "mtime": 1781109418.728769,
+    "ast_hash": "2fe4ae82da900735077ead998bbb54b4",
+    "semantic_hash": "2fe4ae82da900735077ead998bbb54b4"
+  },
+  "TypeSystem/Implementation/SpecializedParameter.cs": {
+    "mtime": 1781109418.7288196,
+    "ast_hash": "f67293b8863228b8a0d74e592c294f47",
+    "semantic_hash": "f67293b8863228b8a0d74e592c294f47"
+  },
+  "TypeSystem/Implementation/SpecializedProperty.cs": {
+    "mtime": 1781109418.7288623,
+    "ast_hash": "d032c731f588fb569c0aafbbcb7191b7",
+    "semantic_hash": "d032c731f588fb569c0aafbbcb7191b7"
+  },
+  "TypeSystem/Implementation/SyntheticRangeIndexer.cs": {
+    "mtime": 1781109418.728919,
+    "ast_hash": "ca36fcf15c12295badc88ed9960d6616",
+    "semantic_hash": "ca36fcf15c12295badc88ed9960d6616"
+  },
+  "TypeSystem/Implementation/ThreeState.cs": {
+    "mtime": 1781109418.7289627,
+    "ast_hash": "ea187e190edbc9166482e9f74eda2ff1",
+    "semantic_hash": "ea187e190edbc9166482e9f74eda2ff1"
+  },
+  "TypeSystem/Implementation/TypeParameterReference.cs": {
+    "mtime": 1781109418.729022,
+    "ast_hash": "c5de33217cf031e5af7fcf8373bb22e3",
+    "semantic_hash": "c5de33217cf031e5af7fcf8373bb22e3"
+  },
+  "TypeSystem/Implementation/TypeWithElementType.cs": {
+    "mtime": 1781109418.729071,
+    "ast_hash": "d1a14763945351c61dfb76b609350ede",
+    "semantic_hash": "d1a14763945351c61dfb76b609350ede"
+  },
+  "TypeSystem/Implementation/UnknownType.cs": {
+    "mtime": 1781109418.729125,
+    "ast_hash": "7b56522fe1daf800b824732a83ebedd1",
+    "semantic_hash": "7b56522fe1daf800b824732a83ebedd1"
+  },
+  "TypeSystem/InheritanceHelper.cs": {
+    "mtime": 1781109418.7292361,
+    "ast_hash": "48da7496532ed6ebff3136115188cc6d",
+    "semantic_hash": "48da7496532ed6ebff3136115188cc6d"
+  },
+  "TypeSystem/IntersectionType.cs": {
+    "mtime": 1781109418.7292917,
+    "ast_hash": "53751ce7c87d10f29ff7f89937b4b8e6",
+    "semantic_hash": "53751ce7c87d10f29ff7f89937b4b8e6"
+  },
+  "TypeSystem/KnownTypeReference.cs": {
+    "mtime": 1781109418.7293794,
+    "ast_hash": "807569f69a8ea14939b9f30a135c73ba",
+    "semantic_hash": "807569f69a8ea14939b9f30a135c73ba"
+  },
+  "TypeSystem/MetadataModule.cs": {
+    "mtime": 1781109418.7294853,
+    "ast_hash": "21163ab0521bc2f4061ac37e8e762355",
+    "semantic_hash": "21163ab0521bc2f4061ac37e8e762355"
+  },
+  "TypeSystem/ModifiedType.cs": {
+    "mtime": 1781109418.729558,
+    "ast_hash": "c1f6c64f6c835759f6aefa38e672737f",
+    "semantic_hash": "c1f6c64f6c835759f6aefa38e672737f"
+  },
+  "TypeSystem/NormalizeTypeVisitor.cs": {
+    "mtime": 1781109418.729614,
+    "ast_hash": "7b84a88358e1babe1403d843dd329fea",
+    "semantic_hash": "7b84a88358e1babe1403d843dd329fea"
+  },
+  "TypeSystem/Nullability.cs": {
+    "mtime": 1781109418.729659,
+    "ast_hash": "b1f8c7da2ea224660f708fc65fd24c55",
+    "semantic_hash": "b1f8c7da2ea224660f708fc65fd24c55"
+  },
+  "TypeSystem/NullableType.cs": {
+    "mtime": 1781109418.7297015,
+    "ast_hash": "e671b5b2a97467ce0a55026649b3e27b",
+    "semantic_hash": "e671b5b2a97467ce0a55026649b3e27b"
+  },
+  "TypeSystem/ParameterListComparer.cs": {
+    "mtime": 1781109418.7297664,
+    "ast_hash": "cac9ae410fbdaaf97016bb97aa0c53ae",
+    "semantic_hash": "cac9ae410fbdaaf97016bb97aa0c53ae"
+  },
+  "TypeSystem/ParameterizedType.cs": {
+    "mtime": 1781109418.7298548,
+    "ast_hash": "849129aed109b70f60ffadf583be1419",
+    "semantic_hash": "849129aed109b70f60ffadf583be1419"
+  },
+  "TypeSystem/PointerType.cs": {
+    "mtime": 1781109418.7298956,
+    "ast_hash": "ec05689fc78427ab0e4041c23dad6480",
+    "semantic_hash": "ec05689fc78427ab0e4041c23dad6480"
+  },
+  "TypeSystem/ReferenceResolvingException.cs": {
+    "mtime": 1781109418.7299488,
+    "ast_hash": "6ae7403ccda6b65837ed1ebfc2348283",
+    "semantic_hash": "6ae7403ccda6b65837ed1ebfc2348283"
+  },
+  "TypeSystem/ReflectionHelper.cs": {
+    "mtime": 1781109418.730079,
+    "ast_hash": "3fa7f2aedc7a9f3264ee698b29b08e76",
+    "semantic_hash": "3fa7f2aedc7a9f3264ee698b29b08e76"
+  },
+  "TypeSystem/ReflectionNameParseException.cs": {
+    "mtime": 1781109418.730128,
+    "ast_hash": "62c947b58c64a5980adaaa7ccf428a0c",
+    "semantic_hash": "62c947b58c64a5980adaaa7ccf428a0c"
+  },
+  "TypeSystem/SimpleTypeResolveContext.cs": {
+    "mtime": 1781109418.7301738,
+    "ast_hash": "5a770fb6b88d5b8647b5e23fffd0c3c4",
+    "semantic_hash": "5a770fb6b88d5b8647b5e23fffd0c3c4"
+  },
+  "TypeSystem/SpecialType.cs": {
+    "mtime": 1781109418.7302244,
+    "ast_hash": "fcb540f8bcb5886512ffbf19d8a62699",
+    "semantic_hash": "fcb540f8bcb5886512ffbf19d8a62699"
+  },
+  "TypeSystem/TaskType.cs": {
+    "mtime": 1781109418.7302809,
+    "ast_hash": "d4dbfc882233d3dc6ba0287dc34ab27d",
+    "semantic_hash": "d4dbfc882233d3dc6ba0287dc34ab27d"
+  },
+  "TypeSystem/TopLevelTypeName.cs": {
+    "mtime": 1781109418.7303314,
+    "ast_hash": "14c4ee4002e7db4c7d5f3664810ea2c9",
+    "semantic_hash": "14c4ee4002e7db4c7d5f3664810ea2c9"
+  },
+  "TypeSystem/TupleType.cs": {
+    "mtime": 1781109418.73041,
+    "ast_hash": "adde9a42f1e5b662cb5ff6b8e7b8f7af",
+    "semantic_hash": "adde9a42f1e5b662cb5ff6b8e7b8f7af"
+  },
+  "TypeSystem/TypeKind.cs": {
+    "mtime": 1781109418.7304606,
+    "ast_hash": "5f6eadfd43571801beb9c24aa04385c6",
+    "semantic_hash": "5f6eadfd43571801beb9c24aa04385c6"
+  },
+  "TypeSystem/TypeParameterSubstitution.cs": {
+    "mtime": 1781109418.7305582,
+    "ast_hash": "ff12e605a7bbc86568b15c3067d78b42",
+    "semantic_hash": "ff12e605a7bbc86568b15c3067d78b42"
+  },
+  "TypeSystem/TypeProvider.cs": {
+    "mtime": 1781109418.730617,
+    "ast_hash": "6a054fde47d181a4446b03c80430774e",
+    "semantic_hash": "6a054fde47d181a4446b03c80430774e"
+  },
+  "TypeSystem/TypeSystemExtensions.cs": {
+    "mtime": 1785500298.7850313,
+    "ast_hash": "1b4ce2a38b68273ddf1c37ea0074011d",
+    "semantic_hash": "1b4ce2a38b68273ddf1c37ea0074011d"
+  },
+  "TypeSystem/TypeUtils.cs": {
+    "mtime": 1781109418.7307947,
+    "ast_hash": "6fd1690b07933b9ece8c65feb8690bf1",
+    "semantic_hash": "6fd1690b07933b9ece8c65feb8690bf1"
+  },
+  "TypeSystem/TypeVisitor.cs": {
+    "mtime": 1781109418.7308404,
+    "ast_hash": "59d4fb930abbf52cb280b0a1ed83869c",
+    "semantic_hash": "59d4fb930abbf52cb280b0a1ed83869c"
+  },
+  "TypeSystem/VarArgInstanceMethod.cs": {
+    "mtime": 1781109418.730903,
+    "ast_hash": "9967d449f019b7674ae5b4151c65e47e",
+    "semantic_hash": "9967d449f019b7674ae5b4151c65e47e"
+  },
+  "Util/AvaloniaResourcesFile.cs": {
+    "mtime": 1783839113.9932044,
+    "ast_hash": "ab7aadd2677144f8d46d5c56ca3d712f",
+    "semantic_hash": "ab7aadd2677144f8d46d5c56ca3d712f"
+  },
+  "Util/BitOperations.cs": {
+    "mtime": 1783839113.99328,
+    "ast_hash": "71c7fe4aa78702e4612bed410a192321",
+    "semantic_hash": "71c7fe4aa78702e4612bed410a192321"
+  },
+  "Util/BitSet.cs": {
+    "mtime": 1781109418.7310827,
+    "ast_hash": "aadb75ca2fca2f73ab5229612a78e426",
+    "semantic_hash": "aadb75ca2fca2f73ab5229612a78e426"
+  },
+  "Util/BusyManager.cs": {
+    "mtime": 1781109418.731135,
+    "ast_hash": "3b9d1fa7e31aa4a4b2ec5899202f3896",
+    "semantic_hash": "3b9d1fa7e31aa4a4b2ec5899202f3896"
+  },
+  "Util/CSharpPrimitiveCast.cs": {
+    "mtime": 1781109418.7312236,
+    "ast_hash": "61323e22eefa84c6764949f981fb8370",
+    "semantic_hash": "61323e22eefa84c6764949f981fb8370"
+  },
+  "Util/CacheManager.cs": {
+    "mtime": 1781109418.7312782,
+    "ast_hash": "bc5e8c2926e997ac9ea44a1832a78903",
+    "semantic_hash": "bc5e8c2926e997ac9ea44a1832a78903"
+  },
+  "Util/CallbackOnDispose.cs": {
+    "mtime": 1781109418.7317643,
+    "ast_hash": "61a0875f2d0ebbffadc713b2f7300958",
+    "semantic_hash": "61a0875f2d0ebbffadc713b2f7300958"
+  },
+  "Util/CollectionExtensions.cs": {
+    "mtime": 1784794597.2386212,
+    "ast_hash": "0d5f906559d9343acde749240cf7b91c",
+    "semantic_hash": "0d5f906559d9343acde749240cf7b91c"
+  },
+  "Util/DelegateComparer.cs": {
+    "mtime": 1781109418.7319987,
+    "ast_hash": "5bb1b4de217d3b1ff5669188b21f08a5",
+    "semantic_hash": "5bb1b4de217d3b1ff5669188b21f08a5"
+  },
+  "Util/EmptyList.cs": {
+    "mtime": 1781109418.7322,
+    "ast_hash": "b435ec1d1ecc317355b428d0c90079d8",
+    "semantic_hash": "b435ec1d1ecc317355b428d0c90079d8"
+  },
+  "Util/ExtensionMethods.cs": {
+    "mtime": 1781109418.7322652,
+    "ast_hash": "00a828e7b79b2963049b2348d3ec7e01",
+    "semantic_hash": "00a828e7b79b2963049b2348d3ec7e01"
+  },
+  "Util/FileUtility.cs": {
+    "mtime": 1781109418.7323792,
+    "ast_hash": "e45956fb0efbabe62c5b27ebbc597917",
+    "semantic_hash": "e45956fb0efbabe62c5b27ebbc597917"
+  },
+  "Util/GraphTraversal.cs": {
+    "mtime": 1781109418.732437,
+    "ast_hash": "70f241b6dd2ae971ea1428f0fea89e6c",
+    "semantic_hash": "70f241b6dd2ae971ea1428f0fea89e6c"
+  },
+  "Util/Index.cs": {
+    "mtime": 1781109418.7324953,
+    "ast_hash": "bbd89cae144467222673645a78ee94de",
+    "semantic_hash": "bbd89cae144467222673645a78ee94de"
+  },
+  "Util/Interval.cs": {
+    "mtime": 1781109418.7326155,
+    "ast_hash": "59d13932330b500fec714babf945b506",
+    "semantic_hash": "59d13932330b500fec714babf945b506"
+  },
+  "Util/KeyComparer.cs": {
+    "mtime": 1781109418.7326684,
+    "ast_hash": "713b6608d94a9fb22b40494191da0c6f",
+    "semantic_hash": "713b6608d94a9fb22b40494191da0c6f"
+  },
+  "Util/LazyInit.cs": {
+    "mtime": 1781109418.7327194,
+    "ast_hash": "7f636bab25bdd8c024c105420df29a1a",
+    "semantic_hash": "7f636bab25bdd8c024c105420df29a1a"
+  },
+  "Util/LongDict.cs": {
+    "mtime": 1781109418.732775,
+    "ast_hash": "e123b9cbbfd83ce96e7dd961c08eecc1",
+    "semantic_hash": "e123b9cbbfd83ce96e7dd961c08eecc1"
+  },
+  "Util/LongSet.cs": {
+    "mtime": 1781109418.7328832,
+    "ast_hash": "32b88905d2169f5791a796cf34c02739",
+    "semantic_hash": "32b88905d2169f5791a796cf34c02739"
+  },
+  "Util/MultiDictionary.cs": {
+    "mtime": 1781109418.7329447,
+    "ast_hash": "4ecf2008ec5e84955df6c0cb9bd80639",
+    "semantic_hash": "4ecf2008ec5e84955df6c0cb9bd80639"
+  },
+  "Util/Platform.cs": {
+    "mtime": 1781109418.7329886,
+    "ast_hash": "3e8bf13dc7c979f49a286d592dd8160c",
+    "semantic_hash": "3e8bf13dc7c979f49a286d592dd8160c"
+  },
+  "Util/ProjectedList.cs": {
+    "mtime": 1781109418.7332158,
+    "ast_hash": "bffb7a9fcda53a97d4d23fec7c4463ee",
+    "semantic_hash": "bffb7a9fcda53a97d4d23fec7c4463ee"
+  },
+  "Util/ReferenceComparer.cs": {
+    "mtime": 1781109418.7334867,
+    "ast_hash": "11a9ac0be0ca2265af08bb786d025c84",
+    "semantic_hash": "11a9ac0be0ca2265af08bb786d025c84"
+  },
+  "Util/ResXResourceWriter.cs": {
+    "mtime": 1781109418.7335672,
+    "ast_hash": "b4a06b9f4db7f64131f1b44d9974aa27",
+    "semantic_hash": "b4a06b9f4db7f64131f1b44d9974aa27"
+  },
+  "Util/ResourcesFile.cs": {
+    "mtime": 1781109418.73365,
+    "ast_hash": "b78a5ec08580f37b5887fd9a6c1e276d",
+    "semantic_hash": "b78a5ec08580f37b5887fd9a6c1e276d"
+  },
+  "Util/Sha1ForNonSecretPurposes.cs": {
+    "mtime": 1781452071.5458374,
+    "ast_hash": "459c4cf9048a80d5c2d5780406d17f0e",
+    "semantic_hash": "459c4cf9048a80d5c2d5780406d17f0e"
+  },
+  "Util/TreeTraversal.cs": {
+    "mtime": 1781109418.7337112,
+    "ast_hash": "51f5fce3d74b7631256dab49c4a63ed1",
+    "semantic_hash": "51f5fce3d74b7631256dab49c4a63ed1"
+  },
+  "Util/UnicodeNewline.cs": {
+    "mtime": 1781109418.7338238,
+    "ast_hash": "9edb69b0fd9ca33758f95574868de85b",
+    "semantic_hash": "9edb69b0fd9ca33758f95574868de85b"
+  },
+  "Util/UnionFind.cs": {
+    "mtime": 1781109418.7338746,
+    "ast_hash": "c43212594aa63f80be3eff64aad54d1b",
+    "semantic_hash": "c43212594aa63f80be3eff64aad54d1b"
+  },
+  "Util/Win32Resources.cs": {
+    "mtime": 1783839113.9942012,
+    "ast_hash": "c324c98a2111bbfc1213a561d5a07475",
+    "semantic_hash": "c324c98a2111bbfc1213a561d5a07475"
+  },
+  "packages.lock.json": {
+    "mtime": 1784133595.7934556,
+    "ast_hash": "04995f1a972df78b6d6b25887d01055c",
+    "semantic_hash": "04995f1a972df78b6d6b25887d01055c"
+  },
+  "CSharp/Syntax/README.md": {
+    "mtime": 1782583629.723925,
+    "ast_hash": "203f670947848f4a536f364b77509e39",
+    "semantic_hash": "203f670947848f4a536f364b77509e39"
+  },
+  "PackageReadme.md": {
+    "mtime": 1781109418.721252,
+    "ast_hash": "0e421ff5104d726c8ef9157ffaacb748",
+    "semantic_hash": "0e421ff5104d726c8ef9157ffaacb748"
+  },
+  "DecompilerNuGetPackageIcon.png": {
+    "mtime": 1781109418.7023878,
+    "ast_hash": "7fbaffeb7c75c958dafdc9e8c8d40214",
+    "semantic_hash": "7fbaffeb7c75c958dafdc9e8c8d40214"
+  }
+}
