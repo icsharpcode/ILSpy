@@ -36,7 +36,9 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Roundtrip
 {
-	[TestFixture, Parallelizable(ParallelScope.All), Platform("Win")]
+	// Order(1) enqueues this fixture's multi-minute roundtrip tests ahead of unordered
+	// fixtures, so they do not straggle at the end of a parallel run.
+	[TestFixture, Parallelizable(ParallelScope.All), Platform("Win"), Order(1)]
 	public class RoundtripAssembly
 	{
 		public static readonly string TestDir = Path.GetFullPath(Path.Combine(Tester.TestCasePath, "../../ILSpy-tests"));
