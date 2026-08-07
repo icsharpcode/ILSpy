@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Async = 0x10000,
 		Ref = 0x20000,
 		Required = 0x40000,
+		Closed = 0x80000,
 
 		VisibilityMask = Private | Internal | Protected | Public,
 
@@ -76,7 +77,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.Public, Modifiers.Private, Modifiers.Protected, Modifiers.Internal,
 			Modifiers.New,
 			Modifiers.Unsafe,
-			Modifiers.Static, Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Override,
+			Modifiers.Static, Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Closed, Modifiers.Override,
 			Modifiers.Required, Modifiers.Readonly, Modifiers.Volatile,
 			Modifiers.Ref,
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
@@ -126,6 +127,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return "ref";
 				case Modifiers.Required:
 					return "required";
+				case Modifiers.Closed:
+					return "closed";
 				case Modifiers.Any:
 					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return "any";

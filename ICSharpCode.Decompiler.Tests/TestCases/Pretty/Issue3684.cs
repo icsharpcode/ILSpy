@@ -15,7 +15,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			T IInterface.Convert<T>(T input)
 			{
-				return ((BaseClass)this).Convert<T>(input);
+				return Convert(input);
 			}
 		}
 	}
