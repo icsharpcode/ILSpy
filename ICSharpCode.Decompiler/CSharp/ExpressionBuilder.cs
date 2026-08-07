@@ -2660,6 +2660,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		IEnumerable<ParameterDeclaration> MakeParameters(IReadOnlyList<IParameter> parameters, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index!.Value);
+			var result = new List<ParameterDeclaration>(parameters.Count);
+			bool anyAnonymousType = false;
 			int i = 0;
 			foreach (var parameter in parameters)
 			{
@@ -2674,11 +2676,24 @@ namespace ICSharpCode.Decompiler.CSharp
 					// needs to be consistent with logic in ILReader.CreateILVariable
 					pd.Name = "P_" + i;
 				}
+
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
-					pd.Type = null;
-				yield return pd;
+					anyAnonymousType = true;
+
+				result.Add(pd);
 				i++;
 			}
+
+			// An anonymous type cannot be named, so a lambda with such a parameter must be implicitly typed.
+			// C# also requires all lambda parameters to use the same form (CS0748). Drop every type when the
+			// remaining parameter syntax permits it; otherwise keep the converted declarations as a
+			// best-effort fallback for an unrepresentable signature.
+			if (anyAnonymousType && result.All(p => p is { ParameterModifier: ReferenceKind.None, IsParams: false, IsScopedRef: false, Attributes.Count: 0, DefaultExpression: null }))
+			{
+				foreach (var pd in result)
+					pd.Type = null;
+			}
+			return result;
 		}
 
 		protected internal override TranslatedExpression VisitBlockContainer(BlockContainer container, TranslationContext context)
