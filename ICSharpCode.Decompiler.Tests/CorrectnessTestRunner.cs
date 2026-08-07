@@ -304,6 +304,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task LambdaNaturalType([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
+		[Test]
 		public async Task ExpressionTrees([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
