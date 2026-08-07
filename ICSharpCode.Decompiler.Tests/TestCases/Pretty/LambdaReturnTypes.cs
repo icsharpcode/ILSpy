@@ -36,5 +36,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			anon(ref arg) = 5;
 			return arg;
 		}
+
+		public int RefReadonlyReturn()
+		{
+			var anon = ref readonly int (ref int x) => ref x;
+			Console.WriteLine("no inlining");
+			int arg = 7;
+			return anon(ref arg);
+		}
 	}
 }

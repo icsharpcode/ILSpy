@@ -2717,11 +2717,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// The natural type's return type is inferred from the body; when that differs
 				// from the delegate's return type, only a C# 10 explicit return type reproduces
-				// the delegate's shape.
-				IType? delegateReturnType = delegateType.GetDelegateInvokeMethod()?.ReturnType;
-				if (delegateReturnType is not null && !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(delegateReturnType, naturalReturnType))
+				// the delegate's shape. 'ref readonly' is not part of the type, so it always
+				// needs the explicit return type, even where the types themselves agree.
+				IMethod? invokeMethod = delegateType.GetDelegateInvokeMethod();
+				if (invokeMethod is not null
+					&& (invokeMethod.ReturnTypeIsRefReadOnly
+						|| !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(invokeMethod.ReturnType, naturalReturnType)))
 				{
-					lambdaExpression.ReturnType = ConvertType(delegateReturnType);
+					lambdaExpression.ReturnType = ConvertType(invokeMethod.ReturnType);
+					if (invokeMethod.ReturnTypeIsRefReadOnly && lambdaExpression.ReturnType is ComposedType composedType && composedType.HasRefSpecifier)
+					{
+						composedType.HasReadOnlySpecifier = true;
+					}
 				}
 			}
 
