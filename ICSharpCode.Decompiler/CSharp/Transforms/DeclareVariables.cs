@@ -626,6 +626,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						type = new SimpleType("var");
 					}
+					else if (context.Settings.NaturalTypeForLambdaAndMethodGroup && v.Type.ContainsAnonymousDelegate())
+					{
+						type = new SimpleType("var");
+					}
 					else
 					{
 						type = context.TypeSystemAstBuilder.ConvertType(v.Type);
@@ -661,6 +665,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						type = new SimpleType("var");
 						isOutVar = true;
+					}
+					else if (context.Settings.NaturalTypeForLambdaAndMethodGroup && v.Type.ContainsAnonymousDelegate())
+					{
+						type = new SimpleType("var");
 					}
 					else if (dirExpr.Annotation<UseImplicitlyTypedOutAnnotation>() != null
 						&& !IsReferencedWithinDeclaringCall(dirExpr, v))

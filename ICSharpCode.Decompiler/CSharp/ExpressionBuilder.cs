@@ -2587,6 +2587,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				let v = ident.GetILVariable()
 				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
 				select ident).Any();
+			bool isAnonymousDelegate = delegateType.IsAnonymousDelegate();
 
 			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type is null))
@@ -2597,6 +2598,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			else if (attributeSections.Count > 0 || ame.Parameters.Any(p => p.Attributes.Any()))
 			{
 				// C# 10 lambdas can have attributes, but anonymous methods cannot
+				isLambda = true;
+			}
+			else if (isAnonymousDelegate)
+			{
+				// An anonymous delegate type cannot be named, so the site can only be typed via
+				// the anonymous function's natural type, which needs lambda syntax: the
+				// parameterless 'delegate {}' form has no natural type, and 'delegate' syntax
+				// cannot declare a return type when the body's type differs from the delegate's.
+				// This outranks the rendering preferences below - they may drop the parameter
+				// list, which would take the natural type with it.
 				isLambda = true;
 			}
 			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ReferenceKind.None && !p.IsParams)
@@ -2618,6 +2629,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Expression replacement;
 			IType inferredReturnType;
+			// The return type C# would re-infer from the emitted anonymous function; only equal to
+			// inferredReturnType for bodies whose value is not discarded.
+			IType naturalReturnType;
 			if (isLambda)
 			{
 				LambdaExpression lambda = new LambdaExpression();
@@ -2629,11 +2643,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					lambda.Body = returnStmt.Expression.Detach();
 					inferredReturnType = lambda.Body!.GetResolveResult().Type;
+					naturalReturnType = inferredReturnType;
+				}
+				else if (isAnonymousDelegate && body.Statements.Count == 1
+					&& body.Statements.Single() is ExpressionStatement exprStmt)
+				{
+					// A single statement-expression can be the expression body of a void-returning
+					// lambda; its value (if any) is discarded, so the return type stays void.
+					lambda.Body = exprStmt.Expression.Detach();
+					inferredReturnType = compilation.FindType(KnownTypeCode.Void);
+					naturalReturnType = lambda.Body!.GetResolveResult().Type;
 				}
 				else
 				{
 					lambda.Body = body;
 					inferredReturnType = InferReturnType(body);
+					naturalReturnType = inferredReturnType;
 				}
 				replacement = lambda;
 			}
@@ -2641,11 +2666,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				ame.Body = body;
 				inferredReturnType = InferReturnType(body);
+				naturalReturnType = inferredReturnType;
 				replacement = ame;
 			}
 			if (ame.IsAsync)
 			{
 				inferredReturnType = GetTaskType(inferredReturnType);
+				naturalReturnType = GetTaskType(naturalReturnType);
+			}
+			if (isAnonymousDelegate && replacement is LambdaExpression lambdaExpression)
+			{
+				// The natural type's return type is inferred from the body; when that differs
+				// from the delegate's return type, only a C# 10 explicit return type reproduces
+				// the delegate's shape.
+				IType? delegateReturnType = delegateType.GetDelegateInvokeMethod()?.ReturnType;
+				if (delegateReturnType is not null && !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(delegateReturnType, naturalReturnType))
+				{
+					lambdaExpression.ReturnType = ConvertType(delegateReturnType);
+				}
 			}
 
 			var rr = new DecompiledLambdaResolveResult(

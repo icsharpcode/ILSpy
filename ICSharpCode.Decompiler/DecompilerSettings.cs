@@ -176,6 +176,13 @@ namespace ICSharpCode.Decompiler
 		public partial bool FileScopedNamespaces { get; set; }
 
 		/// <summary>
+		/// Use C# 10 natural types for delegates and lambdas.
+		/// </summary>
+		[Description("DecompilerSettings.NaturalTypeForLambdaAndMethodGroup")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp10_0)]
+		public partial bool NaturalTypeForLambdaAndMethodGroup { get; set; }
+
+		/// <summary>
 		/// Decompile anonymous methods/lambdas.
 		/// </summary>
 		[Description("DecompilerSettings.DecompileAnonymousMethodsLambdas")]

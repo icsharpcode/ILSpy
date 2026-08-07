@@ -808,7 +808,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			string name;
-			if (type.IsAnonymousType())
+			if (type.IsAnonymousType() || type.IsAnonymousDelegate())
 			{
 				name = "anon";
 			}
