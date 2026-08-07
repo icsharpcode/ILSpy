@@ -562,9 +562,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		public static bool ContainsNonPrintableIdentifierChar(string identifier)
 		{
-			if (string.IsNullOrEmpty(identifier))
-				return false;
+			return !string.IsNullOrEmpty(identifier) && ContainsNonPrintableIdentifierChar(identifier.AsSpan());
+		}
 
+		public static bool ContainsNonPrintableIdentifierChar(ReadOnlySpan<char> identifier)
+		{
 			for (int i = 0; i < identifier.Length; i++)
 			{
 				if (char.IsWhiteSpace(identifier[i]))
@@ -578,6 +580,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 
 		static bool IsPrintableIdentifierChar(string identifier, int index)
 		{
+			return IsPrintableIdentifierChar(identifier.AsSpan(), index);
+		}
+
+		static bool IsPrintableIdentifierChar(ReadOnlySpan<char> identifier, int index)
+		{
 			switch (identifier[index])
 			{
 				case '\\':
@@ -588,7 +595,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case '^':
 					return true;
 			}
-			switch (char.GetUnicodeCategory(identifier, index))
+			UnicodeCategory category;
+			if (index + 1 < identifier.Length && char.IsSurrogatePair(identifier[index], identifier[index + 1]))
+			{
+				// netstandard2.0 has no code-point-based GetUnicodeCategory, so the rare
+				// astral-plane case pays for a two-char string to categorize the pair.
+				category = char.GetUnicodeCategory(new string(new[] { identifier[index], identifier[index + 1] }), 0);
+			}
+			else
+			{
+				category = char.GetUnicodeCategory(identifier[index]);
+			}
+			switch (category)
 			{
 				case UnicodeCategory.NonSpacingMark:
 				case UnicodeCategory.SpacingCombiningMark:
