@@ -197,6 +197,87 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void LifetimeAnnotations()
+		{
+			ITypeDefinition type = GetTypeDefinition(typeof(LifetimeAnnotationTests));
+
+			IParameter explicitScopedRef = type.Methods.Single(m => m.Name == "ExplicitScopedRef").Parameters.Single();
+			Assert.That(explicitScopedRef.Lifetime.DeclaredScope, Is.EqualTo(ScopedKind.ScopedRef));
+			Assert.That(explicitScopedRef.GetEffectiveScope(), Is.EqualTo(ScopedKind.ScopedRef));
+			Assert.That(explicitScopedRef.Lifetime.HasUnscopedRefAttribute, Is.False);
+			Assert.That(explicitScopedRef.Lifetime.ScopedRef, Is.True);
+
+			IParameter explicitScopedValue = type.Methods.Single(m => m.Name == "ExplicitScopedValue").Parameters.Single();
+			Assert.That(explicitScopedValue.Lifetime.DeclaredScope, Is.EqualTo(ScopedKind.ScopedValue));
+			Assert.That(explicitScopedValue.GetEffectiveScope(), Is.EqualTo(ScopedKind.ScopedValue));
+			Assert.That(explicitScopedValue.Lifetime.HasUnscopedRefAttribute, Is.False);
+			Assert.That(explicitScopedValue.Lifetime.ScopedRef, Is.True);
+
+			IParameter implicitScopedRef = type.Methods.Single(m => m.Name == "ImplicitScopedRef").Parameters.Single();
+			Assert.That(implicitScopedRef.Lifetime.DeclaredScope, Is.EqualTo(ScopedKind.None));
+			Assert.That(implicitScopedRef.GetEffectiveScope(), Is.EqualTo(ScopedKind.ScopedRef));
+			Assert.That(implicitScopedRef.Lifetime.HasUnscopedRefAttribute, Is.False);
+			Assert.That(implicitScopedRef.Lifetime.ScopedRef, Is.False);
+
+			IParameter unscopedRef = type.Methods.Single(m => m.Name == "UnscopedRef").Parameters.Single();
+			Assert.That(unscopedRef.Lifetime.DeclaredScope, Is.EqualTo(ScopedKind.None));
+			Assert.That(unscopedRef.GetEffectiveScope(), Is.EqualTo(ScopedKind.None));
+			Assert.That(unscopedRef.Lifetime.HasUnscopedRefAttribute, Is.True);
+			Assert.That(unscopedRef.GetAttributes().Any(a =>
+				a.AttributeType.FullName == "System.Diagnostics.CodeAnalysis.UnscopedRefAttribute"), Is.True);
+
+			var paramsRefStruct = new DefaultParameter(type, "values", isParams: true);
+			Assert.That(paramsRefStruct.GetEffectiveScope(), Is.EqualTo(ScopedKind.ScopedValue));
+
+			IMethod instanceMethod = type.Methods.Single(m => m.Name == "InstanceMethod");
+			Assert.That(instanceMethod.GetThisParameterScope(), Is.EqualTo(ScopedKind.ScopedRef));
+			Assert.That(instanceMethod.HasAttribute(KnownAttribute.UnscopedRef), Is.False);
+
+			IMethod unscopedMethod = type.Methods.Single(m => m.Name == "UnscopedMethod");
+			Assert.That(unscopedMethod.GetThisParameterScope(), Is.EqualTo(ScopedKind.None));
+			Assert.That(unscopedMethod.HasAttribute(KnownAttribute.UnscopedRef), Is.True);
+
+			IProperty unscopedProperty = type.Properties.Single(p => p.Name == "UnscopedProperty");
+			Assert.That(unscopedProperty.Getter.GetThisParameterScope(), Is.EqualTo(ScopedKind.None));
+			Assert.That(unscopedProperty.HasAttribute(KnownAttribute.UnscopedRef), Is.True);
+
+			IProperty accessorUnscopedProperty = type.Properties.Single(p => p.Name == "AccessorUnscopedProperty");
+			Assert.That(accessorUnscopedProperty.Getter.GetThisParameterScope(), Is.EqualTo(ScopedKind.None));
+			Assert.That(accessorUnscopedProperty.Getter.HasAttribute(KnownAttribute.UnscopedRef), Is.True);
+
+			IMethod staticMethod = type.Methods.Single(m => m.Name == "ExplicitScopedRef");
+			Assert.That(staticMethod.GetThisParameterScope(), Is.EqualTo(ScopedKind.None));
+
+			IMethod classMethod = GetTypeDefinition(typeof(SimplePublicClass)).Methods.Single(m => m.Name == "Method");
+			Assert.That(classMethod.GetThisParameterScope(), Is.EqualTo(ScopedKind.None));
+
+			// The legacy mscorlib fixture has no RefSafetyRulesAttribute, so out is not implicitly scoped.
+			ITypeDefinition int32 = compilation.FindType(KnownTypeCode.Int32).GetDefinition();
+			IMethod legacyTryParse = int32.Methods.Single(m => m.Name == "TryParse"
+				&& m.Parameters.Count == 2
+				&& m.Parameters[1].ReferenceKind == ReferenceKind.Out);
+			Assert.That(legacyTryParse.Parameters[1].GetEffectiveScope(), Is.EqualTo(ScopedKind.None));
+		}
+
+		[Test]
+		public void LifetimeAnnotationsCanBeDisabled()
+		{
+			var compilationWithoutLifetimeAnnotations = new SimpleCompilation(
+				TestAssembly.WithOptions(TypeSystemOptions.Default & ~TypeSystemOptions.ScopedRef),
+				Mscorlib.WithOptions(TypeSystemOptions.Default | TypeSystemOptions.OnlyPublicAPI));
+			ITypeDefinition type = compilationWithoutLifetimeAnnotations.FindType(typeof(LifetimeAnnotationTests)).GetDefinition();
+
+			IParameter explicitScopedRef = type.Methods.Single(m => m.Name == "ExplicitScopedRef").Parameters.Single();
+			Assert.That(explicitScopedRef.Lifetime.DeclaredScope, Is.EqualTo(ScopedKind.None));
+			Assert.That(explicitScopedRef.GetEffectiveScope(), Is.EqualTo(ScopedKind.None));
+			Assert.That(explicitScopedRef.GetAttributes().Any(a =>
+				a.AttributeType.FullName == "System.Runtime.CompilerServices.ScopedRefAttribute"), Is.True);
+
+			IMethod instanceMethod = type.Methods.Single(m => m.Name == "InstanceMethod");
+			Assert.That(instanceMethod.GetThisParameterScope(), Is.EqualTo(ScopedKind.None));
+		}
+
+		[Test]
 		public void AssemblyAttribute()
 		{
 			var attributes = compilation.MainModule.GetAssemblyAttributes().ToList();
