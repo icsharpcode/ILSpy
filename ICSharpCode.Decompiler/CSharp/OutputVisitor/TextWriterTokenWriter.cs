@@ -514,14 +514,17 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			if (string.IsNullOrEmpty(identifier))
 				return identifier;
-			StringBuilder sb = new StringBuilder();
+			if (!NeedsEscaping(identifier))
+				return identifier;
+			StringBuilder sb = new StringBuilder(identifier.Length);
 			for (int i = 0; i < identifier.Length; i++)
 			{
 				if (IsPrintableIdentifierChar(identifier, i))
 				{
 					if (char.IsSurrogatePair(identifier, i))
 					{
-						sb.Append(identifier.Substring(i, 2));
+						sb.Append(identifier[i]);
+						sb.Append(identifier[i + 1]);
 						i++;
 					}
 					else
@@ -543,6 +546,18 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 			return sb.ToString();
+		}
+
+		static bool NeedsEscaping(string identifier)
+		{
+			for (int i = 0; i < identifier.Length; i++)
+			{
+				if (!IsPrintableIdentifierChar(identifier, i))
+					return true;
+				if (char.IsSurrogatePair(identifier, i))
+					i++;
+			}
+			return false;
 		}
 
 		public static bool ContainsNonPrintableIdentifierChar(string identifier)
