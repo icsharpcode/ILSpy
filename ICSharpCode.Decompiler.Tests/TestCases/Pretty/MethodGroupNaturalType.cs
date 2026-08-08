@@ -231,6 +231,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return result;
 		}
 
+		public object NaturalTypeAssignedToMulticastDelegate()
+		{
+#if OPT
+			var result = Square;
+#else
+			MulticastDelegate result = Square;
+#endif
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
+		public object NaturalTypeAssignedToDelegateInterface()
+		{
+#if OPT
+			var result = Square;
+#else
+			ICloneable result = Square;
+#endif
+			Console.WriteLine("no inlining");
+			return result;
+		}
+
 		public int InvokeInferredMethodGroup()
 		{
 			var func = Square;

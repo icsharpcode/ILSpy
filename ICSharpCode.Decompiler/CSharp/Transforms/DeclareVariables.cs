@@ -628,6 +628,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return !context.Settings.SeparateLocalVariableDeclarations;
 		}
 
+		/// <summary>
+		/// A function type converts to System.MulticastDelegate, to its base classes and to its
+		/// interfaces; a variable declared as one of those still accepts a bare method group.
+		/// </summary>
+		static bool IsFunctionTypeConversionTarget(IType type, TransformContext context)
+		{
+			return context.TypeSystem.FindType(KnownTypeCode.MulticastDelegate)
+				.GetAllBaseTypes().Any(baseType => baseType.Equals(type));
+		}
+
 		void InsertVariableDeclarations(TransformContext context)
 		{
 			var replacements = new List<(AstNode OldNode, Func<AstNode> CreateNewNode, string StepDescription)>();
@@ -640,12 +650,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				{
 					// 'int v; v = expr;' can be combined to 'int v = expr;'
 					AstType type;
-					// A 'Delegate d = M;' or 'object o = M;' local keeps its declared type (it is not
-					// re-inferable from the method group), but the explicit delegate construction is
-					// dropped when the group's natural type produces the same delegate.
+					// A local declared as one of the types a function type merely converts to keeps
+					// its declared type (it is not re-inferable from the method group), but the
+					// explicit delegate construction is dropped when the group's natural type
+					// produces the same delegate.
 					bool unwrapDelegateConstruction = assignment.Right is ObjectCreateExpression { Arguments: { Count: 1 } } oce
 						&& oce.Arguments.Single().Annotation<MethodGroupNaturalTypeAnnotation>() != null
-						&& (v.Type.IsKnownType(KnownTypeCode.Delegate) || v.Type.IsKnownType(KnownTypeCode.Object));
+						&& IsFunctionTypeConversionTarget(v.Type, context);
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType())
 					{
 						type = new SimpleType("var");
