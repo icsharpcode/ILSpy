@@ -222,6 +222,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 		}
 	}
 
+	// One attribute application per class: the metadata order of repeated attributes on a
+	// single target differs between compilers, which the output comparison would flag.
+	[MyParams("no values")]
+	public class MyClass14
+	{
+	}
+
+	[MyParams("one value", 42)]
+	public class MyClass15
+	{
+	}
+
+	[MyParams("two values", 47, 11)]
+	public class MyClass16
+	{
+	}
+
+	[MyParams("null array", null)]
+	public class MyClass17
+	{
+	}
+
+	[MyParamsOverloaded("no values", new int[] { })]
+	public class MyClass18
+	{
+	}
+
+	[MyParamsOverloaded("one value", 42)]
+	public class MyClass19
+	{
+	}
+
 	[AttributeUsage(AttributeTargets.All)]
 	public class MyClassAttributeOnTypeParameterAttribute : Attribute
 	{
@@ -230,6 +262,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.CustomAttributeSamples
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
 	public class MyMethodOrInterfaceAttributeAttribute : Attribute
 	{
+	}
+
+	public class MyParamsAttribute : Attribute
+	{
+		public MyParamsAttribute(string text, params int[] values)
+		{
+		}
+	}
+
+	public class MyParamsOverloadedAttribute : Attribute
+	{
+		public MyParamsOverloadedAttribute(string text)
+		{
+		}
+
+		public MyParamsOverloadedAttribute(string text, params int[] values)
+		{
+		}
 	}
 
 	[AttributeUsage(AttributeTargets.All)]

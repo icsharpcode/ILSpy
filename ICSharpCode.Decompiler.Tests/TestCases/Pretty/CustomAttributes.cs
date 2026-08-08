@@ -51,6 +51,23 @@ namespace CustomAttributes
 			{
 			}
 		}
+		[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
+		public class GenericParamsAttribute<T> : Attribute
+		{
+			public GenericParamsAttribute(string text, params T[] values)
+			{
+			}
+		}
+		[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
+		public class GenericParamsOverloadedAttribute<T> : Attribute
+		{
+			public GenericParamsOverloadedAttribute(string text)
+			{
+			}
+			public GenericParamsOverloadedAttribute(string text, params T[] values)
+			{
+			}
+		}
 #endif
 		[My(ULongEnum.MaxUInt64)]
 		public enum ULongEnum : ulong
@@ -175,6 +192,17 @@ namespace CustomAttributes
 		[Generic<int[]>]
 		[Generic<StringComparison>(StringComparison.Ordinal)]
 		public static void UseGenericAttributeWithComplexTypes()
+		{
+		}
+		[GenericParams<int>("no values")]
+		[GenericParams<int>("two values", 47, 11)]
+		[GenericParams<string>("strings", "a", "b")]
+		public static void UseGenericParamsAttribute()
+		{
+		}
+		[GenericParamsOverloaded<int>("no values", new int[] { })]
+		[GenericParamsOverloaded<int>("one value", 42)]
+		public static void UseGenericParamsOverloadedAttribute()
 		{
 		}
 #endif

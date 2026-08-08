@@ -788,11 +788,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				attr.AddAnnotation(new MemberResolveResult(null, attribute.Constructor));
 			}
 			var parameters = attribute.Constructor?.Parameters ?? EmptyList<IParameter>.Instance;
+			bool useExpandedForm = CanUseExpandedForm(attribute, parameters, out var paramsElements);
 			for (int i = 0; i < attribute.FixedArguments.Length; i++)
 			{
 				var arg = attribute.FixedArguments[i];
 				var p = (i < parameters.Count) ? parameters[i] : null;
-				attr.Arguments.Add(ConvertConstantValue(p?.Type ?? arg.Type, arg.Type, arg.Value));
+				if (useExpandedForm && i == parameters.Count - 1)
+				{
+					var elementType = ((ArrayType)p!.Type).ElementType;
+					foreach (var element in paramsElements)
+					{
+						attr.Arguments.Add(ConvertConstantValue(elementType, element.Type, element.Value));
+					}
+				}
+				else
+				{
+					attr.Arguments.Add(ConvertConstantValue(p?.Type ?? arg.Type, arg.Type, arg.Value));
+				}
 			}
 			if (attribute.NamedArguments.Length > 0)
 			{
@@ -819,6 +831,60 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				attr.Arguments.Add(new ErrorExpression("Could not decode attribute arguments."));
 			}
 			return attr;
+		}
+
+		/// <summary>
+		/// Determines whether the arguments of <paramref name="attribute"/> can be written in expanded
+		/// form, i.e. <c>[MyAttribute("a", 1, 2)]</c> instead of <c>[MyAttribute("a", new int[] { 1, 2 })]</c>.
+		/// This is only the case if overload resolution on the expanded argument list still picks the
+		/// same constructor: an attribute may well have another constructor that the shorter argument
+		/// list would bind to instead.
+		/// </summary>
+		static bool CanUseExpandedForm(IAttribute attribute, IReadOnlyList<IParameter> parameters,
+			out ImmutableArray<System.Reflection.Metadata.CustomAttributeTypedArgument<IType>> elements)
+		{
+			elements = default;
+			IMethod? ctor = attribute.Constructor;
+			int lastIndex = parameters.Count - 1;
+			if (ctor == null || lastIndex < 0 || !parameters[lastIndex].IsParams)
+				return false;
+			if (attribute.FixedArguments.Length != parameters.Count)
+				return false;
+			if (parameters[lastIndex].Type is not ArrayType)
+				return false;
+			if (attribute.FixedArguments[lastIndex].Value
+				is not ImmutableArray<System.Reflection.Metadata.CustomAttributeTypedArgument<IType>> arrayElements)
+			{
+				return false;
+			}
+
+			var arguments = new ResolveResult[lastIndex + arrayElements.Length];
+			for (int i = 0; i < lastIndex; i++)
+			{
+				arguments[i] = MakeConstantResolveResult(attribute.FixedArguments[i]);
+			}
+			for (int i = 0; i < arrayElements.Length; i++)
+			{
+				arguments[lastIndex + i] = MakeConstantResolveResult(arrayElements[i]);
+			}
+
+			var or = new OverloadResolution(ctor.Compilation, arguments);
+			foreach (IMethod candidate in attribute.AttributeType.GetConstructors())
+			{
+				or.AddCandidate(candidate);
+			}
+			if (or.BestCandidateErrors != OverloadResolutionErrors.None || or.IsAmbiguous)
+				return false;
+			if (!or.BestCandidateIsExpandedForm)
+				return false;
+			var bestCandidate = or.GetBestCandidateWithSubstitutedTypeArguments();
+			if (!bestCandidate.MemberDefinition.Equals(ctor.MemberDefinition)
+				|| !bestCandidate.DeclaringType.Equals(ctor.DeclaringType))
+			{
+				return false;
+			}
+			elements = arrayElements;
+			return true;
 		}
 
 		internal IEnumerable<AttributeSection> ConvertAttributes(IEnumerable<IAttribute> attributes, string? target = null)
@@ -1073,6 +1139,24 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public Expression ConvertConstantValue(IType type, object? constantValue)
 		{
 			return ConvertConstantValue(type, type, constantValue);
+		}
+
+		/// <summary>
+		/// Creates a ResolveResult describing a decoded attribute argument, for use as an argument
+		/// of overload resolution.
+		///
+		/// This is the binding-side counterpart of <see cref="ConvertConstantValue(IType, IType, object)"/>.
+		/// The ResolveResults that method annotates its expressions with describe the literal as printed
+		/// (a <c>byte</c> value is annotated as the <c>int</c> literal it is printed as, because C# has no
+		/// small integer literals), which is not the type the argument binds with.
+		/// </summary>
+		static ResolveResult MakeConstantResolveResult(System.Reflection.Metadata.CustomAttributeTypedArgument<IType> argument)
+		{
+			return argument.Value switch {
+				IType referencedType => new TypeOfResolveResult(argument.Type, referencedType),
+				ImmutableArray<System.Reflection.Metadata.CustomAttributeTypedArgument<IType>> => new ResolveResult(argument.Type),
+				var value => new ConstantResolveResult(argument.Type, value)
+			};
 		}
 
 		/// <summary>
