@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler
 		/// Use C# 3 lambda syntax if possible.
 		/// </summary>
 		[Description("DecompilerSettings.UseLambdaSyntaxIfPossible")]
-		[DecompilerSetting(CSharp.LanguageVersion.CSharp3, AffectsMinimumRequiredVersion = false)]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp3)]
 		public partial bool UseLambdaSyntax { get; set; }
 
 		/// <summary>
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler
 		/// Use enhanced using statements.
 		/// </summary>
 		[Description("DecompilerSettings.UseEnhancedUsing")]
-		[DecompilerSetting(CSharp.LanguageVersion.CSharp8_0, AffectsMinimumRequiredVersion = false)]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp8_0)]
 		public partial bool UseEnhancedUsing { get; set; }
 
 		/// <summary>
@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler
 		public partial bool UsingDeclarations { get; set; }
 
 		[Description("DecompilerSettings.UseExtensionMethodSyntax")]
-		[DecompilerSetting(CSharp.LanguageVersion.CSharp3, AffectsMinimumRequiredVersion = false)]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp3)]
 		public partial bool ExtensionMethods { get; set; }
 
 		[Description("DecompilerSettings.UseLINQExpressionSyntax")]
