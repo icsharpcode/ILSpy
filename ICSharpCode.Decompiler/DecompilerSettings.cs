@@ -483,9 +483,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use C# 11.0 switch on (ReadOnly)Span&lt;char&gt;
 		/// </summary>
-		[Category("C# 11.0 / VS 2022.4")]
 		[Description("DecompilerSettings.SwitchOnReadOnlySpanChar")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp11_0)]
 		public partial bool SwitchOnReadOnlySpanChar { get; set; }
 
 		/// <summary>
