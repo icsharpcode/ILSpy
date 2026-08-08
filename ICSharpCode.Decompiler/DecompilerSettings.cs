@@ -381,7 +381,7 @@ namespace ICSharpCode.Decompiler
 		/// false: <c>pictureBox1.BeginInit();</c>
 		/// default: false
 		/// </summary>
-		[Category("Other")]
+		[Category("DecompilerSettings.Other")]
 		[Description("DecompilerSettings.AlwaysCastTargetsOfExplicitInterfaceImplementationCalls")]
 		[DecompilerSetting(DefaultValue = false)]
 		public partial bool AlwaysCastTargetsOfExplicitInterfaceImplementationCalls { get; set; }
@@ -392,7 +392,7 @@ namespace ICSharpCode.Decompiler
 		/// false: <c>DoSomething();</c>
 		/// default: false
 		/// </summary>
-		[Category("Other")]
+		[Category("DecompilerSettings.Other")]
 		[Description("DecompilerSettings.AlwaysQualifyMemberReferences")]
 		[DecompilerSetting(DefaultValue = false)]
 		public partial bool AlwaysQualifyMemberReferences { get; set; }
@@ -403,7 +403,7 @@ namespace ICSharpCode.Decompiler
 		/// false: <c>enum Kind { A, B, C = 5 }</c>
 		/// default: false
 		/// </summary>
-		[Category("Other")]
+		[Category("DecompilerSettings.Other")]
 		[Description("DecompilerSettings.AlwaysShowEnumMemberValues")]
 		[DecompilerSetting(DefaultValue = false)]
 		public partial bool AlwaysShowEnumMemberValues { get; set; }
@@ -411,7 +411,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/Sets whether to use variable names from debug symbols, if available.
 		/// </summary>
-		[Category("Other")]
+		[Category("DecompilerSettings.Other")]
 		[Description("DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable")]
 		[DecompilerSetting]
 		public partial bool UseDebugSymbols { get; set; }
