@@ -282,6 +282,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ref DefaultInt;
 		}
 
+		public static ref int SwitchRefReturn(int index)
+		{
+			switch (index)
+			{
+				case 0:
+					return ref numbers[0];
+				case 1:
+					return ref numbers[1];
+				default:
+					throw new InvalidOperationException();
+			}
+		}
+
 		public static ref int LastOrDefault()
 		{
 			if (numbers.Length != 0)
