@@ -2172,7 +2172,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				if (matches)
 				{
-					targetExpression.Expression.AddAnnotation(new MethodGroupNaturalTypeAnnotation(delegateType));
+					targetExpression.Expression.AddAnnotation(new NaturalTypeAnnotation(delegateType));
 				}
 			}
 			var conversion = new ConversionResolveResult(

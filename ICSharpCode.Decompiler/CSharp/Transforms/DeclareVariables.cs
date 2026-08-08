@@ -638,6 +638,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				.GetAllBaseTypes().Any(baseType => baseType.Equals(type));
 		}
 
+		/// <summary>
+		/// Determines whether a declared type accepts an anonymous function by its natural type
+		/// alone. A function type converts to the delegate targets above; an expression tree,
+		/// whose natural type is built from the same function type, converts to
+		/// System.Linq.Expressions.Expression and LambdaExpression instead.
+		/// </summary>
+		static bool IsNaturalTypeConversionTarget(IType declaredType, IType naturalType, TransformContext context)
+		{
+			if (naturalType.GetDelegateInvokeMethod() != null)
+				return IsFunctionTypeConversionTarget(declaredType, context);
+			return declaredType.FullName is "System.Linq.Expressions.Expression"
+					or "System.Linq.Expressions.LambdaExpression"
+				&& declaredType.TypeParameterCount == 0;
+		}
+
 		void InsertVariableDeclarations(TransformContext context)
 		{
 			var replacements = new List<(AstNode OldNode, Func<AstNode> CreateNewNode, string StepDescription)>();
@@ -655,8 +670,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// explicit delegate construction is dropped when the group's natural type
 					// produces the same delegate.
 					bool unwrapDelegateConstruction = assignment.Right is ObjectCreateExpression { Arguments: { Count: 1 } } oce
-						&& oce.Arguments.Single().Annotation<MethodGroupNaturalTypeAnnotation>() != null
+						&& oce.Arguments.Single().Annotation<NaturalTypeAnnotation>() != null
 						&& IsFunctionTypeConversionTarget(v.Type, context);
+					// The same holds for an anonymous function: the cast naming its natural type is
+					// redundant where the declared type only needs the conversion.
+					bool unwrapNaturalTypeCast = assignment.Right is CastExpression cast
+						&& cast.Expression.Annotation<NaturalTypeAnnotation>() is { } castNaturalType
+						&& IsNaturalTypeConversionTarget(v.Type, castNaturalType.DelegateType, context);
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType())
 					{
 						type = new SimpleType("var");
@@ -665,11 +685,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						type = new SimpleType("var");
 					}
-					else if (assignment.Right.Annotation<MethodGroupNaturalTypeAnnotation>() is { } naturalType
+					else if (assignment.Right is not (LambdaExpression or AnonymousMethodExpression)
+						&& assignment.Right.Annotation<NaturalTypeAnnotation>() is { } naturalType
 						&& NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(naturalType.DelegateType, v.Type))
 					{
 						// The initializer is a bare method group whose natural type is the
-						// variable's type, so 'var' re-infers the same delegate type.
+						// variable's type, so 'var' re-infers the same delegate type. An anonymous
+						// function is excluded: 'var' over an expression tree infers the delegate
+						// the Expression<> wraps, not the tree.
 						type = new SimpleType("var");
 					}
 					else
@@ -685,9 +708,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						type.AddTrailingTrivia(new Comment("pinned", CommentType.MultiLine));
 					}
 					replacements.Add((v.InsertionPoint.nextNode, () => {
-						Expression initializer = unwrapDelegateConstruction
-							? ((ObjectCreateExpression)assignment.Right).Arguments.Single().Detach()
-							: assignment.Right.Detach();
+						Expression initializer;
+						if (unwrapDelegateConstruction)
+							initializer = ((ObjectCreateExpression)assignment.Right).Arguments.Single().Detach();
+						else if (unwrapNaturalTypeCast)
+							initializer = ((CastExpression)assignment.Right).Expression.Detach();
+						else
+							initializer = assignment.Right.Detach();
 						var vds = new VariableDeclarationStatement(type, v.Name, initializer);
 						var init = vds.Variables.Single();
 						init.AddAnnotation(assignment.Left.GetResolveResult());

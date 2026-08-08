@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -76,6 +77,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			var paramsParameter = (params int[] xs) => xs.Length;
 			Console.WriteLine("params parameter: " + paramsParameter(1, 2, 3));
+
+			// A target type that only asks for the natural type keeps its own identity: the
+			// delegate stays a delegate, and the expression tree must not decay into one.
+			Delegate asDelegate = (int x) => x + 8;
+			Console.WriteLine("as delegate: " + asDelegate.Method.GetParameters().Length + " parameter(s)");
+
+			Expression asExpression = (int x) => x + 9;
+			Console.WriteLine("as expression: " + asExpression.NodeType + " " + asExpression);
 		}
 	}
 }

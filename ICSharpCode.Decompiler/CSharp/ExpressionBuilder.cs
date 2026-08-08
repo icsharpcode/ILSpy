@@ -2766,6 +2766,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				return replacement.WithILInstruction(function)
 					.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 			}
+			// An expression tree is written as a lambda, so its natural type is decided by the
+			// delegate the Expression<> wraps.
+			IType functionType = function.Kind == ILFunctionKind.ExpressionTree && delegateType.TypeArguments.Count == 1
+				? delegateType.TypeArguments[0]
+				: delegateType;
+			if (settings.NaturalTypeForLambdaAndMethodGroup && HasNaturalType(replacement, functionType, naturalReturnType, isLambda))
+			{
+				// A target type that only needs the function type - System.Delegate and the other
+				// base types of MulticastDelegate, or Expression/LambdaExpression for an expression
+				// tree - can be written without the cast, since C# re-infers the same type.
+				replacement.AddAnnotation(new NaturalTypeAnnotation(delegateType));
+			}
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
 				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
@@ -2855,6 +2867,25 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return true;
 			}
+		}
+
+		/// <summary>
+		/// Determines whether C# re-infers <paramref name="functionType"/> from the emitted
+		/// anonymous function alone. Only a lambda with an explicitly typed parameter list has a
+		/// natural type, and the only delegate types ever inferred are Action and Func.
+		/// </summary>
+		bool HasNaturalType(Expression anonymousFunction, IType functionType, IType naturalReturnType, bool isLambda)
+		{
+			if (!isLambda || anonymousFunction is not LambdaExpression lambda)
+				return false;
+			if (lambda.Parameters.Any(p => p.Type is null))
+				return false;
+			IMethod? invoke = functionType.GetDelegateInvokeMethod();
+			if (invoke == null || !MethodGroupNaturalType.IsInferrableDelegateType(functionType, invoke))
+				return false;
+			// Without an explicit return type, the body has to re-infer the delegate's.
+			return lambda.ReturnType is not null
+				|| NormalizeTypeVisitor.TypeErasure.EquivalentTypes(invoke.ReturnType, naturalReturnType);
 		}
 
 		protected internal override TranslatedExpression VisitILFunction(ILFunction function, TranslationContext context)

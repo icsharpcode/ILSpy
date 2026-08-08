@@ -28,14 +28,15 @@ using ICSharpCode.Decompiler.Util;
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	/// <summary>
-	/// Marks a method group expression whose C# natural type equals the delegate type the IL
-	/// constructs, i.e. the site can be emitted without an explicit delegate creation.
+	/// Marks a method group or anonymous function whose C# natural type equals the delegate type
+	/// the IL constructs, i.e. the site can be emitted without naming that type: without an
+	/// explicit delegate creation, or without a cast.
 	/// </summary>
-	sealed class MethodGroupNaturalTypeAnnotation
+	sealed class NaturalTypeAnnotation
 	{
 		public IType DelegateType { get; }
 
-		public MethodGroupNaturalTypeAnnotation(IType delegateType)
+		public NaturalTypeAnnotation(IType delegateType)
 		{
 			DelegateType = delegateType;
 		}
@@ -274,7 +275,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// or compiler-synthesized anonymous delegate types (for everything else) as the natural
 		/// type; a signature-compatible custom delegate type never round-trips through 'var'.
 		/// </summary>
-		static bool IsInferrableDelegateType(IType delegateType, IMethod invoke)
+		internal static bool IsInferrableDelegateType(IType delegateType, IMethod invoke)
 		{
 			if (delegateType.IsAnonymousDelegate())
 				return true;
