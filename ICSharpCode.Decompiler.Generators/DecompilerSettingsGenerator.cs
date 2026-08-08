@@ -98,7 +98,7 @@ internal class DecompilerSettingsGenerator : IIncrementalGenerator
 
 	readonly record struct SettingInfo(
 		string Namespace, string ClassName, string Accessibility, string PropertyName, string FieldName,
-		bool DefaultValue, int VersionValue, string? VersionName, string? Category, bool AffectsMinimumRequiredVersion,
+		bool DefaultValue, int VersionValue, string? VersionName, string? Category,
 		string FilePath, int SpanStart);
 
 	// A diagnostic captured during the transform; kept as plain values so the pipeline stays cacheable.
@@ -122,12 +122,6 @@ namespace ICSharpCode.Decompiler
 
 		/// <summary>Initial value of the setting. Defaults to true.</summary>
 		public bool DefaultValue { get; set; } = true;
-
-		/// <summary>
-		/// Whether enabling the setting raises GetMinimumRequiredVersion() to the version the
-		/// setting was introduced in. Defaults to true; only meaningful on version-gated settings.
-		/// </summary>
-		public bool AffectsMinimumRequiredVersion { get; set; } = true;
 	}
 }
 
@@ -199,7 +193,6 @@ namespace ICSharpCode.Decompiler
 		}
 
 		bool defaultValue = true;
-		bool affectsMinimumRequiredVersion = true;
 		foreach (var named in attribute.NamedArguments)
 		{
 			// A named argument that failed to bind is already a compiler error; ignore it here.
@@ -207,8 +200,6 @@ namespace ICSharpCode.Decompiler
 				continue;
 			if (named.Key == "DefaultValue")
 				defaultValue = namedValue;
-			else if (named.Key == "AffectsMinimumRequiredVersion")
-				affectsMinimumRequiredVersion = namedValue;
 		}
 
 		string fieldName = char.ToLowerInvariant(property.Name[0]) + property.Name.Substring(1);
@@ -225,7 +216,6 @@ namespace ICSharpCode.Decompiler
 			versionValue,
 			versionName,
 			category,
-			affectsMinimumRequiredVersion,
 			node.SyntaxTree.FilePath,
 			node.SpanStart);
 		return new SettingResult(setting, diagnostics.Count == 0 ? null : diagnostics.ToEquatableArray());
@@ -373,10 +363,7 @@ namespace ICSharpCode.Decompiler
 		builder.AppendLine("\t\t{");
 		foreach (var bucket in versionBuckets.Reverse())
 		{
-			var fields = bucket.Where(s => s.AffectsMinimumRequiredVersion).Select(s => s.FieldName).ToArray();
-			if (fields.Length == 0)
-				continue;
-			builder.AppendLine($"\t\t\tif ({string.Join(" || ", fields)})");
+			builder.AppendLine($"\t\t\tif ({string.Join(" || ", bucket.Select(s => s.FieldName))})");
 			builder.AppendLine($"\t\t\t\treturn global::ICSharpCode.Decompiler.CSharp.LanguageVersion.{bucket.First().VersionName};");
 		}
 		builder.AppendLine("\t\t\treturn global::ICSharpCode.Decompiler.CSharp.LanguageVersion.CSharp1;");
