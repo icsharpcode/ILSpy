@@ -44,6 +44,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	public class QueryExpressions
 	{
+		public class MaybeHolder
+		{
+			public Maybe<int> Value;
+
+			public Func<Maybe<int>> Factory()
+			{
+				return () => default(Maybe<int>);
+			}
+		}
+
 		public class HbmParam
 		{
 			public string Name { get; set; }
@@ -216,6 +226,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private List<string> Issue2545(List<string> arglist)
 		{
 			return arglist?.OrderByDescending((string f) => f.Length).ThenBy((string f) => f.ToLower()).ToList();
+		}
+
+		public Maybe<string>? NullConditionalValueTypeQuery(MaybeHolder holder)
+		{
+			return holder?.Value.Where((int value) => value > 0).Select((int value) => value.ToString());
+		}
+
+		public Maybe<string>? NullConditionalNestedInvocationQuery(MaybeHolder holder)
+		{
+			return holder?.Factory()().Where((int value) => value > 0).Select((int value) => value.ToString());
 		}
 #endif
 
