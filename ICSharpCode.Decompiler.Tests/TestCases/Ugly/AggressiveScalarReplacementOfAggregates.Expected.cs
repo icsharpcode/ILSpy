@@ -207,7 +207,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 				field1 = 1,
 				field2 = "Hello World!"
 			};
-			Invoke(delegate {
+			Invoke(() => {
 				displayClass.thisField = new Program();
 			});
 			Console.WriteLine("{0} {1}", this, displayClass.thisField);

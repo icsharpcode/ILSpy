@@ -234,6 +234,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							if (variables.TryGetValue(i, out var v))
 								variableMapping[v] = name;
 						}
+						else if (!IsValidName(name))
+						{
+							// Compiler-generated parameter names (e.g. "<p0>" on an anonymous method
+							// declared without a parameter list) are not valid C# identifiers. Skipping
+							// the reservation and the mapping leaves the parameter to AssignName, which
+							// generates a fresh name from the type for any name that fails IsValidName.
+							continue;
+						}
 						string nameWithoutNumber = SplitName(name, out int newIndex);
 						if (!parentScope.IsReservedVariableName(nameWithoutNumber, out _))
 						{

@@ -524,7 +524,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Func<Task<int>> AsyncDelegate()
 		{
-			return async delegate {
+			return async () => {
 				await Task.Delay(10);
 				return 2;
 			};

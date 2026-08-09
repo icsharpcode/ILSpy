@@ -916,7 +916,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static void NotAnObjectInitializerWithEvent()
 		{
 			Data data = new Data();
-			data.TestEvent += delegate {
+#if NET50
+			data.TestEvent += (object? obj, EventArgs e) => {
+#else
+			data.TestEvent += (object obj, EventArgs e) => {
+#endif
 				Console.WriteLine();
 			};
 			X(Y(), data);

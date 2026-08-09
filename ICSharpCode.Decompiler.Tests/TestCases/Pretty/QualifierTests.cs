@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.Tests.Pretty
 		{
 			int fieldConflict = 5;
 			Capturer(() => this.fieldConflict + fieldConflict);
-			Capturer(delegate {
+			Capturer(() => {
 				int innerConflict = 5;
 				return this.fieldConflict + fieldConflict + Capturer2(() => this.innerConflict + innerConflict + this.fieldConflict + fieldConflict);
 			});

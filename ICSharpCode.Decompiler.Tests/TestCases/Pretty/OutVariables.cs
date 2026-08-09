@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			// to ensure that the value is initialized when the delegate is declared.
 			if (d.Count > 2 && d.TryGetValue(42, out var value))
 			{
-				return delegate {
+				return () => {
 					Console.WriteLine(value);
 				};
 			}

@@ -2550,8 +2550,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ReferenceKind.None && !p.IsParams))
 			{
-				// otherwise use lambda only if an expression lambda is possible
-				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
+				// Lambdas cover statement bodies too; anonymous method syntax remains only for
+				// parameter shapes a lambda cannot express (ref/out/in and params modifiers).
+				isLambda = true;
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the parameters are not used in the method body
 			var parameterReferencingIdentifiers =

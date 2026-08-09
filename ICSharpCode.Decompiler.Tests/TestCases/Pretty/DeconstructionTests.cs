@@ -990,7 +990,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			int a = 0;
 			int b = 0;
-			await Task.Run(delegate {
+			await Task.Run(() => {
 				(a, b) = GetTuple<int, int>();
 			});
 			return a + b;
