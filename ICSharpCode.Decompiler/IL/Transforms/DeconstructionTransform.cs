@@ -129,6 +129,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// exists (see the guard for the precision guarantees).
 			if (IsConsumableByEnclosingDeconstruction(block, pos))
 				return false;
+			// Same idea for the value-semantics copy before a root Deconstruct call: blocks are
+			// processed back to front, so defer the call-only match to the attempt starting at
+			// the copy, which can consume both (see MatchDeconstruction). Defer only when that
+			// attempt actually reaches its match: an attempt that is itself deferred to an
+			// enclosing pattern bails without consuming this position, and the back-to-front
+			// walk never comes back, which would lose the deconstruction at both positions.
+			if (pos > 0 && IsRootDeconstructionCopy(block, pos - 1, out _, out _)
+				&& !IsConsumableByEnclosingDeconstruction(block, pos - 1))
+			{
+				return false;
+			}
 			if (!MatchDeconstructionSequence(block, startPos, out pos, out var rootCall,
 				out var rootTestedOperand, out var conversionStLocs, out var delayedActions))
 			{
@@ -431,7 +442,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void MatchDeconstruction(Block block, ref int pos, out DeconstructionCall? rootCall,
 			out ILInstruction? testedOperand)
 		{
-			rootCall = MatchDeconstructionCall(block.Instructions[pos], out testedOperand);
+			// Deconstruction assignment has value semantics, so Roslyn copies the deconstructed
+			// value into a temporary and calls Deconstruct on that. When the value is a call
+			// result, inlining already folds the temporary away; when it is a local or parameter,
+			// the copy survives to here. Consume it into the pattern: rendering the copied value
+			// as the deconstruction target recompiles to the identical temporary.
+			rootCall = null;
+			testedOperand = null;
+			if (IsRootDeconstructionCopy(block, pos, out var copiedValue, out rootCall))
+			{
+				testedOperand = copiedValue;
+				pos++;
+			}
+			rootCall ??= MatchDeconstructionCall(block.Instructions[pos], out testedOperand);
 			if (rootCall == null)
 				return;
 			rootedInDeconstructCall = true;
@@ -458,6 +481,46 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						leaves.Add(call.Results[i]);
 				}
 			}
+		}
+
+		/// <summary>
+		/// stloc copy(value)                          at pos
+		/// call Deconstruct(ldloc(a) copy, ...)       a root Deconstruct call on the copy
+		/// where the copy has no other use: the value-semantics temporary Roslyn emits for a
+		/// deconstruction whose right-hand side is not already a temporary. On success,
+		/// <paramref name="copiedValue"/> is the deconstructed value and <paramref name="call"/>
+		/// the matched call, so callers need not re-match either.
+		/// </summary>
+		bool IsRootDeconstructionCopy(Block block, int pos, out ILInstruction? copiedValue,
+			out DeconstructionCall? call)
+		{
+			copiedValue = null;
+			call = null;
+			if (pos + 1 >= block.Instructions.Count)
+				return false;
+			if (!block.Instructions[pos].MatchStLoc(out var copy, out var value))
+				return false;
+			if (copy.Kind is not (VariableKind.Local or VariableKind.StackSlot))
+				return false;
+			// A byref temporary is not a copy: Deconstruct called through it acts on the original,
+			// which is not what a value-semantics deconstruction of the referenced expression does.
+			if (copy.StackType == StackType.Ref)
+				return false;
+			if (!(copy.StoreCount == 1 && copy.LoadCount + copy.AddressCount == 1))
+				return false;
+			// The defensive copy of a struct element of an enclosing Deconstruct call has this
+			// exact shape. It belongs to the enclosing call's nested designation, so consuming it
+			// here would commit the inner call on its own and break the designation for good.
+			if (TryFindEnclosingDeconstructionCall(block, pos + 1, out _))
+				return false;
+			var matchedCall = MatchDeconstructionCall(block.Instructions[pos + 1], out var testedOperand);
+			if (matchedCall == null)
+				return false;
+			if (!MatchLdLocOrLdLoca(testedOperand!, out var receiver) || receiver != copy)
+				return false;
+			copiedValue = value;
+			call = matchedCall;
+			return true;
 		}
 
 		/// <summary>
