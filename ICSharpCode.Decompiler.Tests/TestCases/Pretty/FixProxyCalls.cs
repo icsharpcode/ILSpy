@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 
 		protected internal override void Test(string test)
 		{
-			action = delegate (string a) {
+			action = (string a) => {
 				base.Test(a);
 			};
 			if (test.Equals(1))
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		public Action<object> M(object state)
 		{
-			return delegate (object x) {
+			return (object x) => {
 				base.BaseCall(x, state, () => (object)null);
 			};
 		}
@@ -136,7 +136,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal override void Test(int a)
 		{
-			Action action = delegate {
+			Action action = () => {
 				base.Test(a);
 			};
 			if (a.Equals(1))

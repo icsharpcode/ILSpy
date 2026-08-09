@@ -12,7 +12,7 @@ internal class VariableScopeTest
 
 	private void Test(List<string> list1)
 	{
-		AddAction(delegate (List<Item> list2) {
+		AddAction((List<Item> list2) => {
 			long num2 = 1L;
 			foreach (string item in list1)
 			{
@@ -28,7 +28,7 @@ internal class VariableScopeTest
 		{
 			int preservedName = num;
 			num++;
-			AddAction(item2, delegate (object x) {
+			AddAction(item2, (object x) => {
 				SetValue(x, preservedName);
 			});
 		}

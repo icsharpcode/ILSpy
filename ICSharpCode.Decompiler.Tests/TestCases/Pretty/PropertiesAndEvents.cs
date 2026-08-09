@@ -169,7 +169,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public event EventHandler AutomaticEvent;
 
 		[field: NonSerialized]
-		public event EventHandler AutomaticEventWithInitializer = delegate {
+#if NET50
+		public event EventHandler AutomaticEventWithInitializer = (object? obj, EventArgs e) => {
+#else
+		public event EventHandler AutomaticEventWithInitializer = (object obj, EventArgs e) => {
+#endif
 		};
 
 #if ROSLYN

@@ -13,7 +13,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public object Trigger()
 		{
-			return Infer(delegate {
+			return Infer(() => {
 				if (Cond)
 				{
 					Console.WriteLine();
