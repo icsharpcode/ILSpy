@@ -243,25 +243,22 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile [DecimalConstant(...)] as simple literal values.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DecompileDecimalConstantAsSimpleLiteralValues")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool DecimalConstants { get; set; }
 
 		/// <summary>
 		/// Decompile C# 1.0 'public unsafe fixed int arr[10];' members.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DecompileC10PublicUnsafeFixedIntArr10Members")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool FixedBuffers { get; set; }
 
 		/// <summary>
 		/// Decompile 'string.Concat(a, b)' calls into 'a + b'.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.StringConcat")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool StringConcat { get; set; }
 
 		/// <summary>
@@ -295,17 +292,15 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile automatic events
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DecompileAutomaticEvents")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool AutomaticEvents { get; set; }
 
 		/// <summary>
 		/// Decompile using statements.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DetectUsingStatements")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool UsingStatement { get; set; }
 
 		/// <summary>
@@ -326,9 +321,8 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile foreach statements.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DetectForeachStatements")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool ForEachStatement { get; set; }
 
 		/// <summary>
@@ -348,24 +342,20 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Decompile lock statements.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DetectLockStatements")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool LockStatement { get; set; }
 
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DetectSwitchOnString")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool SwitchStatementOnString { get; set; }
 
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.SparseIntegerSwitch")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool SparseIntegerSwitch { get; set; }
 
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.InsertUsingDeclarations")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool UsingDeclarations { get; set; }
 
 		[Description("DecompilerSettings.UseExtensionMethodSyntax")]
@@ -439,9 +429,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to use array initializers.
 		/// If set to false, might produce non-compilable code.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.ArrayInitializerExpressions")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool ArrayInitializers { get; set; }
 
 		/// <summary>
@@ -684,9 +673,8 @@ namespace ICSharpCode.Decompiler
 		/// Gets/Sets whether to expand <c>params</c> arguments by replacing explicit array creation
 		/// with individual values in method calls.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.ExpandParamsArguments")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool ExpandParamsArguments { get; set; }
 
 		/// <summary>
@@ -820,17 +808,15 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Gets/sets whether the decompiler should produce for loops.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.ForStatement")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool ForStatement { get; set; }
 
 		/// <summary>
 		/// Gets/sets whether the decompiler should produce do-while loops.
 		/// </summary>
-		[Category("C# 1.0 / VS .NET")]
 		[Description("DecompilerSettings.DoWhileStatement")]
-		[DecompilerSetting]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp1)]
 		public partial bool DoWhileStatement { get; set; }
 
 		/// <summary>
