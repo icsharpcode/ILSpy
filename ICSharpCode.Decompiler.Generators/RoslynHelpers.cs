@@ -22,6 +22,21 @@ namespace ICSharpCode.Decompiler.Generators;
 
 public static class RoslynHelpers
 {
+	/// <summary>
+	/// Post-init source declaring Microsoft.CodeAnalysis.EmbeddedAttribute. Every generator that
+	/// emits embedded attribute types has to ship its own copy in its own post-init output; the
+	/// declarations merge only while they stay partial and textually compatible, so all generators
+	/// must build their copy from this single constant.
+	/// </summary>
+	public const string EmbeddedAttributeSource = @"
+namespace Microsoft.CodeAnalysis
+{
+    internal sealed partial class EmbeddedAttribute : global::System.Attribute
+    {
+    }
+}
+";
+
 	public static bool IsDerivedFrom(this INamedTypeSymbol type, INamedTypeSymbol baseType)
 	{
 		INamedTypeSymbol? t = type;

@@ -60,14 +60,28 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		LanguageVersion? languageVersion;
 
+		/// <summary>
+		/// The C# language version written into the exported project file as LangVersion.
+		/// This is an export parameter, not decompiler state: when not set explicitly, it defaults
+		/// to <see cref="DecompilerSettings.GetMinimumRequiredVersion"/> of the current settings,
+		/// and an explicit value below that minimum is rejected (here and again when the export
+		/// starts) because the emitted code could not compile under it.
+		/// </summary>
 		public LanguageVersion LanguageVersion {
 			get { return languageVersion ?? Settings.GetMinimumRequiredVersion(); }
 			set {
-				var minVersion = Settings.GetMinimumRequiredVersion();
-				if (value < minVersion)
-					throw new InvalidOperationException($"The chosen settings require at least {minVersion}." +
-						$" Please change the DecompilerSettings accordingly.");
+				ValidateLanguageVersion(value);
 				languageVersion = value;
+			}
+		}
+
+		void ValidateLanguageVersion(LanguageVersion version)
+		{
+			var minVersion = Settings.GetMinimumRequiredVersion();
+			if (version < minVersion)
+			{
+				throw new InvalidOperationException($"The chosen settings require at least {minVersion}." +
+					" Please change the DecompilerSettings accordingly.");
 			}
 		}
 
@@ -153,6 +167,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (string.IsNullOrEmpty(targetDirectory))
 			{
 				throw new InvalidOperationException("Must set TargetDirectory");
+			}
+			// The LanguageVersion setter already rejects a version below what the settings require,
+			// but Settings is mutable and shared, so re-validate against the settings actually in
+			// effect now - otherwise the exported project would carry a LangVersion under which the
+			// emitted code cannot compile.
+			if (languageVersion is { } explicitVersion)
+			{
+				ValidateLanguageVersion(explicitVersion);
 			}
 			DecompilerEventSource.Log.ProjectDecompilationStart(file.Name);
 			int codeFileCount = 0, resourceFileCount = 0;

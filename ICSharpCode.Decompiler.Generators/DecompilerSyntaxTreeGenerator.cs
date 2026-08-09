@@ -843,17 +843,7 @@ internal class DecompilerSyntaxTreeGenerator : IIncrementalGenerator
 		var visitorMembers = astNodeAdditions.Collect();
 
 		context
-			.RegisterPostInitializationOutput(i => i.AddSource("DecompilerSyntaxTreeGeneratorAttributes.g.cs", @"
-
-using System;
-
-namespace Microsoft.CodeAnalysis
-{
-    internal sealed partial class EmbeddedAttribute : global::System.Attribute
-    {
-    }
-}
-
+			.RegisterPostInitializationOutput(i => i.AddSource("DecompilerSyntaxTreeGeneratorAttributes.g.cs", RoslynHelpers.EmbeddedAttributeSource + @"
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	[global::Microsoft.CodeAnalysis.EmbeddedAttribute]
