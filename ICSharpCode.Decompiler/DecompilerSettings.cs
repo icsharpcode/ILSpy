@@ -44,11 +44,30 @@ namespace ICSharpCode.Decompiler
 		/// This does not imply that the resulting code strictly uses only language features from
 		/// that version. Language constructs like generics or ref locals cannot be removed from
 		/// the compiled code.
+		/// The language version is a construction shortcut, not state: it initializes the feature
+		/// flags once (see <see cref="SetLanguageVersion"/>) and is not stored afterwards.
 		/// </remarks>
 		public DecompilerSettings(CSharp.LanguageVersion languageVersion)
 		{
 			SetLanguageVersion(languageVersion);
 		}
+
+		/// <summary>
+		/// One-shot profile initializer: deactivates all language features from versions newer than
+		/// <paramref name="languageVersion"/>. The version itself is not stored - the feature flags
+		/// are the only state - so the call is not reversible and a later call with a higher version
+		/// does not re-enable features. Use <see cref="GetMinimumRequiredVersion"/> to derive a
+		/// version back from the flags.
+		/// </summary>
+		public partial void SetLanguageVersion(CSharp.LanguageVersion languageVersion);
+
+		/// <summary>
+		/// Derives the lowest language version that includes all currently enabled language
+		/// features. The settings do not store a language version, so this derivation is how a
+		/// version is recovered from the flags; project export uses it as the default (and lower
+		/// bound) for the LangVersion written into the project file.
+		/// </summary>
+		public partial CSharp.LanguageVersion GetMinimumRequiredVersion();
 
 		/// <summary>
 		/// Use C# 9 <c>nint</c>/<c>nuint</c> types.

@@ -60,6 +60,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		LanguageVersion? languageVersion;
 
+		/// <summary>
+		/// The C# language version written into the exported project file as LangVersion.
+		/// This is an export parameter, not decompiler state: when not set explicitly, it defaults
+		/// to <see cref="DecompilerSettings.GetMinimumRequiredVersion"/> of the current settings,
+		/// and an explicit value below that minimum is rejected (here and again when the export
+		/// starts) because the emitted code could not compile under it.
+		/// </summary>
 		public LanguageVersion LanguageVersion {
 			get { return languageVersion ?? Settings.GetMinimumRequiredVersion(); }
 			set {

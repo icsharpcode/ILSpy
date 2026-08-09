@@ -332,12 +332,12 @@ namespace ICSharpCode.Decompiler
 		context.AddSource(hintName, SourceText.From(builder.ToString().Replace("\r\n", "\n"), Encoding.UTF8));
 	}
 
+	// Emitted as partial implementing declarations: the containing class supplies the defining
+	// stubs, which is where the XML documentation lives (the docs on a partial method's defining
+	// declaration apply as long as the implementation carries none).
 	static void WriteSetLanguageVersion(StringBuilder builder, IGrouping<int, SettingInfo>[] versionBuckets)
 	{
-		builder.AppendLine("\t\t/// <summary>");
-		builder.AppendLine("\t\t/// Deactivates all language features from versions newer than <paramref name=\"languageVersion\"/>.");
-		builder.AppendLine("\t\t/// </summary>");
-		builder.AppendLine("\t\tpublic void SetLanguageVersion(global::ICSharpCode.Decompiler.CSharp.LanguageVersion languageVersion)");
+		builder.AppendLine("\t\tpublic partial void SetLanguageVersion(global::ICSharpCode.Decompiler.CSharp.LanguageVersion languageVersion)");
 		builder.AppendLine("\t\t{");
 		builder.AppendLine("\t\t\t// By default, all decompiler features are enabled.");
 		builder.AppendLine("\t\t\t// Disable some of them based on language version:");
@@ -356,10 +356,7 @@ namespace ICSharpCode.Decompiler
 
 	static void WriteGetMinimumRequiredVersion(StringBuilder builder, IGrouping<int, SettingInfo>[] versionBuckets)
 	{
-		builder.AppendLine("\t\t/// <summary>");
-		builder.AppendLine("\t\t/// Gets the lowest language version that includes all currently enabled language features.");
-		builder.AppendLine("\t\t/// </summary>");
-		builder.AppendLine("\t\tpublic global::ICSharpCode.Decompiler.CSharp.LanguageVersion GetMinimumRequiredVersion()");
+		builder.AppendLine("\t\tpublic partial global::ICSharpCode.Decompiler.CSharp.LanguageVersion GetMinimumRequiredVersion()");
 		builder.AppendLine("\t\t{");
 		foreach (var bucket in versionBuckets.Reverse())
 		{
