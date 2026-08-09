@@ -2030,7 +2030,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							&& mrr.Member.DeclaringTypeDefinition == typeDef
 							&& !(mrr.Member is IMethod { IsLocalFunction: true }))
 						{
-							workList.Enqueue(mrr.Member);
+							// In generic types the reference is to a member specialized by the type's
+							// own type parameters, but entityMap and the dequeue dedupe are keyed by
+							// the definition; enqueueing the specialized member would decompile the
+							// member under a key the output pass never looks up.
+							workList.Enqueue(mrr.Member.MemberDefinition);
 						}
 						else if (rr is TypeResolveResult trr
 							&& trr.Type.GetDefinition()?.DeclaringTypeDefinition == typeDef)
