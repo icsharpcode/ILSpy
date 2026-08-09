@@ -285,6 +285,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public record struct PairWithPrimaryCtor<A, B>(A First, B Second);
 
+		public readonly record struct BoundsInfo(int Profile, Bounds Bounds);
+
+		public readonly record struct Bounds(ulong Small, ulong Large);
+
 		public record struct PrimaryCtor(int A, string B);
 
 		public record struct MultipleCtorsNoPrimaryCtor
@@ -446,6 +450,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				C = 1.41;
 			}
+		}
+
+		private static BoundsInfo GetInfo()
+		{
+			return new BoundsInfo(1, new Bounds(2uL, 3uL));
+		}
+
+		public static void NestedDeconstruction()
+		{
+			var (value, (value2, value3)) = GetInfo();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
 		}
 	}
 
