@@ -731,7 +731,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				foreach (var use in temp.AddressInstructions.Concat<ILInstruction>(temp.LoadInstructions))
 				{
-					if (!(use.Parent is LdFlda elementAccess && elementAccess.Parent is LdObj))
+					// Walk the ldflda chain up to the reading ldobj: element 8+ of a long tuple
+					// is accessed through the Rest field, i.e. through more than one ldflda.
+					// Whether each read is really a tuple element access (and consumed by the
+					// pattern) is verified by MatchTupleElementRead and the escape check.
+					ILInstruction? node = use.Parent;
+					if (node is not LdFlda)
+						return false;
+					while (node is LdFlda ldflda)
+						node = ldflda.Parent;
+					if (node is not LdObj)
 						return false;
 				}
 				return true;

@@ -996,6 +996,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return a + b;
 		}
 
+		public void NestedDesignation_RestChainedInnerTuple()
+		{
+			var (value, (value2, value3, value4, value5, value6, value7, value8, value9)) = GetTuple<int, (int, int, int, int, int, int, int, int)>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+			Console.WriteLine(value4);
+			Console.WriteLine(value5);
+			Console.WriteLine(value6);
+			Console.WriteLine(value7);
+			Console.WriteLine(value8);
+			Console.WriteLine(value9);
+		}
+
 		public bool DeconstructStructParameter(StructDeconstructionSource<int, string> point)
 		{
 			var (num2, value) = point;
