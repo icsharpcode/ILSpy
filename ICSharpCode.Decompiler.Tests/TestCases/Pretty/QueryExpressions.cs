@@ -48,6 +48,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public Maybe<int> Value;
 
+#if CS60
+			public Maybe<int> this[int index] => default(Maybe<int>);
+#endif
+
 			public Func<Maybe<int>> Factory()
 			{
 				return () => default(Maybe<int>);
@@ -236,6 +240,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public Maybe<string>? NullConditionalNestedInvocationQuery(MaybeHolder holder)
 		{
 			return holder?.Factory()().Where((int value) => value > 0).Select((int value) => value.ToString());
+		}
+
+		public Maybe<string>? NullConditionalIndexerQuery(MaybeHolder holder)
+		{
+			return holder?[0].Where((int value) => value > 0).Select((int value) => value.ToString());
 		}
 #endif
 
