@@ -151,7 +151,81 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		// per-run members
 		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
+		readonly List<DecompilerException> errors = new List<DecompilerException>();
 		readonly IProjectFileWriter projectWriter;
+
+		/// <summary>
+		/// Everything that went wrong during the last <see cref="DecompileProject(MetadataFile, string, CancellationToken)"/>.
+		/// An export never aborts on a member, file or resource it cannot handle; it writes the
+		/// error text where the content would have gone and continues, so a single unsupported
+		/// method still yields a complete project. Callers should show this list to the user -
+		/// otherwise the failures ship silently and never get reported.
+		/// </summary>
+		public IReadOnlyList<DecompilerException> Errors => errors;
+
+		void RecordError(DecompilerException error)
+		{
+			lock (errors)
+			{
+				errors.Add(error);
+			}
+		}
+
+		/// <summary>
+		/// Yields the items of <paramref name="items"/> until one of them throws; the failure is
+		/// recorded instead of aborting the export.
+		/// </summary>
+		IEnumerable<T> RecordingErrors<T>(IEnumerable<T> items, MetadataFile file, string what)
+		{
+			using var enumerator = items.GetEnumerator();
+			bool lastMoveFailed = false;
+			while (true)
+			{
+				T item;
+				try
+				{
+					if (!enumerator.MoveNext())
+						yield break;
+					item = enumerator.Current;
+				}
+				catch (Exception ex) when (!(ex is OperationCanceledException))
+				{
+					RecordError(ex as DecompilerException ?? new DecompilerException(file, $"Error writing {what}", ex));
+					// Skip the item that failed and try the next one, but give up once two attempts
+					// in a row fail: an enumerator that throws without advancing - which nothing
+					// stops an override from being - would otherwise loop forever.
+					if (lastMoveFailed)
+						yield break;
+					lastMoveFailed = true;
+					continue;
+				}
+				lastMoveFailed = false;
+				yield return item;
+			}
+		}
+
+		/// <summary>
+		/// Puts the error text where the file's contents would have gone. The writer itself may be
+		/// what failed - a full disk, a stream already closed - so a second failure while reporting
+		/// the first is dropped rather than allowed to take the export down.
+		/// </summary>
+		static void WriteErrorComment(TextWriter? writer, Exception error)
+		{
+			if (writer == null)
+				return;
+			try
+			{
+				// The failure may have interrupted the output visitor mid-line.
+				writer.WriteLine();
+				foreach (string line in CSharpDecompiler.GetErrorCommentLines(error))
+				{
+					writer.WriteLine("// " + line);
+				}
+			}
+			catch (Exception ex) when (!(ex is OperationCanceledException))
+			{
+			}
+		}
 
 		public void DecompileProject(MetadataFile file, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
@@ -182,7 +256,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				TargetDirectory = targetDirectory;
 				directories.Clear();
-				var resources = WriteResourceFilesInProject(file).ToList();
+				errors.Clear();
+				var resources = RecordingErrors(WriteResourceFilesInProject(file), file, "resource files").ToList();
 				resourceFileCount = resources.Count;
 				var files = WriteCodeFilesInProject(file, resources.SelectMany(r => r.PartialTypes ?? Enumerable.Empty<PartialTypeInfo>()).ToList(), cancellationToken).ToList();
 				codeFileCount = files.Count;
@@ -190,7 +265,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				var module = file as PEFile;
 				if (module != null)
 				{
-					files.AddRange(WriteMiscellaneousFilesInProject(module));
+					files.AddRange(RecordingErrors(WriteMiscellaneousFilesInProject(module), file, "miscellaneous files"));
 				}
 				if (StrongNameKeyFile != null)
 				{
@@ -277,6 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			var progressReporter = ProgressIndicator;
 			var progress = new DecompilationProgress { TotalUnits = files.Count, Title = "Exporting project..." };
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module, AssemblyResolver, Settings);
+			var missingFiles = new ConcurrentBag<string>();
 			var workList = new HashSet<TypeDefinitionHandle>();
 			var processedTypes = new HashSet<TypeDefinitionHandle>();
 			ProcessFiles(files);
@@ -290,7 +366,21 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				progress.TotalUnits = files.Count;
 			}
 
-			return files.Select(f => new ProjectItemInfo("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
+			// The assembly-level attributes are a single file like any other: failing to decompile
+			// them costs that file, not the export.
+			IEnumerable<ProjectItemInfo> assemblyInfo;
+			try
+			{
+				assemblyInfo = WriteAssemblyInfo(ts, cancellationToken);
+			}
+			catch (Exception ex) when (!(ex is OperationCanceledException))
+			{
+				RecordError(ex as DecompilerException ?? new DecompilerException(module, "Error decompiling the module and assembly attributes", ex));
+				assemblyInfo = Enumerable.Empty<ProjectItemInfo>();
+			}
+
+			return files.Select(f => f.Key).Except(missingFiles, Platform.FileNameComparer)
+				.Select(f => new ProjectItemInfo("Compile", f)).Concat(assemblyInfo);
 
 			string GetFileFileNameForHandle(TypeDefinitionHandle h)
 			{
@@ -325,10 +415,14 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					delegate (IGrouping<string, TypeDefinitionHandle> file) {
 						var declaredTypes = file.ToArray();
 						DecompilerEventSource.Log.ProjectFileStart(file.Key, declaredTypes.Length);
+						// Everything that can fail for this one file - creating it included, which is
+						// where a path too long for the file system surfaces - belongs inside the try.
+						TextWriter? w = null;
+						CSharpDecompiler? decompiler = null;
 						try
 						{
-							using var w = CreateFile(Path.Combine(TargetDirectory, file.Key));
-							CSharpDecompiler decompiler = CreateDecompiler(ts);
+							w = CreateFile(Path.Combine(TargetDirectory, file.Key));
+							decompiler = CreateDecompiler(ts);
 
 							foreach (var partialType in partialTypes)
 							{
@@ -356,14 +450,44 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 								}
 							}
 
-							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, Settings.CSharpFormattingOptions));
+							// A member the output visitor cannot write is replaced by the error text
+							// rather than truncating the file where it failed.
+							var outputVisitor = new ErrorTolerantOutputVisitor(w, Settings.CSharpFormattingOptions);
+							syntaxTree.AcceptVisitor(outputVisitor);
+							foreach (var outputError in outputVisitor.Errors)
+							{
+								RecordError(new DecompilerException(module, $"Error writing '{file.Key}'", outputError));
+							}
 						}
-						catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+						catch (Exception innerException) when (!(innerException is OperationCanceledException))
 						{
-							throw new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException);
+							// Whatever the decompiler could not cope with here, the remaining files
+							// are unaffected and the user still gets a complete project; the error
+							// takes the place of the file's contents.
+							RecordError(innerException as DecompilerException ?? new DecompilerException(module, $"Error decompiling for '{file.Key}'", innerException));
+							if (w == null)
+							{
+								// Nothing was written, so nothing can carry the error text - and the
+								// project must not claim a file that is not there.
+								missingFiles.Add(file.Key);
+							}
+							WriteErrorComment(w, innerException);
 						}
 						finally
 						{
+							foreach (var error in decompiler?.Errors ?? (IReadOnlyList<DecompilerException>)Array.Empty<DecompilerException>())
+							{
+								RecordError(error);
+							}
+							try
+							{
+								w?.Dispose();
+							}
+							catch (Exception ex) when (!(ex is OperationCanceledException))
+							{
+								// Dispose flushes: on a full disk this is where the write actually fails.
+								RecordError(new DecompilerException(module, $"Error writing '{file.Key}'", ex));
+							}
 							DecompilerEventSource.Log.ProjectFileStop(file.Key);
 						}
 						progress.Status = file.Key;
@@ -379,76 +503,96 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			foreach (var r in module.Resources.Where(r => r.ResourceType == ResourceType.Embedded))
 			{
-				Stream? stream = r.TryOpenStream();
-				if (stream == null)
-					continue;
-
-				stream.Position = 0;
-
-				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+				List<ProjectItemInfo> items;
+				try
 				{
-					bool decodedIntoIndividualFiles;
-					var individualResources = new List<ProjectItemInfo>();
-					try
+					items = WriteResourceFileInProject(r).ToList();
+				}
+				catch (Exception ex) when (!(ex is OperationCanceledException))
+				{
+					// One resource nobody can decode - a mangled .resources blob, a BAML stream the
+					// decompiler chokes on - costs that resource, not the ones behind it.
+					RecordError(ex as DecompilerException ?? new DecompilerException(module, $"Error writing resource '{r.Name}'", ex));
+					continue;
+				}
+				foreach (var item in items)
+				{
+					yield return item;
+				}
+			}
+		}
+
+		IEnumerable<ProjectItemInfo> WriteResourceFileInProject(Resource r)
+		{
+			Stream? stream = r.TryOpenStream();
+			if (stream == null)
+				yield break;
+
+			stream.Position = 0;
+
+			if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase))
+			{
+				bool decodedIntoIndividualFiles;
+				var individualResources = new List<ProjectItemInfo>();
+				try
+				{
+					var resourcesFile = new ResourcesFile(stream);
+					if (resourcesFile.AllEntriesAreStreams())
 					{
-						var resourcesFile = new ResourcesFile(stream);
-						if (resourcesFile.AllEntriesAreStreams())
+						foreach (var (name, value) in resourcesFile)
 						{
-							foreach (var (name, value) in resourcesFile)
+							string fileName = SanitizeFileName(name);
+							string? dirName = Path.GetDirectoryName(fileName);
+							if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 							{
-								string fileName = SanitizeFileName(name);
-								string? dirName = Path.GetDirectoryName(fileName);
-								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
-								{
-									CreateDirectory(Path.Combine(TargetDirectory, dirName));
-								}
-								Stream entryStream = (Stream)value!;
-								entryStream.Position = 0;
-								individualResources.AddRange(
-									WriteResourceToFile(fileName, name, entryStream));
+								CreateDirectory(Path.Combine(TargetDirectory, dirName));
 							}
-							decodedIntoIndividualFiles = true;
+							Stream entryStream = (Stream)value!;
+							entryStream.Position = 0;
+							individualResources.AddRange(
+								WriteResourceToFile(fileName, name, entryStream));
 						}
-						else
-						{
-							decodedIntoIndividualFiles = false;
-						}
-					}
-					catch (BadImageFormatException)
-					{
-						decodedIntoIndividualFiles = false;
-					}
-					catch (EndOfStreamException)
-					{
-						decodedIntoIndividualFiles = false;
-					}
-					if (decodedIntoIndividualFiles)
-					{
-						foreach (var entry in individualResources)
-						{
-							yield return entry;
-						}
+						decodedIntoIndividualFiles = true;
 					}
 					else
 					{
-						stream.Position = 0;
-						string fileName = GetFileNameForResource(r.Name);
-						foreach (var entry in WriteResourceToFile(fileName, r.Name, stream))
-						{
-							yield return entry;
-						}
+						decodedIntoIndividualFiles = false;
+					}
+				}
+				catch (BadImageFormatException)
+				{
+					decodedIntoIndividualFiles = false;
+				}
+				catch (EndOfStreamException)
+				{
+					decodedIntoIndividualFiles = false;
+				}
+				if (decodedIntoIndividualFiles)
+				{
+					foreach (var entry in individualResources)
+					{
+						yield return entry;
 					}
 				}
 				else
 				{
+					stream.Position = 0;
 					string fileName = GetFileNameForResource(r.Name);
-					using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					foreach (var entry in WriteResourceToFile(fileName, r.Name, stream))
 					{
-						stream.Position = 0;
-						stream.CopyTo(fs);
+						yield return entry;
 					}
-					yield return new ProjectItemInfo("EmbeddedResource", fileName).With("LogicalName", r.Name);
 				}
+			}
+			else
+			{
+				string fileName = GetFileNameForResource(r.Name);
+				using (FileStream fs = new FileStream(Path.Combine(TargetDirectory, fileName), FileMode.Create, FileAccess.Write))
+				{
+					stream.Position = 0;
+					stream.CopyTo(fs);
+				}
+				yield return new ProjectItemInfo("EmbeddedResource", fileName).With("LogicalName", r.Name);
 			}
 		}
 
@@ -519,25 +663,56 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			if (resources == null)
 				yield break;
 
-			byte[]? appIcon = CreateApplicationIcon(resources);
-			if (appIcon != null)
-			{
+			// Each file is written on its own, so the one that fails is the only one lost.
+			foreach (var item in TryWrite(module, "app.ico", () => {
+				byte[]? appIcon = CreateApplicationIcon(resources);
+				if (appIcon == null)
+					return null;
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.ico"), appIcon);
-				yield return new ProjectItemInfo("ApplicationIcon", "app.ico");
+				return new ProjectItemInfo("ApplicationIcon", "app.ico");
+			}))
+			{
+				yield return item;
 			}
 
-			byte[]? appManifest = CreateApplicationManifest(resources);
-			if (appManifest != null && !IsDefaultApplicationManifest(appManifest))
-			{
+			foreach (var item in TryWrite(module, "app.manifest", () => {
+				byte[]? appManifest = CreateApplicationManifest(resources);
+				if (appManifest == null || IsDefaultApplicationManifest(appManifest))
+					return null;
 				File.WriteAllBytes(Path.Combine(TargetDirectory, "app.manifest"), appManifest);
-				yield return new ProjectItemInfo("ApplicationManifest", "app.manifest");
+				return new ProjectItemInfo("ApplicationManifest", "app.manifest");
+			}))
+			{
+				yield return item;
 			}
 
-			var appConfig = module.FileName + ".config";
-			if (File.Exists(appConfig))
-			{
+			foreach (var item in TryWrite(module, "app.config", () => {
+				var appConfig = module.FileName + ".config";
+				if (!File.Exists(appConfig))
+					return null;
 				File.Copy(appConfig, Path.Combine(TargetDirectory, "app.config"), overwrite: true);
-				yield return new ProjectItemInfo("ApplicationConfig", Path.GetFileName(appConfig));
+				return new ProjectItemInfo("ApplicationConfig", Path.GetFileName(appConfig));
+			}))
+			{
+				yield return item;
+			}
+		}
+
+		IEnumerable<ProjectItemInfo> TryWrite(MetadataFile module, string what, Func<ProjectItemInfo?> write)
+		{
+			ProjectItemInfo? item;
+			try
+			{
+				item = write();
+			}
+			catch (Exception ex) when (!(ex is OperationCanceledException))
+			{
+				RecordError(ex as DecompilerException ?? new DecompilerException(module, $"Error writing '{what}'", ex));
+				yield break;
+			}
+			if (item.HasValue)
+			{
+				yield return item.Value;
 			}
 		}
 

@@ -57,6 +57,9 @@ Options:
   -ds|--decompiler-setting <value>        Set a decompiler setting. Use multiple times to set multiple settings.
   -r|--referencepath <path>               Path to a directory containing dependencies of the assembly that is being
                                           decompiled.
+  --ignore-decompilation-errors           Exit with success even when parts of the assembly could not be decompiled. The
+                                          affected code carries the error text in the output and the failures are listed
+                                          on stderr either way; only the exit status changes.
   --no-dead-code                          Remove dead code.
   --no-dead-stores                        Remove dead stores.
   -d|--dump-package                       Dump package assemblies into a folder. This requires the output directory

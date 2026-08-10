@@ -291,6 +291,59 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
+		/// Method bodies that could not be decompiled. Instead of aborting the surrounding type,
+		/// such a member is emitted with the error text in place of its body (see
+		/// <see cref="GetErrorCommentLines"/>) and the exception is collected here, so callers
+		/// decompiling many members - the project exporter above all - can tell the user how many
+		/// members are affected.
+		/// </summary>
+		public IReadOnlyList<DecompilerException> Errors => errors;
+
+		readonly List<DecompilerException> errors = new List<DecompilerException>();
+
+		/// <summary>
+		/// Where users are asked to report decompilation failures; part of the error text emitted
+		/// into the output, because a failure nobody reports is a failure nobody fixes.
+		/// </summary>
+		public const string DecompilationErrorReportUrl = "https://github.com/icsharpcode/ILSpy/issues/new";
+
+		/// <summary>
+		/// The headline a front end puts above the list of failures it recovered from. Shared so the
+		/// UI, the command line and any other consumer say the same thing and point at the same URL.
+		/// </summary>
+		public static IEnumerable<string> GetErrorSummaryLines(int errorCount)
+		{
+			yield return $"{errorCount} error(s) occurred; the affected code was replaced by the error text in the output.";
+			yield return $"Please report them at {DecompilationErrorReportUrl}:";
+		}
+
+		/// <summary>
+		/// The one-line description of a single failure, so the UI and the command line name it the
+		/// same way.
+		/// </summary>
+		public static string GetErrorHeadline(DecompilerException error)
+		{
+			if (error == null)
+				throw new ArgumentNullException(nameof(error));
+			return error.InnerException == null ? error.Message : $"{error.Message}: {error.InnerException.Message}";
+		}
+
+		/// <summary>
+		/// Renders <paramref name="error"/> as the lines of a comment block: an explanation, the
+		/// request to report it, and the full exception including its stack trace, which is what
+		/// makes such a report actionable.
+		/// </summary>
+		internal static IEnumerable<string> GetErrorCommentLines(Exception error)
+		{
+			yield return "ILSpy could not decompile this. Please report the exception below,";
+			yield return "along with the assembly it came from, at " + DecompilationErrorReportUrl;
+			foreach (string line in error.ToString().Split('\n'))
+			{
+				yield return line.TrimEnd('\r');
+			}
+		}
+
+		/// <summary>
 		/// Creates a new <see cref="CSharpDecompiler"/> instance from the given <paramref name="fileName"/> using the given <paramref name="settings"/>.
 		/// </summary>
 		public CSharpDecompiler(string fileName, DecompilerSettings settings)
@@ -752,6 +805,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		DecompileRun CreateDecompileRun(HashSet<string> namespaces)
 		{
+			// Every public Decompile* entry point starts here, so this is where the failures of the
+			// previous one stop counting - otherwise a reused instance reports them again against
+			// members that decompiled cleanly.
+			errors.Clear();
 			List<INamespace> resolvedNamespaces = new List<INamespace>();
 			foreach (var ns in namespaces)
 			{
@@ -2283,9 +2340,34 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				CleanUpMethodDeclaration(entityDecl, body, function, localSettings.DecompileMemberBodies);
 			}
-			catch (Exception innerException) when (!(innerException is OperationCanceledException || innerException is DecompilerException))
+			catch (Exception innerException) when (!(innerException is OperationCanceledException))
 			{
-				throw new DecompilerException(module, method, innerException);
+				// One method the decompiler cannot handle must not cost the user the type or, when
+				// exporting a project, the assembly around it: keep the signature, put the error in
+				// front of it, and let the remaining members decompile.
+				errors.Add(innerException as DecompilerException ?? new DecompilerException(module, method, innerException));
+				entityDecl.GetChild(Slots.Body)?.Remove();
+				if (settings.DecompileMemberBodies)
+				{
+					// The error goes where the code would have been, the same way a warning about the
+					// code does - and the body keeps the member's shape intact.
+					var errorBody = new BlockStatement();
+					var errorStatement = new EmptyStatement();
+					foreach (string line in GetErrorCommentLines(innerException))
+					{
+						errorStatement.AddTrailingTrivia(new Comment(" " + line));
+					}
+					errorBody.Statements.Add(errorStatement);
+					entityDecl.AddChild(errorBody, Slots.Body);
+				}
+				else
+				{
+					// Definitions-only output has no body to put the error in.
+					foreach (string line in GetErrorCommentLines(innerException))
+					{
+						entityDecl.AddLeadingTrivia(new Comment(" " + line));
+					}
+				}
 			}
 		}
 
