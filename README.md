@@ -15,7 +15,7 @@ Aside from the cross-platform desktop UI ILSpy (downloadable via Releases, see a
 * Our dotnet tool for Linux/Mac/Windows - check out [ILSpyCmd](ICSharpCode.ILSpyCmd) in this repository | [dotnet tool install](https://www.nuget.org/packages/ilspycmd/)
 * [C# for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-dotnettools.csharp) ships with decompilation support as well. To enable, activate the setting "Enable Decompilation Support".
 * In Visual Studio 2019, you have to manually enable F12 support. Go to Tools / Options / Text Editor / C# / Advanced and check "Enable navigation to decompiled source"
-* Our [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
+* Our [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) and [ILSpyX](https://www.nuget.org/packages/ICSharpCode.ILSpyX/) NuGet packages for your own projects
 * Our Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
 
 Features
@@ -23,11 +23,12 @@ Features
 
  * Decompilation to C# (check out the [language support status](https://github.com/icsharpcode/ILSpy/issues/829))
  * Whole-project decompilation
+ * Open from NuGet feed, open from running process in addition to disk and GAC (Windows-only)
  * Search for types/methods/properties (learn about the [options](https://github.com/icsharpcode/ILSpy/wiki/Search-Options))
- * Hyperlink-based type/method/property navigation
+ * Hyperlink-based type/method/property navigation, bookmarks
  * Base/Derived types navigation, history
  * Assembly metadata explorer ([feature walkthrough](https://github.com/icsharpcode/ILSpy/wiki/Metadata-Explorer))
- * BAML to XAML decompiler
+ * BAML to XAML decompiler, !AvaloniaResources support
  * ReadyToRun binary support for .NET Core (see the [tutorial](https://github.com/icsharpcode/ILSpy/wiki/ILSpy.ReadyToRun))
  * Extensible via [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins)
  * Additional features in DEBUG builds ([for the devs](https://github.com/icsharpcode/ILSpy/wiki/Additional-Features-in-DEBUG-Builds))
