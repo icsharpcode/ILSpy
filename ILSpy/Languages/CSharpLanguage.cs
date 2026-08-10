@@ -555,8 +555,22 @@ namespace ICSharpCode.ILSpy.Languages
 				targetDirectory,
 				WholeProjectDecompiler.CleanUpFileName(module.Name, ProjectFileExtension));
 			ProjectId? id;
-			using (var writer = new System.IO.StreamWriter(projectFileName))
-				id = decompiler.DecompileProject(module, targetDirectory, writer, options.CancellationToken);
+			try
+			{
+				using (var writer = new System.IO.StreamWriter(projectFileName))
+					id = decompiler.DecompileProject(module, targetDirectory, writer, options.CancellationToken);
+			}
+			finally
+			{
+				// The export does not abort on what it cannot decompile; hand the failures to the
+				// caller, whose result report - not this ITextOutput - is what the user sees when it
+				// finishes. Sources carrying error text are already on disk even if the export went
+				// on to fail, so this belongs in the finally.
+				foreach (var error in decompiler.Errors)
+				{
+					options.DecompilationErrors.Add(error);
+				}
+			}
 			output.WriteLine("// Project written to " + targetDirectory);
 			return id;
 		}

@@ -38,7 +38,15 @@ namespace ICSharpCode.ILSpy
 	/// solution was produced and the human-readable status report (the same breadcrumb the WPF
 	/// version printed into the decompiler text view).
 	/// </summary>
-	public sealed record SolutionExportResult(bool Success, string StatusText);
+	public sealed record SolutionExportResult(bool Success, string StatusText)
+	{
+		/// <summary>
+		/// What the decompiler could not handle while exporting. These are recovered failures - the
+		/// affected code was replaced by the error text and the export ran to completion - so they
+		/// do not make <see cref="Success"/> false; the caller renders them for the user to report.
+		/// </summary>
+		public IReadOnlyList<DecompilerException> Errors { get; init; } = [];
+	}
 
 	/// <summary>
 	/// Creates a Visual Studio solution containing one decompiled project per assembly. The
@@ -82,6 +90,7 @@ namespace ICSharpCode.ILSpy
 		readonly IProgress<DecompilationProgress>? progress;
 		readonly ConcurrentBag<ProjectItem> projects;
 		readonly ConcurrentBag<string> statusOutput;
+		readonly ConcurrentBag<DecompilerException> decompilationErrors = new();
 
 		// How far each project has got, keyed by assembly short name -- unique, because duplicate names
 		// abort the export before any project runs. The workers fill these in as they decompile and the
@@ -206,7 +215,7 @@ namespace ICSharpCode.ILSpy
 
 			// statusOutput only collects per-assembly failures; an empty bag means every project built.
 			if (statusOutput.Count != 0)
-				return new SolutionExportResult(false, report.ToString());
+				return new SolutionExportResult(false, report.ToString()) { Errors = [.. decompilationErrors] };
 
 			report.AppendLine("Successfully decompiled the following assemblies into Visual Studio projects:");
 			foreach (var n in allAssemblies)
@@ -215,7 +224,7 @@ namespace ICSharpCode.ILSpy
 			if (allAssemblies.Count == projects.Count)
 				report.AppendLine("Created the Visual Studio Solution file.");
 
-			return new SolutionExportResult(true, report.ToString());
+			return new SolutionExportResult(true, report.ToString()) { Errors = [.. decompilationErrors] };
 		}
 
 		// Reports the whole solution's progress: the file counts of every project added up. The projects
@@ -323,6 +332,12 @@ namespace ICSharpCode.ILSpy
 				// The project-export path writes the .csproj into SaveAsProjectDirectory itself; the
 				// ITextOutput only receives a "Project written to ..." breadcrumb, which we discard here.
 				var projectInfo = language.DecompileAssembly(loadedAssembly, new PlainTextOutput(new StringWriter()), options);
+				// Recovered failures travel on the result, not in statusOutput: a non-empty
+				// statusOutput means the solution is incomplete, and these projects did get written.
+				foreach (var error in options.DecompilationErrors)
+				{
+					decompilationErrors.Add(error);
+				}
 				if (projectInfo != null)
 				{
 					// SolutionCreator.FixAllProjectReferences parses each project file off disk, so the

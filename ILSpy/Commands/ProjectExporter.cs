@@ -95,7 +95,7 @@ namespace ICSharpCode.ILSpy.Commands
 						.ConfigureAwait(false);
 				}
 				AppendSkipReport(report, skipReport);
-				return new SolutionExportResult(solution.Success, report.ToString());
+				return new SolutionExportResult(solution.Success, report.ToString()) { Errors = solution.Errors };
 			}
 
 			var projectResult = await Task
@@ -125,6 +125,32 @@ namespace ICSharpCode.ILSpy.Commands
 			return report.ToString();
 		}
 
+		/// <summary>
+		/// Writes what the decompiler could not handle: one headline per failure, each followed by
+		/// the full exception in a collapsed fold. The export replaces the affected code with the
+		/// error text and finishes rather than failing, so this is where the user learns anything
+		/// went wrong - and the trace is right there to paste into the bug report.
+		/// </summary>
+		internal static void WriteDecompilationErrors(ITextOutput output, IReadOnlyList<DecompilerException> errors)
+		{
+			if (errors.Count == 0)
+				return;
+			output.WriteLine();
+			foreach (string line in CSharpDecompiler.GetErrorSummaryLines(errors.Count))
+			{
+				output.WriteLine(line);
+			}
+			foreach (var error in errors)
+			{
+				output.WriteLine();
+				output.WriteLine(CSharpDecompiler.GetErrorHeadline(error));
+				output.WriteExceptionDetails(error);
+			}
+			// Keeps the caller's result button off the last frame's line, the same way the
+			// error-free report ends with a blank line.
+			output.WriteLine();
+		}
+
 		static void AppendSkipReport(StringBuilder report, string skipReport)
 		{
 			if (skipReport.Length == 0)
@@ -138,16 +164,18 @@ namespace ICSharpCode.ILSpy.Commands
 		{
 			var report = new StringBuilder();
 			bool success;
+			// Declared out here because the failures the export recovered from are worth reporting
+			// even when it goes on to fail: their error text is already in the written sources.
+			var decompileOptions = new DecompilationOptions(settingsClone) {
+				FullDecompilation = true,
+				EscapeInvalidIdentifiers = true,
+				CancellationToken = ct,
+				SaveAsProjectDirectory = options.OutputDirectory,
+				StrongNameKeyFile = options.StrongNameKeyFile,
+				ProgressIndicator = progress,
+			};
 			try
 			{
-				var decompileOptions = new DecompilationOptions(settingsClone) {
-					FullDecompilation = true,
-					EscapeInvalidIdentifiers = true,
-					CancellationToken = ct,
-					SaveAsProjectDirectory = options.OutputDirectory,
-					StrongNameKeyFile = options.StrongNameKeyFile,
-					ProgressIndicator = progress,
-				};
 				language.DecompileAssembly(assembly, new PlainTextOutput(new StringWriter()), decompileOptions);
 				report.AppendLine("Project written to " + options.OutputDirectory);
 				success = true;
@@ -165,7 +193,7 @@ namespace ICSharpCode.ILSpy.Commands
 			if (options.GeneratePdb && success)
 				GeneratePdbs(new[] { assembly }, _ => options.OutputDirectory, settingsClone, options, report, ct);
 
-			return new SolutionExportResult(success, report.ToString());
+			return new SolutionExportResult(success, report.ToString()) { Errors = [.. decompileOptions.DecompilationErrors] };
 		}
 
 		static void GeneratePdbs(IReadOnlyList<LoadedAssembly> assemblies,

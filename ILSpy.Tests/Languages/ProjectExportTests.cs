@@ -25,12 +25,16 @@ using Avalonia.Headless.NUnit;
 using AwesomeAssertions;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Solution;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Languages;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Views;
+using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;
 
@@ -61,6 +65,69 @@ public class ProjectExportTests
 	{
 		var cs = new CSharpLanguage();
 		cs.ProjectFileExtension.Should().Be(".csproj");
+	}
+
+	/// <summary>
+	/// An export finishes even when parts of the assembly cannot be decompiled, so the failures
+	/// have to reach the result report: the ITextOutput handed to the language is thrown away by
+	/// the export path, and the report is all the user ever sees.
+	/// </summary>
+	[AvaloniaTest]
+	public async Task Export_Report_Names_The_Failures_And_Where_To_Report_Them()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+
+		var loaded = await vm.OpenFixtureAsync();
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpyExport_" + System.Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		try
+		{
+			var options = new ProjectExportOptions(tempDir, UseSdkStyleProjectFormat: true,
+				UseNestedDirectoriesForNamespaces: false, RemoveDeadCode: false, RemoveDeadStores: false,
+				UseDebugSymbols: false, StrongNameKeyFile: null, GeneratePdb: false,
+				EmbedSourceFilesInPdb: false);
+
+			var result = await ProjectExporter.ExportAsync([loaded], solutionMode: false, options,
+				new DecompilerSettings(), new FailingLanguage(), progress: null, default);
+
+			var sw = new StringWriter();
+			ProjectExporter.WriteDecompilationErrors(new PlainTextOutput(sw), result.Errors);
+			string written = sw.ToString();
+
+			result.Success.Should().BeTrue("a recovered failure still produces a project");
+			written.Should().Contain("Error decompiling C.M",
+				"the failing member must be named");
+			written.Should().Contain("Simulated failure",
+				"the exception the export recovered from must show up, stack trace and all");
+			written.Should().Contain(CSharpDecompiler.DecompilationErrorReportUrl,
+				"the report is where the user is asked to file the bug");
+		}
+		finally
+		{
+			try
+			{ Directory.Delete(tempDir, recursive: true); }
+			catch { /* best-effort */ }
+		}
+	}
+
+	/// <summary>Stands in for a decompiler that recovered from a failure while exporting.</summary>
+	sealed class FailingLanguage : Language
+	{
+		public override string Name => "Failing";
+
+		public override string FileExtension => ".cs";
+
+		public override string ProjectFileExtension => ".csproj";
+
+		public override ProjectId? DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
+		{
+			options.DecompilationErrors.Add(new DecompilerException(assembly.GetMetadataFileOrNull()!,
+				"Error decompiling C.M", new System.InvalidOperationException("Simulated failure")));
+			return null;
+		}
 	}
 
 	[AvaloniaTest]

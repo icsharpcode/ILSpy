@@ -595,8 +595,10 @@ namespace ICSharpCode.ILSpy.TextView
 						catch (Exception ex)
 						{
 							output.WriteLine();
-							output.WriteLine("/* Decompilation failed:");
-							output.WriteLine(ex.ToString());
+							output.WriteLine("/* Decompilation failed: " + ex.Message);
+							// The trace goes in a collapsed fold: what the reader needs is the message,
+							// and the frames only when they go looking for them.
+							output.WriteExceptionDetails(ex);
 							output.WriteLine("*/");
 						}
 						return (output, cts.Token);

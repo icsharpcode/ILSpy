@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 
 using ICSharpCode.Decompiler;
@@ -81,6 +82,14 @@ namespace ICSharpCode.ILSpy
 		/// file currently being written; ignored on single-member decompiles.
 		/// </summary>
 		public IProgress<DecompilationProgress>? ProgressIndicator { get; set; }
+
+		/// <summary>
+		/// Filled by the project-export path with the members, files and resources the decompiler
+		/// could not handle. The export writes the error text into the affected sources and runs to
+		/// completion instead of failing, so the caller's result report is where the user learns
+		/// that anything went wrong at all - the ITextOutput of an export is discarded.
+		/// </summary>
+		public IList<DecompilerException> DecompilationErrors { get; } = new List<DecompilerException>();
 
 		// Deliberately no parameterless constructor: every decompilation must make an explicit
 		// choice of settings. Callers inside the app want the user's current settings (see
