@@ -105,6 +105,7 @@
     <None Include="TestCases\ILPretty\ExtensionEncodingV2.il" />
     <None Include="testcases\ilpretty\ExtensionEncodingV1.il" />
     <None Include="TestCases\ILPretty\GuessAccessors.il" />
+    <None Include="TestCases\ILPretty\InaccessibleParameterTypes.il" />
     <None Include="TestCases\ILPretty\Issue2260SwitchString.il" />
     <None Include="TestCases\ILPretty\Issue3442.il" />
     <None Include="TestCases\ILPretty\Issue3344CkFinite.il" />
@@ -209,6 +210,8 @@
     <None Include="TestCases\ILPretty\FSharpUsing_Release.cs" />
     <Compile Remove="TestCases\ILPretty\GuessAccessors.cs" />
     <None Include="TestCases\ILPretty\GuessAccessors.cs" />
+    <Compile Remove="TestCases\ILPretty\InaccessibleParameterTypes.cs" />
+    <None Include="TestCases\ILPretty\InaccessibleParameterTypes.cs" />
     <Compile Remove="TestCases\ILPretty\NoAccessorProperties.cs" />
     <None Include="TestCases\ILPretty\NoAccessorProperties.cs" />
     <Compile Remove="TestCases\ILPretty\Issue1145.cs" />

@@ -2537,6 +2537,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				attributeSections.Add(new AttributeSection(astBuilder.ConvertAttribute(attr)) { AttributeTarget = "return" });
 			}
 
+			bool parametersAreUsed = (
+				from ident in body.Descendants.OfType<IdentifierExpression>()
+				let v = ident.GetILVariable()
+				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
+				select ident).Any();
+
 			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type is null))
 			{
@@ -2548,19 +2554,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				// C# 10 lambdas can have attributes, but anonymous methods cannot
 				isLambda = true;
 			}
-			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ReferenceKind.None && !p.IsParams))
+			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ReferenceKind.None && !p.IsParams)
+				&& (parametersAreUsed || (ParameterTypesAreAccessible(function) && ParametersAreNameable(function))))
 			{
-				// Lambdas cover statement bodies too; anonymous method syntax remains only for
-				// parameter shapes a lambda cannot express (ref/out/in and params modifiers).
+				// Lambdas cover statement bodies too. Anonymous method syntax remains where
+				// dropping the parameter list is the better rendering: for ref/out/in and
+				// params parameters (expressible in an explicitly typed lambda list, but
+				// conservatively left alone), and for unused parameters that a list would have
+				// to name or type from nothing to keep. The parameter-list-less "delegate {}"
+				// form is compatible with any delegate signature, so it is always legal there.
 				isLambda = true;
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the parameters are not used in the method body
-			var parameterReferencingIdentifiers =
-				from ident in body.Descendants.OfType<IdentifierExpression>()
-				let v = ident.GetILVariable()
-				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
-				select ident;
-			if (!isLambda && !parameterReferencingIdentifiers.Any())
+			if (!isLambda && !parametersAreUsed)
 			{
 				ame.Parameters.Clear();
 			}
@@ -2606,6 +2612,47 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
 				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
+		}
+
+		/// <summary>
+		/// True when every parameter carries a name that can be written out as-is. Unused
+		/// parameters whose metadata names are missing or not identifiers (ilasm's synthetic
+		/// A_0/A_1 for unnamed Param rows, "&lt;p0&gt;" from an anonymous method declared without a
+		/// parameter list, obfuscated names) would have to be invented for a lambda's mandatory
+		/// parameter list; "delegate {}" drops the list instead of presenting a made-up name as
+		/// if it came from the source.
+		/// </summary>
+		static bool ParametersAreNameable(ILFunction function)
+		{
+			return function.Parameters.All(
+				p => !string.IsNullOrWhiteSpace(p.Name) && AssignVariableNames.IsValidName(p.Name));
+		}
+
+		bool ParameterTypesAreAccessible(ILFunction function)
+		{
+			var currentTypeDefinition = resolver.CurrentTypeDefinition;
+			if (currentTypeDefinition == null)
+				return true;
+			var lookup = new MemberLookup(currentTypeDefinition, currentTypeDefinition.ParentModule);
+			return function.Parameters.All(p => IsAccessible(p.Type));
+
+			bool IsAccessible(IType type)
+			{
+				switch (type)
+				{
+					case ParameterizedType pt:
+						return IsAccessible(pt.GenericType) && pt.TypeArguments.All(IsAccessible);
+					case TypeWithElementType t:
+						return IsAccessible(t.ElementType);
+					default:
+						for (var td = type.GetDefinition(); td != null; td = td.DeclaringTypeDefinition)
+						{
+							if (!lookup.IsAccessible(td, allowProtectedAccess: true))
+								return false;
+						}
+						return true;
+				}
+			}
 		}
 
 		protected internal override TranslatedExpression VisitILFunction(ILFunction function, TranslationContext context)
