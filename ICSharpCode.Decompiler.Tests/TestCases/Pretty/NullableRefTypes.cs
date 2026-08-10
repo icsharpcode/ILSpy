@@ -144,8 +144,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	public class T06_ExplicitInterfaceImplementation : IEnumerable<KeyValuePair<string, string?>>, IEnumerable
 	{
-		// TODO: declaring type is not yet rendered with nullability annotations from the base type
-		IEnumerator<KeyValuePair<string, string?>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator()
+		IEnumerator<KeyValuePair<string, string?>> IEnumerable<KeyValuePair<string, string?>>.GetEnumerator()
 		{
 			yield return new KeyValuePair<string, string>("a", "b");
 		}
@@ -158,7 +157,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 	public class T07_ExplicitInterfaceImplementation : IEnumerator<KeyValuePair<string, string?>>, IEnumerator, IDisposable
 	{
-		KeyValuePair<string, string?> IEnumerator<KeyValuePair<string, string>>.Current {
+		KeyValuePair<string, string?> IEnumerator<KeyValuePair<string, string?>>.Current {
 			get {
 				throw new NotImplementedException();
 			}
