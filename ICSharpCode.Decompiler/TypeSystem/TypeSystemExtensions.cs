@@ -55,6 +55,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
+		/// Returns <paramref name="interfaceType"/> as <paramref name="implementingType"/> implements it -
+		/// the entry from its base-type list - falling back to <paramref name="interfaceType"/> itself.
+		/// </summary>
+		/// <remarks>
+		/// Tuple element names and nullability are not part of a type's identity, so an interface resolved
+		/// through one of its members carries neither; the implementing type's base-type list is where they
+		/// are recorded. Naming an explicit interface implementation requires the spelling from that list -
+		/// C# rejects <c>void I&lt;(int, int)&gt;.M()</c> on a type declared as <c>I&lt;(int A, int B)&gt;</c>
+		/// with CS0540. At most one base type can match, because implementing two interfaces that differ
+		/// only in tuple element names or nullability is itself an error (CS8140, CS8645).
+		/// </remarks>
+		internal static IType GetInterfaceAsImplementedBy(this IType interfaceType, IType implementingType)
+		{
+			foreach (var baseType in implementingType.GetAllBaseTypes())
+			{
+				if (baseType.Kind == TypeKind.Interface
+					&& NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(baseType, interfaceType))
+				{
+					return baseType;
+				}
+			}
+			return interfaceType;
+		}
+
+		/// <summary>
 		/// Gets all non-interface base types.
 		/// </summary>
 		/// <remarks>

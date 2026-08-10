@@ -1576,7 +1576,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// slot is empty; leave the forwarder's (already empty) return-type slot untouched in that case.
 				if (memberDecl.ReturnType is { } memberReturnType)
 					methodDecl.ReturnType = memberReturnType.Clone();
-				methodDecl.PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType);
+				methodDecl.PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType.GetInterfaceAsImplementedBy(method.DeclaringType));
 				methodDecl.Name = m.Name;
 				methodDecl.TypeParameters.AddRange(memberDecl.GetChildren(Slots.TypeParameter)
 												   .Select(n => (TypeParameterDeclaration)n.Clone()));

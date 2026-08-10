@@ -2774,7 +2774,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			{
 				var baseMember = member.ExplicitlyImplementedInterfaceMembers.FirstOrDefault();
 				if (baseMember != null)
-					return ConvertType(baseMember.DeclaringType);
+					return ConvertType(baseMember.DeclaringType.GetInterfaceAsImplementedBy(member.DeclaringType));
 			}
 			return null;
 		}

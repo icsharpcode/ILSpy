@@ -25,6 +25,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class TupleTests
 	{
+		private interface I1<T>
+		{
+			void Test();
+		}
+
+		private class ExplicitInterfaceImpl : I1<(int V1, int V2)>
+		{
+			void I1<(int V1, int V2)>.Test()
+			{
+			}
+		}
+
 		private abstract class OverloadResolution
 		{
 			public abstract void M1((long, long) a);

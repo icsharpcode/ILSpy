@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				var baseMember = member.ExplicitlyImplementedInterfaceMembers.FirstOrDefault();
 				if (baseMember != null)
-					return baseMember.DeclaringType;
+					return baseMember.DeclaringType.GetInterfaceAsImplementedBy(member.DeclaringType);
 			}
 			return null;
 		}
