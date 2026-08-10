@@ -163,11 +163,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 				return (int x) => this.x;
 			}
 
+#if ROSLYN
+			// Roslyn names the parameters of an anonymous method declared without a parameter
+			// list "<p0>", which no lambda parameter list can spell, so the delegate form is
+			// kept. Legacy csc names them "param0" - a perfectly good identifier that does
+			// become a lambda - hence the Roslyn-only guard.
 			public Action<object> Bug971_DelegateWithoutParameterList()
 			{
-				return (object obj) => {
+				return delegate {
 				};
 			}
+#endif
 
 			private void DoAction(Action action)
 			{

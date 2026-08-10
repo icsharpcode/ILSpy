@@ -360,6 +360,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task InaccessibleParameterTypes()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task EmptyBodies()
 		{
 			await Run();
