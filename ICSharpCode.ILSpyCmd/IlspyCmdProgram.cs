@@ -163,6 +163,11 @@ Examples:
 		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
 		public string[] ReferencePaths { get; }
 
+		[Option("--ignore-decompilation-errors", "Exit with success even when parts of the assembly could not be decompiled. " +
+			"The affected code carries the error text in the output and the failures are listed on stderr either way; " +
+			"only the exit status changes.", CommandOptionType.NoValue)]
+		public bool IgnoreDecompilationErrorsFlag { get; }
+
 		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
 		public bool RemoveDeadCode { get; }
 
@@ -254,7 +259,7 @@ Examples:
 					{
 						string projectFileName = Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(InputAssemblyNames[0]) + ".csproj");
 						DecompileAsProject(InputAssemblyNames[0], projectFileName);
-						return 0;
+						return ExitCodeForDecompilationErrors();
 					}
 					var projects = new List<ProjectItem>();
 					foreach (var file in InputAssemblyNames)
@@ -265,7 +270,7 @@ Examples:
 						projects.Add(new ProjectItem(projectFileName, projectId.PlatformName, projectId.Guid, projectId.TypeGuid));
 					}
 					SolutionCreator.WriteSolutionFile(Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(outputDirectory) + ".sln"), projects);
-					return 0;
+					return ExitCodeForDecompilationErrors();
 				}
 				else if (GenerateDiagrammer)
 				{
@@ -295,7 +300,7 @@ Examples:
 						if (result != 0)
 							return result;
 					}
-					return 0;
+					return ExitCodeForDecompilationErrors();
 				}
 			}
 			catch (Exception ex)
@@ -622,6 +627,34 @@ Examples:
 			return 0;
 		}
 
+		readonly List<DecompilerException> decompilationErrors = new();
+
+		/// <summary>
+		/// Lists what the decompiler could not handle. The output was still written - with the error
+		/// text in place of the affected code - so this is the only sign anything went wrong, and
+		/// <see cref="ExitCodeForDecompilationErrors"/> keeps it from passing silently in a script.
+		/// </summary>
+		void ReportDecompilationErrors(string assemblyFileName, IReadOnlyList<DecompilerException> errors)
+		{
+			if (errors.Count == 0)
+				return;
+			decompilationErrors.AddRange(errors);
+			Console.Error.WriteLine($"While decompiling {assemblyFileName}:");
+			foreach (string line in CSharpDecompiler.GetErrorSummaryLines(errors.Count))
+			{
+				Console.Error.WriteLine(line);
+			}
+			foreach (var error in errors)
+			{
+				Console.Error.WriteLine("  " + CSharpDecompiler.GetErrorHeadline(error));
+			}
+		}
+
+		int ExitCodeForDecompilationErrors()
+		{
+			return decompilationErrors.Count == 0 || IgnoreDecompilationErrorsFlag ? 0 : ProgramExitCodes.EX_SOFTWARE;
+		}
+
 		ProjectId DecompileAsProject(string assemblyFileName, string projectFileName)
 		{
 			var module = new PEFile(assemblyFileName);
@@ -645,8 +678,11 @@ Examples:
 			{
 				decompiler = new WholeProjectDecompiler(settings, resolver, null, resolver, debugInfo);
 			}
-			using (var projectFileWriter = new StreamWriter(File.OpenWrite(projectFileName)))
-				return decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
+			ProjectId projectId;
+			using (var projectFileWriter = new StreamWriter(File.Create(projectFileName)))
+				projectId = decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);
+			ReportDecompilationErrors(assemblyFileName, decompiler.Errors);
+			return projectId;
 		}
 
 		int Decompile(string assemblyFileName, TextWriter output, string typeName = null)
@@ -656,6 +692,7 @@ Examples:
 			if (typeName == null)
 			{
 				output.Write(decompiler.DecompileWholeModuleAsString());
+				ReportDecompilationErrors(assemblyFileName, decompiler.Errors);
 				return 0;
 			}
 
@@ -666,6 +703,7 @@ Examples:
 			}
 
 			output.Write(decompiler.DecompileTypeAsString(typeDefinition.FullTypeName));
+			ReportDecompilationErrors(assemblyFileName, decompiler.Errors);
 			return 0;
 		}
 
@@ -680,6 +718,7 @@ Examples:
 			}
 
 			output.Write(decompiler.DecompileAsString(handle));
+			ReportDecompilationErrors(assemblyFileName, decompiler.Errors);
 			return 0;
 		}
 

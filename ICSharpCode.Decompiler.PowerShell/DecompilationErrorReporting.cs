@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Christoph Wille
+// Copyright (c) 2026 Siegfried Pammer
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,49 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Management.Automation;
-using System.Text;
-
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.PowerShell
 {
-	[Cmdlet(VerbsCommon.Get, "DecompiledSource")]
-	[OutputType(typeof(string))]
-	public class GetDecompiledSourceCmdlet : PSCmdlet
+	static class DecompilationErrorReporting
 	{
-		[Parameter(Position = 0, Mandatory = true)]
-		public CSharpDecompiler Decompiler { get; set; }
-
-		[Parameter]
-		public string TypeName { get; set; } = string.Empty;
-
-		protected override void ProcessRecord()
+		/// <summary>
+		/// Raises one non-terminating error per member the decompiler could not handle. The output
+		/// is produced either way - with the error text in place of the affected code - so without
+		/// this a script would take known-broken source for a clean decompilation.
+		/// </summary>
+		public static void WriteDecompilationErrors(this Cmdlet cmdlet, IReadOnlyList<DecompilerException> errors)
 		{
-			try
+			foreach (var error in errors)
 			{
-				StringWriter output = new StringWriter();
-				if (TypeName == null)
-				{
-					output.Write(Decompiler.DecompileWholeModuleAsString());
-				}
-				else
-				{
-					var name = new FullTypeName(TypeName);
-					output.Write(Decompiler.DecompileTypeAsString(name));
-				}
-
-				WriteObject(output.ToString());
-				this.WriteDecompilationErrors(Decompiler.Errors);
-			}
-			catch (Exception e)
-			{
-				WriteVerbose(e.ToString());
-				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
+				cmdlet.WriteError(new ErrorRecord(error, ErrorIds.DecompilationFailed, ErrorCategory.NotSpecified, null));
 			}
 		}
 	}

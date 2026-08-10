@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -204,6 +205,9 @@ namespace ICSharpCode.Decompiler.Roundtrip
 							decompiler.StrongNameKeyFile = Path.Combine(inputDir, snkFilePath);
 						}
 						decompiler.DecompileProject(module, decompiledDir);
+						// The exporter reports what it could not decompile instead of throwing, so
+						// without this a decompiler crash produces a stub and the round trip passes.
+						Assert.That(decompiler.Errors.Select(e => e.ToString()), Is.Empty);
 						Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
 						projectFile = Path.Combine(decompiledDir, module.Name + ".csproj");
 					}

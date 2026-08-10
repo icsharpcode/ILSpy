@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Management.Automation;
 using System.Threading;
@@ -96,6 +97,7 @@ namespace ICSharpCode.Decompiler.PowerShell
 				task.Wait();
 
 				WriteProgress(new ProgressRecord(1, "Decompiling " + fileName, "Decompilation finished") { RecordType = ProgressRecordType.Completed });
+				this.WriteDecompilationErrors(errors);
 			}
 			catch (Exception e)
 			{
@@ -103,6 +105,8 @@ namespace ICSharpCode.Decompiler.PowerShell
 				WriteError(new ErrorRecord(e, ErrorIds.DecompilationFailed, ErrorCategory.OperationStopped, null));
 			}
 		}
+
+		private IReadOnlyList<DecompilerException> errors = Array.Empty<DecompilerException>();
 
 		private void DoDecompile(string path)
 		{
@@ -112,7 +116,14 @@ namespace ICSharpCode.Decompiler.PowerShell
 			decompiler.ProgressIndicator = this;
 			fileName = module.FileName;
 			completed = 0;
-			decompiler.DecompileProject(module, path);
+			try
+			{
+				decompiler.DecompileProject(module, path);
+			}
+			finally
+			{
+				errors = decompiler.Errors;
+			}
 		}
 	}
 }
