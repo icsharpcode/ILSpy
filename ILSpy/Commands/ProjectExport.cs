@@ -211,6 +211,7 @@ namespace ICSharpCode.ILSpy.Commands
 				var o = new AvaloniaEditTextOutput { Title = title };
 				o.Write(result.StatusText);
 				o.WriteLine();
+				ProjectExporter.WriteDecompilationErrors(o, result.Errors);
 				if (result.Success && Directory.Exists(options.OutputDirectory))
 				{
 					o.AddOpenFolderButton(options.OutputDirectory);
