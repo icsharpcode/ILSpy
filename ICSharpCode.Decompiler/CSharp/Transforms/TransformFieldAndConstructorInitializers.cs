@@ -356,6 +356,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					var initializer = InitializerSequence.Analyze(this, ctor, ctorMethod);
 
 					if (initializer is { CoversFullBody: true, HasDuplicateAssignments: false, Statements.Count: > 0 }
+						&& !initializer.Statements.Any(statement => ReferencesInstanceMember(statement.Initializer))
 						&& ctorMethod.Accessibility == expectedCtorAccessibility)
 					{
 						bool transformToPrimaryConstructor = MetadataTokens.GetRowNumber(ctorMethod.MetadataToken) == firstMethodRowNumber;
@@ -401,6 +402,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							PrimaryConstructorInitializers = initializer;
 						}
 					}
+				}
+
+				bool ReferencesInstanceMember(Expression expression)
+				{
+					foreach (var node in expression.DescendantsAndSelf.OfType<Expression>())
+					{
+						switch (node.GetResolveResult())
+						{
+							case ThisResolveResult:
+								return true;
+							case MemberResolveResult {
+								TargetResult: ThisResolveResult,
+								Member: { IsStatic: false } member
+							} when member is not IField field || !IsGeneratedPrimaryConstructorBackingField(field):
+								return true;
+						}
+					}
+					return false;
 				}
 
 				if (StaticConstructor != null)

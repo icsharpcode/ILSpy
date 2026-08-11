@@ -134,6 +134,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public int B = b;
 		}
+
+		private struct StructInitializerDependsOnField
+		{
+			public int A;
+
+			public int B;
+
+			public StructInitializerDependsOnField(int value)
+			{
+				A = value;
+				B = A + 1;
+			}
+		}
 #endif
 
 		public class ClassWithConstant
