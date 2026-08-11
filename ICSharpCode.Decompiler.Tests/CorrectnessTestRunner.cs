@@ -438,10 +438,30 @@ namespace ICSharpCode.Decompiler.Tests
 			string testOutputFileName = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(options) + ".exe");
 			Helpers.CompilerResults outputFile = null, decompiledOutputFile = null;
 
+			// The mcs mutation below never touches these flags, so they can be captured here
+			// and used for the original run started before the mutation happens.
+			bool useTestRunner = (options & CompilerOptions.UseTestRunner) != 0;
+			bool force32Bit = (options & CompilerOptions.Force32Bit) != 0;
+
 			try
 			{
 				outputFile = await Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: testOutputFileName).ConfigureAwait(false);
+				if ((options & CompilerOptions.UseMcsMask) != 0)
+				{
+					// Add an .exe.config so that we consistently use the .NET 4.x runtime.
+					// Written before the original executable starts below, because the runtime
+					// reads it at process start.
+					File.WriteAllText(outputFile.PathToAssembly + ".config", @"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+	<startup>
+		<supportedRuntime version=""v4.0"" sku="".NETFramework,Version=v4.0,Profile=Client"" />
+	</startup>
+</configuration>");
+				}
+				// The original executable is complete at this point; its run overlaps the
+				// decompile and recompile of the same assembly, which only read it.
+				var originalRun = Tester.StartRun(outputFile.PathToAssembly, useTestRunner, force32Bit);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
 				if ((options & CompilerOptions.UseMcsMask) != 0)
 				{
@@ -450,18 +470,11 @@ namespace ICSharpCode.Decompiler.Tests
 					// for example when there's unreachable code due to other compiler bugs in the first mcs run.
 					options &= ~CompilerOptions.UseMcsMask;
 					options |= CompilerOptions.UseRoslynLatest;
-					// Also, add an .exe.config so that we consistently use the .NET 4.x runtime.
-					File.WriteAllText(outputFile.PathToAssembly + ".config", @"<?xml version=""1.0"" encoding=""utf-8""?>
-<configuration>
-	<startup>
-		<supportedRuntime version=""v4.0"" sku="".NETFramework,Version=v4.0,Profile=Client"" />
-	</startup>
-</configuration>");
 					options |= CompilerOptions.TargetNet40;
 				}
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
-				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
+				await Tester.RunAndCompareOutput(testFileName, originalRun, decompiledOutputFile.PathToAssembly, decompiledCodeFile, useTestRunner, force32Bit);
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 			}
 			finally
@@ -486,10 +499,13 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				outputFile = await Tester.CompileVB(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: testOutputFileName).ConfigureAwait(false);
+				// The original executable is complete at this point; its run overlaps the
+				// decompile and recompile of the same assembly, which only read it.
+				var originalRun = Tester.StartRun(outputFile.PathToAssembly, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
-				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
+				await Tester.RunAndCompareOutput(testFileName, originalRun, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 			}
 			finally
@@ -521,10 +537,13 @@ namespace ICSharpCode.Decompiler.Tests
 					options |= CompilerOptions.UseRoslynLatest;
 				}
 				outputFile = await Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions).ConfigureAwait(false);
+				// The original executable is complete at this point; its run overlaps the
+				// decompile and recompile of the same assembly, which only read it.
+				var originalRun = Tester.StartRun(outputFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile, Tester.GetSettings(options)).ConfigureAwait(false);
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
-				await Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0).ConfigureAwait(false);
+				await Tester.RunAndCompareOutput(testFileName, originalRun, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0).ConfigureAwait(false);
 				Tester.RepeatOnIOError(() => File.Delete(decompiledCodeFile));
 			}
 			finally
