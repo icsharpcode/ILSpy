@@ -40,9 +40,9 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.TextView;
 
 /// <summary>
-/// Pins the reference-link click gesture in the decompiled view (WPF parity): navigation
-/// happens on mouse-UP and only when the pointer did not drag, so text that belongs to a
-/// link can still be selected by press-and-drag.
+/// Pins the reference-link click gesture in the decompiled view: navigation happens on
+/// mouse-UP and only when the pointer did not drag, so text that belongs to a link can
+/// still be selected by press-and-drag.
 /// </summary>
 [TestFixture]
 public class ReferenceClickTests

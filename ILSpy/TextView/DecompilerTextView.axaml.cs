@@ -193,11 +193,10 @@ namespace ICSharpCode.ILSpy.TextView
 			uiElementGenerator = new UIElementGenerator();
 			Editor.TextArea.TextView.ElementGenerators.Add(uiElementGenerator);
 
-			// Reference navigation fires on pointer-RELEASE without drag (WPF parity: the WPF
-			// view used TextArea.PreviewMouseDown/Up the same way), so a press-and-drag over a
-			// link starts a text selection instead of navigating away. The press handler only
-			// records the start position, so tunnel routing (before AvaloniaEdit consumes the
-			// press) is fine.
+			// Reference navigation fires on pointer-RELEASE without drag, so a press-and-drag
+			// over a link starts a text selection instead of navigating away. The press handler
+			// only records the start position, so tunnel routing (before AvaloniaEdit consumes
+			// the press) is fine.
 			Editor.TextArea.AddHandler(InputElement.PointerPressedEvent,
 				OnTextAreaPointerPressedForReferenceClick,
 				RoutingStrategies.Tunnel,

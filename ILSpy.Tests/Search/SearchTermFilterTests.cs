@@ -36,12 +36,12 @@ public class SearchTermFilterTests
 	[AvaloniaTest]
 	public Task SearchTermMatches_Is_A_No_Op_That_Always_Returns_True()
 	{
-		// Pins the WPF-parity contract: the search pane drives its own results via the
-		// ILSpyX search strategies; LanguageSettings.SearchTermMatches deliberately ignores
-		// SearchTerm so the assembly-tree filter cascade stays independent of the search
-		// pane. Without this, typing a term into the search box would hide tree rows whose
-		// names don't match it — including member rows under a type whose own name DOES
-		// match — because the cascade only resets the match bit one level deep.
+		// The search pane drives its own results via the ILSpyX search strategies;
+		// LanguageSettings.SearchTermMatches deliberately ignores SearchTerm so the
+		// assembly-tree filter cascade stays independent of the search pane. Were it to
+		// honour the term, typing into the search box would hide tree rows whose names don't
+		// match it — including member rows under a type whose own name DOES match — because
+		// the cascade only resets the match bit one level deep.
 
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
 		try
@@ -54,7 +54,7 @@ public class SearchTermFilterTests
 			settings.SearchTerm = "enum";
 			settings.SearchTermMatches("IEnumerable").Should().BeTrue();
 			settings.SearchTermMatches("Object").Should().BeTrue(
-				"WPF parity: SearchTermMatches must NOT honour the SearchTerm — it's a no-op shim");
+				"SearchTermMatches must NOT honour the SearchTerm — it's a no-op shim");
 
 			settings.SearchTerm = "ZZZ_NoMatchAnywhere";
 			settings.SearchTermMatches("Anything").Should().BeTrue();
@@ -69,11 +69,10 @@ public class SearchTermFilterTests
 	[AvaloniaTest]
 	public Task Typing_In_The_Search_Pane_Does_Not_Bleed_Into_LanguageSettings_SearchTerm()
 	{
-		// The search pane is decoupled from the assembly-tree filter cascade. Earlier port
-		// commits pushed SearchPaneModel.SearchTerm into LanguageSettings.SearchTerm to drive
-		// a tree-filter cascade — that path hid member rows users expected to see (e.g. enum
-		// literals under their matched-by-name enum type). Reverted to WPF parity: typing in
-		// the search pane drives the orchestrator only.
+		// The search pane is decoupled from the assembly-tree filter cascade: typing in it
+		// drives the orchestrator only. Feeding SearchPaneModel.SearchTerm into
+		// LanguageSettings.SearchTerm instead would drive the cascade and hide member rows
+		// users expect to see — e.g. enum literals under their matched-by-name enum type.
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
 		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;

@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(FieldDefinition);
 
-		// Mirrors WPF's discriminator: enum value, const literal, readonly, plain field.
+		// Discriminated in this order: enum value, const literal, readonly, plain field.
 		public static Avalonia.Media.IImage GetIcon(IField field)
 		{
 			// EnumValue: declaring type is an enum and the return type is the enum itself --
