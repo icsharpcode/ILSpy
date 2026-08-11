@@ -142,9 +142,15 @@ namespace ICSharpCode.Decompiler.Roundtrip
 
 		async Task RunWithOutput(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
+			// Guard before starting the run, so a missing ILSpy-tests checkout still Ignores
+			// instead of faulting the eagerly started process launch.
+			EnsureTestDirAvailable();
 			string inputDir = Path.Combine(TestDir, dir);
+			// The pristine executable only reads from inputDir, which RunInternal never
+			// writes; its run overlaps the whole-project decompile and MSBuild rebuild.
+			var originalRun = Tester.StartRun(Path.Combine(inputDir, fileToRoundtrip));
 			await RunInternal(dir, fileToRoundtrip,
-				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)),
+				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, originalRun, Path.Combine(outputDir, fileToRoundtrip)),
 				languageVersion);
 		}
 
@@ -153,13 +159,18 @@ namespace ICSharpCode.Decompiler.Roundtrip
 			await RunInternal(dir, fileToRoundtrip, _ => Task.CompletedTask, languageVersion);
 		}
 
-		async Task RunInternal(string dir, string fileToRoundtrip, Func<string, Task> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
+		static void EnsureTestDirAvailable()
 		{
 			if (!Directory.Exists(TestDir))
 			{
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{TestDir}' needs to be checked out separately." + Environment.NewLine +
 							  $"git clone https://github.com/icsharpcode/ILSpy-tests \"{TestDir}\"");
 			}
+		}
+
+		async Task RunInternal(string dir, string fileToRoundtrip, Func<string, Task> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
+		{
+			EnsureTestDirAvailable();
 			string inputDir = Path.Combine(TestDir, dir);
 			string decompiledDir = inputDir + "-decompiled";
 			string outputDir = inputDir + "-output";
