@@ -143,30 +143,44 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		internal static async Task Initialize()
 		{
-			await roslynToolset.Fetch("1.3.2", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
-			if (OperatingSystem.IsWindows())
-			{
-				await roslynToolset.Fetch("2.10.0", "Microsoft.Net.Compilers", "tools").ConfigureAwait(false);
-			}
-			else
-			{
+			// All fetches download/extract into disjoint directories and the TestRunner builds
+			// do not depend on any fetched toolset, so everything runs concurrently and is
+			// awaited in one place. Individual toolset registrations are synchronized inside
+			// the toolsets (see RoslynToolset.cs).
+			var tasks = new List<Task> {
+				roslynToolset.Fetch("1.3.2", "Microsoft.Net.Compilers", "tools"),
 				// Microsoft.Net.Compilers only ships .NET Framework executables. The sibling
 				// Microsoft.NETCore.Compilers package contains the dotnet-hosted build of the
 				// same compiler version (tools/bincore/csc.dll), usable on any platform.
-				await roslynToolset.Fetch("2.10.0", "Microsoft.NETCore.Compilers", "tools/bincore").ConfigureAwait(false);
+				OperatingSystem.IsWindows()
+					? roslynToolset.Fetch("2.10.0", "Microsoft.Net.Compilers", "tools")
+					: roslynToolset.Fetch("2.10.0", "Microsoft.NETCore.Compilers", "tools/bincore"),
+				// On non-Windows hosts the net472 compiler binaries cannot be executed; use the
+				// .NET build of each toolset instead. Its tasks folder is named "netcoreapp3.1"
+				// up to Roslyn 3.x and "netcore" from Roslyn 4.x on.
+				roslynToolset.Fetch("3.11.0", sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcoreapp3.1"),
+				roslynToolset.Fetch("4.14.0", sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcore"),
+				roslynToolset.Fetch(roslynLatestVersion, sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcore"),
+				vswhereToolset.Fetch(),
+				RefAssembliesToolset.Fetch("5.0.0", sourcePath: "ref/net5.0"),
+				RefAssembliesToolset.Fetch("9.0.0", sourcePath: "ref/net9.0"),
+				RefAssembliesToolset.Fetch(CurrentNetCoreRefAsmVersion, sourcePath: $"ref/net{CurrentNetCoreVersion}"),
+				BuildTestRunners(),
+			};
+			Task all = Task.WhenAll(tasks);
+			try
+			{
+				await all.ConfigureAwait(false);
 			}
-			// On non-Windows hosts the net472 compiler binaries cannot be executed; use the
-			// .NET build of each toolset instead. Its tasks folder is named "netcoreapp3.1"
-			// up to Roslyn 3.x and "netcore" from Roslyn 4.x on.
-			await roslynToolset.Fetch("3.11.0", sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcoreapp3.1").ConfigureAwait(false);
-			await roslynToolset.Fetch("4.14.0", sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcore").ConfigureAwait(false);
-			await roslynToolset.Fetch(roslynLatestVersion, sourcePath: OperatingSystem.IsWindows() ? "tasks/net472" : "tasks/netcore").ConfigureAwait(false);
+			catch when (all.Exception is { InnerExceptions.Count: > 1 })
+			{
+				// Surface every failed download/build, not just the first.
+				throw all.Exception;
+			}
+		}
 
-			await vswhereToolset.Fetch().ConfigureAwait(false);
-			await RefAssembliesToolset.Fetch("5.0.0", sourcePath: "ref/net5.0").ConfigureAwait(false);
-			await RefAssembliesToolset.Fetch("9.0.0", sourcePath: "ref/net9.0").ConfigureAwait(false);
-			await RefAssembliesToolset.Fetch(CurrentNetCoreRefAsmVersion, sourcePath: $"ref/net{CurrentNetCoreVersion}").ConfigureAwait(false);
-
+		static async Task BuildTestRunners()
+		{
 #if DEBUG
 			const string testRunnerConfig = "Debug";
 #else
@@ -174,6 +188,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 #endif
 			if (OperatingSystem.IsWindows())
 			{
+				// The two RID builds share the same project file and intermediate directory
+				// (obj/project.assets.json is written by each build's implicit restore), so
+				// they must not run concurrently with each other.
 				await BuildTestRunner("win-x86", testRunnerConfig).ConfigureAwait(false);
 				await BuildTestRunner("win-x64", testRunnerConfig).ConfigureAwait(false);
 			}
