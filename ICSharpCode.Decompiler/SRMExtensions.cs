@@ -61,11 +61,7 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsValueType(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
-			return reader.GetTypeDefinition(handle).IsValueType(reader);
-		}
-
-		public static bool IsValueType(this TypeDefinition typeDefinition, MetadataReader reader)
-		{
+			var typeDefinition = reader.GetTypeDefinition(handle);
 			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
 			if (baseType.IsNil)
 				return false;
@@ -73,7 +69,7 @@ namespace ICSharpCode.Decompiler
 				return true;
 			if (!baseType.IsKnownType(reader, KnownTypeCode.ValueType))
 				return false;
-			var thisType = typeDefinition.GetFullTypeName(reader);
+			var thisType = handle.GetFullTypeName(reader);
 			return !thisType.IsKnownType(KnownTypeCode.Enum);
 		}
 
@@ -461,14 +457,10 @@ namespace ICSharpCode.Decompiler
 		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
-			return reader.GetTypeDefinition(handle).GetFullTypeName(reader);
-		}
-
-		public static FullTypeName GetFullTypeName(this TypeDefinition td, MetadataReader reader)
-		{
-			TypeDefinitionHandle declaringTypeHandle;
+			TypeDefinition td = reader.GetTypeDefinition(handle);
 			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(
 				reader.GetString(td.Name), out var typeParameterCount);
+			TypeDefinitionHandle declaringTypeHandle;
 			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil)
 			{
 				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
