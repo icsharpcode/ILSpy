@@ -197,6 +197,6 @@ public class NavigationTests
 		((string)baseTypesEntry.Header!).Should().Contain("Exception",
 			"the dropdown header must disambiguate generic grouping nodes via NavigationText");
 		((string)baseTypesEntry.Header!).Should().NotBe((string)baseTypes.Text,
-			"falling back to bare Text would reproduce the WPF parity gap");
+			"falling back to bare Text would leave the grouping nodes indistinguishable");
 	}
 }

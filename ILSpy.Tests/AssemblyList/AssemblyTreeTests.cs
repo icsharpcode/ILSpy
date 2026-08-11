@@ -1604,12 +1604,10 @@ public class AssemblyTreeTests
 	[AvaloniaTest]
 	public async Task Active_Search_Term_Does_Not_Hide_Member_Tree_Nodes()
 	{
-		// Pre-existing port misstep: commit 45461ddde wired the search-pane's term into
-		// LanguageSettings.SearchTerm and made SearchTermMatches gate visibility on it.
-		// WPF intentionally makes SearchTermMatches a no-op (returns true) so the assembly
-		// tree stays independent of the search pane. After fixing parity, FieldTreeNode.Filter
-		// must NOT return Hidden purely because the field's name doesn't contain the active
-		// SearchTerm — only ShowApiLevel + ShowMember remain valid hiding criteria.
+		// SearchTermMatches is deliberately a no-op (returns true) so the assembly tree stays
+		// independent of the search pane. FieldTreeNode.Filter must therefore NOT return
+		// Hidden purely because the field's name doesn't contain the active SearchTerm —
+		// only ShowApiLevel + ShowMember remain valid hiding criteria.
 
 		var (_, vm) = await TestHarness.BootAsync();
 

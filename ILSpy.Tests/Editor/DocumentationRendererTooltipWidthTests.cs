@@ -40,8 +40,7 @@ namespace ICSharpCode.ILSpy.Tests.TextView;
 /// Pins the rendering shape of method-signature tooltips so a long signature isn't clipped
 /// horizontally: the signature <see cref="SelectableTextBlock"/> must wrap. Created with
 /// <see cref="TextWrapping.NoWrap"/>, text past the popup's MaxWidth is simply cut off,
-/// because the outer ScrollViewer disables horizontal scrolling. WPF parity is
-/// wrap-friendly, so we mirror that.
+/// because the outer ScrollViewer disables horizontal scrolling.
 /// </summary>
 [TestFixture]
 public class DocumentationRendererTooltipWidthTests

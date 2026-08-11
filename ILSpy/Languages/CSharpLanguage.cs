@@ -112,18 +112,18 @@ namespace ICSharpCode.ILSpy.Languages
 
 		public override void WriteCommentLine(ITextOutput output, string comment) => output.WriteLine("// " + comment);
 
-		// Parity with WPF's CSharpLanguage: map an IL member back to its C# source via the
-		// decompiler, so compiler-generated members (lambdas, async/iterator state machines)
-		// resolve to their declaring method/part rather than only the declaring type (the
-		// base Language fallback). Used by analyzers / navigation.
+		// Maps an IL member back to its C# source via the decompiler, so compiler-generated
+		// members (lambdas, async/iterator state machines) resolve to their declaring
+		// method/part rather than only the declaring type (the base Language fallback).
+		// Used by analyzers / navigation.
 		public override CodeMappingInfo GetCodeMappingInfo(MetadataFile module, EntityHandle member)
 		{
 			return CSharpDecompiler.GetCodeMappingInfo(module, member);
 		}
 
-		// Parity with WPF's CSharpLanguage: produce C#-styled entity names (generics as
-		// <T>, nested types joined with '.'). Without this the base Language emits IL-style
-		// names (`1 arity suffixes, escaped identifiers).
+		// Produces C#-styled entity names (generics as <T>, nested types joined with '.').
+		// Without this the base Language emits IL-style names (`1 arity suffixes, escaped
+		// identifiers).
 		public override string GetEntityName(MetadataFile module, EntityHandle handle, bool fullName, bool omitGenerics)
 		{
 			MetadataReader metadata = module.Metadata;
