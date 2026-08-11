@@ -1224,10 +1224,23 @@ namespace System.Runtime.CompilerServices
 			}
 		}
 
-		public static async Task<string> FindMSBuild()
+		// Lazy<Task<T>> memoizes the vswhere lookup: the answer is invariant for the process,
+		// and the parallel roundtrip tests would otherwise each spawn their own vswhere.exe.
+		// A failed lookup stays cached, which is fine because a missing MSBuild is
+		// environmental, not transient.
+		static readonly Lazy<Task<string>> msbuildPath = new(FindMSBuildUncached, LazyThreadSafetyMode.ExecutionAndPublication);
+
+		public static Task<string> FindMSBuild()
 		{
+			// The platform check stays outside the cache so that the IgnoreException is
+			// raised per test instead of being memoized as a faulted task.
 			if (!OperatingSystem.IsWindows())
 				Assert.Ignore("FindMSBuild uses vswhere.exe to locate Visual Studio's MSBuild; not available on this platform.");
+			return msbuildPath.Value;
+		}
+
+		static async Task<string> FindMSBuildUncached()
+		{
 			string path = vswhereToolset.GetVsWhere();
 
 			var result = await Cli.Wrap(path)
