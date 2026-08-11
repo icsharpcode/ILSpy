@@ -80,7 +80,8 @@ namespace ICSharpCode.ILSpy.NuGetFeeds
 			int maxCount, CancellationToken cancellationToken)
 		{
 			var byId = await GetRepository(feedUrl)
-				.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
+				.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false)
+				?? throw new InvalidOperationException($"The feed '{feedUrl}' does not support package lookup by id.");
 			var versions = await byId.GetAllVersionsAsync(
 				packageId, cache, Logger, cancellationToken).ConfigureAwait(false);
 			return versions
@@ -111,7 +112,8 @@ namespace ICSharpCode.ILSpy.NuGetFeeds
 			}
 
 			var byId = await GetRepository(feedUrl)
-				.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
+				.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false)
+				?? throw new InvalidOperationException($"The feed '{feedUrl}' does not support package lookup by id.");
 			using var packageStream = new MemoryStream();
 			bool found = await byId.CopyNupkgToStreamAsync(
 				identity.Id, identity.Version, packageStream, cache,

@@ -8,11 +8,11 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <RoslynVersion>5.9.0-1.26359.118</RoslynVersion>
-    <NetPackageVersion>10.0.10</NetPackageVersion>
+    <RoslynVersion>5.10.0-1.26381.103</RoslynVersion>
+    <NetPackageVersion>10.0.11</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
     <AvaloniaVersion>12.1.1</AvaloniaVersion>
-    <DockVersion>12.1.0</DockVersion>
+    <DockVersion>12.1.0.1</DockVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Avalonia (ILSpy port) -->
@@ -60,15 +60,15 @@
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.3.3" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.3.3" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
-    <PackageVersion Include="NSubstitute" Version="6.1.0" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="NUnit" Version="4.6.1" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.2.0" />
-    <PackageVersion Include="NuGet.Frameworks" Version="7.6.0" />
-    <PackageVersion Include="NuGet.Protocol" Version="7.6.0" />
+    <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
+    <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
     <PackageVersion Include="System.Composition.AttributedModel" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Composition.Hosting" Version="$(NetPackageVersion)" />
