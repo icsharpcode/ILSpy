@@ -30,10 +30,12 @@ namespace ICSharpCode.ILSpy.Processes
 	/// Finds and inspects .NET Framework processes, which exist on Windows only and predate
 	/// the diagnostics endpoint every CoreCLR process exposes. Both answers come from the OS
 	/// module list: the desktop CLR is present in it as clr.dll (or mscorwks.dll before .NET
-	/// 4), and - unlike CoreCLR - the desktop loader registers the assemblies it loads from
-	/// disk there too, so filtering that list to files carrying a CLI header yields the
-	/// managed set. Assemblies loaded from a byte array have no file anywhere and are
-	/// therefore invisible on this path.
+	/// 4), and - unlike CoreCLR - the desktop loader registers the managed images it maps via
+	/// LoadLibrary there too, so filtering that list to files carrying a CLI header yields
+	/// the managed set. That covers NGen native images and mixed-mode assemblies only: an
+	/// IL-only assembly is memory-mapped without a loader entry (the runtime falls back to
+	/// that whenever no valid native image exists), and assemblies loaded from a byte array
+	/// have no file anywhere - both are invisible on this path.
 	/// </summary>
 	[SupportedOSPlatform("windows")]
 	static class NetFrameworkProcesses
