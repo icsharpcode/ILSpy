@@ -157,8 +157,16 @@ jobs:
         7z a -tzip $env:StagingDirectory\ILSpy_binaries_arm64.zip '-xr!*.pdb'
         .\ILSpy\bin\Release\net10.0\win-arm64\publish\fwdependent\*
 
+    # The persistent MSBuild server (on by default since .NET SDK 11.0.100-preview.7,
+    # dotnet/sdk#55231) breaks the SBOM generation Microsoft.Sbom.Targets runs inside
+    # pack: sbom-tool's console backend caches the server's redirected console writer
+    # from the first pack, so the later packs in the reused server process fail their
+    # component-detection scan with ObjectDisposedException and emit SBOMs with zero
+    # packages. Opt out so each pack runs in a fresh single-shot MSBuild process.
     - name: Pack NuGets
       if: matrix.configuration == 'release'
+      env:
+        DOTNET_CLI_USE_MSBUILD_SERVER: 'false'
       run: |
         dotnet pack ICSharpCode.Decompiler --no-restore
         dotnet pack ICSharpCode.BamlDecompiler --no-restore
