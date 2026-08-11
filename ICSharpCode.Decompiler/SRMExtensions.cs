@@ -458,10 +458,26 @@ namespace ICSharpCode.Decompiler
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
 			TypeDefinition td = reader.GetTypeDefinition(handle);
-			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(
-				reader.GetString(td.Name), out var typeParameterCount);
+			string name;
+			try
+			{
+				name = reader.GetString(td.Name);
+			}
+			catch (BadImageFormatException)
+			{
+				name = $"TD{reader.GetToken(handle):x8}";
+			}
+			name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out var typeParameterCount);
 			TypeDefinitionHandle declaringTypeHandle;
-			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil)
+			try
+			{
+				declaringTypeHandle = td.GetDeclaringType();
+			}
+			catch (BadImageFormatException)
+			{
+				declaringTypeHandle = default;
+			}
+			if (declaringTypeHandle.IsNil)
 			{
 				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
 				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));

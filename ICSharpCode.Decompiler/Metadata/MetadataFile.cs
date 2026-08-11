@@ -25,6 +25,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -184,7 +185,16 @@ namespace ICSharpCode.Decompiler.Metadata
 					}
 					var nsHandle = td.Namespace;
 					string ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
-					string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(Metadata.GetString(td.Name), out int typeParameterCount);
+					string name;
+					try
+					{
+						name = Metadata.GetString(td.Name);
+					}
+					catch (BadImageFormatException)
+					{
+						name = $"TD{Metadata.GetToken(handle):x8}";
+					}
+					name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out int typeParameterCount);
 					lookup[new TopLevelTypeName(ns, name, typeParameterCount)] = handle;
 				}
 				lookup = LazyInit.GetOrSet(ref typeLookup, lookup);
