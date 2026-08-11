@@ -127,6 +127,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	class RoslynToolset : AbstractToolset
 	{
+		// Registrations run concurrently while Tester.Initialize awaits all Fetch calls;
+		// lookups only happen after Initialize completes, so the read paths stay lock-free.
 		readonly Dictionary<string, string> installedCompilers = new Dictionary<string, string> {
 			{ "legacy", Environment.ExpandEnvironmentVariables(@"%WINDIR%\Microsoft.NET\Framework\v4.0.30319") }
 		};
@@ -144,7 +146,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				await FetchPackage(packageName, version, sourcePath, Path.Combine(baseDir, version)).ConfigureAwait(false);
 			}
 
-			installedCompilers.Add(SanitizeVersion(version), path);
+			lock (installedCompilers)
+			{
+				installedCompilers.Add(SanitizeVersion(version), path);
+			}
 		}
 
 		// In the .NET ("netcore") build of the compiler toolset the executables live in a
@@ -218,6 +223,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	class RefAssembliesToolset : AbstractToolset
 	{
+		// Registrations run concurrently while Tester.Initialize awaits all Fetch calls;
+		// lookups only happen after Initialize completes, so the read paths stay lock-free.
 		readonly Dictionary<string, string> installedFrameworks = new Dictionary<string, string> {
 			{ "legacy", Path.Combine(Roundtrip.RoundtripAssembly.TestDir, "dotnet", "legacy") },
 			{ "2.2.0", Path.Combine(Roundtrip.RoundtripAssembly.TestDir, "dotnet", "netcore-2.2") },
@@ -236,7 +243,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				await FetchPackage(packageName, version, sourcePath, Path.Combine(baseDir, version)).ConfigureAwait(false);
 			}
 
-			installedFrameworks.Add(RoslynToolset.SanitizeVersion(version), path);
+			lock (installedFrameworks)
+			{
+				installedFrameworks.Add(RoslynToolset.SanitizeVersion(version), path);
+			}
 		}
 
 		internal string GetPath(string targetFramework)
