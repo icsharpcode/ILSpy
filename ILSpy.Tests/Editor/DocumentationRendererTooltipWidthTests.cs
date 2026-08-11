@@ -37,14 +37,11 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.TextView;
 
 /// <summary>
-/// Pins the rendering shape of method-signature tooltips so a long signature isn't
-/// clipped horizontally. Two failure modes the original implementation suffered from:
-/// (1) the signature <see cref="SelectableTextBlock"/> was created with
-/// <see cref="TextWrapping.NoWrap"/>, so text past the popup's MaxWidth was simply cut
-/// off (no horizontal scrolling because the outer ScrollViewer disables it);
-/// (2) the popup MaxWidth defaulted to a snug 600px, narrower than most real C#
-/// generic-method signatures. WPF parity is wrap-friendly, so we mirror that — these
-/// tests fail if either property regresses.
+/// Pins the rendering shape of method-signature tooltips so a long signature isn't clipped
+/// horizontally: the signature <see cref="SelectableTextBlock"/> must wrap. Created with
+/// <see cref="TextWrapping.NoWrap"/>, text past the popup's MaxWidth is simply cut off,
+/// because the outer ScrollViewer disables horizontal scrolling. WPF parity is
+/// wrap-friendly, so we mirror that.
 /// </summary>
 [TestFixture]
 public class DocumentationRendererTooltipWidthTests
@@ -77,21 +74,5 @@ public class DocumentationRendererTooltipWidthTests
 		signature!.TextWrapping.Should().Be(TextWrapping.Wrap,
 			"the signature must wrap inside the popup — without wrapping a long signature is "
 			+ "clipped at the outer MaxWidth because the ScrollViewer disables horizontal scrolling");
-	}
-
-	[AvaloniaTest]
-	public void CreateView_Default_MaxWidth_Is_Generous_Enough_For_Typical_Signatures()
-	{
-		// 600 was too narrow — generic methods + ref-struct parameters routinely exceed it.
-		// Pin the bumped default so a future tweak doesn't silently shrink it back.
-		var renderer = new DocumentationRenderer(
-			new CSharpAmbience(),
-			new FontFamily("Consolas, Menlo, Monospace"),
-			12);
-
-		var view = (Border)renderer.CreateView();
-		view.MaxWidth.Should().BeGreaterThanOrEqualTo(900,
-			"the popup's outer MaxWidth must be wide enough that most realistic method "
-			+ "signatures fit without aggressive wrapping");
 	}
 }

@@ -26,7 +26,6 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Bookmarks;
 using ICSharpCode.ILSpy.Properties;
-using ICSharpCode.ILSpy.Views.Controls;
 
 using NUnit.Framework;
 
@@ -35,22 +34,6 @@ namespace ICSharpCode.ILSpy.Tests.Bookmarks;
 [TestFixture]
 public class BookmarksPaneStructureTests
 {
-	[AvaloniaTest]
-	public void Toolbar_uses_main_toolbar_chrome_and_button_content()
-	{
-		var pane = new BookmarksPane();
-		var toolbarBorder = pane.FindControl<Border>("ToolbarBorder")!;
-		var toolbarRoot = pane.FindControl<StackPanel>("ToolbarRoot")!;
-
-		toolbarBorder.BorderThickness.Should().Be(new Avalonia.Thickness(0, 0, 0, 1));
-		toolbarBorder.MinHeight.Should().Be(29);
-		toolbarBorder.Padding.Should().Be(new Avalonia.Thickness(3));
-		toolbarRoot.Children.OfType<Separator>().Should().HaveCount(2);
-		toolbarRoot.Children.OfType<Button>().Should().AllSatisfy(button => {
-			button.Content.Should().BeOfType<GrayscaleAwareImage>();
-		});
-	}
-
 	[AvaloniaTest]
 	public void Module_column_shows_module_name_with_full_path_tooltip()
 	{

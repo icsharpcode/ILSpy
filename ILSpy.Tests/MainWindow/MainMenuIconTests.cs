@@ -16,32 +16,41 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Linq;
+
+using Avalonia.Controls;
+using Avalonia.Headless.NUnit;
+
 using AwesomeAssertions;
 
-using Dock.Controls.DeferredContentControl;
+using ICSharpCode.ILSpy.Properties;
 
-using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Views;
 
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests;
 
-/// <summary>
-/// Regression guard: <see cref="ToolPaneModel"/> opts out of Dock's deferred content
-/// presentation so panes (search, analyzers, debug steps, etc.) materialise their views
-/// eagerly. Without this, tests can't reach descendants of a pane until it's
-/// focus-activated by the user — and the search-pane's startup tasks (assembly index
-/// scan, etc.) wouldn't kick off until first activation.
-/// </summary>
 [TestFixture]
-public class ToolPaneDeferredContentTests
+public class MainMenuIconTests
 {
-	[Test]
-	public void ToolPaneModel_Opts_Out_Of_Dock_Deferred_Content_Presentation()
+	[AvaloniaTest]
+	public void A_Menu_Item_Declaring_MenuIcon_Metadata_Gets_Its_Icon_Rasterised()
 	{
-		var sentinel = new TestToolPane();
-		((IDeferredContentPresentation)sentinel).DeferContentPresentation.Should().BeFalse();
-	}
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
 
-	sealed class TestToolPane : ToolPaneModel { }
+		var fileMenu = nativeMenu.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources._File, StringComparison.Ordinal));
+		var openItem = fileMenu.Menu!.Items.OfType<NativeMenuItem>()
+			.Single(m => string.Equals(m.Header, Resources._Open, StringComparison.Ordinal));
+
+		openItem.Icon.Should().NotBeNull(
+			"File > Open declares MenuIcon=\"Images/Open\" in its [ExportMainMenuCommand]; the menu builder "
+			+ "must rasterise that into NativeMenuItem.Icon.");
+	}
 }

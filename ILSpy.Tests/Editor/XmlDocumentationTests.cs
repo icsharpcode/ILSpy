@@ -16,68 +16,47 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Linq;
-using System.Threading.Tasks;
-
-using Avalonia.Headless.NUnit;
-
 using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.Documentation;
-using ICSharpCode.Decompiler.TypeSystem;
 
-using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.ViewModels;
-using ICSharpCode.ILSpy.Views;
+using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpy.Tests.TextView;
 
 /// <summary>
-/// Diagnoses whether the XML-documentation lookup that backs the decompiler-view hover
-/// tooltip actually surfaces non-empty docs for a well-documented system method. The
-/// renderer + wiring (<c>DocumentationRenderer</c>,
-/// <c>DecompilerTextView.BuildHoverContent</c>, <c>AppendXmlDocumentation</c>) are
-/// already in place; this test verifies the underlying
-/// <see cref="ICSharpCode.Decompiler.Documentation.XmlDocLoader.LoadDocumentation"/>
-/// path produces a real doc string for at least one ubiquitous CoreLib method.
+/// The XML-documentation lookup behind the decompiler view's hover tooltip. On modern .NET
+/// the entity's metadata-token-bearing assembly (System.Private.CoreLib.dll) is not the one
+/// whose XML carries its docs (System.Runtime.xml), so <see cref="XmlDocLoader"/> falls back
+/// to the parallel ref pack - <c>&lt;dotnet&gt;/packs/Microsoft.NETCore.App.Ref/&lt;version&gt;/ref/&lt;tfm&gt;/*.xml</c>
+/// - and aggregates every XML there into one provider. Without that fallback every tooltip
+/// over a BCL member renders empty.
 /// </summary>
 [TestFixture]
 public class XmlDocumentationTests
 {
-	[AvaloniaTest]
-	public async Task XmlDocLoader_Surfaces_Documentation_For_CoreLib_String_Concat()
+	// The ID string the decompiler produces for the two-argument overload; using the literal
+	// keeps the test off the type system, which is not what is under test here.
+	const string StringConcatId = "M:System.String.Concat(System.String,System.String)";
+
+	[Test]
+	public void XmlDocLoader_Surfaces_Documentation_For_CoreLib_String_Concat()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
+		var coreLib = new AssemblyList().OpenAssembly(typeof(object).Assembly.Location)
+			.GetMetadataFileOrNull();
+		coreLib.Should().NotBeNull();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		stringNode.IsExpanded = true;
-		var concatNode = stringNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Concat");
-
-		var concat = concatNode.MethodDefinition;
-		Assert.That(concat, Is.Not.Null);
-		Assert.That(concat!.ParentModule, Is.Not.Null);
-		Assert.That(concat.ParentModule!.MetadataFile, Is.Not.Null);
-
-		// XmlDocLoader's modern-.NET fallback (added in the shared decompiler library) walks
-		// the parallel ref pack — <dotnet>/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/*.xml
-		// — and aggregates every XML there into a single provider, since each entity's
-		// metadata-token-bearing assembly (System.Private.CoreLib.dll) differs from the one
-		// whose XML carries its docs (System.Runtime.xml).
-		var provider = XmlDocLoader.LoadDocumentation(concat.ParentModule.MetadataFile!);
+		var provider = XmlDocLoader.LoadDocumentation(coreLib!);
 		((object?)provider).Should().NotBeNull(
-			"XmlDocLoader's modern-.NET ref-pack fallback must locate XMLs for the test-host runtime layout");
+			"the ref-pack fallback must locate the XMLs for the test-host runtime layout");
 
-		var documentation = provider!.GetDocumentation(concat.GetIdString());
+		var documentation = provider!.GetDocumentation(StringConcatId);
+
 		documentation.Should().NotBeNullOrEmpty(
-			"System.String.Concat is one of the most-documented methods in CoreLib — the hover tooltip would be empty without this");
+			"System.String.Concat is one of the most-documented methods in CoreLib - the hover "
+			+ "tooltip would be empty without this");
 		documentation.Should().Contain("<summary",
 			"the raw documentation string must include the <summary> tag the renderer parses");
 	}
