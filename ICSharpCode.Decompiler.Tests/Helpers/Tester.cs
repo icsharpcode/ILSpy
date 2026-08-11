@@ -1107,21 +1107,34 @@ namespace System.Runtime.CompilerServices
 			return formattingPolicy;
 		}
 
-		public static async Task RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null, bool useTestRunner = false, bool force32Bit = false)
+		/// <summary>
+		/// Starts executing the given assembly and returns the in-flight task, so that the run
+		/// can overlap other work (e.g. decompiling and recompiling the same assembly). The
+		/// task's fault is pre-observed: a caller that abandons the run because an earlier
+		/// pipeline stage failed first does not trigger UnobservedTaskException.
+		/// </summary>
+		public static Task<(int ExitCode, string Output, string Error)> StartRun(string assemblyFileName, bool useTestRunner = false, bool force32Bit = false)
 		{
-			string output1, output2, error1, error2;
-			int result1, result2;
+			var task = useTestRunner ? RunWithTestRunner(assemblyFileName, force32Bit) : Run(assemblyFileName);
+			task.ContinueWith(static t => _ = t.Exception, CancellationToken.None,
+				TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+			return task;
+		}
 
-			if (useTestRunner)
-			{
-				(result1, output1, error1) = await RunWithTestRunner(outputFile, force32Bit).ConfigureAwait(false);
-				(result2, output2, error2) = await RunWithTestRunner(decompiledOutputFile, force32Bit).ConfigureAwait(false);
-			}
-			else
-			{
-				(result1, output1, error1) = await Run(outputFile).ConfigureAwait(false);
-				(result2, output2, error2) = await Run(decompiledOutputFile).ConfigureAwait(false);
-			}
+		public static Task RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null, bool useTestRunner = false, bool force32Bit = false)
+		{
+			return RunAndCompareOutput(testFileName, StartRun(outputFile, useTestRunner, force32Bit), decompiledOutputFile, decompiledCodeFile, useTestRunner, force32Bit);
+		}
+
+		public static async Task RunAndCompareOutput(string testFileName, Task<(int ExitCode, string Output, string Error)> originalRun, string decompiledOutputFile, string decompiledCodeFile = null, bool useTestRunner = false, bool force32Bit = false)
+		{
+			var decompiledRun = StartRun(decompiledOutputFile, useTestRunner, force32Bit);
+			// Plain WhenAll, no error aggregation: it observes both faults and rethrows the
+			// first one, which keeps NUnit's Ignore semantics intact when both runs raise
+			// IgnoreException (e.g. Force32Bit on a non-Windows host).
+			await Task.WhenAll(originalRun, decompiledRun).ConfigureAwait(false);
+			var (result1, output1, error1) = originalRun.Result;
+			var (result2, output2, error2) = decompiledRun.Result;
 
 			Assert.That(result1, Is.EqualTo(0), "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
 			Assert.That(result2, Is.EqualTo(0), "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
