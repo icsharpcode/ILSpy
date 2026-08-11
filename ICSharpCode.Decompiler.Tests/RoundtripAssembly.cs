@@ -137,23 +137,23 @@ namespace ICSharpCode.Decompiler.Roundtrip
 
 		async Task RunWithTest(string dir, string fileToRoundtrip, string fileToTest, LanguageVersion languageVersion = defaultLanguageVersion, string keyFile = null, bool useOldProjectFormat = false)
 		{
-			await RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest).GetAwaiter().GetResult(), languageVersion, snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
+			await RunInternal(dir, fileToRoundtrip, outputDir => RunTest(outputDir, fileToTest), languageVersion, snkFilePath: keyFile, useOldProjectFormat: useOldProjectFormat);
 		}
 
 		async Task RunWithOutput(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
 			string inputDir = Path.Combine(TestDir, dir);
 			await RunInternal(dir, fileToRoundtrip,
-				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)).GetAwaiter().GetResult(),
+				outputDir => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)),
 				languageVersion);
 		}
 
 		async Task RunOnly(string dir, string fileToRoundtrip, LanguageVersion languageVersion = defaultLanguageVersion)
 		{
-			await RunInternal(dir, fileToRoundtrip, outputDir => { }, languageVersion);
+			await RunInternal(dir, fileToRoundtrip, _ => Task.CompletedTask, languageVersion);
 		}
 
-		async Task RunInternal(string dir, string fileToRoundtrip, Action<string> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
+		async Task RunInternal(string dir, string fileToRoundtrip, Func<string, Task> testAction, LanguageVersion languageVersion, string snkFilePath = null, bool useOldProjectFormat = false)
 		{
 			if (!Directory.Exists(TestDir))
 			{
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.Roundtrip
 			Assert.That(projectFile, Is.Not.Null, $"Could not find {fileToRoundtrip}");
 
 			await Compile(projectFile, outputDir);
-			testAction(outputDir);
+			await testAction(outputDir).ConfigureAwait(false);
 		}
 
 		static void ClearDirectory(string dir)
