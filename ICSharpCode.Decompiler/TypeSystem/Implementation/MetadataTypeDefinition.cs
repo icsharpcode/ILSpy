@@ -72,7 +72,14 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var td = metadata.GetTypeDefinition(handle);
 			this.attributes = td.Attributes;
 			this.fullTypeName = handle.GetFullTypeName(metadata);
-			this.MetadataName = metadata.GetString(td.Name);
+			try
+			{
+				this.MetadataName = metadata.GetString(td.Name);
+			}
+			catch (BadImageFormatException)
+			{
+				this.MetadataName = $"TD{metadata.GetToken(handle):x8}";
+			}
 			// Find DeclaringType + KnownTypeCode:
 			if (fullTypeName.IsNested)
 			{
