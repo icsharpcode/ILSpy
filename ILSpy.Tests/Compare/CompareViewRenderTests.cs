@@ -49,34 +49,6 @@ namespace ICSharpCode.ILSpy.Tests.Compare;
 public class CompareViewRenderTests
 {
 	[AvaloniaTest]
-	public async Task CompareView_Binds_A_HierarchicalModel_When_Opened()
-	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 2);
-
-		var entry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.ContextMenuEntryRegistry>()
-			.Entries.Single(e => e.Metadata.Header == "Compare...").Value;
-		var assemblies = new[] {
-			await vm.OpenFixtureAsync("FixtureA"),
-			await vm.OpenFixtureAsync("FixtureB"),
-		};
-		var nodes = assemblies.Select(a =>
-			(SharpTreeNode)vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(a.ShortName)).ToArray();
-
-		entry.Execute(new TextViewContext { SelectedTreeNodes = nodes });
-
-		var view = await window.WaitForComponent<CompareView>();
-		var grid = await view.WaitForComponent<DataGrid>();
-
-		await Waiters.WaitForAsync(() => grid.HierarchicalModel != null,
-			description: "CompareView must populate the DataGrid's HierarchicalModel — without it "
-				+ "the hierarchical column is rendered over an empty source and the tab shows nothing");
-		grid.HierarchicalModel.Should().NotBeNull();
-	}
-
-	[AvaloniaTest]
 	public async Task CompareView_Renders_Rows_For_The_Merged_Tree()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();

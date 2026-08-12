@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -23,77 +25,83 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.TreeNodes;
+
+using ICSharpCode.ILSpyX.TreeView;
 
 using NUnit.Framework;
 
+using SharpTreeView = ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView;
+
 namespace ICSharpCode.ILSpy.Tests;
 
+/// <summary>
+/// The "Use nested namespace structure" display setting, from the setting through to the
+/// rows on screen. Flat mode keeps every dotted namespace as its own sibling of the assembly
+/// node; nested mode splits them, so "System.Linq" becomes "Linq" under "System". The switch
+/// happens live: toggling rebuilds each loaded assembly's namespace subtree, and because
+/// SharpTreeView's flattener observes node.Children directly, the rebuilt shape reaches the
+/// visible rows with no model re-bind.
+/// </summary>
 [TestFixture]
 public class UseNestedNamespaceNodesTests
 {
 	[AvaloniaTest]
-	public async Task When_UseNestedNamespaceNodes_True_Namespaces_Are_Hierarchical()
+	public async Task Toggling_The_Setting_Reshapes_The_Tree_Live_Down_To_The_Visible_Rows()
 	{
-		// With the setting on, "System" becomes a single root node holding "Collections",
-		// "IO", "Linq", … as descendants — not the flat "System", "System.Collections",
-		// "System.IO" siblings the default flat mode produces.
-
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
-		var (_, vm) = await TestHarness.BootAsync(3);
+		settings.UseNestedNamespaceNodes = false;
+
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var grid = await pane.WaitForComponent<SharpTreeView>();
 
 		try
 		{
-			settings.UseNestedNamespaceNodes = true;
-
-			// Use System.Linq's assembly — it has System and System.Linq as namespaces.
+			// System.Linq's assembly carries both "System" and "System.Linq", so one assembly
+			// shows the difference between the two layouts.
 			var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-			assemblyNode.Children.Clear();
-			assemblyNode.LazyLoading = true;
-			assemblyNode.EnsureLazyChildren();
+			assemblyNode.IsExpanded = true;
+			await Waiters.WaitForAsync(() => assemblyNode.Children.OfType<NamespaceTreeNode>().Any());
 
-			var systemNode = assemblyNode.Children.OfType<NamespaceTreeNode>()
-				.SingleOrDefault(ns => ns.Name == "System");
-			((object?)systemNode).Should().NotBeNull(
-				"in nested mode the top-level node for the System namespace must exist as 'System' (last segment), not 'System.Linq'");
+			var visibleRows = (IList)grid.ItemsSource!;
+			bool VisibleNamespace(string name) => visibleRows.Cast<SharpTreeNode>()
+				.OfType<NamespaceTreeNode>()
+				.Any(n => string.Equals(n.Text?.ToString(), name, StringComparison.Ordinal));
 
-			var nestedLinq = systemNode!.Children.OfType<NamespaceTreeNode>()
-				.SingleOrDefault(ns => ns.Name == "Linq");
-			((object?)nestedLinq).Should().NotBeNull(
-				"the System.Linq namespace must nest under the System node in nested mode");
+			NamespaceNames().Should().Contain("System.Linq",
+				"flat mode lists the whole dotted namespace as one sibling of the assembly node");
+			await Waiters.WaitForAsync(() => VisibleNamespace("System.Collections.Generic"),
+				description: "flat mode shows the dotted namespace as a single visible row");
+			TestCapture.Step("flat-mode");
 
-			// Sanity: there is NO sibling "System.Linq" at the assembly-node level.
-			assemblyNode.Children.OfType<NamespaceTreeNode>()
-				.Select(n => n.Name).Should().NotContain("System.Linq",
-				"flat-style 'System.Linq' sibling must not appear when nesting is on");
+			// The setting fans out through MessageBus<SettingsChangedEventArgs> to
+			// AssemblyTreeModel.OnSettingsChanged, which rebuilds the namespace subtrees.
+			settings.UseNestedNamespaceNodes = true;
+			assemblyNode.IsExpanded = true;
+
+			await Waiters.WaitForAsync(() => NamespaceNames().Contains("System"),
+				TimeSpan.FromSeconds(5),
+				"toggling the setting must rebuild the namespace subtree into nested nodes");
+			TestCapture.Step("nested-mode");
+
+			NamespaceNames().Should().NotContain("System.Linq",
+				"the flat dotted sibling must be gone once its segments are nested");
+			assemblyNode.Children.OfType<NamespaceTreeNode>().Single(n => n.Name == "System")
+				.Children.OfType<NamespaceTreeNode>().Select(n => n.Name).Should().Contain("Linq",
+				"the trailing segment must hang under the node for the leading one");
+			VisibleNamespace("System").Should().BeTrue(
+				"the rebuilt node must reach the visible rows without a model re-bind - the live "
+				+ "flattener observes the child mutations directly");
+
+			string[] NamespaceNames() => assemblyNode.Children.OfType<NamespaceTreeNode>()
+				.Select(n => n.Name).ToArray();
 		}
 		finally
 		{
 			settings.UseNestedNamespaceNodes = false;
 		}
-	}
-
-	[AvaloniaTest]
-	public async Task When_UseNestedNamespaceNodes_False_Namespaces_Are_Flat()
-	{
-		// Baseline: the default flat layout keeps every distinct namespace string as a
-		// sibling under the AssemblyTreeNode.
-		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
-		settings.UseNestedNamespaceNodes = false;
-
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.Children.Clear();
-		assemblyNode.LazyLoading = true;
-		assemblyNode.EnsureLazyChildren();
-
-		var namespaceNames = assemblyNode.Children.OfType<NamespaceTreeNode>()
-			.Select(n => n.Name).ToList();
-
-		namespaceNames.Should().Contain("System.Linq",
-			"in flat mode 'System.Linq' must appear as a top-level sibling");
 	}
 }
