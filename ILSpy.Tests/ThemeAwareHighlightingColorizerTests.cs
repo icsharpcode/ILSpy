@@ -64,6 +64,39 @@ public class ThemeAwareHighlightingColorizerTests
 		public HighlightingColor GetNamedColor(string name) => colors.Find(c => c.Name == name)!;
 	}
 
+	// Mimics AvaloniaEdit's DelayLoadedHighlightingDefinition: every member forwards through
+	// materialization, and materializing runs a load callback that (like
+	// HighlightingService.Load) registers the INNER definition with the theme manager. The
+	// wrapper and the inner definition are distinct objects sharing the same live colours
+	// and Properties dictionary.
+	sealed class LazyLoadedDefinition : IHighlightingDefinition
+	{
+		readonly StubHighlightingDefinition inner;
+		bool materialized;
+
+		public LazyLoadedDefinition(StubHighlightingDefinition inner)
+		{
+			this.inner = inner;
+		}
+
+		StubHighlightingDefinition GetDefinition()
+		{
+			if (!materialized)
+			{
+				materialized = true;
+				ThemeManager.Current.RegisterThemableDefinition(inner);
+			}
+			return inner;
+		}
+
+		public string Name => GetDefinition().Name;
+		public HighlightingRuleSet MainRuleSet => GetDefinition().MainRuleSet;
+		public IEnumerable<HighlightingColor> NamedHighlightingColors => GetDefinition().NamedHighlightingColors;
+		public IDictionary<string, string> Properties => GetDefinition().Properties;
+		public HighlightingRuleSet GetNamedRuleSet(string name) => GetDefinition().GetNamedRuleSet(name);
+		public HighlightingColor GetNamedColor(string name) => GetDefinition().GetNamedColor(name);
+	}
+
 	static HighlightingColor MakeColor(string name, Color foreground)
 		=> new() { Name = name, Foreground = new SimpleHighlightingBrush(foreground) };
 
@@ -74,6 +107,37 @@ public class ThemeAwareHighlightingColorizerTests
 		var settings = new SessionSettings();
 		ThemeManager.Current.Attach(settings);
 		return settings;
+	}
+
+	[AvaloniaTest]
+	public void LazyLoadedDefinitionIsNotDarkenedTwiceAtDarkStartup()
+	{
+		var settings = AttachThemeSettings();
+		try
+		{
+			// Dark is active BEFORE the definition is first touched -- the "dark theme
+			// preselected, session restores a document" startup ordering.
+			settings.Theme = "Dark";
+
+			var color = MakeColor("String", Colors.Red);
+			var pristine = (HighlightingColor)color.Clone();
+			var wrapper = new LazyLoadedDefinition(new StubHighlightingDefinition(color));
+
+			// HighlightingService.GetByExtension registers what the HighlightingManager
+			// returns: the wrapper. Its first member access materializes the inner
+			// definition, whose own registration has then ALREADY darkened the shared
+			// colours in place -- so the wrapper registration must not treat those dark
+			// values as light originals and convert them a second time.
+			ThemeManager.Current.RegisterThemableDefinition(wrapper);
+
+			var singleConversion = ThemeManager.GetColorForDarkTheme(pristine);
+			color.Should().Be(singleConversion,
+				"registering the lazy wrapper after its inner definition must not compound the dark conversion");
+		}
+		finally
+		{
+			settings.Theme = "Light";
+		}
 	}
 
 	[AvaloniaTest]
