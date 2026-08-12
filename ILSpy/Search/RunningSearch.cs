@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy.Search
 	/// Orchestrates one search across the loaded <see cref="AssemblyList"/>. Walks
 	/// the assemblies serially on a background <see cref="Task"/>, pushes results into
 	/// a thread-safe queue, and the UI thread drains that queue once per render frame
-	/// with a wall-clock budget — the same shape as the WPF SearchPane.
+	/// with a wall-clock budget.
 	/// </summary>
 	internal sealed class RunningSearch
 	{

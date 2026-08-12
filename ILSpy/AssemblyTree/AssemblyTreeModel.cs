@@ -161,9 +161,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			};
 			SelectedItems.CollectionChanged += OnSelectedItemsChanged;
 			// Single hub for "navigate to this reference, optionally highlighting that source"
-			// — mirrors WPF AssemblyTreeModel's JumpToReference subscription. The analyzer
-			// pane, metadata tables, and future decompile commands all push through this same
-			// channel.
+			// — the analyzer pane, metadata tables, and future decompile commands all push
+			// through this same channel.
 			Util.MessageBus<Util.NavigateToReferenceEventArgs>.Subscribers += OnNavigateToReference;
 			// Live re-render when Display Settings change. WPF leaves these as apply-on-next-
 			// load; Avalonia opts into reactivity because the Options dialog stays open while
@@ -925,16 +924,14 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// Fan-out for changes to the currently-active assembly list (assemblies added or
 		/// removed). Re-publishes via <see cref="Util.MessageBus"/> so panes that don't
 		/// directly hold a reference to <see cref="AssemblyList"/> can react — the search
-		/// pane restarts, the dock workspace prunes orphaned tabs. Mirrors WPF's
-		/// <c>assemblyList_CollectionChanged</c> shape.
+		/// pane restarts, the dock workspace prunes orphaned tabs.
 		/// </summary>
 		void OnActiveAssemblyListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
 			// Prune navigation-history entries that pointed at tree nodes inside removed
 			// assemblies BEFORE re-publishing — Back/Forward consumers (the toolbar
 			// commands + dropdowns) re-evaluate their CanExecute when the bus fires, so
-			// they must see the post-prune state. Mirrors WPF's history.RemoveAll(...)
-			// inside assemblyList_CollectionChanged.
+			// they must see the post-prune state.
 			if (e.OldItems is { Count: > 0 } oldItems)
 			{
 				var removed = new HashSet<LoadedAssembly>(oldItems.OfType<LoadedAssembly>());
@@ -995,8 +992,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// <summary>
 		/// Resolves every assembly reference of each supplied assembly node through that
 		/// assembly's own resolver -- which auto-loads the targets into the live list -- then
-		/// re-decompiles the active tab so newly available references render. Mirrors WPF's
-		/// LoadDependencies command.
+		/// re-decompiles the active tab so newly available references render.
 		/// </summary>
 		public async Task LoadDependenciesAsync(IReadOnlyList<SharpTreeNode> nodes)
 		{
@@ -1051,7 +1047,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			// tree, so FindNodeByPath returns the same tree-node reference, the
 			// SelectedItem setter early-outs, and DockWorkspace.ShowSelectedNode's
 			// dedup short-circuits — leaving stale decompiled text. Force a fresh
-			// render. Mirrors WPF's RefreshDecompiledView() call.
+			// render.
 			AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
 		}
 	}

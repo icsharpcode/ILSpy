@@ -72,8 +72,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		// Uses the constructor-time marker reference directly. The marker comes from the
 		// parent TypeTreeNode, which resolves through GetTypeSystemWithCurrentOptionsOrNull,
 		// so the chain is consistent with the current settings; per-access re-resolution (so
-		// language-version flips refresh the display string without rebuilding the node, as
-		// WPF does) remains a follow-up (see `extension-methods-tree` in the tracker).
+		// language-version flips refresh the display string without rebuilding the node)
+		// remains a follow-up (see `extension-methods-tree` in the tracker).
 		ITypeDefinition GetTypeDefinition() => MarkerMethod.DeclaringTypeDefinition!;
 
 		protected override void LoadChildren()

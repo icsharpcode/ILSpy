@@ -160,7 +160,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			catch (XmlException)
 			{
-				// Malformed XML in the .xml file — ignore as WPF does.
+				// Malformed XML in the .xml file — ignore it rather than failing the tooltip.
 			}
 		}
 

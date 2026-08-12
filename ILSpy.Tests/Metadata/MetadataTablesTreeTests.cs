@@ -37,7 +37,7 @@ public class MetadataTablesTreeTests
 	public async Task MetadataTreeNode_Surfaces_A_Tables_Container_Between_PE_Headers_And_Heaps()
 	{
 		// "Tables" is the synthetic folder that, once expanded, exposes one leaf per
-		// non-empty CLI metadata table. Mirrors WPF tree shape: PE headers → Tables → heaps.
+		// non-empty CLI metadata table. Tree shape: PE headers → Tables → heaps.
 		// Phase 1 lazy-loads its children with a generic placeholder per table; Phase 1e
 		// replaces them with per-table typed leaves carrying the actual row data.
 

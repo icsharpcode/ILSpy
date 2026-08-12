@@ -85,8 +85,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Optional " @xNNNNNNNN" (hex) or " @NNNNN" (decimal) suffix appended to entity tree-node
 		/// <see cref="SharpTreeNode.Text"/> values when the user enables Display Settings →
-		/// "Show metadata tokens". Mirrors WPF's <c>ILSpyTreeNode.GetSuffixString</c>; format
-		/// matches byte-for-byte so cross-tool grep on token strings keeps working.
+		/// "Show metadata tokens". The format is fixed, so grepping token strings across tools
+		/// keeps working.
 		/// </summary>
 		protected static string GetSuffixString(IMember member) => GetSuffixString(member.MetadataToken);
 
@@ -173,11 +173,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		/// <summary>
 		/// Applies <see cref="Filter"/> to every newly-added child and writes the result
-		/// into <see cref="SharpTreeNode.IsHidden"/>. Mirrors WPF's filter cascade — it's
-		/// what makes accessor children of properties / events read as hidden under the
-		/// default ShowApiLevel without overriding <see cref="SharpTreeNode.ShowExpander"/>
-		/// per node-type. Only fires while this parent is visible (matches WPF) so the
-		/// filter pass doesn't run for descendants whose parent chain isn't realised yet.
+		/// into <see cref="SharpTreeNode.IsHidden"/>. This cascade is what makes accessor
+		/// children of properties / events read as hidden under the default ShowApiLevel
+		/// without overriding <see cref="SharpTreeNode.ShowExpander"/> per node-type. It only
+		/// fires while this parent is visible, so the filter pass doesn't run for descendants
+		/// whose parent chain isn't realised yet.
 		/// </summary>
 		public override void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
@@ -198,7 +198,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// parent inherit stale <see cref="SharpTreeNode.IsHidden"/> states. Without this
 		/// trigger, expanding a node that ShowApiLevel had hidden leaves its accessor
 		/// children reading as visible even though the cascade would mark them hidden.
-		/// Mirrors WPF's identical override on <c>ILSpyTreeNode</c>.
 		/// </summary>
 		protected override void OnIsVisibleChanged()
 		{

@@ -21,8 +21,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// <summary>
 	/// Outcome of an <see cref="ILSpyTreeNode.Filter"/> evaluation against the active
 	/// <see cref="LanguageSettings"/>. Drives whether the assembly tree shows the node, hides
-	/// it outright, or shows it only if any descendant matches. Layout mirrors WPF's
-	/// <c>FilterResult</c> for 1:1 portability of <see cref="ILSpyTreeNode.Filter"/> overrides.
+	/// it outright, or shows it only if any descendant matches.
 	/// </summary>
 	public enum FilterResult
 	{

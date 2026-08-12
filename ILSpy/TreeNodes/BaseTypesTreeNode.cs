@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		internal static void AddBaseTypes(SharpTreeNodeCollection children, MetadataFile module, ITypeDefinition typeDefinition)
 		{
 			// Re-resolve the type with an Uncached type system so we get a fresh inheritance
-			// chain (some Decompiler-flag toggles affect how interfaces fold in). Mirrors WPF.
+			// chain (some Decompiler-flag toggles affect how interfaces fold in).
 			var handle = (TypeDefinitionHandle)typeDefinition.MetadataToken;
 			var typeSystem = new DecompilerTypeSystem(module, module.GetAssemblyResolver(),
 				TypeSystemOptions.Default | TypeSystemOptions.Uncached);

@@ -25,10 +25,10 @@ namespace ICSharpCode.ILSpy.Commands
 {
 	/// <summary>
 	/// Minimal ICommand base. Avalonia has no global RequerySuggested signal like WPF's CommandManager,
-	/// so CanExecuteChanged is routed through our own <see cref="CommandManager"/> (mirroring how WPF's
-	/// SimpleCommand routed it through CommandManager.RequerySuggested). State-change sites call
-	/// <see cref="CommandManager.InvalidateRequerySuggested"/> and every bound command re-evaluates --
-	/// no per-command wiring, and the menu/toolbar item updates its enabled state on every platform.
+	/// so CanExecuteChanged is routed through our own <see cref="CommandManager"/>. State-change
+	/// sites call <see cref="CommandManager.InvalidateRequerySuggested"/> and every bound command
+	/// re-evaluates -- no per-command wiring, and the menu/toolbar item updates its enabled
+	/// state on every platform.
 	/// </summary>
 	public abstract class SimpleCommand : ICommand
 	{

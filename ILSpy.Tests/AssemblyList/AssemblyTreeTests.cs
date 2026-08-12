@@ -1575,7 +1575,7 @@ public class AssemblyTreeTests
 	public void ExitCommand_Is_Exported_To_File_Menu_With_Resources_E_xit_Header()
 	{
 		// File → Exit must be MEF-discovered and parented to the File menu at MenuOrder=99999
-		// (last entry, mirrors WPF). Headless app lifetime isn't IClassicDesktopStyleApplicationLifetime,
+		// (last entry). Headless app lifetime isn't IClassicDesktopStyleApplicationLifetime,
 		// so Execute() is a safe no-op under tests — we don't actually shut down the test runner,
 		// but the metadata + CanExecute path is the regression-worthy surface.
 

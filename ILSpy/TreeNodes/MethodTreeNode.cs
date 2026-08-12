@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(MethodDefinition);
 
-		// Mirrors WPF's dispatch order: operator, extension method, constructor,
+		// Dispatch order: operator, extension method, constructor,
 		// P/Invoke (DllImport without a body), virtual, plain method. Tested against
 		// every kind in the analyzers fixtures.
 		public static Avalonia.Media.IImage GetIcon(IMethod method)

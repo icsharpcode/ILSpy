@@ -46,9 +46,8 @@ namespace ICSharpCode.ILSpy.TextView
 	}
 
 	/// <summary>
-	/// Right-click → Select All. Mirrors WPF's SelectAllContextMenuEntry. Keyboard Ctrl+A is
-	/// handled natively by AvaloniaEdit; this entry surfaces the same action from the
-	/// right-click menu.
+	/// Right-click → Select All. Keyboard Ctrl+A is handled natively by AvaloniaEdit;
+	/// this entry surfaces the same action from the right-click menu.
 	/// </summary>
 	[ExportContextMenuEntry(Header = nameof(Resources.Select), Category = nameof(Resources.Editor), Order = 110)]
 	[Shared]

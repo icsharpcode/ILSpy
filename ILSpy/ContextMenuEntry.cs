@@ -78,9 +78,8 @@ namespace ICSharpCode.ILSpy
 	}
 
 	/// <summary>
-	/// Concrete metadata view for context-menu entries. Mirrors WPF's
-	/// <c>IContextMenuEntryMetadata</c>; <see cref="System.Composition"/> requires a class
-	/// (not an interface) for metadata views.
+	/// Concrete metadata view for context-menu entries: <see cref="System.Composition"/>
+	/// requires a class (not an interface) for metadata views.
 	/// </summary>
 	public class ContextMenuEntryMetadata
 	{

@@ -26,7 +26,7 @@ using Avalonia.Markup.Xaml;
 using ICSharpCode.ILSpy.NuGetFeeds;
 using ICSharpCode.ILSpy.ViewModels;
 
-// Alias the WPF-shared Resources class — Window inherits an IResourceDictionary Resources
+// Alias the localisation Resources class — Window inherits an IResourceDictionary Resources
 // property that would otherwise shadow ICSharpCode.ILSpy.Properties.Resources, turning every
 // `Resources.X` into an IResourceDictionary indexer lookup that doesn't compile.
 using Loc = ICSharpCode.ILSpy.Properties.Resources;

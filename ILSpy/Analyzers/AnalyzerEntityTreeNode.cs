@@ -103,8 +103,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 			// One message carries both halves: Reference drives the assembly-tree navigation,
 			// Source carries the originally-analysed entity so the receiving subscriber can
 			// paint local-reference marks on it in the navigated-to body. The subscription
-			// lives in AssemblyTreeModel (mirrors WPF) so the highlight stays decoupled from
-			// the tree-node code path.
+			// lives in AssemblyTreeModel so the highlight stays decoupled from the tree-node
+			// code path.
 			MessageBus.Send(this, new NavigateToReferenceEventArgs(Member, SourceMember));
 		}
 

@@ -96,7 +96,7 @@ namespace ICSharpCode.ILSpy.Commands
 				return;
 			await assembly.LoadDebugInfo(path);
 			// Refresh the tree node + re-decompile the current selection so the new debug
-			// symbols feed back into the output. Mirrors WPF's RefreshDecompiledView call.
+			// symbols feed back into the output.
 			if (assemblyTreeModel.SelectedItem is { } current)
 			{
 				assemblyTreeModel.SelectedItem = null;

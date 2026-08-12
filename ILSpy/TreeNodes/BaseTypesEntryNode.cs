@@ -56,11 +56,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		/// <summary>
 		/// Shared activate helper used by <see cref="BaseTypesEntryNode"/> and
-		/// <see cref="DerivedTypesEntryNode"/>. Mirrors WPF's matching helper. The
-		/// <paramref name="node"/> parameter is unused on Avalonia (navigation routes through
-		/// the MEF-resolved <see cref="AssemblyTreeModel"/> instead of walking up the tree to
-		/// the assembly-list node), but the signature stays in lock-step with WPF so any future
-		/// caller that needs the originating node has it on hand.
+		/// <see cref="DerivedTypesEntryNode"/>. The <paramref name="node"/> parameter is
+		/// unused — navigation routes through the MEF-resolved <see cref="AssemblyTreeModel"/>
+		/// rather than walking up the tree to the assembly-list node — but it stays on the
+		/// signature so a caller that does need the originating node has it on hand.
 		/// </summary>
 		internal static bool ActivateItem(SharpTreeNode node, ITypeDefinition? def)
 		{

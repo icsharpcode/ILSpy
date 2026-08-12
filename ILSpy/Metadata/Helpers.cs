@@ -96,8 +96,7 @@ namespace ICSharpCode.ILSpy.Metadata
 	/// <summary>
 	/// Bitmask covering each CLI metadata table. Used as the second argument to
 	/// <see cref="MetadataReaderHelpers.ComputeCodedTokenSize"/> when computing how many bytes
-	/// a coded-token column occupies in a given metadata blob — same encoding as the WPF
-	/// host's <c>TableMask</c>.
+	/// a coded-token column occupies in a given metadata blob.
 	/// </summary>
 	[Flags]
 	public enum TableMask : ulong
