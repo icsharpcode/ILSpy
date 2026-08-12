@@ -27,27 +27,40 @@ namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Wraps AvaloniaEdit's default colorizer so colours flip when the active theme is
-	/// Dark. The decision is per-paint and reads <see cref="ThemeManager.IsDarkTheme"/>
-	/// directly, so a theme switch followed by an editor redraw renders in the new
-	/// palette without needing a second colorizer instance. The remapped colours are
-	/// cached per source <see cref="HighlightingColor"/> instance.
+	/// Dark. The whole decision is per-paint: it reads <see cref="ThemeManager.IsDarkTheme"/>
+	/// and <see cref="ThemeManager.IsThemeAware"/> directly, so a theme switch -- or a
+	/// definition getting registered with the theme manager after this colorizer was
+	/// created -- takes effect on the next redraw without needing a second colorizer
+	/// instance. Checking theme-awareness per paint matters for correctness, not just
+	/// freshness: <see cref="ThemeManager"/> darkens a registered definition's named
+	/// colours in place, so remapping them here a second time would wash the palette out.
+	/// The remapped colours are cached per source <see cref="HighlightingColor"/>; the
+	/// cache key is content-based (HighlightingColor overrides Equals/GetHashCode), so an
+	/// in-place recolour of a source colour misses the cache and reconverts instead of
+	/// serving a conversion of the old values.
 	/// </summary>
 	public sealed class ThemeAwareHighlightingColorizer : HighlightingColorizer
 	{
 		readonly Dictionary<HighlightingColor, HighlightingColor> darkColors = new();
-		readonly bool definitionIsThemeAware;
+		readonly IHighlightingDefinition definition;
 
 		public ThemeAwareHighlightingColorizer(IHighlightingDefinition highlightingDefinition)
 			: base(highlightingDefinition)
 		{
-			definitionIsThemeAware = ThemeManager.Current.IsThemeAware(highlightingDefinition);
+			definition = highlightingDefinition;
 		}
 
 		protected override void ApplyColorToElement(VisualLineElement element, HighlightingColor color)
 		{
-			if (!definitionIsThemeAware && ThemeManager.Current.IsDarkTheme)
-				color = GetCachedDarkColor(color);
-			base.ApplyColorToElement(element, color);
+			base.ApplyColorToElement(element, GetEffectiveColor(color));
+		}
+
+		// The per-paint colour decision, split out so tests can drive it without a TextView.
+		internal HighlightingColor GetEffectiveColor(HighlightingColor color)
+		{
+			if (ThemeManager.Current.IsDarkTheme && !ThemeManager.Current.IsThemeAware(definition))
+				return GetCachedDarkColor(color);
+			return color;
 		}
 
 		HighlightingColor GetCachedDarkColor(HighlightingColor lightColor)
