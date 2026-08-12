@@ -108,6 +108,17 @@ namespace ICSharpCode.ILSpy.Themes
 		public void RegisterThemableDefinition(IHighlightingDefinition definition)
 		{
 			ArgumentNullException.ThrowIfNull(definition);
+			// An already-theme-aware definition must not be registered again under a second
+			// identity. HighlightingManager hands out a delay-loaded WRAPPER whose members
+			// forward to the inner definition our Load() callback registers, so registering
+			// the wrapper too would snapshot the shared colours AFTER the inner registration
+			// already themed them -- and, when dark is active before the first touch (dark
+			// theme preselected at startup), dark-convert the already-dark values a second
+			// time, washing the palette out. Reading IsThemeAware here also forces the
+			// wrapper to materialize, so the check observes the inner registration's marker.
+			// This equally respects definitions whose XSHD opts out via ILSpy.IsThemeAware.
+			if (IsThemeAware(definition))
+				return;
 			if (!themableDefinitions.Contains(definition))
 				themableDefinitions.Add(definition);
 			ApplyHighlightingColors(definition);
