@@ -22,28 +22,25 @@ using Avalonia.Headless.NUnit;
 using Avalonia.Media;
 
 using AvaloniaEdit.Highlighting;
-using AvaloniaEdit.Rendering;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.Themes;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpy.Tests;
+namespace ICSharpCode.ILSpy.Tests.Themes;
 
 /// <summary>
 /// Guards the ThemeManager / ThemeAwareHighlightingColorizer contract against double dark
 /// conversion. ThemeManager darkens a REGISTERED definition's named colours in place; the
-/// colorizer per-paint-remaps colours of UNREGISTERED definitions. Both mechanisms active at
-/// once on the same definition converts colours twice (washed-out output), so the colorizer
-/// must observe a registration that happens after it was constructed, and must not serve
-/// cached conversions computed from colour values that a theme switch has since replaced.
+/// colorizer per-paint-remaps colours of UNREGISTERED definitions. Both mechanisms active
+/// at once on the same definition -- or the in-place rewrite running twice over one set of
+/// colours -- converts colours twice and washes the palette out.
 /// </summary>
 [TestFixture]
-public class ThemeAwareHighlightingColorizerTests
+public class DoubleDarkConversionTests
 {
 	// Minimal definition stub: real Properties (ThemeManager marks theme-awareness there)
 	// and real named colours (registration snapshots and rewrites them in place).
@@ -120,7 +117,7 @@ public class ThemeAwareHighlightingColorizerTests
 			settings.Theme = "Dark";
 
 			var color = MakeColor("String", Colors.Red);
-			var pristine = (HighlightingColor)color.Clone();
+			var pristine = color.Clone();
 			var wrapper = new LazyLoadedDefinition(new StubHighlightingDefinition(color));
 
 			// HighlightingService.GetByExtension registers what the HighlightingManager
@@ -133,6 +130,36 @@ public class ThemeAwareHighlightingColorizerTests
 			var singleConversion = ThemeManager.GetColorForDarkTheme(pristine);
 			color.Should().Be(singleConversion,
 				"registering the lazy wrapper after its inner definition must not compound the dark conversion");
+		}
+		finally
+		{
+			settings.Theme = "Light";
+		}
+	}
+
+	[AvaloniaTest]
+	public void ThemeSwitchRestoresPristineColorsAfterDarkStartup()
+	{
+		var settings = AttachThemeSettings();
+		try
+		{
+			settings.Theme = "Dark";
+
+			var color = MakeColor("String", Colors.Red);
+			var pristine = color.Clone();
+			var wrapper = new LazyLoadedDefinition(new StubHighlightingDefinition(color));
+			ThemeManager.Current.RegisterThemableDefinition(wrapper);
+
+			// Every later switch must be computed from the pristine snapshot, not from
+			// whatever the colour held after the previous rewrite: Light restores the
+			// .xshd values exactly, and Dark again yields the single conversion.
+			settings.Theme = "Light";
+			color.Should().Be(pristine,
+				"switching to Light must restore the original .xshd colours exactly");
+
+			settings.Theme = "Dark";
+			color.Should().Be(ThemeManager.GetColorForDarkTheme(pristine),
+				"switching back to Dark must convert the pristine colours exactly once");
 		}
 		finally
 		{
@@ -170,7 +197,7 @@ public class ThemeAwareHighlightingColorizerTests
 	}
 
 	[AvaloniaTest]
-	public void DarkCacheDoesNotSurviveThemeSwitch()
+	public void DarkConversionCacheMissesAfterInPlaceRecolor()
 	{
 		var settings = AttachThemeSettings();
 		try
@@ -180,21 +207,17 @@ public class ThemeAwareHighlightingColorizerTests
 			var colorizer = new ThemeAwareHighlightingColorizer(definition);
 
 			settings.Theme = "Dark";
-			var beforeSwitch = colorizer.GetEffectiveColor(color);
+			colorizer.GetEffectiveColor(color); // primes the cache with the conversion of Red
 
-			// The colour's content changes in place (as ThemeManager does for managed
-			// definitions) with no paint in between. The colorizer's conversion cache is
-			// keyed by HighlightingColor's content-based equality, so the changed content
-			// must miss the cache and reconvert -- serving the conversion of the old values
-			// here would paint stale colours. If HighlightingColor ever moved to reference
-			// equality, this test goes red and the cache needs an explicit flush instead.
+			// The colour's content changes in place with no paint in between. The colorizer's
+			// conversion cache is keyed by HighlightingColor's content-based equality, so the
+			// changed content must miss the cache and reconvert -- serving the conversion of
+			// the old values would paint stale colours. If HighlightingColor ever moved to
+			// reference equality, this goes red and the cache needs an explicit flush instead.
 			color.Foreground = new SimpleHighlightingBrush(Colors.Lime);
-			settings.Theme = "Light";
-			settings.Theme = "Dark";
 
-			var afterSwitch = colorizer.GetEffectiveColor(color);
-			afterSwitch.Should().NotBeSameAs(beforeSwitch,
-				"conversions cached from superseded colour values must not be served");
+			colorizer.GetEffectiveColor(color).Should().Be(ThemeManager.GetColorForDarkTheme(color),
+				"the conversion served after an in-place recolour must be computed from the new colour values");
 		}
 		finally
 		{

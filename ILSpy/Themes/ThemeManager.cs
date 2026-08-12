@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 using Avalonia;
 using Avalonia.Media;
@@ -40,11 +41,21 @@ namespace ICSharpCode.ILSpy.Themes
 		// declares its own dark palette in two variants).
 		const string IsThemeAwareKey = "ILSpy.IsThemeAware";
 
-		// Highlighting definitions whose named colours we re-theme on every theme switch, plus a
-		// snapshot of each definition's ORIGINAL (light, .xshd-default) colours so switching back
-		// to Light restores them exactly. Keyed by colour name within each definition.
+		// Highlighting definitions whose named colours we re-theme on every theme switch.
 		readonly List<IHighlightingDefinition> themableDefinitions = new();
-		readonly Dictionary<IHighlightingDefinition, Dictionary<string, HighlightingColor>> originalColors = new();
+
+		// The ORIGINAL (light, .xshd-default) values of every colour ever themed, so switching
+		// back to Light restores them exactly. Keyed by colour INSTANCE: ConditionalWeakTable
+		// compares by reference (unaffected by HighlightingColor's content-based Equals) and
+		// lets snapshots die with their definition. Keying by instance rather than by definition
+		// makes theming idempotent across definition identities -- AvaloniaEdit's
+		// HighlightingManager hands out a delay-loaded wrapper that forwards to the inner
+		// definition ILSpy's load callback registers, so the same colours can arrive here under
+		// two definition objects. A per-definition snapshot taken via the second identity would
+		// capture already-dark values as "originals" and dark-convert them again (washed-out
+		// colours whenever dark is active at first touch); the per-instance snapshot is taken
+		// exactly once, before the first rewrite, no matter which identity triggers it.
+		readonly ConditionalWeakTable<HighlightingColor, HighlightingColor> originalColors = new();
 
 		public static ThemeManager Current { get; } = new();
 
@@ -108,15 +119,13 @@ namespace ICSharpCode.ILSpy.Themes
 		public void RegisterThemableDefinition(IHighlightingDefinition definition)
 		{
 			ArgumentNullException.ThrowIfNull(definition);
-			// An already-theme-aware definition must not be registered again under a second
-			// identity. HighlightingManager hands out a delay-loaded WRAPPER whose members
-			// forward to the inner definition our Load() callback registers, so registering
-			// the wrapper too would snapshot the shared colours AFTER the inner registration
-			// already themed them -- and, when dark is active before the first touch (dark
-			// theme preselected at startup), dark-convert the already-dark values a second
-			// time, washing the palette out. Reading IsThemeAware here also forces the
-			// wrapper to materialize, so the check observes the inner registration's marker.
-			// This equally respects definitions whose XSHD opts out via ILSpy.IsThemeAware.
+			// Skip definitions that are already theme-aware: either their XSHD declares
+			// ILSpy.IsThemeAware (they ship theme-correct colours we must not rewrite), or a
+			// previous registration themed them -- typically the inner definition behind the
+			// delay-loaded wrapper HighlightingManager returns, which materializes (and
+			// registers itself) when the marker is read here. Re-theming would be harmless
+			// either way (the per-instance colour snapshots make it idempotent); there is
+			// simply nothing to do, and no reason to track a second identity in the list.
 			if (IsThemeAware(definition))
 				return;
 			if (!themableDefinitions.Contains(definition))
@@ -132,22 +141,14 @@ namespace ICSharpCode.ILSpy.Themes
 		/// algorithmic conversion elsewhere. Marks the definition theme-aware so the per-paint
 		/// colorizer doesn't additionally remap it.
 		/// </summary>
-		public void ApplyHighlightingColors(IHighlightingDefinition definition)
+		void ApplyHighlightingColors(IHighlightingDefinition definition)
 		{
-			ArgumentNullException.ThrowIfNull(definition);
-			if (!originalColors.TryGetValue(definition, out var snapshot))
-			{
-				snapshot = new Dictionary<string, HighlightingColor>();
-				foreach (var color in definition.NamedHighlightingColors)
-					snapshot[color.Name] = color.Clone();
-				originalColors[definition] = snapshot;
-			}
-
 			var darkPalette = definition.Name == "C#" ? SyntaxColorPalettes.CSharpDark : null;
 			foreach (var color in definition.NamedHighlightingColors)
 			{
-				if (!snapshot.TryGetValue(color.Name, out var original))
-					continue;
+				// Snapshot before the first rewrite; every later visit gets the stored
+				// pristine values back, never the colour's current (possibly dark) content.
+				var original = originalColors.GetValue(color, static c => c.Clone());
 				if (IsDarkTheme)
 				{
 					if (darkPalette is not null && darkPalette.TryGetValue(color.Name, out var syntaxColor))
