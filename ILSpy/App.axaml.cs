@@ -23,8 +23,12 @@ using System.IO;
 using System.Threading.Tasks;
 
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls.Primitives;
 using Avalonia.Markup.Xaml;
+using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.Settings;
@@ -32,6 +36,7 @@ using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.Views;
 
 namespace ICSharpCode.ILSpy
@@ -85,6 +90,8 @@ namespace ICSharpCode.ILSpy
 				StartupExceptions.Items.Add(new ExceptionData(ex));
 			}
 
+			ApplySystemFont();
+
 			if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 			{
 				MainWindow? mainWindow = null;
@@ -121,6 +128,49 @@ namespace ICSharpCode.ILSpy
 			}
 
 			base.OnFrameworkInitializationCompleted();
+		}
+
+		// Follows the Windows system UI font instead of Avalonia's built-in Segoe UI 12 default.
+		// The two coincide on a stock install, but the accessibility "Text size" setting scales
+		// the system metrics without changing DPI, and only apps that read them honor it.
+		// No-op on non-Windows platforms.
+		//
+		// The following deliberately do NOT follow the system font:
+		//  - the decompiled-code editor: user-configurable via DisplaySettings.SelectedFont/Size;
+		//  - controls with an explicit FontSize in their XAML: search-pane results, the resource
+		//    string/object tables (whose fixed RowHeight is tuned to that size), the zoom-buttons
+		//    overlay, the NuGet feed dialog, the XML-doc renderer, and the startup-error /
+		//    assertion dialogs;
+		//  - Simple-theme controls sized via FontSizeSmall/FontSizeLarge rather than
+		//    FontSizeNormal: TabItem headers (Options dialog, already larger than body text)
+		//    and Calendar buttons (unused in ILSpy).
+		void ApplySystemFont()
+		{
+			if (!WindowsSystemFont.TryGetMessageFont(out var faceName, out var fontSize))
+				return;
+
+			ApplyUiFont(this, faceName, fontSize);
+			AppLog.Mark($"System font applied: {faceName} @ {fontSize}");
+		}
+
+		// Styled on every TopLevel (not just Window) so popup surfaces -- menu dropdowns, context
+		// menus, tooltips -- get the font directly rather than relying on inheritance across the
+		// popup boundary. Internal so the headless test suite can exercise it with a synthetic
+		// size instead of the machine-dependent system metrics.
+		internal static void ApplyUiFont(Application app, string faceName, double fontSize)
+		{
+			var fontStyle = new Style(x => x.Is<TopLevel>());
+			fontStyle.Setters.Add(new Setter(TemplatedControl.FontFamilyProperty, new FontFamily(faceName)));
+			fontStyle.Setters.Add(new Setter(TemplatedControl.FontSizeProperty, fontSize));
+			app.Styles.Add(fontStyle);
+
+			// The Simple theme pins FontSize on a few control themes via its FontSizeNormal
+			// resource (ContextMenu is the one ILSpy hits; also PopupRoot/Window, where the
+			// style above already outranks it). A control-theme setter beats the inherited
+			// value, so shadow the resource at app level -- application resources win the
+			// DynamicResource lookup over theme resources. FontSizeSmall/FontSizeLarge stay
+			// untouched; their consumers are listed on ApplySystemFont.
+			app.Resources["FontSizeNormal"] = fontSize;
 		}
 
 		// Resolves where ILSpy.xml is loaded from. Shared by normal startup and the single-instance
