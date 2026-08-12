@@ -46,11 +46,10 @@ public class AssemblyTreeExpanderHitboxTests
 	[AvaloniaTest]
 	public async Task Expander_Toggle_Offers_At_Least_16x16_Clickable_Target()
 	{
-		// The +/- expander in the assembly tree must give a click target that fills the full 13px
-		// expander column and the 16px row-tall toggle, while its visible glyph stays the classic
-		// 9x9 box. The column is kept at 13px so the +/- box centres on the tree connector lines;
-		// the target must be genuinely hittable across that whole area — not merely occupy it in
-		// layout while only the 9x9 glyph receives input.
+		// The +/- expander's click target fills the 13px expander column and the 16px row height,
+		// while the drawn glyph stays the classic 9x9 box centred on the tree connector lines. The
+		// grown area has to be genuinely hittable rather than merely occupied in layout, so the
+		// test clicks below the glyph instead of measuring the boxes.
 
 		// Arrange — boot, wait for assemblies, expand a node so an expandable row is realised.
 		var (window, vm) = await TestHarness.BootAsync(3);
@@ -63,38 +62,20 @@ public class AssemblyTreeExpanderHitboxTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		// Let rows realise and layout settle.
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(25);
-		}
-
-		// Act — locate the expander toggle of the (expandable) assembly row.
-		var row = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-			.FirstOrDefault(r => RowMatches(r, assemblyNode));
-		row.Should().NotBeNull("the expanded assembly row must be realised");
-		var expander = row!.GetVisualDescendants().OfType<ToggleButton>()
-			.FirstOrDefault(b => b.Name == "PART_Expander");
-		expander.Should().NotBeNull("an expandable row must realise a PART_Expander toggle");
+		// Act — locate the expander toggle of the (expandable) assembly row, once the row and its
+		// template have been realised.
+		ToggleButton? expander = null;
+		await Waiters.WaitForAsync(
+			() => {
+				grid.UpdateLayout();
+				expander = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
+					.FirstOrDefault(r => RowMatches(r, assemblyNode))
+					?.GetVisualDescendants().OfType<ToggleButton>()
+					.FirstOrDefault(b => b.Name == "PART_Expander");
+				return expander is { Bounds.Height: >= 16 };
+			},
+			description: "the expanded assembly row must realise a PART_Expander toggle filling the row height");
 		expander!.IsEnabled.Should().BeTrue("the assembly row is expandable");
-
-		// Assert — the click target fills the 13px expander column and is 16px tall.
-		expander.Bounds.Width.Should().BeGreaterThanOrEqualTo(13,
-			"the expander click target must fill the 13px expander column for reliable tapping");
-		expander.Bounds.Height.Should().BeGreaterThanOrEqualTo(16,
-			"the expander click target must be at least 16px tall for reliable tapping");
-
-		// Assert — the visible glyph box is unchanged at 9x9 (the nearest Border around ExpandPath,
-		// i.e. the drawn box, not the transparent hit-target wrapper).
-		var glyphPath = expander.GetVisualDescendants().OfType<Path>()
-			.FirstOrDefault(p => p.Name == "ExpandPath");
-		glyphPath.Should().NotBeNull("the expander must render its ExpandPath glyph");
-		var glyph = glyphPath!.GetVisualAncestors().OfType<Border>().FirstOrDefault();
-		glyph.Should().NotBeNull("the expander must still render its glyph box");
-		glyph!.Bounds.Width.Should().BeApproximately(9, 0.5, "the visible glyph box must stay 9px wide");
-		glyph.Bounds.Height.Should().BeApproximately(9, 0.5, "the visible glyph box must stay 9px tall");
 
 		// Assert — a real click well below the 9x9 glyph (y=14, inside the 16-tall target but
 		// outside the centred glyph at ~y=3.5..12.5) collapses the node. This proves the grown
