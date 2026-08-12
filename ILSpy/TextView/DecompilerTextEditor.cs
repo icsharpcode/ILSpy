@@ -86,7 +86,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnDisplaySettingsChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is nameof(DisplaySettings.SelectedFont) or nameof(DisplaySettings.SelectedFontSize))
+			if (e.PropertyName is nameof(DisplaySettings.SelectedFont) or nameof(DisplaySettings.SelectedFontSize)
+				or nameof(DisplaySettings.EditorZoomFactor))
 				ApplyFontSettings();
 		}
 
@@ -97,7 +98,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (!string.IsNullOrEmpty(displaySettings.SelectedFont))
 				FontFamily = new FontFamily(displaySettings.SelectedFont);
 			if (displaySettings.SelectedFontSize > 0)
-				FontSize = displaySettings.SelectedFontSize;
+				FontSize = EditorZoom.EffectiveFontSize(displaySettings);
 		}
 
 		static DisplaySettings? TryGetDisplaySettings()

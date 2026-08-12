@@ -68,9 +68,9 @@
 				</StackPanel>
 			</Grid>
 		</Border>
-		<!-- Zoom-buttons overlay: bottom-right corner of the editor, auto-hides at default
-		     font size unless DisplaySettings.AlwaysShowZoomButtons is on. Bound at code-
-		     behind time once DisplaySettings is resolvable from composition. -->
+		<!-- Zoom-buttons overlay: bottom-right corner of the editor, auto-hides at 100% zoom
+		     unless AlwaysShowZoomButtons is on. Bound at code-behind time once DisplaySettings
+		     is resolvable from composition. -->
 		<textView:ZoomButtons Name="ZoomButtons" />
 		<!-- Hover documentation popup (configured in SetupRichPopup). It must be declared
 		     here rather than constructed detached: with overlay popups (see

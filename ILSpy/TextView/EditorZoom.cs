@@ -18,41 +18,49 @@
 
 using System;
 
+using ICSharpCode.ILSpy.Options;
+
 namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
-	/// Pure-math helper for editor zoom (font-size scaling). The actual editor wiring
-	/// reads/writes <c>DisplaySettings.SelectedFontSize</c>; this class encapsulates
-	/// the step calculation and clamping so it's unit-testable without an editor.
+	/// Pure-math helper for editor zoom. Zoom is a multiplier on top of the configured
+	/// <see cref="DisplaySettings.SelectedFontSize"/>, kept in
+	/// <see cref="DisplaySettings.EditorZoomFactor"/>: picking a different font size in the
+	/// options dialog moves the base size without counting as a zoom. The step calculation
+	/// and clamping live here so they're unit-testable without an editor.
 	/// </summary>
 	public static class EditorZoom
 	{
 		/// <summary>Multiplicative step per wheel tick / button press.</summary>
 		public const double Factor = 1.1;
 
-		/// <summary>Lower bound in points. Below ~8 pt the gutter glyphs collapse.</summary>
-		public const double MinFontSize = 8.0;
+		/// <summary>Lower zoom bound; below 20% the gutter glyphs collapse.</summary>
+		public const double MinZoom = 0.2;
 
-		/// <summary>Upper bound in points. Above ~72 pt one glyph fills the viewport.</summary>
-		public const double MaxFontSize = 72.0;
+		/// <summary>Upper zoom bound; above 500% one glyph fills the viewport.</summary>
+		public const double MaxZoom = 5.0;
 
-		/// <summary>Default font size in points, matching <c>DisplaySettings</c>'s initial value.</summary>
-		public const double DefaultFontSize = 10.0 * 4 / 3;
+		/// <summary>Unzoomed state: the configured font size is used as-is.</summary>
+		public const double DefaultZoom = 1.0;
 
-		public static double ZoomIn(double currentFontSize)
-			=> Clamp(RoundToDefaultIfClose(currentFontSize * Factor));
+		public static double ZoomIn(double currentZoom)
+			=> Clamp(RoundToDefaultIfClose(currentZoom * Factor));
 
-		public static double ZoomOut(double currentFontSize)
-			=> Clamp(RoundToDefaultIfClose(currentFontSize / Factor));
+		public static double ZoomOut(double currentZoom)
+			=> Clamp(RoundToDefaultIfClose(currentZoom / Factor));
 
-		public static double Reset() => DefaultFontSize;
+		public static double Reset() => DefaultZoom;
 
-		/// <summary>Snap to <see cref="DefaultFontSize"/> when within 0.001 pt — avoids
-		/// floating-point drift after zoom-in followed by zoom-out leaving the size stuck
-		/// at 13.3333000001 instead of the canonical 13.3333333.</summary>
-		static double RoundToDefaultIfClose(double size)
-			=> Math.Abs(size - DefaultFontSize) < 0.001 ? DefaultFontSize : size;
+		/// <summary>The font size an editor should render at: configured size times zoom.</summary>
+		public static double EffectiveFontSize(DisplaySettings settings)
+			=> settings.SelectedFontSize * Clamp(settings.EditorZoomFactor);
 
-		static double Clamp(double size) => Math.Max(MinFontSize, Math.Min(MaxFontSize, size));
+		/// <summary>Snap to <see cref="DefaultZoom"/> when within 0.001 — avoids floating-point
+		/// drift after zoom-in followed by zoom-out leaving the factor stuck at 1.0000000001,
+		/// which would keep the zoom overlay visible at an apparent 100%.</summary>
+		static double RoundToDefaultIfClose(double zoom)
+			=> Math.Abs(zoom - DefaultZoom) < 0.001 ? DefaultZoom : zoom;
+
+		static double Clamp(double zoom) => Math.Max(MinZoom, Math.Min(MaxZoom, zoom));
 	}
 }
