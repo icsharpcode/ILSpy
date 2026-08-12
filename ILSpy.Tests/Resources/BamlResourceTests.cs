@@ -109,7 +109,7 @@ public class BamlResourceTests
 	{
 		// EntryType drives the MSBuild item group the produced file lands in. BAML→XAML
 		// must go under `<Page>` so MSBuild's XAML compiler picks it up and regenerates the
-		// matching .g.cs partial on rebuild — same as the WPF side.
+		// matching .g.cs partial on rebuild.
 
 		// Arrange + Act + Assert — exact string match (case-sensitive; MSBuild element names
 		// are case-insensitive in practice but the canonical form is "Page").

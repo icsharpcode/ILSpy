@@ -31,9 +31,9 @@ namespace ICSharpCode.ILSpy.Tests;
 
 /// <summary>
 /// Tests for the foldings-persistence helper that backs Back/Forward navigation's
-/// "remember which regions the user had expanded" behaviour. The math mirrors WPF's
-/// <c>DecompilerTextViewState.SaveFoldingsState</c> / <c>RestoreFoldings</c> so that
-/// the protective "skip on layout mismatch" semantics carry over identically.
+/// "remember which regions the user had expanded" behaviour, including the protective
+/// "skip on layout mismatch" semantics: a saved state is only restored when the document
+/// still has the folding layout it was captured against.
 /// </summary>
 [TestFixture]
 public class FoldingsViewStateTests
@@ -42,8 +42,7 @@ public class FoldingsViewStateTests
 	public void Capture_Records_Offsets_Of_Expanded_Foldings_Only()
 	{
 		// The saved subset is the list of foldings the user has open — folded foldings are
-		// already at their default state and don't need preserving. Mirrors WPF's
-		// `foldings.Where(f => !f.IsFolded)` filter at the heart of SaveFoldingsState.
+		// already at their default state and don't need preserving.
 
 		// Arrange — four foldings, two folded and two expanded. Offsets chosen to disambiguate.
 		var foldings = new[] {

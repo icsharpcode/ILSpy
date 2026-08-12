@@ -46,7 +46,7 @@ public class EditorCommandsTests
 	[AvaloniaTest]
 	public async Task Copy_Entry_Is_Registered_Under_The_Editor_Category()
 	{
-		// Mirrors WPF's CopyContextMenuEntry — exported with Header=Copy / Category=Editor so
+		// Exported with Header=Copy / Category=Editor so
 		// it lands under the editor's right-click menu next to other text-view actions.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -60,7 +60,7 @@ public class EditorCommandsTests
 	[AvaloniaTest]
 	public async Task SelectAll_Entry_Is_Registered_Under_The_Editor_Category()
 	{
-		// Mirrors WPF's SelectAllContextMenuEntry — Header=Select / Category=Editor.
+		// Exported with Header=Select / Category=Editor.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
@@ -74,7 +74,7 @@ public class EditorCommandsTests
 	public async Task Copy_Entry_Reflects_Editor_Selection_State()
 	{
 		// Visible whenever a text view is the source; enabled only when the editor has a
-		// non-empty selection. Mirrors WPF: SelectionLength > 0 gates the "Copy" item.
+		// non-empty selection: SelectionLength > 0 gates the "Copy" item.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;

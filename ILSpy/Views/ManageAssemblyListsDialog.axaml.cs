@@ -36,8 +36,7 @@ namespace ICSharpCode.ILSpy.Views
 	/// <summary>
 	/// Manage Assembly Lists dialog: list of saved assembly-list names with New / Clone /
 	/// Rename / Delete / Reset operations + a Select button that swaps the active list.
-	/// Mirrors WPF's <c>ManageAssemblyListsDialog</c>; all CRUD ops route through the
-	/// shared <see cref="AssemblyListManager"/>.
+	/// All CRUD ops route through the shared <see cref="AssemblyListManager"/>.
 	/// </summary>
 	public partial class ManageAssemblyListsDialog : Window
 	{
@@ -190,8 +189,7 @@ namespace ICSharpCode.ILSpy.Views
 		/// The list of preconfigured assembly lists offered by the "Add preconfigured list..."
 		/// menu: the three GAC-based framework lists (only when a GAC is actually present, i.e.
 		/// on Windows) plus one entry per installed .NET runtime discovered under the dotnet
-		/// install's <c>shared</c> folder (works on every platform). Mirrors WPF's
-		/// ManageAssemblyListsViewModel.ResolvePreconfiguredAssemblyLists.
+		/// install's <c>shared</c> folder (works on every platform).
 		/// </summary>
 		internal IEnumerable<PreconfiguredAssemblyList> GetPreconfiguredAssemblyLists()
 		{

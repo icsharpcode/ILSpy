@@ -44,8 +44,8 @@ public class SearchResultSortOrderTests
 	{
 		// The "Sort results by fitness" checkbox in Display Settings must reach the search
 		// pipeline. Default is true (rank by Fitness desc); flipping to false must rank by
-		// Name asc (StringComparer.Ordinal). Mirrors WPF's SearchPane.xaml.cs:288-290
-		// which captures the comparer at start-of-search based on DisplaySettings.SortResults.
+		// Name asc (StringComparer.Ordinal). The comparer is captured at start-of-search
+		// from DisplaySettings.SortResults.
 
 		await TestHarness.BootAsync();
 

@@ -36,8 +36,8 @@ public class PEHeaderTreeTests
 	public async Task MetadataTreeNode_Surfaces_Five_PE_Header_Children_For_A_PE_Assembly()
 	{
 		// The Metadata folder under a PE assembly should expose five PE-format leaves:
-		// DOS / COFF / Optional / DataDirectories / DebugDirectory. Order mirrors WPF so a
-		// user shifting between hosts sees the same tree shape. Each node is the entry point
+		// DOS / COFF / Optional / DataDirectories / DebugDirectory, in that order. Each node
+		// is the entry point
 		// to a header / table view; Phase 1 renders text, Phase 2 swaps to a DataGrid.
 
 		var (_, vm) = await TestHarness.BootAsync();

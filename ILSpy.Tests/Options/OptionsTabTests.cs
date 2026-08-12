@@ -174,7 +174,7 @@ public class OptionsTabTests
 	public void Reinvoking_ShowOptionsCommand_Focuses_Existing_Tab_Without_Spawning_A_Second()
 	{
 		// Single-instance behaviour — re-firing the command while Options is already open
-		// just reactivates the existing tab. Mirrors WPF's modal-stack uniqueness.
+		// just reactivates the existing tab.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;

@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy.Search
 			// Refresh search results when the active assembly list mutates. Skip the
 			// restart when ONLY auto-loaded (dependency) assemblies are added — those
 			// fire from navigating through results in a large assembly and would cause
-			// a tight feedback loop / flicker. Mirrors WPF's #3734 fix.
+			// a tight feedback loop / flicker (issue #3734).
 			Util.MessageBus<Util.CurrentAssemblyListChangedEventArgs>.Subscribers += OnAssemblyListChanged;
 		}
 

@@ -69,11 +69,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		};
 
 		/// <summary>
-		/// Mirrors WPF's filter — drop non-public entries under PublicOnly visibility, otherwise
-		/// recurse so the user can drill into derived chains. The WPF overload also reads
-		/// <c>SearchTermMatches</c> (a <see cref="LanguageSettings"/> helper that's not yet in
-		/// the Avalonia port) to surface only entries whose name matches the active search term;
-		/// reinstate that branch when the search infrastructure lands.
+		/// Drops non-public entries under PublicOnly visibility, otherwise recurses so the user
+		/// can drill into derived chains. The active search term is deliberately not consulted:
+		/// <see cref="LanguageSettings.SearchTermMatches"/> is a no-op so the assembly tree stays
+		/// independent of the search pane.
 		/// </summary>
 		public override FilterResult Filter(LanguageSettings settings)
 		{

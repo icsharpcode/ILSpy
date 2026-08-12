@@ -31,8 +31,7 @@ namespace ICSharpCode.ILSpy.Search
 {
 	/// <summary>
 	/// Builds the <see cref="SearchResult"/> objects the search strategies stream into the
-	/// pane's result queue. Mirrors WPF's <c>SearchResultFactory</c>: fitness ranking
-	/// privileges short names (shorter == higher fitness == higher rank); compiler-generated
+	/// pane's result queue. Fitness ranking privileges short names (shorter == higher fitness == higher rank); compiler-generated
 	/// names (those starting with <c>&lt;</c>) get fitness 0 so they sink to the bottom.
 	/// </summary>
 	internal sealed class AvaloniaSearchResultFactory : ISearchResultFactory

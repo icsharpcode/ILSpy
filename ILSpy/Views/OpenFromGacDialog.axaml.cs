@@ -29,7 +29,7 @@ using Avalonia.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 
-// Alias the WPF-shared Resources class — Window inherits an IResourceDictionary Resources
+// Alias the localisation Resources class — Window inherits an IResourceDictionary Resources
 // property that would otherwise shadow ICSharpCode.ILSpy.Properties.Resources, turning every
 // `Resources.X` into an IResourceDictionary indexer lookup that doesn't compile.
 using Loc = ICSharpCode.ILSpy.Properties.Resources;
@@ -122,7 +122,7 @@ namespace ICSharpCode.ILSpy.Views
 			loadingBar.IsIndeterminate = true;
 			try
 			{
-				// Two-phase progress, like WPF: indeterminate during EnumerateGac (we don't know
+				// Two-phase progress: indeterminate during EnumerateGac (we don't know
 				// the count yet), then determinate while resolving each reference's on-disk path.
 				// EnumerateGac is materialised to a list off-thread so the count is known before
 				// the resolve pass starts.
@@ -193,7 +193,7 @@ namespace ICSharpCode.ILSpy.Views
 			if (string.IsNullOrEmpty(text))
 				return true;
 			// Match every space-separated token against the full assembly name OR the version
-			// string — mirrors WPF's filter (FullName || FormattedVersion). All tokens must
+			// string. All tokens must
 			// match: "system 4.0" finds entries whose FullName contains "system" AND
 			// FormattedVersion contains "4.0".
 			foreach (var token in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))

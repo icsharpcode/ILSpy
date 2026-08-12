@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// this tab is active. Defaults to <see langword="true"/> — meaningful for decompiler
 		/// output (C# / IL / ILAst). Metadata views and the compare view set this to
 		/// <see langword="false"/> in their ctors because language choice doesn't affect what
-		/// they render. Mirrors WPF's <c>TabPageModel.SupportsLanguageSwitching</c>.
+		/// they render.
 		/// </summary>
 		[ObservableProperty]
 		private bool supportsLanguageSwitching = true;

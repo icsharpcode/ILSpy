@@ -159,8 +159,7 @@ public class AssemblyTreeFileDropTests
 	[AvaloniaTest]
 	public async Task File_Drop_Selects_The_Newly_Opened_Assembly_Nodes()
 	{
-		// Selecting the freshly-opened assemblies after a drop mirrors WPF's
-		// AssemblyListTreeNode.Drop (which ends in AssemblyTreeModel.SelectNodes).
+		// A drop ends by selecting the assemblies it just opened.
 		// Without this, the user gets no visual confirmation that the drop took, and
 		// the decompiler view stays parked on whatever was selected before.
 		var (window, vm) = await TestHarness.BootAsync(3);

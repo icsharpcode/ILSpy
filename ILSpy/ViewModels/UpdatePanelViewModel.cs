@@ -32,8 +32,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 	/// <summary>
 	/// Drives the toolbar-strip banner shown under the main toolbar when an update is
 	/// available or the user explicitly asks the Help → Check For Updates menu entry.
-	/// Mirrors WPF's <c>UpdatePanelViewModel</c>: a single <see cref="IsPanelVisible"/>
-	/// flag flips it on/off, and <see cref="UpdateAvailableDownloadUrl"/> toggles the
+	/// A single <see cref="IsPanelVisible"/> flag flips it on/off, and <see cref="UpdateAvailableDownloadUrl"/> toggles the
 	/// button between "Download" (when a URL is set) and "Check Again" (when null).
 	/// </summary>
 	[Export]

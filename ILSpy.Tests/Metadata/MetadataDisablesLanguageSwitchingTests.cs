@@ -41,8 +41,8 @@ public class MetadataDisablesLanguageSwitchingTests
 	public async Task MetadataTablePageModel_Defaults_SupportsLanguageSwitching_False()
 	{
 		// Unit-level guard: every fresh MetadataTablePageModel must declare itself
-		// language-agnostic in its ctor. Mirrors WPF's CoffHeaderTreeNode / DataDirectories /
-		// MetadataTreeNode etc. setting tabPage.SupportsLanguageSwitching=false.
+		// language-agnostic in its ctor: a metadata view has nothing to re-render in another
+		// language, so the language dropdown must not act on it.
 		var model = new MetadataTablePageModel();
 		model.SupportsLanguageSwitching.Should().BeFalse(
 			"metadata grids render PE-header / table fields straight from metadata — language choice doesn't affect what's shown");

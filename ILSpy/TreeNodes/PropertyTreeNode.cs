@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Icon => GetIcon(PropertyDefinition);
 
-		// Mirrors WPF: indexers get a distinct base glyph; extension properties (C# 14
+		// Indexers get a distinct base glyph; extension properties (C# 14
 		// extension blocks) layer the Extension overlay on top.
 		public static Avalonia.Media.IImage GetIcon(IProperty property)
 		{

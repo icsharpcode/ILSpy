@@ -39,8 +39,7 @@ public class ShowMetadataTokensTests
 	public async Task Member_Text_Carries_Hex_Or_Decimal_Token_Suffix_Per_DisplaySettings()
 	{
 		// Display Settings "Show metadata tokens" + "Show metadata tokens in base 10" must
-		// reach the tree-node Text values. Mirrors WPF ILSpyTreeNode.GetSuffixString —
-		// suffix is " @xNNNNNNNN" (hex, 8 digits) or " @NNNNNNNNN" (decimal) when enabled,
+		// reach the tree-node Text values. The suffix is " @xNNNNNNNN" (hex, 8 digits) or " @NNNNNNNNN" (decimal) when enabled,
 		// empty otherwise.
 
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;

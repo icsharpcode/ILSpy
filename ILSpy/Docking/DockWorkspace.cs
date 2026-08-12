@@ -224,7 +224,7 @@ namespace ICSharpCode.ILSpy.Docking
 				documentsNotify.PropertyChanged += OnDocumentsPropertyChanged;
 			// Close orphaned carve-out tabs when their assembly is removed. The persistent
 			// MainTab slot is left alone — its content will swap to whatever the user selects
-			// next via the assembly tree. Mirrors WPF's DockWorkspace.CurrentAssemblyList_Changed.
+			// next via the assembly tree.
 			ICSharpCode.ILSpy.Util.MessageBus<ICSharpCode.ILSpy.Util.CurrentAssemblyListChangedEventArgs>.Subscribers
 				+= OnAssemblyListChanged;
 			ICSharpCode.ILSpy.AppEnv.AppLog.Mark("DockWorkspace ctor exited");
@@ -235,7 +235,7 @@ namespace ICSharpCode.ILSpy.Docking
 			var inner = e.Inner;
 
 			// On Reset (assembly list wholesale-cleared), drop ALL history — every entry is
-			// stale by definition. Mirrors WPF's assemblyList_CollectionChanged.
+			// stale by definition.
 			if (inner.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
 			{
 				PruneHistoryAfterAssemblyListChange(removed: null);
@@ -712,8 +712,7 @@ namespace ICSharpCode.ILSpy.Docking
 		/// the tree isn't rebuilt and the SelectedItem reference is preserved, so the
 		/// normal selection-change cascade would no-op and the editor would keep stale
 		/// decompiled text. Resetting <c>lastShownNodes</c> defeats the
-		/// dedup short-circuit inside <see cref="ShowSelectedNode"/>. Mirrors WPF's
-		/// <c>RefreshDecompiledView()</c> call.
+		/// dedup short-circuit inside <see cref="ShowSelectedNode"/>.
 		/// </summary>
 		public void ForceRefreshActiveTab()
 		{
