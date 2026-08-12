@@ -37,7 +37,9 @@ namespace ICSharpCode.ILSpy.TextView
 	/// The remapped colours are cached per source <see cref="HighlightingColor"/>; the
 	/// cache key is content-based (HighlightingColor overrides Equals/GetHashCode), so an
 	/// in-place recolour of a source colour misses the cache and reconverts instead of
-	/// serving a conversion of the old values.
+	/// serving a conversion of the old values. The entry keyed by the old content is
+	/// stranded rather than replaced -- bounded by the definition's colour count per
+	/// recolour, and it dies with the colorizer.
 	/// </summary>
 	public sealed class ThemeAwareHighlightingColorizer : HighlightingColorizer
 	{
