@@ -422,7 +422,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (currentDisplaySettings == null)
 				return;
 			var step = e.Delta.Y > 0 ? (System.Func<double, double>)EditorZoom.ZoomIn : EditorZoom.ZoomOut;
-			currentDisplaySettings.SelectedFontSize = step(currentDisplaySettings.SelectedFontSize);
+			currentDisplaySettings.EditorZoomFactor = step(currentDisplaySettings.EditorZoomFactor);
 			e.Handled = true;
 		}
 
@@ -556,17 +556,17 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				case Key.OemPlus:
 				case Key.Add:
-					currentDisplaySettings.SelectedFontSize = EditorZoom.ZoomIn(currentDisplaySettings.SelectedFontSize);
+					currentDisplaySettings.EditorZoomFactor = EditorZoom.ZoomIn(currentDisplaySettings.EditorZoomFactor);
 					e.Handled = true;
 					break;
 				case Key.OemMinus:
 				case Key.Subtract:
-					currentDisplaySettings.SelectedFontSize = EditorZoom.ZoomOut(currentDisplaySettings.SelectedFontSize);
+					currentDisplaySettings.EditorZoomFactor = EditorZoom.ZoomOut(currentDisplaySettings.EditorZoomFactor);
 					e.Handled = true;
 					break;
 				case Key.D0:
 				case Key.NumPad0:
-					currentDisplaySettings.SelectedFontSize = EditorZoom.Reset();
+					currentDisplaySettings.EditorZoomFactor = EditorZoom.Reset();
 					e.Handled = true;
 					break;
 			}

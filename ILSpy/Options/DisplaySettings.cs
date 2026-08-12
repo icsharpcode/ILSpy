@@ -39,6 +39,12 @@ namespace ICSharpCode.ILSpy.Options
 		[ObservableProperty]
 		double selectedFontSize = 10.0 * 4 / 3;
 
+		/// <summary>Editor zoom (Ctrl+Wheel / the zoom overlay), as a multiplier on top of
+		/// <see cref="SelectedFontSize"/>. Kept separate so changing the font size in the
+		/// options dialog isn't mistaken for a zoom.</summary>
+		[ObservableProperty]
+		double editorZoomFactor = 1.0;
+
 		[ObservableProperty]
 		bool showLineNumbers;
 
@@ -111,6 +117,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			SelectedFont = (string?)section.Attribute("Font") ?? "Consolas";
 			SelectedFontSize = (double?)section.Attribute("FontSize") ?? 10.0 * 4 / 3;
+			EditorZoomFactor = (double?)section.Attribute(nameof(EditorZoomFactor)) ?? 1.0;
 			ShowLineNumbers = (bool?)section.Attribute(nameof(ShowLineNumbers)) ?? false;
 			ShowMetadataTokens = (bool?)section.Attribute(nameof(ShowMetadataTokens)) ?? false;
 			ShowMetadataTokensInBase10 = (bool?)section.Attribute(nameof(ShowMetadataTokensInBase10)) ?? false;
@@ -140,6 +147,7 @@ namespace ICSharpCode.ILSpy.Options
 			var section = new XElement(SectionName);
 			section.SetAttributeValue("Font", SelectedFont);
 			section.SetAttributeValue("FontSize", SelectedFontSize);
+			section.SetAttributeValue(nameof(EditorZoomFactor), EditorZoomFactor);
 			section.SetAttributeValue(nameof(ShowLineNumbers), ShowLineNumbers);
 			section.SetAttributeValue(nameof(ShowMetadataTokens), ShowMetadataTokens);
 			section.SetAttributeValue(nameof(ShowMetadataTokensInBase10), ShowMetadataTokensInBase10);

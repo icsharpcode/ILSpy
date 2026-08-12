@@ -29,8 +29,9 @@ namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Editor-corner overlay with zoom in / out / reset buttons plus a live "133%" label.
-	/// Bound to <see cref="DisplaySettings.SelectedFontSize"/>; the overlay auto-hides at
-	/// the default font size unless <see cref="AlwaysShowZoomButtons"/> is set to <c>true</c>.
+	/// Bound to <see cref="DisplaySettings.EditorZoomFactor"/>; the overlay auto-hides at
+	/// 100% zoom unless <see cref="AlwaysShowZoomButtons"/> is set to <c>true</c>. Changing
+	/// the configured font size is not a zoom and leaves the overlay hidden.
 	/// </summary>
 	public partial class ZoomButtons : UserControl
 	{
@@ -79,7 +80,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		/// <summary>
 		/// Binds this widget to a live <see cref="DisplaySettings"/>. Re-renders the
-		/// percent label and visibility on each <c>SelectedFontSize</c> change. Safe to
+		/// percent label and visibility on each <c>EditorZoomFactor</c> change. Safe to
 		/// call multiple times — the previous subscription is dropped before the new one
 		/// is wired.
 		/// </summary>
@@ -96,7 +97,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnSettingsChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(DisplaySettings.SelectedFontSize))
+			if (e.PropertyName == nameof(DisplaySettings.EditorZoomFactor))
 			{
 				RefreshLabel();
 				RefreshVisibility();
@@ -114,22 +115,26 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (settings == null)
 				return;
-			settings.SelectedFontSize = step(settings.SelectedFontSize);
+			settings.EditorZoomFactor = step(settings.EditorZoomFactor);
 		}
+
+		/// <summary>The rendered zoom label, e.g. "150%" (test observation point).</summary>
+		internal string ZoomPercentText => settings == null
+			? string.Empty
+			: (int)Math.Round(settings.EditorZoomFactor * 100.0) + "%";
 
 		void RefreshLabel()
 		{
 			if (settings == null || this.FindControl<TextBlock>("PercentLabel") is not { } label)
 				return;
-			var pct = (int)Math.Round(settings.SelectedFontSize / EditorZoom.DefaultFontSize * 100.0);
-			label.Text = pct + "%";
+			label.Text = ZoomPercentText;
 		}
 
 		void RefreshVisibility()
 		{
 			IsVisible = settings != null
 				&& (AlwaysShowZoomButtons
-					|| Math.Abs(settings.SelectedFontSize - EditorZoom.DefaultFontSize) > 0.001);
+					|| Math.Abs(settings.EditorZoomFactor - EditorZoom.DefaultZoom) > 0.001);
 		}
 	}
 }

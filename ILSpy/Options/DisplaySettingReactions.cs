@@ -77,6 +77,7 @@ namespace ICSharpCode.ILSpy.Options
 			// Editor-only (DecompilerTextView applies these directly to the AvaloniaEdit control).
 			[nameof(DisplaySettings.SelectedFont)] = DisplaySettingReaction.EditorLive,
 			[nameof(DisplaySettings.SelectedFontSize)] = DisplaySettingReaction.EditorLive,
+			[nameof(DisplaySettings.EditorZoomFactor)] = DisplaySettingReaction.EditorLive,
 			[nameof(DisplaySettings.ShowLineNumbers)] = DisplaySettingReaction.EditorLive,
 			[nameof(DisplaySettings.EnableWordWrap)] = DisplaySettingReaction.EditorLive,
 			[nameof(DisplaySettings.HighlightCurrentLine)] = DisplaySettingReaction.EditorLive,
