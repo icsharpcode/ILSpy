@@ -863,14 +863,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var setter = propertyDeclaration.Setter;
 			if (context.Settings.AutomaticProperties)
 			{
-				CollapseTrivialAccessor(getter, trivialFieldGetterBody, field);
+				// VB auto-properties do not mark their accessors [CompilerGenerated]; the
+				// pre-C# 14 transform recognizes them by their "_<PropertyName>" backing field
+				// instead. Keep that rule, or a VB auto-property grows explicit "field"
+				// accessors where every other compiler's collapses to "{ get; set; }".
+				bool accessorsMustBeCompilerGenerated = field.Name != "_" + property.Name;
+				CollapseTrivialAccessor(getter, trivialFieldGetterBody, field, accessorsMustBeCompilerGenerated);
 				// A readonly setter cannot become an auto-accessor (same rule as the pre-C# 14
 				// transform); readonly getters collapse fine because auto-getters are
 				// implicitly readonly.
 				if (setter?.HasModifier(Modifiers.Readonly) != true
 					&& !(propertyDeclaration.HasModifier(Modifiers.Readonly) && setter is not null))
 				{
-					CollapseTrivialAccessor(setter, trivialFieldSetterBody, field);
+					CollapseTrivialAccessor(setter, trivialFieldSetterBody, field, accessorsMustBeCompilerGenerated);
 				}
 			}
 			if (getter?.Body == null && setter?.Body == null)
@@ -896,12 +901,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
-		void CollapseTrivialAccessor(Accessor? accessor, BlockStatement pattern, IField field)
+		void CollapseTrivialAccessor(Accessor? accessor, BlockStatement pattern, IField field,
+			bool accessorMustBeCompilerGenerated)
 		{
 			if (accessor?.Body is null)
 				return;
-			if (accessor.GetSymbol() is not IMethod method || !method.IsCompilerGenerated())
+			if (accessorMustBeCompilerGenerated
+				&& (accessor.GetSymbol() is not IMethod method || !method.IsCompilerGenerated()))
+			{
 				return;
+			}
 			Match m = pattern.Match(accessor.Body);
 			if (!m.Success)
 				return;
