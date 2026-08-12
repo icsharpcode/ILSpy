@@ -2788,6 +2788,20 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithoutILInstruction();
 					}
 					translatedTarget = EnsureTargetNotNullable(translatedTarget, target);
+					if (translatedTarget.Expression is ThisReferenceExpression)
+					{
+						// Give an explicit `this` the same resolve result the base-reference branch
+						// above gives `base`, and that the resolver gives the unqualified spelling of
+						// the same access. ConvertVariable annotates it as an ordinary local, so
+						// without this a consumer asking "does this expression reach instance state"
+						// gets a different answer depending on whether the qualifier happened to be
+						// printed - and the qualifier is printed for reasons (a parameter of the same
+						// name, AlwaysQualifyMemberReferences) that have nothing to do with the
+						// question being asked.
+						translatedTarget = new ThisReferenceExpression()
+							.WithILInstruction(target)
+							.WithRR(new ThisResolveResult(translatedTarget.Type, nonVirtualInvocation));
+					}
 					return translatedTarget;
 				}
 			}

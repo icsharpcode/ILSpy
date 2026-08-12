@@ -147,6 +147,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				B = A + 1;
 			}
 		}
+
+		private struct StructInitializerDependsOnQualifiedField
+		{
+			public int value;
+
+			public int b;
+
+			// The parameter shadows the field, so reading the field keeps its qualifier. A
+			// field initializer cannot name the instance, so this has to stay a constructor
+			// rather than becoming a primary one - the same rule as the fixture above, which
+			// only differs in how the read happens to be spelled.
+			public StructInitializerDependsOnQualifiedField(int value)
+			{
+				this.value = value;
+				b = this.value + 1;
+			}
+		}
 #endif
 
 		public class ClassWithConstant
