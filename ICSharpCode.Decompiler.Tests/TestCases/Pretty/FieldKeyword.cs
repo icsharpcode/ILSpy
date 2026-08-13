@@ -95,6 +95,66 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class Field
+		{
+			public int Value;
+		}
+
+		// A generated local name comes from its type, so a local of type "Field" would be
+		// called "field" - which C# 14 rejects inside an accessor (CS9273), because the
+		// identifier is the backing-field keyword there.
+		public class FieldTypedLocal
+		{
+			public int Count {
+				get {
+					Field field2 = Create();
+					Console.WriteLine(field2.Value);
+					return field2.Value + field;
+				}
+				set {
+					field = value;
+				}
+			}
+
+			// Same collision from the other direction: a local named after the method it is
+			// assigned from, with the "Get" prefix stripped.
+			public int FromGetter {
+				get {
+					int field2 = GetField();
+					Console.WriteLine(field2);
+					return field2 + field;
+				}
+				set {
+					field = value;
+				}
+			}
+
+			private static Field Create()
+			{
+				return new Field();
+			}
+
+			private static int GetField()
+			{
+				return 42;
+			}
+		}
+
+		// A static member named "field" cannot be disambiguated with "this.", so the accessor
+		// has to name the declaring type instead; a bare "field" there would bind to the
+		// property's own backing field.
+		public class RealStaticFieldName
+		{
+			private static int field;
+
+			public static int PlusOne => RealStaticFieldName.field + 1;
+
+			public static void Reset()
+			{
+				field = 0;
+			}
+		}
+
 		// 0.00m and -0.0 compare equal to their defaults but are observably different, so
 		// neither initializer may be dropped as a redundant default.
 		public struct PreciseDefaults
