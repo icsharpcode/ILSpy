@@ -57,22 +57,34 @@ namespace ICSharpCode.ILSpy.Options
 			.OrderBy(n => n, System.StringComparer.OrdinalIgnoreCase)
 			.ToArray();
 
-		/// <summary>Point sizes offered in the size dropdown; same list as the WPF host.</summary>
+		/// <summary>Point sizes offered in the size dropdown.</summary>
 		public IReadOnlyList<int> FontSizes { get; } = Enumerable.Range(6, 24 - 6 + 1).ToArray();
 
 		/// <summary>
-		/// The font size as the user sees and edits it: points, like the Windows font dialogs.
-		/// <see cref="DisplaySettings.SelectedFontSize"/> itself stays in device-independent
-		/// pixels (1 pt = 4/3 px) so persisted settings round-trip with the WPF host; the
-		/// conversion happens only at this dialog boundary. Non-numeric input is ignored
-		/// (it is usually a transient typing state), numeric input is clamped to 6-72 pt.
+		/// The font size as the user sees and edits it: points, converted at 1 pt = 4/3 logical
+		/// pixels. That ratio is exact wherever Avalonia's logical unit is 1/96 inch (Windows
+		/// DIPs, X11 via Xft.dpi). On macOS the logical unit is a Cocoa point, so the number
+		/// shown here is not the size native Mac font dialogs would report for the same
+		/// rendering - accepted, because
+		/// <see cref="DisplaySettings.SelectedFontSize"/> staying in logical pixels with one
+		/// fixed conversion is what lets settings files round-trip with ILSpy 9.x on every host.
+		/// Unparsable and non-finite input is ignored, numeric input is clamped to 6-72 pt.
 		/// </summary>
 		public string SelectedFontSizePoints {
 			get => Settings == null
 				? string.Empty
 				: Math.Round(Settings.SelectedFontSize * 3 / 4).ToString(CultureInfo.CurrentCulture);
 			set {
+				// Ignoring unparsable input is load-bearing beyond typing UX: ComboBox re-publishes
+				// its still-empty Text when ItemsSource initializes before the Text binding has
+				// delivered a value, and that write must not clobber the stored size. Do not
+				// "improve" this into a fall-back-to-default.
 				if (Settings == null || !double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out double points))
+					return;
+				// TryParse accepts the culture's NaN symbol, and NaN falls straight through
+				// Math.Clamp; persisted, it would fail the editor's SelectedFontSize > 0 guard
+				// forever, so the editor would never apply a font size again.
+				if (!double.IsFinite(points))
 					return;
 				points = Math.Clamp(points, 6, 72);
 				// Suppress the PropertyChanged echo for this property: the binding would
@@ -90,6 +102,12 @@ namespace ICSharpCode.ILSpy.Options
 		}
 
 		bool updatingFontSizeFromText;
+
+		/// <summary>Re-publishes the size text from the stored value. Wired to the size box's
+		/// LostFocus: the echo suppression above means a typed "3" stored as the clamped 6 pt
+		/// would otherwise keep showing 3 - committing on focus loss resyncs the box, the same
+		/// way the NumericUpDown this ComboBox replaced committed its input.</summary>
+		public void CommitFontSizeText() => OnPropertyChanged(nameof(SelectedFontSizePoints));
 
 		/// <summary>
 		/// Derived FontFamily for the preview TextBlock. Avalonia's runtime binding pipeline
