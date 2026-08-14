@@ -19,6 +19,7 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
@@ -34,8 +35,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// The modifier is erased from IL and PDBs, so recovery compares the ref-safe-context
 	/// (for ref locals) or safe-context (for ref-struct locals) of the declaration initializer
 	/// with each later store. The three contexts are ordered from narrowest to widest:
-	/// current method, return-only, calling method. A narrower later store proves that the
-	/// original declaration required <c>scoped</c>.
+	/// function-member (current method), return-only, caller-context (calling method).
+	/// A narrower later store proves that the original declaration required <c>scoped</c>.
 	/// </remarks>
 	class IntroduceScopedModifierOnLocals : IILTransform
 	{
@@ -59,9 +60,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		enum SafeContext : byte
 		{
-			CurrentMethod,
-			ReturnOnly,
-			CallingMethod,
+			CurrentMethod, // function-member
+			ReturnOnly, // return-only
+			CallingMethod, // caller-context
 		}
 
 		readonly struct LocalScopes(
@@ -80,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			readonly Dictionary<ILVariable, StLoc[]> _stores = [];
 			readonly Dictionary<ILVariable, List<StObj>> _fieldStores = [];
-			readonly Dictionary<ILVariable, List<CallInstruction>> _receiverCalls = [];
+			readonly Dictionary<ILVariable, List<(CallInstruction Call, int ArgumentIndex)>> _callCaptures = [];
 			Dictionary<ILVariable, LocalScopes> _scopes = [];
 
 			public void Run()
@@ -97,8 +98,9 @@ namespace ICSharpCode.Decompiler.IL
 					}
 
 					var stores = variable.StoreInstructions.OfType<StLoc>().ToArray();
-					if (stores.Length == 0 || stores.Any(store => store.Parent == null))
+					if (stores.Length == 0)
 						continue;
+					Debug.Assert(stores.All(store => store.Parent != null));
 
 					_stores.Add(variable, stores);
 					_scopes.Add(variable, default);
@@ -106,39 +108,40 @@ namespace ICSharpCode.Decompiler.IL
 
 				foreach (var store in function.Descendants.OfType<StObj>())
 				{
-					if (!TryGetStorageRoot(store.Target, out var variable)
-						|| !_stores.ContainsKey(variable))
+					foreach (var variable in GetStorageRoots(store.Target).Distinct())
 					{
-						continue;
-					}
+						if (!_stores.ContainsKey(variable))
+							continue;
 
-					if (!_fieldStores.TryGetValue(variable, out var stores))
-					{
-						stores = [];
-						_fieldStores.Add(variable, stores);
+						if (!_fieldStores.TryGetValue(variable, out var stores))
+						{
+							stores = [];
+							_fieldStores.Add(variable, stores);
+						}
+						stores.Add(store);
 					}
-					stores.Add(store);
 				}
 
 				foreach (var call in function.Descendants.OfType<CallInstruction>())
 				{
-					bool isRefStructReceiver = call.IsInstanceCall
-						&& call.Method.DeclaringType.IsRefLikeOrAllowsRefLikeType()
-						&& !call.Method.ThisIsRefReadOnly;
-					if (!(isRefStructReceiver || IsRefStructExtensionReceiver(call))
-						|| call.Arguments.Count == 0
-						|| !TryGetStorageRoot(call.Arguments[0], out var variable)
-						|| !_stores.ContainsKey(variable))
+					for (int argumentIndex = 0; argumentIndex < call.Arguments.Count; argumentIndex++)
 					{
-						continue;
-					}
+						if (!IsWritableRefStructArgument(call, argumentIndex))
+							continue;
 
-					if (!_receiverCalls.TryGetValue(variable, out var calls))
-					{
-						calls = [];
-						_receiverCalls.Add(variable, calls);
+						foreach (var variable in GetStorageRoots(call.Arguments[argumentIndex]).Distinct())
+						{
+							if (!_stores.ContainsKey(variable))
+								continue;
+
+							if (!_callCaptures.TryGetValue(variable, out var captures))
+							{
+								captures = [];
+								_callCaptures.Add(variable, captures);
+							}
+							captures.Add((call, argumentIndex));
+						}
 					}
-					calls.Add(call);
 				}
 
 				for (int iteration = 0; iteration <= _stores.Count * 3; iteration++)
@@ -234,14 +237,14 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				}
 
-				if (!requiresScoped && _receiverCalls.TryGetValue(variable, out var receiverCalls))
+				if (!requiresScoped && _callCaptures.TryGetValue(variable, out var callCaptures))
 				{
-					foreach (var call in receiverCalls)
+					foreach (var (call, argumentIndex) in callCaptures)
 					{
 						if (!initializer.IsBefore(call))
 							continue;
 
-						SafeContext? callEscape = GetInvocationEscapeToReceiver(call);
+						SafeContext? callEscape = GetInvocationEscapeToWritableArgument(call, argumentIndex);
 						if (callEscape is not { } scope)
 							continue;
 
@@ -292,31 +295,70 @@ namespace ICSharpCode.Decompiler.IL
 				return first;
 			}
 
-			static bool IsRefStructExtensionReceiver(CallInstruction call)
+			static bool IsWritableRefStructArgument(CallInstruction call, int argumentIndex)
 			{
-				if (!call.Method.IsExtensionMethod || call.Arguments.Count == 0)
-					return false;
+				if (argumentIndex == 0 && call.IsInstanceCall)
+				{
+					return call.Method.DeclaringType.IsRefLikeOrAllowsRefLikeType()
+						&& !call.Method.ThisIsRefReadOnly;
+				}
 
-				IParameter? receiver = call.GetParameter(0);
-				return receiver is { ReferenceKind: ReferenceKind.Ref }
-					&& GetValueType(receiver.Type).IsRefLikeOrAllowsRefLikeType();
+				IParameter? parameter = call.GetParameter(argumentIndex);
+				return parameter is { ReferenceKind: ReferenceKind.Ref or ReferenceKind.Out }
+					&& GetValueType(parameter.Type).IsRefLikeOrAllowsRefLikeType();
 			}
 
-			static bool TryGetStorageRoot(ILInstruction target, out ILVariable variable)
+			/// <summary>
+			/// Gets the locals whose storage may be reached through an address expression.
+			/// A ref-return call may alias any eligible ref argument, so every such argument is followed.
+			/// </summary>
+			IEnumerable<ILVariable> GetStorageRoots(ILInstruction target)
 			{
-				while (target is LdFlda fieldAddress)
+				switch (target)
 				{
-					target = fieldAddress.Target;
+					case LdFlda fieldAddress:
+						return GetStorageRoots(fieldAddress.Target);
+					case LdElemaInlineArray inlineArray:
+						return GetStorageRoots(inlineArray.Array);
+					case LdLoca ldloca:
+						return [ldloca.Variable];
+					case CallInstruction call:
+						return GetRefReturnStorageArguments(call)
+							.SelectMany(argumentIndex => GetStorageRoots(call.Arguments[argumentIndex]));
+					default:
+						return [];
+				}
+			}
+
+			IEnumerable<int> GetRefReturnStorageArguments(CallInstruction call)
+			{
+				if (call.Method.ReturnType is not ByReferenceType { ElementType: var elementType }
+					|| !elementType.IsRefLikeOrAllowsRefLikeType())
+				{
+					yield break;
 				}
 
-				if (target is LdLoca ldloca)
+				for (int argumentIndex = 0; argumentIndex < call.Arguments.Count; argumentIndex++)
 				{
-					variable = ldloca.Variable;
-					return true;
-				}
+					if (argumentIndex == 0 && call.IsInstanceCall)
+					{
+						if (call.Method.DeclaringType.IsRefLikeOrAllowsRefLikeType()
+							&& !call.Method.ThisIsRefReadOnly
+							&& call.Method.GetThisParameterScope() != ScopedKind.ScopedRef)
+						{
+							yield return argumentIndex;
+						}
+						continue;
+					}
 
-				variable = null!;
-				return false;
+					IParameter? parameter = call.GetParameter(argumentIndex);
+					if (parameter is { ReferenceKind: ReferenceKind.Ref or ReferenceKind.Out }
+						&& GetValueType(parameter.Type).IsRefLikeOrAllowsRefLikeType()
+						&& GetParameterRefEscape(parameter) != SafeContext.CurrentMethod)
+					{
+						yield return argumentIndex;
+					}
+				}
 			}
 
 			SafeContext? GetRefEscape(ILInstruction value)
@@ -518,14 +560,56 @@ namespace ICSharpCode.Decompiler.IL
 				return result;
 			}
 
-			SafeContext? GetInvocationEscapeToReceiver(CallInstruction call)
+			SafeContext? GetInvocationEscapeToWritableArgument(CallInstruction call, int writableArgumentIndex)
 			{
 				if (call.Method.ParentModule is not MetadataModule { UseUpdatedEscapeRules: true })
 					return null;
 
-				SafeContext? result = SafeContext.CallingMethod;
-				for (int i = 1; i < call.Arguments.Count; i++)
+				// The destination context determines which arguments the callee can legally capture into it.
+				SafeContext destinationValEscape;
+				if (writableArgumentIndex == 0 && call.IsInstanceCall)
 				{
+					destinationValEscape = call.Method.IsConstructor
+						? SafeContext.ReturnOnly
+						: SafeContext.CallingMethod;
+				}
+				else
+				{
+					IParameter? writableParameter = call.GetParameter(writableArgumentIndex);
+					if (writableParameter == null)
+						return null;
+					destinationValEscape = GetParameterValEscape(writableParameter);
+				}
+
+				SafeContext? result = SafeContext.CallingMethod;
+				for (int i = 0; i < call.Arguments.Count; i++)
+				{
+					if (i == writableArgumentIndex)
+						continue;
+
+					if (i == 0 && call.IsInstanceCall)
+					{
+						IType receiverType = call.Method.DeclaringType;
+						SafeContext receiverValEscape = call.Method.IsConstructor
+							? SafeContext.ReturnOnly
+							: SafeContext.CallingMethod;
+						if (receiverType.IsRefLikeOrAllowsRefLikeType()
+							&& receiverValEscape >= destinationValEscape)
+						{
+							result = Intersect(result, GetValEscape(call.Arguments[i]));
+						}
+
+						SafeContext receiverRefEscape = call.Method.GetThisParameterScope() == ScopedKind.ScopedRef
+							? SafeContext.CurrentMethod
+							: SafeContext.ReturnOnly;
+						if (receiverType.IsReferenceType == false
+							&& receiverRefEscape >= destinationValEscape)
+						{
+							result = Intersect(result, GetRefEscape(call.Arguments[i]));
+						}
+						continue;
+					}
+
 					IParameter? parameter = call.GetParameter(i);
 					if (parameter == null)
 						return null;
@@ -533,13 +617,13 @@ namespace ICSharpCode.Decompiler.IL
 					IType parameterType = GetValueType(parameter.Type);
 					if (parameterType.IsRefLikeOrAllowsRefLikeType()
 						&& parameter.ReferenceKind != ReferenceKind.Out
-						&& GetParameterValEscape(parameter) == SafeContext.CallingMethod)
+						&& GetParameterValEscape(parameter) >= destinationValEscape)
 					{
 						result = Intersect(result, GetValEscape(call.Arguments[i]));
 					}
 
 					if (parameter.ReferenceKind != ReferenceKind.None
-						&& GetParameterRefEscape(parameter) == SafeContext.CallingMethod)
+						&& GetParameterRefEscape(parameter) >= destinationValEscape)
 					{
 						result = Intersect(result, GetRefEscape(call.Arguments[i]));
 					}

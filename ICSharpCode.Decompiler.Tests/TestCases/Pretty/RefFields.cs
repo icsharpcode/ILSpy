@@ -74,6 +74,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			span = default(Span<int>);
 		}
 
+		public void CaptureIntoRef(ref Holder holder, Span<int> inner)
+		{
+			holder.Inner = inner;
+		}
+
+		public void CaptureIntoOut(out Holder holder, Span<int> inner)
+		{
+			holder = default(Holder);
+			holder.Inner = inner;
+		}
+
+		public void CaptureRefIntoOut(out Holder holder, ref int value)
+		{
+			holder = default(Holder);
+			holder.Inner = new Span<int>(ref value);
+		}
+
+		public ref Holder Identity(ref Holder holder)
+		{
+			return ref holder;
+		}
+
 		public Span<int> CaptureOut([UnscopedRef] out int value)
 		{
 			value = 0;
@@ -281,6 +303,59 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Span<int> inner = stackalloc int[4];
 			holder.SetExtension(inner);
 			return holder.Inner.Length;
+		}
+
+		public int RefArgumentCallRequiresScoped()
+		{
+			scoped Holder holder = default(Holder);
+			Span<int> inner = stackalloc int[4];
+			CaptureIntoRef(ref holder, inner);
+			return holder.Inner.Length;
+		}
+
+		public int OutArgumentCallRequiresScoped()
+		{
+			scoped Holder holder = default(Holder);
+			Span<int> inner = stackalloc int[4];
+			CaptureIntoOut(out holder, inner);
+			return holder.Inner.Length;
+		}
+
+		public int OutArgumentCapturesRefRequiresScoped()
+		{
+			int value = 0;
+			scoped Holder holder = default(Holder);
+			CaptureRefIntoOut(out holder, ref value);
+			return holder.Inner[0];
+		}
+
+		public Holder RefArgumentWideValueDoesNotRequireScoped(Span<int> wide)
+		{
+			Holder holder = default(Holder);
+			CaptureIntoRef(ref holder, wide);
+			return holder;
+		}
+
+		public Holder OutArgumentWideValueDoesNotRequireScoped(Span<int> wide)
+		{
+			Holder holder = default(Holder);
+			CaptureIntoOut(out holder, wide);
+			return holder;
+		}
+
+		public int RefReturnFieldStoreRequiresScoped()
+		{
+			scoped Holder holder = default(Holder);
+			Span<int> inner = stackalloc int[4];
+			Identity(ref holder).Inner = inner;
+			return holder.Inner.Length;
+		}
+
+		public Holder RefReturnFieldStoreWideValueDoesNotRequireScoped(Span<int> wide)
+		{
+			Holder holder = default(Holder);
+			Identity(ref holder).Inner = wide;
+			return holder;
 		}
 
 		public Holder ReadonlyReceiverDoesNotRequireScoped(bool b)
