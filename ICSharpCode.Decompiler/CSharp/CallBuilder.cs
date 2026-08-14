@@ -1643,6 +1643,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (or.IsAmbiguous)
 				return OverloadResolutionErrors.AmbiguousMatch;
 			foundMember = or.GetBestCandidateWithSubstitutedTypeArguments();
+			if (foundMember == null)
+			{
+				// Overload resolution reports no error for an empty candidate set - there is no
+				// best candidate to carry one - so a call that matched nothing has to be reported
+				// as unresolvable here.
+				return OverloadResolutionErrors.AmbiguousMatch;
+			}
 			if (!IsAppropriateCallTarget(expectedTargetDetails, method, foundMember))
 				return OverloadResolutionErrors.AmbiguousMatch;
 			var map = or.GetArgumentToParameterMap();
