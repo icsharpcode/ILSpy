@@ -16,8 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Xml.Linq;
 
@@ -55,6 +57,40 @@ namespace ICSharpCode.ILSpy.Options
 			.OrderBy(n => n, System.StringComparer.OrdinalIgnoreCase)
 			.ToArray();
 
+		/// <summary>Point sizes offered in the size dropdown; same list as the WPF host.</summary>
+		public IReadOnlyList<int> FontSizes { get; } = Enumerable.Range(6, 24 - 6 + 1).ToArray();
+
+		/// <summary>
+		/// The font size as the user sees and edits it: points, like the Windows font dialogs.
+		/// <see cref="DisplaySettings.SelectedFontSize"/> itself stays in device-independent
+		/// pixels (1 pt = 4/3 px) so persisted settings round-trip with the WPF host; the
+		/// conversion happens only at this dialog boundary. Non-numeric input is ignored
+		/// (it is usually a transient typing state), numeric input is clamped to 6-72 pt.
+		/// </summary>
+		public string SelectedFontSizePoints {
+			get => Settings == null
+				? string.Empty
+				: Math.Round(Settings.SelectedFontSize * 3 / 4).ToString(CultureInfo.CurrentCulture);
+			set {
+				if (Settings == null || !double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out double points))
+					return;
+				points = Math.Clamp(points, 6, 72);
+				// Suppress the PropertyChanged echo for this property: the binding would
+				// immediately rewrite the size box with the rounded value mid-keystroke.
+				updatingFontSizeFromText = true;
+				try
+				{
+					Settings.SelectedFontSize = points * 4 / 3;
+				}
+				finally
+				{
+					updatingFontSizeFromText = false;
+				}
+			}
+		}
+
+		bool updatingFontSizeFromText;
+
 		/// <summary>
 		/// Derived FontFamily for the preview TextBlock. Avalonia's runtime binding pipeline
 		/// doesn't auto-coerce a <c>string</c> source to <see cref="FontFamily"/> (the implicit
@@ -75,12 +111,15 @@ namespace ICSharpCode.ILSpy.Options
 			Settings.PropertyChanged += OnSettingsPropertyChanged;
 			SessionSettings = service.SessionSettings;
 			OnPropertyChanged(nameof(CurrentFontFamily));
+			OnPropertyChanged(nameof(SelectedFontSizePoints));
 		}
 
 		void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
 			if (e.PropertyName == nameof(DisplaySettings.SelectedFont))
 				OnPropertyChanged(nameof(CurrentFontFamily));
+			if (e.PropertyName == nameof(DisplaySettings.SelectedFontSize) && !updatingFontSizeFromText)
+				OnPropertyChanged(nameof(SelectedFontSizePoints));
 		}
 
 		public void LoadDefaults()
