@@ -54,6 +54,12 @@
                     <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#FFFFE1" />
                     <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="Black" />
                     <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#FF767676" />
+                    <!-- Documentation hover popup (signature + XML docs). Kept separate from the
+                         plain ILSpy.Tooltip* brushes: the doc popup uses a near-white surface for
+                         syntax-coloured code, not the classic yellow tooltip fill. -->
+                    <SolidColorBrush x:Key="ILSpy.DocTooltipBackground" Color="#FCFCFC" />
+                    <SolidColorBrush x:Key="ILSpy.DocTooltipBorder" Color="#AAAAAA" />
+                    <SolidColorBrush x:Key="ILSpy.DocLinkForeground" Color="#0066CC" />
                     <SolidColorBrush x:Key="ILSpy.WindowBackground" Color="#F0F0F0" />
                     <SolidColorBrush x:Key="ILSpy.WindowForeground" Color="Black" />
                     <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="White" />
@@ -116,6 +122,12 @@
                     <SolidColorBrush x:Key="ILSpy.TooltipBackground" Color="#252526" />
                     <SolidColorBrush x:Key="ILSpy.TooltipForeground" Color="#DCDCDC" />
                     <SolidColorBrush x:Key="ILSpy.TooltipBorder" Color="#3F3F46" />
+                    <!-- Dark counterpart of the doc hover popup: slightly lighter than the #1E1E1E
+                         editor canvas so the popup reads as a raised surface, with the link blue
+                         brightened for contrast on the dark fill. -->
+                    <SolidColorBrush x:Key="ILSpy.DocTooltipBackground" Color="#252526" />
+                    <SolidColorBrush x:Key="ILSpy.DocTooltipBorder" Color="#3F3F46" />
+                    <SolidColorBrush x:Key="ILSpy.DocLinkForeground" Color="#6FA8DC" />
                     <SolidColorBrush x:Key="ILSpy.WindowBackground" Color="#252526" />
                     <SolidColorBrush x:Key="ILSpy.WindowForeground" Color="#DCDCDC" />
                     <SolidColorBrush x:Key="ILSpy.PaneBackground" Color="#1E1E1E" />
@@ -228,6 +240,12 @@
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.TooltipForeground}" />
             <Setter Property="BorderBrush" Value="{DynamicResource ILSpy.TooltipBorder}" />
             <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <!-- Links inside the documentation hover popup (DocumentationRenderer tags them with
+             the doc-link class). Colour lives here so it swaps with the theme variant. -->
+        <Style Selector="TextBlock.doc-link">
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.DocLinkForeground}" />
         </Style>
 
         <!-- Window-level chrome: every top-level window picks up these brushes for the

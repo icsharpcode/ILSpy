@@ -48,8 +48,6 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	public sealed class DocumentationRenderer
 	{
-		static readonly IBrush HyperlinkBrush = new SolidColorBrush(Color.FromRgb(0x00, 0x66, 0xCC));
-
 		readonly IAmbience ambience;
 		readonly FontFamily codeFont;
 		readonly double fontSize;
@@ -118,14 +116,18 @@ namespace ICSharpCode.ILSpy.TextView
 				VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
 				MaxHeight = maxHeight,
 			};
-			return new Border {
+			var border = new Border {
 				BorderThickness = new Thickness(1),
-				BorderBrush = new SolidColorBrush(Color.FromRgb(0xAA, 0xAA, 0xAA)),
-				Background = new SolidColorBrush(Color.FromRgb(0xFC, 0xFC, 0xFC)),
 				Padding = new Thickness(6),
 				MaxWidth = maxWidth,
 				Child = scroll,
 			};
+			// The signature text is coloured by the active highlighting theme, so the chrome
+			// must follow the same theme variant: dark-theme text on a fixed light fill is
+			// unreadable. DynamicResource-style bindings keep it in sync on theme switches.
+			border.Bind(Border.BackgroundProperty, border.GetResourceObservable("ILSpy.DocTooltipBackground"));
+			border.Bind(Border.BorderBrushProperty, border.GetResourceObservable("ILSpy.DocTooltipBorder"));
+			return border;
 		}
 
 		public void AddSignatureBlock(RichText signature)
@@ -392,8 +394,8 @@ namespace ICSharpCode.ILSpy.TextView
 		// embedded TextBlock inside an InlineUIContainer.
 		static TextBlock CreateLinkTextBlock()
 		{
+			// Foreground comes from the App.axaml "doc-link" style so it follows the theme.
 			return new TextBlock {
-				Foreground = HyperlinkBrush,
 				TextDecorations = TextDecorations.Underline,
 				Cursor = new Cursor(StandardCursorType.Hand),
 				// A null background makes the TextBlock hit-test invisible — clicks would
