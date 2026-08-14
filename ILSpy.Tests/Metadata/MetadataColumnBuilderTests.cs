@@ -20,6 +20,9 @@ using System.Linq;
 
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.Media;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -127,5 +130,34 @@ public class MetadataColumnBuilderTests
 		columns[0].Should().BeOfType<DataGridTextColumn>("RID has no [ColumnInfo]");
 		columns[1].Should().BeOfType<DataGridTemplateColumn>("Method is Kind=Token");
 		columns[2].Should().BeOfType<DataGridTextColumn>("Name has no [ColumnInfo]");
+	}
+
+	[AvaloniaTest]
+	public void Token_Cell_Link_Color_Comes_From_The_Theme_And_Yields_To_The_Selected_Row()
+	{
+		// Foreground is inherited, so a local brush on the button would outrank the
+		// DataGridRow:selected white override and leave the link unreadable on the accent fill --
+		// which is exactly the row navigation lands on. The "link" class lets the row win while
+		// still carrying the themed colour everywhere else.
+		var grid = new DataGrid { AutoGenerateColumns = false };
+		foreach (var column in MetadataColumnBuilder.For<SampleEntryWithToken>())
+			grid.Columns.Add(column);
+		grid.ItemsSource = new[] { new SampleEntryWithToken { RID = 1, Method = 0x06000001 } };
+
+		var window = new Window { Content = grid, Width = 400, Height = 200 };
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+
+		var link = grid.GetVisualDescendants().OfType<Button>().Single(b => b.Classes.Contains("link"));
+		var themed = link.Foreground;
+		themed.Should().NotBeNull();
+		window.TryFindResource("ILSpy.LinkForeground", window.ActualThemeVariant, out var expected).Should().BeTrue();
+		(themed as ISolidColorBrush)!.Color.Should().Be((expected as ISolidColorBrush)!.Color);
+
+		grid.SelectedIndex = 0;
+		Dispatcher.UIThread.RunJobs();
+
+		(link.Foreground as ISolidColorBrush)!.Color.Should().Be(Colors.White,
+			"the selected row paints its text white over the accent fill");
 	}
 }
