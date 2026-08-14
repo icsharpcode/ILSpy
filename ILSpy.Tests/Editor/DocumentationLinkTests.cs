@@ -80,6 +80,10 @@ public class DocumentationLinkTests
 			.FirstOrDefault(tb => tb.Classes.Contains("doc-link"));
 		link.Should().NotBeNull("a resolvable cref must render as a clickable link");
 		link!.Cursor.Should().NotBeNull("links show the hand cursor as a click affordance");
+		window.TryFindResource("ILSpy.DocLinkForeground", window.ActualThemeVariant, out var linkBrush)
+			.Should().BeTrue("doc links route their colour through a themed brush");
+		link.Foreground.Should().Be(linkBrush,
+			"a hardcoded link colour is unreadable on the dark popup background (issue #3994)");
 
 		object? navigated = null;
 		var linkClickedRaised = false;
