@@ -1276,14 +1276,24 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		StackType PeekStackType()
+		StackType PeekStackType() => PeekStackTypeAtDepth(0);
+
+		StackType PeekStackTypeAtDepth(int depth)
 		{
-			if (expressionStack.Count > 0)
-				return expressionStack.Last().ResultType;
-			if (currentStack.IsEmpty)
+			// depth 0 = top of stack, depth N = N-th item below the top.
+			if (depth < expressionStack.Count)
+				return expressionStack[expressionStack.Count - 1 - depth].ResultType;
+			int skip = depth - expressionStack.Count;
+			var stack = currentStack;
+			for (int i = 0; i < skip; i++)
+			{
+				if (stack.IsEmpty)
+					return StackType.Unknown;
+				stack = stack.Pop();
+			}
+			if (stack.IsEmpty)
 				return StackType.Unknown;
-			else
-				return currentStack.Peek().StackType;
+			return stack.Peek().StackType;
 		}
 
 		sealed class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
@@ -1765,14 +1775,17 @@ namespace ICSharpCode.Decompiler.IL
 					Warn("Unknown method called on array type: " + method.Name);
 					goto default;
 				}
-				case TypeKind.Struct when method.IsConstructor && !method.IsStatic && opCode == OpCode.Call
-					&& method.ReturnType.Kind == TypeKind.Void:
+				case TypeKind.Struct when IsValueTypeCtorCall():
+				case TypeKind.Unknown when IsValueTypeCtorCall() && ReceiverLooksLikeValueTypeTarget():
 				{
 					// "call Struct.ctor(target, ...)" doesn't exist in C#,
 					// the next best equivalent is an assignment `*target = new Struct(...);`.
 					// So we represent this call as "stobj Struct(target, newobj Struct.ctor(...))".
 					// This needs to happen early (not as a transform) because the StObj.TargetSlot has
 					// restricted inlining (doesn't accept ldflda when exceptions aren't delayed).
+					// The declaring type's kind is unavailable when its assembly is missing, so the
+					// receiver decides: a constructor invoked with "call" on an address is the shape
+					// only a value type can have.
 					arguments = PrepareArguments(firstArgumentIsStObjTarget: true);
 					var newobj = new NewObj(method);
 					newobj.ILStackWasEmpty = CurrentStackIsEmpty();
@@ -1789,6 +1802,23 @@ namespace ICSharpCode.Decompiler.IL
 					if (call.ResultType != StackType.Void)
 						return Push(call);
 					return call;
+			}
+
+			// A value type's constructor is invoked with "call" on the address of the target,
+			// unlike a reference type's, which is invoked with "newobj".
+			bool IsValueTypeCtorCall()
+			{
+				return method.IsConstructor && !method.IsStatic && opCode == OpCode.Call
+					&& method.ReturnType.Kind == TypeKind.Void;
+			}
+
+			// Used when the declaring type could not be resolved, so its kind is unknown: the
+			// receiver is an address (a managed reference, or a pointer in unsafe code), and
+			// metadata that does say the type is a reference type rules the rewrite out.
+			bool ReceiverLooksLikeValueTypeTarget()
+			{
+				return PeekStackTypeAtDepth(method.Parameters.Count) is StackType.Ref or StackType.I
+					&& method.DeclaringType.IsReferenceType != true;
 			}
 
 			ILInstruction[] PrepareArguments(bool firstArgumentIsStObjTarget)
