@@ -2295,6 +2295,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				else
 				{
 					WriteKeyword("set");
+					if (accessor.IsInitOnly)
+					{
+						// The setter is init-only, but the output language version has no init accessor:
+						// mark the keyword, so that the difference is not lost silently.
+						writer.WriteComment(CommentType.MultiLine, "init");
+					}
 				}
 				style = policy.PropertySetBraceStyle;
 			}

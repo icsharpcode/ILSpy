@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		/// <summary>
 		/// Controls whether C# 9 "init;" accessors are supported.
-		/// If disabled, emits "set /*init*/;" instead.
+		/// If disabled, emits "set/*init*/;" instead.
 		/// </summary>
 		public bool SupportInitAccessors { get; set; }
 
@@ -2234,10 +2234,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				accessorKind = AccessorKind.Init;
 			}
 			decl.Kind = accessorKind;
-			if (accessor.IsInitOnly && accessorKind != AccessorKind.Init)
-			{
-				decl.AddTrailingTrivia(new Comment("init", CommentType.MultiLine));
-			}
+			decl.IsInitOnly = accessor.IsInitOnly;
 			if (AddResolveResultAnnotations)
 			{
 				decl.AddAnnotation(new MemberResolveResult(null, accessor));
