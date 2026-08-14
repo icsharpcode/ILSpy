@@ -29,5 +29,10 @@ namespace ICSharpCode.ILSpy.Options.Panels
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);
+
+		// Commit-on-focus-loss for the size box: rewrites the text from the stored (clamped)
+		// value, so e.g. a typed "3" doesn't keep showing while 6 pt is what got stored.
+		void FontSizeBox_LostFocus(object? sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+			=> (DataContext as DisplaySettingsViewModel)?.CommitFontSizeText();
 	}
 }

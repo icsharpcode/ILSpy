@@ -33,7 +33,8 @@
 				<ComboBox Grid.Row="0" Grid.Column="3" Width="100" x:Name="fontSizeComboBox"
 				          IsEditable="True"
 				          ItemsSource="{Binding FontSizes}"
-				          Text="{Binding SelectedFontSizePoints, Mode=TwoWay}" />
+				          Text="{Binding SelectedFontSizePoints, Mode=TwoWay}"
+				          LostFocus="FontSizeBox_LostFocus" />
 				<Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
 				        BorderBrush="{DynamicResource ILSpy.ChromeBorder}" BorderThickness="1" Padding="6" Margin="0,2,0,0">
 					<!-- FontFamily binds to a derived FontFamily property because Avalonia's
