@@ -20,16 +20,21 @@
 				<ComboBox MinWidth="120" ItemsSource="{Binding AllThemes}"
 				          SelectedItem="{Binding SessionSettings.Theme, Mode=TwoWay}" />
 			</StackPanel>
-			<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+			<Grid ColumnDefinitions="Auto,*,Auto,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="4">
 				<TextBlock Grid.Row="0" Grid.Column="0" VerticalAlignment="Center"
 				           Text="{x:Static res:Resources.Font}" />
 				<ComboBox Grid.Row="0" Grid.Column="1" MinWidth="200"
 				          ItemsSource="{Binding AvailableFonts}"
 				          SelectedItem="{Binding Settings.SelectedFont, Mode=TwoWay}" />
-				<NumericUpDown Grid.Row="0" Grid.Column="2" Width="100"
-				               Minimum="6" Maximum="72" Increment="1"
-				               Value="{Binding Settings.SelectedFontSize, Mode=TwoWay}" />
-				<Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+				<TextBlock Grid.Row="0" Grid.Column="2" VerticalAlignment="Center"
+				           Text="{x:Static res:Resources.Size}" />
+				<!-- Edits in points (the unit every Windows font dialog uses); the viewmodel
+				     converts to the device-independent pixels DisplaySettings stores. -->
+				<ComboBox Grid.Row="0" Grid.Column="3" Width="100" x:Name="fontSizeComboBox"
+				          IsEditable="True"
+				          ItemsSource="{Binding FontSizes}"
+				          Text="{Binding SelectedFontSizePoints, Mode=TwoWay}" />
+				<Border Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3"
 				        BorderBrush="{DynamicResource ILSpy.ChromeBorder}" BorderThickness="1" Padding="6" Margin="0,2,0,0">
 					<!-- FontFamily binds to a derived FontFamily property because Avalonia's
 					     runtime binding pipeline doesn't coerce string → FontFamily (the
