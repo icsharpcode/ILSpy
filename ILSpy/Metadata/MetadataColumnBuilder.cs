@@ -434,9 +434,12 @@ namespace ICSharpCode.ILSpy.Metadata
 					Padding = new Thickness(2, 0),
 					HorizontalAlignment = HorizontalAlignment.Left,
 					VerticalAlignment = VerticalAlignment.Center,
-					Foreground = Brushes.Blue,
 					Cursor = new global::Avalonia.Input.Cursor(global::Avalonia.Input.StandardCursorType.Hand),
 					Content = FormatTokenValue(row, prop, format),
+					// Token cells are links. The colour comes from the "Button.link" styles in
+					// App.axaml rather than a local Foreground, so the selected row's white
+					// override still wins over it -- neither link colour reads on the accent fill.
+					Classes = { "link" },
 				};
 				btn.Click += (_, _) => {
 					if (btn.FindAncestorOfType<Views.MetadataTablePage>()?.DataContext is MetadataTablePageModel page)

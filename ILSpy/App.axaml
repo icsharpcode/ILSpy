@@ -12,6 +12,7 @@
              xmlns:dockTheme="using:Dock.Avalonia.Themes.Simple"
              xmlns:dockControls="using:Dock.Avalonia.Controls"
              xmlns:aeFolding="using:AvaloniaEdit.Folding"
+             xmlns:aeRendering="using:AvaloniaEdit.Rendering"
              xmlns:recycling="using:Avalonia.Controls.Recycling"
              xmlns:docking="using:ICSharpCode.ILSpy.Docking"
              xmlns:controls="using:ICSharpCode.ILSpy.Controls"
@@ -43,6 +44,11 @@
                          TextArea style leaves SelectionForeground unset). -->
                     <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#007ACC" Opacity="0.3" />
                     <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#80FFFFFF" />
+                    <!-- Clickable text: About-page and decompiler-view hyperlinks (AvaloniaEdit's
+                         TextView.LinkTextForegroundBrush, see the style below) and the metadata
+                         table's token cells. AvaloniaEdit's own default is pure Blue, which is
+                         unreadable on the dark canvas. -->
+                    <SolidColorBrush x:Key="ILSpy.LinkForeground" Color="#0066CC" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="White" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#FFA9B0B7" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarSeparator" Color="#FFC8CDD3" />
@@ -105,6 +111,7 @@
                          dark editor background. -->
                     <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#3794FF" Opacity="0.35" />
                     <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#A0000000" />
+                    <SolidColorBrush x:Key="ILSpy.LinkForeground" Color="#4DA6FF" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="#2D2D30" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBorder" Color="#3F3F46" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarSeparator" Color="#3F3F46" />
@@ -410,6 +417,14 @@
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.ToolChromeActiveTitleForeground}" />
         </Style>
 
+        <!-- AvaloniaEdit paints VisualLineLinkText with TextView.LinkTextForegroundBrush, whose
+             registered default is pure Blue, 1.9:1 against the dark editor canvas. Route it
+             through the theme so About-page links, resource links, and every other hyperlink in
+             a decompiler view follow the active theme. -->
+        <Style Selector="aeRendering|TextView">
+            <Setter Property="LinkTextForegroundBrush" Value="{DynamicResource ILSpy.LinkForeground}" />
+        </Style>
+
         <!-- AvaloniaEdit folding margin: the +/- toggle squares are painted by FoldingMargin
              with its own brush properties (Background, Marker, plus selected variants for
              pointer-over). Default Light values are hardcoded white-on-gray; route them
@@ -477,6 +492,17 @@
 
         <!-- Selected row text in white so it reads against the accent-color highlight. -->
         <Style Selector="DataGridRow:selected">
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+
+        <!-- Metadata token cells (MetadataColumnBuilder token columns) are links. Styled here
+             rather than with a local Foreground on the button so the selected row's white can
+             override them: on the accent-color selection fill neither link color has usable
+             contrast, and navigating to a cell selects its row. -->
+        <Style Selector="DataGridRow Button.link">
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.LinkForeground}" />
+        </Style>
+        <Style Selector="DataGridRow:selected Button.link">
             <Setter Property="Foreground" Value="White" />
         </Style>
 
