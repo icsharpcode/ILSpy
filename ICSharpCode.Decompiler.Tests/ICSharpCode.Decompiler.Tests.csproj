@@ -202,6 +202,9 @@
     <None Include="TestCases\ILPretty\TruncatedAccessorBody.cs" />
     <Compile Remove="TestCases\ILPretty\SealedRecordProtectedCopyCtor.cs" />
     <None Include="TestCases\ILPretty\SealedRecordProtectedCopyCtor.cs" />
+    <Compile Remove="TestCases\ILPretty\Issue3729.cs" />
+    <None Include="TestCases\ILPretty\Issue3729.cs" />
+    <None Include="TestCases\ILPretty\Issue3729.il" />
     <Compile Remove="TestCases\ILPretty\FSharpLoops_Debug.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
     <Compile Remove="TestCases\ILPretty\FSharpLoops_Release.cs" />
