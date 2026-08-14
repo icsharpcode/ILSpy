@@ -1,0 +1,164 @@
+{
+  "verso": "1.1",
+  "metadata": {
+    "defaultKernel": "csharp",
+    "activeLayout": {
+      "extensionId": "verso.layout.notebook",
+      "layoutId": "notebook"
+    }
+  },
+  "cells": [
+    {
+      "id": "1d2cb516-ae6a-40e5-aa8e-9fcd94cb42b8",
+      "type": "markdown",
+      "source": "You must install the **Verso** extension in VS Code to run this notebook!\n\nLoad the NuGet package and print out the version to make sure we are using the latest and greatest"
+    },
+    {
+      "id": "35f31e8c-6976-4e90-bbf4-a3435e41f068",
+      "type": "code",
+      "language": "csharp",
+      "source": "#r \u0022nuget: ICSharpCode.Decompiler, 11.0.0.9375\u0022\n\nusing System.Reflection.Metadata;\nusing ICSharpCode.Decompiler;\nusing ICSharpCode.Decompiler.CSharp;\nusing ICSharpCode.Decompiler.Metadata;\nusing ICSharpCode.Decompiler.TypeSystem;\n\nConsole.WriteLine(typeof(FullTypeName).Assembly.GetName());",
+      "outputs": [
+        {
+          "mimeType": "text/html",
+          "content": "\u003Cdiv\u003E\u003Cb\u003EInstalled Packages\u003C/b\u003E\u003Cul\u003E\u003Cli\u003E\u003Cspan\u003EICSharpCode.Decompiler, 11.0.0.9375\u003C/span\u003E\u003C/li\u003E\u003C/ul\u003E\u003Cdetails\u003E\u003Csummary\u003ETransitive dependencies (2)\u003C/summary\u003E\u003Cul\u003E\u003Cli\u003E\u003Cspan\u003ESystem.Collections.Immutable, 9.0.0\u003C/span\u003E\u003C/li\u003E\u003Cli\u003E\u003Cspan\u003ESystem.Reflection.Metadata, 9.0.0\u003C/span\u003E\u003C/li\u003E\u003C/ul\u003E\u003C/details\u003E\u003C/div\u003E"
+        },
+        {
+          "mimeType": "text/plain",
+          "content": "ICSharpCode.Decompiler, Version=11.0.0.9375, Culture=neutral, PublicKeyToken=d4bfe873e7598c49\r\n"
+        }
+      ],
+      "metadata": {
+        "execution_count": 10
+      }
+    },
+    {
+      "id": "c44c4ce4-6430-4087-b926-8e905103e112",
+      "type": "markdown",
+      "source": "You must have compiled **ILSpy.sln** first (run \u0022dotnet build ilspy.sln\u0022). Make sure to modify **basePath** to your repository path."
+    },
+    {
+      "id": "f0695e89-e072-4406-bac3-5d49affe1237",
+      "type": "code",
+      "language": "csharp",
+      "source": "const string basePath = @\u0022Z:\\GitWorkspace\\ILSpy\\\u0022;\nstring testAssemblyPath = basePath \u002B @\u0022ILSpy\\bin\\Debug\\net10.0\\ILSpy.dll\u0022;\n\nvar decompiler = new CSharpDecompiler(testAssemblyPath, new DecompilerSettings());",
+      "metadata": {
+        "execution_count": 11
+      }
+    },
+    {
+      "id": "e5627f5f-7a0d-421d-8add-2a851d76841f",
+      "type": "markdown",
+      "source": "Get the count of types in this module"
+    },
+    {
+      "id": "208318cd-a7e8-467d-a436-81f99e33f965",
+      "type": "code",
+      "language": "csharp",
+      "source": "var types = decompiler.TypeSystem.MainModule.TypeDefinitions;\nConsole.WriteLine(types.Count());",
+      "outputs": [
+        {
+          "mimeType": "text/plain",
+          "content": "1117\r\n"
+        }
+      ],
+      "metadata": {
+        "execution_count": 12
+      }
+    },
+    {
+      "id": "79700fcb-f007-4f14-9500-d3ea7f71e706",
+      "type": "markdown",
+      "source": "Decompile a known type (as a whole)"
+    },
+    {
+      "id": "968452de-789f-4c65-aab3-6919c5f0f2e5",
+      "type": "code",
+      "language": "csharp",
+      "source": "var nameOfGenericType = new FullTypeName(\u0022ICSharpCode.ILSpy.Program\u0022);\nConsole.WriteLine(decompiler.DecompileTypeAsString(nameOfGenericType));",
+      "outputs": [
+        {
+          "mimeType": "text/plain",
+          "content": "using System;\r\nusing Avalonia;\r\nusing Avalonia.Logging;\r\nusing ICSharpCode.ILSpy.AppEnv;\r\n\r\nnamespace ICSharpCode.ILSpy;\r\n\r\ninternal sealed class Program\r\n{\r\n\t[STAThread]\r\n\tpublic static void Main(string[] args)\r\n\t{\r\n\t\tif (ShouldStartNewInstance(args))\r\n\t\t{\r\n\t\t\tBuildAvaloniaApp().StartWithClassicDesktopLifetime(args);\r\n\t\t}\r\n\t}\r\n\r\n\tprivate static bool ShouldStartNewInstance(string[] args)\r\n\t{\r\n\t\ttry\r\n\t\t{\r\n\t\t\tCommandLineArguments commandLineArguments = CommandLineArguments.Create(args);\r\n\t\t\tApp.ConfigureSettingsFilePathProvider(commandLineArguments);\r\n\t\t\treturn SingleInstance.TrySignalFirstInstance(commandLineArguments);\r\n\t\t}\r\n\t\tcatch (Exception)\r\n\t\t{\r\n\t\t\treturn true;\r\n\t\t}\r\n\t}\r\n\r\n\tpublic static AppBuilder BuildAvaloniaApp()\r\n\t{\r\n\t\tAppBuilder appBuilder = AppBuilder.Configure\u003CApp\u003E().UsePlatformDetect().With(new X11PlatformOptions\r\n\t\t{\r\n\t\t\tOverlayPopups = true\r\n\t\t});\r\n\t\tappBuilder = appBuilder.WithDeveloperTools();\r\n\t\treturn appBuilder.LogToTrace(LogEventLevel.Warning);\r\n\t}\r\n}\r\n\r\n"
+        }
+      ],
+      "metadata": {
+        "execution_count": 13
+      }
+    },
+    {
+      "id": "0ccc23be-7e41-48af-8fed-f5fd292c55bc",
+      "type": "markdown",
+      "source": "If you want to decompile one single member (sample: first method)"
+    },
+    {
+      "id": "bb9733dc-b721-4c55-953a-95c2098fb8aa",
+      "type": "code",
+      "language": "csharp",
+      "source": "var ftn =  new FullTypeName(\u0022ICSharpCode.ILSpy.AppEnv.AppLog\u0022);\nITypeDefinition typeInfo = decompiler.TypeSystem.FindType(ftn).GetDefinition();\nvar tokenOfFirstMethod = typeInfo.Methods.First().MetadataToken;\nConsole.WriteLine(decompiler.DecompileAsString(tokenOfFirstMethod));",
+      "outputs": [
+        {
+          "mimeType": "text/plain",
+          "content": "public static bool IsEnabled(string category)\r\n{\r\n\tbool value;\r\n\treturn enabled.TryGetValue(category, out value) \u0026 value;\r\n}\r\n\r\n"
+        }
+      ],
+      "metadata": {
+        "execution_count": 14
+      }
+    },
+    {
+      "id": "7e3e7c32-3a4b-4767-af70-fed079d1a304",
+      "type": "markdown",
+      "source": "If you need access to low-level metadata tables"
+    },
+    {
+      "id": "e7bd2951-0f7f-4a30-9834-3a1d792b182f",
+      "type": "code",
+      "language": "csharp",
+      "source": "ITypeDefinition type = decompiler.TypeSystem.FindType(ftn).GetDefinition();\nvar module = type.ParentModule.MetadataFile;",
+      "metadata": {
+        "execution_count": 15
+      }
+    },
+    {
+      "id": "6ac45590-8736-42b9-b772-5f590b8b9256",
+      "type": "markdown",
+      "source": "Get the child namespaces"
+    },
+    {
+      "id": "4638be66-4c63-4e9b-9c66-5186747b57ea",
+      "type": "code",
+      "language": "csharp",
+      "source": "var icsdns = decompiler.TypeSystem.RootNamespace;\nforeach (var cn in icsdns.ChildNamespaces) Console.WriteLine(cn.FullName);",
+      "outputs": [
+        {
+          "mimeType": "text/plain",
+          "content": "System\r\nMcMaster\r\nCommunityToolkit\r\nICSharpCode\r\nCompiledAvaloniaXaml\r\nMicrosoft\r\nFxResources\r\nAvalonia\r\nLightJson\r\nHumanizer\r\nSvg\r\nDock\r\nAvaloniaEdit\r\nNuGet\r\nRoslyn\r\nAvaloniaUI\r\nCoreRPC\r\nMS\r\nInternal\r\n"
+        }
+      ],
+      "metadata": {
+        "execution_count": 16
+      }
+    },
+    {
+      "id": "466f205d-fbd4-4d99-ad4f-223476f42545",
+      "type": "markdown",
+      "source": "Get types in a single namespace"
+    },
+    {
+      "id": "54f40859-5f6a-4a96-beb4-6ce711562f9f",
+      "type": "code",
+      "language": "csharp",
+      "source": "var typesInNamespace = icsdns.ChildNamespaces.First(cn =\u003E cn.FullName == \u0022LightJson\u0022).Types;\nConsole.WriteLine(typesInNamespace.First().FullTypeName);",
+      "outputs": [
+        {
+          "mimeType": "text/plain",
+          "content": "LightJson.JsonArray\r\n"
+        }
+      ],
+      "metadata": {
+        "execution_count": 17
+      }
+    }
+  ]
+}
