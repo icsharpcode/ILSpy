@@ -95,6 +95,48 @@ public class MainMenuTests
 		openItem.Gesture!.Should().Be(expected);
 	}
 
+	// NativeMenuItem.Gesture is display-only when NativeMenuBar renders the menu inline
+	// (the managed fallback binds it to MenuItem.InputGesture, which never handles input),
+	// so every menu gesture must also be registered as a window-level KeyBinding or the
+	// shortcut silently does nothing on Windows / Linux (issue #3993: Ctrl+O, Ctrl+S, F5).
+	[AvaloniaTest]
+	public void Menu_Gestures_Are_Registered_As_Window_KeyBindings()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
+
+		var gestureItems = new System.Collections.Generic.List<(string Path, NativeMenuItem Item)>();
+		CollectItemsWithGesture(nativeMenu, parentPath: "", gestureItems);
+
+		gestureItems.Should().NotBeEmpty("File > Open (Ctrl+O), Reload (F5) and Save (Ctrl+S) declare InputGestureText");
+
+		foreach (var (path, item) in gestureItems)
+		{
+			window.KeyBindings.Should().Contain(
+				kb => Equals(kb.Gesture, item.Gesture) && ReferenceEquals(kb.Command, item.Command),
+				$"the gesture {item.Gesture} shown on '{path}' must actually invoke the item's command");
+		}
+	}
+
+	static void CollectItemsWithGesture(NativeMenu menu, string parentPath, System.Collections.Generic.List<(string, NativeMenuItem)> result)
+	{
+		foreach (var element in menu.Items)
+		{
+			if (element is NativeMenuItemSeparator || element is not NativeMenuItem item)
+				continue;
+			var path = string.IsNullOrEmpty(parentPath) ? (item.Header ?? "<unnamed>") : $"{parentPath} > {item.Header}";
+			// Mirrors RegisterGestureKeyBindings: only items with BOTH a gesture and a command
+			// get a key binding, so a display-only gesture must not fail the assertion.
+			if (item.Gesture != null && item.Command != null)
+				result.Add((path, item));
+			if (item.Menu is { Items.Count: > 0 } sub)
+				CollectItemsWithGesture(sub, path, result);
+		}
+	}
+
 	// Avalonia's macOS NativeMenu bridge maps NativeMenuItem to NSMenuItem and sets
 	// NSMenuItem.action ONLY when Command != null. Without it, NSMenuValidation marks
 	// the item disabled (greyed out) and no click ever reaches managed code - which

@@ -76,7 +76,41 @@ public static class MainMenu
 			PromoteHelpToMacAppMenu(menu, topLevelByTag);
 		}
 
+		RegisterGestureKeyBindings(window, menu);
 		NativeMenu.SetMenu(window, menu);
+	}
+
+	// NativeMenuItem.Gesture is display-only when NativeMenuBar renders the menu inline:
+	// the managed fallback binds it to MenuItem.InputGesture, which never handles input.
+	// So each gesture is registered as a window-level KeyBinding too - that is what makes
+	// Ctrl+O / Ctrl+S / F5 actually fire on Windows and Linux. On macOS the system menu
+	// bar consumes its key equivalents before they reach the window, so these bindings
+	// stay dormant there. Runs after TranslateGesturesForMacOS so the bound gesture always
+	// matches the one the menu displays. Duplicates of the KeyBindings declared in
+	// MainWindow.axaml (e.g. Alt+Left) are harmless: KeyboardDevice stops dispatching
+	// once a binding marks the event handled, so only the first match executes.
+	static void RegisterGestureKeyBindings(Window window, NativeMenu menu)
+	{
+		foreach (var element in menu.Items)
+		{
+			if (element is NativeMenuItemSeparator || element is not NativeMenuItem item)
+				continue;
+			if (item.Gesture is { } gesture && item.Command is { } command)
+			{
+				var keyBinding = new KeyBinding {
+					Gesture = gesture,
+					Command = command,
+				};
+				// CommandParameter must track the item's property, not snapshot it: for
+				// IProvideParameterBinding commands the item's parameter is itself a binding
+				// that only resolves once the menu lives in a visual tree, so a value copied
+				// here would be null when the shortcut fires.
+				keyBinding.Bind(KeyBinding.CommandParameterProperty, item.GetObservable(NativeMenuItem.CommandParameterProperty));
+				window.KeyBindings.Add(keyBinding);
+			}
+			if (item.Menu != null)
+				RegisterGestureKeyBindings(window, item.Menu);
+		}
 	}
 
 	// macOS convention puts About / Check for Updates under the bold app-named menu
