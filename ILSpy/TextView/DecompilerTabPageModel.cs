@@ -103,6 +103,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// in the header while this is set.
 		/// </summary>
 		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(ProgressBarIsIndeterminate))]
 		private bool isDecompiling;
 
 		/// <summary>
@@ -120,7 +121,16 @@ namespace ICSharpCode.ILSpy.TextView
 		/// off so the bar becomes determinate; an in-place decompile leaves it on.
 		/// </summary>
 		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(ProgressBarIsIndeterminate))]
 		private bool progressIsIndeterminate = true;
+
+		/// <summary>
+		/// What the progress bar binds its IsIndeterminate to: indeterminate mode, but only while a
+		/// decompilation is running. The indeterminate indicator is an infinite animation, and it
+		/// keeps running - and keeps the view alive through the render clock - for as long as the
+		/// pseudo-class is set, whether the bar is visible or not.
+		/// </summary>
+		public bool ProgressBarIsIndeterminate => IsDecompiling && ProgressIsIndeterminate;
 
 		/// <summary>Total units to process (the project's file count) for the determinate bar.</summary>
 		[ObservableProperty]
