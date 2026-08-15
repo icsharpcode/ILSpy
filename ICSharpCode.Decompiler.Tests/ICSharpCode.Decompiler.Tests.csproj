@@ -18,6 +18,12 @@
 
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 
+    <!-- The suite runs dozens of allocation-heavy decompiles concurrently (2x logical CPUs NUnit
+         workers, each with WholeProjectDecompiler's own Parallel.ForEach). Workstation GC stops the
+         whole process for every gen0/gen1 collection any worker triggers; measured on a 24-thread
+         machine that was ~300 s of pause in a ~490 s run. Server GC gives each core its own heap and
+         collects in parallel. -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
     <!-- NU1902/1903 are "Package 'X' has a known security vulnerability". In our tests, we don't care. -->
     <!-- CA1416 fires because the TFM dropped its -windows suffix: Windows-only helpers (SdkUtility,
          Tester.SignAssembly/FindMSBuild/RunWithTestRunner) and Windows-only test inputs (Console.CapsLock
