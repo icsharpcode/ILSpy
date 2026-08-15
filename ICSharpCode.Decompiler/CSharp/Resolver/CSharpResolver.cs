@@ -327,14 +327,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (expression.Type.Kind == TypeKind.Dynamic)
 			{
-				if (op == UnaryOperatorType.Await)
-				{
-					return new AwaitResolveResult(SpecialType.Dynamic, new DynamicInvocationResolveResult(new DynamicMemberResolveResult(expression, "GetAwaiter"), DynamicInvocationType.Invocation, EmptyList<ResolveResult>.Instance), SpecialType.Dynamic, null, null, null);
-				}
-				else
-				{
-					return UnaryOperatorResolveResult(SpecialType.Dynamic, op, expression);
-				}
+				return UnaryOperatorResolveResult(SpecialType.Dynamic, op, expression);
 			}
 
 			// C# spec (draft-v11): §12.4.4 Unary operator overload resolution
@@ -353,51 +346,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 						return UnaryOperatorResolveResult(new PointerType(expression.Type), op, expression);
 					case UnaryOperatorType.Await:
 					{
-						ResolveResult getAwaiterMethodGroup = ResolveMemberAccess(expression, "GetAwaiter", EmptyList<IType>.Instance, NameLookupMode.InvocationTarget);
-						ResolveResult getAwaiterInvocation = ResolveInvocation(getAwaiterMethodGroup, Empty<ResolveResult>.Array, argumentNames: null, allowOptionalParameters: false);
-
-						var lookup = CreateMemberLookup();
-						IMethod getResultMethod;
-						IType awaitResultType;
-						var getResultMethodGroup = lookup.Lookup(getAwaiterInvocation, "GetResult", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
-						if (getResultMethodGroup != null)
-						{
-							var getResultOR = getResultMethodGroup.PerformOverloadResolution(compilation, Empty<ResolveResult>.Array, allowExtensionMethods: false, conversions: conversions);
-							getResultMethod = getResultOR.FoundApplicableCandidate ? getResultOR.GetBestCandidateWithSubstitutedTypeArguments() as IMethod : null;
-							awaitResultType = getResultMethod != null ? getResultMethod.ReturnType : SpecialType.UnknownType;
-						}
-						else
-						{
-							getResultMethod = null;
-							awaitResultType = SpecialType.UnknownType;
-						}
-
-						var isCompletedRR = lookup.Lookup(getAwaiterInvocation, "IsCompleted", EmptyList<IType>.Instance, false);
-						var isCompletedProperty = (isCompletedRR is MemberResolveResult ? ((MemberResolveResult)isCompletedRR).Member as IProperty : null);
-						if (isCompletedProperty != null && (!isCompletedProperty.ReturnType.IsKnownType(KnownTypeCode.Boolean) || !isCompletedProperty.CanGet))
-							isCompletedProperty = null;
-						/*
-						var interfaceOnCompleted = compilation.FindType(KnownTypeCode.INotifyCompletion).GetMethods().FirstOrDefault(x => x.Name == "OnCompleted");
-						var interfaceUnsafeOnCompleted = compilation.FindType(KnownTypeCode.ICriticalNotifyCompletion).GetMethods().FirstOrDefault(x => x.Name == "UnsafeOnCompleted");
-
-						IMethod onCompletedMethod = null;
-						var candidates = getAwaiterInvocation.Type.GetMethods().Where(x => x.ImplementedInterfaceMembers.Select(y => y.MemberDefinition).Contains(interfaceUnsafeOnCompleted)).ToList();
-						if (candidates.Count == 0) {
-							candidates = getAwaiterInvocation.Type.GetMethods().Where(x => x.ImplementedInterfaceMembers.Select(y => y.MemberDefinition).Contains(interfaceOnCompleted)).ToList();
-							if (candidates.Count == 1)
-								onCompletedMethod = candidates[0];
-						}
-						else if (candidates.Count == 1) {
-							onCompletedMethod = candidates[0];
-						}
-
-						return new AwaitResolveResult(awaitResultType, getAwaiterInvocation, getAwaiterInvocation.Type, isCompletedProperty, onCompletedMethod, getResultMethod);
-						*/
 						// Not adjusted to TS changes for interface impls
 						// But I believe this is dead code for ILSpy anyways...
 						throw new NotImplementedException();
 					}
-
 					default:
 						return ErrorResolveResult.UnknownError;
 				}
