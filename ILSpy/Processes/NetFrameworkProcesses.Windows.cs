@@ -44,20 +44,18 @@ namespace ICSharpCode.ILSpy.Processes
 
 		public static IEnumerable<RunningDotNetProcess> Enumerate(ISet<int> alreadyListed, CancellationToken cancellationToken)
 		{
-			// Every process on the machine is inspected, and reading one module list is a few
-			// hundred cross-process calls. Done one process at a time on a loaded machine that
-			// adds up to minutes, so the processes are inspected concurrently - as the CoreCLR
-			// half of the explorer already queries its runtimes.
-			return Process.GetProcesses()
-				.AsParallel()
-				.WithCancellation(cancellationToken)
-				.Select(process => {
-					using (process)
-					{
-						return alreadyListed.Contains(process.Id) ? null : TryDescribe(process);
-					}
-				})
-				.OfType<RunningDotNetProcess>();
+			foreach (var process in Process.GetProcesses())
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				using (process)
+				{
+					if (alreadyListed.Contains(process.Id))
+						continue;
+					var described = TryDescribe(process);
+					if (described != null)
+						yield return described;
+				}
+			}
 		}
 
 		static RunningDotNetProcess? TryDescribe(Process process)
