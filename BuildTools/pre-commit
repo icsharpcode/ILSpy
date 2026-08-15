@@ -28,7 +28,7 @@ esac
 DOTNET_PATH="$DOTNET_CACHE_ROOT/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
 if [ ! -d "$DOTNET_PATH" ]; then
  echo "Downloading dotnet-format $DOTNET_FORMAT_VERSION..."
- dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "$DOTNET_FORMAT_SOURCE"
+ dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION"
 fi
 
 DOTNET_FORMAT="$DOTNET_PATH/dotnet-format$EXE_SUFFIX"
@@ -36,11 +36,11 @@ DOTNET_FORMAT="$DOTNET_PATH/dotnet-format$EXE_SUFFIX"
 "$DOTNET_FORMAT" --version
 if [ "${1:-}" = "--format" ]; then
 	# called via format.bat
-	"$DOTNET_FORMAT" whitespace --no-restore --verbosity detailed ILSpy.sln
+	"$DOTNET_FORMAT" whitespace --no-restore --verbosity normal ILSpy.sln
 elif git diff --quiet --ignore-submodules; then
-	"$DOTNET_FORMAT" whitespace --no-restore --verbosity detailed ILSpy.sln
+	"$DOTNET_FORMAT" whitespace --no-restore --verbosity normal ILSpy.sln
 	git add -u -- \*\*.cs
 else
 	echo Partial commit: only verifying formatting
-	exec "$DOTNET_FORMAT" whitespace --verify-no-changes --no-restore --verbosity detailed ILSpy.sln
+	exec "$DOTNET_FORMAT" whitespace --verify-no-changes --no-restore --verbosity normal ILSpy.sln
 fi
