@@ -76,6 +76,15 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		});
 
+		// init accessors require C# 9 and the IsExternalInit marker, which .NET Framework 4.0 lacks
+		static readonly CompilerOptions[] initAccessorOptions = Tester.SupportedOnCurrentPlatform(new[]
+		{
+			CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn4_14_0,
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		});
+
 		// top-level statements require C# 9 and cannot target .NET Framework 4.0
 		static readonly CompilerOptions[] topLevelProgramOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
@@ -125,6 +134,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
 				FieldKeyword = false
 			});
+		}
+
+		[Test]
+		public async Task NoInitAccessors([ValueSource(nameof(initAccessorOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp8_0));
 		}
 
 		[Test]

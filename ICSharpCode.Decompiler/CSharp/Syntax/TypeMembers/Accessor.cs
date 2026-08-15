@@ -52,6 +52,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		public AccessorKind Kind { get; set; }
 
+		/// <summary>
+		/// True if the underlying setter is init-only. When <see cref="Kind"/> is not
+		/// <see cref="AccessorKind.Init"/>, because the output language version has no init accessors,
+		/// the accessor prints as "set" followed by an /*init*/ comment marking the difference.
+		/// Excluded from pattern matching: a pattern written for a setter has to match an init-only
+		/// setter just the same.
+		/// </summary>
+		[ExcludeFromMatch]
+		public bool IsInitOnly { get; set; }
+
 		// An accessor is printed as its keyword (get/set/init/add/remove), never an identifier, so it
 		// carries no name. The contract members are overridden to no-ops: shared decompiler code sets a
 		// name on every method-like entity (e.g. explicit interface implementations), which is irrelevant
