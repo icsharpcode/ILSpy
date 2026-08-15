@@ -356,15 +356,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Apply a list of transforms to this function.
 		/// </summary>
-		/// <remarks>
-		/// The block is verified once on entry, but deliberately not again after every single transform:
-		/// <see cref="CheckInvariant(ILPhase)"/> is O(size of the block), and the block transforms merge
-		/// statements into ever larger blocks, so a per-transform check is quadratic in the block size.
-		/// On a method whose statements all end up in one huge block that dominates the entire DEBUG
-		/// decompilation. The tree is still verified after each transform by
-		/// <see cref="StatementTransform"/> (per statement) and by
-		/// <see cref="ILFunction.RunTransforms"/> (whole function, after the enclosing IL transform).
-		/// </remarks>
 		public void RunTransforms(IEnumerable<IBlockTransform> transforms, BlockTransformContext context)
 		{
 			this.CheckInvariant(ILPhase.Normal);
@@ -374,6 +365,7 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(context.IndexOfFirstAlreadyTransformedInstruction <= this.Instructions.Count);
 				context.StepStartGroup(transform.GetType().Name);
 				transform.Run(this, context);
+				this.CheckInvariant(ILPhase.Normal);
 				context.StepEndGroup();
 			}
 		}
