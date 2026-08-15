@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </remarks>
 	public sealed class CSharpConversions
 	{
-		readonly ConcurrentDictionary<TypePair, Conversion> implicitConversionCache = new ConcurrentDictionary<TypePair, Conversion>();
+		readonly ConcurrentDictionary<(IType fromType, IType toType), Conversion> implicitConversionCache = new ConcurrentDictionary<(IType, IType), Conversion>();
 		readonly ICompilation compilation;
 
 		public CSharpConversions(ICompilation compilation)
@@ -63,39 +63,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			return operators;
 		}
-
-		#region TypePair (for caching)
-		struct TypePair : IEquatable<TypePair>
-		{
-			public readonly IType FromType;
-			public readonly IType ToType;
-
-			public TypePair(IType fromType, IType toType)
-			{
-				Debug.Assert(fromType != null && toType != null);
-				this.FromType = fromType;
-				this.ToType = toType;
-			}
-
-			public override bool Equals(object obj)
-			{
-				return (obj is TypePair) && Equals((TypePair)obj);
-			}
-
-			public bool Equals(TypePair other)
-			{
-				return object.Equals(this.FromType, other.FromType) && object.Equals(this.ToType, other.ToType);
-			}
-
-			public override int GetHashCode()
-			{
-				unchecked
-				{
-					return 1000000007 * FromType.GetHashCode() + 1000000009 * ToType.GetHashCode();
-				}
-			}
-		}
-		#endregion
 
 		#region ImplicitConversion
 		private Conversion ImplicitConversion(ResolveResult resolveResult, IType toType, bool allowUserDefined, bool allowTuple)
@@ -188,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (toType == null)
 				throw new ArgumentNullException(nameof(toType));
 
-			TypePair pair = new TypePair(fromType, toType);
+			var pair = (fromType, toType);
 			if (implicitConversionCache.TryGetValue(pair, out Conversion c))
 				return c;
 
