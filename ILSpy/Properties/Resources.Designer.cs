@@ -1362,6 +1362,24 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;params&apos; and optional parameters in lambdas.
+        /// </summary>
+        public static string DecompilerSettings_LambdaOptionalAndParamsParameters {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.LambdaOptionalAndParamsParameters", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Use C# 13 method group natural type improvements.
+        /// </summary>
+        public static string DecompilerSettings_MethodGroupNaturalTypeImprovements {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.MethodGroupNaturalTypeImprovements", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Use nint/nuint types.
         /// </summary>
         public static string DecompilerSettings_NativeIntegers {
@@ -1370,6 +1388,15 @@ namespace ICSharpCode.ILSpy.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Use natural delegate types for lambdas and method groups.
+        /// </summary>
+        public static string DecompilerSettings_NaturalTypeForLambdaAndMethodGroup {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.NaturalTypeForLambdaAndMethodGroup", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Nullable reference types.
         /// </summary>

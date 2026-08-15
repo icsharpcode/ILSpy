@@ -14,9 +14,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 
 		public Action<object> UsedParameterWithInvalidName()
 		{
-			return (object value) => {
-				Console.WriteLine(value);
-			};
+			return (object value) => Console.WriteLine(value);
 		}
 	}
 }

@@ -129,9 +129,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 					{
 						amount = 0;
 					}
-					DoAction(() => {
-						NoOp(amount);
-					});
+					DoAction(() => NoOp(amount));
 				});
 			}
 
@@ -143,19 +141,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 					{
 						amount = 0;
 					}
-					DoAction(() => {
-						NoOp(amount);
-					});
+					DoAction(() => NoOp(amount));
 				});
 			}
 
 			public void Bug951c(SomeData data)
 			{
-				DoAction(() => {
-					DoAction(() => {
-						DoSomething(data.Value);
-					});
-				});
+				DoAction(() => DoAction(() => DoSomething(data.Value)));
 			}
 
 			public Func<int, int> Issue2143()
@@ -371,9 +363,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 
 		public static Action StaticAnonymousMethodNoClosure()
 		{
-			return () => {
-				Console.WriteLine();
-			};
+			return () => Console.WriteLine();
 		}
 
 		public static void NameConflict()
@@ -404,9 +394,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 			List<Action<int>> list = new List<Action<int>>();
 			for (int i = 0; i < 10; i++)
 			{
-				list.Add((int k) => {
-					Console.WriteLine(k);
-				});
+				list.Add((int k) => Console.WriteLine(k));
 			}
 		}
 
@@ -585,15 +573,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 
 		public static Action<int> StatementLambdaWithAttribute1()
 		{
-			return [return: My] (int x) => {
-				Console.WriteLine(x);
-			};
+			return [return: My] (int x) => Console.WriteLine(x);
 		}
 		public static Action<int> StatementLambdaWithAttribute2()
 		{
-			return ([My] int x) => {
-				Console.WriteLine(x);
-			};
+			return ([My] int x) => Console.WriteLine(x);
+		}
+
+		public static int LambdaWithAttributeOnAnonymousTypeParameter()
+		{
+			return new[] {
+				new {
+					X = 1
+				}
+			}.Select([My] (a) => a.X).Sum();
 		}
 #endif
 

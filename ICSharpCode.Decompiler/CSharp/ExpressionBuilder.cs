@@ -2545,6 +2545,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
+			if (delegateType.IsAnonymousDelegate()
+				&& delegateType.GetDelegateInvokeMethod()?.Parameters is { } invokeParameters
+				&& invokeParameters.Count == ame.Parameters.Count)
+			{
+				// A compiler-synthesized delegate type exists only because the lambda declared
+				// 'params' or a parameter default value, and the lambda's own declaration is the
+				// only way to spell that type. Roslyn 4.14 does not put a ParamArrayAttribute on
+				// the lambda's method, so take both from the delegate's Invoke method, which
+				// always carries them. Named delegate types are left alone: there the lambda's
+				// own metadata decides, and a plain parameter list is valid either way.
+				int parameterIndex = 0;
+				foreach (var pd in ame.Parameters)
+				{
+					var invokeParameter = invokeParameters[parameterIndex++];
+					pd.IsParams |= invokeParameter.IsParams;
+					if (pd.DefaultExpression is null
+						&& astBuilder.ConvertParameter(invokeParameter).DefaultExpression is { } defaultValue)
+					{
+						defaultValue.Detach();
+						pd.DefaultExpression = defaultValue;
+					}
+				}
+			}
 			var builder = new StatementBuilder(
 				typeSystem,
 				this.decompilationContext,
@@ -2589,7 +2612,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				let v = ident.GetILVariable()
 				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
 				select ident).Any();
-
+			bool isAnonymousDelegate = settings.NaturalTypeForLambdaAndMethodGroup && delegateType.IsAnonymousDelegate();
+			if (!settings.LambdaOptionalAndParamsParameters || ame.Parameters.Any(p => p.Type is null))
+			{
+				// 'params' and parameter default values are only legal on the explicitly typed
+				// parameter list of a lambda, and only since C# 12. There is no other spelling:
+				// [ParamArray] cannot be written explicitly in any language version, and attributes
+				// on lambda parameters need C# 10. Drop them; the delegate's Invoke method still
+				// carries them at every call site.
+				foreach (var p in ame.Parameters)
+				{
+					p.IsParams = false;
+					p.DefaultExpression = null;
+				}
+			}
 			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type is null))
 			{
@@ -2599,6 +2635,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			else if (attributeSections.Count > 0 || ame.Parameters.Any(p => p.Attributes.Any()))
 			{
 				// C# 10 lambdas can have attributes, but anonymous methods cannot
+				isLambda = true;
+			}
+			else if (isAnonymousDelegate)
+			{
+				// An anonymous delegate type cannot be named, so the site can only be typed via
+				// the anonymous function's natural type, which needs lambda syntax: the
+				// parameterless 'delegate {}' form has no natural type, and 'delegate' syntax
+				// cannot declare a return type when the body's type differs from the delegate's.
+				// This outranks the rendering preferences below - they may drop the parameter
+				// list, which would take the natural type with it.
+				isLambda = true;
+			}
+			else if (ame.Parameters.Any(p => p.IsParams || p.DefaultExpression is not null))
+			{
+				// 'params' and parameter default values cannot be declared on an anonymous method
+				// in any language version; only the lambda form is legal.
 				isLambda = true;
 			}
 			else if (settings.UseLambdaSyntax && ame.Parameters.All(p => p.ParameterModifier == ReferenceKind.None && !p.IsParams)
@@ -2620,6 +2672,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Expression replacement;
 			IType inferredReturnType;
+			// The return type C# would re-infer from the emitted anonymous function; only equal to
+			// inferredReturnType for bodies whose value is not discarded.
+			IType naturalReturnType;
 			if (isLambda)
 			{
 				LambdaExpression lambda = new LambdaExpression();
@@ -2631,11 +2686,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					lambda.Body = returnStmt.Expression.Detach();
 					inferredReturnType = lambda.Body!.GetResolveResult().Type;
+					naturalReturnType = inferredReturnType;
+				}
+				else if (body.Statements.Count == 1 && body.Statements.Single() is ExpressionStatement exprStmt
+					&& !NeedsDeclarationInBody(function, exprStmt)
+					&& (isAnonymousDelegate || exprStmt.Expression.GetResolveResult().Type.Kind == TypeKind.Void))
+				{
+					// A single statement-expression can be the expression body of a void-returning
+					// lambda; its value (if any) is discarded, so the return type stays void.
+					// Discarding a value is only safe where the void-ness survives into the output:
+					// C# reads the expression's type as the lambda's return type, which picks a
+					// different natural type and a different overload. An anonymous delegate spells
+					// the return type out below; everywhere else the block body, which has no return
+					// statement, is what says the value is dropped.
+					lambda.Body = exprStmt.Expression.Detach();
+					inferredReturnType = compilation.FindType(KnownTypeCode.Void);
+					naturalReturnType = lambda.Body!.GetResolveResult().Type;
 				}
 				else
 				{
 					lambda.Body = body;
 					inferredReturnType = InferReturnType(body);
+					naturalReturnType = inferredReturnType;
 				}
 				replacement = lambda;
 			}
@@ -2643,11 +2715,31 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				ame.Body = body;
 				inferredReturnType = InferReturnType(body);
+				naturalReturnType = inferredReturnType;
 				replacement = ame;
 			}
 			if (ame.IsAsync)
 			{
 				inferredReturnType = GetTaskType(inferredReturnType);
+				naturalReturnType = GetTaskType(naturalReturnType);
+			}
+			if (isAnonymousDelegate && replacement is LambdaExpression lambdaExpression)
+			{
+				// The natural type's return type is inferred from the body; when that differs
+				// from the delegate's return type, only a C# 10 explicit return type reproduces
+				// the delegate's shape. 'ref readonly' is not part of the type, so it always
+				// needs the explicit return type, even where the types themselves agree.
+				IMethod? invokeMethod = delegateType.GetDelegateInvokeMethod();
+				if (invokeMethod is not null
+					&& (invokeMethod.ReturnTypeIsRefReadOnly
+						|| !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(invokeMethod.ReturnType, naturalReturnType)))
+				{
+					lambdaExpression.ReturnType = ConvertType(invokeMethod.ReturnType);
+					if (invokeMethod.ReturnTypeIsRefReadOnly && lambdaExpression.ReturnType is ComposedType composedType && composedType.HasRefSpecifier)
+					{
+						composedType.HasReadOnlySpecifier = true;
+					}
+				}
 			}
 
 			var rr = new DecompiledLambdaResolveResult(
@@ -2656,6 +2748,26 @@ namespace ICSharpCode.Decompiler.CSharp
 				isAnonymousMethod: !isLambda,
 				isImplicitlyTyped: ame.Parameters.Any(p => p.Type is null));
 
+			if (isAnonymousDelegate)
+			{
+				// An anonymous delegate type cannot be named, so no cast to it can be written.
+				// Carrying the conversion on the anonymous function itself keeps the site typed
+				// as the delegate, which converts on to any base type of it without a cast.
+				return replacement.WithILInstruction(function)
+					.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
+			}
+			// An expression tree is written as a lambda, so its natural type is decided by the
+			// delegate the Expression<> wraps.
+			IType functionType = function.Kind == ILFunctionKind.ExpressionTree && delegateType.TypeArguments.Count == 1
+				? delegateType.TypeArguments[0]
+				: delegateType;
+			if (settings.NaturalTypeForLambdaAndMethodGroup && HasNaturalType(replacement, functionType, naturalReturnType, isLambda))
+			{
+				// A target type that only needs the function type - System.Delegate and the other
+				// base types of MulticastDelegate, or Expression/LambdaExpression for an expression
+				// tree - can be written without the cast, since C# re-infers the same type.
+				replacement.AddAnnotation(new NaturalTypeAnnotation(delegateType));
+			}
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
 				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
@@ -2700,6 +2812,70 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 				}
 			}
+		}
+
+		/// <summary>
+		/// Whether the statement uses a variable that DeclareVariables may still have to declare,
+		/// which only a block body can host. Collapsing such a body to an expression pushes the
+		/// declaration inside the lambda when the block is rebuilt for it - turning a captured
+		/// variable into per-invocation state, which no longer round-trips.
+		/// </summary>
+		static bool NeedsDeclarationInBody(ILFunction function, ExpressionStatement statement)
+		{
+			// A deconstruction assignment produces the tuple it assigned from. Compiled as an
+			// expression body its value is discarded differently than in a block, and the IL that
+			// comes back no longer looks like one statement - so the shape would flip on every
+			// round trip. Keep the block, which is stable.
+			if (statement.Expression is AssignmentExpression { Left: TupleExpression })
+				return true;
+			foreach (var identifier in statement.DescendantsAndSelf.OfType<IdentifierExpression>())
+			{
+				if (identifier.GetResolveResult() is not ILVariableResolveResult { Variable: var variable })
+					continue;
+				// Parameters and this-references are never declared.
+				if (variable.Kind is not (VariableKind.Local or VariableKind.StackSlot))
+					continue;
+				// Not closure state: a declaration inside the lambda is correct.
+				if (variable.CaptureScope is null)
+					continue;
+				// Read (or written) elsewhere too, so the declaration lands in the shared scope
+				// no matter what this body looks like, and collapsing is safe.
+				if (!AllUsesAreInside(variable, function))
+					continue;
+				return true;
+			}
+			return false;
+
+			static bool AllUsesAreInside(ILVariable variable, ILFunction function)
+			{
+				foreach (var use in variable.LoadInstructions.Cast<ILInstruction>()
+					.Concat(variable.StoreInstructions.Cast<ILInstruction>())
+					.Concat(variable.AddressInstructions))
+				{
+					if (use.Ancestors.OfType<ILFunction>().FirstOrDefault() != function)
+						return false;
+				}
+				return true;
+			}
+		}
+
+		/// <summary>
+		/// Determines whether C# re-infers <paramref name="functionType"/> from the emitted
+		/// anonymous function alone. Only a lambda with an explicitly typed parameter list has a
+		/// natural type, and the only delegate types ever inferred are Action and Func.
+		/// </summary>
+		bool HasNaturalType(Expression anonymousFunction, IType functionType, IType naturalReturnType, bool isLambda)
+		{
+			if (!isLambda || anonymousFunction is not LambdaExpression lambda)
+				return false;
+			if (lambda.Parameters.Any(p => p.Type is null))
+				return false;
+			IMethod? invoke = functionType.GetDelegateInvokeMethod();
+			if (invoke == null || !MethodGroupNaturalType.IsInferrableDelegateType(functionType, invoke))
+				return false;
+			// Without an explicit return type, the body has to re-infer the delegate's.
+			return lambda.ReturnType is not null
+				|| NormalizeTypeVisitor.TypeErasure.EquivalentTypes(invoke.ReturnType, naturalReturnType);
 		}
 
 		protected internal override TranslatedExpression VisitILFunction(ILFunction function, TranslationContext context)

@@ -917,12 +917,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		{
 			Data data = new Data();
 #if NET50
-			data.TestEvent += (object? obj, EventArgs e) => {
+			data.TestEvent += (object? obj, EventArgs e) => Console.WriteLine();
 #else
-			data.TestEvent += (object obj, EventArgs e) => {
+			data.TestEvent += (object obj, EventArgs e) => Console.WriteLine();
 #endif
-				Console.WriteLine();
-			};
 			X(Y(), data);
 		}
 

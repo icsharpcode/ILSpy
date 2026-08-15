@@ -176,6 +176,13 @@ namespace ICSharpCode.Decompiler
 		public partial bool FileScopedNamespaces { get; set; }
 
 		/// <summary>
+		/// Use C# 10 natural types for delegates and lambdas.
+		/// </summary>
+		[Description("DecompilerSettings.NaturalTypeForLambdaAndMethodGroup")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp10_0)]
+		public partial bool NaturalTypeForLambdaAndMethodGroup { get; set; }
+
+		/// <summary>
 		/// Decompile anonymous methods/lambdas.
 		/// </summary>
 		[Description("DecompilerSettings.DecompileAnonymousMethodsLambdas")]
@@ -338,6 +345,14 @@ namespace ICSharpCode.Decompiler
 		[Description("DecompilerSettings.DecompileParamsCollections")]
 		[DecompilerSetting(CSharp.LanguageVersion.CSharp13_0)]
 		public partial bool ParamsCollections { get; set; }
+
+		/// <summary>
+		/// Use the C# 13 method group natural type improvements: candidates are pruned
+		/// scope-by-scope before the natural type is determined.
+		/// </summary>
+		[Description("DecompilerSettings.MethodGroupNaturalTypeImprovements")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp13_0)]
+		public partial bool MethodGroupNaturalTypeImprovements { get; set; }
 
 		/// <summary>
 		/// Decompile lock statements.
@@ -839,6 +854,14 @@ namespace ICSharpCode.Decompiler
 		[Description("DecompilerSettings.InlineArrays")]
 		[DecompilerSetting(CSharp.LanguageVersion.CSharp12_0)]
 		public partial bool InlineArrays { get; set; }
+
+		/// <summary>
+		/// Gets/sets whether lambda parameter lists may declare 'params' and parameter default
+		/// values. When disabled, these modifiers are dropped from anonymous functions instead.
+		/// </summary>
+		[Description("DecompilerSettings.LambdaOptionalAndParamsParameters")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp12_0)]
+		public partial bool LambdaOptionalAndParamsParameters { get; set; }
 
 		/// <summary>
 		/// Gets/Sets whether C# 14.0 extension members should be transformed.

@@ -96,6 +96,34 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
+		/// <summary>
+		/// The C# compiler names a synthesized delegate type &lt;&gt;A when it returns void and
+		/// &lt;&gt;F otherwise, followed by a bit pattern of the by-reference parameters, but only
+		/// when there are any: a signature that needs a synthesized type solely because it has
+		/// more than 16 parameters is passed entirely by value and carries no suffix. Signatures
+		/// with default values or params arrays get a &lt;&gt;f__AnonymousDelegateN name instead.
+		/// </summary>
+		internal static bool IsAnonymousDelegateName(string name)
+		{
+			return name.Contains("AnonymousDelegate")
+				|| name.StartsWith("<>A", StringComparison.Ordinal)
+				|| name.StartsWith("<>F", StringComparison.Ordinal);
+		}
+
+		public static bool IsAnonymousDelegate(this IType type)
+		{
+			if (type == null)
+				return false;
+			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName()
+				&& type.Kind == TypeKind.Delegate
+				&& IsAnonymousDelegateName(type.Name))
+			{
+				ITypeDefinition td = type.GetDefinition();
+				return td != null && td.IsCompilerGenerated();
+			}
+			return false;
+		}
+
 		public static bool ContainsAnonymousType(this IType type)
 		{
 			var visitor = new ContainsAnonTypeVisitor();
@@ -103,14 +131,31 @@ namespace ICSharpCode.Decompiler
 			return visitor.ContainsAnonType;
 		}
 
+		public static bool ContainsAnonymousDelegate(this IType type)
+		{
+			var visitor = new ContainsAnonTypeVisitor();
+			type.AcceptVisitor(visitor);
+			return visitor.ContainsAnonDelegate;
+		}
+
+		public static bool ContainsAnonymousTypeOrDelegate(this IType type)
+		{
+			var visitor = new ContainsAnonTypeVisitor();
+			type.AcceptVisitor(visitor);
+			return visitor.ContainsAnonType || visitor.ContainsAnonDelegate;
+		}
+
 		class ContainsAnonTypeVisitor : TypeVisitor
 		{
 			public bool ContainsAnonType;
+			public bool ContainsAnonDelegate;
 
 			public override IType VisitOtherType(IType type)
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
+				if (IsAnonymousDelegate(type))
+					ContainsAnonDelegate = true;
 				return base.VisitOtherType(type);
 			}
 
@@ -118,6 +163,8 @@ namespace ICSharpCode.Decompiler
 			{
 				if (IsAnonymousType(type))
 					ContainsAnonType = true;
+				if (IsAnonymousDelegate(type))
+					ContainsAnonDelegate = true;
 				return base.VisitTypeDefinition(type);
 			}
 		}

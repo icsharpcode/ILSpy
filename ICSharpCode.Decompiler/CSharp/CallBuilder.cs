@@ -1987,16 +1987,19 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal ExpressionWithResolveResult BuildMethodReference(IMethod method, bool isVirtual)
 		{
-			var expr = BuildDelegateReference(method, invokeMethod: null, new ExpectedTargetDetails { CallOpCode = isVirtual ? OpCode.CallVirt : OpCode.Call }, thisArg: null);
+			var expr = BuildDelegateReference(method, invokeMethod: null, new ExpectedTargetDetails { CallOpCode = isVirtual ? OpCode.CallVirt : OpCode.Call }, thisArg: null, out _, out _);
 			expr.Expression.RemoveAnnotations<ResolveResult>();
 			return expr.Expression.WithRR(new MemberResolveResult(null, method));
 		}
 
-		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod? invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg)
+		ExpressionWithResolveResult BuildDelegateReference(IMethod method, IMethod? invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg,
+			out ResolveResult? targetResolveResult, out IReadOnlyList<IType> spelledTypeArguments, bool forceTypeArguments = false)
 		{
 			ExpressionBuilder expressionBuilder = this.expressionBuilder;
 			ExpressionWithResolveResult targetExpression;
-			(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) = DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
+			(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) = DisambiguateDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg, forceTypeArguments);
+			targetResolveResult = target.Expression != null ? target.ResolveResult : null;
+			spelledTypeArguments = addTypeArguments ? method.TypeArguments : EmptyList<IType>.Instance;
 			if (target.Expression != null)
 			{
 				var mre = new MemberReferenceExpression(target, methodName);
@@ -2019,8 +2022,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		}
 
-		(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) DisambiguateDelegateReference(IMethod method, IMethod? invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg)
+		(TranslatedExpression target, bool addTypeArguments, string methodName, ResolveResult result) DisambiguateDelegateReference(IMethod method, IMethod? invokeMethod, ExpectedTargetDetails expectedTargetDetails, ILInstruction? thisArg, bool forceTypeArguments = false)
 		{
+			forceTypeArguments &= method.TypeArguments.Count > 0;
 			if (method.IsLocalFunction)
 			{
 				ILFunction? localFunction = expressionBuilder.ResolveLocalFunction(method);
@@ -2038,10 +2042,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				TranslatedExpression target = expressionBuilder.Translate(thisArg!, targetType);
 				var currentTarget = target;
 				bool targetCasted = false;
-				bool addTypeArguments = false;
+				bool addTypeArguments = forceTypeArguments;
 				// Initial inputs for IsUnambiguousMethodReference:
 				ResolveResult targetResolveResult = target.ResolveResult;
-				IReadOnlyList<IType> typeArguments = EmptyList<IType>.Instance;
+				IReadOnlyList<IType> typeArguments = forceTypeArguments ? method.TypeArguments : EmptyList<IType>.Instance;
 				if (thisArg!.MatchLdNull())
 				{
 					targetCasted = true;
@@ -2101,10 +2105,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				TranslatedExpression currentTarget = targetAdded ? target : default;
 				// Remember other decisions:
 				bool targetCasted = false;
-				bool addTypeArguments = false;
+				bool addTypeArguments = forceTypeArguments;
 				// Initial inputs for IsUnambiguousMethodReference:
 				ResolveResult? targetResolveResult = targetAdded ? target.ResolveResult : null;
-				IReadOnlyList<IType> typeArguments = EmptyList<IType>.Instance;
+				IReadOnlyList<IType> typeArguments = forceTypeArguments ? method.TypeArguments : EmptyList<IType>.Instance;
 				// Find somewhat minimal solution:
 				ResolveResult? result;
 				while (!IsUnambiguousMethodReference(expectedTargetDetails, method, targetResolveResult, typeArguments, false, out result))
@@ -2145,13 +2149,55 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression HandleDelegateConstruction(IType delegateType, IMethod method, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg, ILInstruction inst)
 		{
 			var invokeMethod = delegateType.GetDelegateInvokeMethod();
-			var targetExpression = BuildDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
+			bool naturalTypes = settings.NaturalTypeForLambdaAndMethodGroup;
+			bool isAnonymousDelegate = delegateType.IsAnonymousDelegate();
+			// An anonymous delegate type cannot be named, so the site is emitted as a natural-typed
+			// method group ('var f = M;'). Without a target type there is nothing to re-infer generic
+			// type arguments from, so a generic method group must spell them explicitly.
+			var targetExpression = BuildDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg,
+				out var targetResolveResult, out var spelledTypeArguments,
+				forceTypeArguments: naturalTypes && isAnonymousDelegate);
+			if (naturalTypes && !isAnonymousDelegate && !method.IsLocalFunction)
+			{
+				bool scopeByScope = settings.MethodGroupNaturalTypeImprovements;
+				bool matches = MethodGroupNaturalType.Matches(resolver, targetResolveResult, method,
+					spelledTypeArguments, delegateType, scopeByScope);
+				if (!matches && method.TypeArguments.Count > 0 && spelledTypeArguments.Count == 0
+					&& !method.TypeArguments.Any(a => a.ContainsAnonymousType()))
+				{
+					// A generic method group only has a natural type when its type arguments are
+					// spelled; the minimal reference omits them when the target method is already
+					// unambiguous, so retry with them forced.
+					var forced = BuildDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg,
+						out targetResolveResult, out spelledTypeArguments, forceTypeArguments: true);
+					if (MethodGroupNaturalType.Matches(resolver, targetResolveResult, method,
+						spelledTypeArguments, delegateType, scopeByScope))
+					{
+						targetExpression = forced;
+						matches = true;
+					}
+				}
+				if (matches)
+				{
+					targetExpression.Expression.AddAnnotation(new NaturalTypeAnnotation(delegateType));
+				}
+			}
+			var conversion = new ConversionResolveResult(
+				delegateType,
+				targetExpression.ResolveResult,
+				Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, false));
+			if (naturalTypes && isAnonymousDelegate)
+			{
+				// An anonymous delegate type cannot be named, so the delegate creation cannot be
+				// spelled either. The method group's natural type carries the conversion, which is
+				// permitted wherever the target is the delegate type itself or a base type of it.
+				var methodGroup = targetExpression.Expression;
+				methodGroup.RemoveAnnotations<ResolveResult>();
+				return methodGroup.WithILInstruction(inst).WithRR(conversion);
+			}
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(delegateType), targetExpression)
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(
-					delegateType,
-					targetExpression.ResolveResult,
-					Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, false)));
+				.WithRR(conversion);
 			return oce;
 		}
 

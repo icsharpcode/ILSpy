@@ -507,7 +507,11 @@ namespace LocalFunctions
 
 		private void LocalFunctionHidingMethod()
 		{
+#if CS100
+			var action = this.Name;
+#else
 			Action action = this.Name;
+#endif
 			Name();
 			action();
 

@@ -28,9 +28,7 @@ internal class VariableScopeTest
 		{
 			int preservedName = num;
 			num++;
-			AddAction(item2, (object x) => {
-				SetValue(x, preservedName);
-			});
+			AddAction(item2, (object x) => SetValue(x, preservedName));
 		}
 	}
 
