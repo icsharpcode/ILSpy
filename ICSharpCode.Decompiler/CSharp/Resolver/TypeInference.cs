@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
@@ -242,8 +243,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// Exact bounds need to stored separately, not just as Lower+Upper bounds,
 				// due to TypeInferenceTests.GenericArgumentImplicitlyConvertibleToAndFromAnotherTypeList (see #281)
 				if (ExactBound == null)
+				{
 					ExactBound = type;
-				else if (!ExactBound.Equals(type))
+					return;
+				}
+				if (ExactBound.Equals(type))
+					return;
+				// Two exact bounds that differ only in tuple element names are not conflicting;
+				// their names are merged instead (kept where both agree, dropped otherwise).
+				IType merged = MergeTupleNames(ExactBound, type);
+				if (merged != null)
+					ExactBound = merged;
+				else
 					MultipleDifferentExactBounds = true;
 			}
 
@@ -968,8 +979,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Debug.Assert(!tp.IsFixed);
 			if (tp.ExactBound != null)
 			{
-				// the exact bound will always be the result
-				tp.FixedTo = tp.ExactBound;
+				// Roslyn behavior (not in the C# standard): when a lower/upper bound has the
+				// same shape as the exact bound except for tuple element names, the names are
+				// merged - kept where both sides agree, dropped where they conflict. See
+				// MergeTupleNames in Roslyn's MethodTypeInference.cs.
+				IType fixedTo = tp.ExactBound;
+				foreach (var b in tp.LowerBounds.Concat(tp.UpperBounds))
+					fixedTo = MergeTupleNames(fixedTo, b) ?? fixedTo;
+				// the exact bound determines the result, up to the merged element names
+				tp.FixedTo = fixedTo;
 				// check validity
 				if (tp.MultipleDifferentExactBounds)
 					return false;
@@ -977,7 +995,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					&& tp.UpperBounds.All(b => conversions.ImplicitConversion(tp.FixedTo, b).IsValid);
 			}
 			Log.Indent();
-			var types = CreateNestedInstance().FindTypesInBounds(tp.LowerBounds.ToArray(), tp.UpperBounds.ToArray());
+			// Same Roslyn-style merge, over lower and upper bounds together as Roslyn's Fix does,
+			// so bounds that differ only in tuple element names don't survive into
+			// FindTypesInBounds as distinct candidates.
+			var (lowerBounds, upperBounds) = MergeShapeEquivalentBounds(tp.LowerBounds, tp.UpperBounds);
+			var types = CreateNestedInstance().FindTypesInBounds(lowerBounds, upperBounds);
 			Log.Unindent();
 			if (algorithm == TypeInferenceAlgorithm.ImprovedReturnAllResults)
 			{
@@ -991,6 +1013,112 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				Log.WriteLine("  T was fixed " + (types.Count == 1 ? "successfully" : "(with errors)") + " to " + tp.FixedTo);
 				return types.Count == 1;
 			}
+		}
+
+		/// <summary>
+		/// Merges the tuple element names of two types that are equal apart from those names:
+		/// a name is kept where both sides agree and dropped where they conflict. Returns
+		/// <c>null</c> if the types differ in anything else.
+		/// </summary>
+		static IType MergeTupleNames(IType a, IType b)
+		{
+			if (a.Equals(b))
+				return a;
+			// Roslyn merges differing nullability based on the variance of the position; this
+			// implementation does not track that, so differently annotated types are left alone.
+			if (a.Nullability != b.Nullability)
+				return null;
+			if (a is NullabilityAnnotatedType na && b is NullabilityAnnotatedType nb)
+			{
+				return MergeTupleNames(na.TypeWithoutAnnotation, nb.TypeWithoutAnnotation)
+					?.ChangeNullability(a.Nullability);
+			}
+			if (a is TupleType ta && b is TupleType tb
+				&& ta.ElementTypes.Length == tb.ElementTypes.Length)
+			{
+				var mergedElements = ImmutableArray.CreateBuilder<IType>(ta.ElementTypes.Length);
+				for (int i = 0; i < ta.ElementTypes.Length; i++)
+				{
+					var merged = MergeTupleNames(ta.ElementTypes[i], tb.ElementTypes[i]);
+					if (merged == null)
+						return null;
+					mergedElements.Add(merged);
+				}
+				var mergedNames = ImmutableArray.CreateBuilder<string>(ta.ElementNames.Length);
+				for (int i = 0; i < ta.ElementNames.Length; i++)
+				{
+					mergedNames.Add(ta.ElementNames[i] == tb.ElementNames[i] ? ta.ElementNames[i] : null);
+				}
+				return new TupleType(ta.Compilation, mergedElements.MoveToImmutable(), mergedNames.MoveToImmutable(),
+					ta.GetDefinition()?.ParentModule);
+			}
+			if (a is ParameterizedType pa && b is ParameterizedType pb
+				&& pa.GenericType.Equals(pb.GenericType)
+				&& pa.TypeArguments.Count == pb.TypeArguments.Count)
+			{
+				var mergedArgs = new IType[pa.TypeArguments.Count];
+				for (int i = 0; i < pa.TypeArguments.Count; i++)
+				{
+					var merged = MergeTupleNames(pa.TypeArguments[i], pb.TypeArguments[i]);
+					if (merged == null)
+						return null;
+					mergedArgs[i] = merged;
+				}
+				return new ParameterizedType(pa.GenericType, mergedArgs);
+			}
+			if (a is ArrayType arrA && b is ArrayType arrB && arrA.Dimensions == arrB.Dimensions)
+			{
+				var mergedElem = MergeTupleNames(arrA.ElementType, arrB.ElementType);
+				if (mergedElem == null)
+					return null;
+				return new ArrayType(arrA.Compilation, mergedElem, arrA.Dimensions, arrA.Nullability);
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Collapses bounds that are equal modulo tuple element names (possibly nested) into a
+		/// single merged type via <see cref="MergeTupleNames"/>, across both bound sets. Bounds
+		/// without a shape-equivalent partner are returned as-is.
+		/// </summary>
+		static (IReadOnlyList<IType> LowerBounds, IReadOnlyList<IType> UpperBounds) MergeShapeEquivalentBounds(
+			IReadOnlyCollection<IType> lowerBounds, IReadOnlyCollection<IType> upperBounds)
+		{
+			if (lowerBounds.Count + upperBounds.Count < 2)
+				return (lowerBounds.ToArray(), upperBounds.ToArray());
+			var mergedBounds = new List<IType>();
+			bool anyNamesMerged = false;
+			foreach (var bound in lowerBounds.Concat(upperBounds))
+			{
+				bool absorbed = false;
+				for (int i = 0; i < mergedBounds.Count && !absorbed; i++)
+				{
+					IType merged = MergeTupleNames(mergedBounds[i], bound);
+					if (merged != null)
+					{
+						// Bounds that are already equal merge to the existing entry itself;
+						// only a new type means element names were actually merged.
+						anyNamesMerged |= !ReferenceEquals(merged, mergedBounds[i]);
+						mergedBounds[i] = merged;
+						absorbed = true;
+					}
+				}
+				if (!absorbed)
+					mergedBounds.Add(bound);
+			}
+			if (!anyNamesMerged)
+				return (lowerBounds.ToArray(), upperBounds.ToArray());
+			return (MapToMergedBounds(lowerBounds, mergedBounds), MapToMergedBounds(upperBounds, mergedBounds));
+		}
+
+		/// <summary>
+		/// Replaces each bound with the entry of <paramref name="mergedBounds"/> it was merged into.
+		/// Merging only changes element names, never the shape, so every bound is still
+		/// shape-equivalent to exactly one of those entries.
+		/// </summary>
+		static IType[] MapToMergedBounds(IEnumerable<IType> bounds, List<IType> mergedBounds)
+		{
+			return bounds.Select(b => mergedBounds.First(m => MergeTupleNames(m, b) != null)).Distinct().ToArray();
 		}
 		#endregion
 
