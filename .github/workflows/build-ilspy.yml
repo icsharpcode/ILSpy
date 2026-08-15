@@ -97,6 +97,11 @@ jobs:
     - name: Format check
       run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
 
+    - name: Start diagnostics sampler (temporary)
+      run: |
+        New-Item -ItemType Directory -Force test-results/${{ matrix.configuration }} | Out-Null
+        Start-Process pwsh -WindowStyle Hidden -ArgumentList '-NoProfile', '-File', 'BuildTools/ci-diag-sampler.ps1', '-OutFile', "$PWD/test-results/${{ matrix.configuration }}/diag.log"
+
     - name: Execute unit tests
       id: unit-tests
       # All test hosts of the solution run concurrently on a 4-core runner. Server GC (enabled by
@@ -117,7 +122,7 @@ jobs:
       if: success() || failure()
       with:
         name: test-results-${{ matrix.configuration }}
-        path: 'test-results/${{ matrix.configuration }}/*.trx'
+        path: 'test-results/${{ matrix.configuration }}/*'
 
     - name: Upload TestCases on test failure
       uses: actions/upload-artifact@v7
