@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -196,6 +196,9 @@
     <None Include="TestCases\ILPretty\CS1xSwitch_Release.cs" />
     <Compile Remove="TestCases\ILPretty\CallIndirect.cs" />
     <None Include="TestCases\ILPretty\CallIndirect.cs" />
+    <Compile Remove="TestCases\ILPretty\InstanceOperatorCall.cs" />
+    <None Include="TestCases\ILPretty\InstanceOperatorCall.cs" />
+    <None Include="TestCases\ILPretty\InstanceOperatorCall.il" />
     <Compile Remove="TestCases\ILPretty\EmptyBodies.cs" />
     <None Include="TestCases\ILPretty\EmptyBodies.cs" />
     <Compile Remove="TestCases\ILPretty\TruncatedAccessorBody.cs" />
