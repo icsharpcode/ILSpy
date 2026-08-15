@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -65,11 +64,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		public virtual IList<ResolveResult> GetArgumentsForCall()
 		{
 			return Arguments;
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return base.GetChildResults().Concat(this.Arguments).Concat(this.InitializerStatements);
 		}
 	}
 }

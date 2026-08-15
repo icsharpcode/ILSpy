@@ -825,11 +825,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				return ((ConversionResolveResult)rr).Input.GetSymbol();
 			}
-			else if (rr is CSharp.Resolver.DynamicMemberResolveResult dynamicMember)
+			else if (rr is DynamicMemberResolveResult dynamicMember)
 			{
 				return dynamicMember.Symbol;
 			}
-			else if (rr is CSharp.Resolver.DynamicInvocationResolveResult dynamicInvocation)
+			else if (rr is DynamicInvocationResolveResult dynamicInvocation)
 			{
 				return dynamicInvocation.Symbol;
 			}

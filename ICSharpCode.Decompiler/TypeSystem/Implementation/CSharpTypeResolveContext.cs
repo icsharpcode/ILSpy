@@ -18,9 +18,7 @@
 
 using System;
 
-using ICSharpCode.Decompiler.TypeSystem;
-
-namespace ICSharpCode.Decompiler.CSharp.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public sealed class CSharpTypeResolveContext : ITypeResolveContext
 	{

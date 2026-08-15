@@ -20,13 +20,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.NetworkInformation;
 
-using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.CSharp.Resolver
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// A method list that belongs to a declaring type.
@@ -313,14 +312,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			Log.WriteLine("Overload resolution finished, best candidate is {0}.", or.GetBestCandidateWithSubstitutedTypeArguments());
 			return or;
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			if (targetResult != null)
-				return new[] { targetResult };
-			else
-				return Enumerable.Empty<ResolveResult>();
 		}
 	}
 }

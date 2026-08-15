@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -59,11 +58,5 @@ namespace ICSharpCode.Decompiler.Semantics
 		public override bool IsError {
 			get { return !Conversion.IsValid; }
 		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return new[] { Input };
-		}
-
 	}
 }

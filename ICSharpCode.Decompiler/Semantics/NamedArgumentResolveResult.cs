@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -72,11 +71,6 @@ namespace ICSharpCode.Decompiler.Semantics
 				throw new ArgumentNullException(nameof(argument));
 			this.ParameterName = parameterName;
 			this.Argument = argument;
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return new[] { Argument };
 		}
 	}
 }

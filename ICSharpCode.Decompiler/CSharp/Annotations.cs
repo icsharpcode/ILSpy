@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -237,24 +236,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				node.AddAnnotation(annotation);
 			}
 			return node;
-		}
-	}
-
-	/// <summary>
-	/// Represents a reference to a local variable.
-	/// </summary>
-	public class ILVariableResolveResult : ResolveResult
-	{
-		public readonly ILVariable Variable;
-
-		public ILVariableResolveResult(ILVariable v) : base(v.Type)
-		{
-			this.Variable = v;
-		}
-
-		public ILVariableResolveResult(ILVariable v, IType type) : base(type)
-		{
-			this.Variable = v ?? throw new ArgumentNullException(nameof(v));
 		}
 	}
 

@@ -82,10 +82,5 @@ namespace ICSharpCode.Decompiler.Semantics
 		public bool IsLiftedOperator {
 			get { return isLiftedOperator; }
 		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return operands;
-		}
 	}
 }

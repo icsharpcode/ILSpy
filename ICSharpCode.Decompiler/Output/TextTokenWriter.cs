@@ -22,7 +22,6 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
@@ -157,14 +156,14 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		static bool IsDynamicMemberReference(AstNode node)
 		{
-			if (node.Annotation<ResolveResult>() is CSharp.Resolver.DynamicMemberResolveResult)
+			if (node.Annotation<ResolveResult>() is DynamicMemberResolveResult)
 				return true;
 			// The node itself is a dynamic invocation/indexing (a.Method(b), a[b]): its parentheses/brackets
 			// carry the synthesized member.
-			if (node.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
+			if (node.Annotation<ResolveResult>() is DynamicInvocationResolveResult)
 				return true;
 			if (node.Slot?.Kind == Slots.TargetExpression && node.Parent is InvocationExpression
-				&& node.Parent.Annotation<ResolveResult>() is CSharp.Resolver.DynamicInvocationResolveResult)
+				&& node.Parent.Annotation<ResolveResult>() is DynamicInvocationResolveResult)
 				return true;
 			// new T(dynamicArg): the object creation (or its type-name slot) is backed by a dynamic newobj,
 			// whose synthesized constructor has no metadata to navigate to.

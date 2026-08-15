@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,28 +17,29 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem;
+
+#nullable enable
 
 namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
-	/// Resolve result representing an array access.
+	/// Represents a reference to a local variable.
 	/// </summary>
-	public class ArrayAccessResolveResult : ResolveResult
+	public class ILVariableResolveResult : ResolveResult
 	{
-		public readonly ResolveResult Array;
-		public readonly IList<ResolveResult> Indexes;
+		public readonly ILVariable Variable;
 
-		public ArrayAccessResolveResult(IType elementType, ResolveResult array, IList<ResolveResult> indexes) : base(elementType)
+		public ILVariableResolveResult(ILVariable v) : base(v.Type)
 		{
-			if (array == null)
-				throw new ArgumentNullException(nameof(array));
-			if (indexes == null)
-				throw new ArgumentNullException(nameof(indexes));
-			this.Array = array;
-			this.Indexes = indexes;
+			this.Variable = v;
+		}
+
+		public ILVariableResolveResult(ILVariable v, IType type) : base(type)
+		{
+			this.Variable = v ?? throw new ArgumentNullException(nameof(v));
 		}
 	}
 }

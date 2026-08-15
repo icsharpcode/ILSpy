@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 	/// </remarks>
 	public sealed class CSharpConversions
 	{
-		readonly ConcurrentDictionary<TypePair, Conversion> implicitConversionCache = new ConcurrentDictionary<TypePair, Conversion>();
+		readonly ConcurrentDictionary<(IType fromType, IType toType), Conversion> implicitConversionCache = new ConcurrentDictionary<(IType, IType), Conversion>();
 		readonly ICompilation compilation;
 
 		public CSharpConversions(ICompilation compilation)
@@ -63,39 +63,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			return operators;
 		}
-
-		#region TypePair (for caching)
-		struct TypePair : IEquatable<TypePair>
-		{
-			public readonly IType FromType;
-			public readonly IType ToType;
-
-			public TypePair(IType fromType, IType toType)
-			{
-				Debug.Assert(fromType != null && toType != null);
-				this.FromType = fromType;
-				this.ToType = toType;
-			}
-
-			public override bool Equals(object obj)
-			{
-				return (obj is TypePair) && Equals((TypePair)obj);
-			}
-
-			public bool Equals(TypePair other)
-			{
-				return object.Equals(this.FromType, other.FromType) && object.Equals(this.ToType, other.ToType);
-			}
-
-			public override int GetHashCode()
-			{
-				unchecked
-				{
-					return 1000000007 * FromType.GetHashCode() + 1000000009 * ToType.GetHashCode();
-				}
-			}
-		}
-		#endregion
 
 		#region ImplicitConversion
 		private Conversion ImplicitConversion(ResolveResult resolveResult, IType toType, bool allowUserDefined, bool allowTuple)
@@ -188,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (toType == null)
 				throw new ArgumentNullException(nameof(toType));
 
-			TypePair pair = new TypePair(fromType, toType);
+			var pair = (fromType, toType);
 			if (implicitConversionCache.TryGetValue(pair, out Conversion c))
 				return c;
 
@@ -233,8 +200,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return Conversion.ImplicitPointerConversion;
 			if (allowTupleConversion)
 			{
-				// TODO are tuple conversions really standard implicit conversions?
-				// The C# spec (draft-v11, §10.4.2) doesn't list them as standard implicit conversions.
+				// The C# spec (draft-v11, §10.4.2) does not list tuple conversions among the standard
+				// implicit conversions, but Roslyn treats them as such: they are accepted both by
+				// ConversionsBase.IsStandardImplicitConversionFromType and by
+				// UserDefinedImplicitConversions.IsEncompassingImplicitConversionKind, so a tuple
+				// conversion can make one type encompass another while resolving a user-defined
+				// conversion. The pointer, inline-array and span conversions below are in the same
+				// position: implemented by the compiler, absent from the spec's list.
+				// Callers classifying a cast pass allowTupleConversion: false, see ExplicitConversion.
 				c = TupleConversion(fromType, toType, isExplicit: false);
 				if (c != Conversion.None)
 					return c;
@@ -297,6 +270,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			if (resolveResult.Type.Kind == TypeKind.Dynamic)
 				return Conversion.ExplicitDynamicConversion;
+			// Tuple conversions are excluded here even though an implicit tuple conversion may exist:
+			// a cast has to classify the elements as cast conversions, so the explicit tuple
+			// conversion below wins. Roslyn does the same in ClassifyConversionFromTypeForCast, which
+			// discards an ImplicitTuple result (see ExplicitConversionMayDifferFromImplicit).
 			Conversion c = ImplicitConversion(resolveResult, toType, allowUserDefined: false, allowTuple: false);
 			if (c != Conversion.None)
 				return c;

@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -47,14 +46,6 @@ namespace ICSharpCode.Decompiler.Semantics
 				throw new ArgumentNullException(nameof(sizeArguments));
 			this.SizeArguments = sizeArguments;
 			this.InitializerElements = initializerElements;
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			if (InitializerElements != null)
-				return SizeArguments.Concat(InitializerElements);
-			else
-				return SizeArguments;
 		}
 	}
 }

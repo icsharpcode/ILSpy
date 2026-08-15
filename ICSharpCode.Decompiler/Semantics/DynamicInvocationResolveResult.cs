@@ -19,11 +19,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.CSharp.Resolver
+namespace ICSharpCode.Decompiler.Semantics
 {
 	public enum DynamicInvocationType
 	{
