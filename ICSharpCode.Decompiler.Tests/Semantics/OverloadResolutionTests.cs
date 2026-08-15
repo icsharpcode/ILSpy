@@ -365,16 +365,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			}
 		}
 
-		// The legacy reference mscorlib predates Span<T>, so span tests resolve against a
-		// .NET ref assembly; the test assembly itself provides the operator fixture above.
-		static readonly Lazy<ICompilation> spanCompilation = new Lazy<ICompilation>(
-			delegate {
-				string path = Path.Combine(
-					Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
-				return new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
-					new PEFile(path, new FileStream(path, FileMode.Open, FileAccess.Read)));
-			});
-
 		static IMethod MakeMethodIn(ICompilation c, params Type[] parameterTypes)
 		{
 			var m = new FakeMethod(c, SymbolKind.Method);
@@ -393,7 +383,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// to ReadOnlySpan<E2> - the span types, not the element types. No span conversion
 			// relates ReadOnlySpan<int> and ReadOnlySpan<long>, so neither target is better
 			// and the call is ambiguous; Roslyn reports CS0121.
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var r = new OverloadResolution(c, new[] {
 				new ResolveResult(c.FindType(typeof(ConvertibleToBothReadOnlySpans)))
 			});
@@ -422,7 +412,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Roslyn: OnlyIn(arr) compiles - a value argument may bind to an 'in' parameter
 			// through the implicit span conversion (a temporary is created). OnlyIn(in arr)
 			// is CS1503: an explicit 'in' argument must have the parameter's own type.
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var arrayArg = new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.Int32)));
 
 			var implicitIn = new OverloadResolution(c, new[] { arrayArg });
@@ -439,7 +429,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		[Test]
 		public void InReadOnlySpanParameter_BindsAnIdentityArgumentWithAndWithoutIn()
 		{
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var rosArg = new ResolveResult(c.FindType(typeof(ReadOnlySpan<int>)));
 
 			var implicitIn = new OverloadResolution(c, new[] { rosArg });
@@ -459,7 +449,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Roslyn: for F(ReadOnlySpan<int>) vs F(in ReadOnlySpan<int>), a call without 'in'
 			// picks the by-value overload - both for an identity argument and through the
 			// span conversion from int[].
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			foreach (var arg in new[] {
 				new ResolveResult(c.FindType(typeof(ReadOnlySpan<int>))),
 				new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.Int32)))
@@ -482,7 +472,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// 'M(out arr)' against 'out ReadOnlySpan<int>' - ref and out demand the
 			// parameter's own type; the span conversion does not apply. A value argument
 			// without the keyword is a passing-mode mismatch regardless of conversions.
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var arrayArg = new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.Int32)));
 			foreach (var kind in new[] { ReferenceKind.Ref, ReferenceKind.Out })
 			{
@@ -503,7 +493,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			// Roslyn: F(in ros) picks the in-overload; the by-value overload cannot take an
 			// 'in' argument.
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var r = new OverloadResolution(c, new[] {
 				new ByReferenceResolveResult(new ResolveResult(c.FindType(typeof(ReadOnlySpan<int>))), ReferenceKind.In)
 			});
@@ -520,7 +510,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// The positive direction of the same rule: string[] converts to both targets, and
 			// the covariant span conversion ReadOnlySpan<string> -> ReadOnlySpan<object>
 			// exists, so ReadOnlySpan<string> is the better target.
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var r = new OverloadResolution(c, new[] {
 				new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.String)))
 			});

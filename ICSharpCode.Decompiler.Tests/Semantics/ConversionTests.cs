@@ -1789,19 +1789,9 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		#region First-class span conversions
-		// The legacy reference mscorlib predates Span<T>, so the span tests resolve against a
-		// .NET ref assembly; the test assembly provides the extension-method fixture.
-		static readonly Lazy<ICompilation> spanCompilation = new Lazy<ICompilation>(
-			delegate {
-				string path = System.IO.Path.Combine(
-					Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
-				return new SimpleCompilation(TypeSystemLoaderTests.TestAssembly,
-					new Decompiler.Metadata.PEFile(path, new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read)));
-			});
-
 		Conversion SpanConversion(Type from, Type to)
 		{
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			return CSharpConversions.Get(c).ImplicitConversion(c.FindType(from), c.FindType(to));
 		}
 
@@ -1830,7 +1820,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 
 		Conversion SpanMethodGroupConversion(ResolveResult target, Type delegateType)
 		{
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var extensionMethod = c.FindType(typeof(SpanReceiverExtensionTestCase))
 				.GetMethods(m => m.Name == "M").Single();
 			var mgrr = new MethodGroupResolveResult(
@@ -1848,7 +1838,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// resolution is performed for a method group conversion". For 'str.M' with M being
 			// an extension on ReadOnlySpan<char>, Roslyn reports CS0123, even though the
 			// invocation 'str.M()' is legal.
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var conversion = SpanMethodGroupConversion(
 				new ResolveResult(c.FindType(KnownTypeCode.String)), typeof(Action));
 			Assert.That(conversion, Is.EqualTo(C.None));
@@ -1859,7 +1849,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			// Guard for the rule above: with an identity-typed receiver the method group
 			// conversion stays legal.
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			var conversion = SpanMethodGroupConversion(
 				new ResolveResult(c.FindType(typeof(ReadOnlySpan<char>))), typeof(Action));
 			Assert.That(conversion.IsMethodGroupConversion);

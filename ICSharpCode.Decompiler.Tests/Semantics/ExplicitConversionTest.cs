@@ -768,19 +768,9 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		#region First-class span conversions
-		// The legacy reference mscorlib predates Span<T>, so the span tests resolve against a
-		// .NET ref assembly.
-		static readonly Lazy<ICompilation> spanCompilation = new Lazy<ICompilation>(
-			delegate {
-				string path = System.IO.Path.Combine(
-					Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
-				return new SimpleCompilation(
-					new Decompiler.Metadata.PEFile(path, new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read)));
-			});
-
 		Conversion SpanExplicitConversion(Type from, Type to)
 		{
-			var c = spanCompilation.Value;
+			var c = RefAssemblyCompilation.Instance;
 			return CSharpConversions.Get(c).ExplicitConversion(c.FindType(from), c.FindType(to));
 		}
 
