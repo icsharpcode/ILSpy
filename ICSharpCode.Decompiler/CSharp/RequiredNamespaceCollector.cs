@@ -144,13 +144,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						{
 							HandleAttributes(param.GetAttributes());
 							CollectNamespacesForTypeReference(param.Type);
-							if (param.IsOptional)
-							{
-								// ExpressionBuilder.TranslateFunction may downgrade a default value
-								// on an anonymous-function parameter to [Optional] and
-								// [DefaultParameterValue(...)]; keep their namespace in the superset.
-								namespaces.Add(KnownAttribute.DefaultParameterValue.GetTypeName().Namespace);
-							}
 						}
 						HandleTypeParameters(partMethod.TypeParameters);
 						HandleOverrides(part.GetMethodImplementations(module.metadata), module);

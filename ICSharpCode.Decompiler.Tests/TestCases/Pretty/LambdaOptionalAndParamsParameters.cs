@@ -10,9 +10,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private int total;
 
+		// Roslyn 4.14 puts no ParamArrayAttribute on the lambda's own method, so for a named
+		// delegate type the 'params' cannot be recovered there; newer compilers record it.
 		public ParamsAction ParamsStatementBody()
 		{
+#if ROSLYN5 || !EXPECTED_OUTPUT
 			return (params int[] xs) => {
+#else
+			return (int[] xs) => {
+#endif
 				total += xs.Length;
 				Console.WriteLine(xs.Length);
 			};
@@ -20,7 +26,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public ParamsAction ParamsExpressionBody()
 		{
+#if ROSLYN5 || !EXPECTED_OUTPUT
 			return (params int[] xs) => Console.WriteLine(xs.Length);
+#else
+			return (int[] xs) => Console.WriteLine(xs.Length);
+#endif
 		}
 
 		public OptionalFunc OptionalStatementBody()

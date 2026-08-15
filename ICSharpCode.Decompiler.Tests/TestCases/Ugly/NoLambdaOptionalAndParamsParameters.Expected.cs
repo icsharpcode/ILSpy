@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 {
@@ -13,7 +12,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public ParamsAction ParamsLambda()
 		{
-			return ([ParamArray] int[] xs) => {
+			return (int[] xs) => {
 				total += xs.Length;
 				Console.WriteLine(xs.Length);
 			};
@@ -21,7 +20,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 
 		public OptionalFunc OptionalLambda()
 		{
-			return ([Optional][DefaultParameterValue(5)] int x) => x * 2;
+			return (int x) => x * 2;
 		}
 	}
 }

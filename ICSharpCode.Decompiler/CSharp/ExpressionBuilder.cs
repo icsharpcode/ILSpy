@@ -2543,13 +2543,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
-			// 'params' and parameter default values are part of the delegate's signature, and it
-			// is the delegate's Invoke method that call sites bind against. An anonymous function's
-			// own method does not reliably carry them - Roslyn 4.14 emits no ParamArrayAttribute
-			// there - so take them from Invoke, keeping declaration and call sites consistent.
-			var invokeParameters = delegateType.GetDelegateInvokeMethod()?.Parameters;
-			if (invokeParameters?.Count == ame.Parameters.Count)
+			if (delegateType.IsAnonymousDelegate()
+				&& delegateType.GetDelegateInvokeMethod()?.Parameters is { } invokeParameters
+				&& invokeParameters.Count == ame.Parameters.Count)
 			{
+				// A compiler-synthesized delegate type exists only because the lambda declared
+				// 'params' or a parameter default value, and the lambda's own declaration is the
+				// only way to spell that type. Roslyn 4.14 does not put a ParamArrayAttribute on
+				// the lambda's method, so take both from the delegate's Invoke method, which
+				// always carries them. Named delegate types are left alone: there the lambda's
+				// own metadata decides, and a plain parameter list is valid either way.
 				int parameterIndex = 0;
 				foreach (var pd in ame.Parameters)
 				{
@@ -2611,29 +2614,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!settings.LambdaOptionalAndParamsParameters || ame.Parameters.Any(p => p.Type is null))
 			{
 				// 'params' and parameter default values are only legal on the explicitly typed
-				// parameter list of a lambda, and only since C# 12. Elsewhere, downgrade them to
-				// their underlying metadata attributes so the information is not lost.
+				// parameter list of a lambda, and only since C# 12. There is no other spelling:
+				// [ParamArray] cannot be written explicitly in any language version, and attributes
+				// on lambda parameters need C# 10. Drop them; the delegate's Invoke method still
+				// carries them at every call site.
 				foreach (var p in ame.Parameters)
 				{
-					if (p.IsParams)
-					{
-						p.IsParams = false;
-						p.Attributes.Add(new AttributeSection(new Syntax.Attribute {
-							Type = astBuilder.ConvertAttributeType(compilation.FindType(KnownAttribute.ParamArray))
-						}));
-					}
-					if (p.DefaultExpression is { } defaultValue)
-					{
-						defaultValue.Detach();
-						p.Attributes.Add(new AttributeSection(new Syntax.Attribute {
-							Type = astBuilder.ConvertAttributeType(compilation.FindType(KnownAttribute.Optional))
-						}));
-						var defaultParameterValue = new Syntax.Attribute {
-							Type = astBuilder.ConvertAttributeType(compilation.FindType(KnownAttribute.DefaultParameterValue))
-						};
-						defaultParameterValue.Arguments.Add(defaultValue);
-						p.Attributes.Add(new AttributeSection(defaultParameterValue));
-					}
+					p.IsParams = false;
+					p.DefaultExpression = null;
 				}
 			}
 			bool isLambda = false;
