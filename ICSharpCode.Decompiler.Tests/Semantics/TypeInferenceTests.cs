@@ -67,14 +67,6 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		ICompilation compilation;
 		TypeInference ti;
 
-		// The legacy reference mscorlib used by the main compilation predates
-		// System.ValueTuple, so tuple-related tests resolve against a .NET ref assembly.
-		static readonly Lazy<ICompilation> tupleCompilation = new Lazy<ICompilation>(
-			delegate {
-				string path = Path.Combine(Helpers.Tester.RefAssembliesToolset.GetPath(".NETCoreApp,Version=v5.0"), "System.Runtime.dll");
-				return new SimpleCompilation(new PEFile(path, new FileStream(path, FileMode.Open, FileAccess.Read)));
-			});
-
 		[OneTimeSetUp]
 		public void OneTimeSetUp()
 		{
@@ -689,7 +681,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// each element to the corresponding element type, giving the bounds
 			// { int, long } and the fixed type long. Treating the literal like a value
 			// of type (int, long) would instead produce conflicting exact bounds.
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			var inference = new TypeInference(comp);
 			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
 			var tupleOfTT = new TupleType(comp, ImmutableArray.Create<IType>(T, T));
@@ -725,7 +717,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		public void BestCommonTypeMergesTupleElementNames()
 		{
 			// var m = cond ? (a: 1, b: "x") : (a: 2, c: "y"); -> (int a, string)
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			var inference = new TypeInference(comp);
 
 			bool success;
@@ -743,7 +735,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			// Signature:  M<T>(IList<T> x, T y)
 			// Invocation: M(listOfAB, valueAC); -> T = (int a, string)
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			var inference = new TypeInference(comp);
 			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
 			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
@@ -770,7 +762,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Signature:  M<T>(T x, T y)
 			// Invocation: M(listOfAB, listOfAC);   -> T = IList<(int a, string)>
 			//             M(arrayOfAB, arrayOfAC); -> T = (int a, string)[]
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
 
 			IType InferSingle(IType argType1, IType argType2)
@@ -804,7 +796,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Invocation: M(listOfAB, actionOfListOfAC); -> T = IList<(int a, string)>
 			// Action<in T> is contravariant, so the second argument produces an upper bound
 			// while the first produces a lower bound.
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			var inference = new TypeInference(comp);
 			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
 			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
@@ -833,7 +825,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Signature:  M<T>(T x, T y)
 			// Invocation: M(nullableListOfAB, nullableListOfAC); -> T = IList<(int a, string)>?
 			//             M(nullableArrayOfAB, nullableArrayOfAC); -> T = (int a, string)[]?
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			ITypeDefinition listType = comp.FindType(KnownTypeCode.IListOfT).GetDefinition();
 
 			IType InferSingle(IType argType1, IType argType2)
@@ -869,7 +861,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// Merging nullability requires the variance of the position, which this
 			// implementation does not track, so such bounds stay distinct and fixing fails
 			// (csc infers string[]?).
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
 			IType stringType = comp.FindType(KnownTypeCode.String);
 
@@ -888,7 +880,7 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		{
 			// Signature:  M<T>(ref T x, ref T y)
 			// Invocation: M(ref ab, ref ac); -> T = (int a, string)
-			var comp = tupleCompilation.Value;
+			var comp = RefAssemblyCompilation.Instance;
 			var inference = new TypeInference(comp);
 			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
 
@@ -1359,6 +1351,105 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(
 				FindAllTypesInBounds(Resolve(), Resolve(typeof(IEnumerable<ICloneable>), typeof(IEnumerable<IComparable>), typeof(IList))),
 				Is.EqualTo(Resolve(typeof(List<string>), typeof(List<Version>), typeof(Collection<string>), typeof(Collection<Version>), typeof(ReadOnlyCollection<string>), typeof(ReadOnlyCollection<Version>), typeof(System.Runtime.CompilerServices.ReadOnlyCollectionBuilder<string>), typeof(System.Runtime.CompilerServices.ReadOnlyCollectionBuilder<Version>))));
+		}
+		#endregion
+
+		#region First-class span type inference
+		IType[] InferSpan(Func<ICompilation, ITypeParameter, IType[]> parameterTypes,
+			Func<ICompilation, ResolveResult[]> arguments, out bool success)
+		{
+			var c = RefAssemblyCompilation.Instance;
+			var inference = new TypeInference(c);
+			ITypeParameter tp = new DefaultTypeParameter(c, SymbolKind.Method, 0, "T");
+			return inference.InferTypeArguments(new[] { tp }, arguments(c), parameterTypes(c, tp), out success);
+		}
+
+		static ParameterizedType SpanOf(ICompilation c, IType element)
+			=> new ParameterizedType(c.FindType(KnownTypeCode.SpanOfT).GetDefinition(), new[] { element });
+
+		static ParameterizedType ReadOnlySpanOf(ICompilation c, IType element)
+			=> new ParameterizedType(c.FindType(KnownTypeCode.ReadOnlySpanOfT).GetDefinition(), new[] { element });
+
+		[Test]
+		public void SpanArgumentAloneInfersItsElementType()
+		{
+			bool success;
+			Assert.That(
+				InferSpan(
+					(c, tp) => new IType[] { SpanOf(c, tp) },
+					c => new[] { new ResolveResult(SpanOf(c, c.FindType(KnownTypeCode.String))) },
+					out success),
+				Is.EqualTo(new[] { RefAssemblyCompilation.Instance.FindType(KnownTypeCode.String) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void SpanArgumentGivesAnExactBound_ConflictingLowerBoundFailsInference()
+		{
+			// M<T>(Span<T>, T) called with (Span<string>, object): Span<T> is invariant, so the
+			// span argument contributes an EXACT bound (C# 14 spec, 12.6.3.10: "If V is a
+			// Span<V1>, then an exact inference is made"). The conflicting lower bound object
+			// must fail inference; Roslyn reports CS0411 for this call.
+			bool success;
+			InferSpan(
+				(c, tp) => new IType[] { SpanOf(c, tp), tp },
+				c => new[] {
+					new ResolveResult(SpanOf(c, c.FindType(KnownTypeCode.String))),
+					new ResolveResult(c.FindType(KnownTypeCode.Object))
+				},
+				out success);
+			Assert.That(success, Is.False);
+		}
+
+		[Test]
+		public void ArrayArgumentForSpanParameterGivesAnExactBound_ConflictingLowerBoundFailsInference()
+		{
+			// Same as above with a string[] argument: the array-to-Span conversion requires
+			// identity element types, so the bound is exact. Roslyn reports CS0411.
+			bool success;
+			InferSpan(
+				(c, tp) => new IType[] { SpanOf(c, tp), tp },
+				c => new[] {
+					new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.String))),
+					new ResolveResult(c.FindType(KnownTypeCode.Object))
+				},
+				out success);
+			Assert.That(success, Is.False);
+		}
+
+		[Test]
+		public void SpanArgumentForReadOnlySpanParameterGivesALowerBound()
+		{
+			// M<T>(ReadOnlySpan<T>, T) called with (Span<string>, object): ReadOnlySpan is
+			// covariance-convertible, the span argument contributes a LOWER bound, and T=object
+			// wins. Roslyn compiles this with T=object.
+			bool success;
+			Assert.That(
+				InferSpan(
+					(c, tp) => new IType[] { ReadOnlySpanOf(c, tp), tp },
+					c => new[] {
+						new ResolveResult(SpanOf(c, c.FindType(KnownTypeCode.String))),
+						new ResolveResult(c.FindType(KnownTypeCode.Object))
+					},
+					out success),
+				Is.EqualTo(new[] { RefAssemblyCompilation.Instance.FindType(KnownTypeCode.Object) }));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void ArrayArgumentForReadOnlySpanParameterGivesALowerBound()
+		{
+			bool success;
+			Assert.That(
+				InferSpan(
+					(c, tp) => new IType[] { ReadOnlySpanOf(c, tp), tp },
+					c => new[] {
+						new ResolveResult(new ArrayType(c, c.FindType(KnownTypeCode.String))),
+						new ResolveResult(c.FindType(KnownTypeCode.Object))
+					},
+					out success),
+				Is.EqualTo(new[] { RefAssemblyCompilation.Instance.FindType(KnownTypeCode.Object) }));
+			Assert.That(success);
 		}
 		#endregion
 	}
