@@ -46,9 +46,9 @@ namespace ICSharpCode.Decompiler
 
 		public Dictionary<ITypeDefinition, bool> TypeHierarchyIsKnown { get; } = new();
 
-		public CSharp.TypeSystem.UsingScope UsingScope { get; }
+		public UsingScope UsingScope { get; }
 
-		public DecompileRun(DecompilerSettings settings, CSharp.TypeSystem.UsingScope usingScope)
+		public DecompileRun(DecompilerSettings settings, UsingScope usingScope)
 		{
 			this.Settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			this.UsingScope = usingScope ?? throw new ArgumentNullException(nameof(usingScope));

@@ -29,7 +29,6 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 #if STEP
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 #endif
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
