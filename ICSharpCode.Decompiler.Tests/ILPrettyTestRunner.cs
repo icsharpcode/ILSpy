@@ -405,6 +405,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run(settings: new DecompilerSettings { SortSwitchSections = true, FileScopedNamespaces = false });
 		}
 
+		[Test]
+		public async Task Issue3729()
+		{
+			await Run();
+		}
+
 		async Task Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
 			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
 		{
