@@ -423,8 +423,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			if (mrr == null)
+			if (mrr == null || !requireTarget)
 			{
+				// The resolver looked the unqualified name up against the current type, so its
+				// result does not carry the translated target; annotate the same this/base or
+				// type target the qualified spelling gets.
 				mrr = new MemberResolveResult(target.ResolveResult, field);
 			}
 
@@ -2831,13 +2834,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Additionally check target for null, in order to avoid a crash.
 			if (!memberStatic && target != null)
 			{
-				if (ShouldUseBaseReference())
+				if (ShouldUseBaseReference(out var baseThisVariable))
 				{
 					var baseReferenceType = resolver.CurrentTypeDefinition.DirectBaseTypes
 						.FirstOrDefault(t => t.Kind != TypeKind.Interface);
 					return new BaseReferenceExpression()
 						.WithILInstruction(target)
-						.WithRR(new ThisResolveResult(baseReferenceType ?? memberDeclaringType, nonVirtualInvocation));
+						.WithRR(new ThisResolveResult(baseThisVariable, baseReferenceType ?? memberDeclaringType, nonVirtualInvocation));
 				}
 				else
 				{
@@ -2881,11 +2884,11 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithoutILInstruction();
 					}
 					translatedTarget = EnsureTargetNotNullable(translatedTarget, target);
-					if (translatedTarget.Expression is ThisReferenceExpression)
+					if (translatedTarget.Expression is ThisReferenceExpression
+						&& translatedTarget.ResolveResult is ILVariableResolveResult { Variable: var thisVariable })
 					{
 						// Give an explicit `this` the same resolve result the base-reference branch
-						// above gives `base`, and that the resolver gives the unqualified spelling of
-						// the same access. ConvertVariable annotates it as an ordinary local, so
+						// above gives `base`. ConvertVariable annotates it as an ordinary local, so
 						// without this a consumer asking "does this expression reach instance state"
 						// gets a different answer depending on whether the qualifier happened to be
 						// printed - and the qualifier is printed for reasons (a parameter of the same
@@ -2893,7 +2896,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// question being asked.
 						translatedTarget = new ThisReferenceExpression()
 							.WithILInstruction(target)
-							.WithRR(new ThisResolveResult(translatedTarget.Type, nonVirtualInvocation));
+							.WithRR(new ThisResolveResult(thisVariable, translatedTarget.Type, nonVirtualInvocation));
 					}
 					return translatedTarget;
 				}
@@ -2905,21 +2908,22 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new TypeResolveResult(constrainedTo ?? memberDeclaringType));
 			}
 
-			bool ShouldUseBaseReference()
+			bool ShouldUseBaseReference([NotNullWhen(true)] out ILVariable? thisVariable)
 			{
+				thisVariable = null;
 				if (!nonVirtualInvocation)
 					return false;
-				if (!MatchLdThis(target))
+				if (!MatchLdThis(target, out thisVariable))
 					return false;
 				if ((constrainedTo ?? memberDeclaringType).GetDefinition() == resolver.CurrentTypeDefinition)
 					return false;
 				return true;
 			}
 
-			bool MatchLdThis(ILInstruction inst)
+			bool MatchLdThis(ILInstruction inst, [NotNullWhen(true)] out ILVariable? thisVariable)
 			{
 				// ldloc this
-				if (inst.MatchLdThis())
+				if (inst.MatchLdThis(out thisVariable))
 					return true;
 				if (resolver.CurrentTypeDefinition.Kind == TypeKind.Struct)
 				{
@@ -2930,7 +2934,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return false;
 					if (!type.Equals(type2) || !type.Equals(resolver.CurrentTypeDefinition))
 						return false;
-					return arg2.MatchLdThis();
+					return arg2.MatchLdThis(out thisVariable);
 				}
 				return false;
 			}
