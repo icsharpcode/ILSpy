@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -40,11 +39,6 @@ namespace ICSharpCode.Decompiler.Semantics
 				throw new ArgumentNullException(nameof(indexes));
 			this.Array = array;
 			this.Indexes = indexes;
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return new[] { Array }.Concat(Indexes);
 		}
 	}
 }

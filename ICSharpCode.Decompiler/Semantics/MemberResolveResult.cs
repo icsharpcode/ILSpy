@@ -16,9 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -129,14 +127,6 @@ namespace ICSharpCode.Decompiler.Semantics
 
 		public override object ConstantValue {
 			get { return constantValue; }
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			if (targetResult != null)
-				return new[] { targetResult };
-			else
-				return Enumerable.Empty<ResolveResult>();
 		}
 
 		public override string ToString()

@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Collections.Generic;
 using System.Globalization;
 
 using ICSharpCode.Decompiler.Semantics;
@@ -55,11 +54,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public override string ToString()
 		{
 			return string.Format(CultureInfo.InvariantCulture, "[Dynamic member '{0}']", Member);
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return new[] { Target };
 		}
 	}
 }

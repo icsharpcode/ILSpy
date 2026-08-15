@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -33,11 +32,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		{
 			FormatString = formatString;
 			Arguments = arguments;
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return Arguments;
 		}
 	}
 }

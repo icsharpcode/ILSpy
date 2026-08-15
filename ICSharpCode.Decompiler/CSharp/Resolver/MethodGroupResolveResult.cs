@@ -314,13 +314,5 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Log.WriteLine("Overload resolution finished, best candidate is {0}.", or.GetBestCandidateWithSubstitutedTypeArguments());
 			return or;
 		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			if (targetResult != null)
-				return new[] { targetResult };
-			else
-				return Enumerable.Empty<ResolveResult>();
-		}
 	}
 }

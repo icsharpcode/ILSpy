@@ -93,11 +93,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Returns a resolve result for 'void' for statement lambdas.
 		/// </summary>
 		public abstract ResolveResult Body { get; }
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return new[] { this.Body };
-		}
 	}
 
 	sealed class DecompiledLambdaResolveResult : LambdaResolveResult

@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -41,11 +40,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		: base(GetTupleType(compilation, elements, elementNames, valueTupleAssembly))
 		{
 			this.Elements = elements;
-		}
-
-		public override IEnumerable<ResolveResult> GetChildResults()
-		{
-			return Elements;
 		}
 
 		static IType GetTupleType(ICompilation compilation, ImmutableArray<ResolveResult> elements, ImmutableArray<string> elementNames, IModule valueTupleAssembly)

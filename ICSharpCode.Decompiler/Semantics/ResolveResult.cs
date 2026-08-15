@@ -17,8 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -59,11 +57,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		public override string ToString()
 		{
 			return "[" + GetType().Name + " " + type + "]";
-		}
-
-		public virtual IEnumerable<ResolveResult> GetChildResults()
-		{
-			return Enumerable.Empty<ResolveResult>();
 		}
 
 		public virtual ResolveResult ShallowClone()
