@@ -82,7 +82,6 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 - **Subject** is a succinct phrase describing the change. Target <= 72 chars. No area prefix; the subject itself should make the change clear.
 - **Body explains the *why*** and the non-diff context only: the constraint, the prior incident, the decision, what was tried and rejected, the invariant that motivated the change. Keep it short — one short paragraph is usually enough. The diff already shows the *what* — don't restate it, and don't enumerate per-file changes.
 - `Fix #NNNN: ...` closes an issue. `#NNNN` references one without closing.
-- **Small follow-up fixes against a commit still on the branch get squashed back** via `git commit --fixup` + `git rebase --autosquash`, not appended as "fix X" commits.
 - **en-US English** in subject and body. ASCII-only unless a non-ASCII character is genuinely required for what the message describes.
 - **AI attribution: use `Assisted-by:`, not `Co-Authored-By:`.** Following the Linux kernel's coding-assistants guidance (https://docs.kernel.org/process/coding-assistants.html#attribution), an AI-assisted commit ends with a trailer of the form `Assisted-by: AGENT_NAME:MODEL_VERSION:HARNESS` — agent, model id, and the harness that ran it, colon-separated, e.g. `Assisted-by: Claude:claude-opus-4-8:Claude Code`. Use the session's actual model id and harness. Don't list analysis/build tools. Do **not** add a `Co-Authored-By:` line for the AI, and an AI agent **must not** add a `Signed-off-by:` (only a human can certify the DCO).
 
