@@ -55,8 +55,10 @@ public class NetFrameworkProcessesTests
 		File.Exists(WindowsPowerShellPath).Should().BeTrue(
 			"Windows PowerShell 5.1 is the .NET Framework process this fixture inspects");
 
+		// The host lives exactly as long as the test host process: no wall clock for a slow
+		// machine to outrun mid-fixture, and no orphan if the teardown never runs.
 		host = Process.Start(new ProcessStartInfo(WindowsPowerShellPath,
-			"-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 300\"") {
+			$"-NoProfile -NonInteractive -Command \"Wait-Process -Id {Environment.ProcessId}\"") {
 			UseShellExecute = false,
 			CreateNoWindow = true,
 		});
