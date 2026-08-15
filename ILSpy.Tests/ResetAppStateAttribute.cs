@@ -17,14 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Controls;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.Settings;
 
@@ -100,13 +102,48 @@ public sealed class ResetAppStateAttribute : Attribute, ITestAction
 		DrainPendingWork();
 
 		// Close any windows the test showed so their view-models (alive and weakly subscribed to
-		// MessageBus) can't react to events raised by later tests, then drain once more.
-		if (Application.Current.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+		// MessageBus) can't react to events raised by later tests, then drain once more. A window
+		// left open also outlives its container: the compositor keeps every open top level
+		// reachable, and with it the view-models, the assembly tree and the loaded assemblies -
+		// about 13 MB per test, which over the suite is what pushed the CI runner into paging.
+		foreach (var window in openWindows.ToArray())
 		{
-			foreach (var window in desktop.Windows.ToArray())
-				window.Close();
+			DetachFlyouts(window);
+			window.Close();
 		}
 		Dispatcher.UIThread.RunJobs();
+	}
+
+	// Avalonia's Button subscribes to its flyout's Opened/Closed events when its template is
+	// applied and unsubscribes only when the Flyout property changes, not when the button leaves
+	// the tree. Dock's ToolChromeControl theme gives every tool pane's chrome button the same
+	// MenuFlyout resource, so that one shared flyout would keep the visual tree of every window
+	// this suite ever showed alive. Clearing the property before the window closes is what
+	// makes the button let go.
+	static void DetachFlyouts(Window window)
+	{
+		foreach (var button in window.GetVisualDescendants().OfType<Button>())
+		{
+			if (button.Flyout != null)
+				button.Flyout = null;
+		}
+	}
+
+	// The headless host runs the app without an application lifetime, so nothing tracks the
+	// windows the tests show. These are the same class handlers ClassicDesktopStyleApplicationLifetime
+	// installs to maintain its Windows list.
+	static readonly List<Window> openWindows = new();
+
+	static ResetAppStateAttribute()
+	{
+		Window.WindowOpenedEvent.AddClassHandler(typeof(Window), (sender, _) => {
+			if (sender is Window window && !openWindows.Contains(window))
+				openWindows.Add(window);
+		});
+		Window.WindowClosedEvent.AddClassHandler(typeof(Window), (sender, _) => {
+			if (sender is Window window)
+				openWindows.Remove(window);
+		});
 	}
 
 	static void DrainPendingWork()
