@@ -1640,8 +1640,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				ResolveResult r;
 				if (lookupMode == NameLookupMode.Expression || lookupMode == NameLookupMode.InvocationTarget)
 				{
-					var targetResolveResult = (t == this.CurrentTypeDefinition ? ResolveThisReference() : new TypeResolveResult(t));
-					r = lookup.Lookup(targetResolveResult, identifier, typeArguments, lookupMode == NameLookupMode.InvocationTarget);
+					// A ThisResolveResult names the 'this' parameter of an ILFunction, which the
+					// resolver does not know; the lookup on the current type does not need one,
+					// as it accepts protected members of the current type on its own. The type
+					// is self-parameterized so that its members come out specialized, matching
+					// the members that references from inside the type resolve to.
+					IType targetType = t == this.CurrentTypeDefinition && t.TypeParameterCount != 0
+						? new ParameterizedType(t, t.TypeParameters)
+						: t;
+					r = lookup.Lookup(new TypeResolveResult(targetType), identifier, typeArguments, lookupMode == NameLookupMode.InvocationTarget);
 				}
 				else
 				{
@@ -2618,48 +2625,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					break;
 			}
 			return new SizeOfResolveResult(int32, type, size);
-		}
-		#endregion
-
-		#region Resolve This/Base Reference
-		/// <summary>
-		/// Resolves 'this'.
-		/// </summary>
-		public ResolveResult ResolveThisReference()
-		{
-			ITypeDefinition t = CurrentTypeDefinition;
-			if (t != null)
-			{
-				if (t.TypeParameterCount != 0)
-				{
-					// Self-parameterize the type
-					return new ThisResolveResult(new ParameterizedType(t, t.TypeParameters));
-				}
-				else
-				{
-					return new ThisResolveResult(t);
-				}
-			}
-			return ErrorResult;
-		}
-
-		/// <summary>
-		/// Resolves 'base'.
-		/// </summary>
-		public ResolveResult ResolveBaseReference()
-		{
-			ITypeDefinition t = CurrentTypeDefinition;
-			if (t != null)
-			{
-				foreach (IType baseType in t.DirectBaseTypes)
-				{
-					if (baseType.Kind != TypeKind.Unknown && baseType.Kind != TypeKind.Interface)
-					{
-						return new ThisResolveResult(baseType, causesNonVirtualInvocation: true);
-					}
-				}
-			}
-			return ErrorResult;
 		}
 		#endregion
 

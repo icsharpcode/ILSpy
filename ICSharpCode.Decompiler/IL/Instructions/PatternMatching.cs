@@ -116,8 +116,18 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool MatchLdThis()
 		{
-			var inst = this as LdLoc;
-			return inst != null && inst.Variable.Kind == VariableKind.Parameter && inst.Variable.Index < 0;
+			return MatchLdThis(out _);
+		}
+
+		public bool MatchLdThis([NotNullWhen(true)] out ILVariable? variable)
+		{
+			if (this is LdLoc inst && inst.Variable.IsThis())
+			{
+				variable = inst.Variable;
+				return true;
+			}
+			variable = null;
+			return false;
 		}
 
 		public bool MatchStLoc([NotNullWhen(true)] out ILVariable? variable)
