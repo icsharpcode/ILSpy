@@ -200,8 +200,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return Conversion.ImplicitPointerConversion;
 			if (allowTupleConversion)
 			{
-				// TODO are tuple conversions really standard implicit conversions?
-				// The C# spec (draft-v11, §10.4.2) doesn't list them as standard implicit conversions.
+				// The C# spec (draft-v11, §10.4.2) does not list tuple conversions among the standard
+				// implicit conversions, but Roslyn treats them as such: they are accepted both by
+				// ConversionsBase.IsStandardImplicitConversionFromType and by
+				// UserDefinedImplicitConversions.IsEncompassingImplicitConversionKind, so a tuple
+				// conversion can make one type encompass another while resolving a user-defined
+				// conversion. The pointer, inline-array and span conversions below are in the same
+				// position: implemented by the compiler, absent from the spec's list.
+				// Callers classifying a cast pass allowTupleConversion: false, see ExplicitConversion.
 				c = TupleConversion(fromType, toType, isExplicit: false);
 				if (c != Conversion.None)
 					return c;
@@ -264,6 +270,10 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			if (resolveResult.Type.Kind == TypeKind.Dynamic)
 				return Conversion.ExplicitDynamicConversion;
+			// Tuple conversions are excluded here even though an implicit tuple conversion may exist:
+			// a cast has to classify the elements as cast conversions, so the explicit tuple
+			// conversion below wins. Roslyn does the same in ClassifyConversionFromTypeForCast, which
+			// discards an ImplicitTuple result (see ExplicitConversionMayDifferFromImplicit).
 			Conversion c = ImplicitConversion(resolveResult, toType, allowUserDefined: false, allowTuple: false);
 			if (c != Conversion.None)
 				return c;

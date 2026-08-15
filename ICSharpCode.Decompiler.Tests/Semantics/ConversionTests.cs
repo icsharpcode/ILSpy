@@ -196,6 +196,29 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
+		public void ExplicitTupleConversionClassifiesElementsAsCasts()
+		{
+			// Every element of this tuple also converts implicitly, so an implicit tuple conversion
+			// exists...
+			var implicitConversion = ImplicitConversion(typeof((DateTime, int)), typeof((DateTimeOffset, long)));
+			Assert.That(implicitConversion.IsTupleConversion);
+			Assert.That(implicitConversion.IsImplicit);
+			Assert.That(implicitConversion.ElementConversions[0].IsUserDefined);
+			Assert.That(implicitConversion.ElementConversions[0].IsImplicit);
+
+			// ...but a cast must not use it: Roslyn's ClassifyConversionFromTypeForCast discards an
+			// ImplicitTuple result (ExplicitConversionMayDifferFromImplicit lists that kind) and
+			// re-classifies the elements as cast conversions, so the DateTime element becomes a
+			// user-defined explicit conversion.
+			var explicitConversion = ExplicitConversion(typeof((DateTime, int)), typeof((DateTimeOffset, long)));
+			Assert.That(explicitConversion.IsTupleConversion);
+			Assert.That(explicitConversion.IsExplicit);
+			Assert.That(explicitConversion.ElementConversions[0].IsUserDefined);
+			Assert.That(explicitConversion.ElementConversions[0].IsExplicit);
+			Assert.That(explicitConversion.ElementConversions[1], Is.EqualTo(C.ImplicitNumericConversion));
+		}
+
+		[Test]
 		public void PrimitiveConversions()
 		{
 			Assert.That(ImplicitConversion(typeof(char), typeof(ushort)), Is.EqualTo(C.ImplicitNumericConversion));
