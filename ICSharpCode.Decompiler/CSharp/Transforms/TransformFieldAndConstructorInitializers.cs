@@ -26,7 +26,6 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 
-using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.IL;

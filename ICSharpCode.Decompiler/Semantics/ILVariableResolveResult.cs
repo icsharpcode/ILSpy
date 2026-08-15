@@ -1,4 +1,4 @@
-// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,44 +16,30 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Globalization;
+using System;
 
-using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.CSharp.Resolver
+#nullable enable
+
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
-	/// Represents the result of an access to a member of a dynamic object.
+	/// Represents a reference to a local variable.
 	/// </summary>
-	public class DynamicMemberResolveResult : ResolveResult
+	public class ILVariableResolveResult : ResolveResult
 	{
-		/// <summary>
-		/// Target of the member access (a dynamic object).
-		/// </summary>
-		public readonly ResolveResult Target;
+		public readonly ILVariable Variable;
 
-		/// <summary>
-		/// Name of the accessed member.
-		/// </summary>
-		public readonly string Member;
-
-		/// <summary>
-		/// Synthesized member (a <c>dynamic</c> field on the <c>dynamic</c> type) representing the accessed
-		/// member, so the member reference carries a navigable symbol / hover tooltip. May be null.
-		/// </summary>
-		public readonly IMember Symbol;
-
-		public DynamicMemberResolveResult(ResolveResult target, string member, IMember symbol = null) : base(SpecialType.Dynamic)
+		public ILVariableResolveResult(ILVariable v) : base(v.Type)
 		{
-			this.Target = target;
-			this.Member = member;
-			this.Symbol = symbol;
+			this.Variable = v;
 		}
 
-		public override string ToString()
+		public ILVariableResolveResult(ILVariable v, IType type) : base(type)
 		{
-			return string.Format(CultureInfo.InvariantCulture, "[Dynamic member '{0}']", Member);
+			this.Variable = v ?? throw new ArgumentNullException(nameof(v));
 		}
 	}
 }

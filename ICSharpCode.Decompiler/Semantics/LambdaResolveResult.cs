@@ -19,10 +19,10 @@
 using System;
 using System.Collections.Generic;
 
-using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.CSharp.Resolver
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// Represents an anonymous method or lambda expression.
