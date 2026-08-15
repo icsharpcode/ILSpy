@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Async = 0x10000,
 		Ref = 0x20000,
 		Required = 0x40000,
+		Scoped = 0x80000,
 
 		VisibilityMask = Private | Internal | Protected | Public,
 
@@ -78,6 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Modifiers.Unsafe,
 			Modifiers.Static, Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Override,
 			Modifiers.Required, Modifiers.Readonly, Modifiers.Volatile,
+			Modifiers.Scoped,
 			Modifiers.Ref,
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
 			Modifiers.Async,
@@ -124,6 +126,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return "async";
 				case Modifiers.Ref:
 					return "ref";
+				case Modifiers.Scoped:
+					return "scoped";
 				case Modifiers.Required:
 					return "required";
 				case Modifiers.Any:

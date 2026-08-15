@@ -173,6 +173,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new RemoveRedundantReturn(),
 				new IntroduceDynamicTypeOnLocals(),
 				new IntroduceNativeIntTypeOnLocals(),
+				new IntroduceScopedModifierOnLocals(),
 				new AssignVariableNames(),
 			};
 		}
