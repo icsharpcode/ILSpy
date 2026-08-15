@@ -60,26 +60,11 @@ public class HeadlessMmbPointerTests
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
-
-		// Any realised SharpTreeViewItem whose DataContext is an ILSpyTreeNode is a valid click
-		// target — the exact node doesn't matter, only that the gesture pipeline fires.
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-			.Any(r => r.DataContext is ILSpyTreeNode));
-		var row = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-			.First(r => r.DataContext is ILSpyTreeNode);
+		var (topLevel, centreInTopLevel) = await WaitForClickableRowAsync(grid);
 
 		// Snapshot the tab count BEFORE the gesture so we can assert a strict +1 after.
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		int before = documents.VisibleDockables?.Count ?? 0;
-
-		// Translate the row's centre into TopLevel coordinates so MouseDown lands inside it.
-		var topLevel = TopLevel.GetTopLevel(row)!;
-		var rowBounds = row.Bounds;
-		// Tree rows stretch to content width (with horizontal scroll), so clamp the click X to the
-		// visible grid viewport — the row centre can sit off-screen past the grid's right edge.
-		var centreInRow = new Point(System.Math.Min(rowBounds.Width, grid.Bounds.Width) / 2, rowBounds.Height / 2);
-		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
-			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
 
 		// Real pointer event — exercises bubble + handledEventsToo routing through SharpTreeView.
 		topLevel.MouseDown(centreInTopLevel, MouseButton.Middle);
@@ -109,22 +94,10 @@ public class HeadlessMmbPointerTests
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
-
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-			.Any(r => r.DataContext is ILSpyTreeNode));
-		var row = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-			.First(r => r.DataContext is ILSpyTreeNode);
+		var (topLevel, centreInTopLevel) = await WaitForClickableRowAsync(grid);
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		int before = documents.VisibleDockables?.Count ?? 0;
-
-		var topLevel = TopLevel.GetTopLevel(row)!;
-		var rowBounds = row.Bounds;
-		// Tree rows stretch to content width (with horizontal scroll), so clamp the click X to the
-		// visible grid viewport — the row centre can sit off-screen past the grid's right edge.
-		var centreInRow = new Point(System.Math.Min(rowBounds.Width, grid.Bounds.Width) / 2, rowBounds.Height / 2);
-		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
-			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
 
 		topLevel.MouseDown(centreInTopLevel, MouseButton.Left, RawInputModifiers.Control);
 		topLevel.MouseUp(centreInTopLevel, MouseButton.Left, RawInputModifiers.Control);
@@ -154,24 +127,10 @@ public class HeadlessMmbPointerTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		// Any realised SharpTreeViewItem whose data is an ILSpyTreeNode is a fine target; the
-		// non-leaf assembly node row (depth 0) is always present and never confused with a
-		// method row whose tree-toggle area is null.
-		await Waiters.WaitForAsync(() => grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-			.Any(r => r.DataContext is ILSpyTreeNode));
-		var row = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-			.First(r => r.DataContext is ILSpyTreeNode);
+		var (topLevel, centreInTopLevel) = await WaitForClickableRowAsync(grid);
 
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 		int before = documents.VisibleDockables?.Count ?? 0;
-
-		var topLevel = TopLevel.GetTopLevel(row)!;
-		var rowBounds = row.Bounds;
-		// Tree rows stretch to content width (with horizontal scroll), so clamp the click X to the
-		// visible grid viewport — the row centre can sit off-screen past the grid's right edge.
-		var centreInRow = new Point(System.Math.Min(rowBounds.Width, grid.Bounds.Width) / 2, rowBounds.Height / 2);
-		var centreInTopLevel = row.TranslatePoint(centreInRow, topLevel)
-			?? throw new System.InvalidOperationException("Row not in TopLevel visual tree");
 
 		// Drive two LMB clicks at the same coordinate — Avalonia.Headless interprets the
 		// second click within the double-click threshold as a real double-click event.
@@ -187,5 +146,47 @@ public class HeadlessMmbPointerTests
 
 		(documents.VisibleDockables?.Count ?? 0).Should().Be(before,
 			"LMB double-click must not open a new tab — only MMB does");
+	}
+
+	/// <summary>
+	/// Waits until an assembly-tree row is actually clickable and returns the TopLevel point that
+	/// lands on it. "Realised in the visual tree" is not enough: under layout churn (assemblies
+	/// still streaming into the tree) the virtualizing panel can hand out a container whose Bounds
+	/// are still empty, and a row can sit outside the grid's viewport - a pointer event aimed at
+	/// either reaches nothing, so the gesture silently does not happen. Hit-testing the candidate
+	/// point back to its own row before clicking rules both out. Which row is used does not matter,
+	/// only that the click lands on one whose node is an <see cref="ILSpyTreeNode"/>.
+	/// </summary>
+	static async Task<(TopLevel TopLevel, Point Point)> WaitForClickableRowAsync(
+		ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView grid)
+	{
+		Point point = default;
+		await Waiters.WaitForAsync(() => TryGetRowClickPoint(grid, out point),
+			description: "an assembly-tree row whose centre hit-tests back to that row");
+		return (TopLevel.GetTopLevel(grid)!, point);
+	}
+
+	static bool TryGetRowClickPoint(ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView grid, out Point point)
+	{
+		point = default;
+		if (TopLevel.GetTopLevel(grid) is not { } topLevel)
+			return false;
+		foreach (var row in grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>())
+		{
+			if (row.DataContext is not ILSpyTreeNode || row.Bounds.Width <= 0 || row.Bounds.Height <= 0)
+				continue;
+			// Tree rows stretch to content width (with horizontal scroll), so clamp the click X to the
+			// visible grid viewport - the row centre can sit off-screen past the grid's right edge.
+			var centreInRow = new Point(System.Math.Min(row.Bounds.Width, grid.Bounds.Width) / 2, row.Bounds.Height / 2);
+			if (row.TranslatePoint(centreInRow, topLevel) is not { } candidate)
+				continue;
+			if (topLevel.InputHitTest(candidate) is Visual hit
+				&& ReferenceEquals(hit.FindAncestorOfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>(includeSelf: true), row))
+			{
+				point = candidate;
+				return true;
+			}
+		}
+		return false;
 	}
 }
