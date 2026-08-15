@@ -28,7 +28,7 @@ esac
 DOTNET_PATH="$DOTNET_CACHE_ROOT/ICSharpCode/ILSpy/dotnet-format-$DOTNET_FORMAT_VERSION"
 if [ ! -d "$DOTNET_PATH" ]; then
  echo "Downloading dotnet-format $DOTNET_FORMAT_VERSION..."
- dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION" --add-source "$DOTNET_FORMAT_SOURCE"
+ dotnet tool install --tool-path "$DOTNET_PATH" dotnet-format --version "$DOTNET_FORMAT_VERSION"
 fi
 
 DOTNET_FORMAT="$DOTNET_PATH/dotnet-format$EXE_SUFFIX"
