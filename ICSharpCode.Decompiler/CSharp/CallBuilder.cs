@@ -1075,6 +1075,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 
 				arg = arg.ConvertTo(parameterType, expressionBuilder, allowImplicitConversion: arg.Type.Kind != TypeKind.Dynamic);
+				if (method.IsOperator)
+				{
+					// Operator calls do not survive as calls: ReplaceMethodCallsWithOperators turns
+					// them into operator or cast syntax, where the operand determines which operator
+					// is resolved, so it must keep its explicit type.
+					arg = arg.RestoreDefaultLiteralType(expressionBuilder);
+				}
 
 				if (parameter.ReferenceKind != ReferenceKind.None)
 				{

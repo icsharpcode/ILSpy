@@ -125,12 +125,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public Byte16 GetByte16()
 		{
-			return default(Byte16);
+			return default;
 		}
 
 		public Generic16<T> GetGeneric<T>()
 		{
-			return default(Generic16<T>);
+			return default;
 		}
 
 		public int GetIndex()

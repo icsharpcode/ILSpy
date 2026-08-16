@@ -596,6 +596,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (var.LoadCount > 0 || var.AddressCount > 0)
 				{
 					var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
+					if (resource is DefaultValueExpression)
+					{
+						// Unlike "using (expr)", the declaration spells out the type, so the
+						// resource may use the default literal.
+						resource = new TranslatedExpression(resource)
+							.ConvertTo(var.Type, exprBuilder, allowImplicitConversion: true);
+					}
 					var vds = new VariableDeclarationStatement(type, var.Name!, resource);
 					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
 					usingInit = vds;

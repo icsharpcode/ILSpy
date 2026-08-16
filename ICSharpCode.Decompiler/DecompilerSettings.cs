@@ -634,6 +634,14 @@ namespace ICSharpCode.Decompiler
 		public partial bool ThrowExpressions { get; set; }
 
 		/// <summary>
+		/// Gets/Sets whether the C# 7.1 default literal <c>default</c> should be used instead of
+		/// <c>default(T)</c>, wherever the surrounding syntax already supplies the type.
+		/// </summary>
+		[Description("DecompilerSettings.UseDefaultLiterals")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp7_1)]
+		public partial bool DefaultLiterals { get; set; }
+
+		/// <summary>
 		/// Gets/Sets whether implicit conversions between tuples
 		/// should be used in the decompiled output.
 		/// </summary>

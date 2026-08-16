@@ -91,7 +91,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (c != Conversion.None)
 				return c;
 			// C# 9.0 spec: §10.2.16 default literal conversions
-			// TODO
+			if (resolveResult is DefaultLiteralResolveResult)
+				return Conversion.DefaultLiteralConversion;
 			if (resolveResult.IsCompileTimeConstant)
 			{
 				c = StandardImplicitConversion(resolveResult.Type, toType, allowTuple);

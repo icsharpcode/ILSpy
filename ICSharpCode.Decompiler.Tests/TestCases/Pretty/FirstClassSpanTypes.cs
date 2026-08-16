@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void OutSpanOrByValue(out ReadOnlySpan<int> s)
 		{
-			s = default(ReadOnlySpan<int>);
+			s = default;
 		}
 
 		public static void OutSpanOrByValue(ReadOnlySpan<int> s)

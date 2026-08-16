@@ -37,6 +37,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public const string DefaultKeyword = "default";
 
 		[Slot("Type")]
-		public partial AstType Type { get; set; }
+		public partial AstType? Type { get; set; }
 	}
 }
