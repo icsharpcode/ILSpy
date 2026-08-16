@@ -224,6 +224,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				return RestoreDefaultLiteralType(expressionBuilder)
 					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
 			}
+			// Unwrapping a conversion hands its operand to a different target type. A default
+			// literal takes its value from that type, so it may have to be spelled out again:
+			// "T? x = new T?(default)" holds a value, whereas "T? x = default" is null.
+			TranslatedExpression Unwrapped(TranslatedExpression operand)
+			{
+				if (operand.ResolveResult is not DefaultLiteralResolveResult)
+					return operand;
+				return operand.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+			}
 			if (NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(type, targetType))
 			{
 				// Make explicit conversion implicit, if possible
@@ -251,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp
 									type, targetType
 								))
 							{
-								var result = this.UnwrapChild(cast.Expression);
+								var result = Unwrapped(this.UnwrapChild(cast.Expression));
 								if (conversion.Conversion.IsUserDefined)
 								{
 									result.Expression.AddAnnotation(new ImplicitConversionAnnotation(conversion));
@@ -270,7 +279,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1
 								&& invocation.Type.IsKnownType(KnownTypeCode.NullableOfT))
 							{
-								return this.UnwrapChild(oce.Arguments.Single());
+								return Unwrapped(this.UnwrapChild(oce.Arguments.Single()));
 							}
 							break;
 						}
@@ -342,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& !conv.Conversion.IsUserDefined
 				&& CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
 			{
-				var unwrapped = this.UnwrapChild(cast2.Expression);
+				var unwrapped = Unwrapped(this.UnwrapChild(cast2.Expression));
 				if (allowImplicitConversion)
 					return unwrapped;
 				return unwrapped.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);

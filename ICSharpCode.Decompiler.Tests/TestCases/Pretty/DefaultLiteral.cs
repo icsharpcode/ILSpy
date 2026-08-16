@@ -100,6 +100,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return data + default(Data);
 		}
 
+		public bool NullableWithValueStaysTyped()
+		{
+			Data? data = default(Data);
+			return data.HasValue;
+		}
+
 		public string NonIdentityConversionsStayTyped()
 		{
 			object obj = default(Data);

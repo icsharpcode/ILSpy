@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static async void TestAsyncUsingNullableStruct()
 		{
-			await using (AsyncDisposableStruct? asyncDisposableStruct = new AsyncDisposableStruct?(default))
+			await using (AsyncDisposableStruct? asyncDisposableStruct = default(AsyncDisposableStruct))
 			{
 				Use(asyncDisposableStruct);
 			}
