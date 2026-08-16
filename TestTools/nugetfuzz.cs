@@ -316,6 +316,37 @@ async Task<NuGetVersion?> ResolveVersion(string id, VersionRange? range)
 	return versions.LastOrDefault(v => !v.IsPrerelease) ?? versions.LastOrDefault();
 }
 
+// nuget.org stalls or resets a connection now and then. Without a retry such a flake
+// travels all the way out as an unhandled exception, which the report files as a
+// decompiler [EXCEPTION] - the one bucket that must contain nothing but real crashes -
+// and the package is skipped without a single type being decompiled. A 404 is an
+// answer, not a flake, so it is passed straight through to the caller.
+async Task<T> WithRetry<T>(Func<Task<T>> request)
+{
+	for (int attempt = 1; ; attempt++)
+	{
+		try
+		{
+			return await request();
+		}
+		catch (Exception ex) when (attempt < 3 && IsTransient(ex))
+		{
+			Console.WriteLine($"  ! transient http failure ({ex.GetType().Name}), retry {attempt}/2");
+			await Task.Delay(TimeSpan.FromSeconds(2 * attempt));
+		}
+	}
+
+	static bool IsTransient(Exception ex) => ex switch {
+		// HttpClient.Timeout surfaces as a cancellation, not as a timeout
+		TaskCanceledException or IOException => true,
+		// no status code at all means the request never got an answer: DNS, reset, TLS
+		HttpRequestException { StatusCode: null } => true,
+		HttpRequestException { StatusCode: var status } =>
+			status == System.Net.HttpStatusCode.TooManyRequests || (int)status! >= 500,
+		_ => false,
+	};
+}
+
 async Task<List<NuGetVersion>?> GetVersions(string id)
 {
 	var key = id.ToLowerInvariant();
@@ -325,8 +356,8 @@ async Task<List<NuGetVersion>?> GetVersions(string id)
 		return cached;
 	try
 	{
-		var index = await http.GetFromJsonAsync<VersionIndex>(
-			$"https://api.nuget.org/v3-flatcontainer/{key}/index.json");
+		var index = await WithRetry(() => http.GetFromJsonAsync<VersionIndex>(
+			$"https://api.nuget.org/v3-flatcontainer/{key}/index.json"));
 		var versions = index!.versions.Select(NuGetVersion.Parse).ToList();
 		versionCache[key] = versions;
 		return versions;
@@ -457,8 +488,8 @@ async Task<string> GetPackage(string id, NuGetVersion version)
 	if (!Directory.Exists(dir))
 	{
 		Console.WriteLine($"  downloading {id} {v}");
-		var bytes = await http.GetByteArrayAsync(
-			$"https://api.nuget.org/v3-flatcontainer/{idLower}/{v}/{idLower}.{v}.nupkg");
+		var bytes = await WithRetry(() => http.GetByteArrayAsync(
+			$"https://api.nuget.org/v3-flatcontainer/{idLower}/{v}/{idLower}.{v}.nupkg"));
 		var tmp = dir + ".tmp";
 		if (Directory.Exists(tmp))
 			Directory.Delete(tmp, true);
