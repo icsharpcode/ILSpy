@@ -121,6 +121,7 @@ public class SearchProgressTests
 		// is an infinite animation, and one that ran while idle would keep the render clock
 		// busy for as long as the pane exists.
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
+		pane.DataContext.Should().BeSameAs(search, "the indicator binds to the pane's own model; anything else makes the assertions below meaningless");
 		progress!.IsIndeterminate.Should().BeFalse("nothing is running yet");
 		search.IsSearching = true;
 		Dispatcher.UIThread.RunJobs();
