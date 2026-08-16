@@ -4437,9 +4437,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				// we can deference the managed reference by stripping away the 'ref'
 				value = value.UnwrapChild(((DirectionExpression)value.Expression).Expression);
 			}
-			if (expectedType != null)
+			var callBuilder = new CallBuilder(this, typeSystem, settings);
+			if (expectedType != null
+			&& inst.GetAwaiterMethod != null
+			&& !callBuilder.CheckSimpleCall(value.ResolveResult, inst.GetAwaiterMethod, inst.GetAwaiterCallOpCode))
 			{
-				value = value.ConvertTo(expectedType, this, allowImplicitConversion: true);
+				value = value.ConvertTo(expectedType, this);
 			}
 			return new UnaryOperatorExpression(UnaryOperatorType.Await, value.Expression)
 				.WithILInstruction(inst)

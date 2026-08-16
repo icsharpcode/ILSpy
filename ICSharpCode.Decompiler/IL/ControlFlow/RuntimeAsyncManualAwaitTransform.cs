@@ -162,6 +162,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var inst in pauseBlock.Instructions)
 				awaitInst.AddILRange(inst);
 			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
+			awaitInst.GetAwaiterCallOpCode = getAwaiterCall.OpCode;
 			awaitInst.GetResultMethod = getResultCall.Method;
 
 			// Remove the trailing 3 (or 4) instructions of the head block; replace with `br completedBlock`.
