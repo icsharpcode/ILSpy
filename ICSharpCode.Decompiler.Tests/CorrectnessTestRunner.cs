@@ -399,6 +399,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task AsyncAwaitPatterns([ValueSource(nameof(noMonoOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
+		[Test]
 		public async Task LINQRaytracer([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
