@@ -84,6 +84,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double Double_Sixth = 1.0 / 6.0;
 		public const float Float_Tenth = 0.1f;
 		public const double Double_Tenth = 0.1;
+		public const float Float_Third = 1f / 3f;
+		public const float Float_PowerOfTwoFraction = 21f / 32f;
+		public const float Float_SmoothFraction = 2f / 15f;
+		public const float Float_UnitFraction = 1f / 85f;
+		public const float Float_ByteScale_225 = 225f / 255f;
+		public const float Float_ByteScale_200 = 200f / 255f;
+		public const float Float_ByteScale_150 = 150f / 255f;
+		public const float Float_NegativeByteScale = -200f / 255f;
+		public const double Double_ByteScale = 200.0 / 255.0;
+		public const float Float_KScale = 123f / 1024f;
+		public const float Float_MScale = 123f / 1048576f;
 
 #if ROSLYN2 && !NET40
 		public const float Float_PI = MathF.PI;

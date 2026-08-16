@@ -1516,6 +1516,103 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		const int MAX_DENOMINATOR_DOUBLE = 1000;
 		const int MAX_DENOMINATOR_FLOAT = 360;
 
+		// Common machine-scale denominators: powers of two used for binary scaling,
+		// and 2^n-1 values used when normalizing integers (for example, byte colors / 255).
+		// Keep this as a targeted candidate set rather than increasing the generic denominator
+		// limit, which would reintroduce accidental fraction matches for ordinary floating-point values.
+		static readonly int[] preferredFractionDenominators = {
+			127, 128,
+			255, 256,
+			1023, 1024,
+			4095, 4096,
+			8192,
+			16384,
+			32767, 32768,
+			65535, 65536,
+			1048576
+		};
+
+		static int GetIntegerLiteralLength(long value)
+		{
+			int length = value < 0 ? 1 : 0;
+			do
+			{
+				length++;
+				value /= 10;
+			} while (value != 0);
+			return length;
+		}
+
+		static int GetFractionDisplayLength(long num, long den, bool isDouble)
+		{
+			// Float integer constants use the `f` suffix; double constants need `.0`.
+			int numericSuffixLength = isDouble ? 2 : 1;
+			return GetIntegerLiteralLength(num) + GetIntegerLiteralLength(den)
+				+ 3 + 2 * numericSuffixLength; // `num / den`
+		}
+
+		// Unit fractions and denominators composed only of 2, 3 and 5 are already
+		// conventional forms; do not expand them just to reach a preferred scale.
+		static bool IsSimpleFraction(long num, long den)
+		{
+			Debug.Assert(den > 0);
+			if (num == 1 || num == -1)
+				return true;
+			while (den % 2 == 0)
+				den /= 2;
+			while (den % 3 == 0)
+				den /= 3;
+			while (den % 5 == 0)
+				den /= 5;
+			return den == 1;
+		}
+
+		static int GetPreferredFractionScore(long num, int den, bool isDouble)
+		{
+			// Powers of two are native to binary floating point and therefore more likely to
+			// match by coincidence. Values of the form 2^n-1 are a stronger normalization
+			// signal, so allow them a slightly larger readability bonus.
+			bool isPowerOfTwo = (den & (den - 1)) == 0;
+			Debug.Assert(isPowerOfTwo || ((den + 1) & den) == 0);
+			int readabilityBonus = isPowerOfTwo ? 1 : 2;
+			return GetFractionDisplayLength(num, den, isDouble) - readabilityBonus;
+		}
+
+		static bool TryGetPreferredFraction(object constantValue, bool isDouble, out long num, out long den, out int score)
+		{
+			num = 0;
+			den = 0;
+			score = int.MaxValue;
+
+			double value = isDouble ? (double)constantValue : (float)constantValue;
+			if (!(Math.Abs(value) < 1.0))
+				return false;
+
+			foreach (int candidateDen in preferredFractionDenominators)
+			{
+				long candidateNum = (long)Math.Round(value * candidateDen);
+				if (candidateNum == 0 || candidateNum <= -candidateDen || candidateNum >= candidateDen)
+					continue;
+				if (!IsEqual(candidateNum, candidateDen, constantValue, isDouble))
+					continue;
+
+				int candidateScore = GetPreferredFractionScore(candidateNum, candidateDen, isDouble);
+				if (candidateScore < score || (candidateScore == score && candidateDen < den))
+				{
+					num = candidateNum;
+					den = candidateDen;
+					score = candidateScore;
+				}
+			}
+
+			return den != 0;
+		}
+
+		Expression MakeFraction(IType type, long num, long den)
+		{
+			return new BinaryOperatorExpression(MakeConstant(type, num), BinaryOperatorType.Divide, MakeConstant(type, den));
+		}
+
 		Expression ConvertFloatingPointLiteral(IType type, object constantValue)
 		{
 			// Coerce constantValue to either float or double:
@@ -1557,11 +1654,35 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					? FractionApprox((double)constantValue, MAX_DENOMINATOR_DOUBLE)
 					: FractionApprox((float)constantValue, 200);
 
-				if (IsValidFraction(num, den) && IsEqual(num, den, constantValue, isDouble) && Math.Abs(den) != 1)
+				bool hasRegularFraction = IsValidFraction(num, den)
+					&& IsEqual(num, den, constantValue, isDouble)
+					&& Math.Abs(den) != 1;
+
+				if (TryGetPreferredFraction(constantValue, isDouble, out long preferredNum, out long preferredDen, out int preferredScore))
 				{
-					var left = MakeConstant(type, num);
-					var right = MakeConstant(type, den);
-					expr = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right);
+					int baselineLength = hasRegularFraction
+						? GetFractionDisplayLength(num, den, isDouble)
+						: str.Length + (isDouble ? 0 : 1);
+					// Do not replace an already-simple fraction (for example 21 / 32 or 2 / 15)
+					// just to reach one of the larger preferred scales.
+					bool regularFractionIsSimple = hasRegularFraction && IsSimpleFraction(num, den);
+					if (!regularFractionIsSimple && preferredScore <= baselineLength)
+					{
+						if (hasRegularFraction)
+						{
+							num = preferredNum;
+							den = preferredDen;
+						}
+						else
+						{
+							expr = MakeFraction(type, preferredNum, preferredDen);
+						}
+					}
+				}
+
+				if (hasRegularFraction)
+				{
+					expr = MakeFraction(type, num, den);
 				}
 			}
 
