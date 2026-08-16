@@ -41,19 +41,52 @@ namespace ICSharpCode.ILSpyCmd
 	/// </summary>
 	class ILAstDumper
 	{
-		readonly IReadOnlyList<IILTransform> transforms = CSharpDecompiler.GetILTransforms();
-		readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions();
+		static readonly IReadOnlyList<IILTransform> transforms = CSharpDecompiler.GetILTransforms();
+
+		readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
+			// same sugar as the UI's ILAst pane, so its output and this one are diffable
+			UseFieldSugar = true,
+			UseLogicOperationSugar = true,
+		};
 
 		/// <summary>
-		/// Names of the IL transforms, in the order they run. Transforms nested inside a
-		/// BlockILTransform (LoopDetection, ConditionDetection, the statement transforms, ...)
-		/// are not listed: they run as part of their containing entry and cannot be stopped
-		/// after individually.
+		/// Names of the IL transforms, in the order they run, as <c>--after-transform</c> accepts
+		/// them. Transforms nested inside a BlockILTransform (LoopDetection, ConditionDetection,
+		/// the statement transforms, ...) have no name of their own here: they run as part of
+		/// their containing entry and cannot be stopped after individually.
 		/// </summary>
 		public static IReadOnlyList<string> TransformNames { get; } =
-			CSharpDecompiler.GetILTransforms().Select(t => t.GetType().Name).ToArray();
+			transforms.Select(t => t.GetType().Name).ToArray();
 
 		public static int TransformCount => TransformNames.Count;
+
+		/// <summary>
+		/// How a pipeline entry is displayed: a BlockILTransform also names the transforms it
+		/// runs, which are otherwise invisible - and two BlockILTransform entries would be
+		/// indistinguishable.
+		/// </summary>
+		static string Describe(int index)
+		{
+			return transforms[index] is BlockILTransform block ? block.ToString() : TransformNames[index];
+		}
+
+		/// <summary>
+		/// The 1-based index of the pipeline entry running <paramref name="name"/> as one of its
+		/// nested transforms, or 0 if no entry does.
+		/// </summary>
+		static int FindContainingEntry(string name)
+		{
+			for (int i = 0; i < transforms.Count; i++)
+			{
+				if (transforms[i] is BlockILTransform block
+					&& block.PreOrderTransforms.Concat(block.PostOrderTransforms)
+						.Any(t => string.Equals(t.GetType().Name, name, StringComparison.OrdinalIgnoreCase)))
+				{
+					return i + 1;
+				}
+			}
+			return 0;
+		}
 
 		/// <summary>
 		/// The pipeline as displayed to the user: one transform per line, prefixed by the
@@ -62,7 +95,7 @@ namespace ICSharpCode.ILSpyCmd
 		public static string DescribePipeline()
 		{
 			return string.Join(Environment.NewLine,
-				TransformNames.Select((name, index) => $"  {index + 1,3}  {name}"));
+				Enumerable.Range(0, TransformCount).Select(index => $"  {index + 1,3}  {Describe(index)}"));
 		}
 
 		/// <summary>
@@ -96,7 +129,10 @@ namespace ICSharpCode.ILSpyCmd
 
 			if (occurrences.Length == 0)
 			{
-				error = $"Unknown transform '{trimmed}'. Pass one of these names, or its index:{Environment.NewLine}{DescribePipeline()}";
+				int containingEntry = FindContainingEntry(trimmed);
+				error = containingEntry > 0
+					? $"'{trimmed}' runs inside the transform at index {containingEntry} and cannot be stopped after on its own. Pass that index to stop after the whole entry:{Environment.NewLine}{DescribePipeline()}"
+					: $"Unknown transform '{trimmed}'. Pass one of these names, or its index:{Environment.NewLine}{DescribePipeline()}";
 				return false;
 			}
 			if (occurrences.Length > 1)
@@ -111,32 +147,38 @@ namespace ICSharpCode.ILSpyCmd
 
 		/// <summary>
 		/// Writes the ILAst of a single method, or nothing at all if the method has no body
-		/// (abstract, extern or a runtime-provided implementation).
+		/// (abstract, extern or a runtime-provided implementation). Returns the failure if the
+		/// body could not be read, transformed or written, so that one broken method neither
+		/// aborts the dump nor makes the run look successful.
 		/// </summary>
-		public void WriteMethod(CSharpDecompiler decompiler, DecompilerSettings settings, IMethod method,
+		public DecompilerException WriteMethod(CSharpDecompiler decompiler, DecompilerSettings settings, IMethod method,
 			int transformCount, ITextOutput output, CancellationToken cancellationToken)
 		{
-			if (method.MetadataToken.IsNil || method.MetadataToken.Kind != HandleKind.MethodDefinition)
-				return;
-			var metadataFile = decompiler.TypeSystem.MainModule.MetadataFile;
+			if (method == null || method.MetadataToken.IsNil || method.MetadataToken.Kind != HandleKind.MethodDefinition)
+				return null;
+			var module = decompiler.TypeSystem.MainModule;
+			var metadataFile = module.MetadataFile;
 			var handle = (MethodDefinitionHandle)method.MetadataToken;
 			var methodDefinition = metadataFile.Metadata.GetMethodDefinition(handle);
 			if (!methodDefinition.HasBody())
-				return;
+				return null;
 
 			output.WriteLine($"// {method.FullName}");
-			output.WriteLine($"// ILAst after {transformCount} of {TransformCount} transforms ({TransformNames[transformCount - 1]})");
+			output.WriteLine($"// ILAst after {transformCount} of {TransformCount} transforms ({Describe(transformCount - 1)})");
 
-			var reader = new ILReader(decompiler.TypeSystem.MainModule) {
-				UseDebugSymbols = settings.UseDebugSymbols,
-				UseRefLocalsForAccurateOrderOfEvaluation = settings.UseRefLocalsForAccurateOrderOfEvaluation,
-			};
-			var body = metadataFile.GetMethodBody(methodDefinition.RelativeVirtualAddress);
-			ILFunction function = reader.ReadIL(handle, body, kind: ILFunctionKind.TopLevelFunction,
-				cancellationToken: cancellationToken);
-			ILTransformContext context = decompiler.CreateILTransformContext(function);
+			DecompilerException error = null;
+			ILFunction function = null;
 			try
 			{
+				var reader = new ILReader(module) {
+					UseDebugSymbols = settings.UseDebugSymbols,
+					UseRefLocalsForAccurateOrderOfEvaluation = settings.UseRefLocalsForAccurateOrderOfEvaluation,
+					DebugInfo = decompiler.DebugInfoProvider,
+				};
+				var body = metadataFile.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+				function = reader.ReadIL(handle, body, kind: ILFunctionKind.TopLevelFunction,
+					cancellationToken: cancellationToken);
+				ILTransformContext context = decompiler.CreateILTransformContext(function);
 				function.RunTransforms(transforms.Take(transformCount), context);
 			}
 			catch (Exception ex)
@@ -146,10 +188,20 @@ namespace ICSharpCode.ILSpyCmd
 				// rather than aborting the whole dump.
 				output.WriteLine(ex.ToString());
 				output.WriteLine("// ILAst after the crash:");
+				error = new DecompilerException(module, method, ex);
 			}
-			function.WriteTo(output, writingOptions);
+			try
+			{
+				function?.WriteTo(output, writingOptions);
+			}
+			catch (Exception ex)
+			{
+				output.WriteLine(ex.ToString());
+				error ??= new DecompilerException(module, method, ex);
+			}
 			output.WriteLine();
 			output.WriteLine();
+			return error;
 		}
 	}
 }

@@ -19,6 +19,7 @@
 // The --ilast options exist in debug builds only, so this fixture compiles away with them.
 #if DEBUG
 
+using System.IO;
 using System.Threading.Tasks;
 
 using NUnit.Framework;
@@ -53,6 +54,11 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(result.Output, Does.Contain("ILFunction"));
 		}
 
+		// the loop of SumLoop is only recognised by HighLevelLoopTransform, at the very end of the
+		// pipeline: its presence tells a full run from a truncated one, while the header line
+		// (which names the requested transform count) would differ either way
+		const string structuredLoop = "BlockContainer (for)";
+
 		[Test]
 		public async Task StoppingAfterATransformYieldsDifferentILAst()
 		{
@@ -64,17 +70,20 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(full.ExitCode, Is.EqualTo(0), full.Error);
 			Assert.That(partial.ExitCode, Is.EqualTo(0), partial.Error);
 			Assert.That(partial.Output, Does.Contain(nameof(ILAstSample.SumLoop)));
-			Assert.That(partial.Output, Is.Not.EqualTo(full.Output));
+			Assert.That(full.Output, Does.Contain(structuredLoop));
+			Assert.That(partial.Output, Does.Not.Contain(structuredLoop));
 		}
 
 		[Test]
 		public async Task TransformCanBeSelectedByIndex()
 		{
 			var partial = await RunILAstAsync("--after-transform", "1");
-			var full = await RunILAstAsync("--ilast");
 
 			Assert.That(partial.ExitCode, Is.EqualTo(0), partial.Error);
-			Assert.That(partial.Output, Is.Not.EqualTo(full.Output));
+			Assert.That(partial.Output, Does.Contain(nameof(ILAstSample.SumLoop)));
+			Assert.That(partial.Output, Does.Not.Contain(structuredLoop));
+			// AssignVariableNames is the last transform, so the locals still carry their IL names
+			Assert.That(partial.Output, Does.Contain("local V_0"));
 		}
 
 		[Test]
@@ -91,12 +100,39 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task AmbiguousTransformNameReportsItsOccurrences()
 		{
-			// SplitVariables runs three times; the name alone cannot identify a stop point
+			// SplitVariables runs more than once; the name alone cannot identify a stop point
 			var result = await RunILAstAsync("--after-transform", "SplitVariables");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
-			Assert.That(result.Error, Does.Contain("SplitVariables"));
-			Assert.That(result.Error, Does.Contain("2"));
+			// the message has to be the ambiguity one, not the unknown-name listing, which
+			// mentions every transform of the pipeline as well
+			Assert.That(result.Error, Does.Contain("'SplitVariables' runs"));
+			Assert.That(result.Error, Does.Contain("times, at index"));
+			Assert.That(result.Error, Does.Not.Contain("Unknown transform"));
+		}
+
+		[Test]
+		public async Task NestedTransformNamesTheEntryThatRunsIt()
+		{
+			// LoopDetection runs inside a BlockILTransform, so it has no stop point of its own;
+			// the pipeline listing has to show where it runs instead of hiding it
+			var result = await RunILAstAsync("--after-transform", "LoopDetection");
+
+			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
+			Assert.That(result.Error, Does.Contain("runs inside the transform at index"));
+			Assert.That(result.Error, Does.Contain("BlockILTransform (LoopDetection"));
+		}
+
+		[Test]
+		public async Task DebugSymbolsProvideLocalVariableNames()
+		{
+			var withPdb = await RunILAstAsync("--ilast", "-usepdb");
+			var withoutPdb = await RunILAstAsync("--ilast");
+
+			Assert.That(withPdb.ExitCode, Is.EqualTo(0), withPdb.Error);
+			// the PDB's name for the accumulator, instead of the generated 'num'
+			Assert.That(withPdb.Output, Does.Contain("local sum"));
+			Assert.That(withoutPdb.Output, Does.Not.Contain("local sum"));
 		}
 
 		[Test]
@@ -108,6 +144,39 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain(nameof(ILAstSample.SumLoop)));
 			Assert.That(result.Output, Does.Contain(nameof(ILAstSample.Identity)));
+			// accessors are methods with bodies too, and the type system's Methods hides them
+			Assert.That(result.Output, Does.Contain("get_" + nameof(ILAstSample.Counter)));
+		}
+
+		[Test]
+		public async Task OutputDirWritesEveryAssemblyCompletely()
+		{
+			// Two input assemblies, so the per-file output writer is swapped between files;
+			// a writer that is replaced without being flushed truncates the earlier file.
+			string ilspyCmdAssemblyPath = typeof(ILSpyCmdProgram).Assembly.Location;
+			string outputDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+			Directory.CreateDirectory(outputDir);
+			try
+			{
+				// one transform only: this dumps every method of both assemblies, and the
+				// truncation it guards against does not depend on the pipeline length
+				var result = await RunAsync(testAssemblyPath, ilspyCmdAssemblyPath,
+					"--disable-updatecheck", "--after-transform", "1", "-o", outputDir);
+
+				Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+				foreach (string assemblyPath in new[] { testAssemblyPath, ilspyCmdAssemblyPath })
+				{
+					string outputFile = Path.Combine(outputDir, Path.GetFileNameWithoutExtension(assemblyPath) + ".ilast");
+					Assert.That(File.Exists(outputFile), Is.True, outputFile);
+					// every function ends with its closing brace; a truncated file breaks off
+					// wherever the writer's buffer happened to end
+					Assert.That(File.ReadAllText(outputFile).TrimEnd(), Does.EndWith("}"), outputFile);
+				}
+			}
+			finally
+			{
+				Directory.Delete(outputDir, recursive: true);
+			}
 		}
 	}
 
@@ -124,6 +193,8 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		public static string Identity(string value) => value;
+
+		public static int Counter { get; set; }
 	}
 }
 

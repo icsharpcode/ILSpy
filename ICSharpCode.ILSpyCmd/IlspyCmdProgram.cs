@@ -363,8 +363,12 @@ Examples:
 				{
 					if (outputDirectory != null)
 					{
+						// per-file writer, disposed here: the shared 'output' is only closed once
+						// at the end of the run, which would lose the buffered tail of every file
+						// but the last when dumping multiple assemblies
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(outputDirectory, outputName) + ".ilast");
+						using var ilastOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + ".ilast");
+						return ShowILAst(fileName, ilastOutput, app);
 					}
 
 					return ShowILAst(fileName, output, app);
@@ -533,7 +537,9 @@ Examples:
 			return decompilerSettings;
 		}
 
-		CSharpDecompiler GetDecompiler(string assemblyFileName)
+		CSharpDecompiler GetDecompiler(string assemblyFileName) => GetDecompiler(assemblyFileName, out _);
+
+		CSharpDecompiler GetDecompiler(string assemblyFileName, out DecompilerSettings settings)
 		{
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
@@ -541,7 +547,8 @@ Examples:
 			{
 				resolver.AddSearchDirectory(path);
 			}
-			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings(module)) {
+			settings = GetSettings(module);
+			return new CSharpDecompiler(assemblyFileName, resolver, settings) {
 				DebugInfoProvider = TryLoadPDB(module)
 			};
 		}
@@ -667,8 +674,9 @@ Examples:
 				return ProgramExitCodes.EX_USAGE;
 			}
 
-			var settings = GetSettings(new PEFile(assemblyFileName));
-			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName, out var settings);
+			var mainModule = decompiler.TypeSystem.MainModule;
+			var metadata = mainModule.MetadataFile.Metadata;
 			IEnumerable<IMethod> methods;
 
 			if (MemberIdString != null)
@@ -683,7 +691,7 @@ Examples:
 					Console.Error.WriteLine($"'{MemberIdString}' does not name a method; ILAst exists for method bodies only.");
 					return ProgramExitCodes.EX_DATAERR;
 				}
-				methods = new[] { decompiler.TypeSystem.MainModule.GetDefinition((MethodDefinitionHandle)handle) };
+				methods = new[] { mainModule.GetDefinition((MethodDefinitionHandle)handle) };
 			}
 			else if (TypeName != null)
 			{
@@ -692,19 +700,26 @@ Examples:
 					Console.Error.WriteLine(error);
 					return ProgramExitCodes.EX_DATAERR;
 				}
-				methods = typeDefinition.Methods;
+				// via the metadata handles, not ITypeDefinition.Methods: the latter drops every
+				// method that has method semantics, i.e. all property and event accessors
+				methods = metadata.GetTypeDefinition((TypeDefinitionHandle)typeDefinition.MetadataToken)
+					.GetMethods().Select(mainModule.GetDefinition);
 			}
 			else
 			{
-				methods = decompiler.TypeSystem.MainModule.TypeDefinitions.SelectMany(type => type.Methods);
+				methods = metadata.MethodDefinitions.Select(mainModule.GetDefinition);
 			}
 
 			var textOutput = new PlainTextOutput(output);
 			var dumper = new ILAstDumper();
+			var errors = new List<DecompilerException>();
 			foreach (var method in methods)
 			{
-				dumper.WriteMethod(decompiler, settings, method, transformCount, textOutput, CancellationToken.None);
+				var error = dumper.WriteMethod(decompiler, settings, method, transformCount, textOutput, CancellationToken.None);
+				if (error != null)
+					errors.Add(error);
 			}
+			ReportDecompilationErrors(assemblyFileName, errors);
 			return 0;
 		}
 #endif
