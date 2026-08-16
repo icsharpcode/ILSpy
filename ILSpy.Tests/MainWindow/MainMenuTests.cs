@@ -95,6 +95,38 @@ public class MainMenuTests
 		openItem.Gesture!.Should().Be(expected);
 	}
 
+	// The app-level NativeMenu (App.axaml) is process-wide, while every MainWindow builds
+	// its own Help items over its own command instances. On macOS each new window promotes
+	// them into that app menu; the ones an earlier window promoted must be replaced, not
+	// kept - otherwise the app menu pins every earlier window's command graph (and, in the
+	// headless suite, every test's app graph) for the life of the process.
+	[AvaloniaTest]
+	public void Promoting_Help_Again_Replaces_The_Items_An_Earlier_Window_Promoted()
+	{
+		var appMenu = NativeMenu.GetMenu(Application.Current!);
+		appMenu.Should().NotBeNull("App.axaml declares the NativeMenu the Help items move into");
+
+		static (NativeMenu Root, System.Collections.Generic.Dictionary<string, NativeMenuItem> ByTag) WindowMenuWithHelp(string header)
+		{
+			var help = new NativeMenuItem { Header = "_Help", Menu = new NativeMenu() };
+			help.Menu.Items.Add(new NativeMenuItem { Header = header });
+			var root = new NativeMenu();
+			root.Items.Add(help);
+			return (root, new System.Collections.Generic.Dictionary<string, NativeMenuItem>(StringComparer.Ordinal) { ["_Help"] = help });
+		}
+
+		var first = WindowMenuWithHelp("About (first window)");
+		MainMenu.PromoteHelpToMacAppMenu(first.Root, first.ByTag);
+		var afterFirst = appMenu!.Items.Count;
+		var second = WindowMenuWithHelp("About (second window)");
+		MainMenu.PromoteHelpToMacAppMenu(second.Root, second.ByTag);
+
+		appMenu.Items.Count.Should().Be(afterFirst, "the second window's Help items replace the first window's");
+		appMenu.Items.OfType<NativeMenuItem>().Select(i => i.Header)
+			.Should().Contain("About (second window)")
+			.And.NotContain("About (first window)");
+	}
+
 	// NativeMenuItem.Gesture is display-only when NativeMenuBar renders the menu inline
 	// (the managed fallback binds it to MenuItem.InputGesture, which never handles input),
 	// so every menu gesture must also be registered as a window-level KeyBinding or the

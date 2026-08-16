@@ -94,6 +94,13 @@ public sealed class ResetAppStateAttribute : Attribute, ITestAction
 		if (Application.Current == null || !Dispatcher.UIThread.CheckAccess())
 			return;
 
+		TearDownTestState();
+	}
+
+	// Everything the per-test teardown does on the dispatcher thread; exposed so a test can
+	// perform the teardown itself and check what it leaves behind (see TeardownRetentionTests).
+	internal static void TearDownTestState()
+	{
 		// Drive background work to quiescence BEFORE the next test rebuilds the composition. A test
 		// that triggers a decompile spawns a Task.Run plus dispatcher continuations and rarely awaits
 		// them to completion; left running, that continuation lands during the next test and reads

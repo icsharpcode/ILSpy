@@ -74,11 +74,15 @@ public static class MainMenu
 		{
 			TranslateGesturesForMacOS(menu);
 			PromoteHelpToMacAppMenu(menu, topLevelByTag);
+			window.Closed += (_, _) => WithdrawPromotedHelpItems();
 		}
 
 		RegisterGestureKeyBindings(window, menu);
 		NativeMenu.SetMenu(window, menu);
 	}
+
+	// The Help items currently promoted into the app-level NativeMenu (see PromoteHelpToMacAppMenu).
+	static readonly List<NativeMenuItemBase> promotedHelpItems = new();
 
 	// NativeMenuItem.Gesture is display-only when NativeMenuBar renders the menu inline:
 	// the managed fallback binds it to MenuItem.InputGesture, which never handles input.
@@ -121,23 +125,38 @@ public static class MainMenu
 	// the exporter subscribes to that instance's Items, so inserting fires a re-export.
 	// Items go at the top, above the Services / Hide / Quit block the exporter appended.
 	// We then remove _Help from the window menu so the items don't appear in both places.
-	static void PromoteHelpToMacAppMenu(NativeMenu rootMenu, Dictionary<string, NativeMenuItem> topLevelByTag)
+	// The app menu outlives any one window, and each window's Help items are built over
+	// that window's own command instances, so the items an earlier window promoted are
+	// taken out first (and again when the window closes); leaving them in would keep
+	// that window's command graph, and everything those commands reach, alive for the
+	// life of the process.
+	internal static void PromoteHelpToMacAppMenu(NativeMenu rootMenu, Dictionary<string, NativeMenuItem> topLevelByTag)
 	{
-		if (!topLevelByTag.TryGetValue("_Help", out var helpItem) || helpItem.Menu is null)
-			return;
+		WithdrawPromotedHelpItems();
 		if (Application.Current is null)
 			return;
 		var appMenu = NativeMenu.GetMenu(Application.Current);
 		if (appMenu is null)
+			return;
+		if (!topLevelByTag.TryGetValue("_Help", out var helpItem) || helpItem.Menu is null)
 			return;
 		var index = 0;
 		foreach (var item in helpItem.Menu.Items.ToArray())
 		{
 			helpItem.Menu.Items.Remove(item);
 			appMenu.Items.Insert(index++, item);
+			promotedHelpItems.Add(item);
 		}
 		rootMenu.Items.Remove(helpItem);
 		topLevelByTag.Remove("_Help");
+	}
+
+	static void WithdrawPromotedHelpItems()
+	{
+		var appMenu = Application.Current is null ? null : NativeMenu.GetMenu(Application.Current);
+		foreach (var item in promotedHelpItems)
+			appMenu?.Items.Remove(item);
+		promotedHelpItems.Clear();
 	}
 
 	static bool TryGetExports(

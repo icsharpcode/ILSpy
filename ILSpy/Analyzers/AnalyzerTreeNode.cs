@@ -37,23 +37,24 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// </summary>
 	public abstract class AnalyzerTreeNode : SharpTreeNode
 	{
-		static LanguageService? cachedLanguageService;
-		static AnalyzerRegistry? cachedRegistry;
-		static AssemblyTreeModel? cachedAssemblyTreeModel;
+		// The exports below are resolved on every access rather than cached in statics: the
+		// composition root is rebuilt per test in the headless suite, and a static cache would
+		// hand later tests the first test's language service and assembly list and keep that
+		// first app graph reachable for the run. A warm GetExport is a dictionary lookup.
 
 		/// <summary>
 		/// The active language used to format entity text. Resolved lazily through the
 		/// composition host so design-time previews (no MEF) don't NRE during XAML reload.
 		/// </summary>
 		protected static Languages.Language Language
-			=> (cachedLanguageService ??= AppComposition.Current.GetExport<LanguageService>()).CurrentLanguage;
+			=> AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
 
 		/// <summary>
 		/// The active <see cref="AssemblyList"/> backing the assembly tree. Search nodes pass
 		/// it into <c>AnalyzerContext</c> so each analyser can iterate the loaded modules.
 		/// </summary>
 		protected static AssemblyList? CurrentAssemblyList
-			=> (cachedAssemblyTreeModel ??= AppComposition.Current.GetExport<AssemblyTreeModel>()).AssemblyList;
+			=> AppComposition.Current.GetExport<AssemblyTreeModel>().AssemblyList;
 
 		/// <summary>
 		/// All MEF-registered <see cref="IAnalyzer"/> exports, ordered by their declared
@@ -63,7 +64,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		/// <see cref="IAnalyzer.Show"/> returns true for the wrapped entity.
 		/// </summary>
 		public static IReadOnlyList<ExportFactory<IAnalyzer, AnalyzerMetadata>> Analyzers
-			=> (cachedRegistry ??= AppComposition.Current.GetExport<AnalyzerRegistry>()).Analyzers;
+			=> AppComposition.Current.GetExport<AnalyzerRegistry>().Analyzers;
 
 		public override bool CanDelete() => Parent is { IsRoot: true };
 

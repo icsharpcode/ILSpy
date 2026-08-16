@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Search
 	[Export]
 	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Top, Order = 0, IsVisibleByDefault = false)]
 	[Shared]
-	public partial class SearchPaneModel : ToolPaneModel
+	public sealed partial class SearchPaneModel : ToolPaneModel, IDisposable
 	{
 		public const string PaneContentId = "Search";
 
@@ -263,6 +263,16 @@ namespace ICSharpCode.ILSpy.Search
 			currentSearch = run;
 			IsSearching = true;
 			run.Start();
+		}
+
+		// The composition container is the only owner and disposes this model with itself. A search
+		// still in flight at that point owns a dispatcher timer and keeps IsSearching (and with it the
+		// pane's indeterminate progress animation) on; both would otherwise outlive the container.
+		public void Dispose()
+		{
+			currentSearch?.Cancel();
+			currentSearch = null;
+			IsSearching = false;
 		}
 
 		void OnRunCompleted(RunningSearch sender)
