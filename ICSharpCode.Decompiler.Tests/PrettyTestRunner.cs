@@ -567,12 +567,6 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task AsyncAwaitPatternsBugs([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
-		{
-			await RunForLibrary(cscOptions: cscOptions);
-		}
-
-		[Test]
 		public async Task AsyncUsing([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(

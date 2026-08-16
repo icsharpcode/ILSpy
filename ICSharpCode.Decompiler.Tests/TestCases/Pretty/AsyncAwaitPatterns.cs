@@ -16,6 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+// Await shapes that still decompile to code that does not compile are tracked as #4017 (type
+// parameter with an interface constraint), #4018 (static dynamic call) and #4019 (with
+// expression); they are absent here because they have no correct output to pin yet.
+
 #pragma warning disable 1998
 using System;
 using System.Collections.Generic;
@@ -288,6 +292,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 			return taggedTask.Item1.GetAwaiter();
 		}
 #endif
+
+#if CS72
+		public static TaskAwaiter GetAwaiter(this in ByRefReceiver receiver)
+		{
+			return receiver.Self();
+		}
+#endif
 	}
 
 	/// <summary>
@@ -345,6 +356,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		public async Task Cast(object obj)
 		{
 			await (Task)obj;
+		}
+
+		/// <summary>
+		/// A null literal has no type, so the cast is what makes the operand awaitable. Note that
+		/// <c>default(Task)</c> compiles to the same `ldnull` and therefore decompiles to this same
+		/// cast; the two are indistinguishable in IL.
+		/// </summary>
+		public async Task NullLiteral()
+		{
+			await (Task)null;
 		}
 
 		public async Task AsOperator(object obj)
@@ -430,6 +451,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 			await awaitable;
 		}
 
+		/// <summary>
+		/// The cast carries the operand to the interface that declares GetAwaiter; without it the
+		/// explicit implementation is not accessible. A conversion that is merely implicit must not
+		/// be dropped here, even though a boxing conversion exists.
+		/// </summary>
+		public async Task ExplicitInterfaceImplementationOnStruct(ExplicitStructAwaitable awaitable)
+		{
+			await (IAwaitable)awaitable;
+		}
+
+		/// <summary>
+		/// The same shape on a class, i.e. it is not specific to the boxing conversion.
+		/// </summary>
+		public async Task ExplicitInterfaceImplementationOnClass(ExplicitClassAwaitable awaitable)
+		{
+			await (IAwaitable)awaitable;
+		}
+
+		/// <summary>
+		/// The await pattern does not apply user-defined conversions, so the cast that invokes
+		/// op_Implicit has to survive.
+		/// </summary>
+		public async Task UserDefinedConversionToAwaitable(ConvertsToAwaitable awaitable)
+		{
+			await (ClassAwaitable)awaitable;
+		}
+
 		public async Task ExtensionAwaiterOnClass(MarkerClass marker)
 		{
 			await marker;
@@ -449,6 +497,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		{
 			await action;
 		}
+
+#if CS72
+		/// <summary>
+		/// An extension GetAwaiter taking its receiver by 'in' makes the expected type a
+		/// ByReferenceType. Stripping the 'ref' must not leave a conversion that reaches the
+		/// managed reference back through a pointer.
+		/// </summary>
+		public async Task InReceiverExtensionAwaiter(ByRefReceiver receiver)
+		{
+			await receiver;
+		}
+#endif
 
 		public async Task ExtensionAwaiterOverTaskArray(Task<int>[] tasks)
 		{
@@ -531,11 +591,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		}
 	}
 
+#if CS72
+	public struct ByRefReceiver
+	{
+		public long A;
+
+		public long B;
+
+		public TaskAwaiter Self()
+		{
+			return default(TaskAwaiter);
+		}
+	}
+#endif
+
 	public class ClassAwaitable : IAwaitable
 	{
 		public TaskAwaiter GetAwaiter()
 		{
 			return default(TaskAwaiter);
+		}
+	}
+
+	public class ConvertsToAwaitable
+	{
+		public static implicit operator ClassAwaitable(ConvertsToAwaitable value)
+		{
+			return new ClassAwaitable();
 		}
 	}
 
@@ -547,6 +629,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 	{
 		public void Dispose()
 		{
+		}
+	}
+
+	public class ExplicitClassAwaitable : IAwaitable
+	{
+		TaskAwaiter IAwaitable.GetAwaiter()
+		{
+			return default(TaskAwaiter);
+		}
+	}
+
+	[StructLayout(LayoutKind.Sequential, Size = 1)]
+	public struct ExplicitStructAwaitable : IAwaitable
+	{
+		TaskAwaiter IAwaitable.GetAwaiter()
+		{
+			return default(TaskAwaiter);
 		}
 	}
 
