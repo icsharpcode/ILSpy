@@ -1079,7 +1079,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					// Operator calls do not survive as calls: ReplaceMethodCallsWithOperators turns
 					// them into operator or cast syntax, where the operand determines which operator
-					// is resolved, so it must keep its explicit type.
+					// is resolved, so it must keep its explicit type. Unlike the null literal, which
+					// still narrows the candidate set, the default literal converts to every type:
+					// C# rejects it as the operand of any binary operator except == and != (CS8310).
 					arg = arg.RestoreDefaultLiteralType(expressionBuilder);
 				}
 

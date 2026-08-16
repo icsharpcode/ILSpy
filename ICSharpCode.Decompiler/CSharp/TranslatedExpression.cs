@@ -229,16 +229,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Make explicit conversion implicit, if possible
 				if (allowImplicitConversion)
 				{
-					if (Expression is DefaultValueExpression { Type: not null }
+					if (Expression is DefaultValueExpression { Type: not null } defaultValue
 						&& expressionBuilder.settings.DefaultLiterals)
 					{
 						// The target type is supplied by the context, so "default(T)" can be
 						// shortened to the C# 7.1 default literal.
-						var shortened = new DefaultValueExpression();
-						shortened.CopyAnnotationsFrom(Expression);
-						shortened.RemoveAnnotations<ResolveResult>();
-						return shortened.WithRR(new DefaultLiteralResolveResult(type))
-							.WithoutILInstruction();
+						defaultValue.Type = null;
+						defaultValue.RemoveAnnotations<ResolveResult>();
+						var literalRR = new DefaultLiteralResolveResult(type);
+						defaultValue.AddAnnotation(literalRR);
+						return new TranslatedExpression(defaultValue, literalRR);
 					}
 					switch (ResolveResult)
 					{
