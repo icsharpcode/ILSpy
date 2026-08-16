@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 using Avalonia;
@@ -106,25 +107,70 @@ public class MainMenuTests
 		var appMenu = NativeMenu.GetMenu(Application.Current!);
 		appMenu.Should().NotBeNull("App.axaml declares the NativeMenu the Help items move into");
 
-		static (NativeMenu Root, System.Collections.Generic.Dictionary<string, NativeMenuItem> ByTag) WindowMenuWithHelp(string header)
-		{
-			var help = new NativeMenuItem { Header = "_Help", Menu = new NativeMenu() };
-			help.Menu.Items.Add(new NativeMenuItem { Header = header });
-			var root = new NativeMenu();
-			root.Items.Add(help);
-			return (root, new System.Collections.Generic.Dictionary<string, NativeMenuItem>(StringComparer.Ordinal) { ["_Help"] = help });
-		}
-
-		var first = WindowMenuWithHelp("About (first window)");
-		MainMenu.PromoteHelpToMacAppMenu(first.Root, first.ByTag);
+		MainMenu.PromoteHelpToMacAppMenu(
+			WindowMenuWithHelpItems("About (first window)", out var firstByTag), firstByTag);
 		var afterFirst = appMenu!.Items.Count;
-		var second = WindowMenuWithHelp("About (second window)");
-		MainMenu.PromoteHelpToMacAppMenu(second.Root, second.ByTag);
+		var promoted = MainMenu.PromoteHelpToMacAppMenu(
+			WindowMenuWithHelpItems("About (second window)", out var secondByTag), secondByTag);
+		try
+		{
+			appMenu.Items.Count.Should().Be(afterFirst, "the second window's Help items replace the first window's");
+			appMenu.Items.OfType<NativeMenuItem>().Select(i => i.Header)
+				.Should().Contain("About (second window)")
+				.And.NotContain("About (first window)");
+		}
+		finally
+		{
+			RestoreAppMenu(appMenu, promoted);
+		}
+	}
 
-		appMenu.Items.Count.Should().Be(afterFirst, "the second window's Help items replace the first window's");
-		appMenu.Items.OfType<NativeMenuItem>().Select(i => i.Header)
-			.Should().Contain("About (second window)")
-			.And.NotContain("About (first window)");
+	// The Help items a window promotes are withdrawn when it closes, but only that window's own:
+	// a window closing after a second one has promoted its items must leave those in the app menu,
+	// or macOS shows an app menu with no About / Check for Updates while the second window is still
+	// on screen and nothing ever puts them back.
+	[AvaloniaTest]
+	public void Closing_An_Earlier_Window_Leaves_A_Later_Window_Help_Items_In_Place()
+	{
+		var appMenu = NativeMenu.GetMenu(Application.Current!);
+		appMenu.Should().NotBeNull("App.axaml declares the NativeMenu the Help items move into");
+
+		var first = MainMenu.PromoteHelpToMacAppMenu(
+			WindowMenuWithHelpItems("About (first window)", out var firstByTag), firstByTag);
+		var second = MainMenu.PromoteHelpToMacAppMenu(
+			WindowMenuWithHelpItems("About (second window)", out var secondByTag), secondByTag);
+		try
+		{
+			// What the first window's Closed handler does, now that the second window has promoted.
+			MainMenu.WithdrawHelpItems(first);
+
+			appMenu!.Items.OfType<NativeMenuItem>().Select(i => i.Header)
+				.Should().Contain("About (second window)",
+					"the still-open window's Help items must survive an earlier window closing");
+		}
+		finally
+		{
+			RestoreAppMenu(appMenu!, second);
+		}
+	}
+
+	// The app menu is declared on Application and outlives every test, so a test that promotes
+	// placeholder items into it has to take them back out; otherwise a later test reading it
+	// (see MainMenu_top_level_items_are_File_View_Window_in_order) sees this test's leftovers.
+	static void RestoreAppMenu(NativeMenu appMenu, List<NativeMenuItemBase> promoted)
+	{
+		foreach (var item in promoted)
+			appMenu.Items.Remove(item);
+	}
+
+	static NativeMenu WindowMenuWithHelpItems(string header, out Dictionary<string, NativeMenuItem> byTag)
+	{
+		var help = new NativeMenuItem { Header = "_Help", Menu = new NativeMenu() };
+		help.Menu.Items.Add(new NativeMenuItem { Header = header });
+		var root = new NativeMenu();
+		root.Items.Add(help);
+		byTag = new Dictionary<string, NativeMenuItem>(StringComparer.Ordinal) { ["_Help"] = help };
+		return root;
 	}
 
 	// NativeMenuItem.Gesture is display-only when NativeMenuBar renders the menu inline
