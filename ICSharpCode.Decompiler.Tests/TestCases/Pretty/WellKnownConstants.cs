@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const float FloatMaxValue = float.MaxValue;
 		public const float FloatMinValue = float.MinValue;
 		public const float FloatEpsilon = float.Epsilon;
+		public const float FloatNegativeEpsilon = -float.Epsilon;
 
 		public const double DoubleZero = 0.0;
 		public const double DoubleMinusZero = -0.0;
@@ -70,6 +71,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double DoubleMaxValue = double.MaxValue;
 		public const double DoubleMinValue = double.MinValue;
 		public const double DoubleEpsilon = double.Epsilon;
+		public const double DoubleNegativeEpsilon = -double.Epsilon;
 
 		public const decimal DecimalMaxValue = decimal.MaxValue;
 		public const decimal DecimalMinValue = decimal.MinValue;

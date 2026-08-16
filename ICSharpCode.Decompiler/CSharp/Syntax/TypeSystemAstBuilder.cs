@@ -1167,8 +1167,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool IsSpecialConstant(IType expectedType, object constant, [NotNullWhen(true)] out Expression? expression)
 		{
 			expression = null;
+			bool negate = false;
 			if (!specialConstants.TryGetValue(constant, out var info))
-				return false;
+			{
+				if (constant is float single && single < 0f && specialConstants.TryGetValue(-single, out info))
+				{
+					negate = true;
+				}
+				else if (constant is double dbl && dbl < 0.0 && specialConstants.TryGetValue(-dbl, out info))
+				{
+					negate = true;
+				}
+				else
+				{
+					return false;
+				}
+			}
 			// find IType of constant in compilation.
 			var constantType = expectedType;
 			if (!expectedType.IsKnownType(info.Type))
@@ -1244,6 +1258,13 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 			if (AddResolveResultAnnotations)
 				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(constantType), field));
+
+			if (negate)
+			{
+				expression = new UnaryOperatorExpression(UnaryOperatorType.Minus, expression);
+				if (AddResolveResultAnnotations)
+					expression.AddAnnotation(new ConstantResolveResult(constantType, constant));
+			}
 
 			return true;
 		}
