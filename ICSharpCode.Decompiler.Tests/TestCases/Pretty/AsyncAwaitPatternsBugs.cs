@@ -16,13 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Every member of this file is an await shape whose decompilation does not compile today.
-// The file is written as the SPEC: input == expected output == correct C#, so a fixed
-// decompiler makes the test pass with no edits here. Each member names the output that is
-// produced instead. The test is ignored until all of them are fixed.
+// Await shapes where the cast in front of the operand is load-bearing: dropping it either makes
+// GetAwaiter unreachable or leaves the operand with no type at all. Each member here once
+// decompiled to code that does not compile, so the file doubles as a regression test - it is
+// written as the C# the decompiler has to produce, and a relapse shows up as a diff.
+//
+// Await shapes that still decompile to uncompilable code are tracked as #4017 (type parameter
+// with an interface constraint), #4018 (static dynamic call) and #4019 (with expression); they
+// are not covered here because they have no correct output to pin yet.
 
 #pragma warning disable 1998
-using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
@@ -31,16 +34,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwaitBugs
 {
 	public class AwaitPatternsThatDoNotRoundTrip
 	{
-		private static Task<int> Get()
-		{
-			return Task.FromResult(1);
-		}
-
 		/// <summary>
 		/// The cast carries the operand to the interface that declares GetAwaiter; without it the
-		/// explicit implementation is not accessible. ConvertTo(allowImplicitConversion: true)
-		/// drops it because a boxing conversion exists.
-		/// Today: <c>await value;</c> -> CS1929.
+		/// explicit implementation is not accessible. A conversion that is merely implicit must not
+		/// be dropped here, even though a boxing conversion exists.
 		/// </summary>
 		public async Task ExplicitInterfaceImplementationOnStruct(ExplicitStructAwaitable value)
 		{
@@ -48,8 +45,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwaitBugs
 		}
 
 		/// <summary>
-		/// Same defect on a class, i.e. it is not specific to the boxing conversion.
-		/// Today: <c>await value;</c> -> CS1929.
+		/// The same shape on a class, i.e. it is not specific to the boxing conversion.
 		/// </summary>
 		public async Task ExplicitInterfaceImplementationOnClass(ExplicitClassAwaitable value)
 		{
@@ -59,7 +55,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwaitBugs
 		/// <summary>
 		/// The await pattern does not apply user-defined conversions, so the cast that invokes
 		/// op_Implicit has to survive.
-		/// Today: <c>await value;</c> -> CS1929.
 		/// </summary>
 		public async Task UserDefinedConversionToAwaitable(ConvertsToAwaitable value)
 		{
@@ -67,8 +62,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwaitBugs
 		}
 
 		/// <summary>
-		/// A null literal has no type, so the cast is what makes the operand awaitable.
-		/// Today: <c>await null;</c> -> CS4001 "Cannot await '&lt;null&gt;'".
+		/// A null literal has no type, so the cast is what makes the operand awaitable. Note that
+		/// <c>default(Task)</c> compiles to the same `ldnull` and therefore decompiles to this same
+		/// cast; the two are indistinguishable in IL.
 		/// </summary>
 		public async Task AwaitNullTask()
 		{
@@ -76,57 +72,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwaitBugs
 		}
 
 		/// <summary>
-		/// Today: <c>await null;</c> -> CS4001, i.e. <c>default(Task)</c> is lost the same way.
-		/// </summary>
-		public async Task AwaitDefaultTask()
-		{
-			await default(Task);
-		}
-
-		/// <summary>
 		/// An extension GetAwaiter taking its receiver by 'in' makes the expected type a
-		/// ByReferenceType; VisitAwait strips the DirectionExpression and ConvertTo then converts
-		/// the value back to a managed reference through a pointer.
-		/// Today: <c>public unsafe async Task ...</c> with <c>await (ref *(ByRefReceiver*)value);</c>
-		/// -> CS1525.
+		/// ByReferenceType. Stripping the 'ref' must not leave a conversion that reaches the
+		/// managed reference back through a pointer.
 		/// </summary>
 		public async Task InReceiverExtensionAwaiter(ByRefReceiver value)
 		{
 			await value;
-		}
-
-		/// <summary>
-		/// The constrained callvirt lowers to an LdObjIfRef that ExpressionBuilder has no case
-		/// for, and the operand is dropped entirely.
-		/// Today: <c>await (IAwaitable)/*OpCode not supported: LdObjIfRef*/;</c> -> CS0119.
-		/// </summary>
-		public async Task TypeParameterWithInterfaceConstraint<T>(T value) where T : IAwaitable
-		{
-			await value;
-		}
-
-		/// <summary>
-		/// A dynamic call to a static method whose argument list contains an await: the
-		/// typeof(TargetType) marker of the call site is materialized as the receiver.
-		/// Today: <c>Type typeFromHandle = typeof(Console); typeFromHandle.WriteLine(...);</c>
-		/// -> CS1061. Without the await (or for an instance call) the same code is correct.
-		/// </summary>
-		public async Task DynamicAwaitInStaticCall(dynamic value)
-		{
-			Console.WriteLine("x" + await value);
-		}
-
-		/// <summary>
-		/// The await splits the assignment across a suspension point, which defeats the
-		/// with-expression transform and leaves the raw clone call behind.
-		/// Today: <c>Record record = value._003CClone_003E_0024();</c> -> uncompilable.
-		/// Without the await the same expression round-trips.
-		/// </summary>
-		public async Task<Record> WithExpressionContainingAwait(Record value)
-		{
-			return value with {
-				X = await Get()
-			};
 		}
 	}
 	public static class ByRefAwaiterExtensions
@@ -180,6 +132,4 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwaitBugs
 	{
 		TaskAwaiter GetAwaiter();
 	}
-
-	public record Record(int X);
 }

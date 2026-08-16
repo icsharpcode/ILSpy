@@ -569,10 +569,6 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task AsyncAwaitPatternsBugs([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			// The fixture is the spec: it is written as the C# the decompiler ought to produce.
-			// Every one of its members currently decompiles to something that does not compile;
-			// the file names the wrong output per member. This test is expected to fail until
-			// those defects are fixed.
 			await RunForLibrary(cscOptions: cscOptions);
 		}
 
