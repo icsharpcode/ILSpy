@@ -256,6 +256,21 @@ namespace ICSharpCode.Decompiler.DebugSteps
 			}
 		}
 
+		/// <summary>
+		/// Closes every group that is still open, e.g. after an exception unwound out of the transform
+		/// that started them. Without this, everything recorded afterwards is filed as a child of the
+		/// group that failed, and that group's <see cref="Node.EndStep"/> still points at its own start,
+		/// so replaying "the state after this step" lands on the wrong step.
+		/// The groups are kept even when empty: a group that recorded nothing before it was abandoned is
+		/// precisely the one worth seeing, and <see cref="EndGroup"/>'s removal path expects the group to
+		/// still be the last entry of its parent, which an unwind cannot guarantee.
+		/// </summary>
+		public void EndOpenGroups()
+		{
+			while (groups.Count > 0)
+				EndGroup(keepIfEmpty: true);
+		}
+
 		public void EndGroup(bool keepIfEmpty = false)
 		{
 			var node = groups.Pop();
