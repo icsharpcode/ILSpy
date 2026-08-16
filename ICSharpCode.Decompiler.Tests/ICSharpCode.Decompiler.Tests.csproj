@@ -274,6 +274,8 @@
     <None Include="TestCases\Ugly\NoNewOfT.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
     <None Include="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoUnsignedRightShift.Expected.cs" />
+    <None Include="TestCases\Ugly\NoUnsignedRightShift.Expected.cs" />
     <!-- top-level statements: neither the input nor the expected output can be compiled
          into the test assembly, which is a library and has its own entry point rules -->
     <Compile Remove="TestCases\Ugly\TopLevelProgram.cs" />

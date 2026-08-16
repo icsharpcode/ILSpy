@@ -1,0 +1,52 @@
+// Copyright (c) 2026 Siegfried Pammer
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
+{
+	// The unsigned right shift operator requires C# 11, so at a lower language version the
+	// compound assignments below have to be expanded into a plain assignment. That turns the
+	// stored value into a non-pure expression, which the target of the store must not be
+	// copy-propagated across.
+	internal class NoUnsignedRightShift
+	{
+		public struct CustomStruct
+		{
+			public short ShortField;
+		}
+
+		public class CustomClass
+		{
+			public short ShortField;
+		}
+
+		public static void ClassField(CustomClass c)
+		{
+			c.ShortField >>>= 5;
+		}
+
+		public static void StructField(CustomStruct s)
+		{
+			s.ShortField >>>= 5;
+		}
+
+		public static void ArrayElement(short[] a)
+		{
+			a[0] >>>= 5;
+		}
+	}
+}

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -145,6 +146,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block block, ref int i, ILTransformContext context)
 		{
 			context.Step($"Copy propagate {v.Name}", copiedExpr);
+			int firstUninlinedArg = i;
 			// un-inline the arguments of the ldArg instruction
 			ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
 			for (int j = 0; j < uninlinedArgs.Length; j++)
@@ -168,11 +170,38 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				// We are copying an expression from far away, reusing the ILRange would result in incorrect sequence points.
 				clone.SetILRange(new Interval());
+				if (expr.SlotInfo == StObj.TargetSlot && clone.HasDirectFlag(InstructionFlags.MayThrow)
+					&& !expr.Parent.SatisfiesSlotRestrictionForInlining(expr.ChildIndex, clone))
+				{
+					// A LdFlda/LdElema used as StObj target has to delay its exception, because C#
+					// computes the value to be stored before dereferencing the target. Accept the
+					// changed point at which the exception is thrown, mirroring
+					// InliningOptions.AllowChangingOrderOfEvaluationForExceptions in ILInlining.
+					// Unlike inlining, copy propagation has no third option of just giving up: the
+					// defining store is gone by the end of this loop, so every load must be replaced.
+					// Refusing the copy is only possible before propagation starts, which is what
+					// CanPerformCopyPropagation does when ref locals are requested; the assert
+					// guards the public Propagate() entry point, which bypasses that check.
+					Debug.Assert(!context.Settings.UseRefLocalsForAccurateOrderOfEvaluation);
+					if (clone is LdFlda ldflda)
+						ldflda.DelayExceptions = true;
+					else if (clone is LdElema ldelema)
+						ldelema.DelayExceptions = true;
+				}
 				expr.ReplaceWith(clone);
 			}
 			block.Instructions.RemoveAt(i);
 			int c = ILInlining.InlineInto(block, i, InliningOptions.None, context: context);
 			i -= c + 1;
+			if (uninlinedArgs.Length > 0)
+			{
+				// The stores holding the un-inlined arguments are themselves copy-propagation
+				// candidates: copying an ldflda leaves its target address behind in a stack slot,
+				// and if that address is e.g. an ldloca it can be copied as well. They sit before
+				// the current position, so rewind far enough for the caller's loop to visit them;
+				// otherwise a multiply-loaded stack slot survives as a spurious ref local.
+				i = Math.Min(i, firstUninlinedArg - 1);
+			}
 		}
 	}
 }
