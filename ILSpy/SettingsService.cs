@@ -58,6 +58,8 @@ namespace ICSharpCode.ILSpy
 
 		public MiscSettings MiscSettings => GetSettings<MiscSettings>();
 
+		public AISettings AISettings => GetSettings<AISettings>();
+
 		/// <summary>
 		/// Returns the effective decompiler settings a decompilation started right now would
 		/// use: a clone of <see cref="DecompilerSettings"/> with the Display options bridged in
