@@ -144,6 +144,25 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void FindStatementBoundary_IgnoresStringsAndComments()
+		{
+			const string code = "string value = \"; }\"; // } ;\nreturn value;";
+
+			int cutoff = code.IndexOf('\n');
+			ContextBuilder.FindStatementBoundary(code, cutoff).Should().Be(code.IndexOf("; //", StringComparison.Ordinal) + 1);
+		}
+
+		[Test]
+		public void FindStatementBoundary_HandlesVerbatimAndRawStrings()
+		{
+			const string code = "var verbatim = @\"; }\"; var raw = \"\"\"; }\"\"\";";
+
+			int expected = code.IndexOf("; var", StringComparison.Ordinal) + 1;
+			ContextBuilder.FindStatementBoundary(code, code.Length).Should().Be(code.LastIndexOf(';') + 1);
+			ContextBuilder.FindStatementBoundary(code, expected + 2).Should().Be(expected);
+		}
+
+		[Test]
 		public void GetUnicodeSafePrefixLength_DoesNotSplitSurrogatePair()
 		{
 			const string text = "A\ud83d\ude00B";

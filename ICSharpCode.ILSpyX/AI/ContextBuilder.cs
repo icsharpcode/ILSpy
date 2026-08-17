@@ -321,15 +321,92 @@ namespace ICSharpCode.ILSpyX.AI
 			return length;
 		}
 
-		static int FindStatementBoundary(string text, int length)
+		internal static int FindStatementBoundary(string text, int length)
 		{
-			for (int i = length - 1; i >= 0; i--)
+			int boundary = -1;
+			int newline = -1;
+			int i = 0;
+			while (i < length)
 			{
-				if (text[i] is ';' or '}')
-					return i + 1;
+				char current = text[i];
+				if (current is ';' or '}')
+					boundary = i + 1;
+				else if (current == '\n')
+					newline = i;
+
+				if (current == '/' && i + 1 < length)
+				{
+					if (text[i + 1] == '/')
+					{
+						i += 2;
+						while (i < length && text[i] != '\n')
+							i++;
+						continue;
+					}
+					if (text[i + 1] == '*')
+					{
+						i += 2;
+						while (i + 1 < length && (text[i] != '*' || text[i + 1] != '/'))
+							i++;
+						i = Math.Min(length, i + 2);
+						continue;
+					}
+				}
+
+				if (current is '"' or '\'')
+				{
+					bool verbatim = current == '"' && i > 0 && text[i - 1] == '@';
+					int rawQuotes = current == '"' ? CountQuoteRun(text, i) : 0;
+					if (rawQuotes >= 3)
+					{
+						i += rawQuotes;
+						while (i < length)
+						{
+							if (text[i] == '"' && CountQuoteRun(text, i) >= rawQuotes)
+							{
+								i += rawQuotes;
+								break;
+							}
+							i++;
+						}
+						continue;
+					}
+
+					i++;
+					while (i < length)
+					{
+						if (text[i] == '\\' && !verbatim)
+						{
+							i = Math.Min(length, i + 2);
+							continue;
+						}
+						if (text[i] == current)
+						{
+							if (verbatim && i + 1 < length && text[i + 1] == '"')
+							{
+								i += 2;
+								continue;
+							}
+							i++;
+							break;
+						}
+						i++;
+					}
+					continue;
+				}
+
+				i++;
 			}
-			int newline = length > 0 ? text.LastIndexOf('\n', length - 1) : -1;
-			return newline > 0 ? newline : length;
+
+			return boundary >= 0 ? boundary : (newline > 0 ? newline : length);
+		}
+
+		static int CountQuoteRun(string text, int start)
+		{
+			int count = 0;
+			while (start + count < text.Length && text[start + count] == '"')
+				count++;
+			return count;
 		}
 
 	}
