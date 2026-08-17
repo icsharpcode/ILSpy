@@ -1,0 +1,50 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ICSharpCode.ILSpy.Options"
+             mc:Ignorable="d" d:DesignWidth="700" d:DesignHeight="600"
+             x:Class="ICSharpCode.ILSpy.Options.Panels.AISettingsPanel"
+             x:DataType="vm:AISettingsViewModel">
+	<ScrollViewer VerticalScrollBarVisibility="Auto">
+		<StackPanel Margin="12" Spacing="10">
+			<TextBlock FontWeight="Bold" FontSize="16" Text="AI Assistant" />
+			<TextBlock TextWrapping="Wrap" Text="Configure an OpenAI-compatible provider. When an AI action runs, decompiled code and selected metadata are sent to that provider." />
+
+			<HeaderedContentControl Header="Provider">
+				<ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding Settings.Provider, Mode=TwoWay}" />
+			</HeaderedContentControl>
+			<HeaderedContentControl Header="Endpoint">
+				<TextBox Text="{Binding Settings.BaseUrl, Mode=TwoWay}" PlaceholderText="https://api.openai.com" />
+			</HeaderedContentControl>
+			<HeaderedContentControl Header="Model">
+				<TextBox Text="{Binding Settings.Model, Mode=TwoWay}" PlaceholderText="gpt-4o" />
+			</HeaderedContentControl>
+			<HeaderedContentControl Header="API key">
+				<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
+					<TextBox Grid.Column="0" PasswordChar="●" Text="{Binding ApiKeyInput, Mode=TwoWay}" PlaceholderText="Not stored in settings XML" />
+					<Button Grid.Column="1" Content="Save key" Command="{Binding SaveKeyCommand}" />
+					<Button Grid.Column="2" Content="Clear" Command="{Binding ClearKeyCommand}" />
+				</Grid>
+			</HeaderedContentControl>
+			<TextBlock Text="A key is configured in secure storage." IsVisible="{Binding HasConfiguredKey}" />
+
+			<HeaderedContentControl Header="Maximum context tokens">
+				<NumericUpDown Minimum="4000" Maximum="128000" Increment="1000" Value="{Binding Settings.MaxContextTokens, Mode=TwoWay}" />
+			</HeaderedContentControl>
+			<CheckBox Content="Stream responses (reserved for a later UI)" IsChecked="{Binding Settings.StreamResponses, Mode=TwoWay}" />
+			<CheckBox Content="Include IL (not available in this phase)" IsChecked="{Binding Settings.SendIL, Mode=TwoWay}" IsEnabled="False" />
+			<CheckBox Content="Include call graph (not available in this phase)" IsChecked="{Binding Settings.SendCallGraph, Mode=TwoWay}" IsEnabled="False" />
+
+			<Border BorderBrush="Gray" BorderThickness="1" Padding="8">
+				<CheckBox IsChecked="{Binding Settings.PrivacyConsentAccepted, Mode=TwoWay}"
+				          Content="I understand that decompiled code and selected metadata will be sent to the configured AI provider." />
+			</Border>
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<Button Content="Test Connection" Command="{Binding TestConnectionCommand}" />
+				<Button Content="Cancel Test" Command="{Binding CancelTestConnectionCommand}" IsVisible="{Binding IsTestingConnection}" />
+				<TextBlock VerticalAlignment="Center" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+			</StackPanel>
+		</StackPanel>
+	</ScrollViewer>
+</UserControl>

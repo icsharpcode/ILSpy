@@ -28,8 +28,10 @@ namespace ICSharpCode.ILSpyX.Settings
 	/// </summary>
 	public class AISettings : ISettingsSection
 	{
-		const string DefaultProvider = "openai";
-		const int DefaultMaxContextTokens = 32000;
+		public const string DefaultProvider = "openai";
+		public const int DefaultMaxContextTokens = 32000;
+		public const int MinimumMaxContextTokens = 4000;
+		public const int MaximumMaxContextTokens = 128000;
 
 		string provider = DefaultProvider;
 		string apiKey = string.Empty;
@@ -54,10 +56,20 @@ namespace ICSharpCode.ILSpyX.Settings
 			get => provider;
 			set {
 				string normalizedProvider = NormalizeProvider(value);
+				string previousProvider = provider;
+				string previousBaseUrl = BaseUrl;
+				string previousModel = Model;
 				if (!SetProperty(ref provider, normalizedProvider))
 					return;
-				BaseUrl = GetDefaultBaseUrl(normalizedProvider);
-				Model = GetDefaultModel(normalizedProvider);
+
+				// Provider changes update untouched defaults, but preserve an explicit custom
+				// endpoint/model. This keeps a user-configured compatible endpoint intact.
+				if (string.IsNullOrWhiteSpace(previousBaseUrl)
+					|| string.Equals(previousBaseUrl, GetDefaultBaseUrl(previousProvider), StringComparison.OrdinalIgnoreCase))
+					BaseUrl = GetDefaultBaseUrl(normalizedProvider);
+				if (string.IsNullOrWhiteSpace(previousModel)
+					|| string.Equals(previousModel, GetDefaultModel(previousProvider), StringComparison.OrdinalIgnoreCase))
+					Model = GetDefaultModel(normalizedProvider);
 			}
 		}
 
@@ -170,12 +182,12 @@ namespace ICSharpCode.ILSpyX.Settings
 				new XElement(nameof(PrivacyConsentAccepted), PrivacyConsentAccepted));
 		}
 
-		static string NormalizeProvider(string? value)
+		public static string NormalizeProvider(string? value)
 		{
 			return string.IsNullOrWhiteSpace(value) ? DefaultProvider : value.Trim().ToLowerInvariant();
 		}
 
-		static string GetDefaultBaseUrl(string provider)
+		public static string GetDefaultBaseUrl(string provider)
 		{
 			return provider switch {
 				"anthropic" => "https://api.anthropic.com",
@@ -184,13 +196,18 @@ namespace ICSharpCode.ILSpyX.Settings
 			};
 		}
 
-		static string GetDefaultModel(string provider)
+		public static string GetDefaultModel(string provider)
 		{
 			return provider switch {
 				"anthropic" => "claude-opus-4-8",
 				"ollama" => "llama3:70b",
 				_ => "gpt-4o"
 			};
+		}
+
+		public static bool IsSupportedProvider(string? provider)
+		{
+			return NormalizeProvider(provider) is "openai" or "ollama" or "custom";
 		}
 
 		static string ReadString(XElement section, string name, string defaultValue)

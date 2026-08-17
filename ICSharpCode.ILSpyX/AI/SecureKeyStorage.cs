@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -68,6 +69,8 @@ namespace ICSharpCode.ILSpyX.AI
 		public static SecureKeyLookupResult Unavailable => new(SecureKeyLookupStatus.Unavailable, null);
 	}
 
+	[Export]
+	[Shared]
 	public sealed class SecureKeyStorageUnavailableException : Exception
 	{
 		public SecureKeyStorageUnavailableException(string message)
@@ -81,6 +84,8 @@ namespace ICSharpCode.ILSpyX.AI
 		}
 	}
 
+	[Export]
+	[Shared]
 	public sealed class SecureKeyStorage
 	{
 		private readonly ISecureKeyStorageBackend backend;

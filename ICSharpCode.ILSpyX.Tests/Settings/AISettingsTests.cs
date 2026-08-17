@@ -60,6 +60,20 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		}
 
 		[Test]
+		public void ChangingProvider_PreservesExplicitEndpointAndModel()
+		{
+			var settings = new AISettings {
+				BaseUrl = "https://proxy.example.test",
+				Model = "proxy-model"
+			};
+
+			settings.Provider = "custom";
+
+			settings.BaseUrl.Should().Be("https://proxy.example.test");
+			settings.Model.Should().Be("proxy-model");
+		}
+
+		[Test]
 		public void SaveAndLoad_RoundTripsPersistedValues()
 		{
 			var original = new AISettings {

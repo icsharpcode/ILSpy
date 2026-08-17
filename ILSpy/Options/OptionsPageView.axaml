@@ -39,6 +39,9 @@
 							<DataTemplate x:DataType="vm:MiscSettingsViewModel">
 								<panels:MiscSettingsPanel />
 							</DataTemplate>
+							<DataTemplate x:DataType="vm:AISettingsViewModel">
+								<panels:AISettingsPanel />
+							</DataTemplate>
 						</ContentControl.DataTemplates>
 					</ContentControl>
 				</DataTemplate>
