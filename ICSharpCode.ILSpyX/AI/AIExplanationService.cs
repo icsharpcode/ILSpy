@@ -77,19 +77,7 @@ namespace ICSharpCode.ILSpyX.AI
 				EnsureConsent();
 				provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
 			}
-			catch (OperationCanceledException)
-			{
-				throw;
-			}
-			catch (AIConfigurationException)
-			{
-				throw;
-			}
-			catch (AIRequestException)
-			{
-				throw;
-			}
-			catch (Exception exception)
+			catch (Exception exception) when (exception is not (OperationCanceledException or AIConfigurationException or AIRequestException))
 			{
 				throw new AIRequestException(ClassifyError(exception), exception);
 			}
@@ -100,15 +88,7 @@ namespace ICSharpCode.ILSpyX.AI
 			{
 				enumerator = provider.CompleteAsync(request, cancellationToken).GetAsyncEnumerator(cancellationToken);
 			}
-			catch (OperationCanceledException)
-			{
-				throw;
-			}
-			catch (AIRequestException)
-			{
-				throw;
-			}
-			catch (Exception exception)
+			catch (Exception exception) when (exception is not (OperationCanceledException or AIConfigurationException or AIRequestException))
 			{
 				throw new AIRequestException(ClassifyError(exception), exception);
 			}
@@ -122,15 +102,7 @@ namespace ICSharpCode.ILSpyX.AI
 					{
 						hasChunk = await enumerator.MoveNextAsync().ConfigureAwait(false);
 					}
-					catch (OperationCanceledException)
-					{
-						throw;
-					}
-					catch (AIRequestException)
-					{
-						throw;
-					}
-					catch (Exception exception)
+					catch (Exception exception) when (exception is not (OperationCanceledException or AIConfigurationException or AIRequestException))
 					{
 						throw new AIRequestException(ClassifyError(exception), exception);
 					}

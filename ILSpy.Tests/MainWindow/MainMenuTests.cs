@@ -71,6 +71,22 @@ public class MainMenuTests
 	}
 
 	[AvaloniaTest]
+	public void AI_Output_is_exposed_from_the_View_menu()
+	{
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+
+		var nativeMenu = NativeMenu.GetMenu(window)
+			?? throw new InvalidOperationException("MainMenu.Attach should have set NativeMenu on the window");
+		var topLevel = nativeMenu.Items.OfType<NativeMenuItem>().ToDictionary(item => item.Header!);
+
+		topLevel["_View"].Menu!.Items.OfType<NativeMenuItem>()
+			.Should().Contain(item => string.Equals(item.Header, "AI Output", StringComparison.Ordinal));
+		topLevel["_Window"].Menu!.Items.OfType<NativeMenuItem>()
+			.Should().NotContain(item => string.Equals(item.Header, "AI Output", StringComparison.Ordinal));
+	}
+
+	[AvaloniaTest]
 	public void File_Open_Carries_The_Ctrl_O_Gesture()
 	{
 		// MEF metadata's InputGestureText="Ctrl+O" on File -> Open must flow through

@@ -36,14 +36,15 @@ namespace ICSharpCode.ILSpy.AI
 			builder.Append("- **Target Framework:** ").AppendLine(metadataFile.DetectTargetFrameworkId() ?? "unknown");
 			builder.AppendLine();
 
-			var publicTypes = module.TopLevelTypeDefinitions
+			var topLevelTypes = module.TopLevelTypeDefinitions.ToArray();
+			var publicTypes = module.TypeDefinitions
 				.Where(type => type.Accessibility == Accessibility.Public)
 				.ToArray();
 			builder.AppendLine("## Top-level namespaces");
-			foreach (string name in publicTypes.Select(type => type.Namespace).Where(name => !string.IsNullOrEmpty(name)).Distinct(StringComparer.Ordinal).OrderBy(name => name, StringComparer.Ordinal))
+			foreach (string name in topLevelTypes.Select(type => type.Namespace).Where(name => !string.IsNullOrEmpty(name)).Distinct(StringComparer.Ordinal).OrderBy(name => name, StringComparer.Ordinal))
 				builder.Append("- ").AppendLine(name);
 			builder.AppendLine();
-			builder.Append("- **Public top-level types:** ").AppendLine(publicTypes.Length.ToString());
+			builder.Append("- **Public types:** ").AppendLine(publicTypes.Length.ToString());
 
 			builder.AppendLine("## Assembly attributes");
 			foreach (string attribute in module.GetAssemblyAttributes().Select(attribute => attribute.AttributeType.FullName).Distinct(StringComparer.Ordinal).Take(20))

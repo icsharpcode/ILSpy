@@ -68,6 +68,7 @@ public static class MainMenu
 
 		PopulateViewMenu(viewItem.Menu!, settings.SessionSettings, setThemeCommand);
 		AppendRegistryCommands(menu, topLevelByTag, registry.Commands);
+		AppendAIOutputPane(viewItem.Menu!, dockWorkspace);
 		AppendWindowDynamicContent(windowItem.Menu!, dockWorkspace);
 
 		if (OperatingSystem.IsMacOS())
@@ -326,30 +327,49 @@ public static class MainMenu
 	static void AppendWindowDynamicContent(NativeMenu windowMenu, DockWorkspace dockWorkspace)
 	{
 		// Tool-pane toggles sit below any MEF-driven Window commands (CloseAllDocuments / ResetLayout).
-		if (dockWorkspace.ToolPaneMenuItems.Count > 0)
+		var panes = dockWorkspace.ToolPaneMenuItems
+			.Where(pane => !string.Equals(pane.Id, ICSharpCode.ILSpy.AI.AIOutputPaneModel.PaneContentId, StringComparison.Ordinal))
+			.ToArray();
+		if (panes.Length > 0)
 		{
 			if (windowMenu.Items.Count > 0)
 				windowMenu.Items.Add(new NativeMenuItemSeparator());
 
-			foreach (var pane in dockWorkspace.ToolPaneMenuItems)
+			foreach (var pane in panes)
 			{
-				var item = new NativeMenuItem {
-					Header = pane.Title,
-					ToggleType = MenuItemToggleType.CheckBox,
-				};
-				// OneWay binding + Command — see MakeRadio for why TwoWay alone
-				// doesn't drive macOS clickability.
-				item.Bind(NativeMenuItem.IsCheckedProperty, new Binding(nameof(ToolPaneMenuItem.IsPaneVisible)) {
-					Source = pane,
-					Mode = BindingMode.OneWay,
-				});
-				var capturedPane = pane;
-				item.Command = new RelayCommand(() => capturedPane.IsPaneVisible = !capturedPane.IsPaneVisible);
-				windowMenu.Items.Add(item);
+				windowMenu.Items.Add(CreateToolPaneMenuItem(pane));
 			}
 		}
 
 		AppendTabSection(windowMenu, dockWorkspace);
+	}
+
+	static void AppendAIOutputPane(NativeMenu viewMenu, DockWorkspace dockWorkspace)
+	{
+		var pane = dockWorkspace.ToolPaneMenuItems.FirstOrDefault(pane =>
+			string.Equals(pane.Id, ICSharpCode.ILSpy.AI.AIOutputPaneModel.PaneContentId, StringComparison.Ordinal));
+		if (pane is null)
+			return;
+		if (viewMenu.Items.Count > 0)
+			viewMenu.Items.Add(new NativeMenuItemSeparator());
+		viewMenu.Items.Add(CreateToolPaneMenuItem(pane));
+	}
+
+	static NativeMenuItem CreateToolPaneMenuItem(ToolPaneMenuItem pane)
+	{
+		var item = new NativeMenuItem {
+			Header = pane.Title,
+			ToggleType = MenuItemToggleType.CheckBox,
+		};
+		// OneWay binding + Command — see MakeRadio for why TwoWay alone
+		// doesn't drive macOS clickability.
+		item.Bind(NativeMenuItem.IsCheckedProperty, new Binding(nameof(ToolPaneMenuItem.IsPaneVisible)) {
+			Source = pane,
+			Mode = BindingMode.OneWay,
+		});
+		var capturedPane = pane;
+		item.Command = new RelayCommand(() => capturedPane.IsPaneVisible = !capturedPane.IsPaneVisible);
+		return item;
 	}
 
 	static void AppendTabSection(NativeMenu windowMenu, DockWorkspace dockWorkspace)

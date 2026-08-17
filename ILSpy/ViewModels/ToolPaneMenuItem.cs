@@ -38,6 +38,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		public string? Title => pane.Title;
 
+		public string Id => pane.Id;
+
 		public bool IsPaneVisible {
 			// Visible only when the pane currently sits in a real (non-root) dock's visible
 			// dockables. A pane that is hidden by default and never shown has a null Owner — the

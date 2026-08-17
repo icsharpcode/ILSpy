@@ -49,7 +49,7 @@ public class ToolPaneRegistryTests
 		// Arrange + Act — pull the registry from the composition host.
 		var registry = AppComposition.Current.GetExport<ToolPaneRegistry>();
 
-		// Assert — three entries, one per built-in pane type.
+		// Assert — one entry for each built-in pane type.
 		var paneTypes = registry.Panes.Select(p => p.Pane.GetType()).ToArray();
 		paneTypes.Should().Contain(typeof(AssemblyTreeModel));
 		paneTypes.Should().Contain(typeof(SearchPaneModel));
@@ -67,7 +67,7 @@ public class ToolPaneRegistryTests
 		var registry = AppComposition.Current.GetExport<ToolPaneRegistry>();
 		var byType = registry.Panes.ToDictionary(p => p.Pane.GetType(), p => p.Metadata);
 
-		// Assert — Assembly tree on the left, Search on top, Analyzer on the bottom.
+		// Assert — Assembly tree on the left, Search on top, Analyzer and AI Output on the bottom.
 		byType[typeof(AssemblyTreeModel)].Alignment.Should().Be(ToolPaneAlignment.Left);
 		byType[typeof(SearchPaneModel)].Alignment.Should().Be(ToolPaneAlignment.Top);
 		byType[typeof(AnalyzerTreeViewModel)].Alignment.Should().Be(ToolPaneAlignment.Bottom);
@@ -79,7 +79,7 @@ public class ToolPaneRegistryTests
 	{
 		// ILSpyDockFactory iterates the registry instead of taking each pane in its ctor.
 		// The default config places only the visible-by-default assembly-tree pane; Search and
-		// Analyzer are hidden (IsVisibleByDefault = false) and materialised on demand.
+		// Analyzer and AI Output are hidden (IsVisibleByDefault = false) and materialised on demand.
 
 		// Arrange + Act — DockWorkspace is constructed by the composition host; its layout is
 		// built eagerly in the constructor.
