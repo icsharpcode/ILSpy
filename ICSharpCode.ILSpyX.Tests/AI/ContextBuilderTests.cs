@@ -103,6 +103,27 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void TryFitCode_AccountsForMarkdownOverheadAndMarksTruncation()
+		{
+			string firstLine = new('a', 60);
+			var context = new DecompilationContext {
+				FullyQualifiedName = "Example.Type.Method",
+				AssemblyName = "Example",
+				Attributes = Enumerable.Range(1, 100).Select(i => "Example.Attribute" + i).ToArray(),
+				DecompiledCSharp = firstLine + "\n" + new string('b', 200)
+			};
+			int budget = TokenCounter.CountTokens(
+				(context with { DecompiledCSharp = firstLine + "..." }).ToMarkdown(),
+				isCode: true);
+
+			bool success = ContextBuilder.TryFitCode(context, budget, out DecompilationContext fitted);
+
+			success.Should().BeTrue();
+			fitted.DecompiledCSharp.Should().Be(firstLine + "...");
+			fitted.ApproximateTokenCount.Should().BeLessThanOrEqualTo(budget);
+		}
+
+		[Test]
 		public void GetUnicodeSafePrefixLength_DoesNotSplitSurrogatePair()
 		{
 			const string text = "A\ud83d\ude00B";

@@ -147,27 +147,23 @@ namespace ICSharpCode.ILSpyX.AI
 			return EmptyContext();
 		}
 
-		static bool TryFitCode(DecompilationContext context, int budget, out DecompilationContext fitted)
+		internal static bool TryFitCode(DecompilationContext context, int budget, out DecompilationContext fitted)
 		{
-			string truncated = TokenCounter.TruncateToTokenBudget(context.DecompiledCSharp, budget / 2, isCode: true);
-			DecompilationContext fallback = WithTokenCount(context with { DecompiledCSharp = truncated });
-			if (fallback.ApproximateTokenCount <= budget)
-			{
-				fitted = fallback;
-				return true;
-			}
-
+			const string truncationSuffix = "...";
 			int low = 0;
 			int high = context.DecompiledCSharp.Length;
-			DecompilationContext? best = null;
+			int bestLength = -1;
+
 			while (low <= high)
 			{
 				int middle = low + (high - low) / 2;
 				int length = GetUnicodeSafePrefixLength(context.DecompiledCSharp, middle);
-				DecompilationContext candidate = WithTokenCount(context with { DecompiledCSharp = context.DecompiledCSharp[..length] });
+				DecompilationContext candidate = WithTokenCount(context with {
+					DecompiledCSharp = context.DecompiledCSharp[..length] + truncationSuffix
+				});
 				if (candidate.ApproximateTokenCount <= budget)
 				{
-					best = candidate;
+					bestLength = length;
 					low = middle + 1;
 				}
 				else
@@ -176,8 +172,24 @@ namespace ICSharpCode.ILSpyX.AI
 				}
 			}
 
-			fitted = best ?? context;
-			return best is not null;
+			if (bestLength < 0)
+			{
+				fitted = context;
+				return false;
+			}
+
+			int lastNewline = bestLength > 0
+				? context.DecompiledCSharp.LastIndexOf('\n', bestLength - 1)
+				: -1;
+			if (lastNewline > 0)
+				bestLength = lastNewline;
+			if (bestLength > 0 && context.DecompiledCSharp[bestLength - 1] == '\r')
+				bestLength--;
+
+			fitted = WithTokenCount(context with {
+				DecompiledCSharp = context.DecompiledCSharp[..bestLength] + truncationSuffix
+			});
+			return true;
 		}
 
 		static DecompilationContext EmptyContext()
