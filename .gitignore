@@ -51,6 +51,7 @@ DecompilerTests.config.json
 /.aws-codeassist/
 /.aws/amazonq/
 /.commandcode/
+/.codebase-memory/
 
 # macOS
 .DS_Store
@@ -68,4 +69,3 @@ Icon?
 *.icloud
 *.mobileprovision
 .ivy2/
-
