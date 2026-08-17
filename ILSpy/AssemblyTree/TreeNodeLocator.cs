@@ -100,8 +100,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					return root.FindAssemblyNode(lasm);
 
 				case MetadataFile metadataFile:
-					return root.Children.OfType<AssemblyTreeNode>()
-						.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == metadataFile);
+					return FindAssemblyNode(root, metadataFile);
 
 				case Resource resource:
 					return FindResourceNode(root, resource, null);
@@ -115,6 +114,47 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				default:
 					return null;
 			}
+		}
+
+		/// <summary>
+		/// Finds the node for the assembly <paramref name="module"/> was loaded from, including
+		/// assemblies nested inside a package or bundle. Package folders are expanded on the way
+		/// down, so this resolves even when the user has never opened the package in the tree.
+		/// </summary>
+		public static AssemblyTreeNode? FindAssemblyNode(AssemblyListTreeNode root, MetadataFile? module)
+		{
+			// A package child records the bundle it came from, so walking up that chain leads
+			// straight to the one top-level node worth descending into. Searching the tree for a
+			// matching module instead would have to visit every namespace and type node already
+			// built, and would still miss nested assemblies that are not loaded yet.
+			var nesting = new Stack<LoadedAssembly>();
+			for (var current = module?.GetLoadedAssemblyOrNull(); current != null; current = current.ParentBundle)
+				nesting.Push(current);
+			if (nesting.Count == 0)
+				return null;
+
+			var node = root.FindAssemblyNode(nesting.Pop());
+			while (node != null && nesting.Count > 0)
+				node = FindNestedAssemblyNode(node, nesting.Pop());
+			return node;
+		}
+
+		// Depth-first search for one assembly within a package node's folder structure. Only
+		// package folders are descended into, so the walk stays inside the package.
+		static AssemblyTreeNode? FindNestedAssemblyNode(SharpTreeNode packageNode, LoadedAssembly assembly)
+		{
+			packageNode.EnsureLazyChildren();
+			foreach (var child in packageNode.Children)
+			{
+				switch (child)
+				{
+					case AssemblyTreeNode nested when nested.LoadedAssembly == assembly:
+						return nested;
+					case PackageFolderTreeNode folder when FindNestedAssemblyNode(folder, assembly) is { } found:
+						return found;
+				}
+			}
+			return null;
 		}
 
 		// Resolves a resource (optionally a named sub-entry) to its tree node. Mirrors the previous
@@ -152,8 +192,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			var module = ns.ContributingModules.FirstOrDefault();
 			if (module?.MetadataFile == null)
 				return null;
-			var assembly = root.Children.OfType<AssemblyTreeNode>()
-				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module.MetadataFile);
+			var assembly = FindAssemblyNode(root, module.MetadataFile);
 			if (assembly == null)
 				return null;
 			assembly.EnsureLazyChildren();
@@ -166,8 +205,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			var module = type.ParentModule?.MetadataFile;
 			if (module == null)
 				return null;
-			var assembly = root.Children.OfType<AssemblyTreeNode>()
-				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module);
+			var assembly = FindAssemblyNode(root, module);
 			if (assembly == null)
 				return null;
 

@@ -70,6 +70,20 @@ namespace ICSharpCode.ILSpyX
 			return GetLoadedAssembly(file).GetTypeSystemOrNull(DecompilerTypeSystem.GetOptions(settings));
 		}
 
+		/// <summary>
+		/// Like <see cref="GetLoadedAssembly"/>, but returns null for a file that was built outside
+		/// the <see cref="LoadedAssembly"/> machinery instead of throwing.
+		/// </summary>
+		public static LoadedAssembly? GetLoadedAssemblyOrNull(this MetadataFile file)
+		{
+			if (file == null)
+				throw new ArgumentNullException(nameof(file));
+			lock (LoadedAssembly.loadedAssemblies)
+			{
+				return LoadedAssembly.loadedAssemblies.TryGetValue(file, out var loadedAssembly) ? loadedAssembly : null;
+			}
+		}
+
 		public static LoadedAssembly GetLoadedAssembly(this MetadataFile file)
 		{
 			if (file == null)

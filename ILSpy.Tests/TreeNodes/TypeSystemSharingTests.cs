@@ -24,6 +24,7 @@ using Avalonia.Headless.NUnit;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Languages;
 using ICSharpCode.ILSpy.Search;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -75,7 +76,8 @@ public class TypeSystemSharingTests
 		var language = AppComposition.Current.GetExport<LanguageService>().CurrentLanguage;
 
 		var search = new RunningSearch(
-			new[] { fixture }, FixtureAssembly.TypeName, SearchMode.TypeAndMember, language,
+			AppComposition.Current.GetExport<AssemblyTreeModel>().AssemblyList!,
+			FixtureAssembly.TypeName, SearchMode.TypeAndMember, language,
 			ApiVisibility.PublicAndInternal, new AvaloniaSearchResultFactory(language),
 			new ObservableCollection<SearchResult>(), SearchResult.ComparerByName);
 		var request = search.BuildRequest();
