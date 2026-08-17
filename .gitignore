@@ -28,3 +28,44 @@ DecompilerTests.config.json
 
 /.serena/
 /graphify-out/
+
+# AI tools
+/.aider*
+/.codex/
+/.copilot/
+/.cursor/
+/.cursorrules
+/.windsurf/
+/.cline/
+/.roo/
+/.continue/
+/.codeium/
+/.trae/
+/.gemini/
+/.augment/
+/.cascade/
+/.kilo/
+/.opencode/
+/.devin/
+/.ask-ai/
+/.aws-codeassist/
+/.aws/amazonq/
+/.commandcode/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100/
+.fseventsd/
+.Spotlight-V100/
+.TemporaryItems/
+.Trashes/
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+Icon?
+*.icloud
+*.mobileprovision
+.ivy2/
+
