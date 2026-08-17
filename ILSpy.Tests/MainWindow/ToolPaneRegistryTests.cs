@@ -24,6 +24,7 @@ using AwesomeAssertions;
 
 using Dock.Model.Controls;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -39,9 +40,9 @@ namespace ICSharpCode.ILSpy.Tests;
 public class ToolPaneRegistryTests
 {
 	[AvaloniaTest]
-	public void Registry_Lists_All_Three_Built_In_Tool_Panes()
+	public void Registry_Lists_All_Built_In_Tool_Panes()
 	{
-		// AssemblyTreeModel, SearchPaneModel, AnalyzerTreeViewModel each carry [ExportToolPane]
+		// Built-in panes carry [ExportToolPane]
 		// so plugins can drop additional panes into the registry without modifying the dock
 		// factory or DockWorkspace's constructor.
 
@@ -53,6 +54,7 @@ public class ToolPaneRegistryTests
 		paneTypes.Should().Contain(typeof(AssemblyTreeModel));
 		paneTypes.Should().Contain(typeof(SearchPaneModel));
 		paneTypes.Should().Contain(typeof(AnalyzerTreeViewModel));
+		paneTypes.Should().Contain(typeof(AIOutputPaneModel));
 	}
 
 	[AvaloniaTest]
@@ -69,6 +71,7 @@ public class ToolPaneRegistryTests
 		byType[typeof(AssemblyTreeModel)].Alignment.Should().Be(ToolPaneAlignment.Left);
 		byType[typeof(SearchPaneModel)].Alignment.Should().Be(ToolPaneAlignment.Top);
 		byType[typeof(AnalyzerTreeViewModel)].Alignment.Should().Be(ToolPaneAlignment.Bottom);
+		byType[typeof(AIOutputPaneModel)].Alignment.Should().Be(ToolPaneAlignment.Bottom);
 	}
 
 	[AvaloniaTest]
@@ -87,6 +90,7 @@ public class ToolPaneRegistryTests
 		allDockables.OfType<AssemblyTreeModel>().Should().ContainSingle();
 		allDockables.OfType<SearchPaneModel>().Should().BeEmpty("Search is hidden until invoked");
 		allDockables.OfType<AnalyzerTreeViewModel>().Should().BeEmpty("Analyzer is hidden until invoked");
+		allDockables.OfType<AIOutputPaneModel>().Should().BeEmpty("AI Output is hidden until invoked");
 	}
 
 	static System.Collections.Generic.IEnumerable<Dock.Model.Core.IDockable> FlattenDockables(Dock.Model.Core.IDockable root)

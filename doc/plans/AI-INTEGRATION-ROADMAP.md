@@ -215,7 +215,7 @@ public record LLMMessage(string Role, string Content); // "user" | "assistant" |
 - Explain-with-AI now opens the pane instead of a blocking dialog; the pane is discoverable from View and participates in persisted Dock layout state.
 - Enabled IL and call-graph settings. Context building now extracts IL, C# string literals, attributes, and bounded same-module callers/callees, with the existing budget hierarchy preserved.
 - Added assembly summary context generation and an assembly-tree context-menu action with the dedicated summary prompt.
-- Added streaming and enhanced-context tests. AI-filtered `net10.0` tests pass **94/94**; `ILSpy.csproj` builds with **0 errors** under installed SDK `10.0.400`.
+- Added streaming and enhanced-context tests. AI-filtered `net10.0` tests pass **95/95**; the application build reaches the existing `WithDeveloperTools` SDK compatibility error under the installed SDK.
 
 
 ---
@@ -461,10 +461,9 @@ Within each phase, tasks are independent unless noted.
 
 ## Next Steps
 
-1. Complete Phase 0 validation on the pinned .NET 11 SDK
-2. Smoke-test secure key storage on Windows, macOS, and Linux with Secret Service available
-3. Create `doc/plans/phase-1-first-features.md`
-4. Implement Phase 1 with privacy-consent gating
+1. Complete manual cross-platform smoke tests for secure storage and AI consent gating
+2. Plan Phase 3 provider, rename, and security-analysis work
+3. Keep AI-filtered `net10.0` tests network-free as later features are added
 
 ---
 
