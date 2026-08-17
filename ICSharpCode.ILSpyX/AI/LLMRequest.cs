@@ -31,12 +31,15 @@ namespace ICSharpCode.ILSpyX.AI
 				throw new ArgumentOutOfRangeException(nameof(temperature), "Temperature must be between 0 and 2.");
 
 			SystemPrompt = systemPrompt ?? throw new ArgumentNullException(nameof(systemPrompt));
-			Messages = messages ?? throw new ArgumentNullException(nameof(messages));
+			if (messages is null)
+				throw new ArgumentNullException(nameof(messages));
+			var messageSnapshot = new LLMMessage[messages.Count];
 			for (int i = 0; i < messages.Count; i++)
 			{
-				if (messages[i] is null)
-					throw new ArgumentException("Messages cannot contain null entries.", nameof(messages));
+				messageSnapshot[i] = messages[i]
+					?? throw new ArgumentException("Messages cannot contain null entries.", nameof(messages));
 			}
+			Messages = messageSnapshot;
 			MaxTokens = maxTokens;
 			Temperature = temperature;
 		}

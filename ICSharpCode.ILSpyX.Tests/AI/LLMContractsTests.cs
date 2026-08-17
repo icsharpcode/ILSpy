@@ -66,6 +66,19 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void LLMRequest_SnapshotsMessages()
+		{
+			var messages = new List<LLMMessage> { new("user", "first") };
+			var request = new LLMRequest("system", messages, 128);
+
+			messages[0] = new LLMMessage("user", "changed");
+			messages.Add(new LLMMessage("assistant", "added"));
+
+			Assert.That(request.Messages, Has.Count.EqualTo(1));
+			Assert.That(request.Messages[0].Content, Is.EqualTo("first"));
+		}
+
+		[Test]
 		public void LLMRequest_RejectsNullSystemPrompt()
 		{
 			Assert.That(() => new LLMRequest(null!, Array.Empty<LLMMessage>(), 1), Throws.ArgumentNullException);
