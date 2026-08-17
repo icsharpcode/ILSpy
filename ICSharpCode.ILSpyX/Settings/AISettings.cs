@@ -40,6 +40,7 @@ namespace ICSharpCode.ILSpyX.Settings
 		bool streamResponses = true;
 		bool sendIL;
 		bool sendCallGraph;
+		bool privacyConsentAccepted;
 
 		public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -117,6 +118,15 @@ namespace ICSharpCode.ILSpyX.Settings
 			set => SetProperty(ref sendCallGraph, value);
 		}
 
+		/// <summary>
+		/// Indicates that the user accepted the AI data-sharing notice. AI features must
+		/// remain disabled until this value is true.
+		/// </summary>
+		public bool PrivacyConsentAccepted {
+			get => privacyConsentAccepted;
+			set => SetProperty(ref privacyConsentAccepted, value);
+		}
+
 		public void LoadFromXml(XElement section)
 		{
 			if (section is null)
@@ -130,6 +140,7 @@ namespace ICSharpCode.ILSpyX.Settings
 				StreamResponses = true;
 				SendIL = false;
 				SendCallGraph = false;
+				PrivacyConsentAccepted = false;
 				return;
 			}
 
@@ -142,6 +153,7 @@ namespace ICSharpCode.ILSpyX.Settings
 			StreamResponses = ReadBoolean(section, nameof(StreamResponses), true);
 			SendIL = ReadBoolean(section, nameof(SendIL), false);
 			SendCallGraph = ReadBoolean(section, nameof(SendCallGraph), false);
+			PrivacyConsentAccepted = ReadBoolean(section, nameof(PrivacyConsentAccepted), false);
 		}
 
 		public XElement SaveToXml()
@@ -154,7 +166,8 @@ namespace ICSharpCode.ILSpyX.Settings
 				new XElement(nameof(MaxContextTokens), MaxContextTokens),
 				new XElement(nameof(StreamResponses), StreamResponses),
 				new XElement(nameof(SendIL), SendIL),
-				new XElement(nameof(SendCallGraph), SendCallGraph));
+				new XElement(nameof(SendCallGraph), SendCallGraph),
+				new XElement(nameof(PrivacyConsentAccepted), PrivacyConsentAccepted));
 		}
 
 		static string NormalizeProvider(string? value)

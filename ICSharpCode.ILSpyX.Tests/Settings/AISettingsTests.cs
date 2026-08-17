@@ -44,6 +44,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			settings.StreamResponses.Should().BeTrue();
 			settings.SendIL.Should().BeFalse();
 			settings.SendCallGraph.Should().BeFalse();
+			settings.PrivacyConsentAccepted.Should().BeFalse();
 		}
 
 		[TestCase("anthropic", "https://api.anthropic.com", "claude-opus-4-8")]
@@ -69,7 +70,8 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 				MaxContextTokens = 16000,
 				StreamResponses = false,
 				SendIL = true,
-				SendCallGraph = true
+				SendCallGraph = true,
+				PrivacyConsentAccepted = true
 			};
 
 			var loaded = new AISettings();
@@ -83,6 +85,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			loaded.StreamResponses.Should().Be(original.StreamResponses);
 			loaded.SendIL.Should().Be(original.SendIL);
 			loaded.SendCallGraph.Should().Be(original.SendCallGraph);
+			loaded.PrivacyConsentAccepted.Should().Be(original.PrivacyConsentAccepted);
 		}
 
 		[Test]
@@ -116,7 +119,8 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 				new XElement("Provider", "anthropic"),
 				new XElement("MaxContextTokens", "not-a-number"),
 				new XElement("StreamResponses", "not-a-boolean"),
-				new XElement("SendIL", "not-a-boolean")));
+				new XElement("SendIL", "not-a-boolean"),
+				new XElement("PrivacyConsentAccepted", "not-a-boolean")));
 
 			settings.Provider.Should().Be("anthropic");
 			settings.BaseUrl.Should().Be("https://api.anthropic.com");
@@ -125,6 +129,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			settings.MaxContextTokens.Should().BePositive();
 			settings.StreamResponses.Should().BeTrue();
 			settings.SendIL.Should().BeFalse();
+			settings.PrivacyConsentAccepted.Should().BeFalse();
 		}
 
 		[Test]
