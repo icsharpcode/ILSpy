@@ -148,9 +148,9 @@ public class OptionsTabTests
 	}
 
 	[AvaloniaTest]
-	public void OptionsPageModel_Surfaces_The_Three_Panels_In_MEF_Order()
+	public void OptionsPageModel_Surfaces_The_Four_Panels_In_MEF_Order()
 	{
-		// Decompiler / Display / Misc, ordered by ExportOptionPage(Order=10/20/30).
+		// Decompiler / Display / Misc / AI Assistant, ordered by ExportOptionPage(Order=10/20/30/40).
 		// Titles come from the embedded WPF Resources.resx so they match the WPF host
 		// byte-for-byte.
 		var window = AppComposition.Current.GetExport<MainWindow>();
@@ -164,10 +164,11 @@ public class OptionsTabTests
 		var model = (OptionsPageModel)vm.DockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>().First(t => t.Content is OptionsPageModel).Content!;
 
-		model.Pages.Should().HaveCount(3);
+		model.Pages.Should().HaveCount(4);
 		model.Pages[0].Title.Should().Be(Resources.Decompiler);
 		model.Pages[1].Title.Should().Be(Resources.Display);
 		model.Pages[2].Title.Should().Be(Resources.Misc);
+		model.Pages[3].Title.Should().Be("AI Assistant");
 	}
 
 	[AvaloniaTest]
