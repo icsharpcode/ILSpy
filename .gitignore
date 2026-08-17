@@ -25,3 +25,6 @@ DecompilerTests.config.json
 # Claude Code local session/skills directory
 /.claude/
 /.understand-anything
+
+/.serena/
+/graphify-out/
