@@ -195,6 +195,19 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 		}
 
 		[Test]
+		public void CompleteAsync_RejectsOversizedSseEvents()
+		{
+			string responseBody = "data: " + new string('x', 300_000) + "\n\n";
+			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => CreateStreamingResponse(responseBody)));
+			var provider = new OpenAIProvider("https://example.com", "key", "model", httpClient);
+
+			HttpRequestException? exception = Assert.ThrowsAsync<HttpRequestException>(async () =>
+				await ConsumeAsync(provider.CompleteAsync(ValidRequest(), CancellationToken.None)));
+
+			Assert.That(exception!.Message, Does.Contain("SSE event exceeded"));
+		}
+
+		[Test]
 		public async Task CompleteAsync_SkipsMalformedOrEmptyEvents()
 		{
 			const string responseBody = "data: not-json\n\n"

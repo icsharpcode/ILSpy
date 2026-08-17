@@ -36,6 +36,7 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 	public sealed class OpenAIProvider : ILLMProvider
 	{
 		private const int MaxErrorBodyLength = 4096;
+		private const int MaxSseEventLength = 256 * 1024;
 
 		private readonly Uri endpoint;
 		private readonly string? apiKey;
@@ -127,6 +128,9 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 						ReadOnlySpan<char> value = line.AsSpan(5);
 						if (!value.IsEmpty && value[0] == ' ')
 							value = value[1..];
+						int separatorLength = hasData ? 1 : 0;
+						if (value.Length > MaxSseEventLength - eventData.Length - separatorLength)
+							throw new HttpRequestException("API SSE event exceeded the maximum supported size.");
 						eventData.Append(value);
 						hasData = true;
 					}
