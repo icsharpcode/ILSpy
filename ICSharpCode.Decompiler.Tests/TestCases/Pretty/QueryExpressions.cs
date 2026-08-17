@@ -274,5 +274,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				   where t != null
 				   select t;
 		}
+
+#if CS70
+		public IEnumerable<string> Issue3352()
+		{
+			// We don't have backward type inference, so LINQ syntax cannot be used with named tuple types.
+			return new (string, int)[4] {
+				("A", 10),
+				("B", 20),
+				("C", 30),
+				("D", 40)
+			}.Where(((string Name, int Age) t) => t.Age >= 18).Select(((string Name, int Age) t) => t.Name);
+		}
+#endif
 	}
 }

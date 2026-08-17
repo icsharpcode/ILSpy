@@ -426,6 +426,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (expr is LambdaExpression lambda && lambda.Parameters.Count == 1 && lambda.Body is Expression)
 			{
+				if (lambda.GetResolveResult() is DecompiledLambdaResolveResult { AttemptedConversionWithTypeMismatch: true })
+				{
+					parameter = null;
+					body = null;
+					return false;
+				}
 				ParameterDeclaration p = lambda.Parameters.Single();
 				if (ValidateParameter(p))
 				{
