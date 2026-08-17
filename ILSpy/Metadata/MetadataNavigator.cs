@@ -71,10 +71,6 @@ namespace ICSharpCode.ILSpy.Metadata
 			if (!TryReadRow(row, "Token", out var file, out var handle) || handle.IsNil)
 				return null;
 
-			var owningAssembly = assemblyTreeModel.AssemblyList?.GetAssemblies()
-				.FirstOrDefault(a => ReferenceEquals(a.GetMetadataFileOrNull(), file));
-			if (owningAssembly is null)
-				return null;
 			if (file?.GetTypeSystemWithCurrentOptionsOrNull()?.MainModule is not MetadataModule metadataModule)
 				return null;
 			IEntity? entity;
@@ -93,10 +89,9 @@ namespace ICSharpCode.ILSpy.Metadata
 		/// </summary>
 		public MetadataTableTreeNode? FindTableNode(MetadataTokenReference reference)
 		{
-			var targetAssembly = assemblyTreeModel.Root?.Children
-				.OfType<AssemblyTreeNode>()
-				.FirstOrDefault(a => ReferenceEquals(a.LoadedAssembly.GetMetadataFileOrNull(), reference.MetadataFile));
-			if (targetAssembly == null)
+			// FindTreeNode, not a scan of the root's children: the module may sit inside a package
+			// or bundle, whose assembly nodes are grandchildren of a folder node.
+			if (assemblyTreeModel.FindTreeNode(reference.MetadataFile) is not AssemblyTreeNode targetAssembly)
 				return null;
 			targetAssembly.EnsureLazyChildren();
 			var metaNode = targetAssembly.Children.OfType<MetadataTreeNode>().FirstOrDefault();

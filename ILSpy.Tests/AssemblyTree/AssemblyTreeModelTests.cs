@@ -149,24 +149,43 @@ public class AssemblyTreeModelTests
 		// Search enumerates the contents of packages whether or not the user ever opened them in
 		// the tree, so activating such a result has to reach a node that does not exist yet.
 		var (_, vm) = await TestHarness.BootAsync();
-
-		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", Guid.NewGuid().ToString("N"));
-		Directory.CreateDirectory(tempDir);
-		var zipPath = Path.Combine(tempDir, "package.zip");
-		using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-			zip.CreateEntryFromFile(FixtureAssembly.Emit("Nested"), "lib/net10.0/Nested.dll");
-
-		await vm.OpenAssemblyAsync(zipPath);
+		await vm.OpenAssemblyAsync(CreatePackage());
 
 		var nested = (await vm.AssemblyTreeModel.AssemblyList!.GetAllAssemblies())
-			.Single(a => a.ParentBundle != null);
+			.Single(a => a.FileName == "lib/net10.0/Nested.dll");
 		var type = nested.GetTypeSystemOrNull()!.MainModule.TypeDefinitions
 			.Single(t => t.Name == FixtureAssembly.TypeName);
 
 		var node = vm.AssemblyTreeModel.FindTreeNode(type);
 
-		// Cast through object so the generic Should() resolves, not the SharpTreeNode shadow.
-		((object?)node).Should().BeOfType<TypeTreeNode>(
-			"the lookup must descend into the package's folders, expanding them on the way");
+		// Assert the owning module, not just the node type: the fixture's type handle is
+		// 0x02000002, which resolves in nearly every assembly on the list, so a lookup that fell
+		// back to the first top-level node would still hand back some TypeTreeNode.
+		((object?)node).Should().BeOfType<TypeTreeNode>()
+			.Which.Module.Should().BeSameAs(nested.GetMetadataFileOrNull(),
+				"the lookup must descend into the package's folders, expanding them on the way.");
+	}
+
+	[AvaloniaTest]
+	public async Task FindTreeNode_leaves_package_folders_off_the_path_unexpanded()
+	{
+		// Expanding a package folder resolves and extracts every .dll it holds, so a lookup that
+		// swept the package depth-first would pay for entries the user never asked about.
+		var (_, vm) = await TestHarness.BootAsync();
+		var package = await vm.OpenAssemblyAsync(CreatePackage());
+
+		var nested = (await vm.AssemblyTreeModel.AssemblyList!.GetAllAssemblies())
+			.Single(a => a.FileName == "lib/net10.0/Nested.dll");
+		var type = nested.GetTypeSystemOrNull()!.MainModule.TypeDefinitions
+			.Single(t => t.Name == FixtureAssembly.TypeName);
+
+		((object?)vm.AssemblyTreeModel.FindTreeNode(type)).Should().NotBeNull();
+
+		var packageNode = vm.AssemblyTreeModel.FindAssemblyNode(package);
+		((object?)packageNode).Should().NotBeNull();
+		var sibling = packageNode!.Children.OfType<PackageFolderTreeNode>()
+			.Single(f => f.Text as string == "runtimes/win-x64");
+		sibling.Children.Should().BeEmpty(
+			"only the folders on the path down to the target get expanded.");
 	}
 }
