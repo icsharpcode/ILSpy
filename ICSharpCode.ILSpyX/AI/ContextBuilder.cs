@@ -149,6 +149,14 @@ namespace ICSharpCode.ILSpyX.AI
 
 		static bool TryFitCode(DecompilationContext context, int budget, out DecompilationContext fitted)
 		{
+			string truncated = TokenCounter.TruncateToTokenBudget(context.DecompiledCSharp, budget / 2, isCode: true);
+			DecompilationContext fallback = WithTokenCount(context with { DecompiledCSharp = truncated });
+			if (fallback.ApproximateTokenCount <= budget)
+			{
+				fitted = fallback;
+				return true;
+			}
+
 			int low = 0;
 			int high = context.DecompiledCSharp.Length;
 			DecompilationContext? best = null;
