@@ -148,6 +148,31 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void ToMarkdown_UsesFenceLongerThanEmbeddedBackticks()
+		{
+			var context = new DecompilationContext {
+				DecompiledCSharp = "string marker = \"```\";"
+			};
+
+			string markdown = context.ToMarkdown();
+
+			markdown.Should().Contain("````csharp\nstring marker = \"```\";\n````");
+		}
+
+		[Test]
+		public void ToMarkdown_EscapesControlCharactersInStringLiterals()
+		{
+			var context = new DecompilationContext {
+				DecompiledCSharp = "class Example {}",
+				StringLiterals = new[] { "first line\n- injected item" }
+			};
+
+			string markdown = context.ToMarkdown();
+
+			markdown.Should().Contain("- \"first line\\n- injected item\"");
+		}
+
+		[Test]
 		public void ToMarkdown_ProducesStructuredOutput()
 		{
 			var context = new DecompilationContext {

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 
 namespace ICSharpCode.ILSpyX.AI
 {
@@ -63,25 +64,47 @@ namespace ICSharpCode.ILSpyX.AI
 
 			builder.AppendLine("## Decompiled Code");
 			builder.AppendLine();
-			builder.AppendLine("```csharp");
-			builder.AppendLine(DecompiledCSharp);
-			builder.AppendLine("```");
-			builder.AppendLine();
+			AppendCodeBlock(builder, "csharp", DecompiledCSharp);
 
 			if (!string.IsNullOrEmpty(IL))
 			{
 				builder.AppendLine("## IL Bytecode");
 				builder.AppendLine();
-				builder.AppendLine("```il");
-				builder.AppendLine(IL);
-				builder.AppendLine("```");
-				builder.AppendLine();
+				AppendCodeBlock(builder, "il", IL);
 			}
 
-			AppendList(builder, "**String Literals:**", StringLiterals, value => "\"" + value + "\"", limit: 20);
+			AppendList(builder, "**String Literals:**", StringLiterals, value => JsonSerializer.Serialize(value), limit: 20);
 			AppendList(builder, "**Called By:**", Callers, limit: 10);
 			AppendList(builder, "**Calls:**", Callees, limit: 10);
 			return builder.ToString();
+		}
+
+		static void AppendCodeBlock(StringBuilder builder, string language, string content)
+		{
+			string fence = new('`', GetFenceLength(content));
+			builder.Append(fence).AppendLine(language);
+			builder.AppendLine(content);
+			builder.AppendLine(fence);
+			builder.AppendLine();
+		}
+
+		static int GetFenceLength(string content)
+		{
+			int longestRun = 0;
+			int currentRun = 0;
+			foreach (char c in content)
+			{
+				if (c == '`')
+				{
+					currentRun++;
+					longestRun = Math.Max(longestRun, currentRun);
+				}
+				else
+				{
+					currentRun = 0;
+				}
+			}
+			return Math.Max(3, longestRun + 1);
 		}
 
 		static void AppendList(StringBuilder builder, string heading, IReadOnlyList<string> values, Func<string, string>? format = null, int limit = int.MaxValue)
