@@ -37,6 +37,7 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 	{
 		private const int MaxErrorBodyLength = 4096;
 		private const int MaxSseEventLength = 256 * 1024;
+		private const int MaxSseLineLength = MaxSseEventLength + 6;
 
 		private readonly Uri endpoint;
 		private readonly string? apiKey;
@@ -113,12 +114,8 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			var eventData = new StringBuilder();
 			bool hasData = false;
 
-			while (true)
+			await foreach (string line in ReadLinesAsync(reader, cancellationToken).ConfigureAwait(false))
 			{
-				string? line = await ReadLineAsync(reader, cancellationToken).ConfigureAwait(false);
-				bool endOfStream = line is null;
-				line ??= string.Empty;
-
 				if (line.Length != 0)
 				{
 					if (line.StartsWith("data:", StringComparison.Ordinal))
@@ -134,27 +131,29 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 						eventData.Append(value);
 						hasData = true;
 					}
-
-					if (!endOfStream)
-						continue;
+					continue;
 				}
 
-				if (hasData)
-				{
-					string data = eventData.ToString();
-					eventData.Clear();
-					hasData = false;
+				if (!hasData)
+					continue;
 
-					if (string.Equals(data.Trim(), "[DONE]", StringComparison.Ordinal))
-						yield break;
-
-					if (TryGetContent(data, out string content))
-						yield return content;
-				}
-
-				if (endOfStream)
+				string data = TakeEventData(eventData, ref hasData);
+				if (string.Equals(data.Trim(), "[DONE]", StringComparison.Ordinal))
 					yield break;
+				if (TryGetContent(data, out string content))
+					yield return content;
 			}
+
+			if (hasData)
+			{
+				string data = TakeEventData(eventData, ref hasData);
+				if (!string.Equals(data.Trim(), "[DONE]", StringComparison.Ordinal)
+					&& TryGetContent(data, out string content))
+				{
+					yield return content;
+				}
+			}
+
 		}
 
 		public async Task<bool> TestConnectionAsync(CancellationToken cancellationToken)
@@ -212,18 +211,63 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			}
 		}
 
-		private static async Task<string?> ReadLineAsync(
+		private static async IAsyncEnumerable<string> ReadLinesAsync(
 			StreamReader reader,
-			CancellationToken cancellationToken)
+			[EnumeratorCancellation] CancellationToken cancellationToken)
 		{
-			try
+			char[] buffer = new char[4096];
+			var line = new StringBuilder();
+			bool skipLineFeed = false;
+
+			while (true)
 			{
-				return await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+				int read;
+				try
+				{
+					read = await reader.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false);
+				}
+				catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
+				{
+					throw new OperationCanceledException(cancellationToken);
+				}
+
+				if (read == 0)
+					break;
+
+				for (int i = 0; i < read; i++)
+				{
+					char c = buffer[i];
+					if (skipLineFeed)
+					{
+						skipLineFeed = false;
+						if (c == '\n')
+							continue;
+					}
+
+					if (c is '\r' or '\n')
+					{
+						yield return line.ToString();
+						line.Clear();
+						skipLineFeed = c == '\r';
+						continue;
+					}
+
+					if (line.Length >= MaxSseLineLength)
+						throw new HttpRequestException("API SSE event exceeded the maximum supported size.");
+					line.Append(c);
+				}
 			}
-			catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
-			{
-				throw new OperationCanceledException(cancellationToken);
-			}
+
+			if (line.Length != 0)
+				yield return line.ToString();
+		}
+
+		private static string TakeEventData(StringBuilder eventData, ref bool hasData)
+		{
+			string data = eventData.ToString();
+			eventData.Clear();
+			hasData = false;
+			return data;
 		}
 
 		private static bool TryGetContent(string data, out string content)
