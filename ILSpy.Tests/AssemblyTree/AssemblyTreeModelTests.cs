@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
@@ -69,6 +71,76 @@ public class AssemblyTreeModelTests
 			"Initialize mirrors AssemblyListManager.AssemblyLists into the toolbar combo's source.");
 		model.ActiveListName.Should().Be(AssemblyListManager.DefaultListName,
 			"Initialize selects the (Default) list so the tree has something to render at startup.");
+	}
+
+	static readonly string TempRoot = Path.Combine(Path.GetTempPath(), "ILSpy.Tests.Packages", Guid.NewGuid().ToString("N"));
+
+	// Two assemblies in sibling folder chains, so a walk that reaches only one of them fails.
+	static string CreatePackage()
+	{
+		var dir = Directory.CreateDirectory(Path.Combine(TempRoot, Guid.NewGuid().ToString("N"))).FullName;
+		var zipPath = Path.Combine(dir, "package.zip");
+		using var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create);
+		zip.CreateEntryFromFile(FixtureAssembly.Emit("Nested"), "lib/net10.0/Nested.dll");
+		zip.CreateEntryFromFile(FixtureAssembly.Emit("Sibling"), "runtimes/win-x64/Sibling.dll");
+		return zipPath;
+	}
+
+	[OneTimeTearDown]
+	public void DeleteTempPackages()
+	{
+		if (Directory.Exists(TempRoot))
+			Directory.Delete(TempRoot, recursive: true);
+	}
+
+	[AvaloniaTest]
+	public async Task EnumerateAllAssemblies_expands_a_package_into_its_entries()
+	{
+		// The search corpus is this walk, so an assembly it does not yield is an assembly no
+		// search can ever match.
+		var (_, vm) = await TestHarness.BootAsync();
+		await vm.OpenAssemblyAsync(CreatePackage());
+
+		var nested = new List<LoadedAssembly>();
+		await foreach (var asm in vm.AssemblyTreeModel.AssemblyList!.EnumerateAllAssemblies())
+		{
+			if (asm.ParentBundle != null)
+				nested.Add(asm);
+		}
+
+		nested.Select(a => a.FileName).Should().BeEquivalentTo(
+			new[] { "lib/net10.0/Nested.dll", "runtimes/win-x64/Sibling.dll" },
+			"every .dll in the package is searchable, and the package-relative path is what "
+			+ "distinguishes copies of one assembly built for several targets.");
+	}
+
+	[AvaloniaTest]
+	public async Task EnumerateAllAssemblies_stops_expanding_a_package_once_cancelled()
+	{
+		// Both search panes restart on every keystroke, so an abandoned walk that keeps
+		// extracting package entries competes with the run the user is waiting for.
+		var (_, vm) = await TestHarness.BootAsync();
+		await vm.OpenAssemblyAsync(CreatePackage());
+
+		using var cts = new CancellationTokenSource();
+		var walk = vm.AssemblyTreeModel.AssemblyList!.EnumerateAllAssemblies(cts.Token).GetAsyncEnumerator();
+		try
+		{
+			while (await walk.MoveNextAsync() && walk.Current.ParentBundle == null)
+			{
+				// Skip past the list's own assemblies to the package's first entry.
+			}
+			walk.Current.ParentBundle.Should().NotBeNull("the package's entries come last on the list.");
+			cts.Cancel();
+
+			var next = async () => await walk.MoveNextAsync();
+			await next.Should().ThrowAsync<OperationCanceledException>(
+				"the second entry must not be extracted after the walk was cancelled.");
+		}
+		finally
+		{
+			await walk.DisposeAsync();
+		}
 	}
 
 	[AvaloniaTest]

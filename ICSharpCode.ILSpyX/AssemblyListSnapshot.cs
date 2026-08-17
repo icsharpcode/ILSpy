@@ -207,7 +207,7 @@ namespace ICSharpCode.ILSpyX
 				}
 				else if (result.Package != null)
 				{
-					foreach (var descendant in EnumerateDescendants(result.Package.RootFolder))
+					foreach (var descendant in EnumerateDescendants(result.Package.RootFolder, cancellationToken))
 					{
 						yield return descendant;
 					}
@@ -218,11 +218,11 @@ namespace ICSharpCode.ILSpyX
 				}
 			}
 
-			static IEnumerable<LoadedAssembly> EnumerateDescendants(PackageFolder folder)
+			static IEnumerable<LoadedAssembly> EnumerateDescendants(PackageFolder folder, CancellationToken cancellationToken)
 			{
 				foreach (var subFolder in folder.Folders)
 				{
-					foreach (var descendant in EnumerateDescendants(subFolder))
+					foreach (var descendant in EnumerateDescendants(subFolder, cancellationToken))
 					{
 						yield return descendant;
 					}
@@ -230,12 +230,15 @@ namespace ICSharpCode.ILSpyX
 
 				foreach (var entry in folder.Entries)
 				{
+					// Checked per entry, not per package: resolving one starts extracting it from
+					// the archive, so a walk the consumer has given up on must stop expanding.
+					cancellationToken.ThrowIfCancellationRequested();
 					if (!entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) && !entry.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
 						continue;
 					LoadedAssembly? asm;
 					try
 					{
-						asm = folder.ResolveFileName(entry.Name);
+						asm = folder.ResolveEntry(entry);
 					}
 					catch
 					{

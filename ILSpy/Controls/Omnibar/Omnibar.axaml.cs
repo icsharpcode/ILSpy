@@ -21,6 +21,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Threading;
@@ -67,6 +68,14 @@ namespace ICSharpCode.ILSpy.Controls.Omnibar
 				SearchInput.Focus();
 				SearchInput.SelectAll();
 			});
+		}
+
+		protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+		{
+			// The hosting tab is gone (closed, or its content swapped out). Nothing will read the
+			// results, so end the run rather than let it walk the rest of the assembly list.
+			viewModel.CancelSearch();
+			base.OnDetachedFromVisualTree(e);
 		}
 
 		void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

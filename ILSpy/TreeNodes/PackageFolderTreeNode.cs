@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
 					|| entry.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
 				{
-					var asm = root.ResolveFileName(entry.Name);
+					var asm = root.ResolveEntry(entry);
 					if (asm != null)
 					{
 						yield return new AssemblyTreeNode(asm, entry);
