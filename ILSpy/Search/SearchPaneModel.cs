@@ -251,7 +251,7 @@ namespace ICSharpCode.ILSpy.Search
 				? SearchResult.ComparerByFitness
 				: SearchResult.ComparerByName;
 			var run = new RunningSearch(
-				assemblyList.GetAssemblies(),
+				assemblyList,
 				term,
 				SelectedSearchMode.Mode,
 				language,

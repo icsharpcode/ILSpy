@@ -213,7 +213,7 @@ namespace ICSharpCode.ILSpy.Controls.Omnibar
 				?? ApiVisibility.PublicOnly;
 
 			var run = new RunningSearch(
-				assemblyList.GetAssemblies(),
+				assemblyList,
 				term,
 				SearchMode.TypeAndMember,
 				language,

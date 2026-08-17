@@ -22,6 +22,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.Metadata;
@@ -171,48 +173,80 @@ namespace ICSharpCode.ILSpyX
 		public async Task<IList<LoadedAssembly>> GetAllAssembliesAsync()
 		{
 			var results = new List<LoadedAssembly>(assemblies.Length);
+			await foreach (var asm in EnumerateAllAssembliesAsync().ConfigureAwait(false))
+			{
+				results.Add(asm);
+			}
+			return results;
+		}
 
+		/// <summary>
+		/// Streaming variant of <see cref="GetAllAssembliesAsync"/>: yields each assembly as soon
+		/// as it is known. Awaiting the load result is what triggers the lazy load, so a consumer
+		/// that materializes the whole sequence first waits for every assembly on the list to be
+		/// read off disk before it can do any work.
+		/// </summary>
+		public async IAsyncEnumerable<LoadedAssembly> EnumerateAllAssembliesAsync(
+			[EnumeratorCancellation] CancellationToken cancellationToken = default)
+		{
 			foreach (var asm in assemblies)
 			{
-				LoadResult result;
+				cancellationToken.ThrowIfCancellationRequested();
+				LoadResult? result = null;
 				try
 				{
 					result = await asm.GetLoadResultAsync().ConfigureAwait(false);
 				}
 				catch
 				{
-					results.Add(asm);
-					continue;
+					// Load failure: still yield the assembly so the consumer can surface it.
 				}
-				if (result.Package != null)
+				if (result == null)
 				{
-					AddDescendants(result.Package.RootFolder);
+					yield return asm;
+				}
+				else if (result.Package != null)
+				{
+					foreach (var descendant in EnumerateDescendants(result.Package.RootFolder))
+					{
+						yield return descendant;
+					}
 				}
 				else if (result.MetadataFile != null)
 				{
-					results.Add(asm);
+					yield return asm;
 				}
 			}
 
-			void AddDescendants(PackageFolder folder)
+			static IEnumerable<LoadedAssembly> EnumerateDescendants(PackageFolder folder)
 			{
 				foreach (var subFolder in folder.Folders)
 				{
-					AddDescendants(subFolder);
+					foreach (var descendant in EnumerateDescendants(subFolder))
+					{
+						yield return descendant;
+					}
 				}
 
 				foreach (var entry in folder.Entries)
 				{
 					if (!entry.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) && !entry.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
 						continue;
-					var asm = folder.ResolveFileName(entry.Name);
+					LoadedAssembly? asm;
+					try
+					{
+						asm = folder.ResolveFileName(entry.Name);
+					}
+					catch
+					{
+						// One unreadable entry must not abandon the rest of the package.
+						continue;
+					}
 					if (asm == null)
 						continue;
-					results.Add(asm);
+					yield return asm;
 				}
 			}
-
-			return results;
 		}
 	}
 }

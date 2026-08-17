@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Search
 		// when the queue is jammed with thousands of late-arriving hits.
 		const int RefreshTimeBudgetMs = 10;
 
-		readonly IReadOnlyList<LoadedAssembly> assemblies;
+		readonly AssemblyList assemblyList;
 		readonly SearchMode mode;
 		readonly string searchTerm;
 		readonly Language language;
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy.Search
 		bool completedRaised;
 
 		public RunningSearch(
-			IReadOnlyList<LoadedAssembly> assemblies,
+			AssemblyList assemblyList,
 			string searchTerm,
 			SearchMode mode,
 			Language language,
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpy.Search
 			ObservableCollection<SearchResult> sink,
 			IComparer<SearchResult> sortComparer)
 		{
-			this.assemblies = assemblies;
+			this.assemblyList = assemblyList;
 			this.searchTerm = searchTerm;
 			this.mode = mode;
 			this.language = language;
@@ -123,7 +123,7 @@ namespace ICSharpCode.ILSpy.Search
 			RaiseCompletedIfFirst();
 		}
 
-		void RunSearch(CancellationToken ct)
+		async Task RunSearch(CancellationToken ct)
 		{
 			try
 			{
@@ -131,20 +131,23 @@ namespace ICSharpCode.ILSpy.Search
 				var strategy = GetStrategy(request);
 				if (strategy == null)
 					return;
+				// Streaming enumeration: expanding bundles/packages into their contained
+				// assemblies triggers the lazy load of every entry on the list, so awaiting
+				// the whole set up front would mean no results at all until the last
+				// assembly is off disk. Enumerating starts the walk here on the worker
+				// thread, not at construction time on the UI thread.
+				//
 				// Serial walk: per-assembly metadata walk is allocation-dominated, and 4
 				// parallel producers fighting for the ConcurrentQueue + the resulting UI
 				// batching jitter end up slower than serial in practice.
-				foreach (var assembly in assemblies)
+				await foreach (var assembly in assemblyList.EnumerateAllAssemblies(ct).ConfigureAwait(false))
 				{
 					if (ct.IsCancellationRequested)
 						break;
 					MetadataFile? module;
 					try
 					{
-						// Block here — we're already on a worker thread (Task.Run) and
-						// this matches the WPF call shape. ConfigureAwait in an async
-						// state machine would just add overhead for the same effect.
-						module = assembly.GetMetadataFileAsync().GetAwaiter().GetResult();
+						module = await assembly.GetMetadataFileAsync().ConfigureAwait(false);
 					}
 					catch (OperationCanceledException)
 					{
