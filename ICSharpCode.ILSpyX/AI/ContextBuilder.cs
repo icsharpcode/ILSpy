@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpyX.AI
 			{
 				decompiler.Decompile(new[] { entity.MetadataToken }).AcceptVisitor(visitor);
 			}
-			catch (Exception) when (entity is not null)
+			catch (Exception exception) when (IsRecoverableMetadataException(exception))
 			{
 				return Array.Empty<string>();
 			}
@@ -118,7 +118,7 @@ namespace ICSharpCode.ILSpyX.AI
 				new MethodBodyDisassembler(output, default).Disassemble(module.MetadataFile, (MethodDefinitionHandle)method.MetadataToken);
 				return output.ToString();
 			}
-			catch (BadImageFormatException)
+			catch (Exception exception) when (IsRecoverableMetadataException(exception))
 			{
 				return null;
 			}
@@ -128,15 +128,22 @@ namespace ICSharpCode.ILSpyX.AI
 		{
 			if (entity is not IMethod method || mainModule is not MetadataModule module)
 				return Array.Empty<string>();
-			return ScanMethodReferences(method, module).Select(member => member.FullName)
-				.Distinct(StringComparer.Ordinal).Take(10).ToArray();
+			string? declaringType = method.DeclaringTypeDefinition?.FullName;
+			return ScanMethodReferences(method, module)
+				.GroupBy(member => member.FullName, StringComparer.Ordinal)
+				.Select(group => group.First())
+				.OrderByDescending(member => member.DeclaringTypeDefinition?.FullName == declaringType)
+				.ThenBy(member => member.FullName, StringComparer.Ordinal)
+				.Take(10)
+				.Select(member => member.FullName)
+				.ToArray();
 		}
 
 		static IReadOnlyList<string> GetCallers(IEntity entity, IModule mainModule)
 		{
 			if (entity is not IMethod target || mainModule is not MetadataModule module)
 				return Array.Empty<string>();
-			var callers = new List<string>();
+			var callers = new List<IMethod>();
 			foreach (var handle in module.MetadataFile.Metadata.MethodDefinitions)
 			{
 				IMethod? caller;
@@ -144,18 +151,22 @@ namespace ICSharpCode.ILSpyX.AI
 				{
 					caller = module.GetDefinition(handle) as IMethod;
 				}
-				catch (BadImageFormatException)
+				catch (Exception exception) when (IsRecoverableMetadataException(exception))
 				{
 					continue;
 				}
 				if (caller is null || caller.MetadataToken == target.MetadataToken)
 					continue;
 				if (ScanMethodReferences(caller, module).Any(member => member.MetadataToken == target.MetadataToken))
-					callers.Add(caller.FullName);
-				if (callers.Count == 10)
-					break;
+					callers.Add(caller);
 			}
-			return callers;
+			string? declaringType = target.DeclaringTypeDefinition?.FullName;
+			return callers
+				.OrderByDescending(caller => caller.DeclaringTypeDefinition?.FullName == declaringType)
+				.ThenBy(caller => caller.FullName, StringComparer.Ordinal)
+				.Take(10)
+				.Select(caller => caller.FullName)
+				.ToArray();
 		}
 
 		static IEnumerable<IMember> ScanMethodReferences(IMethod method, MetadataModule module)
@@ -173,7 +184,7 @@ namespace ICSharpCode.ILSpyX.AI
 				while (reader.RemainingBytes > 0)
 				{
 					ILOpCode opCode = reader.DecodeOpCode();
-					if (opCode.GetOperandType() != OperandType.Method)
+					if (opCode is not (ILOpCode.Call or ILOpCode.Callvirt or ILOpCode.Newobj))
 					{
 						reader.SkipOperand(opCode);
 						continue;
@@ -184,10 +195,19 @@ namespace ICSharpCode.ILSpyX.AI
 				}
 				return references;
 			}
-			catch (BadImageFormatException)
+			catch (Exception exception) when (IsRecoverableMetadataException(exception))
 			{
 				return Array.Empty<IMember>();
 			}
+		}
+
+		static bool IsRecoverableMetadataException(Exception exception)
+		{
+			return exception is BadImageFormatException
+				or ArgumentException
+				or InvalidOperationException
+				or NotSupportedException
+				or DecompilerException;
 		}
 
 		sealed class StringLiteralVisitor : DepthFirstAstVisitor
@@ -290,11 +310,7 @@ namespace ICSharpCode.ILSpyX.AI
 				return false;
 			}
 
-			int lastNewline = bestLength > 0
-				? context.DecompiledCSharp.LastIndexOf('\n', bestLength - 1)
-				: -1;
-			if (lastNewline > 0)
-				bestLength = lastNewline;
+			bestLength = FindStatementBoundary(context.DecompiledCSharp, bestLength);
 			if (bestLength > 0 && context.DecompiledCSharp[bestLength - 1] == '\r')
 				bestLength--;
 
@@ -319,6 +335,17 @@ namespace ICSharpCode.ILSpyX.AI
 			if (length > 0 && length < text.Length && char.IsHighSurrogate(text[length - 1]) && char.IsLowSurrogate(text[length]))
 				return length - 1;
 			return length;
+		}
+
+		static int FindStatementBoundary(string text, int length)
+		{
+			for (int i = length - 1; i >= 0; i--)
+			{
+				if (text[i] is ';' or '}')
+					return i + 1;
+			}
+			int newline = length > 0 ? text.LastIndexOf('\n', length - 1) : -1;
+			return newline > 0 ? newline : length;
 		}
 
 	}

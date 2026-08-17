@@ -5,6 +5,7 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
@@ -52,9 +53,9 @@ namespace ICSharpCode.ILSpy.AI
 			builder.AppendLine("## Entry point");
 			int entryPointToken = metadataFile.CorHeader?.EntryPointTokenOrRelativeVirtualAddress ?? 0;
 			var metadataModule = module as MetadataModule;
-			MethodDefinitionHandle entryPoint = MetadataTokens.MethodDefinitionHandle(entryPointToken);
-			if (metadataModule is not null && !entryPoint.IsNil)
-				builder.AppendLine("- " + (metadataModule.GetDefinition(entryPoint)?.FullName ?? "unknown"));
+			EntityHandle entryPoint = MetadataTokenHelpers.EntityHandleOrNil(entryPointToken);
+			if (metadataModule is not null && entryPoint.Kind == HandleKind.MethodDefinition)
+				builder.AppendLine("- " + (metadataModule.GetDefinition((MethodDefinitionHandle)entryPoint)?.FullName ?? "unknown"));
 			else
 				builder.AppendLine("- none");
 			builder.AppendLine();
