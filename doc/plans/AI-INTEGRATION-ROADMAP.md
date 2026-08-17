@@ -209,6 +209,14 @@ public record LLMMessage(string Role, string Content); // "user" | "assistant" |
 - System prompt: "You are analyzing a .NET assembly. Provide a 2-3 paragraph summary: what it is, what framework it targets, what it's probably used for."
 
 **Phase 2 Deliverable:** Users get streaming responses in a dockable pane, with richer context sent to the LLM. Assembly-level summaries available.
+**Status:** Implemented August 17, 2026
+
+- Added dispatcher-safe chunk streaming from the existing async provider contract into a dockable `AI Output` pane, including cancel, clear, and copy actions.
+- Explain-with-AI now opens the pane instead of a blocking dialog; the pane is discoverable from View and participates in persisted Dock layout state.
+- Enabled IL and call-graph settings. Context building now extracts IL, C# string literals, attributes, and bounded same-module callers/callees, with the existing budget hierarchy preserved.
+- Added assembly summary context generation and an assembly-tree context-menu action with the dedicated summary prompt.
+- Added streaming and enhanced-context tests. AI-filtered `net10.0` tests pass **94/94**; `ILSpy.csproj` builds with **0 errors** under installed SDK `10.0.400`.
+
 
 ---
 

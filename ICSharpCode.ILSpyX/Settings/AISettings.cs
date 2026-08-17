@@ -105,8 +105,7 @@ namespace ICSharpCode.ILSpyX.Settings
 		}
 
 		/// <summary>
-		/// Persisted response-streaming preference for the orchestration layer.
-		/// The Phase 0 provider contract exposes streamed chunks directly.
+		/// Persisted response-streaming preference for the AI output experience.
 		/// </summary>
 		public bool StreamResponses {
 			get => streamResponses;
@@ -114,7 +113,7 @@ namespace ICSharpCode.ILSpyX.Settings
 		}
 
 		/// <summary>
-		/// Persisted opt-in for adding IL to future context requests. Phase 0 does not extract IL.
+		/// Persisted opt-in for adding IL to context requests.
 		/// </summary>
 		public bool SendIL {
 			get => sendIL;
@@ -122,8 +121,7 @@ namespace ICSharpCode.ILSpyX.Settings
 		}
 
 		/// <summary>
-		/// Persisted opt-in for adding callers and callees to future context requests.
-		/// Phase 0 does not build a call graph.
+		/// Persisted opt-in for adding callers and callees to context requests.
 		/// </summary>
 		public bool SendCallGraph {
 			get => sendCallGraph;

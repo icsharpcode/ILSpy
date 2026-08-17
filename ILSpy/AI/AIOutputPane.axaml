@@ -1,0 +1,22 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ICSharpCode.ILSpy.AI"
+             xmlns:ai="using:ICSharpCode.ILSpy.AI"
+             x:Class="ICSharpCode.ILSpy.AI.AIOutputPane"
+             x:DataType="vm:AIOutputPaneModel">
+	<DockPanel Margin="8">
+		<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+			<TextBlock Text="{Binding TargetName}" FontWeight="Bold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+			<TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center" />
+		</StackPanel>
+		<StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,8,0,0">
+			<Button Content="Copy" Click="CopyClick" IsEnabled="{Binding CanCopy}" />
+			<Button Content="Clear" Command="{Binding ClearCommand}" />
+			<Button Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
+		</StackPanel>
+		<TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="IndianRed" TextWrapping="Wrap" Margin="0,0,0,8" />
+		<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+			<ai:StreamingTextControl Text="{Binding Response}" />
+		</ScrollViewer>
+	</DockPanel>
+</UserControl>

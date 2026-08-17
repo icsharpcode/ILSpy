@@ -25,6 +25,7 @@ using Avalonia.Controls.Templates;
 
 using Dock.Model.Core;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Bookmarks;
@@ -65,6 +66,7 @@ namespace ICSharpCode.ILSpy
 			{ typeof(SearchPaneModel),         () => new SearchPane() },
 			{ typeof(BookmarksPaneModel),      () => new BookmarksPane() },
 			{ typeof(AnalyzerTreeViewModel),   () => new AnalyzerTreeView() },
+			{ typeof(AIOutputPaneModel),        () => new AIOutputPane() },
 			{ typeof(ContentTabPage),          () => new ContentTabPageView() },
 			{ typeof(DecompilerTabPageModel),  () => new DecompilerTextView() },
 			{ typeof(MetadataTablePageModel),  () => new MetadataTablePage() },

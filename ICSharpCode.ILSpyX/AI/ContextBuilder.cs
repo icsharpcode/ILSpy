@@ -20,6 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.IL;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
@@ -59,10 +63,10 @@ namespace ICSharpCode.ILSpyX.AI
 				TargetFramework = DetectTargetFramework(entity.ParentModule),
 				Attributes = entity.GetAttributes().Select(attribute => attribute.AttributeType.FullName).ToArray(),
 				ImplementedInterfaces = GetImplementedInterfaces(entity),
-				StringLiterals = Array.Empty<string>(),
-				Callers = Array.Empty<string>(),
-				Callees = Array.Empty<string>(),
-				IL = null
+				StringLiterals = GetStringLiterals(entity, decompiler),
+				Callers = settings.SendCallGraph ? GetCallers(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
+				Callees = settings.SendCallGraph ? GetCallees(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
+				IL = settings.SendIL ? GetIL(entity) : null
 			};
 			return EnforceBudget(context);
 		}
@@ -88,6 +92,114 @@ namespace ICSharpCode.ILSpyX.AI
 			if (entity is not ITypeDefinition type)
 				return Array.Empty<string>();
 			return type.DirectBaseTypes.Where(baseType => baseType.Kind == TypeKind.Interface).Select(baseType => baseType.FullName).ToArray();
+		}
+
+		static IReadOnlyList<string> GetStringLiterals(IEntity entity, CSharpDecompiler decompiler)
+		{
+			var visitor = new StringLiteralVisitor();
+			try
+			{
+				decompiler.Decompile(new[] { entity.MetadataToken }).AcceptVisitor(visitor);
+			}
+			catch (Exception) when (entity is not null)
+			{
+				return Array.Empty<string>();
+			}
+			return visitor.Values.Distinct(StringComparer.Ordinal).Take(20).ToArray();
+		}
+
+		static string? GetIL(IEntity entity)
+		{
+			if (entity is not IMethod method || method.ParentModule is not MetadataModule module)
+				return null;
+			try
+			{
+				var output = new PlainTextOutput();
+				new MethodBodyDisassembler(output, default).Disassemble(module.MetadataFile, (MethodDefinitionHandle)method.MetadataToken);
+				return output.ToString();
+			}
+			catch (BadImageFormatException)
+			{
+				return null;
+			}
+		}
+
+		static IReadOnlyList<string> GetCallees(IEntity entity, IModule mainModule)
+		{
+			if (entity is not IMethod method || mainModule is not MetadataModule module)
+				return Array.Empty<string>();
+			return ScanMethodReferences(method, module).Select(member => member.FullName)
+				.Distinct(StringComparer.Ordinal).Take(10).ToArray();
+		}
+
+		static IReadOnlyList<string> GetCallers(IEntity entity, IModule mainModule)
+		{
+			if (entity is not IMethod target || mainModule is not MetadataModule module)
+				return Array.Empty<string>();
+			var callers = new List<string>();
+			foreach (var handle in module.MetadataFile.Metadata.MethodDefinitions)
+			{
+				IMethod? caller;
+				try
+				{
+					caller = module.GetDefinition(handle) as IMethod;
+				}
+				catch (BadImageFormatException)
+				{
+					continue;
+				}
+				if (caller is null || caller.MetadataToken == target.MetadataToken)
+					continue;
+				if (ScanMethodReferences(caller, module).Any(member => member.MetadataToken == target.MetadataToken))
+					callers.Add(caller.FullName);
+				if (callers.Count == 10)
+					break;
+			}
+			return callers;
+		}
+
+		static IEnumerable<IMember> ScanMethodReferences(IMethod method, MetadataModule module)
+		{
+			if (!method.HasBody || method.MetadataToken.Kind != HandleKind.MethodDefinition)
+				return Array.Empty<IMember>();
+			var definition = module.MetadataFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+			if (definition.RelativeVirtualAddress == 0)
+				return Array.Empty<IMember>();
+			try
+			{
+				var body = module.MetadataFile.GetMethodBody(definition.RelativeVirtualAddress);
+				var reader = body.GetILReader();
+				var references = new List<IMember>();
+				while (reader.RemainingBytes > 0)
+				{
+					ILOpCode opCode = reader.DecodeOpCode();
+					if (opCode.GetOperandType() != OperandType.Method)
+					{
+						reader.SkipOperand(opCode);
+						continue;
+					}
+					EntityHandle handle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
+					if (module.ResolveEntity(handle, default) is IMember member)
+						references.Add(member.MemberDefinition);
+				}
+				return references;
+			}
+			catch (BadImageFormatException)
+			{
+				return Array.Empty<IMember>();
+			}
+		}
+
+		sealed class StringLiteralVisitor : DepthFirstAstVisitor
+		{
+			public List<string> Values { get; } = new();
+
+			public override void VisitPrimitiveExpression(PrimitiveExpression primitiveExpression)
+			{
+				if (primitiveExpression.Value is string value)
+					Values.Add(value);
+				base.VisitPrimitiveExpression(primitiveExpression);
+			}
 		}
 
 		static string DetectTargetFramework(IModule module)

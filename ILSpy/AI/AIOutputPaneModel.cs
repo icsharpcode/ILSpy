@@ -1,0 +1,173 @@
+// Copyright (c) 2026 Masroor
+using System;
+using System.Composition;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Avalonia.Input.Platform;
+using Avalonia.Threading;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Commands;
+using ICSharpCode.ILSpy.ViewModels;
+using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.AI;
+using ICSharpCode.ILSpyX.Settings;
+
+namespace ICSharpCode.ILSpy.AI
+{
+	[Export]
+	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 2, IsVisibleByDefault = false)]
+	[Shared]
+	public sealed partial class AIOutputPaneModel : ToolPaneModel, IDisposable
+	{
+		public const string PaneContentId = "AIOutput";
+
+		readonly AISettings settings;
+		readonly AIExplanationService explanationService;
+		CancellationTokenSource? cancellation;
+
+		[ObservableProperty]
+		string targetName = string.Empty;
+		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(CanCopy))]
+		string response = string.Empty;
+		[ObservableProperty]
+		string errorMessage = string.Empty;
+		[ObservableProperty]
+		string statusMessage = "Ready";
+		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(CanCopy))]
+		bool isBusy;
+
+		[ImportingConstructor]
+		public AIOutputPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory)
+		{
+			settings = settingsService?.AISettings ?? throw new ArgumentNullException(nameof(settingsService));
+			explanationService = new AIExplanationService(settings, providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
+			Id = PaneContentId;
+			Title = "AI Output";
+		}
+
+		public bool CanCopy => !IsBusy && Response.Length != 0;
+
+		public Task StartAsync(IEntity entity)
+		{
+			ArgumentNullException.ThrowIfNull(entity);
+			MetadataFile module = entity.ParentModule?.MetadataFile
+				?? throw new InvalidOperationException("The selected symbol has no decompilable module.");
+			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new ICSharpCode.Decompiler.DecompilerSettings());
+			return StartAsync(entity.FullName, token => explanationService.ExplainStreamingAsync(entity, decompiler, token));
+		}
+
+		public async Task StartAsync(string name, Func<CancellationToken, IAsyncEnumerable<string>> streamFactory)
+		{
+			ArgumentNullException.ThrowIfNull(streamFactory);
+			cancellation?.Cancel();
+			var requestCancellation = new CancellationTokenSource();
+			cancellation = requestCancellation;
+			TargetName = name ?? string.Empty;
+			Response = string.Empty;
+			ErrorMessage = string.Empty;
+			StatusMessage = "Generating…";
+			IsBusy = true;
+			try
+			{
+				await foreach (string chunk in streamFactory(requestCancellation.Token).ConfigureAwait(false))
+				{
+					if (chunk.Length == 0)
+						continue;
+					await Dispatcher.UIThread.InvokeAsync(() => {
+						if (ReferenceEquals(cancellation, requestCancellation))
+							Response += chunk;
+					});
+				}
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					if (ReferenceEquals(cancellation, requestCancellation))
+						StatusMessage = Response.Length == 0 ? "The provider returned an empty response." : "Complete";
+				});
+			}
+			catch (OperationCanceledException)
+			{
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					if (ReferenceEquals(cancellation, requestCancellation))
+						StatusMessage = "Canceled";
+				});
+			}
+			catch (AIRequestException exception)
+			{
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					if (ReferenceEquals(cancellation, requestCancellation))
+					{
+						ErrorMessage = exception.Message;
+						StatusMessage = "Request failed";
+					}
+				});
+			}
+			catch (AIConfigurationException exception)
+			{
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					if (ReferenceEquals(cancellation, requestCancellation))
+					{
+						ErrorMessage = exception.Message;
+						StatusMessage = "Configuration required";
+					}
+				});
+			}
+			catch (Exception)
+			{
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					if (ReferenceEquals(cancellation, requestCancellation))
+					{
+						ErrorMessage = "The AI request failed. Check provider settings and try again.";
+						StatusMessage = "Request failed";
+					}
+				});
+			}
+			finally
+			{
+				if (ReferenceEquals(cancellation, requestCancellation))
+				{
+					await Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
+					cancellation = null;
+				}
+				requestCancellation.Dispose();
+			}
+		}
+
+		[RelayCommand]
+		void Cancel() => cancellation?.Cancel();
+
+		[RelayCommand]
+		void Clear()
+		{
+			cancellation?.Cancel();
+			cancellation = null;
+			IsBusy = false;
+			Response = string.Empty;
+			ErrorMessage = string.Empty;
+			TargetName = string.Empty;
+			StatusMessage = "Ready";
+		}
+
+		public async Task<bool> CopyToClipboardAsync(IClipboard? clipboard)
+		{
+			if (!CanCopy || clipboard is null)
+				return false;
+			await clipboard.SetTextAsync(Response);
+			StatusMessage = "Copied to clipboard";
+			return true;
+		}
+
+		public void Dispose()
+		{
+			cancellation?.Cancel();
+			cancellation?.Dispose();
+		}
+	}
+}

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Masroor
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,20 @@ namespace ICSharpCode.ILSpyX.AI
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 		}
 
+		public async IAsyncEnumerable<string> ExplainStreamingAsync(
+			IEntity entity,
+			CSharpDecompiler decompiler,
+			[EnumeratorCancellation] CancellationToken cancellationToken = default)
+		{
+			ArgumentNullException.ThrowIfNull(entity);
+			ArgumentNullException.ThrowIfNull(decompiler);
+			DecompilationContext context = await Task.Run(
+				() => new ContextBuilder(settings).Build(entity, decompiler),
+				cancellationToken).ConfigureAwait(false);
+			await foreach (string chunk in ExplainContextStreamingAsync(context, cancellationToken).ConfigureAwait(false))
+				yield return chunk;
+		}
+
 		public async Task<string> ExplainAsync(IEntity entity, CSharpDecompiler decompiler, CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(entity);
@@ -32,25 +47,49 @@ namespace ICSharpCode.ILSpyX.AI
 			return await ExplainContextAsync(context, cancellationToken).ConfigureAwait(false);
 		}
 
+		public IAsyncEnumerable<string> ExplainContextStreamingAsync(
+			DecompilationContext context,
+			CancellationToken cancellationToken = default)
+		{
+			ArgumentNullException.ThrowIfNull(context);
+			return CompleteStreamingAsync(
+				SystemPrompt,
+				"Explain this selected symbol:\n\n" + context.ToMarkdown(),
+				cancellationToken);
+		}
+
+		public IAsyncEnumerable<string> CompleteStreamingAsync(
+			string systemPrompt,
+			string userPrompt,
+			CancellationToken cancellationToken = default)
+		{
+			return CompleteStreamingCoreAsync(systemPrompt, userPrompt, cancellationToken);
+		}
+
+		async IAsyncEnumerable<string> CompleteStreamingCoreAsync(
+			string systemPrompt,
+			string userPrompt,
+			[EnumeratorCancellation] CancellationToken cancellationToken)
+		{
+			EnsureConsent();
+			ILLMProvider provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
+			var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPrompt) }, maxTokens: 2048, temperature: 0.2);
+			await foreach (string chunk in provider.CompleteAsync(request, cancellationToken).ConfigureAwait(false))
+			{
+				if (!string.IsNullOrEmpty(chunk))
+					yield return chunk;
+			}
+		}
+
 		public async Task<string> ExplainContextAsync(DecompilationContext context, CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(context);
 			EnsureConsent();
-			ILLMProvider provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
-			var request = new LLMRequest(
-				SystemPrompt,
-				new[] { new LLMMessage("user", "Explain this selected symbol:\n\n" + context.ToMarkdown()) },
-				maxTokens: 2048,
-				temperature: 0.2);
-
 			var chunks = new List<string>();
 			try
 			{
-				await foreach (string chunk in provider.CompleteAsync(request, cancellationToken).ConfigureAwait(false))
-				{
-					if (!string.IsNullOrEmpty(chunk))
-						chunks.Add(chunk);
-				}
+				await foreach (string chunk in ExplainContextStreamingAsync(context, cancellationToken).ConfigureAwait(false))
+					chunks.Add(chunk);
 			}
 			catch (OperationCanceledException)
 			{
@@ -60,7 +99,6 @@ namespace ICSharpCode.ILSpyX.AI
 			{
 				throw new AIRequestException(ClassifyError(exception), exception);
 			}
-
 			return string.Concat(chunks);
 		}
 

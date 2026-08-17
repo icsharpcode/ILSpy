@@ -32,9 +32,9 @@
 			<HeaderedContentControl Header="Maximum context tokens">
 				<NumericUpDown Minimum="4000" Maximum="128000" Increment="1000" Value="{Binding Settings.MaxContextTokens, Mode=TwoWay}" />
 			</HeaderedContentControl>
-			<CheckBox Content="Stream responses (reserved for a later UI)" IsChecked="{Binding Settings.StreamResponses, Mode=TwoWay}" />
-			<CheckBox Content="Include IL (not available in this phase)" IsChecked="{Binding Settings.SendIL, Mode=TwoWay}" IsEnabled="False" />
-			<CheckBox Content="Include call graph (not available in this phase)" IsChecked="{Binding Settings.SendCallGraph, Mode=TwoWay}" IsEnabled="False" />
+			<CheckBox Content="Stream responses" IsChecked="{Binding Settings.StreamResponses, Mode=TwoWay}" />
+			<CheckBox Content="Include IL" IsChecked="{Binding Settings.SendIL, Mode=TwoWay}" />
+			<CheckBox Content="Include call graph" IsChecked="{Binding Settings.SendCallGraph, Mode=TwoWay}" />
 
 			<Border BorderBrush="Gray" BorderThickness="1" Padding="8">
 				<CheckBox IsChecked="{Binding Settings.PrivacyConsentAccepted, Mode=TwoWay}"

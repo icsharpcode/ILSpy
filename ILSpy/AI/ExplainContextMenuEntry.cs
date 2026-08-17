@@ -5,6 +5,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
@@ -16,13 +17,15 @@ namespace ICSharpCode.ILSpy.AI
 	public sealed class ExplainContextMenuEntry : IContextMenuEntry
 	{
 		readonly SettingsService settingsService;
-		readonly IAIProviderFactory providerFactory;
+		readonly AIOutputPaneModel outputPane;
+		readonly DockWorkspace dockWorkspace;
 
 		[ImportingConstructor]
-		public ExplainContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory)
+		public ExplainContextMenuEntry(SettingsService settingsService, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
-			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+			this.outputPane = outputPane ?? throw new ArgumentNullException(nameof(outputPane));
+			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
 		}
 
 		public bool IsVisible(TextViewContext context) => ResolveEntity(context) is not null;
@@ -45,11 +48,8 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			if (!IsEnabled(context) || ResolveEntity(context) is not { } entity)
 				return;
-			var dialog = new ExplainDialog(entity, settingsService.AISettings, providerFactory);
-			if (UiContext.MainWindow is { } owner)
-				_ = dialog.ShowDialog(owner);
-			else
-				dialog.Show();
+			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
+			outputPane.StartAsync(entity).HandleExceptions();
 		}
 
 		public static IEntity? ResolveEntity(TextViewContext context)

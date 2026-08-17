@@ -43,6 +43,20 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public async Task ExplainContextStreaming_YieldsProviderChunksInOrder()
+		{
+			var provider = new FakeProvider("one", "two", "three");
+			var service = new AIExplanationService(
+				new AISettings { PrivacyConsentAccepted = true },
+				new FakeFactory(provider));
+			var chunks = new List<string>();
+			await foreach (string chunk in service.ExplainContextStreamingAsync(new DecompilationContext { DecompiledCSharp = "class C {}" }))
+				chunks.Add(chunk);
+
+			chunks.Should().Equal("one", "two", "three");
+		}
+
+		[Test]
 		public void ExplainContext_RequiresConsentBeforeProviderCreation()
 		{
 			var factory = new FakeFactory(new FakeProvider("unused"));

@@ -52,11 +52,31 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			context.TargetFramework.Should().Be(module.Metadata.DetectTargetFrameworkId());
 			context.Attributes.Should().Contain(typeof(SerializableAttribute).FullName);
 			context.ImplementedInterfaces.Should().Contain(typeof(IDisposable).FullName);
-			context.StringLiterals.Should().BeEmpty();
+			context.StringLiterals.Should().Contain("phase-two");
 			context.Callers.Should().BeEmpty();
 			context.Callees.Should().BeEmpty();
 			context.IL.Should().BeNull();
 			context.ApproximateTokenCount.Should().Be(TokenCounter.CountTokens(context.ToMarkdown(), true));
+		}
+
+		[Test]
+		public void Build_ExtractsOptionalILLiteralsAndCallGraph()
+		{
+			using var module = OpenTestModule();
+			CSharpDecompiler decompiler = CreateDecompiler(module);
+			ITypeDefinition type = GetSampleType(decompiler);
+			IMethod method = type.Methods.Single(m => m.Name == nameof(ContextSample.Method));
+
+			var settings = new AISettings { SendIL = true, SendCallGraph = true, MaxContextTokens = 128000 };
+			DecompilationContext context = new ContextBuilder(settings).Build(method, decompiler);
+
+			context.IL.Should().Contain(".maxstack");
+			context.Callees.Should().Contain(name => name.Contains(nameof(GC.KeepAlive), StringComparison.Ordinal));
+			context.Callers.Should().Contain(name => name.Contains(nameof(ContextSample.Caller), StringComparison.Ordinal));
+
+			IMethod literalMethod = type.Methods.Single(m => m.Name == nameof(ContextSample.Literal));
+			DecompilationContext literalContext = new ContextBuilder(settings).Build(literalMethod, decompiler);
+			literalContext.StringLiterals.Should().Contain("phase-two");
 		}
 
 		[Test]
@@ -218,6 +238,13 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			GC.KeepAlive(value);
 		}
+
+		public void Caller()
+		{
+			Method(1);
+		}
+
+		public string Literal() => "phase-two";
 
 		public void Dispose()
 		{
