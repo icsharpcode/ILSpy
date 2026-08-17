@@ -1180,6 +1180,6 @@ Checkbox must be checked before AI features activate. The persisted foundation s
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Last Updated:** 2026-08-17  
 **Status:** Design Document - Phase 0 implemented; later phases subject to change

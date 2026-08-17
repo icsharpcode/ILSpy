@@ -3,13 +3,15 @@
 **Goal:** Build the shared infrastructure that all AI features depend on  
 **Estimated effort:** 2-3 weeks  
 **Dependencies:** None  
-**Completion criteria:** All foundation components are unit-tested and ready for Phase 1 consumption
+**Completion criteria:** All foundation components are unit-tested and ready for Phase 1 consumption  
+**Status:** Implemented; full validation requires the pinned .NET 11 SDK and platform credential-store smoke tests  
+**Source of truth:** Production code and tests. Code listings below are original design sketches unless an implementation record says otherwise.
 
 ---
 
 ## Task 0.1: Token Counter Utility ⭐
 
-**Files to create:**
+**Files created:**
 - `ICSharpCode.ILSpyX/AI/TokenCounter.cs`
 - `ICSharpCode.ILSpyX.Tests/AI/TokenCounterTests.cs`
 
@@ -152,7 +154,7 @@ public class TokenCounterTests
 
 ## Task 0.2: AI Settings Data Model ⭐
 
-**Files to create:**
+**Files created:**
 - `ICSharpCode.ILSpyX/Settings/AISettings.cs`
 - `ICSharpCode.ILSpyX.Tests/Settings/AISettingsTests.cs`
 
@@ -217,6 +219,11 @@ namespace ICSharpCode.ILSpyX.Settings
         /// Opt-in: send callers and callees in context for better rename suggestions.
         /// </summary>
         public bool SendCallGraph { get; set; } = false;
+
+        /// <summary>
+        /// Required opt-in before any decompiled code is sent to an AI provider.
+        /// </summary>
+        public bool PrivacyConsentAccepted { get; set; } = false;
         
         public AISettings()
         {
@@ -232,6 +239,7 @@ namespace ICSharpCode.ILSpyX.Settings
             StreamResponses = (bool?)element.Element(nameof(StreamResponses)) ?? true;
             SendIL = (bool?)element.Element(nameof(SendIL)) ?? false;
             SendCallGraph = (bool?)element.Element(nameof(SendCallGraph)) ?? false;
+            PrivacyConsentAccepted = (bool?)element.Element(nameof(PrivacyConsentAccepted)) ?? false;
         }
         
         public XElement Save()
@@ -245,7 +253,8 @@ namespace ICSharpCode.ILSpyX.Settings
                 new XElement(nameof(MaxContextTokens), MaxContextTokens),
                 new XElement(nameof(StreamResponses), StreamResponses),
                 new XElement(nameof(SendIL), SendIL),
-                new XElement(nameof(SendCallGraph), SendCallGraph)
+                new XElement(nameof(SendCallGraph), SendCallGraph),
+                new XElement(nameof(PrivacyConsentAccepted), PrivacyConsentAccepted)
             );
         }
         
@@ -289,6 +298,7 @@ public class AISettingsTests
         Assert.IsTrue(settings.StreamResponses);
         Assert.IsFalse(settings.SendIL);
         Assert.IsFalse(settings.SendCallGraph);
+        Assert.IsFalse(settings.PrivacyConsentAccepted);
     }
     
     [Test]
@@ -325,25 +335,21 @@ public class AISettingsTests
 }
 ```
 
-### Integration with ILSpySettings
+### Integration with SettingsService
 
-Add to `ILSpySettings.cs`:
+The implemented type follows the existing `ISettingsSection` lifecycle through `LoadFromXml` and `SaveToXml`. The desktop service exposes the cached section through:
 
 ```csharp
-public AISettings AISettings {
-    get {
-        var section = this["AISettings"];
-        var settings = new AISettings();
-        settings.Load(section);
-        return settings;
-    }
-}
+public AISettings AISettings => GetSettings<AISettings>();
 ```
+
+The runtime `ApiKey` property is deliberately excluded from XML; only the non-secret placeholder and provider configuration are persisted.
 
 ### Acceptance Criteria
 - ✅ All properties have sensible defaults
 - ✅ XML serialization round-trips correctly
 - ✅ API key is NOT stored in XML (only placeholder)
+- ✅ Privacy consent defaults to false and round-trips in XML
 - ✅ Provider-specific defaults applied
 - ✅ Unit tests pass
 
@@ -351,392 +357,59 @@ public AISettings AISettings {
 
 ## Task 0.3: Secure API Key Storage ⭐⭐
 
-**Files to create:**
+**Files created:**
 - `ICSharpCode.ILSpyX/AI/SecureKeyStorage.cs`
+- `ICSharpCode.ILSpyX/AI/SecureKeyStorageBackends.cs`
 - `ICSharpCode.ILSpyX.Tests/AI/SecureKeyStorageTests.cs`
 
-### Implementation Details
+### Implemented Design
+
+`SecureKeyStorage` is an async facade over internal platform backends. Provider identifiers are canonicalized and restricted before they reach a credential store. A lookup distinguishes three states: found, not found, and secure storage unavailable.
 
 ```csharp
-// ICSharpCode.ILSpyX/AI/SecureKeyStorage.cs
-using System;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
-
-namespace ICSharpCode.ILSpyX.AI
+public sealed class SecureKeyStorage
 {
-    /// <summary>
-    /// Platform-specific secure storage for API keys.
-    /// Windows: DPAPI (ProtectedData)
-    /// macOS: Keychain via 'security' CLI
-    /// Linux: libsecret via 'secret-tool' CLI, fallback to encrypted file
-    /// </summary>
-    public static class SecureKeyStorage
-    {
-        private const string KeychainService = "ILSpy";
-        private const string KeychainAccount = "AI_API_Key";
-        
-        /// <summary>
-        /// Saves an API key for the given provider.
-        /// </summary>
-        public static void SaveKey(string provider, string apiKey)
-        {
-            if (string.IsNullOrWhiteSpace(provider))
-                throw new ArgumentException("Provider cannot be empty", nameof(provider));
-            if (string.IsNullOrWhiteSpace(apiKey))
-                throw new ArgumentException("API key cannot be empty", nameof(apiKey));
-            
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                SaveKeyWindows(provider, apiKey);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                SaveKeyMacOS(provider, apiKey);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                SaveKeyLinux(provider, apiKey);
-            }
-            else
-            {
-                throw new PlatformNotSupportedException("Secure key storage not supported on this platform");
-            }
-        }
-        
-        /// <summary>
-        /// Loads an API key for the given provider. Returns null if not found.
-        /// </summary>
-        public static string? LoadKey(string provider)
-        {
-            if (string.IsNullOrWhiteSpace(provider))
-                throw new ArgumentException("Provider cannot be empty", nameof(provider));
-            
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                return LoadKeyWindows(provider);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                return LoadKeyMacOS(provider);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                return LoadKeyLinux(provider);
-            }
-            else
-            {
-                throw new PlatformNotSupportedException("Secure key storage not supported on this platform");
-            }
-        }
-        
-        /// <summary>
-        /// Deletes an API key for the given provider.
-        /// </summary>
-        public static void DeleteKey(string provider)
-        {
-            if (string.IsNullOrWhiteSpace(provider))
-                throw new ArgumentException("Provider cannot be empty", nameof(provider));
-            
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                DeleteKeyWindows(provider);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                DeleteKeyMacOS(provider);
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                DeleteKeyLinux(provider);
-            }
-        }
-        
-        // Windows: DPAPI
-        private static void SaveKeyWindows(string provider, string apiKey)
-        {
-            byte[] plainBytes = Encoding.UTF8.GetBytes(apiKey);
-            byte[] encryptedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
-            
-            string keyFilePath = GetKeyFilePath(provider);
-            Directory.CreateDirectory(Path.GetDirectoryName(keyFilePath)!);
-            File.WriteAllBytes(keyFilePath, encryptedBytes);
-        }
-        
-        private static string? LoadKeyWindows(string provider)
-        {
-            string keyFilePath = GetKeyFilePath(provider);
-            if (!File.Exists(keyFilePath))
-                return null;
-            
-            try
-            {
-                byte[] encryptedBytes = File.ReadAllBytes(keyFilePath);
-                byte[] plainBytes = ProtectedData.Unprotect(encryptedBytes, null, DataProtectionScope.CurrentUser);
-                return Encoding.UTF8.GetString(plainBytes);
-            }
-            catch (CryptographicException)
-            {
-                // Key was encrypted by different user or machine
-                return null;
-            }
-        }
-        
-        private static void DeleteKeyWindows(string provider)
-        {
-            string keyFilePath = GetKeyFilePath(provider);
-            if (File.Exists(keyFilePath))
-                File.Delete(keyFilePath);
-        }
-        
-        // macOS: Keychain via 'security' CLI
-        private static void SaveKeyMacOS(string provider, string apiKey)
-        {
-            string account = $"{KeychainAccount}_{provider}";
-            
-            // Delete existing entry first
-            DeleteKeyMacOS(provider);
-            
-            // Add new entry
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "security",
-                Arguments = $"add-generic-password -s {KeychainService} -a {account} -w {apiKey}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            
-            using var process = System.Diagnostics.Process.Start(psi);
-            process?.WaitForExit();
-        }
-        
-        private static string? LoadKeyMacOS(string provider)
-        {
-            string account = $"{KeychainAccount}_{provider}";
-            
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "security",
-                Arguments = $"find-generic-password -s {KeychainService} -a {account} -w",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            
-            using var process = System.Diagnostics.Process.Start(psi);
-            if (process == null)
-                return null;
-            
-            string output = process.StandardOutput.ReadToEnd().Trim();
-            process.WaitForExit();
-            
-            return process.ExitCode == 0 ? output : null;
-        }
-        
-        private static void DeleteKeyMacOS(string provider)
-        {
-            string account = $"{KeychainAccount}_{provider}";
-            
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "security",
-                Arguments = $"delete-generic-password -s {KeychainService} -a {account}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            
-            using var process = System.Diagnostics.Process.Start(psi);
-            process?.WaitForExit();
-        }
-        
-        // Linux: secret-tool CLI (fallback to encrypted file)
-        private static void SaveKeyLinux(string provider, string apiKey)
-        {
-            string account = $"{KeychainAccount}_{provider}";
-            
-            // Try secret-tool first
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "secret-tool",
-                Arguments = $"store --label='ILSpy AI API Key' service {KeychainService} account {account}",
-                RedirectStandardInput = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            
-            try
-            {
-                using var process = System.Diagnostics.Process.Start(psi);
-                if (process != null)
-                {
-                    process.StandardInput.Write(apiKey);
-                    process.StandardInput.Close();
-                    process.WaitForExit();
-                    
-                    if (process.ExitCode == 0)
-                        return;
-                }
-            }
-            catch
-            {
-                // secret-tool not available, fall through to file storage
-            }
-            
-            // Fallback: encrypted file (not ideal, but better than plain text)
-            SaveKeyWindows(provider, apiKey); // Uses DPAPI-style encryption
-        }
-        
-        private static string? LoadKeyLinux(string provider)
-        {
-            string account = $"{KeychainAccount}_{provider}";
-            
-            // Try secret-tool first
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "secret-tool",
-                Arguments = $"lookup service {KeychainService} account {account}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            
-            try
-            {
-                using var process = System.Diagnostics.Process.Start(psi);
-                if (process != null)
-                {
-                    string output = process.StandardOutput.ReadToEnd().Trim();
-                    process.WaitForExit();
-                    
-                    if (process.ExitCode == 0)
-                        return output;
-                }
-            }
-            catch
-            {
-                // secret-tool not available, fall through to file storage
-            }
-            
-            // Fallback: encrypted file
-            return LoadKeyWindows(provider);
-        }
-        
-        private static void DeleteKeyLinux(string provider)
-        {
-            string account = $"{KeychainAccount}_{provider}";
-            
-            // Try secret-tool first
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "secret-tool",
-                Arguments = $"clear service {KeychainService} account {account}",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-            
-            try
-            {
-                using var process = System.Diagnostics.Process.Start(psi);
-                process?.WaitForExit();
-            }
-            catch
-            {
-                // Ignore
-            }
-            
-            // Also delete file fallback
-            DeleteKeyWindows(provider);
-        }
-        
-        private static string GetKeyFilePath(string provider)
-        {
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            return Path.Combine(appDataPath, "ICSharpCode", "ILSpy", "AI", $"{provider}_key.dat");
-        }
-    }
+    public Task SaveKeyAsync(string provider, string key, CancellationToken cancellationToken = default);
+    public Task<string?> LoadKeyAsync(string provider, CancellationToken cancellationToken = default);
+    public Task<SecureKeyLookupResult> TryLoadKeyAsync(string provider, CancellationToken cancellationToken = default);
+    public Task DeleteKeyAsync(string provider, CancellationToken cancellationToken = default);
+}
+
+public enum SecureKeyLookupStatus
+{
+    Found,
+    NotFound,
+    Unavailable
 }
 ```
 
-### Unit Tests
+### Platform Behavior
 
-```csharp
-[TestFixture]
-public class SecureKeyStorageTests
-{
-    private const string TestProvider = "test_provider";
-    private const string TestKey = "sk-test-1234567890abcdef";
-    
-    [TearDown]
-    public void Cleanup()
-    {
-        SecureKeyStorage.DeleteKey(TestProvider);
-    }
-    
-    [Test]
-    public void SaveAndLoad_RoundTrip()
-    {
-        SecureKeyStorage.SaveKey(TestProvider, TestKey);
-        string? loaded = SecureKeyStorage.LoadKey(TestProvider);
-        
-        Assert.AreEqual(TestKey, loaded);
-    }
-    
-    [Test]
-    public void LoadKey_NotFound_ReturnsNull()
-    {
-        string? loaded = SecureKeyStorage.LoadKey("nonexistent_provider");
-        Assert.IsNull(loaded);
-    }
-    
-    [Test]
-    public void DeleteKey_RemovesKey()
-    {
-        SecureKeyStorage.SaveKey(TestProvider, TestKey);
-        SecureKeyStorage.DeleteKey(TestProvider);
-        
-        string? loaded = SecureKeyStorage.LoadKey(TestProvider);
-        Assert.IsNull(loaded);
-    }
-    
-    [Test]
-    public void SaveKey_EmptyProvider_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(() => SecureKeyStorage.SaveKey("", TestKey));
-    }
-    
-    [Test]
-    public void SaveKey_EmptyKey_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(() => SecureKeyStorage.SaveKey(TestProvider, ""));
-    }
-}
-```
+- **Windows:** DPAPI with current-user scope. Encrypted blobs are written atomically under `%APPDATA%\ICSharpCode\ILSpy\AI\`.
+- **macOS:** Keychain through native Security framework APIs.
+- **Linux:** Secret Service through `secret-tool`. Exit code 1 is treated as not found; missing or unusable Secret Service is reported as unavailable.
+- **Other platforms:** Report secure storage as unavailable.
+- **No file fallback:** An application-managed "encrypted" file without a platform-protected key would only move the secret-management problem and could violate the no-plaintext guarantee. A future fallback requires a separate threat model and key-management design.
+
+### Tests
+
+Unit tests use the internal backend seam to verify provider validation, canonicalization, cancellation propagation, round trips, deletion, and the difference between not found and unavailable. Native backend smoke tests remain platform validation work because they require an interactive user credential store.
 
 ### Acceptance Criteria
-- ✅ Windows: Uses DPAPI, keys stored in `%APPDATA%\ICSharpCode\ILSpy\AI\`
-- ✅ macOS: Uses Keychain via `security` CLI
-- ✅ Linux: Uses libsecret via `secret-tool`, falls back to encrypted file
-- ✅ Round-trip works on all platforms
-- ✅ Graceful fallback if platform API unavailable
-- ✅ Unit tests pass
+
+- ✅ Windows backend uses DPAPI and atomic file replacement
+- ✅ macOS backend uses Keychain
+- ✅ Linux backend uses Secret Service without an unsafe local-file fallback
+- ✅ Missing keys are distinct from unavailable secure storage
+- ✅ Provider identifiers cannot escape a file or credential namespace
+- ✅ Unit tests cover the platform-independent contract
+- ⏳ Manual round-trip smoke test on Windows, macOS, and Linux
 
 ---
 
 ## Task 0.4: LLM Provider Interface ⭐
 
-**Files to create:**
+**Files created:**
 - `ICSharpCode.ILSpyX/AI/ILLMProvider.cs`
 - `ICSharpCode.ILSpyX/AI/LLMRequest.cs`
 - `ICSharpCode.ILSpyX/AI/LLMMessage.cs`
@@ -805,17 +478,21 @@ namespace ICSharpCode.ILSpyX.AI
 }
 ```
 
+### Implementation Record
+
+The implemented message and request records validate roles, null entries, token counts, and temperature. `LLMRequest` snapshots the caller-provided message list so later mutations cannot change an in-flight request.
+
 ### Acceptance Criteria
 - ✅ Clean interface definition
 - ✅ Supports streaming via `IAsyncEnumerable<string>`
 - ✅ Simple records for request/message
-- ✅ No implementation yet (Phase 0.5)
+- ✅ Implemented by the OpenAI-compatible provider in Task 0.5
 
 ---
 
 ## Task 0.5: OpenAI Provider Implementation ⭐⭐
 
-**Files to create:**
+**Files created:**
 - `ICSharpCode.ILSpyX/AI/Providers/OpenAIProvider.cs`
 - `ICSharpCode.ILSpyX.Tests/AI/Providers/OpenAIProviderTests.cs`
 
@@ -1007,6 +684,10 @@ public class OpenAIProviderTests
 }
 ```
 
+### Implementation Record
+
+The implemented provider accepts a caller-owned `HttpClient`, rejects non-loopback plain HTTP endpoints, avoids duplicating a terminal `/v1` path, bounds error bodies, preserves HTTP status codes, and handles multiline/final SSE events. The provider never disposes the caller-owned client.
+
 ### Acceptance Criteria
 - ✅ Constructor validates inputs
 - ✅ Builds correct JSON payload
@@ -1021,7 +702,7 @@ public class OpenAIProviderTests
 
 ## Task 0.6: Decompilation Context Builder (Basic) ⭐⭐
 
-**Files to create:**
+**Files created:**
 - `ICSharpCode.ILSpyX/AI/DecompilationContext.cs`
 - `ICSharpCode.ILSpyX/AI/ContextBuilder.cs`
 - `ICSharpCode.ILSpyX.Tests/AI/ContextBuilderTests.cs`
@@ -1365,6 +1046,10 @@ public class ContextBuilderTests
 }
 ```
 
+### Implementation Record
+
+The implemented builder validates that the entity belongs to the decompiler's main module, detects the target framework from metadata, uses content-sized Markdown fences, escapes string-literal control characters, and budgets the fully rendered Markdown. Truncated code remains Unicode-safe, ends at a line boundary when possible, and includes the truncation marker inside the budget.
+
 ### Acceptance Criteria
 - ✅ `Build` method takes `IEntity` + `CSharpDecompiler`, returns `DecompilationContext`
 - ✅ Extracts: C# code, FQN, assembly name, attributes, interfaces
@@ -1377,26 +1062,27 @@ public class ContextBuilderTests
 
 ## Phase 0 Completion Checklist
 
-- [ ] 0.1 Token Counter implemented and tested
-- [ ] 0.2 AI Settings model defined, XML round-trip tested
-- [ ] 0.3 Secure key storage works on Windows/macOS/Linux
-- [ ] 0.4 LLM provider interface defined
-- [ ] 0.5 OpenAI provider implemented, basic connectivity tested
-- [ ] 0.6 Context builder extracts basic metadata and decompiled code
-- [ ] All unit tests pass (`dotnet test --solution ILSpy.sln --report-trx --filter "FullyQualifiedName~AI"`)
-- [ ] Code reviewed for copyright headers (see CLAUDE.md conventions)
-- [ ] Pre-commit hook passes (formatting)
+- [x] 0.1 Token Counter implemented and tested
+- [x] 0.2 AI Settings model defined, XML round-trip tested, privacy consent persisted
+- [x] 0.3 Secure key storage backends implemented
+- [x] 0.4 LLM provider interface defined
+- [x] 0.5 OpenAI-compatible provider implemented with mock HTTP coverage
+- [x] 0.6 Context builder extracts basic metadata and decompiled code
+- [ ] Native credential-store round trip smoke-tested on Windows, macOS, and Linux
+- [ ] Official test command passes on the pinned .NET 11 SDK (`dotnet test --solution ILSpy.sln --report-trx --filter "FullyQualifiedName~AI"`)
+- [x] Code reviewed for copyright headers (see CLAUDE.md conventions)
+- [x] Pre-commit hook passes (formatting)
 
 ---
 
 ## Next Steps
 
-After Phase 0 is complete and validated:
-1. Create `doc/plans/phase-1-first-features.md`
-2. Implement Phase 1 (settings UI, first explanation feature)
-3. Get user feedback on the foundation before proceeding to Phase 2
+1. Run the official AI-filtered test command with the pinned .NET 11 SDK.
+2. Smoke-test native credential storage on Windows, macOS, and Linux.
+3. Create `doc/plans/phase-1-first-features.md`.
+4. Implement Phase 1 with privacy-consent gating.
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Last Updated:** 2026-08-17

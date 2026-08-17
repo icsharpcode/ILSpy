@@ -460,5 +460,5 @@ Within each phase, tasks are independent unless noted.
 
 ---
 
-**Document Version:** 1.0  
+**Document Version:** 1.1  
 **Last Updated:** 2026-08-17
