@@ -9,6 +9,7 @@
 			"ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
 			"ICSharpCode.Decompiler\\ICSharpCode.Decompiler.csproj",
 			"ICSharpCode.ILSpyX\\ICSharpCode.ILSpyX.csproj",
+			"ICSharpCode.ILSpyX.Tests\\ICSharpCode.ILSpyX.Tests.csproj",
 			"ILSpy.BamlDecompiler.Tests\\ILSpy.BamlDecompiler.Tests.csproj"
 		]
 	}
