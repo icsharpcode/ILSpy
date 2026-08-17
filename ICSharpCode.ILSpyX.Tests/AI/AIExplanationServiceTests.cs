@@ -57,6 +57,21 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public async Task ExplainContextStreaming_HandlesDelayedProviderChunksInOrder()
+		{
+			var provider = new FakeProvider(TimeSpan.FromMilliseconds(1), "one", "two", "three");
+			var service = new AIExplanationService(
+				new AISettings { PrivacyConsentAccepted = true },
+				new FakeFactory(provider));
+			var chunks = new List<string>();
+
+			await foreach (string chunk in service.ExplainContextStreamingAsync(new DecompilationContext { DecompiledCSharp = "class C {}" }))
+				chunks.Add(chunk);
+
+			chunks.Should().Equal("one", "two", "three");
+		}
+
+		[Test]
 		public void ExplainContext_RequiresConsentBeforeProviderCreation()
 		{
 			var factory = new FakeFactory(new FakeProvider("unused"));
@@ -141,9 +156,15 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		sealed class FakeProvider : ILLMProvider
 		{
 			readonly string[] chunks = Array.Empty<string>();
+			readonly TimeSpan chunkDelay;
 			readonly Exception? exception;
 			readonly Func<CancellationToken, Task>? wait;
 			public FakeProvider(params string[] chunks) => this.chunks = chunks;
+			public FakeProvider(TimeSpan chunkDelay, params string[] chunks)
+			{
+				this.chunkDelay = chunkDelay;
+				this.chunks = chunks;
+			}
 			public FakeProvider(Exception exception) => this.exception = exception;
 			public FakeProvider(Func<CancellationToken, Task> wait) => this.wait = wait;
 			public LLMRequest? LastRequest { get; private set; }
@@ -163,6 +184,8 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 				foreach (string chunk in chunks)
 				{
 					cancellationToken.ThrowIfCancellationRequested();
+					if (chunkDelay > TimeSpan.Zero)
+						await Task.Delay(chunkDelay, cancellationToken);
 					yield return chunk;
 				}
 			}
