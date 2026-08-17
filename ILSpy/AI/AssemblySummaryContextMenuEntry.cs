@@ -1,10 +1,15 @@
 // Copyright (c) 2026 Masroor
 using System;
+using System.Collections.Generic;
 using System.Composition;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -43,21 +48,24 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			if (!IsEnabled(context) || context.SelectedTreeNodes?[0] is not AssemblyTreeNode node)
 				return;
-			string markdown;
-			try
-			{
-				markdown = AssemblySummaryContextBuilder.Build(node.LoadedAssembly);
-			}
-			catch (Exception)
-			{
-				return;
-			}
 			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
-			_ = outputPane.StartAsync(node.LoadedAssembly.ShortName, token => new AIExplanationService(settingsService.AISettings, providerFactory)
-				.CompleteStreamingAsync(
-					"You are analyzing a .NET assembly. Provide a 2-3 paragraph summary: what it is, what framework it targets, what it is probably used for.",
-					"Summarize this assembly:\n\n" + markdown,
-					token));
+			var service = new AIExplanationService(settingsService.AISettings, providerFactory);
+			_ = outputPane.StartAsync(node.LoadedAssembly.ShortName, token => BuildAndCompleteAsync(node.LoadedAssembly, service, token));
+		}
+
+		static async IAsyncEnumerable<string> BuildAndCompleteAsync(
+			LoadedAssembly assembly,
+			AIExplanationService service,
+			[EnumeratorCancellation] CancellationToken cancellationToken)
+		{
+			string markdown = await Task.Run(() => AssemblySummaryContextBuilder.Build(assembly), cancellationToken).ConfigureAwait(false);
+			await foreach (string chunk in service.CompleteStreamingAsync(
+				"You are analyzing a .NET assembly. Provide a 2-3 paragraph summary: what it is, what framework it targets, what it is probably used for.",
+				"Summarize this assembly:\n\n" + markdown,
+				cancellationToken).ConfigureAwait(false))
+			{
+				yield return chunk;
+			}
 		}
 	}
 }
