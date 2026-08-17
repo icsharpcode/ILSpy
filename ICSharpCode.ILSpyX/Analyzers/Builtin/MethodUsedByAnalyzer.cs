@@ -40,6 +40,69 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 
 		public bool Show(ISymbol? symbol) => symbol is IMethod method && !method.IsVirtual && method.ParentModule is not null;
 
+		/// <summary>
+		/// Finds same-module callers using the same reference rules as the analyzer.
+		/// This lightweight entry point is used by features that cannot construct a full analyzer context.
+		/// </summary>
+		internal static IEnumerable<IMember> FindCallers(IMethod analyzedMethod, MetadataModule module)
+		{
+			if (analyzedMethod.ParentModule?.MetadataFile != module.MetadataFile)
+				yield break;
+
+			var analyzedBaseMethod = (IMethod?)InheritanceHelper.GetBaseMember(analyzedMethod);
+			foreach (ITypeDefinition type in GetTypes(module))
+			{
+				foreach (var method in type.GetMembers(m => m is IMethod, Options).OfType<IMethod>())
+				{
+					if (method.MetadataToken != analyzedMethod.MetadataToken
+						&& ScanMethodBody(analyzedMethod, method, analyzedBaseMethod, GetMethodBody(method, module)))
+						 yield return method;
+				}
+
+				foreach (var property in type.Properties)
+				{
+					if ((property.CanGet && ScanMethodBody(analyzedMethod, property.Getter, analyzedBaseMethod, GetMethodBody(property.Getter, module)))
+						|| (property.CanSet && ScanMethodBody(analyzedMethod, property.Setter, analyzedBaseMethod, GetMethodBody(property.Setter, module))))
+						yield return property;
+				}
+
+				foreach (var @event in type.Events)
+				{
+					if ((@event.CanAdd && ScanMethodBody(analyzedMethod, @event.AddAccessor, analyzedBaseMethod, GetMethodBody(@event.AddAccessor, module)))
+						|| (@event.CanRemove && ScanMethodBody(analyzedMethod, @event.RemoveAccessor, analyzedBaseMethod, GetMethodBody(@event.RemoveAccessor, module)))
+						|| (@event.CanInvoke && ScanMethodBody(analyzedMethod, @event.InvokeAccessor, analyzedBaseMethod, GetMethodBody(@event.InvokeAccessor, module))))
+						yield return @event;
+				}
+			}
+		}
+
+		static IEnumerable<ITypeDefinition> GetTypes(MetadataModule module)
+		{
+			var pending = new Stack<ITypeDefinition>(module.TypeDefinitions.Reverse());
+			while (pending.Count > 0)
+			{
+				ITypeDefinition type = pending.Pop();
+				yield return type;
+				foreach (ITypeDefinition nestedType in type.NestedTypes.Reverse())
+					pending.Push(nestedType);
+			}
+		}
+
+		static MethodBodyBlock? GetMethodBody(IMethod method, MetadataModule module)
+		{
+			if (!method.HasBody || method.MetadataToken.IsNil || method.ParentModule?.MetadataFile != module.MetadataFile)
+				return null;
+			try
+			{
+				var definition = module.MetadataFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
+				return definition.RelativeVirtualAddress == 0 ? null : module.MetadataFile.GetMethodBody(definition.RelativeVirtualAddress);
+			}
+			catch (Exception exception) when (exception is BadImageFormatException or ArgumentException or InvalidOperationException)
+			{
+				return null;
+			}
+		}
+
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
 			Debug.Assert(analyzedSymbol is IMethod);

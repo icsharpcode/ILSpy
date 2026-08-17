@@ -29,6 +29,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
 namespace ICSharpCode.ILSpyX.AI
 {
@@ -143,25 +144,8 @@ namespace ICSharpCode.ILSpyX.AI
 		{
 			if (entity is not IMethod target || mainModule is not MetadataModule module)
 				return Array.Empty<string>();
-			var callers = new List<IMethod>();
-			foreach (var handle in module.MetadataFile.Metadata.MethodDefinitions)
-			{
-				IMethod? caller;
-				try
-				{
-					caller = module.GetDefinition(handle) as IMethod;
-				}
-				catch (Exception exception) when (IsRecoverableMetadataException(exception))
-				{
-					continue;
-				}
-				if (caller is null || caller.MetadataToken == target.MetadataToken)
-					continue;
-				if (ScanMethodReferences(caller, module).Any(member => member.MetadataToken == target.MetadataToken))
-					callers.Add(caller);
-			}
 			string? declaringType = target.DeclaringTypeDefinition?.FullName;
-			return callers
+			return MethodUsedByAnalyzer.FindCallers(target, module)
 				.OrderByDescending(caller => caller.DeclaringTypeDefinition?.FullName == declaringType)
 				.ThenBy(caller => caller.FullName, StringComparer.Ordinal)
 				.Take(10)
