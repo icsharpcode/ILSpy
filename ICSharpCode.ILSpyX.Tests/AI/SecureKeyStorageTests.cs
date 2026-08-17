@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+using AwesomeAssertions;
+
 using ICSharpCode.ILSpyX.AI;
 
 using NUnit.Framework;
@@ -30,6 +32,13 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 	[TestFixture]
 	public class SecureKeyStorageTests
 	{
+		[Test]
+		public void BackendContract_IsNotPartOfThePublicApi()
+		{
+			typeof(ISecureKeyStorageBackend).IsNotPublic.Should().BeTrue();
+			typeof(SecureKeyStorageBackendReadResult).IsNotPublic.Should().BeTrue();
+		}
+
 		[Test]
 		public async Task SaveAndLoad_CanonicalizesProvider()
 		{

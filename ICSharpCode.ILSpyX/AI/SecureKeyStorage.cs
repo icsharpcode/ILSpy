@@ -22,7 +22,7 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.ILSpyX.AI
 {
-	public interface ISecureKeyStorageBackend
+	internal interface ISecureKeyStorageBackend
 	{
 		Task SaveAsync(string provider, string key, CancellationToken cancellationToken);
 
@@ -31,13 +31,13 @@ namespace ICSharpCode.ILSpyX.AI
 		Task DeleteAsync(string provider, CancellationToken cancellationToken);
 	}
 
-	public enum SecureKeyStorageBackendReadStatus
+	internal enum SecureKeyStorageBackendReadStatus
 	{
 		Found,
 		NotFound
 	}
 
-	public readonly record struct SecureKeyStorageBackendReadResult(
+	internal readonly record struct SecureKeyStorageBackendReadResult(
 		SecureKeyStorageBackendReadStatus Status,
 		string? Value)
 	{
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpyX.AI
 		{
 		}
 
-		public SecureKeyStorage(ISecureKeyStorageBackend backend)
+		internal SecureKeyStorage(ISecureKeyStorageBackend backend)
 		{
 			this.backend = backend ?? throw new ArgumentNullException(nameof(backend));
 		}
