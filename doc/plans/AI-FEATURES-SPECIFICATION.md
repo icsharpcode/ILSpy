@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Last Updated:** 2026-08-17  
-**Status:** Design Document
+**Status:** Design Document; Phase 0 foundation implemented, validation pending
 
 ---
 
@@ -1105,13 +1105,14 @@ Your API key is stored securely on your device and never sent to ILSpy developer
 [ ] I understand and accept these privacy terms
 ```
 
-Checkbox must be checked before AI features activate.
+Checkbox must be checked before AI features activate. The persisted foundation setting is `AISettings.PrivacyConsentAccepted`, defaults to `false`, and must gate every user-facing AI action.
 
 ### Secure Key Storage
 
 - Windows: DPAPI (`ProtectedData.Protect`) with `CurrentUser` scope
-- macOS: Keychain via `security` CLI
-- Linux: libsecret (`secret-tool`) with fallback to encrypted file
+- macOS: Keychain via native Security framework APIs
+- Linux: Secret Service (`secret-tool`); if unavailable, report secure storage as unavailable
+- No application-managed file fallback unless a future design provides a platform-protected encryption key
 - API keys never stored in plain text
 - Keys never appear in logs or error messages
 
@@ -1181,4 +1182,4 @@ Checkbox must be checked before AI features activate.
 
 **Document Version:** 1.0  
 **Last Updated:** 2026-08-17  
-**Status:** Design Document - Subject to Change
+**Status:** Design Document - Phase 0 implemented; later phases subject to change

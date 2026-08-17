@@ -16,7 +16,8 @@ This document outlines the phased implementation plan for AI/LLM integration int
 
 **Estimated effort:** 2-3 weeks  
 **Dependencies:** None  
-**Goal:** Build the shared infrastructure that all AI features depend on
+**Goal:** Build the shared infrastructure that all AI features depend on  
+**Status:** Implemented; cross-platform credential-store smoke tests and the repository's pinned .NET 11 test run remain validation gates
 
 ### Tasks (ordered easy → hard)
 
@@ -35,7 +36,7 @@ This document outlines the phased implementation plan for AI/LLM integration int
 **Files:** `ICSharpCode.ILSpyX/Settings/AISettings.cs`  
 **Description:** Define the settings class that holds API keys, model selection, provider config  
 **Acceptance criteria:**
-- Properties: Provider, ApiKey, BaseUrl, Model, MaxContextTokens, StreamResponses, SendIL, SendCallGraph
+- Properties: Provider, ApiKey, BaseUrl, Model, MaxContextTokens, StreamResponses, SendIL, SendCallGraph, PrivacyConsentAccepted
 - XML serialization/deserialization compatible with `ILSpySettings`
 - Default values set appropriately
 - No UI yet (Phase 1)
@@ -48,9 +49,10 @@ This document outlines the phased implementation plan for AI/LLM integration int
 - Never store API key in plain XML
 - Windows: DPAPI (`ProtectedData.Protect`)
 - macOS: Keychain via P/Invoke or `security` CLI
-- Linux: libsecret via D-Bus or fallback to encrypted file
-- Graceful fallback if platform API unavailable
-- `void SaveKey(string provider, string key)` and `string? LoadKey(string provider)`
+- Linux: Secret Service via `secret-tool`; report storage as unavailable when no secure service exists
+- Never fall back to an application-managed file without a platform-protected encryption key
+- Async `SaveKeyAsync`, `LoadKeyAsync`, `TryLoadKeyAsync`, and `DeleteKeyAsync` operations
+- Distinguish a missing key from an unavailable credential store
 
 #### 0.4 LLM Provider Interface
 **Difficulty:** ⭐ Easy  
@@ -84,7 +86,7 @@ public record LLMMessage(string Role, string Content); // "user" | "assistant" |
 **Description:** Extract relevant metadata from ILSpy's type system and build LLM-ready context  
 **Acceptance criteria:**
 - `DecompilationContext` record with: DecompiledCSharp, FullyQualifiedName, AssemblyName, TargetFramework
-- `ContextBuilder.Build(IEntity entity, AISettings settings)` method
+- `ContextBuilder(AISettings settings).Build(IEntity entity, CSharpDecompiler decompiler)` method
 - Token budget enforcement (truncate at statement boundaries if over limit)
 - Serialize to compact Markdown format for LLM consumption
 - Unit tests with sample `ITypeDefinition` mocks
@@ -115,6 +117,7 @@ public record LLMMessage(string Role, string Content); // "user" | "assistant" |
 - Checkboxes for SendIL, SendCallGraph (off by default)
 - "Test Connection" button that sends a simple "Hello" prompt and shows success/error
 - Prominent privacy notice: "Your API key is stored securely. Decompiled code is sent to the provider."
+- Required consent checkbox bound to `PrivacyConsentAccepted`; keep all AI actions disabled until checked
 - Bind to `AISettings` instance loaded from `SettingsService`
 
 #### 1.2 Simple Explanation Dialog (Blocking)
@@ -123,7 +126,7 @@ public record LLMMessage(string Role, string Content); // "user" | "assistant" |
 **Description:** Right-click any symbol → "Explain with AI" → shows modal dialog with explanation  
 **Acceptance criteria:**
 - `[ExportContextMenuEntry(Category = "AI", Order = 1000)]`
-- Context menu visible only if `AISettings.ApiKey` is set
+- Context menu enabled only if `AISettings.ApiKey` is set and `PrivacyConsentAccepted` is true
 - Modal dialog with "Explaining..." spinner while waiting
 - Display full response in scrollable TextBox
 - Non-streaming (wait for full response, easier to implement)
@@ -450,10 +453,10 @@ Within each phase, tasks are independent unless noted.
 
 ## Next Steps
 
-1. Review this roadmap with maintainers
-2. Create detailed implementation plan for Phase 0 in `doc/plans/phase-0-foundation.md`
-3. Implement Phase 0 tasks
-4. After Phase 0 validation, proceed to Phase 1 plan
+1. Complete Phase 0 validation on the pinned .NET 11 SDK
+2. Smoke-test secure key storage on Windows, macOS, and Linux with Secret Service available
+3. Create `doc/plans/phase-1-first-features.md`
+4. Implement Phase 1 with privacy-consent gating
 
 ---
 
