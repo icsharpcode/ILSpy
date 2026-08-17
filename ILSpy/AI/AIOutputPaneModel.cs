@@ -45,6 +45,9 @@ namespace ICSharpCode.ILSpy.AI
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(CanCopy))]
 		bool isBusy;
+		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(CanCopy))]
+		bool isComplete;
 
 		[ImportingConstructor]
 		public AIOutputPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory)
@@ -55,7 +58,7 @@ namespace ICSharpCode.ILSpy.AI
 			Title = "AI Output";
 		}
 
-		public bool CanCopy => !IsBusy && Response.Length != 0;
+		public bool CanCopy => !IsBusy && IsComplete && Response.Length != 0;
 
 		public Task StartAsync(IEntity entity)
 		{
@@ -74,6 +77,7 @@ namespace ICSharpCode.ILSpy.AI
 			cancellation = requestCancellation;
 			TargetName = name ?? string.Empty;
 			Response = string.Empty;
+			IsComplete = false;
 			ErrorMessage = string.Empty;
 			StatusMessage = "Generating…";
 			IsBusy = true;
@@ -85,7 +89,10 @@ namespace ICSharpCode.ILSpy.AI
 			{
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
+					{
+						IsComplete = false;
 						StatusMessage = "Canceled";
+					}
 				});
 			}
 			catch (AIRequestException exception)
@@ -93,6 +100,7 @@ namespace ICSharpCode.ILSpy.AI
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 					{
+						IsComplete = false;
 						ErrorMessage = exception.Message;
 						StatusMessage = "Request failed";
 					}
@@ -103,6 +111,7 @@ namespace ICSharpCode.ILSpy.AI
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 					{
+						IsComplete = false;
 						ErrorMessage = exception.Message;
 						StatusMessage = "Configuration required";
 					}
@@ -113,6 +122,7 @@ namespace ICSharpCode.ILSpy.AI
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 					{
+						IsComplete = false;
 						ErrorMessage = "The AI request failed. Check provider settings and try again.";
 						StatusMessage = "Request failed";
 					}
@@ -146,7 +156,10 @@ namespace ICSharpCode.ILSpy.AI
 			}
 			await Dispatcher.UIThread.InvokeAsync(() => {
 				if (ReferenceEquals(cancellation, requestCancellation))
+				{
+					IsComplete = response.Length != 0;
 					StatusMessage = response.Length == 0 ? "The provider returned an empty response." : "Complete";
+				}
 			});
 		}
 
@@ -160,6 +173,7 @@ namespace ICSharpCode.ILSpy.AI
 			cancellation = null;
 			IsBusy = false;
 			Response = string.Empty;
+			IsComplete = false;
 			ErrorMessage = string.Empty;
 			TargetName = string.Empty;
 			StatusMessage = "Ready";
