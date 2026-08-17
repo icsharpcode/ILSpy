@@ -82,6 +82,23 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void StreamingProviderHttpFailure_IsMappedWithoutLeakingBody()
+		{
+			var provider = new FakeProvider(new HttpRequestException("secret-api-key", null, HttpStatusCode.Unauthorized));
+			var service = new AIExplanationService(
+				new AISettings { PrivacyConsentAccepted = true },
+				new FakeFactory(provider));
+
+			AIRequestException exception = Assert.ThrowsAsync<AIRequestException>(async () => {
+				await foreach (string _ in service.ExplainContextStreamingAsync(new DecompilationContext { DecompiledCSharp = "class C {}" }))
+				{
+				}
+			})!;
+			exception.Message.Should().Be("The AI provider rejected the API key.");
+			exception.Message.Should().NotContain("secret-api-key");
+		}
+
+		[Test]
 		public async Task Cancellation_IsForwardedToProvider()
 		{
 			using var cancellation = new CancellationTokenSource();

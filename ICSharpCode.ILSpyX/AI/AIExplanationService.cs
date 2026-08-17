@@ -71,13 +71,79 @@ namespace ICSharpCode.ILSpyX.AI
 			string userPrompt,
 			[EnumeratorCancellation] CancellationToken cancellationToken)
 		{
-			EnsureConsent();
-			ILLMProvider provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
-			var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPrompt) }, maxTokens: 2048, temperature: 0.2);
-			await foreach (string chunk in provider.CompleteAsync(request, cancellationToken).ConfigureAwait(false))
+			ILLMProvider provider;
+			try
 			{
-				if (!string.IsNullOrEmpty(chunk))
-					yield return chunk;
+				EnsureConsent();
+				provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
+			}
+			catch (OperationCanceledException)
+			{
+				throw;
+			}
+			catch (AIConfigurationException)
+			{
+				throw;
+			}
+			catch (AIRequestException)
+			{
+				throw;
+			}
+			catch (Exception exception)
+			{
+				throw new AIRequestException(ClassifyError(exception), exception);
+			}
+
+			var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPrompt) }, maxTokens: 2048, temperature: 0.2);
+			IAsyncEnumerator<string> enumerator;
+			try
+			{
+				enumerator = provider.CompleteAsync(request, cancellationToken).GetAsyncEnumerator(cancellationToken);
+			}
+			catch (OperationCanceledException)
+			{
+				throw;
+			}
+			catch (AIRequestException)
+			{
+				throw;
+			}
+			catch (Exception exception)
+			{
+				throw new AIRequestException(ClassifyError(exception), exception);
+			}
+
+			try
+			{
+				while (true)
+				{
+					bool hasChunk;
+					try
+					{
+						hasChunk = await enumerator.MoveNextAsync().ConfigureAwait(false);
+					}
+					catch (OperationCanceledException)
+					{
+						throw;
+					}
+					catch (AIRequestException)
+					{
+						throw;
+					}
+					catch (Exception exception)
+					{
+						throw new AIRequestException(ClassifyError(exception), exception);
+					}
+
+					if (!hasChunk)
+						break;
+					if (!string.IsNullOrEmpty(enumerator.Current))
+						yield return enumerator.Current;
+				}
+			}
+			finally
+			{
+				await enumerator.DisposeAsync().ConfigureAwait(false);
 			}
 		}
 
@@ -92,6 +158,10 @@ namespace ICSharpCode.ILSpyX.AI
 					chunks.Add(chunk);
 			}
 			catch (OperationCanceledException)
+			{
+				throw;
+			}
+			catch (AIRequestException)
 			{
 				throw;
 			}

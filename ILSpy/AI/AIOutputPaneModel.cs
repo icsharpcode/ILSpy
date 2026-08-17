@@ -2,6 +2,7 @@
 using System;
 using System.Composition;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Input.Platform;
@@ -78,19 +79,7 @@ namespace ICSharpCode.ILSpy.AI
 			IsBusy = true;
 			try
 			{
-				await foreach (string chunk in streamFactory(requestCancellation.Token).ConfigureAwait(false))
-				{
-					if (chunk.Length == 0)
-						continue;
-					await Dispatcher.UIThread.InvokeAsync(() => {
-						if (ReferenceEquals(cancellation, requestCancellation))
-							Response += chunk;
-					});
-				}
-				await Dispatcher.UIThread.InvokeAsync(() => {
-					if (ReferenceEquals(cancellation, requestCancellation))
-						StatusMessage = Response.Length == 0 ? "The provider returned an empty response." : "Complete";
-				});
+				await Task.Run(() => ConsumeAsync(streamFactory, requestCancellation), requestCancellation.Token).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
@@ -131,13 +120,34 @@ namespace ICSharpCode.ILSpy.AI
 			}
 			finally
 			{
-				if (ReferenceEquals(cancellation, requestCancellation))
-				{
-					await Dispatcher.UIThread.InvokeAsync(() => IsBusy = false);
-					cancellation = null;
-				}
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					if (ReferenceEquals(cancellation, requestCancellation))
+					{
+						IsBusy = false;
+						cancellation = null;
+					}
+				});
 				requestCancellation.Dispose();
 			}
+		}
+
+		async Task ConsumeAsync(Func<CancellationToken, IAsyncEnumerable<string>> streamFactory, CancellationTokenSource requestCancellation)
+		{
+			var response = new StringBuilder();
+			await foreach (string chunk in streamFactory(requestCancellation.Token).ConfigureAwait(false))
+			{
+				if (string.IsNullOrEmpty(chunk))
+					continue;
+				response.Append(chunk);
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					if (ReferenceEquals(cancellation, requestCancellation))
+						Response = response.ToString();
+				});
+			}
+			await Dispatcher.UIThread.InvokeAsync(() => {
+				if (ReferenceEquals(cancellation, requestCancellation))
+					StatusMessage = response.Length == 0 ? "The provider returned an empty response." : "Complete";
+			});
 		}
 
 		[RelayCommand]
