@@ -27,12 +27,9 @@ namespace ICSharpCode.ILSpy.AI
 			var builder = new StringBuilder();
 			builder.AppendLine("# Assembly Summary Context");
 			builder.AppendLine();
-			builder.Append("- **Assembly:** ").AppendLine(assembly.ShortName);
-			if (metadata.IsAssembly)
-			{
-				var definition = metadata.GetAssemblyDefinition();
-				builder.Append("- **Version:** ").AppendLine(definition.Version?.ToString() ?? "unknown");
-			}
+			builder.Append("- **Assembly:** ").AppendLine(module.AssemblyName ?? assembly.ShortName);
+			string version = metadata.IsAssembly ? metadata.GetAssemblyDefinition().Version?.ToString() ?? "unknown" : "unknown";
+			builder.Append("- **Version:** ").AppendLine(version);
 			builder.Append("- **Target Framework:** ").AppendLine(metadataFile.DetectTargetFrameworkId() ?? "unknown");
 			builder.AppendLine();
 

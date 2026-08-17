@@ -164,13 +164,24 @@ namespace ICSharpCode.ILSpy.AI
 		}
 
 		[RelayCommand]
-		void Cancel() => cancellation?.Cancel();
+		void Cancel()
+		{
+			var requestCancellation = cancellation;
+			if (requestCancellation is null)
+				return;
+			cancellation = null;
+			requestCancellation.Cancel();
+			IsBusy = false;
+			IsComplete = false;
+			StatusMessage = "Canceled";
+		}
 
 		[RelayCommand]
 		void Clear()
 		{
-			cancellation?.Cancel();
+			var requestCancellation = cancellation;
 			cancellation = null;
+			requestCancellation?.Cancel();
 			IsBusy = false;
 			Response = string.Empty;
 			IsComplete = false;
