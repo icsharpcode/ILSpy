@@ -53,7 +53,7 @@
 **Implemented:** August 17, 2026
 
 - Phase 2 implementation landed in the existing AI feature commits, with follow-up hardening for streaming error classification, stale-request cleanup, background consumption, metadata-safe entry-point handling, and deterministic context extraction.
-- Validation: `ICSharpCode.ILSpyX.Tests` AI filter passes **95/95** on `net10.0` with the installed SDK `10.0.400`.
+- Validation: `ICSharpCode.ILSpyX.Tests` AI filter passes **98/98** on `net10.0` with the installed SDK `10.0.400`.
 - `ILSpy.csproj` reaches the application compilation after the Phase 2 changes; the current environment's repository build is blocked by the pre-existing `Program.cs(74)` `WithDeveloperTools` API mismatch under installed SDK `11.0.100-preview.7.26381.103`.
 
 **Document Version:** 1.0  
