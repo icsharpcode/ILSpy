@@ -45,6 +45,10 @@ namespace ICSharpCode.ILSpyX.Settings
 
 		public XName SectionName => "AISettings";
 
+		/// <summary>
+		/// Configured provider identifier. Phase 0 implements the OpenAI-compatible provider;
+		/// Anthropic, Ollama, and custom values retain their settings for later providers.
+		/// </summary>
 		public string Provider {
 			get => provider;
 			set {
@@ -87,16 +91,27 @@ namespace ICSharpCode.ILSpyX.Settings
 			set => SetProperty(ref maxContextTokens, value > 0 ? value : DefaultMaxContextTokens);
 		}
 
+		/// <summary>
+		/// Persisted response-streaming preference for the orchestration layer.
+		/// The Phase 0 provider contract exposes streamed chunks directly.
+		/// </summary>
 		public bool StreamResponses {
 			get => streamResponses;
 			set => SetProperty(ref streamResponses, value);
 		}
 
+		/// <summary>
+		/// Persisted opt-in for adding IL to future context requests. Phase 0 does not extract IL.
+		/// </summary>
 		public bool SendIL {
 			get => sendIL;
 			set => SetProperty(ref sendIL, value);
 		}
 
+		/// <summary>
+		/// Persisted opt-in for adding callers and callees to future context requests.
+		/// Phase 0 does not build a call graph.
+		/// </summary>
 		public bool SendCallGraph {
 			get => sendCallGraph;
 			set => SetProperty(ref sendCallGraph, value);

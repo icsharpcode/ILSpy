@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
@@ -48,14 +49,20 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? parsedBaseUri)
 				|| (parsedBaseUri.Scheme != Uri.UriSchemeHttp && parsedBaseUri.Scheme != Uri.UriSchemeHttps))
 				throw new ArgumentException("Base URL must be an absolute HTTP or HTTPS URI.", nameof(baseUrl));
+			if (parsedBaseUri.Scheme == Uri.UriSchemeHttp && !parsedBaseUri.IsLoopback)
+				throw new ArgumentException("HTTP is only allowed for loopback endpoints.", nameof(baseUrl));
 			if (string.IsNullOrWhiteSpace(model))
 				throw new ArgumentException("Model cannot be empty.", nameof(model));
 
 			if (!string.IsNullOrEmpty(parsedBaseUri.Query) || !string.IsNullOrEmpty(parsedBaseUri.Fragment))
 				throw new ArgumentException("Base URL cannot contain a query or fragment.", nameof(baseUrl));
 
-			var normalizedBaseUri = new Uri(parsedBaseUri.AbsoluteUri.TrimEnd('/') + "/", UriKind.Absolute);
-			this.endpoint = new Uri(normalizedBaseUri, "v1/chat/completions");
+			var endpointBuilder = new UriBuilder(parsedBaseUri);
+			string path = endpointBuilder.Path.TrimEnd('/');
+			endpointBuilder.Path = path.EndsWith("/v1", StringComparison.OrdinalIgnoreCase)
+				? path + "/chat/completions"
+				: path + "/v1/chat/completions";
+			this.endpoint = endpointBuilder.Uri;
 			this.apiKey = string.IsNullOrWhiteSpace(apiKey) ? null : apiKey.Trim();
 			this.model = model.Trim();
 			this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));

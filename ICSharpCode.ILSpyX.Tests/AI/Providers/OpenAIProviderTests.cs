@@ -40,6 +40,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 		[TestCase("")]
 		[TestCase("relative")]
 		[TestCase("ftp://example.com")]
+		[TestCase("http://example.com")]
 		public void Constructor_RejectsInvalidBaseUri(string baseUri)
 		{
 			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => CreateStreamingResponse("data: [DONE]\n\n")));
@@ -103,6 +104,22 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 			AssertMessage(messages[0], "system", "system prompt");
 			AssertMessage(messages[1], "user", "question");
 			AssertMessage(messages[2], "assistant", "answer");
+		}
+
+		[Test]
+		public async Task CompleteAsync_DoesNotDuplicateTerminalV1Path()
+		{
+			HttpRequestMessage? capturedRequest = null;
+			var handler = new FakeHttpMessageHandler(request => {
+				capturedRequest = request;
+				return CreateStreamingResponse("data: [DONE]\n\n");
+			});
+			using var httpClient = new HttpClient(handler);
+			var provider = new OpenAIProvider("https://example.com/api/v1/", "key", "model", httpClient);
+
+			await ConsumeAsync(provider.CompleteAsync(ValidRequest(), CancellationToken.None));
+
+			Assert.That(capturedRequest!.RequestUri, Is.EqualTo(new Uri("https://example.com/api/v1/chat/completions")));
 		}
 
 		[Test]

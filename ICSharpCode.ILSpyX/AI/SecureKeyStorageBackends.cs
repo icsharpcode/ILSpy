@@ -21,6 +21,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -76,10 +77,10 @@ namespace ICSharpCode.ILSpyX.AI
 			if (!OperatingSystem.IsWindows())
 				throw new SecureKeyStorageUnavailableException("Windows DPAPI is only available on Windows.");
 
-			string localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-			if (string.IsNullOrEmpty(localApplicationData))
-				throw new SecureKeyStorageUnavailableException("The local application data directory is unavailable.");
-			directory = Path.Combine(localApplicationData, "ILSpy", "AI", "Keys");
+			string applicationData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+			if (string.IsNullOrEmpty(applicationData))
+				throw new SecureKeyStorageUnavailableException("The application data directory is unavailable.");
+			directory = Path.Combine(applicationData, "ICSharpCode", "ILSpy", "AI");
 		}
 
 		public async Task SaveAsync(string provider, string key, CancellationToken cancellationToken)
@@ -248,52 +249,209 @@ namespace ICSharpCode.ILSpyX.AI
 
 	}
 
+	[SupportedOSPlatform("macos")]
 	internal sealed class MacOsKeychainStorageBackend : ISecureKeyStorageBackend
 	{
-		private const string SecurityPath = "/usr/bin/security";
-		private const string Service = "com.icsharpcode.ilspy.ai";
-
-		public async Task SaveAsync(string provider, string key, CancellationToken cancellationToken)
+		public Task SaveAsync(string provider, string key, CancellationToken cancellationToken)
 		{
-			ProcessResult result = await SecureKeyStorageProcess.RunAsync(
-				SecurityPath,
-				new[] { "add-generic-password", "-a", provider, "-s", Service, "-U", "-w" },
-				key + "\n",
-				cancellationToken).ConfigureAwait(false);
-			if (result.ExitCode != 0)
+			cancellationToken.ThrowIfCancellationRequested();
+			try
+			{
+				MacOsKeychain.Save(provider, key);
+				return Task.CompletedTask;
+			}
+			catch (SecureKeyStorageUnavailableException)
+			{
+				throw;
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DllNotFoundException or EntryPointNotFoundException)
+			{
+				throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.", ex);
+			}
+		}
+
+		public Task<SecureKeyStorageBackendReadResult> LoadAsync(string provider, CancellationToken cancellationToken)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			try
+			{
+				return Task.FromResult(MacOsKeychain.Load(provider));
+			}
+			catch (SecureKeyStorageUnavailableException)
+			{
+				throw;
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DllNotFoundException or EntryPointNotFoundException)
+			{
+				throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.", ex);
+			}
+		}
+
+		public Task DeleteAsync(string provider, CancellationToken cancellationToken)
+		{
+			cancellationToken.ThrowIfCancellationRequested();
+			try
+			{
+				MacOsKeychain.Delete(provider);
+				return Task.CompletedTask;
+			}
+			catch (SecureKeyStorageUnavailableException)
+			{
+				throw;
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DllNotFoundException or EntryPointNotFoundException)
+			{
+				throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.", ex);
+			}
+		}
+	}
+
+	[SupportedOSPlatform("macos")]
+	internal static class MacOsKeychain
+	{
+		const string Service = "com.icsharpcode.ilspy.ai";
+		const int ErrSecItemNotFound = -25300;
+
+		public static void Save(string provider, string key)
+		{
+			using var nativeProvider = new NativeUtf8(provider);
+			using var nativeService = new NativeUtf8(Service);
+			using var nativeKey = new NativeUtf8(key);
+			IntPtr item = IntPtr.Zero;
+			int status = NativeMethods.SecKeychainFindGenericPassword(
+				IntPtr.Zero,
+				(uint)nativeService.Length,
+				nativeService.Pointer,
+				(uint)nativeProvider.Length,
+				nativeProvider.Pointer,
+				out _,
+				out IntPtr password,
+				out item);
+			if (password != IntPtr.Zero)
+				NativeMethods.SecKeychainItemFreeContent(IntPtr.Zero, password);
+			if (status == 0)
+			{
+				try
+				{
+					status = NativeMethods.SecKeychainItemModifyAttributesAndData(item, IntPtr.Zero, (uint)nativeKey.Length, nativeKey.Pointer);
+				}
+				finally
+				{
+					NativeMethods.CFRelease(item);
+				}
+			}
+			else if (status == ErrSecItemNotFound)
+			{
+				status = NativeMethods.SecKeychainAddGenericPassword(
+					IntPtr.Zero,
+					(uint)nativeService.Length,
+					nativeService.Pointer,
+					(uint)nativeProvider.Length,
+					nativeProvider.Pointer,
+					(uint)nativeKey.Length,
+					nativeKey.Pointer,
+					out item);
+				if (item != IntPtr.Zero)
+					NativeMethods.CFRelease(item);
+			}
+			if (status != 0)
 				throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.");
 		}
 
-		public async Task<SecureKeyStorageBackendReadResult> LoadAsync(string provider, CancellationToken cancellationToken)
+		public static SecureKeyStorageBackendReadResult Load(string provider)
 		{
-			ProcessResult result = await SecureKeyStorageProcess.RunAsync(
-				SecurityPath,
-				new[] { "find-generic-password", "-a", provider, "-s", Service, "-w" },
-				null,
-				cancellationToken).ConfigureAwait(false);
-			if (result.ExitCode == 0)
-				return SecureKeyStorageBackendReadResult.Found(result.Output.TrimEnd('\r', '\n'));
-			if (IsNotFound(result))
-				return SecureKeyStorageBackendReadResult.NotFound;
-			throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.");
+			using var nativeProvider = new NativeUtf8(provider);
+			using var nativeService = new NativeUtf8(Service);
+			IntPtr password = IntPtr.Zero;
+			IntPtr item = IntPtr.Zero;
+			int status = NativeMethods.SecKeychainFindGenericPassword(
+				IntPtr.Zero,
+				(uint)nativeService.Length,
+				nativeService.Pointer,
+				(uint)nativeProvider.Length,
+				nativeProvider.Pointer,
+				out uint passwordLength,
+				out password,
+				out item);
+			try
+			{
+				if (status == ErrSecItemNotFound)
+					return SecureKeyStorageBackendReadResult.NotFound;
+				if (status != 0)
+					throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.");
+				byte[] value = new byte[passwordLength];
+				Marshal.Copy(password, value, 0, value.Length);
+				try
+				{
+					return SecureKeyStorageBackendReadResult.Found(Encoding.UTF8.GetString(value));
+				}
+				finally
+				{
+					CryptographicOperations.ZeroMemory(value);
+				}
+			}
+			finally
+			{
+				if (password != IntPtr.Zero)
+					NativeMethods.SecKeychainItemFreeContent(IntPtr.Zero, password);
+				if (item != IntPtr.Zero)
+					NativeMethods.CFRelease(item);
+			}
 		}
 
-		public async Task DeleteAsync(string provider, CancellationToken cancellationToken)
+		public static void Delete(string provider)
 		{
-			ProcessResult result = await SecureKeyStorageProcess.RunAsync(
-				SecurityPath,
-				new[] { "delete-generic-password", "-a", provider, "-s", Service },
-				null,
-				cancellationToken).ConfigureAwait(false);
-			if (result.ExitCode != 0 && !IsNotFound(result))
+			using var nativeProvider = new NativeUtf8(provider);
+			using var nativeService = new NativeUtf8(Service);
+			IntPtr item = IntPtr.Zero;
+			int status = NativeMethods.SecKeychainFindGenericPassword(
+				IntPtr.Zero,
+				(uint)nativeService.Length,
+				nativeService.Pointer,
+				(uint)nativeProvider.Length,
+				nativeProvider.Pointer,
+				out _,
+				out IntPtr password,
+				out item);
+			if (password != IntPtr.Zero)
+				NativeMethods.SecKeychainItemFreeContent(IntPtr.Zero, password);
+			if (status == ErrSecItemNotFound)
+				return;
+			try
+			{
+				if (status != 0)
+					throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.");
+				status = NativeMethods.SecKeychainItemDelete(item);
+			}
+			finally
+			{
+				if (item != IntPtr.Zero)
+					NativeMethods.CFRelease(item);
+			}
+			if (status != 0)
 				throw new SecureKeyStorageUnavailableException("macOS Keychain is unavailable.");
 		}
 
-		private static bool IsNotFound(ProcessResult result)
+		sealed class NativeUtf8 : IDisposable
 		{
-			return result.ExitCode == 44
-				|| result.Error.Contains("could not be found", StringComparison.OrdinalIgnoreCase)
-				|| result.Error.Contains("item not found", StringComparison.OrdinalIgnoreCase);
+			public NativeUtf8(string value)
+			{
+				byte[] bytes = Encoding.UTF8.GetBytes(value);
+				Length = bytes.Length;
+				Pointer = Marshal.AllocHGlobal(Length);
+				Marshal.Copy(bytes, 0, Pointer, Length);
+				CryptographicOperations.ZeroMemory(bytes);
+			}
+
+			public IntPtr Pointer { get; }
+			public int Length { get; }
+
+			public void Dispose()
+			{
+				for (int i = 0; i < Length; i++)
+					Marshal.WriteByte(Pointer, i, 0);
+				Marshal.FreeHGlobal(Pointer);
+			}
 		}
 	}
 
@@ -423,6 +581,30 @@ namespace ICSharpCode.ILSpyX.AI
 
 	internal static class NativeMethods
 	{
+		[SupportedOSPlatform("macos")]
+		[DllImport("/System/Library/Frameworks/Security.framework/Security")]
+		internal static extern int SecKeychainAddGenericPassword(IntPtr keychain, uint serviceNameLength, IntPtr serviceName, uint accountNameLength, IntPtr accountName, uint passwordLength, IntPtr passwordData, out IntPtr itemRef);
+
+		[SupportedOSPlatform("macos")]
+		[DllImport("/System/Library/Frameworks/Security.framework/Security")]
+		internal static extern int SecKeychainFindGenericPassword(IntPtr keychain, uint serviceNameLength, IntPtr serviceName, uint accountNameLength, IntPtr accountName, out uint passwordLength, out IntPtr passwordData, out IntPtr itemRef);
+
+		[SupportedOSPlatform("macos")]
+		[DllImport("/System/Library/Frameworks/Security.framework/Security")]
+		internal static extern int SecKeychainItemModifyAttributesAndData(IntPtr itemRef, IntPtr attrList, uint length, IntPtr data);
+
+		[SupportedOSPlatform("macos")]
+		[DllImport("/System/Library/Frameworks/Security.framework/Security")]
+		internal static extern int SecKeychainItemDelete(IntPtr itemRef);
+
+		[SupportedOSPlatform("macos")]
+		[DllImport("/System/Library/Frameworks/Security.framework/Security")]
+		internal static extern int SecKeychainItemFreeContent(IntPtr attrList, IntPtr data);
+
+		[SupportedOSPlatform("macos")]
+		[DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")]
+		internal static extern void CFRelease(IntPtr cf);
+
 		[StructLayout(LayoutKind.Sequential)]
 		internal struct DataBlob
 		{

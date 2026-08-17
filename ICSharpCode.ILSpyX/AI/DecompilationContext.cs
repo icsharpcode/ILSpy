@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpyX.AI
 				builder.AppendLine();
 			}
 
-			AppendList(builder, "**String Literals:**", StringLiterals, value => "\"" + value + "\"");
+			AppendList(builder, "**String Literals:**", StringLiterals, value => "\"" + value + "\"", limit: 20);
 			AppendList(builder, "**Called By:**", Callers, limit: 10);
 			AppendList(builder, "**Calls:**", Callees, limit: 10);
 			return builder.ToString();

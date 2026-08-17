@@ -112,6 +112,21 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void ToMarkdown_LimitsStringLiteralsToTwenty()
+		{
+			var context = new DecompilationContext {
+				DecompiledCSharp = "class Example {}",
+				StringLiterals = Enumerable.Range(1, 21).Select(i => "literal-" + i).ToArray()
+			};
+
+			string markdown = context.ToMarkdown();
+
+			markdown.Should().Contain("literal-20");
+			markdown.Should().NotContain("literal-21");
+			markdown.Should().Contain("... and 1 more");
+		}
+
+		[Test]
 		public void ToMarkdown_ProducesStructuredOutput()
 		{
 			var context = new DecompilationContext {
