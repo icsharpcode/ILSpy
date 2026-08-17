@@ -1167,22 +1167,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		bool IsSpecialConstant(IType expectedType, object constant, [NotNullWhen(true)] out Expression? expression)
 		{
 			expression = null;
-			bool negate = false;
 			if (!specialConstants.TryGetValue(constant, out var info))
-			{
-				if (constant is float single && single < 0f && specialConstants.TryGetValue(-single, out info))
-				{
-					negate = true;
-				}
-				else if (constant is double dbl && dbl < 0.0 && specialConstants.TryGetValue(-dbl, out info))
-				{
-					negate = true;
-				}
-				else
-				{
-					return false;
-				}
-			}
+				return false;
 			// find IType of constant in compilation.
 			var constantType = expectedType;
 			if (!expectedType.IsKnownType(info.Type))
@@ -1259,7 +1245,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (AddResolveResultAnnotations)
 				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(constantType), field));
 
-			if (negate)
+			if (info.Negate)
 			{
 				expression = new UnaryOperatorExpression(UnaryOperatorType.Minus, expression);
 				if (AddResolveResultAnnotations)
@@ -1269,44 +1255,50 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return true;
 		}
 
-		static readonly Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member)>() {
+		// Negate wraps the member reference in a unary minus. The negative counterpart of most
+		// members is itself a member (-MaxValue is exactly MinValue, and both infinities have
+		// their own), so only Epsilon needs it. It cannot be derived from the sign of the
+		// constant: MinValue and NegativeInfinity are negative, but must not be negated.
+		static readonly Dictionary<object, (KnownTypeCode Type, string Member, bool Negate)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member, bool Negate)>() {
 			// byte:
-			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue") },
+			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue", false) },
 			// sbyte:
-			{ sbyte.MinValue, (KnownTypeCode.SByte, "MinValue") },
-			{ sbyte.MaxValue, (KnownTypeCode.SByte, "MaxValue") },
+			{ sbyte.MinValue, (KnownTypeCode.SByte, "MinValue", false) },
+			{ sbyte.MaxValue, (KnownTypeCode.SByte, "MaxValue", false) },
 			// short:
-			{ short.MinValue, (KnownTypeCode.Int16, "MinValue") },
-			{ short.MaxValue, (KnownTypeCode.Int16, "MaxValue") },
+			{ short.MinValue, (KnownTypeCode.Int16, "MinValue", false) },
+			{ short.MaxValue, (KnownTypeCode.Int16, "MaxValue", false) },
 			// ushort:
-			{ ushort.MaxValue, (KnownTypeCode.UInt16, "MaxValue") },
+			{ ushort.MaxValue, (KnownTypeCode.UInt16, "MaxValue", false) },
 			// int:
-			{ int.MinValue, (KnownTypeCode.Int32, "MinValue") },
-			{ int.MaxValue, (KnownTypeCode.Int32, "MaxValue") },
+			{ int.MinValue, (KnownTypeCode.Int32, "MinValue", false) },
+			{ int.MaxValue, (KnownTypeCode.Int32, "MaxValue", false) },
 			// uint:
-			{ uint.MaxValue, (KnownTypeCode.UInt32, "MaxValue") },
+			{ uint.MaxValue, (KnownTypeCode.UInt32, "MaxValue", false) },
 			// long:
-			{ long.MinValue, (KnownTypeCode.Int64, "MinValue") },
-			{ long.MaxValue, (KnownTypeCode.Int64, "MaxValue") },
+			{ long.MinValue, (KnownTypeCode.Int64, "MinValue", false) },
+			{ long.MaxValue, (KnownTypeCode.Int64, "MaxValue", false) },
 			// ulong:
-			{ ulong.MaxValue, (KnownTypeCode.UInt64, "MaxValue") },
+			{ ulong.MaxValue, (KnownTypeCode.UInt64, "MaxValue", false) },
 			// float:
-			{ float.NaN, (KnownTypeCode.Single, "NaN") },
-			{ float.NegativeInfinity, (KnownTypeCode.Single, "NegativeInfinity") },
-			{ float.PositiveInfinity, (KnownTypeCode.Single, "PositiveInfinity") },
-			{ float.MinValue, (KnownTypeCode.Single, "MinValue") },
-			{ float.MaxValue, (KnownTypeCode.Single, "MaxValue") },
-			{ float.Epsilon, (KnownTypeCode.Single, "Epsilon") },
+			{ float.NaN, (KnownTypeCode.Single, "NaN", false) },
+			{ float.NegativeInfinity, (KnownTypeCode.Single, "NegativeInfinity", false) },
+			{ float.PositiveInfinity, (KnownTypeCode.Single, "PositiveInfinity", false) },
+			{ float.MinValue, (KnownTypeCode.Single, "MinValue", false) },
+			{ float.MaxValue, (KnownTypeCode.Single, "MaxValue", false) },
+			{ float.Epsilon, (KnownTypeCode.Single, "Epsilon", false) },
+			{ -float.Epsilon, (KnownTypeCode.Single, "Epsilon", true) },
 			// double:
-			{ double.NaN, (KnownTypeCode.Double, "NaN") },
-			{ double.NegativeInfinity, (KnownTypeCode.Double, "NegativeInfinity") },
-			{ double.PositiveInfinity, (KnownTypeCode.Double, "PositiveInfinity") },
-			{ double.MinValue, (KnownTypeCode.Double, "MinValue") },
-			{ double.MaxValue, (KnownTypeCode.Double, "MaxValue") },
-			{ double.Epsilon, (KnownTypeCode.Double, "Epsilon") },
+			{ double.NaN, (KnownTypeCode.Double, "NaN", false) },
+			{ double.NegativeInfinity, (KnownTypeCode.Double, "NegativeInfinity", false) },
+			{ double.PositiveInfinity, (KnownTypeCode.Double, "PositiveInfinity", false) },
+			{ double.MinValue, (KnownTypeCode.Double, "MinValue", false) },
+			{ double.MaxValue, (KnownTypeCode.Double, "MaxValue", false) },
+			{ double.Epsilon, (KnownTypeCode.Double, "Epsilon", false) },
+			{ -double.Epsilon, (KnownTypeCode.Double, "Epsilon", true) },
 			// decimal:
-			{ decimal.MinValue, (KnownTypeCode.Decimal, "MinValue") },
-			{ decimal.MaxValue, (KnownTypeCode.Decimal, "MaxValue") },
+			{ decimal.MinValue, (KnownTypeCode.Decimal, "MinValue", false) },
+			{ decimal.MaxValue, (KnownTypeCode.Decimal, "MaxValue", false) },
 		};
 
 		bool IsFlagsEnum(ITypeDefinition type)
