@@ -16,6 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Threading.Tasks;
+
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
@@ -24,6 +30,7 @@ using ICSharpCode.ILSpyX;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -62,5 +69,32 @@ public class AssemblyTreeModelTests
 			"Initialize mirrors AssemblyListManager.AssemblyLists into the toolbar combo's source.");
 		model.ActiveListName.Should().Be(AssemblyListManager.DefaultListName,
 			"Initialize selects the (Default) list so the tree has something to render at startup.");
+	}
+
+	[AvaloniaTest]
+	public async Task FindTreeNode_resolves_a_type_inside_an_unexpanded_package()
+	{
+		// Search enumerates the contents of packages whether or not the user ever opened them in
+		// the tree, so activating such a result has to reach a node that does not exist yet.
+		var (_, vm) = await TestHarness.BootAsync();
+
+		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(tempDir);
+		var zipPath = Path.Combine(tempDir, "package.zip");
+		using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
+			zip.CreateEntryFromFile(FixtureAssembly.Emit("Nested"), "lib/net10.0/Nested.dll");
+
+		await vm.OpenAssemblyAsync(zipPath);
+
+		var nested = (await vm.AssemblyTreeModel.AssemblyList!.GetAllAssemblies())
+			.Single(a => a.ParentBundle != null);
+		var type = nested.GetTypeSystemOrNull()!.MainModule.TypeDefinitions
+			.Single(t => t.Name == FixtureAssembly.TypeName);
+
+		var node = vm.AssemblyTreeModel.FindTreeNode(type);
+
+		// Cast through object so the generic Should() resolves, not the SharpTreeNode shadow.
+		((object?)node).Should().BeOfType<TypeTreeNode>(
+			"the lookup must descend into the package's folders, expanding them on the way");
 	}
 }
