@@ -240,8 +240,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 
 		protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
 		{
-			return targetMethod?.Name switch
-			{
+			return targetMethod?.Name switch {
 				"get_ParentModule" => module,
 				"get_MetadataToken" => handle,
 				_ => throw new NotSupportedException(targetMethod?.Name)

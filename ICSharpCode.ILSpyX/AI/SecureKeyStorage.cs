@@ -130,8 +130,7 @@ namespace ICSharpCode.ILSpyX.AI
 				return SecureKeyLookupResult.Unavailable;
 			}
 
-			return result.Status switch
-			{
+			return result.Status switch {
 				SecureKeyStorageBackendReadStatus.Found => SecureKeyLookupResult.Found(result.Value!),
 				SecureKeyStorageBackendReadStatus.NotFound => SecureKeyLookupResult.NotFound,
 				_ => throw new InvalidOperationException("The secure key storage backend returned an unknown read status.")

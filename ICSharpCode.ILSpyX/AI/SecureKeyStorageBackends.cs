@@ -508,8 +508,7 @@ namespace ICSharpCode.ILSpyX.AI
 			CancellationToken cancellationToken)
 		{
 			cancellationToken.ThrowIfCancellationRequested();
-			var startInfo = new ProcessStartInfo
-			{
+			var startInfo = new ProcessStartInfo {
 				FileName = fileName,
 				UseShellExecute = false,
 				RedirectStandardInput = standardInput is not null,
@@ -535,8 +534,7 @@ namespace ICSharpCode.ILSpyX.AI
 				throw new SecureKeyStorageUnavailableException("Secure key storage process could not be started.", ex);
 			}
 
-			using CancellationTokenRegistration cancellationRegistration = cancellationToken.Register(static state =>
-			{
+			using CancellationTokenRegistration cancellationRegistration = cancellationToken.Register(static state => {
 				var runningProcess = (Process)state!;
 				try
 				{
