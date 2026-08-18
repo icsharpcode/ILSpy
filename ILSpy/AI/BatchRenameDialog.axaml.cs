@@ -6,6 +6,7 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -38,6 +39,7 @@ namespace ICSharpCode.ILSpy.AI
 			if (viewModel?.ApplyCommand.CanExecute(null) == true)
 			{
 				viewModel.ApplyCommand.Execute(null);
+				AppComposition.TryGetExport<Docking.DockWorkspace>()?.ForceRefreshActiveTab();
 				Close();
 			}
 		}
