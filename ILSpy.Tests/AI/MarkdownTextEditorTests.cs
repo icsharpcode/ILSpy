@@ -1,4 +1,5 @@
-// Copyright (c) 2026 Masroor
+// Copyright (c) 2026 Dr. Masroor Ehsan
+
 using System.Linq;
 
 using Avalonia.Headless.NUnit;
