@@ -389,14 +389,21 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			}
 		}
 
-		private static async Task<HttpRequestException> CreateHttpRequestExceptionAsync(
+		private async Task<HttpRequestException> CreateHttpRequestExceptionAsync(
 			HttpResponseMessage response,
 			CancellationToken cancellationToken)
 		{
 			(string body, bool truncated) = await ReadErrorBodyAsync(response.Content, cancellationToken).ConfigureAwait(false);
 			string suffix = truncated ? " [truncated]" : string.Empty;
-			string message = $"API request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}). {body}{suffix}";
+			string message = $"API request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}). {RedactApiKey(body)}{suffix}";
 			return new HttpRequestException(message, inner: null, response.StatusCode);
+		}
+
+		private string RedactApiKey(string body)
+		{
+			return string.IsNullOrEmpty(apiKey) || apiKey.Length < 4
+				? body
+				: body.Replace(apiKey, "[redacted]", StringComparison.Ordinal);
 		}
 
 		private static async Task<(string Body, bool Truncated)> ReadErrorBodyAsync(

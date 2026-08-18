@@ -253,6 +253,22 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 		}
 
 		[Test]
+		public void CompleteAsync_RedactsApiKeyFromErrorBody()
+		{
+			const string secretKey = "sk_test-key-marker-1ab2c3d4";
+			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest) {
+				Content = new StringContent("{\"error\":{\"detail\":\"invalid key " + secretKey + "\"}}")
+			}));
+			var provider = new OpenAIProvider("https://example.com", secretKey, "model", httpClient);
+
+			var exception = Assert.ThrowsAsync<HttpRequestException>(async () =>
+				await ConsumeAsync(provider.CompleteAsync(ValidRequest(), CancellationToken.None)));
+
+			Assert.That(exception!.Message, Does.Not.Contain(secretKey));
+			Assert.That(exception.Message, Does.Contain("invalid key"));
+		}
+
+		[Test]
 		public void CompleteAsync_PropagatesCancellation()
 		{
 			var handler = new FakeHttpMessageHandler(async (_, cancellationToken) => {

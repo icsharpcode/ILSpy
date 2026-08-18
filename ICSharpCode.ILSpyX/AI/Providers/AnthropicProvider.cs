@@ -211,10 +211,17 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			catch (InvalidOperationException) { return false; }
 		}
 
-		static async Task<HttpRequestException> CreateHttpRequestExceptionAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+		async Task<HttpRequestException> CreateHttpRequestExceptionAsync(HttpResponseMessage response, CancellationToken cancellationToken)
 		{
 			(string body, bool truncated) = await ReadErrorBodyAsync(response.Content, cancellationToken).ConfigureAwait(false);
-			return new HttpRequestException($"API request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}). {body}{(truncated ? " [truncated]" : string.Empty)}", null, response.StatusCode);
+			return new HttpRequestException($"API request failed with status {(int)response.StatusCode} ({response.ReasonPhrase}). {RedactApiKey(body)}{(truncated ? " [truncated]" : string.Empty)}", null, response.StatusCode);
+		}
+
+		string RedactApiKey(string body)
+		{
+			return apiKey.Length < 4
+				? body
+				: body.Replace(apiKey, "[redacted]", StringComparison.Ordinal);
 		}
 
 		static async Task<(string Body, bool Truncated)> ReadErrorBodyAsync(HttpContent content, CancellationToken cancellationToken)

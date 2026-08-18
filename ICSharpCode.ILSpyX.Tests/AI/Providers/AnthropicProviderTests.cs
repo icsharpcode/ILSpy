@@ -70,6 +70,22 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 		}
 
 		[Test]
+		public void CompleteAsync_RedactsApiKeyFromErrorBody()
+		{
+			const string secretKey = "sk-ant-key-marker-9f8e7d6c";
+			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest) {
+				Content = new StringContent("{\"error\":{\"message\":\"authentication failed for key " + secretKey + "\"}}")
+			}));
+			var provider = new AnthropicProvider("https://api.example.test", secretKey, "model", httpClient);
+
+			var exception = Assert.ThrowsAsync<HttpRequestException>(async () =>
+				await ConsumeAsync(provider.CompleteAsync(ValidRequest(), CancellationToken.None)));
+
+			Assert.That(exception!.Message, Does.Not.Contain(secretKey));
+			Assert.That(exception.Message, Does.Contain("authentication failed"));
+		}
+
+		[Test]
 		public void CompleteAsync_RejectsStreamingErrors()
 		{
 			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => Response(
