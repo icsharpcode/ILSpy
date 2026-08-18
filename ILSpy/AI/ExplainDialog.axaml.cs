@@ -27,7 +27,16 @@ namespace ICSharpCode.ILSpy.AI
 			InitializeComponent();
 			viewModel = new ExplainDialogViewModel(entity, settings, providerFactory);
 			DataContext = viewModel;
+			viewModel.PropertyChanged += OnViewModelPropertyChanged;
 			Opened += OnOpened;
+		}
+
+		void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			// Stream the markdown incrementally as it becomes available, so a large explanation is
+			// rendered and syntax-highlighted in place rather than overwritten on completion.
+			if (e.PropertyName == nameof(ExplainDialogViewModel.Response) && viewModel is not null)
+				ContentEditor.SetText(viewModel.Response);
 		}
 
 		async void OnOpened(object? sender, EventArgs e)
@@ -47,8 +56,11 @@ namespace ICSharpCode.ILSpy.AI
 
 		protected override void OnClosed(EventArgs e)
 		{
+			if (viewModel is not null)
+				viewModel.PropertyChanged -= OnViewModelPropertyChanged;
 			viewModel?.Dispose();
 			base.OnClosed(e);
 		}
 	}
 }
+

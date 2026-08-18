@@ -3,6 +3,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="using:ICSharpCode.ILSpy.AI"
+        xmlns:controls="using:ICSharpCode.ILSpy.AI.Controls"
         mc:Ignorable="d" d:DesignWidth="760" d:DesignHeight="560"
         x:Class="ICSharpCode.ILSpy.AI.ExplainDialog"
         x:DataType="vm:ExplainDialogViewModel"
@@ -20,8 +21,7 @@
 			<TextBlock Text="{Binding StatusMessage}" />
 			<TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed" TextWrapping="Wrap" />
 		</StackPanel>
-		<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-			<TextBox Text="{Binding Response}" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" />
-		</ScrollViewer>
+		<controls:MarkdownTextEditor x:Name="ContentEditor" />
 	</DockPanel>
 </Window>
+
