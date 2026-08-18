@@ -78,7 +78,9 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			loaded.LoadFromXml(original.SaveToXml());
 
 			loaded.Provider.Should().Be(original.Provider);
-			loaded.ApiKeyPlaceholder.Should().Be(original.ApiKeyPlaceholder);
+			loaded.ApiKeyPlaceholder.Should().Be("configured", "the legacy placeholder facade derives a non-secret hint from the stored-key flag");
+			loaded.ApiKeyPlaceholder.Should().NotBe("stored-key-reference", "placeholder values are runtime-only and never serialized");
+			loaded.Profiles[0].HasStoredKey.Should().BeTrue();
 			loaded.BaseUrl.Should().Be(original.BaseUrl);
 			loaded.Model.Should().Be(original.Model);
 			loaded.MaxContextTokens.Should().Be(original.MaxContextTokens);

@@ -108,8 +108,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 			var snapshot = AIEditorScrollState.Capture(viewer, followTail);
 			WordWrap = value;
 			int version = ++wrapChangeVersion;
-			Dispatcher.UIThread.Post(() =>
-			{
+			Dispatcher.UIThread.Post(() => {
 				if (version != wrapChangeVersion || viewer is null)
 					return;
 				AIEditorScrollState.Restore(viewer, snapshot);

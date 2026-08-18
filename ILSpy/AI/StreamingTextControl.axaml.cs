@@ -6,6 +6,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.VisualTree;
 
 using AvaloniaEdit.Document;
+
 using ICSharpCode.ILSpy.AI.Controls;
 
 namespace ICSharpCode.ILSpy.AI

@@ -78,8 +78,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		internal void RestoreLater(AIEditorScrollSnapshot snapshot)
 		{
 			int version = ++restoreVersion;
-			Dispatcher.UIThread.Post(() =>
-			{
+			Dispatcher.UIThread.Post(() => {
 				if (version != restoreVersion || viewer is null)
 					return;
 				IsFollowingTail = snapshot.FollowTail;
