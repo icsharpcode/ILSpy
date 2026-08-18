@@ -58,9 +58,11 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		static readonly AttachedProperty<bool> CleanupHookedProperty =
 			AvaloniaProperty.RegisterAttached<TextBlock, bool>("CleanupHooked", typeof(RichNodeText));
 
-		static LanguageSettings? languageSettings;
+		// Resolved on every call rather than cached: the composition root is rebuilt per test in the
+		// headless suite, and a static cache would both subscribe later windows to a stale settings
+		// object and keep the first window's tree reachable through it. A warm export lookup is cheap.
 		static LanguageSettings? GetLanguageSettings()
-			=> languageSettings ??= AppComposition.TryGetExport<SettingsService>()?.SessionSettings.LanguageSettings;
+			=> AppComposition.TryGetExport<SettingsService>()?.SessionSettings.LanguageSettings;
 
 		static RichNodeText()
 		{

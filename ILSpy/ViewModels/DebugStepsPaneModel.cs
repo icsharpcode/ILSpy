@@ -18,6 +18,7 @@
 
 #if DEBUG
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
@@ -52,7 +53,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 	[Export]
 	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 1, IsVisibleByDefault = false)]
 	[Shared]
-	public sealed partial class DebugStepsPaneModel : ToolPaneModel
+	public sealed partial class DebugStepsPaneModel : ToolPaneModel, IDisposable
 	{
 		public const string PaneContentId = "DebugSteps";
 
@@ -184,6 +185,21 @@ namespace ICSharpCode.ILSpy.ViewModels
 			WritingOptions.PropertyChanged += OnWritingOptionsChanged;
 
 			TryAttachToCurrentLanguage();
+		}
+
+		/// <summary>
+		/// Called when the composition container that owns this pane is disposed. The writing
+		/// options are process-wide static state, so the subscription taken in the constructor
+		/// would otherwise keep this pane - and through <see cref="languageService"/> the whole
+		/// composition it belongs to - alive for as long as the process runs.
+		/// </summary>
+		public void Dispose()
+		{
+			WritingOptions.PropertyChanged -= OnWritingOptionsChanged;
+			MessageBus<AssemblyTreeSelectionChangedEventArgs>.Subscribers -= OnSelectionChanged;
+			if (languageService != null)
+				languageService.PropertyChanged -= OnLanguageServiceChanged;
+			DetachFromLanguage();
 		}
 
 		void OnLanguageServiceChanged(object? sender, PropertyChangedEventArgs e)
