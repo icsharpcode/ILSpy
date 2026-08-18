@@ -40,7 +40,9 @@ namespace ICSharpCode.ILSpyX.Search
 		Token,
 		Resource,
 		Assembly,
-		Namespace
+		Namespace,
+		AI,
+		Semantic
 	}
 
 	public struct SearchRequest

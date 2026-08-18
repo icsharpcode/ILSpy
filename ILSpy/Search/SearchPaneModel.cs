@@ -21,13 +21,18 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Composition;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Avalonia.Media;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Search;
+using ICSharpCode.Decompiler.Metadata;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
@@ -132,6 +137,12 @@ namespace ICSharpCode.ILSpy.Search
 			new SearchModeEntry { Mode = SearchMode.Namespace, Name = "Namespace", Image = Images.Namespace },
 		};
 
+		/// <summary>Advanced modes are intentionally opt-in so existing picker layouts remain stable.</summary>
+		public SearchModeEntry[] AdvancedSearchModes { get; } = new[] {
+			new SearchModeEntry { Mode = SearchMode.AI, Name = "AI Search", Image = Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Semantic, Name = "Semantic Search", Image = Images.Library },
+		};
+
 		/// <summary>
 		/// Current query string. Bound two-way to the TextBox in the pane's view. The
 		/// setter raises <see cref="ObservableObject.PropertyChanged"/> so the background
@@ -215,28 +226,40 @@ namespace ICSharpCode.ILSpy.Search
 		/// </summary>
 		public void SelectMode(SearchMode mode)
 		{
-			var entry = SearchModes.FirstOrDefault(m => m.Mode == mode);
+			var entry = SearchModes.Concat(AdvancedSearchModes).FirstOrDefault(m => m.Mode == mode);
 			if (entry != null)
 				SelectedSearchMode = entry;
 		}
 
 		RunningSearch? currentSearch;
+		CancellationTokenSource? specialSearchCancellation;
 
 		void RestartSearch()
 		{
 			currentSearch?.Cancel();
 			currentSearch = null;
+			specialSearchCancellation?.Cancel();
+			specialSearchCancellation = null;
 			Results.Clear();
 			IsSearching = false;
 
 			var term = SearchTerm ?? string.Empty;
 			if (string.IsNullOrWhiteSpace(term))
 				return;
+			SearchMode effectiveMode = SelectedSearchMode.Mode;
+			if (term.StartsWith("ai:", StringComparison.OrdinalIgnoreCase)) { effectiveMode = SearchMode.AI; term = term[3..].Trim(); }
+			else if (term.StartsWith("semantic:", StringComparison.OrdinalIgnoreCase)) { effectiveMode = SearchMode.Semantic; term = term[9..].Trim(); }
+			if (term.Length == 0) return;
 
 			var assemblyTreeModel = AppComposition.TryGetExport<AssemblyTreeModel>();
 			var assemblyList = assemblyTreeModel?.AssemblyList;
 			if (assemblyList == null)
 				return;
+			if (effectiveMode is SearchMode.AI or SearchMode.Semantic)
+			{
+				StartSpecialSearch(assemblyList.GetAssemblies(), term, effectiveMode);
+				return;
+			}
 			var language = AppComposition.TryGetExport<LanguageService>()?.CurrentLanguage;
 			if (language == null)
 				return;
@@ -259,6 +282,68 @@ namespace ICSharpCode.ILSpy.Search
 				factory,
 				Results,
 				sortComparer);
+			run.Completed += OnRunCompleted;
+			currentSearch = run;
+			IsSearching = true;
+			run.Start();
+		}
+
+		void StartSpecialSearch(LoadedAssembly[] assemblies, string term, SearchMode mode)
+		{
+			var settingsService = AppComposition.TryGetExport<SettingsService>();
+			var providerFactory = AppComposition.TryGetExport<IAIProviderFactory>();
+			var language = AppComposition.TryGetExport<LanguageService>()?.CurrentLanguage;
+			if (language == null)
+				return;
+			var factory = new AvaloniaSearchResultFactory(language);
+			var cts = new CancellationTokenSource();
+			specialSearchCancellation = cts;
+			IsSearching = true;
+			_ = Task.Run(async () => {
+				try
+				{
+					var modules = assemblies.Select(assembly => assembly.GetMetadataFileOrNull()).Where(module => module != null).Cast<MetadataFile>().ToArray();
+					var entities = mode == SearchMode.AI
+						? providerFactory == null || settingsService == null
+							? System.Array.Empty<ICSharpCode.Decompiler.TypeSystem.IEntity>()
+							: await AISearchStrategy.SearchAsync(modules, term, settingsService.AISettings, providerFactory, cts.Token).ConfigureAwait(false)
+						: SemanticSearchStrategy.Search(modules, term);
+					if (mode == SearchMode.AI && entities.Count == 0)
+					{
+						await Dispatcher.UIThread.InvokeAsync(() => {
+							if (ReferenceEquals(specialSearchCancellation, cts)) StartFallbackSearch(term);
+						});
+						return;
+					}
+					await Dispatcher.UIThread.InvokeAsync(() => {
+						if (!ReferenceEquals(specialSearchCancellation, cts)) return;
+						foreach (var entity in entities) Results.Add(factory.Create(entity));
+						IsSearching = false;
+					});
+				}
+				catch (OperationCanceledException) { }
+				catch (Exception) {
+					await Dispatcher.UIThread.InvokeAsync(() => {
+						if (!ReferenceEquals(specialSearchCancellation, cts)) return;
+						IsSearching = false;
+						StartFallbackSearch(term);
+					});
+				}
+				finally { if (ReferenceEquals(specialSearchCancellation, cts)) { specialSearchCancellation = null; cts.Dispose(); } }
+			}, cts.Token);
+		}
+
+		void StartFallbackSearch(string term)
+		{
+			var assemblyTreeModel = AppComposition.TryGetExport<AssemblyTreeModel>();
+			var assemblyList = assemblyTreeModel?.AssemblyList;
+			var language = AppComposition.TryGetExport<LanguageService>()?.CurrentLanguage;
+			if (assemblyList == null || language == null) { IsSearching = false; return; }
+			var settings = AppComposition.TryGetExport<SettingsService>();
+			var run = new RunningSearch(assemblyList.GetAssemblies(), term, SearchMode.TypeAndMember, language,
+				settings?.SessionSettings?.LanguageSettings?.ShowApiLevel ?? ApiVisibility.PublicOnly,
+				new AvaloniaSearchResultFactory(language), Results,
+				(settings?.DisplaySettings.SortResults ?? true) ? SearchResult.ComparerByFitness : SearchResult.ComparerByName);
 			run.Completed += OnRunCompleted;
 			currentSearch = run;
 			IsSearching = true;
