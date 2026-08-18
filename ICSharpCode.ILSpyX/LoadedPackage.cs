@@ -349,34 +349,57 @@ namespace ICSharpCode.ILSpyX
 			return Task.FromResult<MetadataFile?>(null);
 		}
 
-		readonly Dictionary<string, LoadedAssembly?> assemblies = new Dictionary<string, LoadedAssembly?>(StringComparer.OrdinalIgnoreCase);
+		// Keyed by entry name, ordinal: an assembly-reference lookup is case-insensitive, but two
+		// entries whose names differ only in case are two distinct files (archive entry names are
+		// case-sensitive) and must not share one LoadedAssembly.
+		readonly Dictionary<string, LoadedAssembly> assemblies = new Dictionary<string, LoadedAssembly>(StringComparer.Ordinal);
 
 		public LoadedAssembly? ResolveFileName(string name)
 		{
+			var entry = Entries.FirstOrDefault(e => string.Equals(name, e.Name, StringComparison.Ordinal))
+				?? Entries.FirstOrDefault(e => string.Equals(name, e.Name, StringComparison.OrdinalIgnoreCase));
+			return entry == null ? null : ResolveEntry(entry);
+		}
+
+		/// <summary>
+		/// The <see cref="LoadedAssembly"/> for one of this folder's entries, created on first use.
+		/// Creating it starts reading the entry out of the package, so call this only for entries
+		/// that are about to be inspected.
+		/// </summary>
+		public LoadedAssembly? ResolveEntry(PackageEntry entry)
+		{
+			ArgumentNullException.ThrowIfNull(entry);
 			if (package.LoadedAssembly == null)
 				return null;
 			lock (assemblies)
 			{
-				if (assemblies.TryGetValue(name, out var asm))
+				if (assemblies.TryGetValue(entry.Name, out var asm))
 					return asm;
-				var entry = Entries.FirstOrDefault(e => string.Equals(name, e.Name, StringComparison.OrdinalIgnoreCase));
-				if (entry != null)
-				{
-					asm = new LoadedAssembly(
-						package.LoadedAssembly, entry.Name,
-						fileLoaders: package.LoadedAssembly.AssemblyList.LoaderRegistry,
-						assemblyResolver: this,
-						stream: Task.Run(entry.TryOpenStream),
-						applyWinRTProjections: package.LoadedAssembly.AssemblyList.ApplyWinRTProjections,
-						useDebugSymbols: package.LoadedAssembly.AssemblyList.UseDebugSymbols
-					);
-				}
-				else
-				{
-					asm = null;
-				}
-				assemblies.Add(name, asm);
+				// FullName is the package-relative path ("lib/net10.0/Foo.dll"), which is what makes
+				// the copies of one assembly in a multi-target package tellable apart wherever the
+				// file name is surfaced. ShortName/Text stay the bare file name either way.
+				asm = new LoadedAssembly(
+					package.LoadedAssembly, entry.FullName,
+					fileLoaders: package.LoadedAssembly.AssemblyList.LoaderRegistry,
+					assemblyResolver: this,
+					stream: Task.Run(entry.TryOpenStream),
+					applyWinRTProjections: package.LoadedAssembly.AssemblyList.ApplyWinRTProjections,
+					useDebugSymbols: package.LoadedAssembly.AssemblyList.UseDebugSymbols
+				);
+				assemblies.Add(entry.Name, asm);
 				return asm;
+			}
+		}
+
+		/// <summary>
+		/// Whether this folder has already resolved <paramref name="assembly"/> from one of its
+		/// entries. Consults the resolution cache only -- nothing is loaded or extracted.
+		/// </summary>
+		public bool HasResolved(LoadedAssembly assembly)
+		{
+			lock (assemblies)
+			{
+				return assemblies.ContainsValue(assembly);
 			}
 		}
 	}

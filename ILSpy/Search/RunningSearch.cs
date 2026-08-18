@@ -131,15 +131,9 @@ namespace ICSharpCode.ILSpy.Search
 				var strategy = GetStrategy(request);
 				if (strategy == null)
 					return;
-				// Streaming enumeration: expanding bundles/packages into their contained
-				// assemblies triggers the lazy load of every entry on the list, so awaiting
-				// the whole set up front would mean no results at all until the last
-				// assembly is off disk. Enumerating starts the walk here on the worker
-				// thread, not at construction time on the UI thread.
-				//
-				// Serial walk: per-assembly metadata walk is allocation-dominated, and 4
-				// parallel producers fighting for the ConcurrentQueue + the resulting UI
-				// batching jitter end up slower than serial in practice.
+				// The per-assembly metadata walk is allocation-dominated, and 4 parallel
+				// producers fighting for the ConcurrentQueue + the resulting UI batching
+				// jitter end up slower than walking the assemblies one at a time.
 				await foreach (var assembly in assemblyList.EnumerateAllAssemblies(ct).ConfigureAwait(false))
 				{
 					if (ct.IsCancellationRequested)

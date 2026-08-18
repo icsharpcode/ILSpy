@@ -52,13 +52,10 @@ namespace ICSharpCode.ILSpy.Metadata
 			newTabPage = true;
 			if (protocol != "metadata")
 				return null;
-			// AssemblyTreeModel.FindTreeNode only resolves EntityReference/ITypeDefinition/IMember,
-			// not MetadataFile — walk the assembly-tree root manually here. Same lookup pattern
-			// FindTypeNode uses internally.
-			var assemblyNode = (assemblyTreeModel.Root as AssemblyListTreeNode)?.Children
-				.OfType<AssemblyTreeNode>()
-				.FirstOrDefault(a => a.LoadedAssembly.GetMetadataFileOrNull() == module);
-			if (assemblyNode == null)
+			// FindTreeNode resolves a MetadataFile to its assembly node, including one nested in a
+			// package or bundle, where the node is a grandchild of a folder node rather than a
+			// child of the root.
+			if (assemblyTreeModel.FindTreeNode(module) is not AssemblyTreeNode assemblyNode)
 				return null;
 			assemblyNode.EnsureLazyChildren();
 			var metadataNode = assemblyNode.Children.OfType<MetadataTreeNode>().FirstOrDefault();

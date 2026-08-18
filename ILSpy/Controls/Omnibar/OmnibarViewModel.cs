@@ -191,13 +191,23 @@ namespace ICSharpCode.ILSpy.Controls.Omnibar
 
 		RunningSearch? currentSearch;
 
-		void RestartSearch()
+		/// <summary>
+		/// Ends the search in flight, if any. A run holds the assembly list and keeps expanding
+		/// packages until it finishes, so a bar that is going away has to stop its run instead of
+		/// leaving it to drain into a sink nobody can see.
+		/// </summary>
+		public void CancelSearch()
 		{
 			currentSearch?.Cancel();
 			currentSearch = null;
+			IsSearching = false;
+		}
+
+		void RestartSearch()
+		{
+			CancelSearch();
 			searchSink.Clear();
 			Suggestions.Clear();
-			IsSearching = false;
 
 			var term = SearchText ?? string.Empty;
 			if (string.IsNullOrWhiteSpace(term))

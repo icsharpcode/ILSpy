@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
@@ -71,30 +73,119 @@ public class AssemblyTreeModelTests
 			"Initialize selects the (Default) list so the tree has something to render at startup.");
 	}
 
+	static readonly string TempRoot = Path.Combine(Path.GetTempPath(), "ILSpy.Tests.Packages", Guid.NewGuid().ToString("N"));
+
+	// Two assemblies in sibling folder chains, so a walk that reaches only one of them fails.
+	static string CreatePackage()
+	{
+		var dir = Directory.CreateDirectory(Path.Combine(TempRoot, Guid.NewGuid().ToString("N"))).FullName;
+		var zipPath = Path.Combine(dir, "package.zip");
+		using var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create);
+		zip.CreateEntryFromFile(FixtureAssembly.Emit("Nested"), "lib/net10.0/Nested.dll");
+		zip.CreateEntryFromFile(FixtureAssembly.Emit("Sibling"), "runtimes/win-x64/Sibling.dll");
+		return zipPath;
+	}
+
+	[OneTimeTearDown]
+	public void DeleteTempPackages()
+	{
+		if (Directory.Exists(TempRoot))
+			Directory.Delete(TempRoot, recursive: true);
+	}
+
+	[AvaloniaTest]
+	public async Task EnumerateAllAssemblies_expands_a_package_into_its_entries()
+	{
+		// The search corpus is this walk, so an assembly it does not yield is an assembly no
+		// search can ever match.
+		var (_, vm) = await TestHarness.BootAsync();
+		await vm.OpenAssemblyAsync(CreatePackage());
+
+		var nested = new List<LoadedAssembly>();
+		await foreach (var asm in vm.AssemblyTreeModel.AssemblyList!.EnumerateAllAssemblies())
+		{
+			if (asm.ParentBundle != null)
+				nested.Add(asm);
+		}
+
+		nested.Select(a => a.FileName).Should().BeEquivalentTo(
+			new[] { "lib/net10.0/Nested.dll", "runtimes/win-x64/Sibling.dll" },
+			"every .dll in the package is searchable, and the package-relative path is what "
+			+ "distinguishes copies of one assembly built for several targets.");
+	}
+
+	[AvaloniaTest]
+	public async Task EnumerateAllAssemblies_stops_expanding_a_package_once_cancelled()
+	{
+		// Both search panes restart on every keystroke, so an abandoned walk that keeps
+		// extracting package entries competes with the run the user is waiting for.
+		var (_, vm) = await TestHarness.BootAsync();
+		await vm.OpenAssemblyAsync(CreatePackage());
+
+		using var cts = new CancellationTokenSource();
+		var walk = vm.AssemblyTreeModel.AssemblyList!.EnumerateAllAssemblies(cts.Token).GetAsyncEnumerator();
+		try
+		{
+			while (await walk.MoveNextAsync() && walk.Current.ParentBundle == null)
+			{
+				// Skip past the list's own assemblies to the package's first entry.
+			}
+			walk.Current.ParentBundle.Should().NotBeNull("the package's entries come last on the list.");
+			cts.Cancel();
+
+			var next = async () => await walk.MoveNextAsync();
+			await next.Should().ThrowAsync<OperationCanceledException>(
+				"the second entry must not be extracted after the walk was cancelled.");
+		}
+		finally
+		{
+			await walk.DisposeAsync();
+		}
+	}
+
 	[AvaloniaTest]
 	public async Task FindTreeNode_resolves_a_type_inside_an_unexpanded_package()
 	{
 		// Search enumerates the contents of packages whether or not the user ever opened them in
 		// the tree, so activating such a result has to reach a node that does not exist yet.
 		var (_, vm) = await TestHarness.BootAsync();
-
-		var tempDir = Path.Combine(Path.GetTempPath(), "ILSpy.Tests", Guid.NewGuid().ToString("N"));
-		Directory.CreateDirectory(tempDir);
-		var zipPath = Path.Combine(tempDir, "package.zip");
-		using (var zip = ZipFile.Open(zipPath, ZipArchiveMode.Create))
-			zip.CreateEntryFromFile(FixtureAssembly.Emit("Nested"), "lib/net10.0/Nested.dll");
-
-		await vm.OpenAssemblyAsync(zipPath);
+		await vm.OpenAssemblyAsync(CreatePackage());
 
 		var nested = (await vm.AssemblyTreeModel.AssemblyList!.GetAllAssemblies())
-			.Single(a => a.ParentBundle != null);
+			.Single(a => a.FileName == "lib/net10.0/Nested.dll");
 		var type = nested.GetTypeSystemOrNull()!.MainModule.TypeDefinitions
 			.Single(t => t.Name == FixtureAssembly.TypeName);
 
 		var node = vm.AssemblyTreeModel.FindTreeNode(type);
 
-		// Cast through object so the generic Should() resolves, not the SharpTreeNode shadow.
-		((object?)node).Should().BeOfType<TypeTreeNode>(
-			"the lookup must descend into the package's folders, expanding them on the way");
+		// Assert the owning module, not just the node type: the fixture's type handle is
+		// 0x02000002, which resolves in nearly every assembly on the list, so a lookup that fell
+		// back to the first top-level node would still hand back some TypeTreeNode.
+		((object?)node).Should().BeOfType<TypeTreeNode>()
+			.Which.Module.Should().BeSameAs(nested.GetMetadataFileOrNull(),
+				"the lookup must descend into the package's folders, expanding them on the way.");
+	}
+
+	[AvaloniaTest]
+	public async Task FindTreeNode_leaves_package_folders_off_the_path_unexpanded()
+	{
+		// Expanding a package folder resolves and extracts every .dll it holds, so a lookup that
+		// swept the package depth-first would pay for entries the user never asked about.
+		var (_, vm) = await TestHarness.BootAsync();
+		var package = await vm.OpenAssemblyAsync(CreatePackage());
+
+		var nested = (await vm.AssemblyTreeModel.AssemblyList!.GetAllAssemblies())
+			.Single(a => a.FileName == "lib/net10.0/Nested.dll");
+		var type = nested.GetTypeSystemOrNull()!.MainModule.TypeDefinitions
+			.Single(t => t.Name == FixtureAssembly.TypeName);
+
+		((object?)vm.AssemblyTreeModel.FindTreeNode(type)).Should().NotBeNull();
+
+		var packageNode = vm.AssemblyTreeModel.FindAssemblyNode(package);
+		((object?)packageNode).Should().NotBeNull();
+		var sibling = packageNode!.Children.OfType<PackageFolderTreeNode>()
+			.Single(f => f.Text as string == "runtimes/win-x64");
+		sibling.Children.Should().BeEmpty(
+			"only the folders on the path down to the target get expanded.");
 	}
 }
