@@ -26,7 +26,6 @@ namespace ICSharpCode.ILSpy.AI
 			InitializeComponent();
 			DataContextChanged += OnDataContextChanged;
 			AttachedToVisualTree += OnAttachedToVisualTree;
-			DetachedFromVisualTree += OnDetachedFromVisualTree;
 		}
 
 		void OnAttachedToVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs e)
@@ -35,12 +34,6 @@ namespace ICSharpCode.ILSpy.AI
 				followTail.Attach(AIEditorScrollState.FindViewer(ConversationList));
 				ScheduleRestore();
 			}, DispatcherPriority.Loaded);
-		}
-
-		void OnDetachedFromVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs e)
-		{
-			UnbindModel();
-			followTail.Detach();
 		}
 
 		void OnDataContextChanged(object? sender, EventArgs e)
