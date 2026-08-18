@@ -14,6 +14,7 @@ using Avalonia.Threading;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Annotations;
 using ICSharpCode.ILSpyX.Settings;

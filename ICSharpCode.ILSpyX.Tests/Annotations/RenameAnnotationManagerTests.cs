@@ -58,6 +58,28 @@ namespace ICSharpCode.ILSpyX.Tests.Annotations
 		}
 
 		[Test]
+		public void LoadJson_NormalizesTokensAndSkipsInvalidEntries()
+		{
+			string path = CreateTempAssemblyFile();
+			try
+			{
+				var manager = new RenameAnnotationManager(path);
+				string json = $"{{\"assemblyHash\":\"{manager.AssemblyHash}\",\"renames\":[{{\"token\":\" 0x42 \",\"newName\":\"PaymentService\"}},{{\"token\":\"not-a-token\",\"newName\":\"Ignored\"}},{{\"token\":\"0x43\",\"newName\":\"not valid\"}}]}}";
+
+				manager.LoadJson(json);
+
+				manager.GetRename("0x00000042").Should().Be("PaymentService");
+				manager.GetRename("0x43").Should().BeNull();
+				manager.Annotations.Should().HaveCount(1);
+			}
+			finally
+			{
+				File.Delete(path);
+				File.Delete(path + ".ilspy-annotations.json");
+			}
+		}
+
+		[Test]
 		public void SetRename_RejectsKeywords()
 		{
 			string path = CreateTempAssemblyFile();
