@@ -4,7 +4,7 @@
 **Estimated effort:** 2-3 weeks  
 **Dependencies:** None  
 **Completion criteria:** All foundation components are unit-tested and ready for Phase 1 consumption  
-**Status:** Implemented; full validation requires the pinned .NET 11 SDK and platform credential-store smoke tests  
+**Status:** Implemented; the pinned .NET 11 AI test project and macOS Keychain smoke test pass locally. Windows/Linux native smoke and the solution-wide Windows test run remain platform-gated. See doc/plans/phase-0-foundation-validation.md.  
 **Source of truth:** Production code and tests. Code listings below are original design sketches unless an implementation record says otherwise.
 
 ---
@@ -1068,6 +1068,7 @@ The implemented builder validates that the entity belongs to the decompiler's ma
 - [x] 0.4 LLM provider interface defined
 - [x] 0.5 OpenAI-compatible provider implemented with mock HTTP coverage
 - [x] 0.6 Context builder extracts basic metadata and decompiled code
+- [x] AI-filtered Phase 0 test project passes on the pinned .NET 11 SDK (117/117 on macOS)
 - [ ] Native credential-store round trip smoke-tested on Windows, macOS, and Linux
 - [ ] Official test command passes on the pinned .NET 11 SDK (`dotnet test --solution ILSpy.sln --report-trx --filter "FullyQualifiedName~AI"`)
 - [x] Code reviewed for copyright headers (see CLAUDE.md conventions)
@@ -1077,8 +1078,8 @@ The implemented builder validates that the entity belongs to the decompiler's ma
 
 ## Next Steps
 
-1. Run the official AI-filtered test command with the pinned .NET 11 SDK.
-2. Smoke-test native credential storage on Windows, macOS, and Linux.
+1. Run the official AI-filtered solution command on the Windows CI leg.
+2. Smoke-test native credential storage on Windows and Linux; macOS is covered locally.
 3. Create `doc/plans/phase-1-first-features.md`.
 4. Implement Phase 1 with privacy-consent gating.
 

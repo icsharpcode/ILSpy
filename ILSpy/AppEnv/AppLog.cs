@@ -75,6 +75,12 @@ namespace ICSharpCode.ILSpy.AppEnv
 			/// document tab; opt in with <c>ILSPY_LOG=Composition</c> to also log them to file.
 			/// </summary>
 			public const string Composition = "Composition";
+
+			/// <summary>
+			/// AI assistant request/response logging. Opt in with <c>ILSPY_LOG=AI</c> to capture
+			/// provider initialization, request construction, streaming events, and errors.
+			/// </summary>
+			public const string AI = "AI";
 		}
 
 		static readonly Stopwatch sw = Stopwatch.StartNew();

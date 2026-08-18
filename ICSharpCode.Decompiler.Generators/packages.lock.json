@@ -115,7 +115,6 @@
           "System.Runtime.CompilerServices.Unsafe": "6.1.0"
         }
       }
-    },
-    ".NETStandard,Version=v2.0/osx-arm64": {}
+    }
   }
 }

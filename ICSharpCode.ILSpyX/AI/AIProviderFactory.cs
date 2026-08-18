@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpyX.Settings;
+using Microsoft.Extensions.Logging;
 
 namespace ICSharpCode.ILSpyX.AI
 {
@@ -22,22 +23,36 @@ namespace ICSharpCode.ILSpyX.AI
 	/// <summary>Creates the configured provider without exposing secure-store or HttpClient details to UI code.</summary>
 	[Export(typeof(IAIProviderFactory))]
 	[Shared]
+#pragma warning disable MEF009 // Multiple constructors by design: public for MEF, internal for testing
+#pragma warning disable MEF002 // AllowDefault import is required for optional ILoggerFactory
 	public sealed class AIProviderFactory : IAIProviderFactory, IDisposable
+#pragma warning restore MEF002
+#pragma warning restore MEF009
 	{
 		readonly SecureKeyStorage keyStorage;
 		readonly HttpClient httpClient;
 		readonly bool ownsHttpClient;
+		readonly ILoggerFactory? loggerFactory;
 
-		public AIProviderFactory()
-			: this(new SecureKeyStorage(), new HttpClient(), true)
+		[ImportingConstructor]
+		public AIProviderFactory(
+#pragma warning disable MEF002 // AllowDefault import is required for optional ILoggerFactory
+			[Import(AllowDefault = true)] ILoggerFactory? loggerFactory
+#pragma warning restore MEF002
+		)
 		{
+			this.keyStorage = new SecureKeyStorage();
+			this.httpClient = new HttpClient();
+			this.ownsHttpClient = true;
+			this.loggerFactory = loggerFactory;
 		}
 
-		internal AIProviderFactory(SecureKeyStorage keyStorage, HttpClient httpClient, bool ownsHttpClient = false)
+		internal AIProviderFactory(SecureKeyStorage keyStorage, HttpClient httpClient, ILoggerFactory? loggerFactory = null)
 		{
 			this.keyStorage = keyStorage ?? throw new ArgumentNullException(nameof(keyStorage));
 			this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-			this.ownsHttpClient = ownsHttpClient;
+			this.ownsHttpClient = false;
+			this.loggerFactory = loggerFactory;
 		}
 
 		public async Task<ILLMProvider> CreateAsync(AISettings settings, CancellationToken cancellationToken = default)
@@ -70,7 +85,7 @@ namespace ICSharpCode.ILSpyX.AI
 
 			return provider == "anthropic"
 				? new Providers.AnthropicProvider(settings.BaseUrl, apiKey!, settings.Model, httpClient)
-				: new Providers.OpenAIProvider(settings.BaseUrl, apiKey, settings.Model, httpClient);
+				: new Providers.OpenAIProvider(settings.BaseUrl, apiKey, settings.Model, httpClient, loggerFactory);
 		}
 
 		public void Dispose()

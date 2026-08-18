@@ -322,6 +322,20 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 			Assert.That(result, Is.True);
 		}
 
+		[Test]
+		public async Task TestConnectionAsync_ReturnsTrueForEmptyContentStream()
+		{
+			const string responseBody = "data: {\"choices\":[{\"delta\":{\"role\":\"assistant\",\"content\":\"\"}}]}\n\n"
+				+ "data: {\"choices\":[{\"delta\":{},\"finish_reason\":\"length\"}]}\n\n"
+				+ "data: [DONE]\n\n";
+			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => CreateStreamingResponse(responseBody)));
+			var provider = new OpenAIProvider("https://example.com", "key", "model", httpClient);
+
+			bool result = await provider.TestConnectionAsync(CancellationToken.None);
+
+			Assert.That(result, Is.True);
+		}
+
 		private static LLMRequest ValidRequest()
 		{
 			return new LLMRequest("", new[] { new LLMMessage("user", "Hello") }, 10);

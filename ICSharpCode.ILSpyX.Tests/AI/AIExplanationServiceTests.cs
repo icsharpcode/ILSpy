@@ -134,7 +134,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task ProviderFactory_CreatesAnthropicProviderWithoutNetworkAccess()
 		{
-			using var factory = new AIProviderFactory();
+			using var factory = new AIProviderFactory(loggerFactory: null);
 			var settings = new AISettings {
 				Provider = "anthropic",
 				ApiKey = "test-key",

@@ -57,6 +57,7 @@
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />

@@ -2,6 +2,15 @@
   "version": 1,
   "dependencies": {
     ".NETFramework,Version=v4.7.2": {
+      "Microsoft.NETFramework.ReferenceAssemblies": {
+        "type": "Direct",
+        "requested": "[1.0.3, )",
+        "resolved": "1.0.3",
+        "contentHash": "vUc9Npcs14QsyOD01tnv/m8sQUnGTGOw1BCmKcv77LBJY7OxhJ+zJF7UD/sCL3lYNFuqmQEVlkfS4Quif6FyYg==",
+        "dependencies": {
+          "Microsoft.NETFramework.ReferenceAssemblies.net472": "1.0.3"
+        }
+      },
       "WixSharp_wix4": {
         "type": "Direct",
         "requested": "[2.14.1, )",
@@ -10,6 +19,11 @@
         "dependencies": {
           "WixSharp_wix4.bin": "2.14.1"
         }
+      },
+      "Microsoft.NETFramework.ReferenceAssemblies.net472": {
+        "type": "Transitive",
+        "resolved": "1.0.3",
+        "contentHash": "0E7evZXHXaDYYiLRfpyXvCh+yzM2rNTyuZDI+ZO7UUqSc6GfjePiXTdqJGtgIKUwdI81tzQKmaWprnUiPj9hAw=="
       },
       "System.Buffers": {
         "type": "Transitive",
@@ -79,13 +93,6 @@
           "System.Collections.Immutable": "[9.0.0, )",
           "System.Reflection.Metadata": "[9.0.0, )"
         }
-      }
-    },
-    ".NETFramework,Version=v4.7.2/win-x86": {
-      "WixToolset.Mba.Core": {
-        "type": "Transitive",
-        "resolved": "4.0.1",
-        "contentHash": "bM8QaYQmjTOf837NMGlfyJUOaEUwom6YJXMZ/0dfjtBRsPtr9q0qGbEhF8tY+TwdNq/024PntCD2SiyxKAYeCg=="
       }
     }
   }

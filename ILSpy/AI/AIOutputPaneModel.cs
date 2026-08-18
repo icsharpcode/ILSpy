@@ -20,6 +20,8 @@ using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
+using Microsoft.Extensions.Logging;
+
 namespace ICSharpCode.ILSpy.AI
 {
 	[Export]
@@ -31,6 +33,7 @@ namespace ICSharpCode.ILSpy.AI
 
 		readonly AISettings settings;
 		readonly AIExplanationService explanationService;
+		readonly ILogger logger;
 		CancellationTokenSource? cancellation;
 
 		[ObservableProperty]
@@ -50,10 +53,11 @@ namespace ICSharpCode.ILSpy.AI
 		bool isComplete;
 
 		[ImportingConstructor]
-		public AIOutputPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory)
+		public AIOutputPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, ILoggerFactory loggerFactory)
 		{
 			settings = settingsService?.AISettings ?? throw new ArgumentNullException(nameof(settingsService));
 			explanationService = new AIExplanationService(settings, providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
+			logger = loggerFactory?.CreateLogger<AIOutputPaneModel>() ?? throw new ArgumentNullException(nameof(loggerFactory));
 			Id = PaneContentId;
 			Title = "AI Output";
 		}
@@ -66,7 +70,34 @@ namespace ICSharpCode.ILSpy.AI
 			MetadataFile module = entity.ParentModule?.MetadataFile
 				?? throw new InvalidOperationException("The selected symbol has no decompilable module.");
 			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new ICSharpCode.Decompiler.DecompilerSettings());
-			return StartAsync(entity.FullName, token => explanationService.ExplainStreamingAsync(entity, decompiler, token));
+
+			// Re-resolve the entity from the new decompiler's type system using its metadata token.
+			// The entity was resolved from a different decompiler instance, so we cannot pass it directly
+			// to ExplainStreamingAsync — ContextBuilder.Build validates that entity.ParentModule equals
+			// decompiler.TypeSystem.MainModule via ReferenceEquals, which would fail.
+			IEntity resolvedEntity = ResolveEntity(entity, decompiler)
+				?? throw new InvalidOperationException($"Failed to resolve entity '{entity.FullName}' in the decompiler type system.");
+			return StartAsync(entity.FullName, token => explanationService.ExplainStreamingAsync(resolvedEntity, decompiler, token));
+		}
+
+		static IEntity? ResolveEntity(IEntity entity, CSharpDecompiler decompiler)
+		{
+			var token = entity.MetadataToken;
+			if (token.IsNil)
+				return null;
+			return token.Kind switch {
+				System.Reflection.Metadata.HandleKind.TypeDefinition =>
+					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.TypeDefinitionHandle)token),
+				System.Reflection.Metadata.HandleKind.MethodDefinition =>
+					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.MethodDefinitionHandle)token),
+				System.Reflection.Metadata.HandleKind.FieldDefinition =>
+					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.FieldDefinitionHandle)token),
+				System.Reflection.Metadata.HandleKind.PropertyDefinition =>
+					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.PropertyDefinitionHandle)token),
+				System.Reflection.Metadata.HandleKind.EventDefinition =>
+					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.EventDefinitionHandle)token),
+				_ => null
+			};
 		}
 
 		public async Task StartAsync(string name, Func<CancellationToken, IAsyncEnumerable<string>> streamFactory)
@@ -81,12 +112,14 @@ namespace ICSharpCode.ILSpy.AI
 			ErrorMessage = string.Empty;
 			StatusMessage = "Generating…";
 			IsBusy = true;
+			logger.LogInformation("Starting AI request for '{TargetName}'", name);
 			try
 			{
 				await Task.Run(() => ConsumeAsync(streamFactory, requestCancellation), requestCancellation.Token).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
+				logger.LogInformation("AI request for '{TargetName}' was canceled", name);
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 					{
@@ -97,6 +130,7 @@ namespace ICSharpCode.ILSpy.AI
 			}
 			catch (AIRequestException exception)
 			{
+				logger.LogError(exception, "AI request failed for '{TargetName}': {Message}", name, exception.Message);
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 					{
@@ -108,6 +142,7 @@ namespace ICSharpCode.ILSpy.AI
 			}
 			catch (AIConfigurationException exception)
 			{
+				logger.LogError(exception, "AI configuration error for '{TargetName}': {Message}", name, exception.Message);
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 					{
@@ -117,13 +152,15 @@ namespace ICSharpCode.ILSpy.AI
 					}
 				});
 			}
-			catch (Exception)
+			catch (Exception exception)
 			{
+				logger.LogError(exception, "Unexpected error during AI request for '{TargetName}': {ExceptionType} - {Message}\nStack trace: {StackTrace}",
+					name, exception.GetType().FullName, exception.Message, exception.StackTrace);
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 					{
 						IsComplete = false;
-						ErrorMessage = "The AI request failed. Check provider settings and try again.";
+						ErrorMessage = $"The AI request failed: {exception.GetType().Name}: {exception.Message}";
 						StatusMessage = "Request failed";
 					}
 				});
@@ -144,16 +181,21 @@ namespace ICSharpCode.ILSpy.AI
 		async Task ConsumeAsync(Func<CancellationToken, IAsyncEnumerable<string>> streamFactory, CancellationTokenSource requestCancellation)
 		{
 			var response = new StringBuilder();
+			logger.LogDebug("Starting to consume AI response stream");
+			int chunkCount = 0;
 			await foreach (string chunk in streamFactory(requestCancellation.Token).ConfigureAwait(false))
 			{
 				if (string.IsNullOrEmpty(chunk))
 					continue;
+				chunkCount++;
 				response.Append(chunk);
+				logger.LogTrace("Received chunk #{ChunkNumber}, length: {Length}", chunkCount, chunk.Length);
 				await Dispatcher.UIThread.InvokeAsync(() => {
 					if (ReferenceEquals(cancellation, requestCancellation))
 						Response = response.ToString();
 				});
 			}
+			logger.LogInformation("AI response stream complete. Total chunks: {ChunkCount}, total length: {Length}", chunkCount, response.Length);
 			await Dispatcher.UIThread.InvokeAsync(() => {
 				if (ReferenceEquals(cancellation, requestCancellation))
 				{

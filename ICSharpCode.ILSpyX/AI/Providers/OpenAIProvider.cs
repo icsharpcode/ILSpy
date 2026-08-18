@@ -28,6 +28,9 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+
 namespace ICSharpCode.ILSpyX.AI.Providers
 {
 	/// <summary>
@@ -43,8 +46,9 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 		private readonly string? apiKey;
 		private readonly string model;
 		private readonly HttpClient httpClient;
+		private readonly ILogger logger;
 
-		public OpenAIProvider(string baseUrl, string? apiKey, string model, HttpClient httpClient)
+		public OpenAIProvider(string baseUrl, string? apiKey, string model, HttpClient httpClient, ILoggerFactory? loggerFactory = null)
 		{
 			if (string.IsNullOrWhiteSpace(baseUrl))
 				throw new ArgumentException("Base URL cannot be empty.", nameof(baseUrl));
@@ -68,6 +72,9 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			this.apiKey = string.IsNullOrWhiteSpace(apiKey) ? null : apiKey.Trim();
 			this.model = model.Trim();
 			this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+			this.logger = loggerFactory?.CreateLogger<OpenAIProvider>() ?? NullLogger<OpenAIProvider>.Instance;
+
+			logger.LogInformation("OpenAIProvider initialized with endpoint: {Endpoint}, model: {Model}", endpoint, model);
 		}
 
 		public async IAsyncEnumerable<string> CompleteAsync(
@@ -75,6 +82,8 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			[EnumeratorCancellation] CancellationToken cancellationToken)
 		{
 			ArgumentNullException.ThrowIfNull(request);
+
+			logger.LogDebug("Starting CompleteAsync for model {Model}", model);
 
 			var messages = new List<object>(request.Messages.Count + 1);
 			if (!string.IsNullOrWhiteSpace(request.SystemPrompt))
@@ -91,9 +100,12 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 				stream = true
 			};
 
+			string payloadJson = JsonSerializer.Serialize(payload);
+			logger.LogTrace("Request payload: {Payload}", payloadJson);
+
 			using var requestMessage = new HttpRequestMessage(HttpMethod.Post, endpoint) {
 				Content = new StringContent(
-					JsonSerializer.Serialize(payload),
+					payloadJson,
 					Encoding.UTF8,
 					"application/json")
 			};
@@ -102,80 +114,129 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 				requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 			requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
 
-			using HttpResponseMessage response = await SendAsync(
-				requestMessage,
-				cancellationToken).ConfigureAwait(false);
+			logger.LogInformation("Sending HTTP POST to {Endpoint}", endpoint);
 
-			if (!response.IsSuccessStatusCode)
-				throw await CreateHttpRequestExceptionAsync(response, cancellationToken).ConfigureAwait(false);
-
-			await using Stream stream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false);
-			using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-			var eventData = new StringBuilder();
-			bool hasData = false;
-
-			await foreach (string line in ReadLinesAsync(reader, cancellationToken).ConfigureAwait(false))
+			HttpResponseMessage response;
+			try
 			{
-				if (line.Length != 0)
+				response = await SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "HTTP request failed: {ExceptionType} - {Message}", ex.GetType().Name, ex.Message);
+				throw;
+			}
+
+			using (response)
+			{
+				logger.LogInformation("Received response with status code: {StatusCode}", response.StatusCode);
+
+				if (!response.IsSuccessStatusCode)
 				{
-					if (line.StartsWith("data:", StringComparison.Ordinal))
+					var exception = await CreateHttpRequestExceptionAsync(response, cancellationToken).ConfigureAwait(false);
+					logger.LogError(exception, "HTTP request returned error status {StatusCode}", response.StatusCode);
+					throw exception;
+				}
+
+				await using Stream stream = await ReadAsStreamAsync(response.Content, cancellationToken).ConfigureAwait(false);
+				using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+				var eventData = new StringBuilder();
+				bool hasData = false;
+				int eventCount = 0;
+				int contentChunkCount = 0;
+
+				logger.LogDebug("Starting to read SSE stream");
+
+				await foreach (string line in ReadLinesAsync(reader, cancellationToken).ConfigureAwait(false))
+				{
+					if (line.Length != 0)
 					{
-						if (hasData)
-							eventData.Append('\n');
-						ReadOnlySpan<char> value = line.AsSpan(5);
-						if (!value.IsEmpty && value[0] == ' ')
-							value = value[1..];
-						int separatorLength = hasData ? 1 : 0;
-						if (value.Length > MaxSseEventLength - eventData.Length - separatorLength)
-							throw new HttpRequestException("API SSE event exceeded the maximum supported size.");
-						eventData.Append(value);
-						hasData = true;
+						if (line.StartsWith("data:", StringComparison.Ordinal))
+						{
+							if (hasData)
+								eventData.Append('\n');
+							ReadOnlySpan<char> value = line.AsSpan(5);
+							if (!value.IsEmpty && value[0] == ' ')
+								value = value[1..];
+							int separatorLength = hasData ? 1 : 0;
+							if (value.Length > MaxSseEventLength - eventData.Length - separatorLength)
+							{
+								logger.LogError("SSE event exceeded maximum size: {EventLength}", eventData.Length + value.Length);
+								throw new HttpRequestException("API SSE event exceeded the maximum supported size.");
+							}
+							eventData.Append(value);
+							hasData = true;
+						}
+						continue;
 					}
-					continue;
+
+					if (!hasData)
+						continue;
+
+					string data = TakeEventData(eventData, ref hasData);
+					eventCount++;
+					logger.LogTrace("Received SSE event #{EventNumber}: {Data}", eventCount, data.Length > 200 ? data.Substring(0, 200) + "..." : data);
+
+					if (string.Equals(data.Trim(), "[DONE]", StringComparison.Ordinal))
+					{
+						logger.LogInformation("Received [DONE] marker after {EventCount} events and {ContentChunkCount} content chunks", eventCount, contentChunkCount);
+						yield break;
+					}
+					if (TryGetContent(data, out string content))
+					{
+						contentChunkCount++;
+						logger.LogTrace("Yielding content chunk #{ChunkNumber}, length: {Length}", contentChunkCount, content.Length);
+						yield return content;
+					}
 				}
 
-				if (!hasData)
-					continue;
-
-				string data = TakeEventData(eventData, ref hasData);
-				if (string.Equals(data.Trim(), "[DONE]", StringComparison.Ordinal))
-					yield break;
-				if (TryGetContent(data, out string content))
-					yield return content;
-			}
-
-			if (hasData)
-			{
-				string data = TakeEventData(eventData, ref hasData);
-				if (!string.Equals(data.Trim(), "[DONE]", StringComparison.Ordinal)
-					&& TryGetContent(data, out string content))
+				if (hasData)
 				{
-					yield return content;
-				}
-			}
+					string data = TakeEventData(eventData, ref hasData);
+					eventCount++;
+					logger.LogTrace("Processing final SSE event #{EventNumber}: {Data}", eventCount, data.Length > 200 ? data.Substring(0, 200) + "..." : data);
 
+					if (!string.Equals(data.Trim(), "[DONE]", StringComparison.Ordinal)
+						&& TryGetContent(data, out string content))
+					{
+						contentChunkCount++;
+						logger.LogTrace("Yielding final content chunk #{ChunkNumber}, length: {Length}", contentChunkCount, content.Length);
+						yield return content;
+					}
+				}
+
+				logger.LogInformation("CompleteAsync finished. Total events: {EventCount}, content chunks: {ContentChunkCount}", eventCount, contentChunkCount);
+			}
 		}
 
 		public async Task<bool> TestConnectionAsync(CancellationToken cancellationToken)
 		{
+			logger.LogInformation("Starting connection test to {Endpoint}", endpoint);
 			try
 			{
 				var request = new LLMRequest(
 					"You are a test assistant.",
 					new[] { new LLMMessage("user", "Say 'Hello'") },
-					10);
+					100);
 
 				await foreach (string _ in CompleteAsync(request, cancellationToken).ConfigureAwait(false))
+				{
+					logger.LogInformation("Connection test successful - received response from provider");
 					return true;
+				}
 
-				return false;
+				logger.LogWarning("Connection test completed but received no content");
+				return true;
 			}
 			catch (OperationCanceledException)
 			{
+				logger.LogInformation("Connection test was canceled");
 				throw;
 			}
-			catch
+			catch (Exception ex)
 			{
+				logger.LogError(ex, "Connection test failed: {ExceptionType} - {Message}\nStack trace: {StackTrace}",
+					ex.GetType().FullName, ex.Message, ex.StackTrace);
 				return false;
 			}
 		}
@@ -186,14 +247,34 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 		{
 			try
 			{
-				return await httpClient.SendAsync(
+				logger.LogDebug("Sending HTTP request to {Uri}", request.RequestUri);
+				var response = await httpClient.SendAsync(
 					request,
 					HttpCompletionOption.ResponseHeadersRead,
 					cancellationToken).ConfigureAwait(false);
+				logger.LogDebug("Received HTTP response with status {StatusCode}", response.StatusCode);
+				return response;
 			}
 			catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
 			{
+				logger.LogInformation("HTTP request was canceled");
 				throw new OperationCanceledException(cancellationToken);
+			}
+			catch (TaskCanceledException ex)
+			{
+				logger.LogError(ex, "HTTP request timed out");
+				throw;
+			}
+			catch (HttpRequestException ex)
+			{
+				logger.LogError(ex, "HTTP request exception: {Message}", ex.Message);
+				throw;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "Unexpected exception during HTTP request: {ExceptionType} - {Message}",
+					ex.GetType().FullName, ex.Message);
+				throw;
 			}
 		}
 
