@@ -81,70 +81,52 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 			Console.WriteLine(await Get());
 		}
 
+#if ROSLYN2 || OPT
 		public async Task BinaryOperator()
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine(await Get() + await Get());
-#else
-			int value = await Get() + await Get();
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 
+#if ROSLYN2 || OPT
 		public async Task UnaryOperator()
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine(-(await Get()));
-#else
-			int value = -(await Get());
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 
+#if ROSLYN2 || OPT
 		public async Task MemberAccessOnResult()
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine((await GetString()).Length);
-#else
-			int length = (await GetString()).Length;
-			Console.WriteLine(length);
-#endif
 		}
+#endif
 
+#if ROSLYN2 || OPT
 		public async Task IndexerOnResult()
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine((await GetString())[0]);
-#else
-			char value = (await GetString())[0];
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 
+#if ROSLYN2 || OPT
 		public async Task CoalesceOnResult()
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine((await GetString()) ?? "null");
-#else
-			string value = (await GetString()) ?? "null";
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 
 		public async Task ThrowAwaitedException()
 		{
 			throw await GetException();
 		}
 
+#if ROSLYN2 || OPT
 		public async Task Checked()
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine(checked(await Get() + 1));
-#else
-			int value = checked(await Get() + 1);
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 
 #if CS60
 		public async Task TryFinally()
@@ -253,15 +235,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		}
 #endif
 
+#if ROSLYN2 || OPT
 		public async Task AwaitInGenericMethod<T>(Task<T> task)
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine(await task);
-#else
-			object value = await task;
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 	}
 
 	public static class AwaiterExtensions
@@ -510,25 +489,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		}
 #endif
 
+#if ROSLYN2
 		public async Task ExtensionAwaiterOverTaskArray(Task<int>[] tasks)
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine((await tasks)[0]);
-#else
-			int value = (await tasks)[0];
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 
+#if ROSLYN2
 		public async Task ExtensionAwaiterOverTaskList(List<Task<int>> tasks)
 		{
-#if ROSLYN2 || OPT
 			Console.WriteLine((await tasks)[0]);
-#else
-			int value = (await tasks)[0];
-			Console.WriteLine(value);
-#endif
 		}
+#endif
 
 		public async Task GenericAwaitableType(GenericAwaitable<string> awaitable)
 		{
