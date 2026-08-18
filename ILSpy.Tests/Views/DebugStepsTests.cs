@@ -152,8 +152,11 @@ public class DebugStepsTests
 			() => debugStepsVm.Steps?.Count > 0,
 			description: "DebugStepsPaneModel.Steps to be populated after the C# decompile");
 
+		// CSharpLanguage additionally appends ILSpy-owned transforms (rename annotations) that
+		// are not part of the library's default transform list.
 		var astTransformNames = CSharpDecompiler.GetAstTransforms()
 			.Select(transform => transform.GetType().Name)
+			.Concat(new[] { "RenameAnnotationTransform" })
 			.ToArray();
 
 		debugStepsVm.Steps!

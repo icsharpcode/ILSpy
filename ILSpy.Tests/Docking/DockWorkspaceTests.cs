@@ -43,11 +43,11 @@ public class DockWorkspaceTests
 		workspace.Layout.Should().NotBeNull("ILSpyDockFactory.CreateLayout() wires the root dock in the ctor.");
 		workspace.Factory.Should().NotBeNull();
 #if DEBUG
-		workspace.ToolPaneMenuItems.Should().HaveCount(6,
-			"AssemblyTree, Search, Analyzers, Bookmarks, AI Output, and the Debug Steps pane (Debug-only) are wired at this point.");
+		workspace.ToolPaneMenuItems.Should().HaveCount(7,
+			"AssemblyTree, Search, Analyzers, Bookmarks, AI Output, AI Chat, and the Debug Steps pane (Debug-only) are wired at this point.");
 #else
-		workspace.ToolPaneMenuItems.Should().HaveCount(5,
-			"AssemblyTree, Search, Analyzers, Bookmarks, and AI Output are the tool panes wired at this point.");
+		workspace.ToolPaneMenuItems.Should().HaveCount(6,
+			"AssemblyTree, Search, Analyzers, Bookmarks, AI Output, and AI Chat are the tool panes wired at this point.");
 #endif
 	}
 }
