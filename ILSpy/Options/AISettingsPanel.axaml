@@ -33,6 +33,7 @@
 				<NumericUpDown Minimum="4000" Maximum="128000" Increment="1000" Value="{Binding Settings.MaxContextTokens, Mode=TwoWay}" />
 			</HeaderedContentControl>
 			<CheckBox Content="Stream responses" IsChecked="{Binding Settings.StreamResponses, Mode=TwoWay}" />
+			<CheckBox Content="Word wrap" IsChecked="{Binding Settings.WordWrap, Mode=TwoWay}" />
 			<CheckBox Content="Include IL" IsChecked="{Binding Settings.SendIL, Mode=TwoWay}" />
 			<CheckBox Content="Include call graph" IsChecked="{Binding Settings.SendCallGraph, Mode=TwoWay}" />
 

@@ -26,6 +26,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			settings.MaxContextTokens.Should().Be(32000);
 			settings.MaxContextTokens.Should().BePositive();
 			settings.StreamResponses.Should().BeTrue();
+			settings.WordWrap.Should().BeTrue();
 			settings.SendIL.Should().BeFalse();
 			settings.SendCallGraph.Should().BeFalse();
 			settings.PrivacyConsentAccepted.Should().BeFalse();
@@ -67,6 +68,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 				Model = "custom-model",
 				MaxContextTokens = 16000,
 				StreamResponses = false,
+				WordWrap = false,
 				SendIL = true,
 				SendCallGraph = true,
 				PrivacyConsentAccepted = true
@@ -81,6 +83,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			loaded.Model.Should().Be(original.Model);
 			loaded.MaxContextTokens.Should().Be(original.MaxContextTokens);
 			loaded.StreamResponses.Should().Be(original.StreamResponses);
+			loaded.WordWrap.Should().Be(original.WordWrap);
 			loaded.SendIL.Should().Be(original.SendIL);
 			loaded.SendCallGraph.Should().Be(original.SendCallGraph);
 			loaded.PrivacyConsentAccepted.Should().Be(original.PrivacyConsentAccepted);
@@ -106,6 +109,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 
 			settings.Provider.Should().Be("openai");
 			settings.MaxContextTokens.Should().Be(32000);
+			settings.WordWrap.Should().BeTrue();
 		}
 
 		[Test]
@@ -117,6 +121,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 				new XElement("Provider", "anthropic"),
 				new XElement("MaxContextTokens", "not-a-number"),
 				new XElement("StreamResponses", "not-a-boolean"),
+				new XElement("WordWrap", "not-a-boolean"),
 				new XElement("SendIL", "not-a-boolean"),
 				new XElement("PrivacyConsentAccepted", "not-a-boolean")));
 
@@ -126,6 +131,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			settings.MaxContextTokens.Should().Be(32000);
 			settings.MaxContextTokens.Should().BePositive();
 			settings.StreamResponses.Should().BeTrue();
+			settings.WordWrap.Should().BeTrue();
 			settings.SendIL.Should().BeFalse();
 			settings.PrivacyConsentAccepted.Should().BeFalse();
 		}
@@ -153,9 +159,11 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 
 			settings.Provider = "anthropic";
 			settings.MaxContextTokens = 16000;
+			settings.WordWrap = false;
 
 			changed.Should().Contain("Provider");
 			changed.Should().Contain("MaxContextTokens");
+			changed.Should().Contain("WordWrap");
 		}
 	}
 }

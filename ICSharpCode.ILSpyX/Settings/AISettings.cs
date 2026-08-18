@@ -24,6 +24,7 @@ namespace ICSharpCode.ILSpyX.Settings
 		string model = GetDefaultModel(DefaultProvider);
 		int maxContextTokens = DefaultMaxContextTokens;
 		bool streamResponses = true;
+		bool wordWrap = true;
 		bool sendIL;
 		bool sendCallGraph;
 		bool privacyConsentAccepted;
@@ -96,6 +97,12 @@ namespace ICSharpCode.ILSpyX.Settings
 			set => SetProperty(ref streamResponses, value);
 		}
 
+		/// <summary>Persisted markdown word-wrap preference for AI surfaces.</summary>
+		public bool WordWrap {
+			get => wordWrap;
+			set => SetProperty(ref wordWrap, value);
+		}
+
 		/// <summary>
 		/// Persisted opt-in for adding IL to context requests.
 		/// </summary>
@@ -132,6 +139,7 @@ namespace ICSharpCode.ILSpyX.Settings
 				Model = GetDefaultModel(DefaultProvider);
 				MaxContextTokens = DefaultMaxContextTokens;
 				StreamResponses = true;
+				WordWrap = true;
 				SendIL = false;
 				SendCallGraph = false;
 				PrivacyConsentAccepted = false;
@@ -145,6 +153,7 @@ namespace ICSharpCode.ILSpyX.Settings
 			Model = ReadString(section, nameof(Model), GetDefaultModel(Provider));
 			MaxContextTokens = ReadPositiveInt32(section, nameof(MaxContextTokens), DefaultMaxContextTokens);
 			StreamResponses = ReadBoolean(section, nameof(StreamResponses), true);
+			WordWrap = ReadBoolean(section, nameof(WordWrap), true);
 			SendIL = ReadBoolean(section, nameof(SendIL), false);
 			SendCallGraph = ReadBoolean(section, nameof(SendCallGraph), false);
 			PrivacyConsentAccepted = ReadBoolean(section, nameof(PrivacyConsentAccepted), false);
@@ -159,6 +168,7 @@ namespace ICSharpCode.ILSpyX.Settings
 				new XElement(nameof(Model), Model),
 				new XElement(nameof(MaxContextTokens), MaxContextTokens),
 				new XElement(nameof(StreamResponses), StreamResponses),
+				new XElement(nameof(WordWrap), WordWrap),
 				new XElement(nameof(SendIL), SendIL),
 				new XElement(nameof(SendCallGraph), SendCallGraph),
 				new XElement(nameof(PrivacyConsentAccepted), PrivacyConsentAccepted));
