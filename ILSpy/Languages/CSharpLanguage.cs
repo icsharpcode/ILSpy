@@ -40,6 +40,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.Annotations;
 
 using ConversionFlags = ICSharpCode.Decompiler.Output.ConversionFlags;
 // Two unrelated `LanguageVersion` types are in scope: a DTO in ILSpyX (toolbar dropdown
@@ -329,6 +330,9 @@ namespace ICSharpCode.ILSpy.Languages
 			decompiler.Stepper.IsDebug = options.IsDebug;
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			var annotations = new RenameAnnotationManager(module.FileName);
+			annotations.Load();
+			decompiler.AstTransforms.Add(new RenameAnnotationTransform(annotations));
 			return decompiler;
 		}
 
@@ -517,6 +521,9 @@ namespace ICSharpCode.ILSpy.Languages
 			};
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			var annotations = new RenameAnnotationManager(assembly.FileName);
+			annotations.Load();
+			decompiler.AstTransforms.Add(new RenameAnnotationTransform(annotations));
 			SyntaxTree st = options.FullDecompilation
 				? decompiler.DecompileWholeModuleAsSingleFile()
 				: decompiler.DecompileModuleAndAssemblyAttributes();

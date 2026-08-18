@@ -153,7 +153,7 @@ namespace ICSharpCode.ILSpyX.AI
 				.ToArray();
 		}
 
-		static IEnumerable<IMember> ScanMethodReferences(IMethod method, MetadataModule module)
+		internal static IEnumerable<IMember> ScanMethodReferences(IMethod method, MetadataModule module)
 		{
 			if (!method.HasBody || method.MetadataToken.Kind != HandleKind.MethodDefinition)
 				return Array.Empty<IMember>();

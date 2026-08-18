@@ -49,8 +49,8 @@ namespace ICSharpCode.ILSpyX.Settings
 		public XName SectionName => "AISettings";
 
 		/// <summary>
-		/// Configured provider identifier. Phase 0 implements the OpenAI-compatible provider;
-		/// Anthropic, Ollama, and custom values retain their settings for later providers.
+		/// Configured provider identifier. OpenAI-compatible and Anthropic providers are supported;
+		/// Ollama and custom values use the OpenAI-compatible schema.
 		/// </summary>
 		public string Provider {
 			get => provider;
@@ -205,7 +205,7 @@ namespace ICSharpCode.ILSpyX.Settings
 
 		public static bool IsSupportedProvider(string? provider)
 		{
-			return NormalizeProvider(provider) is "openai" or "ollama" or "custom";
+			return NormalizeProvider(provider) is "openai" or "anthropic" or "ollama" or "custom";
 		}
 
 		static string ReadString(XElement section, string name, string defaultValue)

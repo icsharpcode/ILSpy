@@ -68,7 +68,9 @@ namespace ICSharpCode.ILSpyX.AI
 			if (provider is not "ollama" && string.IsNullOrWhiteSpace(apiKey))
 				throw new AIConfigurationException("Configure an API key before using this provider.");
 
-			return new Providers.OpenAIProvider(settings.BaseUrl, apiKey, settings.Model, httpClient);
+			return provider == "anthropic"
+				? new Providers.AnthropicProvider(settings.BaseUrl, apiKey!, settings.Model, httpClient)
+				: new Providers.OpenAIProvider(settings.BaseUrl, apiKey, settings.Model, httpClient);
 		}
 
 		public void Dispose()

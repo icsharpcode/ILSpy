@@ -1,0 +1,39 @@
+<Window xmlns="http://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:ICSharpCode.ILSpy.AI"
+        mc:Ignorable="d" d:DesignWidth="820" d:DesignHeight="600"
+        x:Class="ICSharpCode.ILSpy.AI.BatchRenameDialog"
+        x:DataType="vm:BatchRenameDialogViewModel"
+        Title="Batch Rename with AI" Width="820" Height="600"
+        WindowStartupLocation="CenterOwner">
+	<DockPanel Margin="12">
+		<StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,10,0,0">
+			<Button Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
+			<Button Content="Apply Selected" Click="ApplyClick" IsEnabled="{Binding CanApply}" IsVisible="{Binding !IsBusy}" />
+			<Button Content="Close" Click="CloseClick" IsVisible="{Binding !IsBusy}" />
+		</StackPanel>
+		<StackPanel DockPanel.Dock="Top" Spacing="5" Margin="0,0,0,10">
+			<TextBlock FontWeight="Bold" Text="{Binding TargetName}" />
+			<TextBlock Text="{Binding StatusMessage}" />
+			<TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed" TextWrapping="Wrap" />
+		</StackPanel>
+		<ListBox ItemsSource="{Binding Items}">
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" Margin="4" ColumnSpacing="10" RowSpacing="2">
+						<CheckBox Grid.RowSpan="2" VerticalAlignment="Center" IsChecked="{Binding IsSelected}" />
+						<TextBlock Grid.Column="1" Text="{Binding OldName}" FontWeight="Bold" />
+						<ComboBox Grid.Column="2" ItemsSource="{Binding Suggestions}" SelectedItem="{Binding SelectedSuggestion}" MinWidth="220" />
+						<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="4">
+							<TextBlock Text="->" />
+							<TextBlock Text="{Binding NewName}" />
+						</StackPanel>
+						<TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Error}" Foreground="IndianRed" TextWrapping="Wrap" />
+					</Grid>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</DockPanel>
+</Window>

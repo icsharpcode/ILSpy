@@ -27,6 +27,9 @@ using Avalonia.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX;
+using ICSharpCode.ILSpyX.AI;
+using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -103,10 +106,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 				FinishOnUIThread(error: new InvalidOperationException("no active assembly list"));
 				return;
 			}
+			var settingsService = AppComposition.TryGetExport<SettingsService>();
 			var context = new AnalyzerContext {
 				CancellationToken = ct,
 				Language = Language,
 				AssemblyList = assemblyList,
+				AISettings = settingsService?.AISettings,
+				AIProviderFactory = AppComposition.TryGetExport<IAIProviderFactory>(),
 			};
 			try
 			{
@@ -158,6 +164,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 				IMethod method => new AnalyzedMethodTreeNode(method, sourceEntity),
 				IProperty property => new AnalyzedPropertyTreeNode(property, sourceEntity),
 				IEvent ev => new AnalyzedEventTreeNode(ev, sourceEntity),
+				AISecurityFinding finding => new AISecurityFindingTreeNode(finding),
 				_ => throw new ArgumentOutOfRangeException(nameof(resultSymbol),
 					$"Symbol {resultSymbol.GetType().FullName} is not supported.")
 			};

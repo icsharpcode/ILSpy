@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.AI;
+using ICSharpCode.ILSpyX.AI.Providers;
 using ICSharpCode.ILSpyX.Settings;
 
 using NUnit.Framework;
@@ -131,12 +132,17 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
-		public void ProviderFactory_RejectsUnsupportedProviderWithoutNetworkAccess()
+		public async Task ProviderFactory_CreatesAnthropicProviderWithoutNetworkAccess()
 		{
-			var settings = new AISettings { Provider = "anthropic", PrivacyConsentAccepted = true };
-			var factory = new AIProviderFactory();
+			using var factory = new AIProviderFactory();
+			var settings = new AISettings {
+				Provider = "anthropic",
+				ApiKey = "test-key",
+				PrivacyConsentAccepted = true
+			};
 
-			Assert.ThrowsAsync<AIConfigurationException>(async () => await factory.CreateAsync(settings));
+			ILLMProvider provider = await factory.CreateAsync(settings);
+			Assert.That(provider, Is.TypeOf<AnthropicProvider>());
 		}
 
 		sealed class FakeFactory : IAIProviderFactory

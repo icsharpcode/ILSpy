@@ -24,6 +24,8 @@ using System.Threading;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Abstractions;
+using ICSharpCode.ILSpyX.AI;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpyX.Analyzers
 {
@@ -43,6 +45,12 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		/// Currently used language.
 		/// </summary>
 		public required ILanguage Language { get; init; }
+
+		/// <summary>Optional AI configuration supplied by the desktop host for AI analyzers.</summary>
+		public AISettings? AISettings { get; init; }
+
+		/// <summary>Optional provider factory supplied by the desktop host for AI analyzers.</summary>
+		public IAIProviderFactory? AIProviderFactory { get; init; }
 
 		/// <summary>
 		/// Allows the analyzer to control whether the tree nodes will be sorted.
