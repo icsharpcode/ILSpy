@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpy.AI
 		public void Clear()
 		{
 			Editor.SetText(string.Empty);
-			followTail.ResetFromViewport();
+			Avalonia.Threading.Dispatcher.UIThread.Post(followTail.ResetFromViewport, Avalonia.Threading.DispatcherPriority.Loaded);
 		}
 
 		protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)

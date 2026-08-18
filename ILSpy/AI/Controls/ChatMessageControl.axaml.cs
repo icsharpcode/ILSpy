@@ -4,6 +4,7 @@ using System;
 
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 
 using ICSharpCode.ILSpyX.AI;
 
@@ -20,6 +21,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		const string AssistantRoleLabel = "Assistant";
 
 		ChatMessage? message;
+		string renderedContent = string.Empty;
 
 		public ChatMessageControl()
 		{
@@ -43,6 +45,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 				RoleLabel.Text = string.Empty;
 				TimestampLabel.Text = string.Empty;
 				ContentEditor.SetText(string.Empty);
+				renderedContent = string.Empty;
 			}
 		}
 
@@ -64,8 +67,21 @@ namespace ICSharpCode.ILSpy.AI.Controls
 				return;
 			RoleLabel.Text = message.IsAssistant ? AssistantRoleLabel : UserRoleLabel;
 			TimestampLabel.Text = FormatTimestamp(message.TimestampUtc);
-			if (!string.Equals(ContentEditor.Document?.Text, message.Content, StringComparison.Ordinal))
-				ContentEditor.SetText(message.Content);
+			if (!string.Equals(renderedContent, message.Content, StringComparison.Ordinal))
+			{
+				if (message.Content.StartsWith(renderedContent, StringComparison.Ordinal))
+				{
+					ContentEditor.AppendChunk(message.Content[renderedContent.Length..]);
+				}
+				else
+				{
+					var snapshot = AIEditorScrollState.Capture(ContentEditor.EditorScrollViewer, followTail: false);
+					ContentEditor.SetText(message.Content);
+					if (ContentEditor.EditorScrollViewer is { } viewer)
+						Dispatcher.UIThread.Post(() => AIEditorScrollState.Restore(viewer, snapshot), DispatcherPriority.Loaded);
+				}
+				renderedContent = message.Content;
+			}
 			// A streamed reply that hasn't produced content yet still needs a stable row; hide
 			// the editor only so the empty assistant bubble doesn't collapse to a thin sliver.
 			ContentEditor.IsVisible = message.Content.Length != 0;
