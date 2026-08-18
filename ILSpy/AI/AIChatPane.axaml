@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:vm="using:ICSharpCode.ILSpy.AI" x:Class="ICSharpCode.ILSpy.AI.AIChatPane" x:DataType="vm:AIChatPaneModel">
+  <DockPanel Margin="8">
+    <StackPanel DockPanel.Dock="Bottom" Spacing="6" Margin="0,8,0,0">
+      <TextBox Text="{Binding Input}" AcceptsReturn="True" MinHeight="54" PlaceholderText="Ask about the decompiled code…" />
+      <ItemsControl ItemsSource="{Binding CommandSuggestions}" IsVisible="{Binding ShowSuggestions}" />
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+        <Button Content="Send" Command="{Binding SendCommand}" IsEnabled="{Binding !IsBusy}" />
+        <Button Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
+        <Button Content="Clear" Command="{Binding ClearCommand}" />
+        <Button Content="Export" Command="{Binding ExportCommand}" />
+      </StackPanel>
+    </StackPanel>
+    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding StatusMessage}"/><TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed"/></StackPanel>
+    <ListBox ItemsSource="{Binding Messages}">
+      <ListBox.ItemTemplate><DataTemplate><Border Padding="8" Margin="0,4" Background="#22000000"><StackPanel><TextBlock Text="{Binding Role}" FontWeight="Bold"/><TextBlock Text="{Binding Content}" TextWrapping="Wrap"/></StackPanel></Border></DataTemplate></ListBox.ItemTemplate>
+    </ListBox>
+  </DockPanel>
+</UserControl>

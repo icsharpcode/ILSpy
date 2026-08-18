@@ -67,6 +67,7 @@ namespace ICSharpCode.ILSpy
 			{ typeof(BookmarksPaneModel),      () => new BookmarksPane() },
 			{ typeof(AnalyzerTreeViewModel),   () => new AnalyzerTreeView() },
 			{ typeof(AIOutputPaneModel),        () => new AIOutputPane() },
+			{ typeof(AIChatPaneModel),          () => new AIChatPane() },
 			{ typeof(ContentTabPage),          () => new ContentTabPageView() },
 			{ typeof(DecompilerTabPageModel),  () => new DecompilerTextView() },
 			{ typeof(MetadataTablePageModel),  () => new MetadataTablePage() },
