@@ -183,22 +183,37 @@ namespace ICSharpCode.ILSpy.AI
 			var response = new StringBuilder();
 			logger.LogDebug("Starting to consume AI response stream");
 			int chunkCount = 0;
+			int chunksSinceUpdate = 0;
+			// Batch full-document replacement on the UI thread to a whole number of chunks; this
+			// cuts the number of document rebuilds (and any repaint flicker) without holding the
+			// UI thread for every single token.
+			const int UpdateInterval = 5;
+
 			await foreach (string chunk in streamFactory(requestCancellation.Token).ConfigureAwait(false))
 			{
 				if (string.IsNullOrEmpty(chunk))
 					continue;
 				chunkCount++;
+				chunksSinceUpdate++;
 				response.Append(chunk);
 				logger.LogTrace("Received chunk #{ChunkNumber}, length: {Length}", chunkCount, chunk.Length);
-				await Dispatcher.UIThread.InvokeAsync(() => {
-					if (ReferenceEquals(cancellation, requestCancellation))
-						Response = response.ToString();
-				});
+
+				if (chunksSinceUpdate >= UpdateInterval)
+				{
+					await Dispatcher.UIThread.InvokeAsync(() => {
+						if (ReferenceEquals(cancellation, requestCancellation))
+							Response = response.ToString();
+					});
+					chunksSinceUpdate = 0;
+				}
 			}
+
+			// Always push the final (possibly partial) buffer so the last chunks are shown.
 			logger.LogInformation("AI response stream complete. Total chunks: {ChunkCount}, total length: {Length}", chunkCount, response.Length);
 			await Dispatcher.UIThread.InvokeAsync(() => {
 				if (ReferenceEquals(cancellation, requestCancellation))
 				{
+					Response = response.ToString();
 					IsComplete = response.Length != 0;
 					StatusMessage = response.Length == 0 ? "The provider returned an empty response." : "Complete";
 				}
