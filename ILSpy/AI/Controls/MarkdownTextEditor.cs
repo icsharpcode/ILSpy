@@ -1,8 +1,5 @@
 // Copyright (c) 2026 Masroor
 using Avalonia;
-using Avalonia.Media;
-using AvaloniaEdit.Document;
-using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.ILSpy.TextView;
 
@@ -49,3 +46,4 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		}
 	}
 }
+
