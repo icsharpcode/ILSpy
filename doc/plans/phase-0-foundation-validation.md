@@ -38,8 +38,8 @@ platform-gated native credential-store smoke tests.
 
 | Check | Result |
 |-------|--------|
-| ICSharpCode.ILSpyX.Tests AI filter | 117 passed, 0 failed, 2 platform-skipped |
-| ILSpy.Tests AI filter | 3 passed, 0 failed |
+| ICSharpCode.ILSpyX.Tests AI filter | 138 passed, 0 failed, 2 platform-skipped |
+| ILSpy.Tests AI filter | 4 passed, 0 failed, 1 environment-skipped |
 | macOS Keychain native smoke | Passed |
 | Exact solution-wide command from the phase plan | Not runnable on macOS because Windows-only test assemblies require Microsoft.WindowsDesktop.App; use the Windows CI leg for that command |
 

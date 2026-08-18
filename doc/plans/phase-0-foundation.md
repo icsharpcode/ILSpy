@@ -1068,7 +1068,7 @@ The implemented builder validates that the entity belongs to the decompiler's ma
 - [x] 0.4 LLM provider interface defined
 - [x] 0.5 OpenAI-compatible provider implemented with mock HTTP coverage
 - [x] 0.6 Context builder extracts basic metadata and decompiled code
-- [x] AI-filtered Phase 0 test project passes on the pinned .NET 11 SDK (117/117 on macOS)
+- [x] AI-filtered Phase 0 test project passes on the pinned .NET 11 SDK (138/138 on macOS)
 - [ ] Native credential-store round trip smoke-tested on Windows, macOS, and Linux
 - [ ] Official test command passes on the pinned .NET 11 SDK (`dotnet test --solution ILSpy.sln --report-trx --filter "FullyQualifiedName~AI"`)
 - [x] Code reviewed for copyright headers (see CLAUDE.md conventions)

@@ -377,7 +377,7 @@ Import/export profiles, automatic model discovery, provider authentication flows
 
 ## Implementation checklist
 
-- [ ] Keep root CONTEXT.md glossary-only.
+- [x] Keep root CONTEXT.md glossary-only.
 - [ ] Define profile, provider capability, selection, snapshot, readiness, and conversation target contracts.
 - [ ] Implement schema 2 XML and idempotent singleton migration.
 - [ ] Implement profile-ID secure-key storage and compensating failure handling.

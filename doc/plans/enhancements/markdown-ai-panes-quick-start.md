@@ -203,9 +203,9 @@ SyntaxHighlighting = HighlightingService.GetDefinition("MarkDown"); // Exactly a
 - [ ] Verify dialog shows colored markdown
 
 ### After Phase 4:
-- [ ] Write a unit test with markdown containing C# fences
-- [ ] Verify `MarkdownCodeFenceExtractor.ExtractCSharpFences()` returns correct fences
-- [ ] Verify `fence.Code` contains code without backticks
+- [x] Write a unit test with markdown containing C# fences (see `ICSharpCode.ILSpyX.Tests/AI/MarkdownCodeFenceExtractorTests.cs`)
+- [x] Verify `MarkdownCodeFenceExtractor.ExtractCSharpFences()` returns correct fences
+- [x] Verify `fence.Code` contains code without backticks
 
 ### After Phase 5:
 - [ ] Right-click inside a C# code fence in AI Output pane

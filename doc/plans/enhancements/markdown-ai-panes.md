@@ -806,12 +806,12 @@ namespace ICSharpCode.ILSpyX.AI
 ```
 
 **Testing Checklist:**
-- [ ] Create unit test with sample markdown containing multiple fences
-- [ ] Verify C# fences are detected (csharp, cs, c#)
-- [ ] Verify IL fences are detected
-- [ ] Verify fences without language tag are captured (Language = null)
-- [ ] Verify line numbers are correct
-- [ ] Verify code content excludes fence markers
+- [x] Create unit test with sample markdown containing multiple fences (see `ICSharpCode.ILSpyX.Tests/AI/MarkdownCodeFenceExtractorTests.cs`)
+- [x] Verify C# fences are detected (csharp, cs, c#)
+- [x] Verify IL fences are detected
+- [x] Verify fences without language tag are captured (Language = null)
+- [x] Verify line numbers are correct
+- [x] Verify code content excludes fence markers
 
 **Commit Point:** "Add MarkdownCodeFenceExtractor for parsing code blocks"
 
