@@ -131,6 +131,15 @@ namespace ICSharpCode.ILSpyX.AI
 			return backend.DeleteAsync(CanonicalizeProvider(provider), cancellationToken);
 		}
 
+		/// <summary>
+		/// Canonical secure-storage identifier for a profile credential. The prefix keeps profile
+		/// keys from colliding with raw legacy provider identifiers used before migration.
+		/// </summary>
+		public static string ProfileCredentialId(string profileId)
+		{
+			return "profile-" + CanonicalizeProvider(profileId ?? string.Empty);
+		}
+
 		internal static string CanonicalizeProvider(string provider)
 		{
 			if (provider is null)
