@@ -6,13 +6,17 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using AvaloniaEdit.Document;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpyX.AI;
+using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.AI.Controls
 {
@@ -28,6 +32,9 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		const string OpenInDecompilerHeader = "Open in Decompiler";
 		const string CopyCodeBlockHeader = "Copy Code Block";
 		const string CodeBlockCopiedMessage = "Code block copied to clipboard";
+		AISettings? aiSettings;
+		ScrollViewer? editorScrollViewer;
+		int wrapChangeVersion;
 
 		/// <summary>
 		/// Raised when the user asks to open the code fence under the caret in a new decompiler tab.
@@ -35,6 +42,9 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		/// block in a frozen tab via <see cref="DockWorkspace.ShowTextInNewTab"/>.
 		/// </summary>
 		public event EventHandler<CodeFenceEventArgs>? OpenCodeFenceRequested;
+
+		internal Func<bool>? FollowTailStateProvider { get; set; }
+		internal Action<bool>? FollowTailStateRestored { get; set; }
 
 		public MarkdownTextEditor()
 		{
@@ -51,6 +61,60 @@ namespace ICSharpCode.ILSpy.AI.Controls
 			SyntaxHighlighting = HighlightingService.GetByExtension(".md");
 
 			BuildContextMenu();
+		}
+
+		internal ScrollViewer? EditorScrollViewer
+			=> editorScrollViewer ??= AIEditorScrollState.FindViewer(this);
+
+		protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+		{
+			base.OnAttachedToVisualTree(e);
+			editorScrollViewer = null;
+			aiSettings = AppComposition.TryGetExport<SettingsService>()?.AISettings;
+			if (aiSettings is not null)
+			{
+				aiSettings.PropertyChanged += OnAISettingsPropertyChanged;
+				ApplyWordWrap(aiSettings.WordWrap);
+			}
+			else
+			{
+				ApplyWordWrap(true);
+			}
+		}
+
+		protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+		{
+			if (aiSettings is not null)
+			{
+				aiSettings.PropertyChanged -= OnAISettingsPropertyChanged;
+				aiSettings = null;
+			}
+			editorScrollViewer = null;
+			base.OnDetachedFromVisualTree(e);
+		}
+
+		void OnAISettingsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == nameof(AISettings.WordWrap))
+				ApplyWordWrap(aiSettings?.WordWrap ?? true);
+		}
+
+		void ApplyWordWrap(bool value)
+		{
+			if (WordWrap == value)
+				return;
+			var viewer = EditorScrollViewer;
+			bool followTail = FollowTailStateProvider?.Invoke() ?? AIEditorScrollState.IsNearBottom(viewer);
+			var snapshot = AIEditorScrollState.Capture(viewer, followTail);
+			WordWrap = value;
+			int version = ++wrapChangeVersion;
+			Dispatcher.UIThread.Post(() =>
+			{
+				if (version != wrapChangeVersion || viewer is null)
+					return;
+				AIEditorScrollState.Restore(viewer, snapshot);
+				FollowTailStateRestored?.Invoke(snapshot.FollowTail);
+			}, DispatcherPriority.Loaded);
 		}
 
 		/// <summary>Sets the whole document content, replacing whatever was there.</summary>

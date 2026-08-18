@@ -64,7 +64,8 @@ namespace ICSharpCode.ILSpy.AI.Controls
 				return;
 			RoleLabel.Text = message.IsAssistant ? AssistantRoleLabel : UserRoleLabel;
 			TimestampLabel.Text = FormatTimestamp(message.TimestampUtc);
-			ContentEditor.SetText(message.Content);
+			if (!string.Equals(ContentEditor.Document?.Text, message.Content, StringComparison.Ordinal))
+				ContentEditor.SetText(message.Content);
 			// A streamed reply that hasn't produced content yet still needs a stable row; hide
 			// the editor only so the empty assistant bubble doesn't collapse to a thin sliver.
 			ContentEditor.IsVisible = message.Content.Length != 0;

@@ -11,7 +11,8 @@
       </StackPanel>
     </StackPanel>
     <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding StatusMessage}"/><TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed"/></StackPanel>
-    <ListBox ItemsSource="{Binding Messages}" Background="Transparent" Padding="0" Margin="0">
+    <ListBox x:Name="ConversationList" ItemsSource="{Binding Messages}" Background="Transparent" Padding="0" Margin="0"
+             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
       <ListBox.ItemTemplate>
         <DataTemplate>
           <controls:ChatMessageControl />
@@ -28,4 +29,3 @@
     </ListBox>
   </DockPanel>
 </UserControl>
-

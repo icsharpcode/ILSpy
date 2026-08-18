@@ -3,8 +3,10 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Avalonia.VisualTree;
 
 using AvaloniaEdit.Document;
+using ICSharpCode.ILSpy.AI.Controls;
 
 namespace ICSharpCode.ILSpy.AI
 {
@@ -12,11 +14,11 @@ namespace ICSharpCode.ILSpy.AI
 	/// Hosts a <see cref="Controls.MarkdownTextEditor"/> so AI output gets syntax-highlighted
 	/// markdown, and adapts the previous TextBox-based control's public surface: a bindable
 	/// <see cref="Text"/> property for whole-content replacement plus <see cref="AppendText"/>
-	/// for streaming. Scrolls to the end whenever content is set or appended so the latest
-	/// streamed text stays visible.
+	/// for streaming.
 	/// </summary>
 	public partial class StreamingTextControl : UserControl
 	{
+		readonly AIFollowTailController followTail = new();
 		public static readonly StyledProperty<string> TextProperty =
 			AvaloniaProperty.Register<StreamingTextControl, string>(nameof(Text), string.Empty);
 
@@ -29,15 +31,27 @@ namespace ICSharpCode.ILSpy.AI
 		public StreamingTextControl()
 		{
 			InitializeComponent();
+			Editor.FollowTailStateProvider = () => followTail.IsFollowingTail;
+			Editor.FollowTailStateRestored = followTail.SetFollowingTail;
+			AttachedToVisualTree += OnAttachedToVisualTree;
+			DetachedFromVisualTree += OnDetachedFromVisualTree;
 		}
+
+		void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+		{
+			Avalonia.Threading.Dispatcher.UIThread.Post(() => followTail.Attach(AIEditorScrollState.FindViewer(Editor)), Avalonia.Threading.DispatcherPriority.Loaded);
+		}
+
+		void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e) => followTail.Detach();
 
 		protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
 		{
 			base.OnPropertyChanged(change);
 			if (change.Property == TextProperty)
 			{
+				var snapshot = followTail.Capture();
 				Editor.SetText(GetValue(TextProperty));
-				Editor.ScrollToEnd();
+				followTail.RestoreLater(snapshot);
 			}
 		}
 
@@ -47,14 +61,22 @@ namespace ICSharpCode.ILSpy.AI
 		/// </summary>
 		public void AppendText(string text)
 		{
+			var snapshot = followTail.Capture();
 			Editor.AppendText(text);
-			Editor.ScrollToEnd();
+			followTail.RestoreLater(snapshot);
 		}
 
 		/// <summary>Clears all content from the embedded editor.</summary>
 		public void Clear()
 		{
 			Editor.SetText(string.Empty);
+			followTail.ResetFromViewport();
+		}
+
+		protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
+		{
+			followTail.Dispose();
+			base.OnDetachedFromVisualTree(e);
 		}
 	}
 }

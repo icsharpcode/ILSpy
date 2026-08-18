@@ -15,8 +15,6 @@
 			<Button Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
 		</StackPanel>
 		<TextBlock DockPanel.Dock="Bottom" Text="{Binding ErrorMessage}" Foreground="IndianRed" TextWrapping="Wrap" Margin="0,0,0,8" />
-		<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-			<ai:StreamingTextControl Text="{Binding Response}" />
-		</ScrollViewer>
+		<ai:StreamingTextControl Text="{Binding Response}" />
 	</DockPanel>
 </UserControl>

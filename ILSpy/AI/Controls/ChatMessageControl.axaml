@@ -13,7 +13,7 @@
 				<TextBlock x:Name="TimestampLabel" FontSize="11" Opacity="0.7"
 				           Foreground="{DynamicResource ILSpy.SecondaryForeground}" />
 			</StackPanel>
-			<controls:MarkdownTextEditor x:Name="ContentEditor" MinHeight="24" MaxHeight="360"
+			<controls:MarkdownTextEditor x:Name="ContentEditor" MinHeight="24"
 			                             Background="Transparent" />
 		</DockPanel>
 	</Border>
