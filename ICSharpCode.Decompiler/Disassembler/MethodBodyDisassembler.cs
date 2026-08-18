@@ -605,10 +605,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
+		// The shortcut-form opcodes cover exactly the indices 0-3, so the digit text and the
+		// local-reference keys can come from fixed tables instead of being allocated per
+		// rendered instruction.
+		static readonly string[] shortcutIndexes = { "0", "1", "2", "3" };
+		static readonly string[] shortcutParamReferences = { "param_0", "param_1", "param_2", "param_3" };
+		static readonly string[] shortcutLocReferences = { "loc_0", "loc_1", "loc_2", "loc_3" };
+
 		private void WriteOpCode(ILOpCode opCode)
 		{
 			var opCodeInfo = new OpCodeInfo(opCode, opCode.GetDisplayName());
-			string index;
+			int index;
 			switch (opCode)
 			{
 				case ILOpCode.Ldarg_0:
@@ -616,8 +623,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				case ILOpCode.Ldarg_2:
 				case ILOpCode.Ldarg_3:
 					output.WriteReference(opCodeInfo, omitSuffix: true);
-					index = opCodeInfo.Name.Substring(6);
-					output.WriteLocalReference(index, "param_" + index);
+					index = opCode - ILOpCode.Ldarg_0;
+					output.WriteLocalReference(shortcutIndexes[index], shortcutParamReferences[index]);
 					break;
 				case ILOpCode.Ldloc_0:
 				case ILOpCode.Ldloc_1:
@@ -628,8 +635,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 				case ILOpCode.Stloc_2:
 				case ILOpCode.Stloc_3:
 					output.WriteReference(opCodeInfo, omitSuffix: true);
-					index = opCodeInfo.Name.Substring(6);
-					output.WriteLocalReference(index, "loc_" + index);
+					index = opCode <= ILOpCode.Ldloc_3 ? opCode - ILOpCode.Ldloc_0 : opCode - ILOpCode.Stloc_0;
+					output.WriteLocalReference(shortcutIndexes[index], shortcutLocReferences[index]);
 					break;
 				default:
 					output.WriteReference(opCodeInfo);

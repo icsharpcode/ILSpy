@@ -691,7 +691,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsValidName(string varName)
 		{
-			if (string.IsNullOrWhiteSpace(varName))
+			return varName != null && IsValidName(varName.AsSpan());
+		}
+
+		static bool IsValidName(ReadOnlySpan<char> varName)
+		{
+			if (varName.IsEmpty || varName.IsWhiteSpace())
 				return false;
 			if (!(char.IsLetter(varName[0]) || varName[0] == '_'))
 				return false;
@@ -726,12 +731,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (m.Name.StartsWith("get_", StringComparison.OrdinalIgnoreCase) && m.Parameters.Count == 0)
 					{
 						// use name from properties, but not from indexers
-						return CleanUpVariableName(m.Name.Substring(4));
+						return CleanUpVariableName(m.Name.AsSpan(4));
 					}
 					else if (m.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 && char.IsUpper(m.Name[3]))
 					{
 						// use name from Get-methods
-						return CleanUpVariableName(m.Name.Substring(3));
+						return CleanUpVariableName(m.Name.AsSpan(3));
 					}
 					break;
 				case DynamicInvokeMemberInstruction dynInvokeMember:
@@ -739,7 +744,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						&& dynInvokeMember.Name.Length >= 4 && char.IsUpper(dynInvokeMember.Name[3]))
 					{
 						// use name from Get-methods
-						return CleanUpVariableName(dynInvokeMember.Name.Substring(3));
+						return CleanUpVariableName(dynInvokeMember.Name.AsSpan(3));
 					}
 					break;
 			}
@@ -768,11 +773,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// argument might be value of a setter
 						if (m.Name.StartsWith("set_", StringComparison.OrdinalIgnoreCase))
 						{
-							return CleanUpVariableName(m.Name.Substring(4));
+							return CleanUpVariableName(m.Name.AsSpan(4));
 						}
 						else if (m.Name.StartsWith("Set", StringComparison.OrdinalIgnoreCase) && m.Name.Length >= 4 && char.IsUpper(m.Name[3]))
 						{
-							return CleanUpVariableName(m.Name.Substring(3));
+							return CleanUpVariableName(m.Name.AsSpan(3));
 						}
 					}
 					var p = call.GetParameter(i);
@@ -838,9 +843,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					_ => type.Name
 				};
 				// remove the 'I' for interfaces
-				if (name.Length >= 3 && name[0] == 'I' && char.IsUpper(name[1]) && char.IsLower(name[2]))
-					name = name.Substring(1);
-				name = CleanUpVariableName(name) ?? "obj";
+				ReadOnlySpan<char> nameSpan = name.AsSpan();
+				if (nameSpan.Length >= 3 && nameSpan[0] == 'I' && char.IsUpper(nameSpan[1]) && char.IsLower(nameSpan[2]))
+					nameSpan = nameSpan.Slice(1);
+				name = CleanUpVariableName(nameSpan) ?? "obj";
 			}
 			return name;
 		}
@@ -868,8 +874,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				pos--;
 			if (pos < name.Length)
 			{
-				if (int.TryParse(name.Substring(pos), out number))
+				// The loop above guarantees name[pos..] is all ASCII digits;
+				// accumulate the value inline, giving up on int overflow.
+				long value = 0;
+				for (int i = pos; i < name.Length; i++)
 				{
+					value = value * 10 + (name[i] - '0');
+					if (value > int.MaxValue)
+						break;
+				}
+				if (value <= int.MaxValue)
+				{
+					number = (int)value;
 					return name.Substring(0, pos);
 				}
 			}
@@ -879,16 +895,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static string CleanUpVariableName(string name)
 		{
+			return CleanUpVariableName(name.AsSpan());
+		}
+
+		static string CleanUpVariableName(ReadOnlySpan<char> name)
+		{
 			// remove the backtick (generics)
 			int pos = name.IndexOf('`');
 			if (pos >= 0)
-				name = name.Substring(0, pos);
+				name = name.Slice(0, pos);
 
 			// remove field prefix:
-			if (name.Length > 2 && name.StartsWith("m_", StringComparison.Ordinal))
-				name = name.Substring(2);
+			if (name.Length > 2 && name.StartsWith("m_".AsSpan(), StringComparison.Ordinal))
+				name = name.Slice(2);
 			else if (name.Length > 1 && name[0] == '_' && (char.IsLetter(name[1]) || name[1] == '_'))
-				name = name.Substring(1);
+				name = name.Slice(1);
 
 			if (TextWriterTokenWriter.ContainsNonPrintableIdentifierChar(name))
 			{
@@ -903,7 +924,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// separates the parts of its generated names with '$'.
 				return null;
 			}
-			string lowerCaseName = char.ToLower(name[0]) + name.Substring(1);
+			// lowercase the first char, materializing the result in a single allocation
+			// (netstandard2.0 has no string(ReadOnlySpan<char>) constructor)
+			char[] chars = new char[name.Length];
+			chars[0] = char.ToLower(name[0]);
+			name.Slice(1).CopyTo(chars.AsSpan(1));
+			string lowerCaseName = new string(chars);
 			if (CSharp.OutputVisitor.CSharpOutputVisitor.IsKeyword(lowerCaseName))
 				return null;
 			return lowerCaseName;
