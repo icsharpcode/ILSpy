@@ -90,7 +90,18 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected override TranslatedStatement Default(ILInstruction inst)
 		{
-			return new ExpressionStatement(exprBuilder.Translate(inst))
+			Expression expr = exprBuilder.Translate(inst);
+			if (!settings.UseRefLocalsForAccurateOrderOfEvaluation
+				&& expr is DirectionExpression dir)
+			{
+				// Top-level "ref" (e.g. result if ldelema is unused)
+				// would get turned into ref-local by DeclareVariables.
+				// If ref locals aren't supported; remove the "ref",
+				// introducing a load. This way we create compilable code
+				// while preserving the bounds check of the ldelema.
+				expr = dir.Expression.Detach();
+			}
+			return new ExpressionStatement(expr)
 				.WithILInstruction(inst);
 		}
 
