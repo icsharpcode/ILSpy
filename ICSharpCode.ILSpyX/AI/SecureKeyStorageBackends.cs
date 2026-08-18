@@ -463,7 +463,7 @@ namespace ICSharpCode.ILSpyX.AI
 				null,
 				cancellationToken).ConfigureAwait(false);
 			if (result.ExitCode == 0)
-				return SecureKeyStorageBackendReadResult.Found(result.Output.TrimEnd('\r', '\n'));
+				return SecureKeyStorageBackendReadResult.Found(NormalizeLookupOutput(result.Output));
 			if (result.ExitCode == 1)
 				return SecureKeyStorageBackendReadResult.NotFound;
 			throw new SecureKeyStorageUnavailableException("Linux Secret Service is unavailable.");
@@ -478,6 +478,17 @@ namespace ICSharpCode.ILSpyX.AI
 				cancellationToken).ConfigureAwait(false);
 			if (result.ExitCode is not 0 and not 1)
 				throw new SecureKeyStorageUnavailableException("Linux Secret Service is unavailable.");
+		}
+
+		// secret-tool echoes lookup output with one trailing line terminator. Strip exactly
+		// that terminator so a stored key ending in CR/LF round-trips unchanged.
+		internal static string NormalizeLookupOutput(string output)
+		{
+			if (output.EndsWith("\r\n", StringComparison.Ordinal))
+				return output[..^2];
+			if (output.EndsWith('\n') || output.EndsWith('\r'))
+				return output[..^1];
+			return output;
 		}
 	}
 

@@ -94,6 +94,19 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 				async () => await storage.LoadKeyAsync("openai"));
 		}
 
+		[TestCase("abc\n", "abc")]
+		[TestCase("abc\r\n", "abc")]
+		[TestCase("abc\r", "abc")]
+		[TestCase("abc", "abc")]
+		[TestCase("abc\n\n", "abc\n")]
+		[TestCase("abc\r\n\r\n", "abc\r\n")]
+		public void LinuxLookupOutput_StripsOnlyTheEchoedTerminator(string lookupOutput, string expected)
+		{
+			string actual = LinuxSecretServiceStorageBackend.NormalizeLookupOutput(lookupOutput);
+
+			Assert.That(actual, Is.EqualTo(expected));
+		}
+
 		[Test]
 		public async Task Cancellation_IsForwardedToBackend()
 		{
