@@ -1,4 +1,5 @@
-// Copyright (c) 2026 Masroor
+// Copyright (c) 2026 Dr. Masroor Ehsan
+
 using System;
 using System.Composition;
 using System.Collections.Generic;

@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Dr. Masroor Ehsan
+
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 

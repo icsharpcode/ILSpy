@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Dr. Masroor Ehsan
+
 using System;
 using System.IO;
 using ICSharpCode.ILSpyX.AI;

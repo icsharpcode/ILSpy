@@ -1,4 +1,5 @@
-// Copyright (c) 2026 Masroor
+// Copyright (c) 2026 Dr. Masroor Ehsan
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
