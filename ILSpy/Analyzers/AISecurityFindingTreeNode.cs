@@ -21,7 +21,13 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public override object Text => Finding.Line > 0
 			? $"{Finding.Severity}: {Finding.Issue} (line {Finding.Line})"
 			: $"{Finding.Severity}: {Finding.Issue}";
-		public override object Icon => Finding.Severity is "Critical" or "High" ? Images.Warning : Images.AssemblyWarning;
+		public override object Icon => Finding.Severity switch {
+			"Critical" => Images.SecurityCritical,
+			"High" => Images.SecurityHigh,
+			"Medium" => Images.SecurityMedium,
+			"Low" => Images.SecurityLow,
+			_ => Images.SecurityMedium,
+		};
 		public override object? ToolTip => Finding.Type;
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)

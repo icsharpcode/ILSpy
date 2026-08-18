@@ -65,6 +65,7 @@ namespace ICSharpCode.ILSpy.TextView
 		static readonly Color LocalMatchBackground = Colors.GreenYellow;
 		static readonly Color LocalDefinitionBackground = Color.FromArgb(0x80, 0xA0, 0xFF, 0xA0);
 		static readonly Color DebugStepBackground = Color.FromArgb(0x80, 0xFF, 0xD7, 0x66);
+		static readonly Color RenameBackground = Color.FromArgb(0x80, 0x9D, 0xD7, 0xFF);
 
 		// Stay-open corridor for the rich popup: as long as the pointer is closer than
 		// `distanceToPopupLimit` to the popup edges, the popup stays. The limit shrinks toward
@@ -80,6 +81,7 @@ namespace ICSharpCode.ILSpy.TextView
 		BracketHighlightRenderer bracketHighlightRenderer = null!;
 		readonly List<TextMarker> localReferenceMarks = new();
 		readonly List<TextMarker> debugStepMarks = new();
+		readonly List<TextMarker> renameMarks = new();
 		int debugStepHighlightVersion;
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
@@ -351,6 +353,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 		/// <summary>The currently painted local-reference highlight marks (test observability).</summary>
 		internal IReadOnlyList<TextMarker> LocalReferenceMarks => localReferenceMarks;
+
+		/// <summary>The currently painted AI-rename highlight marks (test observability).</summary>
+		internal IReadOnlyList<TextMarker> RenameMarks => renameMarks;
 
 		// ThemeManager.Current is a process-lived singleton, so subscribing to its ThemeChanged in
 		// the constructor and never detaching would root every DecompilerTextView for the lifetime of
@@ -1004,6 +1009,7 @@ namespace ICSharpCode.ILSpy.TextView
 				previous.CaptureViewState = null;
 				previous.NavigateBookmarkInFile = null;
 				previous.ScrollToBookmark = null;
+				ClearRenameMarks();
 			}
 
 			boundModel = DataContext as DecompilerTabPageModel;
@@ -1026,6 +1032,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else
 			{
+				ClearRenameMarks();
 				Omnibar.SetNode(null);
 			}
 		}
@@ -1096,6 +1103,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// force-close even if the popup currently wants to stay (mouseClick: true).
 			TryCloseExistingPopup(mouseClick: true);
 			ClearLocalReferenceMarks();
+			ClearRenameMarks();
 			ClearDebugStepMarks();
 			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
 			Editor.Document.Text = model.Text;
@@ -1116,6 +1124,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			referenceElementGenerator.References = model.References;
 			uiElementGenerator.UIElements = model.UIElements;
+			ApplyRenamedReferenceMarks(model);
 
 			// Re-apply any pending reference highlight against the fresh References collection.
 			// The analyzer-result-activation path sets HighlightedReference before the navigated
@@ -1399,6 +1408,27 @@ namespace ICSharpCode.ILSpy.TextView
 			localReferenceMarks.Clear();
 		}
 
+		void ApplyRenamedReferenceMarks(DecompilerTabPageModel model)
+		{
+			if (model.References == null)
+				return;
+			foreach (var reference in model.References)
+			{
+				if (!reference.IsRenamed || reference.Length <= 0)
+					continue;
+				var mark = textMarkerService.Create(reference.StartOffset, reference.Length);
+				mark.BackgroundColor = RenameBackground;
+				renameMarks.Add(mark);
+			}
+		}
+
+		void ClearRenameMarks()
+		{
+			foreach (var mark in renameMarks)
+				textMarkerService.Remove(mark);
+			renameMarks.Clear();
+		}
+
 		void ApplyDebugStepHighlight(TextRange? range)
 		{
 			ClearDebugStepMarks();
@@ -1656,6 +1686,8 @@ namespace ICSharpCode.ILSpy.TextView
 						return null;
 					var renderer = CreateTooltipRenderer();
 					renderer.AddSignatureBlock(rich);
+					if (segment.IsRenamed)
+						renderer.AddSignatureBlock(new RichText(segment.RenameTooltip ?? "AI-suggested name"));
 					AppendXmlDocumentation(renderer, entity);
 					return new HoverContent(renderer.CreateView(), IsRich: true);
 				case OpCodeInfo op:

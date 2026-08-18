@@ -65,6 +65,10 @@ namespace ICSharpCode.ILSpy
 		public static readonly IImage AssemblyLoading = LoadSvg(nameof(AssemblyLoading));
 		public static readonly IImage AssemblyWarning = LoadSvg(nameof(AssemblyWarning));
 		public static readonly IImage Warning = LoadSvg(nameof(Warning));
+		public static readonly IImage SecurityCritical = LoadSvg(nameof(SecurityCritical));
+		public static readonly IImage SecurityHigh = LoadSvg(nameof(SecurityHigh));
+		public static readonly IImage SecurityMedium = LoadSvg(nameof(SecurityMedium));
+		public static readonly IImage SecurityLow = LoadSvg(nameof(SecurityLow));
 		public static readonly IImage FindAssembly = LoadSvg(nameof(FindAssembly));
 		public static readonly IImage Search = LoadSvg(nameof(Search));
 		public static readonly IImage Library = LoadSvg(nameof(Library));

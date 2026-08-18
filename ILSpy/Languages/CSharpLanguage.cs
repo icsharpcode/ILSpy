@@ -22,6 +22,7 @@ using System.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 
 using AvaloniaEdit.Highlighting;
@@ -358,11 +359,11 @@ namespace ICSharpCode.ILSpy.Languages
 			{
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition!, methodDefinition.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(methodDefinition));
-				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper, method.ParentModule!.MetadataFile!);
 			}
 			else
 			{
-				WriteCode(output, options, decompiler.Decompile(method.MetadataToken), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(method.MetadataToken), decompiler.Stepper, method.ParentModule!.MetadataFile!);
 			}
 			OnCSharpDecompiled(decompiler, output, options);
 		}
@@ -375,7 +376,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(property, output, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType));
-			WriteCode(output, options, decompiler.Decompile(property.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.Decompile(property.MetadataToken), decompiler.Stepper, property.ParentModule!.MetadataFile!);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -385,14 +386,14 @@ namespace ICSharpCode.ILSpy.Languages
 			WriteCommentLine(output, TypeToString(field.DeclaringType));
 			if (field.IsConst)
 			{
-				WriteCode(output, options, decompiler.Decompile(field.MetadataToken), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(field.MetadataToken), decompiler.Stepper, field.ParentModule!.MetadataFile!);
 			}
 			else
 			{
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition!, field.IsStatic);
 				var resolvedField = decompiler.TypeSystem.MainModule.GetDefinition((FieldDefinitionHandle)field.MetadataToken);
 				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
-				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper, field.ParentModule!.MetadataFile!);
 			}
 			OnCSharpDecompiled(decompiler, output, options);
 		}
@@ -421,7 +422,7 @@ namespace ICSharpCode.ILSpy.Languages
 			CSharpDecompiler decompiler = BeginDecompile(extension, output, options);
 			WriteCommentLine(output, TypeToString(commentType,
 				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options, decompiler.DecompileExtension(extension.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.DecompileExtension(extension.MetadataToken), decompiler.Stepper, extension.ParentModule!.MetadataFile!);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -429,7 +430,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(ev, output, options);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType));
-			WriteCode(output, options, decompiler.Decompile(ev.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.Decompile(ev.MetadataToken), decompiler.Stepper, ev.ParentModule!.MetadataFile!);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -437,7 +438,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(type, output, options);
 			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
-			WriteCode(output, options, decompiler.Decompile(type.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.Decompile(type.MetadataToken), decompiler.Stepper, type.ParentModule!.MetadataFile!);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -527,7 +528,7 @@ namespace ICSharpCode.ILSpy.Languages
 			SyntaxTree st = options.FullDecompilation
 				? decompiler.DecompileWholeModuleAsSingleFile()
 				: decompiler.DecompileModuleAndAssemblyAttributes();
-			WriteCode(output, options, st, decompiler.Stepper);
+			WriteCode(output, options, st, decompiler.Stepper, module);
 			return null;
 		}
 
@@ -739,7 +740,7 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 		}
 
-		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, Stepper stepper)
+		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, Stepper stepper, MetadataFile module)
 		{
 			var settings = options.DecompilerSettings;
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
@@ -764,10 +765,33 @@ namespace ICSharpCode.ILSpy.Languages
 
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
 			bookmarkCollector?.Publish();
+			if (output is TextView.AvaloniaEditTextOutput renameOutput)
+				MarkRenamedReferences(renameOutput, module);
 			if (output is TextView.AvaloniaEditTextOutput nodeOutput
 				&& TextView.DebugStepHighlighter.TryResolve(stepper, options.StepLimit, options.HighlightStep, nodeOutput.NodeLookup, out var range))
 			{
 				nodeOutput.DebugStepHighlight = range;
+			}
+		}
+
+		static void MarkRenamedReferences(TextView.AvaloniaEditTextOutput output, MetadataFile module)
+		{
+			var annotations = new RenameAnnotationManager(module.FileName);
+			annotations.Load();
+			foreach (var reference in output.References)
+			{
+				string? name = reference.Reference switch {
+					IEntity entity => annotations.GetRename(entity),
+					IType type when type.GetDefinition() is IEntity definition => annotations.GetRename(definition),
+					EntityReference unresolved when string.Equals(Path.GetFullPath(unresolved.Module), Path.GetFullPath(module.FileName), StringComparison.OrdinalIgnoreCase)
+						&& MetadataTokenHelpers.TryAsEntityHandle(MetadataTokens.GetToken(unresolved.Handle)) is { } token
+						=> annotations.GetRename(RenameAnnotationManager.FormatToken(token)),
+					_ => null,
+				};
+				if (name == null)
+					continue;
+				reference.IsRenamed = true;
+				reference.RenameTooltip = "AI-suggested name";
 			}
 		}
 

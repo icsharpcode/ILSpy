@@ -46,5 +46,9 @@ namespace ICSharpCode.ILSpy.TextView
 		public object? Reference;
 		public ReferenceMode Kind;
 		public bool IsDefinition;
+		/// <summary>True when this occurrence uses a display-only AI rename.</summary>
+		public bool IsRenamed;
+		/// <summary>Tooltip text for a display-only rename, when <see cref="IsRenamed"/> is set.</summary>
+		public string? RenameTooltip;
 	}
 }
