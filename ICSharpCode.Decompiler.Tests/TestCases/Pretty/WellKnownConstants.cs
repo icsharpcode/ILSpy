@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const float FloatMaxValue = float.MaxValue;
 		public const float FloatMinValue = float.MinValue;
 		public const float FloatEpsilon = float.Epsilon;
+		public const float FloatNegativeEpsilon = -float.Epsilon;
 
 		public const double DoubleZero = 0.0;
 		public const double DoubleMinusZero = -0.0;
@@ -70,6 +71,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double DoubleMaxValue = double.MaxValue;
 		public const double DoubleMinValue = double.MinValue;
 		public const double DoubleEpsilon = double.Epsilon;
+		public const double DoubleNegativeEpsilon = -double.Epsilon;
 
 		public const decimal DecimalMaxValue = decimal.MaxValue;
 		public const decimal DecimalMinValue = decimal.MinValue;
@@ -82,6 +84,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double Double_Sixth = 1.0 / 6.0;
 		public const float Float_Tenth = 0.1f;
 		public const double Double_Tenth = 0.1;
+		public const float Float_Third = 1f / 3f;
+		public const float Float_PowerOfTwoFraction = 21f / 32f;
+		public const float Float_SmoothFraction = 2f / 15f;
+		public const float Float_UnitFraction = 1f / 85f;
+		public const float Float_ByteScale_225 = 225f / 255f;
+		public const float Float_ByteScale_200 = 200f / 255f;
+		public const float Float_ByteScale_150 = 150f / 255f;
+		public const float Float_NegativeByteScale = -200f / 255f;
+		public const double Double_ByteScale = 200.0 / 255.0;
+		public const float Float_KScale = 123f / 1024f;
+		public const float Float_MScale = 123f / 1048576f;
+		public const float Float_UnitKScale = 1f / 1024f;
+		public const float Float_SmallKScale = 17f / 1024f;
+		public const float Float_UnreducedKScale = 126f / 1024f;
+		public const float Float_ShortBinaryFraction = 13f / 256f;
+		public const float Float_NearOnePowerOfTwo = 225f / 256f;
+		public const float Float_TinyPowerOfTwoScale = 1f / 32768f;
+		public const float Float_NotAPreferredScale = 0.123456f;
+		public const double Double_NotAPreferredScale = 0.123456789;
 
 #if ROSLYN2 && !NET40
 		public const float Float_PI = MathF.PI;
