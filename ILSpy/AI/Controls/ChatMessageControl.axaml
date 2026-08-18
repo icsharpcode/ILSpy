@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:ICSharpCode.ILSpy.AI.Controls"
+             x:Class="ICSharpCode.ILSpy.AI.Controls.ChatMessageControl">
+	<Border Padding="10,8" CornerRadius="4"
+	        Background="{DynamicResource ILSpy.InputBackground}"
+	        BorderBrush="{DynamicResource ILSpy.DockTabStripBackground}"
+	        BorderThickness="1">
+		<DockPanel>
+			<StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8" Margin="0,0,0,6">
+				<TextBlock x:Name="RoleLabel" FontWeight="SemiBold"
+				           Foreground="{DynamicResource ILSpy.SecondaryForeground}" />
+				<TextBlock x:Name="TimestampLabel" FontSize="11" Opacity="0.7"
+				           Foreground="{DynamicResource ILSpy.SecondaryForeground}" />
+			</StackPanel>
+			<controls:MarkdownTextEditor x:Name="ContentEditor" MinHeight="24" MaxHeight="360"
+			                             Background="Transparent" />
+		</DockPanel>
+	</Border>
+</UserControl>
