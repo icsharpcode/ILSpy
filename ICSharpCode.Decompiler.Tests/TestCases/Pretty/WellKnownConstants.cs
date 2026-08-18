@@ -95,6 +95,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public const double Double_ByteScale = 200.0 / 255.0;
 		public const float Float_KScale = 123f / 1024f;
 		public const float Float_MScale = 123f / 1048576f;
+		public const float Float_UnitKScale = 1f / 1024f;
+		public const float Float_SmallKScale = 17f / 1024f;
+		public const float Float_UnreducedKScale = 126f / 1024f;
+		public const float Float_ShortBinaryFraction = 13f / 256f;
+		public const float Float_NearOnePowerOfTwo = 225f / 256f;
+		public const float Float_TinyPowerOfTwoScale = 1f / 32768f;
+		public const float Float_NotAPreferredScale = 0.123456f;
+		public const double Double_NotAPreferredScale = 0.123456789;
 
 #if ROSLYN2 && !NET40
 		public const float Float_PI = MathF.PI;
