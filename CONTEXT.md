@@ -4,6 +4,14 @@ Domain language for configuring and selecting AI services used by ILSpy features
 
 ## Language
 
+**AI Word Wrap Preference**:
+A persisted AI setting controlling line wrapping in every AI text surface (output, chat, and explanation). It is enabled by default and changes all visible AI editors immediately.
+_Avoid_: pane-local wrap, editor-specific wrap
+
+**AI Follow-Tail Scrolling**:
+The streaming behavior that keeps an AI response's latest content visible only while the user is at the bottom of its viewport. Manual scrolling away from the bottom suspends follow-tail until the user returns there.
+_Avoid_: unconditional auto-scroll, scroll-to-top
+
 **AI Profile**:
 A named AI service configuration containing one provider type, one API endpoint, one credential, and an ordered set of models. Each profile has an identity that remains stable when its name changes.
 _Avoid_: Provider, account, connection
