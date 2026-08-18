@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 				{
 					if (method.MetadataToken != analyzedMethod.MetadataToken
 						&& ScanMethodBody(analyzedMethod, method, analyzedBaseMethod, GetMethodBody(method, module)))
-						 yield return method;
+						yield return method;
 				}
 
 				foreach (var property in type.Properties)

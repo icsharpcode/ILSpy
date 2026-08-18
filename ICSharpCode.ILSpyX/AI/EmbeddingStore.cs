@@ -26,7 +26,8 @@ namespace ICSharpCode.ILSpyX.AI
 		static float Cosine(float[] left, float[] right)
 		{
 			float dot = 0, l = 0, r = 0;
-			for (int i = 0; i < left.Length; i++) { dot += left[i] * right[i]; l += left[i] * left[i]; r += right[i] * right[i]; }
+			for (int i = 0; i < left.Length; i++)
+			{ dot += left[i] * right[i]; l += left[i] * left[i]; r += right[i] * right[i]; }
 			return l == 0 || r == 0 ? 0 : dot / MathF.Sqrt(l * r);
 		}
 	}

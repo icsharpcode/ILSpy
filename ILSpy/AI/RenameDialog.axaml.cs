@@ -1,8 +1,10 @@
 // Copyright (c) 2026 Dr. Masroor Ehsan
 
 using System;
+
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.AI;

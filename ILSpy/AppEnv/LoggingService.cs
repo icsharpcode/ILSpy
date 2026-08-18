@@ -3,6 +3,7 @@
 using System;
 using System.Composition;
 using System.Diagnostics;
+
 using Microsoft.Extensions.Logging;
 
 namespace ICSharpCode.ILSpy.AppEnv

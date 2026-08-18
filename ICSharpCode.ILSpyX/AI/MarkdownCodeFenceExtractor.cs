@@ -61,10 +61,10 @@ namespace ICSharpCode.ILSpyX.AI
 			foreach (var block in document.Descendants<FencedCodeBlock>())
 			{
 				fences.Add(new CodeFence {
-				Language = string.IsNullOrWhiteSpace(block.Info) ? null : block.Info,
-				Code = block.Lines.ToString(),
-				StartLine = block.Line,
-				EndLine = block.Line + block.Lines.Count + 1,
+					Language = string.IsNullOrWhiteSpace(block.Info) ? null : block.Info,
+					Code = block.Lines.ToString(),
+					StartLine = block.Line,
+					EndLine = block.Line + block.Lines.Count + 1,
 				});
 			}
 

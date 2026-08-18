@@ -6,6 +6,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+
 using AvaloniaEdit.Document;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -94,7 +95,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 				return;
 			_ = TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(fence.Code);
 			ShowTransientTooltip(CodeBlockCopiedMessage);
-			}
+		}
 
 		MarkdownCodeFenceExtractor.CodeFence? GetFenceAtCaret()
 		{
@@ -129,7 +130,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 			var timer = new global::System.Threading.Timer(_ => {
 				Avalonia.Threading.Dispatcher.UIThread.Post(() => ToolTip.SetIsOpen(this, false));
 			}, null, 2000, global::System.Threading.Timeout.Infinite);
-			}
+		}
 
 		void BuildContextMenu()
 		{

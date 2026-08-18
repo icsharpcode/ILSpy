@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia.Threading;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -63,7 +64,8 @@ namespace ICSharpCode.ILSpy.AI
 
 		void OnAssemblyTreePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName != nameof(AssemblyTreeModel.SelectedItem)) return;
+			if (e.PropertyName != nameof(AssemblyTreeModel.SelectedItem))
+				return;
 			cancellation?.Cancel();
 			SaveHistory(loadedHistoryPath);
 			Messages.Clear();
@@ -143,7 +145,8 @@ namespace ICSharpCode.ILSpy.AI
 			string path = GetHistoryPath();
 			if (path.Length != 0)
 			{
-				try { File.WriteAllText(Path.ChangeExtension(path, ".md"), new ChatHistory { Messages = Messages.ToList() }.ToMarkdown(), Encoding.UTF8); }
+				try
+				{ File.WriteAllText(Path.ChangeExtension(path, ".md"), new ChatHistory { Messages = Messages.ToList() }.ToMarkdown(), Encoding.UTF8); }
 				catch (UnauthorizedAccessException) { StatusMessage = "Export failed"; return; }
 				catch (IOException) { StatusMessage = "Export failed"; return; }
 			}
@@ -163,15 +166,18 @@ namespace ICSharpCode.ILSpy.AI
 		void SaveHistory() => SaveHistory(GetHistoryPath());
 		void SaveHistory(string path)
 		{
-			if (path.Length == 0) return;
-			try { new ChatHistory { AssemblyPath = GetAssemblyPath(), Messages = Messages.ToList() }.Save(path); }
+			if (path.Length == 0)
+				return;
+			try
+			{ new ChatHistory { AssemblyPath = GetAssemblyPath(), Messages = Messages.ToList() }.Save(path); }
 			catch (UnauthorizedAccessException) { }
 			catch (IOException) { }
 		}
 		string GetAssemblyPath()
 		{
 			var entity = (assemblyTree.SelectedItem as IMemberTreeNode)?.Member;
-			if (!string.IsNullOrWhiteSpace(entity?.ParentModule?.MetadataFile?.FileName)) return entity.ParentModule.MetadataFile.FileName;
+			if (!string.IsNullOrWhiteSpace(entity?.ParentModule?.MetadataFile?.FileName))
+				return entity.ParentModule.MetadataFile.FileName;
 			return assemblyTree.SelectedItem is ILSpyTreeNode node
 				? node.AncestorsAndSelf().OfType<AssemblyTreeNode>().FirstOrDefault()?.LoadedAssembly.FileName ?? string.Empty
 				: string.Empty;

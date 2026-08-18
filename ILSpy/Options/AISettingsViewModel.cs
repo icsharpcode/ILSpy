@@ -47,11 +47,9 @@ namespace ICSharpCode.ILSpy.Options
 
 		public IReadOnlyList<string> Providers { get; }
 
-		public AISettings Settings
-		{
+		public AISettings Settings {
 			get => settings;
-			private set
-			{
+			private set {
 				if (ReferenceEquals(settings, value))
 					return;
 				if (settings is not null)
@@ -66,11 +64,9 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		public string ApiKeyInput
-		{
+		public string ApiKeyInput {
 			get => apiKeyInput;
-			set
-			{
+			set {
 				if (!SetProperty(ref apiKeyInput, value ?? string.Empty))
 					return;
 				if (Settings is not null)
@@ -78,17 +74,14 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		public string StatusMessage
-		{
+		public string StatusMessage {
 			get => statusMessage;
 			private set => SetProperty(ref statusMessage, value);
 		}
 
-		public bool IsTestingConnection
-		{
+		public bool IsTestingConnection {
 			get => isTestingConnection;
-			private set
-			{
+			private set {
 				if (!SetProperty(ref isTestingConnection, value))
 					return;
 				OnPropertyChanged(nameof(CanTestConnection));
@@ -101,10 +94,8 @@ namespace ICSharpCode.ILSpy.Options
 			&& (!string.IsNullOrWhiteSpace(Settings.ApiKey)
 				|| !string.IsNullOrWhiteSpace(Settings.ApiKeyPlaceholder));
 
-		public bool CanTestConnection
-		{
-			get
-			{
+		public bool CanTestConnection {
+			get {
 				if (Settings is null || IsTestingConnection || !Settings.PrivacyConsentAccepted)
 					return false;
 				if (!AISettings.IsSupportedProvider(Settings.Provider)
@@ -290,7 +281,8 @@ namespace ICSharpCode.ILSpy.Options
 					return;
 				running = true;
 				RaiseCanExecuteChanged();
-				try { await execute(); }
+				try
+				{ await execute(); }
 				finally { running = false; RaiseCanExecuteChanged(); }
 			}
 			public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);

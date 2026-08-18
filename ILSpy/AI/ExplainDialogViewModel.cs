@@ -42,23 +42,19 @@ namespace ICSharpCode.ILSpy.AI
 		}
 
 		public string TargetName => entity.FullName;
-		public string Response
-		{
+		public string Response {
 			get => response;
 			private set { if (response != value) { response = value; PropertyChanged?.Invoke(this, new(nameof(Response))); PropertyChanged?.Invoke(this, new(nameof(CanCopy))); } }
 		}
-		public string ErrorMessage
-		{
+		public string ErrorMessage {
 			get => errorMessage;
 			private set { if (errorMessage != value) { errorMessage = value; PropertyChanged?.Invoke(this, new(nameof(ErrorMessage))); } }
 		}
-		public string StatusMessage
-		{
+		public string StatusMessage {
 			get => statusMessage;
 			private set { if (statusMessage != value) { statusMessage = value; PropertyChanged?.Invoke(this, new(nameof(StatusMessage))); } }
 		}
-		public bool IsBusy
-		{
+		public bool IsBusy {
 			get => isBusy;
 			private set { if (isBusy != value) { isBusy = value; PropertyChanged?.Invoke(this, new(nameof(IsBusy))); ((RelayCommand)CancelCommand).RaiseCanExecuteChanged(); } }
 		}

@@ -13,8 +13,7 @@ namespace ICSharpCode.ILSpyX.AI
 {
 	public sealed class ChatHistory
 	{
-		static readonly JsonSerializerOptions JsonOptions = new()
-		{
+		static readonly JsonSerializerOptions JsonOptions = new() {
 			WriteIndented = true
 		};
 

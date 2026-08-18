@@ -44,8 +44,7 @@ namespace ICSharpCode.ILSpy.AI
 
 		public string TargetName => entity.FullName;
 		public ObservableCollection<RenameSuggestion> Suggestions { get; } = new();
-		public RenameSuggestion? SelectedSuggestion
-		{
+		public RenameSuggestion? SelectedSuggestion {
 			get => selectedSuggestion;
 			set { if (selectedSuggestion != value) { selectedSuggestion = value; OnChanged(nameof(SelectedSuggestion)); OnChanged(nameof(CanApply)); ((RelayCommand)ApplyCommand).RaiseCanExecuteChanged(); } }
 		}

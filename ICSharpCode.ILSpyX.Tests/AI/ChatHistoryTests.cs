@@ -2,7 +2,9 @@
 
 using System;
 using System.IO;
+
 using ICSharpCode.ILSpyX.AI;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpyX.Tests.AI

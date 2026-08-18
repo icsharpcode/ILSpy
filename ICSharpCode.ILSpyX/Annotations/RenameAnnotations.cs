@@ -41,8 +41,7 @@ namespace ICSharpCode.ILSpyX.Annotations
 		public string SidecarPath { get; }
 		public string AssemblyHash { get; }
 
-		public IReadOnlyList<RenameAnnotation> Annotations
-		{
+		public IReadOnlyList<RenameAnnotation> Annotations {
 			get { lock (gate) return renames.Select(pair => new RenameAnnotation(pair.Key, pair.Value)).ToArray(); }
 		}
 
@@ -177,7 +176,8 @@ namespace ICSharpCode.ILSpyX.Annotations
 
 		static bool IsValidToken(string token)
 		{
-			try { _ = NormalizeToken(token); return true; }
+			try
+			{ _ = NormalizeToken(token); return true; }
 			catch (ArgumentException) { return false; }
 		}
 

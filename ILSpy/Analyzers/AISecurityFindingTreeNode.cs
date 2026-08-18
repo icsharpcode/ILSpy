@@ -41,8 +41,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 			ICollection<LoadedAssembly> addedAssemblies)
 		{
 			foreach (LoadedAssembly assembly in removedAssemblies)
-			if (Finding.Target.ParentModule?.MetadataFile == assembly.GetMetadataFileOrNull())
-				return false;
+				if (Finding.Target.ParentModule?.MetadataFile == assembly.GetMetadataFileOrNull())
+					return false;
 			return true;
 		}
 	}

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Dr. Masroor Ehsan
 
 using ICSharpCode.ILSpyX.AI;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpyX.Tests.AI

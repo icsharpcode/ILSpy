@@ -60,7 +60,8 @@ namespace ICSharpCode.ILSpy.AI.Controls
 
 		void ApplyMessage()
 		{
-			if (message == null) return;
+			if (message == null)
+				return;
 			RoleLabel.Text = message.IsAssistant ? AssistantRoleLabel : UserRoleLabel;
 			TimestampLabel.Text = FormatTimestamp(message.TimestampUtc);
 			ContentEditor.SetText(message.Content);

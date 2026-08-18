@@ -165,19 +165,25 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			while (true)
 			{
 				int read;
-				try { read = await reader.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false); }
+				try
+				{ read = await reader.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false); }
 				catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested) { throw new OperationCanceledException(cancellationToken); }
-				if (read == 0) break;
+				if (read == 0)
+					break;
 				for (int i = 0; i < read; i++)
 				{
 					char c = buffer[i];
-					if (skipLineFeed) { skipLineFeed = false; if (c == '\n') continue; }
-					if (c is '\r' or '\n') { yield return line.ToString(); line.Clear(); skipLineFeed = c == '\r'; continue; }
-					if (line.Length >= MaxSseLineLength) throw new HttpRequestException("API SSE event exceeded the maximum supported size.");
+					if (skipLineFeed)
+					{ skipLineFeed = false; if (c == '\n') continue; }
+					if (c is '\r' or '\n')
+					{ yield return line.ToString(); line.Clear(); skipLineFeed = c == '\r'; continue; }
+					if (line.Length >= MaxSseLineLength)
+						throw new HttpRequestException("API SSE event exceeded the maximum supported size.");
 					line.Append(c);
 				}
 			}
-			if (line.Length != 0) yield return line.ToString();
+			if (line.Length != 0)
+				yield return line.ToString();
 		}
 
 		static bool TryGetContent(string? eventName, string data, out string content)
@@ -220,7 +226,8 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			while (remaining > 0)
 			{
 				int read = await stream.ReadAsync(buffer.AsMemory(0, Math.Min(buffer.Length, remaining)), cancellationToken).ConfigureAwait(false);
-				if (read == 0) break;
+				if (read == 0)
+					break;
 				body.Write(buffer, 0, read);
 				remaining -= read;
 			}

@@ -42,11 +42,9 @@ namespace ICSharpCode.ILSpy.AI
 		public IReadOnlyList<RenameSuggestion> Suggestions => item.Suggestions;
 		public string Error => item.Error ?? string.Empty;
 		public bool HasError => !string.IsNullOrEmpty(Error);
-		public bool IsSelected
-		{
+		public bool IsSelected {
 			get => isSelected;
-			set
-			{
+			set {
 				if (isSelected == value)
 					return;
 				isSelected = value;
@@ -54,11 +52,9 @@ namespace ICSharpCode.ILSpy.AI
 				changed?.Invoke();
 			}
 		}
-		public RenameSuggestion? SelectedSuggestion
-		{
+		public RenameSuggestion? SelectedSuggestion {
 			get => selectedSuggestion;
-			set
-			{
+			set {
 				if (selectedSuggestion == value)
 					return;
 				selectedSuggestion = value;
@@ -116,12 +112,12 @@ namespace ICSharpCode.ILSpy.AI
 				IProgress<string> progress = new Progress<string>(name => StatusMessage = "Analyzing " + name);
 				IReadOnlyList<BatchRenameItem> suggestions = await Task.Run(
 					() => suggester.SuggestAsync(type, CreateDecompiler(type), progress, linked.Token), linked.Token).ConfigureAwait(false);
-			await Dispatcher.UIThread.InvokeAsync(() => {
-				foreach (BatchRenameItem item in suggestions)
-					Items.Add(new BatchRenameItemViewModel(item, RaiseCanApplyChanged));
-				StatusMessage = Items.Count == 0 ? "No obfuscated members found." : "Review proposed renames.";
-				OnChanged(nameof(CanApply));
-			});
+				await Dispatcher.UIThread.InvokeAsync(() => {
+					foreach (BatchRenameItem item in suggestions)
+						Items.Add(new BatchRenameItemViewModel(item, RaiseCanApplyChanged));
+					StatusMessage = Items.Count == 0 ? "No obfuscated members found." : "Review proposed renames.";
+					OnChanged(nameof(CanApply));
+				});
 			}
 			catch (OperationCanceledException)
 			{

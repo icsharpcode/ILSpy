@@ -247,9 +247,12 @@ namespace ICSharpCode.ILSpy.Search
 			if (string.IsNullOrWhiteSpace(term))
 				return;
 			SearchMode effectiveMode = SelectedSearchMode.Mode;
-			if (term.StartsWith("ai:", StringComparison.OrdinalIgnoreCase)) { effectiveMode = SearchMode.AI; term = term[3..].Trim(); }
-			else if (term.StartsWith("semantic:", StringComparison.OrdinalIgnoreCase)) { effectiveMode = SearchMode.Semantic; term = term[9..].Trim(); }
-			if (term.Length == 0) return;
+			if (term.StartsWith("ai:", StringComparison.OrdinalIgnoreCase))
+			{ effectiveMode = SearchMode.AI; term = term[3..].Trim(); }
+			else if (term.StartsWith("semantic:", StringComparison.OrdinalIgnoreCase))
+			{ effectiveMode = SearchMode.Semantic; term = term[9..].Trim(); }
+			if (term.Length == 0)
+				return;
 
 			var assemblyTreeModel = AppComposition.TryGetExport<AssemblyTreeModel>();
 			var assemblyList = assemblyTreeModel?.AssemblyList;
@@ -311,20 +314,25 @@ namespace ICSharpCode.ILSpy.Search
 					if (mode == SearchMode.AI && entities.Count == 0)
 					{
 						await Dispatcher.UIThread.InvokeAsync(() => {
-							if (ReferenceEquals(specialSearchCancellation, cts)) StartFallbackSearch(term);
+							if (ReferenceEquals(specialSearchCancellation, cts))
+								StartFallbackSearch(term);
 						});
 						return;
 					}
 					await Dispatcher.UIThread.InvokeAsync(() => {
-						if (!ReferenceEquals(specialSearchCancellation, cts)) return;
-						foreach (var entity in entities) Results.Add(factory.Create(entity));
+						if (!ReferenceEquals(specialSearchCancellation, cts))
+							return;
+						foreach (var entity in entities)
+							Results.Add(factory.Create(entity));
 						IsSearching = false;
 					});
 				}
 				catch (OperationCanceledException) { }
-				catch (Exception) {
+				catch (Exception)
+				{
 					await Dispatcher.UIThread.InvokeAsync(() => {
-						if (!ReferenceEquals(specialSearchCancellation, cts)) return;
+						if (!ReferenceEquals(specialSearchCancellation, cts))
+							return;
 						IsSearching = false;
 						StartFallbackSearch(term);
 					});
@@ -338,7 +346,8 @@ namespace ICSharpCode.ILSpy.Search
 			var assemblyTreeModel = AppComposition.TryGetExport<AssemblyTreeModel>();
 			var assemblyList = assemblyTreeModel?.AssemblyList;
 			var language = AppComposition.TryGetExport<LanguageService>()?.CurrentLanguage;
-			if (assemblyList == null || language == null) { IsSearching = false; return; }
+			if (assemblyList == null || language == null)
+			{ IsSearching = false; return; }
 			var settings = AppComposition.TryGetExport<SettingsService>();
 			var run = new RunningSearch(assemblyList.GetAssemblies(), term, SearchMode.TypeAndMember, language,
 				settings?.SessionSettings?.LanguageSettings?.ShowApiLevel ?? ApiVisibility.PublicOnly,
