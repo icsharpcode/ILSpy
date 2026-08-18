@@ -94,6 +94,7 @@
     <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
     <PackageReference Include="Mono.Cecil" />
+    <PackageReference Include="Markdig" />
     <PackageReference Include="K4os.Compression.LZ4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.SourceLink.GitHub">
