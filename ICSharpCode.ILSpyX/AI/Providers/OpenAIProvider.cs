@@ -27,6 +27,7 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 		private const int MaxSseLineLength = MaxSseEventLength + 6;
 
 		private readonly Uri endpoint;
+		private readonly string logSafeEndpoint;
 		private readonly string? apiKey;
 		private readonly string model;
 		private readonly HttpClient httpClient;
@@ -53,12 +54,13 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 				? path + "/chat/completions"
 				: path + "/v1/chat/completions";
 			this.endpoint = endpointBuilder.Uri;
+			logSafeEndpoint = SanitizeForLogs(endpoint);
 			this.apiKey = string.IsNullOrWhiteSpace(apiKey) ? null : apiKey.Trim();
 			this.model = model.Trim();
 			this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
 			this.logger = loggerFactory?.CreateLogger<OpenAIProvider>() ?? NullLogger<OpenAIProvider>.Instance;
 
-			logger.LogInformation("OpenAIProvider initialized with endpoint: {Endpoint}, model: {Model}", endpoint, model);
+			logger.LogInformation("OpenAIProvider initialized with endpoint: {Endpoint}, model: {Model}", logSafeEndpoint, model);
 		}
 
 		public async IAsyncEnumerable<string> CompleteAsync(
@@ -85,7 +87,7 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			};
 
 			string payloadJson = JsonSerializer.Serialize(payload);
-			logger.LogTrace("Request payload: {Payload}", payloadJson);
+			logger.LogTrace("Request payload serialized: {PayloadLength} chars", payloadJson.Length);
 
 			using var requestMessage = new HttpRequestMessage(HttpMethod.Post, endpoint) {
 				Content = new StringContent(
@@ -98,7 +100,7 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 				requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 			requestMessage.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("text/event-stream"));
 
-			logger.LogInformation("Sending HTTP POST to {Endpoint}", endpoint);
+			logger.LogInformation("Sending HTTP POST to {Endpoint}", logSafeEndpoint);
 
 			HttpResponseMessage response;
 			try
@@ -195,7 +197,7 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 
 		public async Task<bool> TestConnectionAsync(CancellationToken cancellationToken)
 		{
-			logger.LogInformation("Starting connection test to {Endpoint}", endpoint);
+			logger.LogInformation("Starting connection test to {Endpoint}", logSafeEndpoint);
 			try
 			{
 				var request = new LLMRequest(
@@ -231,7 +233,7 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 		{
 			try
 			{
-				logger.LogDebug("Sending HTTP request to {Uri}", request.RequestUri);
+				logger.LogDebug("Sending HTTP request to {Uri}", logSafeEndpoint);
 				var response = await httpClient.SendAsync(
 					request,
 					HttpCompletionOption.ResponseHeadersRead,
@@ -335,6 +337,14 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 			return data;
 		}
 
+		private static string SanitizeForLogs(Uri uri)
+		{
+			if (string.IsNullOrEmpty(uri.UserInfo))
+				return uri.ToString();
+			var builder = new UriBuilder(uri) { UserName = string.Empty, Password = string.Empty };
+			return builder.Uri.ToString();
+		}
+
 		private static bool TryGetContent(string data, out string content)
 		{
 			content = string.Empty;
@@ -344,7 +354,8 @@ namespace ICSharpCode.ILSpyX.AI.Providers
 				using JsonDocument json = JsonDocument.Parse(data);
 				JsonElement root = json.RootElement;
 
-				if (root.TryGetProperty("error", out JsonElement error))
+				if (root.TryGetProperty("error", out JsonElement error)
+					&& error.ValueKind is JsonValueKind.Object or JsonValueKind.String)
 				{
 					string message = error.ValueKind == JsonValueKind.Object
 						&& error.TryGetProperty("message", out JsonElement errorMessage)

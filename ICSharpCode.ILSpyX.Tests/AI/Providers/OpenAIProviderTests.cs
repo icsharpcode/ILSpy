@@ -14,6 +14,8 @@ using System.Threading.Tasks;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.AI.Providers;
 
+using Microsoft.Extensions.Logging;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.ILSpyX.Tests.AI.Providers
@@ -166,6 +168,19 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 		}
 
 		[Test]
+		public async Task CompleteAsync_IgnoresNullErrorProperty()
+		{
+			const string responseBody = "data: {\"choices\":[{\"delta\":{\"content\":\"ok\"}}],\"error\":null}\n\n"
+				+ "data: [DONE]\n\n";
+			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => CreateStreamingResponse(responseBody)));
+			var provider = new OpenAIProvider("https://example.com", "key", "model", httpClient);
+
+			var chunks = await ConsumeAsync(provider.CompleteAsync(ValidRequest(), CancellationToken.None));
+
+			Assert.That(chunks, Is.EqualTo(new[] { "ok" }));
+		}
+
+		[Test]
 		public void CompleteAsync_ThrowsForStreamingError()
 		{
 			const string responseBody = "data: {\"error\":{\"message\":\"stream failed\"}}\n\n";
@@ -267,6 +282,28 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 		}
 
 		[Test]
+		public async Task CompleteAsync_DoesNotLogPayloadOrCredentials()
+		{
+			const string uniquePayloadMarker = "unique-payload-marker-7f3a";
+			const string uniqueKeyMarker = "secret-api-key-marker-9c1b";
+			const string responseBody = "data: {\"choices\":[{\"delta\":{\"content\":\"Hello\"}}]}\n\n"
+				+ "data: [DONE]\n\n";
+			using var httpClient = new HttpClient(new FakeHttpMessageHandler(_ => CreateStreamingResponse(responseBody)));
+			using var loggerFactory = new CollectingLoggerFactory();
+			var provider = new OpenAIProvider("https://user:p%40ss@example.com", uniqueKeyMarker, "model", httpClient, loggerFactory);
+			var request = new LLMRequest("system marker", new[] { new LLMMessage("user", uniquePayloadMarker) }, 10);
+
+			await ConsumeAsync(provider.CompleteAsync(request, CancellationToken.None));
+
+			foreach (string message in loggerFactory.Messages)
+			{
+				Assert.That(message, Does.Not.Contain(uniquePayloadMarker));
+				Assert.That(message, Does.Not.Contain(uniqueKeyMarker));
+				Assert.That(message, Does.Not.Contain("p%40ss"));
+			}
+		}
+
+		[Test]
 		public void TestConnectionAsync_DoesNotSwallowCancellation()
 		{
 			var handler = new FakeHttpMessageHandler(async (_, cancellationToken) => {
@@ -346,6 +383,45 @@ namespace ICSharpCode.ILSpyX.Tests.AI.Providers
 		{
 			Assert.That(message.GetProperty("role").GetString(), Is.EqualTo(role));
 			Assert.That(message.GetProperty("content").GetString(), Is.EqualTo(content));
+		}
+
+		private sealed class CollectingLoggerFactory : ILoggerFactory
+		{
+			public List<string> Messages { get; } = new List<string>();
+
+			public void AddProvider(ILoggerProvider provider)
+			{
+			}
+
+			public ILogger CreateLogger(string categoryName)
+			{
+				return new CollectingLogger(Messages);
+			}
+
+			public void Dispose()
+			{
+			}
+
+			private sealed class CollectingLogger : ILogger
+			{
+				private readonly List<string> messages;
+
+				public CollectingLogger(List<string> messages)
+				{
+					this.messages = messages;
+				}
+
+				public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+				public bool IsEnabled(LogLevel logLevel) => true;
+
+				public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+				{
+					messages.Add(formatter(state, exception));
+					if (exception != null)
+						messages.Add(exception.ToString());
+				}
+			}
 		}
 
 		private sealed class FakeHttpMessageHandler : HttpMessageHandler
