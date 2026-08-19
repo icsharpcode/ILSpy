@@ -62,7 +62,7 @@ namespace ICSharpCode.ILSpy.AI
 		[ObservableProperty] string statusMessage = "Ready";
 		[ObservableProperty] string errorMessage = string.Empty;
 		public bool ShowSuggestions => Input.StartsWith("/", StringComparison.Ordinal);
-		public string[] CommandSuggestions { get; } = { "/explain", "/rename ", "/audit", "/summary" };
+		public string[] CommandSuggestions { get; } = { "/help", "/clear", "/explain", "/rename ", "/audit", "/summary" };
 
 		[ImportingConstructor]
 		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AISelectionService selectionService, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
@@ -241,10 +241,10 @@ namespace ICSharpCode.ILSpy.AI
 				return false;
 			int space = text.IndexOf(' ');
 			string command = (space < 0 ? text : text[..space]).ToLowerInvariant();
-			string argument = space < 0 ? string.Empty : text[(space + 1)..].Trim();
 			switch (command)
 			{
 				case "/help":
+					await SetUiStateAsync(() => Input = string.Empty);
 					await AppendLocalMessageAsync("Supported commands: /help, /clear, /explain, /rename, /audit, /summary.");
 					await SetUiStateAsync(() => StatusMessage = "Ready");
 					return true;
@@ -253,6 +253,7 @@ namespace ICSharpCode.ILSpy.AI
 					return true;
 				case "/audit":
 				case "/summary":
+					await SetUiStateAsync(() => Input = string.Empty);
 					await AppendLocalMessageAsync($"{command} is unavailable from chat until its host pipeline is connected. Use the corresponding application command.");
 					await SetUiStateAsync(() => StatusMessage = "Command unavailable");
 					return true;
@@ -260,6 +261,7 @@ namespace ICSharpCode.ILSpy.AI
 				case "/rename":
 					return false;
 				default:
+					await SetUiStateAsync(() => Input = string.Empty);
 					await AppendLocalMessageAsync($"Unsupported command '{command}'. Type /help for supported commands.");
 					await SetUiStateAsync(() => StatusMessage = "Unknown command");
 					return true;
@@ -306,7 +308,7 @@ namespace ICSharpCode.ILSpy.AI
 		void Cancel() { cancellation?.Cancel(); }
 
 		[RelayCommand]
-		void Clear() { cancellation?.Cancel(); Messages.Clear(); loadedHistory.ActiveConversation.Messages.Clear(); SaveHistory(); conversationGeneration++; Interlocked.Increment(ref requestGeneration); StatusMessage = "Ready"; ErrorMessage = string.Empty; }
+		void Clear() { cancellation?.Cancel(); Input = string.Empty; Messages.Clear(); loadedHistory.ActiveConversation.Messages.Clear(); SaveHistory(); conversationGeneration++; Interlocked.Increment(ref requestGeneration); StatusMessage = "Ready"; ErrorMessage = string.Empty; }
 
 		[RelayCommand]
 		void OpenSettings()
