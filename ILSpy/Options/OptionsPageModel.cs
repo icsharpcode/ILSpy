@@ -69,6 +69,11 @@ namespace ICSharpCode.ILSpy.Options
 
 		public IRelayCommand ResetCurrentPageCommand { get; }
 
+		public void SelectPage<TPage>() where TPage : class, IOptionPage
+		{
+			SelectedPage = Pages.OfType<TPage>().FirstOrDefault() ?? SelectedPage;
+		}
+
 		void ResetCurrentPage() => SelectedPage?.LoadDefaults();
 	}
 }

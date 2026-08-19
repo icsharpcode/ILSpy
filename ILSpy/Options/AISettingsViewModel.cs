@@ -572,6 +572,12 @@ namespace ICSharpCode.ILSpy.Options
 
 		async Task CommitDraftAsync(AIProfile draftProfile, string? replacementKey, bool replaceKey, bool removeKey = false)
 		{
+			if (selectionService is null)
+			{
+				ApiKeyInput = string.Empty;
+				StatusMessage = "AI profile persistence is unavailable.";
+				return;
+			}
 			draftProfile.Normalize();
 			IReadOnlyList<string> errors = draftProfile.Validate();
 			if (errors.Count != 0)
@@ -608,12 +614,6 @@ namespace ICSharpCode.ILSpy.Options
 					draftProfile.HasStoredKey = false;
 				}
 
-				if (selectionService is null)
-				{
-					ApiKeyInput = string.Empty;
-					StatusMessage = "AI profile persistence is unavailable.";
-					return;
-				}
 				await selectionService.SaveProfileAsync(draftProfile.Clone());
 
 				selectedProfile = Settings.Profiles.FirstOrDefault(profile => profile.Id == draftProfile.Id);

@@ -131,6 +131,7 @@ public class AISettingsViewModelTests
 		settings.ActiveProfile.HasStoredKey.Should().BeFalse();
 		viewModel.AIProfileDraft.Name.Should().Be("Changed");
 		viewModel.StatusMessage.Should().NotContain("super-secret-test-key");
+		viewModel.ApiKeyInput.Should().BeEmpty();
 		Serialize(settings).Should().NotContain("super-secret-test-key");
 		backend.LastIdentifier.Should().Be(viewModel.AIProfileDraft.CredentialId);
 	}
@@ -173,6 +174,14 @@ public class AISettingsViewModelTests
 		var viewModel = new AISettingsViewModel(
 			providerFactory ?? new RecordingProviderFactory(),
 			new SecureKeyStorage(backend));
+		var selectionService = (AISelectionService)Activator.CreateInstance(
+			typeof(AISelectionService),
+			BindingFlags.Instance | BindingFlags.NonPublic,
+			binder: null,
+			args: new object?[] { settings, new SecureKeyStorage(backend), null },
+			culture: null)!;
+		typeof(AISettingsViewModel).GetField("selectionService", BindingFlags.Instance | BindingFlags.NonPublic)!
+			.SetValue(viewModel, selectionService);
 		typeof(AISettingsViewModel).GetProperty(nameof(AISettingsViewModel.Settings))!
 			.SetValue(viewModel, settings);
 		typeof(AISettingsViewModel).GetProperty(nameof(AISettingsViewModel.AIProfileDraft))!

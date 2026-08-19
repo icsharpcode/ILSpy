@@ -344,11 +344,11 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			ContentTabPage tab = dockWorkspace.OpenSingletonTab("options", () => {
 				var options = new OptionsPageModel(settingsService, optionPages);
-				options.SelectedPage = options.Pages.OfType<AISettingsViewModel>().FirstOrDefault() ?? options.SelectedPage;
+				options.SelectPage<AISettingsViewModel>();
 				return dockWorkspace.OpenNewTab(options);
 			});
 			if (tab.Content is OptionsPageModel existing)
-				existing.SelectedPage = existing.Pages.OfType<AISettingsViewModel>().FirstOrDefault() ?? existing.SelectedPage;
+				existing.SelectPage<AISettingsViewModel>();
 		}
 
 		[RelayCommand]
