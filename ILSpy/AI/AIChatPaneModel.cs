@@ -43,6 +43,7 @@ namespace ICSharpCode.ILSpy.AI
 		readonly DockWorkspace dockWorkspace;
 		readonly IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages;
 		CancellationTokenSource? cancellation;
+		long requestGeneration;
 		string loadedHistoryPath = string.Empty;
 		AIConversationTarget? loadedTarget;
 		long conversationGeneration;
@@ -53,6 +54,7 @@ namespace ICSharpCode.ILSpy.AI
 		public IReadOnlyList<string> Models => ActiveProfile.Models;
 		[ObservableProperty] string readinessMessage = string.Empty;
 		public bool IsReady => string.IsNullOrEmpty(ReadinessMessage);
+		public bool CanOpenAISettings => !IsReady;
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(ShowSuggestions))]
 		string input = string.Empty;
@@ -63,11 +65,11 @@ namespace ICSharpCode.ILSpy.AI
 		public string[] CommandSuggestions { get; } = { "/explain", "/rename ", "/audit", "/summary" };
 
 		[ImportingConstructor]
-		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
+		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AISelectionService selectionService, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
-			selectionService = AppComposition.TryGetExport<AISelectionService>() ?? throw new InvalidOperationException("AI selection service is unavailable.");
+			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
 			this.optionPages = optionPages ?? throw new ArgumentNullException(nameof(optionPages));
@@ -85,6 +87,7 @@ namespace ICSharpCode.ILSpy.AI
 			await Dispatcher.UIThread.InvokeAsync(() => {
 				ReadinessMessage = state.IsReady ? string.Empty : state.Message;
 				OnPropertyChanged(nameof(IsReady));
+				OnPropertyChanged(nameof(CanOpenAISettings));
 				OnPropertyChanged(nameof(ActiveProfile));
 				OnPropertyChanged(nameof(Models));
 			});
@@ -141,6 +144,8 @@ namespace ICSharpCode.ILSpy.AI
 			string text = Input.Trim();
 			if (text.Length == 0 || IsBusy)
 				return;
+			if (await DispatchLocalCommandAsync(text).ConfigureAwait(false))
+				return;
 			AISelectionSnapshot snapshot;
 			try
 			{
@@ -148,24 +153,34 @@ namespace ICSharpCode.ILSpy.AI
 			}
 			catch (AIConfigurationException ex)
 			{
-				ErrorMessage = ex.Message;
-				StatusMessage = "AI settings required";
+				await SetUiStateAsync(() => {
+					ReadinessMessage = ex.Message;
+					ErrorMessage = ex.Message;
+					StatusMessage = "AI settings required";
+					OnPropertyChanged(nameof(IsReady));
+					OnPropertyChanged(nameof(CanOpenAISettings));
+				});
 				return;
 			}
-			Input = string.Empty;
-			EnsureConversation(snapshot);
-			if (text.StartsWith('/'))
-				text = ExpandCommand(text);
-			var user = new ChatMessage { Role = "user", Content = text };
-			Messages.Add(user);
-			TrimHistory();
-			var assistant = new ChatMessage { Role = "assistant" };
-			Messages.Add(assistant);
-			long requestGeneration = conversationGeneration;
-			string requestConversationId = loadedHistory.ActiveConversationId;
-			IsBusy = true;
-			ErrorMessage = string.Empty;
-			StatusMessage = "Generating…";
+			ChatMessage assistant = new() { Role = "assistant" };
+			long requestConversationGeneration = 0;
+			long requestId = 0;
+			string requestConversationId = string.Empty;
+			await SetUiStateAsync(() => {
+				Input = string.Empty;
+				EnsureConversation(snapshot);
+				if (text.StartsWith('/'))
+					text = ExpandCommand(text);
+				Messages.Add(new ChatMessage { Role = "user", Content = text });
+				TrimHistory();
+				Messages.Add(assistant);
+				requestConversationGeneration = conversationGeneration;
+				requestId = Interlocked.Increment(ref requestGeneration);
+				requestConversationId = loadedHistory.ActiveConversationId;
+				IsBusy = true;
+				ErrorMessage = string.Empty;
+				StatusMessage = "Generating…";
+			});
 			cancellation?.Cancel();
 			var cts = new CancellationTokenSource();
 			cancellation = cts;
@@ -181,18 +196,90 @@ namespace ICSharpCode.ILSpy.AI
 					builder.Append(chunk);
 					string contentSnapshot = builder.ToString();
 					await Dispatcher.UIThread.InvokeAsync(() => {
-						if (requestGeneration == conversationGeneration
-							&& requestConversationId == loadedHistory.ActiveConversationId
-							&& Messages.Contains(assistant))
+						if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration
+						&& requestConversationId == loadedHistory.ActiveConversationId
+						&& Messages.Contains(assistant))
 							assistant.Content = contentSnapshot;
 					});
 				}
-				StatusMessage = "Complete";
-				SaveHistory();
+				await SetUiStateAsync(() => {
+					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+						StatusMessage = "Complete";
+				});
+				if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+					SaveHistory();
 			}
-			catch (OperationCanceledException) { StatusMessage = "Canceled"; }
-			catch (Exception ex) { ErrorMessage = ex.Message; StatusMessage = "Request failed"; }
-			finally { IsBusy = false; if (ReferenceEquals(cancellation, cts)) cancellation = null; cts.Dispose(); }
+			catch (OperationCanceledException)
+			{
+				await SetUiStateAsync(() => {
+					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+						StatusMessage = "Canceled";
+				});
+			}
+			catch (Exception ex)
+			{
+				await SetUiStateAsync(() => {
+					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+					{ ErrorMessage = ex.Message; StatusMessage = "Request failed"; }
+				});
+			}
+			finally
+			{
+				await SetUiStateAsync(() => {
+					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+						IsBusy = false;
+				});
+				if (ReferenceEquals(cancellation, cts))
+					cancellation = null;
+				cts.Dispose();
+			}
+		}
+
+		async Task<bool> DispatchLocalCommandAsync(string text)
+		{
+			if (!text.StartsWith("/", StringComparison.Ordinal))
+				return false;
+			int space = text.IndexOf(' ');
+			string command = (space < 0 ? text : text[..space]).ToLowerInvariant();
+			string argument = space < 0 ? string.Empty : text[(space + 1)..].Trim();
+			switch (command)
+			{
+				case "/help":
+					await AppendLocalMessageAsync("Supported commands: /help, /clear, /explain, /rename, /audit, /summary.");
+					await SetUiStateAsync(() => StatusMessage = "Ready");
+					return true;
+				case "/clear":
+					Clear();
+					return true;
+				case "/audit":
+				case "/summary":
+					await AppendLocalMessageAsync($"{command} is unavailable from chat until its host pipeline is connected. Use the corresponding application command.");
+					await SetUiStateAsync(() => StatusMessage = "Command unavailable");
+					return true;
+				case "/explain":
+				case "/rename":
+					return false;
+				default:
+					await AppendLocalMessageAsync($"Unsupported command '{command}'. Type /help for supported commands.");
+					await SetUiStateAsync(() => StatusMessage = "Unknown command");
+					return true;
+			}
+		}
+
+		async Task AppendLocalMessageAsync(string content)
+		{
+			await SetUiStateAsync(() => {
+				Messages.Add(new ChatMessage { Role = "assistant", Content = content });
+				TrimHistory();
+				SaveHistory();
+			});
+		}
+
+		static Task SetUiStateAsync(Action action)
+		{
+			if (Dispatcher.UIThread.CheckAccess())
+			{ action(); return Task.CompletedTask; }
+			return Dispatcher.UIThread.InvokeAsync(action).GetTask();
 		}
 
 		string ExpandCommand(string command)
@@ -219,7 +306,7 @@ namespace ICSharpCode.ILSpy.AI
 		void Cancel() { cancellation?.Cancel(); }
 
 		[RelayCommand]
-		void Clear() { cancellation?.Cancel(); Messages.Clear(); SaveHistory(); conversationGeneration++; StatusMessage = "Ready"; ErrorMessage = string.Empty; }
+		void Clear() { cancellation?.Cancel(); Messages.Clear(); loadedHistory.ActiveConversation.Messages.Clear(); SaveHistory(); conversationGeneration++; Interlocked.Increment(ref requestGeneration); StatusMessage = "Ready"; ErrorMessage = string.Empty; }
 
 		[RelayCommand]
 		void OpenSettings()

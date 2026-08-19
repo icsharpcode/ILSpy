@@ -19,7 +19,7 @@
       </StackPanel>
       <StackPanel Orientation="Horizontal" Spacing="8">
         <TextBlock Text="{Binding ReadinessMessage}" Foreground="IndianRed" TextWrapping="Wrap" />
-        <Button Content="Open AI Settings" Command="{Binding OpenSettingsCommand}" IsVisible="{Binding !IsReady}" />
+        <Button Content="Open AI Settings" Command="{Binding OpenSettingsCommand}" IsVisible="{Binding CanOpenAISettings}" />
       </StackPanel>
       <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding StatusMessage}"/><TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed"/></StackPanel>
     </StackPanel>
