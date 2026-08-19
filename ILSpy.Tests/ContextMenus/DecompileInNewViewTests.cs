@@ -250,6 +250,8 @@ public class DecompileInNewViewTests
 			.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => RowNodeEquals(r, node));
 
+		var menu = grid.ContextMenu!;
+
 		async Task RightClick(SharpTreeNode node)
 		{
 			var row = Row(node);
@@ -257,21 +259,23 @@ public class DecompileInNewViewTests
 			var pt = row.TranslatePoint(new Point(clickX, row.Bounds.Height / 2), window);
 			HeadlessWindowExtensions.MouseDown(window, pt!.Value, MouseButton.Right);
 			HeadlessWindowExtensions.MouseUp(window, pt.Value, MouseButton.Right);
-			for (int i = 0; i < 4; i++)
-			{
-				Dispatcher.UIThread.RunJobs();
-				await Task.Delay(20);
-			}
+			// The highlight is scoped to the popup - set while the menu is being requested, dropped
+			// again when it closes - so the popup is the point at which the gesture is finished and
+			// the row's classes are worth reading.
+			await Waiters.WaitForAsync(() => menu.IsOpen, description: "the right-clicked row's context menu to open");
 		}
 
 		async Task Dismiss()
 		{
 			window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, keySymbol: null);
+			await Waiters.WaitForAsync(() => !menu.IsOpen, description: "the context menu to close");
+			// IsOpen flips the moment the popup is torn down, but the frame that still shows its
+			// light-dismiss overlay is what answers hit tests until the scene is rendered again.
+			// Right-clicking into that frame delivers press and release to the vanishing overlay
+			// instead of the row: no ContextRequested is raised at all, so nothing becomes the
+			// context target and the next assertion sees a row with no classes on it.
 			for (int i = 0; i < 4; i++)
-			{
-				Dispatcher.UIThread.RunJobs();
-				await Task.Delay(20);
-			}
+				Waiters.PumpUI();
 		}
 
 		await RightClick(nodeB);

@@ -22,6 +22,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 using Avalonia;
+using Avalonia.Headless;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -51,11 +52,27 @@ public static class Waiters
 		{
 			if (predicate())
 				return;
-			Dispatcher.UIThread.RunJobs();
+			PumpUI();
 			await Task.Delay(PollInterval);
 		}
 		throw new TimeoutException(
 			$"Timed out after {(timeout ?? DefaultTimeout).TotalSeconds:0.#}s waiting for: {description}");
+	}
+
+	/// <summary>
+	/// Advances the UI by one step: runs the queued dispatcher jobs and renders a frame.
+	/// </summary>
+	/// <remarks>
+	/// Both halves matter. Hit testing for synthesized input is answered from the rendered scene,
+	/// not from the visual tree, so a loop that only runs dispatcher jobs leaves input routing a
+	/// frame behind: a click can still be delivered to a control the last frame shows but the tree
+	/// no longer has - a closed popup's light-dismiss overlay, for one - and never reach what is
+	/// underneath. Avalonia's own headless input helpers pump both for exactly this reason.
+	/// </remarks>
+	public static void PumpUI()
+	{
+		Dispatcher.UIThread.RunJobs();
+		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
 	}
 
 	public static async Task WaitForAssembliesAsync(
