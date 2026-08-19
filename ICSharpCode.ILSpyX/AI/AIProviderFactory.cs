@@ -62,6 +62,7 @@ namespace ICSharpCode.ILSpyX.AI
 			this.loggerFactory = loggerFactory;
 		}
 
+		[Obsolete("Resolve an AISelectionSnapshot before creating a provider.")]
 		public async Task<ILLMProvider> CreateAsync(AISettings settings, CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(settings);
@@ -87,16 +88,24 @@ namespace ICSharpCode.ILSpyX.AI
 				if (result.Status == SecureKeyLookupStatus.Unavailable)
 					throw new AIConfigurationException("Secure API-key storage is unavailable.");
 				apiKey = result.Value;
-				if (!string.IsNullOrWhiteSpace(apiKey))
-					settings.ApiKey = apiKey;
 			}
 
 			if (provider is not "ollama" && string.IsNullOrWhiteSpace(apiKey))
 				throw new AIConfigurationException("Configure an API key before using this provider.");
 
-			return provider == "anthropic"
-				? new Providers.AnthropicProvider(settings.BaseUrl, apiKey!, settings.Model, httpClient)
-				: new Providers.OpenAIProvider(settings.BaseUrl, apiKey, settings.Model, httpClient, loggerFactory);
+			return await CreateAsync(new AISelectionSnapshot {
+				ProfileId = settings.ActiveProfile.Id,
+				ProfileName = settings.ActiveProfile.Name,
+				ProviderType = provider,
+				Endpoint = settings.BaseUrl,
+				Model = settings.Model,
+				CredentialId = settings.ActiveProfile.CredentialId,
+				ApiKey = apiKey,
+				MaxContextTokens = settings.MaxContextTokens,
+				StreamResponses = settings.StreamResponses,
+				SendIL = settings.SendIL,
+				SendCallGraph = settings.SendCallGraph
+			}, cancellationToken).ConfigureAwait(false);
 		}
 
 		public Task<ILLMProvider> CreateAsync(AISelectionSnapshot snapshot, CancellationToken cancellationToken = default)
