@@ -295,6 +295,23 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, newOffsetY);
 		}
 
+		protected override bool ShouldTriggerSelection(Visual selectable, KeyEventArgs eventArgs)
+		{
+			// Avalonia treats Enter and Space as selection input. For a single selected
+			// tree item, let SharpTreeView handle those keys instead.
+			// https://docs.avaloniaui.net/docs/avalonia12-breaking-changes#customizing-selection-behavior
+			if (eventArgs.KeyModifiers == KeyModifiers.None
+				&& eventArgs.Key is Key.Enter or Key.Space
+				&& selectable is SharpTreeViewItem { Node: { } node }
+				&& SelectedItems?.Count == 1
+				&& ReferenceEquals(SelectedItem, node))
+			{
+				return false;
+			}
+
+			return base.ShouldTriggerSelection(selectable, eventArgs);
+		}
+
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			// Ctrl+A select-all must work on the first press even before a current item is
