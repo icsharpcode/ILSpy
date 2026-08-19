@@ -21,6 +21,8 @@ using System.Composition;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.ViewModels;
@@ -32,6 +34,14 @@ namespace ICSharpCode.ILSpy.Views
 	public partial class MainWindow : Window
 	{
 		readonly SettingsService? settingsService;
+
+		static MainWindow()
+		{
+			PointerReleasedEvent.AddClassHandler<MainWindow>(
+				OnBrowserNavigationPointerReleased,
+				RoutingStrategies.Bubble,
+				handledEventsToo: true);
+		}
 
 		public MainWindow()
 		{
@@ -75,6 +85,24 @@ namespace ICSharpCode.ILSpy.Views
 					Avalonia.Threading.DispatcherPriority.Background);
 			};
 			AppLog.Mark("MainWindow ctor exited");
+		}
+
+		static void OnBrowserNavigationPointerReleased(MainWindow window, PointerReleasedEventArgs e)
+		{
+			if (window.DataContext is not MainWindowViewModel viewModel)
+				return;
+
+			var command = e.InitialPressMouseButton switch {
+				MouseButton.XButton1 => viewModel.DockWorkspace.NavigateBackCommand,
+				MouseButton.XButton2 => viewModel.DockWorkspace.NavigateForwardCommand,
+				_ => null
+			};
+
+			if (command?.CanExecute(null) == true)
+			{
+				command.Execute(null);
+				e.Handled = true;
+			}
 		}
 
 		static void SurfaceCompositionErrors()
