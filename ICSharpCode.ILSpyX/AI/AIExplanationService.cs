@@ -17,12 +17,23 @@ namespace ICSharpCode.ILSpyX.AI
 	{
 		public const string SystemPrompt = "You explain decompiled .NET code concisely. State uncertainty when context is incomplete. Never instruct the user to execute code.";
 
-		readonly AISettings settings;
+		readonly AISettings? settings;
+		readonly AISelectionSnapshot? snapshot;
 		readonly IAIProviderFactory providerFactory;
 
 		public AIExplanationService(AISettings settings, IAIProviderFactory providerFactory)
 		{
 			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+		}
+
+		/// <summary>
+		/// Creates a service bound to an immutable request target. Consent and readiness were
+		/// enforced when the snapshot was resolved, and later settings edits cannot affect it.
+		/// </summary>
+		public AIExplanationService(AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
+		{
+			this.snapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 		}
 
@@ -34,7 +45,7 @@ namespace ICSharpCode.ILSpyX.AI
 			ArgumentNullException.ThrowIfNull(entity);
 			ArgumentNullException.ThrowIfNull(decompiler);
 			DecompilationContext context = await Task.Run(
-				() => new ContextBuilder(settings).Build(entity, decompiler),
+				() => CreateContextBuilder().Build(entity, decompiler),
 				cancellationToken).ConfigureAwait(false);
 			await foreach (string chunk in ExplainContextStreamingAsync(context, cancellationToken).ConfigureAwait(false))
 				yield return chunk;
@@ -44,7 +55,7 @@ namespace ICSharpCode.ILSpyX.AI
 		{
 			ArgumentNullException.ThrowIfNull(entity);
 			ArgumentNullException.ThrowIfNull(decompiler);
-			DecompilationContext context = new ContextBuilder(settings).Build(entity, decompiler);
+			DecompilationContext context = CreateContextBuilder().Build(entity, decompiler);
 			return await ExplainContextAsync(context, cancellationToken).ConfigureAwait(false);
 		}
 
@@ -76,7 +87,7 @@ namespace ICSharpCode.ILSpyX.AI
 			try
 			{
 				EnsureConsent();
-				provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
+				provider = await CreateProviderAsync(cancellationToken).ConfigureAwait(false);
 			}
 			catch (Exception exception) when (exception is not (OperationCanceledException or AIConfigurationException or AIRequestException))
 			{
@@ -148,7 +159,7 @@ namespace ICSharpCode.ILSpyX.AI
 		public async Task<bool> TestConnectionAsync(CancellationToken cancellationToken = default)
 		{
 			EnsureConsent();
-			ILLMProvider provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
+			ILLMProvider provider = await CreateProviderAsync(cancellationToken).ConfigureAwait(false);
 			try
 			{
 				return await provider.TestConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -165,8 +176,22 @@ namespace ICSharpCode.ILSpyX.AI
 
 		void EnsureConsent()
 		{
-			if (!settings.PrivacyConsentAccepted)
+			if (settings is { PrivacyConsentAccepted: false })
 				throw new AIConfigurationException("Accept the privacy notice before using AI.");
+		}
+
+		ContextBuilder CreateContextBuilder()
+		{
+			return snapshot != null
+				? new ContextBuilder(snapshot)
+				: new ContextBuilder(settings!);
+		}
+
+		Task<ILLMProvider> CreateProviderAsync(CancellationToken cancellationToken)
+		{
+			return snapshot != null
+				? providerFactory.CreateAsync(snapshot, cancellationToken)
+				: providerFactory.CreateAsync(settings!, cancellationToken);
 		}
 
 		static string ClassifyError(Exception exception)

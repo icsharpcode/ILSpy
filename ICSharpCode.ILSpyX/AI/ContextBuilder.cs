@@ -19,11 +19,25 @@ namespace ICSharpCode.ILSpyX.AI
 {
 	public sealed class ContextBuilder
 	{
-		readonly AISettings settings;
+		readonly int maxContextTokens;
+		readonly bool sendIL;
+		readonly bool sendCallGraph;
 
 		public ContextBuilder(AISettings settings)
+			: this((settings ?? throw new ArgumentNullException(nameof(settings))).MaxContextTokens, settings.SendIL, settings.SendCallGraph)
 		{
-			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
+		}
+
+		public ContextBuilder(AISelectionSnapshot snapshot)
+			: this((snapshot ?? throw new ArgumentNullException(nameof(snapshot))).MaxContextTokens, snapshot.SendIL, snapshot.SendCallGraph)
+		{
+		}
+
+		public ContextBuilder(int maxContextTokens, bool sendIL, bool sendCallGraph)
+		{
+			this.maxContextTokens = maxContextTokens;
+			this.sendIL = sendIL;
+			this.sendCallGraph = sendCallGraph;
 		}
 
 		public DecompilationContext Build(IEntity entity, CSharpDecompiler decompiler)
@@ -49,9 +63,9 @@ namespace ICSharpCode.ILSpyX.AI
 				Attributes = entity.GetAttributes().Select(attribute => attribute.AttributeType.FullName).ToArray(),
 				ImplementedInterfaces = GetImplementedInterfaces(entity),
 				StringLiterals = GetStringLiterals(entity, decompiler),
-				Callers = settings.SendCallGraph ? GetCallers(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
-				Callees = settings.SendCallGraph ? GetCallees(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
-				IL = settings.SendIL ? GetIL(entity) : null
+				Callers = sendCallGraph ? GetCallers(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
+				Callees = sendCallGraph ? GetCallees(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
+				IL = sendIL ? GetIL(entity) : null
 			};
 			return EnforceBudget(context);
 		}
@@ -198,7 +212,7 @@ namespace ICSharpCode.ILSpyX.AI
 
 		DecompilationContext EnforceBudget(DecompilationContext context)
 		{
-			int budget = settings.MaxContextTokens;
+			int budget = maxContextTokens;
 			if (budget <= 0)
 				return EmptyContext();
 

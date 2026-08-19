@@ -18,13 +18,29 @@ namespace ICSharpCode.ILSpyX.Search
 	/// <summary>Interprets a natural-language query against a bounded symbol vocabulary.</summary>
 	public static class AISearchStrategy
 	{
-		public static async Task<IReadOnlyList<IEntity>> SearchAsync(IEnumerable<MetadataFile> modules, string query, AISettings settings, IAIProviderFactory providerFactory, CancellationToken cancellationToken = default)
+		public static Task<IReadOnlyList<IEntity>> SearchAsync(IEnumerable<MetadataFile> modules, string query, AISettings settings, IAIProviderFactory providerFactory, CancellationToken cancellationToken = default)
 		{
+			ArgumentNullException.ThrowIfNull(settings);
+			return SearchCoreAsync(modules, query, providerFactory, ct => providerFactory.CreateAsync(settings, ct), cancellationToken);
+		}
+
+		///<summary>Runs the search against an immutable resolved target.</summary>
+		public static Task<IReadOnlyList<IEntity>> SearchAsync(IEnumerable<MetadataFile> modules, string query, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory, CancellationToken cancellationToken = default)
+		{
+			ArgumentNullException.ThrowIfNull(snapshot);
+			return SearchCoreAsync(modules, query, providerFactory, ct => providerFactory.CreateAsync(snapshot, ct), cancellationToken);
+		}
+
+		static async Task<IReadOnlyList<IEntity>> SearchCoreAsync(IEnumerable<MetadataFile> modules, string query, IAIProviderFactory providerFactory, Func<CancellationToken, Task<ILLMProvider>> createProvider, CancellationToken cancellationToken)
+		{
+			ArgumentNullException.ThrowIfNull(modules);
+			ArgumentNullException.ThrowIfNull(query);
+			ArgumentNullException.ThrowIfNull(providerFactory);
 			var candidates = modules.SelectMany(GetCandidates).GroupBy(e => e.FullName, StringComparer.Ordinal).Select(g => g.First()).Take(50).ToArray();
 			if (candidates.Length == 0)
 				return Array.Empty<IEntity>();
 			string vocabulary = string.Join("\n", candidates.Select(e => e.FullName));
-			var provider = await providerFactory.CreateAsync(settings, cancellationToken).ConfigureAwait(false);
+			var provider = await createProvider(cancellationToken).ConfigureAwait(false);
 			var request = new LLMRequest("Given these method and type signatures, which ones match the query? Return only a JSON array of fully-qualified names.", new[] { new LLMMessage("user", $"Query: {query}\n\nCandidates:\n{vocabulary}") }, 1024, 0.1);
 			var text = new System.Text.StringBuilder();
 			await foreach (var chunk in provider.CompleteAsync(request, cancellationToken).ConfigureAwait(false))

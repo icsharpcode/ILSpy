@@ -35,13 +35,37 @@ namespace ICSharpCode.ILSpyX.AI
 		public const string SystemPrompt = "You suggest meaningful C# names for obfuscated .NET symbols. Return only valid JSON: [{\"name\": string, \"confidence\": number, \"reasoning\": string}]. Return 3 to 5 distinct PascalCase or camelCase candidates. Do not include markdown fences or extra text.";
 		static readonly Regex GeneratedName = new("^(?:method|class|field|property|event|delegate|type)_\\d+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-		readonly AISettings settings;
+		readonly AISettings? settings;
+		readonly AISelectionSnapshot? snapshot;
 		readonly IAIProviderFactory providerFactory;
 
 		public RenameSuggester(AISettings settings, IAIProviderFactory providerFactory)
 		{
 			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+		}
+
+		///<summary>Creates a suggester bound to an immutable request target.</summary>
+		public RenameSuggester(AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
+		{
+			this.snapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
+			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+		}
+
+		int MaxContextTokens => snapshot?.MaxContextTokens ?? settings!.MaxContextTokens;
+
+		ContextBuilder CreateContextBuilder()
+		{
+			return snapshot != null
+				? new ContextBuilder(snapshot)
+				: new ContextBuilder(settings!);
+		}
+
+		AIExplanationService CreateExplanationService()
+		{
+			return snapshot != null
+				? new AIExplanationService(snapshot, providerFactory)
+				: new AIExplanationService(settings!, providerFactory);
 		}
 
 		public async Task<IReadOnlyList<RenameSuggestion>> SuggestAsync(IEntity entity, CSharpDecompiler decompiler, CancellationToken cancellationToken = default)
@@ -58,14 +82,14 @@ namespace ICSharpCode.ILSpyX.AI
 			if (!IsLikelyObfuscated(entity.Name))
 				throw new ArgumentException("The selected symbol does not look obfuscated.", nameof(entity));
 
-			DecompilationContext context = new ContextBuilder(settings).Build(entity, decompiler);
+			DecompilationContext context = CreateContextBuilder().Build(entity, decompiler);
 			string prompt = $"Suggest names for this symbol.\n\nCurrent name: {entity.Name}\nKind: {entity.SymbolKind}\nReflection name: {entity.ReflectionName}\n\n{context.ToMarkdown()}";
 			if (!string.IsNullOrWhiteSpace(additionalContext))
 			{
-				int relatedBudget = Math.Max(128, settings.MaxContextTokens / 5);
+				int relatedBudget = Math.Max(128, MaxContextTokens / 5);
 				prompt += "\n\nPreviously proposed renames:\n" + TokenCounter.TruncateToTokenBudget(additionalContext, relatedBudget, isCode: false);
 			}
-			var service = new AIExplanationService(settings, providerFactory);
+			var service = CreateExplanationService();
 			var chunks = new List<string>();
 			await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, cancellationToken).ConfigureAwait(false))
 				chunks.Add(chunk);
