@@ -26,6 +26,7 @@ namespace ICSharpCode.ILSpy.Options
 		readonly IAIProviderFactory providerFactory;
 		readonly SecureKeyStorage keyStorage;
 		AISettings settings = null!;
+		AIProfile? draft;
 		string apiKeyInput = string.Empty;
 		string statusMessage = string.Empty;
 		bool isTestingConnection;
@@ -64,13 +65,18 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		/// <summary>Unsaved non-secret profile draft used by the editor.</summary>
+		public AIProfile? AIProfileDraft {
+			get => draft;
+			private set => SetProperty(ref draft, value);
+		}
+
 		public string ApiKeyInput {
 			get => apiKeyInput;
 			set {
 				if (!SetProperty(ref apiKeyInput, value ?? string.Empty))
 					return;
-				if (Settings is not null)
-					Settings.ApiKey = apiKeyInput;
+				// Secret input remains transient. It is written only by an explicit save operation.
 			}
 		}
 
@@ -115,6 +121,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			ArgumentNullException.ThrowIfNull(service);
 			Settings = service.AISettings;
+			AIProfileDraft = Settings.ActiveProfile.Clone();
 			ApiKeyInput = string.Empty;
 			StatusMessage = string.Empty;
 			_ = LoadStoredKeyAsync(Settings, CancellationToken.None);
@@ -123,6 +130,7 @@ namespace ICSharpCode.ILSpy.Options
 		public void LoadDefaults()
 		{
 			Settings.LoadFromXml(null!);
+			AIProfileDraft = Settings.ActiveProfile.Clone();
 			ApiKeyInput = string.Empty;
 			StatusMessage = string.Empty;
 			OnPropertyChanged(nameof(HasConfiguredKey));
@@ -219,7 +227,22 @@ namespace ICSharpCode.ILSpy.Options
 			StatusMessage = "Testing connection…";
 			try
 			{
-				bool success = await new AIExplanationService(Settings, providerFactory)
+				AIProfile profile = AIProfileDraft?.Clone() ?? Settings.ActiveProfile.Clone();
+				profile.Normalize();
+				var snapshot = new AISelectionSnapshot {
+					ProfileId = profile.Id,
+					ProfileName = profile.Name,
+					ProviderType = profile.ProviderType,
+					Endpoint = profile.BaseUrl,
+					Model = profile.ResolveModel(),
+					ApiKey = string.IsNullOrWhiteSpace(ApiKeyInput) ? null : ApiKeyInput,
+					CredentialId = profile.CredentialId,
+					MaxContextTokens = Settings.MaxContextTokens,
+					StreamResponses = Settings.StreamResponses,
+					SendIL = Settings.SendIL,
+					SendCallGraph = Settings.SendCallGraph
+				};
+				bool success = await new AIExplanationService(snapshot, providerFactory)
 					.TestConnectionAsync(cancellation.Token);
 				StatusMessage = success ? "Connection succeeded." : "The provider returned no response.";
 			}
