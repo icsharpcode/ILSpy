@@ -278,11 +278,22 @@ namespace ICSharpCode.ILSpy.AI
 			loadedHistoryPath = path;
 			if (path.Length != 0)
 				loadedHistory = ChatHistory.Load(path);
+			MarkDeletedConversationsReadOnly();
 			if (target is not null)
 				loadedHistory.GetOrCreate(target);
 			loadedTarget = loadedHistory.ActiveConversation.Target;
 			foreach (var message in loadedHistory.ActiveConversation.Messages.TakeLast(MaxMessages))
 				Messages.Add(message);
+		}
+
+		void MarkDeletedConversationsReadOnly()
+		{
+			var liveProfileIds = selectionService.Profiles.Select(profile => profile.Id).ToHashSet(StringComparer.Ordinal);
+			foreach (ChatConversation conversation in loadedHistory.Conversations)
+			{
+				if (conversation.Target is { } target && !liveProfileIds.Contains(target.ProfileId))
+					conversation.ReadOnly = true;
+			}
 		}
 
 		AIConversationTarget GetCurrentTarget()

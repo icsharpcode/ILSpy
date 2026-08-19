@@ -48,7 +48,8 @@ namespace ICSharpCode.ILSpyX.AI
 		public ChatConversation GetOrCreate(AIConversationTarget target)
 		{
 			ArgumentNullException.ThrowIfNull(target);
-			ChatConversation? existing = Conversations.FirstOrDefault(c => c.Target?.BelongsTo(target.ProfileId, target.ProviderType, target.Endpoint, target.Model) == true);
+			ChatConversation? existing = Conversations.FirstOrDefault(c => !c.ReadOnly
+				&& c.Target?.BelongsTo(target.ProfileId, target.ProviderType, target.Endpoint, target.Model) == true);
 			if (existing is not null)
 			{
 				ActiveConversationId = existing.Id;

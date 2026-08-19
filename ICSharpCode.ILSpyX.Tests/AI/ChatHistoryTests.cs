@@ -79,5 +79,17 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			Assert.That(different.Id, Is.Not.EqualTo(first.Id));
 			Assert.That(history.Conversations, Has.Count.EqualTo(2));
 		}
+
+		[Test]
+		public void GetOrCreate_DoesNotResumeReadOnlyTarget()
+		{
+			var history = new ChatHistory();
+			var target = new AIConversationTarget("deleted", "Deleted", "openai", "https://api.openai.com", "gpt-4o");
+			ChatConversation old = history.GetOrCreate(target);
+			old.ReadOnly = true;
+			ChatConversation replacement = history.GetOrCreate(target);
+			Assert.That(replacement.Id, Is.Not.EqualTo(old.Id));
+			Assert.That(old.ReadOnly, Is.True);
+		}
 	}
 }
