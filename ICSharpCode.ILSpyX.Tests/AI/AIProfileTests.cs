@@ -147,6 +147,33 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void Normalize_CanonicalizesProviderAndTrimsRememberedModel()
+		{
+			var profile = AIProfile.Create(AIProviderCatalog.Get("openai"));
+			profile.Name = "  Work  ";
+			profile.ProviderType = "  OPENAI  ";
+			profile.LastSelectedModel = "  gpt-4o  ";
+
+			profile.Normalize();
+
+			profile.ProviderType.Should().Be("openai");
+			profile.LastSelectedModel.Should().Be("gpt-4o");
+			profile.Validate().Should().BeEmpty();
+		}
+
+		[Test]
+		public void ResolveModel_IsCaseInsensitiveAndFallsBackWhenRememberedModelIsMissing()
+		{
+			var profile = AIProfile.Create(AIProviderCatalog.Get("openai"));
+			profile.LastSelectedModel = "GPT-4O";
+
+			profile.ResolveModel().Should().Be("GPT-4O");
+
+			profile.LastSelectedModel = "missing";
+			profile.ResolveModel().Should().Be("gpt-4o");
+		}
+
+		[Test]
 		public void Validate_RejectsBlankModel()
 		{
 			var profile = AIProfile.Create(AIProviderCatalog.Get("openai"));

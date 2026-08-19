@@ -210,6 +210,43 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public async Task DeleteProfile_ActiveDeletionSecretFailurePreservesSelectionAndProfile()
+		{
+			var backend = new FakeBackend { FailOnDelete = true };
+			var service = CreateService(out AISettings settings, consent: true, backend: backend);
+			var first = settings.Profiles[0];
+			first.HasStoredKey = true;
+			backend.Keys[first.CredentialId] = "sk-first";
+			var second = AIProfile.Create(AIProviderCatalog.Get("ollama"));
+			second.Name = "Second";
+			settings.Profiles.Add(second);
+			settings.ActiveProfileId = first.Id;
+
+			await FluentActions.Awaiting(() => service.DeleteProfileAsync(first.Id))
+				.Should().ThrowAsync<SecureKeyStorageUnavailableException>();
+
+			settings.Profiles.Should().Contain(first);
+			settings.ActiveProfileId.Should().Be(first.Id);
+		}
+
+		[Test]
+		public async Task SaveProfile_RejectsCaseInsensitiveDuplicateNamesWithoutMutation()
+		{
+			var service = CreateService(out AISettings settings, consent: true);
+			AIProfile existing = settings.Profiles[0];
+			existing.Name = "Work";
+			var duplicate = AIProfile.Create(AIProviderCatalog.Get("anthropic"));
+			duplicate.Name = "WORK";
+
+			await FluentActions.Awaiting(() => service.SaveProfileAsync(duplicate))
+				.Should().ThrowAsync<AIConfigurationException>()
+				.WithMessage("*already exists*");
+
+			settings.Profiles.Should().HaveCount(1);
+			settings.Profiles[0].Name.Should().Be("Work");
+		}
+
+		[Test]
 		public async Task SelectionChanged_PublishesOneNotificationPerApply()
 		{
 			var service = CreateService(out AISettings settings, consent: true);
