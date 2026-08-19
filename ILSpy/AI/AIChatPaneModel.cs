@@ -135,11 +135,13 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			if (e.PropertyName != nameof(AssemblyTreeModel.SelectedItem))
 				return;
-			cancellation?.Cancel();
-			SaveHistory(loadedHistoryPath);
-			Messages.Clear();
-			conversationGeneration++;
-			LoadHistory();
+			_ = SetUiStateAsync(() => {
+				cancellation?.Cancel();
+				SaveHistory(loadedHistoryPath);
+				Messages.Clear();
+				conversationGeneration++;
+				LoadHistory();
+			});
 		}
 
 		[RelayCommand]
@@ -170,6 +172,8 @@ namespace ICSharpCode.ILSpy.AI
 			long requestConversationGeneration = 0;
 			long requestId = 0;
 			string requestConversationId = string.Empty;
+			LLMMessage[] requestMessages = Array.Empty<LLMMessage>();
+			string requestContext = string.Empty;
 			await SetUiStateAsync(() => {
 				Input = string.Empty;
 				EnsureConversation(snapshot);
@@ -181,6 +185,8 @@ namespace ICSharpCode.ILSpy.AI
 				requestConversationGeneration = conversationGeneration;
 				requestId = Interlocked.Increment(ref requestGeneration);
 				requestConversationId = loadedHistory.ActiveConversationId;
+				requestMessages = Messages.Where(m => m.Content.Length != 0).Select(m => new LLMMessage(m.Role, m.Content)).ToArray();
+				requestContext = GetActiveContext(text);
 				IsBusy = true;
 				ErrorMessage = string.Empty;
 				StatusMessage = "Generating…";
@@ -190,10 +196,8 @@ namespace ICSharpCode.ILSpy.AI
 			cancellation = cts;
 			try
 			{
-				var requestMessages = Messages.Where(m => m.Content.Length != 0).Select(m => new LLMMessage(m.Role, m.Content)).ToArray();
 				var provider = await providerFactory.CreateAsync(snapshot, cts.Token).ConfigureAwait(false);
-				var context = GetActiveContext(text);
-				var request = new LLMRequest(SystemPrompt, requestMessages.Append(new LLMMessage("user", context)).ToArray(), 2048, 0.3);
+				var request = new LLMRequest(SystemPrompt, requestMessages.Append(new LLMMessage("user", requestContext)).ToArray(), 2048, 0.3);
 				var builder = new StringBuilder();
 				await foreach (var chunk in provider.CompleteAsync(request, cts.Token).ConfigureAwait(false))
 				{
@@ -210,8 +214,10 @@ namespace ICSharpCode.ILSpy.AI
 					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
 						StatusMessage = "Complete";
 				});
-				if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
-					SaveHistory();
+				await SetUiStateAsync(() => {
+					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+						SaveHistory();
+				});
 			}
 			catch (OperationCanceledException)
 			{
@@ -253,7 +259,7 @@ namespace ICSharpCode.ILSpy.AI
 					await SetUiStateAsync(() => StatusMessage = "Ready");
 					return true;
 				case "/clear":
-					Clear();
+					await SetUiStateAsync(ClearCore);
 					return true;
 				case "/audit":
 				case "/summary":
@@ -312,7 +318,26 @@ namespace ICSharpCode.ILSpy.AI
 		void Cancel() { cancellation?.Cancel(); }
 
 		[RelayCommand]
-		void Clear() { cancellation?.Cancel(); Input = string.Empty; Messages.Clear(); loadedHistory.ActiveConversation.Messages.Clear(); SaveHistory(); conversationGeneration++; Interlocked.Increment(ref requestGeneration); StatusMessage = "Ready"; ErrorMessage = string.Empty; }
+		void Clear()
+		{
+			if (Dispatcher.UIThread.CheckAccess())
+				ClearCore();
+			else
+				Dispatcher.UIThread.Post(ClearCore);
+		}
+
+		void ClearCore()
+		{
+			cancellation?.Cancel();
+			Input = string.Empty;
+			Messages.Clear();
+			loadedHistory.ActiveConversation.Messages.Clear();
+			SaveHistory();
+			conversationGeneration++;
+			Interlocked.Increment(ref requestGeneration);
+			StatusMessage = "Ready";
+			ErrorMessage = string.Empty;
+		}
 
 		[RelayCommand]
 		void OpenSettings()
