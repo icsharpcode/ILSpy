@@ -22,7 +22,8 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	[Shared]
 	public sealed class AISecurityAnalyzer : IAnalyzer
 	{
-		const string SystemPrompt = "You identify security vulnerabilities in decompiled .NET code. Return only valid JSON: [{\"type\": string, \"method\": string, \"issue\": string, \"severity\": \"Critical\"|\"High\"|\"Medium\"|\"Low\", \"line\": number}]. Report only plausible SQL injection, hardcoded credentials, weak cryptography, path traversal, unsafe deserialization, dangerous P/Invoke, or equivalent issues. Do not invent issues.";
+		public const double MinimumFindingConfidence = 0.70;
+		const string SystemPrompt = "You identify security vulnerabilities in decompiled .NET code. Return only valid JSON: [{\"type\": string, \"method\": string, \"issue\": string, \"severity\": \"Critical\"|\"High\"|\"Medium\"|\"Low\", \"line\": number, \"confidence\": number}]. Confidence must be a numeric value from 0 to 1. Report only plausible SQL injection, hardcoded credentials, weak cryptography, path traversal, unsafe deserialization, dangerous P/Invoke, or equivalent issues. Do not invent issues.";
 
 		public bool Show(ISymbol? symbol) => symbol is ITypeDefinition or IMethod;
 
@@ -44,16 +45,15 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			};
 			var service = new AIExplanationService(snapshot, providerFactory);
 			var findings = new List<ISymbol>();
-			foreach (ITypeDefinition current in type.ParentModule!.Compilation.GetAllTypeDefinitions().Where(candidate => candidate.ParentModule == type.ParentModule))
-			{
-				context.CancellationToken.ThrowIfCancellationRequested();
-				DecompilationContext decompilationContext = new ContextBuilder(snapshot).Build(current, decompiler);
-				string prompt = "Analyze this type for security risks.\n\n" + decompilationContext.ToMarkdown();
-				var response = new List<string>();
-				await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, context.CancellationToken).ConfigureAwait(false))
-					response.Add(chunk);
-				findings.AddRange(ParseFindings(string.Concat(response), current));
-			}
+			context.AIProgress?.Report(new AISecurityAuditProgress(0, 1, type.FullName, 0, 0, false));
+			context.CancellationToken.ThrowIfCancellationRequested();
+			DecompilationContext decompilationContext = new ContextBuilder(snapshot).Build(type, decompiler);
+			string prompt = "Analyze this type for security risks.\n\n" + decompilationContext.ToMarkdown();
+			var response = new List<string>();
+			await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, context.CancellationToken).ConfigureAwait(false))
+				response.Add(chunk);
+			findings.AddRange(ParseFindings(string.Concat(response), type));
+			context.AIProgress?.Report(new AISecurityAuditProgress(1, 1, type.FullName, findings.Count, 0, false));
 			return findings.Cast<ISymbol>().ToArray();
 		}
 
@@ -73,12 +73,19 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			var findings = new List<AISecurityFinding>();
 			foreach (FindingDto item in items)
 			{
-				if (string.IsNullOrWhiteSpace(item.Issue))
+				if (string.IsNullOrWhiteSpace(item.Issue) || !TryReadConfidence(item.Confidence, out double confidence) || confidence < MinimumFindingConfidence || confidence > 1)
 					continue;
 				IEntity target = FindTarget(type, item.Method) ?? type;
-				findings.Add(new AISecurityFinding(target, item.Type ?? "Security risk", item.Issue.Trim(), item.Severity ?? "Medium", Math.Max(0, item.Line)));
+				findings.Add(new AISecurityFinding(target, item.Type ?? "Security risk", item.Issue.Trim(), item.Severity ?? "Medium", Math.Max(0, item.Line), confidence));
 			}
 			return findings;
+		}
+
+		static bool TryReadConfidence(JsonElement value, out double confidence)
+		{
+			confidence = 0;
+			return value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out confidence)
+				&& !double.IsNaN(confidence) && !double.IsInfinity(confidence);
 		}
 
 		static IEntity? FindTarget(ITypeDefinition type, string? methodName)
@@ -96,6 +103,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			public string? Issue { get; set; }
 			public string? Severity { get; set; }
 			public int Line { get; set; }
+			public JsonElement Confidence { get; set; }
 		}
 	}
 }

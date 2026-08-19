@@ -7,13 +7,14 @@ namespace ICSharpCode.ILSpyX.Analyzers
 	/// <summary>A navigable security finding returned by the AI security analyzer.</summary>
 	public sealed class AISecurityFinding : ISymbol
 	{
-		public AISecurityFinding(IEntity target, string type, string issue, string severity, int line)
+		public AISecurityFinding(IEntity target, string type, string issue, string severity, int line, double confidence = 1.0)
 		{
 			Target = target;
 			Type = type;
 			Issue = issue;
 			Severity = NormalizeSeverity(severity);
 			Line = line;
+			Confidence = confidence;
 		}
 
 		public IEntity Target { get; }
@@ -21,6 +22,7 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		public string Issue { get; }
 		public string Severity { get; }
 		public int Line { get; }
+		public double Confidence { get; }
 		public SymbolKind SymbolKind => SymbolKind.None;
 		public string Name => $"{Severity}: {Issue}";
 

@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.Abstractions;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
 namespace ICSharpCode.ILSpyX.Analyzers
 {
@@ -51,6 +52,9 @@ namespace ICSharpCode.ILSpyX.Analyzers
 
 		/// <summary>Optional provider factory supplied by the desktop host for AI analyzers.</summary>
 		public IAIProviderFactory? AIProviderFactory { get; init; }
+
+		/// <summary>Optional progress sink for explicitly requested AI bulk analysis.</summary>
+		public IProgress<AISecurityAuditProgress>? AIProgress { get; init; }
 
 		/// <summary>
 		/// Allows the analyzer to control whether the tree nodes will be sorted.
