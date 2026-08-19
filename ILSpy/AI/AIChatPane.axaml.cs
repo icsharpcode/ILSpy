@@ -75,6 +75,18 @@ namespace ICSharpCode.ILSpy.AI
 				ScheduleRestore();
 		}
 
+		async void OnProfileChanged(object? sender, SelectionChangedEventArgs e)
+		{
+			if (DataContext is AIChatPaneModel chat && e.AddedItems.Count > 0)
+				await chat.SelectProfileCommand.ExecuteAsync(e.AddedItems[0] as AIProfile);
+		}
+
+		async void OnModelChanged(object? sender, SelectionChangedEventArgs e)
+		{
+			if (DataContext is AIChatPaneModel chat && e.AddedItems.Count > 0)
+				await chat.SelectModelCommand.ExecuteAsync(e.AddedItems[0] as string);
+		}
+
 		void ScheduleRestore()
 		{
 			var snapshot = followTail.Capture();

@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Composition;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,6 +43,11 @@ namespace ICSharpCode.ILSpy.AI
 		string loadedHistoryPath = string.Empty;
 
 		public ObservableCollection<ChatMessage> Messages { get; } = new();
+		public IReadOnlyList<AIProfile> Profiles => selectionService.Profiles;
+		public AIProfile ActiveProfile => selectionService.ActiveProfile;
+		public IReadOnlyList<string> Models => ActiveProfile.Models;
+		[ObservableProperty] string readinessMessage = string.Empty;
+		public bool IsReady => string.IsNullOrEmpty(ReadinessMessage);
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(ShowSuggestions))]
 		string input = string.Empty;
@@ -61,7 +67,43 @@ namespace ICSharpCode.ILSpy.AI
 			Id = PaneContentId;
 			Title = "AI Chat";
 			assemblyTree.PropertyChanged += OnAssemblyTreePropertyChanged;
+			selectionService.SelectionChanged += OnSelectionChanged;
 			LoadHistory();
+			_ = RefreshReadinessAsync();
+		}
+
+		async Task RefreshReadinessAsync()
+		{
+			AIConfigurationState state = await selectionService.EvaluateReadinessAsync().ConfigureAwait(false);
+			await Dispatcher.UIThread.InvokeAsync(() => {
+				ReadinessMessage = state.IsReady ? string.Empty : state.Message;
+				OnPropertyChanged(nameof(IsReady));
+				OnPropertyChanged(nameof(ActiveProfile));
+				OnPropertyChanged(nameof(Models));
+			});
+		}
+
+		async void OnSelectionChanged(object? sender, EventArgs e)
+		{
+			cancellation?.Cancel();
+			SaveHistory();
+			Messages.Clear();
+			LoadHistory();
+			await RefreshReadinessAsync();
+		}
+
+		[RelayCommand]
+		async Task SelectProfileAsync(AIProfile? profile)
+		{
+			if (profile is null) return;
+			await selectionService.ApplySelectionAsync(profile.Id, profile.ResolveModel());
+		}
+
+		[RelayCommand]
+		async Task SelectModelAsync(string? model)
+		{
+			if (string.IsNullOrWhiteSpace(model)) return;
+			await selectionService.ApplySelectionAsync(ActiveProfile.Id, model);
 		}
 
 		void OnAssemblyTreePropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -210,6 +252,6 @@ namespace ICSharpCode.ILSpy.AI
 				? node.AncestorsAndSelf().OfType<AssemblyTreeNode>().FirstOrDefault()?.LoadedAssembly.FileName ?? string.Empty
 				: string.Empty;
 		}
-		public void Dispose() { assemblyTree.PropertyChanged -= OnAssemblyTreePropertyChanged; cancellation?.Cancel(); SaveHistory(); }
+		public void Dispose() { assemblyTree.PropertyChanged -= OnAssemblyTreePropertyChanged; selectionService.SelectionChanged -= OnSelectionChanged; cancellation?.Cancel(); SaveHistory(); }
 	}
 }

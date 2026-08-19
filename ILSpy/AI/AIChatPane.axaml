@@ -10,7 +10,16 @@
         <Button Content="Export" Command="{Binding ExportCommand}" />
       </StackPanel>
     </StackPanel>
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding StatusMessage}"/><TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed"/></StackPanel>
+    <StackPanel DockPanel.Dock="Top" Spacing="4">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Profile" VerticalAlignment="Center" />
+        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}" SelectionChanged="OnProfileChanged" Width="180" />
+        <TextBlock Text="Model" VerticalAlignment="Center" />
+        <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding ActiveProfile.LastSelectedModel}" SelectionChanged="OnModelChanged" Width="160" />
+      </StackPanel>
+      <TextBlock Text="{Binding ReadinessMessage}" Foreground="IndianRed" TextWrapping="Wrap" />
+      <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding StatusMessage}"/><TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed"/></StackPanel>
+    </StackPanel>
     <ListBox x:Name="ConversationList" ItemsSource="{Binding Messages}" Background="Transparent" Padding="0" Margin="0"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
       <ListBox.ItemTemplate>
