@@ -61,16 +61,17 @@ namespace ICSharpCode.ILSpy.AI
 				await ShowMessageAsync(context, "AI Security Audit", $"{plan.TotalEligible} eligible types exceed the safety limit of {plan.MaximumTypes}. Reduce the module scope before starting the audit.");
 				return;
 			}
-			var window = CreateProgressWindow(plan, snapshot, providerFactory);
+			var moduleName = selectedType.ParentModule?.AssemblyName ?? "selected module";
+			var window = CreateProgressWindow(plan, snapshot, providerFactory, moduleName);
 			if (TopLevel.GetTopLevel(context.OriginalSource as Visual) is Window owner)
 				await window.ShowDialog(owner);
 			else
 				window.Show();
 		}
 
-		static Window CreateProgressWindow(AISecurityAuditPlan plan, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
+		static Window CreateProgressWindow(AISecurityAuditPlan plan, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory, string moduleName)
 		{
-			var status = new TextBlock { Text = $"{plan.TotalEligible} eligible types. Confirm to start.", TextWrapping = TextWrapping.Wrap };
+			var status = new TextBlock { Text = $"Module: {moduleName}\n{plan.TotalEligible} eligible types. Confirm to start.", TextWrapping = TextWrapping.Wrap };
 			var bar = new ProgressBar { Minimum = 0, Maximum = Math.Max(1, plan.Types.Count), Height = 18 };
 			var cancel = new Button { Content = "Cancel", HorizontalAlignment = HorizontalAlignment.Right };
 			var start = new Button { Content = "Start audit", HorizontalAlignment = HorizontalAlignment.Right };
@@ -78,7 +79,13 @@ namespace ICSharpCode.ILSpy.AI
 			var window = new Window { Title = "AI Security Audit", Width = 520, SizeToContent = SizeToContent.Height, Content = panel };
 			var cts = new System.Threading.CancellationTokenSource();
 			cancel.Click += (_, _) => { cts.Cancel(); cancel.IsEnabled = false; status.Text = "Canceling…"; };
+			bool completed = false;
 			start.Click += async (_, _) => {
+				if (completed)
+				{
+					window.Close();
+					return;
+				}
 				start.IsEnabled = false;
 				cancel.IsEnabled = true;
 				status.Text = "Starting audit…";
@@ -92,7 +99,7 @@ namespace ICSharpCode.ILSpy.AI
 					status.Text = result.IsPartial ? $"Canceled: {result.Findings.Count} findings, {result.FailedCount} failures." : $"Complete: {result.Findings.Count} findings, {result.FailedCount} failures.";
 					start.Content = "Close";
 					start.IsEnabled = true;
-					start.Click += (_, _) => window.Close();
+					completed = true;
 				}
 				catch (AIConfigurationException ex)
 				{

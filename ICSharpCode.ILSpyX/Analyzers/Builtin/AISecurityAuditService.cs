@@ -63,7 +63,8 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 				}
 				catch (OperationCanceledException)
 				{
-					throw;
+					progress?.Report(new AISecurityAuditProgress(completed, plan.Types.Count, type.FullName, findings.Count, failed, true));
+					return new AISecurityAuditResult(findings, failed, true);
 				}
 				catch
 				{
