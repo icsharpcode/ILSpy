@@ -210,6 +210,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			transforms.RemoveRange(lastBlockTransform + 1, transforms.Count - (lastBlockTransform + 1));
 			// Use CombineExitsTransform so that "return other != null && ...;" is a single statement even in release builds
 			transforms.Add(new CombineExitsTransform());
+			// Deliberately not the caller's Stepper: this runs speculatively during pattern recognition,
+			// so its steps are noise in a step tree and its numbering would shift with settings the user
+			// never chose.
 			il.RunTransforms(transforms,
 				new ILTransformContext(il, typeSystem, debugInfo: null, settings) {
 					CancellationToken = cancellationToken
@@ -231,6 +234,33 @@ namespace ICSharpCode.Decompiler.CSharp
 		List<IAstTransform> astTransforms = GetAstTransforms();
 
 		public Stepper Stepper { get; set; } = new Stepper();
+
+		/// <summary>
+		/// Gets or sets whether the IL transform phase records its steps into <see cref="Stepper"/>,
+		/// so that one step tree spans the whole pipeline: IL transforms, the ILAst-to-C# conversion,
+		/// and the C# AST transforms.
+		/// Off by default. The recording itself already happens in debug builds - into a per-member
+		/// stepper that is thrown away - so what this turns on is <i>retention</i>: the step history of
+		/// every member of the decompiled type stays alive, and each step pins the ILAst it captured,
+		/// including the instructions its transform removed. That is affordable for the single type a
+		/// step view displays and not for a whole-module decompile, so only callers that show the steps
+		/// opt in.
+		/// Replaying a step by index requires the same value on the full run and on the step-limited
+		/// re-run, since the recording decides how the steps are numbered.
+		/// Has no effect unless <see cref="Stepper.SteppingAvailable"/>.
+		/// </summary>
+		public bool RecordILTransformSteps { get; set; }
+
+		/// <summary>
+		/// The <see cref="ILFunction"/> whose IL transforms were halted by <see cref="Stepper.StepLimit"/>,
+		/// or null when no step limit was reached before the C# AST was built. Reset at the start of
+		/// every Decompile* call, like <see cref="Errors"/>.
+		/// A limit reached in the IL phase leaves this member and every member after it without a body,
+		/// so the returned syntax tree is not the interesting output: the caller renders this function
+		/// as an ILAst dump instead. A limit reached in the C# AST phase leaves this null and still
+		/// yields partially transformed C#.
+		/// </summary>
+		public ILFunction? StepLimitHaltedFunction { get; private set; }
 
 		/// <summary>
 		/// Returns all built-in transforms of the C# AST pipeline.
@@ -816,6 +846,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			// previous one stop counting - otherwise a reused instance reports them again against
 			// members that decompiled cleanly.
 			errors.Clear();
+			// Same reasoning for the halted function: a stale one would make the caller render the
+			// previous run's ILAst, and the "already halted" guard in DecompileBody would skip every
+			// member from here on.
+			StepLimitHaltedFunction = null;
 			List<INamespace> resolvedNamespaces = new List<INamespace>();
 			foreach (var ns in namespaces)
 			{
@@ -841,6 +875,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void RunTransforms(AstNode rootNode, DecompileRun decompileRun, ITypeResolveContext decompilationContext)
 		{
+			// The IL phase halted at the step limit, so this tree is missing the bodies it was supposed
+			// to transform and the caller renders the halted ILAst instead. Running the AST pipeline over
+			// it would only waste the work and hit the same limit again - and that second hit would
+			// overwrite Stepper.LimitReachedStep with a node from a tree nobody displays, losing the
+			// position the halted step is highlighted at.
+			if (StepLimitHaltedFunction != null)
+				return;
 			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
 			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder) {
 				Stepper = Stepper
@@ -2259,6 +2300,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DecompileBody(IMethod method, EntityDeclaration entityDecl, DecompileRun decompileRun, ITypeResolveContext decompilationContext, ExtensionInfo? extensionInfo)
 		{
+			// An earlier member's IL phase already hit the step limit, so the pipeline is stopped for
+			// good: reading IL for every remaining member only to throw on its first step is wasted work.
+			if (StepLimitHaltedFunction != null)
+				return;
+			// Declared out here so the StepLimitReachedException handler below can report the function
+			// its transforms were halted in.
+			ILFunction? function = null;
 			try
 			{
 				var ilReader = new ILReader(typeSystem.MainModule) {
@@ -2290,7 +2338,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					entityDecl.AddChild(body, Slots.Body);
 					return;
 				}
-				var function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
+				function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
 
 				AddAnnotationsToDeclaration(method, entityDecl, function, parameterOffset);
@@ -2309,11 +2357,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					CancellationToken = CancellationToken,
 					DecompileRun = decompileRun
 				};
+				if (RecordILTransformSteps)
+					context.Stepper = Stepper;
+				context.StepStartGroup(method.FullName);
 				foreach (var transform in ilTransforms)
 				{
 					CancellationToken.ThrowIfCancellationRequested();
+					// Named the way ILFunction.RunTransforms names them, so the same transform reads the
+					// same in every step tree.
+					context.StepStartGroup(transform is BlockILTransform blockTransform
+						? blockTransform.ToString()
+						: transform.GetType().Name);
 					transform.Run(function, context);
 					function.CheckInvariant(ILPhase.Normal);
+					context.StepEndGroup(keepIfEmpty: true);
 					// When decompiling definitions only, we can cancel decompilation of all steps
 					// after yield and async detection, because only those are needed to properly set
 					// IsAsync/IsIterator flags on ILFunction.
@@ -2333,6 +2390,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						decompileRun,
 						CancellationToken
 					);
+					// The seam between the two halves of the pipeline. Besides marking where the IL steps
+					// end and the C# AST steps begin, it is the only handle on the fully transformed
+					// ILAst: every IL step shows the state before some transform, never after the last.
+					context.Step("Convert ILAst to C#", function.Body);
 					body = statementBuilder.ConvertAsBlock(function.Body);
 
 					var warningAnchor = body.Statements.FirstOrDefault();
@@ -2349,7 +2410,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					entityDecl.AddChild(body, Slots.Body);
 				}
 
+				context.StepEndGroup(keepIfEmpty: true);
+
 				CleanUpMethodDeclaration(entityDecl, body, function, localSettings.DecompileMemberBodies);
+			}
+			catch (StepLimitReachedException)
+			{
+				// A step limit reached in the IL phase stops the pipeline for good: this member and every
+				// member after it stay body-less, and the caller renders StepLimitHaltedFunction as ILAst
+				// rather than the C# it would otherwise print. This clause has to stay above the general
+				// handler below, which would turn the halt into an error comment and report the member as
+				// a decompilation failure.
+				StepLimitHaltedFunction = function;
+				Stepper.EndOpenGroups();
 			}
 			catch (Exception innerException) when (!(innerException is OperationCanceledException))
 			{
@@ -2357,6 +2430,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				// exporting a project, the assembly around it: keep the signature, put the error in
 				// front of it, and let the remaining members decompile.
 				errors.Add(innerException as DecompilerException ?? new DecompilerException(module, method, innerException));
+				// The unwind left this member's step groups open; close them so the members after it are
+				// recorded as its siblings instead of disappearing into the group that failed.
+				Stepper.EndOpenGroups();
 				entityDecl.GetChild(Slots.Body)?.Remove();
 				if (settings.DecompileMemberBodies)
 				{

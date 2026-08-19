@@ -82,14 +82,13 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
-	public async Task Debug_Steps_VM_Populates_After_ILAst_Decompile_Regardless_Of_View_Lifecycle()
+	public async Task Debug_Steps_VM_Populates_After_Decompile_Regardless_Of_View_Lifecycle()
 	{
 		// End-to-end repro of the user-reported "Debug Steps pane is empty" bug:
 		// 1. Boot the window, load assemblies.
 		// 2. Select a method.
-		// 3. Switch the active language to BlockIL (ILAst).
-		// 4. Wait for the BlockIL decompile to finish — its OnStepperUpdated event fires.
-		// 5. Assert the DebugStepsPaneModel's Steps property is populated.
+		// 3. Wait for the decompile to finish — its OnStepperUpdated event fires.
+		// 4. Assert the DebugStepsPaneModel's Steps property is populated.
 		//
 		// Asserting against the VM (not the View) decouples this test from the dock layout's
 		// view-realisation timing — which is the whole point of the fix that moved state
@@ -110,21 +109,17 @@ public class DebugStepsTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var languageService = AppComposition.Current.GetExport<LanguageService>();
-		var blockIL = languageService.Languages.OfType<ILAstLanguage>()
-			.Single(l => l.Name == "ILAst");
-		languageService.CurrentLanguage = blockIL;
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-
-		blockIL.Stepper.Steps.Should().NotBeEmpty(
-			"BlockILLanguage.DecompileMethod must populate context.Stepper.Steps when STEP is defined");
+		var csharp = languageService.Languages.OfType<CSharpLanguage>().Single();
+		csharp.Stepper.Steps.Should().NotBeEmpty(
+			"the C# decompile must populate decompiler.Stepper.Steps when STEP is defined");
 
 		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
 		await Waiters.WaitForAsync(
 			() => debugStepsVm.Steps?.Count > 0,
-			description: "DebugStepsPaneModel.Steps to be populated after the ILAst decompile");
+			description: "DebugStepsPaneModel.Steps to be populated after the decompile");
 
 		debugStepsVm.Steps.Should().NotBeNullOrEmpty(
-			"after switching to ILAst and decompiling, the VM's Steps must list the stepper's recorded transforms");
+			"after decompiling, the VM's Steps must list the stepper's recorded transforms");
 	}
 
 	[AvaloniaTest]
@@ -156,12 +151,14 @@ public class DebugStepsTests
 			.Select(transform => transform.GetType().Name)
 			.ToArray();
 
+		// The AST transforms close the tree; the per-member IL transform groups precede them.
 		debugStepsVm.Steps!
 			.Select(step => StripStepNumber(step.Description))
-			.Should().Equal(astTransformNames,
-				"C# debug steps must use AST transforms as top-level groups");
+			.Should().EndWith(astTransformNames,
+				"C# debug steps must use AST transforms as the top-level groups of the C# half");
 
 		var transformGroupWithChanges = debugStepsVm.Steps!
+			.Where(step => astTransformNames.Contains(StripStepNumber(step.Description)))
 			.FirstOrDefault(step => step.Children.Count > 0);
 		transformGroupWithChanges.Should().NotBeNull(
 			"individual C# AST mutation steps must be nested under their transform group");
@@ -195,7 +192,7 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
-	public async Task ILAst_DebugStep_Replay_Highlights_Changed_Instruction()
+	public async Task CSharp_DebugSteps_Cover_IL_Transforms_And_Replay_Renders_ILAst()
 	{
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -203,8 +200,8 @@ public class DebugStepsTests
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
 		var languageService = AppComposition.Current.GetExport<LanguageService>();
-		var blockIL = languageService.Languages.OfType<ILAstLanguage>().Single(l => l.Name == "ILAst");
-		languageService.CurrentLanguage = blockIL;
+		var csharp = languageService.Languages.OfType<CSharpLanguage>().Single();
+		languageService.CurrentLanguage = csharp;
 
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
@@ -217,25 +214,42 @@ public class DebugStepsTests
 		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
 		await Waiters.WaitForAsync(
 			() => debugStepsVm.Steps?.Count > 0,
-			description: "DebugStepsPaneModel.Steps to be populated after the ILAst decompile");
+			description: "DebugStepsPaneModel.Steps to be populated after the C# decompile");
+
+		// The C# step tree spans the whole pipeline, so the IL transforms have to be in it - under
+		// the group of the member they transformed, ahead of the C# AST transform groups.
+		var ilTransformNames = CSharpDecompiler.GetILTransforms()
+			.Select(transform => transform.GetType().Name)
+			.ToHashSet();
+		var memberGroup = debugStepsVm.Steps!
+			.FirstOrDefault(step => step.Children.Any(child => ilTransformNames.Contains(StripStepNumber(child.Description))));
+		memberGroup.Should().NotBeNull("the C# step tree must group each member's IL transforms");
 
 		// Replaying an individual mutation step is what surfaces a single IL change; the leaf
 		// step's changed instruction (or a surviving ancestor) must map to a rendered text range.
-		var replayStep = FirstLeafStep(debugStepsVm.Steps!);
-		replayStep.Should().NotBeNull("the ILAst stepper must record individual mutation steps");
+		var replayStep = FirstLeafStep(memberGroup!.Children);
+		replayStep.Should().NotBeNull("the IL transforms must record individual mutation steps");
 
 		var collectedSteps = debugStepsVm.Steps;
 		var tab = vm.DockWorkspace.ActiveDecompilerTab!;
 
 		await tab.RestartDecompileWithStepLimit(replayStep!.BeginStep, isDebug: false, replayStep.BeginStep);
-		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay before a selected step must still emit IL");
-		AssertPreciseHighlight(tab, "ILAst replay before a selected step must locate the changed instruction");
+		tab.Text.Should().NotBeNullOrWhiteSpace("replaying an IL-phase step must still emit output");
+		tab.SyntaxExtension.Should().Be(".il",
+			"an IL-phase step halts before there is any C#, so the editor shows the ILAst it stopped in");
+		AssertPreciseHighlight(tab, "an IL-phase replay must locate the changed instruction");
 		debugStepsVm.Steps.Should().BeSameAs(collectedSteps,
-			"a step-limited ILAst replay must not replace the full step tree shown by the pane");
+			"a step-limited replay must not replace the full step tree shown by the pane");
 
 		await tab.RestartDecompileWithStepLimit(replayStep.EndStep, isDebug: false, replayStep.BeginStep);
-		tab.Text.Should().NotBeNullOrWhiteSpace("ILAst replay after a selected step must still emit IL");
-		AssertPreciseHighlight(tab, "ILAst replay after a selected step must locate the changed instruction");
+		tab.Text.Should().NotBeNullOrWhiteSpace("replaying the state after an IL-phase step must still emit output");
+		AssertPreciseHighlight(tab, "an IL-phase replay must locate the changed instruction");
+
+		static string StripStepNumber(string description)
+		{
+			var separatorIndex = description.IndexOf(": ", StringComparison.Ordinal);
+			return separatorIndex >= 0 ? description[(separatorIndex + 2)..] : description;
+		}
 
 		// The first leaf step that acts on a concrete instruction; a step whose Position is null
 		// (e.g. an empty transform group) has nothing to highlight and is not what a user replays.
@@ -258,17 +272,24 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
-	public Task ILAst_And_TypedIL_Languages_Are_Registered_In_Debug_Builds()
+	public Task Stepping_And_Language_Version_Selection_Coexist_On_The_CSharp_Language()
 	{
-		// Two ILAstLanguage subclasses: BlockILLanguage ("ILAst") drives the stepper,
-		// TypedILLanguage ("Typed IL") writes type-annotated raw IL without transforms.
-		// Both register via [Export(typeof(Language))]; the language picker uses them
-		// in addition to C# and the disassembler-IL language.
+		// The step pipeline used to live on a separate "ILAst" language, which had no language
+		// versions - so picking it silently reset the version to Latest and hid the dropdown. Stepping
+		// now belongs to C#, where the version selection stays live and reaches the IL transforms.
 		var languageService = AppComposition.Current.GetExport<LanguageService>();
-		languageService.Languages.OfType<ILAstLanguage>().Should().HaveCount(2,
-			"both BlockIL and TypedIL must be registered when DEBUG is defined");
-		languageService.Languages.Should().Contain(l => l.Name == "ILAst");
-		languageService.Languages.Should().Contain(l => l.Name == "Typed IL");
+		languageService.Languages.Should().NotContain(l => l.Name == "ILAst",
+			"the ILAst language is retired; its pipeline is walked in the Debug Steps pane");
+		languageService.Languages.Should().Contain(l => l.Name == "Typed IL",
+			"Typed IL is a raw-IL rendering, not a pipeline stage, and stays its own debug language");
+
+		var csharp = languageService.Languages.OfType<CSharpLanguage>().Single();
+		languageService.CurrentLanguage = csharp;
+		csharp.HasLanguageVersions.Should().BeTrue();
+
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+		debugStepsVm.IsAvailable.Should().BeTrue(
+			"the language that offers version selection is also the one that records steps");
 		return Task.CompletedTask;
 	}
 
@@ -394,6 +415,37 @@ public class DebugStepsTests
 		return Task.CompletedTask;
 	}
 
+	[AvaloniaTest]
+	public Task Writing_Option_CheckBoxes_Are_Bound_To_The_ILAst_Writing_Options()
+	{
+		// The checkboxes sit on a DataContext of their own (the writing options rather than the pane),
+		// so their bindings are uncompiled and a rename would break them silently at runtime. They
+		// drive how a halted IL step's ILAst is rendered, so a dead binding is a dead feature.
+		var vm = new DebugStepsPaneModel { IsAvailable = true };
+		var window = new Window { Width = 500, Height = 300, Content = new DebugSteps { DataContext = vm } };
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+		try
+		{
+			var fieldSugar = window.GetVisualDescendants().OfType<CheckBox>()
+				.Single(box => (box.Content as string) == "Field sugar");
+			fieldSugar.IsChecked.Should().Be(DebugStepsPaneModel.WritingOptions.UseFieldSugar,
+				"the checkbox must show the current writing option");
+
+			fieldSugar.IsChecked = false;
+			Dispatcher.UIThread.RunJobs();
+			DebugStepsPaneModel.WritingOptions.UseFieldSugar.Should().BeFalse(
+				"toggling the checkbox must reach the options the ILAst dump is written with");
+		}
+		finally
+		{
+			// Shared static state: leave it as the rest of the suite expects to find it.
+			DebugStepsPaneModel.WritingOptions.UseFieldSugar = true;
+			window.Close();
+		}
+		return Task.CompletedTask;
+	}
+
 	// A replay highlight must land on the changed node, not merely be non-null: in bounds, not a
 	// flood of the whole document, and (unless it is a zero-length removal caret) on rendered code
 	// rather than whitespace. This is what keeps the ancestor fallback from silently widening every
@@ -474,7 +526,7 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public Task Pane_Reports_Not_Available_For_Languages_Without_Debug_Steps()
 	{
-		// The step tree only makes sense for IDebugStepProvider languages (C#, ILAst, Typed IL).
+		// The step tree only makes sense for the C# language, whose pipeline records it.
 		// For the plain IL disassembler the pane must not keep showing the previous language's
 		// stale step tree (whose commands would trigger pointless re-decompiles); it reports
 		// unavailability so the view swaps in a "not available" message instead.
