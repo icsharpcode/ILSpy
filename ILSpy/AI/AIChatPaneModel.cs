@@ -98,16 +98,20 @@ namespace ICSharpCode.ILSpy.AI
 			AIConversationTarget target = GetCurrentTarget();
 			if (loadedTarget?.BelongsTo(target.ProfileId, target.ProviderType, target.Endpoint, target.Model) == true)
 			{
-				if (loadedHistory.ActiveConversation.Target is { } metadata)
-					loadedHistory.ActiveConversation.Target = metadata with { ProfileName = target.ProfileName };
+				await SetUiStateAsync(() => {
+					if (loadedHistory.ActiveConversation.Target is { } metadata)
+						loadedHistory.ActiveConversation.Target = metadata with { ProfileName = target.ProfileName };
+				});
 				await RefreshReadinessAsync();
 				return;
 			}
-			cancellation?.Cancel();
-			SaveHistory();
-			Messages.Clear();
-			conversationGeneration++;
-			LoadHistory(target);
+			await SetUiStateAsync(() => {
+				cancellation?.Cancel();
+				SaveHistory();
+				Messages.Clear();
+				conversationGeneration++;
+				LoadHistory(target);
+			});
 			await RefreshReadinessAsync();
 		}
 
