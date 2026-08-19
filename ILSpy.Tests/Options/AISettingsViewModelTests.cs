@@ -159,7 +159,7 @@ public class AISettingsViewModelTests
 		factory.Snapshot.Endpoint.Should().Be("https://diagnostic.example.test");
 		factory.Snapshot.Model.Should().Be("diagnostic-model");
 		factory.Snapshot.ApiKey.Should().Be("diagnostic-key");
-		viewModel.StatusMessage.Should().Be("Connection succeeded.");
+		viewModel.StatusMessage.Should().Be("Connection succeeded for Diagnostic draft / diagnostic-model.");
 		settings.ActiveProfileId.Should().Be(activeProfileId);
 		Serialize(settings).Should().Be(savedXml);
 	}
