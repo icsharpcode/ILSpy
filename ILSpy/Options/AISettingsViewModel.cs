@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -15,6 +16,7 @@ using System.Composition;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -25,6 +27,7 @@ namespace ICSharpCode.ILSpy.Options
 	{
 		readonly IAIProviderFactory providerFactory;
 		readonly SecureKeyStorage keyStorage;
+		AISelectionService? selectionService;
 		AISettings settings = null!;
 		AIProfile? draft;
 		string apiKeyInput = string.Empty;
@@ -47,6 +50,16 @@ namespace ICSharpCode.ILSpy.Options
 		public string Title => "AI Assistant";
 
 		public IReadOnlyList<string> Providers { get; }
+		public IReadOnlyList<AIProfile> Profiles => Settings is null ? Array.Empty<AIProfile>() : Settings.Profiles;
+		public AIProfile? SelectedProfile {
+			get => AIProfileDraft;
+			set { if (value is not null) { AIProfileDraft = value.Clone(); OnPropertyChanged(); } }
+		}
+		public ICommand AddProfileCommand => new AsyncCommand(AddProfileAsync, () => Settings is not null);
+		public ICommand DuplicateProfileCommand => new AsyncCommand(DuplicateProfileAsync, () => AIProfileDraft is not null);
+		public ICommand DeleteProfileCommand => new AsyncCommand(DeleteProfileAsync, () => AIProfileDraft is not null && Profiles.Count > 1);
+		public ICommand SaveCommand => new AsyncCommand(SaveDraftAsync, () => AIProfileDraft is not null);
+		public ICommand CancelCommand => new AsyncCommand(CancelDraftAsync, () => AIProfileDraft is not null);
 
 		public AISettings Settings {
 			get => settings;
@@ -121,10 +134,61 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			ArgumentNullException.ThrowIfNull(service);
 			Settings = service.AISettings;
+			selectionService = AppComposition.TryGetExport<AISelectionService>();
 			AIProfileDraft = Settings.ActiveProfile.Clone();
 			ApiKeyInput = string.Empty;
 			StatusMessage = string.Empty;
 			_ = LoadStoredKeyAsync(Settings, CancellationToken.None);
+		}
+
+		async Task AddProfileAsync()
+		{
+			AIProfile profile = AIProfile.Create(AIProviderCatalog.Get("openai"));
+			profile.Name = MakeUniqueName("New profile");
+			AIProfileDraft = profile;
+			await Task.CompletedTask;
+		}
+
+		async Task DuplicateProfileAsync()
+		{
+			if (AIProfileDraft is null) return;
+			AIProfileDraft = AIProfileDraft.Duplicate();
+			AIProfileDraft.Name = MakeUniqueName(AIProfileDraft.Name + " Copy");
+			await Task.CompletedTask;
+		}
+
+		async Task DeleteProfileAsync()
+		{
+			if (AIProfileDraft is null || Settings.Profiles.Count <= 1) return;
+			AIProfile? existing = Settings.Profiles.FirstOrDefault(p => p.Id == AIProfileDraft.Id);
+			if (existing is not null && selectionService is not null)
+				await selectionService.DeleteProfileAsync(existing.Id);
+			AIProfileDraft = Settings.ActiveProfile.Clone();
+			OnPropertyChanged(nameof(Profiles));
+		}
+
+		async Task SaveDraftAsync()
+		{
+			if (AIProfileDraft is null) return;
+			AIProfileDraft.Normalize();
+			if (AIProfileDraft.Validate().Count != 0) { StatusMessage = string.Join(" ", AIProfileDraft.Validate()); return; }
+			AIProfile? existing = Settings.Profiles.FirstOrDefault(p => p.Id == AIProfileDraft.Id);
+			if (existing is null) Settings.Profiles.Add(AIProfileDraft.Clone());
+			else { int index = Settings.Profiles.IndexOf(existing); Settings.Profiles[index] = AIProfileDraft.Clone(); }
+			Settings.NotifyProfilesChanged();
+			AIProfileDraft = AIProfileDraft.Clone();
+			OnPropertyChanged(nameof(Profiles));
+			await Task.CompletedTask;
+		}
+
+		async Task CancelDraftAsync() { AIProfileDraft = Settings.ActiveProfile.Clone(); await Task.CompletedTask; }
+
+		string MakeUniqueName(string proposed)
+		{
+			string name = proposed.Trim();
+			int suffix = 2;
+			while (Profiles.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))) name = proposed.Trim() + " " + suffix++;
+			return name;
 		}
 
 		public void LoadDefaults()
