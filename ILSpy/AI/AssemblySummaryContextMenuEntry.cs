@@ -20,7 +20,6 @@ namespace ICSharpCode.ILSpy.AI
 	[Shared]
 	public sealed class AssemblySummaryContextMenuEntry : IContextMenuEntry
 	{
-		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
 		readonly AISelectionService selectionService;
 		readonly AIOutputPaneModel outputPane;
@@ -29,7 +28,7 @@ namespace ICSharpCode.ILSpy.AI
 		[ImportingConstructor]
 		public AssemblySummaryContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace, AISelectionService selectionService)
 		{
-			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+			_ = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			this.outputPane = outputPane ?? throw new ArgumentNullException(nameof(outputPane));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
@@ -40,12 +39,7 @@ namespace ICSharpCode.ILSpy.AI
 			=> context.SelectedTreeNodes is { Length: 1 } && context.SelectedTreeNodes[0] is AssemblyTreeNode;
 
 		public bool IsEnabled(TextViewContext context)
-		{
-			var settings = settingsService.AISettings;
-			return IsVisible(context) && settings.PrivacyConsentAccepted && AISettings.IsSupportedProvider(settings.Provider)
-				&& !string.IsNullOrWhiteSpace(settings.BaseUrl) && !string.IsNullOrWhiteSpace(settings.Model)
-				&& (settings.Provider == "ollama" || !string.IsNullOrWhiteSpace(settings.ApiKey) || !string.IsNullOrWhiteSpace(settings.ApiKeyPlaceholder));
-		}
+			=> IsVisible(context) && selectionService.CanAttemptRequest;
 
 		public void Execute(TextViewContext context)
 		{

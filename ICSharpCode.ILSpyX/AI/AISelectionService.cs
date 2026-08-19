@@ -53,6 +53,21 @@ namespace ICSharpCode.ILSpyX.AI
 
 		public AIProfile ActiveProfile => settings.ActiveProfile;
 
+		/// <summary>Returns whether the active saved selection is structurally usable and has a
+		/// credential hint when the provider requires one. This synchronous gate is for UI
+		/// enablement only; requests must still call <see cref="ResolveSnapshotAsync"/>.</summary>
+		public bool CanAttemptRequest {
+			get {
+				AIConfigurationState structural = EvaluateStructuralReadiness();
+				if (!structural.IsReady)
+					return false;
+				AIProviderDescriptor provider = AIProviderCatalog.Get(settings.ActiveProfile.ProviderType);
+				return provider.KeyRequirement != AIProviderKeyRequirement.Required
+					|| !string.IsNullOrWhiteSpace(settings.ApiKey)
+					|| settings.ActiveProfile.HasStoredKey;
+			}
+		}
+
 		public AISelection ActiveSelection => new(settings.ActiveProfileId, settings.ActiveProfile.ResolveModel());
 
 		/// <summary>

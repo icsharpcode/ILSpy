@@ -17,16 +17,17 @@ namespace ICSharpCode.ILSpy.AI
 	[Shared]
 	public sealed class ExplainContextMenuEntry : IContextMenuEntry
 	{
-		readonly SettingsService settingsService;
+		readonly AISelectionService selectionService;
 		readonly AIOutputPaneModel outputPane;
 		readonly DockWorkspace dockWorkspace;
 
 		[ImportingConstructor]
-		public ExplainContextMenuEntry(SettingsService settingsService, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace)
+		public ExplainContextMenuEntry(SettingsService settingsService, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace, AISelectionService selectionService)
 		{
-			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
+			_ = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.outputPane = outputPane ?? throw new ArgumentNullException(nameof(outputPane));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
+			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 		}
 
 		public bool IsVisible(TextViewContext context) => ResolveEntity(context) is not null;
@@ -35,14 +36,7 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			if (ResolveEntity(context) is null)
 				return false;
-			var settings = settingsService.AISettings;
-			return settings.PrivacyConsentAccepted
-				&& AISettings.IsSupportedProvider(settings.Provider)
-				&& !string.IsNullOrWhiteSpace(settings.BaseUrl)
-				&& !string.IsNullOrWhiteSpace(settings.Model)
-				&& (settings.Provider == "ollama"
-					|| !string.IsNullOrWhiteSpace(settings.ApiKey)
-					|| !string.IsNullOrWhiteSpace(settings.ApiKeyPlaceholder));
+			return selectionService.CanAttemptRequest;
 		}
 
 		public void Execute(TextViewContext context)
