@@ -21,7 +21,7 @@ Verification completed:
 - `rtk dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj --no-restore --filter 'FullyQualifiedName~AIEditorScrollStateTests' --verbosity minimal` — passed, 16 tests.
 - `rtk git diff --check` — passed.
 
-Manual Avalonia UI regression and the full `ILSpy.Tests` suite were not run in this environment. The remaining migration search intentionally retains settings persistence/selection bridges, `ContextBuilder(AISettings)` global-preference compatibility, and the rename context-menu readiness helper; no provider factory or request service receives a live `AISettings`.
+Manual Avalonia UI regression and the full `ILSpy.Tests` suite were not run in this environment. The remaining migration search intentionally retains only settings persistence/selection bridges and `ContextBuilder(AISettings)` global-preference compatibility; no provider factory, request service, or AI context-menu readiness path receives a live `AISettings`.
 
 ### Already implemented or substantially implemented
 
@@ -546,7 +546,7 @@ Inspect every failed test. Do not hide failures with broader filters, retries, o
 - [x] Target changes isolate conversations; rename/reorder/key replacement preserve them.
 - [x] Deleted-target conversations are readable and read-only.
 - [x] All AI consumers use immutable snapshots captured at request start.
-- [ ] Mutable `CreateAsync(AISettings, ...)` and production mutable-settings facades are removed.
+- [x] Mutable `CreateAsync(AISettings, ...)` and production mutable-settings request facades are removed; persistence/selection bridges and `ContextBuilder(AISettings)` remain intentionally.
 - [ ] Follow-tail controller policy is covered by tests and manual UI checks. (Automated policy tests pass; manual UI check pending.)
 
 ### Engineering quality

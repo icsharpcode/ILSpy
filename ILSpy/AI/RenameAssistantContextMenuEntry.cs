@@ -11,7 +11,6 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.AI
 {
@@ -19,14 +18,12 @@ namespace ICSharpCode.ILSpy.AI
 	[Shared]
 	public sealed class RenameAssistantContextMenuEntry : IContextMenuEntry
 	{
-		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
 		readonly AISelectionService selectionService;
 
 		[ImportingConstructor]
-		public RenameAssistantContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AISelectionService selectionService)
+		public RenameAssistantContextMenuEntry(IAIProviderFactory providerFactory, AISelectionService selectionService)
 		{
-			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 		}
@@ -37,8 +34,7 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			if (ResolveEntity(context) is not { } entity)
 				return false;
-			AISettings settings = settingsService.AISettings;
-			return RenameSuggester.IsLikelyObfuscated(entity.Name) && IsConfigured(settings);
+			return RenameSuggester.IsLikelyObfuscated(entity.Name) && selectionService.CanAttemptRequest;
 		}
 
 		public void Execute(TextViewContext context)
@@ -71,26 +67,18 @@ namespace ICSharpCode.ILSpy.AI
 			return entity is ITypeDefinition or IMethod or IField or IProperty ? entity : null;
 		}
 
-		internal static bool IsConfigured(AISettings settings)
-			=> settings.PrivacyConsentAccepted
-				&& AISettings.IsSupportedProvider(settings.Provider)
-				&& !string.IsNullOrWhiteSpace(settings.BaseUrl)
-				&& !string.IsNullOrWhiteSpace(settings.Model)
-				&& (settings.Provider == "ollama" || !string.IsNullOrWhiteSpace(settings.ApiKey) || !string.IsNullOrWhiteSpace(settings.ApiKeyPlaceholder));
 	}
 
 	[ExportContextMenuEntry(Header = "Batch Rename All Members with AI", Category = "AI", Order = 1021)]
 	[Shared]
 	public sealed class BatchRenameContextMenuEntry : IContextMenuEntry
 	{
-		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
 		readonly AISelectionService selectionService;
 
 		[ImportingConstructor]
-		public BatchRenameContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AISelectionService selectionService)
+		public BatchRenameContextMenuEntry(IAIProviderFactory providerFactory, AISelectionService selectionService)
 		{
-			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 		}
@@ -98,7 +86,7 @@ namespace ICSharpCode.ILSpy.AI
 		public bool IsVisible(TextViewContext context) => ResolveType(context) is not null;
 
 		public bool IsEnabled(TextViewContext context)
-			=> ResolveType(context) is not null && RenameAssistantContextMenuEntry.IsConfigured(settingsService.AISettings);
+			=> ResolveType(context) is not null && selectionService.CanAttemptRequest;
 
 		public void Execute(TextViewContext context)
 		{
