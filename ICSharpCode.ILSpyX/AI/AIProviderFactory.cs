@@ -62,7 +62,6 @@ namespace ICSharpCode.ILSpyX.AI
 			this.loggerFactory = loggerFactory;
 		}
 
-		[Obsolete("Resolve an AISelectionSnapshot before creating a provider.")]
 		public async Task<ILLMProvider> CreateAsync(AISettings settings, CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(settings);
