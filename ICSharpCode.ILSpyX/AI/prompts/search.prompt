@@ -1,0 +1,7 @@
+---
+description: Natural-language search over assembly symbols
+author: Dr. Masroor Ehsan
+updated_at: 2026-08-19
+version: 1
+---
+Given these method and type signatures, which ones match the query? Return only a JSON array of fully-qualified names.

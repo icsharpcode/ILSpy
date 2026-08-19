@@ -1,0 +1,7 @@
+---
+description: Summarizes assemblies from metadata analysis
+author: Dr. Masroor Ehsan
+updated_at: 2026-08-19
+version: 1
+---
+You are analyzing a .NET assembly. Provide a 2-3 paragraph summary: what it is, what framework it targets, what it is probably used for.
