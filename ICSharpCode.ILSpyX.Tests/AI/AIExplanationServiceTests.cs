@@ -158,6 +158,15 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 				LastSettings = settings;
 				return Task.FromResult(provider);
 			}
+
+			public Task<ILLMProvider> CreateAsync(AISelectionSnapshot snapshot, CancellationToken cancellationToken = default)
+			{
+				CreateCount++;
+				LastSnapshot = snapshot;
+				return Task.FromResult(provider);
+			}
+
+			public AISelectionSnapshot? LastSnapshot { get; private set; }
 		}
 
 		sealed class FakeProvider : ILLMProvider

@@ -14,6 +14,12 @@ namespace ICSharpCode.ILSpyX.AI
 	public interface IAIProviderFactory
 	{
 		Task<ILLMProvider> CreateAsync(AISettings settings, CancellationToken cancellationToken = default);
+
+		/// <summary>
+		/// Creates the provider for an immutable resolved target. No mutable settings are read;
+		/// in-flight requests are unaffected by later configuration changes.
+		/// </summary>
+		Task<ILLMProvider> CreateAsync(AISelectionSnapshot snapshot, CancellationToken cancellationToken = default);
 	}
 
 	public sealed class AIConfigurationException : Exception
@@ -73,7 +79,11 @@ namespace ICSharpCode.ILSpyX.AI
 			string? apiKey = settings.ApiKey;
 			if (string.IsNullOrWhiteSpace(apiKey) && !string.IsNullOrWhiteSpace(settings.ApiKeyPlaceholder))
 			{
-				SecureKeyLookupResult result = await keyStorage.TryLoadKeyAsync(provider, cancellationToken).ConfigureAwait(false);
+				// Profile-keyed credential first; the legacy provider-keyed entry is the
+				// fallback while credential migration is pending.
+				SecureKeyLookupResult result = await keyStorage.TryLoadKeyAsync(settings.ActiveProfile.CredentialId, cancellationToken).ConfigureAwait(false);
+				if (result.Status == SecureKeyLookupStatus.NotFound && settings.CredentialMigrationPending)
+					result = await keyStorage.TryLoadKeyAsync(provider, cancellationToken).ConfigureAwait(false);
 				if (result.Status == SecureKeyLookupStatus.Unavailable)
 					throw new AIConfigurationException("Secure API-key storage is unavailable.");
 				apiKey = result.Value;
@@ -87,6 +97,25 @@ namespace ICSharpCode.ILSpyX.AI
 			return provider == "anthropic"
 				? new Providers.AnthropicProvider(settings.BaseUrl, apiKey!, settings.Model, httpClient)
 				: new Providers.OpenAIProvider(settings.BaseUrl, apiKey, settings.Model, httpClient, loggerFactory);
+		}
+
+		public Task<ILLMProvider> CreateAsync(AISelectionSnapshot snapshot, CancellationToken cancellationToken = default)
+		{
+			ArgumentNullException.ThrowIfNull(snapshot);
+			if (!AIProviderCatalog.TryGet(snapshot.ProviderType, out AIProviderDescriptor? descriptor))
+				throw new AIConfigurationException($"Provider '{snapshot.ProviderType}' is not supported in this version.");
+			if (string.IsNullOrWhiteSpace(snapshot.Endpoint))
+				throw new AIConfigurationException("Configure an AI endpoint.");
+			if (string.IsNullOrWhiteSpace(snapshot.Model))
+				throw new AIConfigurationException("Configure an AI model.");
+			if (descriptor.KeyRequirement == AIProviderKeyRequirement.Required
+				&& string.IsNullOrWhiteSpace(snapshot.ApiKey))
+				throw new AIConfigurationException("Configure an API key before using this provider.");
+
+			ILLMProvider provider = descriptor.Implementation == AIProviderImplementation.Anthropic
+				? new Providers.AnthropicProvider(snapshot.Endpoint, snapshot.ApiKey!, snapshot.Model, httpClient)
+				: new Providers.OpenAIProvider(snapshot.Endpoint, snapshot.ApiKey, snapshot.Model, httpClient, loggerFactory);
+			return Task.FromResult(provider);
 		}
 
 		public void Dispose()
