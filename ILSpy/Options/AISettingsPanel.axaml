@@ -39,6 +39,7 @@
 							<StackPanel Orientation="Horizontal" Spacing="4">
 								<TextBox Width="180" Text="{Binding ModelNameInput, Mode=TwoWay}" PlaceholderText="Model name" />
 								<Button Content="Add" Command="{Binding AddModelCommand}" />
+								<Button Content="Rename" Command="{Binding RenameModelCommand}" />
 								<Button Content="Delete" Command="{Binding DeleteModelCommand}" />
 								<Button Content="↑" Command="{Binding MoveModelUpCommand}" />
 								<Button Content="↓" Command="{Binding MoveModelDownCommand}" />

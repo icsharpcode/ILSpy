@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy.Options
 		public IReadOnlyList<AIProfile> Profiles => Settings is null ? Array.Empty<AIProfile>() : Settings.Profiles;
 		public AIProfile? SelectedProfile {
 			get => AIProfileDraft;
-			set { if (value is not null) { AIProfileDraft = value.Clone(); OnPropertyChanged(); } }
+			set { if (value is not null) { AIProfileDraft = value.Clone(); SelectedModel = AIProfileDraft.ResolveModel(); OnPropertyChanged(); } }
 		}
 		public ICommand AddProfileCommand => new AsyncCommand(AddProfileAsync, () => Settings is not null);
 		public ICommand DuplicateProfileCommand => new AsyncCommand(DuplicateProfileAsync, () => AIProfileDraft is not null);
@@ -63,11 +63,22 @@ namespace ICSharpCode.ILSpy.Options
 		public ICommand MoveProfileUpCommand => new AsyncCommand(() => MoveProfileAsync(-1), () => AIProfileDraft is not null);
 		public ICommand MoveProfileDownCommand => new AsyncCommand(() => MoveProfileAsync(1), () => AIProfileDraft is not null);
 		public ICommand AddModelCommand => new AsyncCommand(AddModelAsync, () => AIProfileDraft is not null);
+		public ICommand RenameModelCommand => new AsyncCommand(RenameModelAsync, () => AIProfileDraft is not null && !string.IsNullOrWhiteSpace(SelectedModel));
 		public ICommand DeleteModelCommand => new AsyncCommand(DeleteModelAsync, () => AIProfileDraft is not null && AIProfileDraft.Models.Count > 1);
 		public ICommand MoveModelUpCommand => new AsyncCommand(() => MoveModelAsync(-1), () => AIProfileDraft is not null);
 		public ICommand MoveModelDownCommand => new AsyncCommand(() => MoveModelAsync(1), () => AIProfileDraft is not null);
-		public string ModelNameInput { get; set; } = string.Empty;
-		public string SelectedModel { get; set; } = string.Empty;
+		string modelNameInput = string.Empty;
+		string selectedModel = string.Empty;
+		public string ModelNameInput { get => modelNameInput; set => SetProperty(ref modelNameInput, value ?? string.Empty); }
+		public string SelectedModel {
+			get => selectedModel;
+			set {
+				if (!SetProperty(ref selectedModel, value ?? string.Empty) || AIProfileDraft is null)
+					return;
+				if (AIProfileDraft.Models.Contains(SelectedModel, StringComparer.OrdinalIgnoreCase))
+					AIProfileDraft.LastSelectedModel = SelectedModel;
+			}
+		}
 
 		public AISettings Settings {
 			get => settings;
@@ -205,6 +216,26 @@ namespace ICSharpCode.ILSpy.Options
 			AIProfileDraft.Models.Add(model);
 			if (string.IsNullOrWhiteSpace(AIProfileDraft.LastSelectedModel))
 				AIProfileDraft.LastSelectedModel = model;
+			ModelNameInput = string.Empty;
+			OnPropertyChanged(nameof(AIProfileDraft));
+			await Task.CompletedTask;
+		}
+
+		async Task RenameModelAsync()
+		{
+			if (AIProfileDraft is null)
+				return;
+			string replacement = ModelNameInput.Trim();
+			if (replacement.Length == 0)
+			{ StatusMessage = "Enter a model name."; return; }
+			int index = AIProfileDraft.Models.FindIndex(model => string.Equals(model, SelectedModel, StringComparison.OrdinalIgnoreCase));
+			if (index < 0)
+				return;
+			if (AIProfileDraft.Models.Where((model, i) => i != index).Any(model => string.Equals(model, replacement, StringComparison.OrdinalIgnoreCase)))
+			{ StatusMessage = "That model is already listed."; return; }
+			AIProfileDraft.Models[index] = replacement;
+			AIProfileDraft.LastSelectedModel = replacement;
+			SelectedModel = replacement;
 			ModelNameInput = string.Empty;
 			OnPropertyChanged(nameof(AIProfileDraft));
 			await Task.CompletedTask;
