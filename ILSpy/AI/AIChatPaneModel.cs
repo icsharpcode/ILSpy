@@ -36,6 +36,7 @@ namespace ICSharpCode.ILSpy.AI
 		const string SystemPrompt = "You are an assistant for .NET decompilation. Answer questions about the code clearly and concisely.";
 		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
+		readonly AISelectionService selectionService;
 		readonly AssemblyTreeModel assemblyTree;
 		CancellationTokenSource? cancellation;
 		string loadedHistoryPath = string.Empty;
@@ -55,6 +56,7 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+			selectionService = AppComposition.TryGetExport<AISelectionService>() ?? throw new InvalidOperationException("AI selection service is unavailable.");
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
 			Id = PaneContentId;
 			Title = "AI Chat";
@@ -78,7 +80,19 @@ namespace ICSharpCode.ILSpy.AI
 			string text = Input.Trim();
 			if (text.Length == 0 || IsBusy)
 				return;
+			AISelectionSnapshot snapshot;
+			try
+			{
+				snapshot = await selectionService.ResolveSnapshotAsync().ConfigureAwait(false);
+			}
+			catch (AIConfigurationException ex)
+			{
+				ErrorMessage = ex.Message;
+				StatusMessage = "AI settings required";
+				return;
+			}
 			Input = string.Empty;
+			EnsureConversation(snapshot);
 			if (text.StartsWith('/'))
 				text = ExpandCommand(text);
 			var user = new ChatMessage { Role = "user", Content = text };
@@ -95,15 +109,15 @@ namespace ICSharpCode.ILSpy.AI
 			try
 			{
 				var requestMessages = Messages.Where(m => m.Content.Length != 0).Select(m => new LLMMessage(m.Role, m.Content)).ToArray();
-				var provider = await providerFactory.CreateAsync(settingsService.AISettings, cts.Token).ConfigureAwait(false);
+				var provider = await providerFactory.CreateAsync(snapshot, cts.Token).ConfigureAwait(false);
 				var context = GetActiveContext(text);
 				var request = new LLMRequest(SystemPrompt, requestMessages.Append(new LLMMessage("user", context)).ToArray(), 2048, 0.3);
 				var builder = new StringBuilder();
 				await foreach (var chunk in provider.CompleteAsync(request, cts.Token).ConfigureAwait(false))
 				{
 					builder.Append(chunk);
-					string snapshot = builder.ToString();
-					await Dispatcher.UIThread.InvokeAsync(() => assistant.Content = snapshot);
+					string contentSnapshot = builder.ToString();
+					await Dispatcher.UIThread.InvokeAsync(() => assistant.Content = contentSnapshot);
 				}
 				StatusMessage = "Complete";
 				SaveHistory();
@@ -146,7 +160,7 @@ namespace ICSharpCode.ILSpy.AI
 			if (path.Length != 0)
 			{
 				try
-				{ File.WriteAllText(Path.ChangeExtension(path, ".md"), new ChatHistory { Messages = Messages.ToList() }.ToMarkdown(), Encoding.UTF8); }
+				{ File.WriteAllText(Path.ChangeExtension(path, ".md"), loadedHistory.ToMarkdown(), Encoding.UTF8); }
 				catch (UnauthorizedAccessException) { StatusMessage = "Export failed"; return; }
 				catch (IOException) { StatusMessage = "Export failed"; return; }
 			}
@@ -154,6 +168,20 @@ namespace ICSharpCode.ILSpy.AI
 		}
 
 		void TrimHistory() { while (Messages.Count > MaxMessages) Messages.RemoveAt(0); }
+		ChatHistory loadedHistory = new();
+		void EnsureConversation(AISelectionSnapshot snapshot)
+		{
+			AIConversationTarget target = new(snapshot.ProfileId, snapshot.ProfileName, snapshot.ProviderType, snapshot.Endpoint, snapshot.Model);
+			ChatConversation current = loadedHistory.ActiveConversation;
+			if (!current.ReadOnly && current.Target?.BelongsTo(target.ProfileId, target.ProviderType, target.Endpoint, target.Model) == true)
+				return;
+			SaveHistory();
+			current = loadedHistory.GetOrCreate(target);
+			current.ReadOnly = false;
+			Messages.Clear();
+			foreach (ChatMessage message in current.Messages.TakeLast(MaxMessages))
+				Messages.Add(message);
+		}
 		string GetHistoryPath()
 		{
 			var entity = (assemblyTree.SelectedItem as IMemberTreeNode)?.Member;
@@ -162,14 +190,14 @@ namespace ICSharpCode.ILSpy.AI
 				file = node.AncestorsAndSelf().OfType<AssemblyTreeNode>().FirstOrDefault()?.LoadedAssembly.FileName;
 			return string.IsNullOrWhiteSpace(file) ? string.Empty : Path.Combine(Path.GetDirectoryName(file)!, ".ilspy-chat-history.json");
 		}
-		void LoadHistory() { string path = GetHistoryPath(); loadedHistoryPath = path; if (path.Length == 0) return; var history = ChatHistory.Load(path); foreach (var message in history.Messages.TakeLast(MaxMessages)) Messages.Add(message); }
+		void LoadHistory() { string path = GetHistoryPath(); loadedHistoryPath = path; if (path.Length == 0) return; loadedHistory = ChatHistory.Load(path); foreach (var message in loadedHistory.Messages.TakeLast(MaxMessages)) Messages.Add(message); }
 		void SaveHistory() => SaveHistory(GetHistoryPath());
 		void SaveHistory(string path)
 		{
 			if (path.Length == 0)
 				return;
 			try
-			{ new ChatHistory { AssemblyPath = GetAssemblyPath(), Messages = Messages.ToList() }.Save(path); }
+			{ loadedHistory.AssemblyPath = GetAssemblyPath(); loadedHistory.ActiveConversation.Messages = Messages.ToList(); loadedHistory.Save(path); }
 			catch (UnauthorizedAccessException) { }
 			catch (IOException) { }
 		}
