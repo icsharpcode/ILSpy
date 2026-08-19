@@ -29,6 +29,9 @@ namespace ICSharpCode.Decompiler.Metadata
 		public EnumUnderlyingTypeResolveException() { }
 		public EnumUnderlyingTypeResolveException(string message) : base(message) { }
 		public EnumUnderlyingTypeResolveException(string message, Exception inner) : base(message, inner) { }
+#if NET5_0_OR_GREATER
+		[Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
 		protected EnumUnderlyingTypeResolveException(
 		  SerializationInfo info,
 		  StreamingContext context) : base(info, context) { }
@@ -40,6 +43,9 @@ namespace ICSharpCode.Decompiler.Metadata
 		public MetadataFileNotSupportedException() { }
 		public MetadataFileNotSupportedException(string message) : base(message) { }
 		public MetadataFileNotSupportedException(string message, Exception inner) : base(message, inner) { }
+#if NET5_0_OR_GREATER
+		[Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
 		protected MetadataFileNotSupportedException(
 		  SerializationInfo info,
 		  StreamingContext context) : base(info, context) { }
