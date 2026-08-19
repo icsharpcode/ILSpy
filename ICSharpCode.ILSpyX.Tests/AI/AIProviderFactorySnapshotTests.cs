@@ -75,26 +75,6 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 				.Should().ThrowAsync<AIConfigurationException>();
 		}
 
-		[Test]
-		public async Task LegacyAdapter_LoadsMigratedProfileCredential()
-		{
-			var backend = new RecordingBackend();
-			string credentialId;
-			var settings = new AISettings {
-				PrivacyConsentAccepted = true
-			};
-			settings.ApiKeyPlaceholder = "configured";
-			credentialId = settings.ActiveProfile.CredentialId;
-			backend.Keys[credentialId] = "sk-migrated-key";
-			var storage = new SecureKeyStorage(backend);
-			using var factory = new AIProviderFactory(storage, new System.Net.Http.HttpClient());
-
-			ILLMProvider provider = await factory.CreateAsync(settings);
-
-			provider.Should().BeOfType<OpenAIProvider>();
-			backend.LoadCount.Should().BeGreaterThan(0, "the adapter resolves the profile credential id");
-		}
-
 		static AISelectionSnapshot Snapshot(string providerType, string? apiKey, string endpoint = "https://api.openai.com", string model = "gpt-4o")
 		{
 			return new AISelectionSnapshot {
@@ -108,30 +88,5 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			};
 		}
 
-		sealed class RecordingBackend : ISecureKeyStorageBackend
-		{
-			public System.Collections.Generic.Dictionary<string, string> Keys { get; } = new();
-			public int LoadCount { get; private set; }
-
-			public Task SaveAsync(string provider, string key, System.Threading.CancellationToken cancellationToken)
-			{
-				Keys[provider] = key;
-				return Task.CompletedTask;
-			}
-
-			public Task<SecureKeyStorageBackendReadResult> LoadAsync(string provider, System.Threading.CancellationToken cancellationToken)
-			{
-				LoadCount++;
-				return Task.FromResult(Keys.TryGetValue(provider, out string? key)
-					? SecureKeyStorageBackendReadResult.Found(key)
-					: SecureKeyStorageBackendReadResult.NotFound);
-			}
-
-			public Task DeleteAsync(string provider, System.Threading.CancellationToken cancellationToken)
-			{
-				Keys.Remove(provider);
-				return Task.CompletedTask;
-			}
-		}
 	}
 }

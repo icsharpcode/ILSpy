@@ -25,8 +25,8 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var provider = new FakeProvider("first", " second");
 			var factory = new FakeFactory(provider);
-			var settings = new AISettings { PrivacyConsentAccepted = true, MaxContextTokens = 4000 };
-			var service = new AIExplanationService(settings, factory);
+			var snapshot = Snapshot(maxContextTokens: 4000);
+			var service = new AIExplanationService(snapshot, factory);
 			var context = new DecompilationContext {
 				FullyQualifiedName = "Sample.Type.Method",
 				AssemblyName = "Sample",
@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			string explanation = await service.ExplainContextAsync(context);
 
 			explanation.Should().Be("first second");
-			factory.LastSettings.Should().BeSameAs(settings);
+			factory.LastSnapshot.Should().Be(snapshot);
 			provider.LastRequest.Should().NotBeNull();
 			provider.LastRequest!.SystemPrompt.Should().Be(AIExplanationService.SystemPrompt);
 			provider.LastRequest.Messages.Should().ContainSingle();
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var provider = new FakeProvider("one", "two", "three");
 			var service = new AIExplanationService(
-				new AISettings { PrivacyConsentAccepted = true },
+				Snapshot(),
 				new FakeFactory(provider));
 			var chunks = new List<string>();
 			await foreach (string chunk in service.ExplainContextStreamingAsync(new DecompilationContext { DecompiledCSharp = "class C {}" }))
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var provider = new FakeProvider(TimeSpan.FromMilliseconds(1), "one", "two", "three");
 			var service = new AIExplanationService(
-				new AISettings { PrivacyConsentAccepted = true },
+				Snapshot(),
 				new FakeFactory(provider));
 			var chunks = new List<string>();
 
@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		public void ExplainContext_RequiresConsentBeforeProviderCreation()
 		{
 			var factory = new FakeFactory(new FakeProvider("unused"));
-			var service = new AIExplanationService(new AISettings(), factory);
+			var service = new AIExplanationService(new AISelectionSnapshot(), factory);
 			var context = new DecompilationContext { DecompiledCSharp = "class C {}" };
 
 			Assert.ThrowsAsync<AIConfigurationException>(async () => await service.ExplainContextAsync(context));
@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var provider = new FakeProvider(new HttpRequestException("secret-api-key", null, HttpStatusCode.Unauthorized));
 			var service = new AIExplanationService(
-				new AISettings { PrivacyConsentAccepted = true },
+				Snapshot(),
 				new FakeFactory(provider));
 
 			AIRequestException exception = Assert.ThrowsAsync<AIRequestException>(
@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var provider = new FakeProvider(new HttpRequestException("secret-api-key", null, HttpStatusCode.Unauthorized));
 			var service = new AIExplanationService(
-				new AISettings { PrivacyConsentAccepted = true },
+				Snapshot(),
 				new FakeFactory(provider));
 
 			AIRequestException exception = Assert.ThrowsAsync<AIRequestException>(async () => {
@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 				await Task.Delay(Timeout.InfiniteTimeSpan, token);
 			});
 			var service = new AIExplanationService(
-				new AISettings { PrivacyConsentAccepted = true },
+				Snapshot(),
 				new FakeFactory(provider));
 
 			Assert.ThrowsAsync<TaskCanceledException>(
@@ -136,13 +136,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		public async Task ProviderFactory_CreatesAnthropicProviderWithoutNetworkAccess()
 		{
 			using var factory = new AIProviderFactory(loggerFactory: null);
-			var settings = new AISettings {
-				Provider = "anthropic",
-				ApiKey = "test-key",
-				PrivacyConsentAccepted = true
-			};
-
-			ILLMProvider provider = await factory.CreateAsync(settings);
+			ILLMProvider provider = await factory.CreateAsync(Snapshot("anthropic", "test-key"));
 			Assert.That(provider, Is.TypeOf<AnthropicProvider>());
 		}
 
@@ -151,14 +145,6 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			readonly ILLMProvider provider;
 			public FakeFactory(ILLMProvider provider) => this.provider = provider;
 			public int CreateCount { get; private set; }
-			public AISettings? LastSettings { get; private set; }
-			public Task<ILLMProvider> CreateAsync(AISettings settings, CancellationToken cancellationToken = default)
-			{
-				CreateCount++;
-				LastSettings = settings;
-				return Task.FromResult(provider);
-			}
-
 			public Task<ILLMProvider> CreateAsync(AISelectionSnapshot snapshot, CancellationToken cancellationToken = default)
 			{
 				CreateCount++;
@@ -168,6 +154,9 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 
 			public AISelectionSnapshot? LastSnapshot { get; private set; }
 		}
+
+		static AISelectionSnapshot Snapshot(string provider = "openai", string? apiKey = "test-key", int maxContextTokens = 32000)
+			=> new() { ProfileId = "p1", ProfileName = "Default", ProviderType = provider, Endpoint = "https://api.openai.com", Model = "gpt-4o", ApiKey = apiKey, CredentialId = "cred-1", MaxContextTokens = maxContextTokens };
 
 		sealed class FakeProvider : ILLMProvider
 		{
