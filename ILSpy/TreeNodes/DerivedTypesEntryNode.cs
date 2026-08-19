@@ -69,8 +69,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		};
 
 		/// <summary>
-		/// Drops non-public entries under PublicOnly visibility, otherwise recurses so the user
-		/// can drill into derived chains. The active search term is deliberately not consulted:
+		/// Drops non-public entries under PublicOnly visibility, otherwise matches the entry without
+		/// recursing into derived chains. The active search term is deliberately not consulted:
 		/// <see cref="LanguageSettings.SearchTermMatches"/> is a no-op so the assembly tree stays
 		/// independent of the search pane.
 		/// </summary>
@@ -78,7 +78,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (settings.ShowApiLevel == ApiVisibility.PublicOnly && !IsPublicAPI)
 				return FilterResult.Hidden;
-			return FilterResult.Recurse;
+			return FilterResult.Match;
 		}
 
 		public override void ActivateItem(IPlatformRoutedEventArgs e)
