@@ -4,6 +4,10 @@
 **Status:** ✅ Documentation Complete, Ready for Implementation  
 **Total Documentation:** 2,361 lines across 4 files
 
+## Active implementation handoff
+
+The AI profiles/conversation-boundaries phase is implemented on `master` as of August 19, 2026. Focused AI tests (215), follow-tail policy tests (16), application build, and `git diff --check` pass. Manual Avalonia UI regression and the full `ILSpy.Tests` suite remain pending; see `plan/complete-ai-profiles-and-conversation-boundaries.md` for the exact gate record.
+
 ---
 
 ## What Was Delivered

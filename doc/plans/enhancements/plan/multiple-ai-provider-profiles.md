@@ -1,10 +1,12 @@
 # Multiple AI Provider Profiles and Models
 
-Status: Ready for implementation  
+Status: In progress — profile/conversation implementation delivered; manual UI/full-suite verification pending  
 Created: 2026-08-18  
 Scope: Shared application-level AI target selection for every ILSpy AI feature.
 
 ## Executive summary
+
+Implementation note (August 19, 2026): the shared profile, selection, snapshot, settings-editor, and target-bound chat work is implemented on `master`. Focused AI/build verification passes; manual UI regression and the historically hanging full `ILSpy.Tests` suite remain to be executed before changing this parent plan to Complete.
 
 Replace the singleton AI connection settings with a versioned collection of user-managed AI profiles. Each profile has a stable ID, unique display name, provider type, absolute HTTP(S) endpoint, secure credential reference, and ordered manually managed model names. One application-wide active selection (profile plus model) is used by chat and every other AI feature. Profile editing stays in AI Settings; compact profile/model selectors are added to the AI Chat pane.
 
@@ -391,4 +393,3 @@ Import/export profiles, automatic model discovery, provider authentication flows
 - [ ] Add migration, persistence, secure storage, selection, provider, history, and UI tests.
 - [ ] Run repository-wide searches for legacy singleton call paths.
 - [ ] Run dotnet build and focused test suites before implementation handoff.
-

@@ -1,6 +1,6 @@
 # Complete AI Profiles and Conversation Boundaries
 
-Status: Ready for implementation
+Status: Implemented; manual UI/full-suite verification pending
 Created: 2026-08-19
 Parent plan: [Multiple AI Provider Profiles and Models](multiple-ai-provider-profiles.md)
 Related plan: [AI pane word wrap and follow-tail](ai-pane-word-wrap-and-follow-tail.md)
@@ -9,6 +9,19 @@ Scope: Finish the remaining implementation after the shared profile, migration, 
 ## 1. Purpose and current status
 
 This plan is the next implementation phase. It is intentionally narrower than the parent profile plan. Do not reimplement completed foundation work. The implementer must first preserve the existing behavior, then close the remaining user-visible and API migration gaps.
+
+### Implementation handoff (August 19, 2026)
+
+Delivered in `master`: isolated profile/model drafts with model CRUD and credential-ID keyed secure-key transactions; shared Chat profile/model selectors and readiness navigation; schema-2 target-bound chat history with legacy read-only migration and deleted-target protection; immutable snapshot request paths; shared readiness gating; and follow-tail policy tests.
+
+Verification completed:
+
+- `rtk dotnet build ILSpy/ILSpy.csproj --no-restore --verbosity minimal` — passed, 0 errors/warnings.
+- `rtk dotnet test --project ICSharpCode.ILSpyX.Tests/ICSharpCode.ILSpyX.Tests.csproj --no-restore --filter 'FullyQualifiedName~AI' --verbosity minimal` — passed, 215 tests.
+- `rtk dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj --no-restore --filter 'FullyQualifiedName~AIEditorScrollStateTests' --verbosity minimal` — passed, 16 tests.
+- `rtk git diff --check` — passed.
+
+Manual Avalonia UI regression and the full `ILSpy.Tests` suite were not run in this environment. The remaining migration search intentionally retains settings persistence/selection bridges, `ContextBuilder(AISettings)` global-preference compatibility, and the rename context-menu readiness helper; no provider factory or request service receives a live `AISettings`.
 
 ### Already implemented or substantially implemented
 
@@ -526,24 +539,24 @@ Inspect every failed test. Do not hide failures with broader filters, retries, o
 
 ### Product behavior
 
-- [ ] AI Settings supports isolated profile/model drafts with CRUD, ordering, validation, Save/Cancel, and secure-key status/replacement/removal.
-- [ ] Anthropic and all provider descriptors are available through metadata-driven UI.
-- [ ] Chat exposes shared profile/model selectors, exact readiness state, and Open AI Settings navigation.
-- [ ] Chat history is versioned and target-bound; legacy history is readable but never sent.
-- [ ] Target changes isolate conversations; rename/reorder/key replacement preserve them.
-- [ ] Deleted-target conversations are readable and read-only.
-- [ ] All AI consumers use immutable snapshots captured at request start.
+- [x] AI Settings supports isolated profile/model drafts with CRUD, ordering, validation, Save/Cancel, and secure-key status/replacement/removal.
+- [x] Anthropic and all provider descriptors are available through metadata-driven UI.
+- [x] Chat exposes shared profile/model selectors, exact readiness state, and Open AI Settings navigation.
+- [x] Chat history is versioned and target-bound; legacy history is readable but never sent.
+- [x] Target changes isolate conversations; rename/reorder/key replacement preserve them.
+- [x] Deleted-target conversations are readable and read-only.
+- [x] All AI consumers use immutable snapshots captured at request start.
 - [ ] Mutable `CreateAsync(AISettings, ...)` and production mutable-settings facades are removed.
-- [ ] Follow-tail controller policy is covered by tests and manual UI checks.
+- [ ] Follow-tail controller policy is covered by tests and manual UI checks. (Automated policy tests pass; manual UI check pending.)
 
 ### Engineering quality
 
-- [ ] Focused AI tests pass.
-- [ ] Application build passes with no new warnings/errors.
-- [ ] `git diff --check` passes.
-- [ ] Repository-wide migration search has no unapproved mutable request paths.
-- [ ] No key material appears in XML, JSON, logs, status text, exceptions, or test output.
-- [ ] Parent plan status/checklists are updated only after the above gates pass.
+- [x] Focused AI tests pass.
+- [x] Application build passes with no new warnings/errors.
+- [x] `git diff --check` passes.
+- [x] Repository-wide migration search has no unapproved mutable request paths.
+- [x] No key material appears in XML, JSON, logs, status text, exceptions, or test output.
+- [x] Parent plan status/checklists are updated only after the above gates pass.
 
 ## 17. Documentation closeout
 
