@@ -107,6 +107,7 @@ namespace ICSharpCode.ILSpy.Options
 					return;
 				if (AIProfileDraft.Models.Contains(SelectedModel, StringComparer.OrdinalIgnoreCase))
 					AIProfileDraft.LastSelectedModel = SelectedModel;
+				InvalidateConnectionTest();
 			}
 		}
 		public AIProviderDescriptor? SelectedProviderDescriptor {
@@ -157,6 +158,26 @@ namespace ICSharpCode.ILSpy.Options
 		public AIProfile? AIProfileDraft {
 			get => draft;
 			private set => SetProperty(ref draft, value);
+		}
+
+		public string DraftName {
+			get => AIProfileDraft?.Name ?? string.Empty;
+			set {
+				if (AIProfileDraft is null || string.Equals(AIProfileDraft.Name, value, StringComparison.Ordinal))
+					return;
+				AIProfileDraft.Name = value ?? string.Empty;
+				NotifyDraftChanged();
+			}
+		}
+
+		public string DraftBaseUrl {
+			get => AIProfileDraft?.BaseUrl ?? string.Empty;
+			set {
+				if (AIProfileDraft is null || string.Equals(AIProfileDraft.BaseUrl, value, StringComparison.Ordinal))
+					return;
+				AIProfileDraft.BaseUrl = value ?? string.Empty;
+				NotifyDraftChanged();
+			}
 		}
 
 		public string ApiKeyInput {
@@ -269,12 +290,24 @@ namespace ICSharpCode.ILSpy.Options
 
 		void NotifyDraftChanged()
 		{
+			InvalidateConnectionTest();
 			OnPropertyChanged(nameof(AIProfileDraft));
+			OnPropertyChanged(nameof(DraftName));
+			OnPropertyChanged(nameof(DraftBaseUrl));
 			OnPropertyChanged(nameof(SelectedProviderDescriptor));
 			OnPropertyChanged(nameof(ProviderKeyRequirement));
 			OnPropertyChanged(nameof(HasConfiguredKey));
 			OnPropertyChanged(nameof(CanTestConnection));
 			RaiseEditorCommandStates();
+		}
+
+		void InvalidateConnectionTest()
+		{
+			CancellationTokenSource? cancellation = testCancellation;
+			testCancellation = null;
+			cancellation?.Cancel();
+			if (IsTestingConnection)
+				IsTestingConnection = false;
 		}
 
 		void RaiseEditorCommandStates()
@@ -543,6 +576,7 @@ namespace ICSharpCode.ILSpy.Options
 			IReadOnlyList<string> errors = draftProfile.Validate();
 			if (errors.Count != 0)
 			{
+				ApiKeyInput = string.Empty;
 				StatusMessage = string.Join(" ", errors);
 				return;
 			}
@@ -555,6 +589,7 @@ namespace ICSharpCode.ILSpy.Options
 					oldKey = await keyStorage.TryLoadKeyAsync(draftProfile.CredentialId, CancellationToken.None);
 				if (oldKey.Status == SecureKeyLookupStatus.Unavailable)
 				{
+					ApiKeyInput = string.Empty;
 					StatusMessage = "Secure API-key storage is unavailable.";
 					return;
 				}
@@ -575,6 +610,7 @@ namespace ICSharpCode.ILSpy.Options
 
 				if (selectionService is null)
 				{
+					ApiKeyInput = string.Empty;
 					StatusMessage = "AI profile persistence is unavailable.";
 					return;
 				}
@@ -603,6 +639,7 @@ namespace ICSharpCode.ILSpy.Options
 						await keyStorage.DeleteKeyAsync(draftProfile.CredentialId, CancellationToken.None);
 				}
 				catch (Exception) { }
+				ApiKeyInput = string.Empty;
 				StatusMessage = "Unable to save the profile or API key. Previous saved state was retained where possible.";
 			}
 		}
@@ -625,6 +662,12 @@ namespace ICSharpCode.ILSpy.Options
 			{
 				AIProfile profile = AIProfileDraft?.Clone() ?? Settings.ActiveProfile.Clone();
 				profile.Normalize();
+				IReadOnlyList<string> errors = profile.Validate();
+				if (errors.Count != 0)
+				{
+					StatusMessage = string.Join(" ", errors);
+					return;
+				}
 				string? apiKey = string.IsNullOrWhiteSpace(ApiKeyInput) ? null : ApiKeyInput;
 				if (apiKey is null && profile.HasStoredKey)
 				{
@@ -666,8 +709,11 @@ namespace ICSharpCode.ILSpy.Options
 			}
 			finally
 			{
-				testCancellation = null;
-				IsTestingConnection = false;
+				if (ReferenceEquals(testCancellation, cancellation))
+				{
+					testCancellation = null;
+					IsTestingConnection = false;
+				}
 			}
 		}
 
@@ -685,7 +731,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void Dispose()
 		{
-			testCancellation?.Cancel();
+			InvalidateConnectionTest();
+			ApiKeyInput = string.Empty;
 			if (settings is not null)
 				settings.PropertyChanged -= SettingsPropertyChanged;
 		}

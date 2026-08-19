@@ -26,7 +26,7 @@
 				</StackPanel>
 				<StackPanel Grid.Column="1" Spacing="10">
 					<HeaderedContentControl Header="Profile name">
-						<TextBox Text="{Binding AIProfileDraft.Name, Mode=TwoWay}" />
+						<TextBox Text="{Binding DraftName, Mode=TwoWay}" />
 					</HeaderedContentControl>
 					<HeaderedContentControl Header="Provider">
 						<StackPanel Spacing="3">
@@ -41,7 +41,7 @@
 						</StackPanel>
 					</HeaderedContentControl>
 					<HeaderedContentControl Header="Endpoint">
-						<TextBox Text="{Binding AIProfileDraft.BaseUrl, Mode=TwoWay}" PlaceholderText="https://api.openai.com" />
+						<TextBox Text="{Binding DraftBaseUrl, Mode=TwoWay}" PlaceholderText="https://api.openai.com" />
 					</HeaderedContentControl>
 					<HeaderedContentControl Header="Models">
 						<StackPanel Spacing="4">
