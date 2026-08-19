@@ -65,11 +65,11 @@ namespace ICSharpCode.ILSpy.AI
 		public string[] CommandSuggestions { get; } = { "/help", "/clear", "/explain", "/rename ", "/audit", "/summary" };
 
 		[ImportingConstructor]
-		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AISelectionService selectionService, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
+		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
-			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
+			selectionService = AppComposition.TryGetExport<AISelectionService>() ?? throw new InvalidOperationException("AI selection service is unavailable.");
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
 			this.optionPages = optionPages ?? throw new ArgumentNullException(nameof(optionPages));
