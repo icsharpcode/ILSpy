@@ -185,6 +185,7 @@ namespace ICSharpCode.ILSpy.Options
 			set {
 				if (!SetProperty(ref apiKeyInput, value ?? string.Empty))
 					return;
+				InvalidateConnectionTest();
 				OnPropertyChanged(nameof(HasConfiguredKey));
 				OnPropertyChanged(nameof(CanTestConnection));
 				TestConnectionCommand.RaiseCanExecuteChanged();
@@ -277,8 +278,15 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			if (SelectedProfile is null || selectionService is null)
 				return;
-			await selectionService.ApplySelectionAsync(SelectedProfile.Id, SelectedProfile.ResolveModel());
-			StatusMessage = $"'{SelectedProfile.Name}' is now the active AI profile.";
+			try
+			{
+				await selectionService.ApplySelectionAsync(SelectedProfile.Id, SelectedProfile.ResolveModel());
+				StatusMessage = $"'{SelectedProfile.Name}' is now the active AI profile.";
+			}
+			catch (Exception)
+			{
+				StatusMessage = "Unable to activate the selected AI profile.";
+			}
 		}
 
 		void ClearTransientEditorState()
@@ -397,7 +405,15 @@ namespace ICSharpCode.ILSpy.Options
 				StatusMessage = "AI profile persistence is unavailable.";
 				return;
 			}
-			await selectionService.DeleteProfileAsync(SelectedProfile.Id);
+			try
+			{
+				await selectionService.DeleteProfileAsync(SelectedProfile.Id);
+			}
+			catch (Exception)
+			{
+				StatusMessage = "Unable to delete the profile or its stored API key. No profile metadata was removed.";
+				return;
+			}
 			selectedProfile = Settings.ActiveProfile;
 			draftIsNew = false;
 			AIProfileDraft = selectedProfile.Clone();
@@ -431,7 +447,16 @@ namespace ICSharpCode.ILSpy.Options
 		async Task MoveProfileAsync(int delta)
 		{
 			if (!draftIsNew && SelectedProfile is not null && selectionService is not null)
-				await selectionService.MoveProfileAsync(SelectedProfile.Id, delta);
+			{
+				try
+				{
+					await selectionService.MoveProfileAsync(SelectedProfile.Id, delta);
+				}
+				catch (Exception)
+				{
+					StatusMessage = "Unable to reorder AI profiles.";
+				}
+			}
 			OnPropertyChanged(nameof(Profiles));
 		}
 
@@ -693,19 +718,23 @@ namespace ICSharpCode.ILSpy.Options
 				bool success = await new AIExplanationService(snapshot, providerFactory)
 					.TestConnectionAsync(cancellation.Token);
 				string target = $"{profile.Name} / {profile.ResolveModel()}";
-				StatusMessage = success ? $"Connection succeeded for {target}." : $"{target} returned no response.";
+				if (ReferenceEquals(testCancellation, cancellation))
+					StatusMessage = success ? $"Connection succeeded for {target}." : $"{target} returned no response.";
 			}
 			catch (OperationCanceledException)
 			{
-				StatusMessage = "Connection test canceled.";
+				if (ReferenceEquals(testCancellation, cancellation))
+					StatusMessage = "Connection test canceled.";
 			}
 			catch (AIRequestException exception)
 			{
-				StatusMessage = exception.Message;
+				if (ReferenceEquals(testCancellation, cancellation))
+					StatusMessage = exception.Message;
 			}
 			catch (AIConfigurationException exception)
 			{
-				StatusMessage = exception.Message;
+				if (ReferenceEquals(testCancellation, cancellation))
+					StatusMessage = exception.Message;
 			}
 			finally
 			{
