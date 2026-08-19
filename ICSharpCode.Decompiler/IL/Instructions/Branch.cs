@@ -27,6 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	/// <remarks>
 	/// When jumping to the entrypoint of the current block container, the branch represents a <c>continue</c> statement.
+	/// Will implicitly execute finally blocks when jumping out of a try-block.
 	/// </remarks>
 	partial class Branch : SimpleInstruction, IBranchOrLeaveInstruction
 	{
@@ -129,6 +130,14 @@ namespace ICSharpCode.Decompiler.IL
 
 	interface IBranchOrLeaveInstruction
 	{
+		/// <summary>
+		/// The block container that directly contains the jump target.
+		/// </summary>
 		BlockContainer TargetContainer { get; }
+
+		/// <summary>
+		/// Gets whether this branch executes at least one finally block before reaching the jump target.
+		/// </summary>
+		bool TriggersFinallyBlock { get; }
 	}
 }

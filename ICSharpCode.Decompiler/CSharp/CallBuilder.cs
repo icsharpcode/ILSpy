@@ -1912,6 +1912,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
+
+		/// <summary>
+		/// Checks whether calling `target.methodName()` will use `expected` as the method to invoke.
+		/// </summary>
+		public bool CheckSimpleCall(ResolveResult target, IMethod expected, OpCode expectedCallOpCode = OpCode.Call)
+		{
+			var details = new ExpectedTargetDetails { CallOpCode = expectedCallOpCode, NeedsBoxingConversion = false };
+			if (resolver.ResolveMemberAccess(target, expected.Name, [], NameLookupMode.InvocationTarget)
+			is not MethodGroupResolveResult mgrr)
+				return false;
+			var or = mgrr.PerformOverloadResolution(typeSystem, []);
+			if (or.BestCandidateErrors != OverloadResolutionErrors.None || or.IsAmbiguous)
+				return false;
+			return IsAppropriateCallTarget(details, expected, or.GetBestCandidateWithSubstitutedTypeArguments()!);
+		}
+
 		ExpressionWithResolveResult HandleConstructorCall(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method, ArgumentList argumentList)
 		{
 			if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType())
