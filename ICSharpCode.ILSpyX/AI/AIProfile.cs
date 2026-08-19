@@ -48,8 +48,14 @@ namespace ICSharpCode.ILSpyX.AI
 
 		public AIProfile Clone()
 		{
-			var clone = (AIProfile)MemberwiseClone();
-			clone.Models.Clear();
+			var clone = new AIProfile {
+				Id = Id,
+				Name = Name,
+				ProviderType = ProviderType,
+				BaseUrl = BaseUrl,
+				LastSelectedModel = LastSelectedModel,
+				HasStoredKey = HasStoredKey
+			};
 			clone.Models.AddRange(Models);
 			return clone;
 		}

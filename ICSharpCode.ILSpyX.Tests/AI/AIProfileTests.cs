@@ -54,6 +54,18 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public void Clone_IsolatesModelEdits()
+		{
+			var profile = AIProfile.Create(AIProviderCatalog.Get("openai"));
+			var clone = profile.Clone();
+
+			clone.Models[0] = "changed";
+			clone.Models.Add("second");
+
+			profile.Models.Should().Equal("gpt-4o");
+		}
+
+		[Test]
 		public void Duplicate_GetsNewIdAndClearsSecret()
 		{
 			var profile = AIProfile.Create(AIProviderCatalog.Get("openai"));

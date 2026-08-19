@@ -19,6 +19,8 @@
 						<Button Content="Add" Command="{Binding AddProfileCommand}" />
 						<Button Content="Duplicate" Command="{Binding DuplicateProfileCommand}" />
 						<Button Content="Delete" Command="{Binding DeleteProfileCommand}" />
+						<Button Content="↑" Command="{Binding MoveProfileUpCommand}" />
+						<Button Content="↓" Command="{Binding MoveProfileDownCommand}" />
 					</StackPanel>
 				</StackPanel>
 				<StackPanel Grid.Column="1" Spacing="10">
@@ -31,8 +33,17 @@
 					<HeaderedContentControl Header="Endpoint">
 						<TextBox Text="{Binding AIProfileDraft.BaseUrl, Mode=TwoWay}" PlaceholderText="https://api.openai.com" />
 					</HeaderedContentControl>
-					<HeaderedContentControl Header="Model">
-						<TextBox Text="{Binding AIProfileDraft.LastSelectedModel, Mode=TwoWay}" PlaceholderText="gpt-4o" />
+					<HeaderedContentControl Header="Models">
+						<StackPanel Spacing="4">
+							<ListBox ItemsSource="{Binding AIProfileDraft.Models}" SelectedItem="{Binding SelectedModel, Mode=TwoWay}" />
+							<StackPanel Orientation="Horizontal" Spacing="4">
+								<TextBox Width="180" Text="{Binding ModelNameInput, Mode=TwoWay}" PlaceholderText="Model name" />
+								<Button Content="Add" Command="{Binding AddModelCommand}" />
+								<Button Content="Delete" Command="{Binding DeleteModelCommand}" />
+								<Button Content="↑" Command="{Binding MoveModelUpCommand}" />
+								<Button Content="↓" Command="{Binding MoveModelDownCommand}" />
+							</StackPanel>
+						</StackPanel>
 					</HeaderedContentControl>
 			<HeaderedContentControl Header="API key">
 				<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">

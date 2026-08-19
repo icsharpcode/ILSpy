@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			this.keyStorage = keyStorage ?? throw new ArgumentNullException(nameof(keyStorage));
-			Providers = new[] { "openai", "ollama", "custom" };
+			Providers = AIProviderCatalog.All.Select(provider => provider.Id).ToArray();
 			SaveKeyCommand = new AsyncCommand(SaveKeyAsync, () => Settings is not null);
 			ClearKeyCommand = new AsyncCommand(ClearKeyAsync, () => Settings is not null);
 			TestConnectionCommand = new AsyncCommand(TestConnectionAsync, () => CanTestConnection);
@@ -60,6 +60,14 @@ namespace ICSharpCode.ILSpy.Options
 		public ICommand DeleteProfileCommand => new AsyncCommand(DeleteProfileAsync, () => AIProfileDraft is not null && Profiles.Count > 1);
 		public ICommand SaveCommand => new AsyncCommand(SaveDraftAsync, () => AIProfileDraft is not null);
 		public ICommand CancelCommand => new AsyncCommand(CancelDraftAsync, () => AIProfileDraft is not null);
+		public ICommand MoveProfileUpCommand => new AsyncCommand(() => MoveProfileAsync(-1), () => AIProfileDraft is not null);
+		public ICommand MoveProfileDownCommand => new AsyncCommand(() => MoveProfileAsync(1), () => AIProfileDraft is not null);
+		public ICommand AddModelCommand => new AsyncCommand(AddModelAsync, () => AIProfileDraft is not null);
+		public ICommand DeleteModelCommand => new AsyncCommand(DeleteModelAsync, () => AIProfileDraft is not null && AIProfileDraft.Models.Count > 1);
+		public ICommand MoveModelUpCommand => new AsyncCommand(() => MoveModelAsync(-1), () => AIProfileDraft is not null);
+		public ICommand MoveModelDownCommand => new AsyncCommand(() => MoveModelAsync(1), () => AIProfileDraft is not null);
+		public string ModelNameInput { get; set; } = string.Empty;
+		public string SelectedModel { get; set; } = string.Empty;
 
 		public AISettings Settings {
 			get => settings;
@@ -109,19 +117,19 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		public bool HasConfiguredKey => Settings is not null
-			&& (!string.IsNullOrWhiteSpace(Settings.ApiKey)
-				|| !string.IsNullOrWhiteSpace(Settings.ApiKeyPlaceholder));
+		public bool HasConfiguredKey => AIProfileDraft?.HasStoredKey == true
+			|| !string.IsNullOrWhiteSpace(ApiKeyInput);
 
 		public bool CanTestConnection {
 			get {
 				if (Settings is null || IsTestingConnection || !Settings.PrivacyConsentAccepted)
 					return false;
-				if (!AISettings.IsSupportedProvider(Settings.Provider)
-					|| string.IsNullOrWhiteSpace(Settings.BaseUrl)
-					|| string.IsNullOrWhiteSpace(Settings.Model))
+				AIProfile profile = AIProfileDraft ?? Settings.ActiveProfile;
+				if (!AISettings.IsSupportedProvider(profile.ProviderType)
+					|| string.IsNullOrWhiteSpace(profile.BaseUrl)
+					|| string.IsNullOrWhiteSpace(profile.ResolveModel()))
 					return false;
-				return Settings.Provider == "ollama" || HasConfiguredKey;
+				return AIProviderCatalog.Get(profile.ProviderType).KeyRequirement == AIProviderKeyRequirement.None || HasConfiguredKey;
 			}
 		}
 
@@ -173,21 +181,62 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			if (AIProfileDraft is null)
 				return;
-			AIProfileDraft.Normalize();
-			if (AIProfileDraft.Validate().Count != 0)
-			{ StatusMessage = string.Join(" ", AIProfileDraft.Validate()); return; }
-			AIProfile? existing = Settings.Profiles.FirstOrDefault(p => p.Id == AIProfileDraft.Id);
-			if (existing is null)
-				Settings.Profiles.Add(AIProfileDraft.Clone());
-			else
-			{ int index = Settings.Profiles.IndexOf(existing); Settings.Profiles[index] = AIProfileDraft.Clone(); }
-			Settings.NotifyProfilesChanged();
-			AIProfileDraft = AIProfileDraft.Clone();
-			OnPropertyChanged(nameof(Profiles));
-			await Task.CompletedTask;
+			await CommitDraftAsync(AIProfileDraft.Clone(), null, false);
 		}
 
 		async Task CancelDraftAsync() { AIProfileDraft = Settings.ActiveProfile.Clone(); await Task.CompletedTask; }
+
+		async Task MoveProfileAsync(int delta)
+		{
+			if (AIProfileDraft is not null && selectionService is not null)
+				await selectionService.MoveProfileAsync(AIProfileDraft.Id, delta);
+			OnPropertyChanged(nameof(Profiles));
+		}
+
+		async Task AddModelAsync()
+		{
+			if (AIProfileDraft is null)
+				return;
+			string model = ModelNameInput.Trim();
+			if (model.Length == 0)
+			{ StatusMessage = "Enter a model name."; return; }
+			if (AIProfileDraft.Models.Any(m => string.Equals(m, model, StringComparison.OrdinalIgnoreCase)))
+			{ StatusMessage = "That model is already listed."; return; }
+			AIProfileDraft.Models.Add(model);
+			if (string.IsNullOrWhiteSpace(AIProfileDraft.LastSelectedModel))
+				AIProfileDraft.LastSelectedModel = model;
+			ModelNameInput = string.Empty;
+			OnPropertyChanged(nameof(AIProfileDraft));
+			await Task.CompletedTask;
+		}
+
+		async Task DeleteModelAsync()
+		{
+			if (AIProfileDraft is null || AIProfileDraft.Models.Count <= 1)
+				return;
+			int index = AIProfileDraft.Models.FindIndex(m => string.Equals(m, SelectedModel, StringComparison.OrdinalIgnoreCase));
+			if (index < 0)
+				return;
+			AIProfileDraft.Models.RemoveAt(index);
+			if (!AIProfileDraft.Models.Contains(AIProfileDraft.LastSelectedModel, StringComparer.OrdinalIgnoreCase))
+				AIProfileDraft.LastSelectedModel = AIProfileDraft.Models[0];
+			SelectedModel = AIProfileDraft.LastSelectedModel;
+			OnPropertyChanged(nameof(AIProfileDraft));
+			await Task.CompletedTask;
+		}
+
+		async Task MoveModelAsync(int delta)
+		{
+			if (AIProfileDraft is null)
+				return;
+			int index = AIProfileDraft.Models.FindIndex(m => string.Equals(m, SelectedModel, StringComparison.OrdinalIgnoreCase));
+			int target = index + Math.Sign(delta);
+			if (index < 0 || target < 0 || target >= AIProfileDraft.Models.Count)
+				return;
+			(AIProfileDraft.Models[index], AIProfileDraft.Models[target]) = (AIProfileDraft.Models[target], AIProfileDraft.Models[index]);
+			OnPropertyChanged(nameof(AIProfileDraft));
+			await Task.CompletedTask;
+		}
 
 		string MakeUniqueName(string proposed)
 		{
@@ -215,13 +264,13 @@ namespace ICSharpCode.ILSpy.Options
 				return;
 			try
 			{
-				SecureKeyLookupResult result = await keyStorage.TryLoadKeyAsync(target.Provider, cancellationToken);
-				if (result.Status == SecureKeyLookupStatus.Found && result.Value is { } key)
+				SecureKeyLookupResult result = await keyStorage.TryLoadKeyAsync(target.ActiveProfile.CredentialId, cancellationToken);
+				if (result.Status == SecureKeyLookupStatus.Found)
 				{
 					await Dispatcher.UIThread.InvokeAsync(() => {
 						if (ReferenceEquals(Settings, target))
 						{
-							target.ApiKey = key;
+							target.ActiveProfile.HasStoredKey = true;
 							OnPropertyChanged(nameof(HasConfiguredKey));
 							OnPropertyChanged(nameof(CanTestConnection));
 							TestConnectionCommand.RaiseCanExecuteChanged();
@@ -244,41 +293,82 @@ namespace ICSharpCode.ILSpy.Options
 				await ClearKeyAsync();
 				return;
 			}
-			try
-			{
-				await keyStorage.SaveKeyAsync(Settings.Provider, ApiKeyInput, CancellationToken.None);
-				await Dispatcher.UIThread.InvokeAsync(() => {
-					Settings.ApiKeyPlaceholder = "configured";
-					StatusMessage = "API key saved in secure storage.";
-					OnPropertyChanged(nameof(HasConfiguredKey));
-					OnPropertyChanged(nameof(CanTestConnection));
-					TestConnectionCommand.RaiseCanExecuteChanged();
-				});
-			}
-			catch (Exception)
-			{
-				StatusMessage = "Unable to save the API key. Secure storage is required.";
-			}
+			if (AIProfileDraft is not null)
+				await CommitDraftAsync(AIProfileDraft.Clone(), ApiKeyInput, true);
 		}
 
 		async Task ClearKeyAsync()
 		{
+			if (AIProfileDraft is not null)
+				await CommitDraftAsync(AIProfileDraft.Clone(), null, false, removeKey: true);
+		}
+
+		async Task CommitDraftAsync(AIProfile draftProfile, string? replacementKey, bool replaceKey, bool removeKey = false)
+		{
+			draftProfile.Normalize();
+			IReadOnlyList<string> errors = draftProfile.Validate();
+			if (errors.Count != 0)
+			{
+				StatusMessage = string.Join(" ", errors);
+				return;
+			}
+
+			AIProfile? previous = Settings.Profiles.FirstOrDefault(p => p.Id == draftProfile.Id);
+			SecureKeyLookupResult oldKey = SecureKeyLookupResult.NotFound;
+			if (replaceKey || removeKey)
+			{
+				if (previous?.HasStoredKey == true)
+					oldKey = await keyStorage.TryLoadKeyAsync(draftProfile.CredentialId, CancellationToken.None);
+				if (oldKey.Status == SecureKeyLookupStatus.Unavailable)
+				{
+					StatusMessage = "Secure API-key storage is unavailable.";
+					return;
+				}
+			}
+
 			try
 			{
-				await keyStorage.DeleteKeyAsync(Settings.Provider, CancellationToken.None);
-				await Dispatcher.UIThread.InvokeAsync(() => {
-					Settings.ApiKey = string.Empty;
-					Settings.ApiKeyPlaceholder = string.Empty;
-					ApiKeyInput = string.Empty;
-					StatusMessage = "API key removed.";
-					OnPropertyChanged(nameof(HasConfiguredKey));
-					OnPropertyChanged(nameof(CanTestConnection));
-					TestConnectionCommand.RaiseCanExecuteChanged();
-				});
+				if (replaceKey)
+				{
+					await keyStorage.SaveKeyAsync(draftProfile.CredentialId, replacementKey!, CancellationToken.None);
+					draftProfile.HasStoredKey = true;
+				}
+				else if (removeKey)
+				{
+					await keyStorage.DeleteKeyAsync(draftProfile.CredentialId, CancellationToken.None);
+					draftProfile.HasStoredKey = false;
+				}
+
+				if (selectionService is not null)
+					await selectionService.SaveProfileAsync(draftProfile.Clone());
+				else
+				{
+					if (previous is null)
+						Settings.Profiles.Add(draftProfile.Clone());
+					else
+						Settings.Profiles[Settings.Profiles.IndexOf(previous)] = draftProfile.Clone();
+					Settings.NotifyProfilesChanged();
+				}
+
+				AIProfileDraft = draftProfile.Clone();
+				ApiKeyInput = string.Empty;
+				StatusMessage = replaceKey ? "API key saved in secure storage." : removeKey ? "API key removed." : "Profile saved.";
+				OnPropertyChanged(nameof(Profiles));
+				OnPropertyChanged(nameof(HasConfiguredKey));
+				OnPropertyChanged(nameof(CanTestConnection));
+				TestConnectionCommand.RaiseCanExecuteChanged();
 			}
 			catch (Exception)
 			{
-				StatusMessage = "Unable to remove the API key from secure storage.";
+				try
+				{
+					if (oldKey.Status == SecureKeyLookupStatus.Found)
+						await keyStorage.SaveKeyAsync(draftProfile.CredentialId, oldKey.Value!, CancellationToken.None);
+					else if (replaceKey || removeKey)
+						await keyStorage.DeleteKeyAsync(draftProfile.CredentialId, CancellationToken.None);
+				}
+				catch (Exception) { }
+				StatusMessage = "Unable to save the profile or API key. Previous saved state was retained where possible.";
 			}
 		}
 
@@ -300,13 +390,22 @@ namespace ICSharpCode.ILSpy.Options
 			{
 				AIProfile profile = AIProfileDraft?.Clone() ?? Settings.ActiveProfile.Clone();
 				profile.Normalize();
+				string? apiKey = string.IsNullOrWhiteSpace(ApiKeyInput) ? null : ApiKeyInput;
+				if (apiKey is null && profile.HasStoredKey)
+				{
+					SecureKeyLookupResult lookup = await keyStorage.TryLoadKeyAsync(profile.CredentialId, cancellation.Token);
+					if (lookup.Status == SecureKeyLookupStatus.Unavailable)
+						throw new AIConfigurationException("Secure API-key storage is unavailable.");
+					if (lookup.Status == SecureKeyLookupStatus.Found)
+						apiKey = lookup.Value;
+				}
 				var snapshot = new AISelectionSnapshot {
 					ProfileId = profile.Id,
 					ProfileName = profile.Name,
 					ProviderType = profile.ProviderType,
 					Endpoint = profile.BaseUrl,
 					Model = profile.ResolveModel(),
-					ApiKey = string.IsNullOrWhiteSpace(ApiKeyInput) ? null : ApiKeyInput,
+					ApiKey = apiKey,
 					CredentialId = profile.CredentialId,
 					MaxContextTokens = Settings.MaxContextTokens,
 					StreamResponses = Settings.StreamResponses,
