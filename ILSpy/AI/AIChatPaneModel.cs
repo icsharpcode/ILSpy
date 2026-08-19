@@ -20,6 +20,7 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX.AI;
@@ -39,8 +40,12 @@ namespace ICSharpCode.ILSpy.AI
 		readonly IAIProviderFactory providerFactory;
 		readonly AISelectionService selectionService;
 		readonly AssemblyTreeModel assemblyTree;
+		readonly DockWorkspace dockWorkspace;
+		readonly IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages;
 		CancellationTokenSource? cancellation;
 		string loadedHistoryPath = string.Empty;
+		AIConversationTarget? loadedTarget;
+		long conversationGeneration;
 
 		public ObservableCollection<ChatMessage> Messages { get; } = new();
 		public IReadOnlyList<AIProfile> Profiles => selectionService.Profiles;
@@ -58,12 +63,14 @@ namespace ICSharpCode.ILSpy.AI
 		public string[] CommandSuggestions { get; } = { "/explain", "/rename ", "/audit", "/summary" };
 
 		[ImportingConstructor]
-		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree)
+		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			selectionService = AppComposition.TryGetExport<AISelectionService>() ?? throw new InvalidOperationException("AI selection service is unavailable.");
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
+			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
+			this.optionPages = optionPages ?? throw new ArgumentNullException(nameof(optionPages));
 			Id = PaneContentId;
 			Title = "AI Chat";
 			assemblyTree.PropertyChanged += OnAssemblyTreePropertyChanged;
@@ -85,10 +92,19 @@ namespace ICSharpCode.ILSpy.AI
 
 		async void OnSelectionChanged(object? sender, EventArgs e)
 		{
+			AIConversationTarget target = GetCurrentTarget();
+			if (loadedTarget?.BelongsTo(target.ProfileId, target.ProviderType, target.Endpoint, target.Model) == true)
+			{
+				if (loadedHistory.ActiveConversation.Target is { } metadata)
+					loadedHistory.ActiveConversation.Target = metadata with { ProfileName = target.ProfileName };
+				await RefreshReadinessAsync();
+				return;
+			}
 			cancellation?.Cancel();
 			SaveHistory();
 			Messages.Clear();
-			LoadHistory();
+			conversationGeneration++;
+			LoadHistory(target);
 			await RefreshReadinessAsync();
 		}
 
@@ -115,6 +131,7 @@ namespace ICSharpCode.ILSpy.AI
 			cancellation?.Cancel();
 			SaveHistory(loadedHistoryPath);
 			Messages.Clear();
+			conversationGeneration++;
 			LoadHistory();
 		}
 
@@ -144,6 +161,8 @@ namespace ICSharpCode.ILSpy.AI
 			TrimHistory();
 			var assistant = new ChatMessage { Role = "assistant" };
 			Messages.Add(assistant);
+			long requestGeneration = conversationGeneration;
+			string requestConversationId = loadedHistory.ActiveConversationId;
 			IsBusy = true;
 			ErrorMessage = string.Empty;
 			StatusMessage = "Generating…";
@@ -161,7 +180,12 @@ namespace ICSharpCode.ILSpy.AI
 				{
 					builder.Append(chunk);
 					string contentSnapshot = builder.ToString();
-					await Dispatcher.UIThread.InvokeAsync(() => assistant.Content = contentSnapshot);
+					await Dispatcher.UIThread.InvokeAsync(() => {
+						if (requestGeneration == conversationGeneration
+							&& requestConversationId == loadedHistory.ActiveConversationId
+							&& Messages.Contains(assistant))
+							assistant.Content = contentSnapshot;
+					});
 				}
 				StatusMessage = "Complete";
 				SaveHistory();
@@ -195,7 +219,19 @@ namespace ICSharpCode.ILSpy.AI
 		void Cancel() { cancellation?.Cancel(); }
 
 		[RelayCommand]
-		void Clear() { cancellation?.Cancel(); Messages.Clear(); SaveHistory(); StatusMessage = "Ready"; ErrorMessage = string.Empty; }
+		void Clear() { cancellation?.Cancel(); Messages.Clear(); SaveHistory(); conversationGeneration++; StatusMessage = "Ready"; ErrorMessage = string.Empty; }
+
+		[RelayCommand]
+		void OpenSettings()
+		{
+			ContentTabPage tab = dockWorkspace.OpenSingletonTab("options", () => {
+				var options = new OptionsPageModel(settingsService, optionPages);
+				options.SelectedPage = options.Pages.OfType<AISettingsViewModel>().FirstOrDefault() ?? options.SelectedPage;
+				return dockWorkspace.OpenNewTab(options);
+			});
+			if (tab.Content is OptionsPageModel existing)
+				existing.SelectedPage = existing.Pages.OfType<AISettingsViewModel>().FirstOrDefault() ?? existing.SelectedPage;
+		}
 
 		[RelayCommand]
 		void Export()
@@ -223,8 +259,10 @@ namespace ICSharpCode.ILSpy.AI
 			current = loadedHistory.GetOrCreate(target);
 			current.ReadOnly = false;
 			Messages.Clear();
+			conversationGeneration++;
 			foreach (ChatMessage message in current.Messages.TakeLast(MaxMessages))
 				Messages.Add(message);
+			loadedTarget = target;
 		}
 		string GetHistoryPath()
 		{
@@ -234,7 +272,24 @@ namespace ICSharpCode.ILSpy.AI
 				file = node.AncestorsAndSelf().OfType<AssemblyTreeNode>().FirstOrDefault()?.LoadedAssembly.FileName;
 			return string.IsNullOrWhiteSpace(file) ? string.Empty : Path.Combine(Path.GetDirectoryName(file)!, ".ilspy-chat-history.json");
 		}
-		void LoadHistory() { string path = GetHistoryPath(); loadedHistoryPath = path; if (path.Length == 0) return; loadedHistory = ChatHistory.Load(path); foreach (var message in loadedHistory.Messages.TakeLast(MaxMessages)) Messages.Add(message); }
+		void LoadHistory(AIConversationTarget? target = null)
+		{
+			string path = GetHistoryPath();
+			loadedHistoryPath = path;
+			if (path.Length != 0)
+				loadedHistory = ChatHistory.Load(path);
+			if (target is not null)
+				loadedHistory.GetOrCreate(target);
+			loadedTarget = loadedHistory.ActiveConversation.Target;
+			foreach (var message in loadedHistory.ActiveConversation.Messages.TakeLast(MaxMessages))
+				Messages.Add(message);
+		}
+
+		AIConversationTarget GetCurrentTarget()
+		{
+			AIProfile profile = selectionService.ActiveProfile;
+			return new AIConversationTarget(profile.Id, profile.Name, profile.ProviderType, profile.BaseUrl, profile.ResolveModel());
+		}
 		void SaveHistory() => SaveHistory(GetHistoryPath());
 		void SaveHistory(string path)
 		{

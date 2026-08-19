@@ -40,6 +40,15 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		}
 	}
 
+	internal static class AIFollowTailPolicy
+	{
+		internal static bool ShouldFollowAfterAppend(bool followingTail) => followingTail;
+
+		internal static bool ResetAfterLifecycle(bool nearBottom) => nearBottom;
+
+		internal static bool ShouldForceScrollOnCompletion() => false;
+	}
+
 	internal sealed class AIFollowTailController : IDisposable
 	{
 		ScrollViewer? viewer;
@@ -70,7 +79,10 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		}
 
 		internal void ResetFromViewport()
-			=> IsFollowingTail = AIEditorScrollState.IsNearBottom(viewer);
+			=> IsFollowingTail = AIFollowTailPolicy.ResetAfterLifecycle(AIEditorScrollState.IsNearBottom(viewer));
+
+		internal bool ShouldFollowAfterAppend()
+			=> AIFollowTailPolicy.ShouldFollowAfterAppend(IsFollowingTail);
 
 		internal AIEditorScrollSnapshot Capture()
 			=> AIEditorScrollState.Capture(viewer, IsFollowingTail);

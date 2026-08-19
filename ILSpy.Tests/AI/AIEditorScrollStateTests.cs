@@ -28,4 +28,48 @@ public class AIEditorScrollStateTests
 	{
 		AIEditorScrollState.IsNearBottom(100, 100, 50).Should().BeTrue();
 	}
+
+	[Test]
+	public void FollowingAppendScrollsToTail()
+	{
+		AIFollowTailPolicy.ShouldFollowAfterAppend(true).Should().BeTrue();
+	}
+
+	[Test]
+	public void InactiveAppendRetainsPosition()
+	{
+		AIFollowTailPolicy.ShouldFollowAfterAppend(false).Should().BeFalse();
+	}
+
+	[TestCase(true)]
+	[TestCase(false)]
+	public void ClearOrNewStreamResetsFromResultingViewport(bool nearBottom)
+	{
+		AIFollowTailPolicy.ResetAfterLifecycle(nearBottom).Should().Be(nearBottom);
+	}
+
+	[Test]
+	public void CompletionDoesNotForceScroll()
+	{
+		AIFollowTailPolicy.ShouldForceScrollOnCompletion().Should().BeFalse();
+	}
+
+	[Test]
+	public void ReturningToBottomResumesFollowing()
+	{
+		AIFollowTailPolicy.ShouldFollowAfterAppend(
+			AIFollowTailPolicy.ResetAfterLifecycle(nearBottom: true)).Should().BeTrue();
+	}
+
+	[Test]
+	public void DetachReattachDoesNotRestoreStaleState()
+	{
+		AIFollowTailPolicy.ResetAfterLifecycle(nearBottom: false).Should().BeFalse();
+	}
+
+	[Test]
+	public void DelayedRestoreCannotOverrideNewerAttach()
+	{
+		AIFollowTailPolicy.ResetAfterLifecycle(nearBottom: true).Should().BeTrue();
+	}
 }

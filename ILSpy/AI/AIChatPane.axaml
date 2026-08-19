@@ -17,7 +17,10 @@
         <TextBlock Text="Model" VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding ActiveProfile.LastSelectedModel}" SelectionChanged="OnModelChanged" Width="160" />
       </StackPanel>
-      <TextBlock Text="{Binding ReadinessMessage}" Foreground="IndianRed" TextWrapping="Wrap" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="{Binding ReadinessMessage}" Foreground="IndianRed" TextWrapping="Wrap" />
+        <Button Content="Open AI Settings" Command="{Binding OpenSettingsCommand}" IsVisible="{Binding !IsReady}" />
+      </StackPanel>
       <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding StatusMessage}"/><TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed"/></StackPanel>
     </StackPanel>
     <ListBox x:Name="ConversationList" ItemsSource="{Binding Messages}" Background="Transparent" Padding="0" Margin="0"
