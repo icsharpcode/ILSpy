@@ -6,29 +6,68 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.ILSpyX.AI
 {
+	public sealed class ChatConversation
+	{
+		public string Id { get; set; } = Guid.NewGuid().ToString("N");
+		public AIConversationTarget? Target { get; set; }
+		public List<ChatMessage> Messages { get; set; } = new();
+		public bool ReadOnly { get; set; }
+	}
+
 	public sealed class ChatHistory
 	{
-		static readonly JsonSerializerOptions JsonOptions = new() {
-			WriteIndented = true
-		};
-
+		static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
+		public int SchemaVersion { get; set; } = 2;
 		public string AssemblyPath { get; set; } = string.Empty;
-		public List<ChatMessage> Messages { get; set; } = new();
+		public List<ChatConversation> Conversations { get; set; } = new();
+		public string ActiveConversationId { get; set; } = string.Empty;
+
+		[JsonIgnore]
+		public ChatConversation ActiveConversation {
+			get {
+				ChatConversation? conversation = Conversations.FirstOrDefault(c => c.Id == ActiveConversationId) ?? Conversations.FirstOrDefault();
+				if (conversation is null)
+				{
+					conversation = new ChatConversation();
+					Conversations.Add(conversation);
+				}
+				ActiveConversationId = conversation.Id;
+				return conversation;
+			}
+		}
+
+		[JsonIgnore]
+		public List<ChatMessage> Messages => ActiveConversation.Messages;
+
+		public ChatConversation GetOrCreate(AIConversationTarget target)
+		{
+			ArgumentNullException.ThrowIfNull(target);
+			ChatConversation? existing = Conversations.FirstOrDefault(c => c.Target?.BelongsTo(target.ProfileId, target.ProviderType, target.Endpoint, target.Model) == true);
+			if (existing is not null)
+			{
+				ActiveConversationId = existing.Id;
+				return existing;
+			}
+			var created = new ChatConversation { Target = target };
+			Conversations.Add(created);
+			ActiveConversationId = created.Id;
+			return created;
+		}
 
 		public static ChatHistory Load(string path)
 		{
 			if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
 				return new ChatHistory();
-
 			try
 			{
-				string json = File.ReadAllText(path, Encoding.UTF8);
-				return JsonSerializer.Deserialize<ChatHistory>(json, JsonOptions) ?? new ChatHistory();
+				using JsonDocument document = JsonDocument.Parse(File.ReadAllText(path, Encoding.UTF8));
+				return FromJson(document.RootElement);
 			}
 			catch (IOException) { return new ChatHistory(); }
 			catch (JsonException) { return new ChatHistory(); }
@@ -38,39 +77,76 @@ namespace ICSharpCode.ILSpyX.AI
 		{
 			if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
 				return new ChatHistory();
-
 			try
 			{
 				await using var stream = File.OpenRead(path);
-				return await JsonSerializer.DeserializeAsync<ChatHistory>(stream, JsonOptions, cancellationToken).ConfigureAwait(false) ?? new ChatHistory();
+				using JsonDocument document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+				return FromJson(document.RootElement);
 			}
 			catch (IOException) { return new ChatHistory(); }
 			catch (JsonException) { return new ChatHistory(); }
+		}
+
+		static ChatHistory FromJson(JsonElement root)
+		{
+			if (root.ValueKind != JsonValueKind.Object)
+				return new ChatHistory();
+			int schema = root.TryGetProperty("SchemaVersion", out JsonElement version) && version.TryGetInt32(out int parsed) ? parsed : 1;
+			if (schema >= 2 && root.TryGetProperty("Conversations", out _))
+			{
+				ChatHistory? history = JsonSerializer.Deserialize<ChatHistory>(root.GetRawText(), JsonOptions);
+				if (history is null)
+					return new ChatHistory();
+				history.SchemaVersion = 2;
+				history.Conversations = history.Conversations.Where(c => c is not null && !string.IsNullOrWhiteSpace(c.Id)).ToList();
+				return history;
+			}
+
+			var legacy = new ChatHistory { SchemaVersion = 2 };
+			string assemblyPath = root.TryGetProperty("AssemblyPath", out JsonElement assembly) ? assembly.GetString() ?? string.Empty : string.Empty;
+			legacy.AssemblyPath = assemblyPath;
+			var conversation = new ChatConversation { ReadOnly = true, Target = null };
+			if (root.TryGetProperty("Messages", out JsonElement messages) && messages.ValueKind == JsonValueKind.Array)
+			{
+				foreach (JsonElement message in messages.EnumerateArray())
+				{
+					try
+					{
+						ChatMessage? item = JsonSerializer.Deserialize<ChatMessage>(message.GetRawText(), JsonOptions);
+						if (item is not null)
+							conversation.Messages.Add(item);
+					}
+					catch (JsonException) { }
+				}
+			}
+			legacy.Conversations.Add(conversation);
+			legacy.ActiveConversationId = conversation.Id;
+			return legacy;
 		}
 
 		public void Save(string path)
 		{
 			if (string.IsNullOrWhiteSpace(path))
 				return;
-
 			string directory = Path.GetDirectoryName(path) ?? string.Empty;
 			if (directory.Length != 0)
 				Directory.CreateDirectory(directory);
-
-			File.WriteAllText(path, JsonSerializer.Serialize(this, JsonOptions), Encoding.UTF8);
+			string temporary = path + ".tmp";
+			File.WriteAllText(temporary, JsonSerializer.Serialize(this, JsonOptions), Encoding.UTF8);
+			File.Move(temporary, path, true);
 		}
 
 		public async Task SaveAsync(string path, CancellationToken cancellationToken = default)
 		{
 			if (string.IsNullOrWhiteSpace(path))
 				return;
-
 			string directory = Path.GetDirectoryName(path) ?? string.Empty;
 			if (directory.Length != 0)
 				Directory.CreateDirectory(directory);
-
-			await using var stream = File.Create(path);
-			await JsonSerializer.SerializeAsync(stream, this, JsonOptions, cancellationToken).ConfigureAwait(false);
+			string temporary = path + ".tmp";
+			await using (var stream = File.Create(temporary))
+				await JsonSerializer.SerializeAsync(stream, this, JsonOptions, cancellationToken).ConfigureAwait(false);
+			File.Move(temporary, path, true);
 		}
 
 		public string ToMarkdown(string? title = null)
@@ -78,12 +154,17 @@ namespace ICSharpCode.ILSpyX.AI
 			var builder = new StringBuilder();
 			builder.Append("# ").AppendLine(title ?? "AI Chat");
 			builder.AppendLine();
-			foreach (var message in Messages)
+			foreach (ChatConversation conversation in Conversations)
 			{
-				builder.AppendLine("## " + (message.IsUser ? "User" : "Assistant"));
-				builder.AppendLine();
-				builder.AppendLine(message.Content);
-				builder.AppendLine();
+				if (conversation.Target is { } target)
+					builder.Append("_Target: ").Append(target.ProfileName).Append(" / ").Append(target.ProviderType).Append(" / ").Append(target.Model).AppendLine("_");
+				foreach (ChatMessage message in conversation.Messages)
+				{
+					builder.AppendLine("## " + (message.IsUser ? "User" : "Assistant"));
+					builder.AppendLine();
+					builder.AppendLine(message.Content);
+					builder.AppendLine();
+				}
 			}
 			return builder.ToString();
 		}
