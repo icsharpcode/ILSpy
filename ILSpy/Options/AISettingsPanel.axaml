@@ -11,15 +11,29 @@
 			<TextBlock FontWeight="Bold" FontSize="16" Text="AI Assistant" />
 			<TextBlock TextWrapping="Wrap" Text="Configure an OpenAI-compatible provider. When an AI action runs, decompiled code and selected metadata are sent to that provider." />
 
-			<HeaderedContentControl Header="Provider">
-				<ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding Settings.Provider, Mode=TwoWay}" />
-			</HeaderedContentControl>
-			<HeaderedContentControl Header="Endpoint">
-				<TextBox Text="{Binding Settings.BaseUrl, Mode=TwoWay}" PlaceholderText="https://api.openai.com" />
-			</HeaderedContentControl>
-			<HeaderedContentControl Header="Model">
-				<TextBox Text="{Binding Settings.Model, Mode=TwoWay}" PlaceholderText="gpt-4o" />
-			</HeaderedContentControl>
+			<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
+				<StackPanel Spacing="6">
+					<TextBlock FontWeight="Bold" Text="Profiles" />
+					<ListBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" DisplayMemberBinding="{Binding Name}" />
+					<StackPanel Orientation="Horizontal" Spacing="4">
+						<Button Content="Add" Command="{Binding AddProfileCommand}" />
+						<Button Content="Duplicate" Command="{Binding DuplicateProfileCommand}" />
+						<Button Content="Delete" Command="{Binding DeleteProfileCommand}" />
+					</StackPanel>
+				</StackPanel>
+				<StackPanel Grid.Column="1" Spacing="10">
+					<HeaderedContentControl Header="Profile name">
+						<TextBox Text="{Binding AIProfileDraft.Name, Mode=TwoWay}" />
+					</HeaderedContentControl>
+					<HeaderedContentControl Header="Provider">
+						<ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding AIProfileDraft.ProviderType, Mode=TwoWay}" />
+					</HeaderedContentControl>
+					<HeaderedContentControl Header="Endpoint">
+						<TextBox Text="{Binding AIProfileDraft.BaseUrl, Mode=TwoWay}" PlaceholderText="https://api.openai.com" />
+					</HeaderedContentControl>
+					<HeaderedContentControl Header="Model">
+						<TextBox Text="{Binding AIProfileDraft.LastSelectedModel, Mode=TwoWay}" PlaceholderText="gpt-4o" />
+					</HeaderedContentControl>
 			<HeaderedContentControl Header="API key">
 				<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
 					<TextBox Grid.Column="0" PasswordChar="●" Text="{Binding ApiKeyInput, Mode=TwoWay}" PlaceholderText="Not stored in settings XML" />
@@ -45,7 +59,13 @@
 				<Button Content="Test Connection" Command="{Binding TestConnectionCommand}" />
 				<Button Content="Cancel Test" Command="{Binding CancelTestConnectionCommand}" IsVisible="{Binding IsTestingConnection}" />
 				<TextBlock VerticalAlignment="Center" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
-			</StackPanel>
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<Button Content="Save" Command="{Binding SaveCommand}" />
+						<Button Content="Cancel" Command="{Binding CancelCommand}" />
+					</StackPanel>
+					</StackPanel>
+				</StackPanel>
+			</Grid>
 		</StackPanel>
 	</ScrollViewer>
 </UserControl>
