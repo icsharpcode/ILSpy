@@ -14,7 +14,7 @@
 			<Grid ColumnDefinitions="180,*" ColumnSpacing="12">
 				<StackPanel Spacing="6">
 					<TextBlock FontWeight="Bold" Text="Profiles" />
-					<ListBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" DisplayMemberBinding="{Binding Name}" />
+					<ListBox MinHeight="180" ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" DisplayMemberBinding="{Binding Name}" />
 					<StackPanel Orientation="Horizontal" Spacing="4">
 						<Button Content="Add" Command="{Binding AddProfileCommand}" />
 						<Button Content="Duplicate" Command="{Binding DuplicateProfileCommand}" />
@@ -22,13 +22,23 @@
 						<Button Content="↑" Command="{Binding MoveProfileUpCommand}" />
 						<Button Content="↓" Command="{Binding MoveProfileDownCommand}" />
 					</StackPanel>
+					<Button HorizontalAlignment="Left" Content="Use this profile" Command="{Binding ActivateProfileCommand}" />
 				</StackPanel>
 				<StackPanel Grid.Column="1" Spacing="10">
 					<HeaderedContentControl Header="Profile name">
 						<TextBox Text="{Binding AIProfileDraft.Name, Mode=TwoWay}" />
 					</HeaderedContentControl>
 					<HeaderedContentControl Header="Provider">
-						<ComboBox ItemsSource="{Binding Providers}" SelectedItem="{Binding AIProfileDraft.ProviderType, Mode=TwoWay}" />
+						<StackPanel Spacing="3">
+							<ComboBox ItemsSource="{Binding ProviderDescriptors}" SelectedItem="{Binding SelectedProviderDescriptor, Mode=TwoWay}">
+								<ComboBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Label}" />
+									</DataTemplate>
+								</ComboBox.ItemTemplate>
+							</ComboBox>
+							<TextBlock Opacity="0.7" Text="{Binding ProviderKeyRequirement}" />
+						</StackPanel>
 					</HeaderedContentControl>
 					<HeaderedContentControl Header="Endpoint">
 						<TextBox Text="{Binding AIProfileDraft.BaseUrl, Mode=TwoWay}" PlaceholderText="https://api.openai.com" />
@@ -46,14 +56,14 @@
 							</StackPanel>
 						</StackPanel>
 					</HeaderedContentControl>
-			<HeaderedContentControl Header="API key">
+			<HeaderedContentControl Header="Replacement API key">
 				<Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
-					<TextBox Grid.Column="0" PasswordChar="●" Text="{Binding ApiKeyInput, Mode=TwoWay}" PlaceholderText="Not stored in settings XML" />
-					<Button Grid.Column="1" Content="Save key" Command="{Binding SaveKeyCommand}" />
-					<Button Grid.Column="2" Content="Clear" Command="{Binding ClearKeyCommand}" />
+					<TextBox Grid.Column="0" PasswordChar="●" Text="{Binding ApiKeyInput, Mode=TwoWay}" PlaceholderText="Stored only after Save or Replace key" />
+					<Button Grid.Column="1" Content="Replace key" Command="{Binding SaveKeyCommand}" />
+					<Button Grid.Column="2" Content="Remove key" Command="{Binding ClearKeyCommand}" />
 				</Grid>
 			</HeaderedContentControl>
-			<TextBlock Text="A key is configured in secure storage." IsVisible="{Binding HasConfiguredKey}" />
+			<TextBlock Text="A stored or replacement key is configured." IsVisible="{Binding HasConfiguredKey}" />
 
 			<HeaderedContentControl Header="Maximum context tokens">
 				<NumericUpDown Minimum="4000" Maximum="128000" Increment="1000" Value="{Binding Settings.MaxContextTokens, Mode=TwoWay}" />
@@ -67,15 +77,15 @@
 				<CheckBox IsChecked="{Binding Settings.PrivacyConsentAccepted, Mode=TwoWay}"
 				          Content="I understand that decompiled code and selected metadata will be sent to the configured AI provider." />
 			</Border>
-			<StackPanel Orientation="Horizontal" Spacing="8">
-				<Button Content="Test Connection" Command="{Binding TestConnectionCommand}" />
-				<Button Content="Cancel Test" Command="{Binding CancelTestConnectionCommand}" IsVisible="{Binding IsTestingConnection}" />
-				<TextBlock VerticalAlignment="Center" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
-					<StackPanel Orientation="Horizontal" Spacing="8">
-						<Button Content="Save" Command="{Binding SaveCommand}" />
-						<Button Content="Cancel" Command="{Binding CancelCommand}" />
-					</StackPanel>
-					</StackPanel>
+			<StackPanel Spacing="8">
+				<StackPanel Orientation="Horizontal" Spacing="8">
+					<Button Content="Test Connection" Command="{Binding TestConnectionCommand}" />
+					<Button Content="Cancel Test" Command="{Binding CancelTestConnectionCommand}" IsVisible="{Binding IsTestingConnection}" />
+					<Button Content="Save" Command="{Binding SaveCommand}" />
+					<Button Content="Cancel" Command="{Binding CancelCommand}" />
+				</StackPanel>
+				<TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+			</StackPanel>
 				</StackPanel>
 			</Grid>
 		</StackPanel>

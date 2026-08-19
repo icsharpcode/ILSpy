@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Xml.Linq;
 
+using Avalonia.Controls;
+using Avalonia.Layout;
 using Avalonia.Threading;
 
 using System.Composition;
@@ -29,11 +31,25 @@ namespace ICSharpCode.ILSpy.Options
 		readonly SecureKeyStorage keyStorage;
 		AISelectionService? selectionService;
 		AISettings settings = null!;
+		AIProfile? selectedProfile;
 		AIProfile? draft;
+		bool draftIsNew;
 		string apiKeyInput = string.Empty;
 		string statusMessage = string.Empty;
 		bool isTestingConnection;
 		CancellationTokenSource? testCancellation;
+		readonly AsyncCommand addProfileCommand;
+		readonly AsyncCommand duplicateProfileCommand;
+		readonly AsyncCommand deleteProfileCommand;
+		readonly AsyncCommand saveCommand;
+		readonly AsyncCommand cancelCommand;
+		readonly AsyncCommand moveProfileUpCommand;
+		readonly AsyncCommand moveProfileDownCommand;
+		readonly AsyncCommand addModelCommand;
+		readonly AsyncCommand renameModelCommand;
+		readonly AsyncCommand deleteModelCommand;
+		readonly AsyncCommand moveModelUpCommand;
+		readonly AsyncCommand moveModelDownCommand;
 
 		[ImportingConstructor]
 		public AISettingsViewModel(IAIProviderFactory providerFactory, SecureKeyStorage keyStorage)
@@ -41,6 +57,19 @@ namespace ICSharpCode.ILSpy.Options
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			this.keyStorage = keyStorage ?? throw new ArgumentNullException(nameof(keyStorage));
 			Providers = AIProviderCatalog.All.Select(provider => provider.Id).ToArray();
+			ProviderDescriptors = AIProviderCatalog.All;
+			addProfileCommand = new AsyncCommand(AddProfileAsync, () => Settings is not null);
+			duplicateProfileCommand = new AsyncCommand(DuplicateProfileAsync, () => AIProfileDraft is not null);
+			deleteProfileCommand = new AsyncCommand(DeleteProfileAsync, () => SelectedProfile is not null && Profiles.Count > 1);
+			saveCommand = new AsyncCommand(SaveDraftAsync, () => AIProfileDraft is not null);
+			cancelCommand = new AsyncCommand(CancelDraftAsync, () => AIProfileDraft is not null);
+			moveProfileUpCommand = new AsyncCommand(() => MoveProfileAsync(-1), () => SelectedProfile is not null);
+			moveProfileDownCommand = new AsyncCommand(() => MoveProfileAsync(1), () => SelectedProfile is not null);
+			addModelCommand = new AsyncCommand(AddModelAsync, () => AIProfileDraft is not null);
+			renameModelCommand = new AsyncCommand(RenameModelAsync, () => AIProfileDraft is not null && !string.IsNullOrWhiteSpace(SelectedModel));
+			deleteModelCommand = new AsyncCommand(DeleteModelAsync, () => AIProfileDraft is not null && AIProfileDraft.Models.Count > 1);
+			moveModelUpCommand = new AsyncCommand(() => MoveModelAsync(-1), () => AIProfileDraft is not null && !string.IsNullOrWhiteSpace(SelectedModel));
+			moveModelDownCommand = new AsyncCommand(() => MoveModelAsync(1), () => AIProfileDraft is not null && !string.IsNullOrWhiteSpace(SelectedModel));
 			SaveKeyCommand = new AsyncCommand(SaveKeyAsync, () => Settings is not null);
 			ClearKeyCommand = new AsyncCommand(ClearKeyAsync, () => Settings is not null);
 			TestConnectionCommand = new AsyncCommand(TestConnectionAsync, () => CanTestConnection);
@@ -50,23 +79,24 @@ namespace ICSharpCode.ILSpy.Options
 		public string Title => "AI Assistant";
 
 		public IReadOnlyList<string> Providers { get; }
+		public IReadOnlyList<AIProviderDescriptor> ProviderDescriptors { get; }
 		public IReadOnlyList<AIProfile> Profiles => Settings is null ? Array.Empty<AIProfile>() : Settings.Profiles;
 		public AIProfile? SelectedProfile {
-			get => AIProfileDraft;
-			set { if (value is not null) { AIProfileDraft = value.Clone(); SelectedModel = AIProfileDraft.ResolveModel(); OnPropertyChanged(); } }
+			get => selectedProfile;
+			set => SelectProfile(value);
 		}
-		public ICommand AddProfileCommand => new AsyncCommand(AddProfileAsync, () => Settings is not null);
-		public ICommand DuplicateProfileCommand => new AsyncCommand(DuplicateProfileAsync, () => AIProfileDraft is not null);
-		public ICommand DeleteProfileCommand => new AsyncCommand(DeleteProfileAsync, () => AIProfileDraft is not null && Profiles.Count > 1);
-		public ICommand SaveCommand => new AsyncCommand(SaveDraftAsync, () => AIProfileDraft is not null);
-		public ICommand CancelCommand => new AsyncCommand(CancelDraftAsync, () => AIProfileDraft is not null);
-		public ICommand MoveProfileUpCommand => new AsyncCommand(() => MoveProfileAsync(-1), () => AIProfileDraft is not null);
-		public ICommand MoveProfileDownCommand => new AsyncCommand(() => MoveProfileAsync(1), () => AIProfileDraft is not null);
-		public ICommand AddModelCommand => new AsyncCommand(AddModelAsync, () => AIProfileDraft is not null);
-		public ICommand RenameModelCommand => new AsyncCommand(RenameModelAsync, () => AIProfileDraft is not null && !string.IsNullOrWhiteSpace(SelectedModel));
-		public ICommand DeleteModelCommand => new AsyncCommand(DeleteModelAsync, () => AIProfileDraft is not null && AIProfileDraft.Models.Count > 1);
-		public ICommand MoveModelUpCommand => new AsyncCommand(() => MoveModelAsync(-1), () => AIProfileDraft is not null);
-		public ICommand MoveModelDownCommand => new AsyncCommand(() => MoveModelAsync(1), () => AIProfileDraft is not null);
+		public ICommand AddProfileCommand => addProfileCommand;
+		public ICommand DuplicateProfileCommand => duplicateProfileCommand;
+		public ICommand DeleteProfileCommand => deleteProfileCommand;
+		public ICommand SaveCommand => saveCommand;
+		public ICommand CancelCommand => cancelCommand;
+		public ICommand MoveProfileUpCommand => moveProfileUpCommand;
+		public ICommand MoveProfileDownCommand => moveProfileDownCommand;
+		public ICommand AddModelCommand => addModelCommand;
+		public ICommand RenameModelCommand => renameModelCommand;
+		public ICommand DeleteModelCommand => deleteModelCommand;
+		public ICommand MoveModelUpCommand => moveModelUpCommand;
+		public ICommand MoveModelDownCommand => moveModelDownCommand;
 		string modelNameInput = string.Empty;
 		string selectedModel = string.Empty;
 		public string ModelNameInput { get => modelNameInput; set => SetProperty(ref modelNameInput, value ?? string.Empty); }
@@ -79,6 +109,32 @@ namespace ICSharpCode.ILSpy.Options
 					AIProfileDraft.LastSelectedModel = SelectedModel;
 			}
 		}
+		public AIProviderDescriptor? SelectedProviderDescriptor {
+			get => AIProviderCatalog.TryGet(AIProfileDraft?.ProviderType, out AIProviderDescriptor? descriptor) ? descriptor : null;
+			set {
+				if (value is null || AIProfileDraft is null || string.Equals(AIProfileDraft.ProviderType, value.Id, StringComparison.OrdinalIgnoreCase))
+					return;
+				AIProviderDescriptor previous = AIProviderCatalog.TryGet(AIProfileDraft.ProviderType, out AIProviderDescriptor? old) ? old : value;
+				bool useDefaultEndpoint = string.IsNullOrWhiteSpace(AIProfileDraft.BaseUrl) || string.Equals(AIProfileDraft.BaseUrl, previous.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase);
+				bool useDefaultModel = AIProfileDraft.Models.Count == 0 || (AIProfileDraft.Models.Count == 1 && string.Equals(AIProfileDraft.Models[0], previous.DefaultModel, StringComparison.OrdinalIgnoreCase));
+				AIProfileDraft.ProviderType = value.Id;
+				if (useDefaultEndpoint)
+					AIProfileDraft.BaseUrl = value.DefaultBaseUrl;
+				if (useDefaultModel)
+				{
+					AIProfileDraft.Models.Clear();
+					AIProfileDraft.Models.Add(value.DefaultModel);
+					AIProfileDraft.LastSelectedModel = value.DefaultModel;
+				}
+				NotifyDraftChanged();
+			}
+		}
+		public string ProviderKeyRequirement => SelectedProviderDescriptor?.KeyRequirement switch {
+			AIProviderKeyRequirement.Required => "API key required",
+			AIProviderKeyRequirement.Optional => "API key optional",
+			AIProviderKeyRequirement.None => "No API key required",
+			_ => "Provider unavailable"
+		};
 
 		public AISettings Settings {
 			get => settings;
@@ -108,7 +164,9 @@ namespace ICSharpCode.ILSpy.Options
 			set {
 				if (!SetProperty(ref apiKeyInput, value ?? string.Empty))
 					return;
-				// Secret input remains transient. It is written only by an explicit save operation.
+				OnPropertyChanged(nameof(HasConfiguredKey));
+				OnPropertyChanged(nameof(CanTestConnection));
+				TestConnectionCommand.RaiseCanExecuteChanged();
 			}
 		}
 
@@ -140,12 +198,13 @@ namespace ICSharpCode.ILSpy.Options
 					|| string.IsNullOrWhiteSpace(profile.BaseUrl)
 					|| string.IsNullOrWhiteSpace(profile.ResolveModel()))
 					return false;
-				return AIProviderCatalog.Get(profile.ProviderType).KeyRequirement == AIProviderKeyRequirement.None || HasConfiguredKey;
+				return AIProviderCatalog.Get(profile.ProviderType).KeyRequirement != AIProviderKeyRequirement.Required || HasConfiguredKey;
 			}
 		}
 
 		public ICommand SaveKeyCommand { get; }
 		public ICommand ClearKeyCommand { get; }
+		public ICommand ActivateProfileCommand { get; private set; } = null!;
 		public AsyncCommand TestConnectionCommand { get; }
 		public AsyncCommand CancelTestConnectionCommand { get; }
 
@@ -154,7 +213,12 @@ namespace ICSharpCode.ILSpy.Options
 			ArgumentNullException.ThrowIfNull(service);
 			Settings = service.AISettings;
 			selectionService = AppComposition.TryGetExport<AISelectionService>();
+			ActivateProfileCommand = new AsyncCommand(ActivateProfileAsync, () => SelectedProfile is not null && selectionService is not null);
+			OnPropertyChanged(nameof(ActivateProfileCommand));
+			selectedProfile = Settings.ActiveProfile;
 			AIProfileDraft = Settings.ActiveProfile.Clone();
+			draftIsNew = false;
+			SelectedModel = AIProfileDraft.ResolveModel();
 			ApiKeyInput = string.Empty;
 			StatusMessage = string.Empty;
 			_ = LoadStoredKeyAsync(Settings, CancellationToken.None);
@@ -164,8 +228,115 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			AIProfile profile = AIProfile.Create(AIProviderCatalog.Get("openai"));
 			profile.Name = MakeUniqueName("New profile");
+			selectedProfile = null;
+			draftIsNew = true;
 			AIProfileDraft = profile;
+			SelectedModel = profile.ResolveModel();
+			ClearTransientEditorState();
+			OnPropertyChanged(nameof(SelectedProfile));
+			NotifyDraftChanged();
 			await Task.CompletedTask;
+		}
+
+		void SelectProfile(AIProfile? profile)
+		{
+			if (profile is null || ReferenceEquals(selectedProfile, profile))
+				return;
+			testCancellation?.Cancel();
+			selectedProfile = profile;
+			draftIsNew = false;
+			AIProfileDraft = profile.Clone();
+			SelectedModel = AIProfileDraft.ResolveModel();
+			ClearTransientEditorState();
+			OnPropertyChanged(nameof(SelectedProfile));
+			NotifyDraftChanged();
+		}
+
+		async Task ActivateProfileAsync()
+		{
+			if (SelectedProfile is null || selectionService is null)
+				return;
+			await selectionService.ApplySelectionAsync(SelectedProfile.Id, SelectedProfile.ResolveModel());
+			StatusMessage = $"'{SelectedProfile.Name}' is now the active AI profile.";
+		}
+
+		void ClearTransientEditorState()
+		{
+			ApiKeyInput = string.Empty;
+			ModelNameInput = string.Empty;
+			StatusMessage = string.Empty;
+		}
+
+		void NotifyDraftChanged()
+		{
+			OnPropertyChanged(nameof(AIProfileDraft));
+			OnPropertyChanged(nameof(SelectedProviderDescriptor));
+			OnPropertyChanged(nameof(ProviderKeyRequirement));
+			OnPropertyChanged(nameof(HasConfiguredKey));
+			OnPropertyChanged(nameof(CanTestConnection));
+			RaiseEditorCommandStates();
+		}
+
+		void RaiseEditorCommandStates()
+		{
+			foreach (AsyncCommand command in new[] {
+				addProfileCommand, duplicateProfileCommand, deleteProfileCommand, saveCommand, cancelCommand,
+				moveProfileUpCommand, moveProfileDownCommand, addModelCommand, renameModelCommand,
+				deleteModelCommand, moveModelUpCommand, moveModelDownCommand, TestConnectionCommand,
+				ActivateProfileCommand as AsyncCommand
+			}.OfType<AsyncCommand>())
+				command.RaiseCanExecuteChanged();
+		}
+
+		static Task<bool> ConfirmDeleteProfileAsync(AIProfile profile)
+		{
+			return ShowConfirmationAsync(
+				"Delete AI profile",
+				$"Delete '{profile.Name}' and its stored API key? Existing conversations remain readable. If this is the active profile, ILSpy selects the next profile.",
+				"Delete");
+		}
+
+		Task<bool> ConfirmRemoveKeyAsync()
+		{
+			return ShowConfirmationAsync(
+				"Remove API key",
+				$"Remove the stored API key for '{AIProfileDraft?.Name}'? Providers that require a key will stop working until a replacement is saved.",
+				"Remove key");
+		}
+
+		static async Task<bool> ShowConfirmationAsync(string title, string message, string confirmLabel)
+		{
+			Window? owner = UiContext.MainWindow;
+			if (owner is null)
+				return false;
+			bool confirmed = false;
+			var confirm = new Button { Content = confirmLabel, MinWidth = 90 };
+			var cancel = new Button { Content = Resources.Cancel, MinWidth = 90 };
+			var window = new Window {
+				Title = title,
+				SizeToContent = SizeToContent.WidthAndHeight,
+				CanResize = false,
+				WindowStartupLocation = WindowStartupLocation.CenterOwner,
+				ShowInTaskbar = false,
+				Content = new StackPanel {
+					Margin = new global::Avalonia.Thickness(16),
+					MaxWidth = 480,
+					Spacing = 16,
+					Children = {
+						new TextBlock { Text = message, TextWrapping = global::Avalonia.Media.TextWrapping.Wrap },
+						new StackPanel {
+							Orientation = Orientation.Horizontal,
+							HorizontalAlignment = HorizontalAlignment.Right,
+							Spacing = 8,
+							Children = { confirm, cancel }
+						}
+					}
+				}
+			};
+			confirm.Click += (_, _) => { confirmed = true; window.Close(); };
+			cancel.Click += (_, _) => window.Close();
+			await window.ShowDialog(owner);
+			return confirmed;
 		}
 
 		async Task DuplicateProfileAsync()
@@ -174,33 +345,60 @@ namespace ICSharpCode.ILSpy.Options
 				return;
 			AIProfileDraft = AIProfileDraft.Duplicate();
 			AIProfileDraft.Name = MakeUniqueName(AIProfileDraft.Name + " Copy");
+			selectedProfile = null;
+			draftIsNew = true;
+			ClearTransientEditorState();
+			OnPropertyChanged(nameof(SelectedProfile));
+			NotifyDraftChanged();
 			await Task.CompletedTask;
 		}
 
 		async Task DeleteProfileAsync()
 		{
-			if (AIProfileDraft is null || Settings.Profiles.Count <= 1)
+			if (SelectedProfile is null || Settings.Profiles.Count <= 1)
 				return;
-			AIProfile? existing = Settings.Profiles.FirstOrDefault(p => p.Id == AIProfileDraft.Id);
-			if (existing is not null && selectionService is not null)
-				await selectionService.DeleteProfileAsync(existing.Id);
-			AIProfileDraft = Settings.ActiveProfile.Clone();
+			if (!await ConfirmDeleteProfileAsync(SelectedProfile))
+				return;
+			if (selectionService is null)
+			{
+				StatusMessage = "AI profile persistence is unavailable.";
+				return;
+			}
+			await selectionService.DeleteProfileAsync(SelectedProfile.Id);
+			selectedProfile = Settings.ActiveProfile;
+			draftIsNew = false;
+			AIProfileDraft = selectedProfile.Clone();
+			ClearTransientEditorState();
+			SelectedModel = AIProfileDraft.ResolveModel();
+			OnPropertyChanged(nameof(SelectedProfile));
 			OnPropertyChanged(nameof(Profiles));
+			NotifyDraftChanged();
 		}
 
 		async Task SaveDraftAsync()
 		{
 			if (AIProfileDraft is null)
 				return;
-			await CommitDraftAsync(AIProfileDraft.Clone(), null, false);
+			string? replacementKey = string.IsNullOrWhiteSpace(ApiKeyInput) ? null : ApiKeyInput;
+			await CommitDraftAsync(AIProfileDraft.Clone(), replacementKey, replacementKey is not null);
 		}
 
-		async Task CancelDraftAsync() { AIProfileDraft = Settings.ActiveProfile.Clone(); await Task.CompletedTask; }
+		async Task CancelDraftAsync()
+		{
+			selectedProfile ??= Settings.ActiveProfile;
+			draftIsNew = false;
+			AIProfileDraft = selectedProfile.Clone();
+			SelectedModel = AIProfileDraft.ResolveModel();
+			ClearTransientEditorState();
+			OnPropertyChanged(nameof(SelectedProfile));
+			NotifyDraftChanged();
+			await Task.CompletedTask;
+		}
 
 		async Task MoveProfileAsync(int delta)
 		{
-			if (AIProfileDraft is not null && selectionService is not null)
-				await selectionService.MoveProfileAsync(AIProfileDraft.Id, delta);
+			if (!draftIsNew && SelectedProfile is not null && selectionService is not null)
+				await selectionService.MoveProfileAsync(SelectedProfile.Id, delta);
 			OnPropertyChanged(nameof(Profiles));
 		}
 
@@ -217,7 +415,7 @@ namespace ICSharpCode.ILSpy.Options
 			if (string.IsNullOrWhiteSpace(AIProfileDraft.LastSelectedModel))
 				AIProfileDraft.LastSelectedModel = model;
 			ModelNameInput = string.Empty;
-			OnPropertyChanged(nameof(AIProfileDraft));
+			NotifyDraftChanged();
 			await Task.CompletedTask;
 		}
 
@@ -237,7 +435,7 @@ namespace ICSharpCode.ILSpy.Options
 			AIProfileDraft.LastSelectedModel = replacement;
 			SelectedModel = replacement;
 			ModelNameInput = string.Empty;
-			OnPropertyChanged(nameof(AIProfileDraft));
+			NotifyDraftChanged();
 			await Task.CompletedTask;
 		}
 
@@ -252,7 +450,7 @@ namespace ICSharpCode.ILSpy.Options
 			if (!AIProfileDraft.Models.Contains(AIProfileDraft.LastSelectedModel, StringComparer.OrdinalIgnoreCase))
 				AIProfileDraft.LastSelectedModel = AIProfileDraft.Models[0];
 			SelectedModel = AIProfileDraft.LastSelectedModel;
-			OnPropertyChanged(nameof(AIProfileDraft));
+			NotifyDraftChanged();
 			await Task.CompletedTask;
 		}
 
@@ -265,7 +463,7 @@ namespace ICSharpCode.ILSpy.Options
 			if (index < 0 || target < 0 || target >= AIProfileDraft.Models.Count)
 				return;
 			(AIProfileDraft.Models[index], AIProfileDraft.Models[target]) = (AIProfileDraft.Models[target], AIProfileDraft.Models[index]);
-			OnPropertyChanged(nameof(AIProfileDraft));
+			NotifyDraftChanged();
 			await Task.CompletedTask;
 		}
 
@@ -281,7 +479,12 @@ namespace ICSharpCode.ILSpy.Options
 		public void LoadDefaults()
 		{
 			Settings.LoadFromXml(null!);
+			selectedProfile = Settings.ActiveProfile;
+			draftIsNew = false;
 			AIProfileDraft = Settings.ActiveProfile.Clone();
+			SelectedModel = AIProfileDraft.ResolveModel();
+			ClearTransientEditorState();
+			OnPropertyChanged(nameof(SelectedProfile));
 			ApiKeyInput = string.Empty;
 			StatusMessage = string.Empty;
 			OnPropertyChanged(nameof(HasConfiguredKey));
@@ -291,7 +494,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		async Task LoadStoredKeyAsync(AISettings target, CancellationToken cancellationToken)
 		{
-			if (string.IsNullOrWhiteSpace(target.ApiKeyPlaceholder))
+			if (!target.ActiveProfile.HasStoredKey && string.IsNullOrWhiteSpace(target.ApiKeyPlaceholder))
 				return;
 			try
 			{
@@ -321,7 +524,7 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			if (string.IsNullOrWhiteSpace(ApiKeyInput))
 			{
-				await ClearKeyAsync();
+				StatusMessage = "Enter a replacement API key.";
 				return;
 			}
 			if (AIProfileDraft is not null)
@@ -330,7 +533,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		async Task ClearKeyAsync()
 		{
-			if (AIProfileDraft is not null)
+			if (AIProfileDraft is not null && await ConfirmRemoveKeyAsync())
 				await CommitDraftAsync(AIProfileDraft.Clone(), null, false, removeKey: true);
 		}
 
@@ -370,24 +573,25 @@ namespace ICSharpCode.ILSpy.Options
 					draftProfile.HasStoredKey = false;
 				}
 
-				if (selectionService is not null)
-					await selectionService.SaveProfileAsync(draftProfile.Clone());
-				else
+				if (selectionService is null)
 				{
-					if (previous is null)
-						Settings.Profiles.Add(draftProfile.Clone());
-					else
-						Settings.Profiles[Settings.Profiles.IndexOf(previous)] = draftProfile.Clone();
-					Settings.NotifyProfilesChanged();
+					StatusMessage = "AI profile persistence is unavailable.";
+					return;
 				}
+				await selectionService.SaveProfileAsync(draftProfile.Clone());
 
+				selectedProfile = Settings.Profiles.FirstOrDefault(profile => profile.Id == draftProfile.Id);
+				draftIsNew = false;
 				AIProfileDraft = draftProfile.Clone();
+				SelectedModel = AIProfileDraft.ResolveModel();
 				ApiKeyInput = string.Empty;
 				StatusMessage = replaceKey ? "API key saved in secure storage." : removeKey ? "API key removed." : "Profile saved.";
 				OnPropertyChanged(nameof(Profiles));
 				OnPropertyChanged(nameof(HasConfiguredKey));
 				OnPropertyChanged(nameof(CanTestConnection));
 				TestConnectionCommand.RaiseCanExecuteChanged();
+				OnPropertyChanged(nameof(SelectedProfile));
+				NotifyDraftChanged();
 			}
 			catch (Exception)
 			{
@@ -445,7 +649,8 @@ namespace ICSharpCode.ILSpy.Options
 				};
 				bool success = await new AIExplanationService(snapshot, providerFactory)
 					.TestConnectionAsync(cancellation.Token);
-				StatusMessage = success ? "Connection succeeded." : "The provider returned no response.";
+				string target = $"{profile.Name} / {profile.ResolveModel()}";
+				StatusMessage = success ? $"Connection succeeded for {target}." : $"{target} returned no response.";
 			}
 			catch (OperationCanceledException)
 			{
