@@ -79,6 +79,23 @@ namespace ICSharpCode.ILSpy
 					ThemeManager.Current.Attach(settingsService.SessionSettings);
 					ApplyCulture(settingsService.SessionSettings.CurrentCulture);
 				}
+
+				// Move any legacy provider-keyed AI credential under the migrated profile
+				// identity before AI features serve requests. Runs in the background; the
+				// legacy key remains authoritative until confirmation, so a failed attempt
+				// retries on the next launch.
+				_ = Task.Run(async () => {
+					try
+					{
+						var selectionService = Composition?.GetExport<ICSharpCode.ILSpyX.AI.AISelectionService>();
+						if (selectionService != null)
+							await selectionService.EnsureCredentialMigrationAsync().ConfigureAwait(false);
+					}
+					catch (Exception migrationException)
+					{
+						System.Diagnostics.Trace.WriteLine($"AI credential migration failed: {migrationException.GetType().Name}. It will retry on the next launch.");
+					}
+				});
 			}
 			catch (Exception ex)
 			{

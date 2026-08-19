@@ -32,8 +32,8 @@ namespace ICSharpCode.ILSpy.AI
 	{
 		public const string PaneContentId = "AIOutput";
 
-		readonly AISettings settings;
-		readonly AIExplanationService explanationService;
+		readonly AISelectionService selectionService;
+		readonly IAIProviderFactory providerFactory;
 		readonly ILogger logger;
 		CancellationTokenSource? cancellation;
 
@@ -54,10 +54,10 @@ namespace ICSharpCode.ILSpy.AI
 		bool isComplete;
 
 		[ImportingConstructor]
-		public AIOutputPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, ILoggerFactory loggerFactory)
+		public AIOutputPaneModel(AISelectionService selectionService, IAIProviderFactory providerFactory, ILoggerFactory loggerFactory)
 		{
-			settings = settingsService?.AISettings ?? throw new ArgumentNullException(nameof(settingsService));
-			explanationService = new AIExplanationService(settings, providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
+			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
+			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			logger = loggerFactory?.CreateLogger<AIOutputPaneModel>() ?? throw new ArgumentNullException(nameof(loggerFactory));
 			Id = PaneContentId;
 			Title = "AI Output";
@@ -78,7 +78,10 @@ namespace ICSharpCode.ILSpy.AI
 			// decompiler.TypeSystem.MainModule via ReferenceEquals, which would fail.
 			IEntity resolvedEntity = ResolveEntity(entity, decompiler)
 				?? throw new InvalidOperationException($"Failed to resolve entity '{entity.FullName}' in the decompiler type system.");
-			return StartAsync(entity.FullName, token => explanationService.ExplainStreamingAsync(resolvedEntity, decompiler, token));
+			return StartAsync(entity.FullName, async token => {
+				AISelectionSnapshot snapshot = await selectionService.ResolveSnapshotAsync(token).ConfigureAwait(false);
+				return new AIExplanationService(snapshot, providerFactory).ExplainStreamingAsync(resolvedEntity, decompiler, token);
+			});
 		}
 
 		static IEntity? ResolveEntity(IEntity entity, CSharpDecompiler decompiler)
@@ -101,7 +104,13 @@ namespace ICSharpCode.ILSpy.AI
 			};
 		}
 
-		public async Task StartAsync(string name, Func<CancellationToken, IAsyncEnumerable<string>> streamFactory)
+		public Task StartAsync(string name, Func<CancellationToken, IAsyncEnumerable<string>> streamFactory)
+		{
+			ArgumentNullException.ThrowIfNull(streamFactory);
+			return StartAsync(name, token => Task.FromResult(streamFactory(token)));
+		}
+
+		public async Task StartAsync(string name, Func<CancellationToken, Task<IAsyncEnumerable<string>>> streamFactory)
 		{
 			ArgumentNullException.ThrowIfNull(streamFactory);
 			cancellation?.Cancel();
@@ -179,7 +188,7 @@ namespace ICSharpCode.ILSpy.AI
 			}
 		}
 
-		async Task ConsumeAsync(Func<CancellationToken, IAsyncEnumerable<string>> streamFactory, CancellationTokenSource requestCancellation)
+		async Task ConsumeAsync(Func<CancellationToken, Task<IAsyncEnumerable<string>>> streamFactory, CancellationTokenSource requestCancellation)
 		{
 			var response = new StringBuilder();
 			logger.LogDebug("Starting to consume AI response stream");
@@ -190,7 +199,8 @@ namespace ICSharpCode.ILSpy.AI
 			// UI thread for every single token.
 			const int UpdateInterval = 5;
 
-			await foreach (string chunk in streamFactory(requestCancellation.Token).ConfigureAwait(false))
+			IAsyncEnumerable<string> stream = await streamFactory(requestCancellation.Token).ConfigureAwait(false);
+			await foreach (string chunk in stream.ConfigureAwait(false))
 			{
 				if (string.IsNullOrEmpty(chunk))
 					continue;
