@@ -31,12 +31,12 @@ namespace ICSharpCode.ILSpy.AI
 
 		public ExplainDialogViewModel(
 			IEntity entity,
-			AISettings settings,
+			AISelectionSnapshot snapshot,
 			IAIProviderFactory providerFactory,
 			Func<IEntity, CSharpDecompiler>? decompilerFactory = null)
 		{
 			this.entity = entity ?? throw new ArgumentNullException(nameof(entity));
-			this.explanationService = new AIExplanationService(settings ?? throw new ArgumentNullException(nameof(settings)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
+			this.explanationService = new AIExplanationService(snapshot ?? throw new ArgumentNullException(nameof(snapshot)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
 			this.decompilerFactory = decompilerFactory ?? CreateDecompiler;
 			CancelCommand = new RelayCommand(Cancel, () => IsBusy);
 		}

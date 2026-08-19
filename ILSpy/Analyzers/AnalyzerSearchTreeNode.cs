@@ -106,12 +106,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 				FinishOnUIThread(error: new InvalidOperationException("no active assembly list"));
 				return;
 			}
-			var settingsService = AppComposition.TryGetExport<SettingsService>();
+			var selectionService = AppComposition.TryGetExport<AISelectionService>();
 			var context = new AnalyzerContext {
 				CancellationToken = ct,
 				Language = Language,
 				AssemblyList = assemblyList,
-				AISettings = settingsService?.AISettings,
+				AISelectionSnapshot = selectionService?.ResolveSnapshotAsync(ct).GetAwaiter().GetResult(),
 				AIProviderFactory = AppComposition.TryGetExport<IAIProviderFactory>(),
 			};
 			try

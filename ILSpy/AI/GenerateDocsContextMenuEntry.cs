@@ -26,16 +26,18 @@ namespace ICSharpCode.ILSpy.AI
 	{
 		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
+		readonly AISelectionService selectionService;
 		readonly AIOutputPaneModel outputPane;
 		readonly DockWorkspace dockWorkspace;
 
 		[ImportingConstructor]
-		public GenerateDocsContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace)
+		public GenerateDocsContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace, AISelectionService selectionService)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			this.outputPane = outputPane ?? throw new ArgumentNullException(nameof(outputPane));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
+			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 		}
 
 		public bool IsVisible(TextViewContext context) => ResolveEntity(context) is ITypeDefinition or IMethod;
@@ -53,14 +55,23 @@ namespace ICSharpCode.ILSpy.AI
 			if (!IsEnabled(context) || ResolveEntity(context) is not { } entity || entity.ParentModule?.MetadataFile is not MetadataFile module)
 				return;
 			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
-			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new ICSharpCode.Decompiler.DecompilerSettings());
-			var service = new AIExplanationService(settingsService.AISettings, providerFactory);
-			_ = outputPane.StartAsync(entity.FullName, token => GenerateAsync(entity, decompiler, service, settingsService.AISettings, token));
+			_ = ExecuteAsync(entity, module);
 		}
 
-		static async IAsyncEnumerable<string> GenerateAsync(IEntity entity, CSharpDecompiler decompiler, AIExplanationService service, AISettings settings, [EnumeratorCancellation] CancellationToken cancellationToken)
+		async Task ExecuteAsync(IEntity entity, MetadataFile module)
 		{
-			var context = await Task.Run(() => new ContextBuilder(settings).Build(entity, decompiler), cancellationToken).ConfigureAwait(false);
+			AISelectionSnapshot snapshot;
+			try
+			{ snapshot = await selectionService.ResolveSnapshotAsync(); }
+			catch (AIConfigurationException) { return; }
+			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new ICSharpCode.Decompiler.DecompilerSettings());
+			var service = new AIExplanationService(snapshot, providerFactory);
+			_ = outputPane.StartAsync(entity.FullName, token => GenerateAsync(entity, decompiler, service, snapshot, token));
+		}
+
+		static async IAsyncEnumerable<string> GenerateAsync(IEntity entity, CSharpDecompiler decompiler, AIExplanationService service, AISelectionSnapshot snapshot, [EnumeratorCancellation] CancellationToken cancellationToken)
+		{
+			var context = await Task.Run(() => new ContextBuilder(snapshot).Build(entity, decompiler), cancellationToken).ConfigureAwait(false);
 			var chunks = new StringBuilder();
 			await foreach (var chunk in service.CompleteStreamingAsync(
 				"Generate XML documentation comments. Return only the XML, no explanation.",

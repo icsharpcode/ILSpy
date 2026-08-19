@@ -2,6 +2,7 @@
 
 using System;
 using System.Composition;
+using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -20,12 +21,14 @@ namespace ICSharpCode.ILSpy.AI
 	{
 		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
+		readonly AISelectionService selectionService;
 
 		[ImportingConstructor]
-		public RenameAssistantContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory)
+		public RenameAssistantContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AISelectionService selectionService)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 		}
 
 		public bool IsVisible(TextViewContext context) => ResolveEntity(context) is not null;
@@ -42,7 +45,16 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			if (!IsEnabled(context) || ResolveEntity(context) is not { } entity)
 				return;
-			var dialog = new RenameDialog(entity, settingsService.AISettings, providerFactory);
+			_ = ShowRenameAsync(entity, context);
+		}
+
+		async Task ShowRenameAsync(IEntity entity, TextViewContext context)
+		{
+			AISelectionSnapshot snapshot;
+			try
+			{ snapshot = await selectionService.ResolveSnapshotAsync(); }
+			catch (AIConfigurationException) { return; }
+			var dialog = new RenameDialog(entity, snapshot, providerFactory);
 			Window? owner = context.OriginalSource is Visual visual ? TopLevel.GetTopLevel(visual) as Window : null;
 			if (owner is not null)
 				_ = dialog.ShowDialog(owner);
@@ -73,12 +85,14 @@ namespace ICSharpCode.ILSpy.AI
 	{
 		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
+		readonly AISelectionService selectionService;
 
 		[ImportingConstructor]
-		public BatchRenameContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory)
+		public BatchRenameContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AISelectionService selectionService)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 		}
 
 		public bool IsVisible(TextViewContext context) => ResolveType(context) is not null;
@@ -90,7 +104,16 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			if (!IsEnabled(context) || ResolveType(context) is not { } type)
 				return;
-			var dialog = new BatchRenameDialog(type, settingsService.AISettings, providerFactory);
+			_ = ShowBatchRenameAsync(type, context);
+		}
+
+		async Task ShowBatchRenameAsync(ITypeDefinition type, TextViewContext context)
+		{
+			AISelectionSnapshot snapshot;
+			try
+			{ snapshot = await selectionService.ResolveSnapshotAsync(); }
+			catch (AIConfigurationException) { return; }
+			var dialog = new BatchRenameDialog(type, snapshot, providerFactory);
 			Window? owner = context.OriginalSource is Visual visual ? TopLevel.GetTopLevel(visual) as Window : null;
 			if (owner is not null)
 				_ = dialog.ShowDialog(owner);

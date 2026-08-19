@@ -18,12 +18,6 @@ namespace ICSharpCode.ILSpyX.Search
 	/// <summary>Interprets a natural-language query against a bounded symbol vocabulary.</summary>
 	public static class AISearchStrategy
 	{
-		public static Task<IReadOnlyList<IEntity>> SearchAsync(IEnumerable<MetadataFile> modules, string query, AISettings settings, IAIProviderFactory providerFactory, CancellationToken cancellationToken = default)
-		{
-			ArgumentNullException.ThrowIfNull(settings);
-			return SearchCoreAsync(modules, query, providerFactory, ct => providerFactory.CreateAsync(settings, ct), cancellationToken);
-		}
-
 		///<summary>Runs the search against an immutable resolved target.</summary>
 		public static Task<IReadOnlyList<IEntity>> SearchAsync(IEnumerable<MetadataFile> modules, string query, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory, CancellationToken cancellationToken = default)
 		{

@@ -46,8 +46,8 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		/// </summary>
 		public required ILanguage Language { get; init; }
 
-		/// <summary>Optional AI configuration supplied by the desktop host for AI analyzers.</summary>
-		public AISettings? AISettings { get; init; }
+		/// <summary>Immutable AI request target captured by the desktop host for AI analyzers.</summary>
+		public AISelectionSnapshot? AISelectionSnapshot { get; init; }
 
 		/// <summary>Optional provider factory supplied by the desktop host for AI analyzers.</summary>
 		public IAIProviderFactory? AIProviderFactory { get; init; }

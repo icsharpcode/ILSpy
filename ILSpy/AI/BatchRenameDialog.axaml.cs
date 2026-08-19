@@ -18,10 +18,10 @@ namespace ICSharpCode.ILSpy.AI
 
 		public BatchRenameDialog() => InitializeComponent();
 
-		public BatchRenameDialog(ITypeDefinition type, AISettings settings, IAIProviderFactory providerFactory)
+		public BatchRenameDialog(ITypeDefinition type, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
 		{
 			InitializeComponent();
-			viewModel = new BatchRenameDialogViewModel(type, settings, providerFactory);
+			viewModel = new BatchRenameDialogViewModel(type, snapshot, providerFactory);
 			DataContext = viewModel;
 			Opened += OnOpened;
 		}

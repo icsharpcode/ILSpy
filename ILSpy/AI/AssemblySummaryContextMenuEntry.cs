@@ -22,16 +22,18 @@ namespace ICSharpCode.ILSpy.AI
 	{
 		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
+		readonly AISelectionService selectionService;
 		readonly AIOutputPaneModel outputPane;
 		readonly DockWorkspace dockWorkspace;
 
 		[ImportingConstructor]
-		public AssemblySummaryContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace)
+		public AssemblySummaryContextMenuEntry(SettingsService settingsService, IAIProviderFactory providerFactory, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace, AISelectionService selectionService)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			this.outputPane = outputPane ?? throw new ArgumentNullException(nameof(outputPane));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
+			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 		}
 
 		public bool IsVisible(TextViewContext context)
@@ -50,7 +52,16 @@ namespace ICSharpCode.ILSpy.AI
 			if (!IsEnabled(context) || context.SelectedTreeNodes?[0] is not AssemblyTreeNode node)
 				return;
 			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
-			var service = new AIExplanationService(settingsService.AISettings, providerFactory);
+			_ = ExecuteAsync(node);
+		}
+
+		async Task ExecuteAsync(AssemblyTreeNode node)
+		{
+			AISelectionSnapshot snapshot;
+			try
+			{ snapshot = await selectionService.ResolveSnapshotAsync(); }
+			catch (AIConfigurationException) { return; }
+			var service = new AIExplanationService(snapshot, providerFactory);
 			_ = outputPane.StartAsync(node.LoadedAssembly.ShortName, token => BuildAndCompleteAsync(node.LoadedAssembly, service, token));
 		}
 

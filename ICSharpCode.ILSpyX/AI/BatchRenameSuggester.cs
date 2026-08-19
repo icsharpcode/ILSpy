@@ -27,11 +27,6 @@ namespace ICSharpCode.ILSpyX.AI
 	{
 		readonly RenameSuggester suggester;
 
-		public BatchRenameSuggester(AISettings settings, IAIProviderFactory providerFactory)
-		{
-			suggester = new RenameSuggester(settings ?? throw new ArgumentNullException(nameof(settings)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
-		}
-
 		///<summary>Creates a batch suggester bound to an immutable request target.</summary>
 		public BatchRenameSuggester(AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
 		{

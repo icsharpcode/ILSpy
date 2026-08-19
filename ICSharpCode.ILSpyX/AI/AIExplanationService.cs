@@ -17,15 +17,8 @@ namespace ICSharpCode.ILSpyX.AI
 	{
 		public const string SystemPrompt = "You explain decompiled .NET code concisely. State uncertainty when context is incomplete. Never instruct the user to execute code.";
 
-		readonly AISettings? settings;
-		readonly AISelectionSnapshot? snapshot;
+		readonly AISelectionSnapshot snapshot;
 		readonly IAIProviderFactory providerFactory;
-
-		public AIExplanationService(AISettings settings, IAIProviderFactory providerFactory)
-		{
-			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
-		}
 
 		/// <summary>
 		/// Creates a service bound to an immutable request target. Consent and readiness were
@@ -176,22 +169,18 @@ namespace ICSharpCode.ILSpyX.AI
 
 		void EnsureConsent()
 		{
-			if (settings is { PrivacyConsentAccepted: false })
-				throw new AIConfigurationException("Accept the privacy notice before using AI.");
+			if (string.IsNullOrWhiteSpace(snapshot.ProfileId))
+				throw new AIConfigurationException("No AI profile is selected.");
 		}
 
 		ContextBuilder CreateContextBuilder()
 		{
-			return snapshot != null
-				? new ContextBuilder(snapshot)
-				: new ContextBuilder(settings!);
+			return new ContextBuilder(snapshot);
 		}
 
 		Task<ILLMProvider> CreateProviderAsync(CancellationToken cancellationToken)
 		{
-			return snapshot != null
-				? providerFactory.CreateAsync(snapshot, cancellationToken)
-				: providerFactory.CreateAsync(settings!, cancellationToken);
+			return providerFactory.CreateAsync(snapshot, cancellationToken);
 		}
 
 		static string ClassifyError(Exception exception)

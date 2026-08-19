@@ -32,10 +32,10 @@ namespace ICSharpCode.ILSpy.AI
 		string rawResponse = string.Empty;
 		bool isBusy;
 
-		public RenameDialogViewModel(IEntity entity, AISettings settings, IAIProviderFactory providerFactory)
+		public RenameDialogViewModel(IEntity entity, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
 		{
 			this.entity = entity ?? throw new ArgumentNullException(nameof(entity));
-			suggester = new RenameSuggester(settings ?? throw new ArgumentNullException(nameof(settings)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
+			suggester = new RenameSuggester(snapshot ?? throw new ArgumentNullException(nameof(snapshot)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
 			annotations = new RenameAnnotationManager(entity.ParentModule?.MetadataFile?.FileName ?? throw new ArgumentException("The selected symbol has no assembly file.", nameof(entity)));
 			annotations.Load();
 			CancelCommand = new RelayCommand(Cancel, () => IsBusy);

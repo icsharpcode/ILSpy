@@ -95,14 +95,16 @@ namespace ICSharpCode.ILSpy.AI
 		[RelayCommand]
 		async Task SelectProfileAsync(AIProfile? profile)
 		{
-			if (profile is null) return;
+			if (profile is null)
+				return;
 			await selectionService.ApplySelectionAsync(profile.Id, profile.ResolveModel());
 		}
 
 		[RelayCommand]
 		async Task SelectModelAsync(string? model)
 		{
-			if (string.IsNullOrWhiteSpace(model)) return;
+			if (string.IsNullOrWhiteSpace(model))
+				return;
 			await selectionService.ApplySelectionAsync(ActiveProfile.Id, model);
 		}
 

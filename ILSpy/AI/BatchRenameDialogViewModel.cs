@@ -77,10 +77,10 @@ namespace ICSharpCode.ILSpy.AI
 		string errorMessage = string.Empty;
 		bool isBusy;
 
-		public BatchRenameDialogViewModel(ITypeDefinition type, AISettings settings, IAIProviderFactory providerFactory)
+		public BatchRenameDialogViewModel(ITypeDefinition type, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
 		{
 			this.type = type ?? throw new ArgumentNullException(nameof(type));
-			suggester = new BatchRenameSuggester(settings ?? throw new ArgumentNullException(nameof(settings)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
+			suggester = new BatchRenameSuggester(snapshot ?? throw new ArgumentNullException(nameof(snapshot)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
 			annotations = new RenameAnnotationManager(type.ParentModule?.MetadataFile?.FileName ?? throw new ArgumentException("The selected type has no assembly file.", nameof(type)));
 			annotations.Load();
 			CancelCommand = new RelayCommand(Cancel, () => IsBusy);

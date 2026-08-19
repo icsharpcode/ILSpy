@@ -35,15 +35,8 @@ namespace ICSharpCode.ILSpyX.AI
 		public const string SystemPrompt = "You suggest meaningful C# names for obfuscated .NET symbols. Return only valid JSON: [{\"name\": string, \"confidence\": number, \"reasoning\": string}]. Return 3 to 5 distinct PascalCase or camelCase candidates. Do not include markdown fences or extra text.";
 		static readonly Regex GeneratedName = new("^(?:method|class|field|property|event|delegate|type)_\\d+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
-		readonly AISettings? settings;
-		readonly AISelectionSnapshot? snapshot;
+		readonly AISelectionSnapshot snapshot;
 		readonly IAIProviderFactory providerFactory;
-
-		public RenameSuggester(AISettings settings, IAIProviderFactory providerFactory)
-		{
-			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
-			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
-		}
 
 		///<summary>Creates a suggester bound to an immutable request target.</summary>
 		public RenameSuggester(AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
@@ -52,20 +45,16 @@ namespace ICSharpCode.ILSpyX.AI
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 		}
 
-		int MaxContextTokens => snapshot?.MaxContextTokens ?? settings!.MaxContextTokens;
+		int MaxContextTokens => snapshot.MaxContextTokens;
 
 		ContextBuilder CreateContextBuilder()
 		{
-			return snapshot != null
-				? new ContextBuilder(snapshot)
-				: new ContextBuilder(settings!);
+			return new ContextBuilder(snapshot);
 		}
 
 		AIExplanationService CreateExplanationService()
 		{
-			return snapshot != null
-				? new AIExplanationService(snapshot, providerFactory)
-				: new AIExplanationService(settings!, providerFactory);
+			return new AIExplanationService(snapshot, providerFactory);
 		}
 
 		public async Task<IReadOnlyList<RenameSuggestion>> SuggestAsync(IEntity entity, CSharpDecompiler decompiler, CancellationToken cancellationToken = default)

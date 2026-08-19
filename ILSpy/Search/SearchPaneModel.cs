@@ -293,8 +293,8 @@ namespace ICSharpCode.ILSpy.Search
 
 		void StartSpecialSearch(LoadedAssembly[] assemblies, string term, SearchMode mode)
 		{
-			var settingsService = AppComposition.TryGetExport<SettingsService>();
 			var providerFactory = AppComposition.TryGetExport<IAIProviderFactory>();
+			var selectionService = AppComposition.TryGetExport<AISelectionService>();
 			var language = AppComposition.TryGetExport<LanguageService>()?.CurrentLanguage;
 			if (language == null)
 				return;
@@ -307,9 +307,9 @@ namespace ICSharpCode.ILSpy.Search
 				{
 					var modules = assemblies.Select(assembly => assembly.GetMetadataFileOrNull()).Where(module => module != null).Cast<MetadataFile>().ToArray();
 					var entities = mode == SearchMode.AI
-						? providerFactory == null || settingsService == null
+						? providerFactory == null || selectionService == null
 							? System.Array.Empty<ICSharpCode.Decompiler.TypeSystem.IEntity>()
-							: await AISearchStrategy.SearchAsync(modules, term, settingsService.AISettings, providerFactory, cts.Token).ConfigureAwait(false)
+							: await AISearchStrategy.SearchAsync(modules, term, await selectionService.ResolveSnapshotAsync(cts.Token).ConfigureAwait(false), providerFactory, cts.Token).ConfigureAwait(false)
 						: SemanticSearchStrategy.Search(modules, term);
 					if (mode == SearchMode.AI && entities.Count == 0)
 					{

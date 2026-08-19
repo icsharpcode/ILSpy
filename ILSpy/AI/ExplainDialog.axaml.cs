@@ -22,10 +22,10 @@ namespace ICSharpCode.ILSpy.AI
 			InitializeComponent();
 		}
 
-		public ExplainDialog(IEntity entity, AISettings settings, IAIProviderFactory providerFactory)
+		public ExplainDialog(IEntity entity, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
 		{
 			InitializeComponent();
-			viewModel = new ExplainDialogViewModel(entity, settings, providerFactory);
+			viewModel = new ExplainDialogViewModel(entity, snapshot, providerFactory);
 			DataContext = viewModel;
 			viewModel.PropertyChanged += OnViewModelPropertyChanged;
 			Opened += OnOpened;

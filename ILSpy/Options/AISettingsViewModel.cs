@@ -151,7 +151,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		async Task DuplicateProfileAsync()
 		{
-			if (AIProfileDraft is null) return;
+			if (AIProfileDraft is null)
+				return;
 			AIProfileDraft = AIProfileDraft.Duplicate();
 			AIProfileDraft.Name = MakeUniqueName(AIProfileDraft.Name + " Copy");
 			await Task.CompletedTask;
@@ -159,7 +160,8 @@ namespace ICSharpCode.ILSpy.Options
 
 		async Task DeleteProfileAsync()
 		{
-			if (AIProfileDraft is null || Settings.Profiles.Count <= 1) return;
+			if (AIProfileDraft is null || Settings.Profiles.Count <= 1)
+				return;
 			AIProfile? existing = Settings.Profiles.FirstOrDefault(p => p.Id == AIProfileDraft.Id);
 			if (existing is not null && selectionService is not null)
 				await selectionService.DeleteProfileAsync(existing.Id);
@@ -169,12 +171,16 @@ namespace ICSharpCode.ILSpy.Options
 
 		async Task SaveDraftAsync()
 		{
-			if (AIProfileDraft is null) return;
+			if (AIProfileDraft is null)
+				return;
 			AIProfileDraft.Normalize();
-			if (AIProfileDraft.Validate().Count != 0) { StatusMessage = string.Join(" ", AIProfileDraft.Validate()); return; }
+			if (AIProfileDraft.Validate().Count != 0)
+			{ StatusMessage = string.Join(" ", AIProfileDraft.Validate()); return; }
 			AIProfile? existing = Settings.Profiles.FirstOrDefault(p => p.Id == AIProfileDraft.Id);
-			if (existing is null) Settings.Profiles.Add(AIProfileDraft.Clone());
-			else { int index = Settings.Profiles.IndexOf(existing); Settings.Profiles[index] = AIProfileDraft.Clone(); }
+			if (existing is null)
+				Settings.Profiles.Add(AIProfileDraft.Clone());
+			else
+			{ int index = Settings.Profiles.IndexOf(existing); Settings.Profiles[index] = AIProfileDraft.Clone(); }
 			Settings.NotifyProfilesChanged();
 			AIProfileDraft = AIProfileDraft.Clone();
 			OnPropertyChanged(nameof(Profiles));
@@ -187,7 +193,8 @@ namespace ICSharpCode.ILSpy.Options
 		{
 			string name = proposed.Trim();
 			int suffix = 2;
-			while (Profiles.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase))) name = proposed.Trim() + " " + suffix++;
+			while (Profiles.Any(p => string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase)))
+				name = proposed.Trim() + " " + suffix++;
 			return name;
 		}
 

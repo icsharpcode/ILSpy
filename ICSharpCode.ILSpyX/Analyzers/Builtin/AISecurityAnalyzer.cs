@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 
 		async System.Threading.Tasks.Task<IReadOnlyList<ISymbol>> AnalyzeAsync(ISymbol analyzedSymbol, AnalyzerContext context)
 		{
-			if (context.AISettings is not { } settings || context.AIProviderFactory is not { } providerFactory)
+			if (context.AISelectionSnapshot is not { } snapshot || context.AIProviderFactory is not { } providerFactory)
 				throw new AIConfigurationException("AI security analysis is unavailable until AI settings are configured.");
 			ITypeDefinition type = analyzedSymbol switch {
 				ITypeDefinition definition => definition,
@@ -42,12 +42,12 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new DecompilerSettings()) {
 				CancellationToken = context.CancellationToken
 			};
-			var service = new AIExplanationService(settings, providerFactory);
+			var service = new AIExplanationService(snapshot, providerFactory);
 			var findings = new List<ISymbol>();
 			foreach (ITypeDefinition current in type.ParentModule!.Compilation.GetAllTypeDefinitions().Where(candidate => candidate.ParentModule == type.ParentModule))
 			{
 				context.CancellationToken.ThrowIfCancellationRequested();
-				DecompilationContext decompilationContext = new ContextBuilder(settings).Build(current, decompiler);
+				DecompilationContext decompilationContext = new ContextBuilder(snapshot).Build(current, decompiler);
 				string prompt = "Analyze this type for security risks.\n\n" + decompilationContext.ToMarkdown();
 				var response = new List<string>();
 				await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, context.CancellationToken).ConfigureAwait(false))

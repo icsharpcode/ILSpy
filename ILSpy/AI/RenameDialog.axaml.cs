@@ -18,10 +18,10 @@ namespace ICSharpCode.ILSpy.AI
 
 		public RenameDialog() => InitializeComponent();
 
-		public RenameDialog(IEntity entity, AISettings settings, IAIProviderFactory providerFactory)
+		public RenameDialog(IEntity entity, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
 		{
 			InitializeComponent();
-			viewModel = new RenameDialogViewModel(entity, settings, providerFactory);
+			viewModel = new RenameDialogViewModel(entity, snapshot, providerFactory);
 			DataContext = viewModel;
 			Opened += OnOpened;
 		}
