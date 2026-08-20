@@ -12,7 +12,6 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
 namespace ICSharpCode.ILSpyX.AI
@@ -22,11 +21,6 @@ namespace ICSharpCode.ILSpyX.AI
 		readonly int maxContextTokens;
 		readonly bool sendIL;
 		readonly bool sendCallGraph;
-
-		public ContextBuilder(AISettings settings)
-			: this((settings ?? throw new ArgumentNullException(nameof(settings))).MaxContextTokens, settings.SendIL, settings.SendCallGraph)
-		{
-		}
 
 		public ContextBuilder(AISelectionSnapshot snapshot)
 			: this((snapshot ?? throw new ArgumentNullException(nameof(snapshot))).MaxContextTokens, snapshot.SendIL, snapshot.SendCallGraph)

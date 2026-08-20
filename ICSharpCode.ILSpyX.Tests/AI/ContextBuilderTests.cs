@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			CSharpDecompiler decompiler = CreateDecompiler(module);
 			ITypeDefinition type = GetSampleType(decompiler);
 
-			DecompilationContext context = new ContextBuilder(new AISettings()).Build(type, decompiler);
+			DecompilationContext context = new ContextBuilder(128000, false, false).Build(type, decompiler);
 
 			context.DecompiledCSharp.Should().Contain(nameof(ContextSample.Method));
 			context.FullyQualifiedName.Should().Be(type.FullName);
@@ -51,15 +51,14 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			ITypeDefinition type = GetSampleType(decompiler);
 			IMethod method = type.Methods.Single(m => m.Name == nameof(ContextSample.Method));
 
-			var settings = new AISettings { SendIL = true, SendCallGraph = true, MaxContextTokens = 128000 };
-			DecompilationContext context = new ContextBuilder(settings).Build(method, decompiler);
+			DecompilationContext context = new ContextBuilder(128000, true, true).Build(method, decompiler);
 
 			context.IL.Should().Contain(".maxstack");
 			context.Callees.Should().Contain(name => name.Contains(nameof(GC.KeepAlive), StringComparison.Ordinal));
 			context.Callers.Should().Contain(name => name.Contains(nameof(ContextSample.Caller), StringComparison.Ordinal));
 
 			IMethod literalMethod = type.Methods.Single(m => m.Name == nameof(ContextSample.Literal));
-			DecompilationContext literalContext = new ContextBuilder(settings).Build(literalMethod, decompiler);
+			DecompilationContext literalContext = new ContextBuilder(128000, true, true).Build(literalMethod, decompiler);
 			literalContext.StringLiterals.Should().Contain("phase-two");
 		}
 
@@ -71,7 +70,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			CSharpDecompiler firstDecompiler = CreateDecompiler(firstModule);
 			CSharpDecompiler secondDecompiler = CreateDecompiler(secondModule);
 			ITypeDefinition firstType = GetSampleType(firstDecompiler);
-			var builder = new ContextBuilder(new AISettings());
+			var builder = new ContextBuilder(128000, false, false);
 
 			Action action = () => builder.Build(firstType, secondDecompiler);
 
@@ -86,7 +85,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			IEntity entity = EntityProxy.Create(
 				decompiler.TypeSystem.MainModule,
 				MetadataTokens.ParameterHandle(1));
-			var builder = new ContextBuilder(new AISettings());
+			var builder = new ContextBuilder(128000, false, false);
 
 			Action action = () => builder.Build(entity, decompiler);
 
@@ -98,12 +97,12 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			using var module = OpenTestModule();
 			CSharpDecompiler decompiler = CreateDecompiler(module);
-			var settings = new AISettings { MaxContextTokens = 1 };
+			const int maxContextTokens = 1;
 
-			DecompilationContext context = new ContextBuilder(settings).Build(GetSampleType(decompiler), decompiler);
+			DecompilationContext context = new ContextBuilder(maxContextTokens, false, false).Build(GetSampleType(decompiler), decompiler);
 
 			context.ApproximateTokenCount.Should().Be(TokenCounter.CountTokens(context.ToMarkdown(), true));
-			context.ApproximateTokenCount.Should().BeLessThanOrEqualTo(settings.MaxContextTokens);
+			context.ApproximateTokenCount.Should().BeLessThanOrEqualTo(maxContextTokens);
 		}
 
 		[Test]
