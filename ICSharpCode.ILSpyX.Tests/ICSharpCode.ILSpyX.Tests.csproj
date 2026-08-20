@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
+    <ProjectReference Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" />
   </ItemGroup>
 
 </Project>

@@ -53,6 +53,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.ILSpyCmd.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.ILSpyX.Tests", "ICSharpCode.ILSpyX.Tests\ICSharpCode.ILSpyX.Tests.csproj", "{0AAAF2D3-4A1F-482B-B536-BF026368787B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildTools", "BuildTools", "{79546F67-FEAA-3117-1216-FBE46595B2FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PromptEmbedder", "BuildTools\PromptEmbedder\PromptEmbedder.csproj", "{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -267,8 +271,23 @@ Global
 		{0AAAF2D3-4A1F-482B-B536-BF026368787B}.Release|x64.Build.0 = Release|Any CPU
 		{0AAAF2D3-4A1F-482B-B536-BF026368787B}.Release|x86.ActiveCfg = Release|Any CPU
 		{0AAAF2D3-4A1F-482B-B536-BF026368787B}.Release|x86.Build.0 = Release|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Debug|x64.Build.0 = Debug|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Debug|x86.Build.0 = Debug|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Release|x64.ActiveCfg = Release|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Release|x64.Build.0 = Release|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Release|x86.ActiveCfg = Release|Any CPU
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B00D3286-6C7D-4EFC-82F1-EE0261181EE3} = {79546F67-FEAA-3117-1216-FBE46595B2FF}
 	EndGlobalSection
 EndGlobal
