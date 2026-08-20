@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpy.AI
 			_ = outputPane.StartAsync(node.LoadedAssembly.ShortName, token => BuildAndCompleteAsync(node.LoadedAssembly, service, token));
 		}
 
-		static async IAsyncEnumerable<string> BuildAndCompleteAsync(
+		internal static async IAsyncEnumerable<string> BuildAndCompleteAsync(
 			LoadedAssembly assembly,
 			AIExplanationService service,
 			[EnumeratorCancellation] CancellationToken cancellationToken)

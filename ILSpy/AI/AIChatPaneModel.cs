@@ -42,6 +42,7 @@ namespace ICSharpCode.ILSpy.AI
 		readonly AssemblyTreeModel assemblyTree;
 		readonly DockWorkspace dockWorkspace;
 		readonly IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages;
+		readonly IAIChatFeatureCommands featureCommands;
 		CancellationTokenSource? cancellation;
 		long requestGeneration;
 		string loadedHistoryPath = string.Empty;
@@ -71,13 +72,14 @@ namespace ICSharpCode.ILSpy.AI
 		public string[] CommandSuggestions { get; } = { "/help", "/clear", "/explain", "/rename ", "/audit", "/summary" };
 
 		[ImportingConstructor]
-		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
+		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, IAIChatFeatureCommands featureCommands, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			selectionService = AppComposition.TryGetExport<AISelectionService>() ?? throw new InvalidOperationException("AI selection service is unavailable.");
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
+			this.featureCommands = featureCommands ?? throw new ArgumentNullException(nameof(featureCommands));
 			this.optionPages = optionPages ?? throw new ArgumentNullException(nameof(optionPages));
 			Id = PaneContentId;
 			Title = "AI Chat";
@@ -285,7 +287,7 @@ namespace ICSharpCode.ILSpy.AI
 			{
 				case "/help":
 					await SetUiStateAsync(() => Input = string.Empty);
-					await AppendLocalMessageAsync("Supported commands: /help, /clear, /explain, /rename, /audit, /summary.");
+					await AppendLocalMessageAsync("Commands: /help lists commands; /clear clears this conversation; /explain asks about the selected symbol; /rename suggests a name; /audit analyzes the selected type or method for security findings; /summary starts an assembly summary in AI Output.");
 					await SetUiStateAsync(() => StatusMessage = "Ready");
 					return true;
 				case "/clear":
@@ -294,8 +296,29 @@ namespace ICSharpCode.ILSpy.AI
 				case "/audit":
 				case "/summary":
 					await SetUiStateAsync(() => Input = string.Empty);
-					await AppendLocalMessageAsync($"{command} is unavailable from chat until its host pipeline is connected. Use the corresponding application command.");
-					await SetUiStateAsync(() => StatusMessage = "Command unavailable");
+					try
+					{
+						string result = command == "/audit"
+							? await featureCommands.RunAuditAsync(CancellationToken.None).ConfigureAwait(false)
+							: await featureCommands.RunSummaryAsync(CancellationToken.None).ConfigureAwait(false);
+						await AppendLocalMessageAsync(result);
+						await SetUiStateAsync(() => StatusMessage = "Command complete");
+					}
+					catch (AIConfigurationException exception)
+					{
+						await AppendLocalMessageAsync($"{command} requires a ready AI selection: {exception.Message}");
+						await SetUiStateAsync(() => { ErrorMessage = exception.Message; StatusMessage = "Configuration required"; });
+					}
+					catch (OperationCanceledException)
+					{
+						await AppendLocalMessageAsync($"{command} canceled.");
+						await SetUiStateAsync(() => StatusMessage = "Canceled");
+					}
+					catch (Exception exception)
+					{
+						await AppendLocalMessageAsync($"{command} failed: {exception.Message}");
+						await SetUiStateAsync(() => { ErrorMessage = exception.Message; StatusMessage = "Command failed"; });
+					}
 					return true;
 				case "/explain":
 				case "/rename":

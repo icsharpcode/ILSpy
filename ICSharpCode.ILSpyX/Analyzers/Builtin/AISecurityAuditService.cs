@@ -4,9 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.AI;
 
@@ -78,14 +75,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 
 		static async Task<IReadOnlyList<AISecurityFinding>> AnalyzeTypeAsync(ITypeDefinition type, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory, CancellationToken cancellationToken)
 		{
-			MetadataFile module = type.ParentModule!.MetadataFile!;
-			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new DecompilerSettings()) { CancellationToken = cancellationToken };
-			var service = new AIExplanationService(snapshot, providerFactory);
-			var response = new List<string>();
-			string prompt = "Analyze this type for security risks.\n\n" + new ContextBuilder(snapshot).Build(type, decompiler).ToMarkdown();
-			await foreach (string chunk in service.CompleteStreamingAsync("You identify security vulnerabilities in decompiled .NET code. Return only valid JSON with type, method, issue, severity, line, and numeric confidence from 0 to 1. Report only plausible issues.", prompt, cancellationToken).ConfigureAwait(false))
-				response.Add(chunk);
-			return AISecurityAnalyzer.ParseFindings(string.Concat(response), type);
+			return await new AISecurityAnalyzer().AnalyzeSelectedTypeAsync(type, snapshot, providerFactory, cancellationToken: cancellationToken).ConfigureAwait(false);
 		}
 	}
 

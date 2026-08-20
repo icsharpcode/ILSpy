@@ -39,22 +39,33 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 				IMethod method when method.DeclaringTypeDefinition is { } declaringType => declaringType,
 				_ => throw new InvalidOperationException("Security analysis requires a type or method.")
 			};
+			return (await AnalyzeSelectedTypeAsync(type, snapshot, providerFactory, context.AIProgress, context.CancellationToken).ConfigureAwait(false)).Cast<ISymbol>().ToArray();
+		}
+
+		/// <summary>Runs the normal single-type security analyzer pipeline for a captured AI target.</summary>
+		public async Task<IReadOnlyList<AISecurityFinding>> AnalyzeSelectedTypeAsync(
+			ITypeDefinition type,
+			AISelectionSnapshot snapshot,
+			IAIProviderFactory providerFactory,
+			IProgress<AISecurityAuditProgress>? progress = null,
+			CancellationToken cancellationToken = default)
+		{
+			ArgumentNullException.ThrowIfNull(type);
+			ArgumentNullException.ThrowIfNull(snapshot);
+			ArgumentNullException.ThrowIfNull(providerFactory);
 			MetadataFile module = type.ParentModule?.MetadataFile ?? throw new InvalidOperationException("The selected type has no decompilable module.");
-			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new DecompilerSettings()) {
-				CancellationToken = context.CancellationToken
-			};
+			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new DecompilerSettings()) { CancellationToken = cancellationToken };
 			var service = new AIExplanationService(snapshot, providerFactory);
-			var findings = new List<ISymbol>();
-			context.AIProgress?.Report(new AISecurityAuditProgress(0, 1, type.FullName, 0, 0, false));
-			context.CancellationToken.ThrowIfCancellationRequested();
+			progress?.Report(new AISecurityAuditProgress(0, 1, type.FullName, 0, 0, false));
+			cancellationToken.ThrowIfCancellationRequested();
 			DecompilationContext decompilationContext = new ContextBuilder(snapshot).Build(type, decompiler);
 			string prompt = "Analyze this type for security risks.\n\n" + decompilationContext.ToMarkdown();
 			var response = new List<string>();
-			await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, context.CancellationToken).ConfigureAwait(false))
+			await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, cancellationToken).ConfigureAwait(false))
 				response.Add(chunk);
-			findings.AddRange(ParseFindings(string.Concat(response), type));
-			context.AIProgress?.Report(new AISecurityAuditProgress(1, 1, type.FullName, findings.Count, 0, false));
-			return findings.Cast<ISymbol>().ToArray();
+			IReadOnlyList<AISecurityFinding> findings = ParseFindings(string.Concat(response), type);
+			progress?.Report(new AISecurityAuditProgress(1, 1, type.FullName, findings.Count, 0, false));
+			return findings;
 		}
 
 		public static IReadOnlyList<AISecurityFinding> ParseFindings(string response, ITypeDefinition type)
