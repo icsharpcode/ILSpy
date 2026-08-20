@@ -269,6 +269,12 @@ Comprehensive test matrix, bug fixes
 
 ## Next Steps
 
+### AI profile and search reconciliation (August 20, 2026)
+
+The multiple-provider profile domain, isolated settings drafts, shared selectors, immutable snapshot consumer migration, and target-bound chat history are implemented. Focused AI/security/rename/history and AI/search/options suites pass; the desktop build is clean. The full solution test invocation reached completed project results with zero failures but was stopped after more than three minutes without terminal output, and manual Avalonia UI regression remains environment-limited.
+
+Semantic search is intentionally shipped as a dependency-free local similarity heuristic. Remote embedding-backed search is not implemented or implied; adding it requires a separate privacy, storage, model, and evaluation plan.
+
 **Immediate:**
 1. Review documentation (this suite)
 2. Approve approach

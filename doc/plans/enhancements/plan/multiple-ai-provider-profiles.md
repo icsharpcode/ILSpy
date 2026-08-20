@@ -1,16 +1,16 @@
 # Multiple AI Provider Profiles and Models
 
-Status: In progress — profile/conversation implementation delivered; manual UI/full-suite verification pending  
+Status: Complete — implementation and focused verification delivered 2026-08-20
 Created: 2026-08-18  
 Scope: Shared application-level AI target selection for every ILSpy AI feature.
 
 ## Executive summary
 
-Implementation note (August 19, 2026): the shared profile, selection, snapshot, settings-editor, and target-bound chat work is implemented on `master`. Focused AI/build verification passes; manual UI regression and the historically hanging full `ILSpy.Tests` suite remain to be executed before changing this parent plan to Complete.
+Implementation note (August 20, 2026): the shared profile, selection, immutable snapshot, settings-editor, consumer migration, and target-bound chat work is implemented on `master`. Phase 9 reconciliation is recorded in [AI gap-closure implementation plan](../ai-gap-closure-implementation-plan.md). Focused AI/security/rename/history tests (240), focused ILSpy AI/search/options tests (133), and the desktop build pass with zero warnings/errors. The full solution test invocation produced completed TRX results with zero failures for the projects reached, but was stopped after more than three minutes without terminal output; manual Avalonia regression remains an environment limitation.
 
 Replace the singleton AI connection settings with a versioned collection of user-managed AI profiles. Each profile has a stable ID, unique display name, provider type, absolute HTTP(S) endpoint, secure credential reference, and ordered manually managed model names. One application-wide active selection (profile plus model) is used by chat and every other AI feature. Profile editing stays in AI Settings; compact profile/model selectors are added to the AI Chat pane.
 
-The implementation must preserve existing settings and secrets, isolate unsaved drafts, never expose stored keys, and make every request use an immutable target snapshot. Chat conversations become target-bound records so a provider/model change cannot send old context to a different service.
+The implementation must preserve existing settings and secrets, isolate unsaved drafts, never expose stored keys, and make every request use an immutable target snapshot. Chat conversations become target-bound records so a provider/model change cannot send old context to a different service. Mutable `AISettings` remains only for persistence/selection compatibility and global context preferences; provider construction and request targeting are snapshot-only.
 
 ## Goals
 
