@@ -1,6 +1,6 @@
 # AI Prompt Externalization - Detailed Implementation Plan
 
-**Status**: Implemented (Phase 4 completed 2026-08-20)
+**Status**: Implemented (Phase 5 completed 2026-08-20)
 **Created**: 2026-08-19  
 **Author**: Dr. Masroor Ehsan  
 **Target**: Less-capable model execution
@@ -719,18 +719,24 @@ public class AIPromptProviderTests
 
 ---
 
-## Phase 5: Build-Time Code Generation (Future Enhancement)
+## Phase 5: Build-Time Code Generation
 
-**Status**: Deferred to future milestone
+**Status**: Implemented 2026-08-20
 
-**File**: `BuildTools/PromptEmbedder/Program.cs` (to be created)
+**Files**:
+- `BuildTools/PromptEmbedder/Program.cs`
+- `BuildTools/PromptEmbedder/PromptEmbedder.csproj`
+- `ICSharpCode.ILSpyX/ICSharpCode.ILSpyX.csproj` (MSBuild integration)
 
-**Scope**:
-- Create console app that reads all `.prompt` files from `ICSharpCode.ILSpyX/AI/prompts/`
-- Generate `ICSharpCode.ILSpyX/AI/EmbeddedPrompts.g.cs` with embedded prompts
-- Integrate into build via MSBuild `<Exec>` task or pre-build event
+**Behavior**:
+- Reads base `*.prompt` files from `ICSharpCode.ILSpyX/AI/prompts/`; model variants such as `explanation.claude.prompt` are intentionally excluded from embedded fallbacks.
+- Validates YAML frontmatter delimiters, non-empty prompt bodies, and lowercase prompt IDs.
+- Sorts prompt IDs ordinally and emits deterministic UTF-8 `EmbeddedPrompts.g.cs` output.
+- Uses atomic replacement and skips writes when generated content is unchanged.
+- Supports `--check` for CI/staleness validation: `PromptEmbedder <input-directory> <output-file> --check`.
+- Runs automatically before ILSpyX compilation through an MSBuild target, with the generator project included in `ILSpy.sln`.
 
-**Why Deferred**: Manual `EmbeddedPrompts.g.cs` is sufficient for MVP. Code generation adds build complexity and is not blocking.
+**Validation**: `dotnet build ICSharpCode.ILSpyX/ICSharpCode.ILSpyX.csproj --no-restore`, `pwsh build.ps1 --no-restore`, and focused generator/provider tests all pass with zero errors.
 
 ---
 
@@ -746,6 +752,8 @@ After completing all tasks:
 - [ ] Manually test AI chat pane
 - [ ] Manually test assembly summary
 - [x] Automated variation coverage creates an `explanation.*.prompt` file with `applies_to_models` and verifies exact model selection, lexical precedence, case sensitivity, and malformed-variation fallback
+- [x] Phase 5 generator emits deterministic embedded fallbacks and is wired into the ILSpyX build
+- [x] Prompt generator tests cover ordering, variant exclusion, malformed frontmatter, and idempotent writes
 
 ---
 

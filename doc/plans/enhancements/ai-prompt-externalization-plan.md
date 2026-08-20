@@ -1,6 +1,6 @@
 # AI Prompt Externalization Implementation Plan
 
-Status: Implemented (Phase 4 completed 2026-08-20)
+Status: Implemented (Phase 5 completed 2026-08-20)
 Created: 2026-08-19  
 Audience: Implementer with access to the ILSpy codebase  
 Prerequisites: Completion of prompt enhancement audit (all 6 system prompts evaluated and rewritten)
@@ -676,6 +676,7 @@ Future schema changes (e.g., adding model-specific overrides):
 
 ## 10. Future Enhancements (Out of Scope)
 
+- **Build-time embedding**: Completed in Phase 5 via `BuildTools/PromptEmbedder`; generated fallbacks are refreshed automatically before ILSpyX compilation.
 - **Live reload:** Watch `ai-prompts.json` for changes and reload without restart
 - **Model-specific prompts:** `model_overrides` per prompt ID
 - **Prompt versioning:** Git-tracked prompt history with A/B testing
