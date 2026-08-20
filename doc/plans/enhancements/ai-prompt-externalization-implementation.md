@@ -1,6 +1,6 @@
 # AI Prompt Externalization - Detailed Implementation Plan
 
-**Status**: Implemented (Phase 3 completed 2026-08-20)  
+**Status**: Implemented (Phase 4 completed 2026-08-20)  
 **Created**: 2026-08-19  
 **Author**: Dr. Masroor Ehsan  
 **Target**: Less-capable model execution
@@ -738,14 +738,14 @@ public class AIPromptProviderTests
 
 After completing all tasks:
 
-- [ ] Run `pwsh build.ps1` from repo root — should succeed with no errors
-- [ ] Run `dotnet test --solution ILSpy.sln --report-trx` — all tests pass
-- [ ] Check `ICSharpCode.ILSpyX/bin/Debug/net10.0/AI/prompts/` contains 7 files
+- [x] Run `pwsh build.ps1 --no-restore` from repo root — succeeded with 0 warnings and 0 errors on August 20, 2026
+- [ ] Run `dotnet test --solution ILSpy.sln --no-build --report-trx` — attempted on August 20, 2026; stopped after more than six minutes with the solution runner still CPU-bound and no terminal output
+- [x] Check `ICSharpCode.ILSpyX/bin/Debug/net10.0/AI/prompts/` contains 8 .prompt files plus README.md
 - [ ] Manually test "Explain Code" feature in ILSpy UI
 - [ ] Manually test "Rename Symbol" feature
 - [ ] Manually test AI chat pane
 - [ ] Manually test assembly summary
-- [ ] Create a test variation file `explanation.opus.prompt` with `applies_to_models: [claude-opus-5]` and different prompt text, verify it's used when `snapshot.ModelId == "claude-opus-5"`
+- [x] Automated variation coverage creates an `explanation.*.prompt` file with `applies_to_models` and verifies exact model selection, lexical precedence, case sensitivity, and malformed-variation fallback
 
 ---
 
@@ -766,7 +766,7 @@ After completing all tasks:
 - All 6 consumer classes migrated to use `AIPromptProvider.Instance.GetSystemPrompt()`
 - No hardcoded system prompt constants remain in consumer classes
 - All existing tests pass
-- New `AIPromptProviderTests` pass (4 tests)
+- New `AIPromptProviderTests` pass (11 tests)
 - Build completes with no warnings or errors
 - `.prompt` files are copied to output directory
 - Manual smoke test of each AI feature succeeds
