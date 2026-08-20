@@ -18,6 +18,8 @@ namespace ICSharpCode.ILSpyX.AI
 		public AIConversationTarget? Target { get; set; }
 		public List<ChatMessage> Messages { get; set; } = new();
 		public bool ReadOnly { get; set; }
+		[JsonIgnore]
+		public bool TargetDeleted { get; set; }
 
 		[JsonIgnore]
 		public string DisplayName {
@@ -26,7 +28,8 @@ namespace ICSharpCode.ILSpyX.AI
 					return "Legacy conversation (read-only)";
 				string name = string.IsNullOrWhiteSpace(Target.ProfileName) ? "Unknown profile" : Target.ProfileName;
 				string model = string.IsNullOrWhiteSpace(Target.Model) ? "Unknown model" : Target.Model;
-				return $"{name} / {model}{(ReadOnly ? " (read-only)" : string.Empty)}";
+				string state = TargetDeleted ? " (deleted)" : ReadOnly ? " (read-only)" : string.Empty;
+				return $"{name} / {model}{state}";
 			}
 		}
 	}
@@ -197,7 +200,7 @@ namespace ICSharpCode.ILSpyX.AI
 			foreach (ChatConversation conversation in Conversations)
 			{
 				if (conversation.Target is { } target)
-					builder.Append("_Target: ").Append(target.ProfileName).Append(" / ").Append(target.ProviderType).Append(" / ").Append(target.Model).AppendLine("_");
+					builder.Append("_Target: ").Append(target.ProfileName).Append(" / ").Append(target.ProviderType).Append(" / ").Append(target.Model).Append(" / ").Append(target.Endpoint).AppendLine("_");
 				foreach (ChatMessage message in conversation.Messages)
 				{
 					builder.AppendLine("## " + (message.IsUser ? "User" : "Assistant"));

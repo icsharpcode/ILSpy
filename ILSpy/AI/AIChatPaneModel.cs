@@ -102,7 +102,15 @@ namespace ICSharpCode.ILSpy.AI
 			StatusMessage = value.ReadOnly ? "Read-only conversation" : "Ready";
 		}
 
-		public bool IsConversationReadOnly => loadedHistory.ActiveConversation.ReadOnly;
+		public bool IsConversationReadOnly {
+			get {
+				ChatConversation conversation = loadedHistory.ActiveConversation;
+				if (conversation.ReadOnly || conversation.Target is null)
+					return true;
+				AIConversationTarget current = GetCurrentTarget();
+				return !conversation.Target.BelongsTo(current.ProfileId, current.ProviderType, current.Endpoint, current.Model);
+			}
+		}
 		public bool CanSend => !IsBusy && IsReady && !IsConversationReadOnly;
 
 		async Task RefreshReadinessAsync()
@@ -123,16 +131,12 @@ namespace ICSharpCode.ILSpy.AI
 			if (loadedTarget?.BelongsTo(target.ProfileId, target.ProviderType, target.Endpoint, target.Model) == true)
 			{
 				await SetUiStateAsync(() => {
-					if (loadedHistory.ActiveConversation.Target is { } metadata)
-						loadedHistory.ActiveConversation.Target = metadata with { ProfileName = target.ProfileName };
+					OnPropertyChanged(nameof(IsConversationReadOnly));
 				});
 				await RefreshReadinessAsync();
 				return;
 			}
 			await SetUiStateAsync(() => {
-				SaveHistory();
-				Messages.Clear();
-				conversationGeneration++;
 				StartConversation(target);
 			});
 			await RefreshReadinessAsync();
@@ -476,7 +480,10 @@ namespace ICSharpCode.ILSpy.AI
 			foreach (ChatConversation conversation in loadedHistory.Conversations)
 			{
 				if (conversation.Target is { } target && !liveProfileIds.Contains(target.ProfileId))
+				{
+					conversation.TargetDeleted = true;
 					conversation.ReadOnly = true;
+				}
 			}
 		}
 
