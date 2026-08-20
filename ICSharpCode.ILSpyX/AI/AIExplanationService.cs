@@ -15,8 +15,6 @@ namespace ICSharpCode.ILSpyX.AI
 {
 	public sealed class AIExplanationService
 	{
-		public const string SystemPrompt = "You explain decompiled .NET code concisely. State uncertainty when context is incomplete. Never instruct the user to execute code.";
-
 		readonly AISelectionSnapshot snapshot;
 		readonly IAIProviderFactory providerFactory;
 
@@ -58,7 +56,7 @@ namespace ICSharpCode.ILSpyX.AI
 		{
 			ArgumentNullException.ThrowIfNull(context);
 			return CompleteStreamingAsync(
-				SystemPrompt,
+				AIPromptProvider.Instance.GetSystemPrompt("explanation", snapshot.Model),
 				"Explain this selected symbol:\n\n" + context.ToMarkdown(),
 				cancellationToken);
 		}

@@ -32,7 +32,6 @@ namespace ICSharpCode.ILSpyX.AI
 	/// <summary>Builds a bounded symbol context and asks the configured provider for ranked names.</summary>
 	public sealed class RenameSuggester
 	{
-		public const string SystemPrompt = "You suggest meaningful C# names for obfuscated .NET symbols. Return only valid JSON: [{\"name\": string, \"confidence\": number, \"reasoning\": string}]. Return 3 to 5 distinct PascalCase or camelCase candidates. Do not include markdown fences or extra text.";
 		static readonly Regex GeneratedName = new("^(?:method|class|field|property|event|delegate|type)_\\d+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
 		readonly AISelectionSnapshot snapshot;
@@ -80,7 +79,7 @@ namespace ICSharpCode.ILSpyX.AI
 			}
 			var service = CreateExplanationService();
 			var chunks = new List<string>();
-			await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, cancellationToken).ConfigureAwait(false))
+			await foreach (string chunk in service.CompleteStreamingAsync(AIPromptProvider.Instance.GetSystemPrompt("rename", snapshot.Model), prompt, cancellationToken).ConfigureAwait(false))
 				chunks.Add(chunk);
 			return ParseSuggestions(string.Concat(chunks));
 		}

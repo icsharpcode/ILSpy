@@ -75,7 +75,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 
 		static async Task<IReadOnlyList<AISecurityFinding>> AnalyzeTypeAsync(ITypeDefinition type, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory, CancellationToken cancellationToken)
 		{
-			return await new AISecurityAnalyzer().AnalyzeSelectedTypeAsync(type, snapshot, providerFactory, cancellationToken: cancellationToken).ConfigureAwait(false);
+			return await new AISecurityAnalyzer().AnalyzeSelectedTypeAsync(type, snapshot, providerFactory, cancellationToken: cancellationToken, promptId: "security_audit").ConfigureAwait(false);
 		}
 	}
 

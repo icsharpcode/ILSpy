@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			explanation.Should().Be("first second");
 			factory.LastSnapshot.Should().Be(snapshot);
 			provider.LastRequest.Should().NotBeNull();
-			provider.LastRequest!.SystemPrompt.Should().Be(AIExplanationService.SystemPrompt);
+			provider.LastRequest!.SystemPrompt.Should().Be(AIPromptProvider.Instance.GetSystemPrompt("explanation", snapshot.Model));
 			provider.LastRequest.Messages.Should().ContainSingle();
 			provider.LastRequest.Messages[0].Content.Should().Contain("Sample.Type.Method");
 			provider.LastRequest.Messages[0].Content.Should().Contain("void Method() { }");

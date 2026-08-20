@@ -35,7 +35,6 @@ namespace ICSharpCode.ILSpy.AI
 	{
 		public const string PaneContentId = "AIChat";
 		const int MaxMessages = 100;
-		const string SystemPrompt = "You are an assistant for .NET decompilation. Answer questions about the code clearly and concisely.";
 		readonly SettingsService settingsService;
 		readonly IAIProviderFactory providerFactory;
 		readonly AISelectionService selectionService;
@@ -232,7 +231,7 @@ namespace ICSharpCode.ILSpy.AI
 			try
 			{
 				var provider = await providerFactory.CreateAsync(snapshot, cts.Token).ConfigureAwait(false);
-				var request = new LLMRequest(SystemPrompt, requestMessages.Append(new LLMMessage("user", requestContext)).ToArray(), 2048, 0.3);
+				var request = new LLMRequest(AIPromptProvider.Instance.GetSystemPrompt("chat", snapshot.Model), requestMessages.Append(new LLMMessage("user", requestContext)).ToArray(), 2048, 0.3);
 				var builder = new StringBuilder();
 				await foreach (var chunk in provider.CompleteAsync(request, cts.Token).ConfigureAwait(false))
 				{

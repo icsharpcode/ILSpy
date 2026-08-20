@@ -23,7 +23,6 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 	public sealed class AISecurityAnalyzer : IAnalyzer
 	{
 		public const double MinimumFindingConfidence = 0.70;
-		const string SystemPrompt = "You identify security vulnerabilities in decompiled .NET code. Return only valid JSON: [{\"type\": string, \"method\": string, \"issue\": string, \"severity\": \"Critical\"|\"High\"|\"Medium\"|\"Low\", \"line\": number, \"confidence\": number}]. Confidence must be a numeric value from 0 to 1. Report only plausible SQL injection, hardcoded credentials, weak cryptography, path traversal, unsafe deserialization, dangerous P/Invoke, or equivalent issues. Do not invent issues.";
 
 		public bool Show(ISymbol? symbol) => symbol is ITypeDefinition or IMethod;
 
@@ -48,7 +47,8 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			AISelectionSnapshot snapshot,
 			IAIProviderFactory providerFactory,
 			IProgress<AISecurityAuditProgress>? progress = null,
-			CancellationToken cancellationToken = default)
+			CancellationToken cancellationToken = default,
+			string promptId = "security")
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			ArgumentNullException.ThrowIfNull(snapshot);
@@ -61,7 +61,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			DecompilationContext decompilationContext = new ContextBuilder(snapshot).Build(type, decompiler);
 			string prompt = "Analyze this type for security risks.\n\n" + decompilationContext.ToMarkdown();
 			var response = new List<string>();
-			await foreach (string chunk in service.CompleteStreamingAsync(SystemPrompt, prompt, cancellationToken).ConfigureAwait(false))
+			await foreach (string chunk in service.CompleteStreamingAsync(AIPromptProvider.Instance.GetSystemPrompt(promptId, snapshot.Model), prompt, cancellationToken).ConfigureAwait(false))
 				response.Add(chunk);
 			IReadOnlyList<AISecurityFinding> findings = ParseFindings(string.Concat(response), type);
 			progress?.Report(new AISecurityAuditProgress(1, 1, type.FullName, findings.Count, 0, false));

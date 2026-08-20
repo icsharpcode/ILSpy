@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.AI
 			DockWorkspace dockWorkspace = AppComposition.TryGetExport<DockWorkspace>()
 				?? throw new InvalidOperationException("The docking workspace is unavailable. Try again after the main window is ready.");
 			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
-			_ = outputPane.StartAsync(assembly.ShortName, token => AssemblySummaryContextMenuEntry.BuildAndCompleteAsync(assembly, service, token));
+			_ = outputPane.StartAsync(assembly.ShortName, token => AssemblySummaryContextMenuEntry.BuildAndCompleteAsync(assembly, service, snapshot, token));
 			return $"Assembly summary started in the AI Output pane for {assembly.ShortName}.";
 		}
 

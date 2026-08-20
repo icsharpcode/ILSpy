@@ -22,10 +22,11 @@ namespace ICSharpCode.ILSpyX.Search
 		public static Task<IReadOnlyList<IEntity>> SearchAsync(IEnumerable<MetadataFile> modules, string query, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory, CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(snapshot);
-			return SearchCoreAsync(modules, query, providerFactory, ct => providerFactory.CreateAsync(snapshot, ct), cancellationToken);
+			string systemPrompt = AIPromptProvider.Instance.GetSystemPrompt("search", snapshot.Model);
+			return SearchCoreAsync(modules, query, systemPrompt, providerFactory, ct => providerFactory.CreateAsync(snapshot, ct), cancellationToken);
 		}
 
-		static async Task<IReadOnlyList<IEntity>> SearchCoreAsync(IEnumerable<MetadataFile> modules, string query, IAIProviderFactory providerFactory, Func<CancellationToken, Task<ILLMProvider>> createProvider, CancellationToken cancellationToken)
+		static async Task<IReadOnlyList<IEntity>> SearchCoreAsync(IEnumerable<MetadataFile> modules, string query, string systemPrompt, IAIProviderFactory providerFactory, Func<CancellationToken, Task<ILLMProvider>> createProvider, CancellationToken cancellationToken)
 		{
 			ArgumentNullException.ThrowIfNull(modules);
 			ArgumentNullException.ThrowIfNull(query);
@@ -35,7 +36,7 @@ namespace ICSharpCode.ILSpyX.Search
 				return Array.Empty<IEntity>();
 			string vocabulary = string.Join("\n", candidates.Select(e => e.FullName));
 			var provider = await createProvider(cancellationToken).ConfigureAwait(false);
-			var request = new LLMRequest("Given these method and type signatures, which ones match the query? Return only a JSON array of fully-qualified names.", new[] { new LLMMessage("user", $"Query: {query}\n\nCandidates:\n{vocabulary}") }, 1024, 0.1);
+			var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", $"Query: {query}\n\nCandidates:\n{vocabulary}") }, 1024, 0.1);
 			var text = new System.Text.StringBuilder();
 			await foreach (var chunk in provider.CompleteAsync(request, cancellationToken).ConfigureAwait(false))
 				text.Append(chunk);

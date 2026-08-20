@@ -56,17 +56,18 @@ namespace ICSharpCode.ILSpy.AI
 			{ snapshot = await selectionService.ResolveSnapshotAsync(); }
 			catch (AIConfigurationException) { return; }
 			var service = new AIExplanationService(snapshot, providerFactory);
-			_ = outputPane.StartAsync(node.LoadedAssembly.ShortName, token => BuildAndCompleteAsync(node.LoadedAssembly, service, token));
+			_ = outputPane.StartAsync(node.LoadedAssembly.ShortName, token => BuildAndCompleteAsync(node.LoadedAssembly, service, snapshot, token));
 		}
 
 		internal static async IAsyncEnumerable<string> BuildAndCompleteAsync(
 			LoadedAssembly assembly,
 			AIExplanationService service,
+			AISelectionSnapshot snapshot,
 			[EnumeratorCancellation] CancellationToken cancellationToken)
 		{
 			string markdown = await Task.Run(() => AssemblySummaryContextBuilder.Build(assembly), cancellationToken).ConfigureAwait(false);
 			await foreach (string chunk in service.CompleteStreamingAsync(
-				"You are analyzing a .NET assembly. Provide a 2-3 paragraph summary: what it is, what framework it targets, what it is probably used for.",
+				AIPromptProvider.Instance.GetSystemPrompt("assembly_summary", snapshot.Model),
 				"Summarize this assembly:\n\n" + markdown,
 				cancellationToken).ConfigureAwait(false))
 			{

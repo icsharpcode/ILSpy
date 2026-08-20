@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.AI
 			var context = await Task.Run(() => new ContextBuilder(snapshot).Build(entity, decompiler), cancellationToken).ConfigureAwait(false);
 			var chunks = new StringBuilder();
 			await foreach (var chunk in service.CompleteStreamingAsync(
-				"Generate XML documentation comments. Return only the XML, no explanation.",
+				AIPromptProvider.Instance.GetSystemPrompt("generate_docs", snapshot.Model),
 				"Generate <summary>, <param>, <returns>, and exception documentation for this symbol:\n\n" + context.ToMarkdown(), cancellationToken).ConfigureAwait(false))
 				chunks.Append(chunk);
 			string formatted = FormatDocumentation(chunks.ToString());
