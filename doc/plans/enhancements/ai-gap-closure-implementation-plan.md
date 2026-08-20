@@ -367,7 +367,7 @@ Files: `ILSpy/Search/SearchPaneModel.cs`, `ICSharpCode.ILSpyX/Search/AISearchStr
 
 ### Verification record
 
-Closeout commits: `7fc25472b`, `84e4b2d06`, `260312e03`.
+Closeout commits: `7fc25472b`, `84e4b2d06`, `260312e03`, `06d88a01e`.
 
 - Desktop solution build: `rtk dotnet build ILSpy.Desktop.slnf --no-restore --verbosity minimal` — passed, 16 projects, 0 errors, 0 warnings.
 - Focused ILSpyX AI/security/rename/history tests: `rtk dotnet test --project ICSharpCode.ILSpyX.Tests/ICSharpCode.ILSpyX.Tests.csproj --no-restore --filter 'FullyQualifiedName~AI|FullyQualifiedName~AISecurityAnalyzer|FullyQualifiedName~RenameAnnotationManager|FullyQualifiedName~ChatHistory' --verbosity minimal` — passed, 240 tests.
