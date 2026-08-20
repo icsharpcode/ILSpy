@@ -9,7 +9,6 @@ using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 using System.Collections.Concurrent;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -17,12 +16,6 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.ILSpyX.Annotations
 {
 	public sealed record RenameAnnotation(string Token, string NewName);
-
-	public sealed class RenameAnnotationsMismatchEventArgs : EventArgs
-	{
-		public RenameAnnotationsMismatchEventArgs(string assemblyPath) => AssemblyPath = assemblyPath;
-		public string AssemblyPath { get; }
-	}
 
 	/// <summary>Thread-safe sidecar storage for display-only symbol renames.</summary>
 	public sealed class RenameAnnotationManager
@@ -50,7 +43,7 @@ namespace ICSharpCode.ILSpyX.Annotations
 		public string SidecarPath { get; }
 		public string AssemblyHash { get; }
 		public bool HasHashMismatch { get; private set; }
-		public event EventHandler<RenameAnnotationsMismatchEventArgs>? HashMismatchDetected;
+		public event EventHandler? HashMismatchDetected;
 
 		public IReadOnlyList<RenameAnnotation> Annotations {
 			get { lock (gate) return renames.Select(pair => new RenameAnnotation(pair.Key, pair.Value)).ToArray(); }
@@ -163,7 +156,7 @@ namespace ICSharpCode.ILSpyX.Annotations
 			if (!string.Equals(document.AssemblyHash, AssemblyHash, StringComparison.OrdinalIgnoreCase))
 			{
 				HasHashMismatch = true;
-				HashMismatchDetected?.Invoke(this, new RenameAnnotationsMismatchEventArgs(AssemblyPath));
+				HashMismatchDetected?.Invoke(this, EventArgs.Empty);
 				return;
 			}
 			lock (gate)
@@ -226,6 +219,9 @@ namespace ICSharpCode.ILSpyX.Annotations
 			using FileStream stream = File.OpenRead(path);
 			string hash = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
 			HashCache[path] = new HashCacheEntry(info.Length, info.LastWriteTimeUtc, hash);
+			if (HashCache.Count > 256 && HashCache.TryRemove(HashCache.Keys.FirstOrDefault() ?? path, out _))
+			{
+			}
 			return hash;
 		}
 

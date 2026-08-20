@@ -39,13 +39,12 @@ namespace ICSharpCode.ILSpyX.Tests.Annotations
 			try
 			{
 				var manager = new RenameAnnotationManager(path);
-				RenameAnnotationsMismatchEventArgs? notification = null;
-				manager.HashMismatchDetected += (_, args) => notification = args;
+				bool notification = false;
+				manager.HashMismatchDetected += (_, _) => notification = true;
 				manager.LoadJson("{\"assemblyHash\":\"deadbeef\",\"renames\":[]}");
 
 				manager.HasHashMismatch.Should().BeTrue();
-				notification.Should().NotBeNull();
-				notification!.AssemblyPath.Should().Be(manager.AssemblyPath);
+				notification.Should().BeTrue();
 			}
 			finally
 			{
