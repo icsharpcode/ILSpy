@@ -367,6 +367,8 @@ Files: `ILSpy/Search/SearchPaneModel.cs`, `ICSharpCode.ILSpyX/Search/AISearchStr
 
 ### Verification record
 
+Commit: `7fc25472b` (`Reconcile AI gap-closure documentation`).
+
 - Desktop solution build: `rtk dotnet build ILSpy.Desktop.slnf --no-restore --verbosity minimal` — passed, 16 projects, 0 errors, 0 warnings.
 - Focused ILSpyX AI/security/rename/history tests: `rtk dotnet test --project ICSharpCode.ILSpyX.Tests/ICSharpCode.ILSpyX.Tests.csproj --no-restore --filter 'FullyQualifiedName~AI|FullyQualifiedName~AISecurityAnalyzer|FullyQualifiedName~RenameAnnotationManager|FullyQualifiedName~ChatHistory' --verbosity minimal` — passed, 240 tests.
 - Focused ILSpy AI/search/options tests: `rtk dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj --no-restore --filter 'FullyQualifiedName~AI|FullyQualifiedName~Search|FullyQualifiedName~Options' --verbosity minimal` — passed, 133 tests.

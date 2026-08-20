@@ -273,43 +273,43 @@ Search all AISettings, CreateAsync, provider/model reads, and secure-key calls a
 
 ## Phased work packages
 
-### Phase 1: Domain and persistence foundation
+### Phase 1: Domain and persistence foundation — Complete
 
 Files: ICSharpCode.ILSpyX/Settings/AISettings.cs, new profile/descriptor/selection types, XML helpers, ILSpy/SettingsService.cs.
 
 Implement schema 2 serialization, validation, defaults, deterministic repair, observable shared selection, and immediate selection persistence. Keep global preferences intact.
 
-### Phase 2: Secure storage and migration
+### Phase 2: Secure storage and migration — Complete
 
 Files: ICSharpCode.ILSpyX/AI/SecureKeyStorage.cs, platform backends, migration helpers, settings tests.
 
 Add profile credential IDs, legacy lookup, pending migration/cleanup markers, compensating rollback, and no-secret logging tests.
 
-### Phase 3: Provider resolution contract
+### Phase 3: Provider resolution contract — Complete
 
 Files: ICSharpCode.ILSpyX/AI/AIProviderFactory.cs, provider tests/fakes, AI service contracts.
 
 Introduce immutable snapshots, capability registry, readiness errors, profile-ID lookup, and update all factory tests.
 
-### Phase 4: AI Settings editor
+### Phase 4: AI Settings editor — Complete
 
 Files: ILSpy/Options/AISettingsViewModel.cs, ILSpy/Options/AISettingsPanel.axaml, supporting converters/templates/resources.
 
 Implement master-detail CRUD, drafts, model ordering, key UX, validation, Save/Cancel, deterministic deletion confirmation, and selected-model connection tests.
 
-### Phase 5: Shared consumer migration
+### Phase 5: Shared consumer migration — Complete
 
 Files listed in the consumer matrix plus AIOutputPaneModel and dialogs.
 
 Route every AI operation through the selection service, separate global preferences, and preserve existing cancellation/error behavior.
 
-### Phase 6: Chat selectors and history
+### Phase 6: Chat selectors and history — Complete
 
 Files: ILSpy/AI/AIChatPaneModel.cs, ILSpy/AI/AIChatPane.axaml, ICSharpCode.ILSpyX/AI/ChatHistory.cs, new conversation/target types, export code.
 
 Add selectors, target transitions, versioned history migration, deleted-profile read-only behavior, and snapshot-per-request semantics.
 
-### Phase 7: Integration, cleanup, and compatibility
+### Phase 7: Integration, cleanup, and compatibility — Complete
 
 Remove singleton provider/key/model call paths only after all consumers migrate. Update documentation and diagnostics. Verify old schema loads, saves as schema 2, and retains global preferences.
 
