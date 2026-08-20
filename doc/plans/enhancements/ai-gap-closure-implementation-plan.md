@@ -367,12 +367,12 @@ Files: `ILSpy/Search/SearchPaneModel.cs`, `ICSharpCode.ILSpyX/Search/AISearchStr
 
 ### Verification record
 
-Commit: `7fc25472b` (`Reconcile AI gap-closure documentation`).
+Closeout commits: `7fc25472b`, `84e4b2d06`, `260312e03`.
 
 - Desktop solution build: `rtk dotnet build ILSpy.Desktop.slnf --no-restore --verbosity minimal` — passed, 16 projects, 0 errors, 0 warnings.
 - Focused ILSpyX AI/security/rename/history tests: `rtk dotnet test --project ICSharpCode.ILSpyX.Tests/ICSharpCode.ILSpyX.Tests.csproj --no-restore --filter 'FullyQualifiedName~AI|FullyQualifiedName~AISecurityAnalyzer|FullyQualifiedName~RenameAnnotationManager|FullyQualifiedName~ChatHistory' --verbosity minimal` — passed, 240 tests.
 - Focused ILSpy AI/search/options tests: `rtk dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj --no-restore --filter 'FullyQualifiedName~AI|FullyQualifiedName~Search|FullyQualifiedName~Options' --verbosity minimal` — passed, 133 tests.
-- Full-solution test invocation was started with `rtk dotnet test --solution ILSpy.sln --no-restore --verbosity minimal`; it was stopped after the repository-wide run exceeded three minutes without terminal output. Generated TRX files showed completed projects with zero failures (Decompiler 3382 passed, ILSpyX 240 passed, ILSpy 133 passed, ILSpyCmd 22 passed, BAML 4 passed), but the overall command was not allowed to finish. This remains a verification limitation, not a claimed full-suite pass.
+- Full-solution test invocation was started twice with `rtk dotnet test --solution ILSpy.sln --no-restore --verbosity minimal`; each run was stopped after exceeding five minutes without terminal output while `ILSpy.Tests` remained CPU-bound. Generated TRX files from the first run showed completed projects with zero failures (Decompiler 3382 passed, ILSpyX 240 passed, ILSpy 133 passed, ILSpyCmd 22 passed, BAML 4 passed), but the overall command was not allowed to finish. This remains a verification limitation, not a claimed full-suite pass.
 - `rtk git diff --check` — passed.
 - `TestResults/` was confirmed as generated, ignored test output (`*.trx`) and is not part of the commit.
 - Search architecture decision remains explicit in `doc/plans/enhancements/ai-search-architecture-decision.md`: AI/semantic modes stay `SearchPaneModel` special cases because the synchronous registry cannot express their async snapshot/readiness/cancellation contract; semantic search ships as a local heuristic and remote embeddings remain descoped.
