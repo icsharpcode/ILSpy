@@ -765,11 +765,11 @@ After completing all tasks:
 
 - All 6 consumer classes migrated to use `AIPromptProvider.Instance.GetSystemPrompt()`
 - No hardcoded system prompt constants remain in consumer classes
-- All existing tests pass
+- Focused ILSpyX AI tests pass (244 tests, including 11 AIPromptProviderTests)
 - New `AIPromptProviderTests` pass (11 tests)
 - Build completes with no warnings or errors
 - `.prompt` files are copied to output directory
-- Manual smoke test of each AI feature succeeds
+- Manual smoke test of each AI feature remains pending
 
 ---
 
