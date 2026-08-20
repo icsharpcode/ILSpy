@@ -326,7 +326,15 @@ Modify `ICSharpCode.ILSpyX/Annotations/RenameAnnotations.cs`, its call sites (`C
 
 Malformed metadata cannot abort an otherwise usable AI request; mismatch rejection is visible; repeated decompile does not repeatedly SHA-256 unchanged assembly; lifecycle owners dispose their timer/subscriptions.
 
-## 13. Phase 8 - Search architecture reconciliation and cleanup
+## 13. Phase 8 - Search architecture reconciliation and cleanup — Complete (2026-08-20)
+
+Implementation note: the existing synchronous, module-oriented search registry cannot
+express the asynchronous AI provider/readiness/cancellation contract without a wider
+unrelated refactor. AI and semantic modes therefore remain an explicit
+`SearchPaneModel` exception, documented in `ai-search-architecture-decision.md`.
+AI search now captures one immutable selection snapshot before background work; semantic
+search is explicitly documented and labeled as the dependency-free local heuristic.
+The unreferenced `ExplainDialog` trio was deleted after a production-reference audit.
 
 ### Search strategy
 
