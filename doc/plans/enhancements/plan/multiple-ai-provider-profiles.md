@@ -1,6 +1,6 @@
 # Multiple AI Provider Profiles and Models
 
-Status: Complete — implementation and focused verification delivered 2026-08-20
+Status: Complete — implementation and focused verification delivered; manual UI regression environment-limited (2026-08-20)
 Created: 2026-08-18  
 Scope: Shared application-level AI target selection for every ILSpy AI feature.
 

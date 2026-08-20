@@ -1,6 +1,6 @@
 # AI Gap-Closure Implementation Plan
 
-Status: Complete — Phase 9 verified 2026-08-20
+Status: Complete — automated verification passed; manual UI regression environment-limited (2026-08-20)
 Created: 2026-08-19  
 Audience: implementer working in this repository with no assumed knowledge of the AI roadmap  
 Source: AI gap and completeness analysis supplied with this plan request  
@@ -357,7 +357,7 @@ Files: `ILSpy/Search/SearchPaneModel.cs`, `ICSharpCode.ILSpyX/Search/AISearchStr
 - Semantic search tests state local heuristic behavior and do not require a provider or credentials.
 - Build confirms dialog deletion leaves no XAML/project references.
 
-## 14. Phase 9 - Plan reconciliation and final verification — Complete (2026-08-20)
+## 14. Phase 9 - Plan reconciliation and final verification — Complete with documented manual limitation (2026-08-20)
 
 ### Documentation changes
 
