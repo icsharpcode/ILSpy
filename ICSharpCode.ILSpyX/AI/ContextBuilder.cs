@@ -49,17 +49,30 @@ namespace ICSharpCode.ILSpyX.AI
 			if (!IsSupportedHandle(entity.MetadataToken.Kind))
 				throw new ArgumentException($"Metadata handle kind '{entity.MetadataToken.Kind}' is not supported.", nameof(entity));
 
+			var unavailable = new List<string>();
+			string decompiledCode;
+			try
+			{
+				decompiledCode = Decompile(entity, decompiler);
+			}
+			catch (Exception exception) when (IsRecoverableMetadataException(exception))
+			{
+				decompiledCode = string.Empty;
+				unavailable.Add("Decompiled code is unavailable because the assembly metadata could not be read.");
+			}
+
 			var context = new DecompilationContext {
-				DecompiledCSharp = Decompile(entity, decompiler),
+				DecompiledCSharp = decompiledCode,
 				FullyQualifiedName = entity.FullName,
 				AssemblyName = entity.ParentModule.AssemblyName,
 				TargetFramework = DetectTargetFramework(entity.ParentModule),
 				Attributes = entity.GetAttributes().Select(attribute => attribute.AttributeType.FullName).ToArray(),
 				ImplementedInterfaces = GetImplementedInterfaces(entity),
 				StringLiterals = GetStringLiterals(entity, decompiler),
-				Callers = sendCallGraph ? GetCallers(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
-				Callees = sendCallGraph ? GetCallees(entity, decompiler.TypeSystem.MainModule) : Array.Empty<string>(),
-				IL = sendIL ? GetIL(entity) : null
+				Callers = sendCallGraph ? GetCallers(entity, decompiler.TypeSystem.MainModule, unavailable) : Array.Empty<string>(),
+				Callees = sendCallGraph ? GetCallees(entity, decompiler.TypeSystem.MainModule, unavailable) : Array.Empty<string>(),
+				IL = sendIL ? GetIL(entity) : null,
+				UnavailableSections = unavailable
 			};
 			return EnforceBudget(context);
 		}
@@ -117,32 +130,48 @@ namespace ICSharpCode.ILSpyX.AI
 			}
 		}
 
-		static IReadOnlyList<string> GetCallees(IEntity entity, IModule mainModule)
+		static IReadOnlyList<string> GetCallees(IEntity entity, IModule mainModule, List<string> unavailable)
 		{
 			if (entity is not IMethod method || mainModule is not MetadataModule module)
 				return Array.Empty<string>();
 			string? declaringType = method.DeclaringTypeDefinition?.FullName;
-			return ScanMethodReferences(method, module)
+			try
+			{
+				return ScanMethodReferences(method, module)
 				.GroupBy(member => member.FullName, StringComparer.Ordinal)
 				.Select(group => group.First())
 				.OrderByDescending(member => member.DeclaringTypeDefinition?.FullName == declaringType)
 				.ThenBy(member => member.FullName, StringComparer.Ordinal)
 				.Take(10)
 				.Select(member => member.FullName)
-				.ToArray();
+					.ToArray();
+			}
+			catch (Exception exception) when (IsRecoverableMetadataException(exception))
+			{
+				unavailable.Add("Callee information is unavailable because the assembly metadata could not be read.");
+				return Array.Empty<string>();
+			}
 		}
 
-		static IReadOnlyList<string> GetCallers(IEntity entity, IModule mainModule)
+		static IReadOnlyList<string> GetCallers(IEntity entity, IModule mainModule, List<string> unavailable)
 		{
 			if (entity is not IMethod target || mainModule is not MetadataModule module)
 				return Array.Empty<string>();
 			string? declaringType = target.DeclaringTypeDefinition?.FullName;
-			return MethodUsedByAnalyzer.FindCallers(target, module)
+			try
+			{
+				return MethodUsedByAnalyzer.FindCallers(target, module)
 				.OrderByDescending(caller => caller.DeclaringTypeDefinition?.FullName == declaringType)
 				.ThenBy(caller => caller.FullName, StringComparer.Ordinal)
 				.Take(10)
 				.Select(caller => caller.FullName)
-				.ToArray();
+					.ToArray();
+			}
+			catch (Exception exception) when (IsRecoverableMetadataException(exception))
+			{
+				unavailable.Add("Caller information is unavailable because the assembly metadata could not be read.");
+				return Array.Empty<string>();
+			}
 		}
 
 		internal static IEnumerable<IMember> ScanMethodReferences(IMethod method, MetadataModule module)

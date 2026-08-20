@@ -33,6 +33,46 @@ namespace ICSharpCode.ILSpyX.Tests.Annotations
 		}
 
 		[Test]
+		public void LoadJson_ReportsAssemblyHashMismatch()
+		{
+			string path = CreateTempAssemblyFile();
+			try
+			{
+				var manager = new RenameAnnotationManager(path);
+				RenameAnnotationsMismatchEventArgs? notification = null;
+				manager.HashMismatchDetected += (_, args) => notification = args;
+				manager.LoadJson("{\"assemblyHash\":\"deadbeef\",\"renames\":[]}");
+
+				manager.HasHashMismatch.Should().BeTrue();
+				notification.Should().NotBeNull();
+				notification!.AssemblyPath.Should().Be(manager.AssemblyPath);
+			}
+			finally
+			{
+				File.Delete(path);
+			}
+		}
+
+		[Test]
+		public void ChangedAssemblyContentInvalidatesHash()
+		{
+			string path = CreateTempAssemblyFile();
+			try
+			{
+				string firstHash = new RenameAnnotationManager(path).AssemblyHash;
+				File.WriteAllText(path, "changed-content");
+				File.SetLastWriteTimeUtc(path, DateTime.UtcNow.AddSeconds(2));
+				string secondHash = new RenameAnnotationManager(path).AssemblyHash;
+
+				secondHash.Should().NotBe(firstHash);
+			}
+			finally
+			{
+				File.Delete(path);
+			}
+		}
+
+		[Test]
 		public void SaveAndLoad_RoundTripsAnnotations()
 		{
 			string path = CreateTempAssemblyFile();

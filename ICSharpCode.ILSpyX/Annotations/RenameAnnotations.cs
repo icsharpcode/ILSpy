@@ -10,6 +10,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
+using System.Collections.Concurrent;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -17,9 +18,17 @@ namespace ICSharpCode.ILSpyX.Annotations
 {
 	public sealed record RenameAnnotation(string Token, string NewName);
 
+	public sealed class RenameAnnotationsMismatchEventArgs : EventArgs
+	{
+		public RenameAnnotationsMismatchEventArgs(string assemblyPath) => AssemblyPath = assemblyPath;
+		public string AssemblyPath { get; }
+	}
+
 	/// <summary>Thread-safe sidecar storage for display-only symbol renames.</summary>
 	public sealed class RenameAnnotationManager
 	{
+		sealed record HashCacheEntry(long Length, DateTime LastWriteUtc, string Hash);
+		static readonly ConcurrentDictionary<string, HashCacheEntry> HashCache = new(StringComparer.OrdinalIgnoreCase);
 		static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) {
 			WriteIndented = true,
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -34,12 +43,14 @@ namespace ICSharpCode.ILSpyX.Annotations
 				throw new ArgumentException("Assembly path cannot be empty.", nameof(assemblyPath));
 			AssemblyPath = Path.GetFullPath(assemblyPath);
 			SidecarPath = AssemblyPath + ".ilspy-annotations.json";
-			AssemblyHash = ComputeAssemblyHash(AssemblyPath);
+			AssemblyHash = GetAssemblyHash(AssemblyPath);
 		}
 
 		public string AssemblyPath { get; }
 		public string SidecarPath { get; }
 		public string AssemblyHash { get; }
+		public bool HasHashMismatch { get; private set; }
+		public event EventHandler<RenameAnnotationsMismatchEventArgs>? HashMismatchDetected;
 
 		public IReadOnlyList<RenameAnnotation> Annotations {
 			get { lock (gate) return renames.Select(pair => new RenameAnnotation(pair.Key, pair.Value)).ToArray(); }
@@ -147,8 +158,14 @@ namespace ICSharpCode.ILSpyX.Annotations
 			if (string.IsNullOrWhiteSpace(json))
 				return;
 			AnnotationDocument? document = JsonSerializer.Deserialize<AnnotationDocument>(json, JsonOptions);
-			if (document is null || !string.Equals(document.AssemblyHash, AssemblyHash, StringComparison.OrdinalIgnoreCase))
+			if (document is null)
 				return;
+			if (!string.Equals(document.AssemblyHash, AssemblyHash, StringComparison.OrdinalIgnoreCase))
+			{
+				HasHashMismatch = true;
+				HashMismatchDetected?.Invoke(this, new RenameAnnotationsMismatchEventArgs(AssemblyPath));
+				return;
+			}
 			lock (gate)
 			{
 				renames.Clear();
@@ -197,12 +214,19 @@ namespace ICSharpCode.ILSpyX.Annotations
 			=> entity.ParentModule?.MetadataFile?.FileName is { } path
 				&& string.Equals(Path.GetFullPath(path), AssemblyPath, StringComparison.OrdinalIgnoreCase);
 
-		static string ComputeAssemblyHash(string path)
+		static string GetAssemblyHash(string path)
 		{
 			if (!File.Exists(path))
 				return string.Empty;
+			FileInfo info = new(path);
+			if (HashCache.TryGetValue(path, out HashCacheEntry? cached)
+				&& cached.Length == info.Length
+				&& cached.LastWriteUtc == info.LastWriteTimeUtc)
+				return cached.Hash;
 			using FileStream stream = File.OpenRead(path);
-			return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+			string hash = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
+			HashCache[path] = new HashCacheEntry(info.Length, info.LastWriteTimeUtc, hash);
+			return hash;
 		}
 
 		sealed class AnnotationDocument

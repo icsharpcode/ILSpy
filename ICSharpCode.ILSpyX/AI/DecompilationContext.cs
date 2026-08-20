@@ -19,6 +19,7 @@ namespace ICSharpCode.ILSpyX.AI
 		public IReadOnlyList<string> ImplementedInterfaces { get; init; } = Array.Empty<string>();
 		public IReadOnlyList<string> Attributes { get; init; } = Array.Empty<string>();
 		public IReadOnlyList<string> StringLiterals { get; init; } = Array.Empty<string>();
+		public IReadOnlyList<string> UnavailableSections { get; init; } = Array.Empty<string>();
 		public int ApproximateTokenCount { get; init; }
 
 		public string ToMarkdown()
@@ -32,7 +33,8 @@ namespace ICSharpCode.ILSpyX.AI
 				&& Callees.Count == 0
 				&& ImplementedInterfaces.Count == 0
 				&& Attributes.Count == 0
-				&& StringLiterals.Count == 0)
+				&& StringLiterals.Count == 0
+				&& UnavailableSections.Count == 0)
 				return string.Empty;
 
 			var builder = new StringBuilder();
@@ -60,6 +62,7 @@ namespace ICSharpCode.ILSpyX.AI
 			AppendList(builder, "**String Literals:**", StringLiterals, value => JsonSerializer.Serialize(value), limit: 20);
 			AppendList(builder, "**Called By:**", Callers, limit: 10);
 			AppendList(builder, "**Calls:**", Callees, limit: 10);
+			AppendList(builder, "**Unavailable Context:**", UnavailableSections, limit: 8);
 			return builder.ToString();
 		}
 
