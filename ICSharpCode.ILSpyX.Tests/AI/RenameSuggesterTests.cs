@@ -42,5 +42,14 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 
 			action.Should().Throw<RenameSuggestionParseException>();
 		}
+
+		[TestCase(0.59, 59)]
+		[TestCase(0.60, 60)]
+		[TestCase(1.0, 100)]
+		[TestCase(59, 59)]
+		public void ConfidencePercent_NormalizesProviderValues(double confidence, int expected)
+		{
+			new RenameSuggestion("GoodName", confidence, "reason").ConfidencePercent.Should().Be(expected);
+		}
 	}
 }

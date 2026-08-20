@@ -17,6 +17,12 @@
 		<StackPanel DockPanel.Dock="Top" Spacing="5" Margin="0,0,0,10">
 			<TextBlock FontWeight="Bold" Text="{Binding TargetName}" />
 			<TextBlock Text="{Binding StatusMessage}" />
+			<ProgressBar Minimum="0" Maximum="{Binding ProgressMaximum}" Value="{Binding ProgressValue}" Height="16" />
+			<StackPanel Orientation="Horizontal" Spacing="8">
+				<TextBlock Text="{Binding ProgressPercent, StringFormat='Progress: {0:0}%'}" />
+				<TextBlock Text="{Binding ProgressCurrentMember, StringFormat='Current: {0}'}" TextTrimming="CharacterEllipsis" />
+				<TextBlock Text="{Binding ProgressSkippedOrErrorCount, StringFormat='Skipped/errors: {0}'}" />
+			</StackPanel>
 			<TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed" TextWrapping="Wrap" />
 		</StackPanel>
 		<ListBox ItemsSource="{Binding Items}">
@@ -25,12 +31,22 @@
 					<Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto" Margin="4" ColumnSpacing="10" RowSpacing="2">
 						<CheckBox Grid.RowSpan="2" VerticalAlignment="Center" IsChecked="{Binding IsSelected}" />
 						<TextBlock Grid.Column="1" Text="{Binding OldName}" FontWeight="Bold" />
-						<ComboBox Grid.Column="2" ItemsSource="{Binding Suggestions}" SelectedItem="{Binding SelectedSuggestion}" MinWidth="220" />
-						<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="4">
-							<TextBlock Text="->" />
-							<TextBlock Text="{Binding NewName}" />
-						</StackPanel>
-						<TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Error}" Foreground="IndianRed" TextWrapping="Wrap" />
+								<ComboBox Grid.Column="2" ItemsSource="{Binding Suggestions}" SelectedItem="{Binding SelectedSuggestion}" MinWidth="220">
+									<ComboBox.ItemTemplate>
+										<DataTemplate>
+											<StackPanel Orientation="Horizontal" Spacing="6">
+												<TextBlock Text="{Binding Name}" />
+												<TextBlock Text="{Binding ConfidencePercent, StringFormat='({0}%)'}" />
+											</StackPanel>
+										</DataTemplate>
+									</ComboBox.ItemTemplate>
+								</ComboBox>
+								<StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="4">
+									<TextBlock Text="->" />
+									<TextBlock Text="{Binding NewName}" />
+									<TextBlock Text="{Binding SelectedSuggestionConfidencePercent, StringFormat='Confidence: {0}%'}" />
+								</StackPanel>
+								<TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Error}" Foreground="IndianRed" TextWrapping="Wrap" ToolTip.Tip="{Binding SelectedSuggestionReasoning}" />
 					</Grid>
 				</DataTemplate>
 			</ListBox.ItemTemplate>

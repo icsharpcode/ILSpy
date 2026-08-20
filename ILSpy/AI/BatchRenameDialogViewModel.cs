@@ -23,6 +23,7 @@ namespace ICSharpCode.ILSpy.AI
 {
 	public sealed class BatchRenameItemViewModel : INotifyPropertyChanged
 	{
+		public const double BatchRenameAutoSelectConfidence = 0.60;
 		readonly BatchRenameItem item;
 		readonly Action? changed;
 		bool isSelected;
@@ -32,13 +33,15 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			this.item = item ?? throw new ArgumentNullException(nameof(item));
 			this.changed = changed;
-			isSelected = item.HasSuggestions;
+			isSelected = ShouldAutoSelect(item.Suggestions.FirstOrDefault());
 			selectedSuggestion = item.Suggestions.FirstOrDefault();
 		}
 
 		public IEntity Entity => item.Entity;
 		public string OldName => item.OldName;
 		public string NewName => SelectedSuggestion?.Name ?? string.Empty;
+		public int SelectedSuggestionConfidencePercent => SelectedSuggestion?.ConfidencePercent ?? 0;
+		public string SelectedSuggestionReasoning => SelectedSuggestion?.Reasoning ?? string.Empty;
 		public IReadOnlyList<RenameSuggestion> Suggestions => item.Suggestions;
 		public string Error => item.Error ?? string.Empty;
 		public bool HasError => !string.IsNullOrEmpty(Error);
@@ -60,11 +63,16 @@ namespace ICSharpCode.ILSpy.AI
 				selectedSuggestion = value;
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSuggestion)));
 				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NewName)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSuggestionConfidencePercent)));
+				PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedSuggestionReasoning)));
 				changed?.Invoke();
 			}
 		}
 
 		public event PropertyChangedEventHandler? PropertyChanged;
+
+		public static bool ShouldAutoSelect(RenameSuggestion? suggestion)
+			=> suggestion is not null && suggestion.Confidence >= BatchRenameAutoSelectConfidence;
 	}
 
 	public sealed class BatchRenameDialogViewModel : INotifyPropertyChanged, IDisposable
@@ -76,6 +84,10 @@ namespace ICSharpCode.ILSpy.AI
 		string statusMessage = "Ready";
 		string errorMessage = string.Empty;
 		bool isBusy;
+		int progressValue;
+		int progressMaximum;
+		string progressCurrentMember = string.Empty;
+		int progressSkippedOrErrorCount;
 
 		public BatchRenameDialogViewModel(ITypeDefinition type, AISelectionSnapshot snapshot, IAIProviderFactory providerFactory)
 		{
@@ -93,6 +105,11 @@ namespace ICSharpCode.ILSpy.AI
 		public string ErrorMessage { get => errorMessage; private set { if (errorMessage != value) { errorMessage = value; OnChanged(nameof(ErrorMessage)); } } }
 		public bool IsBusy { get => isBusy; private set { if (isBusy != value) { isBusy = value; OnChanged(nameof(IsBusy)); ((RelayCommand)CancelCommand).RaiseCanExecuteChanged(); ((RelayCommand)ApplyCommand).RaiseCanExecuteChanged(); } } }
 		public bool CanApply => !IsBusy && Items.Any(item => item.IsSelected && item.SelectedSuggestion is not null);
+		public int ProgressValue { get => progressValue; private set { if (progressValue != value) { progressValue = value; OnChanged(nameof(ProgressValue)); OnChanged(nameof(ProgressPercent)); } } }
+		public int ProgressMaximum { get => progressMaximum; private set { if (progressMaximum != value) { progressMaximum = value; OnChanged(nameof(ProgressMaximum)); OnChanged(nameof(ProgressPercent)); } } }
+		public double ProgressPercent => ProgressMaximum == 0 ? 0 : (double)ProgressValue / ProgressMaximum * 100;
+		public string ProgressCurrentMember { get => progressCurrentMember; private set { if (progressCurrentMember != value) { progressCurrentMember = value; OnChanged(nameof(ProgressCurrentMember)); } } }
+		public int ProgressSkippedOrErrorCount { get => progressSkippedOrErrorCount; private set { if (progressSkippedOrErrorCount != value) { progressSkippedOrErrorCount = value; OnChanged(nameof(ProgressSkippedOrErrorCount)); } } }
 		public ICommand CancelCommand { get; }
 		public ICommand ApplyCommand { get; }
 		public event PropertyChangedEventHandler? PropertyChanged;
@@ -105,11 +122,15 @@ namespace ICSharpCode.ILSpy.AI
 			cancellation = linked;
 			IsBusy = true;
 			Items.Clear();
+			ProgressValue = 0;
+			ProgressMaximum = 0;
+			ProgressCurrentMember = string.Empty;
+			ProgressSkippedOrErrorCount = 0;
 			ErrorMessage = string.Empty;
 			StatusMessage = "Preparing batch rename";
 			try
 			{
-				IProgress<string> progress = new Progress<string>(name => StatusMessage = "Analyzing " + name);
+				IProgress<BatchRenameProgress> progress = new Progress<BatchRenameProgress>(ReportProgress);
 				IReadOnlyList<BatchRenameItem> suggestions = await Task.Run(
 					() => suggester.SuggestAsync(type, CreateDecompiler(type), progress, linked.Token), linked.Token).ConfigureAwait(false);
 				await Dispatcher.UIThread.InvokeAsync(() => {
@@ -143,6 +164,23 @@ namespace ICSharpCode.ILSpy.AI
 		}
 
 		public void Cancel() => cancellation?.Cancel();
+
+		void ReportProgress(BatchRenameProgress progress)
+		{
+			void Update()
+			{
+				ProgressValue = progress.Completed;
+				ProgressMaximum = progress.Total;
+				ProgressCurrentMember = progress.CurrentMember ?? string.Empty;
+				ProgressSkippedOrErrorCount = progress.SkippedOrErrorCount;
+				if (progress.CurrentMember is not null && progress.Completed < progress.Total)
+					StatusMessage = $"Analyzing {progress.CurrentMember}";
+			}
+			if (Dispatcher.UIThread.CheckAccess())
+				Update();
+			else
+				Dispatcher.UIThread.Post(Update);
+		}
 
 		void Apply()
 		{

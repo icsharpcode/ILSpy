@@ -13,6 +13,13 @@ using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpyX.AI
 {
+	/// <summary>Progress for one batch-rename suggestion run.</summary>
+	public sealed record BatchRenameProgress(
+		int Completed,
+		int Total,
+		string? CurrentMember,
+		int SkippedOrErrorCount);
+
 	public sealed record BatchRenameItem(
 		IEntity Entity,
 		string OldName,
@@ -36,20 +43,24 @@ namespace ICSharpCode.ILSpyX.AI
 		public async Task<IReadOnlyList<BatchRenameItem>> SuggestAsync(
 			ITypeDefinition type,
 			CSharpDecompiler decompiler,
-			IProgress<string>? progress = null,
+			IProgress<BatchRenameProgress>? progress = null,
 			CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(type);
 			ArgumentNullException.ThrowIfNull(decompiler);
 
-			var items = new List<BatchRenameItem>();
+			var eligibleMembers = OrderMembers(type)
+				.Where(member => RenameSuggester.IsLikelyObfuscated(member.Name))
+				.ToArray();
+			var items = new List<BatchRenameItem>(eligibleMembers.Length);
 			var proposedRenames = new List<string>();
-			foreach (IEntity member in OrderMembers(type))
+			int skippedOrErrorCount = 0;
+			int completed = 0;
+			progress?.Report(new BatchRenameProgress(0, eligibleMembers.Length, null, 0));
+			foreach (IEntity member in eligibleMembers)
 			{
 				cancellationToken.ThrowIfCancellationRequested();
-				progress?.Report(member.FullName);
-				if (!RenameSuggester.IsLikelyObfuscated(member.Name))
-					continue;
+				progress?.Report(new BatchRenameProgress(completed, eligibleMembers.Length, member.FullName, skippedOrErrorCount));
 
 				try
 				{
@@ -64,7 +75,10 @@ namespace ICSharpCode.ILSpyX.AI
 				catch (RenameSuggestionParseException exception)
 				{
 					items.Add(new BatchRenameItem(member, member.Name, Array.Empty<RenameSuggestion>(), exception.Message));
+					skippedOrErrorCount++;
 				}
+				completed++;
+				progress?.Report(new BatchRenameProgress(completed, eligibleMembers.Length, member.FullName, skippedOrErrorCount));
 			}
 			return items;
 		}
