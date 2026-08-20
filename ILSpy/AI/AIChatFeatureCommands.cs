@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -31,16 +32,14 @@ namespace ICSharpCode.ILSpy.AI
 		readonly AssemblyTreeModel assemblyTree;
 		readonly AISelectionService selectionService;
 		readonly IAIProviderFactory providerFactory;
-		readonly AIOutputPaneModel outputPane;
 		readonly DockWorkspace dockWorkspace;
 
 		[ImportingConstructor]
-		public AIChatFeatureCommands(AssemblyTreeModel assemblyTree, AISelectionService selectionService, IAIProviderFactory providerFactory, AIOutputPaneModel outputPane, DockWorkspace dockWorkspace)
+		public AIChatFeatureCommands(AssemblyTreeModel assemblyTree, AISelectionService selectionService, IAIProviderFactory providerFactory, DockWorkspace dockWorkspace)
 		{
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
 			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
-			this.outputPane = outputPane ?? throw new ArgumentNullException(nameof(outputPane));
 			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
 		}
 
@@ -67,6 +66,8 @@ namespace ICSharpCode.ILSpy.AI
 
 			AISelectionSnapshot snapshot = await selectionService.ResolveSnapshotAsync(cancellationToken).ConfigureAwait(false);
 			var service = new AIExplanationService(snapshot, providerFactory);
+			AIOutputPaneModel outputPane = AppComposition.TryGetExport<AIOutputPaneModel>()
+				?? throw new InvalidOperationException("The AI Output pane is unavailable. Open it from the View menu and try again.");
 			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
 			_ = outputPane.StartAsync(assembly.ShortName, token => AssemblySummaryContextMenuEntry.BuildAndCompleteAsync(assembly, service, token));
 			return $"Assembly summary started in the AI Output pane for {assembly.ShortName}.";
