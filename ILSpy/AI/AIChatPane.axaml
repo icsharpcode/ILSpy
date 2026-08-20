@@ -4,7 +4,7 @@
       <TextBox Text="{Binding Input}" AcceptsReturn="True" MinHeight="54" PlaceholderText="Ask about the decompiled code…" />
       <ItemsControl ItemsSource="{Binding CommandSuggestions}" IsVisible="{Binding ShowSuggestions}" />
       <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-        <Button Content="Send" Command="{Binding SendCommand}" IsEnabled="{Binding !IsBusy}" />
+        <Button Content="Send" Command="{Binding SendCommand}" IsEnabled="{Binding CanSend}" />
         <Button Content="Cancel" Command="{Binding CancelCommand}" IsVisible="{Binding IsBusy}" />
         <Button Content="Clear" Command="{Binding ClearCommand}" />
         <Button Content="Export" Command="{Binding ExportCommand}" />
@@ -22,8 +22,19 @@
         <Button Content="Open AI Settings" Command="{Binding OpenSettingsCommand}" IsVisible="{Binding CanOpenAISettings}" />
       </StackPanel>
       <StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="{Binding StatusMessage}"/><TextBlock Text="{Binding ErrorMessage}" Foreground="IndianRed"/></StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Conversation" VerticalAlignment="Center" />
+        <ComboBox ItemsSource="{Binding Conversations}" SelectedItem="{Binding SelectedConversation, Mode=TwoWay}" Width="260">
+          <ComboBox.ItemTemplate>
+            <DataTemplate>
+              <TextBlock Text="{Binding DisplayName}" TextTrimming="CharacterEllipsis" />
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+        <Button Content="New conversation" Command="{Binding NewConversationCommand}" />
+      </StackPanel>
     </StackPanel>
-    <ListBox x:Name="ConversationList" ItemsSource="{Binding Messages}" Background="Transparent" Padding="0" Margin="0"
+    <ListBox x:Name="MessageList" ItemsSource="{Binding Messages}" Background="Transparent" Padding="0" Margin="0"
              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
       <ListBox.ItemTemplate>
         <DataTemplate>

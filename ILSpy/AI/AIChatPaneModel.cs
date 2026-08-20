@@ -49,16 +49,22 @@ namespace ICSharpCode.ILSpy.AI
 		long conversationGeneration;
 
 		public ObservableCollection<ChatMessage> Messages { get; } = new();
+		public ObservableCollection<ChatConversation> Conversations { get; } = new();
 		public IReadOnlyList<AIProfile> Profiles => selectionService.Profiles;
 		public AIProfile ActiveProfile => selectionService.ActiveProfile;
 		public IReadOnlyList<string> Models => ActiveProfile.Models;
-		[ObservableProperty] string readinessMessage = string.Empty;
+		[ObservableProperty] ChatConversation? selectedConversation;
+		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(CanSend))]
+		string readinessMessage = string.Empty;
 		public bool IsReady => string.IsNullOrEmpty(ReadinessMessage);
 		public bool CanOpenAISettings => !IsReady;
 		[ObservableProperty]
 		[NotifyPropertyChangedFor(nameof(ShowSuggestions))]
 		string input = string.Empty;
-		[ObservableProperty] bool isBusy;
+		[ObservableProperty]
+		[NotifyPropertyChangedFor(nameof(CanSend))]
+		bool isBusy;
 		[ObservableProperty] string statusMessage = "Ready";
 		[ObservableProperty] string errorMessage = string.Empty;
 		public bool ShowSuggestions => Input.StartsWith("/", StringComparison.Ordinal);
@@ -80,6 +86,24 @@ namespace ICSharpCode.ILSpy.AI
 			LoadHistory();
 			_ = RefreshReadinessAsync();
 		}
+
+		partial void OnSelectedConversationChanged(ChatConversation? value)
+		{
+			if (value is null)
+				return;
+			SaveHistory();
+			if (!loadedHistory.TrySelect(value.Id))
+				return;
+			Messages.Clear();
+			conversationGeneration++;
+			foreach (ChatMessage message in value.Messages.TakeLast(MaxMessages))
+				Messages.Add(message);
+			OnPropertyChanged(nameof(IsConversationReadOnly));
+			StatusMessage = value.ReadOnly ? "Read-only conversation" : "Ready";
+		}
+
+		public bool IsConversationReadOnly => loadedHistory.ActiveConversation.ReadOnly;
+		public bool CanSend => !IsBusy && IsReady && !IsConversationReadOnly;
 
 		async Task RefreshReadinessAsync()
 		{
@@ -106,11 +130,10 @@ namespace ICSharpCode.ILSpy.AI
 				return;
 			}
 			await SetUiStateAsync(() => {
-				cancellation?.Cancel();
 				SaveHistory();
 				Messages.Clear();
 				conversationGeneration++;
-				LoadHistory(target);
+				StartConversation(target);
 			});
 			await RefreshReadinessAsync();
 		}
@@ -152,6 +175,14 @@ namespace ICSharpCode.ILSpy.AI
 				return;
 			if (await DispatchLocalCommandAsync(text).ConfigureAwait(false))
 				return;
+			if (IsConversationReadOnly)
+			{
+				await SetUiStateAsync(() => {
+					StatusMessage = "Start a new conversation before sending.";
+					ErrorMessage = "This conversation is read-only because its target is unavailable or comes from legacy history.";
+				});
+				return;
+			}
 			AISelectionSnapshot snapshot;
 			try
 			{
@@ -169,9 +200,8 @@ namespace ICSharpCode.ILSpy.AI
 				return;
 			}
 			ChatMessage assistant = new() { Role = "assistant" };
-			long requestConversationGeneration = 0;
 			long requestId = 0;
-			string requestConversationId = string.Empty;
+			ChatConversation requestConversation = null!;
 			LLMMessage[] requestMessages = Array.Empty<LLMMessage>();
 			string requestContext = string.Empty;
 			await SetUiStateAsync(() => {
@@ -182,9 +212,8 @@ namespace ICSharpCode.ILSpy.AI
 				Messages.Add(new ChatMessage { Role = "user", Content = text });
 				TrimHistory();
 				Messages.Add(assistant);
-				requestConversationGeneration = conversationGeneration;
 				requestId = Interlocked.Increment(ref requestGeneration);
-				requestConversationId = loadedHistory.ActiveConversationId;
+				requestConversation = loadedHistory.ActiveConversation;
 				requestMessages = Messages.Where(m => m.Content.Length != 0).Select(m => new LLMMessage(m.Role, m.Content)).ToArray();
 				requestContext = GetActiveContext(text);
 				IsBusy = true;
@@ -204,39 +233,34 @@ namespace ICSharpCode.ILSpy.AI
 					builder.Append(chunk);
 					string contentSnapshot = builder.ToString();
 					await Dispatcher.UIThread.InvokeAsync(() => {
-						if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration
-						&& requestConversationId == loadedHistory.ActiveConversationId
-						&& Messages.Contains(assistant))
+						if (requestConversation.Messages.Contains(assistant))
 							assistant.Content = contentSnapshot;
 					});
 				}
 				await SetUiStateAsync(() => {
-					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+					if (requestId == requestGeneration)
 						StatusMessage = "Complete";
 				});
-				await SetUiStateAsync(() => {
-					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
-						SaveHistory();
-				});
+				await SetUiStateAsync(SaveHistory);
 			}
 			catch (OperationCanceledException)
 			{
 				await SetUiStateAsync(() => {
-					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+					if (requestId == requestGeneration)
 						StatusMessage = "Canceled";
 				});
 			}
 			catch (Exception ex)
 			{
 				await SetUiStateAsync(() => {
-					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+					if (requestId == requestGeneration)
 					{ ErrorMessage = ex.Message; StatusMessage = "Request failed"; }
 				});
 			}
 			finally
 			{
 				await SetUiStateAsync(() => {
-					if (requestId == requestGeneration && requestConversationGeneration == conversationGeneration)
+					if (requestId == requestGeneration)
 						IsBusy = false;
 				});
 				if (ReferenceEquals(cancellation, cts))
@@ -340,6 +364,22 @@ namespace ICSharpCode.ILSpy.AI
 		}
 
 		[RelayCommand]
+		void NewConversation()
+		{
+			if (Dispatcher.UIThread.CheckAccess())
+				StartConversation(GetCurrentTarget());
+			else
+				Dispatcher.UIThread.Post(() => StartConversation(GetCurrentTarget()));
+		}
+
+		[RelayCommand]
+		void SelectConversation(ChatConversation? conversation)
+		{
+			if (conversation is not null)
+				SelectedConversation = conversation;
+		}
+
+		[RelayCommand]
 		void OpenSettings()
 		{
 			ContentTabPage tab = dockWorkspace.OpenSingletonTab("options", () => {
@@ -381,6 +421,21 @@ namespace ICSharpCode.ILSpy.AI
 			foreach (ChatMessage message in current.Messages.TakeLast(MaxMessages))
 				Messages.Add(message);
 			loadedTarget = target;
+			SyncConversations();
+		}
+
+		void StartConversation(AIConversationTarget target)
+		{
+			SaveHistory();
+			Messages.Clear();
+			conversationGeneration++;
+			ChatConversation conversation = loadedHistory.StartNew(target);
+			loadedTarget = target;
+			SyncConversations();
+			SelectedConversation = conversation;
+			OnPropertyChanged(nameof(IsConversationReadOnly));
+			StatusMessage = "Ready";
+			ErrorMessage = string.Empty;
 		}
 		string GetHistoryPath()
 		{
@@ -402,6 +457,17 @@ namespace ICSharpCode.ILSpy.AI
 			loadedTarget = loadedHistory.ActiveConversation.Target;
 			foreach (var message in loadedHistory.ActiveConversation.Messages.TakeLast(MaxMessages))
 				Messages.Add(message);
+			SyncConversations();
+			SelectedConversation = loadedHistory.ActiveConversation;
+			OnPropertyChanged(nameof(IsConversationReadOnly));
+		}
+
+		void SyncConversations()
+		{
+			Conversations.Clear();
+			foreach (ChatConversation conversation in loadedHistory.Conversations)
+				Conversations.Add(conversation);
+			OnPropertyChanged(nameof(IsConversationReadOnly));
 		}
 
 		void MarkDeletedConversationsReadOnly()

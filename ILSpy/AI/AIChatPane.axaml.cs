@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.AI
 		void OnAttachedToVisualTree(object? sender, Avalonia.VisualTreeAttachmentEventArgs e)
 		{
 			Dispatcher.UIThread.Post(() => {
-				followTail.Attach(AIEditorScrollState.FindViewer(ConversationList));
+				followTail.Attach(AIEditorScrollState.FindViewer(MessageList));
 				ScheduleRestore();
 			}, DispatcherPriority.Loaded);
 		}

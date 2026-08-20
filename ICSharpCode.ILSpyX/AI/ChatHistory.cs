@@ -18,6 +18,17 @@ namespace ICSharpCode.ILSpyX.AI
 		public AIConversationTarget? Target { get; set; }
 		public List<ChatMessage> Messages { get; set; } = new();
 		public bool ReadOnly { get; set; }
+
+		[JsonIgnore]
+		public string DisplayName {
+			get {
+				if (Target is null)
+					return "Legacy conversation (read-only)";
+				string name = string.IsNullOrWhiteSpace(Target.ProfileName) ? "Unknown profile" : Target.ProfileName;
+				string model = string.IsNullOrWhiteSpace(Target.Model) ? "Unknown model" : Target.Model;
+				return $"{name} / {model}{(ReadOnly ? " (read-only)" : string.Empty)}";
+			}
+		}
 	}
 
 	public sealed class ChatHistory
@@ -61,6 +72,25 @@ namespace ICSharpCode.ILSpyX.AI
 			return created;
 		}
 
+		/// <summary>Creates and selects a fresh writable conversation for the target.</summary>
+		public ChatConversation StartNew(AIConversationTarget target)
+		{
+			ArgumentNullException.ThrowIfNull(target);
+			var created = new ChatConversation { Target = target, ReadOnly = false };
+			Conversations.Add(created);
+			ActiveConversationId = created.Id;
+			return created;
+		}
+
+		public bool TrySelect(string conversationId)
+		{
+			ChatConversation? conversation = Conversations.FirstOrDefault(c => string.Equals(c.Id, conversationId, StringComparison.Ordinal));
+			if (conversation is null)
+				return false;
+			ActiveConversationId = conversation.Id;
+			return true;
+		}
+
 		public static ChatHistory Load(string path)
 		{
 			if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
@@ -99,14 +129,23 @@ namespace ICSharpCode.ILSpyX.AI
 				if (history is null)
 					return new ChatHistory();
 				history.SchemaVersion = 2;
+				history.Conversations ??= new List<ChatConversation>();
 				history.Conversations = history.Conversations.Where(c => c is not null && !string.IsNullOrWhiteSpace(c.Id)).ToList();
+				foreach (ChatConversation conversation in history.Conversations)
+				{
+					conversation.Messages ??= new List<ChatMessage>();
+					if (conversation.Target is null)
+						conversation.ReadOnly = true;
+				}
+				if (!history.TrySelect(history.ActiveConversationId))
+					history.ActiveConversationId = history.Conversations.FirstOrDefault()?.Id ?? string.Empty;
 				return history;
 			}
 
 			var legacy = new ChatHistory { SchemaVersion = 2 };
 			string assemblyPath = root.TryGetProperty("AssemblyPath", out JsonElement assembly) ? assembly.GetString() ?? string.Empty : string.Empty;
 			legacy.AssemblyPath = assemblyPath;
-			var conversation = new ChatConversation { ReadOnly = true, Target = null };
+			var legacyConversation = new ChatConversation { ReadOnly = true, Target = null };
 			if (root.TryGetProperty("Messages", out JsonElement messages) && messages.ValueKind == JsonValueKind.Array)
 			{
 				foreach (JsonElement message in messages.EnumerateArray())
@@ -115,13 +154,13 @@ namespace ICSharpCode.ILSpyX.AI
 					{
 						ChatMessage? item = JsonSerializer.Deserialize<ChatMessage>(message.GetRawText(), JsonOptions);
 						if (item is not null)
-							conversation.Messages.Add(item);
+							legacyConversation.Messages.Add(item);
 					}
 					catch (JsonException) { }
 				}
 			}
-			legacy.Conversations.Add(conversation);
-			legacy.ActiveConversationId = conversation.Id;
+			legacy.Conversations.Add(legacyConversation);
+			legacy.ActiveConversationId = legacyConversation.Id;
 			return legacy;
 		}
 
