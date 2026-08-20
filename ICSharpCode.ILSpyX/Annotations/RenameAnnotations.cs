@@ -22,6 +22,8 @@ namespace ICSharpCode.ILSpyX.Annotations
 	{
 		sealed record HashCacheEntry(long Length, DateTime LastWriteUtc, string Hash);
 		static readonly ConcurrentDictionary<string, HashCacheEntry> HashCache = new(StringComparer.OrdinalIgnoreCase);
+		static readonly object ManagerCacheGate = new();
+		static readonly Dictionary<string, WeakReference<RenameAnnotationManager>> ManagerCache = new(StringComparer.OrdinalIgnoreCase);
 		static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web) {
 			WriteIndented = true,
 			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
@@ -39,11 +41,37 @@ namespace ICSharpCode.ILSpyX.Annotations
 			AssemblyHash = GetAssemblyHash(AssemblyPath);
 		}
 
+		public static RenameAnnotationManager ForAssembly(string assemblyPath)
+		{
+			string path = Path.GetFullPath(assemblyPath);
+			lock (ManagerCacheGate)
+			{
+				if (ManagerCache.TryGetValue(path, out WeakReference<RenameAnnotationManager>? reference)
+					&& reference.TryGetTarget(out RenameAnnotationManager? manager)
+					&& manager.MatchesCurrentAssembly())
+					return manager;
+				manager = new RenameAnnotationManager(path);
+				ManagerCache[path] = new WeakReference<RenameAnnotationManager>(manager);
+				return manager;
+			}
+		}
+
 		public string AssemblyPath { get; }
 		public string SidecarPath { get; }
 		public string AssemblyHash { get; }
 		public bool HasHashMismatch { get; private set; }
 		public event EventHandler? HashMismatchDetected;
+
+		bool MatchesCurrentAssembly()
+		{
+			if (!File.Exists(AssemblyPath))
+				return AssemblyHash.Length == 0;
+			FileInfo info = new(AssemblyPath);
+			return HashCache.TryGetValue(AssemblyPath, out HashCacheEntry? cached)
+				&& cached.Length == info.Length
+				&& cached.LastWriteUtc == info.LastWriteTimeUtc
+				&& string.Equals(cached.Hash, AssemblyHash, StringComparison.OrdinalIgnoreCase);
+		}
 
 		public IReadOnlyList<RenameAnnotation> Annotations {
 			get { lock (gate) return renames.Select(pair => new RenameAnnotation(pair.Key, pair.Value)).ToArray(); }
@@ -94,6 +122,11 @@ namespace ICSharpCode.ILSpyX.Annotations
 
 		public void Load()
 		{
+			lock (gate)
+			{
+				renames.Clear();
+				HasHashMismatch = false;
+			}
 			if (!File.Exists(SidecarPath))
 				return;
 			try

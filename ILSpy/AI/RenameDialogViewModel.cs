@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			this.entity = entity ?? throw new ArgumentNullException(nameof(entity));
 			suggester = new RenameSuggester(snapshot ?? throw new ArgumentNullException(nameof(snapshot)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
-			annotations = new RenameAnnotationManager(entity.ParentModule?.MetadataFile?.FileName ?? throw new ArgumentException("The selected symbol has no assembly file.", nameof(entity)));
+			annotations = RenameAnnotationManager.ForAssembly(entity.ParentModule?.MetadataFile?.FileName ?? throw new ArgumentException("The selected symbol has no assembly file.", nameof(entity)));
 			annotations.Load();
 			CancelCommand = new RelayCommand(Cancel, () => IsBusy);
 			ApplyCommand = new RelayCommand(Apply, () => CanApply);

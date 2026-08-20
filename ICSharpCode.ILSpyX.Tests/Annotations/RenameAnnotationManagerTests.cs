@@ -72,6 +72,23 @@ namespace ICSharpCode.ILSpyX.Tests.Annotations
 		}
 
 		[Test]
+		public void ForAssembly_ReusesManagerUntilAssemblyChanges()
+		{
+			string path = CreateTempAssemblyFile();
+			try
+			{
+				RenameAnnotationManager first = RenameAnnotationManager.ForAssembly(path);
+				RenameAnnotationManager second = RenameAnnotationManager.ForAssembly(path);
+
+				second.Should().BeSameAs(first);
+			}
+			finally
+			{
+				File.Delete(path);
+			}
+		}
+
+		[Test]
 		public void SaveAndLoad_RoundTripsAnnotations()
 		{
 			string path = CreateTempAssemblyFile();

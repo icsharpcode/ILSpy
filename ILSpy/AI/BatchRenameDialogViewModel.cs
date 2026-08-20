@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy.AI
 		{
 			this.type = type ?? throw new ArgumentNullException(nameof(type));
 			suggester = new BatchRenameSuggester(snapshot ?? throw new ArgumentNullException(nameof(snapshot)), providerFactory ?? throw new ArgumentNullException(nameof(providerFactory)));
-			annotations = new RenameAnnotationManager(type.ParentModule?.MetadataFile?.FileName ?? throw new ArgumentException("The selected type has no assembly file.", nameof(type)));
+			annotations = RenameAnnotationManager.ForAssembly(type.ParentModule?.MetadataFile?.FileName ?? throw new ArgumentException("The selected type has no assembly file.", nameof(type)));
 			annotations.Load();
 			CancelCommand = new RelayCommand(Cancel, () => IsBusy);
 			ApplyCommand = new RelayCommand(Apply, () => CanApply);

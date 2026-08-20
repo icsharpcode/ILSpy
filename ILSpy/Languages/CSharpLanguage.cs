@@ -331,7 +331,7 @@ namespace ICSharpCode.ILSpy.Languages
 			decompiler.Stepper.IsDebug = options.IsDebug;
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-			var annotations = new RenameAnnotationManager(module.FileName);
+			var annotations = RenameAnnotationManager.ForAssembly(module.FileName);
 			annotations.Load();
 			decompiler.AstTransforms.Add(new RenameAnnotationTransform(annotations));
 			return decompiler;
@@ -522,7 +522,7 @@ namespace ICSharpCode.ILSpy.Languages
 			};
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-			var annotations = new RenameAnnotationManager(assembly.FileName);
+			var annotations = RenameAnnotationManager.ForAssembly(assembly.FileName);
 			annotations.Load();
 			decompiler.AstTransforms.Add(new RenameAnnotationTransform(annotations));
 			SyntaxTree st = options.FullDecompilation
@@ -776,7 +776,7 @@ namespace ICSharpCode.ILSpy.Languages
 
 		static void MarkRenamedReferences(TextView.AvaloniaEditTextOutput output, MetadataFile module)
 		{
-			var annotations = new RenameAnnotationManager(module.FileName);
+			var annotations = RenameAnnotationManager.ForAssembly(module.FileName);
 			annotations.Load();
 			if (annotations.HasHashMismatch)
 			{
