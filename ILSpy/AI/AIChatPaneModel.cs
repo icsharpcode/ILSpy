@@ -40,7 +40,6 @@ namespace ICSharpCode.ILSpy.AI
 		readonly IAIProviderFactory providerFactory;
 		readonly AISelectionService selectionService;
 		readonly AssemblyTreeModel assemblyTree;
-		readonly DockWorkspace dockWorkspace;
 		readonly IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages;
 		readonly IAIChatFeatureCommands featureCommands;
 		CancellationTokenSource? cancellation;
@@ -72,13 +71,12 @@ namespace ICSharpCode.ILSpy.AI
 		public string[] CommandSuggestions { get; } = { "/help", "/clear", "/explain", "/rename ", "/audit", "/summary" };
 
 		[ImportingConstructor]
-		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, DockWorkspace dockWorkspace, IAIChatFeatureCommands featureCommands, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
+		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, IAIChatFeatureCommands featureCommands, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
 		{
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
 			selectionService = AppComposition.TryGetExport<AISelectionService>() ?? throw new InvalidOperationException("AI selection service is unavailable.");
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
-			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
 			this.featureCommands = featureCommands ?? throw new ArgumentNullException(nameof(featureCommands));
 			this.optionPages = optionPages ?? throw new ArgumentNullException(nameof(optionPages));
 			Id = PaneContentId;
@@ -411,6 +409,8 @@ namespace ICSharpCode.ILSpy.AI
 		[RelayCommand]
 		void OpenSettings()
 		{
+			DockWorkspace dockWorkspace = AppComposition.TryGetExport<DockWorkspace>()
+				?? throw new InvalidOperationException("The docking workspace is unavailable. Try again after the main window is ready.");
 			ContentTabPage tab = dockWorkspace.OpenSingletonTab("options", () => {
 				var options = new OptionsPageModel(settingsService, optionPages);
 				options.SelectPage<AISettingsViewModel>();
