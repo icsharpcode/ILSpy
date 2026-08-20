@@ -321,6 +321,7 @@ namespace ICSharpCode.ILSpy.Search
 			}
 			catch (OperationCanceledException)
 			{
+				cts.Dispose();
 				return;
 			}
 			catch (Exception)
@@ -366,11 +367,12 @@ namespace ICSharpCode.ILSpy.Search
 
 			void FallbackToRegularSearch()
 			{
-				if (!ReferenceEquals(specialSearchCancellation, cts))
-					return;
-				specialSearchCancellation = null;
+				bool isCurrent = ReferenceEquals(specialSearchCancellation, cts);
+				if (isCurrent)
+					specialSearchCancellation = null;
 				cts.Dispose();
-				StartFallbackSearch(term);
+				if (isCurrent)
+					StartFallbackSearch(term);
 			}
 		}
 
