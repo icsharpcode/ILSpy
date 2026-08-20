@@ -71,6 +71,39 @@ public class AnalyzerTreeKeyboardTests
 	}
 
 	[AvaloniaTest]
+	public async Task Enter_Activates_The_Selected_Analyzer_Node()
+	{
+		// Enter on a single selected analyzer row activates it -- for an entity node that means
+		// navigating to the member's home in the assembly tree, like 10.x did. The key must reach
+		// SharpTreeView.OnKeyDown: the container is a ListBoxItem, and Avalonia's default key
+		// selection triggers treat Enter/Space as selection input and mark the event handled
+		// before it bubbles, so SharpTreeView suppresses that trigger for the activation case.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var entity = (ITypeDefinition)typeNode.Member!;
+		var analyzed = analyzerVm.Analyze(entity);
+
+		dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
+		var view = await window.WaitForComponent<ICSharpCode.ILSpy.Analyzers.AnalyzerTreeView>();
+		var tree = await view.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		tree.SelectedItem = analyzed;
+		Dispatcher.UIThread.RunJobs();
+		tree.FocusNode(analyzed);
+		Dispatcher.UIThread.RunJobs();
+
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeSameAs(typeNode,
+			"precondition: the assembly tree must not already sit on the target node");
+
+		window.KeyPress(Key.Enter, RawInputModifiers.None, PhysicalKey.Enter, null);
+		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, typeNode),
+			description: "Enter must activate the analyzer node and select the type in the assembly tree");
+	}
+
+	[AvaloniaTest]
 	public async Task Ctrl_R_Analyzes_The_Selected_Member()
 	{
 		// Ctrl+R on the assembly tree analyzes the selected member(s) -- the keyboard equivalent of the

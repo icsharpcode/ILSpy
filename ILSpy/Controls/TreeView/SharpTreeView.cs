@@ -295,6 +295,27 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, newOffsetY);
 		}
 
+		/// <summary>
+		/// Avalonia's default key selection triggers treat plain Enter/Space as selection input:
+		/// the ListBoxItem container marks the KeyDown handled before it bubbles here, so the
+		/// activation handling in <see cref="OnKeyDown"/> would never see those keys. Suppress the
+		/// selection trigger exactly for the case OnKeyDown activates instead -- a single selected
+		/// row that is the row the key landed on. Multi-row selections keep the default behaviour
+		/// (Enter/Space collapses the selection to the focused row).
+		/// </summary>
+		protected override bool ShouldTriggerSelection(Visual selectable, KeyEventArgs eventArgs)
+		{
+			if (eventArgs.KeyModifiers == KeyModifiers.None
+				&& eventArgs.Key is Key.Enter or Key.Space
+				&& selectable is SharpTreeViewItem { Node: { } node }
+				&& SelectedItems?.Count == 1
+				&& ReferenceEquals(SelectedItem, node))
+			{
+				return false;
+			}
+			return base.ShouldTriggerSelection(selectable, eventArgs);
+		}
+
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			// Ctrl+A select-all must work on the first press even before a current item is
