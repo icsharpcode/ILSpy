@@ -391,7 +391,8 @@
           "Mono.Cecil": "[0.11.6, )",
           "System.Composition.AttributedModel": "[10.0.11, )",
           "System.Reflection.Metadata": "[10.0.11, )",
-          "System.Runtime.CompilerServices.Unsafe": "[6.1.2, )"
+          "System.Runtime.CompilerServices.Unsafe": "[6.1.2, )",
+          "YamlDotNet": "[16.1.3, )"
         }
       },
       "ilspycmd": {
@@ -552,6 +553,12 @@
         "requested": "[10.0.11, )",
         "resolved": "10.0.11",
         "contentHash": "8IV+rI3xN/Mkq9MsSX7VZTv9T9Wt+tyhHLwBX9VNZBk8m8kknEs1JeTSjI2x9M2L/fSja+c2WSE5n5Yy0GXdoQ=="
+      },
+      "YamlDotNet": {
+        "type": "CentralTransitive",
+        "requested": "[16.1.3, )",
+        "resolved": "16.1.3",
+        "contentHash": "gtHGiDvU9VTtWte8f0thIM38cL1oowOjStKpeAEKKfA+Rc4AvekJzqFDZiiPcc4kw00ZiwR4OTJS56L16q98DQ=="
       }
     }
   }

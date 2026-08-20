@@ -70,6 +70,12 @@
         "resolved": "2.24.0",
         "contentHash": "dKHqW1MeAMnDIbtx8qDTsGwy/7LUiQ3ccdzHX0PzCh1r98Lgl/1deIky9+ojZO0K5HjeA7uE+eW9/h+v7EOIBA=="
       },
+      "YamlDotNet": {
+        "type": "Direct",
+        "requested": "[16.1.3, )",
+        "resolved": "16.1.3",
+        "contentHash": "gtHGiDvU9VTtWte8f0thIM38cL1oowOjStKpeAEKKfA+Rc4AvekJzqFDZiiPcc4kw00ZiwR4OTJS56L16q98DQ=="
+      },
       "Microsoft.Build.Tasks.Git": {
         "type": "Transitive",
         "resolved": "10.0.400",

@@ -352,7 +352,8 @@
           "Mono.Cecil": "[0.11.6, )",
           "System.Composition.AttributedModel": "[10.0.11, )",
           "System.Reflection.Metadata": "[10.0.11, )",
-          "System.Runtime.CompilerServices.Unsafe": "[6.1.2, )"
+          "System.Runtime.CompilerServices.Unsafe": "[6.1.2, )",
+          "YamlDotNet": "[16.1.3, )"
         }
       },
       "K4os.Compression.LZ4": {
@@ -445,6 +446,12 @@
         "requested": "[6.1.2, )",
         "resolved": "6.1.2",
         "contentHash": "2hBr6zdbIBTDE3EhK7NSVNdX58uTK6iHW/P/Axmm9sl1xoGSLqDvMtpecn226TNwHByFokYwJmt/aQQNlO5CRw=="
+      },
+      "YamlDotNet": {
+        "type": "CentralTransitive",
+        "requested": "[16.1.3, )",
+        "resolved": "16.1.3",
+        "contentHash": "gtHGiDvU9VTtWte8f0thIM38cL1oowOjStKpeAEKKfA+Rc4AvekJzqFDZiiPcc4kw00ZiwR4OTJS56L16q98DQ=="
       }
     }
   }

@@ -82,6 +82,7 @@
     <PackageVersion Include="System.Formats.Nrbf" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(NetPackageVersion)" />
+    <PackageVersion Include="YamlDotNet" Version="16.1.3" />
     <PackageVersion Include="coverlet.MTP" Version="10.0.1" />
   </ItemGroup>
   <ItemGroup>

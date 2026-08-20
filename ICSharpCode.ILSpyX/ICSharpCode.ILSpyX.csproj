@@ -51,6 +51,15 @@
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="AI\prompts\*.prompt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="AI\prompts\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <!-- https://devblogs.microsoft.com/nuget/enable-repeatable-package-restores-using-a-lock-file/ -->
   <PropertyGroup>
 	<RestoreLockedMode>true</RestoreLockedMode>
@@ -97,6 +106,7 @@
     <PackageReference Include="Markdig" />
     <PackageReference Include="K4os.Compression.LZ4" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="YamlDotNet" />
     <PackageReference Include="Microsoft.SourceLink.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
