@@ -32,15 +32,13 @@ namespace ICSharpCode.ILSpy.AI
 		readonly AssemblyTreeModel assemblyTree;
 		readonly AISelectionService selectionService;
 		readonly IAIProviderFactory providerFactory;
-		readonly DockWorkspace dockWorkspace;
 
 		[ImportingConstructor]
-		public AIChatFeatureCommands(AssemblyTreeModel assemblyTree, AISelectionService selectionService, IAIProviderFactory providerFactory, DockWorkspace dockWorkspace)
+		public AIChatFeatureCommands(AssemblyTreeModel assemblyTree, AISelectionService selectionService, IAIProviderFactory providerFactory)
 		{
 			this.assemblyTree = assemblyTree ?? throw new ArgumentNullException(nameof(assemblyTree));
 			this.selectionService = selectionService ?? throw new ArgumentNullException(nameof(selectionService));
 			this.providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
-			this.dockWorkspace = dockWorkspace ?? throw new ArgumentNullException(nameof(dockWorkspace));
 		}
 
 		public async Task<string> RunAuditAsync(CancellationToken cancellationToken)
@@ -68,6 +66,8 @@ namespace ICSharpCode.ILSpy.AI
 			var service = new AIExplanationService(snapshot, providerFactory);
 			AIOutputPaneModel outputPane = AppComposition.TryGetExport<AIOutputPaneModel>()
 				?? throw new InvalidOperationException("The AI Output pane is unavailable. Open it from the View menu and try again.");
+			DockWorkspace dockWorkspace = AppComposition.TryGetExport<DockWorkspace>()
+				?? throw new InvalidOperationException("The docking workspace is unavailable. Try again after the main window is ready.");
 			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
 			_ = outputPane.StartAsync(assembly.ShortName, token => AssemblySummaryContextMenuEntry.BuildAndCompleteAsync(assembly, service, token));
 			return $"Assembly summary started in the AI Output pane for {assembly.ShortName}.";
