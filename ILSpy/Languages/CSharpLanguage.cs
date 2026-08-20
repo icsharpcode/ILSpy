@@ -778,6 +778,13 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			var annotations = new RenameAnnotationManager(module.FileName);
 			annotations.Load();
+			if (annotations.HasHashMismatch)
+			{
+				output.AddUIElement(() => new global::Avalonia.Controls.TextBlock {
+					Text = "Saved AI rename annotations do not match this assembly and were not applied.",
+					Margin = new global::Avalonia.Thickness(5)
+				});
+			}
 			foreach (var reference in output.References)
 			{
 				string? name = reference.Reference switch {

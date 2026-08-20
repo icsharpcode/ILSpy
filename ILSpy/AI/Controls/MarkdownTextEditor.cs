@@ -33,6 +33,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		const string CopyCodeBlockHeader = "Copy Code Block";
 		const string CodeBlockCopiedMessage = "Code block copied to clipboard";
 		AISettings? aiSettings;
+		DispatcherTimer? transientTooltipTimer;
 		ScrollViewer? editorScrollViewer;
 		int wrapChangeVersion;
 
@@ -84,6 +85,9 @@ namespace ICSharpCode.ILSpy.AI.Controls
 
 		protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
 		{
+			transientTooltipTimer?.Stop();
+			transientTooltipTimer = null;
+			ToolTip.SetIsOpen(this, false);
 			if (aiSettings is not null)
 			{
 				aiSettings.PropertyChanged -= OnAISettingsPropertyChanged;
@@ -190,9 +194,20 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		{
 			ToolTip.SetTip(this, message);
 			ToolTip.SetIsOpen(this, true);
-			var timer = new global::System.Threading.Timer(_ => {
-				Avalonia.Threading.Dispatcher.UIThread.Post(() => ToolTip.SetIsOpen(this, false));
-			}, null, 2000, global::System.Threading.Timeout.Infinite);
+			transientTooltipTimer?.Stop();
+			transientTooltipTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+			transientTooltipTimer.Tick += OnTransientTooltipTimerTick;
+			transientTooltipTimer.Start();
+		}
+
+		void OnTransientTooltipTimerTick(object? sender, EventArgs e)
+		{
+			if (transientTooltipTimer is null)
+				return;
+			transientTooltipTimer.Stop();
+			transientTooltipTimer.Tick -= OnTransientTooltipTimerTick;
+			transientTooltipTimer = null;
+			ToolTip.SetIsOpen(this, false);
 		}
 
 		void BuildContextMenu()

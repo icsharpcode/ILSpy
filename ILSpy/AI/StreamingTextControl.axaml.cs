@@ -34,11 +34,11 @@ namespace ICSharpCode.ILSpy.AI
 			InitializeComponent();
 			Editor.FollowTailStateProvider = () => followTail.IsFollowingTail;
 			Editor.FollowTailStateRestored = followTail.SetFollowingTail;
-			AttachedToVisualTree += OnAttachedToVisualTree;
 		}
 
-		void OnAttachedToVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
+		protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
 		{
+			base.OnAttachedToVisualTree(e);
 			Avalonia.Threading.Dispatcher.UIThread.Post(() => followTail.Attach(AIEditorScrollState.FindViewer(Editor)), Avalonia.Threading.DispatcherPriority.Loaded);
 		}
 
