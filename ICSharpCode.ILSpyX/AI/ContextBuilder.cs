@@ -68,10 +68,10 @@ namespace ICSharpCode.ILSpyX.AI
 				TargetFramework = DetectTargetFramework(entity.ParentModule),
 				Attributes = entity.GetAttributes().Select(attribute => attribute.AttributeType.FullName).ToArray(),
 				ImplementedInterfaces = GetImplementedInterfaces(entity),
-				StringLiterals = GetStringLiterals(entity, decompiler),
+				StringLiterals = GetStringLiterals(entity, decompiler, unavailable),
 				Callers = sendCallGraph ? GetCallers(entity, decompiler.TypeSystem.MainModule, unavailable) : Array.Empty<string>(),
 				Callees = sendCallGraph ? GetCallees(entity, decompiler.TypeSystem.MainModule, unavailable) : Array.Empty<string>(),
-				IL = sendIL ? GetIL(entity) : null,
+				IL = sendIL ? GetIL(entity, unavailable) : null,
 				UnavailableSections = unavailable
 			};
 			return EnforceBudget(context);
@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpyX.AI
 			return type.DirectBaseTypes.Where(baseType => baseType.Kind == TypeKind.Interface).Select(baseType => baseType.FullName).ToArray();
 		}
 
-		static IReadOnlyList<string> GetStringLiterals(IEntity entity, CSharpDecompiler decompiler)
+		static IReadOnlyList<string> GetStringLiterals(IEntity entity, CSharpDecompiler decompiler, List<string> unavailable)
 		{
 			var visitor = new StringLiteralVisitor();
 			try
@@ -109,12 +109,13 @@ namespace ICSharpCode.ILSpyX.AI
 			}
 			catch (Exception exception) when (IsRecoverableMetadataException(exception))
 			{
+				unavailable.Add("String literal information is unavailable because the assembly metadata could not be read.");
 				return Array.Empty<string>();
 			}
 			return visitor.Values.Distinct(StringComparer.Ordinal).Take(20).ToArray();
 		}
 
-		static string? GetIL(IEntity entity)
+		static string? GetIL(IEntity entity, List<string> unavailable)
 		{
 			if (entity is not IMethod method || method.ParentModule is not MetadataModule module)
 				return null;
@@ -126,6 +127,7 @@ namespace ICSharpCode.ILSpyX.AI
 			}
 			catch (Exception exception) when (IsRecoverableMetadataException(exception))
 			{
+				unavailable.Add("IL information is unavailable because the assembly metadata could not be read.");
 				return null;
 			}
 		}
