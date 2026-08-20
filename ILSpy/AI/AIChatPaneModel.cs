@@ -293,12 +293,20 @@ namespace ICSharpCode.ILSpy.AI
 					return true;
 				case "/audit":
 				case "/summary":
-					await SetUiStateAsync(() => Input = string.Empty);
+					await SetUiStateAsync(() => {
+						Input = string.Empty;
+						IsBusy = true;
+						ErrorMessage = string.Empty;
+						StatusMessage = command == "/audit" ? "Auditing selected type…" : "Starting assembly summary…";
+					});
+					cancellation?.Cancel();
+					var commandCancellation = new CancellationTokenSource();
+					cancellation = commandCancellation;
 					try
 					{
 						string result = command == "/audit"
-							? await featureCommands.RunAuditAsync(CancellationToken.None).ConfigureAwait(false)
-							: await featureCommands.RunSummaryAsync(CancellationToken.None).ConfigureAwait(false);
+							? await featureCommands.RunAuditAsync(commandCancellation.Token).ConfigureAwait(false)
+							: await featureCommands.RunSummaryAsync(commandCancellation.Token).ConfigureAwait(false);
 						await AppendLocalMessageAsync(result);
 						await SetUiStateAsync(() => StatusMessage = "Command complete");
 					}
@@ -316,6 +324,13 @@ namespace ICSharpCode.ILSpy.AI
 					{
 						await AppendLocalMessageAsync($"{command} failed: {exception.Message}");
 						await SetUiStateAsync(() => { ErrorMessage = exception.Message; StatusMessage = "Command failed"; });
+					}
+					finally
+					{
+						if (ReferenceEquals(cancellation, commandCancellation))
+							cancellation = null;
+						commandCancellation.Dispose();
+						await SetUiStateAsync(() => IsBusy = false);
 					}
 					return true;
 				case "/explain":
