@@ -11,6 +11,7 @@ namespace ICSharpCode.ILSpyX.Search
 {
 	public static class SemanticSearchStrategy
 	{
+		/// <summary>Searches with the dependency-free local similarity heuristic; no provider or credentials are used.</summary>
 		public static IReadOnlyList<IEntity> Search(IEnumerable<MetadataFile> modules, string query, int limit = 20)
 		{
 			var store = new EmbeddingStore();

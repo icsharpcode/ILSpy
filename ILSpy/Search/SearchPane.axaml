@@ -10,7 +10,7 @@
 	<Grid RowDefinitions="Auto,Auto,*" Margin="4">
 		<Grid Grid.Row="0" ColumnDefinitions="*,8,Auto" Margin="0,0,0,4">
 			<TextBox Grid.Column="0" Name="SearchInput"
-				         PlaceholderText="Search for t:TypeName, m:Member, ai:natural language, or semantic:concept; use exact match (=term), exclusions (-term), or /regex/"
+				         PlaceholderText="Search for t:TypeName, m:Member, ai:natural language, or semantic:local concept; use exact match (=term), exclusions (-term), or /regex/"
 			         ToolTip.Tip="Search"
 			         Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
 				<TextBox.InnerRightContent>

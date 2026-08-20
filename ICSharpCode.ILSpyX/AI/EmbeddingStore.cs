@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace ICSharpCode.ILSpyX.AI
 {
-	/// <summary>Small dependency-free vector cache for local semantic search.</summary>
+	/// <summary>Small dependency-free hash-vector cache for local semantic/similarity search; this is not a remote embedding service.</summary>
 	public sealed class EmbeddingStore
 	{
 		readonly Dictionary<string, float[]> vectors = new(StringComparer.Ordinal);

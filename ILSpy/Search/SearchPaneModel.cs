@@ -140,7 +140,7 @@ namespace ICSharpCode.ILSpy.Search
 		/// <summary>Advanced modes are intentionally opt-in so existing picker layouts remain stable.</summary>
 		public SearchModeEntry[] AdvancedSearchModes { get; } = new[] {
 			new SearchModeEntry { Mode = SearchMode.AI, Name = "AI Search", Image = Images.Library },
-			new SearchModeEntry { Mode = SearchMode.Semantic, Name = "Semantic Search", Image = Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Semantic, Name = "Semantic Search (local heuristic)", Image = Images.Library },
 		};
 
 		/// <summary>
@@ -291,7 +291,7 @@ namespace ICSharpCode.ILSpy.Search
 			run.Start();
 		}
 
-		void StartSpecialSearch(LoadedAssembly[] assemblies, string term, SearchMode mode)
+		async void StartSpecialSearch(LoadedAssembly[] assemblies, string term, SearchMode mode)
 		{
 			var providerFactory = AppComposition.TryGetExport<IAIProviderFactory>();
 			var selectionService = AppComposition.TryGetExport<AISelectionService>();
@@ -302,14 +302,38 @@ namespace ICSharpCode.ILSpy.Search
 			var cts = new CancellationTokenSource();
 			specialSearchCancellation = cts;
 			IsSearching = true;
+			AISelectionSnapshot? snapshot = null;
+			try
+			{
+				// The normal search registry is synchronous and module-oriented. AI search
+				// therefore remains a pane-owned asynchronous exception, but its immutable
+				// target is captured before background work starts so selector changes cannot
+				// affect this request.
+				if (mode == SearchMode.AI)
+				{
+					if (providerFactory == null || selectionService == null)
+					{
+						FallbackToRegularSearch();
+						return;
+					}
+					snapshot = await selectionService.ResolveSnapshotAsync(cts.Token).ConfigureAwait(true);
+				}
+			}
+			catch (OperationCanceledException)
+			{
+				return;
+			}
+			catch (Exception)
+			{
+				FallbackToRegularSearch();
+				return;
+			}
 			_ = Task.Run(async () => {
 				try
 				{
 					var modules = assemblies.Select(assembly => assembly.GetMetadataFileOrNull()).Where(module => module != null).Cast<MetadataFile>().ToArray();
 					var entities = mode == SearchMode.AI
-						? providerFactory == null || selectionService == null
-							? System.Array.Empty<ICSharpCode.Decompiler.TypeSystem.IEntity>()
-							: await AISearchStrategy.SearchAsync(modules, term, await selectionService.ResolveSnapshotAsync(cts.Token).ConfigureAwait(false), providerFactory, cts.Token).ConfigureAwait(false)
+						? await AISearchStrategy.SearchAsync(modules, term, snapshot!, providerFactory!, cts.Token).ConfigureAwait(false)
 						: SemanticSearchStrategy.Search(modules, term);
 					if (mode == SearchMode.AI && entities.Count == 0)
 					{
@@ -339,6 +363,15 @@ namespace ICSharpCode.ILSpy.Search
 				}
 				finally { if (ReferenceEquals(specialSearchCancellation, cts)) { specialSearchCancellation = null; cts.Dispose(); } }
 			}, cts.Token);
+
+			void FallbackToRegularSearch()
+			{
+				if (!ReferenceEquals(specialSearchCancellation, cts))
+					return;
+				specialSearchCancellation = null;
+				cts.Dispose();
+				StartFallbackSearch(term);
+			}
 		}
 
 		void StartFallbackSearch(string term)
