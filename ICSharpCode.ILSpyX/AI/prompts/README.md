@@ -116,7 +116,9 @@ Without zero-padding, `explanation.10.prompt` would load before `explanation.2.p
 | `explanation` | `AIExplanationService` | Explains decompiled code with reverse-engineering context |
 | `rename` | `RenameSuggester` | Suggests meaningful names for obfuscated symbols |
 | `chat` | `AIChatPaneModel` | Multi-turn conversational decompilation assistant |
-| `security` | `AISecurityAnalyzer` | Identifies security vulnerabilities in decompiled assemblies |
+| `security` | `AISecurityAnalyzer` | Identifies security vulnerabilities in decompiled assemblies (single-type analyzer) |
+| `security_audit` | `AISecurityAuditService` | Bulk security audit for multiple types (sequential batch processing) |
+| `generate_docs` | `GenerateDocsContextMenuEntry` | Generates XML documentation comments for types and methods |
 | `search` | `AISearchStrategy` | Natural-language search over assembly symbol vocabulary |
 | `assembly_summary` | `AssemblySummaryContextMenuEntry` | Summarizes entire assemblies from metadata |
 

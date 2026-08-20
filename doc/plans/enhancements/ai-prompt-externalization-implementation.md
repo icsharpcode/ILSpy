@@ -11,14 +11,16 @@ This document provides step-by-step implementation instructions for externalizin
 
 ## Prerequisites
 
-- All 7 base prompt files already created in `ICSharpCode.ILSpyX/AI/prompts/`:
+- All 9 base prompt files already created in `ICSharpCode.ILSpyX/AI/prompts/`:
   - `explanation.prompt`
   - `rename.prompt`
   - `chat.prompt`
-  - `security.prompt`
+  - `security.prompt` (updated to v2 with confidence field)
+  - `security_audit.prompt` (new)
+  - `generate_docs.prompt` (new)
   - `search.prompt`
   - `assembly_summary.prompt`
-  - `README.md`
+  - `README.md` (updated with new prompt IDs)
 
 ## Phase 1: Infrastructure (Tasks 1-3)
 
@@ -432,36 +434,6 @@ public async Task<List<RenameCandidate>> SuggestNamesAsync(...)
 
 ---
 
-### Task 8: Migrate AIChatPaneModel
-
-**File**: `ILSpy/AI/AIChatPaneModel.cs`
-
-**Instructions**:
-
-1. Open file
-2. Locate the `SystemPrompt` constant (around line 38)
-3. Delete it
-4. Locate method `SendMessageAsync` (around line 171-227)
-5. Find where `SystemPrompt` is used in `LLMRequest` construction
-6. Replace with dynamic lookup:
-
-**OLD**:
-```csharp
-var request = new LLMRequest(SystemPrompt, allMessages.ToArray(), ...);
-```
-
-**NEW**:
-```csharp
-string systemPrompt = AIPromptProvider.Instance.GetSystemPrompt("chat", snapshot.ModelId);
-var request = new LLMRequest(systemPrompt, allMessages.ToArray(), ...);
-```
-
-**Note**: `AIChatPaneModel` is in the `ILSpy` project, not `ICSharpCode.ILSpyX`. The `ILSpy` project already references `ICSharpCode.ILSpyX`, so `AIPromptProvider` is accessible.
-
-**Validation**: Build compiles. Manually test chat feature if possible.
-
----
-
 ### Task 9: Migrate AISecurityAnalyzer
 
 **File**: `ICSharpCode.ILSpyX/Analyzers/Builtin/AISecurityAnalyzer.cs`
@@ -490,11 +462,146 @@ var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPr
 
 ---
 
-### Task 10: Migrate AISearchStrategy
+### Task 10: Migrate AISecurityAuditService
+
+**File**: `ICSharpCode.ILSpyX/Analyzers/Builtin/AISecurityAuditService.cs`
+
+**Instructions**:
+
+1. Open file
+2. Locate method `AnalyzeTypeAsync` (around line 79-89)
+3. Find line 86 where inline system prompt is used
+4. Replace with dynamic lookup:
+
+**OLD**:
+```csharp
+await foreach (string chunk in service.CompleteStreamingAsync("You identify security vulnerabilities in decompiled .NET code. Return only valid JSON with type, method, issue, severity, line, and numeric confidence from 0 to 1. Report only plausible issues.", prompt, cancellationToken).ConfigureAwait(false))
+```
+
+**NEW**:
+```csharp
+string systemPrompt = AIPromptProvider.Instance.GetSystemPrompt("security_audit", snapshot.ModelId);
+await foreach (string chunk in service.CompleteStreamingAsync(systemPrompt, prompt, cancellationToken).ConfigureAwait(false))
+```
+
+**Validation**: Build compiles. Run security audit tests if available.
+
+---
+
+### Task 11: Migrate AISearchStrategy
 
 **File**: `ICSharpCode.ILSpyX/Search/AISearchStrategy.cs`
 
 **Instructions**:
+
+**OLD**:
+```csharp
+var request = new LLMRequest(SystemPrompt, new[] { new LLMMessage("user", userPrompt) }, ...);
+```
+
+**NEW**:
+```csharp
+string systemPrompt = AIPromptProvider.Instance.GetSystemPrompt("security", snapshot.ModelId);
+var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPrompt) }, ...);
+```
+
+**Validation**: Build compiles. Run `ICSharpCode.ILSpyX.Tests/Analyzers/AISecurityAnalyzerTests.cs` if it exists.
+
+---
+
+### Task 11: Migrate AISearchStrategy
+
+**File**: `ICSharpCode.ILSpyX/Search/AISearchStrategy.cs`
+
+**Instructions**:
+
+1. Open file
+2. Locate the `SystemPrompt` constant (around line 38)
+3. Delete it
+4. Locate method `SearchAsync` (around line 66-113)
+5. Find where `SystemPrompt` is used
+6. Replace with dynamic lookup:
+
+**OLD**:
+```csharp
+var request = new LLMRequest(SystemPrompt, new[] { new LLMMessage("user", userPrompt) }, ...);
+```
+
+**NEW**:
+```csharp
+string systemPrompt = AIPromptProvider.Instance.GetSystemPrompt("search", snapshot.ModelId);
+var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPrompt) }, ...);
+```
+
+**Validation**: Build compiles. Test AI search feature if possible.
+
+---
+
+### Task 12: Migrate AssemblySummaryContextMenuEntry
+
+**File**: `ILSpy/AI/AssemblySummaryContextMenuEntry.cs`
+
+**Instructions**:
+
+1. Open file
+2. Locate the `SystemPrompt` constant (around line 69)
+3. Delete it
+4. Locate method `GenerateSummaryAsync` (around line 85-120)
+5. Find where `SystemPrompt` is used
+6. Replace with dynamic lookup:
+
+**OLD**:
+```csharp
+var request = new LLMRequest(SystemPrompt, new[] { new LLMMessage("user", userPrompt) }, ...);
+```
+
+**NEW**:
+```csharp
+string systemPrompt = AIPromptProvider.Instance.GetSystemPrompt("assembly_summary", snapshot.ModelId);
+var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPrompt) }, ...);
+```
+
+**Note**: This is in the `ILSpy` project.
+
+**Validation**: Build compiles. Test assembly summary feature if possible.
+
+---
+
+### Task 13: Migrate GenerateDocsContextMenuEntry
+
+**File**: `ILSpy/AI/GenerateDocsContextMenuEntry.cs`
+
+**Instructions**:
+
+1. Open file
+2. Locate method `GenerateAsync` (around line 66-77)
+3. Find line 71 where inline system prompt is used
+4. Replace with dynamic lookup:
+
+**OLD**:
+```csharp
+await foreach (var chunk in service.CompleteStreamingAsync(
+    "Generate XML documentation comments. Return only the XML, no explanation.",
+    "Generate <summary>, <param>, <returns>, and exception documentation for this symbol:\n\n" + context.ToMarkdown(), cancellationToken).ConfigureAwait(false))
+```
+
+**NEW**:
+```csharp
+string systemPrompt = AIPromptProvider.Instance.GetSystemPrompt("generate_docs", snapshot.ModelId);
+await foreach (var chunk in service.CompleteStreamingAsync(
+    systemPrompt,
+    "Generate <summary>, <param>, <returns>, and exception documentation for this symbol:\n\n" + context.ToMarkdown(), cancellationToken).ConfigureAwait(false))
+```
+
+**Note**: This is in the `ILSpy` project.
+
+**Validation**: Build compiles. Test doc generation feature if possible.
+
+---
+
+## Phase 4: Testing (Task 14)
+
+### Task 14: Create AIPromptProviderTests.cs
 
 1. Open file
 2. Locate the `SystemPrompt` constant (around line 38)
@@ -548,9 +655,9 @@ var request = new LLMRequest(systemPrompt, new[] { new LLMMessage("user", userPr
 
 ---
 
-## Phase 4: Testing (Task 12)
+## Phase 4: Testing (Task 14)
 
-### Task 12: Create AIPromptProviderTests.cs
+### Task 14: Create AIPromptProviderTests.cs
 
 **File**: `ICSharpCode.ILSpyX.Tests/AI/AIPromptProviderTests.cs`
 
@@ -574,7 +681,7 @@ public class AIPromptProviderTests
     [Test]
     public void GetSystemPrompt_ReturnsNonEmptyString_ForKnownPromptIds()
     {
-        var promptIds = new[] { "explanation", "rename", "chat", "security", "search", "assembly_summary" };
+        var promptIds = new[] { "explanation", "rename", "chat", "security", "security_audit", "generate_docs", "search", "assembly_summary" };
         
         foreach (var promptId in promptIds)
         {

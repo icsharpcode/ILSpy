@@ -1,0 +1,7 @@
+---
+description: XML documentation generation for symbols
+author: Dr. Masroor Ehsan
+updated_at: 2026-08-20
+version: 1
+---
+Generate XML documentation comments. Return only the XML, no explanation.
