@@ -107,6 +107,8 @@ namespace ICSharpCode.ILSpy.AI
 				ChatConversation conversation = loadedHistory.ActiveConversation;
 				if (conversation.ReadOnly || conversation.Target is null)
 					return true;
+				if (selectionService.Profiles.Count == 0)
+					return true;
 				AIConversationTarget current = GetCurrentTarget();
 				return !conversation.Target.BelongsTo(current.ProfileId, current.ProviderType, current.Endpoint, current.Model);
 			}
