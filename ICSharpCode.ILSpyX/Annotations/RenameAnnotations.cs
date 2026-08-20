@@ -252,9 +252,8 @@ namespace ICSharpCode.ILSpyX.Annotations
 			using FileStream stream = File.OpenRead(path);
 			string hash = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
 			HashCache[path] = new HashCacheEntry(info.Length, info.LastWriteTimeUtc, hash);
-			if (HashCache.Count > 256 && HashCache.TryRemove(HashCache.Keys.FirstOrDefault() ?? path, out _))
-			{
-			}
+			if (HashCache.Count > 256)
+				_ = HashCache.TryRemove(HashCache.Keys.FirstOrDefault() ?? path, out _);
 			return hash;
 		}
 
