@@ -328,6 +328,11 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				e.Handled = true;
 				return;
 			}
+			if (e.Key == Key.Delete && e.KeyModifiers == KeyModifiers.None && DeleteSelection())
+			{
+				e.Handled = true;
+				return;
+			}
 			var node = (e.Source as Visual)?.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node
 				?? SelectedItem as SharpTreeNode;
 			if (node != null && e.KeyModifiers == KeyModifiers.None)
@@ -380,6 +385,28 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 			if (!e.Handled)
 				base.OnKeyDown(e);
+		}
+
+		/// <summary>
+		/// Deletes the top-level selection (see <see cref="GetTopLevelSelection"/>) when every node in it
+		/// supports deletion, then selects the row that takes the first deleted node's place so a
+		/// repeated Delete keeps working. Returns false without touching anything otherwise, e.g. for
+		/// a selection that mixes deletable and non-deletable rows.
+		/// </summary>
+		bool DeleteSelection()
+		{
+			if (flattener is null)
+				return false;
+			var nodes = GetTopLevelSelection().ToArray();
+			if (nodes.Length == 0 || !nodes.All(n => n.CanDelete()))
+				return false;
+			int index = nodes.Min(flattener.IndexOf);
+			foreach (var node in nodes)
+				node.Delete();
+			// The deleted rows leave the selection with the source; pick the nearest survivor.
+			if (SelectedItems!.Count == 0 && flattener.Count > 0)
+				SelectAndFocus((SharpTreeNode)flattener[Math.Clamp(index, 0, flattener.Count - 1)]!);
+			return true;
 		}
 
 		static void ExpandRecursively(SharpTreeNode node)
@@ -447,7 +474,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			searchBuffer = string.Empty;
 		}
 
-		/// <summary>Selected items with no selected ancestor (used by Delete).</summary>
+		/// <summary>Selected items with no selected ancestor.</summary>
 		public IEnumerable<SharpTreeNode> GetTopLevelSelection()
 		{
 			var selection = SelectedItems!.OfType<SharpTreeNode>().ToHashSet();

@@ -104,6 +104,44 @@ public class AnalyzerTreeKeyboardTests
 	}
 
 	[AvaloniaTest]
+	public async Task Delete_Removes_The_Selected_Top_Level_Analyzer_Node()
+	{
+		// Delete on a selected top-level analyzer row removes it from the pane (the keyboard
+		// equivalent of the "Remove" context-menu entry). Rows below the top level are not
+		// deletable, so Delete on one of them leaves the pane untouched.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var analyzed = analyzerVm.Analyze((ITypeDefinition)typeNode.Member!);
+		analyzed.IsExpanded = true;
+		var child = analyzed.Children.First();
+
+		dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
+		var view = await window.WaitForComponent<ICSharpCode.ILSpy.Analyzers.AnalyzerTreeView>();
+		var tree = await view.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+
+		tree.SelectedItem = child;
+		Dispatcher.UIThread.RunJobs();
+		tree.FocusNode(child);
+		Dispatcher.UIThread.RunJobs();
+		window.KeyPress(Key.Delete, RawInputModifiers.None, PhysicalKey.Delete, null);
+		Dispatcher.UIThread.RunJobs();
+		analyzed.Children.Should().Contain(child, "Delete must not remove a nested analyzer row");
+		analyzerVm.Root.Children.Should().Contain(analyzed, "Delete on a nested row must not remove its top-level node");
+
+		tree.SelectedItem = analyzed;
+		Dispatcher.UIThread.RunJobs();
+		tree.FocusNode(analyzed);
+		Dispatcher.UIThread.RunJobs();
+		window.KeyPress(Key.Delete, RawInputModifiers.None, PhysicalKey.Delete, null);
+		await Waiters.WaitForAsync(() => !analyzerVm.Root.Children.Contains(analyzed),
+			description: "Delete must remove the selected top-level analyzer node from the pane");
+	}
+
+	[AvaloniaTest]
 	public async Task Ctrl_R_Analyzes_The_Selected_Member()
 	{
 		// Ctrl+R on the assembly tree analyzes the selected member(s) -- the keyboard equivalent of the
