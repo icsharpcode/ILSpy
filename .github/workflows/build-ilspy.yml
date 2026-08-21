@@ -171,6 +171,8 @@ jobs:
         dotnet pack ICSharpCode.Decompiler --no-restore
         dotnet pack ICSharpCode.BamlDecompiler --no-restore
         dotnet pack ICSharpCode.ILSpyX --no-restore
+        dotnet pack ICSharpCode.ILSpy.AI --no-restore
+        dotnet pack ICSharpCode.ILSpy.AI.Decompiler --no-restore
 
     - name: Build Installer (x64 and arm64, framework-dependent)
       if: matrix.configuration == 'release'  
