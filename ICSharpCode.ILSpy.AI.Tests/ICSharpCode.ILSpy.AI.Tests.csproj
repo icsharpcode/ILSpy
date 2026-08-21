@@ -25,6 +25,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.ILSpy.AI\ICSharpCode.ILSpy.AI.csproj" />
+    <!-- Real (non-build-only) reference for PromptFileGeneratorTests, which exercises the
+         parameterized generator directly. -->
+    <ProjectReference Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" />
   </ItemGroup>
 
 </Project>

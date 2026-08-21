@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 using YamlDotNet.Serialization;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>Metadata parsed from an external AI prompt file.</summary>
 	public sealed class AIPromptMetadata

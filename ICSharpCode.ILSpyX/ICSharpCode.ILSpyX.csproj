@@ -51,36 +51,6 @@
     <None Include="PackageReadme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="AI\prompts\*.prompt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="AI\prompts\README.md">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" ReferenceOutputAssembly="false" />
-    <PromptEmbedderInput Include="AI\prompts\*.prompt" />
-    <PromptEmbedderSource Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" />
-    <PromptEmbedderSource Include="..\BuildTools\PromptEmbedder\Program.cs" />
-  </ItemGroup>
-
-  <PropertyGroup>
-    <PromptEmbedderProject>$(MSBuildProjectDirectory)/../BuildTools/PromptEmbedder/PromptEmbedder.csproj</PromptEmbedderProject>
-    <PromptEmbedderOutput>$(MSBuildProjectDirectory)/AI/EmbeddedPrompts.g.cs</PromptEmbedderOutput>
-  </PropertyGroup>
-
-  <Target Name="GenerateEmbeddedPrompts" BeforeTargets="CoreCompile" Inputs="@(PromptEmbedderInput);@(PromptEmbedderSource)" Outputs="$(PromptEmbedderOutput)">
-    <MSBuild Projects="$(PromptEmbedderProject)" Targets="Build" BuildInParallel="false" Properties="Configuration=$(Configuration)">
-    </MSBuild>
-    <MSBuild Projects="$(PromptEmbedderProject)" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
-      <Output TaskParameter="TargetOutputs" ItemName="_PromptEmbedderAssembly" />
-    </MSBuild>
-    <Exec Command="dotnet &quot;@(_PromptEmbedderAssembly)&quot; &quot;$(MSBuildProjectDirectory)/AI/prompts&quot; &quot;$(PromptEmbedderOutput)&quot;" />
-  </Target>
-
   <!-- https://devblogs.microsoft.com/nuget/enable-repeatable-package-restores-using-a-lock-file/ -->
   <PropertyGroup>
 	<RestoreLockedMode>true</RestoreLockedMode>

@@ -50,6 +50,36 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="AI\prompts\*.prompt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="AI\prompts\README.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" ReferenceOutputAssembly="false" />
+    <PromptEmbedderInput Include="AI\prompts\*.prompt" />
+    <PromptEmbedderSource Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" />
+    <PromptEmbedderSource Include="..\BuildTools\PromptEmbedder\Program.cs" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PromptEmbedderProject>$(MSBuildProjectDirectory)/../BuildTools/PromptEmbedder/PromptEmbedder.csproj</PromptEmbedderProject>
+    <PromptEmbedderOutput>$(MSBuildProjectDirectory)/AI/EmbeddedPrompts.g.cs</PromptEmbedderOutput>
+  </PropertyGroup>
+
+  <Target Name="GenerateEmbeddedPrompts" BeforeTargets="CoreCompile" Inputs="@(PromptEmbedderInput);@(PromptEmbedderSource)" Outputs="$(PromptEmbedderOutput)">
+    <MSBuild Projects="$(PromptEmbedderProject)" Targets="Build" BuildInParallel="false" Properties="Configuration=$(Configuration)">
+    </MSBuild>
+    <MSBuild Projects="$(PromptEmbedderProject)" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_PromptEmbedderAssembly" />
+    </MSBuild>
+    <Exec Command="dotnet &quot;@(_PromptEmbedderAssembly)&quot; &quot;$(MSBuildProjectDirectory)/AI/prompts&quot; &quot;$(PromptEmbedderOutput)&quot; &quot;ICSharpCode.ILSpy.AI&quot;" />
+  </Target>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="ICSharpCode.ILSpy.AI.Tests" Key="00240000048000009400000006020000002400005253413100040000010001004dcf3979c4e902efa4dd2163a039701ed5822e6f1134d77737296abbb97bf0803083cfb2117b4f5446a217782f5c7c634f9fe1fc60b4c11d62c5b3d33545036706296d31903ddcf750875db38a8ac379512f51620bb948c94d0831125fbc5fe63707cbb93f48c1459c4d1749eb7ac5e681a2f0d6d7c60fa527a3c0b8f92b02bf" />
     <!-- Desktop VM tests fake the internal secure-storage backend seam; they held identical
          access through ILSpyX's blanket IVT before the extraction. -->

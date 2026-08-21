@@ -7,7 +7,7 @@ using ILSpy.BuildTools.PromptEmbedder;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI;
+namespace ICSharpCode.ILSpy.AI.Tests.AI;
 
 [TestFixture]
 public sealed class PromptFileGeneratorTests
@@ -35,7 +35,7 @@ public sealed class PromptFileGeneratorTests
 		WritePrompt("alpha.prompt", "A prompt");
 		WritePrompt("alpha.claude.prompt", "Variant");
 
-		var generated = PromptFileGenerator.Generate(_directory);
+		var generated = PromptFileGenerator.Generate(_directory, "ICSharpCode.ILSpy.AI");
 
 		Assert.That(generated.IndexOf("[\"alpha\"]", StringComparison.Ordinal), Is.LessThan(generated.IndexOf("[\"zeta\"]", StringComparison.Ordinal)));
 		Assert.That(generated, Does.Contain("A prompt"));
@@ -48,7 +48,7 @@ public sealed class PromptFileGeneratorTests
 	{
 		File.WriteAllText(Path.Combine(_directory, "broken.prompt"), "---\ndescription: broken\nbody");
 
-		var exception = Assert.Throws<InvalidDataException>(() => PromptFileGenerator.Generate(_directory));
+		var exception = Assert.Throws<InvalidDataException>(() => PromptFileGenerator.Generate(_directory, "ICSharpCode.ILSpy.AI"));
 
 		Assert.That(exception!.Message, Does.Contain("terminator"));
 	}
@@ -58,7 +58,7 @@ public sealed class PromptFileGeneratorTests
 	{
 		WritePrompt("alpha.prompt", "A prompt");
 		var output = Path.Combine(_directory, "EmbeddedPrompts.g.cs");
-		var generated = PromptFileGenerator.Generate(_directory);
+		var generated = PromptFileGenerator.Generate(_directory, "ICSharpCode.ILSpy.AI");
 
 		PromptFileGenerator.WriteIfChanged(output, generated);
 		var timestamp = File.GetLastWriteTimeUtc(output);

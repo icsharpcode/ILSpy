@@ -133,6 +133,32 @@
         "resolved": "5.1.0",
         "contentHash": "YceiKmxdsBrlkAJpmJ2N8XkLyAH01xLsm4VLfjNp5MvtAom2wflZtEBz3CLMQret6Z7jSh3oBO1ULF1Is0tNxA=="
       },
+      "Microsoft.DiaSymReader": {
+        "type": "Direct",
+        "requested": "[1.4.0, )",
+        "resolved": "1.4.0",
+        "contentHash": "iLtWq5/W5ePzSraavAFeXAbasE6REDByizTz6M8yQO3e4jf+6pRqPLdNCSvnSfKRVqsF7y/lTVWhqlf89ttweg==",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1"
+        }
+      },
+      "Microsoft.DiaSymReader.Converter.Xml": {
+        "type": "Direct",
+        "requested": "[1.1.0-beta2-22171-02, )",
+        "resolved": "1.1.0-beta2-22171-02",
+        "contentHash": "Ixyqx+J0j/GXv87Yr4kJ79vkuQKOyMdZJtSQDEVUWheEXaQClYIn+jKwFIvZTFrIHqb+Iua2U46qj6DzQkT2uQ==",
+        "dependencies": {
+          "Microsoft.DiaSymReader": "1.4.0-beta2-21528-01",
+          "Microsoft.DiaSymReader.Native": "17.0.0-beta1.21524.1",
+          "Microsoft.DiaSymReader.PortablePdb": "1.7.0-beta-21525-03"
+        }
+      },
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "Direct",
         "requested": "[10.0.11, )",
@@ -399,10 +425,32 @@
         "resolved": "0.11.6",
         "contentHash": "NdNWGDiZ6eS/Mf/9+QHR91cj1K7Hy+PX9yrHI/zM7xFYuj9IWT2uxtB6sCHjrnxAeLV9fut1R6zHDUGKX6f9lQ=="
       },
+      "Microsoft.DiaSymReader.PortablePdb": {
+        "type": "Transitive",
+        "resolved": "1.7.0-beta-21525-03",
+        "contentHash": "5kthnTSHE9Emo6KpSIAjl4gwpkZKvug67WVLOaJ03H1isIipyom1XPUc/5rh+WlItbI9ZLZPJlMg6kKOb+lxwA==",
+        "dependencies": {
+          "Microsoft.DiaSymReader": "1.4.0-beta2-21525-04",
+          "NETStandard.Library": "1.6.1"
+        }
+      },
       "Microsoft.IO.RecyclableMemoryStream": {
         "type": "Transitive",
         "resolved": "3.0.1",
         "contentHash": "s/s20YTVY9r9TPfTrN5g8zPF1YhwxyqO6PxUkrYTGI2B+OGPe9AdajWZrLhFqXIvqIW23fnUE4+ztrUWNU1+9g=="
+      },
+      "Microsoft.NETCore.Platforms": {
+        "type": "Transitive",
+        "resolved": "1.1.0",
+        "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
+      },
+      "NETStandard.Library": {
+        "type": "Transitive",
+        "resolved": "1.6.1",
+        "contentHash": "WcSp3+vP+yHNgS8EV5J7pZ9IRpeDuARBPN28by8zqff1wJQXm26PVU8L3/fYLBJVU7BtDyqNVWq2KlCVvSSR4A==",
+        "dependencies": {
+          "Microsoft.NETCore.Platforms": "1.1.0"
+        }
       },
       "Newtonsoft.Json": {
         "type": "Transitive",
@@ -663,7 +711,7 @@
         "type": "Project",
         "dependencies": {
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9625, )",
+          "ICSharpCode.ILSpy.AI": "[11.0.0.9626, )",
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Markdig": "[0.40.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
@@ -713,6 +761,12 @@
       }
     },
     "net10.0/linux-x64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Avalonia.Angle.Windows.Natives": {
         "type": "Transitive",
         "resolved": "2.1.27548.20260419",
@@ -769,6 +823,12 @@
       }
     },
     "net10.0/osx-arm64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Avalonia.Angle.Windows.Natives": {
         "type": "Transitive",
         "resolved": "2.1.27548.20260419",
@@ -825,6 +885,12 @@
       }
     },
     "net10.0/win-arm64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Avalonia.Angle.Windows.Natives": {
         "type": "Transitive",
         "resolved": "2.1.27548.20260419",
@@ -881,6 +947,12 @@
       }
     },
     "net10.0/win-x64": {
+      "Microsoft.DiaSymReader.Native": {
+        "type": "Direct",
+        "requested": "[17.0.0-beta1.21524.1, )",
+        "resolved": "17.0.0-beta1.21524.1",
+        "contentHash": "bddH6yTHLUhIDC159WqQR1zyoO5HUyLv0kP7O7kAy2kZIlQSKwhdMn80BPbO/zbcMaURLe/7WAtimG5Nq+qevA=="
+      },
       "Avalonia.Angle.Windows.Natives": {
         "type": "Transitive",
         "resolved": "2.1.27548.20260419",

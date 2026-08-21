@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>
 	/// Generated embedded fallback prompts. DO NOT EDIT - regenerate with BuildTools/PromptEmbedder.

@@ -13,7 +13,7 @@ public static class Program
 		try
 		{
 			var options = GeneratorOptions.Parse(args);
-			var generated = PromptFileGenerator.Generate(options.InputDirectory);
+			var generated = PromptFileGenerator.Generate(options.InputDirectory, options.Namespace);
 			if (options.CheckOnly)
 				return PromptFileGenerator.IsCurrent(options.OutputFile, generated) ? 0 : 1;
 
@@ -28,18 +28,20 @@ public static class Program
 	}
 }
 
-public sealed record GeneratorOptions(string InputDirectory, string OutputFile, bool CheckOnly)
+public sealed record GeneratorOptions(string InputDirectory, string OutputFile, string Namespace, bool CheckOnly)
 {
 	public static GeneratorOptions Parse(string[] args)
 	{
-		if (args.Length is < 2 or > 3)
-			throw new ArgumentException("Usage: PromptEmbedder <input-directory> <output-file> [--check]");
+		if (args.Length is < 3 or > 4)
+			throw new ArgumentException("Usage: PromptEmbedder <input-directory> <output-file> <namespace> [--check]");
 
-		var checkOnly = args.Length == 3 && string.Equals(args[2], "--check", StringComparison.Ordinal);
-		if (args.Length == 3 && !checkOnly)
-			throw new ArgumentException("The optional third argument must be --check.");
+		var checkOnly = args.Length == 4 && string.Equals(args[3], "--check", StringComparison.Ordinal);
+		if (args.Length == 4 && !checkOnly)
+			throw new ArgumentException("The optional fourth argument must be --check.");
+		if (string.IsNullOrWhiteSpace(args[2]))
+			throw new ArgumentException("The target namespace must not be empty.");
 
-		return new GeneratorOptions(Path.GetFullPath(args[0]), Path.GetFullPath(args[1]), checkOnly);
+		return new GeneratorOptions(Path.GetFullPath(args[0]), Path.GetFullPath(args[1]), args[2], checkOnly);
 	}
 }
 
@@ -47,7 +49,7 @@ public static class PromptFileGenerator
 {
 	private const string Header = "// Copyright (c) 2026 Dr. Masroor Ehsan\n\n";
 
-	public static string Generate(string inputDirectory)
+	public static string Generate(string inputDirectory, string targetNamespace)
 	{
 		if (!Directory.Exists(inputDirectory))
 			throw new DirectoryNotFoundException($"Prompt directory does not exist: {inputDirectory}");
@@ -66,7 +68,7 @@ public static class PromptFileGenerator
 		builder.AppendLine("using System;");
 		builder.AppendLine("using System.Collections.Generic;");
 		builder.AppendLine();
-		builder.AppendLine("namespace ICSharpCode.ILSpyX.AI");
+		builder.AppendLine("namespace " + targetNamespace);
 		builder.AppendLine("{");
 		builder.AppendLine("\t/// <summary>");
 		builder.AppendLine("\t/// Generated embedded fallback prompts. DO NOT EDIT - regenerate with BuildTools/PromptEmbedder.");
