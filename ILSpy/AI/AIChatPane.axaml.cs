@@ -12,7 +12,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 
 using ICSharpCode.ILSpy.AI.Controls;
-using ICSharpCode.ILSpyX.AI;
 
 namespace ICSharpCode.ILSpy.AI
 {

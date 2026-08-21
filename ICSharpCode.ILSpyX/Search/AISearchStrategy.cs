@@ -11,7 +11,6 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpyX.Search

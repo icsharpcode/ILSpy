@@ -4,9 +4,9 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpy.AI.Controls;
-using ICSharpCode.ILSpyX.AI;
 
 using NUnit.Framework;
 

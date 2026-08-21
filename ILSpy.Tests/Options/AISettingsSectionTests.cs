@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.Tests.Options
 			var section = new AISettingsSection();
 
 			section.Should().BeAssignableTo<ISettingsSection>();
-			section.SectionName.Should().Be("AISettings");
+			section.SectionName.Should().Be((XName)"AISettings");
 			section.Model.Should().NotBeNull();
 		}
 

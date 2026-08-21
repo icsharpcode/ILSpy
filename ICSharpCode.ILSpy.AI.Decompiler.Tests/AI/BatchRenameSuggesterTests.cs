@@ -14,11 +14,10 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Decompiler.Tests.AI
 {
 	[TestFixture]
 	public class BatchRenameSuggesterTests

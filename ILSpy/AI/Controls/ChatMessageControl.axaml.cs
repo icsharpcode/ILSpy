@@ -6,7 +6,6 @@ using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 
-using ICSharpCode.ILSpyX.AI;
 
 namespace ICSharpCode.ILSpy.AI.Controls
 {

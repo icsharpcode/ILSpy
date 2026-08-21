@@ -28,7 +28,6 @@ using Avalonia.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.Analyzers;

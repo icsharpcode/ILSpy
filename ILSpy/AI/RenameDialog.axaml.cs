@@ -7,7 +7,6 @@ using Avalonia.Markup.Xaml;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AppEnv;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.AI

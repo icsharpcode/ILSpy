@@ -11,13 +11,11 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpy.AI.Providers;
-using ICSharpCode.ILSpyX.Settings;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Decompiler.Tests.AI
 {
 	[TestFixture]
 	public class AIExplanationServiceTests

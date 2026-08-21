@@ -25,7 +25,6 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.Abstractions;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 using ICSharpCode.ILSpyX.Analyzers.Builtin;
 

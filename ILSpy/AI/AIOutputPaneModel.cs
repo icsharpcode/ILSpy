@@ -13,10 +13,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
 using Microsoft.Extensions.Logging;

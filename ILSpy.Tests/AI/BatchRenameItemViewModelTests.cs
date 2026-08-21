@@ -1,7 +1,7 @@
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
 
 using NUnit.Framework;
 

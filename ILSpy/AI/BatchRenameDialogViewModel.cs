@@ -16,7 +16,6 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Annotations;
 using ICSharpCode.ILSpyX.Settings;
 

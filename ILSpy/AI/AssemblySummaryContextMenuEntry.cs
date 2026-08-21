@@ -12,7 +12,6 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.AI

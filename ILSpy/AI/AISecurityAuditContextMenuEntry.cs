@@ -11,7 +11,6 @@ using Avalonia.Media;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI.Decompiler;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Analyzers.Builtin;
 using ICSharpCode.ILSpy.TreeNodes;
 

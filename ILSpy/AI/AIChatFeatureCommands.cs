@@ -15,7 +15,6 @@ using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Analyzers;
 using ICSharpCode.ILSpyX.Analyzers.Builtin;
 

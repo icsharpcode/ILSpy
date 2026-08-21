@@ -17,10 +17,10 @@ using System.Composition;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
 
 namespace ICSharpCode.ILSpy.Options
 {

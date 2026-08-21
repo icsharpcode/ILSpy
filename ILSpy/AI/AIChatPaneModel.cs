@@ -24,7 +24,6 @@ using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
-using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.AI

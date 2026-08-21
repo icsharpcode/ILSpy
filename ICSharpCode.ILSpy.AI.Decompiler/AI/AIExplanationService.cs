@@ -9,11 +9,8 @@ using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.AI.Decompiler;
-using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.Settings;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	public sealed class AIExplanationService
 	{
