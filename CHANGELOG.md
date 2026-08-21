@@ -3,6 +3,29 @@
 This project does not keep an exhaustive release log; this file only records user-facing
 highlights that are worth noting between releases.
 
+## AI Prompt Externalization
+
+### New features
+- All AI system prompts now live in externalized `.prompt` files under
+  `ICSharpCode.ILSpyX/AI/prompts/` and can be edited without recompiling; changes take
+  effect on the next start of ILSpy.
+- Model-specific prompt variations (for example `explanation.opus.prompt`) are selected
+  at runtime through exact, case-sensitive `applies_to_models` matching, with
+  lexicographic file-name precedence.
+- When the prompt directory is missing or a file fails to parse, features fall back to
+  build-time embedded prompts, so the AI features keep working.
+
+### Improvements
+- The `BuildTools/PromptEmbedder` generator refreshes the embedded fallback prompts on
+  every ILSpyX build and offers a `--check` mode for CI staleness validation.
+- The `.prompt` file format, variation selection rules, and per-prompt documentation are
+  described in `ICSharpCode.ILSpyX/AI/prompts/README.md`.
+
+### Technical details
+- A new `AIPromptProvider` singleton loads and caches prompts per prompt ID and model ID
+  and serves all eight consumers: explanation, rename, chat, security, security_audit,
+  generate_docs, search, and assembly_summary.
+
 ## AI Panes - Markdown Syntax Highlighting
 
 ### New features
