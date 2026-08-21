@@ -84,9 +84,13 @@ namespace ICSharpCode.ILSpy.AppEnv
 			AssemblyLoadContext.Default.Resolving += ResolvePluginDependency;
 
 			var assemblies = new List<Assembly> {
-				typeof(IAnalyzer).Assembly,
-				typeof(AppComposition).Assembly,
-			};
+			typeof(IAnalyzer).Assembly,
+			typeof(AppComposition).Assembly,
+			// MEF exports that moved out of ILSpyX (AISelectionService, SecureKeyStorage,
+			// AIProviderFactory…). The container never scans project references, so any assembly
+			// holding exports must be listed here explicitly.
+			typeof(AI.AISelectionService).Assembly,
+		};
 			using (AppLog.Phase("AppComposition.LoadPlugins"))
 				assemblies.AddRange(LoadPlugins());
 			composedAssemblies = assemblies;

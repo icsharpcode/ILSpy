@@ -87,7 +87,7 @@ namespace ICSharpCode.ILSpy
 				_ = Task.Run(async () => {
 					try
 					{
-						var selectionService = Composition?.GetExport<ICSharpCode.ILSpyX.AI.AISelectionService>();
+						var selectionService = Composition?.GetExport<ICSharpCode.ILSpy.AI.AISelectionService>();
 						if (selectionService != null)
 							await selectionService.EnsureCredentialMigrationAsync().ConfigureAwait(false);
 					}

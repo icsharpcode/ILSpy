@@ -7,12 +7,10 @@ using System.Threading.Tasks;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Tests.AI
 {
 	[TestFixture]
 	public class AISelectionServiceTests
@@ -42,7 +40,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task EvaluateReadiness_OllamaNeedsNoKey()
 		{
-			var service = CreateService(out AISettings settings, consent: true);
+			var service = CreateService(out AISettingsModel settings, consent: true);
 			settings.ActiveProfile.ProviderType = "ollama";
 			settings.ActiveProfile.BaseUrl = "http://localhost:11434";
 
@@ -54,7 +52,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task EvaluateReadiness_CustomProviderAllowsMissingKey()
 		{
-			var service = CreateService(out AISettings settings, consent: true);
+			var service = CreateService(out AISettingsModel settings, consent: true);
 			settings.ActiveProfile.ProviderType = "custom";
 
 			AIConfigurationState state = await service.EvaluateReadinessAsync();
@@ -65,7 +63,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task EvaluateReadiness_ReportsInvalidEndpoint()
 		{
-			var service = CreateService(out AISettings settings, consent: true);
+			var service = CreateService(out AISettingsModel settings, consent: true);
 			settings.ActiveProfile.ProviderType = "custom";
 			settings.ActiveProfile.BaseUrl = "not a uri";
 
@@ -79,7 +77,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var backend = new FakeBackend();
 			backend.Keys["profile-placeholder"] = "unused";
-			var service = CreateService(out AISettings settings, consent: true, backend: backend);
+			var service = CreateService(out AISettingsModel settings, consent: true, backend: backend);
 			AIProfile profile = settings.ActiveProfile;
 			backend.Keys[profile.CredentialId] = "sk-profile-key";
 			profile.HasStoredKey = true;
@@ -111,7 +109,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		public async Task ResolveSnapshot_DistinguishesUnavailableStoreFromMissingKey()
 		{
 			var backend = new FakeBackend { IsUnavailable = true };
-			var service = CreateService(out AISettings settings, consent: true, backend: backend);
+			var service = CreateService(out AISettingsModel settings, consent: true, backend: backend);
 			settings.ActiveProfile.HasStoredKey = true;
 
 			await FluentActions.Awaiting(() => service.ResolveSnapshotAsync())
@@ -122,7 +120,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task ApplySelection_RestoresPerProfileModelMemoryAndPersists()
 		{
-			var service = CreateService(out AISettings settings, out List<int> persistCalls, consent: true);
+			var service = CreateService(out AISettingsModel settings, out List<int> persistCalls, consent: true);
 			var second = AIProfile.Create(AIProviderCatalog.Get("anthropic"));
 			second.Name = "Work";
 			second.Models.Add("claude-sonnet");
@@ -152,7 +150,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task DeleteProfile_ActiveDeletionSelectsFollowingProfile()
 		{
-			var service = CreateService(out AISettings settings, consent: true, backend: new FakeBackend());
+			var service = CreateService(out AISettingsModel settings, consent: true, backend: new FakeBackend());
 			var first = settings.Profiles[0];
 			var second = AIProfile.Create(AIProviderCatalog.Get("ollama"));
 			second.Name = "Second";
@@ -167,7 +165,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task DeleteProfile_ActiveLastDeletionWrapsToFirstRemaining()
 		{
-			var service = CreateService(out AISettings settings, consent: true, backend: new FakeBackend());
+			var service = CreateService(out AISettingsModel settings, consent: true, backend: new FakeBackend());
 			var first = settings.Profiles[0];
 			var second = AIProfile.Create(AIProviderCatalog.Get("ollama"));
 			second.Name = "Second";
@@ -185,7 +183,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task DeleteProfile_LastProfileCannotBeDeleted()
 		{
-			var service = CreateService(out AISettings settings, consent: true);
+			var service = CreateService(out AISettingsModel settings, consent: true);
 
 			await FluentActions.Awaiting(() => service.DeleteProfileAsync(settings.Profiles[0].Id))
 				.Should().ThrowAsync<AIConfigurationException>()
@@ -197,7 +195,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		public async Task DeleteProfile_DeletesSecretBeforeMetadata()
 		{
 			var backend = new FakeBackend { FailOnDelete = true };
-			var service = CreateService(out AISettings settings, consent: true, backend: backend);
+			var service = CreateService(out AISettingsModel settings, consent: true, backend: backend);
 			var doomed = AIProfile.Create(AIProviderCatalog.Get("openai"));
 			doomed.Name = "Doomed";
 			doomed.HasStoredKey = true;
@@ -214,7 +212,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		public async Task DeleteProfile_ActiveDeletionSecretFailurePreservesSelectionAndProfile()
 		{
 			var backend = new FakeBackend { FailOnDelete = true };
-			var service = CreateService(out AISettings settings, consent: true, backend: backend);
+			var service = CreateService(out AISettingsModel settings, consent: true, backend: backend);
 			var first = settings.Profiles[0];
 			first.HasStoredKey = true;
 			backend.Keys[first.CredentialId] = "sk-first";
@@ -233,7 +231,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task SaveProfile_RejectsCaseInsensitiveDuplicateNamesWithoutMutation()
 		{
-			var service = CreateService(out AISettings settings, consent: true);
+			var service = CreateService(out AISettingsModel settings, consent: true);
 			AIProfile existing = settings.Profiles[0];
 			existing.Name = "Work";
 			var duplicate = AIProfile.Create(AIProviderCatalog.Get("anthropic"));
@@ -250,7 +248,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		[Test]
 		public async Task SelectionChanged_PublishesOneNotificationPerApply()
 		{
-			var service = CreateService(out AISettings settings, consent: true);
+			var service = CreateService(out AISettingsModel settings, consent: true);
 			int notifications = 0;
 			service.SelectionChanged += (_, _) => notifications++;
 
@@ -264,14 +262,14 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 			return CreateService(out _, consent, backend);
 		}
 
-		static AISelectionService CreateService(out AISettings settings, bool consent = false, FakeBackend? backend = null)
+		static AISelectionService CreateService(out AISettingsModel settings, bool consent = false, FakeBackend? backend = null)
 		{
 			return CreateService(out settings, out _, consent, backend);
 		}
 
-		static AISelectionService CreateService(out AISettings settings, out List<int> persistCalls, bool consent = false, FakeBackend? backend = null)
+		static AISelectionService CreateService(out AISettingsModel settings, out List<int> persistCalls, bool consent = false, FakeBackend? backend = null)
 		{
-			settings = new AISettings { PrivacyConsentAccepted = consent };
+			settings = new AISettingsModel { PrivacyConsentAccepted = consent };
 			persistCalls = new List<int>();
 			List<int> calls = persistCalls;
 			return new AISelectionService(settings, new SecureKeyStorage(backend ?? new FakeBackend()), () => {

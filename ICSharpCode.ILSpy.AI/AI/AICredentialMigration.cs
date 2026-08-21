@@ -5,9 +5,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ICSharpCode.ILSpyX.Settings;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>
 	/// Moves a legacy provider-keyed credential to the migrated profile identity. The legacy
@@ -25,7 +24,7 @@ namespace ICSharpCode.ILSpyX.AI
 			this.keyStorage = keyStorage ?? throw new ArgumentNullException(nameof(keyStorage));
 		}
 
-		public async Task EnsureMigratedAsync(AISettings settings, CancellationToken cancellationToken = default)
+		public async Task EnsureMigratedAsync(AISettingsModel settings, CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(settings);
 			if (!settings.CredentialMigrationPending)

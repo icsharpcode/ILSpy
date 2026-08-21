@@ -20,6 +20,7 @@ using System;
 using System.ComponentModel;
 using System.Composition;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
 
@@ -58,7 +59,11 @@ namespace ICSharpCode.ILSpy
 
 		public MiscSettings MiscSettings => GetSettings<MiscSettings>();
 
-		public AISettings AISettings => GetSettings<AISettings>();
+		/// <summary>
+		/// Live AI settings state. Materializes the <see cref="AISettingsSection"/> adapter that
+		/// owns persistence and returns its portable model; callers bind to the model directly.
+		/// </summary>
+		public AISettingsModel AISettings => GetSettings<AISettingsSection>().Model;
 
 		/// <summary>
 		/// Returns the effective decompiler settings a decompilation started right now would

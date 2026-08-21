@@ -7,10 +7,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.Settings;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>
 	/// Application-scoped AI selection service: loads and validates profiles, owns the shared
@@ -24,7 +22,7 @@ namespace ICSharpCode.ILSpyX.AI
 	public sealed class AISelectionService : IDisposable
 #pragma warning restore MEF009
 	{
-		readonly AISettings settings;
+		readonly AISettingsModel settings;
 		readonly SecureKeyStorage keyStorage;
 		readonly Func<Task>? persistAsync;
 		readonly AICredentialMigration credentialMigration;
@@ -39,7 +37,7 @@ namespace ICSharpCode.ILSpyX.AI
 		{
 		}
 
-		internal AISelectionService(AISettings settings, SecureKeyStorage keyStorage, Func<Task>? persistAsync = null)
+		internal AISelectionService(AISettingsModel settings, SecureKeyStorage keyStorage, Func<Task>? persistAsync = null)
 		{
 			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			this.keyStorage = keyStorage ?? throw new ArgumentNullException(nameof(keyStorage));
@@ -325,7 +323,7 @@ namespace ICSharpCode.ILSpyX.AI
 	/// </summary>
 	public abstract class AISelectionHost
 	{
-		public abstract Settings.AISettings Settings { get; }
+		public abstract AISettingsModel Settings { get; }
 
 		public virtual Func<Task>? PersistAsync => null;
 	}

@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>Which party implements the wire protocol for a provider type.</summary>
 	public enum AIProviderImplementation

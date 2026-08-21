@@ -5,21 +5,20 @@ using System.Xml.Linq;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpy.AI;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.Settings
+namespace ICSharpCode.ILSpy.AI.Tests.Settings
 {
 	[TestFixture]
-	public class AISettingsTests
+	public class AISettingsModelTests
 	{
 		[Test]
 		public void Defaults_AreValid()
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
-			settings.Should().BeAssignableTo<ISettingsSection>();
 			settings.Provider.Should().Be("openai");
 			settings.BaseUrl.Should().Be("https://api.openai.com");
 			settings.Model.Should().Be("gpt-4o");
@@ -36,9 +35,9 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[TestCase("ollama", "http://localhost:11434", "llama3:70b")]
 		public void MissingProviderSettings_UseProviderDefaults(string provider, string baseUrl, string model)
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
-			settings.LoadFromXml(new XElement("AISettings", new XElement("Provider", provider)));
+			settings.LoadFromXml(new XElement("AISettingsModel", new XElement("Provider", provider)));
 
 			settings.BaseUrl.Should().Be(baseUrl);
 			settings.Model.Should().Be(model);
@@ -47,7 +46,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void ChangingProvider_PreservesExplicitEndpointAndModel()
 		{
-			var settings = new AISettings {
+			var settings = new AISettingsModel {
 				BaseUrl = "https://proxy.example.test",
 				Model = "proxy-model"
 			};
@@ -61,7 +60,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void SaveAndLoad_RoundTripsPersistedValues()
 		{
-			var original = new AISettings {
+			var original = new AISettingsModel {
 				Provider = "anthropic",
 				ApiKeyPlaceholder = "stored-key-reference",
 				BaseUrl = "https://example.test",
@@ -74,7 +73,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 				PrivacyConsentAccepted = true
 			};
 
-			var loaded = new AISettings();
+			var loaded = new AISettingsModel();
 			loaded.LoadFromXml(original.SaveToXml());
 
 			loaded.Provider.Should().Be(original.Provider);
@@ -94,18 +93,18 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void SaveToXml_NeverSerializesApiKey()
 		{
-			var settings = new AISettings { ApiKey = "secret-api-key" };
+			var settings = new AISettingsModel { ApiKey = "secret-api-key" };
 
 			var xml = settings.SaveToXml().ToString(SaveOptions.DisableFormatting);
 
 			xml.Should().NotContain("secret-api-key");
-			settings.SaveToXml().Element(nameof(AISettings.ApiKey)).Should().BeNull();
+			settings.SaveToXml().Element(nameof(AISettingsModel.ApiKey)).Should().BeNull();
 		}
 
 		[Test]
 		public void LoadFromXml_NullUsesDefaults()
 		{
-			var settings = new AISettings { Provider = "anthropic", MaxContextTokens = 1000 };
+			var settings = new AISettingsModel { Provider = "anthropic", MaxContextTokens = 1000 };
 
 			settings.LoadFromXml(null!);
 
@@ -117,9 +116,9 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void LoadFromXml_MalformedValuesKeepSafeDefaults()
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
-			settings.LoadFromXml(new XElement("AISettings",
+			settings.LoadFromXml(new XElement("AISettingsModel",
 				new XElement("Provider", "anthropic"),
 				new XElement("MaxContextTokens", "not-a-number"),
 				new XElement("StreamResponses", "not-a-boolean"),
@@ -141,21 +140,21 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void MaxContextTokens_IsAlwaysPositive()
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
 			settings.MaxContextTokens = 0;
 			settings.MaxContextTokens.Should().BePositive();
 			settings.MaxContextTokens = -10;
 			settings.MaxContextTokens.Should().BePositive();
 
-			settings.LoadFromXml(new XElement("AISettings", new XElement("MaxContextTokens", "0")));
+			settings.LoadFromXml(new XElement("AISettingsModel", new XElement("MaxContextTokens", "0")));
 			settings.MaxContextTokens.Should().BePositive();
 		}
 
 		[Test]
 		public void PropertyChanges_RaiseNotifications()
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 			var changed = new List<string?>();
 			settings.PropertyChanged += (_, e) => changed.Add(e.PropertyName);
 

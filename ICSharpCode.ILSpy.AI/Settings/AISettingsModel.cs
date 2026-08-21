@@ -1,4 +1,20 @@
 // Copyright (c) 2026 Dr. Masroor Ehsan
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Collections.Generic;
@@ -8,9 +24,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
-using ICSharpCode.ILSpyX.AI;
-
-namespace ICSharpCode.ILSpyX.Settings
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>
 	/// Settings for AI/LLM integration. Schema 2 persists an ordered collection of AI profiles,
@@ -18,7 +32,12 @@ namespace ICSharpCode.ILSpyX.Settings
 	/// context/privacy preferences. The legacy singleton members (Provider, BaseUrl, Model)
 	/// remain as a facade over the active profile until all consumers migrate.
 	/// </summary>
-	public class AISettings : ISettingsSection
+	/// <remarks>
+	/// Portable model: the desktop host wraps it in an <c>ISettingsSection</c> adapter that owns
+	/// the section registration; this type owns the XML translation itself so the persisted
+	/// schema (element names, ordering, default omission) stays with the state it serializes.
+	/// </remarks>
+	public class AISettingsModel : INotifyPropertyChanged
 	{
 		public const string DefaultProvider = "openai";
 		public const int DefaultMaxContextTokens = 32000;
@@ -27,6 +46,9 @@ namespace ICSharpCode.ILSpyX.Settings
 
 		/// <summary>The persistence schema version written by <see cref="SaveToXml"/>.</summary>
 		public const int CurrentSchemaVersion = 2;
+
+		/// <summary>The XML element name of the settings section that serializes this model.</summary>
+		public const string SectionElementName = "AISettings";
 
 		string apiKey = string.Empty;
 		string apiKeyPlaceholder = string.Empty;
@@ -39,15 +61,13 @@ namespace ICSharpCode.ILSpyX.Settings
 		string activeProfileId = string.Empty;
 		bool credentialMigrationPending;
 
-		public AISettings()
+		public AISettingsModel()
 		{
 			Profiles.Add(CreateDefaultProfile());
 			activeProfileId = Profiles[0].Id;
 		}
 
 		public event PropertyChangedEventHandler? PropertyChanged;
-
-		public XName SectionName => "AISettings";
 
 		/// <summary>
 		/// Ordered, user-managed AI profiles. XML order is the persisted order.
@@ -275,7 +295,7 @@ namespace ICSharpCode.ILSpyX.Settings
 					new XElement("LastSelectedModel", p.LastSelectedModel),
 					new XElement("Models", p.Models.Select(m => new XElement("Model", m))))));
 
-			return new XElement(SectionName,
+			return new XElement(SectionElementName,
 				new XElement("SchemaVersion", CurrentSchemaVersion),
 				new XElement(nameof(ActiveProfileId), ActiveProfileId),
 				new XElement(nameof(MaxContextTokens), MaxContextTokens),

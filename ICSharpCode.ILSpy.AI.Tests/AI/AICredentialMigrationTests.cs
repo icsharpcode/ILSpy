@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpy.AI;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Tests.AI
 {
 	[TestFixture]
 	public class AICredentialMigrationTests
@@ -21,8 +20,8 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var backend = new FakeBackend();
 			backend.Keys["anthropic"] = "sk-legacy-key";
-			var settings = new AISettings();
-			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettings",
+			var settings = new AISettingsModel();
+			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettingsModel",
 				new System.Xml.Linq.XElement("Provider", "anthropic"),
 				new System.Xml.Linq.XElement("ApiKeyPlaceholder", "ref")));
 			string profileCredentialId = settings.Profiles[0].CredentialId;
@@ -41,8 +40,8 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		public async Task PendingMigration_WithoutLegacyKey_CompletesWithoutWriting()
 		{
 			var backend = new FakeBackend();
-			var settings = new AISettings();
-			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettings",
+			var settings = new AISettingsModel();
+			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettingsModel",
 				new System.Xml.Linq.XElement("Provider", "openai"),
 				new System.Xml.Linq.XElement("ApiKeyPlaceholder", "ref")));
 			var migration = new AICredentialMigration(new SecureKeyStorage(backend));
@@ -58,8 +57,8 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var backend = new FakeBackend { IsUnavailable = true };
 			backend.Keys["openai"] = "sk-legacy-key";
-			var settings = new AISettings();
-			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettings",
+			var settings = new AISettingsModel();
+			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettingsModel",
 				new System.Xml.Linq.XElement("Provider", "openai"),
 				new System.Xml.Linq.XElement("ApiKeyPlaceholder", "ref")));
 			var migration = new AICredentialMigration(new SecureKeyStorage(backend));
@@ -74,7 +73,7 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		public async Task CompletedMigration_IsNeverRetried()
 		{
 			var backend = new FakeBackend();
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 			var migration = new AICredentialMigration(new SecureKeyStorage(backend));
 
 			await migration.EnsureMigratedAsync(settings);
@@ -88,8 +87,8 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var backend = new FakeBackend();
 			backend.Keys["openai"] = "sk-legacy-key";
-			var settings = new AISettings();
-			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettings",
+			var settings = new AISettingsModel();
+			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettingsModel",
 				new System.Xml.Linq.XElement("Provider", "openai"),
 				new System.Xml.Linq.XElement("ApiKeyPlaceholder", "ref")));
 			string profileCredentialId = settings.Profiles[0].CredentialId;
@@ -107,8 +106,8 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		{
 			var backend = new FakeBackend();
 			backend.Keys["openai"] = "sk-legacy-key";
-			var settings = new AISettings();
-			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettings",
+			var settings = new AISettingsModel();
+			settings.LoadFromXml(new System.Xml.Linq.XElement("AISettingsModel",
 				new System.Xml.Linq.XElement("Provider", "openai"),
 				new System.Xml.Linq.XElement("ApiKeyPlaceholder", "ref")));
 			var migration = new AICredentialMigration(new SecureKeyStorage(backend));

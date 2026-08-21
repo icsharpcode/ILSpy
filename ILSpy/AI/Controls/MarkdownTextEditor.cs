@@ -15,8 +15,6 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.AI.Controls
 {
@@ -32,7 +30,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 		const string OpenInDecompilerHeader = "Open in Decompiler";
 		const string CopyCodeBlockHeader = "Copy Code Block";
 		const string CodeBlockCopiedMessage = "Code block copied to clipboard";
-		AISettings? aiSettings;
+		AISettingsModel? aiSettings;
 		DispatcherTimer? transientTooltipTimer;
 		ScrollViewer? editorScrollViewer;
 		int wrapChangeVersion;
@@ -99,7 +97,7 @@ namespace ICSharpCode.ILSpy.AI.Controls
 
 		void OnAISettingsPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == nameof(AISettings.WordWrap))
+			if (e.PropertyName == nameof(AISettingsModel.WordWrap))
 				ApplyWordWrap(aiSettings?.WordWrap ?? true);
 		}
 

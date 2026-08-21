@@ -12,20 +12,6 @@ using Microsoft.Extensions.Logging;
 
 namespace ICSharpCode.ILSpyX.AI
 {
-	public interface IAIProviderFactory
-	{
-		/// <summary>
-		/// Creates the provider for an immutable resolved target. No mutable settings are read;
-		/// in-flight requests are unaffected by later configuration changes.
-		/// </summary>
-		Task<ILLMProvider> CreateAsync(AISelectionSnapshot snapshot, CancellationToken cancellationToken = default);
-	}
-
-	public sealed class AIConfigurationException : Exception
-	{
-		public AIConfigurationException(string message) : base(message) { }
-	}
-
 	/// <summary>Creates the configured provider without exposing secure-store or HttpClient details to UI code.</summary>
 	[Export(typeof(IAIProviderFactory))]
 	[Shared]

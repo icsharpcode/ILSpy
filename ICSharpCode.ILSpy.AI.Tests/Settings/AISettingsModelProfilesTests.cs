@@ -5,20 +5,19 @@ using System.Xml.Linq;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpy.AI;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.Settings
+namespace ICSharpCode.ILSpy.AI.Tests.Settings
 {
 	[TestFixture]
-	public class AISettingsProfilesTests
+	public class AISettingsModelProfilesTests
 	{
 		[Test]
 		public void NewSettings_ContainsSingleDefaultOpenAiProfile()
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
 			settings.SchemaVersion.Should().Be(2);
 			settings.Profiles.Should().HaveCount(1);
@@ -34,7 +33,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void SaveToXml_WritesSchema2ShapeWithoutSecrets()
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 			settings.ApiKey = "secret-api-key";
 			AIProfile profile = settings.Profiles[0];
 			profile.HasStoredKey = true;
@@ -59,13 +58,13 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void LegacySingletonSettings_MigrateToOneDefaultProfile()
 		{
-			var xml = new XElement("AISettings",
+			var xml = new XElement("AISettingsModel",
 				new XElement("Provider", "anthropic"),
 				new XElement("ApiKeyPlaceholder", "stored-key-reference"),
 				new XElement("BaseUrl", "https://staging.example.test"),
 				new XElement("Model", "claude-special"),
 				new XElement("PrivacyConsentAccepted", "true"));
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
 			settings.LoadFromXml(xml);
 
@@ -85,8 +84,8 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void LegacySettings_WithBlankFields_UseProviderDefaults()
 		{
-			var xml = new XElement("AISettings", new XElement("Provider", "ollama"));
-			var settings = new AISettings();
+			var xml = new XElement("AISettingsModel", new XElement("Provider", "ollama"));
+			var settings = new AISettingsModel();
 
 			settings.LoadFromXml(xml);
 
@@ -101,15 +100,15 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void Migration_IsIdempotentAcrossSaveLoadCycles()
 		{
-			var xml = new XElement("AISettings",
+			var xml = new XElement("AISettingsModel",
 				new XElement("Provider", "anthropic"),
 				new XElement("Model", "claude-special"));
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 			settings.LoadFromXml(xml);
 
-			var reloaded = new AISettings();
+			var reloaded = new AISettingsModel();
 			reloaded.LoadFromXml(settings.SaveToXml());
-			var thirdPass = new AISettings();
+			var thirdPass = new AISettingsModel();
 			thirdPass.LoadFromXml(reloaded.SaveToXml());
 
 			thirdPass.Profiles.Should().HaveCount(1, "repeated loads must not create duplicate profiles");
@@ -121,7 +120,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		public void LoadFromXml_Schema2_RoundTripsProfilesInOrder()
 		{
 			var xml = XElement.Parse("""
-				<AISettings>
+				<AISettingsModel>
 				  <SchemaVersion>2</SchemaVersion>
 				  <ActiveProfileId>p2</ActiveProfileId>
 				  <MaxContextTokens>5000</MaxContextTokens>
@@ -147,9 +146,9 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 				    </Profile>
 				  </Profiles>
 				  <CredentialMigration State="Pending" />
-				</AISettings>
+				</AISettingsModel>
 				""");
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
 			settings.LoadFromXml(xml);
 
@@ -173,7 +172,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		public void LoadFromXml_RepairsMalformedProfilesWithoutDroppingValidOnes()
 		{
 			var xml = XElement.Parse("""
-				<AISettings>
+				<AISettingsModel>
 				  <SchemaVersion>2</SchemaVersion>
 				  <ActiveProfileId>missing</ActiveProfileId>
 				  <Profiles>
@@ -188,9 +187,9 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 				      <Models />
 				    </Profile>
 				  </Profiles>
-				</AISettings>
+				</AISettingsModel>
 				""");
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
 			settings.LoadFromXml(xml);
 
@@ -210,11 +209,11 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		public void LoadFromXml_Schema2WithoutActiveOrProfiles_FallsBackToMinimumValidProfile()
 		{
 			var xml = XElement.Parse("""
-				<AISettings>
+				<AISettingsModel>
 				  <SchemaVersion>2</SchemaVersion>
-				</AISettings>
+				</AISettingsModel>
 				""");
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
 			settings.LoadFromXml(xml);
 
@@ -226,8 +225,8 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void CompleteCredentialMigration_PersistsCompleteMarker()
 		{
-			var settings = new AISettings();
-			settings.LoadFromXml(new XElement("AISettings",
+			var settings = new AISettingsModel();
+			settings.LoadFromXml(new XElement("AISettingsModel",
 				new XElement("Provider", "openai"),
 				new XElement("ApiKeyPlaceholder", "ref")));
 
@@ -235,7 +234,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 			settings.MarkCredentialMigrationComplete();
 			settings.CredentialMigrationPending.Should().BeFalse();
 
-			var reloaded = new AISettings();
+			var reloaded = new AISettingsModel();
 			reloaded.LoadFromXml(settings.SaveToXml());
 			reloaded.CredentialMigrationPending.Should().BeFalse("a completed migration is never retried");
 		}
@@ -243,7 +242,7 @@ namespace ICSharpCode.ILSpyX.Tests.Settings
 		[Test]
 		public void LegacyFacade_MapsToActiveProfile()
 		{
-			var settings = new AISettings();
+			var settings = new AISettingsModel();
 
 			settings.Provider.Should().Be(settings.Profiles[0].ProviderType);
 			settings.Provider = "ollama";

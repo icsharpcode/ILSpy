@@ -13,7 +13,6 @@ using AwesomeAssertions;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
 
 using NUnit.Framework;
 
@@ -26,7 +25,7 @@ public class AISettingsViewModelTests
 	public async Task AddThenCancel_LeavesSavedStateSelectionAndSecureStorageUntouched()
 	{
 		var backend = new RecordingKeyBackend();
-		var viewModel = CreateViewModel(backend, out AISettings settings);
+		var viewModel = CreateViewModel(backend, out AISettingsModel settings);
 		string savedXml = Serialize(settings);
 		string activeProfileId = settings.ActiveProfileId;
 
@@ -48,7 +47,7 @@ public class AISettingsViewModelTests
 	[Test]
 	public async Task Duplicate_CopiesNonSecretFieldsWithFreshIdentityAndNoCredential()
 	{
-		var viewModel = CreateViewModel(new RecordingKeyBackend(), out AISettings settings);
+		var viewModel = CreateViewModel(new RecordingKeyBackend(), out AISettingsModel settings);
 		AIProfile saved = settings.ActiveProfile;
 		saved.Name = "Work";
 		saved.BaseUrl = "https://proxy.example.test";
@@ -72,7 +71,7 @@ public class AISettingsViewModelTests
 	[Test]
 	public async Task Cancel_DiscardsDraftEditsAndTransientKeyInput()
 	{
-		var viewModel = CreateViewModel(new RecordingKeyBackend(), out AISettings settings);
+		var viewModel = CreateViewModel(new RecordingKeyBackend(), out AISettingsModel settings);
 		AIProfile saved = settings.ActiveProfile.Clone();
 
 		viewModel.AIProfileDraft!.Name = "Unsaved";
@@ -107,7 +106,7 @@ public class AISettingsViewModelTests
 	[Test]
 	public async Task Save_RejectsInvalidEndpointWithoutMutatingSavedProfile()
 	{
-		var viewModel = CreateViewModel(new RecordingKeyBackend(), out AISettings settings);
+		var viewModel = CreateViewModel(new RecordingKeyBackend(), out AISettingsModel settings);
 		string originalEndpoint = settings.ActiveProfile.BaseUrl;
 		viewModel.AIProfileDraft!.BaseUrl = "api.example.test";
 
@@ -121,7 +120,7 @@ public class AISettingsViewModelTests
 	public async Task SaveKeyFailure_PreservesMetadataAndDoesNotExposeKey()
 	{
 		var backend = new RecordingKeyBackend { FailOnSave = true };
-		var viewModel = CreateViewModel(backend, out AISettings settings);
+		var viewModel = CreateViewModel(backend, out AISettingsModel settings);
 		string savedName = settings.ActiveProfile.Name;
 		viewModel.AIProfileDraft!.Name = "Changed";
 		viewModel.ApiKeyInput = "super-secret-test-key";
@@ -142,7 +141,7 @@ public class AISettingsViewModelTests
 	{
 		var backend = new RecordingKeyBackend();
 		var factory = new RecordingProviderFactory();
-		var viewModel = CreateViewModel(backend, out AISettings settings, factory);
+		var viewModel = CreateViewModel(backend, out AISettingsModel settings, factory);
 		settings.PrivacyConsentAccepted = true;
 		string savedXml = Serialize(settings);
 		string activeProfileId = settings.ActiveProfileId;
@@ -168,10 +167,10 @@ public class AISettingsViewModelTests
 
 	static AISettingsViewModel CreateViewModel(
 		RecordingKeyBackend backend,
-		out AISettings settings,
+		out AISettingsModel settings,
 		IAIProviderFactory? providerFactory = null)
 	{
-		settings = new AISettings();
+		settings = new AISettingsModel();
 		var viewModel = new AISettingsViewModel(
 			providerFactory ?? new RecordingProviderFactory(),
 			new SecureKeyStorage(backend));
@@ -198,7 +197,7 @@ public class AISettingsViewModelTests
 		await (Task)method.Invoke(viewModel, null)!;
 	}
 
-	static string Serialize(AISettings settings)
+	static string Serialize(AISettingsModel settings)
 		=> settings.SaveToXml().ToString(SaveOptions.DisableFormatting);
 
 	sealed class RecordingKeyBackend : ISecureKeyStorageBackend

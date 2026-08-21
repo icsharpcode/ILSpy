@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpyX.AI;
+using ICSharpCode.ILSpy.AI;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Tests.AI
 {
 	[TestFixture]
 	public class SecureKeyStorageTests

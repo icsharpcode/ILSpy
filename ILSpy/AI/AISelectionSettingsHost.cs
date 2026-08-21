@@ -4,9 +4,6 @@ using System;
 using System.Composition;
 using System.Threading.Tasks;
 
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
-
 namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>
@@ -26,7 +23,7 @@ namespace ICSharpCode.ILSpy.AI
 			this.settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 		}
 
-		public override AISettings Settings => settingsService.AISettings;
+		public override AISettingsModel Settings => settingsService.AISettings;
 
 		public override Func<Task> PersistAsync => () => {
 			settingsService.Save();

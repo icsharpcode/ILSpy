@@ -5,7 +5,7 @@ using System.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	internal interface ISecureKeyStorageBackend
 	{

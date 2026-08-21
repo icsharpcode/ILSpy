@@ -21,7 +21,6 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -31,7 +30,7 @@ namespace ICSharpCode.ILSpy.Options
 		readonly IAIProviderFactory providerFactory;
 		readonly SecureKeyStorage keyStorage;
 		AISelectionService? selectionService;
-		AISettings settings = null!;
+		AISettingsModel settings = null!;
 		AIProfile? selectedProfile;
 		AIProfile? draft;
 		bool draftIsNew;
@@ -138,7 +137,7 @@ namespace ICSharpCode.ILSpy.Options
 			_ => "Provider unavailable"
 		};
 
-		public AISettings Settings {
+		public AISettingsModel Settings {
 			get => settings;
 			private set {
 				if (ReferenceEquals(settings, value))
@@ -217,7 +216,7 @@ namespace ICSharpCode.ILSpy.Options
 				if (Settings is null || IsTestingConnection || !Settings.PrivacyConsentAccepted)
 					return false;
 				AIProfile profile = AIProfileDraft ?? Settings.ActiveProfile;
-				if (!AISettings.IsSupportedProvider(profile.ProviderType)
+				if (!AISettingsModel.IsSupportedProvider(profile.ProviderType)
 					|| string.IsNullOrWhiteSpace(profile.BaseUrl)
 					|| string.IsNullOrWhiteSpace(profile.ResolveModel()))
 					return false;
@@ -551,7 +550,7 @@ namespace ICSharpCode.ILSpy.Options
 			TestConnectionCommand.RaiseCanExecuteChanged();
 		}
 
-		async Task LoadStoredKeyAsync(AISettings target, CancellationToken cancellationToken)
+		async Task LoadStoredKeyAsync(AISettingsModel target, CancellationToken cancellationToken)
 		{
 			if (!target.ActiveProfile.HasStoredKey && string.IsNullOrWhiteSpace(target.ApiKeyPlaceholder))
 				return;
@@ -749,9 +748,9 @@ namespace ICSharpCode.ILSpy.Options
 
 		void SettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is nameof(AISettings.Provider) or nameof(AISettings.ApiKey)
-				or nameof(AISettings.ApiKeyPlaceholder) or nameof(AISettings.BaseUrl)
-				or nameof(AISettings.Model) or nameof(AISettings.PrivacyConsentAccepted))
+			if (e.PropertyName is nameof(AISettingsModel.Provider) or nameof(AISettingsModel.ApiKey)
+				or nameof(AISettingsModel.ApiKeyPlaceholder) or nameof(AISettingsModel.BaseUrl)
+				or nameof(AISettingsModel.Model) or nameof(AISettingsModel.PrivacyConsentAccepted))
 			{
 				OnPropertyChanged(nameof(HasConfiguredKey));
 				OnPropertyChanged(nameof(CanTestConnection));
