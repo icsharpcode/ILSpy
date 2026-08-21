@@ -99,6 +99,13 @@ jobs:
 
     - name: Execute unit tests
       id: unit-tests
+      # All test hosts of the solution run concurrently on a 4-core runner. Server GC (enabled by
+      # ICSharpCode.Decompiler.Tests for machines it has to itself) keeps that host at 100% CPU
+      # and starves the neighbours: the process-module walks in ILSpy.Tests.Windows blow their
+      # 60 s budget and ILSpy.Tests takes almost twice as long, while the decompiler suite itself
+      # gains little here. The environment variable overrides the runtimeconfig setting.
+      env:
+        DOTNET_gcServer: 0
       run: >
         dotnet test --solution ilspy.sln
         --configuration ${{ matrix.configuration }}

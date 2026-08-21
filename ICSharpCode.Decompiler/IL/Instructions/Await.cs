@@ -25,5 +25,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public IMethod? GetAwaiterMethod;
 		public IMethod? GetResultMethod;
+		// Whether the original GetAwaiter call was `call` or `callvirt`, so ExpressionBuilder can tell
+		// whether re-emitting it as a plain `await` expression would change which method gets invoked.
+		public OpCode GetAwaiterCallOpCode = OpCode.Call;
 	}
 }

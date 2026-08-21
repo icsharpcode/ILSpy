@@ -5,20 +5,33 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "ILSpy",
+            "name": ".NET Core Debugger (launch)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${command:dotrush.activeTargetPath}",
+            // ILSpy is single-instance: without this a launch forwards its arguments to an
+            // already-running ILSpy and exits before Avalonia starts, so no breakpoint is hit.
+            "args": ["--newinstance"],
+            "preLaunchTask": "dotrush: Build"
+        },
+        {
+            // Fallback for setups without the dotrush extension: builds and launches ILSpy
+            // directly, no ${command:dotrush.*} resolution involved.
+            "name": "ILSpy (no dotrush)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/ILSpy/bin/Debug/net10.0/ILSpy.exe",
+            "program": "${workspaceFolder}/ILSpy/bin/Debug/net10.0/ILSpy.dll",
             "args": ["--newinstance"],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
             "stopAtEntry": false
         },
         {
-            "name": ".NET Core Attach",
+            "name": ".NET Core Debugger (attach)",
             "type": "coreclr",
-            "request": "attach"
+            "request": "attach",
+            "processId": "${command:dotrush.pickProcess}"
         }
     ]
 }

@@ -161,6 +161,15 @@ namespace ICSharpCode.ILSpyX
 			return GetSnapshot().GetAllAssembliesAsync();
 		}
 
+		/// <summary>
+		/// Streaming variant of <see cref="GetAllAssemblies"/>, for consumers that can act on each
+		/// assembly as it loads instead of waiting for the whole list.
+		/// </summary>
+		public IAsyncEnumerable<LoadedAssembly> EnumerateAllAssemblies(CancellationToken cancellationToken = default)
+		{
+			return GetSnapshot().EnumerateAllAssembliesAsync(cancellationToken);
+		}
+
 		public int Count {
 			get {
 				lock (lockObj)

@@ -49,9 +49,12 @@
 		</Grid>
 		<!-- Indeterminate progress strip: lights up while RunningSearch is in flight. Mirrors
 		     WPF's searchProgressBar; the height is just enough to be noticed without stealing
-		     space from the results list. -->
+		     space from the results list. IsIndeterminate follows the search too, not just
+		     IsVisible: the indeterminate indicator is an infinite animation that keeps running
+		     (and keeps the pane's visual tree alive through the render clock) for as long as
+		     the pseudo-class is set, hidden or not. -->
 		<ProgressBar Grid.Row="1" Name="SearchProgress"
-		             IsIndeterminate="True"
+		             IsIndeterminate="{Binding IsSearching}"
 		             IsVisible="{Binding IsSearching}"
 		             Height="2" Margin="0,0,0,1"
 		             BorderThickness="0"

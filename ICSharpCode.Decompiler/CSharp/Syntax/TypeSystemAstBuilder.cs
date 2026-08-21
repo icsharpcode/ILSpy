@@ -1245,47 +1245,60 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			if (AddResolveResultAnnotations)
 				expression.AddAnnotation(new MemberResolveResult(new TypeResolveResult(constantType), field));
 
+			if (info.Negate)
+			{
+				expression = new UnaryOperatorExpression(UnaryOperatorType.Minus, expression);
+				if (AddResolveResultAnnotations)
+					expression.AddAnnotation(new ConstantResolveResult(constantType, constant));
+			}
+
 			return true;
 		}
 
-		static readonly Dictionary<object, (KnownTypeCode Type, string Member)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member)>() {
+		// Negate wraps the member reference in a unary minus. The negative counterpart of most
+		// members is itself a member (-MaxValue is exactly MinValue, and both infinities have
+		// their own), so only Epsilon needs it. It cannot be derived from the sign of the
+		// constant: MinValue and NegativeInfinity are negative, but must not be negated.
+		static readonly Dictionary<object, (KnownTypeCode Type, string Member, bool Negate)> specialConstants = new Dictionary<object, (KnownTypeCode Type, string Member, bool Negate)>() {
 			// byte:
-			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue") },
+			{ byte.MaxValue, (KnownTypeCode.Byte, "MaxValue", false) },
 			// sbyte:
-			{ sbyte.MinValue, (KnownTypeCode.SByte, "MinValue") },
-			{ sbyte.MaxValue, (KnownTypeCode.SByte, "MaxValue") },
+			{ sbyte.MinValue, (KnownTypeCode.SByte, "MinValue", false) },
+			{ sbyte.MaxValue, (KnownTypeCode.SByte, "MaxValue", false) },
 			// short:
-			{ short.MinValue, (KnownTypeCode.Int16, "MinValue") },
-			{ short.MaxValue, (KnownTypeCode.Int16, "MaxValue") },
+			{ short.MinValue, (KnownTypeCode.Int16, "MinValue", false) },
+			{ short.MaxValue, (KnownTypeCode.Int16, "MaxValue", false) },
 			// ushort:
-			{ ushort.MaxValue, (KnownTypeCode.UInt16, "MaxValue") },
+			{ ushort.MaxValue, (KnownTypeCode.UInt16, "MaxValue", false) },
 			// int:
-			{ int.MinValue, (KnownTypeCode.Int32, "MinValue") },
-			{ int.MaxValue, (KnownTypeCode.Int32, "MaxValue") },
+			{ int.MinValue, (KnownTypeCode.Int32, "MinValue", false) },
+			{ int.MaxValue, (KnownTypeCode.Int32, "MaxValue", false) },
 			// uint:
-			{ uint.MaxValue, (KnownTypeCode.UInt32, "MaxValue") },
+			{ uint.MaxValue, (KnownTypeCode.UInt32, "MaxValue", false) },
 			// long:
-			{ long.MinValue, (KnownTypeCode.Int64, "MinValue") },
-			{ long.MaxValue, (KnownTypeCode.Int64, "MaxValue") },
+			{ long.MinValue, (KnownTypeCode.Int64, "MinValue", false) },
+			{ long.MaxValue, (KnownTypeCode.Int64, "MaxValue", false) },
 			// ulong:
-			{ ulong.MaxValue, (KnownTypeCode.UInt64, "MaxValue") },
+			{ ulong.MaxValue, (KnownTypeCode.UInt64, "MaxValue", false) },
 			// float:
-			{ float.NaN, (KnownTypeCode.Single, "NaN") },
-			{ float.NegativeInfinity, (KnownTypeCode.Single, "NegativeInfinity") },
-			{ float.PositiveInfinity, (KnownTypeCode.Single, "PositiveInfinity") },
-			{ float.MinValue, (KnownTypeCode.Single, "MinValue") },
-			{ float.MaxValue, (KnownTypeCode.Single, "MaxValue") },
-			{ float.Epsilon, (KnownTypeCode.Single, "Epsilon") },
+			{ float.NaN, (KnownTypeCode.Single, "NaN", false) },
+			{ float.NegativeInfinity, (KnownTypeCode.Single, "NegativeInfinity", false) },
+			{ float.PositiveInfinity, (KnownTypeCode.Single, "PositiveInfinity", false) },
+			{ float.MinValue, (KnownTypeCode.Single, "MinValue", false) },
+			{ float.MaxValue, (KnownTypeCode.Single, "MaxValue", false) },
+			{ float.Epsilon, (KnownTypeCode.Single, "Epsilon", false) },
+			{ -float.Epsilon, (KnownTypeCode.Single, "Epsilon", true) },
 			// double:
-			{ double.NaN, (KnownTypeCode.Double, "NaN") },
-			{ double.NegativeInfinity, (KnownTypeCode.Double, "NegativeInfinity") },
-			{ double.PositiveInfinity, (KnownTypeCode.Double, "PositiveInfinity") },
-			{ double.MinValue, (KnownTypeCode.Double, "MinValue") },
-			{ double.MaxValue, (KnownTypeCode.Double, "MaxValue") },
-			{ double.Epsilon, (KnownTypeCode.Double, "Epsilon") },
+			{ double.NaN, (KnownTypeCode.Double, "NaN", false) },
+			{ double.NegativeInfinity, (KnownTypeCode.Double, "NegativeInfinity", false) },
+			{ double.PositiveInfinity, (KnownTypeCode.Double, "PositiveInfinity", false) },
+			{ double.MinValue, (KnownTypeCode.Double, "MinValue", false) },
+			{ double.MaxValue, (KnownTypeCode.Double, "MaxValue", false) },
+			{ double.Epsilon, (KnownTypeCode.Double, "Epsilon", false) },
+			{ -double.Epsilon, (KnownTypeCode.Double, "Epsilon", true) },
 			// decimal:
-			{ decimal.MinValue, (KnownTypeCode.Decimal, "MinValue") },
-			{ decimal.MaxValue, (KnownTypeCode.Decimal, "MaxValue") },
+			{ decimal.MinValue, (KnownTypeCode.Decimal, "MinValue", false) },
+			{ decimal.MaxValue, (KnownTypeCode.Decimal, "MaxValue", false) },
 		};
 
 		bool IsFlagsEnum(ITypeDefinition type)
@@ -1495,6 +1508,103 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		const int MAX_DENOMINATOR_DOUBLE = 1000;
 		const int MAX_DENOMINATOR_FLOAT = 360;
 
+		// Common machine-scale denominators: powers of two used for binary scaling,
+		// and 2^n-1 values used when normalizing integers (for example, byte colors / 255).
+		// Keep this as a targeted candidate set rather than increasing the generic denominator
+		// limit, which would reintroduce accidental fraction matches for ordinary floating-point values.
+		static readonly int[] preferredFractionDenominators = {
+			127, 128,
+			255, 256,
+			1023, 1024,
+			4095, 4096,
+			8192,
+			16384,
+			32767, 32768,
+			65535, 65536,
+			1048576
+		};
+
+		static int GetIntegerLiteralLength(long value)
+		{
+			int length = value < 0 ? 1 : 0;
+			do
+			{
+				length++;
+				value /= 10;
+			} while (value != 0);
+			return length;
+		}
+
+		static int GetFractionDisplayLength(long num, long den, bool isDouble)
+		{
+			// Float integer constants use the `f` suffix; double constants need `.0`.
+			int numericSuffixLength = isDouble ? 2 : 1;
+			return GetIntegerLiteralLength(num) + GetIntegerLiteralLength(den)
+				+ 3 + 2 * numericSuffixLength; // `num / den`
+		}
+
+		// Unit fractions and denominators composed only of 2, 3 and 5 are already
+		// conventional forms; do not expand them just to reach a preferred scale.
+		static bool IsSimpleFraction(long num, long den)
+		{
+			Debug.Assert(den > 0);
+			if (num == 1 || num == -1)
+				return true;
+			while (den % 2 == 0)
+				den /= 2;
+			while (den % 3 == 0)
+				den /= 3;
+			while (den % 5 == 0)
+				den /= 5;
+			return den == 1;
+		}
+
+		static int GetPreferredFractionScore(long num, int den, bool isDouble)
+		{
+			// Powers of two are native to binary floating point and therefore more likely to
+			// match by coincidence. Values of the form 2^n-1 are a stronger normalization
+			// signal, so allow them a slightly larger readability bonus.
+			bool isPowerOfTwo = (den & (den - 1)) == 0;
+			Debug.Assert(isPowerOfTwo || ((den + 1) & den) == 0);
+			int readabilityBonus = isPowerOfTwo ? 1 : 2;
+			return GetFractionDisplayLength(num, den, isDouble) - readabilityBonus;
+		}
+
+		static bool TryGetPreferredFraction(object constantValue, bool isDouble, out long num, out long den, out int score)
+		{
+			num = 0;
+			den = 0;
+			score = int.MaxValue;
+
+			double value = isDouble ? (double)constantValue : (float)constantValue;
+			if (!(Math.Abs(value) < 1.0))
+				return false;
+
+			foreach (int candidateDen in preferredFractionDenominators)
+			{
+				long candidateNum = (long)Math.Round(value * candidateDen);
+				if (candidateNum == 0 || candidateNum <= -candidateDen || candidateNum >= candidateDen)
+					continue;
+				if (!IsEqual(candidateNum, candidateDen, constantValue, isDouble))
+					continue;
+
+				int candidateScore = GetPreferredFractionScore(candidateNum, candidateDen, isDouble);
+				if (candidateScore < score || (candidateScore == score && candidateDen < den))
+				{
+					num = candidateNum;
+					den = candidateDen;
+					score = candidateScore;
+				}
+			}
+
+			return den != 0;
+		}
+
+		Expression MakeFraction(IType type, long num, long den)
+		{
+			return new BinaryOperatorExpression(MakeConstant(type, num), BinaryOperatorType.Divide, MakeConstant(type, den));
+		}
+
 		Expression ConvertFloatingPointLiteral(IType type, object constantValue)
 		{
 			// Coerce constantValue to either float or double:
@@ -1536,11 +1646,35 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					? FractionApprox((double)constantValue, MAX_DENOMINATOR_DOUBLE)
 					: FractionApprox((float)constantValue, 200);
 
-				if (IsValidFraction(num, den) && IsEqual(num, den, constantValue, isDouble) && Math.Abs(den) != 1)
+				bool hasRegularFraction = IsValidFraction(num, den)
+					&& IsEqual(num, den, constantValue, isDouble)
+					&& Math.Abs(den) != 1;
+
+				if (TryGetPreferredFraction(constantValue, isDouble, out long preferredNum, out long preferredDen, out int preferredScore))
 				{
-					var left = MakeConstant(type, num);
-					var right = MakeConstant(type, den);
-					expr = new BinaryOperatorExpression(left, BinaryOperatorType.Divide, right);
+					int baselineLength = hasRegularFraction
+						? GetFractionDisplayLength(num, den, isDouble)
+						: str.Length + (isDouble ? 0 : 1);
+					// Do not replace an already-simple fraction (for example 21 / 32 or 2 / 15)
+					// just to reach one of the larger preferred scales.
+					bool regularFractionIsSimple = hasRegularFraction && IsSimpleFraction(num, den);
+					if (!regularFractionIsSimple && preferredScore <= baselineLength)
+					{
+						if (hasRegularFraction)
+						{
+							num = preferredNum;
+							den = preferredDen;
+						}
+						else
+						{
+							expr = MakeFraction(type, preferredNum, preferredDen);
+						}
+					}
+				}
+
+				if (hasRegularFraction)
+				{
+					expr = MakeFraction(type, num, den);
 				}
 			}
 

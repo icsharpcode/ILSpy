@@ -29,7 +29,8 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// only resolves <c>[ImportMany]</c> with metadata through constructor injection, so this
 	/// registry is the single place that pulls the factories out of the composition host. Each
 	/// <see cref="AnalyzerEntityTreeNode"/> reads <see cref="Analyzers"/> through the static
-	/// accessor on <see cref="AnalyzerTreeNode"/>, which in turn resolves this registry once.
+	/// accessor on <see cref="AnalyzerTreeNode"/>, which resolves this shared registry from the
+	/// current composition host on each access.
 	/// </summary>
 	[Export]
 	[Shared]

@@ -117,6 +117,17 @@ Examples:
 		[Option("--il-sequence-points", "Show IL with sequence points. Implies -il.", CommandOptionType.NoValue)]
 		public bool ShowILSequencePointsFlag { get; }
 
+#if DEBUG
+		// ILAst is the decompiler's own working representation: it exists to debug transforms
+		// while developing ILSpy, so - like the UI's ILAst language - it ships in debug builds
+		// only and is absent from the released tool.
+		[Option("--ilast", "Show the decompiler's intermediate representation (ILAst) of method bodies, after the full IL transform pipeline. Select what to dump with --type or --member; without either, every method of the assembly is dumped.", CommandOptionType.NoValue)]
+		public bool ShowILAstFlag { get; }
+
+		[Option("--after-transform <name-or-index>", "Stop the IL transform pipeline after the named transform (or after the transform at the given 1-based pipeline index) and show the ILAst at that point. Implies --ilast. Pass an unknown name to list the pipeline.", CommandOptionType.SingleValue)]
+		public string AfterTransformName { get; }
+#endif
+
 		[Option("-genpdb|--generate-pdb", "Generate PDB.", CommandOptionType.NoValue)]
 		public bool CreateDebugInfoFlag { get; }
 
@@ -347,6 +358,22 @@ Examples:
 
 					return ShowIL(fileName, output);
 				}
+#if DEBUG
+				else if (ShowILAstFlag || AfterTransformName != null)
+				{
+					if (outputDirectory != null)
+					{
+						// per-file writer, disposed here: the shared 'output' is only closed once
+						// at the end of the run, which would lose the buffered tail of every file
+						// but the last when dumping multiple assemblies
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						using var ilastOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + ".ilast");
+						return ShowILAst(fileName, ilastOutput, app);
+					}
+
+					return ShowILAst(fileName, output, app);
+				}
+#endif
 				else if (CreateDebugInfoFlag)
 				{
 					string pdbFileName = null;
@@ -510,7 +537,9 @@ Examples:
 			return decompilerSettings;
 		}
 
-		CSharpDecompiler GetDecompiler(string assemblyFileName)
+		CSharpDecompiler GetDecompiler(string assemblyFileName) => GetDecompiler(assemblyFileName, out _);
+
+		CSharpDecompiler GetDecompiler(string assemblyFileName, out DecompilerSettings settings)
 		{
 			var module = new PEFile(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
@@ -518,7 +547,8 @@ Examples:
 			{
 				resolver.AddSearchDirectory(path);
 			}
-			return new CSharpDecompiler(assemblyFileName, resolver, GetSettings(module)) {
+			settings = GetSettings(module);
+			return new CSharpDecompiler(assemblyFileName, resolver, settings) {
 				DebugInfoProvider = TryLoadPDB(module)
 			};
 		}
@@ -626,6 +656,73 @@ Examples:
 			disassembler.WriteModuleContents(module);
 			return 0;
 		}
+
+#if DEBUG
+		int ShowILAst(string assemblyFileName, TextWriter output, CommandLineApplication app)
+		{
+			if (MemberIdString != null && TypeName != null)
+			{
+				app.Error.WriteLine("The --type and --member options are mutually exclusive.");
+				return ProgramExitCodes.EX_USAGE;
+			}
+
+			int transformCount = ILAstDumper.TransformCount;
+			if (AfterTransformName != null
+				&& !ILAstDumper.TryResolveTransformCount(AfterTransformName, out transformCount, out string transformError))
+			{
+				app.Error.WriteLine(transformError);
+				return ProgramExitCodes.EX_USAGE;
+			}
+
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName, out var settings);
+			var mainModule = decompiler.TypeSystem.MainModule;
+			var metadata = mainModule.MetadataFile.Metadata;
+			IEnumerable<IMethod> methods;
+
+			if (MemberIdString != null)
+			{
+				if (!TryResolveMember(decompiler.TypeSystem, MemberIdString, out EntityHandle handle, out string error))
+				{
+					Console.Error.WriteLine(error);
+					return ProgramExitCodes.EX_DATAERR;
+				}
+				if (handle.Kind != HandleKind.MethodDefinition)
+				{
+					Console.Error.WriteLine($"'{MemberIdString}' does not name a method; ILAst exists for method bodies only.");
+					return ProgramExitCodes.EX_DATAERR;
+				}
+				methods = new[] { mainModule.GetDefinition((MethodDefinitionHandle)handle) };
+			}
+			else if (TypeName != null)
+			{
+				if (!TryResolveType(decompiler.TypeSystem, TypeName, out ITypeDefinition typeDefinition, out string error))
+				{
+					Console.Error.WriteLine(error);
+					return ProgramExitCodes.EX_DATAERR;
+				}
+				// via the metadata handles, not ITypeDefinition.Methods: the latter drops every
+				// method that has method semantics, i.e. all property and event accessors
+				methods = metadata.GetTypeDefinition((TypeDefinitionHandle)typeDefinition.MetadataToken)
+					.GetMethods().Select(mainModule.GetDefinition);
+			}
+			else
+			{
+				methods = metadata.MethodDefinitions.Select(mainModule.GetDefinition);
+			}
+
+			var textOutput = new PlainTextOutput(output);
+			var dumper = new ILAstDumper();
+			var errors = new List<DecompilerException>();
+			foreach (var method in methods)
+			{
+				var error = dumper.WriteMethod(decompiler, settings, method, transformCount, textOutput, CancellationToken.None);
+				if (error != null)
+					errors.Add(error);
+			}
+			ReportDecompilationErrors(assemblyFileName, errors);
+			return 0;
+		}
+#endif
 
 		readonly List<DecompilerException> decompilationErrors = new();
 

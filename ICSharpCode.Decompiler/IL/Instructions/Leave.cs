@@ -22,14 +22,14 @@ using System.Diagnostics;
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
-	/// Unconditional branch. <c>goto target;</c>
+	/// Unconditional branch to end of block container.
+	/// Return is represented using IsLeavingFunction and an (optional) return value.
+	/// The block container evaluates to the value produced by the argument of the leave instruction.
 	/// </summary>
 	/// <remarks>
-	/// When jumping to the entrypoint of the current block container, the branch represents a <c>continue</c> statement.
-	/// 
-	/// Phase-1 execution of a branch is a no-op.
-	/// Phase-2 execution removes PopCount elements from the evaluation stack
-	/// and jumps to the target block.
+	/// While <c>Branch</c> jumps to the start of a block, <c>Leave</c> jumps to the end of a BlockContainer.
+	/// <c>Leave</c> often represents <c>break;</c> or <c>return;</c>.
+	/// Will implicitly execute finally blocks when jumping out of a try-block.
 	/// </remarks>
 	partial class Leave : ILInstruction, IBranchOrLeaveInstruction
 	{
@@ -87,8 +87,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets whether the leave instruction is directly leaving the whole ILFunction.
 		/// (TargetContainer == main container of the function).
 		/// 
-		/// This is only valid for functions returning void (representing value-less "return;"),
-		/// and for iterators (representing "yield break;").
+		/// Indicates the leave instruction represents a <c>return</c> statement.
 		/// 
 		/// Note: returns false for leave instructions that indirectly leave the function
 		/// (e.g. leaving a try block, and the try-finally construct is immediately followed

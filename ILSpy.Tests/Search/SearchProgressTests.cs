@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
 using Avalonia.Media;
+using Avalonia.Threading;
 
 using AwesomeAssertions;
 
@@ -115,7 +116,19 @@ public class SearchProgressTests
 		var progress = pane.FindControl<ProgressBar>("SearchProgress");
 		((object?)progress).Should().NotBeNull(
 			"the pane must host a progress indicator the user can see while a search runs");
-		progress!.IsIndeterminate.Should().BeTrue(
-			"the indicator runs in indeterminate mode — we don't know the total work up front");
+
+		// Indeterminate mode is tied to the search, not switched on permanently: the indicator
+		// is an infinite animation, and one that ran while idle would keep the render clock
+		// busy for as long as the pane exists.
+		var search = AppComposition.Current.GetExport<SearchPaneModel>();
+		pane.DataContext.Should().BeSameAs(search, "the indicator binds to the pane's own model; anything else makes the assertions below meaningless");
+		progress!.IsIndeterminate.Should().BeFalse("nothing is running yet");
+		search.IsSearching = true;
+		Dispatcher.UIThread.RunJobs();
+		progress.IsIndeterminate.Should().BeTrue(
+			"the indicator runs in indeterminate mode while a search is in flight - we don't know the total work up front");
+		search.IsSearching = false;
+		Dispatcher.UIThread.RunJobs();
+		progress.IsIndeterminate.Should().BeFalse("the animation stops with the search");
 	}
 }

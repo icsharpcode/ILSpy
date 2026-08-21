@@ -1820,6 +1820,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ILVariable awaiterVar = stLocAwaiter.Variable;
 			ILInstruction awaitedValue;
 			IMethod getAwaiterMethod;
+			OpCode getAwaiterCallOpCode;
 			bool isDynamicAwait = false;
 			if (stLocAwaiter.Value is CallInstruction getAwaiterCall
 				&& getAwaiterCall.Method.Name == "GetAwaiter"
@@ -1828,6 +1829,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				awaitedValue = getAwaiterCall.Arguments[0];
 				getAwaiterMethod = getAwaiterCall.Method;
+				getAwaiterCallOpCode = getAwaiterCall.OpCode;
 			}
 			else if (stLocAwaiter.Value is DynamicInvokeMemberInstruction dynGetAwaiter
 				&& dynGetAwaiter.Name == "GetAwaiter" && dynGetAwaiter.Arguments.Count == 1)
@@ -1836,6 +1838,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				awaitedValue = dynGetAwaiter.Arguments[0];
 				getAwaiterMethod = CreateDynamicAwaiterMethod(context, "GetAwaiter");
 				isDynamicAwait = true;
+				getAwaiterCallOpCode = OpCode.CallVirt;
 			}
 			else
 			{
@@ -1917,6 +1920,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Await awaitInst = new Await(UnwrapConvUnknown(awaitedValue));
 			awaitInst.GetResultMethod = getResultMethod;
 			awaitInst.GetAwaiterMethod = getAwaiterMethod;
+			awaitInst.GetAwaiterCallOpCode = getAwaiterCallOpCode;
 			getResultInst.ReplaceWith(awaitInst);
 
 			// Remove useless reset of awaiterVar.

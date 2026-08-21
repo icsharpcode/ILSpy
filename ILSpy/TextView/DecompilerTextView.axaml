@@ -40,7 +40,7 @@
 					           Text="{Binding ProgressTitle}" />
 					<ProgressBar Name="ProgressBar"
 					             x:CompileBindings="False"
-					             IsIndeterminate="{Binding ProgressIsIndeterminate}"
+					             IsIndeterminate="{Binding ProgressBarIsIndeterminate}"
 					             Minimum="0"
 					             Maximum="{Binding ProgressMaximum}"
 					             Value="{Binding ProgressValue}"
