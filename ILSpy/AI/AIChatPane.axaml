@@ -13,7 +13,7 @@
     <StackPanel DockPanel.Dock="Top" Spacing="4">
       <StackPanel Orientation="Horizontal" Spacing="8">
         <TextBlock Text="Profile" VerticalAlignment="Center" />
-        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}" SelectionChanged="OnProfileChanged" Width="180" />
+        <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding ActiveProfile}" DisplayMemberBinding="{Binding Name}" SelectionChanged="OnProfileChanged" Width="180" />
         <TextBlock Text="Model" VerticalAlignment="Center" />
         <ComboBox ItemsSource="{Binding Models}" SelectedItem="{Binding ActiveProfile.LastSelectedModel}" SelectionChanged="OnModelChanged" Width="160" />
       </StackPanel>

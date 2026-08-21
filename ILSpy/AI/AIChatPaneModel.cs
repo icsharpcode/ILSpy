@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpy.AI
 				return;
 			}
 			await SetUiStateAsync(() => {
-				StartConversation(target);
+				StartConversation(target, createNew: false);
 			});
 			await RefreshReadinessAsync();
 		}
@@ -467,12 +467,16 @@ namespace ICSharpCode.ILSpy.AI
 			SyncConversations();
 		}
 
-		void StartConversation(AIConversationTarget target)
+		void StartConversation(AIConversationTarget target, bool createNew = true)
 		{
 			SaveHistory();
 			Messages.Clear();
 			conversationGeneration++;
-			ChatConversation conversation = loadedHistory.StartNew(target);
+			ChatConversation conversation = createNew
+				? loadedHistory.StartNew(target)
+				: loadedHistory.GetOrCreate(target);
+			foreach (ChatMessage message in conversation.Messages.TakeLast(MaxMessages))
+				Messages.Add(message);
 			loadedTarget = target;
 			SyncConversations();
 			SelectedConversation = conversation;
