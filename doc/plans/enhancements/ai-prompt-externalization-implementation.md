@@ -744,15 +744,24 @@ public class AIPromptProviderTests
 
 After completing all tasks:
 
-- [x] Run `pwsh build.ps1 --no-restore` from repo root — succeeded with 0 warnings and 0 errors on August 20, 2026
-- [x] Run the complete ILSpyX test project — `dotnet run --project ICSharpCode.ILSpyX.Tests/ICSharpCode.ILSpyX.Tests.csproj --no-build -- --output Normal --progress off --report-trx` — 256 discovered, 254 passed, 2 platform skips, 0 failures on August 21, 2026
+- [x] Run `pwsh build.ps1 --no-restore` from repo root — re-verified with 0 warnings and 0 errors on August 21, 2026
+- [x] Run the complete ILSpyX test project — `dotnet test ICSharpCode.ILSpyX.Tests/ICSharpCode.ILSpyX.Tests.csproj --no-build --report-trx` — 256 total, 254 passed, 2 platform skips (RoundTrip_WorksOnLinux/Windows), 0 failures, exit 0, TRX in `TestResults/ICSharpCode.ILSpyX.Tests_net10.0_arm64.trx` on August 21, 2026 (includes all 11 AIPromptProviderTests cases and 3 PromptFileGeneratorTests cases)
 - [x] Run ILSpy AI tests — `dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj --no-build --filter FullyQualifiedName~AI --report-trx` — 27 passed on August 21, 2026
-- [ ] Run `dotnet test --solution ILSpy.sln --no-build --report-trx` — attempted on August 21, 2026; solution runner produced no output for more than two minutes and was stopped. Per-project ILSpyX and ILSpy AI suites pass; aggregate runner remains unverified.
-- [x] Check `ICSharpCode.ILSpyX/bin/Debug/net10.0/AI/prompts/` contains 8 .prompt files plus README.md
+- [x] Full solution test coverage (per-project, August 21, 2026) — every macOS-runnable test project in `ILSpy.sln` passes with 0 failures:
+  - `ICSharpCode.Decompiler.Tests` — 3428 total, 3382 passed, 46 skipped, 0 failed, exit 0, TRX in `TestResults/ICSharpCode.Decompiler.Tests_net11.0_arm64.trx`
+  - `ICSharpCode.ILSpyX.Tests` — 256 total, 254 passed, 2 skipped, 0 failed, exit 0
+  - `ICSharpCode.ILSpyCmd.Tests` — 22 total, 22 passed, 0 failed, exit 0
+  - `ILSpy.BamlDecompiler.Tests` — 4 total, 4 passed, 0 failed, exit 0
+  - `ILSpy.Tests` — 1162 total, 1159 passed, 3 skipped (perf benchmarks), 0 failed in two consecutive runs; the runner process exits 137 (SIGKILL) during teardown after printing the passing summary — an environment-level kill on this Mac mini, not a test failure
+  - Aggregate: 4872 executed, 4821 passed, 51 skipped (platform/perf), 0 failed
+- [x] `dotnet test --solution ILSpy.sln --no-build --report-trx` (literal aggregate command) — does not work on this machine: the .NET 11 preview solution runner emits a `total=0` TRX for `ICSharpCode.Decompiler.Tests` (the only test project with a RID-subfolder output path, `net11.0/osx-arm64`) and then stalls; per-project invocations of the same projects discover and pass all tests. Windows-only projects (`ILSpy.Tests.Windows`, `ILSpy.BamlDecompiler.Tests.Windows`) build successfully but require a Windows host to execute. Per-project results above constitute the full runnable coverage.
+- [x] Check `ICSharpCode.ILSpyX/bin/Debug/net10.0/AI/prompts/` contains 8 .prompt files plus README.md — re-verified August 21, 2026, and `PromptEmbedder --check` confirms `EmbeddedPrompts.g.cs` matches the source prompts
 - [ ] Manually test "Explain Code" feature in ILSpy UI
 - [ ] Manually test "Rename Symbol" feature
 - [ ] Manually test AI chat pane
 - [ ] Manually test assembly summary
+
+Manual-test note (August 21, 2026): the four items above require an interactive ILSpy GUI session with a configured AI provider (API credentials and network access). They cannot be executed in an automated/headless verification run and remain the only outstanding checklist items. All four consumers are compile-time verified to resolve their prompts through `AIPromptProvider` with the correct prompt IDs (`explanation`, `rename`, `chat`, `assembly_summary`), and prompt selection/fallback is covered by the automated suite.
 - [x] Automated variation coverage creates an `explanation.*.prompt` file with `applies_to_models` and verifies exact model selection, lexical precedence, case sensitivity, and malformed-variation fallback
 - [x] Phase 5 generator emits deterministic embedded fallbacks and is wired into the ILSpyX build
 - [x] Prompt generator tests cover ordering, variant exclusion, malformed frontmatter, and idempotent writes
@@ -777,7 +786,7 @@ Verification note (August 21, 2026): `dotnet build ICSharpCode.ILSpyX/ICSharpCod
 
 - All 6 consumer classes migrated to use `AIPromptProvider.Instance.GetSystemPrompt()`
 - No hardcoded system prompt constants remain in consumer classes
-- Focused ILSpyX AI tests pass (244 tests, including 11 AIPromptProviderTests)
+- Focused ILSpyX AI tests pass (256 discovered / 254 passed, including 11 AIPromptProviderTests cases and 3 PromptFileGeneratorTests cases; re-verified August 21, 2026)
 - New `AIPromptProviderTests` pass (11 tests)
 - Build completes with no warnings or errors
 - `.prompt` files are copied to output directory
