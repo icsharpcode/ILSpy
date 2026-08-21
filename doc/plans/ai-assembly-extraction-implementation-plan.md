@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use `superpowers:subagent-driven-development` (recommended) or `superpowers:executing-plans` to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Verified against the codebase** on 2026-08-21: file paths, type/namespace names, constructors, MEF attributes, composition mechanics, package versions, and CI steps referenced below were cross-checked against the working tree. Load-bearing verified facts: `AppComposition` catalogs only ILSpyX, the app assembly, and `*.Plugin.dll` (it never scans project references); `ContextBuilder` depends on internal ILSpyX analyzer helpers; `AISecurityAnalyzer` implements `IAnalyzer` and is discovered via MEF; the security confidence threshold is the double `0.70`, not an integer percentage; `PromptEmbedder` hard-codes its output namespace; mid-migration ILSpyX needs temporary bridge references to the new assemblies until its own AI consumers have moved.
+
 **Goal:** Move only the implemented, user-authored AI functionality out of `ICSharpCode.ILSpyX` into `ICSharpCode.ILSpy.AI` and `ICSharpCode.ILSpy.AI.Decompiler`, migrate every production caller and test, and leave all Avalonia UI and desktop command wiring in `ILSpy`.
 
 **Architecture:** Create a portable AI module that owns provider transport, configuration/profile selection, credential storage, prompts, and non-decompiler utilities. Create a second decompiler adapter module that owns every AI implementation which accepts or inspects `ICSharpCode.Decompiler` entities. `ILSpy` remains the desktop host: it retains Avalonia views, view models, menu commands, dialogs, settings panels, and the `AISelectionSettingsHost` adapter, but references the new modules instead of `ILSpyX` AI namespaces.
@@ -20,6 +22,9 @@
 - `ILSpy` retains its current references to `ICSharpCode.ILSpyX` and `ICSharpCode.Decompiler` for unrelated functionality, and gains explicit references to both new AI projects.
 - Preserve `net10.0`, nullable warnings-as-errors, strong naming using `ICSharpCode.Decompiler.snk`, central package versions, and `packages.lock.json` for every new project.
 - Do not broaden `InternalsVisibleTo` merely to make extraction compile. Move internal implementation with its public facade, or introduce a narrow public seam where one is actually required.
+- The new root namespace `ICSharpCode.ILSpy.AI` intentionally coincides with the desktop app's existing `ICSharpCode.ILSpy.AI` namespace (see `ILSpy/ViewLocator.cs`, `ILSpy/AI/AISelectionSettingsHost.cs`). There are no type-name collisions today; moved type names must stay collision-free, and the shared namespace is not a reason to move desktop types into the portable module.
+- `AppComposition` (`ILSpy/AppEnv/AppComposition.cs`) catalogs exactly `typeof(IAnalyzer).Assembly` (ILSpyX), the desktop assembly, and `*.Plugin.dll` files — it does not scan project references. Any MEF export that leaves ILSpyX must have its new assembly added to `RegisterPluginResolver` in the same task that moves it; System.Composition resolution failures are lazy and surface at runtime, not compile time.
+- Temporary bridge references are required, not a violation: while ILSpyX still compiles not-yet-migrated AI files that consume already-moved types (notably `AnalyzerContext` until Task 3.3), `ICSharpCode.ILSpyX.csproj` holds transitional ProjectReferences to the new AI assemblies. Add them with the first moved type; Task 3.4 removes them. The final dependency graph is unchanged.
 - Migrate callers before deleting legacy source. Each phase must build and pass its focused tests before the next phase starts.
 - Do not modify unrelated existing worktree changes, including `doc/plans/obfuscation-analysis-implementation-plan.md` and `.zcode/`.
 
@@ -52,9 +57,9 @@ ICSharpCode.ILSpy.AI <--- ICSharpCode.ILSpy.AI.Decompiler
   - References `ICSharpCode.ILSpy.AI` and `ICSharpCode.Decompiler`.
   - Owns decompiler-context construction, LLM-backed analysis/rename/search/security features, and rename annotation transforms.
 - Create: `ICSharpCode.ILSpy.AI.Tests/ICSharpCode.ILSpy.AI.Tests.csproj`
-  - `net10.0`, not packable; replaces the portable/core AI tests currently in `ICSharpCode.ILSpyX.Tests/AI`.
+  - `net10.0`, not packable; replaces the portable/core AI tests currently in `ICSharpCode.ILSpyX.Tests/AI` plus the model-level half of `ICSharpCode.ILSpyX.Tests/Settings/AISettingsTests.cs` and `AISettingsProfilesTests.cs`.
 - Create: `ICSharpCode.ILSpy.AI.Decompiler.Tests/ICSharpCode.ILSpy.AI.Decompiler.Tests.csproj`
-  - `net10.0`, not packable; replaces decompiler-aware AI tests currently split across `ICSharpCode.ILSpyX.Tests/AI`, `Annotations`, `Analyzers`, and `Search`.
+  - `net10.0`, not packable; replaces the decompiler-aware AI tests currently split across `ICSharpCode.ILSpyX.Tests/AI`, `Annotations`, and `Analyzers`. No AI search tests exist today (there is no `Search` test folder); their regression tests are written new, not moved.
 
 ### Move to `ICSharpCode.ILSpy.AI`
 
@@ -103,7 +108,14 @@ Move these files, preserving non-AI placement only if required by existing exten
 - `ICSharpCode.ILSpyX/Annotations/RenameAnnotations.cs`
 - `ICSharpCode.ILSpyX/Annotations/RenameAnnotationTransform.cs`
 
-Before moving analyzer/search/annotation types, inspect MEF and extension registrations. Preserve their existing public contracts and attributes so host discovery semantics do not change.
+Discovery-contract facts, verified against the current tree:
+
+- `RenameAnnotationTransform : IAstTransform` implements a `ICSharpCode.Decompiler` contract (there is no `IAnnotationTransform` in ILSpyX) and is registered manually by `ILSpy/Languages/CSharpLanguage.cs` (~lines 334 and 527); no MEF is involved. Keep the type name — `ILSpy.Tests/Views/DebugStepsTests.cs` asserts the string `"RenameAnnotationTransform"` in debug output.
+- `AISearchStrategy` and `SemanticSearchStrategy` are static classes with no base class and no MEF attributes; `ILSpy/Search/SearchPaneModel.cs` calls them directly in `StartSpecialSearch`. The `SearchMode.AI`/`SearchMode.Semantic` enum members stay in `ICSharpCode.ILSpyX/Search/AbstractSearchStrategy.cs`.
+- `AISecurityAnalyzer` currently implements ILSpyX's `IAnalyzer`, takes `AnalyzerContext` parameters, and carries `[ExportAnalyzer(Header = "Security Risks (AI)", Order = 1000)] [Shared]`; the desktop discovers it through the MEF analyzer registry. It moves as a plain service with no `IAnalyzer`/`AnalyzerContext` dependency, and a thin desktop MEF adapter keeps the tree-analyzer feature working (Task 3.3).
+- `AISecurityFinding` implements the decompiler's `ISymbol` and moves cleanly; its namespace change ripples into `ILSpy/Analyzers/AISecurityFindingTreeNode.cs`.
+- `AISecurityAuditService` is a plain class the desktop news up directly (`ILSpy/AI/AISecurityAuditContextMenuEntry.cs`); its file also defines `AISecurityAuditPlan/Progress/Result/LimitException`, and `AnalyzerContext.AIProgress` currently references `AISecurityAuditProgress` (removed from `AnalyzerContext` in Task 3.3).
+- `DecompilationContext` has zero decompiler dependencies (pure serialized record); it lives in this module by design choice because it is the decompiler-context DTO.
 
 ### Remain in `ILSpy`
 
@@ -147,7 +159,7 @@ Do not move any of these categories:
 
 - [ ] List every current AI production file and classify it as `AI`, `AI.Decompiler`, `ILSpy desktop`, or `out of scope`.
 - [ ] Explicitly list these as out of scope: the documents and any future source for broad static obfuscation detection, AI AST transforms, semantic variable naming, AI comment insertion, cleanup transforms, and intent reconstruction.
-- [ ] List every AI test file in `ICSharpCode.ILSpyX.Tests/AI`, `ICSharpCode.ILSpyX.Tests/Annotations`, `ICSharpCode.ILSpyX.Tests/Analyzers`, `ILSpy.Tests/AI`, and `ILSpy.Tests/Options` with its target destination.
+- [ ] List every AI test file in `ICSharpCode.ILSpyX.Tests/AI` (including `Providers/`), `ICSharpCode.ILSpyX.Tests/Settings` (`AISettingsTests.cs`, `AISettingsProfilesTests.cs`), `ICSharpCode.ILSpyX.Tests/Annotations`, `ICSharpCode.ILSpyX.Tests/Analyzers`, `ILSpy.Tests/AI`, and `ILSpy.Tests/Options` with its target destination. Record that no tests exist for `AISearchStrategy`/`SemanticSearchStrategy` today and that `ILSpy.Tests/Analyzers/Library/ExportAnalyzerAttributeTests.cs` asserts the analyzer inventory of the ILSpyX assembly and must be updated when `AISecurityAnalyzer` moves.
 - [ ] List all prompt IDs and consumers: `explanation`, `rename`, `chat`, `security`, `security_audit`, `generate_docs`, `search`, and `assembly_summary`.
 - [ ] Confirm that no source move changes prompt text, settings XML element names, credential identity generation, or public provider request contracts.
 - [ ] Commit the manifest separately: `docs: record AI assembly extraction source manifest`.
@@ -187,14 +199,14 @@ Do not move any of these categories:
 - Create: `ICSharpCode.ILSpy.AI/ICSharpCode.ILSpy.AI.csproj`
 - Create: `ICSharpCode.ILSpy.AI/PackageReadme.md`
 - Create: `ICSharpCode.ILSpy.AI/packages.lock.json`
-- Modify: `Directory.Packages.props`
+- Modify: `Directory.Packages.props` (likely no change — `System.Composition.AttributedModel`, `Microsoft.Extensions.Logging.Abstractions`, and `YamlDotNet` are already pinned centrally)
 - Modify: `ILSpy.sln`, `ILSpy.XPlat.slnf`, `ILSpy.Desktop.slnf`
 
 **Interfaces:**
 - Produces assembly: `ICSharpCode.ILSpy.AI` targeting `net10.0`.
 - Must not reference: `ICSharpCode.Decompiler`, `ICSharpCode.ILSpyX`, or `ILSpy`.
 
-- [ ] Copy only structural MSBuild properties required from `ICSharpCode.ILSpyX.csproj`: `net10.0`, nullable enabled, nullable warnings as errors, assembly signing, shared `.snk`, generated version attributes disabled, locked restore, CI build property, and package/source-link/SBOM conventions.
+- [ ] Copy only structural MSBuild properties required from `ICSharpCode.ILSpyX.csproj`: `net10.0`, nullable enabled, nullable warnings as errors, assembly signing via `..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk` (the only shared `.snk` in the tree; there is no repo-root key), generated version attributes disabled, `RestoreLockedMode`, the RID-complete `RuntimeIdentifiers` list (`win-x64;win-arm64;linux-x64;osx-arm64`, required so locked-mode RID publishes of the app restore on any host), the `ContinuousIntegrationBuild` property (set from `GITHUB_ACTIONS` in ILSpyX), and package/source-link/SBOM conventions.
 - [ ] Set package identity to `ICSharpCode.ILSpy.AI`; use a description that identifies it as provider/configuration/prompt infrastructure and does not claim it is the ILSpyX platform package.
 - [ ] Add only package references justified by actual Phase 2 source: `System.Composition.AttributedModel`, `Microsoft.Extensions.Logging.Abstractions`, and `YamlDotNet`. Do not copy `Mono.Cecil`, `Markdig`, `LZ4`, metadata packages, or decompiler dependencies.
 - [ ] Add the project to `ILSpy.sln`, both solution filters, and relevant solution configurations using the same conventions as existing library projects.
@@ -237,8 +249,8 @@ Do not move any of these categories:
 - `AI.Decompiler.Tests` references `AI.Decompiler`, `AI`, and any existing fixture/test support project required by moved tests.
 
 - [ ] Mirror test infrastructure from `ICSharpCode.ILSpyX.Tests.csproj`: `net10.0`, signed executable test project, NUnit, NUnit adapter, Microsoft Testing Platform extensions, and AwesomeAssertions.
-- [ ] Configure `InternalsVisibleTo` in each new production project only for its matching strong-named test project. Do not retain friends for `ILSpy.Tests` unless a desktop test demonstrably needs an internal member.
-- [ ] Add explicit workflow test commands for both new test projects in the same relevant CI matrices that exercise ILSpyX tests. Do not remove old test commands yet.
+- [ ] Configure `InternalsVisibleTo` in each new production project only for its matching strong-named test project (same key pattern as ILSpyX's existing entries). Do not grant friends to `ILSpy.Tests` by default: ILSpyX currently grants `ILSpy.Tests` internals access, so audit whether any `ILSpy.Tests` AI test reaches internals of moved types (internal constructors, `SecureKeyStorage` backends, `ContextBuilder` internals) — such tests belong in the new module test projects, which receive access through their own IVT.
+- [ ] CI coverage fact: `ICSharpCode.ILSpyX.Tests` runs only inside the Windows job's solution-wide `dotnet test --solution ilspy.sln` step; there are no per-project ILSpyX test commands and no test filters anywhere in the workflow, and ILSpyX tests are not run on Linux/macOS. Adding both new test projects to `ILSpy.sln` therefore enrolls them in the Windows run automatically. If cross-platform coverage of the new modules is wanted, add explicit per-project test steps to the Linux/macOS `Desktop` job — noting that `SecureKeyStorageSmokeTests` are platform-gated and currently execute only on Windows CI. Do not remove existing test steps.
 - [ ] Build the solution filter and run the empty test projects.
 - [ ] Commit: `test: add AI extraction test projects`.
 
@@ -255,12 +267,14 @@ Do not move any of these categories:
 **Files:**
 - Move from `ICSharpCode.ILSpyX/AI/` to `ICSharpCode.ILSpy.AI/AI/`: `ILLMProvider.cs`, `LLMMessage.cs`, `LLMRequest.cs`, `AISelectionTypes.cs`, `ChatMessage.cs`, `ChatHistory.cs`, `EmbeddingStore.cs`, `MarkdownCodeFenceExtractor.cs`, `TokenCounter.cs`.
 - Move matching tests from `ICSharpCode.ILSpyX.Tests/AI/` to `ICSharpCode.ILSpy.AI.Tests/AI/`: `LLMContractsTests.cs`, `AISelectionContractsTests.cs`, `ChatHistoryTests.cs`, `EmbeddingStoreTests.cs`, `MarkdownCodeFenceExtractorTests.cs`, `TokenCounterTests.cs`.
+- Modify: `ILSpy/ILSpy.csproj` (add the `ICSharpCode.ILSpy.AI` reference) and `ICSharpCode.ILSpyX/ICSharpCode.ILSpyX.csproj` (temporary bridge reference, see below).
 - Modify: namespaces/usings in moved production/tests and all current callers.
 
 **Interfaces:**
 - Produce the same public contracts with assembly identity changed to `ICSharpCode.ILSpy.AI`.
 - Do not change record fields, enum values, method names, cancellation behavior, streaming interfaces, or serialization behavior.
 
+- [ ] Add bridge references before moving anything: `ILSpy/ILSpy.csproj` gains `ICSharpCode.ILSpy.AI` (desktop callers consume the moved contracts directly), and `ICSharpCode.ILSpyX.csproj` gains a temporary reference to the same assembly so not-yet-migrated ILSpyX files that consume these types (`AnalyzerContext`'s `AISelectionSnapshot` property, `AISecurityAnalyzer`, `AISearchStrategy`, `AISecurityAuditService`) still compile. None of the files in this batch carry MEF exports, so no `AppComposition` change is needed yet.
 - [ ] Move each source file with history where possible (`git mv`), then change only its namespace and imports needed to compile in the new project.
 - [ ] Update all production and test callers to import `ICSharpCode.ILSpy.AI` rather than the old ILSpyX namespace.
 - [ ] Add focused tests proving `LLMRequest` defaults/validation, `ChatHistory` target handling, token counting, code-fence extraction, embeddings, and selection records are behaviorally identical.
@@ -274,7 +288,7 @@ Do not move any of these categories:
 - Move: `AIProfile.cs`, `AIProviderCatalog.cs`, `AISelectionService.cs`, `AICredentialMigration.cs`, `SecureKeyStorage.cs`, `SecureKeyStorageBackends.cs`.
 - Create from the AI-owned portions of `ICSharpCode.ILSpyX/Settings/AISettings.cs`: `ICSharpCode.ILSpy.AI/Settings/AISettingsModel.cs`.
 - Create: `ILSpy/AI/AISettingsSection.cs` implementing `ICSharpCode.ILSpyX.Settings.ISettingsSection` and delegating to `AISettingsModel`.
-- Modify: `ILSpy/SettingsService.cs`, `ILSpy/AI/AISelectionSettingsHost.cs`, `ILSpy/Options/AISettingsViewModel.cs`, all desktop callers, and affected tests.
+- Modify: `ILSpy/SettingsService.cs`, `ILSpy/AppEnv/AppComposition.cs`, `ILSpy/App.axaml.cs`, `ILSpy/AI/AISelectionSettingsHost.cs`, `ILSpy/Options/AISettingsViewModel.cs`, all desktop callers, and affected tests.
 - Split/move tests: portable model/profile/selection tests go to `ICSharpCode.ILSpy.AI.Tests`; XML section registration and desktop persistence tests remain in `ILSpy.Tests`.
 
 **Interfaces:**
@@ -285,12 +299,15 @@ Do not move any of these categories:
 
 - [ ] Write characterization tests around the existing `AISettings` before splitting it: feed schema-2 and every supported legacy XML fixture into `LoadFromXml`, assert all resulting properties/profiles, call `SaveToXml`, and record the expected XML structure/order/default omission behavior.
 - [ ] Extract `AISettingsModel` without any reference to `ISettingsSection`, `SettingsServiceBase`, `ICSharpCode.ILSpyX`, or desktop types. Keep profile state, defaults, validation, migration helpers, and notification methods in the model.
+- [ ] Re-anchor the two remaining consumers of the section type inside the portable module: `AICredentialMigration.EnsureMigratedAsync(AISettings, ...)` and `AISelectionService`'s internal test constructor both switch from `ICSharpCode.ILSpyX.Settings.AISettings` to `AISettingsModel`.
+- [ ] Register `ICSharpCode.ILSpy.AI` in `AppComposition.RegisterPluginResolver`'s assembly list (`ILSpy/AppEnv/AppComposition.cs`; the list currently contains exactly `typeof(IAnalyzer).Assembly` plus the app assembly). This task moves the first MEF exports out of ILSpyX (`[Export] [Shared] AISelectionService`, `[Export] [Shared] SecureKeyStorage` and `SecureKeyStorageUnavailableException`), and the container does not scan project references. The desktop and the `ILSpy.Tests` harness (`TestApp.axaml.cs`, `ResetAppStateAttribute`) share this code path, so one registration covers both.
+- [ ] Update `ILSpy/App.axaml.cs` by searching for the type name, not just using directives: it resolves `ICSharpCode.ILSpyX.AI.AISelectionService` fully-qualified (around line 90, inside the credential-migration startup block) with no `using` statement.
 - [ ] Implement `AISettingsSection` in `ILSpy` as the single ILSpyX persistence adapter. It owns `SectionName`, translates XML to/from the portable model using the migrated serializer, forwards model property changes as needed by `SettingsServiceBase`, and never stores API key material in XML.
 - [ ] Update `SettingsService` so its public AI settings access returns the live `AISettingsModel` (and privately retains/registers the `AISettingsSection` instance required by generic settings persistence). Do not change non-AI settings registration.
 - [ ] Update `AISelectionHost.Settings`, `AISelectionSettingsHost`, and options UI to use `AISettingsModel`. `AISelectionSettingsHost` remains in `ILSpy` and continues to call `SettingsService.Save()`.
 - [ ] Keep `SecureKeyStorage` public and preserve internal backend interfaces, P/Invokes, macOS platform attributes, Linux `secret-tool` behavior, file locations, exception types, and availability results.
 - [ ] Keep `AISelectionService` MEF export/shared lifetime behavior unchanged. Its public host constructor must continue to receive `AISelectionHost`; do not expose its internal test constructor.
-- [ ] Move profile/model/selection tests to `AI.Tests`. Keep adapter registration, existing XML compatibility, and `SettingsService.Save()` round-trip tests in `ILSpy.Tests` because they cross the ILSpyX host contract.
+- [ ] Move profile/model/selection tests to `AI.Tests`. The existing characterization suites are `ICSharpCode.ILSpyX.Tests/Settings/AISettingsTests.cs` and `AISettingsProfilesTests.cs`: port the model-level cases (defaults, `RepairProfiles`, legacy migration semantics) to `AI.Tests`, and port the XML section/`SaveToXml` round-trip cases to `ILSpy.Tests` against the `AISettingsSection` adapter, because they cross the ILSpyX `ISettingsSection` host contract.
 - [ ] Add regression tests for provider profile validation, profile duplication/movement/deletion fallback, persisted mutation callback behavior, unavailable credential backend, and platform-gated secure-store smoke paths.
 - [ ] Run `AI.Tests`, desktop settings/options tests, and platform-specific secure-storage tests according to their existing gates.
 - [ ] Delete `ICSharpCode.ILSpyX/Settings/AISettings.cs` only after the model, adapter, settings service, selection host, and all tests compile and pass.
@@ -327,7 +344,8 @@ Do not move any of these categories:
 - Preserve the same eight prompt IDs, YAML metadata semantics, provider/model variation resolution, disk-first loading, invalid-file fallback, and embedded fallback content.
 
 - [ ] Move prompt content copy rules, prompt embedder project reference with `ReferenceOutputAssembly="false"`, input/source item groups, properties, and `GenerateEmbeddedPrompts` target to `AI.csproj` with destination-relative paths.
-- [ ] Update `BuildTools/PromptEmbedder` and `PromptFileGeneratorTests` so the generator receives the target namespace as an explicit argument and emits `ICSharpCode.ILSpy.AI` for this project. Do not leave a hard-coded `ICSharpCode.ILSpyX.AI` namespace in generated output.
+- [ ] Update `BuildTools/PromptEmbedder` and `PromptFileGeneratorTests`: the generator currently hard-codes `namespace ICSharpCode.ILSpyX.AI` in `PromptFileGenerator.Generate` (`BuildTools/PromptEmbedder/Program.cs`, around line 69) and its CLI accepts only `<input> <output> [--check]`. Add the target namespace as an explicit CLI argument and emit `ICSharpCode.ILSpy.AI` for this project. PromptEmbedder is a dependency-free net10.0 tool with no `packages.lock.json`, excluded from both solution filters (its self-build target handles that); do not add it to the filters.
+- [ ] Move the real `PromptEmbedder` ProjectReference currently held by `ICSharpCode.ILSpyX.Tests.csproj` (it exists for `PromptFileGeneratorTests`; ILSpyX itself uses only a `ReferenceOutputAssembly="false"` build-only reference) to `ICSharpCode.ILSpy.AI.Tests` together with the test, so generator tests exercise the parameterized tool directly.
 - [ ] Ensure generated source is produced under `ICSharpCode.ILSpy.AI/AI/EmbeddedPrompts.g.cs` in namespace `ICSharpCode.ILSpy.AI`; do not maintain a second generated copy in ILSpyX.
 - [ ] Remove AI prompt content items and generation target from `ICSharpCode.ILSpyX.csproj` only after the new project builds the generated file.
 - [ ] Add test cases that load each prompt from disk, validate all IDs, test missing/invalid external files falling back to embedded content, and test provider/model variation selection.
@@ -343,7 +361,7 @@ Do not move any of these categories:
 - Delete only after migration: old portable source files, `ICSharpCode.ILSpyX/AI/prompts`, and old generated prompt source.
 
 - [ ] Use a whole-repository type search for every moved type and namespace. Update project references explicitly; do not depend on accidental transitive references.
-- [ ] Remove `YamlDotNet`, `Microsoft.Extensions.Logging.Abstractions`, and `System.Composition.AttributedModel` from ILSpyX only if no non-AI ILSpyX source still references them. Verify each removal with a build; retain any dependency still needed by unrelated ILSpyX functionality.
+- [ ] Remove `YamlDotNet` and `Microsoft.Extensions.Logging.Abstractions` from ILSpyX only if no non-AI ILSpyX source still references them. Verify each removal with a build; retain any dependency still needed by unrelated ILSpyX functionality. Expect `System.Composition.AttributedModel` to REMAIN in ILSpyX regardless: `ExportAnalyzerAttribute` derives from `ExportAttribute` and the non-AI analyzer/settings exports are MEF parts. The temporary ILSpyX → AI bridge reference from Task 2.1 stays in place for now; Task 3.4 removes it.
 - [ ] Remove portable AI tests from `ICSharpCode.ILSpyX.Tests`; remove its PromptEmbedder project reference only after no remaining test relies on it.
 - [ ] Verify `ICSharpCode.ILSpyX` builds without any `AI/` source, generated prompts, or prompt content output.
 - [ ] Commit: `refactor: remove migrated AI core from ILSpyX`.
@@ -361,6 +379,7 @@ Do not move any of these categories:
 **Files:**
 - Move to `ICSharpCode.ILSpy.AI.Decompiler/AI/`: `DecompilationContext.cs`, `ContextBuilder.cs`.
 - Move tests: `ContextBuilderTests.cs`.
+- Modify: `ILSpy/ILSpy.csproj` and `ICSharpCode.ILSpyX/ICSharpCode.ILSpyX.csproj` — both gain a reference to `ICSharpCode.ILSpy.AI.Decompiler` (the app consumes the moved types; ILSpyX's not-yet-moved explanation/rename/security code still compiles against `ContextBuilder` through the temporary bridge).
 - Modify all explanation, rename, security, search, and desktop context callers.
 
 **Interfaces:**
@@ -368,8 +387,9 @@ Do not move any of these categories:
 - Preserve token budget truncation, unavailable-section reporting, C# source, attributes/interfaces, literals, callers/callees, and optional IL output.
 
 - [ ] Move source with history and change namespaces/usings only as needed for project ownership.
-- [ ] Add the project reference to `AI` and retain the direct reference to `ICSharpCode.Decompiler`.
-- [ ] Keep internal helpers internal. Do not make `ScanMethodReferences` or token-fitting helpers public to simplify desktop access.
+- [ ] Add the project references first: `AI.Decompiler` already references `AI` and `ICSharpCode.Decompiler` from Task 1.2; add the two bridge references listed above before moving the files.
+- [ ] Re-implement same-module caller discovery inside `AI.Decompiler` in this task — `ContextBuilder` cannot compile there without it: `ContextBuilder.GetCallers` calls `MethodUsedByAnalyzer.FindCallers` (internal, `ICSharpCode.ILSpyX/Analyzers/Builtin/MethodUsedByAnalyzer.cs`, around line 47), which also uses `AnalyzerHelpers.IsPossibleReferenceTo` (internal, `ICSharpCode.ILSpyX/Analyzers/AnalyzerHelpers.cs`). Both are unreachable from the new assembly. Copy `FindCallers`, `GetTypes`, `GetMethodBody`, `ScanMethodBody`, `IsSupportedOpCode`, and `IsSameMember` (~200 lines) plus `IsPossibleReferenceTo` (~22 lines), preserving ordering, limits, and metadata exception handling. Every other dependency (`InheritanceHelper`, `ILParser`, `MetadataTokenHelpers`, `GenericContext`) comes from `ICSharpCode.Decompiler`. Callee discovery needs no work: `ScanMethodReferences` is already internal to `ContextBuilder` and moves with the file.
+- [ ] Keep internal helpers internal. Do not make `ScanMethodReferences` or token-fitting helpers public to simplify desktop access. `ContextBuilderTests` exercises internal members (`TryFitCode` and friends), so this task relies on the Task 1.3 `InternalsVisibleTo` entry for `AI.Decompiler.Tests`.
 - [ ] Run the migrated context tests against representative methods/types and assert exact or normalized outputs where tests already define behavior.
 - [ ] Add regression assertions for context-budget clipping, call graph/IL opt-in flags, and unavailable context sections.
 - [ ] Commit: `refactor: move AI decompilation context builder`.
@@ -396,19 +416,23 @@ Do not move any of these categories:
 
 **Files:**
 - Move: `RenameAnnotations.cs`, `RenameAnnotationTransform.cs`, `AISearchStrategy.cs`, `SemanticSearchStrategy.cs`, `AISecurityFinding.cs`, `AISecurityAnalyzer.cs`, `AISecurityAuditService.cs`.
-- Move tests: `Annotations/RenameAnnotationManagerTests.cs`, `Analyzers/AISecurityAnalyzerTests.cs`, relevant AI search tests, and decompiler-side batch rename tests.
-- Modify desktop integrations: `ILSpy/Search/SearchPaneModel.cs`, `ILSpy/Analyzers/AnalyzerSearchTreeNode.cs`, `ILSpy/Analyzers/AISecurityFindingTreeNode.cs`, `ILSpy/Languages/CSharpLanguage.cs`, `ILSpy/AI/AISecurityAuditContextMenuEntry.cs`, and their tests.
+- Move tests: `Annotations/RenameAnnotationManagerTests.cs`, `Analyzers/AISecurityAnalyzerTests.cs`, and decompiler-side batch rename tests. AI search tests do not exist yet and are written new (below).
+- Create: `ILSpy/Analyzers/AISecurityAnalyzerAdapter.cs` — the desktop MEF adapter described below.
+- Modify: `ICSharpCode.ILSpyX/Analyzers/AnalyzerContext.cs` (remove AI properties), `ILSpy/Search/SearchPaneModel.cs`, `ILSpy/Analyzers/AnalyzerSearchTreeNode.cs`, `ILSpy/Analyzers/AISecurityFindingTreeNode.cs`, `ILSpy/Languages/CSharpLanguage.cs`, `ILSpy/AI/AISecurityAuditContextMenuEntry.cs`, `ILSpy/AI/AIChatFeatureCommands.cs`, and their tests.
 
 **Interfaces:**
-- Preserve the analyzer MEF contracts and attributes, security finding JSON parsing, confidence threshold of 70%, audit caps/progress/cancellation, search result entity resolution, and rename annotation transform behavior.
+- Security analysis splits into core + adapter. The core (finding JSON parsing, confidence filtering against `MinimumFindingConfidence = 0.70` — a `double` in `[0,1]`, not an integer percentage — audit cap `MaximumTypesPerAudit = 50`, progress/cancellation) moves to `AI.Decompiler` as a plain service with no `IAnalyzer`/`AnalyzerContext`/`[ExportAnalyzer]` dependency (those are ILSpyX contracts the module must not reference), keeping the `AnalyzeSelectedTypeAsync` entry point used by `ILSpy/AI/AIChatFeatureCommands.cs`.
+- Preserve search result entity resolution, audit caps/progress/cancellation, and rename annotation transform behavior unchanged.
 
-- [ ] Before moving each type, inspect its current MEF export/import attributes. Preserve ordinary desktop-facing contracts, but remove any AI-specific generic-analyzer export that would require `ICSharpCode.ILSpyX` to reference the extracted assembly.
-- [ ] Move or locally reimplement the caller-discovery logic currently obtained through ILSpyX analyzer helpers inside `AI.Decompiler`; preserve ordering, limits, metadata exception handling, and the existing context-builder test expectations. This is required because `AI.Decompiler` must not reference ILSpyX.
-- [ ] Remove AI-specific data/services from generic ILSpyX analyzer context only after desktop commands invoke the moved security analyzer/audit service explicitly. Do not modify non-AI analyzer contracts.
+- [ ] Keep the "Security Risks (AI)" tree analyzer working with a desktop adapter: create an `ILSpy`-owned `AISecurityAnalyzerAdapter : IAnalyzer` carrying `[ExportAnalyzer(Header = "Security Risks (AI)", Order = 1000)] [Shared]`, importing `AISelectionService`/`IAIProviderFactory` via `[ImportingConstructor]`, and delegating to the moved core service. The app assembly is already composed, so `AnalyzerRegistry`'s `[ImportMany("Analyzer")]` discovers the adapter exactly as it discovered the ILSpyX export — same header, same order, same results. Do not simply drop the export: that would silently remove a working feature.
+- [ ] Strip AI members from `AnalyzerContext` (`AISelectionSnapshot`, `IAIProviderFactory`, `IProgress<AISecurityAuditProgress> AIProgress`, and the AI usings) once the adapter exists, and delete the AI resolution special-case in `AnalyzerSearchTreeNode.RunAnalyzer` (it unconditionally resolves `AISelectionService` and populates those properties; the adapter now supplies its own state). Keep the `AISecurityFinding` dispatch in `WrapResult`. Do not modify non-AI analyzer contracts.
+- [ ] Update `ILSpy.Tests/Analyzers/Library/ExportAnalyzerAttributeTests.cs`: `ExportAnalyzerAttribute.GetAnnotatedAnalyzers()` reflects over the ILSpyX assembly only, so its expected analyzer inventory changes when `AISecurityAnalyzer` leaves. Assert the adapter's presence through the real composition container instead.
+- [ ] Keep the type name `RenameAnnotationTransform` unchanged: `ILSpy.Tests/Views/DebugStepsTests.cs` asserts the string `"RenameAnnotationTransform"` in debug steps output. Registration in `CSharpLanguage` is manual (not MEF); update its using only.
+- [ ] Write (do not expect to move) AI search regression tests: no tests exist for `AISearchStrategy`/`SemanticSearchStrategy` today. The strategies are static classes with no base class and no MEF attributes; `SearchPaneModel.StartSpecialSearch` calls them directly, and the `SearchMode.AI`/`SearchMode.Semantic` enum members stay in ILSpyX.
 - [ ] Keep analyzer and search logic in the decompiler module because they consume `MetadataFile`, type-system entities, analyzer APIs, and decompilation output.
 - [ ] Keep `AISecurityFindingTreeNode` in `ILSpy`; only its model/service reference changes.
 - [ ] Keep `SearchPaneModel` and `AnalyzerSearchTreeNode` in `ILSpy`; maintain their existing `AppComposition` resolution behavior until a separate composition redesign is requested.
-- [ ] Add regression tests for security confidence boundary values (`69` rejected, `70` retained), malformed LLM JSON, cancellation, configured audit cap, and stable result mapping to entities.
+- [ ] Add regression tests for security confidence boundary values (`0.69` rejected, `0.70` retained, values above `1` rejected), malformed LLM JSON, cancellation, the configured audit cap (`MaximumTypesPerAudit = 50`), and stable result mapping to entities.
 - [ ] Add regression tests for semantic/local search ranking and mapping results back to decompiler entities.
 - [ ] Add regression tests for rename annotations continuing to render and not mutating original metadata.
 - [ ] Commit: `refactor: move AI search security and annotations`.
@@ -423,6 +447,7 @@ Do not move any of these categories:
 - [ ] Search the repository for each moved source type and old AI namespace; update all remaining imports and project references.
 - [ ] Remove decompiler-specific AI tests from `ICSharpCode.ILSpyX.Tests` after they are passing in `AI.Decompiler.Tests`.
 - [ ] Remove package references from ILSpyX only when no unrelated source needs them. In particular, verify `Mono.Cecil`, `Markdig`, `LZ4`, metadata packages, and MEF independently instead of deleting them as a group.
+- [ ] Remove the temporary bridge references added in Tasks 2.1 and 3.1: `ICSharpCode.ILSpyX.csproj` must no longer reference `ICSharpCode.ILSpy.AI` or `ICSharpCode.ILSpy.AI.Decompiler`. This is possible only after Task 3.3 removed the AI members from `AnalyzerContext`; verify with a clean build.
 - [ ] Build `ICSharpCode.ILSpyX` and inspect its compile items to prove it no longer compiles AI code.
 - [ ] Commit: `refactor: remove migrated decompiler AI from ILSpyX`.
 
@@ -445,11 +470,11 @@ Do not move any of these categories:
 - `ILSpy` references `ICSharpCode.ILSpy.AI` and `ICSharpCode.ILSpy.AI.Decompiler` directly.
 - Existing MEF composition resolves `AISelectionService`, `IAIProviderFactory`, analyzers, and search strategies from the new assemblies.
 
-- [ ] Add explicit project references to both new assemblies in `ILSpy.csproj`; do not remove the existing ILSpyX or Decompiler project references needed by non-AI desktop code.
+- [ ] Verify (not add) the desktop project references: `ILSpy.csproj` gained `ICSharpCode.ILSpy.AI` in Task 2.1 and `ICSharpCode.ILSpy.AI.Decompiler` in Task 3.1. Do not remove the existing ILSpyX or Decompiler project references needed by non-AI desktop code.
 - [ ] Update only namespaces/usings and type references in desktop classes. Do not relocate, rename, redesign, or change Avalonia markup.
 - [ ] Update `ILSpy/App.axaml.cs` credential-migration startup call and every `SettingsService.AISettings` consumer to use the portable `AISettingsModel` through the retained ILSpy adapter.
-- [ ] Confirm composition loads the new assemblies in normal desktop/test output. If existing `AppComposition` scans referenced assemblies rather than output files, use the repository's standard registration mechanism; do not create a parallel container.
-- [ ] Add or update a composition test proving imports of `AISelectionService` and `IAIProviderFactory` resolve from the new assembly identity. Validate AI search/security desktop entry points through their explicit desktop construction path; do not require an ILSpyX generic analyzer export.
+- [ ] Confirm composition resolves the moved exports end-to-end. Fact: `AppComposition` catalogs exactly ILSpyX + the app assembly + `*.Plugin.dll` and does not scan project references; `ICSharpCode.ILSpy.AI` was registered in `RegisterPluginResolver` during Task 2.2. `ICSharpCode.ILSpy.AI.Decompiler` deliberately carries no MEF exports (search strategies are static; the analyzer adapter lives in the app assembly), so it needs no registration. Do not create a parallel container.
+- [ ] Add or update a composition test proving imports of `AISelectionService` and `IAIProviderFactory` resolve from the new assembly identity, exercising the same `AppComposition` path used by `TestApp`/`ResetAppStateAttribute`. Validate AI search via `SearchPaneModel.StartSpecialSearch`'s direct static calls and security via the `AISecurityAnalyzerAdapter` export; the adapter replaces the former ILSpyX generic-analyzer export one-for-one.
 - [ ] Commit: `refactor: migrate ILSpy desktop AI callers`.
 
 ### Task 4.2: Update desktop tests and preserve UI contracts
@@ -549,12 +574,12 @@ Do not move any of these categories:
 ## Migration Order and Non-Negotiable Sequencing
 
 1. Add empty projects/tests/CI first.
-2. Move BCL-only contracts and utilities.
-3. Move profiles/settings/credential storage and provider transport.
+2. Move BCL-only contracts and utilities, adding the `ILSpy` → `AI` and the temporary `ILSpyX` → `AI` bridge references before the first file moves.
+3. Move profiles/settings/credential storage and provider transport, registering `ICSharpCode.ILSpy.AI` in `AppComposition` when the first MEF exports move.
 4. Move prompts and generator only after the portable project compiles.
 5. Remove portable AI source from ILSpyX.
-6. Move decompiler context, then explanation/rename, then annotations/search/security.
-7. Remove decompiler-aware AI source from ILSpyX.
+6. Move decompiler context (re-implementing internal caller discovery locally and adding the `AI.Decompiler` bridge references), then explanation/rename, then annotations/search/security with the desktop analyzer adapter and `AnalyzerContext` cleanup.
+7. Remove decompiler-aware AI source from ILSpyX and drop both temporary bridge references.
 8. Update desktop references/callers/tests, but do not move UI files.
 9. Validate packages, CI, full builds, automated tests, and manual desktop smoke behavior.
 
@@ -564,7 +589,11 @@ Do not attempt to move all source files in one change. The executable must remai
 
 | Risk | Required response |
 |---|---|
-| `AISettings` depends on an ILSpyX settings interface | Find the exact interface owner. Add the smallest allowed reference or move only the generic interface if it is AI-specific. Do not duplicate types or make desktop settings public. |
+| `AISettings` depends on ILSpyX's `ISettingsSection` | Resolved by the Task 2.2 design: split into a portable `AISettingsModel` (pure `INotifyPropertyChanged`) plus an `ILSpy`-owned `AISettingsSection : ISettingsSection` adapter delegating to the model. Never reference ILSpyX from the AI project and never duplicate types. |
+| MEF exports vanish when types leave ILSpyX | `AppComposition` catalogs only ILSpyX, the app assembly, and `*.Plugin.dll`; it never scans project references, and failures are lazy. Register `ICSharpCode.ILSpy.AI` in `RegisterPluginResolver` in the same task that moves the first export (Task 2.2). |
+| ILSpyX cannot compile mid-migration | Not-yet-moved ILSpyX AI code consumes already-moved types. Add temporary ILSpyX → AI / AI.Decompiler bridge references when the first types move (Tasks 2.1 and 3.1) and remove them in Task 3.4, after `AnalyzerContext` is AI-free. |
+| Caller discovery is internal to ILSpyX | `ContextBuilder` needs `MethodUsedByAnalyzer.FindCallers` and `AnalyzerHelpers.IsPossibleReferenceTo` (both internal). Copy them into `AI.Decompiler` in Task 3.1, preserving ordering, limits, and exception handling. |
+| Analyzer tree feature silently disappears | Dropping `AISecurityAnalyzer`'s `[ExportAnalyzer]` would remove "Security Risks (AI)" from the analyzer tree. Keep it via the `ILSpy`-owned `AISecurityAnalyzerAdapter` (Task 3.3) and update `ExportAnalyzerAttributeTests`. |
 | Prompt files disappear from desktop output | Fix the `AI.csproj` content-copy and generator paths; verify publish output before deleting old ILSpyX content rules. |
 | MEF cannot resolve services after assembly move | Preserve export/shared attributes, make ILSpy reference the new assemblies directly, and use existing application composition conventions. Do not add a second service container. |
 | Secure key storage changes platform behavior | Move facade and all internal platform backends together; preserve P/Invoke declarations, locations, and Linux process behavior. |
@@ -580,6 +609,8 @@ Do not attempt to move all source files in one change. The executable must remai
 - [ ] All scoped portable and decompiler-aware AI source has been removed from `ICSharpCode.ILSpyX`.
 - [ ] All production callers and tests use the new contracts/assemblies.
 - [ ] `ILSpy` retains all Avalonia UI, desktop command, menu, dialog, options, and host adapter files.
+- [ ] `ICSharpCode.ILSpyX` no longer references either new AI assembly (the temporary bridge references from Tasks 2.1/3.1 were removed in Task 3.4).
+- [ ] `AppComposition` catalogs `ICSharpCode.ILSpy.AI` (registered in Task 2.2), and the "Security Risks (AI)" tree analyzer still works through the desktop `AISecurityAnalyzerAdapter`.
 - [ ] The existing provider protocols, settings migration, secure storage, prompts, chat commands, rename annotations, search, and security audit behavior are preserved.
 - [ ] New projects, tests, solution filters, lock files, package metadata, and CI entries are complete.
 - [ ] `ILSpy.XPlat.slnf`, `ILSpy.Desktop.slnf`, new module tests, remaining ILSpyX tests, and desktop tests pass within supported platform constraints.
