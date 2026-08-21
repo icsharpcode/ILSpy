@@ -12,6 +12,8 @@
 			"ICSharpCode.ILSpyX.Tests\\ICSharpCode.ILSpyX.Tests.csproj",
 			"ICSharpCode.ILSpy.AI\\ICSharpCode.ILSpy.AI.csproj",
 			"ICSharpCode.ILSpy.AI.Decompiler\\ICSharpCode.ILSpy.AI.Decompiler.csproj",
+			"ICSharpCode.ILSpy.AI.Tests\\ICSharpCode.ILSpy.AI.Tests.csproj",
+			"ICSharpCode.ILSpy.AI.Decompiler.Tests\\ICSharpCode.ILSpy.AI.Decompiler.Tests.csproj",
 			"ILSpy.BamlDecompiler.Tests\\ILSpy.BamlDecompiler.Tests.csproj"
 		]
 	}

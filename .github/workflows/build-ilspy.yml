@@ -362,6 +362,23 @@ jobs:
         --no-build --report-trx
         --results-directory test-results
 
+    # The extracted AI modules are pure net10.0 libraries, so their tests run on every
+    # desktop platform (the Windows job also runs them via the solution-wide test step).
+    # SecureKeyStorageSmokeTests self-exclude per host through [Platform] attributes.
+    - name: Execute AI module tests
+      run: >
+        dotnet test --project ICSharpCode.ILSpy.AI.Tests/ICSharpCode.ILSpy.AI.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
+    - name: Execute AI decompiler module tests
+      run: >
+        dotnet test --project ICSharpCode.ILSpy.AI.Decompiler.Tests/ICSharpCode.ILSpy.AI.Decompiler.Tests.csproj
+        --configuration Release
+        --no-build --report-trx
+        --results-directory test-results
+
     - name: Execute decompiler tests
       id: decompiler-tests
       if: matrix.platform != 'macos'
