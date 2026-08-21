@@ -8,6 +8,7 @@ using Avalonia;
 using Avalonia.Controls;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpyX.AI;

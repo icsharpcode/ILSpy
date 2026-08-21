@@ -1585,11 +1585,19 @@
           "YamlDotNet": "[16.1.3, )"
         }
       },
+      "icsharpcode.ilspy.ai.decompiler": {
+        "type": "Project",
+        "dependencies": {
+          "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
+          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )"
+        }
+      },
       "icsharpcode.ilspyx": {
         "type": "Project",
         "dependencies": {
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9627, )",
+          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )",
+          "ICSharpCode.ILSpy.AI.Decompiler": "[11.0.0.9628, )",
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Markdig": "[0.40.0, )",
           "Mono.Cecil": "[0.11.6, )",
@@ -1615,7 +1623,8 @@
           "Dock.Serializer.SystemTextJson": "[12.1.0.1, )",
           "ICSharpCode.BamlDecompiler": "[10.0.0-noversion, )",
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9627, )",
+          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )",
+          "ICSharpCode.ILSpy.AI.Decompiler": "[11.0.0.9628, )",
           "ICSharpCode.ILSpyX": "[8.0.0-noversion, )",
           "McMaster.Extensions.CommandLineUtils": "[5.1.0, )",
           "Microsoft.DiaSymReader": "[1.4.0, )",

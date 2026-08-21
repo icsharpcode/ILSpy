@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpy.AI.Providers;

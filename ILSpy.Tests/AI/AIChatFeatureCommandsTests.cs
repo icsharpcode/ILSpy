@@ -11,6 +11,7 @@ using Avalonia.Headless.NUnit;
 using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.AI;

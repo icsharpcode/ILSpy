@@ -95,6 +95,13 @@
           "YamlDotNet": "[16.1.3, )"
         }
       },
+      "icsharpcode.ilspy.ai.decompiler": {
+        "type": "Project",
+        "dependencies": {
+          "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
+          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )"
+        }
+      },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",
         "requested": "[10.0.11, )",

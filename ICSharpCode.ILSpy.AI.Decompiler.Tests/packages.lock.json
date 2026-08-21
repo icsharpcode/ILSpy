@@ -129,7 +129,7 @@
         "type": "Project",
         "dependencies": {
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9627, )"
+          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )"
         }
       },
       "Markdig": {

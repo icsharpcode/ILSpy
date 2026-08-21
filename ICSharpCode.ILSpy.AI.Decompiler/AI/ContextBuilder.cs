@@ -13,9 +13,8 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	public sealed class ContextBuilder
 	{
@@ -163,7 +162,7 @@ namespace ICSharpCode.ILSpyX.AI
 			string? declaringType = target.DeclaringTypeDefinition?.FullName;
 			try
 			{
-				return MethodUsedByAnalyzer.FindCallers(target, module)
+				return SameModuleCallerDiscovery.FindCallers(target, module)
 				.OrderByDescending(caller => caller.DeclaringTypeDefinition?.FullName == declaringType)
 				.ThenBy(caller => caller.FullName, StringComparer.Ordinal)
 				.Take(10)

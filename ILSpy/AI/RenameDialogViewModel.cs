@@ -13,6 +13,7 @@ using Avalonia.Threading;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Annotations;

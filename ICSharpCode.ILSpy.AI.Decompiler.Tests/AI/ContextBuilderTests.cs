@@ -8,16 +8,16 @@ using System.Reflection.Metadata.Ecma335;
 
 using AwesomeAssertions;
 
+using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpy.AI.Decompiler;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Decompiler.Tests.AI
 {
 	[TestFixture]
 	public class ContextBuilderTests

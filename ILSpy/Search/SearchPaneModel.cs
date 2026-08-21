@@ -29,6 +29,7 @@ using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.AI;
