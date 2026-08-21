@@ -5,7 +5,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	public sealed class ChatMessage : INotifyPropertyChanged
 	{

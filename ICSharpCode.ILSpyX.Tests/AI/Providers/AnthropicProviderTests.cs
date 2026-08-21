@@ -10,6 +10,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.AI.Providers;
 

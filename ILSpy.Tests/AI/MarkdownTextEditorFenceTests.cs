@@ -6,6 +6,7 @@ using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpy.AI.Controls;
 
 using NUnit.Framework;

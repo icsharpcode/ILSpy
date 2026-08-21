@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
 
 namespace ICSharpCode.ILSpyX.Analyzers.Builtin

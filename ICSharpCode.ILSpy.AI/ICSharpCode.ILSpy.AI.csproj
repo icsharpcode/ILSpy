@@ -66,6 +66,7 @@
     <PackageReference Include="System.Composition.AttributedModel" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="YamlDotNet" />
+    <PackageReference Include="Markdig" />
     <PackageReference Include="Microsoft.SourceLink.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

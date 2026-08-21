@@ -11,6 +11,7 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 

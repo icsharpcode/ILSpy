@@ -2,7 +2,7 @@
 
 using System;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>Precise reason the active AI selection cannot serve requests.</summary>
 	public enum AIReadinessReason

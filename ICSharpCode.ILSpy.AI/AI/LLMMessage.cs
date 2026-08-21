@@ -2,7 +2,7 @@
 
 using System;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	public sealed record LLMMessage
 	{

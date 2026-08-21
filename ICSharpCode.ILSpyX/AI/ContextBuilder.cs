@@ -12,6 +12,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
 namespace ICSharpCode.ILSpyX.AI

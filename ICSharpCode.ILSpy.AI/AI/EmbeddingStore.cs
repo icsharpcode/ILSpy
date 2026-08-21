@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>Small dependency-free hash-vector cache for local semantic/similarity search; this is not a remote embedding service.</summary>
 	public sealed class EmbeddingStore

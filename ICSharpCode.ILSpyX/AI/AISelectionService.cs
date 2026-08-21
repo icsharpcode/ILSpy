@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpyX.AI

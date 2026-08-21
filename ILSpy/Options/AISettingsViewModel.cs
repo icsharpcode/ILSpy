@@ -19,6 +19,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 

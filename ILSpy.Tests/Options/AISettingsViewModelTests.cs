@@ -11,6 +11,7 @@ using System.Xml.Linq;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.Settings;
 

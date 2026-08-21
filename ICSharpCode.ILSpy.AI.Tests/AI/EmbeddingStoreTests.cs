@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Dr. Masroor Ehsan
 
-using ICSharpCode.ILSpyX.AI;
+using ICSharpCode.ILSpy.AI;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Tests.AI
 {
 	[TestFixture]
 	public class EmbeddingStoreTests

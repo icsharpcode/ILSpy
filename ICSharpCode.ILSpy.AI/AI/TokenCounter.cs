@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Dr. Masroor Ehsan
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>
 	/// Provides approximate token counting for LLM context budget management.

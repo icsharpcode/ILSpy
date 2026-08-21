@@ -381,10 +381,20 @@
           "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
+      "icsharpcode.ilspy.ai": {
+        "type": "Project",
+        "dependencies": {
+          "Markdig": "[0.40.0, )",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
+          "System.Composition.AttributedModel": "[10.0.11, )",
+          "YamlDotNet": "[16.1.3, )"
+        }
+      },
       "icsharpcode.ilspyx": {
         "type": "Project",
         "dependencies": {
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
+          "ICSharpCode.ILSpy.AI": "[11.0.0.9624, )",
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Markdig": "[0.40.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",

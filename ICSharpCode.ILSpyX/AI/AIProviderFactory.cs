@@ -6,6 +6,7 @@ using System.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.Settings;
 using Microsoft.Extensions.Logging;
 

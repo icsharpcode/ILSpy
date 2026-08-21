@@ -12,6 +12,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ICSharpCode.ILSpy.AI;
+
 namespace ICSharpCode.ILSpyX.AI.Providers
 {
 	/// <summary>Anthropic Messages API provider with streaming support.</summary>

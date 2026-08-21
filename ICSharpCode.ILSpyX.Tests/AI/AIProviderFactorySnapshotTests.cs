@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
 using ICSharpCode.ILSpyX.AI.Providers;
 using ICSharpCode.ILSpyX.Settings;

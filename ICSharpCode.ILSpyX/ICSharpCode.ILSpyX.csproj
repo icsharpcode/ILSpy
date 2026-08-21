@@ -140,6 +140,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <!-- TEMPORARY BRIDGE (Task 2.1): not-yet-migrated ILSpyX AI files consume contracts that
+         moved to ICSharpCode.ILSpy.AI. Removed in Task 3.4 once ILSpyX is AI-free. -->
+    <ProjectReference Include="..\ICSharpCode.ILSpy.AI\ICSharpCode.ILSpy.AI.csproj" />
   </ItemGroup>
 
   <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">

@@ -7,7 +7,7 @@ using System.Linq;
 using Markdig;
 using Markdig.Syntax;
 
-namespace ICSharpCode.ILSpyX.AI
+namespace ICSharpCode.ILSpy.AI
 {
 	/// <summary>
 	/// Extracts fenced code blocks from AI-generated markdown so they can be acted on without

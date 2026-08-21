@@ -44,15 +44,26 @@
         "contentHash": "OzKDcIRkeNJeC8qAsbn8yJXnfTLP1dtkWILe+T56Gf/z+IkAASi7sMqLqJQat08j5z/mRN5xVtoAwbkMNMoBUQ=="
       },
       "icsharpcode.decompiler": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "System.Collections.Immutable": "[9.0.0, )",
+          "System.Reflection.Metadata": "[9.0.0, )"
+        }
       },
       "icsharpcode.ilspy.ai": {
         "type": "Project",
         "dependencies": {
+          "Markdig": "[0.40.0, )",
           "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
           "System.Composition.AttributedModel": "[10.0.11, )",
           "YamlDotNet": "[16.1.3, )"
         }
+      },
+      "Markdig": {
+        "type": "CentralTransitive",
+        "requested": "[0.40.0, )",
+        "resolved": "0.40.0",
+        "contentHash": "4ve14zs+gt1irldTQE3y5FLAHuzmhW7T99lAAvVipe/q2LWT/nUCO0iICb9TXGvMX6n7Z1OZroFXkdSy91rO8w=="
       },
       "Microsoft.Extensions.DependencyInjection.Abstractions": {
         "type": "CentralTransitive",
@@ -69,11 +80,23 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.11"
         }
       },
+      "System.Collections.Immutable": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "BQY956wwWSjRDoOspL6L1JscbFoSgJK606mO3PYalBHIZRV+Sc2xokvR/NHLlpUEfju6EbW5GbKbNpVYQ65cLw=="
+      },
       "System.Composition.AttributedModel": {
         "type": "CentralTransitive",
         "requested": "[10.0.11, )",
         "resolved": "10.0.11",
         "contentHash": "pexJp2ogcmngQ0GUg0KNtGRzfDgQ/5ZPNapEJ/EMc4rl2Y528cKPigXGdjajbVtvKfER1Tx/5DY3WRiWUgIH5w=="
+      },
+      "System.Reflection.Metadata": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.11, )",
+        "resolved": "10.0.11",
+        "contentHash": "ayYHfHtraz6Z6kFQrlTVJ4lV8jG11noHfu6fWAdeP6I6coGCym14V06jZApgk/9c74HoP8Wmcpxd1NokbKFdbQ=="
       },
       "YamlDotNet": {
         "type": "CentralTransitive",
