@@ -745,7 +745,9 @@ public class AIPromptProviderTests
 After completing all tasks:
 
 - [x] Run `pwsh build.ps1 --no-restore` from repo root — succeeded with 0 warnings and 0 errors on August 20, 2026
-- [ ] Run `dotnet test --solution ILSpy.sln --no-build --report-trx` — attempted on August 20, 2026; stopped after more than six minutes with the solution runner still CPU-bound and no terminal output
+- [x] Run the complete ILSpyX test project — `dotnet run --project ICSharpCode.ILSpyX.Tests/ICSharpCode.ILSpyX.Tests.csproj --no-build -- --output Normal --progress off --report-trx` — 256 discovered, 254 passed, 2 platform skips, 0 failures on August 21, 2026
+- [x] Run ILSpy AI tests — `dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj --no-build --filter FullyQualifiedName~AI --report-trx` — 27 passed on August 21, 2026
+- [ ] Run `dotnet test --solution ILSpy.sln --no-build --report-trx` — attempted on August 21, 2026; solution runner produced no output for more than two minutes and was stopped. Per-project ILSpyX and ILSpy AI suites pass; aggregate runner remains unverified.
 - [x] Check `ICSharpCode.ILSpyX/bin/Debug/net10.0/AI/prompts/` contains 8 .prompt files plus README.md
 - [ ] Manually test "Explain Code" feature in ILSpy UI
 - [ ] Manually test "Rename Symbol" feature
@@ -754,6 +756,8 @@ After completing all tasks:
 - [x] Automated variation coverage creates an `explanation.*.prompt` file with `applies_to_models` and verifies exact model selection, lexical precedence, case sensitivity, and malformed-variation fallback
 - [x] Phase 5 generator emits deterministic embedded fallbacks and is wired into the ILSpyX build
 - [x] Prompt generator tests cover ordering, variant exclusion, malformed frontmatter, and idempotent writes
+
+Verification note (August 21, 2026): `dotnet build ICSharpCode.ILSpyX/ICSharpCode.ILSpyX.csproj --no-restore`, `pwsh build.ps1 --no-restore`, and `PromptEmbedder --check` all pass. The implemented format is YAML-frontmatter `*.prompt` files with generated embedded fallbacks; the earlier JSON design checklist in `ai-prompt-externalization-plan.md` is superseded by this implementation.
 
 ---
 
