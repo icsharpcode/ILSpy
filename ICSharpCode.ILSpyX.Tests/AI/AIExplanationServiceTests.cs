@@ -74,6 +74,40 @@ namespace ICSharpCode.ILSpyX.Tests.AI
 		}
 
 		[Test]
+		public async Task ExplainContextStreaming_WithFocusText_IncludesFocusInPrompt()
+		{
+			var provider = new FakeProvider("answer");
+			var service = new AIExplanationService(
+				Snapshot(),
+				new FakeFactory(provider));
+			var context = new DecompilationContext { DecompiledCSharp = "class C {}" };
+
+			await foreach (string _ in service.ExplainContextStreamingAsync(context, "thread safety"))
+			{
+			}
+
+			provider.LastRequest!.Messages.Should().ContainSingle();
+			provider.LastRequest.Messages[0].Content.Should().StartWith("Explain this selected symbol. Focus on: thread safety:\n\n");
+		}
+
+		[Test]
+		public async Task ExplainContextStreaming_WithoutFocusText_KeepsStandardHeading()
+		{
+			var provider = new FakeProvider("answer");
+			var service = new AIExplanationService(
+				Snapshot(),
+				new FakeFactory(provider));
+			var context = new DecompilationContext { DecompiledCSharp = "class C {}" };
+
+			await foreach (string _ in service.ExplainContextStreamingAsync(context, focusText: null))
+			{
+			}
+
+			provider.LastRequest!.Messages.Should().ContainSingle();
+			provider.LastRequest.Messages[0].Content.Should().StartWith("Explain this selected symbol:\n\n");
+		}
+
+		[Test]
 		public void ExplainContext_RequiresConsentBeforeProviderCreation()
 		{
 			var factory = new FakeFactory(new FakeProvider("unused"));

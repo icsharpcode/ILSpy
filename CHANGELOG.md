@@ -3,6 +3,39 @@
 This project does not keep an exhaustive release log; this file only records user-facing
 highlights that are worth noting between releases.
 
+## AI Chat - Wired /explain and /rename Commands
+
+### New features
+- `/explain` now runs the dedicated explanation pipeline in the chat: the selected symbol's
+  full token-budgeted decompilation context (decompiled C#, attributes, interfaces, string
+  literals, optional callers/callees and IL) is sent with the `explanation` system prompt,
+  and the answer streams into the conversation as an assistant message.
+- `/explain <focus text>` optionally focuses the explanation (for example
+  `/explain focus on the locking strategy`).
+- `/rename` now invokes the rename assistant in the chat: it renders ranked name
+  suggestions with confidence and reasoning as an assistant message, plus a pointer to
+  "Suggest Name with AI" for applying a suggestion.
+- `/rename <hint>` optionally passes a naming hint to the suggester (for example
+  `/rename prefer a Header prefix`).
+- Both commands explain what they need when no symbol is selected, and `/rename` friendly
+  declines symbols that do not look obfuscated, matching the context-menu behavior.
+
+### Improvements
+- Slash commands are no longer rewritten into plain-English chat prompts; the unused
+  command-expansion fallback was removed.
+- The `/audit` and `/summary` command handlers share one command runner with the new
+  commands (busy state, cancellation, and error handling behave identically).
+
+### Technical details
+- `IAIChatFeatureCommands` gained `RunExplainAsync` (streaming) and `RunRenameAsync`
+  (one-shot) implemented by `AIChatFeatureCommands`, which resolves the selected entity,
+  re-resolves it in a fresh decompiler type system, and calls `AIExplanationService` /
+  `RenameSuggester`.
+- The entity-to-decompiler plumbing (`AIEntityDecompilation`) is shared with the
+  AI Output pane instead of being duplicated per feature.
+- `AIExplanationService.ExplainContextStreamingAsync` accepts an optional focus text and
+  `RenameSuggester.SuggestAsync` an optional user naming hint.
+
 ## AI Prompt Externalization
 
 ### New features

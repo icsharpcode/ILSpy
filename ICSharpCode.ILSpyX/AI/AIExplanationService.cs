@@ -53,11 +53,20 @@ namespace ICSharpCode.ILSpyX.AI
 		public IAsyncEnumerable<string> ExplainContextStreamingAsync(
 			DecompilationContext context,
 			CancellationToken cancellationToken = default)
+			=> ExplainContextStreamingAsync(context, focusText: null, cancellationToken);
+
+		public IAsyncEnumerable<string> ExplainContextStreamingAsync(
+			DecompilationContext context,
+			string? focusText,
+			CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(context);
+			string heading = string.IsNullOrWhiteSpace(focusText)
+				? "Explain this selected symbol"
+				: "Explain this selected symbol. Focus on: " + focusText.Trim();
 			return CompleteStreamingAsync(
 				AIPromptProvider.Instance.GetSystemPrompt("explanation", snapshot.Model),
-				"Explain this selected symbol:\n\n" + context.ToMarkdown(),
+				heading + ":\n\n" + context.ToMarkdown(),
 				cancellationToken);
 		}
 

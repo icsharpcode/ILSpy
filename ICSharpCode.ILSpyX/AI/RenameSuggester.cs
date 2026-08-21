@@ -64,6 +64,14 @@ namespace ICSharpCode.ILSpyX.AI
 			CSharpDecompiler decompiler,
 			string? additionalContext,
 			CancellationToken cancellationToken = default)
+			=> await SuggestAsync(entity, decompiler, additionalContext, namingHint: null, cancellationToken).ConfigureAwait(false);
+
+		public async Task<IReadOnlyList<RenameSuggestion>> SuggestAsync(
+			IEntity entity,
+			CSharpDecompiler decompiler,
+			string? additionalContext,
+			string? namingHint,
+			CancellationToken cancellationToken = default)
 		{
 			ArgumentNullException.ThrowIfNull(entity);
 			ArgumentNullException.ThrowIfNull(decompiler);
@@ -76,6 +84,11 @@ namespace ICSharpCode.ILSpyX.AI
 			{
 				int relatedBudget = Math.Max(128, MaxContextTokens / 5);
 				prompt += "\n\nPreviously proposed renames:\n" + TokenCounter.TruncateToTokenBudget(additionalContext, relatedBudget, isCode: false);
+			}
+			if (!string.IsNullOrWhiteSpace(namingHint))
+			{
+				int hintBudget = Math.Max(128, MaxContextTokens / 5);
+				prompt += "\n\nNaming hint from the user: " + TokenCounter.TruncateToTokenBudget(namingHint, hintBudget, isCode: false);
 			}
 			var service = CreateExplanationService();
 			var chunks = new List<string>();

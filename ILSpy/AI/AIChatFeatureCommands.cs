@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,6 +24,8 @@ namespace ICSharpCode.ILSpy.AI
 	{
 		Task<string> RunAuditAsync(CancellationToken cancellationToken);
 		Task<string> RunSummaryAsync(CancellationToken cancellationToken);
+		Task<IAsyncEnumerable<string>?> RunExplainAsync(string? focusText, CancellationToken cancellationToken);
+		Task<string> RunRenameAsync(string? namingHint, CancellationToken cancellationToken);
 	}
 
 	[Export(typeof(IAIChatFeatureCommands))]
@@ -71,6 +74,64 @@ namespace ICSharpCode.ILSpy.AI
 			dockWorkspace.ShowToolPane(AIOutputPaneModel.PaneContentId);
 			_ = outputPane.StartAsync(assembly.ShortName, token => AssemblySummaryContextMenuEntry.BuildAndCompleteAsync(assembly, service, snapshot, token));
 			return $"Assembly summary started in the AI Output pane for {assembly.ShortName}.";
+		}
+
+		public async Task<IAsyncEnumerable<string>?> RunExplainAsync(string? focusText, CancellationToken cancellationToken)
+		{
+			IEntity? entity = ResolveSelectedEntity();
+			if (entity is null)
+				return null;
+
+			var decompiler = AIEntityDecompilation.CreateDecompiler(entity);
+			IEntity resolvedEntity = AIEntityDecompilation.ResolveEntity(entity, decompiler)
+				?? throw new InvalidOperationException($"Failed to resolve entity '{entity.FullName}' in the decompiler type system.");
+			AISelectionSnapshot snapshot = await selectionService.ResolveSnapshotAsync(cancellationToken).ConfigureAwait(false);
+			DecompilationContext context = await Task.Run(
+				() => new ContextBuilder(snapshot).Build(resolvedEntity, decompiler),
+				cancellationToken).ConfigureAwait(false);
+			return new AIExplanationService(snapshot, providerFactory).ExplainContextStreamingAsync(context, focusText, cancellationToken);
+		}
+
+		public async Task<string> RunRenameAsync(string? namingHint, CancellationToken cancellationToken)
+		{
+			IEntity? entity = ResolveSelectedEntity();
+			if (entity is null)
+				return "/rename requires a selected type, method, property, or field. Select one in the assembly tree and try again.";
+			if (!RenameSuggester.IsLikelyObfuscated(entity.Name))
+				return $"/rename targets obfuscated names (e.g. method_1234); '{entity.Name}' does not look obfuscated. Ask in plain chat for general naming advice.";
+
+			var decompiler = AIEntityDecompilation.CreateDecompiler(entity);
+			IEntity resolvedEntity = AIEntityDecompilation.ResolveEntity(entity, decompiler)
+				?? throw new InvalidOperationException($"Failed to resolve entity '{entity.FullName}' in the decompiler type system.");
+			AISelectionSnapshot snapshot = await selectionService.ResolveSnapshotAsync(cancellationToken).ConfigureAwait(false);
+			IReadOnlyList<RenameSuggestion> suggestions = await new RenameSuggester(snapshot, providerFactory)
+				.SuggestAsync(resolvedEntity, decompiler, additionalContext: null, namingHint, cancellationToken)
+				.ConfigureAwait(false);
+			return FormatRenameSuggestions(entity, suggestions);
+		}
+
+		public static string FormatRenameSuggestions(IEntity entity, IReadOnlyList<RenameSuggestion> suggestions)
+		{
+			ArgumentNullException.ThrowIfNull(entity);
+			ArgumentNullException.ThrowIfNull(suggestions);
+			var builder = new StringBuilder();
+			builder.Append("Rename candidates for ").Append(entity.FullName).AppendLine(":");
+			foreach (RenameSuggestion suggestion in suggestions)
+			{
+				builder.AppendLine();
+				builder.Append("- **").Append(suggestion.Name).Append("** (").Append(suggestion.ConfidencePercent).Append("%) — ")
+					.Append(string.IsNullOrWhiteSpace(suggestion.Reasoning) ? "no reasoning provided" : suggestion.Reasoning);
+			}
+			builder.AppendLine();
+			builder.AppendLine();
+			builder.Append("Apply one via the assembly tree context menu → \"Suggest Name with AI\".");
+			return builder.ToString();
+		}
+
+		IEntity? ResolveSelectedEntity()
+		{
+			var entity = (assemblyTree.SelectedItem as IMemberTreeNode)?.Member;
+			return entity is ITypeDefinition or IMethod or IProperty or IField ? entity : null;
 		}
 
 		ITypeDefinition? ResolveSelectedType()

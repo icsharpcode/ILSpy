@@ -12,8 +12,6 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.ViewModels;
@@ -68,40 +66,13 @@ namespace ICSharpCode.ILSpy.AI
 		public Task StartAsync(IEntity entity)
 		{
 			ArgumentNullException.ThrowIfNull(entity);
-			MetadataFile module = entity.ParentModule?.MetadataFile
-				?? throw new InvalidOperationException("The selected symbol has no decompilable module.");
-			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new ICSharpCode.Decompiler.DecompilerSettings());
-
-			// Re-resolve the entity from the new decompiler's type system using its metadata token.
-			// The entity was resolved from a different decompiler instance, so we cannot pass it directly
-			// to ExplainStreamingAsync — ContextBuilder.Build validates that entity.ParentModule equals
-			// decompiler.TypeSystem.MainModule via ReferenceEquals, which would fail.
-			IEntity resolvedEntity = ResolveEntity(entity, decompiler)
+			var decompiler = AIEntityDecompilation.CreateDecompiler(entity);
+			IEntity resolvedEntity = AIEntityDecompilation.ResolveEntity(entity, decompiler)
 				?? throw new InvalidOperationException($"Failed to resolve entity '{entity.FullName}' in the decompiler type system.");
 			return StartAsync(entity.FullName, async token => {
 				AISelectionSnapshot snapshot = await selectionService.ResolveSnapshotAsync(token).ConfigureAwait(false);
 				return new AIExplanationService(snapshot, providerFactory).ExplainStreamingAsync(resolvedEntity, decompiler, token);
 			});
-		}
-
-		static IEntity? ResolveEntity(IEntity entity, CSharpDecompiler decompiler)
-		{
-			var token = entity.MetadataToken;
-			if (token.IsNil)
-				return null;
-			return token.Kind switch {
-				System.Reflection.Metadata.HandleKind.TypeDefinition =>
-					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.TypeDefinitionHandle)token),
-				System.Reflection.Metadata.HandleKind.MethodDefinition =>
-					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.MethodDefinitionHandle)token),
-				System.Reflection.Metadata.HandleKind.FieldDefinition =>
-					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.FieldDefinitionHandle)token),
-				System.Reflection.Metadata.HandleKind.PropertyDefinition =>
-					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.PropertyDefinitionHandle)token),
-				System.Reflection.Metadata.HandleKind.EventDefinition =>
-					decompiler.TypeSystem.MainModule.GetDefinition((System.Reflection.Metadata.EventDefinitionHandle)token),
-				_ => null
-			};
 		}
 
 		public Task StartAsync(string name, Func<CancellationToken, IAsyncEnumerable<string>> streamFactory)

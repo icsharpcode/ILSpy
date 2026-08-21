@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.AI
 		[ObservableProperty] string statusMessage = "Ready";
 		[ObservableProperty] string errorMessage = string.Empty;
 		public bool ShowSuggestions => Input.StartsWith("/", StringComparison.Ordinal);
-		public string[] CommandSuggestions { get; } = { "/help", "/clear", "/explain", "/rename ", "/audit", "/summary" };
+		public string[] CommandSuggestions { get; } = { "/help", "/clear", "/explain ", "/rename ", "/audit", "/summary" };
 
 		[ImportingConstructor]
 		public AIChatPaneModel(SettingsService settingsService, IAIProviderFactory providerFactory, AssemblyTreeModel assemblyTree, IAIChatFeatureCommands featureCommands, [ImportMany("OptionPages")] IEnumerable<ExportFactory<IOptionPage, IOptionsMetadata>> optionPages)
@@ -212,8 +212,6 @@ namespace ICSharpCode.ILSpy.AI
 			await SetUiStateAsync(() => {
 				Input = string.Empty;
 				EnsureConversation(snapshot);
-				if (text.StartsWith('/'))
-					text = ExpandCommand(text);
 				Messages.Add(new ChatMessage { Role = "user", Content = text });
 				TrimHistory();
 				Messages.Add(assistant);
@@ -280,67 +278,108 @@ namespace ICSharpCode.ILSpy.AI
 				return false;
 			int space = text.IndexOf(' ');
 			string command = (space < 0 ? text : text[..space]).ToLowerInvariant();
+			string? argument = space < 0 ? null : text[(space + 1)..];
 			switch (command)
 			{
 				case "/help":
 					await SetUiStateAsync(() => Input = string.Empty);
-					await AppendLocalMessageAsync("Commands: /help lists commands; /clear clears this conversation; /explain asks about the selected symbol; /rename suggests a name; /audit analyzes the selected type or method for security findings; /summary starts an assembly summary in AI Output.");
+					await AppendLocalMessageAsync("Commands: /help lists commands; /clear clears this conversation; /explain explains the selected symbol with full decompiled context (optional focus text); /rename suggests names for the selected obfuscated symbol (optional naming hint); /audit analyzes the selected type or method for security findings; /summary starts an assembly summary in AI Output.");
 					await SetUiStateAsync(() => StatusMessage = "Ready");
 					return true;
 				case "/clear":
 					await SetUiStateAsync(ClearCore);
 					return true;
 				case "/audit":
-				case "/summary":
-					await SetUiStateAsync(() => {
-						Input = string.Empty;
-						IsBusy = true;
-						ErrorMessage = string.Empty;
-						StatusMessage = command == "/audit" ? "Auditing selected type…" : "Starting assembly summary…";
+					await RunCommandCoreAsync(command, "Auditing selected type…", async token => {
+						string result = await featureCommands.RunAuditAsync(token).ConfigureAwait(false);
+						await AppendLocalMessageAsync(result).ConfigureAwait(false);
 					});
-					cancellation?.Cancel();
-					var commandCancellation = new CancellationTokenSource();
-					cancellation = commandCancellation;
-					try
-					{
-						string result = command == "/audit"
-							? await featureCommands.RunAuditAsync(commandCancellation.Token).ConfigureAwait(false)
-							: await featureCommands.RunSummaryAsync(commandCancellation.Token).ConfigureAwait(false);
-						await AppendLocalMessageAsync(result);
-						await SetUiStateAsync(() => StatusMessage = "Command complete");
-					}
-					catch (AIConfigurationException exception)
-					{
-						await AppendLocalMessageAsync($"{command} requires a ready AI selection: {exception.Message}");
-						await SetUiStateAsync(() => { ErrorMessage = exception.Message; StatusMessage = "Configuration required"; });
-					}
-					catch (OperationCanceledException)
-					{
-						await AppendLocalMessageAsync($"{command} canceled.");
-						await SetUiStateAsync(() => StatusMessage = "Canceled");
-					}
-					catch (Exception exception)
-					{
-						await AppendLocalMessageAsync($"{command} failed: {exception.Message}");
-						await SetUiStateAsync(() => { ErrorMessage = exception.Message; StatusMessage = "Command failed"; });
-					}
-					finally
-					{
-						if (ReferenceEquals(cancellation, commandCancellation))
-							cancellation = null;
-						commandCancellation.Dispose();
-						await SetUiStateAsync(() => IsBusy = false);
-					}
+					return true;
+				case "/summary":
+					await RunCommandCoreAsync(command, "Starting assembly summary…", async token => {
+						string result = await featureCommands.RunSummaryAsync(token).ConfigureAwait(false);
+						await AppendLocalMessageAsync(result).ConfigureAwait(false);
+					});
 					return true;
 				case "/explain":
+					await RunCommandCoreAsync(command, "Explaining selected symbol…", token => RunExplainStreamAsync(argument, token));
+					return true;
 				case "/rename":
-					return false;
+					await RunCommandCoreAsync(command, "Suggesting names…", async token => {
+						string result = await featureCommands.RunRenameAsync(argument, token).ConfigureAwait(false);
+						await AppendLocalMessageAsync(result).ConfigureAwait(false);
+					});
+					return true;
 				default:
 					await SetUiStateAsync(() => Input = string.Empty);
 					await AppendLocalMessageAsync($"Unsupported command '{command}'. Type /help for supported commands.");
 					await SetUiStateAsync(() => StatusMessage = "Unknown command");
 					return true;
 			}
+		}
+
+		async Task RunCommandCoreAsync(string command, string statusText, Func<CancellationToken, Task> run)
+		{
+			await SetUiStateAsync(() => {
+				Input = string.Empty;
+				IsBusy = true;
+				ErrorMessage = string.Empty;
+				StatusMessage = statusText;
+			});
+			cancellation?.Cancel();
+			var commandCancellation = new CancellationTokenSource();
+			cancellation = commandCancellation;
+			try
+			{
+				await run(commandCancellation.Token).ConfigureAwait(false);
+				await SetUiStateAsync(() => StatusMessage = "Command complete");
+			}
+			catch (AIConfigurationException exception)
+			{
+				await AppendLocalMessageAsync($"{command} requires a ready AI selection: {exception.Message}");
+				await SetUiStateAsync(() => { ErrorMessage = exception.Message; StatusMessage = "Configuration required"; });
+			}
+			catch (OperationCanceledException)
+			{
+				await AppendLocalMessageAsync($"{command} canceled.");
+				await SetUiStateAsync(() => StatusMessage = "Canceled");
+			}
+			catch (Exception exception)
+			{
+				await AppendLocalMessageAsync($"{command} failed: {exception.Message}");
+				await SetUiStateAsync(() => { ErrorMessage = exception.Message; StatusMessage = "Command failed"; });
+			}
+			finally
+			{
+				if (ReferenceEquals(cancellation, commandCancellation))
+					cancellation = null;
+				commandCancellation.Dispose();
+				await SetUiStateAsync(() => IsBusy = false);
+			}
+		}
+
+		async Task RunExplainStreamAsync(string? focusText, CancellationToken cancellationToken)
+		{
+			var stream = await featureCommands.RunExplainAsync(focusText, cancellationToken).ConfigureAwait(false);
+			if (stream is null)
+			{
+				await AppendLocalMessageAsync("/explain requires a selected type, method, property, or field. Select one in the assembly tree and try again.").ConfigureAwait(false);
+				return;
+			}
+			string symbolName = (assemblyTree.SelectedItem as IMemberTreeNode)?.Member?.FullName ?? "the selected symbol";
+			var assistant = new ChatMessage { Role = "assistant", Content = $"**Explaining `{symbolName}`**\n\n" };
+			await SetUiStateAsync(() => {
+				Messages.Add(assistant);
+				TrimHistory();
+			});
+			var builder = new StringBuilder(assistant.Content);
+			await foreach (var chunk in stream.ConfigureAwait(false))
+			{
+				builder.Append(chunk);
+				string contentSnapshot = builder.ToString();
+				await Dispatcher.UIThread.InvokeAsync(() => assistant.Content = contentSnapshot);
+			}
+			await SetUiStateAsync(SaveHistory);
 		}
 
 		async Task AppendLocalMessageAsync(string content)
@@ -357,19 +396,6 @@ namespace ICSharpCode.ILSpy.AI
 			if (Dispatcher.UIThread.CheckAccess())
 			{ action(); return Task.CompletedTask; }
 			return Dispatcher.UIThread.InvokeAsync(action).GetTask();
-		}
-
-		string ExpandCommand(string command)
-		{
-			int space = command.IndexOf(' ');
-			string name = (space < 0 ? command : command[..space]).ToLowerInvariant();
-			return name switch {
-				"/explain" => "Explain the currently selected symbol.",
-				"/rename" => "Suggest a meaningful rename for " + (space < 0 ? "the currently selected symbol." : command[(space + 1)..]),
-				"/audit" => "Audit the currently loaded assembly for security risks.",
-				"/summary" => "Summarize the currently loaded assembly.",
-				_ => command
-			};
 		}
 
 		string GetActiveContext(string requestText)
