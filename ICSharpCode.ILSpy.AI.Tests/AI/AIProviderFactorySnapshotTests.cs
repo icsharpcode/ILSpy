@@ -5,13 +5,12 @@ using System.Threading.Tasks;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.AI.Providers;
-using ICSharpCode.ILSpyX.Settings;
+using ICSharpCode.ILSpy.AI.Providers;
+
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI
+namespace ICSharpCode.ILSpy.AI.Tests.AI
 {
 	[TestFixture]
 	public class AIProviderFactorySnapshotTests

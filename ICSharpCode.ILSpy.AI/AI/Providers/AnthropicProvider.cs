@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.AI;
 
-namespace ICSharpCode.ILSpyX.AI.Providers
+namespace ICSharpCode.ILSpy.AI.Providers
 {
 	/// <summary>Anthropic Messages API provider with streaming support.</summary>
 	public sealed class AnthropicProvider : ILLMProvider

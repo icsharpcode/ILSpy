@@ -11,7 +11,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.AI.Providers;
+using ICSharpCode.ILSpy.AI.Providers;
 using ICSharpCode.ILSpyX.Settings;
 
 using NUnit.Framework;

@@ -12,14 +12,13 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.AI;
-using ICSharpCode.ILSpyX.AI.Providers;
+using ICSharpCode.ILSpy.AI.Providers;
 
 using Microsoft.Extensions.Logging;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.AI.Providers
+namespace ICSharpCode.ILSpy.AI.Tests.AI.Providers
 {
 	[TestFixture]
 	public class OpenAIProviderTests

@@ -17,7 +17,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 using ICSharpCode.ILSpy.AI;
 
-namespace ICSharpCode.ILSpyX.AI.Providers
+namespace ICSharpCode.ILSpy.AI.Providers
 {
 	/// <summary>
 	/// OpenAI-compatible API provider (supports OpenAI, Ollama, and custom endpoints).
