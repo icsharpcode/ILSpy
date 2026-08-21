@@ -50,17 +50,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="AI\prompts\*.prompt">
+    <Content Include="prompts\*.prompt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="AI\prompts\README.md">
+    <Content Include="prompts\README.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" ReferenceOutputAssembly="false" />
-    <PromptEmbedderInput Include="AI\prompts\*.prompt" />
+    <PromptEmbedderInput Include="prompts\*.prompt" />
     <PromptEmbedderSource Include="..\BuildTools\PromptEmbedder\PromptEmbedder.csproj" />
     <PromptEmbedderSource Include="..\BuildTools\PromptEmbedder\Program.cs" />
   </ItemGroup>
@@ -76,7 +76,7 @@
     <MSBuild Projects="$(PromptEmbedderProject)" Targets="GetTargetPath" Properties="Configuration=$(Configuration)">
       <Output TaskParameter="TargetOutputs" ItemName="_PromptEmbedderAssembly" />
     </MSBuild>
-    <Exec Command="dotnet &quot;@(_PromptEmbedderAssembly)&quot; &quot;$(MSBuildProjectDirectory)/AI/prompts&quot; &quot;$(PromptEmbedderOutput)&quot; &quot;ICSharpCode.ILSpy.AI&quot;" />
+    <Exec Command="dotnet &quot;@(_PromptEmbedderAssembly)&quot; &quot;$(MSBuildProjectDirectory)/prompts&quot; &quot;$(PromptEmbedderOutput)&quot; &quot;ICSharpCode.ILSpy.AI&quot;" />
   </Target>
 
   <ItemGroup>

@@ -29,11 +29,11 @@ namespace ICSharpCode.ILSpy.AI
 			if (!string.IsNullOrEmpty(assemblyLocation))
 			{
 				var assemblyDirectory = Path.GetDirectoryName(assemblyLocation);
-				_promptsDirectory = Path.Combine(assemblyDirectory ?? AppContext.BaseDirectory, "AI", "prompts");
+				_promptsDirectory = Path.Combine(assemblyDirectory ?? AppContext.BaseDirectory, "prompts");
 			}
 			else
 			{
-				_promptsDirectory = Path.Combine(AppContext.BaseDirectory, "AI", "prompts");
+				_promptsDirectory = Path.Combine(AppContext.BaseDirectory, "prompts");
 			}
 		}
 

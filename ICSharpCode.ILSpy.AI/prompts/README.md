@@ -169,7 +169,7 @@ These are **non-fatal** — the loader continues with warnings and falls back gr
 These files are copied to the output directory during build:
 
 ```xml
-<Content Include="AI\prompts\*.prompt">
+<Content Include="prompts\*.prompt">
   <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 </Content>
 ```
