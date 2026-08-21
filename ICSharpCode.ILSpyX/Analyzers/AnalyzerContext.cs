@@ -23,10 +23,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX.Abstractions;
-using ICSharpCode.ILSpyX.Settings;
-using ICSharpCode.ILSpyX.Analyzers.Builtin;
 
 namespace ICSharpCode.ILSpyX.Analyzers
 {
@@ -46,15 +43,6 @@ namespace ICSharpCode.ILSpyX.Analyzers
 		/// Currently used language.
 		/// </summary>
 		public required ILanguage Language { get; init; }
-
-		/// <summary>Immutable AI request target captured by the desktop host for AI analyzers.</summary>
-		public AISelectionSnapshot? AISelectionSnapshot { get; init; }
-
-		/// <summary>Optional provider factory supplied by the desktop host for AI analyzers.</summary>
-		public IAIProviderFactory? AIProviderFactory { get; init; }
-
-		/// <summary>Optional progress sink for explicitly requested AI bulk analysis.</summary>
-		public IProgress<AISecurityAuditProgress>? AIProgress { get; init; }
 
 		/// <summary>
 		/// Allows the analyzer to control whether the tree nodes will be sorted.

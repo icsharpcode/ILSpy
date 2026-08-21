@@ -16,31 +16,15 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
 
-namespace ICSharpCode.ILSpyX.Analyzers.Builtin
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
-	/// <summary>Uses the configured provider to identify common security risks in a type.</summary>
-	[ExportAnalyzer(Header = "Security Risks (AI)", Order = 1000)]
-	[Shared]
-	public sealed class AISecurityAnalyzer : IAnalyzer
+	/// <summary>
+	/// Uses the configured provider to identify common security risks in a type. The desktop
+	/// assembly owns the <c>IAnalyzer</c> adapter because that analyzer contract belongs to ILSpyX.
+	/// </summary>
+	public sealed class AISecurityAnalyzer
 	{
 		public const double MinimumFindingConfidence = 0.70;
-
-		public bool Show(ISymbol? symbol) => symbol is ITypeDefinition or IMethod;
-
-		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
-			=> AnalyzeAsync(analyzedSymbol, context).GetAwaiter().GetResult();
-
-		async System.Threading.Tasks.Task<IReadOnlyList<ISymbol>> AnalyzeAsync(ISymbol analyzedSymbol, AnalyzerContext context)
-		{
-			if (context.AISelectionSnapshot is not { } snapshot || context.AIProviderFactory is not { } providerFactory)
-				throw new AIConfigurationException("AI security analysis is unavailable until AI settings are configured.");
-			ITypeDefinition type = analyzedSymbol switch {
-				ITypeDefinition definition => definition,
-				IMethod method when method.DeclaringTypeDefinition is { } declaringType => declaringType,
-				_ => throw new InvalidOperationException("Security analysis requires a type or method.")
-			};
-			return (await AnalyzeSelectedTypeAsync(type, snapshot, providerFactory, context.AIProgress, context.CancellationToken).ConfigureAwait(false)).Cast<ISymbol>().ToArray();
-		}
 
 		/// <summary>Runs the normal single-type security analyzer pipeline for a captured AI target.</summary>
 		public async Task<IReadOnlyList<AISecurityFinding>> AnalyzeSelectedTypeAsync(
@@ -55,7 +39,7 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			ArgumentNullException.ThrowIfNull(snapshot);
 			ArgumentNullException.ThrowIfNull(providerFactory);
 			MetadataFile module = type.ParentModule?.MetadataFile ?? throw new InvalidOperationException("The selected type has no decompilable module.");
-			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(true), new DecompilerSettings()) { CancellationToken = cancellationToken };
+			var decompiler = new CSharpDecompiler(module.FileName, new DecompilerSettings()) { CancellationToken = cancellationToken };
 			var service = new AIExplanationService(snapshot, providerFactory);
 			progress?.Report(new AISecurityAuditProgress(0, 1, type.FullName, 0, 0, false));
 			cancellationToken.ThrowIfCancellationRequested();

@@ -13,7 +13,7 @@ using System.Collections.Concurrent;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpyX.Annotations
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	public sealed record RenameAnnotation(string Token, string NewName);
 

@@ -11,9 +11,8 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
-using ICSharpCode.ILSpyX.Settings;
 
-namespace ICSharpCode.ILSpyX.Search
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	/// <summary>Interprets a natural-language query against a bounded symbol vocabulary.</summary>
 	public static class AISearchStrategy
@@ -54,7 +53,7 @@ namespace ICSharpCode.ILSpyX.Search
 
 		static IEnumerable<IEntity> GetCandidates(MetadataFile module)
 		{
-			var compilation = module.GetTypeSystemWithDecompilerSettingsOrNull(new ICSharpCode.Decompiler.DecompilerSettings());
+			var compilation = DecompilerTypeSystemFactory.Create(module);
 			if (compilation is null)
 				yield break;
 			foreach (var type in compilation.MainModule.TypeDefinitions)

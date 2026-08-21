@@ -5,7 +5,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpyX.Annotations
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	/// <summary>Rewrites annotated entity names in the generated AST without modifying the assembly.</summary>
 	public sealed class RenameAnnotationTransform : IAstTransform

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
 
-namespace ICSharpCode.ILSpyX.Analyzers.Builtin
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	/// <summary>Bounded, sequential bulk security audit. The normal analyzer never uses this path.</summary>
 	public sealed class AISecurityAuditService

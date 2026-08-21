@@ -116,28 +116,10 @@
           "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
-      "icsharpcode.ilspy.ai": {
-        "type": "Project",
-        "dependencies": {
-          "Markdig": "[0.40.0, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
-          "System.Composition.AttributedModel": "[10.0.11, )",
-          "YamlDotNet": "[16.1.3, )"
-        }
-      },
-      "icsharpcode.ilspy.ai.decompiler": {
-        "type": "Project",
-        "dependencies": {
-          "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )"
-        }
-      },
       "icsharpcode.ilspyx": {
         "type": "Project",
         "dependencies": {
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )",
-          "ICSharpCode.ILSpy.AI.Decompiler": "[11.0.0.9628, )",
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Markdig": "[0.40.0, )",
           "Mono.Cecil": "[0.11.6, )",
@@ -157,21 +139,6 @@
         "requested": "[0.40.0, )",
         "resolved": "0.40.0",
         "contentHash": "4ve14zs+gt1irldTQE3y5FLAHuzmhW7T99lAAvVipe/q2LWT/nUCO0iICb9TXGvMX6n7Z1OZroFXkdSy91rO8w=="
-      },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "/a1aJz4m7ylhEDf25ugQChLQoN5XwoGjWw/BoR/ZWWKsO1v4DdJElS1uyngahz4B/eOzjFk1KNTkarRLE5wsIg=="
-      },
-      "Microsoft.Extensions.Logging.Abstractions": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.11, )",
-        "resolved": "10.0.11",
-        "contentHash": "Ljd0Uxoq5XpScD2Bg0nM/r3mwx7Ao5Uq24eo2ARxbGvqJ7Zht6rt2cJtwVRH4Cv+1ZVMdXz6TB43KbpmsxRrvQ==",
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.11"
-        }
       },
       "Mono.Cecil": {
         "type": "CentralTransitive",
@@ -202,12 +169,6 @@
         "requested": "[6.1.2, )",
         "resolved": "6.1.2",
         "contentHash": "2hBr6zdbIBTDE3EhK7NSVNdX58uTK6iHW/P/Axmm9sl1xoGSLqDvMtpecn226TNwHByFokYwJmt/aQQNlO5CRw=="
-      },
-      "YamlDotNet": {
-        "type": "CentralTransitive",
-        "requested": "[16.1.3, )",
-        "resolved": "16.1.3",
-        "contentHash": "gtHGiDvU9VTtWte8f0thIM38cL1oowOjStKpeAEKKfA+Rc4AvekJzqFDZiiPcc4kw00ZiwR4OTJS56L16q98DQ=="
       }
     }
   }

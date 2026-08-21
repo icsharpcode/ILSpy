@@ -39,9 +39,9 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX;
-using ICSharpCode.ILSpyX.Annotations;
 
 using ConversionFlags = ICSharpCode.Decompiler.Output.ConversionFlags;
 // Two unrelated `LanguageVersion` types are in scope: a DTO in ILSpyX (toolbar dropdown

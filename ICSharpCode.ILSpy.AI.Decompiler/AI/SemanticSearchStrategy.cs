@@ -7,7 +7,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.AI;
 
-namespace ICSharpCode.ILSpyX.Search
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	public static class SemanticSearchStrategy
 	{
@@ -23,7 +23,7 @@ namespace ICSharpCode.ILSpyX.Search
 		}
 		static IEnumerable<IEntity> GetCandidates(MetadataFile module)
 		{
-			var compilation = module.GetTypeSystemWithDecompilerSettingsOrNull(new ICSharpCode.Decompiler.DecompilerSettings());
+			var compilation = DecompilerTypeSystemFactory.Create(module);
 			if (compilation is null)
 				yield break;
 			foreach (var type in compilation.MainModule.TypeDefinitions)

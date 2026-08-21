@@ -17,7 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Composition;
 
+using AwesomeAssertions;
+
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpyX.Analyzers;
 
 using NUnit.Framework;
@@ -38,5 +43,8 @@ public class ExportAnalyzerAttributeTests
 		Assert.That(analyzerNames.Contains("MethodUsedByAnalyzer"));
 		Assert.That(analyzerNames.Contains("PropertyOverriddenByAnalyzer"));
 		Assert.That(analyzerNames.Contains("TypeInstantiatedByAnalyzer"));
+		AppComposition.Current.GetExport<AnalyzerRegistry>().Analyzers
+			.Select(analyzer => analyzer.Metadata?.Header)
+			.Should().Contain("Security Risks (AI)");
 	}
 }

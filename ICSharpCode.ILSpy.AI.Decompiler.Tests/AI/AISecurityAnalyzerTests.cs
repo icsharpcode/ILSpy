@@ -8,12 +8,11 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.ILSpyX.Analyzers;
-using ICSharpCode.ILSpyX.Analyzers.Builtin;
+using ICSharpCode.ILSpy.AI.Decompiler;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.Analyzers
+namespace ICSharpCode.ILSpy.AI.Decompiler.Tests.AI
 {
 	[TestFixture]
 	public class AISecurityAnalyzerTests

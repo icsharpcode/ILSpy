@@ -342,28 +342,10 @@
           "System.Reflection.Metadata": "[9.0.0, )"
         }
       },
-      "icsharpcode.ilspy.ai": {
-        "type": "Project",
-        "dependencies": {
-          "Markdig": "[0.40.0, )",
-          "Microsoft.Extensions.Logging.Abstractions": "[10.0.11, )",
-          "System.Composition.AttributedModel": "[10.0.11, )",
-          "YamlDotNet": "[16.1.3, )"
-        }
-      },
-      "icsharpcode.ilspy.ai.decompiler": {
-        "type": "Project",
-        "dependencies": {
-          "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )"
-        }
-      },
       "icsharpcode.ilspyx": {
         "type": "Project",
         "dependencies": {
           "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
-          "ICSharpCode.ILSpy.AI": "[11.0.0.9628, )",
-          "ICSharpCode.ILSpy.AI.Decompiler": "[11.0.0.9628, )",
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Markdig": "[0.40.0, )",
           "Mono.Cecil": "[0.11.6, )",
@@ -462,12 +444,6 @@
         "requested": "[6.1.2, )",
         "resolved": "6.1.2",
         "contentHash": "2hBr6zdbIBTDE3EhK7NSVNdX58uTK6iHW/P/Axmm9sl1xoGSLqDvMtpecn226TNwHByFokYwJmt/aQQNlO5CRw=="
-      },
-      "YamlDotNet": {
-        "type": "CentralTransitive",
-        "requested": "[16.1.3, )",
-        "resolved": "16.1.3",
-        "contentHash": "gtHGiDvU9VTtWte8f0thIM38cL1oowOjStKpeAEKKfA+Rc4AvekJzqFDZiiPcc4kw00ZiwR4OTJS56L16q98DQ=="
       }
     }
   }

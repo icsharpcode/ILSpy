@@ -5,11 +5,11 @@ using System.IO;
 
 using AwesomeAssertions;
 
-using ICSharpCode.ILSpyX.Annotations;
+using ICSharpCode.ILSpy.AI.Decompiler;
 
 using NUnit.Framework;
 
-namespace ICSharpCode.ILSpyX.Tests.Annotations
+namespace ICSharpCode.ILSpy.AI.Decompiler.Tests.AI
 {
 	[TestFixture]
 	public class RenameAnnotationManagerTests

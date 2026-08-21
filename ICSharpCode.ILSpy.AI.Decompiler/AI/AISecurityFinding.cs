@@ -2,7 +2,7 @@
 
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpyX.Analyzers
+namespace ICSharpCode.ILSpy.AI.Decompiler
 {
 	/// <summary>A navigable security finding returned by the AI security analyzer.</summary>
 	public sealed class AISecurityFinding : ISymbol

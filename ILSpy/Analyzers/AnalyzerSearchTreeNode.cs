@@ -26,6 +26,7 @@ using System.Threading.Tasks;
 using Avalonia.Threading;
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.AI;
 using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.Settings;
@@ -106,13 +107,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 				FinishOnUIThread(error: new InvalidOperationException("no active assembly list"));
 				return;
 			}
-			var selectionService = AppComposition.TryGetExport<AISelectionService>();
 			var context = new AnalyzerContext {
 				CancellationToken = ct,
 				Language = Language,
 				AssemblyList = assemblyList,
-				AISelectionSnapshot = selectionService?.ResolveSnapshotAsync(ct).GetAwaiter().GetResult(),
-				AIProviderFactory = AppComposition.TryGetExport<IAIProviderFactory>(),
 			};
 			try
 			{

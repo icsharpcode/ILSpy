@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 
+using ICSharpCode.ILSpy.AI.Decompiler;
 using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX;
