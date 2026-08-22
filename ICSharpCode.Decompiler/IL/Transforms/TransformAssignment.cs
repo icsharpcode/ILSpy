@@ -22,6 +22,7 @@ using System.Linq;
 using System.Linq.Expressions;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -386,18 +387,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					binary, target, targetKind, binary.Right,
 					targetType, CompoundEvalMode.EvaluatesToNewValue);
 			}
-			else if (setterValue is Call operatorCall && operatorCall.Method.IsOperator)
+			else if (setterValue is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Method.IsStatic)
 			{
 				if (operatorCall.Arguments.Count == 0)
 					return false;
 				if (!IsMatchingCompoundLoad(operatorCall.Arguments[0], compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
 				ILInstruction rhs;
+				IType valueType;
 				if (operatorCall.Arguments.Count == 2)
 				{
 					if (CSharp.ExpressionBuilder.GetAssignmentOperatorTypeFromMetadataName(operatorCall.Method.Name, context.Settings) == null)
 						return false;
 					rhs = operatorCall.Arguments[1];
+					valueType = operatorCall.GetParameter(1).Type;
 				}
 				else if (operatorCall.Arguments.Count == 1)
 				{
@@ -405,8 +408,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					// use a dummy node so that we don't need a dedicated instruction for user-defined unary operator calls
 					rhs = new LdcI4(1);
+					valueType = null;
 				}
 				else
+				{
+					return false;
+				}
+				// IsCompoundStore accepts a store to a local (StLoc) or to a field, array element,
+				// ref or pointer (StObj), which are variables, and a setter call, which is not.
+				if (CSharpResolver.IsShadowedByInstanceOperator(operatorCall.Method, targetType, valueType,
+					targetIsVariable: compoundStore is not CallInstruction, context.TypeSystem))
 				{
 					return false;
 				}
@@ -892,6 +903,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
 					return false;
+				if (CSharpResolver.IsShadowedByInstanceOperator(operatorCall.Method, targetType, null,
+					targetIsVariable: true, context.TypeSystem))
+				{
+					return false;
+				}
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				ldloc = operatorCall.Arguments[0] as LdLoc;
@@ -977,6 +993,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
 					return false;
+				// No check for an instance operator of the same name here, unlike the prefix form:
+				// a postfix increment whose result is used cannot bind to one. An operator that
+				// mutates the instance in place has no way to hand back the value from before it
+				// ran, so C# only ever considers the static operator for that shape.
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				stloc = operatorCall.Arguments[0] as StLoc;
@@ -1088,6 +1108,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!operatorCall.Arguments[0].MatchLdLoc(tmpVar))
 					return false;
+				// No shadowing check here: "x++" whose result is used hands back the value from
+				// before the increment, which an instance operator mutating in place cannot
+				// produce, so C# does not consider one for that shape.
 				if (!UserDefinedCompoundAssign.IsIncrementOrDecrement(operatorCall.Method, context.Settings))
 					return false;
 				if (operatorCall.IsLifted)

@@ -821,18 +821,31 @@ namespace ICSharpCode.Decompiler.CSharp
 					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
 					break;
 				case RequiredGetCurrentTransformation.IntroduceNewVariableAndLocalCopy:
+				{
+					// The local copy is the existing variable the loop body stores Current into,
+					// if there is one; otherwise a fresh local replaces the address-of expression.
+					ILVariable? localCopyVariable = foreachVariable;
 					foreachVariable = currentFunction.RegisterVariable(
 						VariableKind.ForeachLocal, type,
 						AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), decompileRun.UsingScope)
 					);
-					var localCopyVariable = currentFunction.RegisterVariable(
-						VariableKind.Local, type,
-						AssignVariableNames.GenerateVariableName(currentFunction, type, decompileRun.UsingScope)
-					);
-					instToReplace.Parent!.ReplaceWith(new LdLoca(localCopyVariable));
-					body.Instructions.Insert(0, new StLoc(localCopyVariable, new LdLoc(foreachVariable)));
+					if (localCopyVariable != null)
+					{
+						localCopyVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, type, decompileRun.UsingScope);
+						instToReplace.ReplaceWith(new LdLoc(foreachVariable));
+					}
+					else
+					{
+						localCopyVariable = currentFunction.RegisterVariable(
+							VariableKind.Local, type,
+							AssignVariableNames.GenerateVariableName(currentFunction, type, decompileRun.UsingScope)
+						);
+						instToReplace.Parent!.ReplaceWith(new LdLoca(localCopyVariable));
+						body.Instructions.Insert(0, new StLoc(localCopyVariable, new LdLoc(foreachVariable)));
+					}
 					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
 					break;
+				}
 				case RequiredGetCurrentTransformation.Deconstruction:
 					useVar = true;
 					designation = TranslateDeconstructionDesignation((DeconstructInstruction)body.Instructions[0], isForeach: true);
@@ -1029,6 +1042,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			///	stloc copy(ldloc foreachVar)
 			///	... (ldloca copy) ...
 			/// </code>
+			/// The same applies when the value is stored into an existing variable that is the
+			/// receiver of an instance compound assignment operator, which a read-only foreach
+			/// variable cannot be: that variable stays the writable local copy.
+			/// <code>
+			///	stloc existing(call get_Current())
+			///	... existing op= ...
+			///	=>
+			///	stloc foreachVar(call get_Current())
+			///	stloc existing(ldloc foreachVar)
+			///	... existing op= ...
+			/// </code>
 			/// </summary>
 			IntroduceNewVariableAndLocalCopy,
 			/// <summary>
@@ -1085,6 +1109,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (stloc.Parent == loopBody && VariableIsOnlyUsedInBlock(stloc, usingContainer, loopContainer))
 				{
 					foreachVariable = stloc.Variable;
+					if (settings.UserDefinedCompoundAssignmentOperators
+						&& UserDefinedCompoundAssign.IsCompoundAssignmentReceiver(stloc.Variable))
+					{
+						// A foreach variable is read-only, but an instance compound assignment
+						// operator requires an assignable target: keep the variable as the copy.
+						return RequiredGetCurrentTransformation.IntroduceNewVariableAndLocalCopy;
+					}
 					return RequiredGetCurrentTransformation.UseExistingVariable;
 				}
 			}
