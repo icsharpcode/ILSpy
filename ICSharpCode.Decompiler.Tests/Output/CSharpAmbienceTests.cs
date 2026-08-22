@@ -59,7 +59,8 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			return foundType;
 		}
 
-		const ConversionFlags ILSpyMainTreeViewTypeFlags = ShowTypeParameterList | PlaceReturnTypeAfterParameterList;
+		const ConversionFlags ILSpyMainTreeViewTypeFlags = ShowTypeParameterList | PlaceReturnTypeAfterParameterList
+			| SupportOperatorChecked | SupportUnsignedRightShift | SupportUserDefinedCompoundAssignmentOperators;
 		const ConversionFlags ILSpyMainTreeViewMemberFlags = ILSpyMainTreeViewTypeFlags | ShowParameterList | ShowReturnType | ShowParameterModifiers;
 
 		#region ITypeDefinition tests
@@ -311,6 +312,41 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			Assert.That(ambience.ConvertSymbol(prop), Is.EqualTo(expectedOutput));
 		}
 
+		const ConversionFlags TooltipFlags = All & ~(ShowBody | PlaceReturnTypeAfterParameterList);
+
+		[TestCase(StandardConversionFlags, "public void operator op_AdditionAssignment(int rhs);")]
+		[TestCase(StandardConversionFlags | SupportUserDefinedCompoundAssignmentOperators, "public void operator +=(int rhs);")]
+		[TestCase(ILSpyMainTreeViewMemberFlags, "operator +=(int) : void")]
+		[TestCase(TooltipFlags, "public void ICSharpCode.Decompiler.Tests.Output.CSharpAmbienceTests.Program.operator +=(int rhs)")]
+		public void CompoundAssignmentOperatorTests(ConversionFlags flags, string expectedOutput)
+		{
+			var op = compilation.FindType(typeof(CSharpAmbienceTests.Program))
+				.GetMethods(m => m.Name == "op_AdditionAssignment").Single();
+			ambience.ConversionFlags = flags;
+
+			Assert.That(ambience.ConvertSymbol(op), Is.EqualTo(expectedOutput));
+		}
+
+		[TestCase(ILSpyMainTreeViewMemberFlags, "operator checked +=(int) : void")]
+		public void CheckedCompoundAssignmentOperatorTests(ConversionFlags flags, string expectedOutput)
+		{
+			var op = compilation.FindType(typeof(CSharpAmbienceTests.Program))
+				.GetMethods(m => m.Name == "op_CheckedAdditionAssignment").Single();
+			ambience.ConversionFlags = flags;
+
+			Assert.That(ambience.ConvertSymbol(op), Is.EqualTo(expectedOutput));
+		}
+
+		[TestCase(ILSpyMainTreeViewMemberFlags, "operator ++() : void")]
+		public void InstanceIncrementOperatorTests(ConversionFlags flags, string expectedOutput)
+		{
+			var op = compilation.FindType(typeof(CSharpAmbienceTests.Program))
+				.GetMethods(m => m.Name == "op_IncrementAssignment").Single();
+			ambience.ConversionFlags = flags;
+
+			Assert.That(ambience.ConvertSymbol(op), Is.EqualTo(expectedOutput));
+		}
+
 		[TestCase(StandardConversionFlags, "~Program();")]
 		[TestCase(ILSpyMainTreeViewMemberFlags, "~Program()")]
 		public void DestructorTests(ConversionFlags flags, string expectedOutput)
@@ -437,6 +473,21 @@ namespace ICSharpCode.Decompiler.Tests.Output
 			}
 
 			public static bool operator +(Program lhs, Program rhs)
+			{
+				throw new NotImplementedException();
+			}
+
+			public void operator +=(int rhs)
+			{
+				throw new NotImplementedException();
+			}
+
+			public void operator checked +=(int rhs)
+			{
+				throw new NotImplementedException();
+			}
+
+			public void operator ++()
 			{
 				throw new NotImplementedException();
 			}

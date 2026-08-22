@@ -286,6 +286,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			astBuilder.SupportUnsignedRightShift = (ConversionFlags & ConversionFlags.SupportUnsignedRightShift) != 0;
 			astBuilder.SupportOperatorChecked = (ConversionFlags & ConversionFlags.SupportOperatorChecked) != 0;
 			astBuilder.SupportExtensionDeclarations = (ConversionFlags & ConversionFlags.SupportExtensionDeclarations) != 0;
+			astBuilder.SupportUserDefinedCompoundAssignmentOperators = (ConversionFlags & ConversionFlags.SupportUserDefinedCompoundAssignmentOperators) != 0;
 			return astBuilder;
 		}
 
@@ -394,7 +395,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 							writer.WriteKeyword("operator");
 							writer.Space();
 							var operatorType = OperatorDeclaration.GetOperatorType(name);
-							if (operatorType.HasValue && !((ConversionFlags & ConversionFlags.SupportOperatorChecked) == 0 && OperatorDeclaration.IsChecked(operatorType.Value)))
+							if (operatorType.HasValue && !((ConversionFlags & ConversionFlags.SupportOperatorChecked) == 0 && OperatorDeclaration.IsChecked(operatorType.Value))
+								&& !((ConversionFlags & ConversionFlags.SupportUserDefinedCompoundAssignmentOperators) == 0 && OperatorDeclaration.IsCompoundAssignment(operatorType.Value)))
 							{
 								if (OperatorDeclaration.IsChecked(operatorType.Value))
 								{

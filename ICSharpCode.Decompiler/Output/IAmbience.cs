@@ -125,6 +125,10 @@ namespace ICSharpCode.Decompiler.Output
 		/// Support C# 14 <c>extension</c> declarations.
 		/// </summary>
 		SupportExtensionDeclarations = 0x400000,
+		/// <summary>
+		/// Support C# 14 user-defined compound assignment operators (<c>operator +=</c>).
+		/// </summary>
+		SupportUserDefinedCompoundAssignmentOperators = 0x800000,
 
 		StandardConversionFlags = ShowParameterNames |
 			ShowAccessibility |
@@ -140,7 +144,7 @@ namespace ICSharpCode.Decompiler.Output
 			ShowDefinitionKeyword |
 			ShowBody,
 
-		All = 0x1fffff,
+		All = 0xffffff,
 	}
 
 	/// <summary>
