@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
@@ -264,6 +265,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					return false;
 				}
+				if (context.Settings.UserDefinedCompoundAssignmentOperators
+					&& UserDefinedCompoundAssign.IsCompoundAssignmentReceiverUse(loadInst)
+					&& !CanReplaceCompoundAssignmentReceiver(((CallInstruction)loadInst.Parent!).Method, inlinedExpression, context))
+				{
+					return false;
+				}
 				if (loadInst.OpCode == OpCode.LdLoca)
 				{
 					if (!IsGeneratedTemporaryForAddressOf((LdLoca)loadInst, v, inlinedExpression, options))
@@ -323,6 +330,105 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& newObj.Arguments[0] == loadInst
 				&& (newObj.Method.DeclaringType.IsKnownType(KnownTypeCode.SpanOfT)
 					|| newObj.Method.DeclaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT));
+		}
+
+		/// <summary>
+		/// Gets whether <paramref name="replacement"/> can stand in for the receiver of a call to
+		/// the compound assignment operator <paramref name="op"/>. The receiver becomes the target
+		/// of "x op= y", so the replacement has to denote a storage location C# accepts there, and
+		/// it has to bind the operator the call names rather than one a more derived type brings
+		/// into scope. Shared by ILInlining and CopyPropagation, which both substitute the receiver.
+		/// </summary>
+		internal static bool CanReplaceCompoundAssignmentReceiver(IMethod op, ILInstruction replacement, ILTransformContext context)
+		{
+			if (IsReadonlyCompoundAssignmentTarget(replacement, context.Function?.Method))
+			{
+				// The target is not an assignable variable, so it cannot take the place of
+				// "x" in "x op= y"; the copy the receiver slot holds is what keeps the
+				// operator form legal.
+				return false;
+			}
+			switch (replacement.OpCode)
+			{
+				case OpCode.LdLoc:
+				case OpCode.LdObj:
+				case OpCode.LdFlda:
+				case OpCode.LdsFlda:
+					break;
+				default:
+					// anything else would turn the target into "GetX() op= y"
+					return false;
+			}
+			return !CSharpResolver.WouldRebindOperator(op,
+				GetReceiverType(replacement, context), context.TypeSystem);
+		}
+
+		/// <summary>
+		/// Gets the type that decides which operator a receiver expression binds.
+		/// </summary>
+		/// <remarks>
+		/// A stack slot standing in for a value carries whatever type the reader gave it - for a
+		/// flushed expression stack that is just the stack type, which says nothing about the
+		/// operators in play. Such a slot is a pure alias, so the value stored into it is what
+		/// really ends up as the receiver.
+		/// </remarks>
+		static IType GetReceiverType(ILInstruction expr, ILTransformContext context)
+		{
+			while (expr is LdLoc { Variable: { Kind: VariableKind.StackSlot, IsSingleDefinition: true } v }
+				&& v.StoreInstructions.SingleOrDefault() is StLoc store)
+			{
+				expr = store.Value;
+			}
+			var type = expr.InferType(context.TypeSystem);
+			// An address-taking receiver denotes the storage location itself.
+			return type is ByReferenceType byRef ? byRef.ElementType : type;
+		}
+
+		/// <summary>
+		/// Gets whether the expression denotes something C# does not accept as the target of
+		/// "x op= y". The target has to be an assignable variable even though an instance
+		/// operator never assigns to it: "this" in a class, foreach, using and fixed variables,
+		/// "in" parameters and other read-only references, and readonly fields outside the
+		/// matching constructor are all rejected by the compiler.
+		/// </summary>
+		internal static bool IsReadonlyCompoundAssignmentTarget(ILInstruction expr, IMethod contextMethod)
+		{
+			switch (expr)
+			{
+				case LdLoc { Variable: var v }:
+					return (v.IsThis() && v.Type.IsReferenceType == true)
+						|| v.IsRefReadOnly
+						|| v.Kind is VariableKind.ForeachLocal or VariableKind.UsingLocal or VariableKind.PinnedLocal;
+				case LdObj ldObj:
+					return IsReadonlyReferenceOutsideOfConstructor(ldObj.Target, contextMethod);
+				case LdFlda:
+				case LdsFlda:
+					return IsReadonlyReferenceOutsideOfConstructor(expr, contextMethod);
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Like <see cref="IsReadonlyReference"/>, except that a readonly field still counts as
+		/// writable inside the matching constructor of its declaring type, where C# classifies
+		/// it as a variable.
+		/// </summary>
+		static bool IsReadonlyReferenceOutsideOfConstructor(ILInstruction addr, IMethod contextMethod)
+		{
+			if (!IsReadonlyReference(addr))
+				return false;
+			switch (addr)
+			{
+				case LdsFlda ldsflda:
+					return !(contextMethod is { IsConstructor: true, IsStatic: true }
+						&& ldsflda.Field.DeclaringTypeDefinition == contextMethod.DeclaringTypeDefinition);
+				case LdFlda ldflda when ldflda.Field.IsReadOnly && ldflda.Target.MatchLdThis():
+					return !(contextMethod is { IsConstructor: true, IsStatic: false }
+						&& ldflda.Field.DeclaringTypeDefinition == contextMethod.DeclaringTypeDefinition);
+				default:
+					return true;
+			}
 		}
 
 		/// <summary>

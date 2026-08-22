@@ -61,7 +61,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (rhs is BinaryOperatorExpression binary && assignment.Operator == AssignmentOperatorType.Assign)
 			{
 				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left)
-					&& binary.Right != null && IsImplicitlyConvertible(binary.Right, expectedType))
+					&& binary.Right != null && IsImplicitlyConvertible(binary.Right, expectedType)
+					&& !IsShadowedByInstanceOperator(binary))
 				{
 					var newOperator = GetAssignmentOperatorForBinaryOperator(binary.Operator);
 					if (newOperator != AssignmentOperatorType.Assign)
@@ -100,6 +101,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						context.EndStep(unaryOperator);
 					}
 				}
+			}
+
+			bool IsShadowedByInstanceOperator(BinaryOperatorExpression binary)
+			{
+				// "x = x + y" must keep calling the static operator wherever "x += y" would find an
+				// applicable C# 14 instance operator on the static type of x: that form considers
+				// the instance operators first and only falls back to the static ones.
+				return binary.Right != null && binary.GetSymbol() is IMethod method
+					&& CSharpResolver.IsShadowedByInstanceOperator(method,
+						assignment.Left.GetResolveResult().Type, binary.Right.GetResolveResult().Type,
+						targetIsVariable: assignment.Left.GetSymbol() is not IProperty,
+						context.TypeSystem);
 			}
 
 			bool IsImplicitlyConvertible(Expression rhs, IType? expectedType)

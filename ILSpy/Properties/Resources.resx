@@ -654,6 +654,9 @@ Are you sure you want to continue?</value>
   <data name="DecompilerSettings.UseVariableNamesFromDebugSymbolsIfAvailable" xml:space="preserve">
     <value>Use variable names from debug symbols, if available</value>
   </data>
+  <data name="DecompilerSettings.UserDefinedCompoundAssignmentOperators" xml:space="preserve">
+    <value>User-defined compound assignment operators</value>
+  </data>
   <data name="DecompilerSettings.Utf8StringLiterals" xml:space="preserve">
     <value>UTF-8 string literals</value>
   </data>

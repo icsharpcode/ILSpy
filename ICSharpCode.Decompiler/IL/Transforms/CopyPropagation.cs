@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							context.EndStep(copiedExpr);
 						}
 					}
-					else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr, splitVariables, context.Settings))
+					else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr, splitVariables, context))
 					{
 						DoPropagate(v, copiedExpr, block, ref i, context);
 					}
@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		static bool CanPerformCopyPropagation(ILVariable target, ILInstruction value, HashSet<ILVariable> splitVariables, DecompilerSettings settings)
+		static bool CanPerformCopyPropagation(ILVariable target, ILInstruction value, HashSet<ILVariable> splitVariables, ILTransformContext context)
 		{
 			Debug.Assert(target.StackType == value.ResultType);
 			if (target.Type.IsSmallIntegerType())
@@ -105,6 +105,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (splitVariables != null && splitVariables.Contains(target))
 			{
 				return false; // non-local code move might change semantics when there's split variables
+			}
+			if (context.Settings.UserDefinedCompoundAssignmentOperators && CannotReplaceCompoundAssignmentReceiver(target, value, context))
+			{
+				return false;
 			}
 			switch (value.OpCode)
 			{
@@ -117,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case OpCode.LdElema:
 				case OpCode.LdFlda:
-					return !settings.UseRefLocalsForAccurateOrderOfEvaluation;
+					return !context.Settings.UseRefLocalsForAccurateOrderOfEvaluation;
 				case OpCode.LdLoc:
 					var v = ((LdLoc)value).Variable;
 					if (splitVariables != null && splitVariables.Contains(v))
@@ -141,6 +145,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// All instructions without special behavior that target a stack-variable can be copied.
 					return value.Flags == InstructionFlags.None && value.Children.Count == 0 && target.Kind == VariableKind.StackSlot;
 			}
+		}
+
+		/// <summary>
+		/// Gets whether replacing loads of <paramref name="target"/> with <paramref name="value"/>
+		/// would break a C# 14 compound assignment whose target the variable is.
+		/// </summary>
+		/// <remarks>
+		/// The receiver of an instance operator call becomes the target of "x op= y", and that form
+		/// selects its operator from the static type of x. Copying a receiver of a more derived type
+		/// over the variable would therefore pick up an operator the original call did not use, and
+		/// the cast that would prevent it cannot be an assignment target: "(Base)x op= y" is not
+		/// valid C#, whereas the variable that is about to be removed is. A read-only variable
+		/// ("this" in a class, a foreach or using variable, an "in" parameter) cannot replace a
+		/// receiver at all: it is not a valid target of "x op= y".
+		/// </remarks>
+		static bool CannotReplaceCompoundAssignmentReceiver(ILVariable target, ILInstruction value, ILTransformContext context)
+		{
+			if (value is not LdLoc)
+				return false;
+			foreach (var load in target.LoadInstructions)
+			{
+				if (load.Parent is not CallInstruction { Method: { IsOperator: true, IsStatic: false } } call
+					|| call.Arguments.Count == 0 || call.Arguments[0] != load)
+					continue;
+				if (!ILInlining.CanReplaceCompoundAssignmentReceiver(call.Method, value, context))
+					return true;
+			}
+			return false;
 		}
 
 		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block block, ref int i, ILTransformContext context)

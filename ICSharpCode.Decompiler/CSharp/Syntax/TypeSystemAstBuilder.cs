@@ -260,6 +260,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// Controls whether C# 14 "extension" declarations are supported.
 		/// </summary>
 		public bool SupportExtensionDeclarations { get; set; }
+
+		/// <summary>
+		/// Controls whether C# 14 user-defined compound assignment operators ("operator +=") are supported.
+		/// </summary>
+		public bool SupportUserDefinedCompoundAssignmentOperators { get; set; }
 		#endregion
 
 		#region Convert Type
@@ -2556,7 +2561,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			OperatorType? opType = OperatorDeclaration.GetOperatorType(name);
 			if (opType == null)
 				return ConvertMethod(op);
-			if (opType == OperatorType.UnsignedRightShift && !SupportUnsignedRightShift)
+			if (opType is OperatorType.UnsignedRightShift or OperatorType.UnsignedRightShiftAssignment && !SupportUnsignedRightShift)
+				return ConvertMethod(op);
+			if (!SupportUserDefinedCompoundAssignmentOperators && OperatorDeclaration.IsCompoundAssignment(opType.Value))
+				return ConvertMethod(op);
+			// C# requires a user-defined operator to be public, so a compound assignment operator
+			// that is not can only be written as a plain method. An explicit interface
+			// implementation is private in metadata but is still written in operator form.
+			if (OperatorDeclaration.IsCompoundAssignment(opType.Value)
+				&& op.Accessibility != Accessibility.Public && !op.IsExplicitInterfaceImplementation)
 				return ConvertMethod(op);
 			if (!SupportOperatorChecked && OperatorDeclaration.IsChecked(opType.Value))
 				return ConvertMethod(op);

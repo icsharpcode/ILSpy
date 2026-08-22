@@ -75,7 +75,31 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// Implicit and Explicit
 		Implicit,
 		Explicit,
-		CheckedExplicit
+		CheckedExplicit,
+
+		// C# 14 user-defined compound assignment (void-returning instance operators).
+		// IsCompoundAssignment tells these apart by comparing against AdditionAssignment, so they
+		// have to stay last as a block: a member added after them would be taken for one of them,
+		// and one added before would stop being recognized.
+		AdditionAssignment,
+		CheckedAdditionAssignment,
+		SubtractionAssignment,
+		CheckedSubtractionAssignment,
+		MultiplicationAssignment,
+		CheckedMultiplicationAssignment,
+		DivisionAssignment,
+		CheckedDivisionAssignment,
+		ModulusAssignment,
+		BitwiseAndAssignment,
+		BitwiseOrAssignment,
+		ExclusiveOrAssignment,
+		LeftShiftAssignment,
+		RightShiftAssignment,
+		UnsignedRightShiftAssignment,
+		IncrementAssignment,
+		CheckedIncrementAssignment,
+		DecrementAssignment,
+		CheckedDecrementAssignment
 	}
 
 	/// <summary>
@@ -100,7 +124,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 
 		static OperatorDeclaration()
 		{
-			names = new string[(int)OperatorType.CheckedExplicit + 1][];
+			names = new string[(int)OperatorType.CheckedDecrementAssignment + 1][];
 			names[(int)OperatorType.LogicalNot] = new string[] { "!", "op_LogicalNot" };
 			names[(int)OperatorType.OnesComplement] = new string[] { "~", "op_OnesComplement" };
 			names[(int)OperatorType.Increment] = new string[] { "++", "op_Increment" };
@@ -136,6 +160,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			names[(int)OperatorType.Implicit] = new string[] { "implicit", "op_Implicit" };
 			names[(int)OperatorType.Explicit] = new string[] { "explicit", "op_Explicit" };
 			names[(int)OperatorType.CheckedExplicit] = new string[] { "explicit", "op_CheckedExplicit" };
+			names[(int)OperatorType.AdditionAssignment] = new string[] { "+=", "op_AdditionAssignment" };
+			names[(int)OperatorType.CheckedAdditionAssignment] = new string[] { "+=", "op_CheckedAdditionAssignment" };
+			names[(int)OperatorType.SubtractionAssignment] = new string[] { "-=", "op_SubtractionAssignment" };
+			names[(int)OperatorType.CheckedSubtractionAssignment] = new string[] { "-=", "op_CheckedSubtractionAssignment" };
+			names[(int)OperatorType.MultiplicationAssignment] = new string[] { "*=", "op_MultiplicationAssignment" };
+			names[(int)OperatorType.CheckedMultiplicationAssignment] = new string[] { "*=", "op_CheckedMultiplicationAssignment" };
+			names[(int)OperatorType.DivisionAssignment] = new string[] { "/=", "op_DivisionAssignment" };
+			names[(int)OperatorType.CheckedDivisionAssignment] = new string[] { "/=", "op_CheckedDivisionAssignment" };
+			names[(int)OperatorType.ModulusAssignment] = new string[] { "%=", "op_ModulusAssignment" };
+			names[(int)OperatorType.BitwiseAndAssignment] = new string[] { "&=", "op_BitwiseAndAssignment" };
+			names[(int)OperatorType.BitwiseOrAssignment] = new string[] { "|=", "op_BitwiseOrAssignment" };
+			names[(int)OperatorType.ExclusiveOrAssignment] = new string[] { "^=", "op_ExclusiveOrAssignment" };
+			names[(int)OperatorType.LeftShiftAssignment] = new string[] { "<<=", "op_LeftShiftAssignment" };
+			names[(int)OperatorType.RightShiftAssignment] = new string[] { ">>=", "op_RightShiftAssignment" };
+			names[(int)OperatorType.UnsignedRightShiftAssignment] = new string[] { ">>>=", "op_UnsignedRightShiftAssignment" };
+			names[(int)OperatorType.IncrementAssignment] = new string[] { "++", "op_IncrementAssignment" };
+			names[(int)OperatorType.CheckedIncrementAssignment] = new string[] { "++", "op_CheckedIncrementAssignment" };
+			names[(int)OperatorType.DecrementAssignment] = new string[] { "--", "op_DecrementAssignment" };
+			names[(int)OperatorType.CheckedDecrementAssignment] = new string[] { "--", "op_CheckedDecrementAssignment" };
 		}
 
 		public override SymbolKind SymbolKind {
@@ -201,8 +244,23 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				OperatorType.CheckedIncrement => true,
 				OperatorType.CheckedDecrement => true,
 				OperatorType.CheckedExplicit => true,
+				OperatorType.CheckedAdditionAssignment => true,
+				OperatorType.CheckedSubtractionAssignment => true,
+				OperatorType.CheckedMultiplicationAssignment => true,
+				OperatorType.CheckedDivisionAssignment => true,
+				OperatorType.CheckedIncrementAssignment => true,
+				OperatorType.CheckedDecrementAssignment => true,
 				_ => false,
 			};
+		}
+
+		/// <summary>
+		/// Gets whether the operator type is a C# 14 user-defined compound assignment operator
+		/// (a void-returning instance operator, including the increment/decrement forms).
+		/// </summary>
+		public static bool IsCompoundAssignment(OperatorType type)
+		{
+			return type >= OperatorType.AdditionAssignment;
 		}
 
 		/// <summary>

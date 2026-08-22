@@ -83,7 +83,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					this.symbolKind = SymbolKind.Constructor;
 				}
 				else if (name.StartsWith("op_", StringComparison.Ordinal)
-					&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) != null)
+					&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) is CSharp.Syntax.OperatorType operatorType
+					&& (!CSharp.Syntax.OperatorDeclaration.IsCompoundAssignment(operatorType) || IsUserDefinedCompoundAssignmentOperator(operatorType)))
 				{
 					this.symbolKind = SymbolKind.Operator;
 				}
@@ -96,7 +97,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					this.symbolKind = SymbolKind.Destructor;
 				}
 			}
-			else if ((attributes & MethodAttributes.Static) != 0 && typeParameters.Length == 0)
+			else if (typeParameters.Length == 0)
 			{
 				// Operators that are explicit interface implementations are not marked
 				// with MethodAttributes.SpecialName or MethodAttributes.RTSpecialName
@@ -107,7 +108,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 					name = name.Substring(index + 1);
 
 					if (name.StartsWith("op_", StringComparison.Ordinal)
-						&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) != null)
+						&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) is CSharp.Syntax.OperatorType operatorType
+						&& (CSharp.Syntax.OperatorDeclaration.IsCompoundAssignment(operatorType)
+							? IsUserDefinedCompoundAssignmentOperator(operatorType)
+							: (attributes & MethodAttributes.Static) != 0))
 					{
 						this.symbolKind = SymbolKind.Operator;
 					}
@@ -116,6 +120,53 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.IsExtensionMethod = (attributes & MethodAttributes.Static) == MethodAttributes.Static
 				&& (module.TypeSystemOptions & TypeSystemOptions.ExtensionMethods) == TypeSystemOptions.ExtensionMethods
 				&& def.GetCustomAttributes().HasKnownAttribute(metadata, KnownAttribute.Extension);
+		}
+
+		/// <summary>
+		/// Gets whether this method has the shape C# requires of a user-defined compound assignment
+		/// operator: an instance method returning void, taking one parameter (none for the
+		/// increment and decrement operators). Other languages give unrelated methods the same
+		/// metadata names: F# mangles
+		/// "static member (+=)" to a static, value-returning op_AdditionAssignment, and C++/CLI emits
+		/// value-returning instance operators. Those are plain methods as far as C# is concerned.
+		/// </summary>
+		/// <summary>
+		/// Gets whether this method should be classified as a C# 14 user-defined compound assignment
+		/// operator: the feature has to be enabled (<see cref="TypeSystemOptions.UserDefinedCompoundAssignmentOperators"/>)
+		/// and the method has to have the required shape. When the feature is off the method stays a
+		/// plain method, so it keeps its op_*Assignment name and its specialname flag is surfaced.
+		/// </summary>
+		bool IsUserDefinedCompoundAssignmentOperator(CSharp.Syntax.OperatorType operatorType)
+		{
+			return (module.TypeSystemOptions & TypeSystemOptions.UserDefinedCompoundAssignmentOperators) != 0
+				&& IsCompoundAssignmentOperatorSignature(operatorType);
+		}
+
+		bool IsCompoundAssignmentOperatorSignature(CSharp.Syntax.OperatorType operatorType)
+		{
+			if ((attributes & MethodAttributes.Static) != 0 || !ReturnType.IsKnownType(KnownTypeCode.Void))
+				return false;
+			// a static class cannot contain operators
+			if (DeclaringTypeDefinition is { IsAbstract: true, IsSealed: true })
+				return false;
+			int parameterCount = operatorType
+				is CSharp.Syntax.OperatorType.IncrementAssignment
+				or CSharp.Syntax.OperatorType.CheckedIncrementAssignment
+				or CSharp.Syntax.OperatorType.DecrementAssignment
+				or CSharp.Syntax.OperatorType.CheckedDecrementAssignment
+				? 0 : 1;
+			if (Parameters.Count != parameterCount)
+				return false;
+			if (parameterCount == 1)
+			{
+				// C# allows only value, "in" and "ref readonly" parameters on operators
+				IParameter parameter = Parameters[0];
+				if (parameter.ReferenceKind is not (ReferenceKind.None or ReferenceKind.In or ReferenceKind.RefReadOnly))
+					return false;
+				if (parameter.IsParams)
+					return false;
+			}
+			return true;
 		}
 
 		public EntityHandle MetadataToken => handle;

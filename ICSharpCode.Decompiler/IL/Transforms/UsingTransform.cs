@@ -97,6 +97,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
+			if (tryFinally.TryBlock is not BlockContainer tryBody
+				|| !RedirectCompoundAssignmentReceivers(storeInst.Variable, tryBody.EntryPoint, 0))
+				return false;
 			context.Step("UsingTransform", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			block.Instructions.RemoveAt(i + 1);
@@ -166,12 +169,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
+			if (!RedirectCompoundAssignmentReceivers(storeInst.Variable, tryContainer.EntryPoint, 1))
+				return false;
 			context.Step("UsingTransformVB", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			tryContainer.EntryPoint.Instructions.RemoveAt(0);
 			var usingInst = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
 			block.Instructions[i] = usingInst;
 			context.EndStep(usingInst);
+			return true;
+		}
+
+		/// <summary>
+		/// A using variable is read-only, so an instance compound assignment operator can only be
+		/// applied to a copy of it, which the compiler may have optimized away. The loads that serve
+		/// as operator receivers are redirected to a fresh copy stored at the start of the using
+		/// body. An address receiver (a value type mutated in place) cannot be redirected without
+		/// changing what is mutated, so no using statement is introduced for it.
+		/// </summary>
+		/// <returns>false if the using statement must not be introduced.</returns>
+		bool RedirectCompoundAssignmentReceivers(ILVariable variable, Block usingBody, int insertionIndex)
+		{
+			if (!context.Settings.UserDefinedCompoundAssignmentOperators)
+				return true;
+			if (variable.AddressInstructions.Any(UserDefinedCompoundAssign.IsCompoundAssignmentReceiverUse))
+				return false;
+			var receiverLoads = variable.LoadInstructions.Where(UserDefinedCompoundAssign.IsCompoundAssignmentReceiverUse).ToArray();
+			if (receiverLoads.Length == 0)
+				return true;
+			var copy = context.Function.RegisterVariable(VariableKind.Local, variable.Type);
+			foreach (var load in receiverLoads)
+			{
+				load.ReplaceWith(new LdLoc(copy));
+			}
+			usingBody.Instructions.Insert(insertionIndex, new StLoc(copy, new LdLoc(variable)));
 			return true;
 		}
 
@@ -500,6 +531,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
 			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, usingNull: false, disposeMethodFullName, KnownTypeCode.IAsyncDisposable))
+				return false;
+			if (tryFinally.TryBlock is not BlockContainer asyncTryBody
+				|| !RedirectCompoundAssignmentReceivers(storeInst.Variable, asyncTryBody.EntryPoint, 0))
 				return false;
 			context.Step("AsyncUsingTransform", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;

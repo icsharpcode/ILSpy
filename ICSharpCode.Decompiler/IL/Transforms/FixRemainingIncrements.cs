@@ -20,12 +20,25 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	public class FixRemainingIncrements : IILTransform
 	{
+		/// <summary>
+		/// Gets the type "++x" binds its operator against once the call is rewritten: the first
+		/// rewrite below increments the variable the result is stored in, whose type can be more
+		/// derived than the operator's parameter when the operator has a covariant return type.
+		/// </summary>
+		static IType GetIncrementTargetType(Call call)
+		{
+			if (call.SlotInfo == StLoc.ValueSlot && call.Parent!.SlotInfo == Block.InstructionSlot)
+				return ((StLoc)call.Parent).Variable.Type;
+			return call.GetParameter(0).Type;
+		}
+
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			var callsToFix = new List<Call>();
@@ -35,6 +48,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					continue;
 				if (call.Arguments.Count != 1)
 					continue;
+				if (CSharpResolver.IsShadowedByInstanceOperator(call.Method,
+					GetIncrementTargetType(call), null, targetIsVariable: true, context.TypeSystem))
+				{
+					// "x++" would bind the instance operator instead of the one this call names.
+					continue;
+				}
 				if (call.Method.DeclaringType.IsKnownType(KnownTypeCode.Decimal))
 				{
 					// For decimal, legacy csc can optimize "d + 1m" to "op_Increment(d)".
