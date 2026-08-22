@@ -1638,14 +1638,20 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			Assert.That(c.Method.DeclaringType.Name, Is.EqualTo("OperatorInBaseClass"));
 		}
 
-		[Test, Ignore("C# standard 10.2.16 is not implemented: CSharpConversions.ImplicitConversion has a TODO for default literal conversions, and no ResolveResult represents a typeless default literal")]
+		[Test]
 		public void DefaultLiteralConversions()
 		{
-			// C# standard 10.2.16: an implicit conversion exists from a default_literal to
-			// any type, producing the default value of the inferred type. Once the semantic
-			// model gains a typeless default-literal ResolveResult, this test should assert
-			// that it converts to int, string, int? and type parameters.
-			Assert.Fail("Default literal conversions are not implemented.");
+			// C# standard 10.2.16: an implicit conversion exists from a default_literal to any type
+			var defaultLiteral = new DefaultLiteralResolveResult();
+			// a default_value_expression is a constant expression (C# standard 12.8.21)
+			Assert.That(defaultLiteral.IsCompileTimeConstant);
+			Assert.That(conversions.ImplicitConversion(defaultLiteral, compilation.FindType(KnownTypeCode.Int32)), Is.EqualTo(C.DefaultLiteralConversion));
+			Assert.That(conversions.ImplicitConversion(defaultLiteral, compilation.FindType(KnownTypeCode.String)), Is.EqualTo(C.DefaultLiteralConversion));
+			Assert.That(conversions.ImplicitConversion(defaultLiteral, compilation.FindType(typeof(int?))), Is.EqualTo(C.DefaultLiteralConversion));
+			ITypeParameter t = new DefaultTypeParameter(compilation, SymbolKind.Method, 0, "T");
+			Assert.That(conversions.ImplicitConversion(defaultLiteral, t), Is.EqualTo(C.DefaultLiteralConversion));
+			// explicit conversions include all implicit conversions, so (T)default is also valid
+			Assert.That(conversions.ExplicitConversion(defaultLiteral, compilation.FindType(KnownTypeCode.Int32)), Is.EqualTo(C.DefaultLiteralConversion));
 		}
 
 		[Test, Ignore("C# standard 10.2.18 is not implemented: no ResolveResult represents a switch expression; the decompiler converts each arm separately in ILAst")]

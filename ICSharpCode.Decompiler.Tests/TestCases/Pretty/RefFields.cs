@@ -66,12 +66,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public Span<int> ScopedSpan(scoped Span<int> span)
 		{
-			return default(Span<int>);
+			return default;
 		}
 
 		public void OutSpan(out Span<int> span)
 		{
-			span = default(Span<int>);
+			span = default;
 		}
 
 		public void CaptureIntoRef(ref Holder holder, Span<int> inner)
@@ -81,13 +81,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void CaptureIntoOut(out Holder holder, Span<int> inner)
 		{
-			holder = default(Holder);
+			holder = default;
 			holder.Inner = inner;
 		}
 
 		public void CaptureRefIntoOut(out Holder holder, ref int value)
 		{
-			holder = default(Holder);
+			holder = default;
 			holder.Inner = new Span<int>(ref value);
 		}
 
@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public Span<int> NoCaptureOut(out int value)
 		{
 			value = 0;
-			return default(Span<int>);
+			return default;
 		}
 
 		public Span<int> Identity(Span<int> span)
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int ReassignScopedSpanFromOut(bool b)
 		{
 			int value = 0;
-			scoped Span<int> span = default(Span<int>);
+			scoped Span<int> span = default;
 			if (b)
 			{
 				span = CaptureOut(out value);
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ImplicitScopedOutDoesNotCapture()
 		{
-			Span<int> span = default(Span<int>);
+			Span<int> span = default;
 			span = NoCaptureOut(out var value);
 			Console.WriteLine(span.Length);
 			return span.Length + value;
@@ -155,8 +155,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ReassignScopedSpanFromReceiver(bool b)
 		{
-			UnscopedRefStruct unscopedRefStruct = default(UnscopedRefStruct);
-			scoped Span<int> span = default(Span<int>);
+			UnscopedRefStruct unscopedRefStruct = default;
+			scoped Span<int> span = default;
 			if (b)
 			{
 				span = unscopedRefStruct.AsSpan();
@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ReassignScopedSpanFromRefParameter(bool b, ref int value)
 		{
-			scoped Span<int> span = default(Span<int>);
+			scoped Span<int> span = default;
 			if (b)
 			{
 				span = CreateAndCapture(ref value);
@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ReassignScopedSpanFromStackAlloc(bool b)
 		{
-			scoped Span<int> span = default(Span<int>);
+			scoped Span<int> span = default;
 			if (b)
 			{
 				span = stackalloc int[1];
@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ReassignScopedSpanFromScopedValue(bool b, scoped Span<int> value)
 		{
-			scoped Span<int> span = default(Span<int>);
+			scoped Span<int> span = default;
 			if (b)
 			{
 				span = value;
@@ -197,7 +197,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int ReassignScopedSpanFromNestedCall(bool b)
 		{
 			int value = 0;
-			scoped Span<int> span = default(Span<int>);
+			scoped Span<int> span = default;
 			if (b)
 			{
 				span = Identity(CreateAndCapture(ref value));
@@ -208,7 +208,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int ReassignScopedSpanFromLocalCopy(bool b)
 		{
 			Span<int> span = stackalloc int[1];
-			scoped Span<int> span2 = default(Span<int>);
+			scoped Span<int> span2 = default;
 			if (b)
 			{
 				span2 = span;
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int ReassignScopedSpanFromScopedRefValue(bool b)
 		{
 			Span<int> span = stackalloc int[1];
-			scoped Span<int> span2 = default(Span<int>);
+			scoped Span<int> span2 = default;
 			if (b)
 			{
 				span2 = ScopedRefSpan(ref span);
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ClassParameterReceiverDoesNotNarrow(SpanProvider provider, bool b)
 		{
-			Span<int> span = default(Span<int>);
+			Span<int> span = default;
 			if (b)
 			{
 				span = provider.GetBuffer();
@@ -263,7 +263,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int ClassLocalReceiverDoesNotNarrow(bool b)
 		{
 			SpanProvider spanProvider = new SpanProvider();
-			Span<int> span = default(Span<int>);
+			Span<int> span = default;
 			if (b)
 			{
 				span = spanProvider.GetBuffer();
@@ -283,7 +283,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int FieldStoreRequiresScoped()
 		{
-			scoped Holder holder = default(Holder);
+			scoped Holder holder = default;
 			Span<int> inner = stackalloc int[4];
 			holder.Inner = inner;
 			return holder.Inner.Length;
@@ -291,7 +291,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ReceiverCallRequiresScoped()
 		{
-			scoped Holder holder = default(Holder);
+			scoped Holder holder = default;
 			Span<int> inner = stackalloc int[4];
 			holder.Set(inner);
 			return holder.Inner.Length;
@@ -299,7 +299,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int ExtensionReceiverCallRequiresScoped()
 		{
-			scoped Holder holder = default(Holder);
+			scoped Holder holder = default;
 			Span<int> inner = stackalloc int[4];
 			holder.SetExtension(inner);
 			return holder.Inner.Length;
@@ -307,7 +307,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int RefArgumentCallRequiresScoped()
 		{
-			scoped Holder holder = default(Holder);
+			scoped Holder holder = default;
 			Span<int> inner = stackalloc int[4];
 			CaptureIntoRef(ref holder, inner);
 			return holder.Inner.Length;
@@ -315,7 +315,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public int OutArgumentCallRequiresScoped()
 		{
-			scoped Holder holder = default(Holder);
+			scoped Holder holder = default;
 			Span<int> inner = stackalloc int[4];
 			CaptureIntoOut(out holder, inner);
 			return holder.Inner.Length;
@@ -324,28 +324,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int OutArgumentCapturesRefRequiresScoped()
 		{
 			int value = 0;
-			scoped Holder holder = default(Holder);
+			scoped Holder holder = default;
 			CaptureRefIntoOut(out holder, ref value);
 			return holder.Inner[0];
 		}
 
 		public Holder RefArgumentWideValueDoesNotRequireScoped(Span<int> wide)
 		{
-			Holder holder = default(Holder);
+			Holder holder = default;
 			CaptureIntoRef(ref holder, wide);
 			return holder;
 		}
 
 		public Holder OutArgumentWideValueDoesNotRequireScoped(Span<int> wide)
 		{
-			Holder holder = default(Holder);
+			Holder holder = default;
 			CaptureIntoOut(out holder, wide);
 			return holder;
 		}
 
 		public int RefReturnFieldStoreRequiresScoped()
 		{
-			scoped Holder holder = default(Holder);
+			scoped Holder holder = default;
 			Span<int> inner = stackalloc int[4];
 			Identity(ref holder).Inner = inner;
 			return holder.Inner.Length;
@@ -353,14 +353,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public Holder RefReturnFieldStoreWideValueDoesNotRequireScoped(Span<int> wide)
 		{
-			Holder holder = default(Holder);
+			Holder holder = default;
 			Identity(ref holder).Inner = wide;
 			return holder;
 		}
 
 		public Holder ReadonlyReceiverDoesNotRequireScoped(bool b)
 		{
-			Holder result = default(Holder);
+			Holder result = default;
 			if (b)
 			{
 				Span<int> inner = stackalloc int[4];
@@ -371,7 +371,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public Holder ReadonlyExtensionReceiverDoesNotRequireScoped(bool b)
 		{
-			Holder holder = default(Holder);
+			Holder holder = default;
 			if (b)
 			{
 				Span<int> inner = stackalloc int[4];
@@ -466,7 +466,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public Span<int> GetBuffer()
 		{
-			return default(Span<int>);
+			return default;
 		}
 	}
 

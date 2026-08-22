@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public static implicit operator ReadOnlySpan<int>(SpanConvertible c)
 			{
-				return default(ReadOnlySpan<int>);
+				return default;
 			}
 		}
 

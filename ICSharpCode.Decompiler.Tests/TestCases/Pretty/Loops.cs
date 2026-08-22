@@ -515,7 +515,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static T LastOrDefault<T>(IEnumerable<T> items)
 		{
+#if CS71
+			T result = default;
+#else
 			T result = default(T);
+#endif
 			foreach (T item in items)
 			{
 				result = item;

@@ -37,7 +37,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public void TestB(S x, ref S y)
 			{
 				b[5, 3] = new S[10];
+#if CS71
+				b[5, 3][0] = default;
+#else
 				b[5, 3][0] = default(S);
+#endif
 				b[5, 3][1] = x;
 				b[5, 3][2] = y;
 			}

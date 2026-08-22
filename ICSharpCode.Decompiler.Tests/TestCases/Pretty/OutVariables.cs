@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private bool TryGet<T>(out T result)
 		{
-			result = default(T);
+			result = default;
 			return true;
 		}
 

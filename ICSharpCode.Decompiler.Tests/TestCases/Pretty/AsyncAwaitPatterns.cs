@@ -35,7 +35,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		{
 			public TaskAwaiter GetAwaiter()
 			{
+#if CS71
+				return default;
+#else
 				return default(TaskAwaiter);
+#endif
 			}
 		}
 	}
@@ -51,7 +55,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		{
 			public ValueTask DisposeAsync()
 			{
-				return default(ValueTask);
+				return default;
 			}
 		}
 #endif
@@ -247,7 +251,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 	{
 		public static TaskAwaiter GetAwaiter(this IAwaitableMarker marker)
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter);
+#endif
 		}
 
 		public static TaskAwaiter GetAwaiter(this int millisecondsDelay)
@@ -257,12 +265,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 
 		public static TaskAwaiter GetAwaiter(this Action action)
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter);
+#endif
 		}
 
 		public static TaskAwaiter<T[]> GetAwaiter<T>(this IEnumerable<Task<T>> tasks)
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter<T[]>);
+#endif
 		}
 
 #if CS70 && !NET40
@@ -573,7 +589,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 
 		public TaskAwaiter Self()
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter);
+#endif
 		}
 	}
 #endif
@@ -582,7 +602,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 	{
 		public TaskAwaiter GetAwaiter()
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter);
+#endif
 		}
 	}
 
@@ -609,7 +633,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 	{
 		TaskAwaiter IAwaitable.GetAwaiter()
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter);
+#endif
 		}
 	}
 
@@ -618,7 +646,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 	{
 		TaskAwaiter IAwaitable.GetAwaiter()
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter);
+#endif
 		}
 	}
 
@@ -626,7 +658,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 	{
 		public TaskAwaiter<T> GetAwaiter()
 		{
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter<T>);
+#endif
 		}
 	}
 
@@ -664,7 +700,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		public TaskAwaiter GetAwaiter()
 		{
 			Counter++;
+#if CS71
+			return default;
+#else
 			return default(TaskAwaiter);
+#endif
 		}
 	}
 }
