@@ -159,13 +159,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		RuntimeAsync = 0x100000,
 		/// <summary>
+		/// If this option is active, a void-returning instance method whose name is one of the C# 14
+		/// compound assignment operators (op_AdditionAssignment, op_IncrementAssignment, ...) is
+		/// classified as an operator. Without it such a method stays a plain method, so it keeps its
+		/// metadata name and its specialname flag surfaces as a [SpecialName] attribute.
+		/// </summary>
+		UserDefinedCompoundAssignmentOperators = 0x200000,
+		/// <summary>
 		/// Default settings: typical options for the decompiler, with all C# language features enabled.
 		/// </summary>
 		Default = Dynamic | Tuple | ExtensionMethods | DecimalConstants | ReadOnlyStructsAndParameters
 			| RefStructs | UnmanagedConstraints | NullabilityAnnotations | ReadOnlyMethods
 			| NativeIntegers | FunctionPointers | ScopedRef | NativeIntegersWithoutAttribute
 			| RefReadOnlyParameters | ParamsCollections | FirstClassSpanTypes | ExtensionMembers
-			| RuntimeAsync
+			| RuntimeAsync | UserDefinedCompoundAssignmentOperators
 	}
 
 	/// <summary>
@@ -215,6 +222,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				typeSystemOptions |= TypeSystemOptions.ExtensionMembers;
 			if (settings.AsyncAwait)
 				typeSystemOptions |= TypeSystemOptions.RuntimeAsync;
+			if (settings.UserDefinedCompoundAssignmentOperators)
+				typeSystemOptions |= TypeSystemOptions.UserDefinedCompoundAssignmentOperators;
 			return typeSystemOptions;
 		}
 
