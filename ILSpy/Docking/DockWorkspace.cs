@@ -596,7 +596,11 @@ namespace ICSharpCode.ILSpy.Docking
 			suppressHistoryRecording = true;
 			try
 			{
-				if (factory.Documents?.VisibleDockables is { } docs && docs.Contains(target.Tab))
+				// Only activate a tab that is not already active: Dock's ActiveDockable setter re-runs
+				// InitActiveDockable -> SetFocusedDockable even for an unchanged value, which would
+				// move the active pane to the document on every navigation.
+				if (factory.Documents is { VisibleDockables: { } docs } documents
+					&& docs.Contains(target.Tab) && !ReferenceEquals(documents.ActiveDockable, target.Tab))
 					factory.SetActiveDockable(target.Tab);
 				if (target is TreeNodeEntry treeNode)
 				{

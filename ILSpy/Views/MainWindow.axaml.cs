@@ -21,6 +21,8 @@ using System.Composition;
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.ViewModels;
@@ -60,6 +62,16 @@ namespace ICSharpCode.ILSpy.Views
 			// gesture that triggered the DBus call. No-op unless that category is enabled.
 			InputDiagnostics.Attach(this);
 			ICSharpCode.ILSpy.MainMenu.Attach(this);
+			// Mouse back/forward buttons navigate the history, like Alt+Left / Alt+Right. There is
+			// no KeyBinding equivalent for pointer buttons, so listen window-wide. The press is
+			// swallowed while tunnelling (the window is the first stop) so the control under the
+			// pointer never sees it as a click: Dock would activate the pane, AvaloniaEdit would
+			// focus the editor or toggle a folding marker. The release then navigates;
+			// handledEventsToo because inner controls handle pointer events for their own gestures
+			// without ever using the X buttons.
+			AddHandler(PointerPressedEvent, OnBrowserNavigationPointerPressed, RoutingStrategies.Tunnel);
+			AddHandler(PointerReleasedEvent, OnBrowserNavigationPointerReleased,
+				RoutingStrategies.Bubble, handledEventsToo: true);
 			ApplySessionSettings(settingsService.SessionSettings);
 			Opened += async (_, _) => {
 				AppLog.Mark("MainWindow.Opened fired");
@@ -75,6 +87,31 @@ namespace ICSharpCode.ILSpy.Views
 					Avalonia.Threading.DispatcherPriority.Background);
 			};
 			AppLog.Mark("MainWindow ctor exited");
+		}
+
+		void OnBrowserNavigationPointerPressed(object? sender, PointerPressedEventArgs e)
+		{
+			if (e.GetCurrentPoint(this).Properties.PointerUpdateKind
+				is PointerUpdateKind.XButton1Pressed or PointerUpdateKind.XButton2Pressed)
+			{
+				e.Handled = true;
+			}
+		}
+
+		void OnBrowserNavigationPointerReleased(object? sender, PointerReleasedEventArgs e)
+		{
+			if (DataContext is not MainWindowViewModel viewModel)
+				return;
+			var command = e.InitialPressMouseButton switch {
+				MouseButton.XButton1 => viewModel.DockWorkspace.NavigateBackCommand,
+				MouseButton.XButton2 => viewModel.DockWorkspace.NavigateForwardCommand,
+				_ => null
+			};
+			if (command?.CanExecute(null) == true)
+			{
+				command.Execute(null);
+				e.Handled = true;
+			}
 		}
 
 		static void SurfaceCompositionErrors()

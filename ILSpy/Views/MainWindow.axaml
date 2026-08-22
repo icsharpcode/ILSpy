@@ -20,8 +20,8 @@
 	</Design.DataContext>
 
 	<Window.KeyBindings>
-		<!-- Browser-style navigation. XButton1/2 (mouse Back/Forward) aren't first-class in
-		     Avalonia 12 yet, so we wire keyboard only for now. -->
+		<!-- Browser-style keyboard navigation. The mouse back/forward buttons drive the same
+		     commands from code-behind (KeyBindings cannot express pointer buttons). -->
 		<KeyBinding Gesture="Alt+Left" Command="{Binding DockWorkspace.NavigateBackCommand}" />
 		<KeyBinding Gesture="Alt+Right" Command="{Binding DockWorkspace.NavigateForwardCommand}" />
 		<!-- Search pane shortcuts. Ctrl+Shift+F is the WPF default; Ctrl+E mirrors the

@@ -232,26 +232,12 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 
 		#endregion
 
-		#region Keyboard (assembly-specific: Delete, Ctrl+R)
+		#region Keyboard (assembly-specific: Ctrl+R; Delete is handled by SharpTreeView)
 
 		void OnTreeKeyDown(object? sender, KeyEventArgs e)
 		{
 			if (DataContext is not AssemblyTreeModel model)
 				return;
-			if (e.Key == Key.Delete && e.KeyModifiers == KeyModifiers.None && model.AssemblyList is { } list)
-			{
-				var selectedAssemblyNodes = model.SelectedItems.OfType<AssemblyTreeNode>().ToList();
-				if (selectedAssemblyNodes.Count == 0)
-					return;
-				int reselectIndex = FlattenedIndexOf(selectedAssemblyNodes[0]);
-				foreach (var node in selectedAssemblyNodes)
-					list.Unload(node.LoadedAssembly);
-				e.Handled = true;
-				global::Avalonia.Threading.Dispatcher.UIThread.Post(
-					() => ReselectAfterDelete(reselectIndex),
-					global::Avalonia.Threading.DispatcherPriority.Background);
-				return;
-			}
 			if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
 			{
 				var members = model.SelectedItems.OfType<IMemberTreeNode>()
@@ -267,23 +253,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					analyzerVm.Analyze(member!);
 				e.Handled = true;
 			}
-		}
-
-		System.Collections.IList? Flattened => Tree.ItemsSource as System.Collections.IList;
-
-		int FlattenedIndexOf(SharpTreeNode node) => Flattened?.IndexOf(node) ?? -1;
-
-		void ReselectAfterDelete(int index)
-		{
-			if (DataContext is not AssemblyTreeModel model)
-				return;
-			var flattened = Flattened;
-			if (flattened == null || flattened.Count == 0 || index < 0)
-			{
-				model.SelectNode(null);
-				return;
-			}
-			model.SelectNode(flattened[Math.Clamp(index, 0, flattened.Count - 1)] as SharpTreeNode);
 		}
 
 		#endregion
