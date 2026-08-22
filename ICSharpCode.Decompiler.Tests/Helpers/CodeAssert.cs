@@ -210,7 +210,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var syntaxTree = CSharpSyntaxTree.ParseText(input, new CSharpParseOptions(preprocessorSymbols: definedSymbols));
 			var result = new DeleteDisabledTextRewriter().Visit(syntaxTree.GetRoot());
 			input = result.ToFullString();
-			return input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
+			// Drop lines that are ignored anyway (blank, comment-only, preprocessor directives)
+			// so they cannot sit between real lines and skew the diff alignment - a run of #if/
+			// #else/#endif around a statement could otherwise make the aligner report an adjacent
+			// brace as inserted-and-deleted.
+			return input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries)
+				.Where(line => !ShouldIgnoreChange(line))
+				.ToList();
 		}
 	}
 }
