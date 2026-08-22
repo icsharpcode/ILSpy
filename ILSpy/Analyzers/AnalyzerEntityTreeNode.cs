@@ -30,6 +30,7 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpy.Themes;
+using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -39,9 +40,10 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// per-entity root row plus every analyser result row underneath an
 	/// <see cref="AnalyzerSearchTreeNode"/>). Concrete subclasses supply the entity, its
 	/// icon, and its text; this base owns the navigation hook and the assembly-change
-	/// pruning logic.
+	/// pruning logic. Implementing <see cref="IMemberTreeNode"/> is what lets the member-based
+	/// context-menu entries (Analyze, Copy name, ...) act on analyzer rows like on assembly-tree rows.
 	/// </summary>
-	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IRichTextNode
+	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IRichTextNode, IMemberTreeNode
 	{
 		// Flags reproducing the plain signature the pane used before highlighting: the member's
 		// declaring type, fully-qualified names, and the usual return-type/parameter detail.

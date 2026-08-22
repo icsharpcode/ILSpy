@@ -29,6 +29,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -236,6 +237,62 @@ public class AnalyzeContextMenuTests
 			((object?)searchHeader.Icon).Should().NotBeNull(
 				$"'{searchHeader.AnalyzerHeader}' analyzer-search row needs an icon — was the regression");
 		}
+	}
+
+	[AvaloniaTest]
+	public async Task Analyze_Promotes_An_Analyzer_Result_Row_To_A_Top_Level_Entry()
+	{
+		// Right-click on a result row inside the analyzer pane (a "Used By" hit, say) must
+		// offer Analyze and, on Execute, add that row's entity as a new top-level entry.
+		var (_, vm) = await TestHarness.BootAsync();
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.Analyze));
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty").MethodDefinition;
+
+		entry.Execute(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { typeNode } });
+		var rootRow = analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>().Last();
+		rootRow.EnsureLazyChildren();
+		// A result row lives underneath an analyzer-search header, never directly under the root.
+		var resultRow = new AnalyzedMethodTreeNode(method, typeNode.Member);
+		rootRow.Children.OfType<AnalyzerSearchTreeNode>().First().Children.Add(resultRow);
+
+		var context = new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { resultRow } };
+		entry.IsVisible(context).Should().BeTrue("an analyzer result row wraps an entity, so Analyze must be offered");
+		entry.IsEnabled(context).Should().BeTrue();
+
+		var before = analyzerVm.Root.Children.Count;
+		entry.Execute(context);
+		TestCapture.Step("result-row-analyzed");
+
+		analyzerVm.Root.Children.Count.Should().Be(before + 1, "the result row's entity must become a top-level entry");
+		var promoted = analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>().Last();
+		promoted.Member.Should().BeSameAs(method);
+		((object)analyzerVm.SelectedItems.Single()).Should().BeSameAs(promoted);
+	}
+
+	[AvaloniaTest]
+	public async Task Analyze_Is_Hidden_For_A_Top_Level_Analyzer_Row()
+	{
+		// A top-level analyzer row is already analysed; re-analysing it would be a no-op, so the
+		// entry stays hidden there (Remove is the entry offered for those rows).
+		var (_, vm) = await TestHarness.BootAsync();
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.Analyze));
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		entry.Execute(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { typeNode } });
+		var rootRow = analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>().Last();
+
+		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { rootRow } })
+			.Should().BeFalse("a top-level analyzer row is already analysed");
 	}
 
 	static AnalyzerTreeViewModel? FindAnalyzerPane(ICSharpCode.ILSpy.Docking.DockWorkspace dockWorkspace)

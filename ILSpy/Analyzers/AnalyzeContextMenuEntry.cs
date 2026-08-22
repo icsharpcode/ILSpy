@@ -29,9 +29,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 {
 	/// <summary>
 	/// Right-click → "Analyze" — pushes every selected member (type, method, field, property,
-	/// event) into the analyzer pane. The pane's <see cref="AnalyzerTreeViewModel.Analyze"/>
-	/// dedupes entries by <see cref="IEntity.MetadataToken"/> + parent module so re-running
-	/// the menu on the same entity just refocuses the existing row.
+	/// event) into the analyzer pane, from the assembly tree, from a code reference, or from a
+	/// result row inside the analyzer pane itself (promoting it to a top-level entry). The
+	/// pane's <see cref="AnalyzerTreeViewModel.Analyze"/> dedupes entries by
+	/// <see cref="IEntity.MetadataToken"/> + parent module so re-running the menu on the same
+	/// entity just refocuses the existing row.
 	/// </summary>
 	[ExportContextMenuEntry(
 		Header = nameof(Resources.Analyze),
@@ -54,7 +56,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public bool IsVisible(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
-				return nodes.All(n => n is IMemberTreeNode);
+			{
+				// Top-level analyzer rows are already analysed (Remove is the entry for those);
+				// result rows underneath promote their entity to a new top-level row.
+				return nodes.All(n => n is IMemberTreeNode
+					&& n is not AnalyzerEntityTreeNode { Parent.IsRoot: true });
+			}
 			// Right-clicking a resolved symbol in the decompiled code: the reference carries the entity.
 			return context.Reference?.Reference is IEntity;
 		}
