@@ -475,8 +475,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			{
 				Parenthesize(assignmentExpression);
 			}
-			// assignment is right-associative
-			ParenthesizeIfRequired(assignmentExpression.Left, PrecedenceLevel.Assignment + 1);
+			// assignment is right-associative. A ref-conditional target (cond ? ref a : ref b)
+			// has conditional precedence and would otherwise re-parse as cond ? ref a : (ref b = value),
+			// so the target needs precedence above ?: to keep its parentheses.
+			ParenthesizeIfRequired(assignmentExpression.Left, PrecedenceLevel.Conditional + 1);
 			HandleAssignmentRHS(assignmentExpression.Right);
 			base.VisitAssignmentExpression(assignmentExpression);
 		}
