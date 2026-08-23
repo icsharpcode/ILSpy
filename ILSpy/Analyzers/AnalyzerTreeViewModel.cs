@@ -86,10 +86,12 @@ namespace ICSharpCode.ILSpy.Analyzers
 
 		static bool IsSameEntity(IEntity? a, IEntity b)
 		{
-			if (a == null)
-				return false;
-			return a.MetadataToken == b.MetadataToken
-				&& ReferenceEquals(a.ParentModule, b.ParentModule);
+			// Entities reaching the pane come from different type systems (the assembly tree's,
+			// and the fresh one each analyzer run builds), so the IModule instances differ even
+			// for the same member; the loaded MetadataFile is the stable identity.
+			return a?.ParentModule?.MetadataFile is { } file
+				&& a.MetadataToken == b.MetadataToken
+				&& ReferenceEquals(file, b.ParentModule?.MetadataFile);
 		}
 
 		void SyncSelection(SharpTreeNode node)

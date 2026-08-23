@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
@@ -25,6 +26,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpyX;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy;
@@ -293,6 +295,37 @@ public class AnalyzeContextMenuTests
 
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { rootRow } })
 			.Should().BeFalse("a top-level analyzer row is already analysed");
+	}
+
+	[AvaloniaTest]
+	public async Task Analyze_Reuses_The_Row_When_The_Same_Entity_Comes_From_Another_Type_System()
+	{
+		// Analyzer result rows carry entities from the type system each analyzer run builds, so
+		// the same member reaches the pane as different IEntity/IModule instances depending on
+		// whether it was analysed from the assembly tree or from a result row. Both must land on
+		// the same top-level row.
+		var (_, vm) = await TestHarness.BootAsync();
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty").MethodDefinition;
+		var first = analyzerVm.Analyze(method);
+		var count = analyzerVm.Root.Children.Count;
+
+		var file = method.ParentModule!.MetadataFile!;
+		var otherTypeSystem = new DecompilerTypeSystem(file, file.GetAssemblyResolver());
+		var other = otherTypeSystem.MainModule.GetDefinition((MethodDefinitionHandle)method.MetadataToken);
+		other.ParentModule.Should().NotBeSameAs(method.ParentModule, "the test must exercise the cross-type-system case");
+
+		var second = analyzerVm.Analyze(other);
+		TestCapture.Step("same-entity-other-type-system");
+
+		((object)second).Should().BeSameAs(first, "the existing row must be reused");
+		analyzerVm.Root.Children.Count.Should().Be(count);
+		((object)analyzerVm.SelectedItems.Single()).Should().BeSameAs(first);
 	}
 
 	static AnalyzerTreeViewModel? FindAnalyzerPane(ICSharpCode.ILSpy.Docking.DockWorkspace dockWorkspace)
