@@ -5,8 +5,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		private void dgvItemList_CellValueChanged(object sender, DataGridViewCellEventArgs e)
 		{
-			string text = default(string);
-			string s = default(string);
+			string text = default;
+			string s = default;
 			switch (text)
 			{
 				case "rowno":

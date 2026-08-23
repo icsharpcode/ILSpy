@@ -543,11 +543,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedStatement VisitUsingInstruction(UsingInstruction inst)
 		{
-			var resource = exprBuilder.Translate(inst.ResourceExpression).Expression;
+			var resource = exprBuilder.Translate(inst.ResourceExpression);
 			var transformed = TransformToForeach(inst, resource);
 			if (transformed != null)
 				return transformed.WithILInstruction(inst);
-			AstNode usingInit = resource;
+			AstNode usingInit = resource.Expression;
 			var var = inst.Variable;
 			KnownTypeCode knownTypeCode;
 			IType disposeType;
@@ -578,7 +578,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					disposeInvocation = new UnaryOperatorExpression { Expression = disposeInvocation, Operator = UnaryOperatorType.Await };
 				}
 				return new BlockStatement {
-					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Detach())),
+					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Expression.Detach())),
 					new TryCatchStatement {
 						TryBlock = ConvertAsBlock(inst.Body),
 						FinallyBlock = new BlockStatement() {
@@ -596,6 +596,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (var.LoadCount > 0 || var.AddressCount > 0)
 				{
 					var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
+					if (!type.IsVar())
+					{
+						// Unlike "using (expr)", the declaration spells out the type, so the
+						// resource may leave conversions to it implicit.
+						resource = resource.ConvertTo(var.Type, exprBuilder, allowImplicitConversion: true);
+					}
 					var vds = new VariableDeclarationStatement(type, var.Name!, resource);
 					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
 					usingInit = vds;

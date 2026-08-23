@@ -169,6 +169,20 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
+		/// Undoes the shortening to the C# 7.1 default literal that <see cref="ConvertTo"/>
+		/// applies, restoring the original "default(T)". Use in contexts that supply no target
+		/// type for the literal, e.g. an awaited expression or an argument of a call that later
+		/// becomes a cast or an operator.
+		/// </summary>
+		public TranslatedExpression RestoreDefaultLiteralType(ExpressionBuilder expressionBuilder)
+		{
+			if (ResolveResult is not DefaultLiteralResolveResult literal)
+				return this;
+			return expressionBuilder.GetDefaultValueExpression(literal.ShortenedFrom)
+				.WithILInstruction(this.ILInstructions);
+		}
+
+		/// <summary>
 		/// Adds casts (if necessary) to convert this expression to the specified target type.
 		/// </summary>
 		/// <remarks>
@@ -195,11 +209,46 @@ namespace ICSharpCode.Decompiler.CSharp
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool allowImplicitConversion = false)
 		{
 			var type = this.Type;
+			if (ResolveResult is DefaultLiteralResolveResult literal)
+			{
+				if (allowImplicitConversion
+					&& NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(literal.ShortenedFrom, targetType))
+				{
+					// The context still supplies the type the literal was shortened from.
+					return this;
+				}
+				// Either an explicit type is required here (e.g. overload resolution needs the
+				// typed form to stay unambiguous), or the context supplies a different type, in
+				// which case the literal would produce a different value (e.g. null instead of
+				// a boxed struct).
+				return RestoreDefaultLiteralType(expressionBuilder)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+			}
+			// Unwrapping a conversion hands its operand to a different target type. A default
+			// literal takes its value from that type, so it may have to be spelled out again:
+			// "T? x = new T?(default)" holds a value, whereas "T? x = default" is null.
+			TranslatedExpression Unwrapped(TranslatedExpression operand)
+			{
+				if (operand.ResolveResult is not DefaultLiteralResolveResult)
+					return operand;
+				return operand.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);
+			}
 			if (NormalizeTypeVisitor.IgnoreNullabilityAndTuples.EquivalentTypes(type, targetType))
 			{
 				// Make explicit conversion implicit, if possible
 				if (allowImplicitConversion)
 				{
+					if (Expression is DefaultValueExpression { Type: not null } defaultValue
+						&& expressionBuilder.settings.DefaultLiterals)
+					{
+						// The target type is supplied by the context, so "default(T)" can be
+						// shortened to the C# 7.1 default literal.
+						defaultValue.Type = null;
+						defaultValue.RemoveAnnotations<ResolveResult>();
+						var literalRR = new DefaultLiteralResolveResult(type);
+						defaultValue.AddAnnotation(literalRR);
+						return new TranslatedExpression(defaultValue, literalRR);
+					}
 					switch (ResolveResult)
 					{
 						case ConversionResolveResult conversion:
@@ -211,7 +260,7 @@ namespace ICSharpCode.Decompiler.CSharp
 									type, targetType
 								))
 							{
-								var result = this.UnwrapChild(cast.Expression);
+								var result = Unwrapped(this.UnwrapChild(cast.Expression));
 								if (conversion.Conversion.IsUserDefined)
 								{
 									result.Expression.AddAnnotation(new ImplicitConversionAnnotation(conversion));
@@ -230,7 +279,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1
 								&& invocation.Type.IsKnownType(KnownTypeCode.NullableOfT))
 							{
-								return this.UnwrapChild(oce.Arguments.Single());
+								return Unwrapped(this.UnwrapChild(oce.Arguments.Single()));
 							}
 							break;
 						}
@@ -302,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& !conv.Conversion.IsUserDefined
 				&& CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
 			{
-				var unwrapped = this.UnwrapChild(cast2.Expression);
+				var unwrapped = Unwrapped(this.UnwrapChild(cast2.Expression));
 				if (allowImplicitConversion)
 					return unwrapped;
 				return unwrapped.ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion);

@@ -104,6 +104,11 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public static readonly Conversion ExplicitSpanConversion = new BuiltinConversion(false, 14);
 
+		/// <summary>
+		/// C# 7.1 default literal being converted to an arbitrary type.
+		/// </summary>
+		public static readonly Conversion DefaultLiteralConversion = new BuiltinConversion(true, 15);
+
 		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
 		{
 			if (operatorMethod == null)
@@ -265,6 +270,7 @@ namespace ICSharpCode.Decompiler.Semantics
 			public override bool IsInlineArrayConversion => type == 12;
 			public override bool IsImplicitSpanConversion => type == 13;
 			public override bool IsExplicitSpanConversion => type == 14;
+			public override bool IsDefaultLiteralConversion => type == 15;
 
 			public override string ToString()
 			{
@@ -306,6 +312,8 @@ namespace ICSharpCode.Decompiler.Semantics
 						return "implicit span conversion";
 					case 14:
 						return "explicit span conversion";
+					case 15:
+						return "default-literal conversion";
 				}
 				return (isImplicit ? "implicit " : "explicit ") + name + " conversion";
 			}
@@ -496,6 +504,10 @@ namespace ICSharpCode.Decompiler.Semantics
 		}
 
 		public virtual bool IsThrowExpressionConversion {
+			get { return false; }
+		}
+
+		public virtual bool IsDefaultLiteralConversion {
 			get { return false; }
 		}
 

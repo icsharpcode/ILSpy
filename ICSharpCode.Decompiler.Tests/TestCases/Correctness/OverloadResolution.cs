@@ -43,7 +43,81 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Issue2444.M2();
 			Issue2741.B.Test(new Issue2741.C());
 			ExtensionMethodDemo.Issue2165.Test();
+#if CS71
+			DefaultLiteralTests();
+#endif
 		}
+
+#if CS71
+		static void DefaultLiteralTests()
+		{
+			// The decompiled output may shorten default(T) to a default literal;
+			// re-compilation must still pick the same overloads and operators.
+			DefaultOverload(default(DataStruct));
+			DefaultOverload(default(OtherStruct));
+			DefaultNullableOverload(default(DataStruct));
+			Console.WriteLine(default(DataStruct) == new DataStruct());
+			Console.WriteLine(GenericDefault("x", default));
+			Console.WriteLine(GenericDefault(42, default));
+		}
+
+		struct DataStruct
+		{
+			public int Field;
+
+			public static bool operator ==(DataStruct a, DataStruct b)
+			{
+				Console.WriteLine("DataStruct operator ==");
+				return a.Field == b.Field;
+			}
+
+			public static bool operator !=(DataStruct a, DataStruct b)
+			{
+				return a.Field != b.Field;
+			}
+
+			public override bool Equals(object obj)
+			{
+				return obj is DataStruct other && Field == other.Field;
+			}
+
+			public override int GetHashCode()
+			{
+				return Field;
+			}
+		}
+
+		struct OtherStruct
+		{
+			public int Field;
+		}
+
+		static void DefaultOverload(DataStruct data)
+		{
+			Console.WriteLine("DefaultOverload(DataStruct)");
+		}
+
+		static void DefaultOverload(OtherStruct data)
+		{
+			Console.WriteLine("DefaultOverload(OtherStruct)");
+		}
+
+		static void DefaultNullableOverload(DataStruct data)
+		{
+			Console.WriteLine("DefaultNullableOverload(DataStruct)");
+		}
+
+		static void DefaultNullableOverload(DataStruct? data)
+		{
+			Console.WriteLine("DefaultNullableOverload(DataStruct?)");
+		}
+
+		static T GenericDefault<T>(T a, T b)
+		{
+			Console.WriteLine("GenericDefault: " + typeof(T).Name);
+			return b;
+		}
+#endif
 
 		#region ConstructorTest
 		static void ConstructorTest()

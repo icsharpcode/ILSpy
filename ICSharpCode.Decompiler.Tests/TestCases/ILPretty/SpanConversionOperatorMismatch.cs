@@ -6,7 +6,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		public static implicit operator ReadOnlySpan<char>(object o)
 		{
-			return default(ReadOnlySpan<char>);
+			return default;
 		}
 
 		public static ReadOnlySpan<char> ConvertString(string s)

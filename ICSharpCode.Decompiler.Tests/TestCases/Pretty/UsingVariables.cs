@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void UsingVarPatternBasedDispose()
 		{
 			Console.WriteLine("before using");
-			using RefStructWithDispose refStructWithDispose = default(RefStructWithDispose);
+			using RefStructWithDispose refStructWithDispose = default;
 			Console.WriteLine("inside using");
 			refStructWithDispose.Use();
 		}

@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public virtual U? ReturnOnly<U>()
 			{
-				return default(U);
+				return default;
 			}
 
 			public virtual T?[] Nested<T>(T?[] values)
@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public override U? ReturnOnly<U>() where U : default
 			{
-				return default(U);
+				return default;
 			}
 
 			public override T?[] Nested<T>(T?[] values) where T : default

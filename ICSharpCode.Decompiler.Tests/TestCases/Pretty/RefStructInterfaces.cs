@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public static SpanFactory Create(int size)
 			{
-				return default(SpanFactory);
+				return default;
 			}
 		}
 
@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static T CreateDefault<T>() where T : allows ref struct
 		{
-			return default(T);
+			return default;
 		}
 
 		public static void CombinedUnmanaged<T>() where T : unmanaged, allows ref struct
@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void InvokeDelegate(RefStructAction<Span<int>> action)
 		{
-			action(default(Span<int>));
+			action(default);
 		}
 
 		public static void LocalFunctionAllows()
@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void CapturingLocalFunction<T>(int seed) where T : allows ref struct
 		{
-			Nested(default(T));
+			Nested(default);
 			Console.WriteLine(seed);
 			void Nested(scoped T value)
 			{

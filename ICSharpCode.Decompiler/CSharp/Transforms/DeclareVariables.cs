@@ -708,7 +708,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					if (v.DefaultInitialization == VariableInitKind.NeedsDefaultValue)
 					{
-						initializer = new DefaultValueExpression(type.Clone());
+						// The declaration always spells out the type, so the default literal is
+						// equivalent to default(T).
+						initializer = context.Settings.DefaultLiterals
+							? new DefaultValueExpression()
+							: new DefaultValueExpression(type.Clone());
 					}
 					var vds = new VariableDeclarationStatement(type, v.Name, initializer);
 					if (context.Settings.ScopedRef && v.ILVariable.IsScopedWithoutInitializer)

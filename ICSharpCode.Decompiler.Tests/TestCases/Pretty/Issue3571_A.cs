@@ -8,13 +8,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		[StructLayout(LayoutKind.Sequential, Size = 1)]
 		public readonly struct fsResult
 		{
-			public static fsResult Success => default(fsResult);
-			public static fsResult Failure => default(fsResult);
+			public static fsResult Success => default;
+			public static fsResult Failure => default;
 			public bool Succeeded => true;
 			public bool Failed => false;
 			public static fsResult operator +(fsResult a, fsResult b)
 			{
-				return default(fsResult);
+				return default;
 			}
 		}
 
