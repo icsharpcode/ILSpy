@@ -23,6 +23,8 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
+using ICSharpCode.ILSpy.TreeNodes;
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedFieldTreeNode : AnalyzerEntityTreeNode
@@ -44,8 +46,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override RichText? BuildRichText() => CreateMemberRichText("", MemberSignatureFlags);
 
-		public override object Icon => Images.GetIcon(Images.Field,
-			Images.GetOverlay(analyzedField.Accessibility), analyzedField.IsStatic);
+		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
 
 		protected override void LoadChildren() => AddAnalyzerChildren(analyzedField);
 	}

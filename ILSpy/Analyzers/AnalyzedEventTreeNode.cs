@@ -24,6 +24,8 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
+using ICSharpCode.ILSpy.TreeNodes;
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedEventTreeNode : AnalyzerEntityTreeNode
@@ -47,8 +49,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override RichText? BuildRichText() => CreateMemberRichText(prefix, MemberSignatureFlags);
 
-		public override object Icon => Images.GetIcon(Images.Event,
-			Images.GetOverlay(analyzedEvent.Accessibility), analyzedEvent.IsStatic);
+		public override object Icon => EventTreeNode.GetIcon(analyzedEvent);
 
 		protected override void LoadChildren()
 		{
