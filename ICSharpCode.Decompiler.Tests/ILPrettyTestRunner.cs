@@ -441,8 +441,14 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run();
 		}
 
+		[Test]
+		public async Task MissingBaseConstructor()
+		{
+			await Run(expectedText: "//IL_0001: Unknown result type (might be due to invalid IL or missing references)");
+		}
+
 		async Task Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
-			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
+			AssemblerOptions assemblerOptions = AssemblerOptions.Library, string expectedText = null)
 		{
 			if (settings == null)
 			{
@@ -456,6 +462,8 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiled = await Tester.DecompileCSharp(executable, settings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled, ["EXPECTED_OUTPUT"]);
+			if (expectedText != null)
+				Assert.That(File.ReadAllText(decompiled), Does.Contain(expectedText));
 			Tester.RepeatOnIOError(() => File.Delete(decompiled));
 		}
 

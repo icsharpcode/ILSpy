@@ -43,27 +43,75 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class TransformFieldAndConstructorInitializers : IAstTransform
 	{
-		/// <summary>
-		/// Pattern for reference types:
-		/// this..ctor(...);
-		/// </summary>
-		internal static readonly AstNode ThisCallClassPattern = new ExpressionStatement(
-			new NamedNode("invocation", new InvocationExpression(
-				new MemberReferenceExpression(
-					new Choice {
-						new NamedNode("target", new ThisReferenceExpression()),
-						new NamedNode("target", new BaseReferenceExpression()),
-						new CastExpression {
-							Type = new AnyNode(),
-							Expression = new Choice {
-							new NamedNode("target", new ThisReferenceExpression()),
-								new NamedNode("target", new BaseReferenceExpression()),
-							}
-						}
-					}, ".ctor"),
-				new Repeat(new AnyNode()))
-			)
-		);
+		static bool TryMatchClassConstructorCall(Statement? statement,
+			[NotNullWhen(true)] out InvocationExpression? invocation,
+			[NotNullWhen(true)] out Expression? target)
+		{
+			invocation = null;
+			target = null;
+			if (statement is not ExpressionStatement {
+				Expression: InvocationExpression {
+					Target: MemberReferenceExpression { MemberName: ".ctor" } memberReference
+				} candidate
+			})
+			{
+				return false;
+			}
+
+			var unwrappedTarget = UnwrapConstructorCallTarget(memberReference.Target);
+			if (unwrappedTarget is not (ThisReferenceExpression or BaseReferenceExpression))
+				return false;
+
+			invocation = candidate;
+			target = memberReference.Target;
+			return true;
+		}
+
+		static Expression UnwrapConstructorCallTarget(Expression target)
+		{
+			while (true)
+			{
+				target = target switch {
+					ParenthesizedExpression parenthesized => parenthesized.Expression,
+					CastExpression cast => cast.Expression,
+					_ => target,
+				};
+				if (target is not (ParenthesizedExpression or CastExpression))
+					return target;
+			}
+		}
+
+		static ConstructorInitializerType GetConstructorInitializerType(
+			InvocationExpression invocation, Expression target, IMethod ctorMethod)
+		{
+			if (invocation.GetSymbol() is IMethod { IsConstructor: true } ctor)
+			{
+				return ctor.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition
+					? ConstructorInitializerType.This
+					: ConstructorInitializerType.Base;
+			}
+
+			while (target is ParenthesizedExpression parenthesized)
+				target = parenthesized.Expression;
+			if (target is BaseReferenceExpression)
+				return ConstructorInitializerType.Base;
+			if (target is ThisReferenceExpression)
+				return ConstructorInitializerType.This;
+			if (target is CastExpression cast)
+			{
+				var innerTarget = UnwrapConstructorCallTarget(cast.Expression);
+				if (innerTarget is BaseReferenceExpression)
+					return ConstructorInitializerType.Base;
+				if (cast.GetResolveResult().Type.GetDefinition() == ctorMethod.DeclaringTypeDefinition)
+					return ConstructorInitializerType.This;
+			}
+			return ConstructorInitializerType.Base;
+		}
+
+		static Statement? FirstNonEmptyStatement(IEnumerable<Statement> statements)
+		{
+			return statements.FirstOrDefault(statement => statement is not EmptyStatement);
+		}
 
 		/// <summary>
 		/// Pattern for value types:
@@ -173,12 +221,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					else
 					{
-						var m = isStruct
-							? ThisCallStructPattern.Match(stmt)
-							: ThisCallClassPattern.Match(stmt);
-						if (m.Success)
+						var constructorCallStatement = stmt;
+						while (constructorCallStatement is EmptyStatement)
+							constructorCallStatement = constructorCallStatement.GetNextStatement();
+						bool isConstructorCall = isStruct
+							? ThisCallStructPattern.IsMatch(constructorCallStatement)
+							: TryMatchClassConstructorCall(constructorCallStatement, out _, out _);
+						if (isConstructorCall)
 						{
-							sequence.CoversFullBody = stmt.GetNextStatement() == null;
+							sequence.CoversFullBody = constructorCallStatement!.GetNextStatement() == null;
 						}
 					}
 				}
@@ -369,15 +420,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					else
 					{
 						// find this-ctor call
-						var stmt = ctor.Body?.Statements.FirstOrDefault();
-						var m = ctorMethod.DeclaringType.Kind == TypeKind.Struct
-							? ThisCallStructPattern.Match(stmt)
-							: ThisCallClassPattern.Match(stmt);
-
+						var stmt = ctor.Body == null ? null : FirstNonEmptyStatement(ctor.Body.Statements);
 						allCtors.Add(ctor);
 
-						if (m.Success && m.Get<Expression>("target").Single() is ThisReferenceExpression)
+						if (ctorMethod.DeclaringType.Kind == TypeKind.Struct)
+						{
+							var m = ThisCallStructPattern.Match(stmt);
+							if (m.Success && m.Get<Expression>("target").Single() is ThisReferenceExpression)
+								continue;
+						}
+						else if (TryMatchClassConstructorCall(stmt, out var invocation, out var target)
+							&& GetConstructorInitializerType(invocation, target, ctorMethod) == ConstructorInitializerType.This)
+						{
 							continue;
+						}
 
 						constructorsNotChainedWithThis.Add(ctor);
 					}
@@ -527,7 +583,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (constructorDeclaration.Body is null)
 					return false;
-				Statement stmt = constructorDeclaration.Body.Statements.FirstOrDefault()!;
+				Statement stmt = FirstNonEmptyStatement(constructorDeclaration.Body.Statements)!;
 				var isValueType = ctorMethod.DeclaringType.Kind == TypeKind.Struct;
 
 				// value types may omit the constructor initializer completely
@@ -536,54 +592,43 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return true;
 				}
 
-				var m = isValueType
-					? ThisCallStructPattern.Match(stmt)
-					: ThisCallClassPattern.Match(stmt);
-				if (!m.Success && !isValueType)
-				{
-					foreach (var candidate in constructorDeclaration.Body.Statements.Skip(1))
-					{
-						var candidateMatch = ThisCallClassPattern.Match(candidate);
-						if (!candidateMatch.Success
-							|| candidateMatch.Get<Expression>("target").Single() is not BaseReferenceExpression)
-						{
-							continue;
-						}
-						var candidateInvocation = candidateMatch.Get<AstNode>("invocation").Single();
-						if (candidateInvocation.GetChildren(Slots.Argument).Any())
-							continue;
-						stmt = candidate;
-						m = candidateMatch;
-						break;
-					}
-				}
-
-				if (!m.Success)
-					return isValueType;
-
-				Debug.Assert(stmt != null); // because m.Success
-
-				AstNode invocation = m.Get<AstNode>("invocation").Single();
-				var target = m.Get<Expression>("target").Single();
+				AstNode invocation;
 				ConstructorInitializerType type;
-				if (invocation.GetSymbol() is IMethod { IsConstructor: true } ctor)
+				if (isValueType)
 				{
-					type = ctor.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition
-						? ConstructorInitializerType.This
-						: ConstructorInitializerType.Base;
-				}
-				else if (target is ThisReferenceExpression)
-				{
+					var m = ThisCallStructPattern.Match(stmt);
+					if (!m.Success)
+						return true;
+					invocation = m.Get<AstNode>("invocation").Single();
 					type = ConstructorInitializerType.This;
-				}
-				else if (target is BaseReferenceExpression)
-				{
-					type = ConstructorInitializerType.Base;
 				}
 				else
 				{
-					return false;
+					InvocationExpression? classInvocation;
+					Expression? classTarget;
+					if (!TryMatchClassConstructorCall(stmt, out classInvocation, out classTarget))
+					{
+						foreach (var candidate in constructorDeclaration.Body.Statements.Skip(1))
+						{
+							if (!TryMatchClassConstructorCall(candidate, out var candidateInvocation, out var candidateTarget)
+								|| GetConstructorInitializerType(candidateInvocation, candidateTarget, ctorMethod) != ConstructorInitializerType.Base
+								|| candidateInvocation.Arguments.Any())
+							{
+								continue;
+							}
+							stmt = candidate;
+							classInvocation = candidateInvocation;
+							classTarget = candidateTarget;
+							break;
+						}
+					}
+					if (classInvocation == null || classTarget == null)
+						return false;
+					invocation = classInvocation;
+					type = GetConstructorInitializerType(classInvocation, classTarget, ctorMethod);
 				}
+
+				Debug.Assert(stmt != null);
 
 				var ci = new ConstructorInitializer { ConstructorInitializerType = type };
 
