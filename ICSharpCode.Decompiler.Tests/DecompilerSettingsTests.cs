@@ -49,5 +49,12 @@ namespace ICSharpCode.Decompiler.Tests
 			settings.ParamsCollections = false;
 			Assert.That(settings.GetMinimumRequiredVersion(), Is.EqualTo(LanguageVersion.CSharp11_0));
 		}
+
+		[Test]
+		public void CollectionExpressionsRequireCSharp12()
+		{
+			Assert.That(new DecompilerSettings(LanguageVersion.CSharp11_0).CollectionExpressions, Is.False);
+			Assert.That(new DecompilerSettings(LanguageVersion.CSharp12_0).CollectionExpressions, Is.True);
+		}
 	}
 }

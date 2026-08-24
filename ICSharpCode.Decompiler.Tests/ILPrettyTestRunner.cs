@@ -455,6 +455,7 @@ namespace ICSharpCode.Decompiler.Tests
 				// never use file-scoped namespaces, unless explicitly specified
 				settings = new DecompilerSettings { FileScopedNamespaces = false };
 			}
+			settings.CollectionExpressions = false;
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 

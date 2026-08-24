@@ -1241,7 +1241,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			else
 			{
 				// Find candidates by looking at all classes in the project:
-				candidateTypeDefinitions = compilation.GetAllTypeDefinitions().ToList();
+				candidateTypeDefinitions = compilation.GetAllTypeDefinitions()
+					.Where(type => !type.IsCompilerGenerated())
+					.ToList();
 			}
 
 			// Now filter out candidates that violate the upper bounds:

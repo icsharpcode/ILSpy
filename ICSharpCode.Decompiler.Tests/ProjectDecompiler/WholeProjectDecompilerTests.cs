@@ -28,6 +28,9 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.ProjectDecompiler;
@@ -132,6 +135,75 @@ public sealed class WholeProjectDecompilerTests
 			Assert.That(decompiler.Errors.Select(e => e.InnerException?.Message),
 				Is.EqualTo(new[] { TestFriendlyProjectDecompiler.ResourceFailure }));
 		}
+	}
+
+	[Test]
+	public void HiddenReferencedTypesDoNotCreateEmptyProjectFiles()
+	{
+		string assemblyPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".dll");
+		try
+		{
+			CompileCollectionExpressionAssembly(assemblyPath);
+			TestFriendlyProjectDecompiler decompiler = new(new UniversalAssemblyResolver(assemblyPath, false, null));
+			decompiler.Settings.CollectionExpressions = true;
+
+			using PEFile module = new(assemblyPath);
+			decompiler.DecompileProject(module, Path.GetTempPath(), new StringWriter());
+
+			using (Assert.EnterMultipleScope())
+			{
+				Assert.That(decompiler.Files.Keys.Select(Path.GetFileName),
+					Has.None.StartsWith("--z__ReadOnly"));
+				string source = decompiler.Files.Single(file => Path.GetFileName(file.Key) == "CollectionSource.cs")
+					.Value.ToString();
+				Assert.That(source, Does.Contain("Consume([1]);"));
+				Assert.That(source, Does.Contain("Consume([1, 2, 3]);"));
+				Assert.That(source, Does.Match(@"Consume\(\[\.\. \w+\]\);"));
+			}
+		}
+		finally
+		{
+			File.Delete(assemblyPath);
+		}
+	}
+
+	static void CompileCollectionExpressionAssembly(string assemblyPath)
+	{
+		const string source = """
+			using System.Collections.Generic;
+
+			public static class CollectionSource
+			{
+				public static void Call(int[] values)
+				{
+					Consume([1]);
+					Consume([1, 2, 3]);
+					Consume([0, .. values, 4]);
+				}
+
+				private static void Consume(IReadOnlyList<int> values)
+				{
+				}
+			}
+			""";
+		string runtimeDirectory = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
+		var compilation = CSharpCompilation.Create(
+			"CollectionExpressionProject",
+			new[] {
+				CSharpSyntaxTree.ParseText(source,
+					new CSharpParseOptions(Microsoft.CodeAnalysis.CSharp.LanguageVersion.CSharp12))
+			},
+			new[] {
+				MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+				MetadataReference.CreateFromFile(Path.Combine(runtimeDirectory, "System.Runtime.dll"))
+			},
+			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
+				optimizationLevel: OptimizationLevel.Release));
+
+		using FileStream output = File.Create(assemblyPath);
+		var result = compilation.Emit(output);
+		Assert.That(result.Success, Is.True,
+			string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.ToString())));
 	}
 
 	sealed class ThrowingAstTransform(string typeName) : IAstTransform

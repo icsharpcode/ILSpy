@@ -610,9 +610,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					{
 						foreach (var candidate in constructorDeclaration.Body.Statements.Skip(1))
 						{
-							if (!TryMatchClassConstructorCall(candidate, out var candidateInvocation, out var candidateTarget)
-								|| GetConstructorInitializerType(candidateInvocation, candidateTarget, ctorMethod) != ConstructorInitializerType.Base
-								|| candidateInvocation.Arguments.Any())
+							if (!TryMatchClassConstructorCall(candidate, out var candidateInvocation, out var candidateTarget))
+							{
+								continue;
+							}
+							var candidateType = GetConstructorInitializerType(candidateInvocation, candidateTarget, ctorMethod);
+							if (!TryReconstructSpreadCollectionArgument(constructorDeclaration, candidate, candidateInvocation)
+								&& (candidateType != ConstructorInitializerType.Base || candidateInvocation.Arguments.Any()))
 							{
 								continue;
 							}
@@ -629,6 +633,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 
 				Debug.Assert(stmt != null);
+				if (context.Settings.CollectionExpressions)
+					ConvertConstructorInitializerCollections(invocation);
 
 				var ci = new ConstructorInitializer { ConstructorInitializerType = type };
 
@@ -644,6 +650,211 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				context.EndStep(constructorDeclaration.Initializer);
 
 				return true;
+			}
+
+			void ConvertConstructorInitializerCollections(AstNode invocation)
+			{
+				foreach (var creation in invocation.Descendants.OfType<ObjectCreateExpression>().ToArray())
+				{
+					if (creation.GetResolveResult().Type.GetDefinition()?.FullName != "System.Collections.Generic.List")
+						continue;
+					var elements = new List<Expression>();
+					if (creation.Initializer != null)
+					{
+						foreach (var element in creation.Initializer.Elements)
+						{
+							elements.Add(element is ArrayInitializerExpression { Elements.Count: 1 } nested
+								? nested.Elements.Single()
+								: element);
+						}
+					}
+					if (creation.Arguments.Count > 1
+						|| (creation.Arguments.Count == 1
+							&& (creation.Arguments.Single().GetResolveResult().ConstantValue is not int capacity
+								|| capacity != elements.Count)))
+					{
+						continue;
+					}
+
+					var collection = new CollectionExpression();
+					foreach (var element in elements)
+						collection.Elements.Add(element.Detach());
+					AstNode replaceTarget = creation.Parent is CastExpression cast ? cast : creation;
+					collection.AddAnnotation(new ResolveResult(replaceTarget.GetResolveResult().Type));
+					context.Step("Use collection expression in constructor initializer", creation);
+					replaceTarget.ReplaceWith(collection);
+					context.EndStep(collection);
+				}
+			}
+
+			bool TryReconstructSpreadCollectionArgument(ConstructorDeclaration constructorDeclaration,
+				Statement constructorCallStatement, InvocationExpression invocation)
+			{
+				if (!context.Settings.CollectionExpressions)
+					return false;
+				Debug.Assert(constructorDeclaration.Body != null);
+				var precedingStatements = constructorDeclaration.Body.Statements
+					.TakeWhile(statement => statement != constructorCallStatement)
+					.Where(statement => statement is not EmptyStatement)
+					.ToList();
+				if (precedingStatements.Count < 2)
+					return false;
+
+				VariableDeclarationStatement? listDeclaration = null;
+				VariableInitializer? listVariable = null;
+				ObjectCreateExpression? listCreation = null;
+				int listDeclarationIndex = -1;
+				for (int i = 0; i < precedingStatements.Count; i++)
+				{
+					if (precedingStatements[i] is not VariableDeclarationStatement { Variables.Count: 1 } declaration)
+						continue;
+					var variable = declaration.Variables.Single();
+					if (variable.Initializer is not ObjectCreateExpression creation
+						|| creation.GetResolveResult().Type.GetDefinition()?.FullName != "System.Collections.Generic.List")
+					{
+						continue;
+					}
+					var references = invocation.Descendants.OfType<IdentifierExpression>()
+						.Where(identifier => identifier.Identifier == variable.Name)
+						.ToArray();
+					if (references.Length != 1)
+						continue;
+					listDeclaration = declaration;
+					listVariable = variable;
+					listCreation = creation;
+					listDeclarationIndex = i;
+					break;
+				}
+				if (listDeclaration == null || listVariable == null || listCreation == null)
+					return false;
+
+				var elements = new List<(Expression Expression, bool IsSpread)>();
+				if (!TryParseAddSequence() && !TryParseSpanSequence())
+					return false;
+				if (elements.Any(element => element.Expression.DescendantsAndSelf
+					.Any(node => node is ThisReferenceExpression or BaseReferenceExpression)))
+				{
+					return false;
+				}
+				var listReferences = constructorDeclaration.Body.Descendants.OfType<IdentifierExpression>()
+					.Where(identifier => identifier.Identifier == listVariable.Name)
+					.ToArray();
+				if (listReferences.Any(reference => !precedingStatements.Any(statement => reference.Ancestors.Contains(statement))
+					&& !reference.Ancestors.Contains(invocation)))
+				{
+					return false;
+				}
+
+				var invocationReference = invocation.Descendants.OfType<IdentifierExpression>()
+					.Single(identifier => identifier.Identifier == listVariable.Name);
+				AstNode replaceTarget = invocationReference.Parent is CastExpression cast ? cast : invocationReference;
+				var collection = new CollectionExpression();
+				foreach (var element in elements)
+				{
+					collection.Elements.Add(element.IsSpread
+						? new SpreadElement { Expression = element.Expression.Detach() }
+						: element.Expression.Detach());
+				}
+				collection.AddAnnotation(new ResolveResult(replaceTarget.GetResolveResult().Type));
+
+				context.Step("Reconstruct spread collection in constructor initializer", constructorCallStatement);
+				replaceTarget.ReplaceWith(collection);
+				foreach (var statement in precedingStatements)
+					statement.Remove();
+				context.EndStep(collection);
+				return true;
+
+				bool TryParseAddSequence()
+				{
+					if (listDeclarationIndex != 0)
+						return false;
+					foreach (var statement in precedingStatements.Skip(1))
+					{
+						if (statement is not ExpressionStatement {
+							Expression: InvocationExpression {
+								Target: MemberReferenceExpression {
+									Target: IdentifierExpression target,
+									MemberName: var methodName
+								},
+								Arguments.Count: 1
+							} call
+						} || target.Identifier != listVariable.Name || methodName is not ("Add" or "AddRange"))
+						{
+							elements.Clear();
+							return false;
+						}
+						elements.Add((call.Arguments.Single(), methodName == "AddRange"));
+					}
+					return true;
+				}
+
+				bool TryParseSpanSequence()
+				{
+					elements.Clear();
+					if (precedingStatements.Take(listDeclarationIndex)
+						.Any(statement => statement is not VariableDeclarationStatement { Variables.Count: 1 }))
+					{
+						return false;
+					}
+					var followingStatements = precedingStatements.Skip(listDeclarationIndex + 1).ToArray();
+					bool hasSetCount = followingStatements
+						.SelectMany(statement => statement.Descendants.OfType<InvocationExpression>())
+						.Any(call => call.Target is MemberReferenceExpression { MemberName: "SetCount" });
+					var spanDeclaration = followingStatements.OfType<VariableDeclarationStatement>()
+						.FirstOrDefault(declaration => declaration is { Variables.Count: 1 }
+							&& declaration.Variables.Single().Initializer is InvocationExpression {
+								Target: MemberReferenceExpression { MemberName: "AsSpan" }
+							});
+					if (!hasSetCount || spanDeclaration == null)
+						return false;
+					var spanName = spanDeclaration.Variables.Single().Name;
+					bool afterSpanDeclaration = false;
+					foreach (var statement in followingStatements)
+					{
+						if (statement == spanDeclaration)
+						{
+							afterSpanDeclaration = true;
+							continue;
+						}
+						if (!afterSpanDeclaration)
+							continue;
+						if (statement is ForeachStatement foreachStatement)
+						{
+							elements.Add((foreachStatement.InExpression, true));
+							continue;
+						}
+						if (statement is VariableDeclarationStatement { Variables.Count: 1 } declaration
+							&& declaration.Variables.Single().Initializer is ObjectCreateExpression {
+								Arguments.Count: 1
+							} readOnlySpanCreation
+							&& readOnlySpanCreation.GetResolveResult().Type.GetDefinition()?.FullName == "System.ReadOnlySpan")
+						{
+							elements.Add((readOnlySpanCreation.Arguments.Single(), true));
+							continue;
+						}
+						if (statement is ExpressionStatement {
+							Expression: AssignmentExpression {
+								Operator: AssignmentOperatorType.Assign,
+								Left: IndexerExpression { Target: IdentifierExpression spanTarget },
+								Right: var value
+							}
+						} && spanTarget.Identifier == spanName)
+						{
+							elements.Add((value, false));
+							continue;
+						}
+						if (statement.Descendants.OfType<InvocationExpression>().Any(call =>
+							call.Target is MemberReferenceExpression { MemberName: "CopyTo" or "Slice" }))
+						{
+							continue;
+						}
+						if (statement is VariableDeclarationStatement or ExpressionStatement)
+							continue;
+						elements.Clear();
+						return false;
+					}
+					return elements.Count > 0;
+				}
 			}
 
 			public bool MoveFieldInitializersToDeclarations(InitializerSequence sequence, InitializerKind kind)
