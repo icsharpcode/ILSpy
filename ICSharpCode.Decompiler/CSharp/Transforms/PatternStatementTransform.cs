@@ -868,7 +868,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// pre-C# 14 transform recognizes them by their "_<PropertyName>" backing field
 				// instead. Keep that rule, or a VB auto-property grows explicit "field"
 				// accessors where every other compiler's collapses to "{ get; set; }".
-				bool accessorsMustBeCompilerGenerated = field.Name != "_" + property.Name;
+				bool accessorsMustBeCompilerGenerated = field.Name != "_" + property.Name
+					&& property.DeclaringTypeDefinition?.IsCompilerGenerated() != true;
 				CollapseTrivialAccessor(getter, trivialFieldGetterBody, field, accessorsMustBeCompilerGenerated);
 				// A readonly setter cannot become an auto-accessor (same rule as the pre-C# 14
 				// transform); readonly getters collapse fine because auto-getters are
@@ -958,7 +959,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var propertyType = ((IProperty)property.MemberDefinition).ReturnType;
 			foreach (var candidate in property.DeclaringTypeDefinition.Fields)
 			{
-				if (candidate.IsCompilerGenerated()
+				if ((candidate.IsCompilerGenerated() || property.DeclaringTypeDefinition.IsCompilerGenerated())
 					&& candidate.IsStatic == property.IsStatic
 					// The trivial accessor bodies of a classic auto-property guaranteed this
 					// structurally; arbitrary accessor bodies do not. A field of a different
@@ -1104,7 +1105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			property = null;
 			if (!NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out var propertyName))
 				return false;
-			if (!field.IsCompilerGenerated())
+			if (!field.IsCompilerGenerated() && field.DeclaringTypeDefinition?.IsCompilerGenerated() != true)
 				return false;
 			property = field.DeclaringTypeDefinition?
 				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers)

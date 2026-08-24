@@ -28,6 +28,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -73,7 +74,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				cancellationToken.ThrowIfCancellationRequested();
 				var p = (IProperty)property.Specialize(subst);
-				if (IsAutoProperty(p, out var field))
+				if (IsAutoProperty(p, out var field)
+					|| (settings.FieldKeyword && PatternStatementTransform.TryGetBackingField(p, out field)))
 				{
 					backingFieldToAutoProperty.Add(field, p);
 					autoPropertyToBackingField.Add(p, field);
@@ -524,6 +526,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (attribute.AttributeType.ReflectionName)
 			{
 				case "System.Runtime.CompilerServices.CompilerGeneratedAttribute":
+				case "System.Diagnostics.CodeAnalysis.SetsRequiredMembersAttribute":
 					return true;
 				default:
 					return false;
@@ -566,7 +569,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 			}
 			pos++;
-			// Then all the fields are copied over
+			var expectedFields = new HashSet<IField>();
 			foreach (var member in orderedMembers)
 			{
 				if (member.IsStatic)
@@ -576,24 +579,29 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (!autoPropertyToBackingField.TryGetValue((IProperty)member, out field!))
 						continue;
 				}
+				expectedFields.Add((IField)field.MemberDefinition);
+			}
+
+			while (pos < body.Instructions.Count && body.Instructions[pos] is not Leave)
+			{
 				if (pos >= body.Instructions.Count)
 					return false;
 				if (!body.Instructions[pos].MatchStFld(out var lhsTarget, out var lhsField, out var valueInst))
 					return false;
 				if (!lhsTarget.MatchLdThis())
 					return false;
-				if (!lhsField.Equals(field))
+				if (!expectedFields.Remove((IField)lhsField.MemberDefinition))
 					return false;
 
 				if (!valueInst.MatchLdFld(out var rhsTarget, out var rhsField))
 					return false;
 				if (!rhsTarget.MatchLdLoc(other))
 					return false;
-				if (!rhsField.Equals(field))
+				if (!rhsField.MemberDefinition.Equals(lhsField.MemberDefinition))
 					return false;
 				pos++;
 			}
-			return body.Instructions[pos] is Leave;
+			return expectedFields.Count == 0 && pos < body.Instructions.Count && body.Instructions[pos] is Leave;
 		}
 
 		private bool IsGeneratedEqualityContract(IProperty property)
