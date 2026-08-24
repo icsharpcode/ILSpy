@@ -296,8 +296,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (body.Instructions.Count < addonInst)
 					return false;
 
-				int parameterIndex = 0;
-
 				for (int i = 0; i < body.Instructions.Count - addonInst; i++)
 				{
 					if (!body.Instructions[i].MatchStFld(out var target, out var field, out var valueInst))
@@ -309,16 +307,14 @@ namespace ICSharpCode.Decompiler.CSharp
 						continue;
 					if (valueInst.MatchLdLoc(out var v))
 					{
-						if (!ValidateParameter(v, parameterIndex))
+						if (!ValidateParameter(v))
 							return false;
-						parameterIndex = v.Index!.Value;
 					}
 					else if (valueInst.MatchLdObj(out valueInst, out _) && valueInst.MatchLdLoc(out v))
 					{
-						if (!ValidateParameter(v, parameterIndex))
+						if (!ValidateParameter(v))
 							return false;
-						parameterIndex = v.Index!.Value;
-						if (method.Parameters[parameterIndex].ReferenceKind is ReferenceKind.None)
+						if (method.Parameters[v.Index!.Value].ReferenceKind is ReferenceKind.None)
 						{
 							return false;
 						}
@@ -327,7 +323,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						continue;
 					}
-					IParameter parameter = unspecializedMethod.Parameters[parameterIndex];
+					IParameter parameter = unspecializedMethod.Parameters[v.Index!.Value];
 					if (primaryCtorParameterToAutoProperty.ContainsKey(parameter))
 					{
 						continue;
@@ -335,7 +331,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 					if (recordTypeDef.Kind != TypeKind.Struct)
 					{
-						if (!(property.CanSet && property.Setter.IsInitOnly))
+						if (property.Accessibility != Accessibility.Public
+							|| !(property.CanSet && property.Setter.IsInitOnly))
 						{
 							continue;
 						}
@@ -346,17 +343,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				var returnInst = body.Instructions.LastOrDefault();
 				return returnInst != null && returnInst.MatchReturn(out var retVal) && retVal.MatchNop();
 
-				bool ValidateParameter(ILVariable v, int expectedMinimumIndex)
+				bool ValidateParameter(ILVariable v)
 				{
 					if (v.Kind != VariableKind.Parameter)
 						return false;
 					Debug.Assert(v.Index.HasValue);
-					if (v.Index < 0 || v.Index >= unspecializedMethod.Parameters.Count)
-						return false;
-					var parameter = unspecializedMethod.Parameters[v.Index.Value];
-					if (primaryCtorParameterToAutoProperty.ContainsKey(parameter))
-						return true;
-					return v.Index >= expectedMinimumIndex;
+					return v.Index >= 0 && v.Index < unspecializedMethod.Parameters.Count;
 				}
 			}
 
@@ -380,16 +372,36 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static List<IMember> DetectMemberOrder(ITypeDefinition recordTypeDef, Dictionary<IField, IProperty> backingFieldToAutoProperty)
 		{
-			// For records, the order of members is important:
-			// Equals/GetHashCode/PrintMembers must agree on an order of fields+properties.
-			// The IL metadata has the order of fields and the order of properties, but we
-			// need to detect the correct interleaving.
-			// We could try to detect this from the PrintMembers body, but let's initially
-			// restrict ourselves to the common case where the record only uses properties.
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
-			return recordTypeDef.Properties.Select(p => p.Specialize(subst)).Concat(
-				recordTypeDef.Fields.Select(f => (IField)f.Specialize(subst)).Where(f => !backingFieldToAutoProperty.ContainsKey(f))
-			).ToList();
+			var properties = recordTypeDef.Properties.Select(p => (IProperty)p.Specialize(subst)).ToList();
+			var result = new List<IMember>();
+			foreach (var field in recordTypeDef.Fields.Select(f => (IField)f.Specialize(subst)))
+			{
+				result.Add(backingFieldToAutoProperty.TryGetValue(field, out var property) ? property : field);
+			}
+
+			for (int i = 0; i < properties.Count; i++)
+			{
+				var property = properties[i];
+				if (result.Contains(property))
+					continue;
+				if (recordTypeDef.Kind == TypeKind.Class && property.Name == "EqualityContract")
+				{
+					result.Insert(0, property);
+					continue;
+				}
+
+				var nextPropertyWithStorage = properties.Skip(i + 1).FirstOrDefault(result.Contains);
+				if (nextPropertyWithStorage != null)
+				{
+					result.Insert(result.IndexOf(nextPropertyWithStorage), property);
+				}
+				else
+				{
+					result.Insert(result.FindLastIndex(member => member is IProperty) + 1, property);
+				}
+			}
+			return result;
 		}
 
 		/// <summary>
@@ -557,7 +569,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// First instruction is the base constructor call
 			if (!(body.Instructions[pos] is Call { Method: { IsConstructor: true } } baseCtorCall))
 				return false;
-			if (!object.Equals(baseCtorCall.Method.DeclaringType, baseClass))
+			if (baseClass == null || !NormalizeTypeVisitor.TypeErasure.EquivalentTypes(baseCtorCall.Method.DeclaringType, baseClass))
 				return false;
 			if (baseCtorCall.Arguments.Count != (isInheritedRecord ? 2 : 1))
 				return false;
@@ -803,6 +815,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (member.IsOverride)
 				{
 					return false; // override is not printed (again), the virtual base property was already printed
+				}
+				if (member is IProperty { Parameters.Count: > 0 })
+				{
+					return false;
 				}
 				return true;
 			}
@@ -1159,7 +1175,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (foundBaseClassHash || hashedMembers.Count > 0)
 						return false; // must be first
 					foundBaseClassHash = true;
-					return baseHashCodeCall.Method.DeclaringType.Equals(baseClass);
+					return baseClass != null && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(baseHashCodeCall.Method.DeclaringType, baseClass);
 				}
 				// callvirt GetHashCode(call get_Default(), callvirt get_EqualityContract(ldloc this))
 				// callvirt GetHashCode(call get_Default(), ldfld <A>k__BackingField(ldloc this)))
