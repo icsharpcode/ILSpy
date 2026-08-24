@@ -49,8 +49,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object NavigationText => Language.EntityToString(EventDefinition, ConversionFlags.ShowDeclaringType);
 
-		public override object Icon => Images.GetIcon(Images.Event,
-			Images.GetOverlay(EventDefinition.Accessibility), EventDefinition.IsStatic);
+		public override object Icon => GetIcon(EventDefinition);
+
+		public static Avalonia.Media.IImage GetIcon(IEvent @event) => Images.GetIcon(Images.Event,
+			Images.GetOverlay(@event.Accessibility), @event.IsStatic);
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 			=> language.DecompileEvent(EventDefinition, output, options);

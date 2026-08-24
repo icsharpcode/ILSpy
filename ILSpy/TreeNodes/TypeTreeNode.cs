@@ -64,18 +64,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Text
 			=> Language.TypeToString(typeDefinition, ConversionFlags.None) + GetSuffixString(handle);
 
-		public override object Icon {
-			get {
-				var baseImage = typeDefinition.Kind switch {
-					TypeKind.Interface => Images.Interface,
-					TypeKind.Struct or TypeKind.Void => Images.Struct,
-					TypeKind.Delegate => Images.Delegate,
-					TypeKind.Enum => Images.Enum,
-					_ => Images.Class,
-				};
-				return Images.GetIcon(baseImage,
-					Images.GetOverlay(typeDefinition.Accessibility), typeDefinition.IsStatic);
-			}
+		public override object Icon => GetIcon(typeDefinition);
+
+		public static Avalonia.Media.IImage GetIcon(ITypeDefinition type)
+		{
+			var baseImage = type.Kind switch {
+				TypeKind.Interface => Images.Interface,
+				TypeKind.Struct or TypeKind.Void => Images.Struct,
+				TypeKind.Delegate => Images.Delegate,
+				TypeKind.Enum => Images.Enum,
+				_ => Images.Class,
+			};
+			return Images.GetIcon(baseImage,
+				Images.GetOverlay(type.Accessibility), type.IsStatic);
 		}
 
 		public override bool CanExpandRecursively => true;
