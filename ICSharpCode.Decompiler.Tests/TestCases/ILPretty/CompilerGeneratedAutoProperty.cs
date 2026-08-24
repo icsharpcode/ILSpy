@@ -2,6 +2,12 @@ using System.Runtime.CompilerServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 {
+#if !EXPECTED_OUTPUT
+	public struct MissingMemory<T>
+	{
+	}
+#endif
+
 	[CompilerGenerated]
 	public sealed class CompilerGeneratedAutoProperty
 	{
@@ -11,5 +17,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		{
 			Name = name;
 		}
+	}
+
+	public class UnresolvedGenericAutoProperty<T>
+	{
+		public MissingMemory<T> Data { get; set; }
 	}
 }

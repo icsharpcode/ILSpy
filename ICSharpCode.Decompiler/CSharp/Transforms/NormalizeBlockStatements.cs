@@ -215,7 +215,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ReturnType = new AnyNode(),
 			Getter = new Accessor() {
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
+				Body = new BlockStatement() {
+					new Repeat(new EmptyStatement()).ToStatement(),
+					new ReturnStatement(new AnyNode("expression"))
+				}
 			}
 		};
 
@@ -227,7 +230,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ReturnType = new AnyNode(),
 			Getter = new Accessor() {
 				Modifiers = Modifiers.Any,
-				Body = new BlockStatement() { new ReturnStatement(new AnyNode("expression")) }
+				Body = new BlockStatement() {
+					new Repeat(new EmptyStatement()).ToStatement(),
+					new ReturnStatement(new AnyNode("expression"))
+				}
 			}
 		};
 
