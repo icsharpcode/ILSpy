@@ -92,6 +92,20 @@ public class SearchResultFactoryIconTests
 	}
 
 	[AvaloniaTest]
+	public void Protected_Internal_Nested_Type_Gets_Plain_Protected_Overlay()
+	{
+		var nested = fixtureType.NestedTypes
+			.Single(t => t.Name == "NestedProtectedInternal").GetDefinition()!;
+
+		var icon = (LayeredImage)factory.Create(nested).Image;
+
+		// Types map protected-internal to the plain protected badge; only members show
+		// the combined protected-internal badge. Matches the WPF frontend's type-only
+		// overlay mapping.
+		icon.Overlays.Should().Equal(Images.OverlayProtected);
+	}
+
+	[AvaloniaTest]
 	public void Location_Image_Reflects_Declaring_Type_Icon()
 	{
 		var field = fixtureType.Fields.Single(f => f.Name == "privateStaticField");
@@ -113,5 +127,7 @@ class SearchIconFixture
 	internal interface INested { }
 
 	enum NestedEnum { None }
+
+	protected internal class NestedProtectedInternal { }
 }
 #pragma warning restore CS0169

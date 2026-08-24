@@ -75,8 +75,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				TypeKind.Enum => Images.Enum,
 				_ => Images.Class,
 			};
-			return Images.GetIcon(baseImage,
-				Images.GetOverlay(type.Accessibility), type.IsStatic);
+			// Types map protected-internal to the plain protected badge; only members show
+			// the combined protected-internal badge. Matches the WPF frontend's type-only
+			// overlay mapping.
+			var overlay = type.Accessibility == Accessibility.ProtectedOrInternal
+				? AccessOverlayIcon.Protected
+				: Images.GetOverlay(type.Accessibility);
+			return Images.GetIcon(baseImage, overlay, type.IsStatic);
 		}
 
 		public override bool CanExpandRecursively => true;
