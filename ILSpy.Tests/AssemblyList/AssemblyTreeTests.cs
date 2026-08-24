@@ -1540,6 +1540,35 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
+	public async Task Derived_Type_Entries_Stay_Visible_When_The_DerivedTypes_Node_Is_Expanded()
+	{
+		// The filter cascade runs for children added under a visible parent. A derived-type
+		// entry must report FilterResult.Match there: the Recurse handling force-loads the
+		// entry's own (lazy) children and hides the entry when all of them are hidden -- a
+		// leaf derived type has none, so every entry under "Derived Types" ended up hidden.
+
+		var (_, vm) = await TestHarness.BootAsync(3);
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			coreLibName, "System", "System.Exception");
+		// Expand the full ancestor chain so the type node is IsVisible -- the cascade only
+		// fires for children of visible parents, which is the state the real tree is in.
+		foreach (var ancestor in typeNode.Ancestors())
+			ancestor.IsExpanded = true;
+		typeNode.IsExpanded = true;
+
+		var derived = typeNode.Children.OfType<DerivedTypesTreeNode>().Single();
+		derived.IsExpanded = true;
+
+		var entries = derived.Children.OfType<DerivedTypesEntryNode>().ToList();
+		entries.Should().NotBeEmpty(
+			"the loaded assembly list contains several Exception subclasses");
+		entries.Should().OnlyContain(e => e.IsVisible,
+			"public derived-type entries must show under the expanded Derived Types node");
+	}
+
+	[AvaloniaTest]
 	public async Task Sealed_Class_Has_No_DerivedTypes_Node()
 	{
 		// Sealed types can't be derived from, so the DerivedTypes sub-tree must not appear.

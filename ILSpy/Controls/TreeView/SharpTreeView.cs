@@ -295,6 +295,27 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, newOffsetY);
 		}
 
+		/// <summary>
+		/// Avalonia's default key selection triggers treat plain Enter/Space as selection input:
+		/// the ListBoxItem container marks the KeyDown handled before it bubbles here, so the
+		/// activation handling in <see cref="OnKeyDown"/> would never see those keys. Suppress the
+		/// selection trigger exactly for the case OnKeyDown activates instead -- a single selected
+		/// row that is the row the key landed on. Multi-row selections keep the default behaviour
+		/// (Enter/Space collapses the selection to the focused row).
+		/// </summary>
+		protected override bool ShouldTriggerSelection(Visual selectable, KeyEventArgs eventArgs)
+		{
+			if (eventArgs.KeyModifiers == KeyModifiers.None
+				&& eventArgs.Key is Key.Enter or Key.Space
+				&& selectable is SharpTreeViewItem { Node: { } node }
+				&& SelectedItems?.Count == 1
+				&& ReferenceEquals(SelectedItem, node))
+			{
+				return false;
+			}
+			return base.ShouldTriggerSelection(selectable, eventArgs);
+		}
+
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			// Ctrl+A select-all must work on the first press even before a current item is
@@ -304,6 +325,11 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				&& SelectionMode.HasFlag(SelectionMode.Multiple))
 			{
 				SelectAll();
+				e.Handled = true;
+				return;
+			}
+			if (e.Key == Key.Delete && e.KeyModifiers == KeyModifiers.None && DeleteSelection())
+			{
 				e.Handled = true;
 				return;
 			}
@@ -359,6 +385,28 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 			if (!e.Handled)
 				base.OnKeyDown(e);
+		}
+
+		/// <summary>
+		/// Deletes the top-level selection (see <see cref="GetTopLevelSelection"/>) when every node in it
+		/// supports deletion, then selects the row that takes the first deleted node's place so a
+		/// repeated Delete keeps working. Returns false without touching anything otherwise, e.g. for
+		/// a selection that mixes deletable and non-deletable rows.
+		/// </summary>
+		bool DeleteSelection()
+		{
+			if (flattener is null)
+				return false;
+			var nodes = GetTopLevelSelection().ToArray();
+			if (nodes.Length == 0 || !nodes.All(n => n.CanDelete()))
+				return false;
+			int index = nodes.Min(flattener.IndexOf);
+			foreach (var node in nodes)
+				node.Delete();
+			// The deleted rows leave the selection with the source; pick the nearest survivor.
+			if (SelectedItems!.Count == 0 && flattener.Count > 0)
+				SelectAndFocus((SharpTreeNode)flattener[Math.Clamp(index, 0, flattener.Count - 1)]!);
+			return true;
 		}
 
 		static void ExpandRecursively(SharpTreeNode node)
@@ -426,7 +474,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			searchBuffer = string.Empty;
 		}
 
-		/// <summary>Selected items with no selected ancestor (used by Delete).</summary>
+		/// <summary>Selected items with no selected ancestor.</summary>
 		public IEnumerable<SharpTreeNode> GetTopLevelSelection()
 		{
 			var selection = SelectedItems!.OfType<SharpTreeNode>().ToHashSet();
