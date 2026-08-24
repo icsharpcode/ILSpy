@@ -23,6 +23,8 @@ using AvaloniaEdit.Highlighting;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
+using ICSharpCode.ILSpy.TreeNodes;
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal class AnalyzedMethodTreeNode : AnalyzerEntityTreeNode
@@ -46,20 +48,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override RichText? BuildRichText() => CreateMemberRichText(prefix, MemberSignatureFlags);
 
-		public override object Icon => ResolveIcon(analyzedMethod);
-
-		internal static object ResolveIcon(IMethod method)
-		{
-			var baseImage = method.IsConstructor
-				? Images.Constructor
-				: method.IsOperator
-					? Images.Operator
-					: Images.Method;
-			return Images.GetIcon(baseImage,
-				Images.GetOverlay(method.Accessibility),
-				method.IsStatic,
-				method.IsExtensionMethod);
-		}
+		public override object Icon => MethodTreeNode.GetIcon(analyzedMethod);
 
 		protected override void LoadChildren() => AddAnalyzerChildren(analyzedMethod);
 	}

@@ -82,21 +82,13 @@ namespace ICSharpCode.ILSpy.Compare
 		};
 
 		public override object Icon => entry.Entity switch {
-			ITypeDefinition t => TypeIconForKind(t),
-			IMethod => ICSharpCode.ILSpy.Images.Method,
-			IField => ICSharpCode.ILSpy.Images.Field,
-			IProperty => ICSharpCode.ILSpy.Images.Property,
-			IEvent => ICSharpCode.ILSpy.Images.Event,
+			ITypeDefinition t => TypeTreeNode.GetIcon(t),
+			IMethod m => MethodTreeNode.GetIcon(m),
+			IField f => FieldTreeNode.GetIcon(f),
+			IProperty p => PropertyTreeNode.GetIcon(p),
+			IEvent e => EventTreeNode.GetIcon(e),
 			INamespace => ICSharpCode.ILSpy.Images.Namespace,
 			IModule => ICSharpCode.ILSpy.Images.Assembly,
-			_ => ICSharpCode.ILSpy.Images.Class,
-		};
-
-		static object TypeIconForKind(ITypeDefinition t) => t.Kind switch {
-			TypeKind.Interface => ICSharpCode.ILSpy.Images.Interface,
-			TypeKind.Struct => ICSharpCode.ILSpy.Images.Struct,
-			TypeKind.Enum => ICSharpCode.ILSpy.Images.Enum,
-			TypeKind.Delegate => ICSharpCode.ILSpy.Images.Delegate,
 			_ => ICSharpCode.ILSpy.Images.Class,
 		};
 

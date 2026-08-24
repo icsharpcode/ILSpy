@@ -22,6 +22,8 @@ using AvaloniaEdit.Highlighting;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
+using ICSharpCode.ILSpy.TreeNodes;
+
 namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 {
 	internal sealed class AnalyzedTypeTreeNode : AnalyzerEntityTreeNode
@@ -41,20 +43,7 @@ namespace ICSharpCode.ILSpy.Analyzers.TreeNodes
 
 		protected override RichText? BuildRichText() => CreateMemberRichText("", TypeSignatureFlags);
 
-		public override object Icon => ResolveIcon(analyzedType);
-
-		static object ResolveIcon(ITypeDefinition type)
-		{
-			var baseImage = type.Kind switch {
-				TypeKind.Interface => Images.Interface,
-				TypeKind.Struct or TypeKind.Void => Images.Struct,
-				TypeKind.Delegate => Images.Delegate,
-				TypeKind.Enum => Images.Enum,
-				_ => Images.Class,
-			};
-			return Images.GetIcon(baseImage,
-				Images.GetOverlay(type.Accessibility), type.IsStatic);
-		}
+		public override object Icon => TypeTreeNode.GetIcon(analyzedType);
 
 		protected override void LoadChildren() => AddAnalyzerChildren(analyzedType);
 	}

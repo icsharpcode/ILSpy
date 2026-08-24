@@ -53,9 +53,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object? NavigationText => $"{Text} ({ICSharpCode.ILSpy.Properties.Resources.DerivedTypes})";
 
-		public override object Icon => type.Kind == TypeKind.Interface
-			? Images.Interface
-			: Images.Class;
+		public override object Icon => TypeTreeNode.GetIcon(type);
 
 		protected override void LoadChildren()
 		{

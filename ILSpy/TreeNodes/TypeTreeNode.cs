@@ -64,18 +64,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public override object Text
 			=> Language.TypeToString(typeDefinition, ConversionFlags.None) + GetSuffixString(handle);
 
-		public override object Icon {
-			get {
-				var baseImage = typeDefinition.Kind switch {
-					TypeKind.Interface => Images.Interface,
-					TypeKind.Struct or TypeKind.Void => Images.Struct,
-					TypeKind.Delegate => Images.Delegate,
-					TypeKind.Enum => Images.Enum,
-					_ => Images.Class,
-				};
-				return Images.GetIcon(baseImage,
-					Images.GetOverlay(typeDefinition.Accessibility), typeDefinition.IsStatic);
-			}
+		public override object Icon => GetIcon(typeDefinition);
+
+		public static Avalonia.Media.IImage GetIcon(ITypeDefinition type)
+		{
+			var baseImage = type.Kind switch {
+				TypeKind.Interface => Images.Interface,
+				TypeKind.Struct or TypeKind.Void => Images.Struct,
+				TypeKind.Delegate => Images.Delegate,
+				TypeKind.Enum => Images.Enum,
+				_ => Images.Class,
+			};
+			// Types map protected-internal to the plain protected badge; only members show
+			// the combined protected-internal badge. Matches the WPF frontend's type-only
+			// overlay mapping.
+			var overlay = type.Accessibility == Accessibility.ProtectedOrInternal
+				? AccessOverlayIcon.Protected
+				: Images.GetOverlay(type.Accessibility);
+			return Images.GetIcon(baseImage, overlay, type.IsStatic);
 		}
 
 		public override bool CanExpandRecursively => true;
