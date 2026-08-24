@@ -117,9 +117,49 @@ public class SearchResultFactoryIconTests
 		location.BaseImage.Should().BeSameAs(Images.Class);
 		location.Overlays.Should().Equal(Images.OverlayInternal);
 	}
+
+	[AvaloniaTest]
+	public void Internal_Static_Method_Result_Composes_Static_And_Internal_Overlays()
+	{
+		var method = fixtureType.Methods.Single(m => m.Name == "InternalStaticMethod");
+
+		var icon = (LayeredImage)factory.Create(method).Image;
+
+		icon.BaseImage.Should().BeSameAs(Images.Method);
+		icon.Overlays.Should().Equal(Images.OverlayStatic, Images.OverlayInternal);
+	}
+
+	[AvaloniaTest]
+	public void Protected_Property_Result_Composes_Protected_Overlay()
+	{
+		var property = fixtureType.Properties.Single(p => p.Name == "ProtectedProperty");
+
+		var icon = (LayeredImage)factory.Create(property).Image;
+
+		icon.BaseImage.Should().BeSameAs(Images.Property);
+		icon.Overlays.Should().Equal(Images.OverlayProtected);
+	}
+
+	[AvaloniaTest]
+	public void Private_Event_Result_Composes_Private_Overlay()
+	{
+		var @event = fixtureType.Events.Single(e => e.Name == "privateEvent");
+
+		var icon = (LayeredImage)factory.Create(@event).Image;
+
+		icon.BaseImage.Should().BeSameAs(Images.Event);
+		icon.Overlays.Should().Equal(Images.OverlayPrivate);
+	}
+
+	[AvaloniaTest]
+	public void Top_Level_Type_Result_Falls_Back_To_Namespace_Location_Image()
+	{
+		// A top-level type has no declaring type, so the location column shows its namespace.
+		factory.Create(fixtureType).LocationImage.Should().BeSameAs(Images.Namespace);
+	}
 }
 
-#pragma warning disable CS0169 // fields exist only as metadata probes for the tests above
+#pragma warning disable CS0169, CS0067 // members exist only as metadata probes for the tests above
 class SearchIconFixture
 {
 	static int privateStaticField;
@@ -129,5 +169,11 @@ class SearchIconFixture
 	enum NestedEnum { None }
 
 	protected internal class NestedProtectedInternal { }
+
+	internal static void InternalStaticMethod() { }
+
+	protected int ProtectedProperty { get; }
+
+	event System.EventHandler? privateEvent;
 }
-#pragma warning restore CS0169
+#pragma warning restore CS0169, CS0067
