@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.Solution
 
 		static List<string> WriteSolutionConfigurations(TextWriter writer, List<ProjectItem> projects)
 		{
-			var platforms = projects.GroupBy(p => p.PlatformName).Select(g => g.Key).ToList();
+			var platforms = projects.Select(p => GetSolutionPlatformName(p.PlatformName)).Distinct().ToList();
 
 			platforms.Sort();
 
@@ -139,18 +139,23 @@ namespace ICSharpCode.Decompiler.Solution
 
 				foreach (var platform in solutionPlatforms)
 				{
-					writer.WriteLine($"\t\t{projectGuid}.Debug|{platform}.ActiveCfg = Debug|{project.PlatformName}");
-					writer.WriteLine($"\t\t{projectGuid}.Debug|{platform}.Build.0 = Debug|{project.PlatformName}");
+					writer.WriteLine($"\t\t{projectGuid}.Debug|{platform}.ActiveCfg = Debug|{GetSolutionPlatformName(project.PlatformName)}");
+					writer.WriteLine($"\t\t{projectGuid}.Debug|{platform}.Build.0 = Debug|{GetSolutionPlatformName(project.PlatformName)}");
 				}
 
 				foreach (var platform in solutionPlatforms)
 				{
-					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.ActiveCfg = Release|{project.PlatformName}");
-					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.Build.0 = Release|{project.PlatformName}");
+					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.ActiveCfg = Release|{GetSolutionPlatformName(project.PlatformName)}");
+					writer.WriteLine($"\t\t{projectGuid}.Release|{platform}.Build.0 = Release|{GetSolutionPlatformName(project.PlatformName)}");
 				}
 			}
 
 			writer.WriteLine("\tEndGlobalSection");
+		}
+
+		static string GetSolutionPlatformName(string platformName)
+		{
+			return platformName == "AnyCPU" ? "Any CPU" : platformName;
 		}
 
 		static void FixAllProjectReferences(List<ProjectItem> projects)

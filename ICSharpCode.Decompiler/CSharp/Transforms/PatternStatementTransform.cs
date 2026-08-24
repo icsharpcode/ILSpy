@@ -843,7 +843,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!TryGetBackingField(property, out var field))
 				return null;
-			if (!OutsideReferencesAreExpressible(propertyDeclaration, field))
+			if (!OutsideReferencesAreExpressible(propertyDeclaration, field)
+				&& !IsTrivialRecordAutoProperty(propertyDeclaration, property, field))
 			{
 				// The field stays declared, so the "field" keyword references emitted by
 				// ExpressionBuilder.ConvertField have to become ordinary field references again.
@@ -899,6 +900,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 			return null;
+		}
+
+		bool IsTrivialRecordAutoProperty(PropertyDeclaration declaration, IProperty property, IField field)
+		{
+			if (property.DeclaringTypeDefinition?.IsRecord != true)
+				return false;
+			return IsTrivialAccessor(declaration.Getter, trivialFieldGetterBody, field)
+				&& IsTrivialAccessor(declaration.Setter, trivialFieldSetterBody, field);
+		}
+
+		bool IsTrivialAccessor(Accessor? accessor, BlockStatement pattern, IField field)
+		{
+			if (accessor == null || accessor.Body == null)
+				return true;
+			if (accessor.GetSymbol() is not IMethod method || !method.IsCompilerGenerated())
+				return false;
+			Match match = pattern.Match(accessor.Body);
+			return match.Success
+				&& match.Get<AstNode>("fieldReference").Single().GetSymbol() is IField referencedField
+				&& field.Equals(referencedField.MemberDefinition);
 		}
 
 		void CollapseTrivialAccessor(Accessor? accessor, BlockStatement pattern, IField field,

@@ -59,4 +59,9 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		string StrongNameKeyFile { get; }
 	}
+
+	internal interface INullableProjectInfoProvider
+	{
+		bool NullableReferenceTypes { get; }
+	}
 }

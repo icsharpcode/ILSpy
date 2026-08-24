@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -75,12 +76,14 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly List<string> searchPaths = new List<string>();
 		readonly List<string> packageBasePaths = new List<string>();
 		readonly Version targetFrameworkVersion;
+		readonly TargetFrameworkIdentifier targetFramework;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 		readonly string preferredRuntimePack;
 
 		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion,
 			string preferredRuntimePack)
 		{
+			this.targetFramework = targetFramework;
 			this.targetFrameworkVersion = targetFrameworkVersion;
 			this.preferredRuntimePack = preferredRuntimePack;
 
@@ -213,6 +216,11 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public string TryResolveDotNetCoreShared(IAssemblyReference name, out string runtimePack)
 		{
+			return TryResolveDotNetCoreShared(name, out runtimePack, allowRollForward: true);
+		}
+
+		internal string TryResolveDotNetCoreShared(IAssemblyReference name, out string runtimePack, bool allowRollForward)
+		{
 			if (dotnetBasePath == null)
 			{
 				runtimePack = null;
@@ -232,14 +240,33 @@ namespace ICSharpCode.Decompiler.Metadata
 				string basePath = Path.Combine(dotnetBasePath, "shared", pack);
 				if (!Directory.Exists(basePath))
 					continue;
-				var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
-				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll")))
+				var versionFolders = new DirectoryInfo(basePath).GetDirectories()
+					.Select(ConvertToVersion)
+					.Where(v => v.version != null);
+				versionFolders = allowRollForward
+					? versionFolders.Where(v => v.version >= targetFrameworkVersion)
+					: versionFolders.Where(v => v.version.Major == targetFrameworkVersion.Major
+						&& v.version.Minor == targetFrameworkVersion.Minor
+						&& v.version >= targetFrameworkVersion);
+				foreach (var folder in versionFolders.OrderBy(v => v.version))
 				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
-				}
-				else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe")))
-				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+					foreach (string extension in new[] { ".dll", ".exe" })
+					{
+						string path = Path.Combine(folder.directory.FullName, name.Name + extension);
+						if (!File.Exists(path))
+							continue;
+						try
+						{
+							var resolvedVersion = AssemblyName.GetAssemblyName(path).Version;
+							if (targetFramework == TargetFrameworkIdentifier.NETStandard
+								|| name.Version == null || resolvedVersion == null || resolvedVersion >= name.Version)
+								return path;
+						}
+						catch (Exception ex)
+						{
+							Trace.TraceWarning(ex.ToString());
+						}
+					}
 				}
 			}
 			runtimePack = null;
