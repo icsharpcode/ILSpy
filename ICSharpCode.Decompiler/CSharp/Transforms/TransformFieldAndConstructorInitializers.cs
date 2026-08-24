@@ -616,6 +616,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							}
 							var candidateType = GetConstructorInitializerType(candidateInvocation, candidateTarget, ctorMethod);
 							if (!TryReconstructSpreadCollectionArgument(constructorDeclaration, candidate, candidateInvocation)
+								&& !TryInlineConstructorCallTemporaries(constructorDeclaration, candidate, candidateInvocation)
 								&& (candidateType != ConstructorInitializerType.Base || candidateInvocation.Arguments.Any()))
 							{
 								continue;
@@ -855,6 +856,85 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					return elements.Count > 0;
 				}
+			}
+
+			bool TryInlineConstructorCallTemporaries(ConstructorDeclaration constructorDeclaration,
+				Statement constructorCallStatement, InvocationExpression invocation)
+			{
+				Debug.Assert(constructorDeclaration.Body != null);
+				var precedingStatements = constructorDeclaration.Body.Statements
+					.TakeWhile(statement => statement != constructorCallStatement)
+					.Where(statement => statement is not EmptyStatement)
+					.ToArray();
+				if (precedingStatements.Length == 0
+					|| invocation.GetResolveResult() is not InvocationResolveResult {
+						Member: IMethod { SymbolKind: SymbolKind.Constructor } ctor
+					})
+				{
+					return false;
+				}
+
+				var namedArguments = invocation.Arguments.OfType<NamedArgumentExpression>().ToArray();
+				if (namedArguments.Length != invocation.Arguments.Count
+					|| namedArguments.Length != ctor.Parameters.Count
+					|| namedArguments.Select(argument => argument.Name).Distinct().Count() != namedArguments.Length
+					|| namedArguments.Any(argument => !ctor.Parameters.Any(parameter => parameter.Name == argument.Name)))
+				{
+					return false;
+				}
+
+				var temporaries = new List<(VariableDeclarationStatement Declaration,
+					NamedArgumentExpression Argument, AstNode ReplacementTarget, Expression Initializer)>();
+				foreach (var statement in precedingStatements)
+				{
+					if (statement is not VariableDeclarationStatement { Variables.Count: 1 } declaration)
+						return false;
+					var variable = declaration.Variables.Single();
+					if (variable.Initializer is not Expression initializer || initializer.DescendantsAndSelf
+						.Any(node => node is ThisReferenceExpression or BaseReferenceExpression))
+					{
+						return false;
+					}
+
+					var ilVariable = variable.GetILVariable();
+					var references = constructorDeclaration.Body.Descendants.OfType<IdentifierExpression>()
+						.Where(reference => ilVariable != null
+							? reference.GetILVariable() == ilVariable
+							: reference.Identifier == variable.Name)
+						.ToArray();
+					if (references.Length != 1)
+						return false;
+					var reference = references[0];
+					var argument = reference.Ancestors.OfType<NamedArgumentExpression>().FirstOrDefault();
+					if (argument == null || !namedArguments.Contains(argument))
+						return false;
+
+					AstNode replacementTarget = reference;
+					if (reference.Parent is DirectionExpression direction)
+					{
+						if (direction.FieldDirection != FieldDirection.In)
+							return false;
+						replacementTarget = direction;
+					}
+					temporaries.Add((declaration, argument, replacementTarget, initializer));
+				}
+				if (temporaries.Select(temporary => temporary.Argument).Distinct().Count() != temporaries.Count)
+					return false;
+
+				var reorderedArguments = temporaries.Select(temporary => temporary.Argument)
+					.Concat(namedArguments.Where(argument => temporaries.All(temporary => temporary.Argument != argument)))
+					.ToArray();
+				context.Step("Inline constructor call temporaries", constructorCallStatement);
+				foreach (var temporary in temporaries)
+					temporary.ReplacementTarget.ReplaceWith(temporary.Initializer.Detach());
+				foreach (var argument in reorderedArguments)
+					argument.Remove();
+				foreach (var argument in reorderedArguments)
+					invocation.Arguments.Add(argument);
+				foreach (var temporary in temporaries)
+					temporary.Declaration.Remove();
+				context.EndStep(invocation);
+				return true;
 			}
 
 			public bool MoveFieldInitializersToDeclarations(InitializerSequence sequence, InitializerKind kind)
