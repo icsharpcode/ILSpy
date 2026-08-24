@@ -1237,6 +1237,37 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		/// <summary>
+		/// Whether the arguments left out of the call are the default values of the member it
+		/// resolves to. They were compared against the parameters of the method the call
+		/// instruction names, which for a virtual call is the base declaration; an override may
+		/// redeclare a different default, and then leaving the argument out changes the value that
+		/// is passed.
+		/// </summary>
+		bool OmittedArgumentsAreDefaultsOf(ArgumentList argumentList, IMember? foundMember)
+		{
+			int argumentCount = argumentList.IsSetter ? argumentList.Length - 1 : argumentList.Length;
+			int omittedFrom = argumentList.GetActualArgumentCount();
+			if (omittedFrom >= argumentCount)
+				return true;
+			if (foundMember is not IParameterizedMember foundParameterizedMember)
+				return false;
+			var parameters = foundParameterizedMember.Parameters;
+			// Names may leave out a parameter in the middle, so what was dropped is found through
+			// the map rather than by position. Its first entries are the target's.
+			var map = argumentList.ArgumentToParameterMap;
+			int firstParamIndex = map != null ? map.Count - argumentList.Length : 0;
+			for (int i = omittedFrom; i < argumentCount; i++)
+			{
+				int parameterIndex = map != null ? map[i + firstParamIndex] : i;
+				if (parameterIndex < 0 || parameterIndex >= parameters.Count)
+					return false;
+				if (!IsOptionalArgument(parameters[parameterIndex], argumentList.Arguments[i]))
+					return false;
+			}
+			return true;
+		}
+
 		bool IsOptionalArgument(IParameter parameter, TranslatedExpression arg)
 		{
 			if (!parameter.IsOptional)
@@ -1354,8 +1385,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			OverloadResolutionErrors errors;
 			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
 				argumentList.GetArgumentResolveResults().ToArray(), argumentList.GetArgumentNames(), out foundMethod,
-				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
+				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None
+				|| bestCandidateIsExpandedForm != argumentList.IsExpandedForm
+				|| !OmittedArgumentsAreDefaultsOf(argumentList, foundMethod))
 			{
+				if (errors == OverloadResolutionErrors.None && argumentList.FirstOptionalArgumentIndex >= 0)
+				{
+					// Resolution succeeded, so the omitted arguments are what is left: they do not
+					// match the defaults of the member found and have to be written out again.
+					argumentList.FirstOptionalArgumentIndex = -1;
+					continue;
+				}
 				switch (errors)
 				{
 					case OverloadResolutionErrors.OutVarTypeMismatch:
@@ -1884,7 +1924,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			IMember? foundMember;
 			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method,
-				argumentList.GetArgumentResolveResults(), argumentList.GetArgumentNames(), out foundMember))
+				argumentList.GetArgumentResolveResults(), argumentList.GetArgumentNames(), out foundMember)
+				|| !OmittedArgumentsAreDefaultsOf(argumentList, foundMember))
 			{
 				if (argumentList.FirstOptionalArgumentIndex >= 0)
 				{
