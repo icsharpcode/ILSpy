@@ -490,7 +490,8 @@ namespace ICSharpCode.Decompiler.Metadata
 					return assembly;
 			}
 
-			if (decompilerRuntime == DecompilerRuntime.NETCoreApp)
+			if (decompilerRuntime == DecompilerRuntime.NETCoreApp
+				&& ShouldUseHostRuntimeFallback(targetFrameworkIdentifier, targetFramework, Environment.OSVersion.Platform))
 			{
 				// Hosts without a .NET Framework installation (e.g. Linux, macOS) have no GAC;
 				// the only system-wide assembly store there is the shared-framework directory
@@ -507,6 +508,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (throwOnError)
 				throw new ResolutionException(name, null, null);
 			return null;
+		}
+
+		internal static bool ShouldUseHostRuntimeFallback(TargetFrameworkIdentifier identifier,
+			string targetFramework, PlatformID platform)
+		{
+			return platform != PlatformID.Win32NT
+				|| (identifier != TargetFrameworkIdentifier.NETStandard
+					&& !targetFramework.StartsWith(".NETFramework,", StringComparison.Ordinal));
 		}
 
 		#region .NET / mono GAC handling

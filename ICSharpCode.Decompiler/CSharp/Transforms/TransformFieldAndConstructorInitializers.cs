@@ -539,6 +539,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				var m = isValueType
 					? ThisCallStructPattern.Match(stmt)
 					: ThisCallClassPattern.Match(stmt);
+				if (!m.Success && !isValueType)
+				{
+					foreach (var candidate in constructorDeclaration.Body.Statements.Skip(1))
+					{
+						var candidateMatch = ThisCallClassPattern.Match(candidate);
+						if (!candidateMatch.Success
+							|| candidateMatch.Get<Expression>("target").Single() is not BaseReferenceExpression)
+						{
+							continue;
+						}
+						var candidateInvocation = candidateMatch.Get<AstNode>("invocation").Single();
+						if (candidateInvocation.GetChildren(Slots.Argument).Any())
+							continue;
+						stmt = candidate;
+						m = candidateMatch;
+						break;
+					}
+				}
 
 				if (!m.Success)
 					return isValueType;
@@ -546,12 +564,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Debug.Assert(stmt != null); // because m.Success
 
 				AstNode invocation = m.Get<AstNode>("invocation").Single();
-				if (invocation.GetSymbol() is not IMethod { IsConstructor: true } ctor)
+				var target = m.Get<Expression>("target").Single();
+				ConstructorInitializerType type;
+				if (invocation.GetSymbol() is IMethod { IsConstructor: true } ctor)
+				{
+					type = ctor.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition
+						? ConstructorInitializerType.This
+						: ConstructorInitializerType.Base;
+				}
+				else if (target is ThisReferenceExpression)
+				{
+					type = ConstructorInitializerType.This;
+				}
+				else if (target is BaseReferenceExpression)
+				{
+					type = ConstructorInitializerType.Base;
+				}
+				else
+				{
 					return false;
-
-				ConstructorInitializerType type = ctor.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition
-					? ConstructorInitializerType.This
-					: ConstructorInitializerType.Base;
+				}
 
 				var ci = new ConstructorInitializer { ConstructorInitializerType = type };
 
@@ -934,7 +966,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var analyzer = new ConstructorInitializerAnalyzer(context, currentTypeDefinition, node as TypeDeclaration);
 
 			if (!analyzer.Analyze(members))
+			{
+				foreach (var constructorDeclaration in members.OfType<ConstructorDeclaration>())
+				{
+					analyzer.MoveConstructorInitializer(constructorDeclaration, (IMethod)constructorDeclaration.GetSymbol()!);
+				}
 				return false;
+			}
 
 			if (analyzer.PrimaryConstructorInitializers is { HasDuplicateAssignments: false })
 			{

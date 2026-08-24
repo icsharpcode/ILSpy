@@ -177,5 +177,17 @@ namespace ICSharpCode.Decompiler.Tests.ProjectDecompiler
 			Assert.That(resolver.FindAssemblyFile(reference), Is.Not.Null);
 			Assert.That(resolver.IsSharedAssembly(reference, out _), Is.False);
 		}
+
+		[TestCase(TargetFrameworkIdentifier.NETStandard, ".NETStandard,Version=v2.0", PlatformID.Win32NT, false)]
+		[TestCase(TargetFrameworkIdentifier.NET, ".NETFramework,Version=v4.7.2", PlatformID.Win32NT, false)]
+		[TestCase(TargetFrameworkIdentifier.NETCoreApp, ".NETCoreApp,Version=v3.1", PlatformID.Win32NT, true)]
+		[TestCase(TargetFrameworkIdentifier.NET, ".NETCoreApp,Version=v10.0", PlatformID.Win32NT, true)]
+		[TestCase(TargetFrameworkIdentifier.NETStandard, ".NETStandard,Version=v2.0", PlatformID.Unix, true)]
+		public void VerifyHostRuntimeFallback(TargetFrameworkIdentifier identifier, string targetFramework,
+			PlatformID platform, bool expected)
+		{
+			Assert.That(UniversalAssemblyResolver.ShouldUseHostRuntimeFallback(identifier, targetFramework, platform),
+				Is.EqualTo(expected));
+		}
 	}
 }

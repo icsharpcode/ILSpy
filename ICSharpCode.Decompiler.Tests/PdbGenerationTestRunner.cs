@@ -23,6 +23,8 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.CSharp;
@@ -56,6 +58,29 @@ namespace ICSharpCode.Decompiler.Tests
 		public void HelloWorld()
 		{
 			TestSequencePoints();
+		}
+
+		[Test]
+		public void GlobalNamespaceDocument()
+		{
+			(string peFileName, _) = CompileTestCase(nameof(GlobalNamespaceDocument));
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+			const string sourceText = "source text";
+			using var generatedPdb = new MemoryStream();
+			new PortablePdbWriter {
+				NoLogo = true,
+				SourceTextProvider = _ => sourceText,
+			}.WritePdb(module, decompiler, new DecompilerSettings(), generatedPdb);
+
+			generatedPdb.Position = 0;
+			var reader = MetadataReaderProvider.FromPortablePdbStream(generatedPdb).GetMetadataReader();
+			var document = reader.GetDocument(reader.Documents.Single());
+			Assert.That(reader.GetString(document.Name), Is.EqualTo("GlobalNamespaceDocument.cs"));
+			Assert.That(reader.GetBlobBytes(document.Hash),
+				Is.EqualTo(SHA256.HashData(Encoding.UTF8.GetBytes(sourceText))));
 		}
 
 		[Test]

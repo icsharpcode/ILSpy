@@ -27,6 +27,7 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpyX;
@@ -216,11 +217,8 @@ namespace ICSharpCode.ILSpy.Commands
 				try
 				{
 					using var stream = new FileStream(pdbFileName, FileMode.Create, FileAccess.Write);
-					var resolver = assembly.GetAssemblyResolver();
-					var decompiler = new CSharpDecompiler(file, resolver, settingsClone) {
-						CancellationToken = ct,
-					};
-					new PortablePdbWriter { EmbedSourceFiles = options.EmbedSourceFilesInPdb }
+					var decompiler = CreateProjectPdbDecompiler(assembly, file, settingsClone, ct);
+					CreateProjectPdbWriter(options, projectDirectory(assembly))
 						.WritePdb(file, decompiler, settingsClone, stream);
 					report.AppendLine("Generated PDB: " + pdbFileName);
 				}
@@ -233,6 +231,30 @@ namespace ICSharpCode.ILSpy.Commands
 					report.AppendLine($"Failed to generate a PDB for '{assembly.ShortName}': {e.Message}");
 				}
 			}
+		}
+
+		internal static CSharpDecompiler CreateProjectPdbDecompiler(LoadedAssembly assembly, PEFile file,
+			DecompilerSettings settings, CancellationToken cancellationToken)
+		{
+			var decompiler = new CSharpDecompiler(file, assembly.GetAssemblyResolver(), settings) {
+				CancellationToken = cancellationToken,
+				DebugInfoProvider = assembly.GetDebugInfoOrNull(),
+			};
+			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
+			return decompiler;
+		}
+
+		internal static PortablePdbWriter CreateProjectPdbWriter(ProjectExportOptions options, string sourceDirectory)
+		{
+			return new PortablePdbWriter {
+				NoLogo = true,
+				EmbedSourceFiles = options.EmbedSourceFilesInPdb,
+				SourceTextProvider = fileName => {
+					string path = Path.Combine(sourceDirectory, fileName);
+					return File.Exists(path) ? File.ReadAllText(path) : null;
+				},
+			};
 		}
 
 		static void ApplyOverrides(DecompilerSettings settings, ProjectExportOptions options)
