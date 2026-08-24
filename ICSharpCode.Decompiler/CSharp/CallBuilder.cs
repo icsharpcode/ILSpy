@@ -1255,7 +1255,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		bool IsOptionalArgument(IParameter parameter, TranslatedExpression arg)
+		internal static bool IsOptionalArgument(IParameter parameter, TranslatedExpression arg)
 		{
 			if (!parameter.IsOptional)
 				return false;

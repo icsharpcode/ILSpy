@@ -498,7 +498,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// what it returns, not whether it found something.
 					bool unambiguous = IsUnambiguousAccess(expectedTargetDetails,
 						LookupTarget, accessor, Arguments.GetArgumentResolveResultsDirect(),
-						Arguments.GetArgumentNames(), out var foundAccessorOwner);
+						Arguments.GetArgumentNames(), out var foundAccessorOwner)
+						&& OmittedArgumentsAreDefaultsOf(Arguments, foundAccessorOwner);
 					FoundMember = foundAccessorOwner;
 					return unambiguous
 						? OverloadResolutionErrors.None
@@ -533,6 +534,37 @@ namespace ICSharpCode.Decompiler.CSharp
 			return OverloadResolutionErrors.None;
 		}
 
+		/// <summary>
+		/// Whether the arguments left out of the call are the default values of the member it
+		/// resolves to. They were compared against the parameters of the method the call
+		/// instruction names, which for a virtual call is the base declaration; an override may
+		/// redeclare a different default, and then leaving the argument out changes the value that
+		/// is passed.
+		/// </summary>
+		static bool OmittedArgumentsAreDefaultsOf(ArgumentList argumentList, IMember? foundMember)
+		{
+			int argumentCount = argumentList.Length;
+			int omittedFrom = argumentList.GetActualArgumentCount();
+			if (omittedFrom >= argumentCount)
+				return true;
+			if (foundMember is not IParameterizedMember foundParameterizedMember)
+				return false;
+			var parameters = foundParameterizedMember.Parameters;
+			// Names may leave out a parameter in the middle, so what was dropped is found through
+			// the map rather than by position. Its first entries are the target's.
+			var map = argumentList.ArgumentToParameterMap;
+			int firstParamIndex = map != null ? map.Count - argumentList.Length : 0;
+			for (int i = omittedFrom; i < argumentCount; i++)
+			{
+				int parameterIndex = map != null ? map[i + firstParamIndex] : i;
+				if (parameterIndex < 0 || parameterIndex >= parameters.Count)
+					return false;
+				if (!CallBuilder.IsOptionalArgument(parameters[parameterIndex], argumentList.Arguments[i]))
+					return false;
+			}
+			return true;
+		}
+
 		OverloadResolutionErrors ProbeCall(IMethod method)
 		{
 			var errors = IsUnambiguousCall(expressionBuilder, expectedTargetDetails, method, LookupTarget,
@@ -542,11 +574,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			FoundMember = foundMember;
 			if (errors != OverloadResolutionErrors.None)
 				return errors;
-			// Resolving to the same method in the other of its normal and expanded form still
-			// means the spelling is wrong, and no single error describes that.
-			return bestCandidateIsExpandedForm != Arguments.IsExpandedForm
-				? OverloadResolutionErrors.AmbiguousMatch
-				: OverloadResolutionErrors.None;
+			// Resolution succeeding does not make the spelling right. It can have reached the
+			// method in the other of its normal and expanded form, or through omitted arguments
+			// that are not the defaults the member found declares; neither has an error of its
+			// own to report.
+			if (bestCandidateIsExpandedForm == Arguments.IsExpandedForm
+				&& OmittedArgumentsAreDefaultsOf(Arguments, foundMember))
+			{
+				return OverloadResolutionErrors.None;
+			}
+			// Where arguments were left out, writing them out again answers both.
+			return Arguments.FirstOptionalArgumentIndex >= 0
+				? OverloadResolutionErrors.MissingArgumentForRequiredParameter
+				: OverloadResolutionErrors.AmbiguousMatch;
 		}
 
 		/// <summary>

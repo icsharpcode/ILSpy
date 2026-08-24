@@ -96,6 +96,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		internal class BaseDefaultValue
+		{
+			public virtual int this[int x, int y = 10] {
+				get {
+					return x + y;
+				}
+				set {
+				}
+			}
+
+			public virtual int Method(int x, int y = 10)
+			{
+				return x + y;
+			}
+		}
+
+		internal class DerivedDefaultValue : BaseDefaultValue
+		{
+			public override int this[int x, int y = 20] {
+				get {
+					return x + y + 1;
+				}
+				set {
+				}
+			}
+
+			public override int Method(int x, int y = 20)
+			{
+				return x + y + 1;
+			}
+		}
+
 		internal class BaseIndexer
 		{
 			public virtual int this[bool flag] {
@@ -407,6 +439,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			d(42);
 		}
 #endif
+
+		private void RedeclaredDefaultValues(DerivedDefaultValue derived)
+		{
+			// The calls go to the base declarations, whose defaults the override redeclares:
+			// leaving the argument out would pass the override's value instead.
+			Console.WriteLine(derived[1, 10]);
+			derived[1, 10] = 5;
+			Console.WriteLine(derived.Method(1, 10));
+		}
 
 		private void Indexers(Indexer indexer, IndexerWithOverload overloaded)
 		{

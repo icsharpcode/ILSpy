@@ -106,6 +106,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public int this[int a, int b, int c = 30] {
+			get {
+				return a;
+			}
+			set {
+			}
+		}
+
+		public void UseOptional(int a, int b, int c = 3)
+		{
+		}
+
+		public void UseTwoOptional(int x, int y = 10, int z = 20)
+		{
+		}
+
 		public void Use(int a, int b, int c)
 		{
 		}
@@ -132,6 +148,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Use(this[y: Get(1), x: Get(2)], 0, 0);
 			this[y: Get(1), x: Get(2)] = 3;
+		}
+
+		public void NamedArgsWithOmittedOptional()
+		{
+			UseOptional(b: Get(2), a: Get(1));
+			UseTwoOptional(y: Get(1), x: Get(2));
+			Use(this[b: Get(1), a: Get(2)], 0, 0);
+			this[b: Get(1), a: Get(2)] = 4;
+		}
+
+		public void NamedArgsWithOmittedMiddleOptional()
+		{
+			UseTwoOptional(z: Get(1), x: Get(2));
 		}
 
 		public void NamedArgsForIndexerNeedingCast()
