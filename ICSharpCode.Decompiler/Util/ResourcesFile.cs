@@ -152,18 +152,16 @@ namespace ICSharpCode.Decompiler.Util
 				throw new BadImageFormatException($"Unsupported resource set version: {version}");
 
 			numResources = reader.ReadInt32();
-			if (numResources < 0)
-			{
-				throw new BadImageFormatException(ResourcesHeaderCorrupted);
-			}
+			// Every resource contributes at least a 4-byte name hash and a 4-byte name position.
+			// Bounding the count by the bytes that remain also keeps numResources * 2 in
+			// GetStartPositions from overflowing.
+			CheckLengthOrThrow(numResources, bytesPerElement: 8);
 
 			// Read type positions into type positions array.
 			// But delay initialize the type table.
 			int numTypes = reader.ReadInt32();
-			if (numTypes < 0)
-			{
-				throw new BadImageFormatException(ResourcesHeaderCorrupted);
-			}
+			// Every type name is a length-prefixed string of at least one byte.
+			CheckLengthOrThrow(numTypes, bytesPerElement: 1);
 			typeTable = new string[numTypes];
 			for (int i = 0; i < numTypes; i++)
 			{
@@ -231,6 +229,22 @@ namespace ICSharpCode.Decompiler.Util
 			reader.Dispose();
 		}
 
+		/// <summary>
+		/// Validates a count or byte length read from the file before it is used to size an
+		/// allocation. Every element occupies at least <paramref name="bytesPerElement"/> bytes
+		/// in the stream, so a value that needs more bytes than remain after the current
+		/// position cannot describe real data; rejecting it up front keeps a crafted header from
+		/// forcing a multi-gigabyte allocation.
+		/// </summary>
+		void CheckLengthOrThrow(int count, int bytesPerElement)
+		{
+			long remaining = reader.BaseStream.Length - reader.BaseStream.Position;
+			if (count < 0 || (long)count * bytesPerElement > remaining)
+			{
+				throw new BadImageFormatException("Resources file corrupted: declared length exceeds the available data.");
+			}
+		}
+
 		public int ResourceCount => numResources;
 
 		public string GetResourceName(int index)
@@ -253,10 +267,7 @@ namespace ICSharpCode.Decompiler.Util
 				reader.Seek(pos, SeekOrigin.Begin);
 				// Can't use reader.ReadString, since it's using UTF-8!
 				int byteLen = reader.Read7BitEncodedInt();
-				if (byteLen < 0)
-				{
-					throw new BadImageFormatException("Resource name has negative length");
-				}
+				CheckLengthOrThrow(byteLen, bytesPerElement: 1);
 				bytes = new byte[byteLen];
 				// We must read byteLen bytes, or we have a corrupted file.
 				// Use a blocking read in case the stream doesn't give us back
@@ -448,20 +459,14 @@ namespace ICSharpCode.Decompiler.Util
 				case ResourceTypeCode.ByteArray:
 				{
 					int len = reader.ReadInt32();
-					if (len < 0)
-					{
-						throw new BadImageFormatException("Resource with negative length");
-					}
+					CheckLengthOrThrow(len, bytesPerElement: 1);
 					return reader.ReadBytes(len);
 				}
 
 				case ResourceTypeCode.Stream:
 				{
 					int len = reader.ReadInt32();
-					if (len < 0)
-					{
-						throw new BadImageFormatException("Resource with negative length");
-					}
+					CheckLengthOrThrow(len, bytesPerElement: 1);
 					byte[] bytes = reader.ReadBytes(len);
 					return new MemoryStream(bytes, writable: false);
 				}
@@ -548,8 +553,12 @@ namespace ICSharpCode.Decompiler.Util
 				if (usesSerializationFormat)
 				{
 					int kind = reader.Read7BitEncodedInt();
-					Debug.Assert(Enum.IsDefined(typeof(SerializationFormat), kind));
+					if (!Enum.IsDefined(typeof(SerializationFormat), kind))
+					{
+						throw new BadImageFormatException("Resources file corrupted: unknown serialization format.");
+					}
 					len = reader.Read7BitEncodedInt();
+					CheckLengthOrThrow(len, bytesPerElement: 1);
 				}
 				return reader.ReadBytes(len);
 			}
