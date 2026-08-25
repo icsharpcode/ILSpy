@@ -155,13 +155,13 @@ namespace ICSharpCode.Decompiler.Util
 			// Every resource contributes at least a 4-byte name hash and a 4-byte name position.
 			// Bounding the count by the bytes that remain also keeps numResources * 2 in
 			// GetStartPositions from overflowing.
-			CheckLength(numResources, bytesPerElement: 8);
+			CheckLengthOrThrow(numResources, bytesPerElement: 8);
 
 			// Read type positions into type positions array.
 			// But delay initialize the type table.
 			int numTypes = reader.ReadInt32();
 			// Every type name is a length-prefixed string of at least one byte.
-			CheckLength(numTypes, bytesPerElement: 1);
+			CheckLengthOrThrow(numTypes, bytesPerElement: 1);
 			typeTable = new string[numTypes];
 			for (int i = 0; i < numTypes; i++)
 			{
@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.Util
 		/// position cannot describe real data; rejecting it up front keeps a crafted header from
 		/// forcing a multi-gigabyte allocation.
 		/// </summary>
-		void CheckLength(int count, int bytesPerElement)
+		void CheckLengthOrThrow(int count, int bytesPerElement)
 		{
 			long remaining = reader.BaseStream.Length - reader.BaseStream.Position;
 			if (count < 0 || (long)count * bytesPerElement > remaining)
@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.Util
 				reader.Seek(pos, SeekOrigin.Begin);
 				// Can't use reader.ReadString, since it's using UTF-8!
 				int byteLen = reader.Read7BitEncodedInt();
-				CheckLength(byteLen, bytesPerElement: 1);
+				CheckLengthOrThrow(byteLen, bytesPerElement: 1);
 				bytes = new byte[byteLen];
 				// We must read byteLen bytes, or we have a corrupted file.
 				// Use a blocking read in case the stream doesn't give us back
@@ -459,14 +459,14 @@ namespace ICSharpCode.Decompiler.Util
 				case ResourceTypeCode.ByteArray:
 				{
 					int len = reader.ReadInt32();
-					CheckLength(len, bytesPerElement: 1);
+					CheckLengthOrThrow(len, bytesPerElement: 1);
 					return reader.ReadBytes(len);
 				}
 
 				case ResourceTypeCode.Stream:
 				{
 					int len = reader.ReadInt32();
-					CheckLength(len, bytesPerElement: 1);
+					CheckLengthOrThrow(len, bytesPerElement: 1);
 					byte[] bytes = reader.ReadBytes(len);
 					return new MemoryStream(bytes, writable: false);
 				}
@@ -558,7 +558,7 @@ namespace ICSharpCode.Decompiler.Util
 						throw new BadImageFormatException("Resources file corrupted: unknown serialization format.");
 					}
 					len = reader.Read7BitEncodedInt();
-					CheckLength(len, bytesPerElement: 1);
+					CheckLengthOrThrow(len, bytesPerElement: 1);
 				}
 				return reader.ReadBytes(len);
 			}
