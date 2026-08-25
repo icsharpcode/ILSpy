@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			public IList<ResolveResult> GetArgumentResolveResultsDirect(int skipCount = 0)
+			public ResolveResult[] GetArgumentResolveResultsDirect(int skipCount = 0)
 			{
 				return Arguments
 					.Skip(skipCount)
@@ -1036,14 +1036,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			// >= 0 - the index of the first argument that can be removed, because it is optional
 			// and is the default value of the parameter. 
 			int firstOptionalArgumentIndex = expressionBuilder.settings.OptionalArguments ? -2 : -1;
-			// Only an accessor written as an access takes its assigned value out of the argument
-			// list; one written as a call passes it like any other argument. The scan below and
-			// GetActualArgumentCount() have to agree on that, so it is decided once, here.
+			// Only an access takes the assigned value out of the argument list; an accessor
+			// written as a call passes it like any other argument.
 			bool writtenAsMemberAccess = IsWrittenAsMemberAccess(method);
+			if (writtenAsMemberAccess && TakesAssignedValueLast(method) && argumentToParameterMap != null
+				&& argumentToParameterMap[callArguments.Count - 1] != method.Parameters.Count - 1)
+			{
+				// An access writes the value from the last argument; in any other order there is
+				// no access syntax for it.
+				writtenAsMemberAccess = false;
+			}
 			bool isSetter = writtenAsMemberAccess && TakesAssignedValueLast(method);
-			// A named argument of an indexer access names a parameter of the indexer, which the type
-			// system takes from the getter. The accessor being called may name the same parameters
-			// differently - C# cannot declare that, but other languages can.
+			// A name in an element access names a parameter of the indexer, which the type system
+			// takes from the getter; the accessor being called may name them differently.
 			IReadOnlyList<IParameter> namedParameters = method.AccessorOwner is IProperty { IsIndexer: true } indexer
 				? indexer.Parameters
 				: method.Parameters;
@@ -1238,11 +1243,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
-		/// Whether the arguments left out of the call are the default values of the member it
-		/// resolves to. They were compared against the parameters of the method the call
-		/// instruction names, which for a virtual call is the base declaration; an override may
-		/// redeclare a different default, and then leaving the argument out changes the value that
-		/// is passed.
+		/// Whether the omitted arguments are the defaults of the member the shortened call resolves
+		/// to. They were compared against the method the call instruction names, which for a virtual
+		/// call is the base declaration, and an override may redeclare a different default.
 		/// </summary>
 		bool OmittedArgumentsAreDefaultsOf(ArgumentList argumentList, IMember? foundMember)
 		{
@@ -1300,12 +1303,45 @@ namespace ICSharpCode.Decompiler.CSharp
 		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
 			ref TranslatedExpression target, ref ArgumentList argumentList, CallTransformation allowedTransforms, out IParameterizedMember? foundMethod)
 		{
+			var transform = GetRequiredTransformations(expectedTargetDetails, method, ref target, ref argumentList,
+				allowedTransforms, writtenAsMemberAccess: false, out var foundMember);
+			foundMethod = (IParameterizedMember?)foundMember;
+			return transform;
+		}
+
+		/// <summary>
+		/// Finds the transformations an expression needs to bind back to the member the IL names,
+		/// cheapest first. With <paramref name="writtenAsMemberAccess"/> the expression is a
+		/// property, indexer or event access, which resolves against the accessor's owner.
+		/// </summary>
+		private CallTransformation GetRequiredTransformations(ExpectedTargetDetails expectedTargetDetails, IMethod method,
+			ref TranslatedExpression target, ref ArgumentList argumentList, CallTransformation allowedTransforms,
+			bool writtenAsMemberAccess, out IMember? foundMember)
+		{
 			CallTransformation transform = CallTransformation.None;
+			IMember boundMember = writtenAsMemberAccess ? method.AccessorOwner! : method;
 
 			// initialize requireTarget flag
 			bool requireTarget;
 			ResolveResult? targetResolveResult;
-			if ((allowedTransforms & CallTransformation.RequireTarget) != 0)
+			if (writtenAsMemberAccess)
+			{
+				if (settings.AlwaysQualifyMemberReferences || boundMember.SymbolKind == SymbolKind.Indexer
+					|| expressionBuilder.HidesVariableWithName(boundMember.Name))
+				{
+					requireTarget = true;
+				}
+				else if (method.IsStatic)
+				{
+					requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition);
+				}
+				else
+				{
+					requireTarget = target.Expression is not ThisReferenceExpression;
+				}
+				targetResolveResult = requireTarget ? target.ResolveResult : null;
+			}
+			else if ((allowedTransforms & CallTransformation.RequireTarget) != 0)
 			{
 				if (settings.AlwaysQualifyMemberReferences || expressionBuilder.HidesVariableWithName(method.Name))
 				{
@@ -1379,20 +1415,35 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			bool targetCasted = false;
-			bool argumentsCasted = false;
+			bool argumentsCasted = writtenAsMemberAccess && argumentList.GetActualArgumentCount() == 0;
 			bool originalRequireTarget = requireTarget;
-			bool skipTargetCast = method.Accessibility <= Accessibility.Protected && expressionBuilder.IsBaseTypeOfCurrentType(method.DeclaringTypeDefinition);
+			bool skipTargetCast = !writtenAsMemberAccess
+				&& method.Accessibility <= Accessibility.Protected && expressionBuilder.IsBaseTypeOfCurrentType(method.DeclaringTypeDefinition);
 			OverloadResolutionErrors errors;
-			while ((errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
-				argumentList.GetArgumentResolveResults().ToArray(), argumentList.GetArgumentNames(), out foundMethod,
-				out var bestCandidateIsExpandedForm)) != OverloadResolutionErrors.None
-				|| bestCandidateIsExpandedForm != argumentList.IsExpandedForm
-				|| !OmittedArgumentsAreDefaultsOf(argumentList, foundMethod))
+			while (true)
 			{
+				bool expandedFormMismatch = false;
+				if (writtenAsMemberAccess)
+				{
+					errors = IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method,
+						argumentList.GetArgumentResolveResults(), argumentList.GetArgumentNames(), out foundMember);
+				}
+				else
+				{
+					errors = IsUnambiguousCall(expectedTargetDetails, method, targetResolveResult, typeArguments,
+						argumentList.GetArgumentResolveResults(), argumentList.GetArgumentNames(),
+						out var foundMethod, out bool bestCandidateIsExpandedForm);
+					foundMember = foundMethod;
+					expandedFormMismatch = bestCandidateIsExpandedForm != argumentList.IsExpandedForm;
+				}
+				if (errors == OverloadResolutionErrors.None && !expandedFormMismatch
+					&& OmittedArgumentsAreDefaultsOf(argumentList, foundMember))
+				{
+					break;
+				}
 				if (errors == OverloadResolutionErrors.None && argumentList.FirstOptionalArgumentIndex >= 0)
 				{
-					// Resolution succeeded, so the omitted arguments are what is left: they do not
-					// match the defaults of the member found and have to be written out again.
+					// The omitted arguments are not the defaults of the member found.
 					argumentList.FirstOptionalArgumentIndex = -1;
 					continue;
 				}
@@ -1443,7 +1494,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 							argumentsCasted = true;
 							argumentList.UseImplicitlyTypedOut = false;
-							CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
+							CastArguments(argumentList.Arguments, argumentList.GetActualArgumentCount(),
+								argumentList.ExpectedParameters);
 						}
 						else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !requireTarget)
 						{
@@ -1462,7 +1514,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							else
 							{
 								targetCasted = true;
-								target = target.ConvertTo(method.DeclaringType, expressionBuilder);
+								target = target.ConvertTo(boundMember.DeclaringType, expressionBuilder);
 								targetResolveResult = target.ResolveResult;
 							}
 						}
@@ -1483,7 +1535,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						continue;
 				}
 				// We've given up.
-				foundMethod = method;
+				foundMember = boundMember;
 				break;
 			}
 			if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && requireTarget)
@@ -1600,9 +1652,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return newObj;
 		}
 
-		private void CastArguments(IList<TranslatedExpression> arguments, IList<IParameter> expectedParameters)
+		/// <summary>
+		/// Casts the first <paramref name="count"/> arguments in place - the retry loop reads them
+		/// back from the array on its next attempt. A setter's assigned value is past the count.
+		/// </summary>
+		private void CastArguments(TranslatedExpression[] arguments, int count, IParameter[] expectedParameters)
 		{
-			for (int i = 0; i < arguments.Count; i++)
+			for (int i = 0; i < count; i++)
 			{
 				if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType())
 				{
@@ -1830,8 +1886,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			return OverloadResolutionErrors.None;
 		}
 
-		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method,
-			IList<ResolveResult> arguments, string[]? argumentNames, [NotNullWhen(true)] out IMember? foundMember)
+		/// <summary>
+		/// Resolves an access the way a call is resolved, so that the ladder can tell one that binds
+		/// to nothing from one that is merely missing an argument.
+		/// </summary>
+		OverloadResolutionErrors IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method,
+			ResolveResult[] arguments, string[]? argumentNames, out IMember? foundMember)
 		{
 			Log.WriteLine("IsUnambiguousAccess: Performing overload resolution for " + method);
 			Log.WriteCollection("  Arguments: ", arguments);
@@ -1843,7 +1903,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					EmptyList<IType>.Instance,
 					isInvocationTarget: false) as MemberResolveResult;
 				if (result == null || result.IsError)
-					return false;
+					return OverloadResolutionErrors.AmbiguousMatch;
 				foundMember = result.Member;
 			}
 			else
@@ -1852,15 +1912,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.AccessorOwner!.SymbolKind == SymbolKind.Indexer)
 				{
 					var or = new OverloadResolution(resolver.Compilation,
-						arguments.ToArray(),
+						arguments,
 						argumentNames: argumentNames,
 						typeArguments: Empty<IType>.Array,
 						conversions: expressionBuilder.resolver.conversions);
 					or.AddMethodLists(lookup.LookupIndexers(target));
 					if (or.BestCandidateErrors != OverloadResolutionErrors.None)
-						return false;
+						return or.BestCandidateErrors;
 					if (or.IsAmbiguous)
-						return false;
+						return OverloadResolutionErrors.AmbiguousMatch;
 					foundMember = or.GetBestCandidateWithSubstitutedTypeArguments();
 				}
 				else
@@ -1870,11 +1930,16 @@ namespace ICSharpCode.Decompiler.CSharp
 						EmptyList<IType>.Instance,
 						isInvocation: false) as MemberResolveResult;
 					if (result == null || result.IsError)
-						return false;
+						return OverloadResolutionErrors.AmbiguousMatch;
 					foundMember = result.Member;
 				}
 			}
-			return foundMember != null && IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, foundMember);
+			if (foundMember == null || !IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner!, foundMember))
+			{
+				foundMember = null;
+				return OverloadResolutionErrors.AmbiguousMatch;
+			}
+			return OverloadResolutionErrors.None;
 		}
 
 		/// <summary>
@@ -1904,17 +1969,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		ExpressionWithResolveResult HandleAccessorCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
 			TranslatedExpression target, ArgumentList argumentList)
 		{
-			bool requireTarget;
-			if (settings.AlwaysQualifyMemberReferences || method.AccessorOwner!.SymbolKind == SymbolKind.Indexer || expressionBuilder.HidesVariableWithName(method.AccessorOwner.Name))
-				requireTarget = true;
-			else if (method.IsStatic)
-				requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition);
-			else
-				requireTarget = !(target.Expression is ThisReferenceExpression);
-			bool targetCasted = false;
 			bool isSetter = argumentList.IsSetter;
-			bool argumentsCasted = (isSetter && method.Parameters.Count == 1) || (!isSetter && method.Parameters.Count == 0);
-			var targetResolveResult = requireTarget ? target.ResolveResult : null;
 
 			// Dropping every argument would turn an indexer access into a property access.
 			if (argumentList.FirstOptionalArgumentIndex == 0 && method.AccessorOwner!.SymbolKind == SymbolKind.Indexer)
@@ -1922,45 +1977,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				argumentList.FirstOptionalArgumentIndex = 1;
 			}
 
-			IMember? foundMember;
-			while (!IsUnambiguousAccess(expectedTargetDetails, targetResolveResult, method,
-				argumentList.GetArgumentResolveResults(), argumentList.GetArgumentNames(), out foundMember)
-				|| !OmittedArgumentsAreDefaultsOf(argumentList, foundMember))
-			{
-				if (argumentList.FirstOptionalArgumentIndex >= 0)
-				{
-					// Unlike the casts below, writing the omitted arguments out again cannot change
-					// what the access means, so try that first.
-					argumentList.FirstOptionalArgumentIndex = -1;
-				}
-				else if (!argumentsCasted)
-				{
-					argumentsCasted = true;
-					CastArguments(
-						new ArraySegment<TranslatedExpression>(argumentList.Arguments, 0, argumentList.GetActualArgumentCount()),
-						argumentList.ExpectedParameters);
-				}
-				else if (!requireTarget)
-				{
-					requireTarget = true;
-					targetResolveResult = target.ResolveResult;
-				}
-				else if (!targetCasted)
-				{
-					targetCasted = true;
-					target = target.ConvertTo(method.AccessorOwner!.DeclaringType, expressionBuilder);
-					targetResolveResult = target.ResolveResult;
-				}
-				else
-				{
-					foundMember = method.AccessorOwner!;
-					break;
-				}
-			}
+			var transform = GetRequiredTransformations(expectedTargetDetails, method, ref target, ref argumentList,
+				CallTransformation.RequireTarget, writtenAsMemberAccess: true, out var foundMember);
+			Debug.Assert(foundMember != null);
+			bool requireTarget = (transform & CallTransformation.RequireTarget) != 0;
 
 			var arguments = argumentList.GetArgumentExpressions().ToList();
-			// The assigned value is not one of the arguments the ladder casts, so nothing it could
-			// try makes an access resolve that fails over the value's type.
+			// Not one of the arguments the ladder casts.
 			TranslatedExpression value = isSetter ? argumentList.Arguments[argumentList.Length - 1] : default;
 			var rr = new MemberResolveResult(target.ResolveResult, foundMember);
 
@@ -2082,24 +2105,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				while (IsUnambiguousCall(expectedTargetDetails, method, null, Empty<IType>.Array,
-					argumentList.GetArgumentResolveResults().ToArray(),
-					argumentList.GetArgumentNames(), out _,
-					out var bestCandidateIsExpandedForm) != OverloadResolutionErrors.None || bestCandidateIsExpandedForm != argumentList.IsExpandedForm)
-				{
-					if (argumentList.AddNamesToPrimitiveValues)
-					{
-						argumentList.AddNamesToPrimitiveValues = false;
-						continue;
-					}
-					if (argumentList.FirstOptionalArgumentIndex >= 0)
-					{
-						argumentList.FirstOptionalArgumentIndex = -1;
-						continue;
-					}
-					CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
-					break; // make sure that we don't not end up in an infinite loop
-				}
+				// A constructor names its type, so neither qualification nor type arguments apply.
+				TranslatedExpression noTarget = default;
+				GetRequiredTransformations(expectedTargetDetails, method, ref noTarget, ref argumentList,
+					CallTransformation.None, writtenAsMemberAccess: false, out _);
 				IType? returnTypeOverride = null;
 				if (typeSystem.MainModule.TypeSystemOptions.HasFlag(TypeSystemOptions.NativeIntegersWithoutAttribute))
 				{
