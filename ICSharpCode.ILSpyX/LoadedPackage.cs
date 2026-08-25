@@ -239,10 +239,27 @@ namespace ICSharpCode.ILSpyX
 				}
 				else
 				{
+					// entry.Size comes straight from the manifest and is not trusted: it must never
+					// size an allocation, and decompression must not run past it. A size that does
+					// not fit a single in-memory buffer cannot be a real entry either.
+					if (entry.Size < 0 || entry.Size > int.MaxValue)
+					{
+						throw new InvalidDataException($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not valid.");
+					}
 					Stream compressedStream = new UnmanagedMemoryStream(view.SafeMemoryMappedViewHandle, entry.Offset, entry.CompressedSize);
 					using var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress);
-					Stream decompressedStream = new MemoryStream((int)entry.Size);
-					deflateStream.CopyTo(decompressedStream);
+					// Grows only with the bytes that actually come out of the deflate stream. Reading
+					// one byte past the declared size is enough to prove the entry corrupt, so a
+					// decompression bomb stops there instead of being inflated in full.
+					Stream decompressedStream = new MemoryStream();
+					byte[] buffer = new byte[81920];
+					long remaining = entry.Size + 1;
+					int read;
+					while (remaining > 0 && (read = deflateStream.Read(buffer, 0, (int)Math.Min(buffer.Length, remaining))) > 0)
+					{
+						decompressedStream.Write(buffer, 0, read);
+						remaining -= read;
+					}
 					if (decompressedStream.Length != entry.Size)
 					{
 						throw new InvalidDataException($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
