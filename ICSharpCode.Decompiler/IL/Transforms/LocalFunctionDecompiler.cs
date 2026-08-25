@@ -781,34 +781,44 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var method = metadata.GetMethodDefinition(methodHandle);
 			var declaringType = method.GetDeclaringType();
 
-			if ((method.Attributes & MethodAttributes.Assembly) == 0 || !(method.IsCompilerGenerated(metadata) || declaringType.IsCompilerGenerated(metadata)))
+			if ((method.Attributes & MethodAttributes.Assembly) == 0)
 				return false;
 
-			if (!ParseLocalFunctionName(metadata.GetString(method.Name), out _, out _))
-				return false;
+			if ((method.IsCompilerGenerated(metadata) || declaringType.IsCompilerGenerated(metadata))
+				&& ParseLocalFunctionName(metadata.GetString(method.Name), out _, out _))
+			{
+				return true;
+			}
 
-			return true;
+			// Obfuscators strip the CompilerGeneratedAttribute and rewrite the
+			// "<caller>g__name|x_y" name, but they cannot remove the by-ref display-struct
+			// parameter: a compiler-generated struct closure is only ever passed by reference
+			// to the local functions that capture it.
+			return HasDisplayStructParameter(module, methodHandle);
+		}
+
+		/// <summary>
+		/// True if any parameter is a by-ref compiler-generated closure struct of this module.
+		/// </summary>
+		static bool HasDisplayStructParameter(MetadataFile module, MethodDefinitionHandle methodHandle)
+		{
+			var metadata = module.Metadata;
+			var method = metadata.GetMethodDefinition(methodHandle);
+			FindRefStructParameters visitor = new FindRefStructParameters();
+			method.DecodeSignature(visitor, default);
+			foreach (var h in visitor.RefStructTypes)
+			{
+				var td = metadata.GetTypeDefinition(h);
+				if (td.IsCompilerGenerated(metadata) && td.IsValueType(metadata) && td.HasGeneratedName(metadata))
+					return true;
+			}
+			return false;
 		}
 
 		public static bool LocalFunctionNeedsAccessibilityChange(MetadataFile module, MethodDefinitionHandle methodHandle)
 		{
-			if (!IsLocalFunctionMethod(module, methodHandle))
-				return false;
-
-			var metadata = module.Metadata;
-			var method = metadata.GetMethodDefinition(methodHandle);
-
-			FindRefStructParameters visitor = new FindRefStructParameters();
-			method.DecodeSignature(visitor, default);
-
-			foreach (var h in visitor.RefStructTypes)
-			{
-				var td = metadata.GetTypeDefinition(h);
-				if (td.IsCompilerGenerated(metadata) && td.IsValueType(metadata))
-					return true;
-			}
-
-			return false;
+			return IsLocalFunctionMethod(module, methodHandle)
+				&& HasDisplayStructParameter(module, methodHandle);
 		}
 
 		public static bool IsLocalFunctionDisplayClass(MetadataFile module, TypeDefinitionHandle typeHandle, ILTransformContext context = null)
