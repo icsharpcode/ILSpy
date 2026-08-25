@@ -77,10 +77,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						&& !ParameterNames.Any(string.IsNullOrEmpty))
 				{
 					Debug.Assert(skipCount == 0);
-					if (argumentNames == null)
-					{
-						argumentNames = new string[Arguments.Length];
-					}
+					// On a copy: giving these names up again must leave the ones that order the
+					// arguments untouched.
+					argumentNames = argumentNames == null
+						? new string[Arguments.Length]
+						: (string[])argumentNames.Clone();
 
 					for (int i = 0; i < Arguments.Length; i++)
 					{
