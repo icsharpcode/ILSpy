@@ -26,13 +26,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture]
 	public class SingleFileBundleTests
 	{
-		// The 32-byte bundle signature (SHA-256 of ".net core bundle"), as in SingleFileBundle.IsBundle.
-		static readonly byte[] Signature = new byte[] {
-			0x8b, 0x12, 0x02, 0xb9, 0x6a, 0x61, 0x20, 0x38,
-			0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
-			0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
-			0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae
-		};
+		static readonly byte[] Signature = SingleFileBundle.BundleSignature.ToArray();
 
 		[Test]
 		public unsafe void IsBundle_SignatureAtStart_DoesNotReadBeforeBuffer()
