@@ -26,13 +26,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture]
 	public class SingleFileBundleTests
 	{
-		// The 32-byte bundle signature (SHA-256 of ".net core bundle"), as in SingleFileBundle.IsBundle.
-		static readonly byte[] Signature = new byte[] {
-			0x8b, 0x12, 0x02, 0xb9, 0x6a, 0x61, 0x20, 0x38,
-			0x72, 0x7b, 0x93, 0x02, 0x14, 0xd7, 0xa0, 0x32,
-			0x13, 0xf5, 0xb9, 0xe6, 0xef, 0xae, 0x33, 0x18,
-			0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae
-		};
+		static readonly byte[] Signature = SingleFileBundle.BundleSignature.ToArray();
 
 		[Test]
 		public unsafe void IsBundle_SignatureAtStart_DoesNotReadBeforeBuffer()
@@ -74,6 +68,27 @@ namespace ICSharpCode.Decompiler.Tests
 				bool result = SingleFileBundle.IsBundle(p, buffer.Length, out long headerOffset);
 
 				Assert.That(result, Is.True, "a well-formed bundle signature must still be detected");
+				Assert.That(headerOffset, Is.EqualTo(expectedOffset));
+			}
+		}
+
+		[Test]
+		public unsafe void IsBundle_SignatureAtEndOfBuffer_DetectsBundle()
+		{
+			// The signature may occupy the final bytes of the region with nothing after it. A
+			// memory-mapped view reports the exact file length on Unix (Windows rounds it up to
+			// a page, leaving trailing zero bytes), so the scan must include the last position
+			// at which a full signature still fits.
+			const long expectedOffset = 8;
+			byte[] buffer = new byte[8 + 8 + Signature.Length]; // pad + headerOffset + signature, nothing trailing
+			BitConverter.GetBytes(expectedOffset).CopyTo(buffer, 8);
+			Signature.CopyTo(buffer, 16);
+
+			fixed (byte* p = buffer)
+			{
+				bool result = SingleFileBundle.IsBundle(p, buffer.Length, out long headerOffset);
+
+				Assert.That(result, Is.True, "a signature ending exactly at the end of the region must be detected");
 				Assert.That(headerOffset, Is.EqualTo(expectedOffset));
 			}
 		}
