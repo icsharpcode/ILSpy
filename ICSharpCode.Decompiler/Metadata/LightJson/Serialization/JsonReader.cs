@@ -17,6 +17,15 @@ namespace LightJson.Serialization
 	{
 		private TextScanner scanner;
 
+		/// <summary>
+		/// The deepest array/object nesting the parser will descend into before failing.
+		/// Guards against uncontrolled recursion (CWE-674): without it, deeply nested input
+		/// such as a crafted .deps.json overflows the stack with an uncatchable
+		/// StackOverflowException. 64 matches the ecosystem default (System.Text.Json) and is
+		/// far beyond any real dependency manifest.
+		/// </summary>
+		private const int MaxNestingDepth = 64;
+
 		private JsonReader(TextReader reader)
 		{
 			this.scanner = new TextScanner(reader);
@@ -60,8 +69,15 @@ namespace LightJson.Serialization
 			return this.ReadString();
 		}
 
-		private JsonValue ReadJsonValue()
+		private JsonValue ReadJsonValue(int depth)
 		{
+			if (depth > MaxNestingDepth)
+			{
+				throw new JsonParseException(
+					ErrorType.MaximumNestingDepthExceeded,
+					this.scanner.Position);
+			}
+
 			this.scanner.SkipWhitespace();
 
 			var next = this.scanner.Peek();
@@ -74,10 +90,10 @@ namespace LightJson.Serialization
 			switch (next)
 			{
 				case '{':
-					return this.ReadObject();
+					return this.ReadObject(depth);
 
 				case '[':
-					return this.ReadArray();
+					return this.ReadArray(depth);
 
 				case '"':
 					return this.ReadString();
@@ -320,12 +336,12 @@ namespace LightJson.Serialization
 			return (char)value;
 		}
 
-		private JsonObject ReadObject()
+		private JsonObject ReadObject(int depth)
 		{
-			return this.ReadObject(new JsonObject());
+			return this.ReadObject(new JsonObject(), depth);
 		}
 
-		private JsonObject ReadObject(JsonObject jsonObject)
+		private JsonObject ReadObject(JsonObject jsonObject, int depth)
 		{
 			this.scanner.Assert('{');
 
@@ -357,7 +373,7 @@ namespace LightJson.Serialization
 
 					this.scanner.SkipWhitespace();
 
-					var value = this.ReadJsonValue();
+					var value = this.ReadJsonValue(depth + 1);
 
 					jsonObject.Add(key, value);
 
@@ -395,12 +411,12 @@ namespace LightJson.Serialization
 			return jsonObject;
 		}
 
-		private JsonArray ReadArray()
+		private JsonArray ReadArray(int depth)
 		{
-			return this.ReadArray(new JsonArray());
+			return this.ReadArray(new JsonArray(), depth);
 		}
 
-		private JsonArray ReadArray(JsonArray jsonArray)
+		private JsonArray ReadArray(JsonArray jsonArray, int depth)
 		{
 			this.scanner.Assert('[');
 
@@ -416,7 +432,7 @@ namespace LightJson.Serialization
 				{
 					this.scanner.SkipWhitespace();
 
-					var value = this.ReadJsonValue();
+					var value = this.ReadJsonValue(depth + 1);
 
 					jsonArray.Add(value);
 
@@ -457,7 +473,7 @@ namespace LightJson.Serialization
 		private JsonValue Parse()
 		{
 			this.scanner.SkipWhitespace();
-			return this.ReadJsonValue();
+			return this.ReadJsonValue(0);
 		}
 	}
 }

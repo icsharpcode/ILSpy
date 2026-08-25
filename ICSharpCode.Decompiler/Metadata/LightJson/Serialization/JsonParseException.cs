@@ -68,6 +68,11 @@ namespace LightJson.Serialization
 			/// Indicates that the parser encountered and invalid or unexpected character.
 			/// </summary>
 			InvalidOrUnexpectedCharacter,
+
+			/// <summary>
+			/// Indicates that the input nested arrays/objects deeper than the parser allows.
+			/// </summary>
+			MaximumNestingDepthExceeded,
 		}
 
 		/// <summary>
@@ -94,6 +99,9 @@ namespace LightJson.Serialization
 
 				case ErrorType.DuplicateObjectKeys:
 					return "The parser encountered a JsonObject with duplicate keys.";
+
+				case ErrorType.MaximumNestingDepthExceeded:
+					return "The parser exceeded the maximum allowed nesting depth.";
 
 				default:
 					return "An error occurred while parsing the JSON message.";
