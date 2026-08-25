@@ -52,6 +52,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task ConditionalChain()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task AnonymousMethodEdgeCases()
 		{
 			await Run();
