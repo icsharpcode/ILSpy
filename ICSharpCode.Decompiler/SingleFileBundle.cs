@@ -45,8 +45,11 @@ namespace ICSharpCode.Decompiler
 				0xee, 0x3b, 0x2d, 0xce, 0x24, 0xb3, 0x6a, 0xae
 			};
 
+			// 'end' is the last position at which a full signature still fits, so it is a valid
+			// candidate itself: a memory-mapped view reports the exact file length on Unix (Windows
+			// rounds it up to a page), and the signature may occupy the final bytes of the file.
 			byte* end = data + (size - bundleSignature.Length);
-			for (byte* ptr = data; ptr < end; ptr++)
+			for (byte* ptr = data; ptr <= end; ptr++)
 			{
 				if (*ptr == 0x8b && bundleSignature.SequenceEqual(new ReadOnlySpan<byte>(ptr, bundleSignature.Length)))
 				{

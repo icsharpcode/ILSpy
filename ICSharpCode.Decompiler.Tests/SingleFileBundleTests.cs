@@ -79,6 +79,27 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public unsafe void IsBundle_SignatureAtEndOfBuffer_DetectsBundle()
+		{
+			// The signature may occupy the final bytes of the region with nothing after it. A
+			// memory-mapped view reports the exact file length on Unix (Windows rounds it up to
+			// a page, leaving trailing zero bytes), so the scan must include the last position
+			// at which a full signature still fits.
+			const long expectedOffset = 8;
+			byte[] buffer = new byte[8 + 8 + Signature.Length]; // pad + headerOffset + signature, nothing trailing
+			BitConverter.GetBytes(expectedOffset).CopyTo(buffer, 8);
+			Signature.CopyTo(buffer, 16);
+
+			fixed (byte* p = buffer)
+			{
+				bool result = SingleFileBundle.IsBundle(p, buffer.Length, out long headerOffset);
+
+				Assert.That(result, Is.True, "a signature ending exactly at the end of the region must be detected");
+				Assert.That(headerOffset, Is.EqualTo(expectedOffset));
+			}
+		}
+
+		[Test]
 		public void ReadManifest_HugeFileCount_Throws()
 		{
 			// A crafted manifest declaring a huge FileCount must be rejected before it is used to
