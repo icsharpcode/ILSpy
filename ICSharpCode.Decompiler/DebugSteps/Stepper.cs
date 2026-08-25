@@ -183,6 +183,13 @@ namespace ICSharpCode.Decompiler.DebugSteps
 		readonly IList<Node> steps;
 		int step = 0;
 
+		/// <summary>
+		/// Index the next recorded step will be given. It equals <see cref="StepLimit"/> exactly at the
+		/// point the limit is about to halt the pipeline, so a caller unwinding for a different reason
+		/// can tell whether it is standing on the step a replay was aiming for.
+		/// </summary>
+		public int CurrentStep => step;
+
 		public Stepper()
 		{
 			steps = new List<Node>();
@@ -255,6 +262,29 @@ namespace ICSharpCode.Decompiler.DebugSteps
 				return null;
 			}
 		}
+
+		/// <summary>
+		/// Closes every group that is still open, e.g. after an exception unwound out of the transform
+		/// that started them. Without this, everything recorded afterwards is filed as a child of the
+		/// group that failed, and that group's <see cref="Node.EndStep"/> still points at its own start,
+		/// so replaying "the state after this step" lands on the wrong step.
+		/// The groups are kept even when empty: a group that recorded nothing before it was abandoned is
+		/// precisely the one worth seeing, and <see cref="EndGroup"/>'s removal path expects the group to
+		/// still be the last entry of its parent, which an unwind cannot guarantee.
+		/// Closing stops at <paramref name="targetDepth"/>: a group that was already open before the
+		/// unwinding code ran belongs to whoever opened it, not to the unwind.
+		/// </summary>
+		public void EndOpenGroups(int targetDepth = 0)
+		{
+			while (groups.Count > targetDepth)
+				EndGroup(keepIfEmpty: true);
+		}
+
+		/// <summary>
+		/// How many groups are currently open. Take it before entering code that may unwind, and hand
+		/// it back to <see cref="EndOpenGroups"/> so only the groups that code opened are closed.
+		/// </summary>
+		public int GroupDepth => groups.Count;
 
 		public void EndGroup(bool keepIfEmpty = false)
 		{

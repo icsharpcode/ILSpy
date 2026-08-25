@@ -39,8 +39,16 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		public Stepper.Node Step { get; }
 		public StepNodeViewModel? Parent { get; }
-		public IReadOnlyList<StepNodeViewModel> Children { get; }
 		public string Description => Step.Description;
+
+		IReadOnlyList<StepNodeViewModel>? children;
+
+		/// <summary>
+		/// Wrappers for this step's children, built on first access. A recorded type runs to tens of
+		/// thousands of steps, so materialising the whole tree up front would put that many view-models
+		/// on the UI thread for the handful of rows an expanded path actually shows.
+		/// </summary>
+		public IReadOnlyList<StepNodeViewModel> Children => children ??= Wrap(Step.Children, this);
 
 		/// <summary>Two-way bound to the row's TreeViewItem.IsExpanded.</summary>
 		[ObservableProperty]
@@ -60,20 +68,16 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			Step = step;
 			Parent = parent;
-			var children = new List<StepNodeViewModel>(step.Children.Count);
-			foreach (var child in step.Children)
-			{
-				children.Add(new StepNodeViewModel(child, this));
-			}
-			Children = children;
 		}
 
-		public static IReadOnlyList<StepNodeViewModel> Wrap(IList<Stepper.Node> steps)
+		public static IReadOnlyList<StepNodeViewModel> Wrap(IList<Stepper.Node> steps) => Wrap(steps, null);
+
+		static IReadOnlyList<StepNodeViewModel> Wrap(IList<Stepper.Node> steps, StepNodeViewModel? parent)
 		{
 			var wrapped = new List<StepNodeViewModel>(steps.Count);
 			foreach (var step in steps)
 			{
-				wrapped.Add(new StepNodeViewModel(step, null));
+				wrapped.Add(new StepNodeViewModel(step, parent));
 			}
 			return wrapped;
 		}

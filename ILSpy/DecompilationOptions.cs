@@ -54,10 +54,12 @@ namespace ICSharpCode.ILSpy
 		public string? StrongNameKeyFile { get; set; }
 
 		/// <summary>
-		/// Stop the IL-transform pipeline after this many steps. <see cref="int.MaxValue"/>
-		/// means "run all transforms". The Debug Steps pane sets this to the index of a
-		/// chosen step so it can show the partial state at that point. Honoured by
-		/// <see cref="Languages.BlockILLanguage"/>; ignored by every other language.
+		/// Stop the decompiler pipeline after this many steps. <see cref="int.MaxValue"/> means "run
+		/// everything". The Debug Steps pane sets this to the index of a chosen step so it can show the
+		/// partial state at that point. Honoured by the C# language, whose steps span the IL transforms,
+		/// the ILAst-to-C# conversion and the C# AST transforms; ignored by every other language.
+		/// A limit landing in the IL phase yields an ILAst dump rather than C#, because the halted
+		/// member never reaches the C# builders.
 		/// </summary>
 		public int StepLimit { get; set; } = int.MaxValue;
 
@@ -69,9 +71,10 @@ namespace ICSharpCode.ILSpy
 		public int? HighlightStep { get; set; }
 
 		/// <summary>
-		/// When true, transforms emit verbose debug information about their behaviour. Only
-		/// meaningful in combination with <see cref="StepLimit"/> — the Debug Steps pane sets
-		/// it on the "Debug this step" context-menu action.
+		/// When true, the pipeline breaks into an attached debugger on reaching <see cref="StepLimit"/>
+		/// and then carries on, instead of halting there. Only meaningful in combination with
+		/// <see cref="StepLimit"/> — the Debug Steps pane sets it on the "Debug this step"
+		/// context-menu action.
 		/// </summary>
 		public bool IsDebug { get; set; }
 

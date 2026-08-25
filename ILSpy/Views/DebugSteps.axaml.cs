@@ -83,7 +83,12 @@ namespace ICSharpCode.ILSpy.Views
 			DetachModel();
 			attachedModel = model;
 			if (model != null)
+			{
 				model.SelectionRevealRequested += OnSelectionRevealRequested;
+				// The view is in the tree exactly while the pane is open, which is the only time the
+				// recorded IL steps are worth their memory.
+				model.SetRecordingEnabled(true);
+			}
 		}
 
 		void DetachModel()
@@ -91,6 +96,7 @@ namespace ICSharpCode.ILSpy.Views
 			if (attachedModel != null)
 			{
 				attachedModel.SelectionRevealRequested -= OnSelectionRevealRequested;
+				attachedModel.SetRecordingEnabled(false);
 				attachedModel = null;
 			}
 		}
