@@ -55,6 +55,83 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		internal class Indexer
+		{
+			public int this[int x, int y = 10] {
+				get {
+					return x + y;
+				}
+				set {
+				}
+			}
+		}
+
+		internal class IndexerWithOverload
+		{
+			public int this[int x] {
+				get {
+					return x;
+				}
+				set {
+				}
+			}
+
+			public int this[int x, int y = 10] {
+				get {
+					return x + y;
+				}
+				set {
+				}
+			}
+		}
+
+		internal class AllOptionalIndexer
+		{
+			public int this[int x = 10, int y = 20] {
+				get {
+					return x + y;
+				}
+				set {
+				}
+			}
+		}
+
+		internal class BaseIndexer
+		{
+			public virtual int this[bool flag] {
+				get {
+					return 1;
+				}
+				set {
+				}
+			}
+		}
+
+		internal class DerivedIndexer : BaseIndexer
+		{
+			public override int this[bool f] {
+				get {
+					return 2;
+				}
+				set {
+				}
+			}
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		internal struct StructIndexer
+		{
+			public int this[int x, int y = 10] {
+				get {
+					return x + y;
+				}
+				set {
+				}
+			}
+		}
+
+		private static StructIndexer structIndexer;
+
 		public OptionalArguments(string name, int a = 5)
 		{
 
@@ -328,6 +405,54 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			d();
 			d(42);
+		}
+#endif
+
+		private void Indexers(Indexer indexer, IndexerWithOverload overloaded)
+		{
+			Console.WriteLine(indexer[1]);
+			Console.WriteLine(indexer[1, 20]);
+			indexer[1] = 5;
+			indexer[1] += 5;
+			indexer[1]++;
+			Console.WriteLine(structIndexer[1]);
+			structIndexer[1] = 5;
+			// Leaving the argument out would bind to the single-parameter indexer.
+			Console.WriteLine(overloaded[1, 10]);
+			Console.WriteLine(overloaded[1]);
+		}
+
+		private void AllOptionalIndexers(AllOptionalIndexer allOptional, BaseIndexer boolIndexer, DerivedIndexer derived)
+		{
+			// An indexer access keeps an argument even when every one of them is optional.
+			Console.WriteLine(allOptional[10]);
+			allOptional[10] = 5;
+			// Primitive values are not named in an access, unlike in a call. The second one binds
+			// to an override that names the parameter differently.
+			Console.WriteLine(boolIndexer[true]);
+			Console.WriteLine(derived[true]);
+		}
+
+		// Only the index initializers below need C# 6.
+#if CS60
+		private Indexer IndexerInitializer()
+		{
+			return new Indexer {
+				[1] = 5,
+				[2, 20] = 6
+			};
+		}
+
+		private BaseIndexer BoolIndexerInitializer()
+		{
+			// An index initializer does not name its arguments either.
+			return new BaseIndexer { [true] = 5 };
+		}
+
+		private DerivedIndexer DerivedIndexerInitializer()
+		{
+			// The call goes to the base indexer, which names the parameter differently.
+			return new DerivedIndexer { [true] = 7 };
 		}
 #endif
 	}

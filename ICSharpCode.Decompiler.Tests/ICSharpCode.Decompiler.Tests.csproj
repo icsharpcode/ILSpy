@@ -218,6 +218,14 @@
     <Compile Remove="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.il" />
+    <Compile Remove="TestCases\ILPretty\ParameterizedPropertyInitializer.cs" />
+    <None Include="TestCases\ILPretty\ParameterizedPropertyInitializer.cs" />
+    <None Include="TestCases\ILPretty\ParameterizedPropertyInitializer.il" />
+    <None Include="TestCases\ILPretty\ParamsPropertySetter.il" />
+    <None Include="TestCases\ILPretty\IndexerAccessorParameterNames.il" />
+    <Compile Remove="TestCases\ILPretty\ParameterizedPropertySetterCall.cs" />
+    <None Include="TestCases\ILPretty\ParameterizedPropertySetterCall.cs" />
+    <None Include="TestCases\ILPretty\ParameterizedPropertySetterCall.il" />
     <Compile Remove="TestCases\ILPretty\SpanConversionOperatorMismatch.cs" />
     <None Include="TestCases\ILPretty\SpanConversionOperatorMismatch.cs" />
     <Compile Remove="TestCases\ILPretty\FSharpLoops_Debug.cs" />

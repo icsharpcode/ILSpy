@@ -32,6 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Generics();
 			ConstructorTest();
 			TestIndexer();
+			TestIndexerWithNamedArguments();
 			Issue1281();
 			Issue1747();
 			CallAmbiguousOutParam();
@@ -330,6 +331,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 		#endregion
 
+		#region Indexer with named arguments
+		static void TestIndexerWithNamedArguments()
+		{
+			var obj = new NamedArgumentIndexerTests();
+			Console.WriteLine(obj[y: Trace(1), x: Trace(2)]);
+			obj[y: Trace(3), x: Trace(4)] = Trace(5);
+			Console.WriteLine(obj[y: Trace(6), x: Trace(7)] = Trace(8));
+			obj[y: Trace(9), x: Trace(10)] += 5;
+		}
+
+		static int Trace(int i)
+		{
+			Console.WriteLine("Trace(" + i + ")");
+			return i;
+		}
+		#endregion
+
 		#region Out Parameter
 		static void AmbiguousOutParam(out string a)
 		{
@@ -600,6 +618,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 		#endregion
+	}
+
+	class NamedArgumentIndexerTests
+	{
+		public int this[int x, int y] {
+			get {
+				Console.WriteLine("get_Item(" + x + ", " + y + ")");
+				return x;
+			}
+			set {
+				Console.WriteLine("set_Item(" + x + ", " + y + ", " + value + ")");
+			}
+		}
 	}
 
 	class IndexerTests
