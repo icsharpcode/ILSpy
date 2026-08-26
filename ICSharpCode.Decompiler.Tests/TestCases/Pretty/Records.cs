@@ -66,6 +66,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public double C = 1.0;
 			public string D = A + B;
 		}
+#if EXPECTED_OUTPUT
+		public record PrimaryCtorWithReorderedPropertyInitializers(int First, int Second);
+#else
+		public record PrimaryCtorWithReorderedPropertyInitializers(int First, int Second)
+		{
+			public int Second { get; init; } = Second;
+			public int First { get; init; } = First;
+		}
+#endif
 		public record PrimaryCtorWithInParameter(in int A, in string B);
 		public record PrimaryCtorWithProperty(int A, string B)
 		{
