@@ -112,6 +112,58 @@ public class CommandLineArgumentsTests
 	}
 
 	[AvaloniaTest]
+	public async Task NavigateTo_Accepts_A_Member_Id_Without_Its_Signature()
+	{
+		// A cref may name a member without a parameter list ("M:System.Linq.Enumerable.Where"),
+		// which is what a user reaches for on the command line and what an xml doc comment
+		// allows. The short form names the whole overload group, so any of its members is a
+		// correct landing spot.
+
+		// Arrange - boot.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var args = CommandLineArguments.Create(new[] { "--navigateto", "M:System.Linq.Enumerable.Where" });
+
+		// Act.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - selection landed on one of the Where overloads.
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
+		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(MethodTreeNode));
+		((MethodTreeNode)vm.AssemblyTreeModel.SelectedItem!).MethodDefinition.Name.Should().Be("Where");
+	}
+
+	[AvaloniaTest]
+	public async Task NavigateTo_Falls_Back_To_The_Loaded_Assembly_When_The_Id_Does_Not_Resolve()
+	{
+		// An ID that names nothing must not leave the tree on an empty selection with no
+		// indication of what happened: the assembly the user asked to open is still the best
+		// answer, and it is what opening it without --navigateto would have selected.
+
+		// Arrange - boot, then ask to open an assembly the default list does not contain.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		vm.AssemblyTreeModel.SelectedItems.Clear();
+
+		string path = typeof(CommandLineArgumentsTests).Assembly.Location;
+		var args = CommandLineArguments.Create(new[] { path, "--navigateto", "M:No.Such.Type.NoSuchMember" });
+
+		// Act.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - the requested assembly is selected.
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull(
+			"an unresolvable target must fall back to the assembly that was opened");
+		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(AssemblyTreeNode));
+		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be(path);
+	}
+
+	[AvaloniaTest]
 	public async Task NavigateTo_Skips_A_Missing_Session_Assembly_Instead_Of_Crashing()
 	{
 		// A restored session can still list an assembly whose file has since been deleted or
