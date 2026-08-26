@@ -177,6 +177,23 @@
         IL_000c: ret
     }
 
+    .method public hidebysig
+        instance void TestUnresolvedStructMemberCalls () cil managed
+    {
+        .maxstack 1
+        .locals init (
+            [0] valuetype [Library1]Library1.MyEnumerator
+        )
+
+        IL_0000: ldloca.s 0
+        IL_0002: call instance bool [Library1]Library1.MyEnumerator::MoveNext()
+        IL_0007: pop
+        IL_0008: ldloca.s 0
+        IL_000a: constrained. [Library1]Library1.MyEnumerator
+        IL_0010: callvirt instance void [System.Runtime]System.IDisposable::Dispose()
+        IL_0015: ret
+    }
+
     .method public hidebysig specialname rtspecialname
         instance void .ctor () cil managed
     {
