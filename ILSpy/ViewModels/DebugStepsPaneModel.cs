@@ -61,10 +61,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// <see cref="Stepper"/>. Every retained step pins the ILAst it captured, so recording a whole
 		/// type costs tens of thousands of nodes (System.Linq.Enumerable: 85k, ~35 MB) and a third
 		/// again as much decompilation time - worth it while the pane is on screen to show them,
-		/// wasted while it is closed. Static because the language is MEF-shared and decompiles on
-		/// background tasks that have no view-model reference.
+		/// wasted while it is closed. Reached from the C# language through composition: the pane is a
+		/// [Shared] export, so the background decompile resolves this very instance.
 		/// </summary>
-		public static bool IsRecording { get; private set; }
+		public bool IsRecording { get; private set; }
 
 		readonly LanguageService? languageService;
 
@@ -74,10 +74,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// <summary>
 		/// App-wide ILAst writing options shared between the C# language (which reads them while
 		/// emitting the ILAst a halted IL step stopped in) and the DebugSteps view (whose four
-		/// checkboxes toggle their values). Static singleton state because the language is
-		/// MEF-shared and decompiles on background tasks that have no view-model reference.
+		/// checkboxes toggle their values). Reached from the C# language through composition, the same
+		/// way <see cref="IsRecording"/> is.
 		/// </summary>
-		public static ILAstWritingOptions WritingOptions { get; } = new() {
+		public ILAstWritingOptions WritingOptions { get; } = new() {
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true,
 		};

@@ -236,20 +236,20 @@ namespace ICSharpCode.Decompiler.CSharp
 		public Stepper Stepper { get; set; } = new Stepper();
 
 		/// <summary>
-		/// Gets or sets whether the IL transform phase records its steps into <see cref="Stepper"/>,
-		/// so that one step tree spans the whole pipeline: IL transforms, the ILAst-to-C# conversion,
+		/// Gets or sets whether the pipeline records its steps into <see cref="Stepper"/>, so that one
+		/// step tree spans all of it: the IL transforms of every member, the ILAst-to-C# conversion,
 		/// and the C# AST transforms.
-		/// Off by default. The recording itself already happens in debug builds - into a per-member
-		/// stepper that is thrown away - so what this turns on is <i>retention</i>: the step history of
-		/// every member of the decompiled type stays alive, and each step pins the ILAst it captured,
-		/// including the instructions its transform removed. That is affordable for the single type a
-		/// step view displays and not for a whole-module decompile, so only callers that show the steps
-		/// opt in.
-		/// Replaying a step by index requires the same value on the full run and on the step-limited
-		/// re-run, since the recording decides how the steps are numbered.
+		/// Off by default, and off means the whole pipeline records nothing: every phase keeps the
+		/// stepper its context creates for itself, which nothing reads. Turning it on is what makes the
+		/// steps <i>retained</i>, and each retained step pins the ILAst it captured, including the
+		/// instructions its transform removed. That is affordable for the single type a step view
+		/// displays and not for a whole-module decompile, so only callers that show the steps opt in.
+		/// A step index is only meaningful against a run with the same value: numbering the whole
+		/// pipeline and numbering nothing are not the same scale, so a full run and the step-limited
+		/// re-run that replays one of its indices have to agree on it.
 		/// Has no effect unless <see cref="Stepper.SteppingAvailable"/>.
 		/// </summary>
-		public bool RecordILTransformSteps { get; set; }
+		public bool RecordSteps { get; set; }
 
 		/// <summary>
 		/// The <see cref="ILFunction"/> whose IL transforms were halted by <see cref="Stepper.StepLimit"/>,
@@ -893,9 +893,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (StepLimitHaltedFunction != null)
 				return;
 			var typeSystemAstBuilder = CreateAstBuilder(decompileRun.Settings);
-			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder) {
-				Stepper = Stepper
-			};
+			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder);
+			// Off means off for the whole pipeline: leaving the AST half recording would give the same
+			// pipeline two numbering bases, and an index recorded under one of them means a different
+			// step under the other. Without this the context keeps a stepper of its own, which nothing
+			// reads.
+			if (RecordSteps)
+				context.Stepper = Stepper;
 			// The tree handed to the pipeline must already be well-formed; check it once up front so a
 			// malformed builder output is caught here rather than blamed on the first transform (DEBUG only).
 			rootNode.CheckInvariant();
@@ -2397,7 +2401,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					CancellationToken = CancellationToken,
 					DecompileRun = decompileRun
 				};
-				if (RecordILTransformSteps)
+				if (RecordSteps)
 					context.Stepper = Stepper;
 				context.StepStartGroup(method.FullName);
 				// From here on a halt belongs to this member: it is standing on one of this member's own
@@ -2474,7 +2478,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// throws before any step can reach the limit, so without this the halt would be attributed
 				// to the next member and the half-transformed ILAst the crash left behind - the one thing
 				// worth looking at when debugging a throwing transform - would be unreachable.
-				if (function != null && Stepper.CurrentStep == Stepper.StepLimit)
+				if (RecordSteps && function != null && Stepper.CurrentStep == Stepper.StepLimit)
 					StepLimitHaltedFunction = function;
 				entityDecl.GetChild(Slots.Body)?.Remove();
 				if (settings.DecompileMemberBodies)

@@ -147,6 +147,45 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		/// <summary>
+		/// A step index only means anything against the run that produced it, so there must not be a
+		/// second numbering to confuse it with: with recording off the pipeline counts nothing at all,
+		/// neither the IL transforms nor the C# AST transforms that used to be recorded regardless.
+		/// </summary>
+		[Test]
+		public void NothingIsRecordedWhileRecordingIsOff()
+		{
+			var decompiler = StepperTesting.CreateDecompiler();
+
+			decompiler.DecompileTypeAsString(SampleType);
+
+			using (Assert.EnterMultipleScope())
+			{
+				Assert.That(decompiler.RecordSteps, Is.False, "recording is off unless a caller asks for it");
+				Assert.That(decompiler.Stepper.Steps, Is.Empty, "no step may be recorded while recording is off");
+				Assert.That(decompiler.Stepper.CurrentStep, Is.Zero, "the step counter must not advance either");
+			}
+		}
+
+		/// <summary>
+		/// The crashed-member attribution compares the step counter against the limit, which is only
+		/// meaningful while the counter is actually counting. With recording off it sits at zero, so a
+		/// limit of zero would otherwise match at every throwing transform and hand the pane an
+		/// unrelated member's ILAst.
+		/// </summary>
+		[Test]
+		public void ACrashWhileRecordingIsOffAttributesNoHaltedFunction()
+		{
+			var decompiler = StepperTesting.CreateDecompiler();
+			decompiler.ILTransforms.Add(new StepperTesting.ThrowingILTransform("CleanUpFileName"));
+			decompiler.Stepper.StepLimit = 0;
+
+			decompiler.DecompileTypeAsString(SampleType);
+
+			Assert.That(decompiler.StepLimitHaltedFunction, Is.Null,
+				"a step limit cannot be reached by a run that records no steps");
+		}
+
+		/// <summary>
 		/// Closing the groups an unwind abandoned must stop at the depth the member started from: a
 		/// group opened around the decompile still belongs to whoever opened it, and swallowing it
 		/// files every later step as that caller's sibling instead of its child.
@@ -270,7 +309,7 @@ namespace ICSharpCode.Decompiler.Tests
 		static CSharpDecompiler CreateRecordingDecompiler()
 		{
 			var decompiler = StepperTesting.CreateDecompiler();
-			decompiler.RecordILTransformSteps = true;
+			decompiler.RecordSteps = true;
 			return decompiler;
 		}
 

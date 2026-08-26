@@ -73,7 +73,7 @@ public class DebugStepsTests
 		// The default writing options match the WPF baseline: field sugar and
 		// logic-operation sugar on; IL ranges and child-index-in-block off. The four
 		// CheckBoxes in DebugSteps.axaml bind two-way against these defaults.
-		var options = DebugStepsPaneModel.WritingOptions;
+		var options = AppComposition.Current.GetExport<DebugStepsPaneModel>().WritingOptions;
 		options.UseFieldSugar.Should().BeTrue();
 		options.UseLogicOperationSugar.Should().BeTrue();
 		options.ShowILRanges.Should().BeFalse();
@@ -94,6 +94,9 @@ public class DebugStepsTests
 		// view-realisation timing — which is the whole point of the fix that moved state
 		// from the View into the VM. If `Steps` is populated, any view that binds to it (now
 		// or later) will render the correct content.
+		//
+		// Recording is what produces steps at all, and no view is realised to switch it on here.
+		AppComposition.Current.GetExport<DebugStepsPaneModel>().SetRecordingEnabled(true);
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
@@ -125,6 +128,10 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public async Task CSharp_DebugSteps_Are_Grouped_By_Ast_Transform()
 	{
+		// Steps exist only while the pane asks for them, and nothing realises the pane's view here,
+		// so this test asks the same way the view does.
+		AppComposition.Current.GetExport<DebugStepsPaneModel>().SetRecordingEnabled(true);
+
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -152,7 +159,7 @@ public class DebugStepsTests
 			.Select(transform => transform.GetType().Name)
 			.ToArray();
 
-		// The AST transforms close the tree; with the pane closed, nothing precedes them.
+		// The AST transforms close the tree, after the member groups of the IL half.
 		debugStepsVm.Steps!
 			.Select(step => StripStepNumber(step.Description))
 			.Should().EndWith(astTransformNames,
@@ -189,9 +196,10 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public async Task IL_Steps_Are_Recorded_Only_While_The_Pane_Asks_For_Them()
 	{
-		// Every retained IL step pins the ILAst it captured, which for one type runs to tens of
-		// thousands of nodes. A closed pane displays none of them, so the decompile must not collect
-		// them either - only the C# AST steps, which are few and cheap.
+		// Every retained step pins the ILAst it captured, which for one type runs to tens of thousands
+		// of nodes. A closed pane displays none of them, so the decompile must not collect any - not
+		// the IL transforms, and not the C# AST transforms either: a run that records half a pipeline
+		// would number its steps on a scale no displayed tree was recorded on.
 		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
 		debugStepsVm.SetRecordingEnabled(false);
 
@@ -218,6 +226,7 @@ public class DebugStepsTests
 		AllDescriptions(csharp.Stepper.Steps).Should().NotContain(
 			description => ilTransformNames.Contains(StripStepNumber(description)),
 			"a closed pane leaves the IL transforms unrecorded");
+		csharp.Stepper.Steps.Should().BeEmpty("a closed pane leaves the whole pipeline unrecorded");
 
 		static System.Collections.Generic.IEnumerable<string> AllDescriptions(
 			System.Collections.Generic.IEnumerable<Stepper.Node> nodes)
@@ -477,9 +486,9 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public Task Writing_Option_CheckBoxes_Are_Bound_To_The_ILAst_Writing_Options()
 	{
-		// The checkboxes drive how a halted IL step's ILAst is rendered, through options that live in a
-		// static singleton: what the compiler cannot check is that the two-way path reaches that
-		// singleton rather than a copy, and a dead binding here is a dead feature.
+		// The checkboxes drive how a halted IL step's ILAst is rendered, through the options the pane
+		// owns: what the compiler cannot check is that the two-way path reaches the pane's own instance
+		// rather than a copy, and a dead binding here is a dead feature.
 		var vm = new DebugStepsPaneModel { IsAvailable = true };
 		var window = new Window { Width = 500, Height = 300, Content = new DebugSteps { DataContext = vm } };
 		window.Show();
@@ -488,18 +497,16 @@ public class DebugStepsTests
 		{
 			var fieldSugar = window.GetVisualDescendants().OfType<CheckBox>()
 				.Single(box => (box.Content as string) == "Field sugar");
-			fieldSugar.IsChecked.Should().Be(DebugStepsPaneModel.WritingOptions.UseFieldSugar,
+			fieldSugar.IsChecked.Should().Be(vm.WritingOptions.UseFieldSugar,
 				"the checkbox must show the current writing option");
 
 			fieldSugar.IsChecked = false;
 			Dispatcher.UIThread.RunJobs();
-			DebugStepsPaneModel.WritingOptions.UseFieldSugar.Should().BeFalse(
+			vm.WritingOptions.UseFieldSugar.Should().BeFalse(
 				"toggling the checkbox must reach the options the ILAst dump is written with");
 		}
 		finally
 		{
-			// Shared static state: leave it as the rest of the suite expects to find it.
-			DebugStepsPaneModel.WritingOptions.UseFieldSugar = true;
 			window.Close();
 		}
 		return Task.CompletedTask;

@@ -23,6 +23,7 @@ using System;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugSteps;
+using ICSharpCode.Decompiler.IL;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
@@ -65,17 +66,24 @@ namespace ICSharpCode.ILSpy.Languages
 				avaloniaOutput.SyntaxExtensionOverride = ".il";
 			}
 			output.WriteLine();
-			function.WriteTo(output, DebugStepsPaneModel.WritingOptions);
+			function.WriteTo(output, DebugStepsPane?.WritingOptions ?? new ILAstWritingOptions());
 			handled = true;
 		}
 
 		/// <summary>
-		/// Points the decompiler's IL phase at the shared stepper, but only while the Debug Steps pane
-		/// is there to display what it records - see <see cref="DebugStepsPaneModel.IsRecording"/>.
+		/// The Debug Steps pane, or null before composition is up (design-time previews) and in the
+		/// window between startup and the pane being created. It is a [Shared] export, so a decompile
+		/// running on a background task resolves the same instance the view is bound to.
+		/// </summary>
+		static DebugStepsPaneModel? DebugStepsPane => AppComposition.TryGetExport<DebugStepsPaneModel>();
+
+		/// <summary>
+		/// Points the whole pipeline at the shared stepper, but only while the Debug Steps pane is
+		/// there to display what it records - see <see cref="DebugStepsPaneModel.IsRecording"/>.
 		/// </summary>
 		static partial void ConfigureStepRecording(CSharpDecompiler decompiler)
 		{
-			decompiler.RecordILTransformSteps = DebugStepsPaneModel.IsRecording;
+			decompiler.RecordSteps = DebugStepsPane?.IsRecording ?? false;
 		}
 
 		/// <summary>
