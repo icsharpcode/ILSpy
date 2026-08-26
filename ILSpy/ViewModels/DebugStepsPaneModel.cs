@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
+using System.Linq;
 
 using Avalonia.Threading;
 
@@ -255,6 +256,11 @@ namespace ICSharpCode.ILSpy.ViewModels
 		void OnStepperUpdated(object? sender, System.EventArgs e)
 		{
 			Dispatcher.UIThread.Post(() => {
+				// A run that started while the pane was open can finish after it closed. Taking its
+				// update would pin the tree straight back into a pane nobody is looking at, undoing
+				// the release that closing just performed.
+				if (!IsRecording)
+					return;
 				if (activeLanguage != null)
 				{
 					SetStepsSource(activeLanguage.Stepper.Steps);
@@ -392,8 +398,16 @@ namespace ICSharpCode.ILSpy.ViewModels
 		}
 
 		/// <summary>
+		/// The C# language whether or not it is the current one. The steps are pinned on the MEF-shared
+		/// language instance, so releasing them cannot depend on which language happens to be selected:
+		/// switching to IL detaches this pane but leaves the recorded tree exactly where it was.
+		/// </summary>
+		CSharpLanguage? StepRecordingLanguage =>
+			activeLanguage ?? languageService?.Languages.OfType<CSharpLanguage>().FirstOrDefault();
+
+		/// <summary>
 		/// Turns step recording on while the pane is on screen. Enabling re-runs the current decompile,
-		/// because the run that produced the displayed output recorded no IL steps; disabling drops the
+		/// because the run that produced the displayed output recorded no steps; disabling drops the
 		/// tree the language is still holding, which is where the retained ILAst lives.
 		/// </summary>
 		internal void SetRecordingEnabled(bool enabled)
@@ -403,12 +417,15 @@ namespace ICSharpCode.ILSpy.ViewModels
 			IsRecording = enabled;
 			if (enabled)
 			{
-				RequestRedecompile(int.MaxValue, isDebug: false);
+				// C# is the only language that records anything, so re-running any other one would
+				// throw away the view the user is looking at to produce a tree that stays empty.
+				if (activeLanguage != null)
+					RequestRedecompile(int.MaxValue, isDebug: false);
 			}
 			else
 			{
 				SetStepsSource(null);
-				activeLanguage?.ReleaseSteps();
+				StepRecordingLanguage?.ReleaseSteps();
 			}
 		}
 

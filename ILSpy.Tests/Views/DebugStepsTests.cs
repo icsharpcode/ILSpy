@@ -241,6 +241,121 @@ public class DebugStepsTests
 	}
 
 	[AvaloniaTest]
+	public async Task Closing_The_Pane_Releases_The_Steps_Even_When_Another_Language_Is_Current()
+	{
+		// The steps are pinned on the MEF-shared CSharpLanguage, not on whichever language happens to
+		// be selected. Open the pane on C#, switch to IL, close the pane: the release has to reach the
+		// C# language anyway, or its whole IL tree stays alive until the next full C# run.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		var csharp = languageService.Languages.OfType<CSharpLanguage>().Single();
+		languageService.CurrentLanguage = csharp;
+
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+		debugStepsVm.SetRecordingEnabled(true);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Range");
+		vm.AssemblyTreeModel.SelectNode(method);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Waiters.WaitForAsync(
+			() => debugStepsVm.Steps?.Count > 0,
+			description: "DebugStepsPaneModel.Steps to be populated after the C# decompile");
+
+		languageService.CurrentLanguage = languageService.GetLanguage("IL");
+		Dispatcher.UIThread.RunJobs();
+
+		debugStepsVm.SetRecordingEnabled(false);
+
+		csharp.Stepper.Steps.Should().BeEmpty(
+			"closing the pane must release the recorded steps whatever language is selected");
+	}
+
+	[AvaloniaTest]
+	public async Task Opening_The_Pane_Does_Not_Redecompile_A_Language_That_Records_Nothing()
+	{
+		// Only the C# language records steps, so re-running any other language's decompile buys
+		// nothing and throws away the view the user is looking at.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+		debugStepsVm.SetRecordingEnabled(false);
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		languageService.CurrentLanguage = languageService.GetLanguage("IL");
+		Dispatcher.UIThread.RunJobs();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Range");
+		vm.AssemblyTreeModel.SelectNode(method);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		var tab = vm.DockWorkspace.ActiveDecompilerTab!;
+		tab.IsDecompiling.Should().BeFalse("the IL decompile the test awaited has finished");
+
+		debugStepsVm.SetRecordingEnabled(true);
+
+		tab.IsDecompiling.Should().BeFalse(
+			"opening the pane on a language that records no steps must leave the tab alone");
+	}
+
+	[AvaloniaTest]
+	public async Task A_Run_Finishing_After_The_Pane_Closed_Does_Not_Repin_Its_Steps()
+	{
+		// Closing the pane drops the tree, but the language still raises StepperUpdated at the end of
+		// every full run. Taking that update would pin the tree straight back into a pane nobody is
+		// looking at - which is the retention closing was meant to end.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		var languageService = AppComposition.Current.GetExport<LanguageService>();
+		var csharp = languageService.Languages.OfType<CSharpLanguage>().Single();
+		languageService.CurrentLanguage = csharp;
+
+		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
+		debugStepsVm.SetRecordingEnabled(true);
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var first = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Range");
+		vm.AssemblyTreeModel.SelectNode(first);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Waiters.WaitForAsync(
+			() => debugStepsVm.Steps?.Count > 0,
+			description: "DebugStepsPaneModel.Steps to be populated after the C# decompile");
+
+		debugStepsVm.SetRecordingEnabled(false);
+		debugStepsVm.Steps.Should().BeNull("closing the pane drops the tree it was showing");
+
+		// A later full run raises StepperUpdated exactly the way the in-flight one would have.
+		var second = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+		vm.AssemblyTreeModel.SelectNode(second);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		Dispatcher.UIThread.RunJobs();
+
+		debugStepsVm.Steps.Should().BeNull(
+			"a run finishing while the pane is closed must not pin its steps back into it");
+	}
+
+	[AvaloniaTest]
 	public async Task CSharp_DebugSteps_Cover_IL_Transforms_And_Replay_Renders_ILAst()
 	{
 		// Recording the IL half is what an open pane switches on; nothing realises the pane's view
