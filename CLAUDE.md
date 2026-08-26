@@ -94,7 +94,7 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 
 If the user cannot answer the questions sufficiently or does not provide detailed instructions in their prompt, stop immediately.
 Never decide on your own.
-Never put more than one feature on one branch.
+Never put more than one C# language feature on one branch.
 
 ## Test discipline
 
