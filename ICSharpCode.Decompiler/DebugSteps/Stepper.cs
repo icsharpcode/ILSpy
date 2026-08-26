@@ -271,10 +271,11 @@ namespace ICSharpCode.Decompiler.DebugSteps
 		/// The groups are kept even when empty: a group that recorded nothing before it was abandoned is
 		/// precisely the one worth seeing, and <see cref="EndGroup"/>'s removal path expects the group to
 		/// still be the last entry of its parent, which an unwind cannot guarantee.
-		/// Closing stops at <paramref name="targetDepth"/>: a group that was already open before the
+		/// Closing stops at <paramref name="targetDepth"/>, which every caller must state: a group that
+		/// was already open before the
 		/// unwinding code ran belongs to whoever opened it, not to the unwind.
 		/// </summary>
-		public void EndOpenGroups(int targetDepth = 0)
+		public void EndOpenGroups(int targetDepth)
 		{
 			while (groups.Count > targetDepth)
 				EndGroup(keepIfEmpty: true);

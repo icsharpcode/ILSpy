@@ -95,7 +95,7 @@ public class DebugStepsTests
 		// from the View into the VM. If `Steps` is populated, any view that binds to it (now
 		// or later) will render the correct content.
 		//
-		// Recording is what produces steps at all, and no view is realised to switch it on here.
+		// Recording is what produces steps at all, and no view is realized to switch it on here.
 		AppComposition.Current.GetExport<DebugStepsPaneModel>().SetRecordingEnabled(true);
 
 		var window = AppComposition.Current.GetExport<MainWindow>();
@@ -128,7 +128,7 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public async Task CSharp_DebugSteps_Are_Grouped_By_Ast_Transform()
 	{
-		// Steps exist only while the pane asks for them, and nothing realises the pane's view here,
+		// Steps exist only while the pane asks for them, and nothing realizes the pane's view here,
 		// so this test asks the same way the view does.
 		AppComposition.Current.GetExport<DebugStepsPaneModel>().SetRecordingEnabled(true);
 
@@ -347,7 +347,7 @@ public class DebugStepsTests
 	[AvaloniaTest]
 	public async Task CSharp_DebugSteps_Cover_IL_Transforms_And_Replay_Renders_ILAst()
 	{
-		// Recording the IL half is what an open pane switches on; nothing realises the pane's view
+		// Recording the IL half is what an open pane switches on; nothing realizes the pane's view
 		// here, so this test asks for it the same way the view does.
 		var debugStepsVm = AppComposition.Current.GetExport<DebugStepsPaneModel>();
 		debugStepsVm.SetRecordingEnabled(true);
