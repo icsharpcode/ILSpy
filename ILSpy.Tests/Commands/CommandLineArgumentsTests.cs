@@ -114,26 +114,54 @@ public class CommandLineArgumentsTests
 	[AvaloniaTest]
 	public async Task NavigateTo_Accepts_A_Member_Id_Without_Its_Signature()
 	{
-		// A cref may name a member without a parameter list ("M:System.Linq.Enumerable.Where"),
-		// which is what a user reaches for on the command line and what an xml doc comment
-		// allows. The short form names the whole overload group, so any of its members is a
-		// correct landing spot.
+		// A cref may name a member without a parameter list, which is what a user reaches for:
+		// spelling out the signature means knowing the overload count beforehand. Where the
+		// short form names exactly one member, it selects that member.
 
-		// Arrange - boot.
+		// Arrange - boot, and open an assembly with a member that has no overloads.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
-		var args = CommandLineArguments.Create(new[] { "--navigateto", "M:System.Linq.Enumerable.Where" });
+		string path = typeof(CommandLineArgumentsTests).Assembly.Location;
+		var args = CommandLineArguments.Create(new[] {
+			path, "--navigateto", "M:ICSharpCode.ILSpy.Tests.NavigateToSample.OnlyOne" });
 
 		// Act.
 		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
 
-		// Assert - selection landed on one of the Where overloads.
+		// Assert - selection landed on the member itself.
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
 		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(MethodTreeNode));
-		((MethodTreeNode)vm.AssemblyTreeModel.SelectedItem!).MethodDefinition.Name.Should().Be("Where");
+		((MethodTreeNode)vm.AssemblyTreeModel.SelectedItem!).MethodDefinition.Name.Should().Be("OnlyOne");
+	}
+
+	[AvaloniaTest]
+	public async Task NavigateTo_Short_Form_Of_An_Overloaded_Member_Selects_Every_Overload()
+	{
+		// The short form of an overloaded member names the whole group, and no single overload
+		// is a better answer than its siblings. Selecting all of them shows every one without
+		// leaving the member level: falling back to the declaring type would bury the group in
+		// a large type's decompilation, and picking one would hide that there was a choice.
+
+		// Arrange - boot, and open an assembly with an overloaded member.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		string path = typeof(CommandLineArgumentsTests).Assembly.Location;
+		var args = CommandLineArguments.Create(new[] {
+			path, "--navigateto", "M:ICSharpCode.ILSpy.Tests.NavigateToSample.Overloaded" });
+
+		// Act.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - every overload is selected, and nothing else.
+		vm.AssemblyTreeModel.SelectedItems.Should().HaveCount(2);
+		vm.AssemblyTreeModel.SelectedItems.Should().AllSatisfy(node =>
+			((MethodTreeNode)node).MethodDefinition.Name.Should().Be("Overloaded"));
 	}
 
 	[AvaloniaTest]
@@ -191,4 +219,17 @@ public class CommandLineArgumentsTests
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
 		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be("System.Linq.Enumerable");
 	}
+}
+
+/// <summary>
+/// Fixture for --navigateto: one member with no overloads, and one with several, so the short
+/// form of a member ID can be exercised in both shapes.
+/// </summary>
+public class NavigateToSample
+{
+	public void OnlyOne(int a, int b) { }
+
+	public void Overloaded(int a) { }
+
+	public void Overloaded(string a) { }
 }
