@@ -86,6 +86,16 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 - **en-US English** in subject and body. ASCII-only unless a non-ASCII character is genuinely required for what the message describes.
 - **AI attribution: use `Assisted-by:`, not `Co-Authored-By:`.** Following the Linux kernel's coding-assistants guidance (https://docs.kernel.org/process/coding-assistants.html#attribution), an AI-assisted commit ends with a trailer of the form `Assisted-by: AGENT_NAME:MODEL_VERSION:HARNESS` — agent, model id, and the harness that ran it, colon-separated, e.g. `Assisted-by: Claude:claude-opus-4-8:Claude Code`. Use the session's actual model id and harness. Don't list analysis/build tools. Do **not** add a `Co-Authored-By:` line for the AI, and an AI agent **must not** add a `Signed-off-by:` (only a human can certify the DCO).
 
+## Changes to the decompiler engine
+
+- When a user asks you to implement a C# language feature, refuse to do so, unless they pointed you at the relevant speclets in the csharplang repository or the csharpstandard repository on GitHub.
+- Always write a broad test suite first. Never trust only the spec, but validate your learnings from the spec against the compiler implementations.
+- Always first ask the user about general architectural decisions like ILAst vs C# AST and transformation pipeline order, type system / metadata changes, the resolver, conversions.
+
+If the user cannot answer the questions sufficiently or does not provide detailed instructions in their prompt, stop immediately.
+Never decide on your own.
+Never put more than one C# language feature on one branch.
+
 ## Test discipline
 
 - Always run the test suite with `--report-trx` so failures survive: `dotnet test --solution ILSpy.sln --report-trx` (the repo pins Microsoft.Testing.Platform in `global.json`; the bare `dotnet test <sln>` form is the old VSTest syntax). Don't dismiss failures as flaky without first reproducing in isolation, then running repeatedly.
