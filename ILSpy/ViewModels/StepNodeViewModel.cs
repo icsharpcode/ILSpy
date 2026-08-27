@@ -23,6 +23,8 @@ using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.Decompiler.DebugSteps;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
@@ -41,6 +43,33 @@ namespace ICSharpCode.ILSpy.ViewModels
 		public StepNodeViewModel? Parent { get; }
 		public string Description => Step.Description;
 
+		/// <summary>
+		/// Which half of the pipeline the step belongs to, shown beside the description so the seam is
+		/// visible at a glance. Taken from what the step points at: the IL transforms anchor their
+		/// steps to instructions, the C# ones to syntax nodes. Empty when a step carries no anchor.
+		/// </summary>
+		public string Phase => PhaseOf(Step);
+
+		static string PhaseOf(Stepper.Node step)
+		{
+			switch (step.Position)
+			{
+				case ILInstruction:
+					return "IL";
+				case AstNode:
+					return "C#";
+			}
+			// A group opener carries no position of its own when anchoring it would misattribute a
+			// halt landing on it, so take the phase from the first step underneath that has one.
+			foreach (var child in step.Children)
+			{
+				string phase = PhaseOf(child);
+				if (phase.Length > 0)
+					return phase;
+			}
+			return string.Empty;
+		}
+
 		IReadOnlyList<StepNodeViewModel>? children;
 
 		/// <summary>
@@ -49,6 +78,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// on the UI thread for the handful of rows an expanded path actually shows.
 		/// </summary>
 		public IReadOnlyList<StepNodeViewModel> Children => children ??= Wrap(Step.Children, this);
+
+		/// <summary>
+		/// Whether <see cref="Children"/> has been built. Lets a walk that only needs to fix up state
+		/// it previously set skip the subtrees nobody has looked at, instead of wrapping them to find
+		/// out there is nothing to fix.
+		/// </summary>
+		internal bool HasMaterializedChildren => children != null;
 
 		/// <summary>Two-way bound to the row's TreeViewItem.IsExpanded.</summary>
 		[ObservableProperty]

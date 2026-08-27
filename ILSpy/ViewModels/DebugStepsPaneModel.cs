@@ -334,6 +334,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 		static void SnapshotExpansion(StepNodeViewModel node)
 		{
 			node.ExpansionBeforeFilter = node.IsExpanded;
+			// A subtree nobody has expanded has no wrappers and so no expansion state to save.
+			if (!node.HasMaterializedChildren)
+				return;
 			foreach (var child in node.Children)
 				SnapshotExpansion(child);
 		}
@@ -344,6 +347,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (node.ExpansionBeforeFilter is bool expanded)
 				node.IsExpanded = expanded;
 			node.ExpansionBeforeFilter = null;
+			if (!node.HasMaterializedChildren)
+				return;
 			foreach (var child in node.Children)
 				RestoreExpansion(child);
 		}
@@ -355,15 +360,32 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// </summary>
 		static bool ApplyFilterToNode(StepNodeViewModel node, string filter)
 		{
-			bool descendantMatches = false;
-			foreach (var child in node.Children)
-				descendantMatches |= ApplyFilterToNode(child, filter);
-			bool selfMatches = node.Description.Contains(filter, System.StringComparison.OrdinalIgnoreCase);
+			bool selfMatches = Matches(node.Description, filter);
+			// Ask the recorded steps, not the wrappers: a subtree with no match stays hidden, and
+			// wrapping it only to hide it would put a view-model on the UI thread for every step of a
+			// recorded type - tens of thousands of them, on the first keystroke.
+			bool descendantMatches = node.Step.Children.Any(step => SubtreeMatches(step, filter));
 			node.IsVisible = selfMatches || descendantMatches;
 			if (descendantMatches)
 				node.IsExpanded = true;
+			// Descend into wrappers that exist either because the path is being revealed or because
+			// an earlier pass built them: those carry visibility state that has to be corrected.
+			if (descendantMatches || node.HasMaterializedChildren)
+			{
+				foreach (var child in node.Children)
+					ApplyFilterToNode(child, filter);
+			}
 			return selfMatches || descendantMatches;
 		}
+
+		static bool SubtreeMatches(Stepper.Node step, string filter)
+		{
+			return Matches(step.Description, filter)
+				|| step.Children.Any(child => SubtreeMatches(child, filter));
+		}
+
+		static bool Matches(string description, string filter)
+			=> description.Contains(filter, System.StringComparison.OrdinalIgnoreCase);
 
 		void OnSelectionChanged(object? sender, AssemblyTreeSelectionChangedEventArgs e)
 		{

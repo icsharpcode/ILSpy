@@ -411,9 +411,12 @@ public class DebugStepsTests
 			.ToArray();
 		var topLevel = debugStepsVm.Steps!.Select(step => StripStepNumber(step.Description)).ToArray();
 		topLevel.Should().EndWith(astTransformNames, "the C# AST transforms close the step tree");
-		topLevel.Take(topLevel.Length - astTransformNames.Length)
+		var beforeTransforms = topLevel.Take(topLevel.Length - astTransformNames.Length).ToArray();
+		beforeTransforms.Should().EndWith(new[] { "C# AST built from ILAst" },
+			"the seam closes the IL half, right before the first AST transform");
+		beforeTransforms.SkipLast(1)
 			.Should().OnlyContain(description => description.Contains("System.Linq.Enumerable"),
-				"nothing but the decompiled members' groups precedes them");
+				"nothing but the decompiled members' groups precedes the seam");
 
 		// Replaying an individual mutation step is what surfaces a single IL change; the leaf
 		// step's changed instruction (or a surviving ancestor) must map to a rendered text range.

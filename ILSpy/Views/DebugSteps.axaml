@@ -44,7 +44,14 @@
 			</TreeView.Styles>
 			<TreeView.ItemTemplate>
 				<TreeDataTemplate DataType="vm:StepNodeViewModel" ItemsSource="{Binding Children}">
-					<TextBlock Text="{Binding Description}" />
+					<StackPanel Orientation="Horizontal" Spacing="6">
+						<Border Background="{DynamicResource ThemeControlMidBrush}"
+								CornerRadius="3" Padding="4,0" VerticalAlignment="Center"
+								IsVisible="{Binding Phase, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+							<TextBlock Text="{Binding Phase}" FontSize="10" />
+						</Border>
+						<TextBlock Text="{Binding Description}" />
+					</StackPanel>
 				</TreeDataTemplate>
 			</TreeView.ItemTemplate>
 			<TreeView.ContextMenu>
