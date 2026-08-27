@@ -263,13 +263,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public ILFunction? StepLimitHaltedFunction { get; private set; }
 
-		/// <summary>
-		/// The last member whose IL transforms ran to completion. A step limit landing on a member's
-		/// opening group step stops the pipeline at the very point that member's predecessor finished,
-		/// so this - not the untouched member the halt technically occurred in - is the state the caller
-		/// is asking to see.
-		/// </summary>
-		ILFunction? lastCompletedFunction;
 
 		/// <summary>
 		/// Returns all built-in transforms of the C# AST pipeline.
@@ -859,7 +852,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			// previous run's ILAst, and the "already halted" guard in DecompileBody would skip every
 			// member from here on.
 			StepLimitHaltedFunction = null;
-			lastCompletedFunction = null;
 			List<INamespace> resolvedNamespaces = new List<INamespace>();
 			foreach (var ns in namespaces)
 			{
@@ -909,7 +901,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var transform in astTransforms)
 				{
 					CancellationToken.ThrowIfCancellationRequested();
-					context.StepStartGroup(transform.GetType().Name);
+					context.StepStartGroup(transform.GetType().Name, rootNode);
 					long traceStart = traceTransforms ? Stopwatch.GetTimestamp() : 0;
 					transform.Run(rootNode, context);
 					if (traceTransforms)
@@ -2317,10 +2309,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// on, or null when the step named no instruction (a group opener) or the instruction hangs off
 		/// no function at all.
 		/// </summary>
+		/// <summary>
+		/// The function a halt belongs to, taken from the stepper rather than reconstructed. The step
+		/// the limit stopped on is the first choice; on a member's opening group step that step belongs
+		/// to the next member, so the last step actually recorded - the previous member's - is the
+		/// state the halt is showing. Following the instruction to its outermost function also covers
+		/// a step recorded in a helper the pipeline has not attached yet.
+		/// </summary>
 		ILFunction? HaltedStepFunction()
 		{
-			return (Stepper.LimitReachedStep?.Position as ILInstruction)?
-				.Ancestors.OfType<ILFunction>().LastOrDefault();
+			return FunctionOf(Stepper.LimitReachedStep) ?? FunctionOf(Stepper.LastStep);
+
+			static ILFunction? FunctionOf(Stepper.Node? step)
+				=> (step?.Position as ILInstruction)?.Ancestors.OfType<ILFunction>().LastOrDefault();
 		}
 
 		/// <summary>
@@ -2345,9 +2346,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (StepLimitHaltedFunction != null)
 				return;
 			// Declared out here so the StepLimitReachedException handler below can report the function
-			// its transforms were halted in, and tell a halt inside this member from one on its boundary.
+			// its transforms were halted in.
 			ILFunction? function = null;
-			bool haltBelongsToThisMember = false;
 			// Only the groups this member opens may be closed when an exception unwinds out of it: a
 			// caller that wrapped this call in a group of its own still owns that group afterwards.
 			int groupDepth = Stepper.GroupDepth;
@@ -2403,13 +2403,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				};
 				if (RecordSteps)
 					context.Stepper = Stepper;
+				// Deliberately unanchored: a member's opening step is where the *previous* member's
+				// state ends, so giving it this member's function would attribute a halt on the
+				// boundary to the member the pipeline is only about to start.
 				context.StepStartGroup(method.FullName);
-				// From here on a halt belongs to this member: it is standing on one of this member's own
-				// steps, not on the boundary where the previous member finished.
-				haltBelongsToThisMember = true;
 				function.RunTransforms(SelectILTransforms(localSettings.DecompileMemberBodies), context);
 
-				lastCompletedFunction = function;
 
 				// Generate C# AST only if bodies should be displayed.
 				if (localSettings.DecompileMemberBodies)
@@ -2461,8 +2460,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// nested function on its way into place) belongs to that function's own tree, which the
 				// member's function does not contain - so follow the halted step's instruction to the
 				// function that actually holds it.
-				StepLimitHaltedFunction = HaltedStepFunction()
-					?? (haltBelongsToThisMember ? function : lastCompletedFunction ?? function);
+				StepLimitHaltedFunction = HaltedStepFunction() ?? function;
 				Stepper.EndOpenGroups(groupDepth);
 			}
 			catch (Exception innerException) when (!(innerException is OperationCanceledException))

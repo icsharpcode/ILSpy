@@ -406,13 +406,16 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var transform in transforms)
 			{
 				context.CancellationToken.ThrowIfCancellationRequested();
+				// 'near: this' is what lets a halt on a group opener be traced back to the function it
+				// belongs to; without a position the step carries no anchor and the halt cannot be
+				// attributed to any member.
 				if (transform is BlockILTransform blockTransform)
 				{
-					context.StepStartGroup(blockTransform.ToString());
+					context.StepStartGroup(blockTransform.ToString(), this);
 				}
 				else
 				{
-					context.StepStartGroup(transform.GetType().Name);
+					context.StepStartGroup(transform.GetType().Name, this);
 				}
 				long traceStart = traceTransforms ? System.Diagnostics.Stopwatch.GetTimestamp() : 0;
 				transform.Run(this, context);
