@@ -898,6 +898,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool traceTransforms = DecompilerEventSource.Log.IsTransformTracingEnabled();
 			try
 			{
+				// The whole type has been converted and nothing has transformed it yet, so this is the
+				// one index whose state is the plain ExpressionBuilder/StatementBuilder output. Without
+				// it that state is only reachable as "before the first AST transform", which names a
+				// transform rather than the thing being shown and sits after every member's group.
+				context.Step("C# AST built from ILAst", rootNode);
 				foreach (var transform in astTransforms)
 				{
 					CancellationToken.ThrowIfCancellationRequested();

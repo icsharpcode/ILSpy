@@ -43,6 +43,8 @@ namespace ICSharpCode.Decompiler.Tests
 		const string RecordedStep = "recorded IL step";
 		const string DetachedStep = "step on a detached function";
 
+		const string SeamStep = "C# AST built from ILAst";
+
 		static readonly FullTypeName SampleType =
 			new FullTypeName("ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler");
 
@@ -209,6 +211,39 @@ namespace ICSharpCode.Decompiler.Tests
 					"the group opened around the decompile must still be the one collecting steps");
 				Assert.That(decompiler.Stepper.Steps, Does.Not.Contain(afterwards),
 					"a step recorded inside the outer group is not a top-level sibling of it");
+			}
+		}
+
+		/// <summary>
+		/// The plain ExpressionBuilder/StatementBuilder output is a state worth looking at, so it has
+		/// a step of its own at the top level rather than being reachable only as "before the first
+		/// AST transform". Halting there has to print C#: the whole type is converted by then, so
+		/// nothing is left in ILAst.
+		/// </summary>
+		[Test]
+		public void TheStateAtTheSeamIsUntransformedCSharp()
+		{
+			if (!Stepper.SteppingAvailable)
+				Assert.Ignore("Transform stepping is compiled out without the STEP symbol, so there is no seam step.");
+
+			var decompiler = CreateRecordingDecompiler();
+			string full = decompiler.DecompileTypeAsString(SampleType);
+
+			var seam = decompiler.Stepper.Steps.SingleOrDefault(n => n.Description.Contains(SeamStep));
+			Assert.That(seam, Is.Not.Null, $"'{SeamStep}' must be recorded once, at the top level");
+
+			var replay = CreateRecordingDecompiler();
+			replay.Stepper.StepLimit = seam!.BeginStep;
+			string atSeam = replay.DecompileTypeAsString(SampleType);
+
+			using (Assert.EnterMultipleScope())
+			{
+				Assert.That(replay.StepLimitHaltedFunction, Is.Null,
+					"the seam is past every member's IL phase, so there is no halted function to dump");
+				Assert.That(atSeam, Does.Contain("class WholeProjectDecompiler"),
+					"halting at the seam still prints C#");
+				Assert.That(atSeam, Is.Not.EqualTo(full),
+					"the AST transforms have not run yet, so this cannot equal the finished output");
 			}
 		}
 
