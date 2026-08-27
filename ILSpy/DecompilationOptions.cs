@@ -79,6 +79,14 @@ namespace ICSharpCode.ILSpy
 		public bool IsDebug { get; set; }
 
 		/// <summary>
+		/// When true, the pipeline records its steps so a step view can display them. It travels with
+		/// the request rather than being read from the view: a step index only means anything against
+		/// a run recorded the same way, so the full run and the step-limited replay of one of its
+		/// indices have to agree on it, and the decompile that reads it happens on a background task.
+		/// </summary>
+		public bool RecordSteps { get; set; }
+
+		/// <summary>
 		/// Optional sink for whole-project decompilation progress. Wired onto
 		/// <see cref="ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler.ProgressIndicator"/>
 		/// on the project-export path so the export tab can show a determinate progress bar and the

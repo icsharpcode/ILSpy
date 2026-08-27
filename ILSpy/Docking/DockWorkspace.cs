@@ -84,6 +84,15 @@ namespace ICSharpCode.ILSpy.Docking
 		/// behaviour (e.g. ShowOptionsCommand).</summary>
 		public IDocumentDock? Documents => factory.Documents;
 
+		/// <summary>
+		/// Whether decompiles started in this workspace record their transform steps. Set on the UI
+		/// thread by whoever displays them and copied into each run's <see cref="DecompilationOptions"/>,
+		/// so a background decompile never samples live view state - and every tab, including ones
+		/// opened later, records the same way. A step index only means anything against a run
+		/// recorded like the one the index was taken from.
+		/// </summary>
+		public bool RecordSteps { get; set; }
+
 		public IRelayCommand NavigateBackCommand { get; }
 		public IRelayCommand NavigateForwardCommand { get; }
 		public IRelayCommand<NavigationEntry> NavigateToHistoryCommand { get; }

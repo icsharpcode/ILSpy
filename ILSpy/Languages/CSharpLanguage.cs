@@ -327,10 +327,10 @@ namespace ICSharpCode.ILSpy.Languages
 			};
 			decompiler.Stepper.StepLimit = options.StepLimit;
 			decompiler.Stepper.IsDebug = options.IsDebug;
-			// The Debug Steps pane walks the whole pipeline, so the IL transforms have to record into
-			// the same stepper as the C# AST transforms. Implemented only under DEBUG, where the pane
-			// exists; a Release decompiler records no steps at all.
-			ConfigureStepRecording(decompiler);
+			// The Debug Steps pane walks the whole pipeline, so the IL transforms record into the same
+			// stepper as the C# AST transforms. Which runs record is decided by whoever started the
+			// decompile, not by the pane's state at the moment this runs on a background task.
+			decompiler.RecordSteps = options.RecordSteps;
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			return decompiler;
@@ -775,10 +775,6 @@ namespace ICSharpCode.ILSpy.Languages
 				nodeOutput.DebugStepHighlight = range;
 			}
 		}
-
-		// Implemented only under DEBUG (CSharpLanguage.DebugSteps.cs): enables IL-transform step
-		// recording while the Debug Steps pane is open. A no-op partial in Release.
-		static partial void ConfigureStepRecording(CSharpDecompiler decompiler);
 
 		// Implemented only under DEBUG (CSharpLanguage.DebugSteps.cs): writes the ILAst the pipeline was
 		// halted in, when a Debug Steps replay stopped it before there was any C# to show. A no-op

@@ -78,15 +78,6 @@ namespace ICSharpCode.ILSpy.Languages
 		static DebugStepsPaneModel? DebugStepsPane => AppComposition.TryGetExport<DebugStepsPaneModel>();
 
 		/// <summary>
-		/// Points the whole pipeline at the shared stepper, but only while the Debug Steps pane is
-		/// there to display what it records - see <see cref="DebugStepsPaneModel.IsRecording"/>.
-		/// </summary>
-		static partial void ConfigureStepRecording(CSharpDecompiler decompiler)
-		{
-			decompiler.RecordSteps = DebugStepsPane?.IsRecording ?? false;
-		}
-
-		/// <summary>
 		/// Drops the recorded steps of the last run. The stepper pins every ILAst its steps captured, so
 		/// this is what actually releases that memory once nothing is displaying it.
 		/// </summary>

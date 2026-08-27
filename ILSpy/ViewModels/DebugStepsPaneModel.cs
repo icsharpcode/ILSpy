@@ -415,6 +415,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (IsRecording == enabled)
 				return;
 			IsRecording = enabled;
+			// The workspace carries the flag into every run it starts, including the ones the user
+			// triggers by selecting another node, so closing the pane has to clear it there too.
+			if (AppComposition.TryGetExport<DockWorkspace>() is { } workspace)
+				workspace.RecordSteps = enabled;
 			if (enabled)
 			{
 				// C# is the only language that records anything, so re-running any other one would
@@ -434,7 +438,10 @@ namespace ICSharpCode.ILSpy.ViewModels
 			lastSelectedStep = stepLimit;
 			// Composition unavailable in design-time previews; the gesture is a no-op there.
 			var dock = AppComposition.TryGetExport<DockWorkspace>();
-			dock?.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug, highlightStep);
+			if (dock == null)
+				return;
+			dock.RecordSteps = IsRecording;
+			dock.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug, highlightStep);
 		}
 	}
 }

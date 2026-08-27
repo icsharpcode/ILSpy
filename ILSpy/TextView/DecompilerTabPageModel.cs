@@ -395,6 +395,7 @@ namespace ICSharpCode.ILSpy.TextView
 		int? pendingHighlightStep;
 		bool pendingIsDebug;
 
+
 		/// <summary>
 		/// Output-length safety limits (characters): a decompile that produces more than the active
 		/// limit is stopped and replaced with a "too much code" message rather than hanging/OOMing the
@@ -559,6 +560,10 @@ namespace ICSharpCode.ILSpy.TextView
 				var stepLimit = pendingStepLimit;
 				var highlightStep = pendingHighlightStep;
 				var isDebug = pendingIsDebug;
+				// Unlike the per-run overrides above, this is not reset: it describes the tab, and
+				// every run has to record the same way or a step index picked from one tree would
+				// select a different step on replay.
+				var recordSteps = AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>()?.RecordSteps ?? false;
 				pendingStepLimit = int.MaxValue;
 				pendingHighlightStep = null;
 				pendingIsDebug = false;
@@ -580,6 +585,7 @@ namespace ICSharpCode.ILSpy.TextView
 							StepLimit = stepLimit,
 							HighlightStep = highlightStep,
 							IsDebug = isDebug,
+							RecordSteps = recordSteps,
 						};
 						try
 						{
