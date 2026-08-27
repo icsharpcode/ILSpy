@@ -37,10 +37,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Null
 		}
 
+		public abstract class Animal
+		{
+			public abstract string Name { get; }
+
+			public Animal ToValidated()
+			{
+				return this;
+			}
+		}
+
+		public class Dog : Animal
+		{
+			public override string Name => "Dog";
+		}
+
+		public class Fish : Animal
+		{
+			public override string Name => "Fish";
+		}
+
 		public static bool? SwitchOverNullableEnum(State? state)
 		{
+			// Note: we output a cast for the first element because
+			// {false,true,null} has no "best common type".
+			// (however C# doesn't require this cast due to target
+			//  typing, but the decompiler doesn't make use of that yet)
 			return state switch {
-				State.False => false,
+				State.False => (bool?)false,
 				State.True => true,
 				State.Null => null,
 				_ => throw new InvalidOperationException(),
@@ -209,6 +233,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				StringComparison.OrdinalIgnoreCase => StringComparison.InvariantCulture,
 			};
 #endif
+		}
+
+		public static Animal Issue3683(int animalType)
+		{
+			return (animalType switch {
+				0 => (Animal)new Dog(),
+				1 => new Fish(),
+				_ => throw new ArgumentException("Invalid animal type"),
+			}).ToValidated();
 		}
 
 		public static int SwitchOnStringImplicitDefault(string s)
