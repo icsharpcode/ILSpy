@@ -223,21 +223,10 @@ public class DebugStepsTests
 		var ilTransformNames = CSharpDecompiler.GetILTransforms()
 			.Select(transform => transform.GetType().Name)
 			.ToHashSet();
-		AllDescriptions(csharp.Stepper.Steps).Should().NotContain(
+		ICSharpCode.Decompiler.Util.TreeTraversal.PreOrder(csharp.Stepper.Steps, n => n.Children).Select(n => n.Description).Should().NotContain(
 			description => ilTransformNames.Contains(StripStepNumber(description)),
 			"a closed pane leaves the IL transforms unrecorded");
 		csharp.Stepper.Steps.Should().BeEmpty("a closed pane leaves the whole pipeline unrecorded");
-
-		static System.Collections.Generic.IEnumerable<string> AllDescriptions(
-			System.Collections.Generic.IEnumerable<Stepper.Node> nodes)
-		{
-			foreach (var node in nodes)
-			{
-				yield return node.Description;
-				foreach (var description in AllDescriptions(node.Children))
-					yield return description;
-			}
-		}
 	}
 
 	[AvaloniaTest]

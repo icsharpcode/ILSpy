@@ -23,6 +23,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugSteps;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -56,7 +57,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			decompiler.DecompileTypeAsString(SampleType);
 
-			Assert.That(Descriptions(decompiler.Stepper.Steps), Has.Some.Contains(RecordedStep));
+			Assert.That(TreeTraversal.PreOrder(decompiler.Stepper.Steps, n => n.Children).Select(n => n.Description), Has.Some.Contains(RecordedStep));
 		}
 
 		/// <summary>
@@ -72,7 +73,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			decompiler.DecompileTypeAsString(SampleType);
 
-			Assert.That(Descriptions(decompiler.Stepper.Steps), Has.None.Contains(RecordedStep));
+			Assert.That(TreeTraversal.PreOrder(decompiler.Stepper.Steps, n => n.Children).Select(n => n.Description), Has.None.Contains(RecordedStep));
 		}
 
 		/// <summary>
@@ -301,7 +302,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var decompiler = CreateRecordingDecompiler();
 			decompiler.ILTransforms.Add(detachedStep);
 			decompiler.DecompileTypeAsString(SampleType);
-			int haltAt = AllNodes(decompiler.Stepper.Steps).Single(n => n.Description.Contains(DetachedStep)).BeginStep;
+			int haltAt = TreeTraversal.PreOrder(decompiler.Stepper.Steps, n => n.Children).Single(n => n.Description.Contains(DetachedStep)).BeginStep;
 
 			var replay = CreateRecordingDecompiler();
 			var replayStep = new DetachedFunctionILTransform("CleanUpFileName");
@@ -319,26 +320,6 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			decompiler.DecompileTypeAsString(SampleType);
 			return decompiler.Stepper.Steps.Single(n => n.Description.EndsWith("." + methodName, StringComparison.Ordinal));
-		}
-
-		static IEnumerable<Stepper.Node> AllNodes(IEnumerable<Stepper.Node> nodes)
-		{
-			foreach (var node in nodes)
-			{
-				yield return node;
-				foreach (var child in AllNodes(node.Children))
-					yield return child;
-			}
-		}
-
-		static IEnumerable<string> Descriptions(IEnumerable<Stepper.Node> nodes)
-		{
-			foreach (var node in nodes)
-			{
-				yield return node.Description;
-				foreach (var description in Descriptions(node.Children))
-					yield return description;
-			}
 		}
 
 		static CSharpDecompiler CreateRecordingDecompiler()

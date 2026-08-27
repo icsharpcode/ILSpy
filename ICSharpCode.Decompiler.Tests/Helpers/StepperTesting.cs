@@ -37,10 +37,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static CSharpDecompiler CreateDecompiler()
 		{
-			var module = new PEFile("ICSharpCode.Decompiler.dll");
-			var settings = new DecompilerSettings();
-			var typeSystem = new DecompilerTypeSystem(module, new UniversalAssemblyResolver(null, false, null), settings);
-			return new CSharpDecompiler(typeSystem, settings);
+			return new CSharpDecompiler("ICSharpCode.Decompiler.dll",
+				new UniversalAssemblyResolver(null, false, null), new DecompilerSettings());
 		}
 
 		/// <summary>
