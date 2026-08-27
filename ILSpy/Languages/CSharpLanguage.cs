@@ -738,9 +738,7 @@ namespace ICSharpCode.ILSpy.Languages
 
 		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, CSharpDecompiler decompiler)
 		{
-			bool handled = false;
-			TryWriteILAst(output, options, decompiler, ref handled);
-			if (!handled)
+			if (!TryWriteILAst(output, options, decompiler))
 			{
 				var settings = options.DecompilerSettings;
 				syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
@@ -776,10 +774,15 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 		}
 
-		// Implemented only under DEBUG (CSharpLanguage.DebugSteps.cs): writes the ILAst the pipeline was
-		// halted in, when a Debug Steps replay stopped it before there was any C# to show. A no-op
-		// partial in Release, where nothing sets a step limit.
-		static partial void TryWriteILAst(ITextOutput output, DecompilationOptions options, CSharpDecompiler decompiler, ref bool handled);
+		// Writes the ILAst the pipeline was halted in, when a Debug Steps replay stopped it before
+		// there was any C# to show, and reports whether it wrote anything. Implemented under DEBUG in
+		// CSharpLanguage.DebugSteps.cs; in Release nothing sets a step limit, so it never writes.
+		private static partial bool TryWriteILAst(ITextOutput output, DecompilationOptions options, CSharpDecompiler decompiler);
+
+#if !DEBUG
+		private static partial bool TryWriteILAst(ITextOutput output, DecompilationOptions options, CSharpDecompiler decompiler)
+			=> false;
+#endif
 
 		void AddWarningMessage(MetadataFile module, ITextOutput output, string line1, string? line2 = null,
 			string? buttonText = null, global::Avalonia.Media.IImage? buttonImage = null,

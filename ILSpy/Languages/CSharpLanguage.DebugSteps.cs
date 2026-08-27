@@ -56,10 +56,10 @@ namespace ICSharpCode.ILSpy.Languages
 		/// highlighting unambiguous, and which member the limit lands in follows decompilation order,
 		/// not the user's selection.
 		/// </summary>
-		static partial void TryWriteILAst(ITextOutput output, DecompilationOptions options, CSharpDecompiler decompiler, ref bool handled)
+		private static partial bool TryWriteILAst(ITextOutput output, DecompilationOptions options, CSharpDecompiler decompiler)
 		{
 			if (decompiler.StepLimitHaltedFunction is not { } function)
-				return;
+				return false;
 			if (output is AvaloniaEditTextOutput avaloniaOutput)
 			{
 				// The dump is IL, not C#; without this the editor would highlight it as C#.
@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 			output.WriteLine();
 			function.WriteTo(output, DebugStepsPane?.WritingOptions ?? new ILAstWritingOptions());
-			handled = true;
+			return true;
 		}
 
 		/// <summary>
