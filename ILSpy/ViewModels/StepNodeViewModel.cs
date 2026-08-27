@@ -23,6 +23,8 @@ using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.Decompiler.DebugSteps;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
@@ -39,8 +41,50 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		public Stepper.Node Step { get; }
 		public StepNodeViewModel? Parent { get; }
-		public IReadOnlyList<StepNodeViewModel> Children { get; }
 		public string Description => Step.Description;
+
+		/// <summary>
+		/// Which half of the pipeline the step belongs to, shown beside the description so the seam is
+		/// visible at a glance. Taken from what the step points at: the IL transforms anchor their
+		/// steps to instructions, the C# ones to syntax nodes. Empty when a step carries no anchor.
+		/// </summary>
+		public string Phase => PhaseOf(Step);
+
+		static string PhaseOf(Stepper.Node step)
+		{
+			switch (step.Position)
+			{
+				case ILInstruction:
+					return "IL";
+				case AstNode:
+					return "C#";
+			}
+			// A group opener carries no position of its own when anchoring it would misattribute a
+			// halt landing on it, so take the phase from the first step underneath that has one.
+			foreach (var child in step.Children)
+			{
+				string phase = PhaseOf(child);
+				if (phase.Length > 0)
+					return phase;
+			}
+			return string.Empty;
+		}
+
+		IReadOnlyList<StepNodeViewModel>? children;
+
+		/// <summary>
+		/// Wrappers for this step's children, built on first access. A recorded type runs to tens of
+		/// thousands of steps, so materialising the whole tree up front would put that many view-models
+		/// on the UI thread for the handful of rows an expanded path actually shows.
+		/// </summary>
+		public IReadOnlyList<StepNodeViewModel> Children => children ??= Wrap(Step.Children, this);
+
+		/// <summary>
+		/// Whether <see cref="Children"/> has been built. Lets a walk that only needs to fix up state
+		/// it previously set skip the subtrees nobody has looked at, instead of wrapping them to find
+		/// out there is nothing to fix.
+		/// </summary>
+		internal bool HasMaterializedChildren => children != null;
 
 		/// <summary>Two-way bound to the row's TreeViewItem.IsExpanded.</summary>
 		[ObservableProperty]
@@ -60,20 +104,16 @@ namespace ICSharpCode.ILSpy.ViewModels
 		{
 			Step = step;
 			Parent = parent;
-			var children = new List<StepNodeViewModel>(step.Children.Count);
-			foreach (var child in step.Children)
-			{
-				children.Add(new StepNodeViewModel(child, this));
-			}
-			Children = children;
 		}
 
-		public static IReadOnlyList<StepNodeViewModel> Wrap(IList<Stepper.Node> steps)
+		public static IReadOnlyList<StepNodeViewModel> Wrap(IList<Stepper.Node> steps) => Wrap(steps, null);
+
+		static IReadOnlyList<StepNodeViewModel> Wrap(IList<Stepper.Node> steps, StepNodeViewModel? parent)
 		{
 			var wrapped = new List<StepNodeViewModel>(steps.Count);
 			foreach (var step in steps)
 			{
-				wrapped.Add(new StepNodeViewModel(step, null));
+				wrapped.Add(new StepNodeViewModel(step, parent));
 			}
 			return wrapped;
 		}

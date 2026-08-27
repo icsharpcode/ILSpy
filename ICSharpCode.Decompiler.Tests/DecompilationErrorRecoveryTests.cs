@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Tests.Helpers;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using NUnit.Framework;
@@ -40,20 +41,19 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture]
 	public class DecompilationErrorRecoveryTests
 	{
-		const string SimulatedFailure = "Simulated transform failure";
 
 		[Test]
 		public void FailingMethodBodyKeepsTheRestOfTheType()
 		{
-			var decompiler = CreateDecompiler();
-			decompiler.ILTransforms.Add(new ThrowingILTransform("CleanUpFileName"));
+			var decompiler = StepperTesting.CreateDecompiler();
+			decompiler.ILTransforms.Add(new StepperTesting.ThrowingILTransform("CleanUpFileName"));
 
 			string code = decompiler.DecompileTypeAsString(
 				new FullTypeName("ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler"));
 
 			using (Assert.EnterMultipleScope())
 			{
-				Assert.That(code, Does.Contain(SimulatedFailure), "the exception text must show up in the output");
+				Assert.That(code, Does.Contain(StepperTesting.SimulatedFailure), "the exception text must show up in the output");
 				Assert.That(code, Does.Contain(CSharpDecompiler.DecompilationErrorReportUrl), "users need to be told where to report this");
 				Assert.That(code, Does.Contain("public static string CleanUpFileName"), "the failing member keeps its signature");
 				Assert.That(code, Does.Contain("DecompileProject"), "the other members of the type are unaffected");
@@ -63,8 +63,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void FailingMethodBodyIsRecordedAsError()
 		{
-			var decompiler = CreateDecompiler();
-			decompiler.ILTransforms.Add(new ThrowingILTransform("CleanUpFileName"));
+			var decompiler = StepperTesting.CreateDecompiler();
+			decompiler.ILTransforms.Add(new StepperTesting.ThrowingILTransform("CleanUpFileName"));
 
 			decompiler.DecompileTypeAsString(
 				new FullTypeName("ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler"));
@@ -80,8 +80,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ErrorsCoverOnlyTheLastDecompilation()
 		{
-			var decompiler = CreateDecompiler();
-			var failing = new ThrowingILTransform("CleanUpFileName");
+			var decompiler = StepperTesting.CreateDecompiler();
+			var failing = new StepperTesting.ThrowingILTransform("CleanUpFileName");
 			decompiler.ILTransforms.Add(failing);
 			decompiler.DecompileTypeAsString(
 				new FullTypeName("ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler"));
@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void FailingOutputKeepsTheFileWellFormed()
 		{
-			var decompiler = CreateDecompiler();
+			var decompiler = StepperTesting.CreateDecompiler();
 			var syntaxTree = decompiler.DecompileType(
 				new FullTypeName("ICSharpCode.Decompiler.CSharp.ProjectDecompiler.WholeProjectDecompiler"));
 
@@ -125,21 +125,5 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		static CSharpDecompiler CreateDecompiler()
-		{
-			var module = new PEFile("ICSharpCode.Decompiler.dll");
-			var settings = new DecompilerSettings();
-			var typeSystem = new DecompilerTypeSystem(module, new UniversalAssemblyResolver(null, false, null), settings);
-			return new CSharpDecompiler(typeSystem, settings);
-		}
-
-		sealed class ThrowingILTransform(string methodName) : IILTransform
-		{
-			public void Run(ILFunction function, ILTransformContext context)
-			{
-				if (function.Parent == null && function.Method?.Name == methodName)
-					throw new InvalidOperationException(SimulatedFailure);
-			}
-		}
 	}
 }

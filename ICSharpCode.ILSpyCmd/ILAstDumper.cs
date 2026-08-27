@@ -37,14 +37,14 @@ namespace ICSharpCode.ILSpyCmd
 	/// <summary>
 	/// Writes the decompiler's intermediate representation (ILAst) of a method body, optionally
 	/// stopping the IL transform pipeline after a chosen transform. This is the command-line
-	/// counterpart of the UI's "ILAst" language, and makes transform output diffable.
+	/// counterpart of the UI's Debug Steps pane, and makes transform output diffable.
 	/// </summary>
 	class ILAstDumper
 	{
 		static readonly IReadOnlyList<IILTransform> transforms = CSharpDecompiler.GetILTransforms();
 
 		readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
-			// same sugar as the UI's ILAst pane, so its output and this one are diffable
+			// same sugar as the Debug Steps pane's ILAst dump, so its output and this one are diffable
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true,
 		};

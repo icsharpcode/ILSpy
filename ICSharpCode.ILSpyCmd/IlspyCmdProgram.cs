@@ -119,7 +119,7 @@ Examples:
 
 #if DEBUG
 		// ILAst is the decompiler's own working representation: it exists to debug transforms
-		// while developing ILSpy, so - like the UI's ILAst language - it ships in debug builds
+		// while developing ILSpy, so - like the UI's Debug Steps pane - it ships in debug builds
 		// only and is absent from the released tool.
 		[Option("--ilast", "Show the decompiler's intermediate representation (ILAst) of method bodies, after the full IL transform pipeline. Select what to dump with --type or --member; without either, every method of the assembly is dumped.", CommandOptionType.NoValue)]
 		public bool ShowILAstFlag { get; }
