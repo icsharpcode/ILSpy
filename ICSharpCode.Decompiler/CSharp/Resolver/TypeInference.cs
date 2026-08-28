@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return;
 				// Two exact bounds that differ only in tuple element names are not conflicting;
 				// their names are merged instead (kept where both agree, dropped otherwise).
-				IType merged = MergeTupleNames(ExactBound, type);
+				IType merged = MergeSimilarTypes(ExactBound, type);
 				if (merged != null)
 					ExactBound = merged;
 				else
@@ -987,7 +987,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// MergeTupleNames in Roslyn's MethodTypeInference.cs.
 				IType fixedTo = tp.ExactBound;
 				foreach (var b in tp.LowerBounds.Concat(tp.UpperBounds))
-					fixedTo = MergeTupleNames(fixedTo, b) ?? fixedTo;
+					fixedTo = MergeSimilarTypes(fixedTo, b) ?? fixedTo;
 				// the exact bound determines the result, up to the merged element names
 				tp.FixedTo = fixedTo;
 				// check validity
@@ -1018,11 +1018,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		/// <summary>
-		/// Merges the tuple element names of two types that are equal apart from those names:
-		/// a name is kept where both sides agree and dropped where they conflict. Returns
-		/// <c>null</c> if the types differ in anything else.
+		/// Merges similar types that differ only in tuple element names and/or object/dynamic, recursively.
+		///  * for tuple element names, a name is kept where both sides agree and dropped where they conflict.
+		///  * for object/dynamic, dynamic is preferred over object. 
+		/// Returns <c>null</c> if the types differ in any other aspects.
 		/// </summary>
-		static IType MergeTupleNames(IType a, IType b)
+		static IType MergeSimilarTypes(IType a, IType b)
 		{
 			if (a.Equals(b))
 				return a;
@@ -1032,8 +1033,16 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return null;
 			if (a is NullabilityAnnotatedType na && b is NullabilityAnnotatedType nb)
 			{
-				return MergeTupleNames(na.TypeWithoutAnnotation, nb.TypeWithoutAnnotation)
+				return MergeSimilarTypes(na.TypeWithoutAnnotation, nb.TypeWithoutAnnotation)
 					?.ChangeNullability(a.Nullability);
+			}
+			if (a.Kind == TypeKind.Dynamic && b.IsKnownType(KnownTypeCode.Object))
+			{
+				return a;
+			}
+			if (b.Kind == TypeKind.Dynamic && a.IsKnownType(KnownTypeCode.Object))
+			{
+				return b;
 			}
 			if (a is TupleType ta && b is TupleType tb
 				&& ta.ElementTypes.Length == tb.ElementTypes.Length)
@@ -1041,7 +1050,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var mergedElements = ImmutableArray.CreateBuilder<IType>(ta.ElementTypes.Length);
 				for (int i = 0; i < ta.ElementTypes.Length; i++)
 				{
-					var merged = MergeTupleNames(ta.ElementTypes[i], tb.ElementTypes[i]);
+					var merged = MergeSimilarTypes(ta.ElementTypes[i], tb.ElementTypes[i]);
 					if (merged == null)
 						return null;
 					mergedElements.Add(merged);
@@ -1061,7 +1070,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var mergedArgs = new IType[pa.TypeArguments.Count];
 				for (int i = 0; i < pa.TypeArguments.Count; i++)
 				{
-					var merged = MergeTupleNames(pa.TypeArguments[i], pb.TypeArguments[i]);
+					var merged = MergeSimilarTypes(pa.TypeArguments[i], pb.TypeArguments[i]);
 					if (merged == null)
 						return null;
 					mergedArgs[i] = merged;
@@ -1070,7 +1079,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			if (a is ArrayType arrA && b is ArrayType arrB && arrA.Dimensions == arrB.Dimensions)
 			{
-				var mergedElem = MergeTupleNames(arrA.ElementType, arrB.ElementType);
+				var mergedElem = MergeSimilarTypes(arrA.ElementType, arrB.ElementType);
 				if (mergedElem == null)
 					return null;
 				return new ArrayType(arrA.Compilation, mergedElem, arrA.Dimensions, arrA.Nullability);
@@ -1080,7 +1089,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		/// <summary>
 		/// Collapses bounds that are equal modulo tuple element names (possibly nested) into a
-		/// single merged type via <see cref="MergeTupleNames"/>, across both bound sets. Bounds
+		/// single merged type via <see cref="MergeSimilarTypes"/>, across both bound sets. Bounds
 		/// without a shape-equivalent partner are returned as-is.
 		/// </summary>
 		static (IReadOnlyList<IType> LowerBounds, IReadOnlyList<IType> UpperBounds) MergeShapeEquivalentBounds(
@@ -1095,7 +1104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				bool absorbed = false;
 				for (int i = 0; i < mergedBounds.Count && !absorbed; i++)
 				{
-					IType merged = MergeTupleNames(mergedBounds[i], bound);
+					IType merged = MergeSimilarTypes(mergedBounds[i], bound);
 					if (merged != null)
 					{
 						// Bounds that are already equal merge to the existing entry itself;
@@ -1120,7 +1129,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// </summary>
 		static IType[] MapToMergedBounds(IEnumerable<IType> bounds, List<IType> mergedBounds)
 		{
-			return bounds.Select(b => mergedBounds.First(m => MergeTupleNames(m, b) != null)).Distinct().ToArray();
+			return bounds.Select(b => mergedBounds.First(m => MergeSimilarTypes(m, b) != null)).Distinct().ToArray();
 		}
 		#endregion
 

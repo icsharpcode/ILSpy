@@ -1195,6 +1195,21 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
+		public void BestCommonTypeNullAndInt()
+		{
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(SpecialType.NullType),
+					new ResolveResult(compilation.FindType(KnownTypeCode.Int32))
+				}, out bool success),
+				Is.EqualTo(compilation.FindType(KnownTypeCode.Int32)));
+			// By my read of the C# spec, the best common type is really the non-nullable `int`.
+			// It's only a following step that will report an error if the argument expressions
+			// are not convertible to the common type.
+			Assert.That(success);
+		}
+
+		[Test]
 		public void BestCommonTypeStringAndObject()
 		{
 			bool success;
@@ -1204,6 +1219,30 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 					new ResolveResult(compilation.FindType(KnownTypeCode.Object))
 				}, out success),
 				Is.EqualTo(compilation.FindType(KnownTypeCode.Object)));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void BestCommonTypeStringAndDynamic()
+		{
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(compilation.FindType(KnownTypeCode.String)),
+					new ResolveResult(SpecialType.Dynamic)
+				}, out bool success),
+				Is.EqualTo(SpecialType.Dynamic));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void BestCommonTypeObjectAndDynamic()
+		{
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(compilation.FindType(KnownTypeCode.Object)),
+					new ResolveResult(SpecialType.Dynamic)
+				}, out bool success),
+				Is.EqualTo(SpecialType.Dynamic));
 			Assert.That(success);
 		}
 		#endregion
