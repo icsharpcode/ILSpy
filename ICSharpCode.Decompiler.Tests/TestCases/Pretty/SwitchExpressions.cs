@@ -244,6 +244,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}).ToValidated();
 		}
 
+		public static void ThrowDifferentExceptions(int i)
+		{
+			throw i switch {
+				0 => (Exception)new ArgumentException("Invalid argument"),
+				1 => new InvalidOperationException("Invalid operation"),
+				_ => new NotSupportedException(),
+			};
+		}
+
 		public static int SwitchOnStringImplicitDefault(string s)
 		{
 			return s switch {

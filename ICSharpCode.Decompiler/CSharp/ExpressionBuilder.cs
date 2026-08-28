@@ -1272,7 +1272,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitThrow(Throw inst, TranslationContext context)
 		{
-			return new ThrowExpression(Translate(inst.Argument))
+			var ex = Translate(inst.Argument, typeHint: compilation.FindType(KnownTypeCode.Exception));
+			return new ThrowExpression(ex)
 				.WithILInstruction(inst)
 				.WithRR(new ThrowResolveResult());
 		}

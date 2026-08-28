@@ -434,7 +434,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedStatement VisitThrow(Throw inst)
 		{
-			return new ThrowStatement(exprBuilder.Translate(inst.Argument)).WithILInstruction(inst);
+			var ex = exprBuilder.Translate(inst.Argument, typeHint: typeSystem.FindType(KnownTypeCode.Exception));
+			return new ThrowStatement(ex).WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedStatement VisitRethrow(Rethrow inst)
