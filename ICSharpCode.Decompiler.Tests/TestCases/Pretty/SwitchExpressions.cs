@@ -244,6 +244,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}).ToValidated();
 		}
 
+		public static bool NullableDateTime(int i)
+		{
+			return (i switch {
+				0 => (DateTime?)DateTime.Now,
+				1 => DateTime.UtcNow,
+				_ => null,
+			}).HasValue;
+		}
+
 		public static void ThrowDifferentExceptions(int i)
 		{
 			throw i switch {
