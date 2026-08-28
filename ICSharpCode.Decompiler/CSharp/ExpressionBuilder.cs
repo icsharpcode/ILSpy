@@ -1272,7 +1272,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitThrow(Throw inst, TranslationContext context)
 		{
-			return new ThrowExpression(Translate(inst.Argument))
+			var ex = Translate(inst.Argument, typeHint: compilation.FindType(KnownTypeCode.Exception));
+			return new ThrowExpression(ex)
 				.WithILInstruction(inst)
 				.WithRR(new ThrowResolveResult());
 		}
@@ -4342,6 +4343,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				resultType = compilation.FindType(inst.ResultType);
 			}
 
+			var expressionsForTypeInference = new List<TranslatedExpression>();
+
 			foreach (var section in inst.Sections)
 			{
 				if (section == defaultSection)
@@ -4370,12 +4373,51 @@ namespace ICSharpCode.Decompiler.CSharp
 				switchExpr.SwitchSections.Add(defaultSES);
 			}
 
-			return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(resultType));
+			var ti = new TypeInference(compilation, resolver.conversions);
+			IType commonType = ti.GetBestCommonType(
+				expressionsForTypeInference.SelectArray(e => e.ResolveResult),
+				out bool success);
+			if (success && commonType.GetStackType() == inst.ResultType)
+			{
+				return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(commonType));
+			}
+			else
+			{
+				// Try to help out the C# compiler by casting the first element to the expected type:
+				expressionsForTypeInference[0].Expression.ReplaceWith(
+					node => expressionsForTypeInference[0] = expressionsForTypeInference[0].ConvertTo(resultType, this)
+				);
+				commonType = ti.GetBestCommonType(
+					expressionsForTypeInference.SelectArray(e => e.ResolveResult),
+					out success);
+				if (success && commonType.GetStackType() == inst.ResultType)
+				{
+					return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(commonType));
+				}
+				else
+				{
+					// Cast all expressions
+					for (int i = 1; i < expressionsForTypeInference.Count; i++)
+					{
+						expressionsForTypeInference[i].Expression.ReplaceWith(
+							node => expressionsForTypeInference[i].ConvertTo(resultType, this)
+						);
+					}
+					return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(resultType));
+				}
+			}
 
 			Expression TranslateSectionBody(IL.SwitchSection section)
 			{
 				var body = Translate(section.Body, resultType);
-				return body.ConvertTo(resultType, this, allowImplicitConversion: true);
+				// Initially we allow implicit conversions for the body,
+				body = body.ConvertTo(resultType, this, allowImplicitConversion: true);
+				// but we may add explicit casts later if needed to satisfy the C# compiler.
+				if (body.Expression is not ThrowExpression)
+				{
+					expressionsForTypeInference.Add(body);
+				}
+				return body;
 			}
 		}
 
