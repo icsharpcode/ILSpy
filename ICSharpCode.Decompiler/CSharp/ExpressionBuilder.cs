@@ -853,10 +853,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ByReferenceResolveResult(expr.ResolveResult, ReferenceKind.Ref));
 		}
 
+		/// <summary>
+		/// Gets whether the variable still carries the type the ILReader hands a stack slot, which is
+		/// derived from the stack type alone and therefore says nothing about the value stored in it.
+		/// A slot that was given a type on purpose has to keep it.
+		/// </summary>
+		bool HasDefaultStackSlotType(ILVariable variable)
+		{
+			if (variable.Type.Equals(compilation.FindType(variable.StackType)))
+				return true;
+			// native ints reach the C# layer as nint/nuint rather than as the IntPtr the reader used.
+			return variable.StackType == StackType.I && variable.Type.Kind is TypeKind.NInt or TypeKind.NUInt;
+		}
+
 		protected internal override TranslatedExpression VisitStLoc(StLoc inst, TranslationContext context)
 		{
 			var translatedValue = Translate(inst.Value, typeHint: inst.Variable.Type);
-			if (inst.Variable.Kind == VariableKind.StackSlot && !loadedVariablesSet.Contains(inst.Variable))
+			if (inst.Variable.Kind == VariableKind.StackSlot && !loadedVariablesSet.Contains(inst.Variable) && HasDefaultStackSlotType(inst.Variable))
 			{
 				// Stack slots in the ILAst have inaccurate types (e.g. System.Object for StackType.O)
 				// so we should replace them with more accurate types where possible:

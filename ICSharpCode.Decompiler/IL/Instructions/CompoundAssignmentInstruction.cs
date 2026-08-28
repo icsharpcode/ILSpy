@@ -18,9 +18,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -318,6 +322,11 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || IsIncrementOrDecrement(method));
 		}
 
+		/// <summary>
+		/// Gets whether <paramref name="method"/> is a static increment or decrement operator.
+		/// Whether "x++" can stand in for a call to it also depends on the target it is applied
+		/// to: the statement form binds a C# 14 instance operator on the target's type first.
+		/// </summary>
 		public static bool IsIncrementOrDecrement(IMethod method, DecompilerSettings? settings = null)
 		{
 			if (!(method.IsOperator && method.IsStatic))
@@ -327,6 +336,40 @@ namespace ICSharpCode.Decompiler.IL
 			if (method.Name is "op_CheckedIncrement" or "op_CheckedDecrement")
 				return settings?.CheckedOperators ?? true;
 			return false;
+		}
+
+		/// <summary>
+		/// Gets whether the variable is used as the receiver of a call to a C# 14 instance
+		/// compound assignment operator. Such a call can only be written as "x op= y" or "x++",
+		/// which requires x to be an assignable variable; a variable C# treats as read-only
+		/// (a foreach or using variable, for example) cannot take that place.
+		/// </summary>
+		public static bool IsCompoundAssignmentReceiver(ILVariable variable)
+		{
+			return variable.LoadInstructions.Concat<ILInstruction>(variable.AddressInstructions)
+				.Any(IsCompoundAssignmentReceiverUse);
+		}
+
+		/// <summary>
+		/// Gets the metadata name of the checked operator paired with an unchecked one, and vice
+		/// versa. Which of the two "x op= y" binds depends on the checked context the assignment
+		/// ends up in, so code reasoning about that form has to consider the pair together.
+		/// </summary>
+		public static string GetCheckedSiblingName(string operatorName)
+		{
+			return operatorName.StartsWith("op_Checked", StringComparison.Ordinal)
+				? "op_" + operatorName.Substring("op_Checked".Length)
+				: "op_Checked" + operatorName.Substring("op_".Length);
+		}
+
+		/// <summary>
+		/// Gets whether the instruction is the receiver of a call to a C# 14 instance compound
+		/// assignment operator.
+		/// </summary>
+		public static bool IsCompoundAssignmentReceiverUse(ILInstruction inst)
+		{
+			return inst.Parent is CallInstruction { Method: { IsOperator: true, IsStatic: false } } call
+				&& call.Arguments.Count > 0 && call.Arguments[0] == inst;
 		}
 
 		public static bool IsStringConcat(IMethod method)
