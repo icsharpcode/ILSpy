@@ -103,6 +103,12 @@ Never put more than one C# language feature on one branch.
 - After matcher / rewriter edits, **run the relevant tests, not just the build.** `dotnet build` green ≠ behaviour correct.
 - **To see what a transform did, dump the ILAst:** `ilspycmd <assembly> -m <doc-id> --ilast` prints the IL transform pipeline's result, and `--after-transform <name-or-index>` stops the pipeline early so two stages can be diffed. Debug builds only (like the UI's Debug Steps pane), so run it from a local build, not the installed tool.
 
+## Code review
+
+- **A PR review and exploratory testing are different jobs.** A review is scoped to the PR's feature and reports only genuine bugs *the diff caused*. Exploratory testing — corpus sweeps, `nugetfuzz`, `decompdiff`, round-tripping real assemblies — is encouraged on a PR branch, but its results never go into the review verbatim: a sweep measures the whole decompiler, not the diff. Triage first; what the diff caused may become a comment, the rest becomes an issue.
+- **"Review X" means produce the findings and report them back.** Posting to the PR is a separate, explicitly requested step. Never set `approve` / `request-changes` on someone's behalf.
+- **Read [.github/CODE_REVIEW.md](.github/CODE_REVIEW.md) before writing a single review comment** — the bar for what gets posted, what evidence a finding needs, and how to retract one without damaging the replies to it.
+
 ## Investigating dependencies
 
 - **Decompile NuGet packages with this repo's `ilspycmd`** to inspect dependency internals — don't grep binaries.
