@@ -111,7 +111,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override AstNode VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
-			if (context.Settings.AutomaticProperties
+			// Same rule as CSharpDecompiler.MemberIsHidden applies to the backing field: either
+			// setting on its own allows the field declaration to disappear, and
+			// GetterOnlyAutomaticProperties vetoes the getter-only case for both. Asking only
+			// about AutomaticProperties would skip the transform for a field-backed property
+			// while ExpressionBuilder.ConvertField has already printed "field" in its accessors,
+			// leaving the declaration and the keyword in the same output.
+			if ((context.Settings.AutomaticProperties || context.Settings.FieldKeyword)
 				&& (propertyDeclaration.Setter is not null || context.Settings.GetterOnlyAutomaticProperties))
 			{
 				AstNode? result = TransformAutomaticProperty(propertyDeclaration);

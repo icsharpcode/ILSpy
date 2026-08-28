@@ -129,6 +129,14 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task NoAutomaticProperties([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				AutomaticProperties = false
+			});
+		}
+
+		[Test]
 		public async Task NoFieldKeyword([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {

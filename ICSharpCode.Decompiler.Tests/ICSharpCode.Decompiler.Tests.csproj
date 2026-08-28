@@ -264,6 +264,8 @@
     <None Include="TestCases\Ugly\AggressiveScalarReplacementOfAggregates.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoArrayInitializers.Expected.cs" />
     <None Include="TestCases\Ugly\NoArrayInitializers.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoAutomaticProperties.Expected.cs" />
+    <None Include="TestCases\Ugly\NoAutomaticProperties.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
