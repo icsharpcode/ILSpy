@@ -16,6 +16,17 @@ internal class NoAutomaticProperties
 		}
 	}
 
+	public int WithInitializer {
+		[CompilerGenerated]
+		get {
+			return field;
+		}
+		[CompilerGenerated]
+		set {
+			field = value;
+		}
+	} = 5;
+
 	public int SemiAuto {
 		get {
 			return field;

@@ -16,23 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-
 namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 {
-	internal class NoAutomaticProperties
+	internal class NoGetterOnlyAutomaticProperties
 	{
-		public int Plain { get; set; }
+		public int GetOnly { get; }
 
-		public int WithInitializer { get; set; } = 5;
+		public int WithSetter { get; set; }
 
-		public int SemiAuto {
-			get {
-				return field;
-			}
-			set {
-				field = Math.Max(0, value);
-			}
+		public NoGetterOnlyAutomaticProperties()
+		{
+			GetOnly = 5;
 		}
 	}
 }

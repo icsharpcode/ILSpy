@@ -274,6 +274,8 @@
     <None Include="TestCases\Ugly\NoFieldKeyword.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoForEachStatement.Expected.cs" />
     <None Include="TestCases\Ugly\NoForEachStatement.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoGetterOnlyAutomaticProperties.Expected.cs" />
+    <None Include="TestCases\Ugly\NoGetterOnlyAutomaticProperties.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoInitAccessors.Expected.cs" />
     <None Include="TestCases\Ugly\NoInitAccessors.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoLocalFunctions.Expected.cs" />

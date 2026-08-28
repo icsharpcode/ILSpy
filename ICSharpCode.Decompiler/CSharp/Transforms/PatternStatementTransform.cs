@@ -1089,12 +1089,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			property = null;
 			if (!NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out var propertyName))
 				return false;
-			if (!field.IsCompilerGenerated())
-				return false;
-			property = field.DeclaringTypeDefinition?
+			var candidate = field.DeclaringTypeDefinition?
 				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers)
 				.FirstOrDefault();
-			return property != null;
+			// Answering through TryGetBackingField keeps the two directions of the same question
+			// from disagreeing: it is the predicate every transform consults before removing a
+			// declaration, and it checks more than the name (compiler-generated, staticness and
+			// field type all have to match the property).
+			if (candidate == null || !TryGetBackingField(candidate, out var backingField)
+				|| !field.MemberDefinition.Equals(backingField.MemberDefinition))
+			{
+				return false;
+			}
+			property = candidate;
+			return true;
 		}
 
 		/// <summary>
@@ -1119,45 +1127,47 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		Identifier? ReplaceBackingFieldUsage(Identifier identifier)
 		{
-			if (NameCouldBeBackingFieldOfAutomaticProperty(identifier.Name, out _))
+			// The resolve result, not the spelling, identifies the member: after
+			// ExpressionBuilder.ConvertField the same backing field appears both as the C# 14 "field"
+			// keyword and under its metadata name, carrying the same annotation either way.
+			var parent = identifier.Parent;
+			if (parent == null)
+				return null;
+			var mrr = parent.Annotation<MemberResolveResult>();
+			if (mrr?.Member is not IField field || !IsBackingFieldOfAutomaticProperty(field, out var property)
+				|| currentMethod?.AccessorOwner == property)
 			{
-				var parent = identifier.Parent;
-				if (parent == null)
-					return null;
-				var mrr = parent.Annotation<MemberResolveResult>();
-				if (mrr?.Member is IField field && IsBackingFieldOfAutomaticProperty(field, out var property)
-					&& currentMethod?.AccessorOwner != property)
-				{
-					if (CanTransformToAutomaticProperty(property, !(field.IsCompilerGenerated() && field.Name == "_" + property.Name)))
-					{
-						if (!property.CanSet && !context.Settings.GetterOnlyAutomaticProperties && !context.Settings.FieldKeyword)
-							return null;
-					}
-					else if (context.Settings.FieldKeyword && !property.CanSet && IsConstructorStoreTarget(parent, field)
-						&& BackingFieldWillBeRemoved(property, field, parent))
-					{
-						// A direct store to the backing field of a setter-less field-backed
-						// property is expressible as a property assignment in a constructor -
-						// but only where the property declaration actually becomes field-backed.
-						// If TransformFieldBackedProperty bails, the property keeps explicit
-						// accessors and no setter, so assigning it would not compile (CS0200).
-					}
-					else
-					{
-						// Stores that initialize a field-backed property with a setter are left
-						// as field references and lifted into the property initializer by
-						// TransformFieldAndConstructorInitializers (a property assignment would
-						// invoke the setter); everything else is inexpressible with the "field"
-						// keyword and keeps the field declared.
-						return null;
-					}
-					context.Step("Replace backing field use with property", identifier);
-					parent.RemoveAnnotations<MemberResolveResult>();
-					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
-					return Identifier.Create(property.Name);
-				}
+				return null;
 			}
-			return null;
+			// With the keyword available TransformAutomaticProperty routes every property through
+			// TransformFieldBackedProperty, so its verdict on the declaration is the only one that
+			// counts: while the field stays declared, a field reference remains the correct - and
+			// only compilable - rendering.
+			if (context.Settings.FieldKeyword && !BackingFieldWillBeRemoved(property, field, parent))
+				return null;
+			if (context.Settings.AutomaticProperties
+				&& CanTransformToAutomaticProperty(property, !(field.IsCompilerGenerated() && field.Name == "_" + property.Name)))
+			{
+				if (!property.CanSet && !context.Settings.GetterOnlyAutomaticProperties)
+					return null;
+			}
+			else if (context.Settings.FieldKeyword && !property.CanSet && IsConstructorStoreTarget(parent, field))
+			{
+				// A setter-less field-backed property keeping explicit accessors is still assignable
+				// by name inside a constructor of its declaring type, and that is the only form the
+				// store has left once the declaration is gone.
+			}
+			else
+			{
+				// The property keeps explicit accessors and a setter, so its name would invoke that
+				// setter. The store stays a field reference and TransformFieldAndConstructorInitializers
+				// lifts it into the property initializer, which is what field-backed storage means.
+				return null;
+			}
+			context.Step("Replace backing field use with property", identifier);
+			parent.RemoveAnnotations<MemberResolveResult>();
+			parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
+			return Identifier.Create(property.Name);
 		}
 
 		bool IsConstructorStoreTarget(AstNode node, IField field)
@@ -1170,7 +1180,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </summary>
 		bool BackingFieldWillBeRemoved(IProperty property, IField field, AstNode nodeInTree)
 		{
-			return TryGetBackingField(property, out var backingField)
+			return context.Settings.FieldKeyword
+				// The same gate VisitPropertyDeclaration applies: a setter-less property is only
+				// transformed where getter-only auto-properties are allowed.
+				&& (property.CanSet || context.Settings.GetterOnlyAutomaticProperties)
+				&& TryGetBackingField(property, out var backingField)
 				&& field.MemberDefinition.Equals(backingField.MemberDefinition)
 				&& OutsideReferencesAreExpressible(nodeInTree, backingField);
 		}
