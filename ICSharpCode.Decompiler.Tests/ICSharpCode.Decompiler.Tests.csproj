@@ -280,6 +280,8 @@
     <None Include="TestCases\Ugly\NoNewOfT.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
     <None Include="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoUserDefinedCompoundAssignmentOperators.Expected.cs" />
+    <None Include="TestCases\Ugly\NoUserDefinedCompoundAssignmentOperators.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoUnsignedRightShift.Expected.cs" />
     <None Include="TestCases\Ugly\NoUnsignedRightShift.Expected.cs" />
     <!-- top-level statements: neither the input nor the expected output can be compiled

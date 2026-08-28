@@ -871,6 +871,13 @@ namespace ICSharpCode.Decompiler
 		public partial bool FieldKeyword { get; set; }
 
 		/// <summary>
+		/// Gets/Sets whether C# 14.0 user-defined compound assignment operators should be used.
+		/// </summary>
+		[Description("DecompilerSettings.UserDefinedCompoundAssignmentOperators")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp14_0)]
+		public partial bool UserDefinedCompoundAssignmentOperators { get; set; }
+
+		/// <summary>
 		/// Gets/sets whether the decompiler should separate local variable declarations
 		/// from their initialization.
 		/// </summary>
