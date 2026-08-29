@@ -24,12 +24,17 @@
 // changes across real-world code. The textual complement to the Windows
 // round-trip tests, which verify correctness but not output quality.
 //
-// usage: dotnet run decompdiff.cs -- --old <ILSpy-checkout|Decompiler.dll> --new <ILSpy-checkout|Decompiler.dll>
-//                                    [-o <report-dir>] [--build] [--refs <dir>]... <dll|dir>...
+// usage: dotnet run decompdiff.cs -- --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...>
+//                                    [-o <report-dir>] [--build] [--refs <dir>]... <dll|dir|@list>...
 //
 // - checkout args are built on demand (Release; restore keeps packages.lock.json
 //   whole via -p:RestoreEnablePackagePruning=false); pass --build to force rebuild.
-// - corpus dirs are scanned recursively for *.dll (e.g. ~/.cache/nugetfuzz).
+// - a commit-ish (branch, tag, sha, FETCH_HEAD) is resolved against the repository
+//   the tool is run from and checked out into a worktree under
+//   ~/.cache/decompdiff/<repo>/<commit>, kept and reused so a rerun keeps the
+//   Release build it already contains.
+// - corpus dirs are scanned recursively for *.dll (e.g. ~/.cache/nugetfuzz); @list reads
+//   the entries from a file, one per line, as nugetfuzz does with its package list.
 // - changed/errored types are written to <report-dir>/{old,new}/...; inspect with
 //   `git diff --no-index <report-dir>/old <report-dir>/new`, or open the generated
 //   <report-dir>/index.html, which carries the same data with inline diffs.
@@ -93,13 +98,24 @@ for (int i = 0; i < args.Length; i++)
 			refDirs.Add(args[++i]);
 			break;
 		default:
-			corpus.Add(args[i]);
+			// @file lists corpus entries one per line, the same spelling nugetfuzz uses. Shells
+			// differ on how (or whether) a file expands into arguments, so the tool reads it.
+			if (args[i].StartsWith('@'))
+			{
+				corpus.AddRange(File.ReadAllLines(args[i][1..])
+					.Select(l => l.Trim())
+					.Where(l => l.Length > 0 && !l.StartsWith('#')));
+			}
+			else
+			{
+				corpus.Add(args[i]);
+			}
 			break;
 	}
 }
 if (oldSpec == null || newSpec == null || corpus.Count == 0)
 {
-	Console.Error.WriteLine("usage: decompdiff --old <ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--build] [--refs <dir>]... <dll|dir>...");
+	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--build] [--refs <dir>]... <dll|dir|@list>...");
 	return 1;
 }
 reportDir ??= "decompdiff-report";
@@ -114,8 +130,19 @@ if (Directory.Exists(reportDir))
 }
 Directory.CreateDirectory(reportDir);
 
-var oldSide = Side.Create("old", oldSpec, forceBuild);
-var newSide = Side.Create("new", newSpec, forceBuild);
+Side oldSide, newSide;
+try
+{
+	oldSide = Side.Create("old", oldSpec, forceBuild);
+	newSide = Side.Create("new", newSpec, forceBuild);
+}
+catch (ArgumentException ex)
+{
+	// A mistyped branch name is the easiest way to get here, and its message says more
+	// than the stack trace does.
+	Console.Error.WriteLine(ex.Message);
+	return 1;
+}
 Console.WriteLine($"old: {oldSide.Description}");
 Console.WriteLine($"new: {newSide.Description}");
 
@@ -856,9 +883,19 @@ class Side
 			// The dll timestamp exposes stale pre-existing builds; --build forces a fresh one.
 			description = $"{checkout} ({GitDescribe(checkout)}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
 		}
+		else if (TryResolveCommit(spec, out var commit, out var repoRoot))
+		{
+			// A git ref, so a PR or a tag can be diffed without preparing checkouts by hand.
+			// The worktree is keyed by commit and kept: reusing it reuses the Release build
+			// already sitting in its bin/, which is what dominates the runtime of a rerun.
+			var checkout = EnsureWorktree(repoRoot, commit);
+			dllPath = BuildCheckout(checkout, forceBuild);
+			description = $"{spec} ({commit[..9]}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
+		}
 		else
 		{
-			throw new ArgumentException($"--{name} {spec}: no such file or directory");
+			throw new ArgumentException(
+				$"--{name} {spec}: not a file, a directory, or a commit-ish in the repository at {Environment.CurrentDirectory}");
 		}
 		var alc = new DecompilerLoadContext(name, dllPath);
 		return new Side(alc.LoadFromAssemblyPath(dllPath), description);
@@ -897,24 +934,66 @@ class Side
 			throw new InvalidOperationException($"{exe} {arguments} failed:\n{output}");
 	}
 
-	static string GitDescribe(string checkout)
+	// Resolves a commit-ish against the repository the tool is run from. Files and directories
+	// win over refs, so a branch sharing a name with a directory still needs the path spelled out.
+	static bool TryResolveCommit(string spec, out string commit, out string repoRoot)
+	{
+		commit = "";
+		repoRoot = "";
+		var root = Git(Environment.CurrentDirectory, "rev-parse", "--show-toplevel");
+		if (root == null)
+			return false;
+		var resolved = Git(root, "rev-parse", "--verify", "--quiet", spec + "^{commit}");
+		if (string.IsNullOrEmpty(resolved))
+			return false;
+		commit = resolved;
+		repoRoot = root;
+		return true;
+	}
+
+	// Worktrees live outside the repository, so they never show up in its status or get
+	// swept up by a clean; `git worktree list` still shows them, and they are safe to delete.
+	static string EnsureWorktree(string repoRoot, string commit)
+	{
+		var dir = Path.Combine(
+			Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+			".cache", "decompdiff", Path.GetFileName(repoRoot), commit);
+		if (Directory.Exists(dir))
+			return dir;
+		Directory.CreateDirectory(Path.GetDirectoryName(dir)!);
+		Console.WriteLine($"  $ git worktree add --detach {dir} {commit[..9]}");
+		if (Git(repoRoot, "worktree", "add", "--detach", dir, commit) == null)
+			throw new InvalidOperationException($"git worktree add failed for {commit}");
+		return dir;
+	}
+
+	// Runs git and returns its trimmed stdout, or null if it could not be run or failed.
+	static string? Git(string workingDirectory, params string[] arguments)
 	{
 		try
 		{
-			var psi = new ProcessStartInfo("git", "describe --always --dirty --exclude *") {
-				WorkingDirectory = checkout,
+			var psi = new ProcessStartInfo("git") {
+				WorkingDirectory = workingDirectory,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 			};
+			foreach (var argument in arguments)
+				psi.ArgumentList.Add(argument);
 			using var p = Process.Start(psi)!;
 			var output = p.StandardOutput.ReadToEnd().Trim();
 			p.WaitForExit();
-			return p.ExitCode == 0 && output.Length > 0 ? output : "unknown";
+			return p.ExitCode == 0 ? output : null;
 		}
 		catch
 		{
-			return "unknown";
+			return null;
 		}
+	}
+
+	static string GitDescribe(string checkout)
+	{
+		var output = Git(checkout, "describe", "--always", "--dirty", "--exclude", "*");
+		return string.IsNullOrEmpty(output) ? "unknown" : output;
 	}
 
 	// Decompiles every top-level type; null when the assembly itself cannot be
