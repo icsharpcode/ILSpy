@@ -76,9 +76,14 @@ The report directory gets `summary.md`, a self-contained `index.html` with inlin
 changed types dumped under `old/` and `new/` for `git diff --no-index report/old report/new`.
 
 Each assembly is decompiled from a staging directory holding its neighbours plus the transitive
-closure of its references, found in `--refs` directories, the NuGet cache and the .NET Framework
-reference packs. Both sides read the same staging directory, so anything still unresolved degrades
-them identically and the diff stays meaningful. Unresolved references are listed in the summary.
+closure of its references, found in the reference-assembly pack matching each assembly's own target
+framework (`Microsoft.NETCore.App.Ref` and the Windows-desktop / ASP.NET packs for .NET Core targets,
+`Microsoft.NETFramework.ReferenceAssemblies` for classic net4x), then `--refs` directories and the
+NuGet cache. Getting the pack right matters as much as it does for `nugetfuzz`: binding a net9.0
+assembly against the net4x packs resolves mscorlib but not `ValueTask` or the async method builders,
+and every async method then decompiles as a raw state machine. Both sides read the same staging
+directory, so anything still unresolved degrades them identically and the diff stays meaningful.
+Unresolved references are listed in the summary.
 
 ## Windows notes
 
