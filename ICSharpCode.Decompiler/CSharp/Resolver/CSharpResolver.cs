@@ -1245,6 +1245,182 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return operators;
 		}
 
+		#region C# 14 user-defined compound assignment operator binding
+		/// <summary>
+		/// Gets the C# 14 instance compound assignment operators that "x op= y" considers when x
+		/// has the type <paramref name="targetType"/>.
+		/// </summary>
+		/// <remarks>
+		/// Ordinary member lookup skips operators, so they have to be collected from the type by
+		/// hand. C# requires a user-defined operator to be public (CS9308), so one that is not
+		/// cannot be bound in operator form at all.
+		///
+		/// <paramref name="alternateName"/> collects a second operator name in the same pass, for
+		/// callers that have to consider the checked and the unchecked operator together.
+		/// </remarks>
+		public List<IMethod> GetInstanceOperatorCandidates(IType targetType, string name, string alternateName = null)
+		{
+			var candidates = targetType.GetMethods(
+				m => m.IsOperator && !m.IsStatic && m.Accessibility == Accessibility.Public
+					&& (m.Name == name || m.Name == alternateName)
+			).ToList();
+			if (candidates.Count <= 1)
+				return candidates;
+			// An override and the member it overrides share a signature; member lookup keeps only
+			// the most derived one, and passing both to overload resolution would make every call
+			// ambiguous.
+			return candidates.Where(
+				m => !candidates.Any(other => other != m
+					&& InheritanceHelper.GetBaseMembers(other, includeImplementedInterfaces: false)
+						.Any(b => b.MemberDefinition == m.MemberDefinition))
+			).ToList();
+		}
+
+		/// <summary>
+		/// Gets whether "x op= y" would bind a C# 14 instance compound assignment operator instead
+		/// of <paramref name="method"/>, the static operator the IL calls, where x has the type
+		/// <paramref name="targetType"/> and y the type <paramref name="valueType"/>
+		/// (null for the increment and decrement operators, which take no argument).
+		/// </summary>
+		/// <param name="targetIsVariable">
+		/// Whether x denotes a storage location. An instance operator mutates its receiver in
+		/// place, so C# only considers one where x is a variable; for a property or an indexer the
+		/// first phase described below does not happen at all.
+		/// </param>
+		/// <remarks>
+		/// C# resolves "x op= y" in two phases: the instance operators reachable from the static
+		/// type of x are considered first, and the static operators only if none of them is
+		/// applicable. An applicable instance operator wins even where a static one would be the
+		/// better match by conversion, and one inherited from a base class beats a static operator
+		/// declared on the target's own type. Folding "x = x op y" into "x op= y" is therefore only
+		/// safe while the first phase comes up empty.
+		/// </remarks>
+		public bool IsShadowedByInstanceOperator(IMethod method, IType targetType, IType valueType,
+			bool targetIsVariable)
+		{
+			ICompilation compilation = this.Compilation;
+			if (!targetIsVariable)
+				return false;
+			string name = GetCompoundAssignmentOperatorName(method.Name);
+			if (name == null)
+				return false;
+			// Several ILAst nodes are typed by their stack type rather than by the C# type they are
+			// written as, and System.Object then says nothing about what the operator form would
+			// bind against. A user-defined operator always takes its own declaring type, so its
+			// operand is the closest stand-in for the type the C# layer will resolve.
+			if (targetType.IsKnownType(KnownTypeCode.Object) && method.Parameters.Count > 0)
+				targetType = method.Parameters[0].Type.UnwrapByRef();
+			// Both the checked and the unchecked instance operator can take the call: which of them
+			// applies depends on the checked context the assignment ends up in.
+			string checkedName = IL.UserDefinedCompoundAssign.GetCheckedSiblingName(name);
+			var candidates = GetInstanceOperatorCandidates(targetType, name, checkedName);
+			if (candidates.Count == 0)
+				return false;
+			ResolveResult[] arguments = valueType == null
+				? []
+				: [new ResolveResult(valueType.UnwrapByRef())];
+			var or = new OverloadResolution(compilation, arguments);
+			foreach (var candidate in candidates)
+			{
+				or.AddCandidate(candidate);
+			}
+			return or.FoundApplicableCandidate;
+		}
+
+		/// <summary>
+		/// Gets the candidates of <see cref="GetInstanceOperatorCandidates(IType, string, string)"/> reduced
+		/// the way C# overload resolution reduces them for the given arguments: a candidate declared
+		/// in a base type is removed when a candidate declared in a more derived type is applicable.
+		/// An applicable operator on the receiver's own type therefore takes the call even where a
+		/// base-type operator would be the better match by conversion.
+		/// </summary>
+		public List<IMethod> GetInstanceOperatorCandidates(IType targetType, string name, ResolveResult[] arguments)
+		{
+			return PruneCandidatesHiddenByDerivedApplicable(GetInstanceOperatorCandidates(targetType, name), arguments, Compilation);
+		}
+
+		static List<IMethod> PruneCandidatesHiddenByDerivedApplicable(List<IMethod> candidates, ResolveResult[] arguments, ICompilation compilation)
+		{
+			if (candidates.Count <= 1)
+				return candidates;
+			var applicable = candidates.Where(c => IsApplicable(c, arguments, compilation)).ToList();
+			if (applicable.Count == 0)
+				return candidates;
+			return candidates.Where(
+				c => !applicable.Any(a => a.DeclaringTypeDefinition != c.DeclaringTypeDefinition
+					&& a.DeclaringTypeDefinition != null && c.DeclaringTypeDefinition != null
+					&& a.DeclaringTypeDefinition.GetAllBaseTypeDefinitions().Contains(c.DeclaringTypeDefinition))
+			).ToList();
+		}
+
+		static bool IsApplicable(IMethod candidate, ResolveResult[] arguments, ICompilation compilation)
+		{
+			var or = new OverloadResolution(compilation, arguments);
+			or.AddCandidate(candidate);
+			return or.FoundApplicableCandidate;
+		}
+
+		/// <summary>
+		/// Gets whether "x op= y", where x has the type <paramref name="receiverType"/> and y is
+		/// described by <paramref name="arguments"/>, would bind an operator other than
+		/// <paramref name="called"/>. The operator form has no way to pick an overload by
+		/// parameter modifier, so a call to an "in" overload whose by-value sibling is applicable
+		/// cannot be folded.
+		/// </summary>
+		public bool WouldRebindOperator(IMethod called, IType receiverType, ResolveResult[] arguments)
+		{
+			ICompilation compilation = this.Compilation;
+			if (called.DeclaringType.Kind == TypeKind.Interface
+				&& receiverType.Kind is not (TypeKind.Interface or TypeKind.TypeParameter)
+				&& !receiverType.IsKnownType(KnownTypeCode.Object))
+			{
+				// An operator declared in an interface is only reachable from a receiver of
+				// interface (or type-parameter) type: class member lookup does not see
+				// interface members, so a class-typed replacement cannot bind the call.
+				// System.Object stays permissive - it is the stack-type placeholder several
+				// ILAst nodes carry.
+				return true;
+			}
+			var candidates = GetInstanceOperatorCandidates(receiverType, called.Name, arguments);
+			if (candidates.Count == 0)
+				return false;
+			var or = new OverloadResolution(compilation, arguments);
+			foreach (var candidate in candidates)
+			{
+				or.AddCandidate(candidate);
+			}
+			if (!or.FoundApplicableCandidate || or.BestCandidate is not IMethod best)
+				return false;
+			// An override occupies the slot of the operator the call names, so binding to it is
+			// binding to the call; a "new" member only shares the signature.
+			if (best.Equals(called))
+				return false;
+			return !(best.IsOverride
+				&& InheritanceHelper.GetBaseMembers(best, includeImplementedInterfaces: false)
+					.Any(m => m.MemberDefinition == called.MemberDefinition));
+		}
+
+		static string GetCompoundAssignmentOperatorName(string staticOperatorName)
+		{
+			return staticOperatorName switch {
+				"op_Addition" or "op_CheckedAddition" => "op_AdditionAssignment",
+				"op_Subtraction" or "op_CheckedSubtraction" => "op_SubtractionAssignment",
+				"op_Multiply" or "op_CheckedMultiply" => "op_MultiplicationAssignment",
+				"op_Division" or "op_CheckedDivision" => "op_DivisionAssignment",
+				"op_Modulus" => "op_ModulusAssignment",
+				"op_BitwiseAnd" => "op_BitwiseAndAssignment",
+				"op_BitwiseOr" => "op_BitwiseOrAssignment",
+				"op_ExclusiveOr" => "op_ExclusiveOrAssignment",
+				"op_LeftShift" => "op_LeftShiftAssignment",
+				"op_RightShift" => "op_RightShiftAssignment",
+				"op_UnsignedRightShift" => "op_UnsignedRightShiftAssignment",
+				"op_Increment" or "op_CheckedIncrement" => "op_IncrementAssignment",
+				"op_Decrement" or "op_CheckedDecrement" => "op_DecrementAssignment",
+				_ => null,
+			};
+		}
+		#endregion
+
 		void LiftUserDefinedOperators(List<IMethod> operators)
 		{
 			int nonLiftedMethodCount = operators.Count;

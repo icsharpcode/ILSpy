@@ -403,6 +403,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (!UserDefinedCompoundAssign.IsIncrementOrDecrement(operatorCall.Method, context.Settings))
 						return false;
+					// An increment whose result is used has to be written as a prefix increment,
+					// which prefers an applicable C# 14 instance operator over the static one this
+					// call names. There is no expression form that binds the static operator (only
+					// a used postfix result does, and that hands back the old value), so the call
+					// stays a call here; FixRemainingIncrements turns it into a statement of its
+					// own, where a postfix increment with a discarded result can bind it.
+					if (compoundStore.SlotInfo != Block.InstructionSlot
+						&& context.Settings.UserDefinedCompoundAssignmentOperators
+						&& context.CSharpResolver.IsShadowedByInstanceOperator(operatorCall.Method, targetType, null,
+							targetIsVariable: compoundStore is not CallInstruction))
+					{
+						return false;
+					}
 					// use a dummy node so that we don't need a dedicated instruction for user-defined unary operator calls
 					rhs = new LdcI4(1);
 				}
@@ -892,6 +905,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!(operatorCall.Method.Name == "op_Increment" || operatorCall.Method.Name == "op_Decrement"))
 					return false;
+				// The result of this fold is used, so it would be written as a prefix increment,
+				// which prefers an applicable C# 14 instance operator; see HandleCompoundAssign.
+				if (context.Settings.UserDefinedCompoundAssignmentOperators
+					&& context.CSharpResolver.IsShadowedByInstanceOperator(operatorCall.Method, targetType, null,
+						targetIsVariable: true))
+				{
+					return false;
+				}
 				if (operatorCall.IsLifted)
 					return false; // TODO: add tests and think about whether nullables need special considerations
 				ldloc = operatorCall.Arguments[0] as LdLoc;

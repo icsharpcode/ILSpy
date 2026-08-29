@@ -2012,6 +2012,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				target = Translate(inst.Target, loadType);
 			}
+			if (settings.UserDefinedCompoundAssignmentOperators
+				&& (inst.Method.Parameters.Count == 2 || inst.SlotInfo == Block.InstructionSlot)
+				&& inst.TargetKind != CompoundTargetKind.Property
+				&& inst.Method.IsOperator
+				&& resolver.IsShadowedByInstanceOperator(inst.Method, target.ResolveResult.Type,
+					inst.Method.Parameters.Count == 2 ? inst.Method.Parameters[1].Type : null,
+					targetIsVariable: true))
+			{
+				return TranslateShadowedCompoundAssign(inst, target);
+			}
 			var opType = OperatorDeclaration.GetOperatorType(inst.Method.Name);
 			if (opType != null && OperatorDeclaration.IsChecked(opType.Value))
 			{
@@ -2061,6 +2071,70 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new UnaryOperatorExpression(op.Value, target)
 					.WithILInstruction(inst)
 					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, UnaryOperatorExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted, new[] { target.ResolveResult }));
+			}
+		}
+
+		/// <summary>
+		/// Writes a compound assignment whose usual spelling would bind a C# 14 instance operator
+		/// instead of the static operator this instruction calls. "x op= y" and a prefix
+		/// increment prefer an applicable instance operator on the static type of x wherever x is
+		/// a variable - whether or not the result is used; the only forms that always bind the
+		/// static operator are the plain spelling "x = x + y" and a postfix increment whose
+		/// result is used. So the binary operators are written as the former, and an increment as
+		/// "_ = x++", whose discard is what makes the result count as used.
+		/// </summary>
+		TranslatedExpression TranslateShadowedCompoundAssign(UserDefinedCompoundAssign inst, ExpressionWithResolveResult target)
+		{
+			if (inst.Method.Parameters.Count == 2)
+			{
+				var value = Translate(inst.Value).ConvertTo(inst.Method.Parameters[1].Type, this);
+				Expression valueExpr = value.Expression is DirectionExpression dir
+					? dir.Expression.Detach()  // "in" arguments are passed without a modifier
+					: value.Expression;
+				BinaryOperatorType? bop = ReplaceMethodCallsWithOperators.GetBinaryOperatorTypeFromMetadataName(
+					inst.Method.Name, out _, settings);
+				Debug.Assert(bop != null);
+				var binary = new BinaryOperatorExpression((Expression)target.Expression.Clone(), bop.Value, valueExpr)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType,
+						BinaryOperatorExpression.GetLinqNodeType(bop.Value, false), inst.Method, inst.IsLifted,
+						new[] { target.ResolveResult, value.ResolveResult }));
+				return new AssignmentExpression(target, AssignmentOperatorType.Assign, binary)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.Assign,
+						new[] { target.ResolveResult, binary.ResolveResult }));
+			}
+			else
+			{
+				if (HidesVariableWithName("_"))
+				{
+					// A local named "_" would capture the discard, and no other spelling binds the
+					// static operator, so the call is written out even though C# rejects an
+					// explicit operator call: visibly broken output beats silently running the
+					// instance operator.
+					var explicitCall = new InvocationExpression(
+						new MemberReferenceExpression(
+							new TypeReferenceExpression(ConvertType(inst.Method.DeclaringType)),
+							inst.Method.Name),
+						(Expression)target.Expression.Clone())
+						.WithILInstruction(inst)
+						.WithRR(new ResolveResult(inst.Method.ReturnType));
+					return new AssignmentExpression(target, AssignmentOperatorType.Assign, explicitCall)
+						.WithILInstruction(inst)
+						.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.Assign,
+							new[] { target.ResolveResult, explicitCall.ResolveResult }));
+				}
+				UnaryOperatorType? op = GetUnaryOperatorTypeFromMetadataName(inst.Method.Name, isPostfix: true);
+				Debug.Assert(op != null);
+				var unary = new UnaryOperatorExpression(op.Value, target)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType,
+						UnaryOperatorExpression.GetLinqNodeType(op.Value, false), inst.Method, inst.IsLifted,
+						new[] { target.ResolveResult }));
+				return new AssignmentExpression(new IdentifierExpression("_"), AssignmentOperatorType.Assign, unary)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(inst.Method.ReturnType, ExpressionType.Assign,
+						new[] { target.ResolveResult, unary.ResolveResult }));
 			}
 		}
 
