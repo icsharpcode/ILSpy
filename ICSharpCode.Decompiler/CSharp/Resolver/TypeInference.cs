@@ -1000,9 +1000,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Same Roslyn-style merge, over lower and upper bounds together as Roslyn's Fix does,
 			// so bounds that differ only in tuple element names don't survive into
 			// FindTypesInBounds as distinct candidates.
-			var (lowerBounds, upperBounds) = MergeShapeEquivalentBounds(tp.LowerBounds, tp.UpperBounds);
-			var types = CreateNestedInstance().FindTypesInBounds(lowerBounds, upperBounds);
-			Log.Unindent();
+			var types = CreateNestedInstance().FindTypesInBounds(tp.LowerBounds, tp.UpperBounds);
 			if (algorithm == TypeInferenceAlgorithm.ImprovedReturnAllResults)
 			{
 				tp.FixedTo = IntersectionType.Create(types);
@@ -1086,51 +1084,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 			return null;
 		}
-
-		/// <summary>
-		/// Collapses bounds that are equal modulo tuple element names (possibly nested) into a
-		/// single merged type via <see cref="MergeSimilarTypes"/>, across both bound sets. Bounds
-		/// without a shape-equivalent partner are returned as-is.
-		/// </summary>
-		static (IReadOnlyList<IType> LowerBounds, IReadOnlyList<IType> UpperBounds) MergeShapeEquivalentBounds(
-			IReadOnlyCollection<IType> lowerBounds, IReadOnlyCollection<IType> upperBounds)
-		{
-			if (lowerBounds.Count + upperBounds.Count < 2)
-				return (lowerBounds.ToArray(), upperBounds.ToArray());
-			var mergedBounds = new List<IType>();
-			bool anyNamesMerged = false;
-			foreach (var bound in lowerBounds.Concat(upperBounds))
-			{
-				bool absorbed = false;
-				for (int i = 0; i < mergedBounds.Count && !absorbed; i++)
-				{
-					IType merged = MergeSimilarTypes(mergedBounds[i], bound);
-					if (merged != null)
-					{
-						// Bounds that are already equal merge to the existing entry itself;
-						// only a new type means element names were actually merged.
-						anyNamesMerged |= !ReferenceEquals(merged, mergedBounds[i]);
-						mergedBounds[i] = merged;
-						absorbed = true;
-					}
-				}
-				if (!absorbed)
-					mergedBounds.Add(bound);
-			}
-			if (!anyNamesMerged)
-				return (lowerBounds.ToArray(), upperBounds.ToArray());
-			return (MapToMergedBounds(lowerBounds, mergedBounds), MapToMergedBounds(upperBounds, mergedBounds));
-		}
-
-		/// <summary>
-		/// Replaces each bound with the entry of <paramref name="mergedBounds"/> it was merged into.
-		/// Merging only changes element names, never the shape, so every bound is still
-		/// shape-equivalent to exactly one of those entries.
-		/// </summary>
-		static IType[] MapToMergedBounds(IEnumerable<IType> bounds, List<IType> mergedBounds)
-		{
-			return bounds.Select(b => mergedBounds.First(m => MergeSimilarTypes(m, b) != null)).Distinct().ToArray();
-		}
 		#endregion
 
 		#region Finding the best common type of a set of expressions
@@ -1169,7 +1122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Finds a type that satisfies the given lower and upper bounds.
 		/// </summary>
-		public IType FindTypeInBounds(IReadOnlyList<IType> lowerBounds, IReadOnlyList<IType> upperBounds)
+		public IType FindTypeInBounds(IReadOnlyCollection<IType> lowerBounds, IReadOnlyCollection<IType> upperBounds)
 		{
 			if (lowerBounds == null)
 				throw new ArgumentNullException(nameof(lowerBounds));
@@ -1189,13 +1142,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		static IType GetFirstTypePreferNonInterfaces(IReadOnlyList<IType> result)
+		static IType GetFirstTypePreferNonInterfaces(IReadOnlyCollection<IType> result)
 		{
 			return result.FirstOrDefault(c => c.Kind != TypeKind.Interface)
 				?? result.FirstOrDefault() ?? SpecialType.UnknownType;
 		}
 
-		IReadOnlyList<IType> FindTypesInBounds(IReadOnlyList<IType> lowerBounds, IReadOnlyList<IType> upperBounds)
+		IReadOnlyCollection<IType> FindTypesInBounds(IReadOnlyCollection<IType> lowerBounds, IReadOnlyCollection<IType> upperBounds)
 		{
 			// If there's only a single type; return that single type.
 			// If both inputs are empty, return the empty list.
@@ -1210,8 +1163,36 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Log.WriteCollection("FindTypesInBound, LowerBounds=", lowerBounds);
 			Log.WriteCollection("FindTypesInBound, UpperBounds=", upperBounds);
 
+			// Deduplicate types. This also merges types that differ only in tuple
+			// element names and/or object/dynamic.
+			var candidateMergeDict = new Dictionary<IType, IType>();
+			foreach (var candidate in lowerBounds.Concat(upperBounds))
+			{
+				var key = candidate.AcceptVisitor(NormalizeTypeVisitor.KeyForTypeMerging);
+				if (candidateMergeDict.TryGetValue(key, out var existing))
+				{
+					var merged = MergeSimilarTypes(existing, candidate);
+					Log.WriteLine(" Merged similar types " + existing + " and " + candidate + " into " + merged);
+					if (merged != null)
+					{
+						candidateMergeDict[key] = merged;
+					}
+					else
+					{
+						Debug.Fail("MergeSimilarTypes should always be able to merge;"
+						 	+ " is the KeyForTypeMerging visitor misconfigured?");
+					}
+				}
+				else
+				{
+					candidateMergeDict.Add(key, candidate);
+				}
+			}
+
+			Log.WriteCollection("FindTypesInBound, Merged types from bounds=", candidateMergeDict.Values);
+
 			// First try the Fixing algorithm from the C# spec (§12.6.3.13)
-			List<IType> candidateTypes = lowerBounds.Union(upperBounds)
+			List<IType> candidateTypes = candidateMergeDict.Values
 				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c).IsValid))
 				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b).IsValid))
 				.ToList(); // evaluate the query only once
@@ -1240,10 +1221,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (lowerBounds.Count > 0)
 			{
 				// Find candidates by using the lower bounds:
-				var hashSet = new HashSet<ITypeDefinition>(lowerBounds[0].GetAllBaseTypeDefinitions());
-				for (int i = 1; i < lowerBounds.Count; i++)
+				var lowerBoundsList = lowerBounds.ToList();
+				var hashSet = new HashSet<ITypeDefinition>(lowerBoundsList[0].GetAllBaseTypeDefinitions());
+				for (int i = 1; i < lowerBoundsList.Count; i++)
 				{
-					hashSet.IntersectWith(lowerBounds[i].GetAllBaseTypeDefinitions());
+					hashSet.IntersectWith(lowerBoundsList[i].GetAllBaseTypeDefinitions());
 				}
 				candidateTypeDefinitions = hashSet.ToList();
 			}

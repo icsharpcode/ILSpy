@@ -1245,6 +1245,18 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				Is.EqualTo(SpecialType.Dynamic));
 			Assert.That(success);
 		}
+
+		[Test]
+		public void BestCommonTypeDynamicAndObject()
+		{
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(SpecialType.Dynamic),
+					new ResolveResult(compilation.FindType(KnownTypeCode.Object))
+				}, out bool success),
+				Is.EqualTo(SpecialType.Dynamic));
+			Assert.That(success);
+		}
 		#endregion
 
 		#region FindTypeInBounds
