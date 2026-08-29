@@ -142,6 +142,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			MemberReferenceExpression? mre = invocation.Target as MemberReferenceExpression;
 			if (mre == null || IsNullConditional(mre.Target))
 				return null;
+			if (mre.TypeArguments.Count > 0)
+				return null;
 			switch (mre.MemberName)
 			{
 				case "Select":
