@@ -873,7 +873,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			public TypeDefinitionHandle GetArrayType(TypeDefinitionHandle elementType, ArrayShape shape) => default;
 			public TypeDefinitionHandle GetFunctionPointerType(MethodSignature<TypeDefinitionHandle> signature) => default;
-			public TypeDefinitionHandle GetGenericInstantiation(TypeDefinitionHandle genericType, ImmutableArray<TypeDefinitionHandle> typeArguments) => default;
+			// A closure struct of a generic method or generic declaring type arrives as an instantiation;
+			// its definition handle is what identifies the struct. Cross-module generic types still drop out,
+			// because GetTypeFromReference already returned nil for them.
+			public TypeDefinitionHandle GetGenericInstantiation(TypeDefinitionHandle genericType, ImmutableArray<TypeDefinitionHandle> typeArguments) => genericType;
 			public TypeDefinitionHandle GetGenericMethodParameter(Unit genericContext, int index) => default;
 			public TypeDefinitionHandle GetGenericTypeParameter(Unit genericContext, int index) => default;
 			public TypeDefinitionHandle GetModifiedType(TypeDefinitionHandle modifier, TypeDefinitionHandle unmodifiedType, bool isRequired) => default;
