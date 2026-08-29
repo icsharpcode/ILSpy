@@ -64,13 +64,27 @@ round-trip tests check; this checks readability. Exit code 1 means the new side 
 side did not.
 
 ```pwsh
+dotnet run decompdiff.cs -- --old master --new fix/my-branch -o report ~/.cache/nugetfuzz
 dotnet run decompdiff.cs -- --old ../../ILSpy-master --new . -o report ~/.cache/nugetfuzz
 dotnet run decompdiff.cs -- --old v9.1.dll --new v11.dll --refs <dir> corpus.dll
 ```
 
-An `--old`/`--new` argument is either a path to `ICSharpCode.Decompiler.dll` or an ILSpy checkout,
-which is restored and built in Release on demand. **Watch the timestamp in the header line**: an
-existing Release build is reused as-is; pass `--build` to force a rebuild.
+An `--old`/`--new` argument is a path to `ICSharpCode.Decompiler.dll`, an ILSpy checkout, or a
+commit-ish. A checkout is restored and built in Release on demand. **Watch the timestamp in the
+header line**: an existing Release build is reused as-is; pass `--build` to force a rebuild.
+
+A commit-ish (branch, tag, sha, `FETCH_HEAD`) is resolved against the repository the tool is run
+from and checked out into a worktree under `~/.cache/decompdiff/<repo>/<commit>`, so diffing two
+commits needs no checkouts prepared by hand. Paths win over refs, so a branch that shares its name
+with a directory has to be spelled as a path. The worktrees are kept: a rerun reuses the Release
+build already in one, which is what dominates the runtime. They live outside the repository and
+`git worktree remove` (or deleting the cache directory) is enough to clean them up. To diff a pull
+request, fetch it first:
+
+```pwsh
+git fetch origin pull/4071/head
+dotnet run decompdiff.cs -- --old origin/master --new FETCH_HEAD -o report ~/.cache/nugetfuzz
+```
 
 The report directory gets `summary.md`, a self-contained `index.html` with inline diffs, and the
 changed types dumped under `old/` and `new/` for `git diff --no-index report/old report/new`.
