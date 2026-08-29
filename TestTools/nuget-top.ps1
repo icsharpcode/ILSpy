@@ -70,4 +70,4 @@ $dirs = $log | ForEach-Object { if ($_ -match '^\s*cached:\s*(.+)$') { $Matches[
 Set-Content -Path $corpusFile -Value $dirs
 Write-Host ""
 Write-Host "$($dirs.Count) lib directories -> $corpusFile"
-Write-Host "decompdiff --old <ref> --new <ref> -o report `$(cat $corpusFile)"
+Write-Host "dotnet run decompdiff.cs -- --old <ref> --new <ref> -o report `@$corpusFile"

@@ -25,7 +25,7 @@
 // round-trip tests, which verify correctness but not output quality.
 //
 // usage: dotnet run decompdiff.cs -- --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...>
-//                                    [-o <report-dir>] [--build] [--refs <dir>]... <dll|dir>...
+//                                    [-o <report-dir>] [--build] [--refs <dir>]... <dll|dir|@list>...
 //
 // - checkout args are built on demand (Release; restore keeps packages.lock.json
 //   whole via -p:RestoreEnablePackagePruning=false); pass --build to force rebuild.
@@ -33,7 +33,8 @@
 //   the tool is run from and checked out into a worktree under
 //   ~/.cache/decompdiff/<repo>/<commit>, kept and reused so a rerun keeps the
 //   Release build it already contains.
-// - corpus dirs are scanned recursively for *.dll (e.g. ~/.cache/nugetfuzz).
+// - corpus dirs are scanned recursively for *.dll (e.g. ~/.cache/nugetfuzz); @list reads
+//   the entries from a file, one per line, as nugetfuzz does with its package list.
 // - changed/errored types are written to <report-dir>/{old,new}/...; inspect with
 //   `git diff --no-index <report-dir>/old <report-dir>/new`, or open the generated
 //   <report-dir>/index.html, which carries the same data with inline diffs.
@@ -97,13 +98,24 @@ for (int i = 0; i < args.Length; i++)
 			refDirs.Add(args[++i]);
 			break;
 		default:
-			corpus.Add(args[i]);
+			// @file lists corpus entries one per line, the same spelling nugetfuzz uses. Shells
+			// differ on how (or whether) a file expands into arguments, so the tool reads it.
+			if (args[i].StartsWith('@'))
+			{
+				corpus.AddRange(File.ReadAllLines(args[i][1..])
+					.Select(l => l.Trim())
+					.Where(l => l.Length > 0 && !l.StartsWith('#')));
+			}
+			else
+			{
+				corpus.Add(args[i]);
+			}
 			break;
 	}
 }
 if (oldSpec == null || newSpec == null || corpus.Count == 0)
 {
-	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--build] [--refs <dir>]... <dll|dir>...");
+	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--build] [--refs <dir>]... <dll|dir|@list>...");
 	return 1;
 }
 reportDir ??= "decompdiff-report";

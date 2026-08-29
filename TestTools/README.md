@@ -72,10 +72,11 @@ download itself is `nugetfuzz --download-only`, so package selection, TFM matchi
 dependency walk behave exactly as they do in a sweep - only the decompiling is skipped.
 
 The corpus is written as a list of directories rather than one root, because a package already
-restored on this machine is used from the machine-wide NuGet cache instead of being copied:
+restored on this machine is used from the machine-wide NuGet cache instead of being copied. Pass the
+list with `@`, which both tools understand and which needs no help from the shell:
 
 ```pwsh
-dotnet run decompdiff.cs -- --old master --new my-branch -o report $(cat crawl/top-200.corpus.txt)
+dotnet run decompdiff.cs -- --old master --new my-branch -o report @crawl/top-200.corpus.txt
 ```
 
 ## decompdiff
@@ -91,6 +92,9 @@ dotnet run decompdiff.cs -- --old master --new fix/my-branch -o report ~/.cache/
 dotnet run decompdiff.cs -- --old ../../ILSpy-master --new . -o report ~/.cache/nugetfuzz
 dotnet run decompdiff.cs -- --old v9.1.dll --new v11.dll --refs <dir> corpus.dll
 ```
+
+A corpus argument is a dll, a directory scanned recursively for dlls, or `@file` listing either one
+per line (`#` comments allowed).
 
 An `--old`/`--new` argument is a path to `ICSharpCode.Decompiler.dll`, an ILSpy checkout, or a
 commit-ish. A checkout is restored and built in Release on demand. **Watch the timestamp in the
