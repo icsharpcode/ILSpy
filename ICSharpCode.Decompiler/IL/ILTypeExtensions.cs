@@ -164,6 +164,45 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
+		/// Infers the C# type an instruction expects of the child in <paramref name="childIndex"/>,
+		/// i.e. the counterpart to <see cref="InferType"/>: that one asks what a value is, this one
+		/// asks what the position it flows into says it should be.
+		///
+		/// Returns SpecialType.UnknownType where the position names nothing.
+		/// </summary>
+		/// <remarks>
+		/// Where a value's own type is only its stack type - `I4` being `int`, `bool`, `char` and
+		/// every enum at once - the consumer often still knows, because a parameter, a return type
+		/// or a field carries its type in metadata.
+		/// </remarks>
+		public static IType InferExpectedType(this ILInstruction inst, int childIndex, ICompilation? compilation)
+		{
+			switch (inst)
+			{
+				case CallInstruction call:
+					if (childIndex == 0 && call.IsInstanceCall)
+						return call.ConstrainedTo ?? call.Method.DeclaringType;
+					return call.GetParameter(childIndex)?.Type ?? SpecialType.UnknownType;
+				case Leave leave when childIndex == 0:
+					// the value of a leave is a return value only where it leaves the function body
+					var function = leave.Ancestors.OfType<ILFunction>().FirstOrDefault();
+					if (function == null || leave.TargetContainer != function.Body)
+						return SpecialType.UnknownType;
+					return function.Method?.ReturnType ?? SpecialType.UnknownType;
+				case StObj stobj when childIndex == 1:
+					return stobj.Type;
+				case StLoc stloc when childIndex == 0:
+					return stloc.Variable.Type;
+				case IfInstruction ifInst when childIndex == 0:
+					return compilation?.FindType(KnownTypeCode.Boolean) ?? SpecialType.UnknownType;
+				case NewArr newArr:
+					return compilation?.FindType(KnownTypeCode.Int32) ?? SpecialType.UnknownType;
+				default:
+					return SpecialType.UnknownType;
+			}
+		}
+
+		/// <summary>
 		/// Infers the C# type for an IL instruction.
 		/// 
 		/// Returns SpecialType.UnknownType for unsupported instructions.
