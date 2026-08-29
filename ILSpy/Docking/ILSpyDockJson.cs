@@ -29,7 +29,6 @@ using System.Windows.Input;
 
 using Dock.Model.Controls;
 using Dock.Model.Core;
-using Dock.Serializer.SystemTextJson;
 
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -72,24 +71,36 @@ namespace ICSharpCode.ILSpy.Docking
 			resolver.Modifiers.Add(RemoveIgnoredMembers);
 			resolver.Modifiers.Add(KeepWritablePropertiesOnly);
 			resolver.Modifiers.Add(StripCycleProneProperties);
+			resolver.Modifiers.Add(UseObservableCollectionsForLists);
 			return new JsonSerializerOptions {
 				WriteIndented = true,
 				DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
 				NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
 				TypeInfoResolver = resolver,
-				// Dock's converter handles IList<T> → ObservableCollection<T> at deserialise
-				// time, matching Newtonsoft's ListContractResolver substitution.
-				Converters = { new JsonConverterFactoryList(typeof(ObservableCollection<>)) },
 				MaxDepth = 256,
 				// ReferenceHandler.Preserve is intentionally NOT set. Newtonsoft tolerates
 				// $id/$ref/$type in any order; STJ requires $type first when polymorphism
-				// is in play, and Dock's JsonConverterList<T>.Write makes per-element
-				// JsonSerializer.Serialize calls which reset Preserve's $id counter — so
-				// multiple unrelated objects would share $id="1". Both incompatibilities
-				// vanish once back-reference properties (Owner / Window / Layout) are
-				// stripped, leaving a DAG that doesn't need $id/$ref. StripCycleProneProperties
-				// below does the stripping.
+				// is in play. That incompatibility vanishes once back-reference properties
+				// (Owner / Window / Layout) are stripped, leaving a DAG that doesn't need
+				// $id/$ref. StripCycleProneProperties below does the stripping.
 			};
+		}
+
+		static void UseObservableCollectionsForLists(JsonTypeInfo typeInfo)
+		{
+			// IList<T> members on the dock model (VisibleDockables, Windows, ...) must
+			// deserialise into ObservableCollection<T> so the UI observes later changes,
+			// matching Newtonsoft's ListContractResolver substitution. Dock.Serializer's
+			// own STJ serializer does this with an internal type-info modifier that swaps
+			// the CreateObject factory; this is the same technique, since a converter would
+			// bypass STJ's built-in enumerable path (and polymorphism handling) for elements.
+			if (typeInfo.Kind != JsonTypeInfoKind.Enumerable)
+				return;
+			var type = typeInfo.Type;
+			if (!type.IsGenericType || type.GetGenericTypeDefinition() != typeof(IList<>))
+				return;
+			var listType = typeof(ObservableCollection<>).MakeGenericType(type.GetGenericArguments()[0]);
+			typeInfo.CreateObject = () => Activator.CreateInstance(listType)!;
 		}
 
 		static void AddPolymorphism(JsonTypeInfo typeInfo)
