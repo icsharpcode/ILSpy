@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		public void TestArrayElemCtor()
 		{
 			//IL_000f: Unknown result type (might be due to invalid IL or missing references)
-			MyStruct[] array = (MyStruct[])(object)new MyStruct[1] {
+			MyStruct[] array = new MyStruct[1] {
 				new MyStruct(7)
 			};
 		}
