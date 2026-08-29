@@ -647,19 +647,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void ForEachOverMultiDimArray3(int*[,] items)
 		{
-#if ROSLYN && OPT
-			foreach (int* intPtr in items)
-			{
-				Console.WriteLine(*intPtr);
-				Console.WriteLine(*intPtr);
-			}
-#else
 			foreach (int* ptr in items)
 			{
 				Console.WriteLine(*ptr);
 				Console.WriteLine(*ptr);
 			}
-#endif
 		}
 #endif
 

@@ -623,17 +623,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// leaf instead of becoming a nested designation.
 		public void LocalVariable_TupleInner_ElementUsedOutside()
 		{
-#if OPT
-			(int, (int, int)) tuple = GetTuple<int, (int, int)>();
-			int item = tuple.Item1;
-			(int, int) item2 = tuple.Item2;
-			Console.WriteLine(item);
-			Console.WriteLine(item2.Item1);
-#else
 			var (value, tuple2) = GetTuple<int, (int, int)>();
 			Console.WriteLine(value);
 			Console.WriteLine(tuple2.Item1);
-#endif
 		}
 
 		// Same, but the escaping element is in the first position. Every leaf of the
