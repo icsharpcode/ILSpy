@@ -24,6 +24,7 @@ using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -61,7 +62,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (rhs is BinaryOperatorExpression binary && assignment.Operator == AssignmentOperatorType.Assign)
 			{
 				if (CanConvertToCompoundAssignment(assignment.Left) && assignment.Left.IsMatch(binary.Left)
-					&& binary.Right != null && IsImplicitlyConvertible(binary.Right, expectedType))
+					&& binary.Right != null && IsImplicitlyConvertible(binary.Right, expectedType)
+					&& !IsShadowedByInstanceOperator(binary))
 				{
 					var newOperator = GetAssignmentOperatorForBinaryOperator(binary.Operator);
 					if (newOperator != AssignmentOperatorType.Assign)
@@ -100,6 +102,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						context.EndStep(unaryOperator);
 					}
 				}
+			}
+
+			bool IsShadowedByInstanceOperator(BinaryOperatorExpression binary)
+			{
+				// "x = x + y" must keep calling the static operator wherever "x += y" would find an
+				// applicable C# 14 instance operator on the static type of x: that form considers
+				// the instance operators first and only falls back to the static ones.
+				// GetSymbol has no OperatorResolveResult mapping, so the method behind an operator
+				// expression has to be read off the resolve result itself.
+				IMethod? method = binary.GetSymbol() as IMethod
+					?? (binary.GetResolveResult() as OperatorResolveResult)?.UserDefinedOperatorMethod;
+				return binary.Right != null && method != null
+					&& context.Settings.UserDefinedCompoundAssignmentOperators
+					&& new CSharpResolver(context.TypeSystem).IsShadowedByInstanceOperator(method,
+						assignment.Left.GetResolveResult().Type, binary.Right.GetResolveResult().Type,
+						targetIsVariable: assignment.Left.GetSymbol() is not IProperty);
 			}
 
 			bool IsImplicitlyConvertible(Expression rhs, IType? expectedType)
