@@ -162,6 +162,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return (string)(await d.RunAsync());
 		}
 
+		// --- static-type call target spilled across an await ---
+
+		private static void StaticMember(dynamic d, int value)
+		{
+		}
+
+		private static async Task StaticTargetWithAwaitedArgument(object o)
+		{
+			DynamicAwait.StaticMember((dynamic)o, await GetIntAsync(null));
+		}
+
 		// --- fully dynamic awaiter (the awaitable itself is dynamic) ---
 
 		private static async Task AwaitDynamicValue(dynamic d)
