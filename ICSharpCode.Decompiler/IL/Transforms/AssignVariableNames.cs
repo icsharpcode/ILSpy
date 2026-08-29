@@ -505,13 +505,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private static void AssignNameToLocalFunction(ILFunction function, VariableScope parentContext)
 		{
-			if (!LocalFunctionDecompiler.ParseLocalFunctionName(function.Name, out _, out var newName) || !IsValidName(newName))
-				newName = null;
 			string nameWithoutNumber;
 			int number;
-			if (!string.IsNullOrEmpty(newName))
+			string newName;
+			if (LocalFunctionDecompiler.ParseLocalFunctionName(function.Name, out _, out newName) && IsValidName(newName))
 			{
 				nameWithoutNumber = SplitName(newName, out number);
+			}
+			else if (IsValidName(function.Name))
+			{
+				// An obfuscated assembly carries an arbitrary name instead of
+				// "<caller>g__name|x_y". Take it verbatim: it has no synthetic suffix to
+				// split off, so its trailing digits belong to the name itself
+				// ("smethod_1", not "smethod_" numbered 1).
+				nameWithoutNumber = function.Name;
+				number = 1;
 			}
 			else
 			{
