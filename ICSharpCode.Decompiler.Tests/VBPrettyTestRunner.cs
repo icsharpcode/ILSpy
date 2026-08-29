@@ -129,7 +129,8 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task VBAnonymousTypes([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			IgnoreIfVbRuntimeSubstituted(options);
-			await Run(options: options | CompilerOptions.Library);
+			await Run(options: options | CompilerOptions.Library,
+				settings: new DecompilerSettings { FileScopedNamespaces = false, SortCustomAttributes = true });
 		}
 
 		[Test]
@@ -193,7 +194,9 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			var executable = await Tester.CompileVB(vbFile, options | CompilerOptions.ReferenceVisualBasic, exeFile).ConfigureAwait(false);
-			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings ?? new DecompilerSettings { FileScopedNamespaces = false }).ConfigureAwait(false);
+			settings ??= new DecompilerSettings { FileScopedNamespaces = false };
+			settings.CollectionExpressions = false;
+			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(options).ToArray());
 			Tester.RepeatOnIOError(() => File.Delete(decompiled));

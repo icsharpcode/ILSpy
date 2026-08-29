@@ -276,6 +276,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new AddCheckedBlocks(),
 				new DeclareVariables(), // should run after most transforms that modify statements
 				new TransformFieldAndConstructorInitializers(), // must run after DeclareVariables
+				new IntroduceCollectionExpressions(),
 				new PrettifyAssignments(), // must run after DeclareVariables
 				new IntroduceUsingDeclarations(),
 				new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
@@ -450,6 +451,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					var typeHandle = (TypeDefinitionHandle)member;
 					var type = metadata.GetTypeDefinition(typeHandle);
 					name = metadata.GetString(type.Name);
+					if (settings.CollectionExpressions
+						&& (name.StartsWith("<>y__InlineArray", StringComparison.Ordinal)
+							|| name.StartsWith("<>z__ReadOnlyArray", StringComparison.Ordinal)
+							|| name.StartsWith("<>z__ReadOnlyList", StringComparison.Ordinal)
+							|| name.StartsWith("<>z__ReadOnlySingleElementList", StringComparison.Ordinal)))
+					{
+						return true;
+					}
 					if (!type.GetDeclaringType().IsNil)
 					{
 						if (settings.LocalFunctions && LocalFunctionDecompiler.IsLocalFunctionDisplayClass(module, typeHandle))

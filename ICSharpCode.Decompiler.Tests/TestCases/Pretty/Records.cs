@@ -45,6 +45,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public string S = "abc";
 		}
 
+		public record PrivateFieldsBeforeProperties
+		{
+			private readonly int hiddenNumber = 42;
+			private readonly string hiddenText = "hidden";
+
+			public int A { get; init; }
+			public string B { get; init; }
+			public int HiddenValue => hiddenNumber + hiddenText.Length;
+		}
+
 		public record Interface(int B) : IRecord;
 
 		public interface IRecord
@@ -71,6 +81,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			public double C { get; init; } = 1.0;
 			public string D { get; } = A + B;
+		}
+
+		public record PrimaryCtorWithReorderedAssignments(int first, int second, int Third, int Fourth)
+		{
+			private int first { get; init; } = first;
+			private int second { get; init; } = second;
+		}
+
+		public record WithIndexer
+		{
+			public int A { get; init; }
+			public int this[int index] => A + index;
 		}
 
 		public record Properties

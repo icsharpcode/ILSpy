@@ -820,12 +820,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		static readonly BlockStatement trivialFieldGetterBody = new BlockStatement {
+			new Repeat(new EmptyStatement()).ToStatement(),
 			new ReturnStatement {
 				Expression = new NamedNode("fieldReference", new IdentifierExpression("field"))
 			}
 		};
 
 		static readonly BlockStatement trivialFieldSetterBody = new BlockStatement {
+			new Repeat(new EmptyStatement()).ToStatement(),
 			new AssignmentExpression {
 				Left = new NamedNode("fieldReference", new IdentifierExpression("field")),
 				Right = new IdentifierExpression("value")
@@ -843,7 +845,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!TryGetBackingField(property, out var field))
 				return null;
-			if (!OutsideReferencesAreExpressible(propertyDeclaration, field))
+			if (!OutsideReferencesAreExpressible(propertyDeclaration, field)
+				&& !IsTrivialRecordAutoProperty(propertyDeclaration, property, field))
 			{
 				// The field stays declared, so the "field" keyword references emitted by
 				// ExpressionBuilder.ConvertField have to become ordinary field references again.
@@ -867,7 +870,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// pre-C# 14 transform recognizes them by their "_<PropertyName>" backing field
 				// instead. Keep that rule, or a VB auto-property grows explicit "field"
 				// accessors where every other compiler's collapses to "{ get; set; }".
-				bool accessorsMustBeCompilerGenerated = field.Name != "_" + property.Name;
+				bool accessorsMustBeCompilerGenerated = field.Name != "_" + property.Name
+					&& property.DeclaringTypeDefinition?.IsCompilerGenerated() != true;
 				CollapseTrivialAccessor(getter, trivialFieldGetterBody, field, accessorsMustBeCompilerGenerated);
 				// A readonly setter cannot become an auto-accessor (same rule as the pre-C# 14
 				// transform); readonly getters collapse fine because auto-getters are
@@ -901,6 +905,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 
+		bool IsTrivialRecordAutoProperty(PropertyDeclaration declaration, IProperty property, IField field)
+		{
+			if (property.DeclaringTypeDefinition?.IsRecord != true)
+				return false;
+			return IsTrivialAccessor(declaration.Getter, trivialFieldGetterBody, field)
+				&& IsTrivialAccessor(declaration.Setter, trivialFieldSetterBody, field);
+		}
+
+		bool IsTrivialAccessor(Accessor? accessor, BlockStatement pattern, IField field)
+		{
+			if (accessor == null || accessor.Body == null)
+				return true;
+			if (accessor.GetSymbol() is not IMethod method || !method.IsCompilerGenerated())
+				return false;
+			Match match = pattern.Match(accessor.Body);
+			if (!match.Success)
+				return false;
+			var symbol = match.Get<AstNode>("fieldReference").Single().GetSymbol();
+			// 缺失依赖时，field 标识符可能没有解析结果；其语法只会由已确认的 backing field 生成。
+			return symbol == null || symbol is IField referencedField && field.Equals(referencedField.MemberDefinition);
+		}
+
 		void CollapseTrivialAccessor(Accessor? accessor, BlockStatement pattern, IField field,
 			bool accessorMustBeCompilerGenerated)
 		{
@@ -914,8 +940,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = pattern.Match(accessor.Body);
 			if (!m.Success)
 				return;
-			if (m.Get<AstNode>("fieldReference").Single().GetSymbol() is not IField referencedField
-				|| !field.Equals(referencedField.MemberDefinition))
+			var symbol = m.Get<AstNode>("fieldReference").Single().GetSymbol();
+			// 缺失依赖时允许解析结果为空，但仍拒绝解析到其他成员的标识符。
+			if (symbol != null && (symbol is not IField referencedField
+				|| !field.Equals(referencedField.MemberDefinition)))
 			{
 				return;
 			}
@@ -937,13 +965,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var propertyType = ((IProperty)property.MemberDefinition).ReturnType;
 			foreach (var candidate in property.DeclaringTypeDefinition.Fields)
 			{
-				if (candidate.IsCompilerGenerated()
+				if ((candidate.IsCompilerGenerated() || property.DeclaringTypeDefinition.IsCompilerGenerated())
 					&& candidate.IsStatic == property.IsStatic
-					// The trivial accessor bodies of a classic auto-property guaranteed this
-					// structurally; arbitrary accessor bodies do not. A field of a different
-					// type is not this property's storage, and removing it while printing
-					// `field` would substitute storage of the property's type instead.
-					&& candidate.Type.Equals(propertyType)
+					// 正常情况下类型必须一致；缺失依赖导致占位类型不等时，改用精确的元数据映射确认关系。
+					&& BackingFieldTypeMatches(candidate, property, propertyType)
 					&& NameCouldBeBackingFieldOfAutomaticProperty(candidate.Name, out var propertyName)
 					&& propertyName == property.Name)
 				{
@@ -952,6 +977,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 			return false;
+		}
+
+		static bool BackingFieldTypeMatches(IField candidate, IProperty property, IType propertyType)
+		{
+			if (candidate.Type.Equals(propertyType))
+				return true;
+			if (candidate.ParentModule is not MetadataModule module
+				|| candidate.MetadataToken.Kind != HandleKind.FieldDefinition
+				|| property.MemberDefinition.MetadataToken.Kind != HandleKind.PropertyDefinition)
+			{
+				return false;
+			}
+			return module.MetadataFile.PropertyAndEventBackingFieldLookup.IsPropertyBackingField(
+				(FieldDefinitionHandle)candidate.MetadataToken, out var propertyHandle)
+				&& propertyHandle == (PropertyDefinitionHandle)property.MemberDefinition.MetadataToken;
 		}
 
 		/// <summary>
@@ -1083,7 +1123,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			property = null;
 			if (!NameCouldBeBackingFieldOfAutomaticProperty(field.Name, out var propertyName))
 				return false;
-			if (!field.IsCompilerGenerated())
+			if (!field.IsCompilerGenerated() && field.DeclaringTypeDefinition?.IsCompilerGenerated() != true)
 				return false;
 			property = field.DeclaringTypeDefinition?
 				.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers)

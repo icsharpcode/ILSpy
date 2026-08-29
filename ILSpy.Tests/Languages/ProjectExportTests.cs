@@ -26,6 +26,8 @@ using AwesomeAssertions;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -49,6 +51,37 @@ namespace ICSharpCode.ILSpy.Tests.Languages;
 [TestFixture]
 public class ProjectExportTests
 {
+	[AvaloniaTest]
+	public async Task ProjectPdbUsesProjectSourceTransformsAndFormatting()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var loaded = await vm.OpenFixtureAsync();
+		var file = (PEFile)loaded.GetMetadataFileOrNull()!;
+		var settings = new DecompilerSettings();
+		var decompiler = ProjectExporter.CreateProjectPdbDecompiler(loaded, file, settings, default);
+		decompiler.AstTransforms.Should().Contain(t => t is EscapeInvalidIdentifiers);
+		decompiler.AstTransforms.Should().Contain(t => t is RemoveCLSCompliantAttribute);
+
+		var options = new ProjectExportOptions("unused", UseSdkStyleProjectFormat: true,
+			UseNestedDirectoriesForNamespaces: false, RemoveDeadCode: false, RemoveDeadStores: false,
+			UseDebugSymbols: false, StrongNameKeyFile: null, GeneratePdb: true,
+			EmbedSourceFilesInPdb: false);
+		var sourceDirectory = Path.Combine(Path.GetTempPath(), "ILSpyPdbSource_" + System.Guid.NewGuid().ToString("N"));
+		Directory.CreateDirectory(sourceDirectory);
+		try
+		{
+			await File.WriteAllTextAsync(Path.Combine(sourceDirectory, "Source.cs"), "source text");
+			var writer = ProjectExporter.CreateProjectPdbWriter(options, sourceDirectory);
+			writer.NoLogo.Should().BeTrue();
+			writer.EmbedSourceFiles.Should().BeFalse();
+			writer.SourceTextProvider!("Source.cs").Should().Be("source text");
+		}
+		finally
+		{
+			Directory.Delete(sourceDirectory, recursive: true);
+		}
+	}
+
 	[Test]
 	public void Language_Base_Defaults_ProjectFileExtension_To_Null()
 	{

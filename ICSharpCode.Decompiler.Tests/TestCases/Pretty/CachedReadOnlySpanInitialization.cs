@@ -8,7 +8,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// compiler-generated lazy cache in <PrivateImplementationDetails> for a ReadOnlySpan<char>
 		// created from a multi-byte array literal. The CachedReadOnlySpanInitialization transform
 		// collapses that cache back to the explicit ReadOnlySpan constructor.
-#if NET70
+#if EXPECTED_OUTPUT && CS120
+		public static ReadOnlySpan<char> NewLine => ['\r', '\n'];
+#elif NET70
 		public static ReadOnlySpan<char> NewLine => new char[2] { '\r', '\n' };
 #else
 		public static ReadOnlySpan<char> NewLine => new ReadOnlySpan<char>(new char[2] { '\r', '\n' });

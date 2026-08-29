@@ -849,6 +849,13 @@ namespace ICSharpCode.Decompiler
 		public partial bool InlineArrays { get; set; }
 
 		/// <summary>
+		/// 获取或设置是否还原 C# 12.0 集合表达式。
+		/// </summary>
+		[Description("DecompilerSettings.CollectionExpressions")]
+		[DecompilerSetting(CSharp.LanguageVersion.CSharp12_0)]
+		public partial bool CollectionExpressions { get; set; }
+
+		/// <summary>
 		/// Gets/Sets whether C# 14.0 extension members should be transformed.
 		/// </summary>
 		[Description("DecompilerSettings.ExtensionMembers")]

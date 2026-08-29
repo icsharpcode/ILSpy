@@ -67,6 +67,8 @@ public class SolutionExportTests
 			result.Success.Should().BeTrue(
 				"the solution export should succeed for valid assemblies. Status:\n" + result.StatusText);
 			File.Exists(slnPath).Should().BeTrue("the .sln file must be written to the chosen path");
+			var solutionText = await File.ReadAllTextAsync(slnPath);
+			solutionText.Should().Contain("Debug|Any CPU").And.NotContain("Debug|AnyCPU");
 
 			foreach (var a in assemblies)
 			{

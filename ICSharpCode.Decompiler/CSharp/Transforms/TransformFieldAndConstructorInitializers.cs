@@ -43,27 +43,75 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class TransformFieldAndConstructorInitializers : IAstTransform
 	{
-		/// <summary>
-		/// Pattern for reference types:
-		/// this..ctor(...);
-		/// </summary>
-		internal static readonly AstNode ThisCallClassPattern = new ExpressionStatement(
-			new NamedNode("invocation", new InvocationExpression(
-				new MemberReferenceExpression(
-					new Choice {
-						new NamedNode("target", new ThisReferenceExpression()),
-						new NamedNode("target", new BaseReferenceExpression()),
-						new CastExpression {
-							Type = new AnyNode(),
-							Expression = new Choice {
-							new NamedNode("target", new ThisReferenceExpression()),
-								new NamedNode("target", new BaseReferenceExpression()),
-							}
-						}
-					}, ".ctor"),
-				new Repeat(new AnyNode()))
-			)
-		);
+		static bool TryMatchClassConstructorCall(Statement? statement,
+			[NotNullWhen(true)] out InvocationExpression? invocation,
+			[NotNullWhen(true)] out Expression? target)
+		{
+			invocation = null;
+			target = null;
+			if (statement is not ExpressionStatement {
+				Expression: InvocationExpression {
+					Target: MemberReferenceExpression { MemberName: ".ctor" } memberReference
+				} candidate
+			})
+			{
+				return false;
+			}
+
+			var unwrappedTarget = UnwrapConstructorCallTarget(memberReference.Target);
+			if (unwrappedTarget is not (ThisReferenceExpression or BaseReferenceExpression))
+				return false;
+
+			invocation = candidate;
+			target = memberReference.Target;
+			return true;
+		}
+
+		static Expression UnwrapConstructorCallTarget(Expression target)
+		{
+			while (true)
+			{
+				target = target switch {
+					ParenthesizedExpression parenthesized => parenthesized.Expression,
+					CastExpression cast => cast.Expression,
+					_ => target,
+				};
+				if (target is not (ParenthesizedExpression or CastExpression))
+					return target;
+			}
+		}
+
+		static ConstructorInitializerType GetConstructorInitializerType(
+			InvocationExpression invocation, Expression target, IMethod ctorMethod)
+		{
+			if (invocation.GetSymbol() is IMethod { IsConstructor: true } ctor)
+			{
+				return ctor.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition
+					? ConstructorInitializerType.This
+					: ConstructorInitializerType.Base;
+			}
+
+			while (target is ParenthesizedExpression parenthesized)
+				target = parenthesized.Expression;
+			if (target is BaseReferenceExpression)
+				return ConstructorInitializerType.Base;
+			if (target is ThisReferenceExpression)
+				return ConstructorInitializerType.This;
+			if (target is CastExpression cast)
+			{
+				var innerTarget = UnwrapConstructorCallTarget(cast.Expression);
+				if (innerTarget is BaseReferenceExpression)
+					return ConstructorInitializerType.Base;
+				if (cast.GetResolveResult().Type.GetDefinition() == ctorMethod.DeclaringTypeDefinition)
+					return ConstructorInitializerType.This;
+			}
+			return ConstructorInitializerType.Base;
+		}
+
+		static Statement? FirstNonEmptyStatement(IEnumerable<Statement> statements)
+		{
+			return statements.FirstOrDefault(statement => statement is not EmptyStatement);
+		}
 
 		/// <summary>
 		/// Pattern for value types:
@@ -173,12 +221,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					else
 					{
-						var m = isStruct
-							? ThisCallStructPattern.Match(stmt)
-							: ThisCallClassPattern.Match(stmt);
-						if (m.Success)
+						var constructorCallStatement = stmt;
+						while (constructorCallStatement is EmptyStatement)
+							constructorCallStatement = constructorCallStatement.GetNextStatement();
+						bool isConstructorCall = isStruct
+							? ThisCallStructPattern.IsMatch(constructorCallStatement)
+							: TryMatchClassConstructorCall(constructorCallStatement, out _, out _);
+						if (isConstructorCall)
 						{
-							sequence.CoversFullBody = stmt.GetNextStatement() == null;
+							sequence.CoversFullBody = constructorCallStatement!.GetNextStatement() == null;
 						}
 					}
 				}
@@ -369,15 +420,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					else
 					{
 						// find this-ctor call
-						var stmt = ctor.Body?.Statements.FirstOrDefault();
-						var m = ctorMethod.DeclaringType.Kind == TypeKind.Struct
-							? ThisCallStructPattern.Match(stmt)
-							: ThisCallClassPattern.Match(stmt);
-
+						var stmt = ctor.Body == null ? null : FirstNonEmptyStatement(ctor.Body.Statements);
 						allCtors.Add(ctor);
 
-						if (m.Success && m.Get<Expression>("target").Single() is ThisReferenceExpression)
+						if (ctorMethod.DeclaringType.Kind == TypeKind.Struct)
+						{
+							var m = ThisCallStructPattern.Match(stmt);
+							if (m.Success && m.Get<Expression>("target").Single() is ThisReferenceExpression)
+								continue;
+						}
+						else if (TryMatchClassConstructorCall(stmt, out var invocation, out var target)
+							&& GetConstructorInitializerType(invocation, target, ctorMethod) == ConstructorInitializerType.This)
+						{
 							continue;
+						}
 
 						constructorsNotChainedWithThis.Add(ctor);
 					}
@@ -527,7 +583,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (constructorDeclaration.Body is null)
 					return false;
-				Statement stmt = constructorDeclaration.Body.Statements.FirstOrDefault()!;
+				Statement stmt = FirstNonEmptyStatement(constructorDeclaration.Body.Statements)!;
 				var isValueType = ctorMethod.DeclaringType.Kind == TypeKind.Struct;
 
 				// value types may omit the constructor initializer completely
@@ -536,22 +592,50 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return true;
 				}
 
-				var m = isValueType
-					? ThisCallStructPattern.Match(stmt)
-					: ThisCallClassPattern.Match(stmt);
+				AstNode invocation;
+				ConstructorInitializerType type;
+				if (isValueType)
+				{
+					var m = ThisCallStructPattern.Match(stmt);
+					if (!m.Success)
+						return true;
+					invocation = m.Get<AstNode>("invocation").Single();
+					type = ConstructorInitializerType.This;
+				}
+				else
+				{
+					InvocationExpression? classInvocation;
+					Expression? classTarget;
+					if (!TryMatchClassConstructorCall(stmt, out classInvocation, out classTarget))
+					{
+						foreach (var candidate in constructorDeclaration.Body.Statements.Skip(1))
+						{
+							if (!TryMatchClassConstructorCall(candidate, out var candidateInvocation, out var candidateTarget))
+							{
+								continue;
+							}
+							var candidateType = GetConstructorInitializerType(candidateInvocation, candidateTarget, ctorMethod);
+							if (!TryReconstructSpreadCollectionArgument(constructorDeclaration, candidate, candidateInvocation)
+								&& !TryInlineConstructorCallTemporaries(constructorDeclaration, candidate, candidateInvocation)
+								&& (candidateType != ConstructorInitializerType.Base || candidateInvocation.Arguments.Any()))
+							{
+								continue;
+							}
+							stmt = candidate;
+							classInvocation = candidateInvocation;
+							classTarget = candidateTarget;
+							break;
+						}
+					}
+					if (classInvocation == null || classTarget == null)
+						return false;
+					invocation = classInvocation;
+					type = GetConstructorInitializerType(classInvocation, classTarget, ctorMethod);
+				}
 
-				if (!m.Success)
-					return isValueType;
-
-				Debug.Assert(stmt != null); // because m.Success
-
-				AstNode invocation = m.Get<AstNode>("invocation").Single();
-				if (invocation.GetSymbol() is not IMethod { IsConstructor: true } ctor)
-					return false;
-
-				ConstructorInitializerType type = ctor.DeclaringTypeDefinition == ctorMethod.DeclaringTypeDefinition
-					? ConstructorInitializerType.This
-					: ConstructorInitializerType.Base;
+				Debug.Assert(stmt != null);
+				if (context.Settings.CollectionExpressions)
+					ConvertConstructorInitializerCollections(invocation);
 
 				var ci = new ConstructorInitializer { ConstructorInitializerType = type };
 
@@ -566,6 +650,290 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				stmt.Remove();
 				context.EndStep(constructorDeclaration.Initializer);
 
+				return true;
+			}
+
+			void ConvertConstructorInitializerCollections(AstNode invocation)
+			{
+				foreach (var creation in invocation.Descendants.OfType<ObjectCreateExpression>().ToArray())
+				{
+					if (creation.GetResolveResult().Type.GetDefinition()?.FullName != "System.Collections.Generic.List")
+						continue;
+					var elements = new List<Expression>();
+					if (creation.Initializer != null)
+					{
+						foreach (var element in creation.Initializer.Elements)
+						{
+							elements.Add(element is ArrayInitializerExpression { Elements.Count: 1 } nested
+								? nested.Elements.Single()
+								: element);
+						}
+					}
+					if (creation.Arguments.Count > 1
+						|| (creation.Arguments.Count == 1
+							&& (creation.Arguments.Single().GetResolveResult().ConstantValue is not int capacity
+								|| capacity != elements.Count)))
+					{
+						continue;
+					}
+
+					var collection = new CollectionExpression();
+					foreach (var element in elements)
+						collection.Elements.Add(element.Detach());
+					AstNode replaceTarget = creation.Parent is CastExpression cast ? cast : creation;
+					collection.AddAnnotation(new ResolveResult(replaceTarget.GetResolveResult().Type));
+					context.Step("Use collection expression in constructor initializer", creation);
+					replaceTarget.ReplaceWith(collection);
+					context.EndStep(collection);
+				}
+			}
+
+			bool TryReconstructSpreadCollectionArgument(ConstructorDeclaration constructorDeclaration,
+				Statement constructorCallStatement, InvocationExpression invocation)
+			{
+				if (!context.Settings.CollectionExpressions)
+					return false;
+				Debug.Assert(constructorDeclaration.Body != null);
+				var precedingStatements = constructorDeclaration.Body.Statements
+					.TakeWhile(statement => statement != constructorCallStatement)
+					.Where(statement => statement is not EmptyStatement)
+					.ToList();
+				if (precedingStatements.Count < 2)
+					return false;
+
+				VariableDeclarationStatement? listDeclaration = null;
+				VariableInitializer? listVariable = null;
+				ObjectCreateExpression? listCreation = null;
+				int listDeclarationIndex = -1;
+				for (int i = 0; i < precedingStatements.Count; i++)
+				{
+					if (precedingStatements[i] is not VariableDeclarationStatement { Variables.Count: 1 } declaration)
+						continue;
+					var variable = declaration.Variables.Single();
+					if (variable.Initializer is not ObjectCreateExpression creation
+						|| creation.GetResolveResult().Type.GetDefinition()?.FullName != "System.Collections.Generic.List")
+					{
+						continue;
+					}
+					var references = invocation.Descendants.OfType<IdentifierExpression>()
+						.Where(identifier => identifier.Identifier == variable.Name)
+						.ToArray();
+					if (references.Length != 1)
+						continue;
+					listDeclaration = declaration;
+					listVariable = variable;
+					listCreation = creation;
+					listDeclarationIndex = i;
+					break;
+				}
+				if (listDeclaration == null || listVariable == null || listCreation == null)
+					return false;
+
+				var elements = new List<(Expression Expression, bool IsSpread)>();
+				if (!TryParseAddSequence() && !TryParseSpanSequence())
+					return false;
+				if (elements.Any(element => element.Expression.DescendantsAndSelf
+					.Any(node => node is ThisReferenceExpression or BaseReferenceExpression)))
+				{
+					return false;
+				}
+				var listReferences = constructorDeclaration.Body.Descendants.OfType<IdentifierExpression>()
+					.Where(identifier => identifier.Identifier == listVariable.Name)
+					.ToArray();
+				if (listReferences.Any(reference => !precedingStatements.Any(statement => reference.Ancestors.Contains(statement))
+					&& !reference.Ancestors.Contains(invocation)))
+				{
+					return false;
+				}
+
+				var invocationReference = invocation.Descendants.OfType<IdentifierExpression>()
+					.Single(identifier => identifier.Identifier == listVariable.Name);
+				AstNode replaceTarget = invocationReference.Parent is CastExpression cast ? cast : invocationReference;
+				var collection = new CollectionExpression();
+				foreach (var element in elements)
+				{
+					collection.Elements.Add(element.IsSpread
+						? new SpreadElement { Expression = element.Expression.Detach() }
+						: element.Expression.Detach());
+				}
+				collection.AddAnnotation(new ResolveResult(replaceTarget.GetResolveResult().Type));
+
+				context.Step("Reconstruct spread collection in constructor initializer", constructorCallStatement);
+				replaceTarget.ReplaceWith(collection);
+				foreach (var statement in precedingStatements)
+					statement.Remove();
+				context.EndStep(collection);
+				return true;
+
+				bool TryParseAddSequence()
+				{
+					if (listDeclarationIndex != 0)
+						return false;
+					foreach (var statement in precedingStatements.Skip(1))
+					{
+						if (statement is not ExpressionStatement {
+							Expression: InvocationExpression {
+								Target: MemberReferenceExpression {
+									Target: IdentifierExpression target,
+									MemberName: var methodName
+								},
+								Arguments.Count: 1
+							} call
+						} || target.Identifier != listVariable.Name || methodName is not ("Add" or "AddRange"))
+						{
+							elements.Clear();
+							return false;
+						}
+						elements.Add((call.Arguments.Single(), methodName == "AddRange"));
+					}
+					return true;
+				}
+
+				bool TryParseSpanSequence()
+				{
+					elements.Clear();
+					if (precedingStatements.Take(listDeclarationIndex)
+						.Any(statement => statement is not VariableDeclarationStatement { Variables.Count: 1 }))
+					{
+						return false;
+					}
+					var followingStatements = precedingStatements.Skip(listDeclarationIndex + 1).ToArray();
+					bool hasSetCount = followingStatements
+						.SelectMany(statement => statement.Descendants.OfType<InvocationExpression>())
+						.Any(call => call.Target is MemberReferenceExpression { MemberName: "SetCount" });
+					var spanDeclaration = followingStatements.OfType<VariableDeclarationStatement>()
+						.FirstOrDefault(declaration => declaration is { Variables.Count: 1 }
+							&& declaration.Variables.Single().Initializer is InvocationExpression {
+								Target: MemberReferenceExpression { MemberName: "AsSpan" }
+							});
+					if (!hasSetCount || spanDeclaration == null)
+						return false;
+					var spanName = spanDeclaration.Variables.Single().Name;
+					bool afterSpanDeclaration = false;
+					foreach (var statement in followingStatements)
+					{
+						if (statement == spanDeclaration)
+						{
+							afterSpanDeclaration = true;
+							continue;
+						}
+						if (!afterSpanDeclaration)
+							continue;
+						if (statement is ForeachStatement foreachStatement)
+						{
+							elements.Add((foreachStatement.InExpression, true));
+							continue;
+						}
+						if (statement is VariableDeclarationStatement { Variables.Count: 1 } declaration
+							&& declaration.Variables.Single().Initializer is ObjectCreateExpression {
+								Arguments.Count: 1
+							} readOnlySpanCreation
+							&& readOnlySpanCreation.GetResolveResult().Type.GetDefinition()?.FullName == "System.ReadOnlySpan")
+						{
+							elements.Add((readOnlySpanCreation.Arguments.Single(), true));
+							continue;
+						}
+						if (statement is ExpressionStatement {
+							Expression: AssignmentExpression {
+								Operator: AssignmentOperatorType.Assign,
+								Left: IndexerExpression { Target: IdentifierExpression spanTarget },
+								Right: var value
+							}
+						} && spanTarget.Identifier == spanName)
+						{
+							elements.Add((value, false));
+							continue;
+						}
+						if (statement.Descendants.OfType<InvocationExpression>().Any(call =>
+							call.Target is MemberReferenceExpression { MemberName: "CopyTo" or "Slice" }))
+						{
+							continue;
+						}
+						if (statement is VariableDeclarationStatement or ExpressionStatement)
+							continue;
+						elements.Clear();
+						return false;
+					}
+					return elements.Count > 0;
+				}
+			}
+
+			bool TryInlineConstructorCallTemporaries(ConstructorDeclaration constructorDeclaration,
+				Statement constructorCallStatement, InvocationExpression invocation)
+			{
+				Debug.Assert(constructorDeclaration.Body != null);
+				var precedingStatements = constructorDeclaration.Body.Statements
+					.TakeWhile(statement => statement != constructorCallStatement)
+					.Where(statement => statement is not EmptyStatement)
+					.ToArray();
+				if (precedingStatements.Length == 0
+					|| invocation.GetResolveResult() is not InvocationResolveResult {
+						Member: IMethod { SymbolKind: SymbolKind.Constructor } ctor
+					})
+				{
+					return false;
+				}
+
+				var namedArguments = invocation.Arguments.OfType<NamedArgumentExpression>().ToArray();
+				if (namedArguments.Length != invocation.Arguments.Count
+					|| namedArguments.Length != ctor.Parameters.Count
+					|| namedArguments.Select(argument => argument.Name).Distinct().Count() != namedArguments.Length
+					|| namedArguments.Any(argument => !ctor.Parameters.Any(parameter => parameter.Name == argument.Name)))
+				{
+					return false;
+				}
+
+				var temporaries = new List<(VariableDeclarationStatement Declaration,
+					NamedArgumentExpression Argument, AstNode ReplacementTarget, Expression Initializer)>();
+				foreach (var statement in precedingStatements)
+				{
+					if (statement is not VariableDeclarationStatement { Variables.Count: 1 } declaration)
+						return false;
+					var variable = declaration.Variables.Single();
+					if (variable.Initializer is not Expression initializer || initializer.DescendantsAndSelf
+						.Any(node => node is ThisReferenceExpression or BaseReferenceExpression))
+					{
+						return false;
+					}
+
+					var ilVariable = variable.GetILVariable();
+					var references = constructorDeclaration.Body.Descendants.OfType<IdentifierExpression>()
+						.Where(reference => ilVariable != null
+							? reference.GetILVariable() == ilVariable
+							: reference.Identifier == variable.Name)
+						.ToArray();
+					if (references.Length != 1)
+						return false;
+					var reference = references[0];
+					var argument = reference.Ancestors.OfType<NamedArgumentExpression>().FirstOrDefault();
+					if (argument == null || !namedArguments.Contains(argument))
+						return false;
+
+					AstNode replacementTarget = reference;
+					if (reference.Parent is DirectionExpression direction)
+					{
+						if (direction.FieldDirection != FieldDirection.In)
+							return false;
+						replacementTarget = direction;
+					}
+					temporaries.Add((declaration, argument, replacementTarget, initializer));
+				}
+				if (temporaries.Select(temporary => temporary.Argument).Distinct().Count() != temporaries.Count)
+					return false;
+
+				var reorderedArguments = temporaries.Select(temporary => temporary.Argument)
+					.Concat(namedArguments.Where(argument => temporaries.All(temporary => temporary.Argument != argument)))
+					.ToArray();
+				context.Step("Inline constructor call temporaries", constructorCallStatement);
+				foreach (var temporary in temporaries)
+					temporary.ReplacementTarget.ReplaceWith(temporary.Initializer.Detach());
+				foreach (var argument in reorderedArguments)
+					argument.Remove();
+				foreach (var argument in reorderedArguments)
+					invocation.Arguments.Add(argument);
+				foreach (var temporary in temporaries)
+					temporary.Declaration.Remove();
+				context.EndStep(invocation);
 				return true;
 			}
 
@@ -934,7 +1302,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var analyzer = new ConstructorInitializerAnalyzer(context, currentTypeDefinition, node as TypeDeclaration);
 
 			if (!analyzer.Analyze(members))
+			{
+				foreach (var constructorDeclaration in members.OfType<ConstructorDeclaration>())
+				{
+					analyzer.MoveConstructorInitializer(constructorDeclaration, (IMethod)constructorDeclaration.GetSymbol()!);
+				}
 				return false;
+			}
 
 			if (analyzer.PrimaryConstructorInitializers is { HasDuplicateAssignments: false })
 			{

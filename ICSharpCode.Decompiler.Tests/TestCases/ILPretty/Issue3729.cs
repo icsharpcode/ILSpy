@@ -66,6 +66,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 			MyClass value = new MyClass();
 			Console.WriteLine(value);
 		}
+
+		public void TestUnresolvedStructMemberCalls()
+		{
+			MyEnumerator val = default;
+			val.MoveNext();
+			((IDisposable)val/*cast due to constrained. prefix*/).Dispose();
+		}
 	}
 	public class Issue3729_DerivedFromUnknown : MissingBase
 	{

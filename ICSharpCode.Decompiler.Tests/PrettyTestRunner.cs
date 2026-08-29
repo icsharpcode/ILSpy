@@ -466,7 +466,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task ConstructorInitializers([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.ProcessXmlDoc);
+			await RunForLibrary(cscOptions: cscOptions | CompilerOptions.ProcessXmlDoc,
+				configureDecompiler: settings => settings.CollectionExpressions = Tester.GetPreprocessorSymbols(cscOptions).Contains("CS120"));
 		}
 
 		[Test]
@@ -744,7 +745,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task CachedReadOnlySpanInitialization([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions cscOptions)
 		{
-			await RunForLibrary(cscOptions: cscOptions);
+			await RunForLibrary(cscOptions: cscOptions,
+				configureDecompiler: settings => settings.CollectionExpressions = Tester.GetPreprocessorSymbols(cscOptions).Contains("CS120"));
 		}
 
 		[Test]
@@ -1041,6 +1043,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task CollectionExpressions([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions,
+				configureDecompiler: settings => settings.CollectionExpressions = Tester.GetPreprocessorSymbols(cscOptions).Contains("CS120"));
+		}
+
+		[Test]
 		public async Task Issue3684([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
@@ -1080,6 +1089,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			// 2. Decompile
 			var settings = Tester.GetSettings(cscOptions);
+			settings.CollectionExpressions = false;
 			configureDecompiler?.Invoke(settings);
 			var decompiled = await Tester.DecompileCSharp(exeFile, settings).ConfigureAwait(false);
 

@@ -659,6 +659,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(arrayInitializerExpression);
 		}
 
+		public virtual void VisitCollectionExpression(CollectionExpression collectionExpression)
+		{
+			VisitChildren(collectionExpression);
+		}
+
+		public virtual void VisitSpreadElement(SpreadElement spreadElement)
+		{
+			VisitChildren(spreadElement);
+		}
+
 		public virtual void VisitArraySpecifier(ArraySpecifier arraySpecifier)
 		{
 			VisitChildren(arraySpecifier);
@@ -1334,6 +1344,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(arrayInitializerExpression);
 		}
 
+		public virtual T VisitCollectionExpression(CollectionExpression collectionExpression)
+		{
+			return VisitChildren(collectionExpression);
+		}
+
+		public virtual T VisitSpreadElement(SpreadElement spreadElement)
+		{
+			return VisitChildren(spreadElement);
+		}
+
 		public virtual T VisitArraySpecifier(ArraySpecifier arraySpecifier)
 		{
 			return VisitChildren(arraySpecifier);
@@ -2007,6 +2027,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public virtual S VisitArrayInitializerExpression(ArrayInitializerExpression arrayInitializerExpression, T data)
 		{
 			return VisitChildren(arrayInitializerExpression, data);
+		}
+
+		public virtual S VisitCollectionExpression(CollectionExpression collectionExpression, T data)
+		{
+			return VisitChildren(collectionExpression, data);
+		}
+
+		public virtual S VisitSpreadElement(SpreadElement spreadElement, T data)
+		{
+			return VisitChildren(spreadElement, data);
 		}
 
 		public virtual S VisitArraySpecifier(ArraySpecifier arraySpecifier, T data)

@@ -155,6 +155,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public record RecordWithAutoProperties
+		{
+			public int Value { get; init; }
+
+			public string Text { get; init; } = "";
+
+			public RecordWithAutoProperties(int value)
+			{
+				Value = value;
+			}
+		}
+
+		public abstract record FieldBackedRecordBase
+		{
+			public int Id { get; init; }
+		}
+
+		public record RecordWithFieldBackedProperty : FieldBackedRecordBase
+		{
+			public string Value {
+				get {
+					return field ?? string.Empty;
+				}
+				init {
+					field = value ?? string.Empty;
+				}
+			}
+		}
+
 		// 0.00m and -0.0 compare equal to their defaults but are observably different, so
 		// neither initializer may be dropped as a redundant default.
 		public struct PreciseDefaults

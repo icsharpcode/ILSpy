@@ -201,6 +201,54 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if CS120
+		public class SpreadConstructorBase<T>
+		{
+			protected SpreadConstructorBase(IList<T> items)
+			{
+			}
+		}
+
+		public class SpreadConstructorInitializers : SpreadConstructorBase<int>
+		{
+			public SpreadConstructorInitializers()
+				: base([])
+			{
+			}
+
+			public SpreadConstructorInitializers(IEnumerable<int> items)
+				: base([.. items])
+			{
+			}
+
+			public SpreadConstructorInitializers(IReadOnlyList<int> items, bool unused)
+				: base([.. items])
+			{
+			}
+
+			public SpreadConstructorInitializers(params int[] items)
+				: base([.. items])
+			{
+			}
+
+			public SpreadConstructorInitializers(IEnumerable<int> items, int unused)
+				: base([1, 2, 3])
+			{
+			}
+
+			public SpreadConstructorInitializers(IEnumerable<int> items, string unused)
+				: base([1, .. items, 2])
+			{
+			}
+
+			public SpreadConstructorInitializers(IEnumerable<int> first, IEnumerable<int> second)
+				: base([.. first, .. second])
+			{
+			}
+		}
+
+#endif
+
 		public struct SimpleStruct
 		{
 			public int Field1;

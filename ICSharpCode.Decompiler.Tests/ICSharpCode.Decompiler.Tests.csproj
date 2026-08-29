@@ -230,6 +230,8 @@
     <None Include="TestCases\ILPretty\GuessAccessors.cs" />
     <Compile Remove="TestCases\ILPretty\InaccessibleParameterTypes.cs" />
     <None Include="TestCases\ILPretty\InaccessibleParameterTypes.cs" />
+    <Compile Remove="TestCases\ILPretty\MissingBaseConstructor.cs" />
+    <None Include="TestCases\ILPretty\MissingBaseConstructor.cs" />
     <Compile Remove="TestCases\ILPretty\NoAccessorProperties.cs" />
     <None Include="TestCases\ILPretty\NoAccessorProperties.cs" />
     <Compile Remove="TestCases\ILPretty\Issue1145.cs" />

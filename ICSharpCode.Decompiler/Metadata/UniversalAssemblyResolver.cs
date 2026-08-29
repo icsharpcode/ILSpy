@@ -267,7 +267,8 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public override bool IsSharedAssembly(IAssemblyReference reference, [NotNullWhen(true)] out string? runtimePack)
 		{
-			return dotNetCorePathFinder.Value.TryResolveDotNetCoreShared(reference, out runtimePack) != null;
+			return dotNetCorePathFinder.Value.TryResolveDotNetCoreShared(
+				reference, out runtimePack, allowRollForward: false) != null;
 		}
 
 		public string? FindAssemblyFile(IAssemblyReference name)
@@ -297,28 +298,31 @@ namespace ICSharpCode.Decompiler.Metadata
 				return FindWindowsMetadataFile(name);
 			}
 
-			string? file;
+			if (UsesDotNetCorePathFinder(targetFrameworkIdentifier) && !IsZeroOrAllOnes(targetFrameworkVersion))
+			{
+				string? file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
+				if (file != null)
+					return file;
+			}
+
 			switch (targetFrameworkIdentifier)
 			{
-				case TargetFrameworkIdentifier.NET:
-				case TargetFrameworkIdentifier.NETCoreApp:
-				case TargetFrameworkIdentifier.NETStandard:
-					if (IsZeroOrAllOnes(targetFrameworkVersion))
-						goto default;
-					file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
-					if (file != null)
-						return file;
-					goto default;
 				case TargetFrameworkIdentifier.Silverlight:
 					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
-					file = ResolveSilverlight(name, targetFrameworkVersion);
+					string? file = ResolveSilverlight(name, targetFrameworkVersion);
 					if (file != null)
 						return file;
 					goto default;
 				default:
 					return ResolveInternal(name);
 			}
+		}
+
+		internal static bool UsesDotNetCorePathFinder(TargetFrameworkIdentifier identifier)
+		{
+			return identifier is TargetFrameworkIdentifier.NET or TargetFrameworkIdentifier.NETCoreApp
+				or TargetFrameworkIdentifier.NETStandard;
 		}
 
 		DotNetCorePathFinder InitDotNetCorePathFinder()
@@ -486,7 +490,8 @@ namespace ICSharpCode.Decompiler.Metadata
 					return assembly;
 			}
 
-			if (decompilerRuntime == DecompilerRuntime.NETCoreApp)
+			if (decompilerRuntime == DecompilerRuntime.NETCoreApp
+				&& ShouldUseHostRuntimeFallback(targetFrameworkIdentifier, targetFramework, Environment.OSVersion.Platform))
 			{
 				// Hosts without a .NET Framework installation (e.g. Linux, macOS) have no GAC;
 				// the only system-wide assembly store there is the shared-framework directory
@@ -503,6 +508,14 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (throwOnError)
 				throw new ResolutionException(name, null, null);
 			return null;
+		}
+
+		internal static bool ShouldUseHostRuntimeFallback(TargetFrameworkIdentifier identifier,
+			string targetFramework, PlatformID platform)
+		{
+			return platform != PlatformID.Win32NT
+				|| (identifier != TargetFrameworkIdentifier.NETStandard
+					&& !targetFramework.StartsWith(".NETFramework,", StringComparison.Ordinal));
 		}
 
 		#region .NET / mono GAC handling

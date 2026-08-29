@@ -95,7 +95,8 @@ public class ProjectExportRunnerTests
 				new DecompilerSettings(), Language(), progress, CancellationToken.None);
 
 			result.Success.Should().BeTrue(result.StatusText);
-			Directory.EnumerateFiles(tempDir, "*.csproj").Should().HaveCount(1);
+			var projectFile = Directory.EnumerateFiles(tempDir, "*.csproj").Single();
+			(await File.ReadAllTextAsync(projectFile)).Should().Contain("<Nullable>enable</Nullable>");
 			Directory.EnumerateFiles(tempDir, "*.cs", SearchOption.AllDirectories).Should().NotBeEmpty();
 			progress.Reports.Should().Contain(p => p.TotalUnits > 0,
 				"project export reports a determinate per-file unit count to the progress sink");

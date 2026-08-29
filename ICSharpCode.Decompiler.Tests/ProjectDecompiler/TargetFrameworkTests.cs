@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.IO;
+using System.Reflection;
 
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
@@ -128,6 +130,64 @@ namespace ICSharpCode.Decompiler.Tests.ProjectDecompiler
 			var (id, v) = UniversalAssemblyResolver.ParseTargetFramework(targetFramework);
 			Assert.That(id, Is.EqualTo(identifier));
 			Assert.That(v.ToString(3), Is.EqualTo(version));
+		}
+
+		[TestCase(TargetFrameworkIdentifier.NET, true)]
+		[TestCase(TargetFrameworkIdentifier.NETCoreApp, true)]
+		[TestCase(TargetFrameworkIdentifier.NETStandard, true)]
+		[TestCase(TargetFrameworkIdentifier.Silverlight, false)]
+		public void VerifyUseOfDotNetCorePathFinder(TargetFrameworkIdentifier identifier, bool expected)
+		{
+			Assert.That(UniversalAssemblyResolver.UsesDotNetCorePathFinder(identifier), Is.EqualTo(expected));
+		}
+		[Test]
+		public void NetStandardResolvesSharedRuntimeAssembly()
+		{
+			var reference = AssemblyNameReference.Parse(
+				"System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51");
+			var resolver = new UniversalAssemblyResolver(null, false, ".NETStandard,Version=v2.0");
+
+			var file = resolver.FindAssemblyFile(reference);
+
+			Assert.That(file, Is.Not.Null);
+			Assert.That(File.Exists(file), Is.True);
+		}
+
+		[Test]
+		public void NetCoreAppResolvesCompatibleSharedRuntimeAssembly()
+		{
+			var reference = AssemblyNameReference.Parse(
+				"System.Text.Json, Version=10.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51");
+			var resolver = new UniversalAssemblyResolver(null, false, ".NETCoreApp,Version=v3.1");
+
+			var file = resolver.FindAssemblyFile(reference);
+
+			Assert.That(file, Is.Not.Null);
+			Assert.That(File.Exists(file), Is.True);
+			Assert.That(AssemblyName.GetAssemblyName(file!).Version, Is.GreaterThanOrEqualTo(reference.Version));
+		}
+
+		[Test]
+		public void LaterRuntimeAssemblyResolvesWithoutBecomingImplicitProjectReference()
+		{
+			var reference = AssemblyNameReference.Parse(
+				"System.Net.ServerSentEvents, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a");
+			var resolver = new UniversalAssemblyResolver(null, false, ".NETCoreApp,Version=v8.0");
+
+			Assert.That(resolver.FindAssemblyFile(reference), Is.Not.Null);
+			Assert.That(resolver.IsSharedAssembly(reference, out _), Is.False);
+		}
+
+		[TestCase(TargetFrameworkIdentifier.NETStandard, ".NETStandard,Version=v2.0", PlatformID.Win32NT, false)]
+		[TestCase(TargetFrameworkIdentifier.NET, ".NETFramework,Version=v4.7.2", PlatformID.Win32NT, false)]
+		[TestCase(TargetFrameworkIdentifier.NETCoreApp, ".NETCoreApp,Version=v3.1", PlatformID.Win32NT, true)]
+		[TestCase(TargetFrameworkIdentifier.NET, ".NETCoreApp,Version=v10.0", PlatformID.Win32NT, true)]
+		[TestCase(TargetFrameworkIdentifier.NETStandard, ".NETStandard,Version=v2.0", PlatformID.Unix, true)]
+		public void VerifyHostRuntimeFallback(TargetFrameworkIdentifier identifier, string targetFramework,
+			PlatformID platform, bool expected)
+		{
+			Assert.That(UniversalAssemblyResolver.ShouldUseHostRuntimeFallback(identifier, targetFramework, platform),
+				Is.EqualTo(expected));
 		}
 	}
 }
