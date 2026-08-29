@@ -89,12 +89,33 @@ public class EdgeCases
 
 	public static ShadowTarget Shared;
 
+	public ShadowTarget mutableField;
+
 	// A statement-level "x++" considers the instance operator first; the only form that always
 	// binds the static operator is a postfix increment whose result is used, so the result goes
 	// to a discard.
 	public static void StatementLevelPostIncrement()
 	{
 		_ = Shared++;
+	}
+
+	public ShadowTarget ReassignField()
+	{
+		mutableField = new ShadowTarget();
+		return null;
+	}
+
+	public static void UseTwo(object o, ShadowTarget t)
+	{
+	}
+
+	// The receiver read must not be hoisted above side effects already pending on the
+	// expression stack: ReassignField() replaces the field the increment then applies to.
+	public void IncrementAfterPendingSideEffect()
+	{
+		ShadowTarget o = ReassignField();
+		mutableField++;
+		UseTwo(o, mutableField);
 	}
 
 	// A pre-increment whose result is used prefers the instance operator too, so the increment

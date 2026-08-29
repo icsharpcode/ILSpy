@@ -1840,6 +1840,13 @@ namespace ICSharpCode.Decompiler.IL
 				// address, so it already denotes a variable, and copying it into another one would
 				// make the operator mutate the copy.
 				bool materializeReceiver = IsNonStaticOperatorCall() && expectedStackType == StackType.O;
+				if (materializeReceiver)
+				{
+					// The receiver slot is appended to the current block, so everything still
+					// pending on the expression stack has to be flushed first - the parameter
+					// loop below does that too, but the increment operators take no parameters.
+					FlushExpressionStack();
+				}
 				for (int i = method.Parameters.Count - 1; i >= 0; i--)
 				{
 					if (requiresLdObjIfRef || materializeReceiver)

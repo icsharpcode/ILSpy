@@ -188,6 +188,40 @@
     IL_0011:  ret
   }
 
+  .field public class ShadowTarget mutableField
+
+  .method public hidebysig instance class ShadowTarget ReassignField() cil managed
+  {
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  newobj     instance void ShadowTarget::.ctor()
+    IL_0006:  stfld      class ShadowTarget EdgeCases::mutableField
+    IL_000b:  ldnull
+    IL_000c:  ret
+  }
+
+  .method public hidebysig static void  UseTwo(object o, class ShadowTarget t) cil managed
+  {
+    .maxstack  8
+    IL_0000:  ret
+  }
+
+  // The receiver read must not be hoisted above side effects already pending on the
+  // expression stack: ReassignField() replaces the field the increment then applies to.
+  .method public hidebysig instance void  IncrementAfterPendingSideEffect() cil managed
+  {
+    .maxstack  3
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance class ShadowTarget EdgeCases::ReassignField()
+    IL_0006:  ldarg.0
+    IL_0007:  ldfld      class ShadowTarget EdgeCases::mutableField
+    IL_000c:  callvirt   instance void ShadowTarget::op_IncrementAssignment()
+    IL_0011:  ldarg.0
+    IL_0012:  ldfld      class ShadowTarget EdgeCases::mutableField
+    IL_0017:  call       void EdgeCases::UseTwo(object, class ShadowTarget)
+    IL_001c:  ret
+  }
+
   // A pre-increment whose result is used: a prefix increment would bind the instance operator,
   // so the increment has to become a statement of its own before the uses of the new value.
   .method public hidebysig static void  ValueUsedPreIncrement() cil managed
