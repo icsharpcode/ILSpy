@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return;
 				// Two exact bounds that differ only in tuple element names are not conflicting;
 				// their names are merged instead (kept where both agree, dropped otherwise).
-				IType merged = MergeSimilarTypes(ExactBound, type);
+				IType merged = MergeSimilarTypes(ExactBound, type, VarianceModifier.Invariant);
 				if (merged != null)
 					ExactBound = merged;
 				else
@@ -986,8 +986,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// merged - kept where both sides agree, dropped where they conflict. See
 				// MergeTupleNames in Roslyn's MethodTypeInference.cs.
 				IType fixedTo = tp.ExactBound;
-				foreach (var b in tp.LowerBounds.Concat(tp.UpperBounds))
-					fixedTo = MergeSimilarTypes(fixedTo, b) ?? fixedTo;
+				foreach (var b in tp.LowerBounds)
+				{
+					fixedTo = MergeSimilarTypes(fixedTo, b, VarianceModifier.Covariant) ?? fixedTo;
+				}
+				foreach (var b in tp.UpperBounds)
+				{
+					fixedTo = MergeSimilarTypes(fixedTo, b, VarianceModifier.Contravariant) ?? fixedTo;
+				}
 				// the exact bound determines the result, up to the merged element names
 				tp.FixedTo = fixedTo;
 				// check validity
@@ -1016,23 +1022,23 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		/// <summary>
-		/// Merges similar types that differ only in tuple element names and/or object/dynamic, recursively.
-		///  * for tuple element names, a name is kept where both sides agree and dropped where they conflict.
-		///  * for object/dynamic, dynamic is preferred over object. 
+		/// Merges similar types that differ only in any of these aspects.
+		///  * tuple element names: a name is kept where both sides agree and dropped where they conflict.
+		///  * object/dynamic: dynamic is preferred over object. 
+		///  * nullability: depends on the variance of the position.
 		/// Returns <c>null</c> if the types differ in any other aspects.
 		/// </summary>
-		static IType MergeSimilarTypes(IType a, IType b)
+		static IType MergeSimilarTypes(IType a, IType b, VarianceModifier variance)
 		{
 			if (a.Equals(b))
 				return a;
-			// Roslyn merges differing nullability based on the variance of the position; this
-			// implementation does not track that, so differently annotated types are left alone.
-			if (a.Nullability != b.Nullability)
-				return null;
-			if (a is NullabilityAnnotatedType na && b is NullabilityAnnotatedType nb)
+			if (a is NullabilityAnnotatedType || b is NullabilityAnnotatedType)
 			{
-				return MergeSimilarTypes(na.TypeWithoutAnnotation, nb.TypeWithoutAnnotation)
-					?.ChangeNullability(a.Nullability);
+				var nullability = MergeNullability(a.Nullability, b.Nullability, variance);
+				var merged = MergeSimilarTypes(a.WithoutNullability(), b.WithoutNullability(), variance);
+				if (merged == null)
+					return null;
+				return merged.ChangeNullability(nullability);
 			}
 			if (a.Kind == TypeKind.Dynamic && b.IsKnownType(KnownTypeCode.Object))
 			{
@@ -1048,7 +1054,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var mergedElements = ImmutableArray.CreateBuilder<IType>(ta.ElementTypes.Length);
 				for (int i = 0; i < ta.ElementTypes.Length; i++)
 				{
-					var merged = MergeSimilarTypes(ta.ElementTypes[i], tb.ElementTypes[i]);
+					// Note: even though ValueTuple has invariant type parameters,
+					// Roslyn merges tuple element types in a covariant manner.
+					var merged = MergeSimilarTypes(
+						ta.ElementTypes[i], tb.ElementTypes[i],
+						variance.Combine(VarianceModifier.Covariant));
 					if (merged == null)
 						return null;
 					mergedElements.Add(merged);
@@ -1062,27 +1072,74 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					ta.GetDefinition()?.ParentModule);
 			}
 			if (a is ParameterizedType pa && b is ParameterizedType pb
-				&& pa.GenericType.Equals(pb.GenericType)
 				&& pa.TypeArguments.Count == pb.TypeArguments.Count)
 			{
+				var genericType = MergeSimilarTypes(pa.GenericType, pb.GenericType, variance);
+				if (genericType == null)
+					return null;
 				var mergedArgs = new IType[pa.TypeArguments.Count];
 				for (int i = 0; i < pa.TypeArguments.Count; i++)
 				{
-					var merged = MergeSimilarTypes(pa.TypeArguments[i], pb.TypeArguments[i]);
+					var merged = MergeSimilarTypes(
+						pa.TypeArguments[i], pb.TypeArguments[i],
+						variance.Combine(pa.TypeParameters[i].Variance));
 					if (merged == null)
 						return null;
 					mergedArgs[i] = merged;
 				}
-				return new ParameterizedType(pa.GenericType, mergedArgs);
+				return new ParameterizedType(genericType, mergedArgs);
 			}
 			if (a is ArrayType arrA && b is ArrayType arrB && arrA.Dimensions == arrB.Dimensions)
 			{
-				var mergedElem = MergeSimilarTypes(arrA.ElementType, arrB.ElementType);
+				// Roslyn ArrayTypeSymbol merges in a covariant manner.
+				var mergedElem = MergeSimilarTypes(
+					arrA.ElementType, arrB.ElementType,
+					variance.Combine(VarianceModifier.Covariant));
 				if (mergedElem == null)
 					return null;
-				return new ArrayType(arrA.Compilation, mergedElem, arrA.Dimensions, arrA.Nullability);
+				var nullability = MergeNullability(arrA.Nullability, arrB.Nullability, variance);
+				return new ArrayType(arrA.Compilation, mergedElem, arrA.Dimensions, nullability);
+			}
+			if (a is PointerType ptrA && b is PointerType ptrB)
+			{
+				var mergedElem = MergeSimilarTypes(
+					ptrA.ElementType, ptrB.ElementType,
+					variance.Combine(VarianceModifier.Invariant));
+				if (mergedElem == null)
+					return null;
+				return new PointerType(mergedElem);
 			}
 			return null;
+		}
+
+		static Nullability MergeNullability(Nullability a, Nullability b, VarianceModifier variance)
+		{
+			// Like Roslyn's MergeNullableAnnotation()
+			return (variance, a, b) switch {
+				// Covariant merging rules: Nullable wins over Oblivious which wins over NotNullable.
+				(VarianceModifier.Covariant, Nullability.Nullable, _) => Nullability.Nullable,
+				(VarianceModifier.Covariant, _, Nullability.Nullable) => Nullability.Nullable,
+				(VarianceModifier.Covariant, Nullability.Oblivious, _) => Nullability.Oblivious,
+				(VarianceModifier.Covariant, _, Nullability.Oblivious) => Nullability.Oblivious,
+				(VarianceModifier.Covariant, Nullability.NotNullable, Nullability.NotNullable) => Nullability.NotNullable,
+				// Contravariant merging rules: NotNullable wins over Oblivious which wins over Nullable.
+				(VarianceModifier.Contravariant, Nullability.NotNullable, _) => Nullability.NotNullable,
+				(VarianceModifier.Contravariant, _, Nullability.NotNullable) => Nullability.NotNullable,
+				(VarianceModifier.Contravariant, Nullability.Oblivious, _) => Nullability.Oblivious,
+				(VarianceModifier.Contravariant, _, Nullability.Oblivious) => Nullability.Oblivious,
+				(VarianceModifier.Contravariant, Nullability.Nullable, Nullability.Nullable) => Nullability.Nullable,
+				// Invariant merging rules: NotNullable wins over Nullable which wins over Oblivious.
+				// Weird but that's what Roslyn does:
+				//  static T M<T>(ref T x, ref T y) => x;
+				//  M(ref nullableArray, nonNullableArray);
+				//  T is inferred as int[] and then the first argument reports a "possible null reference assignment" warning.
+				(VarianceModifier.Invariant, Nullability.NotNullable, _) => Nullability.NotNullable,
+				(VarianceModifier.Invariant, _, Nullability.NotNullable) => Nullability.NotNullable,
+				(VarianceModifier.Invariant, Nullability.Nullable, _) => Nullability.Nullable,
+				(VarianceModifier.Invariant, _, Nullability.Nullable) => Nullability.Nullable,
+				(VarianceModifier.Invariant, Nullability.Oblivious, Nullability.Oblivious) => Nullability.Oblivious,
+				_ => throw new NotSupportedException("Unexpected nullability combination: " + a + ", " + b + " with variance " + variance)
+			};
 		}
 		#endregion
 
@@ -1166,28 +1223,33 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Deduplicate types. This also merges types that differ only in tuple
 			// element names and/or object/dynamic.
 			var candidateMergeDict = new Dictionary<IType, IType>();
-			foreach (var candidate in lowerBounds.Concat(upperBounds))
+			void AddCandidates(IEnumerable<IType> candidates, VarianceModifier variance)
 			{
-				var key = candidate.AcceptVisitor(NormalizeTypeVisitor.KeyForTypeMerging);
-				if (candidateMergeDict.TryGetValue(key, out var existing))
+				foreach (var candidate in candidates)
 				{
-					var merged = MergeSimilarTypes(existing, candidate);
-					Log.WriteLine(" Merged similar types " + existing + " and " + candidate + " into " + merged);
-					if (merged != null)
+					var key = candidate.AcceptVisitor(NormalizeTypeVisitor.KeyForTypeMerging);
+					if (candidateMergeDict.TryGetValue(key, out var existing))
 					{
-						candidateMergeDict[key] = merged;
+						var merged = MergeSimilarTypes(existing, candidate, variance);
+						Log.WriteLine(" Merged similar types " + existing + " and " + candidate + " into " + merged);
+						if (merged != null)
+						{
+							candidateMergeDict[key] = merged;
+						}
+						else
+						{
+							Debug.Fail("MergeSimilarTypes should always be able to merge;"
+								 + " is the KeyForTypeMerging visitor misconfigured?");
+						}
 					}
 					else
 					{
-						Debug.Fail("MergeSimilarTypes should always be able to merge;"
-						 	+ " is the KeyForTypeMerging visitor misconfigured?");
+						candidateMergeDict.Add(key, candidate);
 					}
 				}
-				else
-				{
-					candidateMergeDict.Add(key, candidate);
-				}
 			}
+			AddCandidates(lowerBounds, VarianceModifier.Covariant);
+			AddCandidates(upperBounds, VarianceModifier.Contravariant);
 
 			Log.WriteCollection("FindTypesInBound, Merged types from bounds=", candidateMergeDict.Values);
 

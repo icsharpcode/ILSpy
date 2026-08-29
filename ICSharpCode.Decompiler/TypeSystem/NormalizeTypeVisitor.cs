@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			RemoveTupleElementNames = true,
 			RemoveModOpt = false,
 			RemoveModReq = false,
-			RemoveNullability = false,
+			RemoveNullability = true,
 		};
 
 		internal static readonly NormalizeTypeVisitor IgnoreNullability = new NormalizeTypeVisitor {

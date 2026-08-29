@@ -854,25 +854,24 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
-		public void FixingDoesNotMergeBoundsThatDifferInNullability()
+		public void FixingMergesBoundsThatDifferInNullability()
 		{
 			// Signature:  M<T>(T x, T y)
 			// Invocation: M(nullableArrayOfString, arrayOfString);
-			// Merging nullability requires the variance of the position, which this
-			// implementation does not track, so such bounds stay distinct and fixing fails
-			// (csc infers string[]?).
+			// Merging nullability in this covariant position should result in T=string[]? (the nullable array type).
 			var comp = RefAssemblyCompilation.Instance;
 			var T = new DefaultTypeParameter(comp, SymbolKind.Method, 0, "T");
 			IType stringType = comp.FindType(KnownTypeCode.String);
 
-			new TypeInference(comp).InferTypeArguments(new ITypeParameter[] { T },
-				new[] {
+			var result = new TypeInference(comp).InferTypeArguments([T],
+				[
 					new ResolveResult(new ArrayType(comp, stringType, 1, Nullability.Nullable)),
 					new ResolveResult(new ArrayType(comp, stringType))
-				},
-				new IType[] { T, T },
+				],
+				[T, T],
 				out bool success);
-			Assert.That(success, Is.False);
+			Assert.That(success, Is.True);
+			Assert.That(result, Is.EqualTo([new ArrayType(comp, stringType, 1, Nullability.Nullable)]));
 		}
 
 		[Test]
@@ -1257,6 +1256,18 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				Is.EqualTo(SpecialType.Dynamic));
 			Assert.That(success);
 		}
+
+		[Test]
+		public void BestCommonTypeObjectAndNullableObject()
+		{
+			Assert.That(
+				ti.GetBestCommonType(new[] {
+					new ResolveResult(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.NotNullable)),
+					new ResolveResult(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.Nullable))
+				}, out bool success),
+				Is.EqualTo(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.Nullable)));
+			Assert.That(success);
+		}
 		#endregion
 
 		#region FindTypeInBounds
@@ -1399,8 +1410,12 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 			// ReadOnlyCollectionBuilder<T> appears because the test compilation includes
 			// System.Core, which declares it as another public implementation of both
 			// IList and IList<T>.
+			var typesInBounds = FindAllTypesInBounds(Resolve(), Resolve(typeof(IEnumerable<ICloneable>), typeof(IEnumerable<IComparable>), typeof(IList)));
+			// As this finds all derived types, the result set contains compiler-generated types like <>z__ReadOnlyArray`1.
+			// We filter those out to make the test more robust against changes.
+			typesInBounds = typesInBounds.Where(t => !t.GetDefinition().IsCompilerGenerated()).ToArray();
 			Assert.That(
-				FindAllTypesInBounds(Resolve(), Resolve(typeof(IEnumerable<ICloneable>), typeof(IEnumerable<IComparable>), typeof(IList))),
+				typesInBounds,
 				Is.EqualTo(Resolve(typeof(List<string>), typeof(List<Version>), typeof(Collection<string>), typeof(Collection<Version>), typeof(ReadOnlyCollection<string>), typeof(ReadOnlyCollection<Version>), typeof(System.Runtime.CompilerServices.ReadOnlyCollectionBuilder<string>), typeof(System.Runtime.CompilerServices.ReadOnlyCollectionBuilder<Version>))));
 		}
 		#endregion
