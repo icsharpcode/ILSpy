@@ -137,6 +137,14 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task NoUserDefinedCompoundAssignmentOperators([ValueSource(nameof(roslynLatestOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				UserDefinedCompoundAssignmentOperators = false
+			});
+		}
+
+		[Test]
 		public async Task NoInitAccessors([ValueSource(nameof(initAccessorOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings(CSharp.LanguageVersion.CSharp8_0));

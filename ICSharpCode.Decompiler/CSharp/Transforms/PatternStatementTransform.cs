@@ -323,6 +323,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			}
 
+			if (context.Settings.UserDefinedCompoundAssignmentOperators
+				&& IL.UserDefinedCompoundAssign.IsCompoundAssignmentReceiver(itemVar))
+			{
+				// A foreach variable is read-only, but an instance compound assignment operator
+				// requires an assignable target; the plain loop keeps the variable writable.
+				return false;
+			}
+
 			var blockContainer = loop.Annotation<IL.BlockContainer>();
 
 			if (!itemVar.IsSingleDefinition)
@@ -662,6 +670,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var itemVariable = foreachVariable.GetILVariable();
 			if (itemVariable == null || !itemVariable.IsSingleDefinition
 				|| (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot)
+				|| (context.Settings.UserDefinedCompoundAssignmentOperators
+					&& IL.UserDefinedCompoundAssign.IsCompoundAssignmentReceiver(itemVariable))
 				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
 				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
 				return null;

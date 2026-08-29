@@ -209,6 +209,9 @@
     <None Include="TestCases\ILPretty\InstanceOperatorCall.il" />
     <Compile Remove="TestCases\ILPretty\EnumArithmeticOutOfRange.cs" />
     <None Include="TestCases\ILPretty\EnumArithmeticOutOfRange.cs" />
+    <Compile Remove="TestCases\ILPretty\CompoundAssignmentOperatorEdgeCases.cs" />
+    <None Include="TestCases\ILPretty\CompoundAssignmentOperatorEdgeCases.cs" />
+    <None Include="TestCases\ILPretty\CompoundAssignmentOperatorEdgeCases.il" />
     <Compile Remove="TestCases\ILPretty\EmptyBodies.cs" />
     <None Include="TestCases\ILPretty\EmptyBodies.cs" />
     <Compile Remove="TestCases\ILPretty\TruncatedAccessorBody.cs" />
@@ -280,6 +283,8 @@
     <None Include="TestCases\Ugly\NoNewOfT.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
     <None Include="TestCases\Ugly\NoPropertiesAndEvents.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoUserDefinedCompoundAssignmentOperators.Expected.cs" />
+    <None Include="TestCases\Ugly\NoUserDefinedCompoundAssignmentOperators.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoUnsignedRightShift.Expected.cs" />
     <None Include="TestCases\Ugly\NoUnsignedRightShift.Expected.cs" />
     <!-- top-level statements: neither the input nor the expected output can be compiled

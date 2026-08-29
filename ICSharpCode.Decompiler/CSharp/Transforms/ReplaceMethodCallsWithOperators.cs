@@ -26,6 +26,7 @@ using System.Reflection;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -191,6 +192,91 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				invocationExpression.ReplaceWith(binaryOperator);
 				context.EndStep(binaryOperator);
 				return;
+			}
+			// Accessibility is part of whether "x op= y" can bind here at all: C# requires a
+			// user-defined operator to be public, so a call to one that is not has to stay a call.
+			if (context.Settings.UserDefinedCompoundAssignmentOperators
+				&& method is { IsOperator: true, IsStatic: false, Accessibility: Accessibility.Public }
+				&& invocationExpression.Target is MemberReferenceExpression or PointerReferenceExpression)
+			{
+				// A pointer indirection is always an assignable variable; every other receiver
+				// has to pass the target checks.
+				bool receiverIsPointer = invocationExpression.Target is PointerReferenceExpression;
+				Expression receiver = invocationExpression.Target switch {
+					MemberReferenceExpression mre => mre.Target,
+					_ => ((PointerReferenceExpression)invocationExpression.Target).Target,
+				};
+				if (!receiverIsPointer && (!IsValidAssignmentTarget(receiver) || !IsAssignableTarget(receiver)))
+					return;
+				if (!receiverIsPointer && method.DeclaringType.Kind == TypeKind.Interface
+					&& receiver.GetResolveResult().Type.Kind is not (TypeKind.Interface or TypeKind.TypeParameter))
+				{
+					// An operator declared in an interface (an explicit implementation, say)
+					// can only be bound through a receiver of interface or type-parameter type.
+					return;
+				}
+				Expression MakeAssignmentTarget()
+				{
+					Expression target = receiver.Detach();
+					return receiverIsPointer
+						? new UnaryOperatorExpression(UnaryOperatorType.Dereference, target)
+						: target;
+				}
+				AssignmentOperatorType? aop = GetCompoundAssignmentOperatorTypeFromMetadataName(method.Name, out isChecked, context.Settings);
+				if (aop != null && arguments.Length == 1)
+				{
+					// "x op= y" takes its operator from the static type of x and the type of y; it
+					// has no way to select an overload by parameter modifier, so a call the form
+					// would bind differently (an "in" overload beside an applicable by-value one)
+					// has to stay a call.
+					Expression value = arguments[0] is DirectionExpression direction ? direction.Expression : arguments[0];
+					IType receiverType = receiverIsPointer
+						? ((PointerType)receiver.GetResolveResult().Type).ElementType
+						: receiver.GetResolveResult().Type;
+					if (new CSharpResolver(context.TypeSystem).WouldRebindOperator(method, receiverType, [value.GetResolveResult()]))
+						return;
+					context.Step("Replace instance operator method with compound assignment", invocationExpression);
+					if (isChecked)
+					{
+						invocationExpression.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+					}
+					else if (HasCheckedEquivalent(method))
+					{
+						invocationExpression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+					}
+					var assignment = new AssignmentExpression(
+						MakeAssignmentTarget(),
+						aop.Value,
+						arguments[0].Detach().UnwrapInDirectionExpression()
+					).CopyAnnotationsFrom(invocationExpression);
+					invocationExpression.ReplaceWith(assignment);
+					context.EndStep(assignment);
+					return;
+				}
+				UnaryOperatorType? incDecOp = method.Name switch {
+					"op_IncrementAssignment" => UnaryOperatorType.PostIncrement,
+					"op_DecrementAssignment" => UnaryOperatorType.PostDecrement,
+					"op_CheckedIncrementAssignment" when context.Settings.CheckedOperators => UnaryOperatorType.PostIncrement,
+					"op_CheckedDecrementAssignment" when context.Settings.CheckedOperators => UnaryOperatorType.PostDecrement,
+					_ => null,
+				};
+				if (incDecOp != null && arguments.Length == 0)
+				{
+					context.Step("Replace instance operator method with increment/decrement", invocationExpression);
+					if (method.Name is "op_CheckedIncrementAssignment" or "op_CheckedDecrementAssignment")
+					{
+						invocationExpression.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+					}
+					else if (HasCheckedEquivalent(method))
+					{
+						invocationExpression.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+					}
+					var incDec = new UnaryOperatorExpression(incDecOp.Value, MakeAssignmentTarget())
+						.CopyAnnotationsFrom(invocationExpression);
+					invocationExpression.ReplaceWith(incDec);
+					context.EndStep(incDec);
+					return;
+				}
 			}
 			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name, out isChecked, context.Settings);
 			if (uop != null && arguments.Length == 1)
@@ -430,7 +516,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name, out bool isChecked, DecompilerSettings settings)
+		internal static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name, out bool isChecked, DecompilerSettings settings)
 		{
 			isChecked = false;
 			switch (name)
@@ -515,6 +601,139 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				default:
 					return null;
 			}
+		}
+
+		static AssignmentOperatorType? GetCompoundAssignmentOperatorTypeFromMetadataName(string name, out bool isChecked, DecompilerSettings settings)
+		{
+			isChecked = false;
+			switch (name)
+			{
+				case "op_AdditionAssignment":
+					return AssignmentOperatorType.Add;
+				case "op_CheckedAdditionAssignment" when settings.CheckedOperators:
+					isChecked = true;
+					return AssignmentOperatorType.Add;
+				case "op_SubtractionAssignment":
+					return AssignmentOperatorType.Subtract;
+				case "op_CheckedSubtractionAssignment" when settings.CheckedOperators:
+					isChecked = true;
+					return AssignmentOperatorType.Subtract;
+				case "op_MultiplicationAssignment":
+					return AssignmentOperatorType.Multiply;
+				case "op_CheckedMultiplicationAssignment" when settings.CheckedOperators:
+					isChecked = true;
+					return AssignmentOperatorType.Multiply;
+				case "op_DivisionAssignment":
+					return AssignmentOperatorType.Divide;
+				case "op_CheckedDivisionAssignment" when settings.CheckedOperators:
+					isChecked = true;
+					return AssignmentOperatorType.Divide;
+				case "op_ModulusAssignment":
+					return AssignmentOperatorType.Modulus;
+				case "op_BitwiseAndAssignment":
+					return AssignmentOperatorType.BitwiseAnd;
+				case "op_BitwiseOrAssignment":
+					return AssignmentOperatorType.BitwiseOr;
+				case "op_ExclusiveOrAssignment":
+					return AssignmentOperatorType.ExclusiveOr;
+				case "op_LeftShiftAssignment":
+					return AssignmentOperatorType.ShiftLeft;
+				case "op_RightShiftAssignment":
+					return AssignmentOperatorType.ShiftRight;
+				case "op_UnsignedRightShiftAssignment" when settings.UnsignedRightShift:
+					return AssignmentOperatorType.UnsignedShiftRight;
+				default:
+					return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets whether the expression is classified as a variable, the only thing a user-defined
+		/// compound assignment operator can be applied to. Instance operator calls carry their
+		/// receiver as the call target, which is under no such restriction: properties and indexers
+		/// route through the static operator instead, and hand-written IL can call the operator on
+		/// any value at all.
+		/// </summary>
+		static bool IsValidAssignmentTarget(Expression expression)
+		{
+			if (IsWritableRefReturn(expression))
+				return true;
+			return expression switch {
+				BaseReferenceExpression => false,
+				// A pointer indirection is a variable.
+				UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference } => true,
+				IndexerExpression => expression.GetSymbol() is not IProperty,
+				_ => expression.GetResolveResult() switch {
+					ILVariableResolveResult => true,
+					MemberResolveResult mrr => mrr.Member is IField,
+					_ => false,
+				}
+			};
+		}
+
+		/// <summary>
+		/// Gets whether the expression is a variable C# accepts as the target of "x op= y". The
+		/// target has to be assignable even though an instance operator never assigns to it:
+		/// "this" in a class, foreach, using and fixed variables, "in" parameters and readonly
+		/// fields outside the matching constructor are all rejected by the compiler.
+		/// </summary>
+		static bool IsAssignableTarget(Expression expression)
+		{
+			if (IsWritableRefReturn(expression))
+				return true;
+			if (expression is UnaryOperatorExpression { Operator: UnaryOperatorType.Dereference })
+			{
+				// A pointer indirection is never read-only.
+				return true;
+			}
+			if (expression is IndexerExpression)
+			{
+				// An array element (property indexers never get this far).
+				return true;
+			}
+			switch (expression.GetResolveResult())
+			{
+				case ThisResolveResult thisResolveResult:
+					// "this" is an assignable variable only in a struct, and only where the
+					// method does not make it read-only.
+					return thisResolveResult.Type.IsReferenceType != true
+						&& !thisResolveResult.Variable.IsRefReadOnly;
+				case ILVariableResolveResult vrr:
+					return !vrr.Variable.IsRefReadOnly
+						&& vrr.Variable.Kind is not (IL.VariableKind.ForeachLocal or IL.VariableKind.UsingLocal or IL.VariableKind.PinnedLocal);
+				case MemberResolveResult mrr when mrr.Member is IField field:
+					if (!field.IsReadOnly)
+						return true;
+					// A readonly field is a variable inside the matching constructor of its
+					// declaring type; an instance field additionally has to be accessed
+					// through "this".
+					return GetEnclosingMember(expression) is IMethod { IsConstructor: true } ctor
+						&& ctor.IsStatic == field.IsStatic
+						&& field.DeclaringTypeDefinition == ctor.DeclaringTypeDefinition
+						&& (field.IsStatic || mrr.TargetResult is ThisResolveResult);
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
+		/// Gets whether the expression denotes a writable ref-returning invocation or member
+		/// access. C# classifies those as variables, so they can take the place of x in
+		/// "x op= y"; a "ref readonly" return stays a read-only variable.
+		/// </summary>
+		static bool IsWritableRefReturn(Expression expression)
+		{
+			return expression.GetSymbol() is IMember { ReturnType: ByReferenceType } member
+				&& member switch {
+					IMethod method => !method.ReturnTypeIsRefReadOnly,
+					IProperty property => !property.ReturnTypeIsRefReadOnly,
+					_ => false,
+				};
+		}
+
+		static IMember? GetEnclosingMember(Expression expression)
+		{
+			return expression.Ancestors.OfType<EntityDeclaration>().FirstOrDefault()?.GetSymbol() as IMember;
 		}
 
 		static readonly Expression getMethodOrConstructorFromHandlePattern =

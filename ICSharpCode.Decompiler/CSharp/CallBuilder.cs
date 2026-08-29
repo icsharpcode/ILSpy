@@ -1667,7 +1667,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 			}
-			else if (method.IsOperator)
+			else if (method.IsOperator && !IL.UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(method))
 			{
 				IEnumerable<IParameterizedMember> operatorCandidates;
 				if (arguments.Length == 1)
@@ -1699,6 +1699,23 @@ namespace ICSharpCode.Decompiler.CSharp
 					operatorCandidates = EmptyList<IParameterizedMember>.Instance;
 				}
 				foreach (var m in operatorCandidates)
+				{
+					or.AddCandidate(m);
+				}
+			}
+			else if (IL.UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(method) && target != null)
+			{
+				// An instance operator has no callable spelling of its own: it is only ever emitted
+				// as "x op= y" or "x++". C# resolves that form in two phases, the instance operators
+				// on the static type of x first and the static operators only if none of them is
+				// applicable, so these candidates are the whole of what recompilation considers here.
+				// The fallback phase is not modeled: a call this set cannot account for gives up the
+				// operator form rather than being checked against the static operators, since a match
+				// there would emit the operator form for a call C# resolves to a different method.
+				// The reverse direction - a static operator call that must not be folded because the
+				// first phase would take it - uses the same candidate set, see
+				// CSharpResolver.IsShadowedByInstanceOperator.
+				foreach (var m in resolver.GetInstanceOperatorCandidates(target.Type, method.Name, arguments))
 				{
 					or.AddCandidate(m);
 				}

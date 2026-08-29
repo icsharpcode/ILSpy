@@ -145,6 +145,12 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
 		}, executesCompiledOutput: true);
 
+		static readonly CompilerOptions[] roslyn5OrNewerOptions = Tester.SupportedOnCurrentPlatform(new[]
+		{
+			CompilerOptions.UseRoslynLatest,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslynLatest,
+		});
+
 		static readonly CompilerOptions[] roslyn2OrNewerOptions = Tester.SupportedOnCurrentPlatform(new[]
 		{
 			CompilerOptions.UseRoslyn2_10_0 | CompilerOptions.TargetNet40,
@@ -207,6 +213,18 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public async Task CompoundAssignment([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
+		[Test]
+		public async Task UserDefinedCompoundAssignment([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
+		[Test]
+		public async Task UserDefinedCompoundAssignmentInheritance([ValueSource(nameof(roslyn5OrNewerOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
 		}

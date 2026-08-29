@@ -83,7 +83,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Debug.Assert(call.Arguments[0].MatchLdLoc(newVariable));
 					var compoundAssign = new UserDefinedCompoundAssign(call.Method, CompoundEvalMode.EvaluatesToNewValue,
 						new LdLoca(newVariable), CompoundTargetKind.Address, new LdcI4(1)).WithILRange(call);
-					call.ReplaceWith(compoundAssign);
+					if (context.Settings.UserDefinedCompoundAssignmentOperators
+						&& context.CSharpResolver.IsShadowedByInstanceOperator(call.Method, newVariable.Type, null,
+							targetIsVariable: true)
+						&& newVariable.StoreInstructions.SingleOrDefault() is StLoc { Parent: Block hoistBlock } hoistedStore)
+					{
+						// A prefix increment here would bind the C# 14 instance operator of the
+						// same name; only a postfix increment with a used result binds the static
+						// one, and that hands back the old value. So the increment becomes a
+						// statement of its own, right after the extracted argument. This can move
+						// the operator call ahead of side effects that originally ran before it;
+						// the alternative is output that silently calls the other operator.
+						hoistBlock.Instructions.Insert(hoistedStore.ChildIndex + 1, compoundAssign);
+						call.ReplaceWith(new LdLoc(newVariable));
+					}
+					else
+					{
+						call.ReplaceWith(compoundAssign);
+					}
 					context.EndStep(compoundAssign);
 				}
 			}

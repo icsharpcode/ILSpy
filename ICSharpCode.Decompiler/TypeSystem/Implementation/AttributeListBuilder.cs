@@ -234,6 +234,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 									return (options & TypeSystemOptions.ReadOnlyStructsAndParameters) != 0;
 								case SymbolKind.Method:
 								case SymbolKind.Accessor:
+								case SymbolKind.Operator:
 									return (options & TypeSystemOptions.ReadOnlyMethods) != 0;
 								case SymbolKind.ReturnType:
 								case SymbolKind.Property:

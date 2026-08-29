@@ -1821,6 +1821,11 @@ namespace ICSharpCode.Decompiler.IL
 					&& method.DeclaringType.IsReferenceType != true;
 			}
 
+			bool IsNonStaticOperatorCall()
+			{
+				return UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(method);
+			}
+
 			ILInstruction[] PrepareArguments(bool firstArgumentIsStObjTarget)
 			{
 				int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
@@ -1831,9 +1836,20 @@ namespace ICSharpCode.Decompiler.IL
 					&& !firstArgumentIsStObjTarget
 					&& UseRefLocalsForAccurateOrderOfEvaluation
 					&& expectedStackType == StackType.Ref && typeOfThis.IsReferenceType != false;
+				// Only an object reference is worth materializing: a value-type receiver is passed by
+				// address, so it already denotes a variable, and copying it into another one would
+				// make the operator mutate the copy.
+				bool materializeReceiver = IsNonStaticOperatorCall() && expectedStackType == StackType.O;
+				if (materializeReceiver)
+				{
+					// The receiver slot is appended to the current block, so everything still
+					// pending on the expression stack has to be flushed first - the parameter
+					// loop below does that too, but the increment operators take no parameters.
+					FlushExpressionStack();
+				}
 				for (int i = method.Parameters.Count - 1; i >= 0; i--)
 				{
-					if (requiresLdObjIfRef)
+					if (requiresLdObjIfRef || materializeReceiver)
 					{
 						FlushExpressionStack();
 					}
@@ -1853,6 +1869,12 @@ namespace ICSharpCode.Decompiler.IL
 						if (requiresLdObjIfRef)
 						{
 							firstArgumentInstruction = new LdObjIfRef(firstArgumentInstruction, typeOfThis);
+						}
+						else if (materializeReceiver)
+						{
+							Debug.Assert(currentBlock != null);
+							var v = AllocateStackSlot(firstArgumentInstruction, typeOfThis);
+							firstArgumentInstruction = new LdLoc(v);
 						}
 					}
 					arguments[0] = firstArgumentInstruction;
@@ -2107,13 +2129,21 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var inst in expressionStack)
 			{
 				Debug.Assert(inst.ResultType != StackType.Void);
-				IType type = compilation.FindType(inst.ResultType);
-				var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
-				v.HasGeneratedName = true;
+				var v = AllocateStackSlot(inst, null);
 				currentStack = currentStack.Push(v);
-				currentBlock.Block.Instructions.Add(new StLoc(v, inst).WithILRange(inst));
 			}
 			expressionStack.Clear();
+		}
+
+		private ILVariable AllocateStackSlot(ILInstruction inst, IType? expectedType)
+		{
+			Debug.Assert(currentBlock != null);
+			IType type = expectedType ?? compilation.FindType(inst.ResultType);
+			Debug.Assert(type.GetStackType() == inst.ResultType);
+			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
+			v.HasGeneratedName = true;
+			currentBlock.Block.Instructions.Add(new StLoc(v, inst).WithILRange(inst));
+			return v;
 		}
 
 		ILInstruction DecodeSwitch()

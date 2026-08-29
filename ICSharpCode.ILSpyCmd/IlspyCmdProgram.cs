@@ -160,7 +160,7 @@ Examples:
 
 		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
 			"CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
-			"CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, Preview or Latest", CommandOptionType.SingleValue)]
+			"CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, CSharp14_0, CSharp15_0, Preview or Latest", CommandOptionType.SingleValue)]
 		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
 
 		[FileExists]

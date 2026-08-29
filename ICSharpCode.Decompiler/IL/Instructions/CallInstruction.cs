@@ -19,6 +19,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -169,6 +170,119 @@ namespace ICSharpCode.Decompiler.IL
 				&& object.Equals(this.ConstrainedTo, o.ConstrainedTo)
 				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
+
+		internal override bool SatisfiesSlotRestrictionForInlining(int childIndex, ILInstruction newChild)
+		{
+			// The receiver of a call to a C# 14 instance compound assignment operator becomes the
+			// target of "x op= y", so the expression taking its place has to be one C# accepts
+			// there and one that still binds the operator this call names. Classification already
+			// implies the corresponding decompiler setting is on.
+			if (childIndex == 0 && UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(Method)
+				&& !CanBeCompoundAssignmentReceiver(newChild))
+			{
+				return false;
+			}
+			return base.SatisfiesSlotRestrictionForInlining(childIndex, newChild);
+		}
+
+		/// <summary>
+		/// Gets whether <paramref name="replacement"/> can stand in for the receiver of this call
+		/// to an instance compound assignment operator. The receiver becomes the target of
+		/// "x op= y", so the replacement has to denote a storage location C# accepts there, and it
+		/// has to bind the operator the call names rather than one a more derived type brings into
+		/// scope. Consulted by inlining through the slot restriction above, and by copy
+		/// propagation, which substitutes receivers the same way.
+		/// </summary>
+		internal bool CanBeCompoundAssignmentReceiver(ILInstruction replacement)
+		{
+			var contextMethod = this.Ancestors.OfType<ILFunction>().FirstOrDefault()?.Method;
+			if (Transforms.ILInlining.IsReadonlyCompoundAssignmentTarget(replacement, contextMethod))
+			{
+				// The target is not an assignable variable, so it cannot take the place of
+				// "x" in "x op= y"; the copy the receiver slot holds is what keeps the
+				// operator form legal.
+				return false;
+			}
+			switch (replacement.OpCode)
+			{
+				case OpCode.LdLoc:
+				case OpCode.LdObj:
+				case OpCode.LdFlda:
+				case OpCode.LdsFlda:
+					break;
+				default:
+					// anything else would turn the target into "GetX() op= y"
+					return false;
+			}
+			return !ReplacementMayRebindOperator(Method, GetReceiverType(replacement));
+		}
+
+		/// <summary>
+		/// Gets whether "x op= y" with x of type <paramref name="receiverType"/> could bind an
+		/// operator other than <paramref name="op"/>, the one the call being rewritten names.
+		/// The form selects its operator from the static type of x, so an operator introduced
+		/// anywhere between that type and the type declaring <paramref name="op"/> can take the
+		/// call. This is a declaration-existence check, deliberately one-sided: overloads next to
+		/// the operator itself cannot be selected by the receiver's type, and an override of a
+		/// virtual operator occupies the slot of the operator the call names. Where it errs it
+		/// only refuses a substitution, which costs a local copy in the output, never its
+		/// correctness. The exact form of the question, argument applicability included, is
+		/// CSharpResolver.WouldRebindOperator, which the C# transforms use; this check stays
+		/// approximate because the IL layer does not bind.
+		/// </summary>
+		static bool ReplacementMayRebindOperator(IMethod op, IType receiverType)
+		{
+			if (op.DeclaringType.Kind == TypeKind.Interface)
+			{
+				// An operator declared in an interface is only reachable from a receiver of
+				// interface (or type-parameter) type: class member lookup does not see interface
+				// members. System.Object stays permissive - it is the stack-type placeholder
+				// several ILAst nodes carry.
+				return receiverType.Kind is not (TypeKind.Interface or TypeKind.TypeParameter)
+					&& !receiverType.IsKnownType(KnownTypeCode.Object);
+			}
+			// Both the checked and the unchecked operator can take the call: which of them applies
+			// depends on the checked context the assignment ends up in.
+			string siblingName = UserDefinedCompoundAssign.GetCheckedSiblingName(op.Name);
+			foreach (var type in receiverType.GetAllBaseTypeDefinitions())
+			{
+				if (type == op.DeclaringTypeDefinition)
+					continue;
+				if (!type.GetAllBaseTypeDefinitions().Contains(op.DeclaringTypeDefinition))
+					continue;
+				foreach (var m in type.Methods)
+				{
+					if (m.IsOperator && !m.IsStatic && !m.IsOverride
+						&& m.Accessibility == Accessibility.Public
+						&& (m.Name == op.Name || m.Name == siblingName))
+					{
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Gets the type that decides which operator a receiver expression binds.
+		/// </summary>
+		/// <remarks>
+		/// A stack slot standing in for a value carries whatever type the reader gave it - for a
+		/// flushed expression stack that is just the stack type, which says nothing about the
+		/// operators in play. Such a slot is a pure alias, so the value stored into it is what
+		/// really ends up as the receiver.
+		/// </remarks>
+		IType GetReceiverType(ILInstruction expr)
+		{
+			while (expr is LdLoc { Variable: { Kind: VariableKind.StackSlot, IsSingleDefinition: true } v }
+				&& v.StoreInstructions.SingleOrDefault() is StLoc store)
+			{
+				expr = store.Value;
+			}
+			var type = expr.InferType(Method.Compilation);
+			// An address-taking receiver denotes the storage location itself.
+			return type is ByReferenceType byRef ? byRef.ElementType : type;
+		}
 	}
 
 	partial class Call : ILiftableInstruction
@@ -188,5 +302,6 @@ namespace ICSharpCode.Decompiler.IL
 					return Method.ReturnType.GetStackType();
 			}
 		}
+
 	}
 }
