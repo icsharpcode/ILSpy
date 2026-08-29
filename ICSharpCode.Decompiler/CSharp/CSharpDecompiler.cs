@@ -827,6 +827,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.SupportOperatorChecked = settings.CheckedOperators;
 			typeSystemAstBuilder.AlwaysUseGlobal = settings.AlwaysUseGlobal;
 			typeSystemAstBuilder.SupportExtensionDeclarations = settings.ExtensionMembers;
+			typeSystemAstBuilder.SupportUserDefinedCompoundAssignmentOperators = settings.UserDefinedCompoundAssignmentOperators;
 			return typeSystemAstBuilder;
 		}
 
@@ -1730,15 +1731,16 @@ namespace ICSharpCode.Decompiler.CSharp
 								return true;
 							}
 						}
-						else if (entity.SymbolKind == SymbolKind.Method)
+						else if (entity.SymbolKind is SymbolKind.Method or SymbolKind.Operator)
 						{
 							// A method introduced in a class or struct hides all non-method base class members with the same name, and all
 							// base class methods with the same signature (method name and parameter count, modifiers, and types).
+							// Instance operators hide by those same rules.
 							if (baseType.GetMembers(m => m.SymbolKind != SymbolKind.Indexer
 													&& m.SymbolKind != SymbolKind.Constructor
 													&& m.SymbolKind != SymbolKind.Destructor
 													&& m.Name == entity.Name && lookup.IsAccessible(m, true))
-								.Any(m => m.SymbolKind != SymbolKind.Method ||
+								.Any(m => m.SymbolKind is not (SymbolKind.Method or SymbolKind.Operator) ||
 									(((IMethod)entity).TypeParameters.Count == ((IMethod)m).TypeParameters.Count
 										&& parameterListComparer.Equals(((IMethod)entity).Parameters, ((IMethod)m).Parameters))))
 							{
@@ -2245,8 +2247,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					methodDecl.Modifiers |= Modifiers.Extern;
 				}
 				// Accessors qualify only when they are emitted as ordinary methods (parameterized
-				// properties); an Accessor node cannot carry the 'new' modifier.
-				if ((method.SymbolKind == SymbolKind.Method || (method.SymbolKind == SymbolKind.Accessor && methodDecl is MethodDeclaration))
+				// properties); an Accessor node cannot carry the 'new' modifier. Instance operators
+				// hide by signature like ordinary methods do; static ones cannot carry 'new' at all.
+				if ((method.SymbolKind == SymbolKind.Method
+						|| (method.SymbolKind == SymbolKind.Operator && !method.IsStatic)
+						|| (method.SymbolKind == SymbolKind.Accessor && methodDecl is MethodDeclaration))
 					&& !method.IsExplicitInterfaceImplementation
 					&& methodDefinition.HasFlag(System.Reflection.MethodAttributes.Virtual) == methodDefinition.HasFlag(System.Reflection.MethodAttributes.NewSlot))
 				{
@@ -2271,6 +2276,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsConstructor && settings.RequiredMembers && RemoveCompilerFeatureRequiredAttribute(methodDecl, "RequiredMembers"))
 				{
 					RemoveObsoleteAttribute(methodDecl, "Constructors of types with required members are not supported in this version of your compiler.");
+				}
+				if (methodDecl is OperatorDeclaration operatorDecl && OperatorDeclaration.IsCompoundAssignment(operatorDecl.OperatorType))
+				{
+					RemoveCompilerFeatureRequiredAttribute(methodDecl, "UserDefinedCompoundAssignmentOperators");
 				}
 				return methodDecl;
 

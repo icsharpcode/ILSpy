@@ -86,7 +86,9 @@ namespace ICSharpCode.ILSpy.Languages
 		};
 
 		static CSharpAmbience CreateAmbience() => new() {
-			ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList,
+			ConversionFlags = ConversionFlags.ShowTypeParameterList | ConversionFlags.PlaceReturnTypeAfterParameterList
+				| ConversionFlags.SupportOperatorChecked | ConversionFlags.SupportUnsignedRightShift
+				| ConversionFlags.SupportUserDefinedCompoundAssignmentOperators,
 		};
 
 		public override string TypeToString(IType type, ConversionFlags conversionFlags = ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.UseFullyQualifiedTypeNames)
