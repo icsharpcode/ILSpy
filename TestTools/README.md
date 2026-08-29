@@ -1,12 +1,13 @@
 # TestTools
 
-Two standalone tools that run the decompiler over real-world assemblies, to find defects the
+Standalone tools that run the decompiler over real-world assemblies, to find defects the
 in-repo test suite cannot: it decompiles fixtures we wrote, these decompile what the world ships.
 
 | tool | question it answers |
 |---|---|
 | `nugetfuzz.cs` | Does the decompiler *crash* on real code? (asserts, exceptions, IL warnings) |
 | `decompdiff.cs` | Did a change make the *output* better or worse? (readability across two builds) |
+| `nuget-top.ps1` | Where do I get a corpus? (downloads the most-downloaded packages) |
 
 Both are [file-based apps](https://learn.microsoft.com/dotnet/core/whats-new/dotnet-10/sdk#file-based-apps):
 single `.cs` files run directly by the SDK, no project, no solution entry. They are not built by
@@ -54,6 +55,28 @@ Findings from every package land in `crawl/findings.jsonl`; render the aggregate
 including while the sweep is still running, with `--report`. Logs of failed runs are kept in
 `logs/`, successful ones are deleted. The package cache (`~/.cache/nugetfuzz`) is capped at 20 GB
 by default (`-CacheCapMB`) and pruned least-recently-used, because `decompdiff` uses it as a corpus.
+
+## nuget-top
+
+Downloads the most-downloaded packages on nuget.org, with their dependency closures, and writes the
+list of lib directories they resolved to - a ready-made corpus for either tool:
+
+```pwsh
+./nuget-top.ps1 -Count 200
+./nuget-top.ps1 -Count 50 -Skip 200      # extend an existing corpus further down the ranking
+./nuget-top.ps1 -Count 200 -ListOnly     # just the ids, download nothing
+```
+
+The ids come from an empty query against the search service, which orders by download count. The
+download itself is `nugetfuzz --download-only`, so package selection, TFM matching and the
+dependency walk behave exactly as they do in a sweep - only the decompiling is skipped.
+
+The corpus is written as a list of directories rather than one root, because a package already
+restored on this machine is used from the machine-wide NuGet cache instead of being copied:
+
+```pwsh
+dotnet run decompdiff.cs -- --old master --new my-branch -o report $(cat crawl/top-200.corpus.txt)
+```
 
 ## decompdiff
 

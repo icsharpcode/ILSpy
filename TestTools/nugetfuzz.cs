@@ -25,7 +25,7 @@
 // Microsoft.NETFramework.ReferenceAssemblies packages), then decompiles every
 // assembly type-by-type and reports Debug.Assert failures / exceptions.
 //
-// usage: dotnet run nugetfuzz.cs -- <PackageId[@Version]>... | @packagelist.txt
+// usage: dotnet run nugetfuzz.cs -- [--download-only] <PackageId[@Version]>... | @packagelist.txt
 
 using System.Diagnostics;
 using System.IO.Compression;
@@ -108,14 +108,18 @@ if (args is ["--report", var ledgerPath, ..])
 	return 0;
 }
 
+// Populates the cache without decompiling: the sweep is the slow part, and a corpus
+// only needs the assemblies on disk.
+var downloadOnly = args.Contains("--download-only");
 var packages = args
+	.Where(a => a != "--download-only")
 	.SelectMany(a => a.StartsWith('@') ? File.ReadAllLines(a[1..]) : new[] { a })
 	.Select(l => l.Trim())
 	.Where(l => l.Length > 0 && !l.StartsWith('#'))
 	.ToList();
 if (packages.Count == 0)
 {
-	Console.Error.WriteLine("usage: nugetfuzz <PackageId[@Version]>... | @packagelist.txt");
+	Console.Error.WriteLine("usage: nugetfuzz [--download-only] <PackageId[@Version]>... | @packagelist.txt");
 	Console.Error.WriteLine("       nugetfuzz --report <ledger.jsonl> [out.html]");
 	return 1;
 }
@@ -147,7 +151,11 @@ foreach (var entry in failures.Values.OrderByDescending(f => f.Count))
 // shared ledger; `--report <ledger>` renders the aggregate. Without a ledger the run
 // reports only itself.
 var ledger = Environment.GetEnvironmentVariable("NUGETFUZZ_LEDGER");
-if (ledger != null)
+if (downloadOnly)
+{
+	// Nothing was decompiled, so there are no findings to report on.
+}
+else if (ledger != null)
 {
 	AppendToLedger(ledger, failures.Values, assemblyCount, typeCount, refsResolved, refsTotal);
 	Console.WriteLine($"ledger: {Path.GetFullPath(ledger)}");
@@ -190,6 +198,13 @@ async Task ProcessPackage(string spec)
 
 	var searchDirs = await CollectDependencies(dir, matchTarget, id);
 	searchDirs.Insert(0, libDir);
+	if (downloadOnly)
+	{
+		// The package and its dependency closure are in the cache now, which is all a
+		// corpus needs; decompiling every type is what the sweep is for.
+		Console.WriteLine($"  cached: {libDir}");
+		return;
+	}
 	// The installed runtime dir is a last-resort fallback only: Microsoft.NETCore.App
 	// ships stub facades (e.g. WindowsBase.dll without System.Windows.Point) that must
 	// not shadow the real assemblies from ref packs or dependency packages.
