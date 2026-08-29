@@ -1007,6 +1007,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// so bounds that differ only in tuple element names don't survive into
 			// FindTypesInBounds as distinct candidates.
 			var types = CreateNestedInstance().FindTypesInBounds(tp.LowerBounds, tp.UpperBounds);
+			Log.Unindent();
 			if (algorithm == TypeInferenceAlgorithm.ImprovedReturnAllResults)
 			{
 				tp.FixedTo = IntersectionType.Create(types);
