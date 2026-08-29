@@ -35,6 +35,16 @@ public class BadParameterShapes
 	{
 	}
 }
+// A C++/CLI-style classic operator: a value-returning instance op_Addition. It has an ordinary
+// call spelling, so none of the compound assignment receiver machinery applies to it; the
+// instance operator declaration form is longstanding behavior for such methods.
+public class ClassicInstanceOperator
+{
+	public ClassicInstanceOperator operator +(ClassicInstanceOperator other)
+	{
+		return this;
+	}
+}
 public class CompoundTarget
 {
 	public int Value;
@@ -129,6 +139,18 @@ public class EdgeCases
 
 	public static void UseValue(ShadowTarget t)
 	{
+	}
+
+	public static ClassicInstanceOperator GetClassic()
+	{
+		return new ClassicInstanceOperator();
+	}
+
+	// The receiver is an r-value; a compound assignment receiver would have to be spilled to a
+	// variable, but a classic operator call needs no such thing.
+	public static void CallClassicOperatorOnRValue(ClassicInstanceOperator x)
+	{
+		GetClassic().op_Addition(x);
 	}
 
 	// The same holds for the shape that stores the old value inside the operator call.

@@ -168,6 +168,28 @@
   }
 }
 
+// A C++/CLI-style classic operator: a value-returning instance op_Addition. It has an
+// ordinary call spelling, so none of the compound assignment receiver machinery applies.
+.class public auto ansi beforefieldinit ClassicInstanceOperator
+       extends [System.Runtime]System.Object
+{
+  .method public hidebysig specialname instance class ClassicInstanceOperator
+          op_Addition(class ClassicInstanceOperator other) cil managed
+  {
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ret
+  }
+
+  .method public hidebysig specialname rtspecialname instance void  .ctor() cil managed
+  {
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void [System.Runtime]System.Object::.ctor()
+    IL_0006:  ret
+  }
+}
+
 .class public auto ansi beforefieldinit EdgeCases
        extends [System.Runtime]System.Object
 {
@@ -239,6 +261,25 @@
   {
     .maxstack  8
     IL_0000:  ret
+  }
+
+  .method public hidebysig static class ClassicInstanceOperator GetClassic() cil managed
+  {
+    .maxstack  8
+    IL_0000:  newobj     instance void ClassicInstanceOperator::.ctor()
+    IL_0005:  ret
+  }
+
+  // The receiver is an r-value; a compound assignment receiver would have to be spilled to a
+  // variable, but a classic operator call needs no such thing.
+  .method public hidebysig static void  CallClassicOperatorOnRValue(class ClassicInstanceOperator x) cil managed
+  {
+    .maxstack  8
+    IL_0000:  call       class ClassicInstanceOperator EdgeCases::GetClassic()
+    IL_0005:  ldarg.0
+    IL_0006:  callvirt   instance class ClassicInstanceOperator ClassicInstanceOperator::op_Addition(class ClassicInstanceOperator)
+    IL_000b:  pop
+    IL_000c:  ret
   }
 
   // The other legacy post-increment shape, storing the old value inside the operator call: it is

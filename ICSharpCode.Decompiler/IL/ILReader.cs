@@ -1823,7 +1823,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			bool IsNonStaticOperatorCall()
 			{
-				return method.IsOperator && !method.IsStatic;
+				return UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(method);
 			}
 
 			ILInstruction[] PrepareArguments(bool firstArgumentIsStObjTarget)

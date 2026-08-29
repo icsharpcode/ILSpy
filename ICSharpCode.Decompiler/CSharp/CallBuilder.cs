@@ -1667,7 +1667,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 			}
-			else if (method.IsOperator && method.IsStatic)
+			else if (method.IsOperator && !IL.UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(method))
 			{
 				IEnumerable<IParameterizedMember> operatorCandidates;
 				if (arguments.Length == 1)
@@ -1703,7 +1703,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					or.AddCandidate(m);
 				}
 			}
-			else if (settings.UserDefinedCompoundAssignmentOperators && method.IsOperator && !method.IsStatic && target != null)
+			else if (IL.UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(method) && target != null)
 			{
 				// An instance operator has no callable spelling of its own: it is only ever emitted
 				// as "x op= y" or "x++". C# resolves that form in two phases, the instance operators

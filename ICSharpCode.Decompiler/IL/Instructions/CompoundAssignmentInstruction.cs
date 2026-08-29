@@ -351,6 +351,19 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
+		/// Gets whether the method is a C# 14 instance compound assignment operator - the only
+		/// kind of operator whose call sites must be written as "x op= y" / "x++". Other
+		/// languages' instance operators (C++/CLI's value-returning op_Addition, say) have an
+		/// ordinary call spelling and none of the receiver machinery applies to them.
+		/// </summary>
+		public static bool IsInstanceCompoundAssignmentOperator(IMethod method)
+		{
+			return method is { IsOperator: true, IsStatic: false }
+				&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(method.Name) is CSharp.Syntax.OperatorType operatorType
+				&& CSharp.Syntax.OperatorDeclaration.IsCompoundAssignment(operatorType);
+		}
+
+		/// <summary>
 		/// Gets the metadata name of the checked operator paired with an unchecked one, and vice
 		/// versa. Which of the two "x op= y" binds depends on the checked context the assignment
 		/// ends up in, so code reasoning about that form has to consider the pair together.
@@ -368,7 +381,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public static bool IsCompoundAssignmentReceiverUse(ILInstruction inst)
 		{
-			return inst.Parent is CallInstruction { Method: { IsOperator: true, IsStatic: false } } call
+			return inst.Parent is CallInstruction call
+				&& IsInstanceCompoundAssignmentOperator(call.Method)
 				&& call.Arguments.Count > 0 && call.Arguments[0] == inst;
 		}
 

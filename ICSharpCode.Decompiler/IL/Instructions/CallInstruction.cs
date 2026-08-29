@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.IL
 			// target of "x op= y", so the expression taking its place has to be one C# accepts
 			// there and one that still binds the operator this call names. Classification already
 			// implies the corresponding decompiler setting is on.
-			if (childIndex == 0 && Method.IsOperator && !Method.IsStatic
+			if (childIndex == 0 && UserDefinedCompoundAssign.IsInstanceCompoundAssignmentOperator(Method)
 				&& !CanBeCompoundAssignmentReceiver(newChild))
 			{
 				return false;
