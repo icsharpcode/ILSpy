@@ -1258,13 +1258,25 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 		}
 
 		[Test]
+		public void BestCommonTypeObjectAndNullableString()
+		{
+			Assert.That(
+				ti.GetBestCommonType([
+					new ResolveResult(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.NotNullable)),
+					new ResolveResult(compilation.FindType(KnownTypeCode.String).ChangeNullability(Nullability.Nullable))
+				], out bool success),
+				Is.EqualTo(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.Nullable)));
+			Assert.That(success);
+		}
+
+		[Test]
 		public void BestCommonTypeObjectAndNullableObject()
 		{
 			Assert.That(
-				ti.GetBestCommonType(new[] {
+				ti.GetBestCommonType([
 					new ResolveResult(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.NotNullable)),
 					new ResolveResult(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.Nullable))
-				}, out bool success),
+				], out bool success),
 				Is.EqualTo(compilation.FindType(KnownTypeCode.Object).ChangeNullability(Nullability.Nullable)));
 			Assert.That(success);
 		}

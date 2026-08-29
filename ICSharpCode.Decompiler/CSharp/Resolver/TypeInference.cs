@@ -1222,16 +1222,32 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// Deduplicate types. This also merges types that differ only in tuple
 			// element names and/or object/dynamic.
+			// The specification doesn't mention this step, but Roslyn does it,
+			// and it's crucial for tuple element names and nested nullabilities in otherwise
+			// equivalent types.
+			Nullability? topLevelNullability = null;
 			var candidateMergeDict = new Dictionary<IType, IType>();
-			void AddCandidates(IEnumerable<IType> candidates, VarianceModifier variance)
+			void AddCandidates(IReadOnlyCollection<IType> bounds, VarianceModifier variance)
 			{
-				foreach (var candidate in candidates)
+				// This helper function works like Roslyn's MethodTypeInference.AddAllCandidates().
+				// It deduplicates similar types and merges them into a single candidate type,
+				// handling differences in nullability, tuple element names, and object/dynamic,
+				// but only if the type is otherwise completely identical.
+				foreach (var bound in bounds)
 				{
-					var key = candidate.AcceptVisitor(NormalizeTypeVisitor.KeyForTypeMerging);
+					if (topLevelNullability.HasValue)
+					{
+						topLevelNullability = MergeNullability(topLevelNullability.Value, bound.Nullability, variance);
+					}
+					else
+					{
+						topLevelNullability = bound.Nullability;
+					}
+					var key = bound.AcceptVisitor(NormalizeTypeVisitor.KeyForTypeMerging);
 					if (candidateMergeDict.TryGetValue(key, out var existing))
 					{
-						var merged = MergeSimilarTypes(existing, candidate, variance);
-						Log.WriteLine(" Merged similar types " + existing + " and " + candidate + " into " + merged);
+						var merged = MergeSimilarTypes(existing, bound, variance);
+						Log.WriteLine(" Merged similar types " + existing + " and " + bound + " into " + merged);
 						if (merged != null)
 						{
 							candidateMergeDict[key] = merged;
@@ -1244,7 +1260,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					}
 					else
 					{
-						candidateMergeDict.Add(key, candidate);
+						candidateMergeDict.Add(key, bound);
 					}
 				}
 			}
@@ -1266,6 +1282,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			candidateTypes = candidateTypes.Where(
 				c => candidateTypes.All(o => conversions.ImplicitConversion(o, c).IsValid)
 			).ToList();
+
+			// Apply the merged top-level nullability:
+			Debug.Assert(topLevelNullability.HasValue);
+			// (Roslyn has a different approach in MergeOrRemoveCandidates, but to me that just looked
+			//  like an overly complicated way of achieving the same thing.)
+			for (int i = 0; i < candidateTypes.Count; i++)
+			{
+				candidateTypes[i] = candidateTypes[i].ChangeNullability(topLevelNullability.Value);
+			}
 
 			// If the specified algorithm produces a single candidate, we return
 			// that candidate.
