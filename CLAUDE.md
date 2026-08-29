@@ -84,7 +84,8 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 - **Body explains the *why*** and the non-diff context only: the constraint, the prior incident, the decision, what was tried and rejected, the invariant that motivated the change. Keep it short — one short paragraph is usually enough. The diff already shows the *what* — don't restate it, and don't enumerate per-file changes.
 - `Fix #NNNN: ...` closes an issue. `#NNNN` references one without closing.
 - **en-US English** in subject and body. ASCII-only unless a non-ASCII character is genuinely required for what the message describes.
-- **AI attribution: use `Assisted-by:`, not `Co-Authored-By:`.** Following the Linux kernel's coding-assistants guidance (https://docs.kernel.org/process/coding-assistants.html#attribution), an AI-assisted commit ends with a trailer of the form `Assisted-by: AGENT_NAME:MODEL_VERSION:HARNESS` — agent, model id, and the harness that ran it, colon-separated, e.g. `Assisted-by: Claude:claude-opus-4-8:Claude Code`. Use the session's actual model id and harness. Don't list analysis/build tools. Do **not** add a `Co-Authored-By:` line for the AI, and an AI agent **must not** add a `Signed-off-by:` (only a human can certify the DCO).
+- **AI attribution is mandatory on every commit an agent writes: use `Assisted-by:`, not `Co-Authored-By:`.** Following the Linux kernel's coding-assistants guidance (https://docs.kernel.org/process/coding-assistants.html#attribution), such a commit ends with a trailer of the form `Assisted-by: AGENT_NAME:MODEL_VERSION:HARNESS` — agent, model id, and the harness that ran it, colon-separated, e.g. `Assisted-by: Claude:claude-opus-4-8:Claude Code`. Use the session's actual model id and harness. Don't list analysis/build tools. Do **not** add a `Co-Authored-By:` line for the AI, and an AI agent **must not** add a `Signed-off-by:` (only a human can certify the DCO).
+- **There is no exemption from the trailer.** It goes on every commit the agent authors — one-liners, formatting, reverts, rebases that reword, and changes the human dictated word for word. The same holds anywhere else an agent writes under a human's account, such as PR and issue comments, where every individual comment carries the disclosure rather than one summary covering a batch. A rule with an exemption for the common case stops being a rule: a reader can only tell which work came from an agent if the marker is on all of it. An agent-written commit missing the trailer is a defect — amend it, don't leave it.
 
 ## Changes to the decompiler engine
 
@@ -102,6 +103,12 @@ Never put more than one C# language feature on one branch.
 - The decompiler test suite (test kinds, fixture structure, how to write tests, the compiler-matrix model) is documented in [ICSharpCode.Decompiler.Tests/CLAUDE.md](ICSharpCode.Decompiler.Tests/CLAUDE.md).
 - After matcher / rewriter edits, **run the relevant tests, not just the build.** `dotnet build` green ≠ behaviour correct.
 - **To see what a transform did, dump the ILAst:** `ilspycmd <assembly> -m <doc-id> --ilast` prints the IL transform pipeline's result, and `--after-transform <name-or-index>` stops the pipeline early so two stages can be diffed. Debug builds only (like the UI's Debug Steps pane), so run it from a local build, not the installed tool.
+
+## Code review
+
+- **A PR review and exploratory testing are different jobs.** A review is scoped to the PR's feature and reports only genuine bugs *the diff caused*. Exploratory testing — corpus sweeps, `nugetfuzz`, `decompdiff`, round-tripping real assemblies — is encouraged on a PR branch, but its results never go into the review verbatim: a sweep measures the whole decompiler, not the diff. Triage first; what the diff caused may become a comment, the rest becomes an issue.
+- **"Review X" means produce the findings and report them back.** Posting to the PR is a separate, explicitly requested step. Never set `approve` / `request-changes` on someone's behalf.
+- **Read [.github/CODE_REVIEW.md](.github/CODE_REVIEW.md) before writing a single review comment** — the bar for what gets posted, what evidence a finding needs, and how to retract one without damaging the replies to it.
 
 ## Investigating dependencies
 
