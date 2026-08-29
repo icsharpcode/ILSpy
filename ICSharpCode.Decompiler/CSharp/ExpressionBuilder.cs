@@ -4377,7 +4377,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType commonType = ti.GetBestCommonType(
 				expressionsForTypeInference.SelectArray(e => e.ResolveResult),
 				out bool success);
-			if (success && commonType.GetStackType() == inst.ResultType)
+			// Note: we need to ensure the compiler actually picked the type that we used for the
+			// implicit conversions.
+			if (success && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(commonType, resultType))
 			{
 				return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(commonType));
 			}
@@ -4390,7 +4392,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				commonType = ti.GetBestCommonType(
 					expressionsForTypeInference.SelectArray(e => e.ResolveResult),
 					out success);
-				if (success && commonType.GetStackType() == inst.ResultType)
+				if (success && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(commonType, resultType))
 				{
 					return switchExpr.WithILInstruction(inst).WithRR(new ResolveResult(commonType));
 				}
