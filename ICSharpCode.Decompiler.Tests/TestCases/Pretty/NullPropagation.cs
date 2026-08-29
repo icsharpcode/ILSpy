@@ -320,6 +320,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(setsOfNumbers?[1]?[1].ToString() == null);
 		}
 
+		private static byte[] GetBytes()
+		{
+			return null;
+		}
+
+		private static void ArrayLengthWithFallback()
+		{
+			Console.WriteLine(GetBytes()?.Length ?? 0);
+			Console.WriteLine(GetBytes()?.LongLength ?? 0);
+		}
+
 		private static dynamic DynamicNullProp(dynamic a)
 		{
 			return a?.b.c(1)?.d[10];
