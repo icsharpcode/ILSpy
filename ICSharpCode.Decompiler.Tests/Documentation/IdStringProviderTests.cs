@@ -1225,6 +1225,216 @@ namespace ModreqParams
 				"GetIdString on found entity does not match the input ID string");
 		}
 
+		/// <summary>
+		/// Every ID Roslyn generates for the fixture must resolve, and resolve back to the same
+		/// ID. Driving this from the Roslyn map rather than a hand-picked list is what makes it
+		/// cover the generic shapes exhaustively: generic types of each arity, generic methods,
+		/// members whose signatures mention `0/``0, and types nested to three levels where the
+		/// nesting mixes generic and non-generic (Gen`1.Inner, Gen`1.InnerGen`1.Deepest`1).
+		/// </summary>
+		[Test]
+		public void FindEntity_RoundTripsEveryIdRoslynGenerates()
+		{
+			var module = decompilerTypeSystem.MainModule.MetadataFile;
+			var unresolved = new List<string>();
+			var mismatched = new List<string>();
+			var threw = new List<string>();
+
+			var drifted = new List<string>();
+
+			foreach (string id in roslynIdMap.Keys.OrderBy(k => k, StringComparer.Ordinal))
+			{
+				// Namespaces have no entity to find, and Roslyn also emits IDs for the
+				// referenced assemblies; only the fixture's own entities can be found in the
+				// module under test.
+				if (id.Length < 2 || id[1] != ':' || !"TMPFE".Contains(id[0]))
+					continue;
+				EntityHandle handle;
+				try
+				{
+					(_, handle) = IdStringProvider.FindEntity(id, new[] { module });
+				}
+				catch (ReflectionNameParseException ex)
+				{
+					threw.Add($"{id}  ->  {ex.Message}");
+					continue;
+				}
+				// Roslyn emits IDs for members it declares implicitly - a struct's parameterless
+				// constructor, for one - which the compiler never writes to metadata. Those must
+				// resolve to nothing; resolving them to a same-named sibling is the drift this
+				// guards against, and a record struct's primary constructor is a live example.
+				bool implicitlyDeclared = roslynIdMap[id].IsImplicitlyDeclared;
+				if (handle.IsNil)
+				{
+					if (IsFixtureId(id) && !implicitlyDeclared)
+						unresolved.Add(id);
+					continue;
+				}
+				string roundTripped = IdStringProvider.GetIdString(module, handle);
+				if (implicitlyDeclared)
+				{
+					if (roundTripped != id)
+						drifted.Add($"{id}  ->  {roundTripped}");
+					continue;
+				}
+				if (roundTripped != id)
+					mismatched.Add($"{id}  ->  {roundTripped}");
+			}
+
+			Assert.Multiple(() => {
+				Assert.That(unresolved, Is.Empty, "IDs Roslyn generates that FindEntity cannot resolve");
+				Assert.That(mismatched, Is.Empty, "IDs that resolve to an entity with a different ID");
+				Assert.That(threw, Is.Empty, "IDs Roslyn generates that FindEntity rejects as malformed");
+				Assert.That(drifted, Is.Empty, "IDs of members that never reach metadata, resolved to a different member");
+			});
+		}
+
+		/// <summary>
+		/// True for an ID naming an entity declared by the fixture itself, as opposed to one of
+		/// the assemblies it references.
+		/// </summary>
+		static bool IsFixtureId(string id)
+		{
+			string name = id.Substring(2);
+			return !name.StartsWith("System.", StringComparison.Ordinal)
+				&& !name.StartsWith("Microsoft.", StringComparison.Ordinal);
+		}
+
+		/// <summary>
+		/// The id grammar is exact, so resolution is too: an id naming a signature no member has,
+		/// or leaving one off entirely, resolves to nothing rather than to a same-named sibling.
+		/// Tolerating what a human leaves out is <see cref="DocumentationIdSearch"/>'s job, and
+		/// keeping it out of here is what lets cref-following trust the answer.
+		/// </summary>
+		// a signature no member has
+		[TestCase("M:Acme.Widget.M1(System.Int32)")]
+		[TestCase("M:Acme.Widget.M6(System.String)")]
+		[TestCase("M:Acme.Widget.op_Explicit(Acme.Widget)~System.Byte")]
+		// no such member at all
+		[TestCase("M:Acme.Widget.NoSuchMember")]
+		[TestCase("F:Acme.Widget.noSuchField")]
+		// an arity no member has, and one left off entirely
+		[TestCase("M:Acme.UseList.GetValues``2")]
+		[TestCase("M:Acme.UseList.GetValues")]
+		// a parameter list left off
+		[TestCase("M:Acme.Widget.M1")]
+		[TestCase("P:Acme.Widget.Item")]
+		// a type arity left off
+		[TestCase("T:Acme.MyList")]
+		[TestCase("M:Acme.MyList.Test")]
+		public void FindEntity_ResolvesOnlyWhatTheIdExactlyNames(string idString)
+		{
+			var (_, handle) = IdStringProvider.FindEntity(
+				idString, new[] { decompilerTypeSystem.MainModule.MetadataFile });
+			Assert.That(handle.IsNil, Is.True, $"'{idString}' must not resolve to any member");
+		}
+
+		#region DocumentationIdSearch - the omission-tolerant ladder
+
+		ImmutableArray<EntityHandle> Search(string idString)
+		{
+			var (_, handles) = DocumentationIdSearch.Find(
+				idString, new[] { decompilerTypeSystem.MainModule.MetadataFile });
+			return handles;
+		}
+
+		string[] SearchIds(string idString)
+		{
+			var module = decompilerTypeSystem.MainModule.MetadataFile;
+			return Search(idString).Select(h => IdStringProvider.GetIdString(module, h)).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+		}
+
+		/// <summary>
+		/// Rung 1: an id that spells everything out names exactly one entity, and the ladder must
+		/// not loosen past it.
+		/// </summary>
+		[TestCase("M:Acme.Widget.M1(System.Char,System.Single@,Acme.ValueType@,System.Int32@)")]
+		[TestCase("T:Acme.MyList`1")]
+		[TestCase("M:Acme.UseList.GetValues``1(``0)")]
+		[TestCase("T:DeepNesting.GenericLevel1`1.GenericLevel2`1.GenericLevel3`1")]
+		public void Search_ExactIdNamesOneEntity(string idString)
+		{
+			Assert.That(Search(idString), Has.Length.EqualTo(1), idString);
+		}
+
+		/// <summary>
+		/// Rung 2: the parameter list may be left off, naming the whole member group.
+		/// </summary>
+		[Test]
+		public void Search_ParameterListMayBeLeftOff()
+		{
+			Assert.That(SearchIds("M:Overloads.OverloadResolution.M"), Has.Length.EqualTo(5));
+			Assert.That(SearchIds("P:Acme.Widget.Item"), Has.Length.EqualTo(2));
+			Assert.That(SearchIds("M:Acme.Widget.M1"),
+				Is.EqualTo(new[] { "M:Acme.Widget.M1(System.Char,System.Single@,Acme.ValueType@,System.Int32@)" }));
+		}
+
+		/// <summary>
+		/// Rung 3: generic arities may be left off - on the member, on the declaring type, and on
+		/// any level of a nested type. Knowing an arity is the same problem as knowing an overload
+		/// count, and a backtick does not survive being typed at a shell prompt unquoted.
+		/// </summary>
+		[TestCase("M:Acme.UseList.GetValues", "M:Acme.UseList.GetValues``1(``0)")]
+		[TestCase("T:Acme.MyList", "T:Acme.MyList`1")]
+		[TestCase("M:Acme.MyList.Test", "M:Acme.MyList`1.Test(`0)")]
+		[TestCase("T:DeepNesting.GenericLevel1.GenericLevel2.GenericLevel3", "T:DeepNesting.GenericLevel1`1.GenericLevel2`1.GenericLevel3`1")]
+		[TestCase("T:DeepNesting.GenericLevel1`1.GenericLevel2.GenericLevel3", "T:DeepNesting.GenericLevel1`1.GenericLevel2`1.GenericLevel3`1")]
+		public void Search_GenericArityMayBeLeftOff(string idString, string expected)
+		{
+			Assert.That(SearchIds(idString), Is.EqualTo(new[] { expected }));
+		}
+
+		/// <summary>
+		/// A stated arity still has to be right: leaving one off asks for any, giving a wrong one
+		/// asks for something that does not exist.
+		/// </summary>
+		[TestCase("M:Acme.UseList.GetValues``2")]
+		[TestCase("T:Acme.MyList`9")]
+		[TestCase("M:Acme.Widget.M1(System.Int32)")]
+		[TestCase("M:Acme.Widget.NoSuchMember")]
+		public void Search_StatedDetailMustStillMatch(string idString)
+		{
+			Assert.That(Search(idString), Is.Empty, idString);
+		}
+
+		/// <summary>
+		/// The "T:"/"M:" prefix may be left off, and the declaring type may be named by the tail
+		/// of its path rather than in full - both are what a person or a tool actually types.
+		/// </summary>
+		[TestCase("Acme.UseList.GetValues", "M:Acme.UseList.GetValues``1(``0)")]
+		[TestCase("UseList.GetValues", "M:Acme.UseList.GetValues``1(``0)")]
+		[TestCase("MyList.Test", "M:Acme.MyList`1.Test(`0)")]
+		[TestCase("GenericLevel2.GenericLevel3", "T:DeepNesting.GenericLevel1`1.GenericLevel2`1.GenericLevel3`1")]
+		public void Search_PrefixAndNamespaceMayBeLeftOff(string idString, string expected)
+		{
+			Assert.That(SearchIds(idString), Is.EqualTo(new[] { expected }));
+		}
+
+		/// <summary>
+		/// Arity may be given the way a cref or C# spells it, which is both what people reach for
+		/// and what survives a shell prompt.
+		/// </summary>
+		[TestCase("T:Acme.MyList{T}")]
+		[TestCase("T:Acme.MyList<T>")]
+		[TestCase("MyList{T}")]
+		public void Search_AcceptsBracketedGenericArguments(string idString)
+		{
+			Assert.That(SearchIds(idString), Is.EqualTo(new[] { "T:Acme.MyList`1" }));
+		}
+
+		/// <summary>
+		/// A name can read as a nested type or as a member; both are searched, and both are
+		/// reported rather than one being guessed at.
+		/// </summary>
+		[Test]
+		public void Search_WithoutAPrefixReportsBothReadings()
+		{
+			Assert.That(SearchIds("Acme.Widget.NestedClass"), Is.EqualTo(new[] { "T:Acme.Widget.NestedClass" }));
+			Assert.That(SearchIds("Acme.Widget.Width"), Has.Length.EqualTo(1));
+		}
+
+		#endregion
+
 		[TestCase("T:Acme.MyList{")]
 		[TestCase("T:Acme.MyList{System.Int32")]
 		[TestCase("T:Acme.MyList{Acme.MyList{System.Int32}")]

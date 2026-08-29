@@ -63,6 +63,40 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(result.Output, Does.Contain("int Add(int a, int b)"));
 		}
 
+		/// <summary>
+		/// The short form is what a user reaches for, because knowing the parameter list means
+		/// knowing the overload count beforehand. Where it names one member, it just works.
+		/// </summary>
+		[Test]
+		public async Task ShortFormWithoutSignatureDecompilesTheMember()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Add");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("int Add(int a, int b)"));
+			Assert.That(result.Output, Does.Not.Contain("names 2 members"));
+		}
+
+		/// <summary>
+		/// The short form of an overloaded member names the whole group. Every member is shown -
+		/// making the user re-run with a full signature would defeat the point of accepting the
+		/// short form - with a comment saying the ID was ambiguous and what it matched.
+		/// </summary>
+		[Test]
+		public async Task ShortFormOfOverloadedMemberDecompilesEveryMember()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Scale");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("int Scale(int value)"));
+			Assert.That(result.Output, Does.Contain("string Scale(string value)"));
+			Assert.That(result.Output, Does.Contain("names 2 members"));
+			Assert.That(result.Output, Does.Contain("M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Scale(System.Int32)"));
+			Assert.That(result.Output, Does.Contain("M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Scale(System.String)"));
+		}
+
 		[Test]
 		public async Task UnknownMemberReportsError()
 		{
@@ -133,6 +167,16 @@ namespace ICSharpCode.ILSpyCmd.Tests
 
 		public void Unrelated()
 		{
+		}
+
+		public int Scale(int value)
+		{
+			return value * 2;
+		}
+
+		public string Scale(string value)
+		{
+			return value + value;
 		}
 	}
 }
