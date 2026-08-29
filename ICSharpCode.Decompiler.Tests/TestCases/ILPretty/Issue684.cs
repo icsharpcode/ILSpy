@@ -8,35 +8,35 @@ public static class Issue684
 		int num = int.Parse(Console.ReadLine());
 		// Point of this test was to ensure the stack slot here uses an appropriate type,
 		// (bool instead of int). Unfortunately our type fixup runs too late to affect variable names.
-		bool num2 = num >= 1000;
-		if (!num2)
+		bool flag = num >= 1000;
+		if (!flag)
 		{
-			num2 = num < 2;
+			flag = num < 2;
 		}
-		if (num2)
+		if (flag)
 		{
 			Console.WriteLine(-1);
 		}
 		else
 		{
 			int i = 2;
-			for (int num3 = 2; num3 <= num; num3 = i)
+			for (int num2 = 2; num2 <= num; num2 = i)
 			{
-				Console.WriteLine(num3);
-				for (; i <= num; i += num3)
+				Console.WriteLine(num2);
+				for (; i <= num; i += num2)
 				{
-					int num4 = 1;
-					array[i] = num4;
+					int num3 = 1;
+					array[i] = num3;
 				}
-				i = num3;
+				i = num2;
 				while (true)
 				{
-					bool num5 = i <= num;
-					if (num5)
+					bool flag2 = i <= num;
+					if (flag2)
 					{
-						num5 = array[i] != 0;
+						flag2 = array[i] != 0;
 					}
-					if (!num5)
+					if (!flag2)
 					{
 						break;
 					}

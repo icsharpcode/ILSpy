@@ -507,7 +507,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			// Merge different variables for same stack slot:
 			var unionFind = CheckOutgoingEdges();
-			var visitor = new CollectStackVariablesVisitor(unionFind);
+			var visitor = new CollectStackVariablesVisitor(unionFind, compilation);
 			foreach (var block in blocksByOffset.Values)
 			{
 				block.Block.AcceptVisitor(visitor);
@@ -1298,13 +1298,16 @@ namespace ICSharpCode.Decompiler.IL
 
 		sealed class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
 		{
+			readonly ICompilation compilation;
 			readonly UnionFind<ILVariable> unionFind;
 			internal readonly HashSet<ILVariable> variables = new HashSet<ILVariable>();
 
-			public CollectStackVariablesVisitor(UnionFind<ILVariable> unionFind)
+			public CollectStackVariablesVisitor(UnionFind<ILVariable> unionFind, ICompilation compilation)
 			{
 				Debug.Assert(unionFind != null);
+				Debug.Assert(compilation != null);
 				this.unionFind = unionFind;
+				this.compilation = compilation;
 			}
 
 			protected override ILInstruction Default(ILInstruction inst)
@@ -1318,15 +1321,26 @@ namespace ICSharpCode.Decompiler.IL
 				return inst;
 			}
 
+			ILVariable MapVar(ILVariable v1)
+			{
+				var v2 = unionFind.Find(v1);
+				if (variables.Add(v2))
+				{
+					v2.Name = $"S_{variables.Count - 1}";
+				}
+				if (v1 != v2 && !v1.Type.Equals(v2.Type) && !v2.Type.CannotBeReconstructedFromStackType())
+				{
+					v2.Type = compilation.FindType(v1.StackType);
+				}
+				return v2;
+			}
+
 			protected internal override ILInstruction VisitLdLoc(LdLoc inst)
 			{
 				base.VisitLdLoc(inst);
 				if (inst.Variable.Kind == VariableKind.StackSlot)
 				{
-					var variable = unionFind.Find(inst.Variable);
-					if (variables.Add(variable))
-						variable.Name = $"S_{variables.Count - 1}";
-					return new LdLoc(variable).WithILRange(inst);
+					inst.Variable = MapVar(inst.Variable);
 				}
 				return inst;
 			}
@@ -1336,10 +1350,7 @@ namespace ICSharpCode.Decompiler.IL
 				base.VisitStLoc(inst);
 				if (inst.Variable.Kind == VariableKind.StackSlot)
 				{
-					var variable = unionFind.Find(inst.Variable);
-					if (variables.Add(variable))
-						variable.Name = $"S_{variables.Count - 1}";
-					return new StLoc(variable, inst.Value).WithILRange(inst);
+					inst.Variable = MapVar(inst.Variable);
 				}
 				return inst;
 			}
@@ -2107,7 +2118,20 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var inst in expressionStack)
 			{
 				Debug.Assert(inst.ResultType != StackType.Void);
-				IType type = compilation.FindType(inst.ResultType);
+				// Use InferType() for an improved type for these stackslot locals.
+				// This is crucial for value types, where FindType(StackType.O)
+				// would incorrectly use `object`.
+				// It's also highly useful for ref-locals,
+				// and shouldn't hurt for other types -- this type of
+				// stackslot-variable is never reassigned, so even types
+				// like `bool` shouldn't hurt.
+				// (note: if the variable is merged across control-flow branches,
+				//  we'll reset the type to be based on the StackType)
+				IType type = inst.InferType(compilation);
+				if (type.GetStackType() != inst.ResultType)
+				{
+					type = compilation.FindType(inst.ResultType);
+				}
 				var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType);
 				v.HasGeneratedName = true;
 				currentStack = currentStack.Push(v);

@@ -317,6 +317,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
+		/// Returns true for types where compilation.FindType(type.GetStackType()) will
+		/// be completely unsuitable (e.g. lead to miscompilation if the stack type
+		/// alone is used for when a variable is created for a stack slot):
+		///  * managed reference types
+		///  * value types with StackType.O
+		/// </summary>
+		public static bool CannotBeReconstructedFromStackType(this IType type)
+		{
+			var stackType = type.GetStackType();
+			if (stackType == StackType.Ref)
+			{
+				return true;
+			}
+			return stackType == StackType.O && type.IsReferenceType == false;
+		}
+
+		/// <summary>
 		/// If type is an enumeration type, returns the underlying type.
 		/// Otherwise, returns type unmodified.
 		/// </summary>

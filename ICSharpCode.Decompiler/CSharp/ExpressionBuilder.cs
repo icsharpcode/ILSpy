@@ -4340,7 +4340,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				resultType = compilation.FindType(inst.ResultType);
+				resultType = inst.InferType(compilation);
+				if (resultType.Kind == TypeKind.Unknown || resultType.GetStackType() != inst.ResultType)
+				{
+					resultType = compilation.FindType(inst.ResultType);
+				}
 			}
 
 			var expressionsForTypeInference = new List<TranslatedExpression>();

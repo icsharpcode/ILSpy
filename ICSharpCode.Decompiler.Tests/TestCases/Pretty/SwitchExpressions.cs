@@ -253,6 +253,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}).HasValue;
 		}
 
+		public static bool TupleWithImmediateUse(int i)
+		{
+			return (i switch {
+				0 => (0, true),
+				1 => (1, true),
+				_ => (i, false),
+			}).Item2;
+		}
+
 		public static void ThrowDifferentExceptions(int i)
 		{
 			throw i switch {
