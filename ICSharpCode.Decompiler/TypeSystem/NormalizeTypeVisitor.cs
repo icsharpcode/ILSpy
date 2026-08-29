@@ -97,6 +97,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public override IType VisitOtherType(IType type)
+		{
+			if (type is UnknownType unknownType)
+				return unknownType.WithoutReferenceTypeKnowledge();
+			return base.VisitOtherType(type);
+		}
+
 		public override IType VisitTypeDefinition(ITypeDefinition type)
 		{
 			switch (type.KnownTypeCode)
