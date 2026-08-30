@@ -1336,8 +1336,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 			// Apply the merged top-level nullability:
 			Debug.Assert(topLevelNullability.HasValue);
-			// (Roslyn has a different approach in MergeOrRemoveCandidates, but to me that just looked
-			//  like an overly complicated way of achieving the same thing.)
+			// Roslyn has a different approach in MergeOrRemoveCandidates, which can
+			// differ in behavior when there's both lower+upper bounds
+			// -- e.g. `static void M<T>(T x, Action<T> a)` called with `M("s", (object? o) => {}))`
+			// is inferred as `T = object?` by Roslyn, but `T = object` by us.
+			// To match Roslyn exactly, we'd need to handle the topLevelNullability per-candidate.
 			for (int i = 0; i < candidateTypes.Count; i++)
 			{
 				candidateTypes[i] = candidateTypes[i].ChangeNullability(topLevelNullability.Value);
