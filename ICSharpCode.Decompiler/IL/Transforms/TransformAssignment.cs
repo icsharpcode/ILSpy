@@ -25,6 +25,7 @@ using System.Linq;
 using System.Linq.Expressions;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -263,9 +264,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return inst;
 		}
 
-		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv? conv, IType targetType, DecompilerSettings settings)
+		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv? conv, IType targetType, ILTransformContext context)
 		{
-			if (!NumericCompoundAssign.IsBinaryCompatibleWithType(binary, targetType, settings))
+			if (!NumericCompoundAssign.IsBinaryCompatibleWithType(binary, targetType, context))
 				return false;
 			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
 				return false; // conv does not match binary operation
@@ -381,13 +382,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (!IsMatchingCompoundLoad(binary.Left, compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
-				if (!ValidateCompoundAssign(binary, smallIntConv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, smallIntConv, targetType, context))
 					return false;
 				context.Step($"Compound assignment (binary.numeric)", compoundStore);
 				finalizeMatch?.Invoke(context);
 				newInst = new NumericCompoundAssign(
 					binary, target, targetKind, binary.Right,
-					targetType, CompoundEvalMode.EvaluatesToNewValue);
+					targetType, CompoundEvalMode.EvaluatesToNewValue, context);
 			}
 			else if (setterValue is Call operatorCall && operatorCall.Method.IsOperator)
 			{
@@ -887,7 +888,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						targetType = SwapSign(targetType, context.TypeSystem);
 				}
 
-				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context))
 					return false;
 				ldloc = binary.Left as LdLoc;
 			}
@@ -920,7 +921,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary != null)
 			{
 				block.Instructions[pos] = new StLoc(stloc_outer.Variable, new NumericCompoundAssign(
-					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToNewValue));
+					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToNewValue, context));
 			}
 			else
 			{
@@ -972,7 +973,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						targetType = SwapSign(targetType, context.TypeSystem);
 				}
 
-				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context))
 					return false;
 				stloc = binary.Left as StLoc;
 			}
@@ -1001,7 +1002,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary != null)
 			{
 				block.Instructions[pos] = new StLoc(stloc.Variable, new NumericCompoundAssign(
-					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToOldValue));
+					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToOldValue, context));
 			}
 			else
 			{
@@ -1080,12 +1081,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// Change the sign of the type to skip implicit truncation
 					stObj.Type = targetType = SwapSign(targetType, context.TypeSystem);
 				}
-				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context))
 					return false;
 				context.Step("TransformPostIncDecOperator (builtin)", inst);
 				finalizeMatch?.Invoke(context);
 				inst.Value = new NumericCompoundAssign(binary, target, targetKind, binary.Right,
-					targetType, CompoundEvalMode.EvaluatesToOldValue);
+					targetType, CompoundEvalMode.EvaluatesToOldValue, context);
 			}
 			else if (value is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Arguments.Count == 1)
 			{
