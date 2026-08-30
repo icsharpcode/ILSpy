@@ -292,7 +292,7 @@ namespace ICSharpCode.Decompiler.IL
 			parentInstruction.InstructionCollectionUpdateComplete();
 		}
 
-		public bool Remove(T item)
+		public bool Remove(T? item)
 		{
 			int index = IndexOf(item);
 			if (index >= 0)
