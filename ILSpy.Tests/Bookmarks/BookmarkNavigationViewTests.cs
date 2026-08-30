@@ -59,11 +59,7 @@ public class BookmarkNavigationViewTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		int bookmarkLine = Enumerable.Range(1, view.Editor.Document.LineCount)
 			.Where(view.CanToggleBookmarkAtLine)
@@ -232,10 +228,6 @@ public class BookmarkNavigationViewTests
 
 	static async Task PumpLayoutAsync()
 	{
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 	}
 }

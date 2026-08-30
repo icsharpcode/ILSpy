@@ -156,11 +156,7 @@ public class SearchPaneNicetiesTests
 		int before = workspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
 
 		RaiseKey(results, Key.Enter, KeyModifiers.Control);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		workspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count()
 			.Should().BeGreaterThan(before, "Ctrl+Enter on a result opens it in a new document tab instead of reusing the active one");
@@ -183,11 +179,7 @@ public class SearchPaneNicetiesTests
 		int before = workspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
 
 		vm.Activate(hit, inNewTabPage: true);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		workspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count()
 			.Should().BeGreaterThan(before, "Activate(inNewTabPage: true) must route through OpenNodeInNewTab");

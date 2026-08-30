@@ -57,11 +57,7 @@ public class BookmarkGutterTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 		window.UpdateLayout();
 
 		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
@@ -107,11 +103,7 @@ public class BookmarkGutterTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 		window.UpdateLayout();
 
 		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
@@ -150,11 +142,7 @@ public class BookmarkGutterTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 		window.UpdateLayout();
 
 		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
@@ -231,11 +219,7 @@ public class BookmarkGutterTests
 			vm.AssemblyTreeModel.SelectNode(node);
 			await vm.DockWorkspace.WaitForDecompiledTextAsync();
 			var shown = await window.WaitForComponent<DecompilerTextView>();
-			for (int i = 0; i < 8; i++)
-			{
-				Dispatcher.UIThread.RunJobs();
-				await Task.Delay(25);
-			}
+			await Waiters.WaitForIdleAsync();
 			return shown;
 		}
 

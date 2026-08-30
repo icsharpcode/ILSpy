@@ -51,17 +51,11 @@ public class OmnibarSettingTests
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectedItem = typeNode;
 		Omnibar? omnibar = null;
-		for (int i = 0; i < 200; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			omnibar = window.GetVisualDescendants().OfType<DecompilerTextView>()
+		await Waiters.WaitForAsync(() => (omnibar = window.GetVisualDescendants().OfType<DecompilerTextView>()
 				.Where(v => v.IsEffectivelyVisible)
 				.SelectMany(v => v.GetVisualDescendants().OfType<Omnibar>())
-				.FirstOrDefault();
-			if (omnibar != null)
-				break;
-			await Task.Delay(20);
-		}
+				.FirstOrDefault()) != null,
+			description: "a visible decompiler text view hosting the omnibar");
 		Assert.That(omnibar, Is.Not.Null, "selecting a node realizes a decompiler text view hosting the omnibar");
 
 		Assert.That(omnibar!.IsVisible, Is.False,

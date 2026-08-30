@@ -64,11 +64,7 @@ public class ReferenceScopeAndNewTabTests
 
 		int before = vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
 		entry.Execute(RefContext(entity));
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count()
 			.Should().BeGreaterThan(before, "Decompile to new tab on a code reference must open a new document tab");

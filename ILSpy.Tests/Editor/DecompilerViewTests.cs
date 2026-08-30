@@ -460,11 +460,7 @@ public class DecompilerViewTests
 		await Waiters.WaitForAsync(() => tab.SyntaxExtension == ".xml" && tab.Text.Contains("<root>"));
 
 		// Drain the layout so ApplyDocument's PropertyChanged handler has executed.
-		for (int i = 0; i < 5; i++)
-		{
-			global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 		host.Capture("xml-folding");
 
 		// Assert — FoldingManager is installed (private field, reflected) and produced fold

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Threading.Tasks;
 using System.Reflection;
 
 using Avalonia;
@@ -73,7 +74,7 @@ public class MetadataFilterRowEndToEndTests
 		});
 
 	[AvaloniaTest]
-	public void Clicking_Inside_The_Popup_Never_Sorts_The_Column_Of_A_Real_DataGrid()
+	public async Task Clicking_Inside_The_Popup_Never_Sorts_The_Column_Of_A_Real_DataGrid()
 	{
 		// Full assembly of the real parts: an actual DataGrid with CanUserSortColumns
 		// (as MetadataTablePage.axaml configures it), the builder's columns, the overlay
@@ -116,9 +117,7 @@ public class MetadataFilterRowEndToEndTests
 		// "Filter Attributes" tooltip).
 		var funnel = FindAttributesFunnel(headerPanel);
 		var flyout = (Flyout)FlyoutBase.GetAttachedFlyout(funnel)!;
-		var funnelCenter = funnel.TranslatePoint(new Point(funnel.Bounds.Width / 2, funnel.Bounds.Height / 2), window)!.Value;
-		window.MouseDown(funnelCenter, MouseButton.Left);
-		window.MouseUp(funnelCenter, MouseButton.Left);
+		await window.ClickAsync(() => funnel);
 		flyout.IsOpen.Should().BeTrue("setup precondition — the funnel click must open the flyout");
 		window.UpdateLayout();
 		Dispatcher.UIThread.RunJobs();

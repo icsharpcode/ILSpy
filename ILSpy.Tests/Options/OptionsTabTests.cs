@@ -331,8 +331,7 @@ public class OptionsTabTests
 		// Toggle a re-decompile display setting.
 		var display = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
 		display.DecodeCustomAttributeBlobs = !display.DecodeCustomAttributeBlobs;
-		for (int i = 0; i < 12; i++)
-			Dispatcher.UIThread.RunJobs();
+		await Waiters.WaitForIdleAsync();
 
 		documents.ActiveDockable.Should().BeSameAs(optionsTab,
 			"an output display setting must re-decompile in place, not switch the user off the focused tab");

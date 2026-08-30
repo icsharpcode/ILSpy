@@ -181,12 +181,7 @@ public class DecompileInNewViewTests
 		vm.AssemblyTreeModel.SelectNode(nodeA);
 
 		// Let the top-level rows realise and layout settle.
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		var rowB = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.FirstOrDefault(r => RowNodeEquals(r, nodeB));
@@ -200,16 +195,9 @@ public class DecompileInNewViewTests
 
 		// Right-click the centre of B's row (clear of the far-left expander glyph). Tree rows
 		// stretch to content width, so clamp X to the visible grid viewport.
-		var clickX = System.Math.Min(rowB!.Bounds.Width, grid.Bounds.Width) / 2;
-		var point = rowB.TranslatePoint(new Point(clickX, rowB.Bounds.Height / 2), window);
-		point.Should().NotBeNull();
-		HeadlessWindowExtensions.MouseDown(window, point!.Value, MouseButton.Right);
-		HeadlessWindowExtensions.MouseUp(window, point.Value, MouseButton.Right);
-		for (int i = 0; i < 4; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await window.ClickAsync(() => rowB, MouseButton.Right,
+			pointInTarget: r => new Point(System.Math.Min(r.Bounds.Width, grid.Bounds.Width) / 2, r.Bounds.Height / 2));
+		await Waiters.WaitForIdleAsync();
 
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeA).Should().BeTrue(
 			"right-clicking an unselected row must not change the selection (Thunderbird-style context target)");
@@ -239,12 +227,7 @@ public class DecompileInNewViewTests
 		var nodeC = assemblies[2];
 
 		vm.AssemblyTreeModel.SelectNode(nodeA);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem Row(SharpTreeNode node) => grid.GetVisualDescendants()
 			.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
@@ -252,43 +235,16 @@ public class DecompileInNewViewTests
 
 		var menu = grid.ContextMenu!;
 
-		Point? ClickPoint(SharpTreeNode node)
-		{
-			var row = grid.GetVisualDescendants()
-				.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
-				.FirstOrDefault(r => RowNodeEquals(r, node));
-			if (row == null)
-				return null;
-			var clickX = System.Math.Min(row.Bounds.Width, grid.Bounds.Width) / 2;
-			return row.TranslatePoint(new Point(clickX, row.Bounds.Height / 2), window);
-		}
-
 		async Task RightClick(SharpTreeNode node)
 		{
-			// A press only becomes a context request for the row when the hit test at the press
-			// point answers with that row - the same question OnTreeContextRequested asks - and it
-			// takes an unknown number of frames for that to hold: a closed popup's light-dismiss
-			// overlay keeps answering hit tests until the scene is rendered again, and assemblies
-			// still loading in the background reshuffle the rows, which re-realises containers and
-			// shifts them. So the row container and the point are resolved afresh on every poll and
-			// the hit is matched by node, not by container identity.
-			Point? pt = null;
-			Visual? lastHit = null;
-			try
-			{
-				await Waiters.WaitForAsync(
-					() => (pt = ClickPoint(node)) is { } p
-						&& (lastHit = window.InputHitTest(p) as Visual) is { } hit
-						&& hit.FindAncestorOfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>(includeSelf: true) is { } hitRow
-						&& RowNodeEquals(hitRow, node),
-					description: "the row to answer hit tests at the point about to be right-clicked");
-			}
-			catch (System.TimeoutException ex)
-			{
-				throw new System.TimeoutException($"{ex.Message} (point: {pt?.ToString() ?? "row not realised"}, hit: {lastHit?.GetType().Name ?? "nothing"})", ex);
-			}
-			HeadlessWindowExtensions.MouseDown(window, pt!.Value, MouseButton.Right);
-			HeadlessWindowExtensions.MouseUp(window, pt.Value, MouseButton.Right);
+			// Tree rows stretch to content width, so clamp X to the visible grid viewport.
+			await window.ClickAsync(
+				() => grid.GetVisualDescendants()
+					.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
+					.FirstOrDefault(r => RowNodeEquals(r, node)),
+				MouseButton.Right,
+				pointInTarget: row => new Point(System.Math.Min(row.Bounds.Width, grid.Bounds.Width) / 2, row.Bounds.Height / 2),
+				description: $"the row for {node}");
 			// The highlight is scoped to the popup - set while the menu is being requested, dropped
 			// again when it closes - so the popup is the point at which the gesture is finished and
 			// the row's classes are worth reading.
@@ -328,27 +284,15 @@ public class DecompileInNewViewTests
 		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
 		vm.AssemblyTreeModel.SelectNode(nodeA);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		var rowB = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.First(r => RowNodeEquals(r, nodeB));
 		int tabsBefore = vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count();
 
-		var clickX = System.Math.Min(rowB.Bounds.Width, grid.Bounds.Width) / 2;
-		var point = rowB.TranslatePoint(new Point(clickX, rowB.Bounds.Height / 2), window)!.Value;
-		HeadlessWindowExtensions.MouseDown(window, point, MouseButton.Middle);
-		HeadlessWindowExtensions.MouseUp(window, point, MouseButton.Middle);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(20);
-		}
+		await window.ClickAsync(() => rowB, MouseButton.Middle,
+			pointInTarget: r => new Point(System.Math.Min(r.Bounds.Width, grid.Bounds.Width) / 2, r.Bounds.Height / 2));
+		await Waiters.WaitForIdleAsync();
 
 		vm.DockWorkspace.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count()
 			.Should().BeGreaterThan(tabsBefore, "middle-clicking a row must open it in a new document tab");
@@ -376,23 +320,13 @@ public class DecompileInNewViewTests
 
 		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries, rightClickedNode: nodeB);
 		menu!.ClickItem(Resources.DecompileToNewPanel);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		// The model selection follows the new active tab...
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeB).Should().BeTrue(
@@ -428,12 +362,7 @@ public class DecompileInNewViewTests
 		vm.AssemblyTreeModel.SelectedItems.Add(nodeA);
 		vm.AssemblyTreeModel.SelectedItems.Add(nodeB);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 		vm.AssemblyTreeModel.SelectedItems.Count.Should().Be(2, "precondition: a multi-selection is held");
 
 		// Open C in a new tab -> activates it -> the tree must follow to C.
@@ -441,12 +370,7 @@ public class DecompileInNewViewTests
 		var menu = pane.BuildContextMenuForCurrentState(registry.Entries, rightClickedNode: nodeC);
 		menu!.ClickItem(Resources.DecompileToNewPanel);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, nodeC).Should().BeTrue(
 			"the tree model selection must follow the newly-activated single-node tab");
@@ -494,12 +418,7 @@ public class DecompileInNewViewTests
 
 		// 3) Re-activate the multi-node tab.
 		vm.DockWorkspace.Factory.SetActiveDockable(multiTab);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		// 4) The tree selection must contain BOTH original nodes again -- in the model...
 		vm.AssemblyTreeModel.SelectedItems.Should().Contain(nodeA)
