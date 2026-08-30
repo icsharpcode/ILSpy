@@ -158,9 +158,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					NullCoalescingKind.NullableWithValueFallback,
 					new NullableRewrap(nonNullInst, NullableType.Create(context.TypeSystem, returnType)),
 					nullInst
-				) {
-					UnderlyingResultType = nullInst.ResultType
-				};
+				);
 				context.EndStep(result);
 				return result;
 			}

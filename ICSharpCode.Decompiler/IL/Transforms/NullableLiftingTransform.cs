@@ -771,9 +771,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// v.HasValue ? ldloc v : fallback
 					// => v ?? fallback
 					context.Step("v.HasValue ? v : fallback => v ?? fallback", trueInst);
-					return new NullCoalescingInstruction(nullableVars[0].Type, NullCoalescingKind.Nullable, trueInst, falseInst) {
-						UnderlyingResultType = NullableType.GetUnderlyingType(nullableVars[0].Type).GetStackType()
-					};
+					return new NullCoalescingInstruction(nullableVars[0].Type, NullCoalescingKind.Nullable, trueInst, falseInst);
 				}
 				ILInstruction result = LiftCSharpUserComparison(trueInst, falseInst);
 				if (result != null)
@@ -822,17 +820,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (isNullCoalescingWithNonNullableFallback)
 			{
-				lifted = new NullCoalescingInstruction(utype, NullCoalescingKind.NullableWithValueFallback, lifted, falseInst) {
-					UnderlyingResultType = exprToLift.ResultType
-				};
+				lifted = new NullCoalescingInstruction(utype, NullCoalescingKind.NullableWithValueFallback, lifted, falseInst);
 			}
 			else if (!MatchNull(falseInst, utype))
 			{
 				// Normal lifting, but the falseInst isn't `default(utype?)`
 				// => use the `??` operator to provide the fallback value.
-				lifted = new NullCoalescingInstruction(NullableType.Create(context.TypeSystem, utype), NullCoalescingKind.Nullable, lifted, falseInst) {
-					UnderlyingResultType = exprToLift.ResultType
-				};
+				lifted = new NullCoalescingInstruction(NullableType.Create(context.TypeSystem, utype), NullCoalescingKind.Nullable, lifted, falseInst);
 			}
 			return lifted;
 		}

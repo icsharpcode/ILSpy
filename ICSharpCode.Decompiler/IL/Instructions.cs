@@ -2103,7 +2103,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
-			DebugAssert(resourceExpression.ResultType == StackType.O);
+			DebugAssert(resourceExpression.ResultType is StackType.Obj or StackType.VT);
 		}
 	}
 }

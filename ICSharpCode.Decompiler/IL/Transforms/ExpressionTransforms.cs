@@ -296,9 +296,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var ldObj = new LdObj(nullableValue, inst.Method.DeclaringType);
 				var replacement = new NullCoalescingInstruction(
 					NullableType.GetUnderlyingType(inst.Method.DeclaringType),
-					NullCoalescingKind.NullableWithValueFallback, ldObj, fallback) {
-					UnderlyingResultType = fallback.ResultType
-				};
+					NullCoalescingKind.NullableWithValueFallback, ldObj, fallback);
 				inst.ReplaceWith(replacement.WithILRange(inst));
 				context.EndStep(replacement);
 				replacement.AcceptVisitor(this);
