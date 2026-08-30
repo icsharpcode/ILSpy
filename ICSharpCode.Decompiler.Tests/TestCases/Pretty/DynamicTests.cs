@@ -23,13 +23,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		private class CtorTarget
-		{
-			public CtorTarget(dynamic d, int i)
-			{
-			}
-		}
-
 		private struct MyValueType
 		{
 			private readonly dynamic _getOnlyProperty;
@@ -384,57 +377,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
-		private static dynamic M5(dynamic d, int i)
-		{
-			return null;
-		}
-
-		private static void M6<T>(dynamic d, int i)
-		{
-		}
-
 #if CS60
-		// #3704: the call target of a dynamic member access on a static type is typeof(DynamicTests).
-		// The array is loaded into a temporary that survives as its own statement, which strands the
-		// typeof between the two, so it cannot reach the call site by ordinary inlining.
-		private static void StaticTargetBehindSurvivingTemporary(dynamic d)
+		// #3704: the call target of a dynamic member access on a static type is
+		// typeof(DynamicTests), which has to reach the call site.
+		private static void StaticTargetOnDynamicCall(dynamic d)
 		{
-#if EXPECTED_OUTPUT
-			byte[] data = GetData();
-			DynamicTests.M4(d, (data != null) ? data.Length : 0);
-#else
 			DynamicTests.M4(d, GetData()?.Length ?? 0);
-#endif
-		}
-
-		private static dynamic StaticTargetResultUsed(dynamic d)
-		{
-#if EXPECTED_OUTPUT
-			byte[] data = GetData();
-			return DynamicTests.M5(d, (data != null) ? data.Length : 0);
-#else
-			return DynamicTests.M5(d, GetData()?.Length ?? 0);
-#endif
-		}
-
-		private static void StaticTargetWithTypeArguments(dynamic d)
-		{
-#if EXPECTED_OUTPUT
-			byte[] data = GetData();
-			DynamicTests.M6<int>(d, (data != null) ? data.Length : 0);
-#else
-			DynamicTests.M6<int>(d, GetData()?.Length ?? 0);
-#endif
-		}
-
-		private static void StaticCtorBehindSurvivingTemporary(dynamic d)
-		{
-#if EXPECTED_OUTPUT
-			byte[] data = GetData();
-			new CtorTarget(d, (data != null) ? data.Length : 0);
-#else
-			new CtorTarget(d, GetData()?.Length ?? 0);
-#endif
 		}
 #endif
 

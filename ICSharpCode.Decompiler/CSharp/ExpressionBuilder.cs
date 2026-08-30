@@ -4601,10 +4601,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitDynamicInvokeMemberInstruction(DynamicInvokeMemberInstruction inst, TranslationContext context)
 		{
 			Expression targetExpr;
-			var target = inst.StaticTargetType is IType staticTargetType
-				? new TypeReferenceExpression(ConvertType(staticTargetType))
+			var target = inst.StaticTargetType != null
+				? new TypeReferenceExpression(ConvertType(inst.StaticTargetType))
 					.WithoutILInstruction()
-					.WithRR(new TypeResolveResult(staticTargetType))
+					.WithRR(new TypeResolveResult(inst.StaticTargetType))
 				: TranslateDynamicTarget(inst.Arguments[0], inst.ArgumentInfo[0]);
 			if (inst.BinderFlags.HasFlag(CSharpBinderFlags.InvokeSimpleName) && target.Expression is ThisReferenceExpression)
 			{

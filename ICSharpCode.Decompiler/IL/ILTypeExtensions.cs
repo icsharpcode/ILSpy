@@ -287,6 +287,12 @@ namespace ICSharpCode.Decompiler.IL
 						default:
 							return SpecialType.UnknownType;
 					}
+				case LdLen ldLen:
+					if (compilation == null)
+						return SpecialType.UnknownType;
+					// Mirrors ExpressionBuilder.VisitLdLen, which picks Array.Length or
+					// Array.LongLength based on the result type alone.
+					return compilation.FindType(ldLen.ResultType == StackType.I4 ? KnownTypeCode.Int32 : KnownTypeCode.Int64);
 				case DefaultValue defaultValue:
 					return defaultValue.Type;
 				case ILFunction func when func.DelegateType != null:
