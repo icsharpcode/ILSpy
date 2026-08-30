@@ -376,6 +376,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return null;
 			}
+			var nullableType = varPattern.Variable.Type;
+			var underlyingStackType = NullableType.GetUnderlyingType(nullableType).GetStackType();
 			if (!DetectExitPoints.CompatibleExitInstruction(falseInst, parentFalseInst))
 			{
 				if (DetectExitPoints.CompatibleExitInstruction(trueInst, parentFalseInst))
@@ -386,7 +388,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 
 					context.Step("Nullable.HasValue check -> null pattern", block);
-					var nullComp = new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp, StackType.VT, Sign.None, varPattern.TestedOperand, new LdNull());
+					var nullComp = new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp, underlyingStackType, Sign.None, varPattern.TestedOperand, new DefaultValue(nullableType));
 					varPattern.ReplaceWith(nullComp);
 					context.EndStep(nullComp);
 					block.Instructions.Clear();
@@ -398,7 +400,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (varPattern.Variable.AddressCount == 1 && context.Settings.PatternCombinators)
 			{
 				context.Step("Nullable.HasValue check -> not null pattern", block);
-				var notNullComp = new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, StackType.VT, Sign.None, varPattern.TestedOperand, new LdNull());
+				var notNullComp = new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, underlyingStackType, Sign.None, varPattern.TestedOperand, new DefaultValue(nullableType));
 				varPattern.ReplaceWith(notNullComp);
 				context.EndStep(notNullComp);
 				block.Instructions.Clear();

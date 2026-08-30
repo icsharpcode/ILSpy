@@ -183,8 +183,13 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase, compilation);
 			if (LiftingKind == ComparisonLiftingKind.None)
 			{
-				Debug.Assert(Left.ResultType == InputType);
-				Debug.Assert(Right.ResultType == InputType);
+				// As a special case, we allow comparing a value type with null (but only in the non-lifted Comp).
+				// This is useful for unconstrained generics: these are treated as VT
+				// because they might be value types, but they can also be compared with null
+				// because they might be reference types. (the original IL uses `box` for this,
+				// but we drop the box in the ILAst to avoid a special case in PatternMatchingTransform etc.)
+				Debug.Assert(Left.ResultType == InputType || Left is LdNull);
+				Debug.Assert(Right.ResultType == InputType || Right is LdNull);
 			}
 			else
 			{
