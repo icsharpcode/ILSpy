@@ -54,11 +54,7 @@ public class BookmarkContextMenuTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		var bookmarkableLines = Enumerable.Range(1, view.Editor.Document.LineCount)
 			.Where(view.CanToggleBookmarkAtLine)
@@ -94,11 +90,7 @@ public class BookmarkContextMenuTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		int line = Enumerable.Range(1, view.Editor.Document.LineCount)
 			.First(view.CanToggleBookmarkAtLine);

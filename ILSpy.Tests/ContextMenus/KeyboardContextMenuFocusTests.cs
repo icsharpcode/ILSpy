@@ -60,12 +60,7 @@ public class KeyboardContextMenuFocusTests
 
 		var node = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().First();
 		vm.AssemblyTreeModel.SelectNode(node);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			grid.UpdateLayout();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		var row = grid.GetVisualDescendants()
 			.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>().First();
@@ -77,21 +72,13 @@ public class KeyboardContextMenuFocusTests
 
 		// Keyboard invocation raises ContextRequested with no pointer position (the Shift+F10 / Apps path).
 		row.RaiseEvent(new ContextRequestedEventArgs());
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 		grid.ContextMenu!.IsOpen.Should().BeTrue("the keyboard gesture must open the tree context menu");
 		row.Classes.Should().Contain("contextTarget",
 			"a keyboard-invoked menu must show the transient target highlight on the selected row, like the mouse path");
 
 		window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, keySymbol: null);
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		(focusManager.GetFocusedElement() == row).Should().BeTrue(
 			"closing a keyboard-invoked context menu must return focus to the row, not strand it");

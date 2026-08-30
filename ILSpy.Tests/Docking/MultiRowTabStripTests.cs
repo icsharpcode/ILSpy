@@ -61,12 +61,7 @@ public class MultiRowTabStripTests
 			for (int i = 0; i < 40; i++)
 				vm.DockWorkspace.OpenNewTab(new DecompilerTabPageModel { Title = $"Tab number {i:00}" });
 
-			for (int i = 0; i < 12; i++)
-			{
-				Dispatcher.UIThread.RunJobs();
-				window.UpdateLayout();
-				await Task.Delay(20);
-			}
+			await Waiters.WaitForIdleAsync();
 
 			var strip = window.GetVisualDescendants().OfType<DocumentTabStrip>().FirstOrDefault();
 			strip.Should().NotBeNull("the document tab strip must be realised");

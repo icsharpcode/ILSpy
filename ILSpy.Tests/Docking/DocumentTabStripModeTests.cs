@@ -65,15 +65,7 @@ public class DocumentTabStripModeTests
 		return (window, strip);
 	}
 
-	static async Task Pump(MainWindow window)
-	{
-		for (int i = 0; i < 12; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			window.UpdateLayout();
-			await Task.Delay(20);
-		}
-	}
+	static Task Pump(MainWindow window) => Waiters.WaitForIdleAsync();
 
 	static Button? Dropdown(DocumentTabStrip strip)
 		=> strip.GetVisualDescendants().OfType<Button>()
@@ -175,10 +167,7 @@ public class DocumentTabStripModeTests
 
 			// Drive a real pointer click through the input pipeline (open is deferred a dispatcher
 			// turn, which Pump runs), so this would have caught the menu failing to open on a live click.
-			var centre = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)
-				?? new Point(8, 8);
-			window.MouseDown(centre, MouseButton.Left);
-			window.MouseUp(centre, MouseButton.Left);
+			await window.ClickAsync(() => button);
 			await Pump(window);
 
 			opened.Should().BeTrue("clicking the dropdown must open its menu");
@@ -198,10 +187,7 @@ public class DocumentTabStripModeTests
 			var button = Dropdown(strip);
 			var menu = button!.ContextMenu!;
 
-			var centre = button.TranslatePoint(new Point(button.Bounds.Width / 2, button.Bounds.Height / 2), window)
-				?? new Point(8, 8);
-			window.MouseDown(centre, MouseButton.Left);
-			window.MouseUp(centre, MouseButton.Left);
+			await window.ClickAsync(() => button);
 			await Pump(window);
 
 			var target = strip.Items.OfType<ContentTabPage>().Last();

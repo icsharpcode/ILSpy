@@ -77,11 +77,7 @@ public class RunInNewTabTests
 			TreeNavigation.CoreLibName, "System.Runtime.Versioning");
 		vm.AssemblyTreeModel.SelectNode(navNode);
 		await dock.WaitForDecompiledTextAsync();
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		capturedToken.IsCancellationRequested.Should().BeFalse(
 			"navigating the tree must NOT cancel a long op running in its own frozen tab");

@@ -634,11 +634,7 @@ public class AssemblyTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(enumerable);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 		grid.UpdateLayout();
 
 		var scrollViewer = await grid.WaitForComponent<ScrollViewer>();
@@ -665,19 +661,13 @@ public class AssemblyTreeTests
 		var offsetBefore = scrollViewer.Offset.Y;
 
 		// Act — real pointer click. Setting SelectedItem programmatically would fire DataGrid's
-		// internal ScrollIntoView too, which a real user click does not.
-		var rowCentre = candidateRow!.TranslatePoint(
-			new Point(candidateRow.Bounds.Width / 2, candidateRow.Bounds.Height / 2),
-			window)!.Value;
-		global::Avalonia.Headless.HeadlessWindowExtensions.MouseDown(window, rowCentre, global::Avalonia.Input.MouseButton.Left);
-		global::Avalonia.Headless.HeadlessWindowExtensions.MouseUp(window, rowCentre, global::Avalonia.Input.MouseButton.Left);
+		// internal ScrollIntoView too, which a real user click does not. Tree rows stretch to
+		// content width, so clamp X to the visible grid viewport.
+		await window.ClickAsync(() => candidateRow,
+			pointInTarget: r => new Point(System.Math.Min(r.Bounds.Width, grid.Bounds.Width) / 2, r.Bounds.Height / 2));
 		TestCapture.Step("visible-row-clicked");
 
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		// Assert — viewport offset is unchanged (within 1px tolerance for layout jitter).
 		scrollViewer.Offset.Y.Should().BeApproximately(offsetBefore, 1.0,
@@ -711,11 +701,7 @@ public class AssemblyTreeTests
 
 		vm.AssemblyTreeModel.SelectNode(enumerable);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 		grid.UpdateLayout();
 
 		var scrollViewer = await grid.WaitForComponent<ScrollViewer>();
@@ -742,11 +728,7 @@ public class AssemblyTreeTests
 
 		// Act — model-driven selection (the open-in-new-tab path), NOT a mouse click.
 		vm.AssemblyTreeModel.SelectNode(candidateNode);
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		scrollViewer.Offset.Y.Should().BeApproximately(offsetBefore, 1.0,
 			"selecting an already-visible row via the model (e.g. Decompile to new tab) must not move the viewport");
@@ -780,11 +762,7 @@ public class AssemblyTreeTests
 		// Select + reveal the type, then let it settle on screen.
 		vm.AssemblyTreeModel.SelectNode(enumerable);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, enumerable));
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 		grid.UpdateLayout();
 
 		(scrollViewer.Extent.Height - scrollViewer.Viewport.Height).Should().BeGreaterThan(50,
@@ -795,11 +773,7 @@ public class AssemblyTreeTests
 		// rows above the selection and pushing it off-screen.
 		var coreLib = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(typeof(object).Assembly.GetName().Name!);
 		coreLib.IsExpanded = true;
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 		grid.UpdateLayout();
 
 		// Assert: the app did not chase the selection. The expand reveals the opened node's children;
@@ -1774,14 +1748,9 @@ public class AssemblyTreeTests
 		Assert.That(targetNode, Is.Not.Null, "the clicked row must wrap a tree node");
 		// Tree rows stretch to content width (with horizontal scroll), so a row can be wider than
 		// the grid viewport. Click within the visible viewport, not at the (off-screen) row centre.
-		var clickX = System.Math.Min(targetRow.Bounds.Width, grid.Bounds.Width) / 2;
-		var rowCentre = targetRow.TranslatePoint(
-			new Point(clickX, targetRow.Bounds.Height / 2), window)!.Value;
-		HeadlessWindowExtensions.MouseDown(window, rowCentre, MouseButton.Left);
-		HeadlessWindowExtensions.MouseUp(window, rowCentre, MouseButton.Left);
-		Dispatcher.UIThread.RunJobs();
-		await Task.Delay(50);
-		Dispatcher.UIThread.RunJobs();
+		await window.ClickAsync(() => targetRow,
+			pointInTarget: r => new Point(System.Math.Min(r.Bounds.Width, grid.Bounds.Width) / 2, r.Bounds.Height / 2));
+		await Waiters.WaitForIdleAsync();
 		TestCapture.Step("plain-click-collapsed-selection");
 
 		// Assert — selection collapsed to exactly the clicked row, in both grid and model.
@@ -1822,11 +1791,7 @@ public class AssemblyTreeTests
 
 		// Act -- run Load Dependencies on the System.Net.Http node.
 		await vm.AssemblyTreeModel.LoadDependenciesAsync(new SharpTreeNode[] { httpNode });
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		// Assert -- references were resolved AND survive in the list as auto-loaded entries.
 		var added = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()

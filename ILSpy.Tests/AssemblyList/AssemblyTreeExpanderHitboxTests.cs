@@ -81,10 +81,7 @@ public class AssemblyTreeExpanderHitboxTests
 		// outside the centred glyph at ~y=3.5..12.5) collapses the node. This proves the grown
 		// area is genuinely hittable, not just larger in layout.
 		assemblyNode.IsExpanded.Should().BeTrue("precondition: node is expanded before the click");
-		var hitPoint = expander.TranslatePoint(new Point(expander.Bounds.Width / 2, 14), window);
-		hitPoint.Should().NotBeNull();
-		HeadlessWindowExtensions.MouseDown(window, hitPoint!.Value, MouseButton.Left);
-		HeadlessWindowExtensions.MouseUp(window, hitPoint.Value, MouseButton.Left);
+		await window.ClickAsync(() => expander, pointInTarget: e => new Point(e.Bounds.Width / 2, 14));
 		TestCapture.Step("clicked-enlarged-expander-area");
 
 		await Waiters.WaitForAsync(() => !assemblyNode.IsExpanded,

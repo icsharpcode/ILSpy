@@ -21,16 +21,69 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 namespace ICSharpCode.ILSpy.Tests;
 
 public static class WindowExtensions
 {
+	/// <summary>
+	/// Presses and releases <paramref name="button"/> on the visual <paramref name="resolveTarget"/>
+	/// returns, once the window's hit test at the click point answers with that visual (or a
+	/// descendant of it). Returns the window-relative point that was clicked.
+	/// </summary>
+	/// <remarks>
+	/// Synthesized input is routed by hit testing the rendered scene, so a press only reaches the
+	/// intended control when the scene agrees with the visual tree: a closed popup's light-dismiss
+	/// overlay keeps answering hit tests until the next frame, a virtualized row may be re-realised
+	/// as a different container, and layout may still be moving. Resolving the target on every poll
+	/// and waiting for the hit test is that precondition, whatever number of frames it takes.
+	/// <paramref name="pointInTarget"/> picks the point inside the target's bounds; the centre by
+	/// default.
+	/// </remarks>
+	public static async Task<Point> ClickAsync(
+		this Window window,
+		Func<Visual?> resolveTarget,
+		MouseButton button = MouseButton.Left,
+		RawInputModifiers modifiers = RawInputModifiers.None,
+		Func<Visual, Point>? pointInTarget = null,
+		[CallerArgumentExpression(nameof(resolveTarget))] string? description = null)
+	{
+		ArgumentNullException.ThrowIfNull(window);
+		ArgumentNullException.ThrowIfNull(resolveTarget);
+		pointInTarget ??= static t => new Point(t.Bounds.Width / 2, t.Bounds.Height / 2);
+		Visual? target = null;
+		Point? point = null;
+		object? lastHit = null;
+		try
+		{
+			await Waiters.WaitForAsync(() => {
+				target = resolveTarget();
+				point = target == null ? null : target.TranslatePoint(pointInTarget(target), window);
+				if (point == null)
+					return false;
+				lastHit = window.InputHitTest(point.Value);
+				return lastHit is Visual hit && (ReferenceEquals(hit, target) || hit.GetVisualAncestors().Contains(target));
+			}, description: $"{description} to answer the hit test at its click point");
+		}
+		catch (TimeoutException ex)
+		{
+			throw new TimeoutException(
+				$"{ex.Message} (target: {target?.GetType().Name ?? "not resolved"}, point: {point?.ToString() ?? "n/a"}, hit: {lastHit?.GetType().Name ?? "nothing"})", ex);
+		}
+		window.MouseDown(point!.Value, button, modifiers);
+		window.MouseUp(point.Value, button, modifiers);
+		return point.Value;
+	}
+
 	/// <summary>Snapshots the window with Skia, writes a temp PNG, and opens it in the OS
 	/// image viewer. No-op when <c>UseHeadlessDrawing</c> is true (CI default).</summary>
 	public static void CaptureAndShow(this Window window, [CallerMemberName] string? label = null)
