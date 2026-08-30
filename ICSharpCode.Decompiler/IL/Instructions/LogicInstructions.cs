@@ -31,13 +31,13 @@ namespace ICSharpCode.Decompiler.IL
 		bool ILiftableInstruction.IsLifted => true;
 		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
 
-		public override StackType ResultType => StackType.O;
+		public override StackType ResultType => StackType.VT;
 		public override IType InferType(ICompilation compilation) => NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
 
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.VT);
 		}
 	}
 
@@ -46,13 +46,13 @@ namespace ICSharpCode.Decompiler.IL
 		bool ILiftableInstruction.IsLifted => true;
 		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
 
-		public override StackType ResultType => StackType.O;
+		public override StackType ResultType => StackType.VT;
 		public override IType InferType(ICompilation compilation) => NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
 
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
+			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.VT);
 		}
 	}
 

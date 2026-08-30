@@ -152,12 +152,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array).WithILRange(inst.Left));
 					inst.Right = rightWithoutConv;
 				}
-				else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.O)
+				else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.Obj)
 				{
 					// C++/CLI sometimes uses this weird comparison with null:
 					context.Step("comp(conv o->i (ldloc obj) == conv i4->i <sign extend>(ldc.i4 0))", inst);
 					// -> comp(ldloc obj == ldnull)
-					inst.InputType = StackType.O;
+					inst.InputType = StackType.Obj;
 					inst.Left = conv.Argument;
 					inst.Right = new LdNull().WithILRange(inst.Right);
 					inst.Right.AddILRange(rightWithoutConv);

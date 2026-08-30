@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			else
 			{
-				Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
+				Debug.Assert(Argument.ResultType == StackType.VT, "nullable.unwrap expects nullable type as input");
 			}
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
 		}

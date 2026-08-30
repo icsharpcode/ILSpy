@@ -386,7 +386,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 
 					context.Step("Nullable.HasValue check -> null pattern", block);
-					var nullComp = new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull());
+					var nullComp = new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp, StackType.VT, Sign.None, varPattern.TestedOperand, new LdNull());
 					varPattern.ReplaceWith(nullComp);
 					context.EndStep(nullComp);
 					block.Instructions.Clear();
@@ -398,7 +398,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (varPattern.Variable.AddressCount == 1 && context.Settings.PatternCombinators)
 			{
 				context.Step("Nullable.HasValue check -> not null pattern", block);
-				var notNullComp = new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, StackType.O, Sign.None, varPattern.TestedOperand, new LdNull());
+				var notNullComp = new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp, StackType.VT, Sign.None, varPattern.TestedOperand, new LdNull());
 				varPattern.ReplaceWith(notNullComp);
 				context.EndStep(notNullComp);
 				block.Instructions.Clear();

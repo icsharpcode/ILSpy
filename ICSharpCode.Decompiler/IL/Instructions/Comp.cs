@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Sign = sign;
 		}
 
-		public override StackType ResultType => LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.O : StackType.I4;
+		public override StackType ResultType => LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.VT : StackType.I4;
 
 		public override IType InferType(ICompilation compilation)
 		{
@@ -188,8 +188,8 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			else
 			{
-				Debug.Assert(Left.ResultType == InputType || Left.ResultType == StackType.O);
-				Debug.Assert(Right.ResultType == InputType || Right.ResultType == StackType.O);
+				Debug.Assert(Left.ResultType == InputType || Left.ResultType == StackType.VT);
+				Debug.Assert(Right.ResultType == InputType || Right.ResultType == StackType.VT);
 			}
 		}
 
@@ -250,7 +250,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Unsafe.As(ref a) op Unsafe.As(ref b), which requires that a and b are variables
 			// and not expressions. Returning false in those cases prevents inlining.
 			// However if one of the arguments is LdNull, then we don't need the Unsafe.As trickery, and can always inline.
-			if (kind.IsEqualityOrInequality() || this.InputType != StackType.O)
+			if (kind.IsEqualityOrInequality() || this.InputType != StackType.Obj)
 			{
 				// OK, won't need Unsafe.As.
 				return true;

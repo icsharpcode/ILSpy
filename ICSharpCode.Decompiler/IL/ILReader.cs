@@ -1122,7 +1122,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stind_i:
 					return new StObj(value: Pop(StackType.I), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.IntPtr));
 				case ILOpCode.Stind_ref:
-					return new StObj(value: Pop(StackType.O), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Object));
+					return new StObj(value: Pop(StackType.Obj), target: PopStObjTarget(), type: compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Stloc:
 				case ILOpCode.Stloc_s:
 					return Stloc(ILParser.DecodeIndex(ref reader, opCode));
@@ -1150,7 +1150,7 @@ namespace ICSharpCode.Decompiler.IL
 					return Push(new Box(Pop(type.GetStackType()), type));
 				}
 				case ILOpCode.Castclass:
-					return Push(new CastClass(Pop(StackType.O), ReadAndDecodeTypeReference()));
+					return Push(new CastClass(Pop(StackType.Obj), ReadAndDecodeTypeReference()));
 				case ILOpCode.Cpobj:
 				{
 					var type = ReadAndDecodeTypeReference();
@@ -1167,7 +1167,7 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						FlushExpressionStack(); // value-type isinst has inlining restrictions
 					}
-					return Push(new IsInst(Pop(StackType.O), type));
+					return Push(new IsInst(Pop(StackType.Obj), type));
 				}
 				case ILOpCode.Ldelem:
 					return LdElem(ReadAndDecodeTypeReference());
@@ -1212,7 +1212,7 @@ namespace ICSharpCode.Decompiler.IL
 					return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(PopFieldTarget(field), field) { DelayExceptions = true }, type: field.Type);
 				}
 				case ILOpCode.Ldlen:
-					return Push(new LdLen(StackType.I, Pop(StackType.O)));
+					return Push(new LdLen(StackType.I, Pop(StackType.Obj)));
 				case ILOpCode.Ldobj:
 					return Push(new LdObj(PopPointer(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldsfld:
@@ -1330,9 +1330,13 @@ namespace ICSharpCode.Decompiler.IL
 				{
 					v2.Name = $"S_{variables.Count - 1}";
 				}
-				if (v1 != v2 && !v1.Type.Equals(v2.Type) && !v2.Type.CannotBeReconstructedFromStackType())
+				Debug.Assert(v1.StackType == v2.StackType);
+				// When branches with unequal types are merged, go back to the raw stack type,
+				// to ensure that the variable can accept all possible values across all branches.
+				// Exception: don't do this for value types, as FindType(stackType) wouldn't work for them.
+				if (v1 != v2 && !v1.Type.Equals(v2.Type) && !(v2.StackType == StackType.O && v2.Type.IsReferenceType != true))
 				{
-					v2.Type = compilation.FindType(v1.StackType);
+					v2.Type = compilation.FindType(v2.StackType);
 				}
 				return v2;
 			}
@@ -1464,7 +1468,7 @@ namespace ICSharpCode.Decompiler.IL
 				else if (expectedType == StackType.Ref)
 				{
 					// implicitly start GC tracking / object to interior
-					if (!inst.ResultType.IsIntegerType() && inst.ResultType != StackType.O)
+					if (!inst.ResultType.IsIntegerType() && inst.ResultType != StackType.Obj)
 					{
 						// We also handle the invalid to-ref cases here because the else case
 						// below uses expectedType.ToKnownTypeCode(), which doesn't work for Ref.
@@ -1533,13 +1537,13 @@ namespace ICSharpCode.Decompiler.IL
 			switch (field.DeclaringType.IsReferenceType)
 			{
 				case true:
-					return Pop(StackType.O);
+					return Pop(StackType.Obj);
 				case false:
 					return PopPointer();
 				default:
 					// field in unresolved type
 					var stackType = PeekStackType();
-					if (stackType == StackType.O || stackType == StackType.Unknown)
+					if (stackType is StackType.Obj or StackType.VT or StackType.Unknown)
 						return Pop();
 					else
 						return PopPointer();
@@ -1554,16 +1558,16 @@ namespace ICSharpCode.Decompiler.IL
 			switch (field.DeclaringType.IsReferenceType)
 			{
 				case true:
-					return Pop(StackType.O);
+					return Pop(StackType.Obj);
 				case false:
 					// field of value type: ldfld can handle temporaries
-					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
+					if (PeekStackType() is StackType.VT or StackType.Unknown)
 						return new AddressOf(Pop(), field.DeclaringType);
 					else
 						return PopPointer();
 				default:
 					// field in unresolved type
-					if (PeekStackType() == StackType.O || PeekStackType() == StackType.Unknown)
+					if (PeekStackType() is StackType.Obj or StackType.VT or StackType.Unknown)
 						return Pop();
 					else
 						return PopPointer();
@@ -1916,7 +1920,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction Comparison(ComparisonKind kind, bool un = false)
 		{
-			if (!kind.IsEqualityOrInequality() && PeekStackType() == StackType.O)
+			if (!kind.IsEqualityOrInequality() && PeekStackType() == StackType.Obj)
 			{
 				FlushExpressionStack();
 			}
@@ -1925,7 +1929,7 @@ namespace ICSharpCode.Decompiler.IL
 			var left = Pop();
 			// left will run before right, thus preserving the evaluation order
 
-			if ((left.ResultType == StackType.O || left.ResultType == StackType.Ref) && right.ResultType.IsIntegerType())
+			if ((left.ResultType == StackType.Obj || left.ResultType == StackType.Ref) && right.ResultType.IsIntegerType())
 			{
 				// C++/CLI sometimes compares object references with integers.
 				// Also happens with Ref==I in Unsafe.IsNullRef().
@@ -1936,7 +1940,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				left = new Conv(left, right.ResultType.ToPrimitiveType(), false, Sign.None);
 			}
-			else if ((right.ResultType == StackType.O || right.ResultType == StackType.Ref) && left.ResultType.IsIntegerType())
+			else if ((right.ResultType == StackType.Obj || right.ResultType == StackType.Ref) && left.ResultType.IsIntegerType())
 			{
 				if (left.ResultType == StackType.I4)
 				{
@@ -2031,7 +2035,7 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction condition = Pop();
 			switch (condition.ResultType)
 			{
-				case StackType.O:
+				case StackType.Obj:
 					// introduce explicit comparison with null
 					condition = new Comp(
 						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,

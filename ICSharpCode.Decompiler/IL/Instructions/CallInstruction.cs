@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the expected stack type for passing the this pointer in a method call.
 		/// Returns StackType.Ref if constrainedTo is not null,
-		/// StackType.O for reference types (this pointer passed as object reference),
+		/// StackType.Obj for reference types (this pointer passed as object reference),
 		/// and StackType.Ref for type parameters and value types (this pointer passed as managed reference).
 		/// 
 		/// Returns StackType.Unknown if the input type is unknown.
@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.IL
 			switch (declaringType.IsReferenceType)
 			{
 				case true:
-					return StackType.O;
+					return StackType.Obj;
 				case false:
 					return StackType.Ref;
 				default:

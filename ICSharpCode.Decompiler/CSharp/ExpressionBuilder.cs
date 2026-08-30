@@ -1089,7 +1089,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				|| !rr.Type.IsKnownType(KnownTypeCode.Boolean))
 			{
 				IType targetType;
-				if (inst.InputType == StackType.O)
+				if (inst.InputType == StackType.Obj)
 				{
 					targetType = compilation.FindType(KnownTypeCode.Object);
 				}
@@ -1227,7 +1227,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				left = left.ConvertTo(inputType, this);
 				right = right.ConvertTo(inputType, this);
 			}
-			else if (inst.InputType == StackType.O)
+			else if (inst.InputType == StackType.Obj)
 			{
 				// Unsafe.As<object, UIntPtr>(ref left) op Unsafe.As<object, UIntPtr>(ref right)
 				// TTo Unsafe.As<TFrom, TTo>(ref TFrom source)
@@ -4313,7 +4313,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
-					Debug.Assert(inst.Value.ResultType == StackType.O);
+					Debug.Assert(inst.Value.ResultType == StackType.VT);
 					Debug.Assert(inst.IsLifted);
 					Debug.Assert(inst.Type == governingType);
 				}

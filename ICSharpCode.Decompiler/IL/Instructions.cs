@@ -1147,7 +1147,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Common instruction for dynamic compound assignments.</summary>
 	public sealed partial class DynamicCompoundAssign : CompoundAssignmentInstruction
 	{
-		public override StackType ResultType => StackType.O;
+		public override StackType ResultType => StackType.Obj;
 		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1956,7 +1956,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(onExpression.ResultType == StackType.O);
+			DebugAssert(onExpression.ResultType == StackType.Obj);
 		}
 	}
 }
@@ -3081,7 +3081,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly decimal Value;
-		public override StackType ResultType => StackType.O;
+		public override StackType ResultType => StackType.VT;
 		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Decimal);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -4928,7 +4928,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(array.ResultType == StackType.O);
+			DebugAssert(array.ResultType == StackType.Obj);
 		}
 	}
 }
@@ -5302,7 +5302,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(argument.ResultType == StackType.O);
+			DebugAssert(argument.ResultType == StackType.Obj);
 		}
 	}
 }
@@ -5392,7 +5392,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(argument.ResultType == StackType.O);
+			DebugAssert(argument.ResultType == StackType.Obj);
 		}
 	}
 }
@@ -5918,7 +5918,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(argument.ResultType == StackType.O);
+			DebugAssert(argument.ResultType == StackType.Obj);
 		}
 	}
 }
@@ -6006,7 +6006,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(target.ResultType == StackType.O);
+			DebugAssert(target.ResultType == StackType.Obj);
 		}
 	}
 }
@@ -6111,7 +6111,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(target.ResultType == StackType.O);
+			DebugAssert(target.ResultType == StackType.Obj);
 		}
 	}
 }
@@ -6554,7 +6554,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
-			DebugAssert(argument.ResultType == StackType.O);
+			DebugAssert(argument.ResultType == StackType.Obj);
 		}
 	}
 }

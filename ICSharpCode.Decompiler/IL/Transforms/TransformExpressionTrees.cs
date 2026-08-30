@@ -1350,7 +1350,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						case StackType.F8:
 							left = new LdcF8(0);
 							break;
-						case StackType.O when underlyingType.IsKnownType(KnownTypeCode.Decimal):
+						case StackType.VT when underlyingType.IsKnownType(KnownTypeCode.Decimal):
 							left = new LdcDecimal(0);
 							break;
 						default:
