@@ -1334,7 +1334,7 @@ namespace ICSharpCode.Decompiler.IL
 				// When branches with unequal types are merged, go back to the raw stack type,
 				// to ensure that the variable can accept all possible values across all branches.
 				// Exception: don't do this for value types, as FindType(stackType) wouldn't work for them.
-				if (v1 != v2 && !v1.Type.Equals(v2.Type) && !(v2.StackType == StackType.O && v2.Type.IsReferenceType != true))
+				if (v1 != v2 && !v1.Type.Equals(v2.Type) && v2.StackType != StackType.VT)
 				{
 					v2.Type = compilation.FindType(v2.StackType);
 				}
@@ -2125,8 +2125,8 @@ namespace ICSharpCode.Decompiler.IL
 			{
 				Debug.Assert(inst.ResultType != StackType.Void);
 				// Use InferType() for an improved type for these stackslot locals.
-				// This is crucial for value types, where FindType(StackType.O)
-				// would incorrectly use `object`.
+				// This is crucial for value types, where FindType(StackType.VT)
+				// wouldn't work.
 				// It's also highly useful for ref-locals,
 				// and shouldn't hurt for other types -- this type of
 				// stackslot-variable is never reassigned, so even types

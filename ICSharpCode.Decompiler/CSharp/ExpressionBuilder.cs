@@ -883,7 +883,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					inst.Variable.Type = translatedValue.Type;
 				}
-				else if (inst.Value.MatchDefaultValue(out var type) && IsOtherValueType(type))
+				else if (inst.Value.MatchDefaultValue(out var type) && type.GetStackType() == StackType.VT)
 				{
 					inst.Variable.Type = type;
 				}
@@ -908,11 +908,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return v.IsSingleDefinition
 					|| AllStoresUseConsistentType(v.StoreInstructions, type);
-			}
-
-			bool IsOtherValueType(IType type)
-			{
-				return type.IsReferenceType == false && type.GetStackType() == StackType.O;
 			}
 
 			bool AllStoresUseConsistentType(IReadOnlyList<IStoreInstruction> storeInstructions, IType expectedType)

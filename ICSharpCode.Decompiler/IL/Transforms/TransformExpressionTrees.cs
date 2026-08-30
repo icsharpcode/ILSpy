@@ -660,15 +660,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						result = new AddressOf(target, expectedType);
 					}
 					break;
-				case StackType.O:
-					if (targetType.IsReferenceType == false)
-					{
-						result = new Box(target, targetType);
-					}
-					else
-					{
-						result = target;
-					}
+				case StackType.Obj:
+					result = target;
+					break;
+				case StackType.VT:
+					result = new Box(target, targetType);
 					break;
 				default:
 					result = target;
