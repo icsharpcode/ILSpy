@@ -18,7 +18,10 @@
 
 #nullable enable
 
+using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
@@ -34,6 +37,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			DynamicAndObject = true,
 			IntPtrToNInt = true,
 			TupleToUnderlyingType = true,
+			RemoveTupleElementNames = false,
 			RemoveModOpt = true,
 			RemoveModReq = true,
 			RemoveNullability = true,
@@ -45,8 +49,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			DynamicAndObject = false,
 			IntPtrToNInt = false,
 			TupleToUnderlyingType = true,
+			RemoveTupleElementNames = false,
 			RemoveModOpt = true,
 			RemoveModReq = true,
+			RemoveNullability = true,
+		};
+
+		// Used in type inference to group together similar types that can be merged.
+		internal static readonly NormalizeTypeVisitor KeyForTypeMerging = new NormalizeTypeVisitor {
+			ReplaceClassTypeParametersWithDummy = false,
+			ReplaceMethodTypeParametersWithDummy = false,
+			DynamicAndObject = true,
+			IntPtrToNInt = false,
+			TupleToUnderlyingType = false,
+			RemoveTupleElementNames = true,
+			RemoveModOpt = false,
+			RemoveModReq = false,
 			RemoveNullability = true,
 		};
 
@@ -56,6 +74,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			DynamicAndObject = false,
 			IntPtrToNInt = false,
 			TupleToUnderlyingType = false,
+			RemoveTupleElementNames = false,
 			RemoveModOpt = true,
 			RemoveModReq = true,
 			RemoveNullability = true,
@@ -75,6 +94,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public bool DynamicAndObject = true;
 		public bool IntPtrToNInt = true;
 		public bool TupleToUnderlyingType = true;
+		public bool RemoveTupleElementNames = true;
 		public bool RemoveNullability = true;
 
 		public override IType VisitTypeParameter(ITypeParameter type)
@@ -128,6 +148,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (TupleToUnderlyingType)
 			{
 				return type.UnderlyingType.AcceptVisitor(this);
+			}
+			else if (RemoveTupleElementNames && type.ElementNames.Any(name => name != null))
+			{
+				return new TupleType(
+					type.Compilation,
+					type.ElementTypes.SelectImmutableArray(t => t.AcceptVisitor(this)),
+					default,
+					type.GetDefinition()?.ParentModule);
 			}
 			else
 			{

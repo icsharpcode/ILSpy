@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.Semantics
 					return Conversion.None;
 				for (int i = 0; i < parameterTypes.Length; ++i)
 				{
-					if (parameterTypes[i].Equals(this.Parameters[i].Type))
+					if (NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(parameterTypes[i], this.Parameters[i].Type))
 					{
 						continue;
 					}

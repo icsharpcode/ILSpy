@@ -52,6 +52,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			return visitor.VisitNullabilityAnnotatedType(this);
 		}
 
+		public override int GetHashCode()
+		{
+			return baseType.GetHashCode() ^ nullability.GetHashCode();
+		}
+
 		public override bool Equals(IType other)
 		{
 			return other is NullabilityAnnotatedType nat
