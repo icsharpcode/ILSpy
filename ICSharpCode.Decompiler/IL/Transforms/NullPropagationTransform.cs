@@ -242,10 +242,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (testedVar != null) { testedVar.AccessChain(); }
 			// => testedVar?.AccessChain();
 			IntroduceUnwrap(testedVar, varLoad, mode);
-			var replacement = new NullableRewrap(
-				bodyInst,
-				bodyInst.InferType(context.TypeSystem)
-			).WithILRange(ifInst);
+			var returnType = bodyInst.InferType(context.TypeSystem);
+			if (returnType.Kind != TypeKind.Void)
+			{
+				returnType = NullableType.Create(context.TypeSystem, returnType);
+			}
+			var replacement = new NullableRewrap(bodyInst, returnType).WithILRange(ifInst);
 			ifInst.ReplaceWith(replacement);
 			context.EndStep(replacement);
 		}

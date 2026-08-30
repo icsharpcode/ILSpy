@@ -39,6 +39,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				return null;
 			}
 
+			public bool GetBool()
+			{
+				return false;
+			}
+
 			public void Done()
 			{
 			}
@@ -67,6 +72,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 #else
 				return default(MyStruct);
 #endif
+			}
+
+			public bool GetBool()
+			{
+				return false;
 			}
 
 			public void Done()
@@ -169,6 +179,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetMyClass()?[GetInt()].Done();
 		}
 
+		public void CallGetBool()
+		{
+			GetMyClass()?.GetBool();
+			GetMyClass()?.Field?.GetBool();
+			GetMyClass()?.Field.GetBool();
+			GetMyClass()?.Property?.GetBool();
+			GetMyClass()?.Property.GetBool();
+			GetMyClass()?.Method(GetInt())?.GetBool();
+			GetMyClass()?.Method(GetInt()).GetBool();
+			GetMyClass()?[GetInt()]?.GetBool();
+			GetMyClass()?[GetInt()].GetBool();
+		}
+
 		public void CallDoneStruct()
 		{
 			GetMyStruct()?.Done();
@@ -179,6 +202,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			GetMyStruct()?.Method1(GetInt())?.Done();
 			GetMyStruct()?.Method2(GetInt()).Done();
 			GetMyStruct()?[GetInt()]?.Done();
+		}
+
+		public void CallGetBoolStruct()
+		{
+			GetMyStruct()?.GetBool();
+			GetMyStruct()?.Field?.GetBool();
+			GetMyStruct()?.Field.GetBool();
+			GetMyStruct()?.Property1?.GetBool();
+			GetMyStruct()?.Property2.GetBool();
+			GetMyStruct()?.Method1(GetInt())?.GetBool();
+			GetMyStruct()?.Method2(GetInt()).GetBool();
+			GetMyStruct()?[GetInt()]?.GetBool();
 		}
 
 		public void RequiredParentheses()
