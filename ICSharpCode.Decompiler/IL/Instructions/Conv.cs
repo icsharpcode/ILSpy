@@ -169,9 +169,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.IsLifted = isLifted;
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			// Debug.Assert(Kind != ConversionKind.Invalid); // invalid conversion can happen with invalid IL/missing references
 			Debug.Assert(Argument.ResultType == (IsLifted ? StackType.O : InputType));
 			Debug.Assert(!(IsLifted && Kind == ConversionKind.StopGCTracking));

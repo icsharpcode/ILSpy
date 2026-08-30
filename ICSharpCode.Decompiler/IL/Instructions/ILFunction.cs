@@ -230,7 +230,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.kind = kind;
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			switch (kind)
 			{
@@ -263,7 +263,7 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(Variables[i].IndexInFunction == i);
 				Variables[i].CheckInvariant();
 			}
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 		}
 
 		void CloneVariables()
@@ -401,7 +401,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context)
 		{
-			this.CheckInvariant(ILPhase.Normal);
+			this.CheckInvariant(ILPhase.Normal, context.TypeSystem);
 			bool traceTransforms = DecompilerEventSource.Log.IsTransformTracingEnabled();
 			foreach (var transform in transforms)
 			{
@@ -421,7 +421,7 @@ namespace ICSharpCode.Decompiler.IL
 				transform.Run(this, context);
 				if (traceTransforms)
 					DecompilerEventSource.Log.ILTransformExecuted(transform, this, traceStart);
-				this.CheckInvariant(ILPhase.Normal);
+				this.CheckInvariant(ILPhase.Normal, context.TypeSystem);
 				context.StepEndGroup(keepIfEmpty: true);
 			}
 		}

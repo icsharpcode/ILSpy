@@ -487,7 +487,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (hasBody)
 			{
 				function.DeclarationScope = (BlockContainer)rootFunction.Body;
-				function.CheckInvariant(ILPhase.Normal);
+				function.CheckInvariant(ILPhase.Normal, context.TypeSystem);
 				var nestedContext = new ILTransformContext(context, function);
 				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is LocalFunctionDecompiler)), nestedContext);
 				function.DeclarationScope = null;

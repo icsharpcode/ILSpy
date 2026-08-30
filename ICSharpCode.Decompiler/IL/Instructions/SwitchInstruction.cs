@@ -152,9 +152,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.resultType = resultType;
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			bool expectNullSection = this.IsLifted;
 			LongSet sets = LongSet.Empty;
 			foreach (var section in Sections)

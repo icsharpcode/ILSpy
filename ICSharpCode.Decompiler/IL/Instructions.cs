@@ -1038,9 +1038,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as PinnedRegion;
 			return o != null && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			DebugAssert(Variable.Kind == VariableKind.PinnedRegionLocal);
@@ -1940,9 +1940,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LockInstruction;
 			return o != null && this.onExpression.PerformMatch(o.onExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(onExpression.ResultType == StackType.O);
 		}
 	}
@@ -2084,9 +2084,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as UsingInstruction;
 			return o != null && variable == o.variable && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			DebugAssert(resourceExpression.ResultType == StackType.O);
@@ -2363,9 +2363,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdLoc;
 			return o != null && variable == o.variable;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 		}
@@ -2437,9 +2437,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdLoca;
 			return o != null && variable == o.variable;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 		}
@@ -3567,9 +3567,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as Cpblk;
 			return o != null && this.destAddress.PerformMatch(o.destAddress, ref match) && this.sourceAddress.PerformMatch(o.sourceAddress, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(destAddress.ResultType == StackType.I || destAddress.ResultType == StackType.Ref);
 			DebugAssert(sourceAddress.ResultType == StackType.I || sourceAddress.ResultType == StackType.Ref);
 			DebugAssert(size.ResultType == StackType.I4);
@@ -3718,9 +3718,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as Initblk;
 			return o != null && this.address.PerformMatch(o.address, ref match) && this.value.PerformMatch(o.value, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(address.ResultType == StackType.I || address.ResultType == StackType.Ref);
 			DebugAssert(value.ResultType == StackType.I4);
 			DebugAssert(size.ResultType == StackType.I4);
@@ -4081,9 +4081,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdObj;
 			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 		}
 	}
@@ -4191,9 +4191,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdObjIfRef;
 			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 		}
 	}
@@ -4330,9 +4330,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as StObj;
 			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 			DebugAssert(value.ResultType == type.GetStackType());
 			CheckTargetSlot();
@@ -4856,9 +4856,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdLen;
 			return o != null && this.array.PerformMatch(o.array, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(array.ResultType == StackType.O);
 		}
 	}
@@ -5218,9 +5218,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as GetPinnableReference;
 			return o != null && this.argument.PerformMatch(o.argument, ref match) && object.Equals(method, o.method);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -5307,9 +5307,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as StringToInt;
 			return o != null && this.argument.PerformMatch(o.argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -5831,9 +5831,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicConvertInstruction;
 			return o != null && type.Equals(o.type) && this.argument.PerformMatch(o.argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -5919,9 +5919,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicGetMemberInstruction;
 			return o != null && this.target.PerformMatch(o.target, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.O);
 		}
 	}
@@ -6024,9 +6024,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicSetMemberInstruction;
 			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.O);
 		}
 	}
@@ -6467,9 +6467,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicIsEventInstruction;
 			return o != null && this.argument.PerformMatch(o.argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -6608,9 +6608,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as MatchInstruction;
 			return o != null && variable == o.variable && object.Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.IsDeconstructTuple == o.IsDeconstructTuple && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			AdditionalInvariants();
@@ -6984,9 +6984,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DeconstructResultInstruction;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			AdditionalInvariants();
 		}
 	}

@@ -455,9 +455,9 @@ namespace <#=opCode.Namespace#>
 		}
 <#		} #>
 <#		if (opCode.Invariants.Count > 0) { #>
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 <#			foreach (var invariant in opCode.Invariants) {#>
 			<#=invariant#>
 <#			} #>

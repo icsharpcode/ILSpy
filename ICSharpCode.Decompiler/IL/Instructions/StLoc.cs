@@ -19,6 +19,8 @@
 
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class StLoc
@@ -36,9 +38,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal bool ILStackWasEmpty;
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			Debug.Assert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			Debug.Assert(value.ResultType == variable.StackType);

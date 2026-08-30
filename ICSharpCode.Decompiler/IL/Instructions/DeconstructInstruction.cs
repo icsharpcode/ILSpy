@@ -296,9 +296,9 @@ namespace ICSharpCode.Decompiler.IL
 			return null;
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			var patternVariables = new HashSet<ILVariable>();
 			var conversionVariables = new HashSet<ILVariable>();
 
@@ -323,7 +323,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			foreach (var inst in assignments.Instructions)
 			{
-				if (!(IsAssignment(inst, typeSystem: null, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
+				if (!(IsAssignment(inst, compilation, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
 					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}

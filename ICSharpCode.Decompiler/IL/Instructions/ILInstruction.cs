@@ -81,9 +81,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(b, msg);
 		}
 
+		/// <summary>
+		/// Verifies the invariants of this instruction and its descendants. Only active in debug builds.
+		/// </summary>
+		/// <param name="phase">Which set of invariants applies; they tighten as the pipeline progresses.</param>
+		/// <param name="compilation">The compilation the instruction tree was decoded against, so that
+		/// invariants involving types can be resolved against the same type system the decompiler uses.</param>
 		[Conditional("DEBUG")]
-		internal virtual void CheckInvariant(ILPhase phase)
+		internal virtual void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
+			Debug.Assert(compilation != null);
 			foreach (var child in Children)
 			{
 				Debug.Assert(child.Parent == this);
@@ -92,7 +99,7 @@ namespace ICSharpCode.Decompiler.IL
 				// exception: nested ILFunctions (lambdas)
 				Debug.Assert(this is ILFunction || child.flags != invalidFlags || this.flags == invalidFlags);
 				Debug.Assert(child.IsConnected == this.IsConnected);
-				child.CheckInvariant(phase);
+				child.CheckInvariant(phase, compilation);
 			}
 			Debug.Assert((this.DirectFlags & ~this.Flags) == 0, "All DirectFlags must also appear in this.Flags");
 		}

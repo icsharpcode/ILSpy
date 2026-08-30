@@ -164,9 +164,9 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsLifted => LiftingKind != ComparisonLiftingKind.None;
 		public StackType UnderlyingResultType => StackType.I4;
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			if (LiftingKind == ComparisonLiftingKind.None)
 			{
 				Debug.Assert(Left.ResultType == InputType);
