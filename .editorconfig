@@ -144,11 +144,11 @@ dotnet_naming_symbols.private_fields_symbols.applicable_kinds = field
 
 # Naming rules:
 # all non-private fields are pascal case
-dotnet_naming_rule.fields_rule.severity = warning
+dotnet_naming_rule.fields_rule.severity = suggestion
 dotnet_naming_rule.fields_rule.style = upper_camel_case_style
 dotnet_naming_rule.fields_rule.symbols = fields_symbols
 # all private fields are camel case
-dotnet_naming_rule.private_fields_rule.severity = warning
+dotnet_naming_rule.private_fields_rule.severity = suggestion
 dotnet_naming_rule.private_fields_rule.style = lower_camel_case_style
 dotnet_naming_rule.private_fields_rule.symbols = private_fields_symbols
 
