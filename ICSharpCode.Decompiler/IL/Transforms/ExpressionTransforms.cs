@@ -863,8 +863,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					break;
 				case BinaryNumericOperator.BitAnd:
-					if (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
-						&& inst.Right.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean))
+				{
+					IType leftType = inst.Left.InferType(context.TypeSystem);
+					IType rightType = inst.Right.InferType(context.TypeSystem);
+					DetectImprovedTypeForForBitOp(inst, leftType, rightType);
+					if (leftType.IsKnownType(KnownTypeCode.Boolean)
+						&& rightType.IsKnownType(KnownTypeCode.Boolean))
 					{
 						if (new NullableLiftingTransform(context).Run(inst))
 						{
@@ -872,6 +876,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 					}
 					break;
+				}
+				case BinaryNumericOperator.BitOr:
+				case BinaryNumericOperator.BitXor:
+				{
+					IType leftType = inst.Left.InferType(context.TypeSystem);
+					IType rightType = inst.Right.InferType(context.TypeSystem);
+					DetectImprovedTypeForForBitOp(inst, leftType, rightType);
+					break;
+				}
 			}
 
 			bool MatchExpectedShiftSize(ILInstruction rhs)
@@ -890,6 +903,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							&& eight.MatchLdcI4(8) && one.MatchLdcI4(1);
 					default:
 						return false;
+				}
+			}
+		}
+
+		// Given bit.or(a, b), promotes the "known to be bool/short" information from the operands to bit.or
+		void DetectImprovedTypeForForBitOp(BinaryNumericInstruction inst, IType leftType, IType rightType)
+		{
+			if (leftType.Equals(rightType) && (leftType.IsCSharpPrimitiveIntegerType() || leftType.IsCSharpNativeIntegerType() || leftType.IsKnownType(KnownTypeCode.Boolean)))
+			{
+				if (!leftType.Equals(inst.CSharpResultType))
+				{
+					context.Step("DetectImprovedTypeForForBitOp", inst);
+					inst.CSharpResultType = leftType;
+					context.EndStep(inst);
 				}
 			}
 		}

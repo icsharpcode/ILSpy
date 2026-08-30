@@ -78,6 +78,14 @@ namespace ICSharpCode.Decompiler.IL
 
 		readonly StackType resultType;
 
+		/// <summary>
+		/// Result type of this instruction. If not null, InferType() will return this type.
+		/// Can be used to store an improved C# type for the result of this instruction,
+		/// e.g. `bit.or.i4(bool1, bool2)` can use CSharpResultType = bool after the
+		/// ExpressionTransform has determined that the result is always 0 or 1.
+		/// </summary>
+		public IType? CSharpResultType { get; set; }
+
 		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
 			: this(op, left, right, left.ResultType, right.ResultType, checkForOverflow, sign)
 		{
@@ -123,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL
 			return StackType.Unknown;
 		}
 
-		public StackType UnderlyingResultType { get => resultType; }
+		public StackType UnderlyingResultType => resultType;
 
 		public sealed override StackType ResultType {
 			get => IsLifted ? StackType.O : resultType;
@@ -131,6 +139,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override IType InferType(ICompilation compilation)
 		{
+			if (CSharpResultType != null)
+				return CSharpResultType;
 			IType type = compilation.FindType(UnderlyingResultType);
 			if (IsLifted)
 				return NullableType.Create(compilation, type);
