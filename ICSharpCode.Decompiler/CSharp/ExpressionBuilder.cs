@@ -2627,7 +2627,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				let v = ident.GetILVariable()
 				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
 				select ident).Any();
-
 			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type is null))
 			{
@@ -2643,12 +2642,40 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& (parametersAreUsed || (ParameterTypesAreAccessible(function) && ParametersAreNameable(function))))
 			{
 				// Lambdas cover statement bodies too. Anonymous method syntax remains where
-				// dropping the parameter list is the better rendering: for ref/out/in and
-				// params parameters (expressible in an explicitly typed lambda list, but
-				// conservatively left alone), and for unused parameters that a list would have
-				// to name or type from nothing to keep. The parameter-list-less "delegate {}"
-				// form is compatible with any delegate signature, so it is always legal there.
+				// dropping the parameter list is the better rendering: for ref/out/in
+				// parameters, for params parameters when the C# 12 lambda form is not
+				// available (the modifier is stripped below), and for unused parameters that
+				// a list would have to name or type from nothing to keep. The
+				// parameter-list-less "delegate {}" form is compatible with any delegate
+				// signature, so it is always legal there.
 				isLambda = true;
+			}
+			// 'params' and parameter default values are only legal on the explicitly typed
+			// parameter list of a lambda, and only since C# 12; and a list that is about to be
+			// dropped cannot carry them at all. Everywhere else they are decorative - the
+			// delegate type still declares both, and that is what call sites bind against.
+			if (settings.LambdaOptionalAndParamsParameters
+				&& (isLambda || parametersAreUsed)
+				&& ame.Parameters.All(p => p.Type is not null))
+			{
+				// Only what the anonymous function's own metadata declares is written. A lambda
+				// may state a different default than its target delegate, or none where the
+				// delegate has one, and reflection over the lambda's method reports what the
+				// lambda declared - so taking either from the delegate's Invoke would change
+				// what the recompiled assembly says. The delegate type keeps declaring both,
+				// and call sites bind against it, so nothing is lost by leaving them out here.
+
+				// An anonymous method cannot declare either, in any language version.
+				if (ame.Parameters.Any(p => p.IsParams || p.DefaultExpression is not null))
+					isLambda = true;
+			}
+			else
+			{
+				foreach (var p in ame.Parameters)
+				{
+					p.IsParams = false;
+					p.DefaultExpression?.Detach();
+				}
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the parameters are not used in the method body
 			if (!isLambda && !parametersAreUsed)

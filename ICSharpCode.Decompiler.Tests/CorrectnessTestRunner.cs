@@ -296,6 +296,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task LambdaOptionalAndParamsParameters([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions options)
+		{
+			await RunCS(options: options);
+		}
+
+		[Test]
 		public async Task NullPropagation([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
