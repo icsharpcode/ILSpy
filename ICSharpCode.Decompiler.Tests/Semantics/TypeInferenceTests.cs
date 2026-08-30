@@ -23,6 +23,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Metadata;
@@ -713,6 +714,15 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 				ImmutableArray.CreateRange(elementNames));
 		}
 
+		FunctionPointerType MakeFunctionPointerType(ICompilation comp, IType returnType)
+		{
+			return new FunctionPointerType(
+				(MetadataModule)comp.MainModule,
+				SignatureCallingConvention.Default, ImmutableArray<IType>.Empty,
+				returnType, returnIsRefReadOnly: false,
+				ImmutableArray<IType>.Empty, ImmutableArray<ReferenceKind>.Empty);
+		}
+
 		[Test]
 		public void BestCommonTypeMergesTupleElementNames()
 		{
@@ -727,6 +737,21 @@ namespace ICSharpCode.Decompiler.Tests.Semantics
 					new ResolveResult(MakeTupleType(comp, "a", "c"))
 				}, out success),
 				Is.EqualTo(MakeTupleType(comp, "a", null)));
+			Assert.That(success);
+		}
+
+		[Test]
+		public void BestCommonTypeMergesFunctionPointerTupleElementNames()
+		{
+			var comp = RefAssemblyCompilation.Instance;
+			var inference = new TypeInference(comp);
+
+			Assert.That(
+				inference.GetBestCommonType(new[] {
+					new ResolveResult(MakeFunctionPointerType(comp, MakeTupleType(comp, "a", "b"))),
+					new ResolveResult(MakeFunctionPointerType(comp, MakeTupleType(comp, "a", "c")))
+				}, out bool success),
+				Is.EqualTo(MakeFunctionPointerType(comp, MakeTupleType(comp, "a", null))));
 			Assert.That(success);
 		}
 

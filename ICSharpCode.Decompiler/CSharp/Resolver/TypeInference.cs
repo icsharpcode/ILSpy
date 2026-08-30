@@ -1101,6 +1101,15 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var nullability = MergeNullability(arrA.Nullability, arrB.Nullability, variance);
 				return new ArrayType(arrA.Compilation, mergedElem, arrA.Dimensions, nullability);
 			}
+			if (a is ByReferenceType refA && b is ByReferenceType refB)
+			{
+				var mergedElem = MergeSimilarTypes(
+					refA.ElementType, refB.ElementType,
+					variance.Combine(VarianceModifier.Invariant));
+				if (mergedElem == null)
+					return null;
+				return new ByReferenceType(mergedElem);
+			}
 			if (a is PointerType ptrA && b is PointerType ptrB)
 			{
 				var mergedElem = MergeSimilarTypes(
@@ -1109,6 +1118,47 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				if (mergedElem == null)
 					return null;
 				return new PointerType(mergedElem);
+			}
+			if (a is FunctionPointerType fnPtrA && b is FunctionPointerType fnPtrB
+				&& fnPtrA.CallingConvention == fnPtrB.CallingConvention
+				&& fnPtrA.CustomCallingConventions.SequenceEqual(fnPtrB.CustomCallingConventions)
+				&& fnPtrA.ReturnIsRefReadOnly == fnPtrB.ReturnIsRefReadOnly
+				&& fnPtrA.ParameterTypes.Length == fnPtrB.ParameterTypes.Length
+				&& fnPtrA.ParameterReferenceKinds.SequenceEqual(fnPtrB.ParameterReferenceKinds))
+			{
+				var mergedReturn = MergeSimilarTypes(
+					fnPtrA.ReturnType, fnPtrB.ReturnType,
+					variance.Combine(VarianceModifier.Covariant));
+				if (mergedReturn == null)
+					return null;
+				var mergedParameters = ImmutableArray.CreateBuilder<IType>(fnPtrA.ParameterTypes.Length);
+				for (int i = 0; i < fnPtrA.ParameterTypes.Length; i++)
+				{
+					var mergedParameter = MergeSimilarTypes(
+						fnPtrA.ParameterTypes[i], fnPtrB.ParameterTypes[i],
+						variance.Combine(VarianceModifier.Contravariant));
+					if (mergedParameter == null)
+						return null;
+					mergedParameters.Add(mergedParameter);
+				}
+				return fnPtrA.WithSignature(mergedReturn, mergedParameters.MoveToImmutable());
+			}
+			if (a is ModifiedType modA && b is ModifiedType modB
+				&& modA.Kind == modB.Kind
+				&& modA.Modifier.Equals(modB.Modifier))
+			{
+				var mergedElem = MergeSimilarTypes(modA.ElementType, modB.ElementType, variance);
+				if (mergedElem == null)
+					return null;
+				return new ModifiedType(modA.Modifier, mergedElem, modA.Kind == TypeKind.ModReq);
+			}
+			if (a is UnknownType unknownTypeA && b is UnknownType unknownTypeB
+				&& unknownTypeA.FullTypeName == unknownTypeB.FullTypeName)
+			{
+				if (unknownTypeA.IsReferenceType == unknownTypeB.IsReferenceType)
+					return unknownTypeA;
+				else
+					return unknownTypeA.WithoutReferenceTypeKnowledge();
 			}
 			return null;
 		}
