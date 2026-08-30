@@ -129,6 +129,14 @@ namespace ICSharpCode.Decompiler.IL
 			get => IsLifted ? StackType.O : resultType;
 		}
 
+		public override IType InferType(ICompilation compilation)
+		{
+			IType type = compilation.FindType(UnderlyingResultType);
+			if (IsLifted)
+				return NullableType.Create(compilation, type);
+			return type;
+		}
+
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
@@ -142,14 +150,14 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
-			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+			if (CheckForOverflow || Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem)
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}
 
 		public override InstructionFlags DirectFlags {
 			get {
-				if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
+				if (CheckForOverflow || Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem)
 					return base.DirectFlags | InstructionFlags.MayThrow;
 				return base.DirectFlags;
 			}

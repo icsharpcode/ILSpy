@@ -87,14 +87,9 @@ namespace ICSharpCode.Decompiler.IL
 			return Method.Parameters[argumentIndex - firstParamIndex];
 		}
 
-		public override StackType ResultType {
-			get {
-				if (OpCode == OpCode.NewObj)
-					return Method.DeclaringType.GetStackType();
-				else
-					return Method.ReturnType.GetStackType();
-			}
-		}
+		// Note: NewObj is overriding ResultType+InferType.
+		public override StackType ResultType => Method.ReturnType.GetStackType();
+		public override IType InferType(ICompilation compilation) => Method.ReturnType;
 
 		/// <summary>
 		/// Gets the expected stack type for passing the this pointer in a method call.

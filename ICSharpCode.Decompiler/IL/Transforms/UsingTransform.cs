@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					disposeInvocation = disposeBlock.Instructions[0];
 				}
-				else if (checkInst.MatchNullableRewrap(out disposeInst))
+				else if (checkInst.MatchNullableRewrap(out disposeInst, out _))
 				{
 					disposeInvocation = disposeInst;
 				}

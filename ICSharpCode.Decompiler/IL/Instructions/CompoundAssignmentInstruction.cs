@@ -336,6 +336,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => Method.ReturnType.GetStackType();
+		public override IType InferType(ICompilation compilation) => Method.ReturnType;
 
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{

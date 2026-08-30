@@ -56,13 +56,16 @@ namespace ICSharpCode.Decompiler.IL
 	partial class NullCoalescingInstruction
 	{
 		public readonly NullCoalescingKind Kind;
+		public IType Type { get; }
 		public StackType UnderlyingResultType = StackType.O;
 
-		public NullCoalescingInstruction(NullCoalescingKind kind, ILInstruction valueInst, ILInstruction fallbackInst) : base(OpCode.NullCoalescingInstruction)
+		public NullCoalescingInstruction(IType type, NullCoalescingKind kind, ILInstruction valueInst, ILInstruction fallbackInst) : base(OpCode.NullCoalescingInstruction)
 		{
+			this.Type = type;
 			this.Kind = kind;
 			this.ValueInst = valueInst;
 			this.FallbackInst = fallbackInst;
+			Debug.Assert(type.GetStackType() == fallbackInst.ResultType);
 		}
 
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
@@ -78,6 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 				return fallbackInst.ResultType;
 			}
 		}
+		public override IType InferType(ICompilation compilation) => Type;
 
 		public override InstructionFlags DirectFlags {
 			get {

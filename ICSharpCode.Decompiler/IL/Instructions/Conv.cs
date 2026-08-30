@@ -307,7 +307,25 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType {
-			get => IsLifted ? StackType.O : TargetType.GetStackType();
+			get => IsLifted ? StackType.VT : TargetType.GetStackType();
+		}
+
+		public override IType InferType(ICompilation compilation)
+		{
+			var ktc = TargetType.ToKnownTypeCode();
+			IType type;
+			if (ktc != KnownTypeCode.None)
+			{
+				type = compilation.FindType(ktc);
+			}
+			else
+			{
+				type = compilation.FindType(TargetType.GetStackType());
+			}
+			if (IsLifted)
+				return NullableType.Create(compilation, type);
+			else
+				return type;
 		}
 
 		public StackType UnderlyingResultType {

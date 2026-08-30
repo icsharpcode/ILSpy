@@ -294,7 +294,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				context.Step("call Nullable{T}.GetValueOrDefault(a, b) -> a ?? b", inst);
 				var ldObj = new LdObj(nullableValue, inst.Method.DeclaringType);
-				var replacement = new NullCoalescingInstruction(NullCoalescingKind.NullableWithValueFallback, ldObj, fallback) {
+				var replacement = new NullCoalescingInstruction(
+					NullableType.GetUnderlyingType(inst.Method.DeclaringType),
+					NullCoalescingKind.NullableWithValueFallback, ldObj, fallback) {
 					UnderlyingResultType = fallback.ResultType
 				};
 				inst.ReplaceWith(replacement.WithILRange(inst));
@@ -603,7 +605,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2))
 			{
 				context.Step("conditional operator", inst);
-				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1);
+				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1, v.Type);
 				newIf.AddILRange(inst);
 				var stLoc = new StLoc(v, newIf);
 				inst.ReplaceWith(stLoc);
@@ -621,7 +623,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(container.Kind == ContainerKind.Switch);
 			Debug.Assert(container.ResultType == StackType.Void);
 			var defaultSection = switchInst.GetDefaultSection();
-			StackType resultType = StackType.Void;
 			BlockContainer leaveTarget = null;
 			ILVariable resultVariable = null;
 			foreach (var section in switchInst.Sections)
@@ -650,7 +651,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return;
 						leaveTarget ??= leave.TargetContainer;
 						Debug.Assert(leaveTarget == leave.TargetContainer);
-						resultType = leave.Value.ResultType;
 					}
 					else
 					{
@@ -666,7 +666,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					resultVariable ??= v;
 					if (resultVariable != v)
 						return;
-					resultType = resultVariable.StackType;
 				}
 				else
 				{
@@ -676,8 +675,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Exactly one of resultVariable/leaveTarget must be null
 			if ((resultVariable == null) == (leaveTarget == null))
 				return;
+			IType resultType = resultVariable?.Type ?? leaveTarget?.ExpectedResultType;
 			// C# has no ref-returning switch expression: an arm cannot be `0 => ref x`.
-			if (resultType == StackType.Ref)
+			if (resultType.Kind == TypeKind.ByReference)
 				return;
 			if (switchInst.Value is StringToInt str2int)
 			{
@@ -699,7 +699,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (block.Instructions[0] is Throw t)
 					{
-						t.resultType = resultType;
 						section.Body = t;
 					}
 					else if (block.Instructions[0] is Leave leave)

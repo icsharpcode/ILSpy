@@ -19,11 +19,10 @@
 
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>
-	/// Description of LdLen.
-	/// </summary>
 	public sealed partial class LdLen
 	{
 		readonly StackType resultType;
@@ -37,6 +36,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType {
 			get { return resultType; }
+		}
+
+		public override IType InferType(ICompilation compilation)
+		{
+			return compilation.FindType(resultType);
 		}
 
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)

@@ -235,6 +235,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		public override IType InferType(ICompilation compilation)
+		{
+			return finalInstruction.InferType(compilation);
+		}
+
 		internal override bool CanInlineIntoSlot(int childIndex, ILInstruction expressionBeingMoved)
 		{
 			switch (Kind)

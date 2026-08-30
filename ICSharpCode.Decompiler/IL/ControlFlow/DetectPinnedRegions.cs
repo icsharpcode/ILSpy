@@ -162,10 +162,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			for (int i = 0; i < container.Blocks.Count; i++)
 			{
 				var block = container.Blocks[i];
-				if (IsNullSafeArrayToPointerPattern(block, out ILVariable v, out ILVariable p, out Block targetBlock))
+				if (IsNullSafeArrayToPointerPattern(block, out ILVariable v, out ILVariable p, out Block targetBlock)
+					&& v.Type is ArrayType arrayType)
 				{
 					context.Step("NullSafeArrayToPointerPattern", block);
-					ILInstruction arrayToPointer = new GetPinnableReference(new LdLoc(v), null);
+					ILInstruction arrayToPointer = new GetPinnableReference(new LdLoc(v), arrayType.ElementType, null);
 					if (p.StackType != StackType.Ref)
 					{
 						arrayToPointer = new Conv(arrayToPointer, p.StackType.ToPrimitiveType(), false, Sign.None);
@@ -180,16 +181,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					context.Step("CustomRefPinPattern", block);
 					ILInstruction gpr;
-					if (context.Settings.PatternBasedFixedStatement)
+					if (context.Settings.PatternBasedFixedStatement
+						&& callGPR.Method.ReturnType is ByReferenceType brt)
 					{
-						gpr = new GetPinnableReference(ldlocMem, callGPR.Method);
+						gpr = new GetPinnableReference(ldlocMem, brt.ElementType, callGPR.Method);
 					}
 					else
 					{
 						gpr = new IfInstruction(
 							condition: new Comp(ComparisonKind.Inequality, Sign.None, ldlocMem, new LdNull()),
 							trueInst: callGPR,
-							falseInst: new Conv(new LdcI4(0), PrimitiveType.Ref, checkForOverflow: false, inputSign: Sign.None)
+							falseInst: new Conv(new LdcI4(0), PrimitiveType.Ref, checkForOverflow: false, inputSign: Sign.None),
+							resultType: callGPR.Method.ReturnType
 						);
 					}
 					block.Instructions[block.Instructions.Count - 2] = new StLoc(v, gpr)
@@ -818,7 +821,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newVar.HasGeneratedName = oldVar.HasGeneratedName;
 			oldVar.Function.Variables.Add(newVar);
 			pinnedRegion.Variable = newVar;
-			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, arrayToPointer.Method).WithILRange(arrayToPointer);
+			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, arrayToPointer.Type, arrayToPointer.Method).WithILRange(arrayToPointer);
 			conv.ReplaceWith(new LdLoc(newVar).WithILRange(conv));
 		}
 
@@ -895,7 +898,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					newVar.HasGeneratedName = pinnedRegion.Variable.HasGeneratedName;
 					pinnedRegion.Variable.Function.Variables.Add(newVar);
 					pinnedRegion.Variable = newVar;
-					pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
+					pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, context.TypeSystem.FindType(KnownTypeCode.Char), null);
 				}
 				return;
 			}
@@ -948,7 +951,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				body.Blocks.RemoveRange(1, body.Blocks.Count - 1);
 				body.Blocks[0].Instructions.Add(new Branch(targetBlock));
 			}
-			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, null);
+			pinnedRegion.Init = new GetPinnableReference(pinnedRegion.Init, context.TypeSystem.FindType(KnownTypeCode.Char), null);
 
 			ILVariable otherVar;
 			ILInstruction otherVarInit;
