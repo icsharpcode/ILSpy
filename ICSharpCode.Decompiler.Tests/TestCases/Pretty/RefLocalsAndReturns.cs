@@ -343,6 +343,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			RefReassignment(ref reference.GetHashCode() == 4 ? ref reference : ref s);
 		}
 
+		public static void ConditionalRefAssignment(bool c, ref int a, ref int b)
+		{
+			(c ? ref a : ref b) = 3;
+			(c ? ref a : ref b) += 10;
+			(c ? ref b : ref a)++;
+		}
+
 		public static void Main(string[] args)
 		{
 			DoubleNumber(ref args.Length == 1 ? ref numbers[0] : ref DefaultInt);
