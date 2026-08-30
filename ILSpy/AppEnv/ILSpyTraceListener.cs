@@ -65,6 +65,7 @@ namespace ICSharpCode.ILSpy.AppEnv
 		public override void Fail(string? message)
 			=> Fail(message, null);
 
+		[DebuggerStepThrough] // make the 'Debug' button jump directly to the failing assertion, not here.
 		public override void Fail(string? message, string? detailMessage)
 		{
 			Debug.WriteLine("Assertion failed: " + message);
