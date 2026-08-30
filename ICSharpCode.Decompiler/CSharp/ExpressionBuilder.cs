@@ -331,25 +331,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return eventReference.WithRR(eventResolveResult);
 			}
 
-			if (settings.FieldKeyword
-				&& decompilationContext.CurrentMember is IProperty accessedProperty
-				&& accessedProperty.Parameters.Count == 0
-				// Ask exactly the question PatternStatementTransform asks when it decides whether
-				// the field declaration can go away. A looser test here prints `field` inside a
-				// property whose declaration then keeps explicit accessors and its field: on
-				// recompile the keyword binds to a freshly synthesized backing field while the
-				// original one stays declared and unwritten - silently different storage.
-				&& PatternStatementTransform.TryGetBackingField(accessedProperty, out var backingField)
-				&& field.MemberDefinition.Equals(backingField.MemberDefinition)
-				// Only THIS instance's field is the `field` keyword. IL can load another
-				// instance's backing field inside an accessor (weavers, obfuscators, hand-written
-				// IL); rendering that as `field` would redirect the access, and drop whatever
-				// side effect producing the target had.
-				&& (field.IsStatic || TargetIsThis(targetInstruction)))
+			if (CanUseFieldKeyword())
 			{
-				// Inside its own property's get/set/init accessor (including nested lambdas and
-				// local functions), the backing field is the C# 14 "field" keyword. It must stay
-				// unqualified: "this.field" would refer to a real member named "field".
+				// The keyword must stay unqualified: "this.field" would refer to a real member
+				// named "field".
 				return new IdentifierExpression("field")
 					.WithRR(new MemberResolveResult(null, field));
 			}
@@ -441,6 +426,38 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			return expr;
+
+			// Whether this access may be rendered as the C# 14 "field" keyword: it has to be the
+			// backing field of the property whose accessor is being decompiled, read off this
+			// instance, in a property the declaration can actually disappear from. Nested lambdas
+			// and local functions inside the accessor count as being inside it.
+			bool CanUseFieldKeyword()
+			{
+				if (!settings.FieldKeyword)
+					return false;
+				if (decompilationContext.CurrentMember is not IProperty property || property.Parameters.Count != 0)
+					return false;
+				// With GetterOnlyAutomaticProperties off, a setter-less property keeps its backing
+				// field declared (CSharpDecompiler.MemberIsHidden) and PatternStatementTransform
+				// leaves the property alone, so the keyword would land next to the declaration it
+				// is supposed to replace.
+				if (!property.CanSet && !settings.GetterOnlyAutomaticProperties)
+					return false;
+				// Exactly the question PatternStatementTransform asks before removing the
+				// declaration. A looser test prints "field" in a property that then keeps its
+				// field: on recompile the keyword binds to a freshly synthesized backing field
+				// while the original stays declared and unwritten - silently different storage.
+				if (!PatternStatementTransform.TryGetBackingField(property, out var backingField)
+					|| !field.MemberDefinition.Equals(backingField.MemberDefinition))
+				{
+					return false;
+				}
+				// Only THIS instance's field is the keyword. IL can load another instance's backing
+				// field inside an accessor (weavers, obfuscators, hand-written IL); rendering that
+				// as "field" would redirect the access and drop whatever side effect produced the
+				// target.
+				return field.IsStatic || TargetIsThis(targetInstruction);
+			}
 		}
 
 		// References to an automatic event's backing field are printed as the event. Gated on
