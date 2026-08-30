@@ -12,13 +12,8 @@ using Microsoft.VisualBasic.CompilerServices;
 // A VB anonymous type. Its properties are settable and only those declared 'Key'
 // take part in Equals and GetHashCode, so it cannot be written as a C# anonymous
 // type and is declared here instead.
-#if LEGACY_VBC && OPT
 [DebuggerDisplay("Value={Value}, Name={Name}")]
 [CompilerGenerated]
-#else
-[CompilerGenerated]
-[DebuggerDisplay("Value={Value}, Name={Name}")]
-#endif
 internal sealed class VB_AnonymousType_0<T0, T1>
 {
 #if !OPT && !LEGACY_VBC
