@@ -19,6 +19,8 @@
 
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class BitNot : ILiftableInstruction
@@ -43,9 +45,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(IsLifted == (ResultType == StackType.O));
 			Debug.Assert(IsLifted || ResultType == UnderlyingResultType);
 		}

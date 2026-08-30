@@ -19,6 +19,8 @@
 
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	// Note: The comp instruction also supports three-valued logic via ComparisonLiftingKind.ThreeValuedLogic.
@@ -29,9 +31,9 @@ namespace ICSharpCode.Decompiler.IL
 		bool ILiftableInstruction.IsLifted => true;
 		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
 		}
 	}
@@ -41,9 +43,9 @@ namespace ICSharpCode.Decompiler.IL
 		bool ILiftableInstruction.IsLifted => true;
 		StackType ILiftableInstruction.UnderlyingResultType => StackType.I4;
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(Left.ResultType == StackType.I4 || Left.ResultType == StackType.O);
 		}
 	}

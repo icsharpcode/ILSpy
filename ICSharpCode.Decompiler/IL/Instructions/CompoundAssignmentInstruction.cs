@@ -79,9 +79,9 @@ namespace ICSharpCode.Decompiler.IL
 			CheckValidTarget();
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			CheckValidTarget();
 		}
 

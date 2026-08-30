@@ -68,9 +68,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType => FunctionPointerType.ReturnType.GetStackType();
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(Arguments.Count == FunctionPointerType.ParameterTypes.Length + (IsInstance ? 1 : 0));
 		}
 

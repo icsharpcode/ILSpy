@@ -19,6 +19,8 @@
 
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
@@ -63,9 +65,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.FallbackInst = fallbackInst;
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(valueInst.ResultType == StackType.O); // lhs is reference type or nullable type
 			Debug.Assert(fallbackInst.ResultType == StackType.O || Kind == NullCoalescingKind.NullableWithValueFallback);
 			Debug.Assert(ResultType == UnderlyingResultType || Kind == NullCoalescingKind.Nullable);

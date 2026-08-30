@@ -129,9 +129,9 @@ namespace ICSharpCode.Decompiler.IL
 			get => IsLifted ? StackType.O : resultType;
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			if (!IsLifted)
 			{
 				Debug.Assert(LeftInputType == Left.ResultType);

@@ -21,6 +21,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
@@ -140,9 +141,9 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class TryCatchHandler
 	{
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(Parent is TryCatch);
 			Debug.Assert(filter.ResultType == StackType.I4);
 			Debug.Assert(this.IsDescendantOf(variable.Function!));

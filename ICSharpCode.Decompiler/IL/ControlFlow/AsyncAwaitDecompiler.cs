@@ -143,9 +143,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			InlineBodyOfMoveNext(function);
-			function.CheckInvariant(ILPhase.InAsyncAwait);
+			function.CheckInvariant(ILPhase.InAsyncAwait, context.TypeSystem);
 			CleanUpBodyOfMoveNext(function);
-			function.CheckInvariant(ILPhase.InAsyncAwait);
+			function.CheckInvariant(ILPhase.InAsyncAwait, context.TypeSystem);
 
 			AnalyzeStateMachine(function);
 			DetectAwaitPattern(function);

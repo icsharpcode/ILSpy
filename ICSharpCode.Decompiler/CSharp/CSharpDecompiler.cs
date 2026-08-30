@@ -2389,7 +2389,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return;
 				}
 				function = ilReader.ReadIL((MethodDefinitionHandle)method.MetadataToken, methodBody, cancellationToken: CancellationToken);
-				function.CheckInvariant(ILPhase.Normal);
+				function.CheckInvariant(ILPhase.Normal, typeSystem);
 
 				AddAnnotationsToDeclaration(method, entityDecl, function, parameterOffset);
 

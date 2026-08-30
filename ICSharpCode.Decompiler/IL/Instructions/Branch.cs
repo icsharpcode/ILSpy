@@ -20,6 +20,8 @@
 using System;
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
@@ -108,9 +110,9 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			if (phase > ILPhase.InILReader)
 			{
 				Debug.Assert(targetBlock?.Parent is BlockContainer);

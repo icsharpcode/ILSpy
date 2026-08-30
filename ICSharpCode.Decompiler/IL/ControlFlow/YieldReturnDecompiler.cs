@@ -189,7 +189,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Note: because this only deletes blocks outright, the 'stateChanges' entries remain valid
 			// (though some may point to now-deleted blocks)
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
-			function.CheckInvariant(ILPhase.Normal);
+			function.CheckInvariant(ILPhase.Normal, context.TypeSystem);
 
 			try
 			{

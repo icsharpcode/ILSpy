@@ -543,7 +543,7 @@ namespace ICSharpCode.Decompiler.IL
 				var inst = decodedInstruction.Instruction;
 				if (inst.ResultType == StackType.Unknown && inst.OpCode != OpCode.InvalidBranch && inst.OpCode != OpCode.InvalidExpression)
 					Warn("Unknown result type (might be due to invalid IL or missing references)");
-				inst.CheckInvariant(ILPhase.InILReader);
+				inst.CheckInvariant(ILPhase.InILReader, compilation);
 				int end = reader.Offset;
 				inst.AddILRange(new Interval(start, end));
 				if (!decodedInstruction.PushedOnExpressionStack)

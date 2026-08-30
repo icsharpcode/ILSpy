@@ -19,6 +19,8 @@
 
 using System.Diagnostics;
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
@@ -53,9 +55,9 @@ namespace ICSharpCode.Decompiler.IL
 			return new IfInstruction(lhs, new LdcI4(1), rhs);
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(condition.ResultType == StackType.I4);
 			Debug.Assert(trueInst.ResultType == falseInst.ResultType
 				|| trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable)
