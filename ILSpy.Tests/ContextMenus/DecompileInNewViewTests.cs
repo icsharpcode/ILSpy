@@ -252,20 +252,41 @@ public class DecompileInNewViewTests
 
 		var menu = grid.ContextMenu!;
 
+		Point? ClickPoint(SharpTreeNode node)
+		{
+			var row = grid.GetVisualDescendants()
+				.OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
+				.FirstOrDefault(r => RowNodeEquals(r, node));
+			if (row == null)
+				return null;
+			var clickX = System.Math.Min(row.Bounds.Width, grid.Bounds.Width) / 2;
+			return row.TranslatePoint(new Point(clickX, row.Bounds.Height / 2), window);
+		}
+
 		async Task RightClick(SharpTreeNode node)
 		{
-			var row = Row(node);
-			var clickX = System.Math.Min(row.Bounds.Width, grid.Bounds.Width) / 2;
-			var pt = row.TranslatePoint(new Point(clickX, row.Bounds.Height / 2), window);
-			// A popup's light-dismiss overlay keeps answering hit tests for as long as the frame
-			// that still shows it, and it swallows a press without raising ContextRequested - so
-			// nothing becomes the context target. Hit testing the point is the same question the
-			// context-request handler asks, so waiting for it to reach the row is exactly the
-			// precondition for this click, however many frames the overlay takes to disappear.
-			await Waiters.WaitForAsync(
-				() => window.InputHitTest(pt!.Value) is Visual hit
-					&& ReferenceEquals(hit.FindAncestorOfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>(includeSelf: true), row),
-				description: "the row to answer hit tests at the point about to be right-clicked");
+			// A press only becomes a context request for the row when the hit test at the press
+			// point answers with that row - the same question OnTreeContextRequested asks - and it
+			// takes an unknown number of frames for that to hold: a closed popup's light-dismiss
+			// overlay keeps answering hit tests until the scene is rendered again, and assemblies
+			// still loading in the background reshuffle the rows, which re-realises containers and
+			// shifts them. So the row container and the point are resolved afresh on every poll and
+			// the hit is matched by node, not by container identity.
+			Point? pt = null;
+			Visual? lastHit = null;
+			try
+			{
+				await Waiters.WaitForAsync(
+					() => (pt = ClickPoint(node)) is { } p
+						&& (lastHit = window.InputHitTest(p) as Visual) is { } hit
+						&& hit.FindAncestorOfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>(includeSelf: true) is { } hitRow
+						&& RowNodeEquals(hitRow, node),
+					description: "the row to answer hit tests at the point about to be right-clicked");
+			}
+			catch (System.TimeoutException ex)
+			{
+				throw new System.TimeoutException($"{ex.Message} (point: {pt?.ToString() ?? "row not realised"}, hit: {lastHit?.GetType().Name ?? "nothing"})", ex);
+			}
 			HeadlessWindowExtensions.MouseDown(window, pt!.Value, MouseButton.Right);
 			HeadlessWindowExtensions.MouseUp(window, pt.Value, MouseButton.Right);
 			// The highlight is scoped to the popup - set while the menu is being requested, dropped
