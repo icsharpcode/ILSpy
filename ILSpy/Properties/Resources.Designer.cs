@@ -1362,6 +1362,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to &apos;params&apos; and optional parameters in lambdas.
+        /// </summary>
+        public static string DecompilerSettings_LambdaOptionalAndParamsParameters {
+            get {
+                return ResourceManager.GetString("DecompilerSettings.LambdaOptionalAndParamsParameters", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Use nint/nuint types.
         /// </summary>
         public static string DecompilerSettings_NativeIntegers {
