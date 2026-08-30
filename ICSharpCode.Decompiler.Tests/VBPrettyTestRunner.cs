@@ -193,7 +193,8 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			var executable = await Tester.CompileVB(vbFile, options | CompilerOptions.ReferenceVisualBasic, exeFile).ConfigureAwait(false);
-			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings ?? new DecompilerSettings { FileScopedNamespaces = false }).ConfigureAwait(false);
+			settings ??= new DecompilerSettings { FileScopedNamespaces = false, SortCustomAttributes = true };
+			var decompiled = await Tester.DecompileCSharp(executable.PathToAssembly, settings).ConfigureAwait(false);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(options).ToArray());
 			Tester.RepeatOnIOError(() => File.Delete(decompiled));

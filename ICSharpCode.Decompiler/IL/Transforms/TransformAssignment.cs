@@ -16,12 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -37,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </remarks>
 	public class TransformAssignment : IStatementTransform
 	{
-		StatementTransformContext context;
+		StatementTransformContext context = null!;
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
@@ -109,8 +113,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			ILVariable local;
 			int nextPos;
-			if (block.Instructions[pos + 1] is StLoc localStore)
+			StLoc? localStore;
+			if (block.Instructions[pos + 1] is StLoc localStoreInst)
 			{ // with extra local
+				localStore = localStoreInst;
 				if (localStore.Variable.Kind != VariableKind.Local || !localStore.Value.MatchLdLoc(inst.Variable))
 					return false;
 				// if we're using an extra local, we'll delete "s", so check that that doesn't have any additional uses
@@ -179,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (call.ResultType != StackType.Void || call.Arguments.Count == 0)
 					return false;
-				IProperty property = call.Method.AccessorOwner as IProperty;
+				IProperty? property = call.Method.AccessorOwner as IProperty;
 				if (property == null)
 					return false;
 				if (!call.Method.Equals(property.Setter))
@@ -246,30 +252,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			};
 		}
 
-		static ILInstruction UnwrapSmallIntegerConv(ILInstruction inst, out Conv conv)
+		static ILInstruction UnwrapSmallIntegerConv(ILInstruction inst, [NotNullWhen(true)] out Conv? conv)
 		{
-			conv = inst as Conv;
-			if (conv != null && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType())
+			if (inst is Conv { Kind: ConversionKind.Truncate } convInst && convInst.TargetType.IsSmallIntegerType())
 			{
 				// for compound assignments to small integers, the compiler emits a "conv" instruction
-				return conv.Argument;
+				conv = convInst;
+				return convInst.Argument;
 			}
-			else
-			{
-				return inst;
-			}
+			conv = null;
+			return inst;
 		}
 
-		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv conv, IType targetType, DecompilerSettings settings)
+		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv? conv, IType targetType, ILTransformContext context)
 		{
-			if (!NumericCompoundAssign.IsBinaryCompatibleWithType(binary, targetType, settings))
+			if (!NumericCompoundAssign.IsBinaryCompatibleWithType(binary, targetType, context))
 				return false;
 			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
 				return false; // conv does not match binary operation
 			return true;
 		}
 
-		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall, out Action<ILTransformContext> finalizeMatch)
+		static bool MatchingGetterAndSetterCalls(CallInstruction? getterCall, CallInstruction? setterCall, out Action<ILTransformContext>? finalizeMatch)
 		{
 			finalizeMatch = null;
 			if (getterCall == null || setterCall == null || !IsSameMember(getterCall.Method.AccessorOwner, setterCall.Method.AccessorOwner))
@@ -378,13 +382,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (!IsMatchingCompoundLoad(binary.Left, compoundStore, out var target, out var targetKind, out var finalizeMatch, forbiddenVariable: storeInSetter?.Variable))
 					return false;
-				if (!ValidateCompoundAssign(binary, smallIntConv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, smallIntConv, targetType, context))
 					return false;
 				context.Step($"Compound assignment (binary.numeric)", compoundStore);
 				finalizeMatch?.Invoke(context);
 				newInst = new NumericCompoundAssign(
 					binary, target, targetKind, binary.Right,
-					targetType, CompoundEvalMode.EvaluatesToNewValue);
+					targetType, CompoundEvalMode.EvaluatesToNewValue, context);
 			}
 			else if (setterValue is Call operatorCall && operatorCall.Method.IsOperator)
 			{
@@ -684,8 +688,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// Every IsCompoundStore() call should be followed by an IsMatchingCompoundLoad() call.
 		/// </remarks>
-		static bool IsCompoundStore(ILInstruction inst, out IType storeType,
-			out ILInstruction value, ICompilation compilation)
+		static bool IsCompoundStore(ILInstruction inst, [NotNullWhen(true)] out IType? storeType,
+			 [NotNullWhen(true)] out ILInstruction? value, ICompilation compilation)
 		{
 			value = null;
 			storeType = null;
@@ -773,10 +777,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Instruction preceding the load.
 		/// </param>
 		static bool IsMatchingCompoundLoad(ILInstruction load, ILInstruction store,
-			out ILInstruction target, out CompoundTargetKind targetKind,
-			out Action<ILTransformContext> finalizeMatch,
-			ILVariable forbiddenVariable = null,
-			ILInstruction previousInstruction = null)
+			 [NotNullWhen(true)] out ILInstruction? target, out CompoundTargetKind targetKind,
+			out Action<ILTransformContext>? finalizeMatch,
+			ILVariable? forbiddenVariable = null,
+			ILInstruction? previousInstruction = null)
 		{
 			target = null;
 			targetKind = 0;
@@ -870,7 +874,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var targetType = targetType1;
 			var stloc_outer = store as StLoc;
 			var stloc_inner = value1 as StLoc;
-			LdLoc ldloc;
+			LdLoc? ldloc;
 			var binary = UnwrapSmallIntegerConv(value2, out var conv) as BinaryNumericInstruction;
 			if (binary != null && (binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
 			{
@@ -884,7 +888,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						targetType = SwapSign(targetType, context.TypeSystem);
 				}
 
-				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context))
 					return false;
 				ldloc = binary.Left as LdLoc;
 			}
@@ -917,7 +921,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary != null)
 			{
 				block.Instructions[pos] = new StLoc(stloc_outer.Variable, new NumericCompoundAssign(
-					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToNewValue));
+					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToNewValue, context));
 			}
 			else
 			{
@@ -955,7 +959,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return false;
 			}
-			StLoc stloc;
+			StLoc? stloc;
 			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
 			if (binary != null && (binary.Right.MatchLdcI(1) || binary.Right.MatchLdcF4(1) || binary.Right.MatchLdcF8(1)))
 			{
@@ -969,7 +973,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						targetType = SwapSign(targetType, context.TypeSystem);
 				}
 
-				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context))
 					return false;
 				stloc = binary.Left as StLoc;
 			}
@@ -998,7 +1002,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary != null)
 			{
 				block.Instructions[pos] = new StLoc(stloc.Variable, new NumericCompoundAssign(
-					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToOldValue));
+					binary, target, targetKind, binary.Right, targetType, CompoundEvalMode.EvaluatesToOldValue, context));
 			}
 			else
 			{
@@ -1077,12 +1081,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// Change the sign of the type to skip implicit truncation
 					stObj.Type = targetType = SwapSign(targetType, context.TypeSystem);
 				}
-				if (!ValidateCompoundAssign(binary, conv, targetType, context.Settings))
+				if (!ValidateCompoundAssign(binary, conv, targetType, context))
 					return false;
 				context.Step("TransformPostIncDecOperator (builtin)", inst);
 				finalizeMatch?.Invoke(context);
 				inst.Value = new NumericCompoundAssign(binary, target, targetKind, binary.Right,
-					targetType, CompoundEvalMode.EvaluatesToOldValue);
+					targetType, CompoundEvalMode.EvaluatesToOldValue, context);
 			}
 			else if (value is Call operatorCall && operatorCall.Method.IsOperator && operatorCall.Arguments.Count == 1)
 			{
@@ -1111,7 +1115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static bool IsSameMember(IMember a, IMember b)
+		static bool IsSameMember(IMember? a, IMember? b)
 		{
 			if (a == null || b == null)
 				return false;

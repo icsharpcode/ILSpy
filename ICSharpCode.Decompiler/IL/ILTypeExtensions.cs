@@ -17,6 +17,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -215,17 +216,15 @@ namespace ICSharpCode.Decompiler.IL
 		/// If not returning UnknownType, must return a type that can store
 		/// the result of the instruction without loss of information.
 		/// </remarks>
-		public static IType InferType(this ILInstruction inst, ICompilation? compilation)
+		public static IType InferType(this ILInstruction inst, ICompilation compilation)
 		{
+			Debug.Assert(compilation != null);
 			switch (inst)
 			{
 				case NewObj newObj:
 					return newObj.Method.DeclaringType ?? SpecialType.UnknownType;
 				case NewArr newArr:
-					if (compilation != null)
-						return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);
-					else
-						return SpecialType.UnknownType;
+					return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);
 				case Call call:
 					return call.Method.ReturnType;
 				case CallVirt callVirt:
@@ -258,8 +257,6 @@ namespace ICSharpCode.Decompiler.IL
 					}
 					return new ByReferenceType(ldelema.Type);
 				case Comp comp:
-					if (compilation == null)
-						return SpecialType.UnknownType;
 					switch (comp.LiftingKind)
 					{
 						case ComparisonLiftingKind.None:

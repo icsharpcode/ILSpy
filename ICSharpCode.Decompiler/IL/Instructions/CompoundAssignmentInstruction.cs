@@ -153,10 +153,11 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsLifted { get; }
 
 		public NumericCompoundAssign(BinaryNumericInstruction binary, ILInstruction target,
-			CompoundTargetKind targetKind, ILInstruction value, IType type, CompoundEvalMode evalMode)
+			CompoundTargetKind targetKind, ILInstruction value, IType type, CompoundEvalMode evalMode,
+			Transforms.ILTransformContext context)
 			: base(OpCode.NumericCompoundAssign, evalMode, target, targetKind, value)
 		{
-			Debug.Assert(IsBinaryCompatibleWithType(binary, type, null));
+			Debug.Assert(IsBinaryCompatibleWithType(binary, type, context));
 			this.CheckForOverflow = binary.CheckForOverflow;
 			this.Sign = binary.Sign;
 			this.LeftInputType = binary.LeftInputType;
@@ -166,14 +167,14 @@ namespace ICSharpCode.Decompiler.IL
 			this.IsLifted = binary.IsLifted;
 			this.type = type;
 			this.AddILRange(binary);
-			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
+			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub);
 			Debug.Assert(this.ResultType == (IsLifted ? StackType.O : UnderlyingResultType));
 		}
 
 		/// <summary>
 		/// Gets whether the specific binary instruction is compatible with a compound operation on the specified type.
 		/// </summary>
-		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type, DecompilerSettings? settings)
+		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type, Transforms.ILTransformContext context)
 		{
 			if (binary.IsLifted)
 			{
@@ -220,7 +221,7 @@ namespace ICSharpCode.Decompiler.IL
 				// If the LHS is C# 9 IntPtr (but not nint or C# 11 IntPtr):
 				// "target.intptr *= 2;" is compiler error, but
 				// "target.intptr *= (nint)2;" works
-				if (settings != null && !settings.NativeIntegers)
+				if (!context.Settings.NativeIntegers)
 				{
 					// But if native integers are not available, we cannot use compound assignment.
 					return false;
@@ -235,7 +236,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			if (binary.Sign != Sign.None)
 			{
-				bool signMismatchAllowed = (binary.Sign == Sign.Unsigned && binary.Operator == BinaryNumericOperator.ShiftRight && (settings == null || settings.UnsignedRightShift));
+				bool signMismatchAllowed = binary.Sign == Sign.Unsigned && binary.Operator == BinaryNumericOperator.ShiftRight && context.Settings.UnsignedRightShift;
 				if (type.IsCSharpSmallIntegerType())
 				{
 					// C# will use numeric promotion to int, binary op must be signed
@@ -250,7 +251,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			// Can't transform if the RHS value would be need to be truncated for the LHS type.
-			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, null, binary.IsLifted))
+			if (Transforms.TransformAssignment.IsImplicitTruncation(binary.Right, type, context.TypeSystem, binary.IsLifted))
 				return false;
 			return true;
 		}
