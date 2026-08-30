@@ -42,11 +42,11 @@
 //
 // Reference handling: every assembly is decompiled out of a staging directory that
 // holds symlinks to itself, its original neighbours, and the transitive closure of
-// its references as found in --refs directories, the machine-wide NuGet cache, and
-// the reference-assembly pack matching the assembly's own target framework.
-// UniversalAssemblyResolver searches
-// that directory first (ResolveInternal -> SearchDirectory), so staging fixes both
-// classic failure modes - a sibling package that does not sit next to the assembly,
+// its references as found in --refs directories, the machine-wide NuGet cache, the
+// nugetfuzz package cache, and the reference-assembly pack matching the assembly's
+// own target framework. UniversalAssemblyResolver searches that directory first
+// (ResolveInternal -> SearchDirectory), so staging fixes both classic failure modes
+// - a sibling package that does not sit next to the assembly,
 // and the Windows-only mscorlib lookup that throws "Version not supported" on Linux
 // - while still driving the stable 2-arg CSharpDecompiler ctor. Both sides read the
 // SAME staging directory, so whatever stays unresolved degrades them identically
@@ -357,6 +357,12 @@ sealed class RefIndex
 			?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
 		if (Directory.Exists(nugetRoot))
 			probeRoots.Add(nugetRoot);
+		// nugetfuzz's package cache uses the same <id>/<version>/lib/<tfm> layout and holds the
+		// dependency closure of everything it downloaded. It is the usual source of the corpus,
+		// so its packages are exactly the ones a corpus assembly's own references point at.
+		var fuzzCache = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "nugetfuzz");
+		if (Directory.Exists(fuzzCache))
+			probeRoots.Add(fuzzCache);
 		Description = $"{byName.Count} assemblies indexed"
 			+ (probeRoots.Count > 0 ? $", NuGet cache probe at {string.Join(", ", probeRoots)}" : "");
 	}
@@ -528,12 +534,14 @@ sealed class RefIndex
 		Link(dll, dir);
 		var missing = new List<string>();
 		var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		var queue = new Queue<string>();
+		// The flag records whether a name was reached through a reference assembly, which
+		// decides whether its absence is worth reporting.
+		var queue = new Queue<(string Name, bool ViaRefPack)>();
 		foreach (var name in ReferencesOf(dll))
-			queue.Enqueue(name);
+			queue.Enqueue((name, false));
 		while (queue.Count > 0)
 		{
-			var name = queue.Dequeue();
+			var (name, viaRefPack) = queue.Dequeue();
 			if (!seen.Add(name))
 				continue;
 			var staged = Path.Combine(dir, name + ".dll");
@@ -542,15 +550,21 @@ sealed class RefIndex
 				var found = refs.Find(name, frameworkIndex);
 				if (found == null)
 				{
-					missing.Add(name);
+					// Reference assemblies name GAC-only internals - SMDiagnostics and
+					// System.ServiceModel.Internals are referenced from twenty .NET Framework
+					// ref assemblies and ship in no pack and no package. Nothing can supply
+					// them, so listing them as coverable by --refs is a false lead.
+					if (!viaRefPack)
+						missing.Add(name);
 					continue;
 				}
 				Link(found, dir);
 			}
 			// A staged reference brings its own references along: the type system follows
 			// base types and type-forwards across the whole closure, not just one hop.
+			var transitiveViaRefPack = viaRefPack || frameworkIndex.ContainsKey(name);
 			foreach (var transitive in ReferencesOf(staged))
-				queue.Enqueue(transitive);
+				queue.Enqueue((transitive, transitiveViaRefPack));
 		}
 		missing.Sort(StringComparer.OrdinalIgnoreCase);
 		return (Path.Combine(dir, Path.GetFileName(dll)), missing);
