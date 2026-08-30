@@ -65,22 +65,18 @@ namespace ICSharpCode.Decompiler.IL
 			this.Kind = kind;
 			this.ValueInst = valueInst;
 			this.FallbackInst = fallbackInst;
-			Debug.Assert(type.GetStackType() == fallbackInst.ResultType);
+			Debug.Assert(type.GetStackType() == fallbackInst.ResultType || fallbackInst.HasDirectFlag(InstructionFlags.EndPointUnreachable));
 		}
 
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
 			Debug.Assert(valueInst.ResultType == StackType.O); // lhs is reference type or nullable type
-			Debug.Assert(fallbackInst.ResultType == StackType.O || Kind == NullCoalescingKind.NullableWithValueFallback);
+			Debug.Assert(fallbackInst.ResultType == StackType.O || Kind == NullCoalescingKind.NullableWithValueFallback || fallbackInst.HasDirectFlag(InstructionFlags.EndPointUnreachable));
 			Debug.Assert(ResultType == UnderlyingResultType || Kind == NullCoalescingKind.Nullable);
 		}
 
-		public override StackType ResultType {
-			get {
-				return fallbackInst.ResultType;
-			}
-		}
+		public override StackType ResultType => Type.GetStackType();
 		public override IType InferType(ICompilation compilation) => Type;
 
 		public override InstructionFlags DirectFlags {
