@@ -58,7 +58,32 @@ carried once per distinct finding, not once per hit.
 
 Environment variables: `NUGETFUZZ_VERBOSE` (per-type progress), `NUGETFUZZ_DUMP=<dir>` (write the
 decompiled C#), `NUGETFUZZ_LEDGER=<file>` (append findings as JSONL instead of writing a
-per-run HTML report), `NUGETFUZZ_HTML=<file>` (report path), `NUGET_PACKAGES` (package cache).
+per-run HTML report), `NUGETFUZZ_HTML=<file>` (report path), `NUGET_PACKAGES` (package cache),
+`NUGETFUZZ_FRAMEWORKS` (local .NET Framework trees, see below).
+
+### Local .NET Framework assemblies
+
+Some assemblies exist only in a real .NET Framework installation - the GAC-only internals such as
+`SMDiagnostics` and `System.ServiceModel.Internals` ship in no reference-assembly package and no
+nuget package, so a reference to them resolves nowhere. On **Windows** the framework directories
+under `%WINDIR%\Microsoft.NET` are found automatically and nothing needs configuring. On Linux and
+macOS there is no such installation, so point `NUGETFUZZ_FRAMEWORKS` at a copy of the tree:
+
+```sh
+export NUGETFUZZ_FRAMEWORKS=~/Projects/dotnet-frameworks/installed
+```
+
+The value is one or more roots separated by the platform path separator. A root is either a
+framework tree (containing `Framework/` and `Framework64/`, each with one folder per installed
+version) or a single directory of loose assemblies, used as is. The startup line reports how many
+directories were found.
+
+These are **implementation** assemblies and are ranked *after* the reference-assembly packages,
+and only for classic .NET Framework targets. Letting them reach a netstandard or .NET assembly
+binds it to a .NET Framework BCL, and every type that moved since then decompiles as a failure
+that is really a reference problem. The GAC itself is not searched: it nests each assembly in its
+own version folder, which would mean thousands of search directories for assemblies the framework
+directories already carry.
 
 ### Checking generated PDBs
 

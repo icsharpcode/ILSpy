@@ -113,6 +113,18 @@ var assemblyPackageAlias = new Dictionary<string, string> {
 
 const string NetCoreRefPack = "Microsoft.NETCore.App.Ref";
 
+// Assemblies that exist only in a real .NET Framework installation: the GAC-only internals
+// such as SMDiagnostics and System.ServiceModel.Internals, which ship in no reference-assembly
+// package and no nuget package at all, so a reference to them resolves nowhere. Windows has
+// them in place under %WINDIR%; elsewhere NUGETFUZZ_FRAMEWORKS points at a copy of the same
+// tree (see TestTools/README.md). Used as a last resort, after the ref packs, so a metadata-only
+// reference assembly is still preferred over the implementation assembly.
+var localFrameworkDirs = FindLocalFrameworkDirs();
+if (localFrameworkDirs.Count > 0)
+	Console.WriteLine($"local frameworks: {localFrameworkDirs.Count} directories, first {localFrameworkDirs[0]}");
+else if (!OperatingSystem.IsWindows())
+	Console.WriteLine("local frameworks: none (set NUGETFUZZ_FRAMEWORKS to a .NET Framework tree)");
+
 // WPF/WinForms assemblies of .NET (Core) live in the WindowsDesktop ref pack, not on nuget.
 var windowsDesktopPrefixes = new[] {
 	"PresentationCore", "PresentationFramework", "WindowsBase", "System.Xaml",
@@ -262,7 +274,14 @@ async Task ProcessPackage(string spec)
 	// not shadow the real assemblies from ref packs or dependency packages.
 	string? fallbackDir = null;
 	if (libFw.Framework == FrameworkConstants.FrameworkIdentifiers.Net)
+	{
 		searchDirs.AddRange(await GetNetFxRefDirs(libFw));
+		// Ranked after the reference packages, and only for classic targets: these are
+		// implementation assemblies, and letting them near a netstandard or .NET assembly
+		// would bind it to a .NET Framework BCL and turn every moved type into a decompiler
+		// failure that is really a reference problem.
+		searchDirs.AddRange(localFrameworkDirs);
+	}
 	else
 		fallbackDir = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
@@ -355,6 +374,46 @@ async Task<bool> ShouldPreferNetFxAsset(NuGetFramework libFw)
 		return true;
 	return !versions.Any(v => !v.IsPrerelease && v.Major == libFw.Version.Major && v.Minor == libFw.Version.Minor)
 		&& !versions.Any(v => !v.IsPrerelease && v.Major <= libFw.Version.Major);
+}
+
+// The framework directories of a local .NET Framework installation, newest and 64-bit first.
+// On Windows this is %WINDIR%\Microsoft.NET, which is always present. Everywhere else the
+// same tree has to be supplied by hand, so NUGETFUZZ_FRAMEWORKS takes one or more roots
+// separated by the platform path separator. A root is either a framework tree (holding
+// Framework/ and Framework64/) or a single directory of loose assemblies, which is used as is.
+// The GAC is deliberately not searched: it nests every assembly in its own version folder,
+// which would mean thousands of search directories, and for the classic targets the framework
+// directories already carry the assemblies the reference packages omit.
+List<string> FindLocalFrameworkDirs()
+{
+	var roots = new List<string>();
+	if (OperatingSystem.IsWindows() && Environment.GetEnvironmentVariable("WINDIR") is { Length: > 0 } windir)
+		roots.Add(Path.Combine(windir, "Microsoft.NET"));
+	if (Environment.GetEnvironmentVariable("NUGETFUZZ_FRAMEWORKS") is { Length: > 0 } configured)
+		roots.AddRange(configured.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries));
+
+	var dirs = new List<string>();
+	foreach (var root in roots.Where(Directory.Exists))
+	{
+		bool expanded = false;
+		foreach (var bitness in new[] { "Framework64", "Framework" })
+		{
+			var bitnessDir = Path.Combine(root, bitness);
+			if (!Directory.Exists(bitnessDir))
+				continue;
+			foreach (var version in Directory.GetDirectories(bitnessDir, "v*")
+				.OrderByDescending(d => Path.GetFileName(d), StringComparer.OrdinalIgnoreCase))
+			{
+				if (Directory.GetFiles(version, "*.dll").Length == 0)
+					continue;
+				dirs.Add(version);
+				expanded = true;
+			}
+		}
+		if (!expanded && Directory.GetFiles(root, "*.dll").Length > 0)
+			dirs.Add(root);
+	}
+	return dirs;
 }
 
 // Classic .NET Framework has no reference assemblies on this machine; fetch the
