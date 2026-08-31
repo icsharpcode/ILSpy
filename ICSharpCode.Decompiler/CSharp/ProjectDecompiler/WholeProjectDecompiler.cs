@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				List<ProjectItemInfo> items;
 				try
 				{
-					items = WriteResourceFileInProject(r).ToList();
+					items = WriteResourceFileInProject(module, r).ToList();
 				}
 				catch (Exception ex) when (!(ex is OperationCanceledException))
 				{
@@ -522,7 +522,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 		}
 
-		IEnumerable<ProjectItemInfo> WriteResourceFileInProject(Resource r)
+		IEnumerable<ProjectItemInfo> WriteResourceFileInProject(MetadataFile module, Resource r)
 		{
 			Stream? stream = r.TryOpenStream();
 			if (stream == null)
@@ -549,8 +549,18 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							}
 							Stream entryStream = (Stream)value!;
 							entryStream.Position = 0;
-							individualResources.AddRange(
-								WriteResourceToFile(fileName, name, entryStream));
+							try
+							{
+								individualResources.AddRange(
+									WriteResourceToFile(fileName, name, entryStream));
+							}
+							catch (Exception ex) when (!(ex is OperationCanceledException))
+							{
+								// One entry nobody can decode - a BAML stream carrying characters XML
+								// cannot represent, say - costs that entry, not every other entry
+								// sharing the container with it.
+								RecordError(ex as DecompilerException ?? new DecompilerException(module, $"Error writing resource '{name}'", ex));
+							}
 						}
 						decodedIntoIndividualFiles = true;
 					}

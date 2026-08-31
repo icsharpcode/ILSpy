@@ -94,6 +94,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- A .resources container holding two stream entries, so this assembly itself is the module
+         WholeProjectDecompiler's per-entry resource path can be exercised against. -->
+    <EmbeddedResource Include="Helpers\TwoStreamEntries.resources" LogicalName="TwoStreamEntries.g.resources" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
   </ItemGroup>
