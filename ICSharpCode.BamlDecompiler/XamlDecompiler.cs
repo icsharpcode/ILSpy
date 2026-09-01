@@ -44,6 +44,7 @@ namespace ICSharpCode.BamlDecompiler
 			new AttributeRewritePass(),
 			new ConnectionIdRewritePass(),
 			new DocumentRewritePass(),
+			new EscapeInvalidXmlCharactersRewritePass(),
 		};
 
 		private BamlDecompilerTypeSystem typeSystem;

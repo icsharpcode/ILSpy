@@ -184,7 +184,12 @@ namespace ICSharpCode.BamlDecompiler
 				return null;
 
 			if (!xmlnsMap.TryGetValue(xmlns, out var ns))
-				xmlnsMap[xmlns] = ns = XNamespace.Get(xmlns);
+			{
+				// Every XNamespace is created here, so escaping the URI once keeps the xmlns
+				// declaration and the names that use it in sync. Doing it later is not possible:
+				// the URI is baked into every name built from this namespace.
+				xmlnsMap[xmlns] = ns = XNamespace.Get(XamlUtils.EscapeInvalidXmlCharacters(xmlns));
+			}
 			return ns;
 		}
 

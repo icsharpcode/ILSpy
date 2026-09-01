@@ -17,11 +17,14 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
@@ -122,6 +125,56 @@ namespace ICSharpCode.Decompiler.Tests
 				Assert.That(code, Does.Contain("DecompileProject"), "the members after the failing one are still written");
 				Assert.That(code.Count(c => c == '{'), Is.EqualTo(code.Count(c => c == '}')),
 					"every brace the failed member opened is closed again");
+			}
+		}
+
+		/// <summary>
+		/// A .resources container holds every BAML stream of an assembly. One entry the decompiler
+		/// cannot write - obfuscated BAML that produces characters XML cannot carry, say - must not
+		/// take the entries next to it down: they are unrelated pages of an unrelated type.
+		/// </summary>
+		[Test]
+		public void FailingResourceEntryKeepsTheOtherEntriesOfTheContainer()
+		{
+			string location = typeof(DecompilationErrorRecoveryTests).Assembly.Location;
+			using var stream = new FileStream(location, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(location, stream, streamOptions: PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new EntryFailingProjectDecompiler(
+				new UniversalAssemblyResolver(location, throwOnError: false, module.DetectTargetFrameworkId()));
+
+			var items = decompiler.WriteResources(module).ToList();
+
+			using (Assert.EnterMultipleScope())
+			{
+				Assert.That(items.Select(i => i.FileName), Does.Contain("good.baml"),
+					"the entry after the failing one is still written");
+				Assert.That(decompiler.Errors, Has.Count.EqualTo(1), "the failure is reported to the caller");
+				Assert.That(decompiler.Errors[0].ToString(), Does.Contain("bad.baml"),
+					"and names the entry that failed");
+			}
+		}
+
+		/// <summary>
+		/// Writes every resource entry as a project item, except the one named "bad.baml", which
+		/// throws the way a resource handler does when it cannot produce a file.
+		/// </summary>
+		sealed class EntryFailingProjectDecompiler : WholeProjectDecompiler
+		{
+			public EntryFailingProjectDecompiler(IAssemblyResolver assemblyResolver)
+				: base(assemblyResolver)
+			{
+				// Entries this fixture does not override still get written to disk.
+				TargetDirectory = Directory.CreateTempSubdirectory("ILSpyResourceRecovery").FullName;
+			}
+
+			public IEnumerable<ProjectItemInfo> WriteResources(MetadataFile module)
+				=> WriteResourceFilesInProject(module);
+
+			protected override IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+			{
+				if (resourceName == "bad.baml")
+					throw new NotSupportedException("cannot write bad.baml");
+				return new[] { new ProjectItemInfo("Page", fileName) };
 			}
 		}
 
