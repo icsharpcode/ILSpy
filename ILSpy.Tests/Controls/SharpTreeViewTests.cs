@@ -151,4 +151,125 @@ public class SharpTreeViewTests
 		c.IsSelected.Should().BeTrue();
 		a.IsSelected.Should().BeFalse("moving the selection clears the old node's flag");
 	}
+
+	/// <summary>The number of rows the flattener should expose for a tree rooted in
+	/// <paramref name="root"/> when the root itself is not shown.</summary>
+	static int VisibleRowCount(SharpTreeNode root)
+	{
+		int count = 0;
+		void Walk(SharpTreeNode node)
+		{
+			foreach (SharpTreeNode child in node.Children)
+			{
+				if (child.IsHidden)
+					continue;
+				count++;
+				if (child.IsExpanded)
+					Walk(child);
+			}
+		}
+		Walk(root);
+		return count;
+	}
+
+	static void AssertEveryRowResolves(SharpTreeView tree, SharpTreeNode root, string because)
+	{
+		tree.UpdateLayout();
+		Dispatcher.UIThread.RunJobs();
+		int expected = VisibleRowCount(root);
+		tree.ItemCount.Should().Be(expected, because);
+		for (int i = 0; i < expected; i++)
+			tree.ItemsView[i].Should().NotBeNull($"row {i} must resolve after {because}");
+	}
+
+	/// <summary>
+	/// Collapsing and removing nodes above a scrolled viewport shrinks the flattened list under
+	/// the virtualizing panel's realized index range. The panel must not be left indexing rows
+	/// that no longer exist.
+	/// </summary>
+	[AvaloniaTest]
+	public void Shrinking_The_Tree_Above_A_Scrolled_Viewport_Keeps_Every_Row_Resolvable()
+	{
+		var groups = Enumerable.Range(0, 200)
+			.Select(i => new TestNode($"g{i}", Enumerable.Range(0, 5)
+				.Select(j => new TestNode($"g{i}_{j}")).ToArray()))
+			.ToArray();
+		var root = new TestNode("root", groups);
+		var tree = new SharpTreeView { ShowRoot = false, Root = root };
+		var window = new Window { Content = tree, Width = 300, Height = 400 };
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+
+		foreach (var group in groups)
+			group.IsExpanded = true;
+		AssertEveryRowResolves(tree, root, "expanding every group");
+		tree.GetRealizedContainers().Count().Should()
+			.BeLessThan(tree.ItemCount, "the panel must be virtualizing, or this test proves nothing");
+
+		// Park the realized range far from index 0, with a live selection inside it.
+		tree.SelectedItem = groups[^1].Children[^1];
+		tree.ScrollIntoView(tree.ItemCount - 1);
+		AssertEveryRowResolves(tree, root, "scrolling to the last row");
+
+		for (int i = 0; i < 190; i++)
+			groups[i].IsExpanded = false;
+		AssertEveryRowResolves(tree, root, "collapsing 190 groups above the viewport");
+
+		for (int i = 0; i < 150; i++)
+			root.Children.RemoveAt(0);
+		AssertEveryRowResolves(tree, root, "removing 150 groups above the viewport");
+
+		tree.ScrollIntoView(0);
+		AssertEveryRowResolves(tree, root, "scrolling back to the top");
+	}
+
+	/// <summary>
+	/// A lazily loaded node replaces its placeholder with real children while the tree is
+	/// scrolled: the row count grows and shrinks in the same gesture.
+	/// </summary>
+	[AvaloniaTest]
+	public void Lazy_Loading_Under_A_Scrolled_Viewport_Keeps_Every_Row_Resolvable()
+	{
+		var lazy = Enumerable.Range(0, 100).Select(i => new LazyNode($"l{i}", 7)).ToArray();
+		var root = new TestNode("root");
+		foreach (var node in lazy)
+			root.Children.Add(node);
+		var tree = new SharpTreeView { ShowRoot = false, Root = root };
+		var window = new Window { Content = tree, Width = 300, Height = 400 };
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+
+		AssertEveryRowResolves(tree, root, "the initial collapsed list");
+
+		tree.ScrollIntoView(tree.ItemCount - 1);
+		AssertEveryRowResolves(tree, root, "scrolling to the last row");
+
+		foreach (var node in lazy)
+		{
+			node.IsExpanded = true;
+			AssertEveryRowResolves(tree, root, $"lazily expanding {node.Text}");
+		}
+
+		foreach (var node in lazy)
+			node.ReloadChildren();
+		AssertEveryRowResolves(tree, root, "reloading every lazy subtree in place");
+	}
+
+	sealed class LazyNode : SharpTreeNode
+	{
+		readonly string text;
+		readonly int childCount;
+		public LazyNode(string text, int childCount)
+		{
+			this.text = text;
+			this.childCount = childCount;
+			LazyLoading = true;
+		}
+		public override object Text => text;
+		protected override void LoadChildren()
+		{
+			for (int i = 0; i < childCount; i++)
+				Children.Add(new TestNode($"{text}_{i}"));
+		}
+	}
 }
