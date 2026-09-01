@@ -76,7 +76,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			s.Position = 0;
 			try
 			{
-				foreach (var entry in new ResourcesFile(s).OrderBy(e => e.Key, NaturalStringComparer.Instance))
+				IEnumerable<KeyValuePair<string, object?>> entries = new ResourcesFile(s);
+				// The WPF-generated containers key their entries by a URI-escaped relative path, so
+				// their names are decoded once here - this is the only place the entry names enter
+				// the tree, and every child node derives its display name, its save-as file name
+				// and its search text from them. Any other container is left alone: a percent sign
+				// there is part of the entry name and has to survive unchanged.
+				if (WholeProjectDecompiler.IsWpfGeneratedResourceContainer(Resource.Name))
+					entries = entries.Select(e => new KeyValuePair<string, object?>(Uri.UnescapeDataString(e.Key), e.Value));
+				foreach (var entry in entries.OrderBy(e => e.Key, NaturalStringComparer.Instance))
 					ProcessEntry(entry);
 			}
 			catch (BadImageFormatException) { /* malformed — ignore */ }
