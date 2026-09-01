@@ -539,9 +539,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					var resourcesFile = new ResourcesFile(stream);
 					if (resourcesFile.AllEntriesAreStreams())
 					{
+						bool entryNamesAreEscaped = IsWpfGeneratedResourceContainer(r.Name);
 						foreach (var (name, value) in resourcesFile)
 						{
-							string fileName = SanitizeFileName(name);
+							string fileName = SanitizeFileName(entryNamesAreEscaped ? Uri.UnescapeDataString(name) : name);
 							string? dirName = Path.GetDirectoryName(fileName);
 							if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
 							{
@@ -637,6 +638,24 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				entryStream.CopyTo(fs);
 			}
 			return new[] { new ProjectItemInfo("EmbeddedResource", fileName).With("LogicalName", resourceName) };
+		}
+
+		/// <summary>
+		/// WPF's build tasks put every Page and Resource item into "&lt;AssemblyName&gt;.g.resources"
+		/// (and into "&lt;AssemblyName&gt;.g.&lt;culture&gt;.resources" in satellite assemblies), keyed by
+		/// the item's relative path, lower-cased and URI-escaped: a folder named "My Images" becomes
+		/// "my%20images". Those escapes are not part of the name and have to be decoded before the
+		/// name is turned into a file name, otherwise the percent sign is sanitized away and
+		/// "my%20images/logo.png" lands in a directory called "my-20images".
+		/// </summary>
+		static bool IsWpfGeneratedResourceContainer(string resourceName)
+		{
+			const string extension = ".resources";
+			if (!resourceName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+				return false;
+			string name = resourceName.Substring(0, resourceName.Length - extension.Length);
+			return name.EndsWith(".g", StringComparison.OrdinalIgnoreCase)
+				|| name.Substring(0, Math.Max(0, name.LastIndexOf('.'))).EndsWith(".g", StringComparison.OrdinalIgnoreCase);
 		}
 
 		string GetFileNameForResource(string fullName)

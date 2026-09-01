@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Resources;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
@@ -27,6 +28,9 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
+
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 
 using NUnit.Framework;
 
@@ -134,6 +138,63 @@ public sealed class WholeProjectDecompilerTests
 		}
 	}
 
+	/// <summary>
+	/// WPF's build tasks key every Page and Resource item in "&lt;AssemblyName&gt;.g.resources" by its
+	/// relative path, lower-cased and URI-escaped, so a folder named "My Folder" arrives as
+	/// "my%20folder". The escapes have to be decoded before the name becomes a file name -
+	/// sanitizing them instead produces a directory called "my-20folder" (issue #3315). Only the
+	/// WPF-generated containers are escaped; a percent sign in any other .resources file is part
+	/// of the name.
+	/// </summary>
+	[Test]
+	public void WpfResourceIdsAreUnescapedBeforeSanitizing()
+	{
+		string targetDirectory = Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName());
+		TestFriendlyProjectDecompiler decompiler = new(new UniversalAssemblyResolver(null, false, null));
+		decompiler.CaptureResources = true;
+
+		using var assembly = CreateAssemblyWithResources(
+			("Test.g.resources", "my%20folder/window.baml"),
+			("Test.g.de-DE.resources", "my%20folder/window.baml"),
+			("Test.resources", "100%25off/window.baml"));
+		decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, new StringWriter());
+		AssertDirectoryDoesntExist(targetDirectory);
+
+		Assert.That(decompiler.WrittenResources, Is.EquivalentTo(new[] {
+			Path.Combine("my-folder", "window.baml"),
+			Path.Combine("my-folder", "window.baml"),
+			// not a WPF container, so "%25" is three characters of the name and not an escaped '%'
+			Path.Combine("100-25off", "window.baml"),
+		}));
+	}
+
+	/// <summary>
+	/// Emits an assembly carrying one embedded .resources container per entry in
+	/// <paramref name="resources"/>, each holding a single stream-valued entry. Streams are what
+	/// makes the export write the entries out as individual files.
+	/// </summary>
+	static Stream CreateAssemblyWithResources(params (string ContainerName, string EntryName)[] resources)
+	{
+		var compilation = CSharpCompilation.Create("Test",
+			new[] { CSharpSyntaxTree.ParseText("[assembly: System.Runtime.Versioning.TargetFramework(\".NETCoreApp,Version=v8.0\")] class C { }") },
+			new[] { MetadataReference.CreateFromFile(typeof(object).Assembly.Location) },
+			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+		MemoryStream assembly = new();
+		var result = compilation.Emit(assembly, manifestResources: resources.Select(r => {
+			MemoryStream container = new();
+			using (ResourceWriter writer = new(container))
+			{
+				writer.AddResource(r.EntryName, new MemoryStream(new byte[] { 1, 2, 3 }));
+			}
+			byte[] bytes = container.ToArray();
+			return new ResourceDescription(r.ContainerName, () => new MemoryStream(bytes), isPublic: true);
+		}).ToArray());
+		Assert.That(result.Success, Is.True, () => string.Join(Environment.NewLine, result.Diagnostics));
+		assembly.Position = 0;
+		return assembly;
+	}
+
 	sealed class ThrowingAstTransform(string typeName) : IAstTransform
 	{
 		public const string Failure = "Simulated AST transform failure";
@@ -200,9 +261,13 @@ public sealed class WholeProjectDecompilerTests
 
 		public List<string> WrittenResources { get; } = [];
 
+		// Resources are skipped unless a test asks for them, so the tests that only care about
+		// source files neither touch the disk nor pay for decoding them.
+		public bool CaptureResources { get; set; }
+
 		protected override IEnumerable<ProjectItemInfo> WriteResourceFilesInProject(MetadataFile module)
 		{
-			if (FailResourceWriting)
+			if (FailResourceWriting || CaptureResources)
 				return base.WriteResourceFilesInProject(module);
 			return FailResourceEnumeration
 				? Enumerable.Range(0, 1).Select<int, ProjectItemInfo>(_ => throw new InvalidOperationException(ResourceFailure))
@@ -213,7 +278,7 @@ public sealed class WholeProjectDecompilerTests
 		// "gave up on the rest of them".
 		protected override IEnumerable<ProjectItemInfo> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
-			if (WrittenResources.Count == 0)
+			if (FailResourceWriting && WrittenResources.Count == 0)
 			{
 				WrittenResources.Add(fileName);
 				throw new InvalidOperationException(ResourceFailure);
