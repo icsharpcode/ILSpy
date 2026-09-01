@@ -192,7 +192,7 @@ namespace ICSharpCode.BamlDecompiler
 		public const string KnownNamespace_Presentation = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
 		public const string KnownNamespace_PresentationOptions = "http://schemas.microsoft.com/winfx/2006/xaml/presentation/options";
 
-		public string TryGetXmlNamespace(IModule assembly, string typeNamespace)
+		public static string TryGetXmlNamespace(IModule assembly, string typeNamespace, XElement context = null)
 		{
 			if (assembly == null)
 				return null;
@@ -214,10 +214,33 @@ namespace ICSharpCode.BamlDecompiler
 					possibleXmlNs.Add(xmlNs);
 			}
 
+			// An assembly may map one CLR namespace to several XML namespaces; PresentationFramework
+			// for example maps its namespaces to both the winfx/2006 and the netfx/2007 presentation
+			// namespace. Whenever the document itself declares one of the candidates, that one has to
+			// win: picking a different candidate for an element whose start tag carries the xmlns
+			// declaration redefines the prefix within that tag, which is not valid XML.
+			var declared = possibleXmlNs.Where(ns => IsDeclaredIn(context, ns)).ToList();
+			if (declared.Count > 0)
+				possibleXmlNs = new HashSet<string>(declared);
+
 			if (possibleXmlNs.Contains(KnownNamespace_Presentation))
 				return KnownNamespace_Presentation;
 
 			return possibleXmlNs.FirstOrDefault();
+		}
+
+		static bool IsDeclaredIn(XElement context, string xmlNamespace)
+		{
+			for (var elem = context; elem != null; elem = elem.Parent)
+			{
+				foreach (var attr in elem.Attributes())
+				{
+					if (attr.IsNamespaceDeclaration && attr.Value == xmlNamespace)
+						return true;
+				}
+			}
+
+			return false;
 		}
 
 		public XName GetKnownNamespace(string name, string xmlNamespace, XElement context = null)
