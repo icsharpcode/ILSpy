@@ -902,5 +902,29 @@ namespace LocalFunctions
 #endif
 			return outer;
 		}
+
+		public void Issue3008_DisplayClassForwardedThroughLocalFunction(int start)
+		{
+			Run();
+			void Run()
+			{
+				int captured = start;
+				A();
+				Console.WriteLine(captured);
+				void A()
+				{
+					captured++;
+					if (captured < 10)
+					{
+						B();
+					}
+				}
+				void B()
+				{
+					captured += 2;
+					A();
+				}
+			}
+		}
 	}
 }
