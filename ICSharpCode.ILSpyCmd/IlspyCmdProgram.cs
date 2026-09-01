@@ -189,6 +189,9 @@ Examples:
 		[Option("-d|--dump-package", "Dump package assemblies into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
 		public bool DumpPackageFlag { get; }
 
+		[Option("--bundle-entry <name>", "The assembly inside a single-file bundle (or other package) to work on, as printed when such a file is passed without this option. Ignored for input files that are not packages.", CommandOptionType.SingleValue)]
+		public string BundleEntryName { get; }
+
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
 		public bool NestedDirectories { get; }
 
@@ -315,6 +318,11 @@ Examples:
 					return ExitCodeForDecompilationErrors();
 				}
 			}
+			catch (PackageEntryRequiredException ex)
+			{
+				app.Error.WriteLine(ex.Message);
+				return ex.ExitCode;
+			}
 			catch (Exception ex)
 			{
 				app.Error.WriteLine(ex.ToString());
@@ -417,6 +425,8 @@ Examples:
 						return ProgramExitCodes.EX_USAGE;
 					}
 
+					using var tableModule = LoadInputModule(fileName);
+
 					if (outputDirectory != null)
 					{
 						// per-file writer, disposed here: the shared 'output' is only closed once
@@ -424,10 +434,10 @@ Examples:
 						// but the last when dumping multiple assemblies
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
 						using var tableOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + $".{table}.{(JsonOutputFlag ? "json" : "txt")}");
-						return MetadataTableDumper.DumpTable(fileName, tableOutput, table, JsonOutputFlag);
+						return MetadataTableDumper.DumpTable(tableModule, tableOutput, table, JsonOutputFlag);
 					}
 
-					return MetadataTableDumper.DumpTable(fileName, output, table, JsonOutputFlag);
+					return MetadataTableDumper.DumpTable(tableModule, output, table, JsonOutputFlag);
 				}
 				else
 				{
@@ -538,18 +548,33 @@ Examples:
 			return decompilerSettings;
 		}
 
+		/// <summary>
+		/// Loads the module to work on. A package (single-file bundle, archive) is not an
+		/// assembly: the entry to use must be named with --bundle-entry.
+		/// </summary>
+		PEFile LoadInputModule(string assemblyFileName, bool applyWinRTProjections = true)
+		{
+			return InputFileLoader.Load(assemblyFileName, BundleEntryName, applyWinRTProjections);
+		}
+
 		CSharpDecompiler GetDecompiler(string assemblyFileName) => GetDecompiler(assemblyFileName, out _);
 
 		CSharpDecompiler GetDecompiler(string assemblyFileName, out DecompilerSettings settings)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
 			{
 				resolver.AddSearchDirectory(path);
 			}
 			settings = GetSettings(module);
-			return new CSharpDecompiler(assemblyFileName, resolver, settings) {
+			if (!settings.ApplyWindowsRuntimeProjections)
+			{
+				// Whether the projections are wanted is only known once the settings have been
+				// read, which needs the module: load it again to get the metadata as stored.
+				module = LoadInputModule(assemblyFileName, applyWinRTProjections: false);
+			}
+			return new CSharpDecompiler(module, resolver, settings) {
 				DebugInfoProvider = TryLoadPDB(module)
 			};
 		}
@@ -569,7 +594,7 @@ Examples:
 
 		int ListResources(string assemblyFileName, TextWriter output)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			foreach (var path in ResourceExtensions.EnumerateResourcePaths(module))
 			{
 				output.WriteLine(path);
@@ -579,7 +604,7 @@ Examples:
 
 		int ExtractResource(string assemblyFileName, string resourceName, TextWriter output, string outputDirectory, CommandLineApplication app)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			if (!ResourceExtensions.TryGetResource(module, resourceName, out object value))
 			{
 				app.Error.WriteLine($"Resource '{resourceName}' not found.");
@@ -648,7 +673,7 @@ Examples:
 
 		int ShowIL(string assemblyFileName, TextWriter output)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			output.WriteLine($"// IL code: {module.Name}");
 			var disassembler = new ReflectionDisassembler(new PlainTextOutput(output), CancellationToken.None) {
 				DebugInfo = TryLoadPDB(module),
@@ -762,7 +787,7 @@ Examples:
 
 		ProjectId DecompileAsProject(string assemblyFileName, string projectFileName)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
 			{
@@ -1167,10 +1192,8 @@ Examples:
 
 		int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
 		{
-			var module = new PEFile(assemblyFileName,
-				new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read),
-				PEStreamOptions.PrefetchEntireImage,
-				metadataOptions: MetadataReaderOptions.None);
+			// PDB generation works on the metadata as it is stored, so no WinRT projections here.
+			var module = LoadInputModule(assemblyFileName, applyWinRTProjections: false);
 
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(module))
 			{
