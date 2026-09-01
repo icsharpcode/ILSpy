@@ -1791,7 +1791,14 @@ public class AssemblyTreeTests
 
 		// Act -- run Load Dependencies on the System.Net.Http node.
 		await vm.AssemblyTreeModel.LoadDependenciesAsync(new SharpTreeNode[] { httpNode });
-		await Waiters.WaitForIdleAsync();
+		// Wait for the resolved dependencies to show up in the list, not for the application to go
+		// idle. The command ends with RefreshDecompiledView, so waiting for the dispatcher queue to
+		// drain means waiting for a decompilation whose duration is a property of the machine; on a
+		// loaded agent that outlasts the idle deadline. What this test asserts - and the refresh
+		// regression it guards against - is visible in the assembly list itself.
+		await Waiters.WaitForAsync(
+			() => vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a => !before.Contains(a.FileName)),
+			description: "the resolved dependencies to appear in the assembly list");
 
 		// Assert -- references were resolved AND survive in the list as auto-loaded entries.
 		var added = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies()
