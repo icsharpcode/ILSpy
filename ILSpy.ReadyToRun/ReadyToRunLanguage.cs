@@ -302,7 +302,11 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 
 			public IAssemblyMetadata FindAssembly(MetadataReader metadataReader, AssemblyReferenceHandle assemblyReferenceHandle, string parentFile)
 			{
-				return GetAssemblyMetadata(assemblyResolver.Resolve(new Decompiler.Metadata.AssemblyReference(metadataReader, assemblyReferenceHandle)));
+				// Only the reader is handed in, so the reference is resolved by name: an
+				// AssemblyReference is tied to the file that declares it.
+				var reference = metadataReader.GetAssemblyReference(assemblyReferenceHandle);
+				var name = Decompiler.Metadata.AssemblyNameReference.Parse(reference.GetFullAssemblyName(metadataReader));
+				return GetAssemblyMetadata(assemblyResolver.Resolve(name));
 			}
 
 			public IAssemblyMetadata FindAssembly(string simpleName, string parentFile)
