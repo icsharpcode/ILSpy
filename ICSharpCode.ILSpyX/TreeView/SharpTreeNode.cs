@@ -23,6 +23,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading;
 
 using ICSharpCode.ILSpyX.TreeView.PlatformAbstractions;
 
@@ -365,10 +366,38 @@ namespace ICSharpCode.ILSpyX.TreeView
 		}
 
 		/// <summary>
-		/// Ensures the children were initialized (loads children if lazy loading is enabled)
+		/// Ensures the children were initialized (loads children if lazy loading is enabled).
 		/// </summary>
+		/// <remarks>
+		/// Realizing children mutates a tree that a UI may be indexing concurrently, so on a tree
+		/// that has an owner with a way onto it (see <see cref="SetOwner(Thread, Action{Action})"/>)
+		/// this marshals itself there rather than relying on every caller to remember: the app
+		/// realizes children from background decompile tasks in several places, and a caller that
+		/// forgets corrupts the flat list.
+		///
+		/// A call that is already on the owning thread runs inline, which is what keeps a blocking
+		/// invoke from deadlocking on itself and keeps nesting cheap: once the outermost call has
+		/// marshalled, everything <see cref="LoadChildren"/> triggers below it is already on the
+		/// owner and hops no further.
+		///
+		/// A tree with no owner is not marshalled: building a subtree on a worker and publishing it
+		/// on the UI thread is a legitimate pattern, and nothing is displaying that subtree yet.
+		/// </remarks>
 		public void EnsureLazyChildren()
 		{
+			if (!LazyLoading)
+				return;
+			SharpTreeNode? ownerNode = OwnerNode;
+			if (ownerNode?.ownerInvoke is { } invoke && ownerNode.owner != Thread.CurrentThread)
+				invoke(LoadLazyChildren);
+			else
+				LoadLazyChildren();
+		}
+
+		void LoadLazyChildren()
+		{
+			// Re-checked after marshalling: the owning thread may have realized the children while
+			// the calling thread was queued behind it.
 			if (LazyLoading)
 			{
 				LazyLoading = false;

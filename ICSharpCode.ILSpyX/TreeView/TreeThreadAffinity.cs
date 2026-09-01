@@ -28,24 +28,29 @@ using System.Threading;
 
 namespace ICSharpCode.ILSpyX.TreeView
 {
-	// Thread-affinity checking for the tree model.
+	// Thread affinity of the tree model.
 	//
 	// The model is not thread-safe. TreeFlattener.Count and SharpTreeNode.GetNodeByVisibleIndex
 	// both read the augmented 'totalListLength' fields, so a structural mutation racing a read can
 	// hand out an index for a node that no longer exists; issue #3290 is a NullReferenceException
-	// inside GetNodeByVisibleIndex that is unreachable single-threaded. The convention is that a
-	// tree displayed by a UI is mutated only from that UI's thread, but ICSharpCode.ILSpyX is
+	// inside GetNodeByVisibleIndex that is unreachable single-threaded. The rule is that a tree
+	// displayed by a UI is mutated only from that UI's thread, but ICSharpCode.ILSpyX is
 	// host-agnostic and must not name a dispatcher, so ownership is stated explicitly instead:
-	// a host calls SetOwner() on the root of a tree it takes over, and every later structural
-	// mutation of that tree is verified against the owning thread.
+	// a host calls SetOwner() on the root of a tree it takes over, passing the thread and the way
+	// to get onto it.
+	//
+	// Ownership carries the rule two ways. EnsureLazyChildren uses the invoke delegate to move
+	// itself onto the owning thread, so a caller cannot get it wrong; and, in debug builds, every
+	// other structural mutation is verified against the owning thread so a call site that bypasses
+	// the rule is named instead of silently corrupting the flat list.
 	partial class SharpTreeNode
 	{
-#if DEBUG
 		Thread? owner;
+		Action<Action>? ownerInvoke;
 
 		/// <summary>
-		/// The nearest explicit owner on the model-parent chain, or null when nothing on the chain
-		/// has been claimed.
+		/// The nearest node on the model-parent chain that carries an explicit owner, or null when
+		/// nothing on the chain has been claimed.
 		/// </summary>
 		/// <remarks>
 		/// Resolving the owner by walking up instead of stamping every node gives the propagation
@@ -59,48 +64,47 @@ namespace ICSharpCode.ILSpyX.TreeView
 		/// parent - and that attachment is itself a mutation of the owned tree, so it is checked.</item>
 		/// </list>
 		/// </remarks>
-		Thread? EffectiveOwner {
+		SharpTreeNode? OwnerNode {
 			get {
 				for (SharpTreeNode? node = this; node != null; node = node.modelParent)
 				{
 					if (node.owner != null)
-						return node.owner;
+						return node;
 				}
 				return null;
 			}
 		}
-#endif
+
+		Thread? EffectiveOwner => OwnerNode?.owner;
 
 		/// <summary>
 		/// Declares <paramref name="owner"/> as the only thread allowed to structurally mutate this
-		/// node and its subtree. Debug-only: the call is compiled away entirely in release builds.
+		/// node and its subtree.
 		/// </summary>
+		/// <param name="invoke">
+		/// Runs an action on <paramref name="owner"/> and blocks until it has completed - the host's
+		/// dispatcher invoke. Supplying it lets <see cref="EnsureLazyChildren"/> marshal itself
+		/// instead of every caller having to know it must. Null leaves the tree unmarshalled, which
+		/// only makes sense for a tree no UI is displaying.
+		/// </param>
 		/// <remarks>
 		/// Re-owning is allowed - handing a tree over is exactly what this exists for - but the
 		/// handoff must be performed by the thread that currently owns the tree, because a
-		/// background thread taking ownership of a live tree away from the UI is the very race this
-		/// check hunts for.
+		/// background thread taking ownership of a live tree away from the UI is the very race the
+		/// affinity check hunts for.
 		/// </remarks>
-		[Conditional("DEBUG")]
-		public void SetOwner(Thread owner)
+		public void SetOwner(Thread owner, Action<Action>? invoke = null)
 		{
-#if DEBUG
 			VerifyAccess(nameof(SetOwner));
 			this.owner = owner;
-#endif
+			this.ownerInvoke = invoke;
 		}
 
 		/// <summary>
 		/// Declares the calling thread as the only thread allowed to structurally mutate this node
-		/// and its subtree. Debug-only.
+		/// and its subtree, without a way to marshal onto it.
 		/// </summary>
-		[Conditional("DEBUG")]
-		public void SetOwner()
-		{
-#if DEBUG
-			SetOwner(Thread.CurrentThread);
-#endif
-		}
+		public void SetOwner() => SetOwner(Thread.CurrentThread);
 
 		/// <summary>
 		/// Reports a violation if the calling thread is not the effective owner of this node.
@@ -137,6 +141,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 				{
 					TreeThreadAffinity.Report(node, "attach of a subtree owned by another thread", node.owner);
 					node.owner = null;
+					node.ownerInvoke = null;
 				}
 			}
 #endif
@@ -164,9 +169,11 @@ namespace ICSharpCode.ILSpyX.TreeView
 		static readonly object logLock = new();
 
 		/// <summary>
-		/// When true, a violation throws instead of being recorded. Tests use this to observe a
-		/// violation deterministically; an exploratory session over a large corpus leaves it off so
-		/// that one bad call site does not end the run and hide all the others.
+		/// When true, a violation throws after being recorded, so a debugger stops at the offending
+		/// frame. It is not what makes a violation observable - <see cref="Violations"/> is recorded
+		/// either way, because the throw may well be swallowed by a caller that catches Exception.
+		/// An exploratory session over a large corpus leaves this off so one bad call site does not
+		/// interfere with the rest of the run.
 		/// </summary>
 		public static bool FailFast { get; set; } = Environment.GetEnvironmentVariable(FailFastVariable) == "1";
 
@@ -196,8 +203,6 @@ namespace ICSharpCode.ILSpyX.TreeView
 			// Skip Report and the [Conditional] wrapper that called it, so frame 0 is the mutation.
 			string stackTrace = new StackTrace(2, fNeedFileInfo: true).ToString();
 			var violation = new TreeThreadAffinityViolation(Describe(node), operation, expected, Thread.CurrentThread, stackTrace);
-			if (FailFast)
-				throw new InvalidOperationException(violation.ToString());
 			Debug.WriteLine(violation.ToString());
 			// Deduplicate by call site: a mutation inside a loop must not produce one entry per
 			// iteration. The first occurrence is written through immediately so a long-running
@@ -205,6 +210,13 @@ namespace ICSharpCode.ILSpyX.TreeView
 			var recorded = violations.GetOrAdd(stackTrace, violation);
 			if (recorded.Hit() == 1)
 				AppendToLog(recorded.ToString());
+			// Recorded first, thrown second. The throw is only a convenience for stopping a
+			// debugger at the offending frame; it is not the record. Tree mutation happens inside
+			// callers that catch Exception (the background decompile writes the failure into the
+			// text view), so a throw alone would be swallowed and a fail-fast run would come back
+			// green while violating. Violations is what a test or a session asserts on.
+			if (FailFast)
+				throw new InvalidOperationException(violation.ToString());
 		}
 
 		static string Describe(SharpTreeNode node)

@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 		byte height = 1;
 
 		/// <summary>Length in the flat list, including children (children within the flat list). -1 = invalidated</summary>
-		int totalListLength = -1;
+		internal int totalListLength = -1;
 
 		int Balance {
 			get { return Height(right) - Height(left); }
@@ -106,8 +106,16 @@ namespace ICSharpCode.ILSpyX.TreeView
 			root.GetTotalListLength(); // ensure all list lengths are calculated
 			Debug.Assert(index >= 0);
 			Debug.Assert(index < root.totalListLength);
+			int originalIndex = index;
 			SharpTreeNode node = root;
-			while (true)
+			// Falling out of the descent means the augmented lengths describe more visible nodes
+			// than the tree actually holds, which is what a structural mutation racing this walk
+			// leaves behind (see TreeThreadAffinity). This is a mitigation, not a fix: it turns a
+			// NullReferenceException with no context into a report of the state that produced it,
+			// and it cannot make the read correct. Note it does not detect a stale index either -
+			// collapsing a node restructures the flat list without changing totalListLength, so the
+			// assert above stays satisfied while the structure moves underneath.
+			while (node != null)
 			{
 				if (node.left != null && index < node.left.totalListLength)
 				{
@@ -128,6 +136,9 @@ namespace ICSharpCode.ILSpyX.TreeView
 					node = node.right;
 				}
 			}
+			throw new InvalidOperationException(
+				$"The flat list tree ran out of nodes while looking up visible index {originalIndex}; "
+				+ $"totalListLength is {root.totalListLength}. The tree was restructured while it was being read.");
 		}
 
 		internal static int GetVisibleIndexForNode(SharpTreeNode node)

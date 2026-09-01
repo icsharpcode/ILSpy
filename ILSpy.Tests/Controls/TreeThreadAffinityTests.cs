@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
+using System.Runtime.ExceptionServices;
 using System.Threading;
 
 using AwesomeAssertions;
@@ -36,6 +38,96 @@ public class TreeThreadAffinityTests
 		public TestNode(string text) => this.text = text;
 		public override object Text => text;
 		public override string ToString() => text;
+	}
+
+	/// <summary>
+	/// A lazy node that records where and how often its children were built, plus an optional hook
+	/// so a test can drive whatever LoadChildren would do in the app.
+	/// </summary>
+	sealed class LazyTestNode : SharpTreeNode
+	{
+		readonly string text;
+
+		public LazyTestNode(string text)
+		{
+			this.text = text;
+			LazyLoading = true;
+		}
+
+		public Action<LazyTestNode>? OnLoadChildren { get; set; }
+		public Thread? LoadChildrenThread { get; private set; }
+		public int LoadChildrenCount { get; private set; }
+
+		protected override void LoadChildren()
+		{
+			LoadChildrenThread = Thread.CurrentThread;
+			LoadChildrenCount++;
+			OnLoadChildren?.Invoke(this);
+		}
+
+		public override object Text => text;
+		public override string ToString() => text;
+	}
+
+	/// <summary>
+	/// A stand-in for the UI thread: a thread with a work queue, whose <see cref="Invoke"/> has the
+	/// same contract as the host dispatcher's - run the action there, block until it is done, and
+	/// run it inline when the caller already is that thread.
+	/// </summary>
+	sealed class OwnerThread : IDisposable
+	{
+		readonly BlockingCollection<Action> queue = new();
+		readonly Thread thread;
+		int invokeCount;
+
+		public OwnerThread()
+		{
+			thread = new Thread(() => {
+				foreach (var work in queue.GetConsumingEnumerable())
+					work();
+			}) { Name = "affinity-test-owner", IsBackground = true };
+			thread.Start();
+		}
+
+		public Thread Thread => thread;
+
+		/// <summary>Number of calls that actually had to be marshalled.</summary>
+		public int InvokeCount => invokeCount;
+
+		public void Invoke(Action action)
+		{
+			if (Thread.CurrentThread == thread)
+			{
+				action();
+				return;
+			}
+			Interlocked.Increment(ref invokeCount);
+			ExceptionDispatchInfo? failure = null;
+			using var done = new ManualResetEventSlim();
+			queue.Add(() => {
+				try
+				{
+					action();
+				}
+				catch (Exception ex)
+				{
+					failure = ExceptionDispatchInfo.Capture(ex);
+				}
+				finally
+				{
+					done.Set();
+				}
+			});
+			done.Wait();
+			failure?.Throw();
+		}
+
+		public void Dispose()
+		{
+			queue.CompleteAdding();
+			thread.Join();
+			queue.Dispose();
+		}
 	}
 
 	bool oldFailFast;
@@ -83,7 +175,114 @@ public class TreeThreadAffinityTests
 		return error;
 	}
 
+	[Test]
+	public void EnsureLazyChildrenFromNonOwningThread_LoadsOnTheOwningThread()
+	{
+		using var owner = new OwnerThread();
+		var root = new LazyTestNode("root");
+		root.SetOwner(owner.Thread, owner.Invoke);
+
+		root.EnsureLazyChildren();
+
+		root.LoadChildrenThread.Should().BeSameAs(owner.Thread);
+		root.LoadChildrenCount.Should().Be(1);
+		owner.InvokeCount.Should().Be(1);
+	}
+
+	[Test]
+	public void EnsureLazyChildrenOnUnownedTree_LoadsOnTheCallingThread()
+	{
+		var root = new LazyTestNode("root");
+
+		var error = RunOnOtherThread(root.EnsureLazyChildren);
+
+		error.Should().BeNull();
+		root.LoadChildrenThread.Should().NotBeNull();
+		root.LoadChildrenThread!.Name.Should().Be("affinity-test-worker");
+		root.LoadChildrenCount.Should().Be(1);
+	}
+
+	[Test]
+	public void EnsureLazyChildrenOnTheOwningThread_DoesNotMarshalAndLoadsOnce()
+	{
+		using var owner = new OwnerThread();
+		var root = new LazyTestNode("root");
+		root.SetOwner(owner.Thread, owner.Invoke);
+
+		owner.Invoke(() => {
+			root.EnsureLazyChildren();
+			root.EnsureLazyChildren();
+		});
+
+		// One marshalled call: the test thread getting onto the owner. Nothing inside it needed a
+		// second hop, which is what keeps a blocking invoke from deadlocking on itself.
+		owner.InvokeCount.Should().Be(1);
+		root.LoadChildrenCount.Should().Be(1);
+		root.LoadChildrenThread.Should().BeSameAs(owner.Thread);
+	}
+
+	[Test]
+	public void NestedEnsureLazyChildrenFromNonOwningThread_MarshalsOnlyOnce()
+	{
+		// The shape AssemblyReferenceReferencedTypesTreeNode has: loading a node's children
+		// realises a child node's children from inside LoadChildren.
+		using var owner = new OwnerThread();
+		var root = new LazyTestNode("root");
+		var child = new LazyTestNode("child");
+		root.OnLoadChildren = node => {
+			node.Children.Add(child);
+			child.EnsureLazyChildren();
+		};
+		root.SetOwner(owner.Thread, owner.Invoke);
+
+		root.EnsureLazyChildren();
+
+		owner.InvokeCount.Should().Be(1);
+		root.LoadChildrenThread.Should().BeSameAs(owner.Thread);
+		child.LoadChildrenThread.Should().BeSameAs(owner.Thread);
+		child.LoadChildrenCount.Should().Be(1);
+	}
+
 #if DEBUG
+
+	[Test]
+	public void EnsureLazyChildrenFromNonOwningThread_ProducesNoViolation()
+	{
+		TreeThreadAffinity.FailFast = true;
+		using var owner = new OwnerThread();
+		var root = new LazyTestNode("root");
+		root.OnLoadChildren = node => node.Children.Add(new TestNode("child"));
+		root.SetOwner(owner.Thread, owner.Invoke);
+
+		root.EnsureLazyChildren();
+
+		TreeThreadAffinity.Violations.Should().BeEmpty();
+	}
+
+	[Test]
+	public void FailFastViolation_IsRecordedEvenWhenTheThrowIsSwallowed()
+	{
+		// The app's background decompile wraps every node in catch (Exception), so a fail-fast
+		// throw never reaches the test host. The collector has to stay authoritative no matter who
+		// catches, or a fail-fast suite run comes back green and means nothing.
+		TreeThreadAffinity.FailFast = true;
+		var root = new TestNode("root");
+		root.SetOwner();
+
+		var error = RunOnOtherThread(() => {
+			try
+			{
+				root.Children.Add(new TestNode("child"));
+			}
+			catch (Exception)
+			{
+			}
+		});
+
+		error.Should().BeNull();
+		TreeThreadAffinity.Violations.Should().ContainSingle()
+			.Which.Operation.Should().Contain("Children.Add");
+	}
 
 	[Test]
 	public void ChildrenAddFromNonOwningThread_IsReported()
