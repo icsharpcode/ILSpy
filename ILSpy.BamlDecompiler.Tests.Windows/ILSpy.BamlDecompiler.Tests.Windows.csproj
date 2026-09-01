@@ -66,6 +66,9 @@
     </Compile>
     <Compile Include="Cases\CustomControl.cs" />
     <Compile Include="Cases\Issue1547.xaml.cs" />
+    <Compile Include="Cases\Issue1688.xaml.cs">
+      <DependentUpon>Issue1688.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Cases\Issue2097.xaml.cs" />
     <Compile Include="Cases\Issue2116.xaml.cs" />
     <Compile Include="Cases\Issue3318.xaml.cs" />
@@ -100,6 +103,9 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Cases\Issue1547.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Cases\Issue1688.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Cases\Issue2052.xaml">

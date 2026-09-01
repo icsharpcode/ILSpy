@@ -43,7 +43,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="InvalidXmlCharacterTests.cs" />
     <Compile Include="MissingReferencesTests.cs" />
+    <Compile Include="XmlNamespaceResolutionTests.cs" />
   </ItemGroup>
 
 </Project>
