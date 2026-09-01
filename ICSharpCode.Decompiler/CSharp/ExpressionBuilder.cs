@@ -5358,7 +5358,19 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithILInstruction(matchInstruction);
 					}
 				case Comp comp:
-					var constantValue = Translate(comp.Right, leftHandType);
+					TranslatedExpression constantValue;
+					if (comp.Right is DefaultValue dv)
+					{
+						// Translate(comp.Right) would create `(int?)null` but we don't want a cast here.
+						Debug.Assert(dv.ResultType == StackType.Obj || dv.Type.IsKnownType(KnownTypeCode.NullableOfT));
+						constantValue = new NullReferenceExpression()
+							.WithoutILInstruction()
+							.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
+					}
+					else
+					{
+						constantValue = Translate(comp.Right, leftHandType);
+					}
 					switch (comp.Kind)
 					{
 						case ComparisonKind.Equality:

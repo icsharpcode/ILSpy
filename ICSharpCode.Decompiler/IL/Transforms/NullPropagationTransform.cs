@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// => testedVar?.AccessChain();
 			IntroduceUnwrap(testedVar, varLoad, mode);
 			var returnType = bodyInst.InferType(context.TypeSystem);
-			if (returnType.Kind != TypeKind.Void)
+			if (returnType.Kind != TypeKind.Void && NullableType.IsNonNullableValueType(returnType))
 			{
 				returnType = NullableType.Create(context.TypeSystem, returnType);
 			}

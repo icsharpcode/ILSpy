@@ -123,12 +123,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
 			if (firstArgument == 1)
 			{
-				if (!(Arguments[0].ResultType == ExpectedTypeForThisPointer(Method.DeclaringType, ConstrainedTo)))
+				var arg = Arguments[0];
+				var expectedType = ExpectedTypeForThisPointer(Method.DeclaringType, ConstrainedTo);
+				if (arg.ResultType != expectedType)
 					Debug.Fail($"Stack type mismatch in 'this' argument in call to {Method.Name}()");
 			}
 			for (int i = 0; i < Method.Parameters.Count; ++i)
 			{
-				if (!(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType()))
+				var arg = Arguments[firstArgument + i];
+				var param = Method.Parameters[i];
+				if (arg.ResultType != param.Type.GetStackType())
 					Debug.Fail($"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
 		}

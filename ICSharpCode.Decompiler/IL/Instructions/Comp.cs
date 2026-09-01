@@ -188,6 +188,7 @@ namespace ICSharpCode.Decompiler.IL
 				// because they might be value types, but they can also be compared with null
 				// because they might be reference types. (the original IL uses `box` for this,
 				// but we drop the box in the ILAst to avoid a special case in PatternMatchingTransform etc.)
+				// TODO: these are unclean semantics; we should probably drop this special case and adjust the other transforms.
 				Debug.Assert(Left.ResultType == InputType || Left is LdNull);
 				Debug.Assert(Right.ResultType == InputType || Right is LdNull);
 			}
