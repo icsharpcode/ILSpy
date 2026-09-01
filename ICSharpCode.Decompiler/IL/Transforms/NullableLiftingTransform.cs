@@ -764,7 +764,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift))
 			{
 				isNullCoalescingWithNonNullableFallback = true;
-				utype = context.TypeSystem.FindType(trueInst.ResultType);
+				utype = trueInst.InferType(context.TypeSystem);
 				exprToLift = trueInst;
 				if (nullableVars.Count == 1 && exprToLift.MatchLdLoc(nullableVars[0]))
 				{

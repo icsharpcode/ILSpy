@@ -4220,13 +4220,12 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 							else
 							{
-								// fall back to 'ref byte' if we can't determine a referenced type otherwise
-								targetType = new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
+								targetType = inst.InferType(compilation);
 							}
 						}
 						else
 						{
-							targetType = FindType(inst.ResultType, context.TypeHint.GetSign());
+							targetType = inst.InferType(compilation);
 						}
 					}
 				}
@@ -4390,10 +4389,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 			{
 				resultType = inst.InferType(compilation);
-				if (resultType.Kind == TypeKind.Unknown || resultType.GetStackType() != inst.ResultType)
-				{
-					resultType = compilation.FindType(inst.ResultType);
-				}
 			}
 
 			var expressionsForTypeInference = new List<TranslatedExpression>();
