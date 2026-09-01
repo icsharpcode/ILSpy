@@ -56,6 +56,18 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			"System.Xaml",
 		};
 
+		/// <summary>
+		/// Item types that must not be listed as project items: source files are covered by the
+		/// SDK's default Compile glob, the icon and the manifest are written as properties, and
+		/// embedded resources have their own remove/include phase.
+		/// </summary>
+		static readonly HashSet<string> ItemTypesWrittenElsewhere = new HashSet<string> {
+			"ApplicationIcon",
+			"ApplicationManifest",
+			"Compile",
+			"EmbeddedResource",
+		};
+
 		enum ProjectType { Default, WinForms, Wpf, Web }
 
 		/// <summary>
@@ -286,6 +298,38 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						xml.WriteAttributeString(key, value);
 				}
 				xml.WriteEndElement();
+			}
+
+			// Every other item type the export produced, "Page" for XAML recovered from BAML above
+			// all. Files the project does not list are files the exported project cannot build.
+			foreach (var group in files.Where(t => !ItemTypesWrittenElsewhere.Contains(t.ItemType))
+				.GroupBy(t => t.ItemType).OrderBy(g => g.Key, StringComparer.Ordinal))
+			{
+				var items = group.OrderBy(t => t.FileName, StringComparer.OrdinalIgnoreCase).ToList();
+
+				// remove phase: an SDK glob may already have claimed these files - a WPF project
+				// (UseWPF) globs **/*.xaml into Page - and the same file in an item type twice is
+				// a build error. Removing first, in the same item group, keeps the explicit item
+				// with its metadata and drops the globbed one.
+				foreach (var item in items)
+				{
+					xml.WriteStartElement(group.Key);
+					xml.WriteAttributeString("Remove", item.FileName);
+					xml.WriteEndElement();
+				}
+
+				// include phase
+				foreach (var item in items)
+				{
+					xml.WriteStartElement(group.Key);
+					xml.WriteAttributeString("Include", item.FileName);
+					if (item.AdditionalProperties != null)
+					{
+						foreach (var (key, value) in item.AdditionalProperties)
+							xml.WriteAttributeString(key, value);
+					}
+					xml.WriteEndElement();
+				}
 			}
 		}
 
