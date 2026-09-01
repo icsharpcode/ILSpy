@@ -161,6 +161,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 			set {
 				if (isHidden != value)
 				{
+					VerifyAccess(nameof(IsHidden));
 					isHidden = value;
 					if (modelParent != null)
 						UpdateIsVisible(modelParent.isVisible && modelParent.isExpanded, true);
@@ -287,6 +288,7 @@ namespace ICSharpCode.ILSpyX.TreeView
 			set {
 				if (isExpanded != value)
 				{
+					VerifyAccess(nameof(IsExpanded));
 					isExpanded = value;
 					if (isExpanded)
 					{

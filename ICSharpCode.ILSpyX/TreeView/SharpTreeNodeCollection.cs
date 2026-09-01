@@ -45,6 +45,11 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		void OnCollectionChanged(NotifyCollectionChangedEventArgs e)
 		{
+			// Checked here rather than in each mutator: every one of them funnels through this method,
+			// and this is the last point before OnChildrenChanged rewrites the flat-list tree and
+			// notifies the flattener. A violation therefore leaves the flat list untouched instead of
+			// half-updated; only the backing List<T> has already moved.
+			parent.VerifyChildrenChange(e);
 			Debug.Assert(!isRaisingEvent);
 			isRaisingEvent = true;
 			try

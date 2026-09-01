@@ -129,6 +129,11 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 			if (Root != null)
 			{
+				// The tree becomes reachable from the UI here, so this is where the UI thread takes
+				// ownership of it. Avalonia raises property changes on the UI thread, so the calling
+				// thread is the right owner. Every SharpTreeView in the app routes through Reload,
+				// so this single call claims every displayed tree.
+				Root.SetOwner();
 				if (!(ShowRoot && ShowRootExpander))
 					Root.IsExpanded = true;
 				flattener = new TreeFlattener(Root, ShowRoot);
