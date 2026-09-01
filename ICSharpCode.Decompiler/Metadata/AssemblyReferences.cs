@@ -220,8 +220,24 @@ namespace ICSharpCode.Decompiler.Metadata
 	{
 		readonly System.Reflection.Metadata.AssemblyReference entry;
 
-		public MetadataReader Metadata { get; }
 		public AssemblyReferenceHandle Handle { get; }
+
+		/// <summary>
+		/// The module that declares this reference. Assembly resolution is otherwise anchored on the
+		/// assembly being decompiled, no matter which assembly is asking; a resolver that has to tell
+		/// the two apart - to keep a chain of type forwarders inside the framework it started in,
+		/// say - needs to know who made the reference.
+		/// </summary>
+		public MetadataFile ReferencingModule { get; }
+
+		public MetadataReader Metadata => ReferencingModule.Metadata;
+
+		/// <summary>
+		/// Asks the resolver to look next to <see cref="ReferencingModule"/> before anywhere else.
+		/// Set while repairing a chain of type forwarders that resolution took out of the framework
+		/// it was walking through; ordinary references leave it alone and resolve as they always did.
+		/// </summary>
+		public bool PreferNextToReferencingModule { get; }
 
 		public bool IsWindowsRuntime => (entry.Flags & AssemblyFlags.WindowsRuntime) != 0;
 		public bool IsRetargetable => (entry.Flags & AssemblyFlags.Retargetable) != 0;
@@ -325,26 +341,17 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 		}
 
-		public AssemblyReference(MetadataReader metadata, AssemblyReferenceHandle handle)
-		{
-			if (metadata == null)
-				throw new ArgumentNullException(nameof(metadata));
-			if (handle.IsNil)
-				throw new ArgumentNullException(nameof(handle));
-			Metadata = metadata;
-			Handle = handle;
-			entry = metadata.GetAssemblyReference(handle);
-		}
-
-		public AssemblyReference(MetadataFile module, AssemblyReferenceHandle handle)
+		public AssemblyReference(MetadataFile module, AssemblyReferenceHandle handle,
+			bool preferNextToReferencingModule = false)
 		{
 			if (module == null)
 				throw new ArgumentNullException(nameof(module));
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
-			Metadata = module.Metadata;
 			Handle = handle;
-			entry = Metadata.GetAssemblyReference(handle);
+			ReferencingModule = module;
+			PreferNextToReferencingModule = preferNextToReferencingModule;
+			entry = module.Metadata.GetAssemblyReference(handle);
 		}
 
 		public override string ToString()

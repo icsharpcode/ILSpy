@@ -273,8 +273,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			"System.Runtime.CompilerServices.Unsafe"
 		};
 
+		/// <summary>
+		/// Where the resolver keeps one, the log that records how each reference was resolved. The
+		/// type system reports the forwarder chains it cannot follow there, next to the resolution
+		/// messages for the same reference.
+		/// </summary>
+		internal ReferenceLoadInfo ReferenceLoadInfo { get; private set; }
+
 		private async Task InitializeAsync(MetadataFile mainModule, IAssemblyResolver assemblyResolver)
 		{
+			ReferenceLoadInfo = (assemblyResolver as IReferenceLoadInfoProvider)?.LoadInfo;
 			DecompilerEventSource.Log.TypeSystemInitStart(mainModule.Name);
 			int referencedAssembliesResolved = 0;
 			try
@@ -286,6 +294,170 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				DecompilerEventSource.Log.TypeSystemInitStop(mainModule.Name, referencedAssembliesResolved);
 			}
 		}
+
+		/// <summary>
+		/// Walks the type forwarders of every loaded assembly and looks for chains that come back to
+		/// an assembly they already passed through. Such a chain never reaches a definition, so the
+		/// type it forwards is lost. It is walked a second time with each hop resolved next to the
+		/// assembly forwarding it, which keeps it inside the framework it reached, and the assembly
+		/// that ends the repaired chain is returned so the caller can load it.
+		/// </summary>
+		/// <remarks>
+		/// Only chains that are already broken are walked twice: a chain that reaches a definition is
+		/// left exactly as it resolved, so nothing that decompiles correctly today changes.
+		/// </remarks>
+		static async Task<HashSet<MetadataFile>> RepairCyclicTypeForwardersAsync(
+			List<MetadataFile> referencedAssemblies, IAssemblyResolver assemblyResolver)
+		{
+			// The chain is followed the way the type system follows it: by assembly short name, over
+			// the assemblies that are loaded, keeping the highest version of each name.
+			var loadedByName = new Dictionary<string, MetadataFile>(StringComparer.OrdinalIgnoreCase);
+			foreach (var file in referencedAssemblies)
+			{
+				if (!file.IsAssembly)
+					continue;
+				if (!loadedByName.TryGetValue(file.Name, out var existing)
+					|| file.Metadata.GetAssemblyDefinition().Version > existing.Metadata.GetAssemblyDefinition().Version)
+				{
+					loadedByName[file.Name] = file;
+				}
+			}
+
+			var repaired = new HashSet<MetadataFile>();
+			// The same chain carries every type a facade forwards; walking one of them settles it.
+			var alreadyWalked = new HashSet<(MetadataFile, string)>();
+			foreach (var file in referencedAssemblies.ToArray())
+			{
+				var metadata = file.Metadata;
+				foreach (var handle in metadata.ExportedTypes)
+				{
+					var exportedType = metadata.GetExportedType(handle);
+					// Only a row that names another assembly can start a chain that leaves this one.
+					// A row implemented by an AssemblyFile stays inside this assembly - the type lives
+					// in one of its other modules - and a nested type is implemented by its enclosing
+					// exported type, so it travels with the chain of the enclosing name.
+					if (exportedType.Implementation.Kind != SRM.HandleKind.AssemblyReference)
+						continue;
+					var typeName = exportedType.GetFullTypeName(metadata);
+					var reference = (SRM.AssemblyReferenceHandle)exportedType.Implementation;
+					string targetName = metadata.GetString(metadata.GetAssemblyReference(reference).Name);
+					if (!alreadyWalked.Add((file, targetName)))
+						continue;
+					if (!ChainIsCyclic(file, typeName, targetName, loadedByName))
+						continue;
+					var definition = await FollowChainNextToForwardersAsync(file, typeName, reference, assemblyResolver)
+						.ConfigureAwait(false);
+					if (definition != null && !loadedByName.ContainsValue(definition))
+					{
+						repaired.Add(definition);
+					}
+				}
+			}
+			return repaired;
+		}
+
+		/// <summary>
+		/// Whether following <paramref name="typeName"/> through the loaded assemblies returns to one
+		/// it already passed through. A chain that ends anywhere else - at an assembly that does not
+		/// forward the type onwards, or at a name nothing resolves to - is not this method's business.
+		/// </summary>
+		static bool ChainIsCyclic(MetadataFile start, FullTypeName typeName, string targetName,
+			Dictionary<string, MetadataFile> loadedByName)
+		{
+			var visited = new HashSet<MetadataFile> { start };
+			for (int hop = 0; hop < MaxTypeForwarderHops; hop++)
+			{
+				if (!loadedByName.TryGetValue(targetName, out var next))
+					return false;
+				if (!visited.Add(next))
+					return true;
+				var forwarder = next.GetTypeForwarder(typeName);
+				if (forwarder.IsNil)
+					return false;
+				var exportedType = next.Metadata.GetExportedType(forwarder);
+				// Anything but another assembly ends the chain here: an AssemblyFile row puts the
+				// type in a sibling module of this assembly, and a nested type row points back at
+				// its enclosing type rather than onwards.
+				if (exportedType.Implementation.Kind != SRM.HandleKind.AssemblyReference)
+					return false;
+				var reference = (SRM.AssemblyReferenceHandle)exportedType.Implementation;
+				targetName = next.Metadata.GetString(next.Metadata.GetAssemblyReference(reference).Name);
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Follows the chain again with every hop resolved next to the assembly that forwards it, and
+		/// returns the assembly the chain ends at - the one that holds the definition, where the
+		/// repair worked. Null where it still leads nowhere.
+		/// </summary>
+		static async Task<MetadataFile> FollowChainNextToForwardersAsync(MetadataFile start,
+			FullTypeName typeName, SRM.AssemblyReferenceHandle reference, IAssemblyResolver assemblyResolver)
+		{
+			var current = start;
+			var visited = new HashSet<MetadataFile> { start };
+			for (int hop = 0; hop < MaxTypeForwarderHops; hop++)
+			{
+				MetadataFile next;
+				try
+				{
+					next = await assemblyResolver.ResolveAsync(
+						new AssemblyReference(current, reference, preferNextToReferencingModule: true))
+						.ConfigureAwait(false);
+				}
+				catch (Exception ex) when (!(ex is OperationCanceledException))
+				{
+					return null;
+				}
+				if (next == null || !visited.Add(next))
+					return null;
+				var forwarder = next.GetTypeForwarder(typeName);
+				if (forwarder.IsNil)
+				{
+					// The chain ends here, which is only worth anything if the type is really
+					// declared here: an assembly that neither forwards nor defines it would
+					// otherwise be loaded, and displace the assembly it shares its name with.
+					return DefinesType(next, typeName) ? next : null;
+				}
+				var exportedType = next.Metadata.GetExportedType(forwarder);
+				if (exportedType.Implementation.Kind == SRM.HandleKind.AssemblyFile)
+				{
+					// The type is declared in another module of this assembly, which the loader pulls
+					// in along with it, so the chain ends here and ends well.
+					return next;
+				}
+				if (exportedType.Implementation.Kind != SRM.HandleKind.AssemblyReference)
+				{
+					// A nested type, implemented by its enclosing exported type. The chain that
+					// matters is the enclosing type's, and that one is walked in its own right.
+					return null;
+				}
+				current = next;
+				reference = (SRM.AssemblyReferenceHandle)exportedType.Implementation;
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Whether the file declares the type itself. Walking every type definition is affordable
+		/// here because it only happens for a chain that is already known to be broken.
+		/// </summary>
+		static bool DefinesType(MetadataFile file, FullTypeName typeName)
+		{
+			var metadata = file.Metadata;
+			foreach (var handle in metadata.TypeDefinitions)
+			{
+				if (handle.GetFullTypeName(metadata) == typeName)
+					return true;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Chains are a handful of hops long in practice; the cap only stops a malformed assembly
+		/// from walking forever.
+		/// </summary>
+		const int MaxTypeForwarderHops = 16;
 
 		/// <returns>The number of references in the final set passed to Init(): distinct
 		/// resolved assemblies (same-name lower-version duplicates dropped) plus resolved
@@ -372,6 +544,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				}
 			}
+			// A chain of type forwarders is followed by assembly name, and every name is resolved
+			// relative to the assembly being decompiled - so a chain that leaves for another
+			// framework can be pulled straight back and end up at an assembly it already visited.
+			// Nothing in the closure defines the type then, and it is lost (issue #2054). Such a
+			// chain is already broken, so walking it again costs nothing: this time each hop is
+			// resolved next to the assembly that forwards it, and whatever that turns up is added.
+			var repairedFiles = await RepairCyclicTypeForwardersAsync(referencedAssemblies, assemblyResolver)
+				.ConfigureAwait(false);
+			referencedAssemblies.AddRange(repairedFiles);
+
 			if (!(identifier == TargetFrameworkIdentifier.NET && version >= new Version(7, 0)))
 			{
 				typeSystemOptions &= ~TypeSystemOptions.NativeIntegersWithoutAttribute;
@@ -379,7 +561,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var mainModuleWithOptions = mainModule.WithOptions(typeSystemOptions);
 			// create IModuleReferences for all references
 			var referencedAssembliesWithOptions = new List<IModuleReference>(referencedAssemblies.Count);
-			Dictionary<string, (Version version, int insertionIndex)> referenceAssemblyVersionMap = new();
+			Dictionary<string, (Version version, int insertionIndex, bool repaired)> referenceAssemblyVersionMap = new();
 			foreach (var file in referencedAssemblies)
 			{
 				// if the file is an assembly, we need to make sure to deduplicate all assemblies,
@@ -387,18 +569,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				if (file.IsAssembly)
 				{
 					var newFileVersion = file.Metadata.GetAssemblyDefinition().Version;
+					// A file the forwarder repair found holds the definition the chain was looking
+					// for, which the assembly it shares its name with does not - version order says
+					// nothing about that, so it wins outright.
+					bool isRepaired = repairedFiles.Contains(file);
 					if (referenceAssemblyVersionMap.TryGetValue(file.Name, out var info))
 					{
-						if (newFileVersion >= info.version)
+						if (isRepaired || (newFileVersion >= info.version && !info.repaired))
 						{
 							referencedAssembliesWithOptions[info.insertionIndex] = file.WithOptions(typeSystemOptions);
-							referenceAssemblyVersionMap[file.Name] = (newFileVersion, info.insertionIndex);
+							referenceAssemblyVersionMap[file.Name] = (newFileVersion, info.insertionIndex, isRepaired);
 						}
 						continue;
 					}
 					else
 					{
-						referenceAssemblyVersionMap[file.Name] = (file.Metadata.GetAssemblyDefinition().Version, referencedAssembliesWithOptions.Count);
+						referenceAssemblyVersionMap[file.Name] = (newFileVersion, referencedAssembliesWithOptions.Count, isRepaired);
 					}
 				}
 				referencedAssembliesWithOptions.Add(file.WithOptions(typeSystemOptions));

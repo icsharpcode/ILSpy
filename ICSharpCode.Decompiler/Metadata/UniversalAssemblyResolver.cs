@@ -298,6 +298,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			}
 
 			string? file;
+#if !VSADDIN
+			file = FindNextToReferencingModule(name);
+			if (file != null)
+				return file;
+#endif
 			switch (targetFrameworkIdentifier)
 			{
 				case TargetFrameworkIdentifier.NET:
@@ -307,19 +312,44 @@ namespace ICSharpCode.Decompiler.Metadata
 						goto default;
 					file = dotNetCorePathFinder.Value.TryResolveDotNetCore(name);
 					if (file != null)
-						return file;
+						break;
 					goto default;
 				case TargetFrameworkIdentifier.Silverlight:
 					if (IsZeroOrAllOnes(targetFrameworkVersion))
 						goto default;
 					file = ResolveSilverlight(name, targetFrameworkVersion);
 					if (file != null)
-						return file;
+						break;
 					goto default;
 				default:
-					return ResolveInternal(name);
+					file = ResolveInternal(name);
+					break;
 			}
+
+			return file;
 		}
+
+#if !VSADDIN
+		/// <summary>
+		/// Every other probe searches relative to the assembly being decompiled, whichever assembly
+		/// is asking. A caller that is following a chain of type forwarders needs the opposite: the
+		/// next assembly in the chain has to come from where the chain currently is, or the chain
+		/// leaves the framework it reached and can end up going in circles (issue #2054). Only a
+		/// caller that knows it is repairing such a chain asks for this, by setting
+		/// <see cref="AssemblyReference.PreferNextToReferencingModule"/>.
+		/// </summary>
+		string? FindNextToReferencingModule(IAssemblyReference name)
+		{
+			if (name is not AssemblyReference { PreferNextToReferencingModule: true, ReferencingModule: { } referrer })
+				return null;
+			// An entry of a package or a single-file bundle carries its path inside the container,
+			// which would be probed relative to the current working directory.
+			if (!Path.IsPathRooted(referrer.FileName))
+				return null;
+			string? directory = Path.GetDirectoryName(referrer.FileName);
+			return directory == null ? null : SearchDirectory(name, directory);
+		}
+#endif
 
 		DotNetCorePathFinder InitDotNetCorePathFinder()
 		{

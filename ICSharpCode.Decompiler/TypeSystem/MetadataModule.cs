@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IModule ResolveModuleUncached(AssemblyReferenceHandle handle)
 		{
-			var asmRef = new Metadata.AssemblyReference(metadata, handle);
+			var asmRef = new Metadata.AssemblyReference(MetadataFile, handle);
 			return Compilation.FindModuleByReference(asmRef);
 		}
 
@@ -940,6 +940,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					{
 						return td;
 					}
+				}
+				else
+				{
+					// The chain of forwarders came back to this module, so nothing in it defines the
+					// type and the assemblies involved disagree about where it lives - mismatched
+					// facades from two frameworks, typically. Recorded once per reference: a facade
+					// forwards hundreds of types, and they all fail together.
+					(Compilation as DecompilerTypeSystem)?.ReferenceLoadInfo?.AddMessageOnce(
+						module.FullAssemblyName, MessageKind.Warning,
+						$"Could not follow the type forwarders for {typeName.ReflectionName}: they lead back to {AssemblyName}.");
 				}
 			}
 			return new UnknownType(typeName);

@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy.Metadata
 						output.Write(metadata.GetString(moduleReference.Name));
 						break;
 					case HandleKind.AssemblyReference:
-						var asmRef = new ICSharpCode.Decompiler.Metadata.AssemblyReference(metadata, (AssemblyReferenceHandle)handle);
+						var asmRef = new ICSharpCode.Decompiler.Metadata.AssemblyReference(module, (AssemblyReferenceHandle)handle);
 						output.Write(asmRef.ToString());
 						break;
 					case HandleKind.Parameter:
