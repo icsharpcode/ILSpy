@@ -552,8 +552,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 							entryStream.Position = 0;
 							try
 							{
-								individualResources.AddRange(
-									WriteResourceToFile(fileName, name, entryStream));
+								foreach (var item in WriteResourceToFile(fileName, name, entryStream))
+								{
+									individualResources.Add(entryNamesAreEscaped ? ToWpfProjectItem(item, name) : item);
+								}
 							}
 							catch (Exception ex) when (!(ex is OperationCanceledException))
 							{
@@ -638,6 +640,33 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				entryStream.CopyTo(fs);
 			}
 			return new[] { new ProjectItemInfo("EmbeddedResource", fileName).With("LogicalName", resourceName) };
+		}
+
+		/// <summary>
+		/// Adjusts a project item produced from an entry of a WPF-generated ".g.resources" container
+		/// so that rebuilding the exported project puts the entry back under its original resource
+		/// ID. The file on disk cannot carry that ID - it is sanitized, and the ID is escaped - so
+		/// the item pins it with a LogicalName holding the decoded name: the WPF build tasks
+		/// lower-case and escape the LogicalName again, arriving back at the original ID. Entries
+		/// that no handler turned into some other item type are WPF Resource items; leaving them as
+		/// EmbeddedResource would rebuild them into a manifest resource of their own instead of
+		/// putting them into ".g.resources".
+		/// </summary>
+		static ProjectItemInfo ToWpfProjectItem(ProjectItemInfo item, string escapedEntryName)
+		{
+			string logicalName = Uri.UnescapeDataString(escapedEntryName);
+			if (item.FileName.EndsWith(".xaml", StringComparison.OrdinalIgnoreCase))
+			{
+				// A decompiled BAML page is written as .xaml, and the build derives the .baml
+				// extension of the resource ID from the Page item type, not from the LogicalName.
+				logicalName = Path.ChangeExtension(logicalName, ".xaml");
+			}
+			var result = item with {
+				ItemType = item.ItemType == "EmbeddedResource" ? "Resource" : item.ItemType
+			};
+			result.AdditionalProperties ??= new Dictionary<string, string>();
+			result.AdditionalProperties["LogicalName"] = logicalName;
+			return result;
 		}
 
 		/// <summary>

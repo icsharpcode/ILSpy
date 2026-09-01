@@ -169,9 +169,41 @@ public sealed class WholeProjectDecompilerTests
 	}
 
 	/// <summary>
-	/// Emits an assembly carrying one embedded .resources container per entry in
-	/// <paramref name="resources"/>, each holding a single stream-valued entry. Streams are what
-	/// makes the export write the entries out as individual files.
+	/// A rebuilt WPF project only resolves its own pack URIs when every entry of
+	/// "&lt;AssemblyName&gt;.g.resources" comes back under the resource ID it had before. The file on
+	/// disk cannot carry that ID - it is sanitized, and the ID is escaped - so each item pins it
+	/// with a LogicalName holding the decoded name, which is what the WPF build tasks escape again.
+	/// Entries no handler claimed have to be Resource items as well: as EmbeddedResource they would
+	/// rebuild into a manifest resource of their own instead of landing in ".g.resources".
+	/// </summary>
+	[Test]
+	public void WpfResourceEntriesCarryTheirOriginalResourceIdAsLogicalName()
+	{
+		string targetDirectory = Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName());
+		TestFriendlyProjectDecompiler decompiler = new(new UniversalAssemblyResolver(null, false, null));
+		decompiler.CaptureResources = true;
+
+		using var assembly = CreateAssemblyWithResources(
+			("Test.g.resources", "my%20folder/window.baml"),
+			("Test.g.resources", "resource%20test/logo.png"),
+			("Test.resources", "plain%25folder/logo.png"));
+		decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, new StringWriter());
+		AssertDirectoryDoesntExist(targetDirectory);
+
+		Assert.That(decompiler.ResourceItems.Select(i => (i.ItemType, i.FileName, i.AdditionalProperties?["LogicalName"])),
+			Is.EquivalentTo(new[] {
+				// the build re-derives the .baml extension from the Page item type
+				("Page", Path.Combine("my-folder", "window.xaml"), "my folder/window.xaml"),
+				("Resource", Path.Combine("resource-test", "logo.png"), "resource test/logo.png"),
+				// not a WPF container, so the name is neither escaped nor a Resource item
+				("EmbeddedResource", Path.Combine("plain-25folder", "logo.png"), "plain%25folder/logo.png"),
+			}));
+	}
+
+	/// <summary>
+	/// Emits an assembly carrying one embedded .resources container per distinct container name in
+	/// <paramref name="resources"/>, each holding the stream-valued entries named for it. Streams
+	/// are what makes the export write the entries out as individual files.
 	/// </summary>
 	static Stream CreateAssemblyWithResources(params (string ContainerName, string EntryName)[] resources)
 	{
@@ -181,14 +213,17 @@ public sealed class WholeProjectDecompilerTests
 			new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
 		MemoryStream assembly = new();
-		var result = compilation.Emit(assembly, manifestResources: resources.Select(r => {
-			MemoryStream container = new();
-			using (ResourceWriter writer = new(container))
+		var result = compilation.Emit(assembly, manifestResources: resources.GroupBy(r => r.ContainerName).Select(container => {
+			MemoryStream contents = new();
+			using (ResourceWriter writer = new(contents))
 			{
-				writer.AddResource(r.EntryName, new MemoryStream(new byte[] { 1, 2, 3 }));
+				foreach (var entry in container)
+				{
+					writer.AddResource(entry.EntryName, new MemoryStream(new byte[] { 1, 2, 3 }));
+				}
 			}
-			byte[] bytes = container.ToArray();
-			return new ResourceDescription(r.ContainerName, () => new MemoryStream(bytes), isPublic: true);
+			byte[] bytes = contents.ToArray();
+			return new ResourceDescription(container.Key, () => new MemoryStream(bytes), isPublic: true);
 		}).ToArray());
 		Assert.That(result.Success, Is.True, () => string.Join(Environment.NewLine, result.Diagnostics));
 		assembly.Position = 0;
@@ -261,6 +296,8 @@ public sealed class WholeProjectDecompilerTests
 
 		public List<string> WrittenResources { get; } = [];
 
+		public List<ProjectItemInfo> ResourceItems { get; } = [];
+
 		// Resources are skipped unless a test asks for them, so the tests that only care about
 		// source files neither touch the disk nor pay for decoding them.
 		public bool CaptureResources { get; set; }
@@ -268,7 +305,10 @@ public sealed class WholeProjectDecompilerTests
 		protected override IEnumerable<ProjectItemInfo> WriteResourceFilesInProject(MetadataFile module)
 		{
 			if (FailResourceWriting || CaptureResources)
-				return base.WriteResourceFilesInProject(module);
+			{
+				ResourceItems.AddRange(base.WriteResourceFilesInProject(module));
+				return ResourceItems;
+			}
 			return FailResourceEnumeration
 				? Enumerable.Range(0, 1).Select<int, ProjectItemInfo>(_ => throw new InvalidOperationException(ResourceFailure))
 				: [];
@@ -284,7 +324,13 @@ public sealed class WholeProjectDecompilerTests
 				throw new InvalidOperationException(ResourceFailure);
 			}
 			WrittenResources.Add(fileName);
-			return new[] { new ProjectItemInfo("EmbeddedResource", fileName) };
+			// Stands in for the BAML resource-file handlers the real hosts plug in: a .baml entry
+			// is decompiled into a .xaml file referenced by a <Page> item, and those handlers
+			// attach no LogicalName. Everything else keeps the base class' behaviour of naming the
+			// resource entry as it is stored in the assembly.
+			return fileName.EndsWith(".baml", StringComparison.OrdinalIgnoreCase)
+				? new[] { new ProjectItemInfo("Page", Path.ChangeExtension(fileName, ".xaml")) }
+				: new[] { new ProjectItemInfo("EmbeddedResource", fileName).With("LogicalName", resourceName) };
 		}
 	}
 }
