@@ -155,17 +155,57 @@ public sealed class WholeProjectDecompilerTests
 
 		using var assembly = CreateAssemblyWithResources(
 			("Test.g.resources", "my%20folder/window.baml"),
-			("Test.g.de-DE.resources", "my%20folder/window.baml"),
+			// satellite assemblies hold the localized pages in "<AssemblyName>.g.<culture>.resources"
+			("Test.g.de-DE.resources", "my%20folder/other.baml"),
 			("Test.resources", "100%25off/window.baml"));
 		decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, new StringWriter());
 		AssertDirectoryDoesntExist(targetDirectory);
 
 		Assert.That(decompiler.WrittenResources, Is.EquivalentTo(new[] {
 			Path.Combine("my-folder", "window.baml"),
-			Path.Combine("my-folder", "window.baml"),
+			Path.Combine("my-folder", "other.baml"),
 			// not a WPF container, so "%25" is three characters of the name and not an escaped '%'
 			Path.Combine("100-25off", "window.baml"),
 		}));
+	}
+
+	/// <summary>
+	/// Sanitizing is not injective: "a+b/logo.png", "a&amp;b/logo.png" and "a%23b/logo.png" all end up
+	/// as "a-b/logo.png", and an assembly can be crafted to aim any number of entries at one name.
+	/// Colliding entries used to overwrite each other silently, costing the export their contents
+	/// with nothing written to the error list. Each one now gets a file of its own; the item still
+	/// carries the true name, so all of them survive a rebuild.
+	/// </summary>
+	[Test]
+	public void ResourcesThatSanitizeToTheSameNameGetSeparateFiles()
+	{
+		string targetDirectory = Path.Combine(Environment.CurrentDirectory, Path.GetRandomFileName());
+		TestFriendlyProjectDecompiler decompiler = new(new UniversalAssemblyResolver(null, false, null));
+		decompiler.CaptureResources = true;
+
+		using var assembly = CreateAssemblyWithResources(
+			("Test.g.resources", "a+b/logo.png"),
+			("Test.g.resources", "a&b/logo.png"),
+			("Test.g.resources", "a%23b/logo.png"),
+			// the same name in a second container is a different resource and needs its own file too
+			("Test.g.de-DE.resources", "a+b/logo.png"));
+		decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, new StringWriter());
+		AssertDirectoryDoesntExist(targetDirectory);
+
+		// Entries come back in the order the .resources format stores them, not the order they were
+		// written in, so which entry draws which suffix is not fixed - only that the four of them
+		// occupy four files and keep their four names.
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(decompiler.WrittenResources, Is.EquivalentTo(new[] {
+				Path.Combine("a-b", "logo.png"),
+				Path.Combine("a-b", "logo_2.png"),
+				Path.Combine("a-b", "logo_3.png"),
+				Path.Combine("a-b", "logo_4.png"),
+			}));
+			Assert.That(decompiler.ResourceItems.Select(i => i.AdditionalProperties?["LogicalName"]),
+				Is.EquivalentTo(new[] { "a+b/logo.png", "a&b/logo.png", "a#b/logo.png", "a+b/logo.png" }));
+		}
 	}
 
 	/// <summary>
