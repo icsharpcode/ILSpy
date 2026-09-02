@@ -84,6 +84,79 @@ public sealed class WpfProjectExportTests
 	}
 
 	/// <summary>
+	/// NETSDK1136: a .NET 5+ project that sets UseWPF or UseWindowsForms is rejected outright
+	/// unless its target framework names the Windows platform.
+	/// </summary>
+	[Test]
+	public void WpfTargetFrameworkKeepsThePlatformSuffix()
+	{
+		string project = WriteProjectFile(WpfApplication(targetFramework: ".NETCoreApp,Version=v10.0", targetPlatform: "Windows7.0"));
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain("<UseWPF>True</UseWPF>"));
+			Assert.That(project, Does.Contain("<TargetFramework>net10.0-windows7.0</TargetFramework>"));
+		}
+	}
+
+	/// <summary>
+	/// The platform belongs to the assembly, not to WPF: a plain library built for Windows keeps
+	/// its suffix as well, and one built for no particular platform does not grow one.
+	/// </summary>
+	[TestCase("Windows7.0", "net10.0-windows7.0")]
+	[TestCase(null, "net10.0")]
+	public void PlainLibraryFollowsItsTargetPlatformAttribute(string targetPlatform, string expectedMoniker)
+	{
+		string project = WriteProjectFile(Compile("PlainLibrary",
+			AssemblyAttributes(".NETCoreApp,Version=v10.0", targetPlatform) + "public class C { }"));
+
+		Assert.That(project, Does.Contain($"<TargetFramework>{expectedMoniker}</TargetFramework>"));
+	}
+
+	/// <summary>
+	/// Assemblies built before the platform-suffixed monikers existed carry no TargetPlatform
+	/// attribute; a WPF project still has to name Windows to build at all.
+	/// </summary>
+	[Test]
+	public void WpfWithoutTargetPlatformAttributeStillNamesWindows()
+	{
+		string project = WriteProjectFile(WpfApplication(targetFramework: ".NETCoreApp,Version=v10.0", targetPlatform: null));
+
+		Assert.That(project, Does.Contain("<TargetFramework>net10.0-windows</TargetFramework>"));
+	}
+
+	/// <summary>
+	/// Platform suffixes only exist for .NET 5 and later. A .NET Framework moniker that grew one
+	/// would no longer resolve to any target pack.
+	/// </summary>
+	[Test]
+	public void NetFrameworkMonikerTakesNoPlatformSuffix()
+	{
+		string project = WriteProjectFile(WpfApplication(targetFramework: ".NETFramework,Version=v4.7.2", targetPlatform: "Windows7.0"));
+
+		Assert.That(project, Does.Contain("<TargetFramework>net472</TargetFramework>"));
+	}
+
+	/// <summary>
+	/// An assembly whose minimum supported OS version is lower than the version it targets says so
+	/// through SupportedOSPlatform; without TargetPlatformMinVersion the exported project would
+	/// silently raise its own floor to the target version.
+	/// </summary>
+	[Test]
+	public void LowerSupportedOSPlatformBecomesTargetPlatformMinVersion()
+	{
+		string project = WriteProjectFile(Compile("VersionedLibrary",
+			AssemblyAttributes(".NETCoreApp,Version=v10.0", "Windows10.0.19041.0", supportedOSPlatform: "Windows10.0.17763.0")
+			+ "public class C { }"));
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain("<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>"));
+			Assert.That(project, Does.Contain("<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>"));
+		}
+	}
+
+	/// <summary>
 	/// The markup compiler generates the program entry point into the application definition, so
 	/// the XAML file of the Application subclass is the one item that must not be a Page (#2253).
 	/// </summary>

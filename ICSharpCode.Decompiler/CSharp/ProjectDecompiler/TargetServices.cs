@@ -22,6 +22,7 @@ using System.Linq;
 using System.Reflection.PortableExecutable;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
@@ -89,6 +90,58 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			}
 
 			return new TargetFramework(targetFrameworkIdentifier, versionNumber, targetFrameworkProfile);
+		}
+
+		/// <summary>
+		/// Gets the OS platform the specified <paramref name="module"/> was built for, as recorded by
+		/// <c>[assembly: TargetPlatform(...)]</c>, e.g. "Windows7.0". Null if the assembly names no platform.
+		/// </summary>
+		public static string DetectTargetPlatform(MetadataFile module)
+		{
+			return GetAssemblyAttributeArgument(module, "System.Runtime.Versioning.TargetPlatformAttribute");
+		}
+
+		/// <summary>
+		/// Gets the lowest OS platform version the specified <paramref name="module"/> supports, as recorded
+		/// by <c>[assembly: SupportedOSPlatform(...)]</c>, e.g. "Windows10.0.17763.0". Null if the assembly
+		/// declares no minimum.
+		/// </summary>
+		public static string DetectSupportedOSPlatform(MetadataFile module)
+		{
+			return GetAssemblyAttributeArgument(module, "System.Runtime.Versioning.SupportedOSPlatformAttribute");
+		}
+
+		/// <summary>
+		/// Reads the single string argument of an assembly-level attribute of the given type.
+		/// </summary>
+		static string GetAssemblyAttributeArgument(MetadataFile module, string attributeTypeName)
+		{
+			if (module is null)
+			{
+				throw new ArgumentNullException(nameof(module));
+			}
+
+			var metadata = module.Metadata;
+			foreach (var handle in metadata.GetCustomAttributes(System.Reflection.Metadata.Handle.AssemblyDefinition))
+			{
+				try
+				{
+					var attribute = metadata.GetCustomAttribute(handle);
+					if (attribute.GetAttributeType(metadata).GetFullTypeName(metadata).ToString() != attributeTypeName)
+						continue;
+					var blobReader = metadata.GetBlobReader(attribute.Value);
+					if (blobReader.ReadUInt16() == 0x0001)
+					{
+						return blobReader.ReadSerializedString();
+					}
+				}
+				catch (BadImageFormatException)
+				{
+					// ignore malformed attributes
+				}
+			}
+
+			return null;
 		}
 
 		/// <summary>

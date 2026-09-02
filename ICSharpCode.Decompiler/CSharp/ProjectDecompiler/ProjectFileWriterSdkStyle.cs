@@ -38,6 +38,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const string AspNetCorePrefix = "Microsoft.AspNetCore";
 		const string PresentationFrameworkName = "PresentationFramework";
 		const string WindowsFormsName = "System.Windows.Forms";
+		const string NetCoreAppIdentifier = ".NETCoreApp";
+		const string WindowsPlatformName = "Windows";
 		const string TrueString = "True";
 		const string FalseString = "False";
 		const string AnyCpuString = "AnyCPU";
@@ -155,7 +157,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			WriteDesktopExtensions(xml, projectType);
 
-			xml.WriteElementString("TargetFramework", GetTargetFrameworkMoniker(module, project));
+			string moniker = GetTargetFrameworkMoniker(module, project);
+			string? platform = GetTargetPlatform(module, projectType);
+			if (platform != null)
+			{
+				moniker += "-" + platform;
+			}
+			xml.WriteElementString("TargetFramework", moniker);
+
+			string? minVersion = platform != null ? GetTargetPlatformMinVersion(module, platform) : null;
+			if (minVersion != null)
+			{
+				xml.WriteElementString("TargetPlatformMinVersion", minVersion);
+			}
 
 			// 'AnyCPU' is default, so only need to specify platform if it differs
 			if (platformName != AnyCpuString)
@@ -167,6 +181,68 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				xml.WriteElementString("Prefer32Bit", TrueString);
 			}
+		}
+
+		/// <summary>
+		/// Gets the target platform part of the target framework moniker, e.g. "windows7.0" in
+		/// "net10.0-windows7.0". Only .NET 5 and later monikers carry one; "net472" or
+		/// "netcoreapp3.1" with a platform suffix names no target pack at all.
+		/// </summary>
+		/// <returns>The lower-case platform, or null when the moniker takes none.</returns>
+		static string? GetTargetPlatform(MetadataFile module, ProjectType projectType)
+		{
+			var targetFramework = TargetServices.DetectTargetFramework(module);
+			if (targetFramework.Identifier != NetCoreAppIdentifier || targetFramework.VersionNumber < 500)
+			{
+				return null;
+			}
+
+			string? platform = TargetServices.DetectTargetPlatform(module);
+			if (platform == null && projectType is ProjectType.Wpf or ProjectType.WinForms)
+			{
+				// Assemblies built before platform-suffixed monikers existed carry no
+				// TargetPlatformAttribute, but WPF and Windows Forms are Windows-only and the SDK
+				// rejects the project outright (NETSDK1136) unless the moniker says so.
+				platform = WindowsPlatformName;
+			}
+
+			return platform?.ToLowerInvariant();
+		}
+
+		/// <summary>
+		/// Gets the lowest platform version the assembly supports, when it is lower than the version
+		/// it targets. Without it the exported project would raise its own floor to the target version.
+		/// </summary>
+		static string? GetTargetPlatformMinVersion(MetadataFile module, string platform)
+		{
+			string? supported = TargetServices.DetectSupportedOSPlatform(module)?.ToLowerInvariant();
+			if (supported == null)
+			{
+				return null;
+			}
+
+			var (supportedName, supportedVersion) = SplitPlatform(supported);
+			var (platformName, platformVersion) = SplitPlatform(platform);
+			if (supportedName != platformName || supportedVersion.Length == 0 || supportedVersion == platformVersion)
+			{
+				return null;
+			}
+
+			return supportedVersion;
+		}
+
+		/// <summary>
+		/// Splits a platform such as "windows10.0.17763.0" into its name and its version.
+		/// </summary>
+		static (string Name, string Version) SplitPlatform(string platform)
+		{
+			int versionStart = 0;
+			while (versionStart < platform.Length && !char.IsDigit(platform[versionStart]))
+			{
+				versionStart++;
+			}
+
+			return (platform.Substring(0, versionStart), platform.Substring(versionStart));
 		}
 
 		/// <summary>
@@ -349,12 +425,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <returns>An enumerable of assembly references.</returns>
 		protected virtual IEnumerable<AssemblyReference> GetReferences(MetadataFile module, IProjectInfoProvider project)
 		{
-			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
+			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == NetCoreAppIdentifier;
+			var projectType = GetProjectType(module);
 			var targetPacks = new HashSet<string>();
 			if (isNetCoreApp)
 			{
 				targetPacks.Add("Microsoft.NETCore.App");
-				switch (GetProjectType(module))
+				switch (projectType)
 				{
 					case ProjectType.WinForms:
 					case ProjectType.Wpf:
