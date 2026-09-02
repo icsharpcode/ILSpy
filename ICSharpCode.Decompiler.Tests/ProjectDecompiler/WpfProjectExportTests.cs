@@ -43,7 +43,24 @@ namespace ICSharpCode.Decompiler.Tests.ProjectDecompiler;
 [TestFixture]
 public sealed class WpfProjectExportTests
 {
+	/// <summary>
+	/// The nine assemblies the .NET SDK references by itself for a project that sets UseWPF
+	/// (item _WpfCommonNetFxReference in Microsoft.NET.Sdk.WindowsDesktop.props).
+	/// </summary>
+	static readonly string[] UseWpfReferences = {
+		"PresentationCore",
+		"PresentationFramework",
+		"System.Windows.Controls.Ribbon",
+		"System.Xaml",
+		"UIAutomationClient",
+		"UIAutomationClientSideProviders",
+		"UIAutomationProvider",
+		"UIAutomationTypes",
+		"WindowsBase",
+	};
+
 	readonly List<MetadataFile> openedModules = new();
+	readonly Dictionary<string, string> stubAssemblies = new();
 	string tempDirectory;
 	string presentationFramework;
 	string presentationCore;
@@ -65,13 +82,23 @@ public sealed class WpfProjectExportTests
 				public class Application { }
 				public class Window { }
 			}
+			namespace Stubs
+			{
+				public class PresentationFramework { }
+			}
 			""");
 		presentationCore = CompileTo("PresentationCore.dll", "PresentationCore", """
 			namespace System.Windows.Media
 			{
 				public class Brush { }
 			}
+			namespace Stubs
+			{
+				public class PresentationCore { }
+			}
 			""");
+		stubAssemblies.Add("PresentationFramework", presentationFramework);
+		stubAssemblies.Add("PresentationCore", presentationCore);
 	}
 
 	[OneTimeTearDown]
@@ -221,6 +248,79 @@ public sealed class WpfProjectExportTests
 		Assert.That(WholeProjectDecompiler.IsApplicationDefinition(FindType(typeSystem, "Fixture.App"), module), Is.False);
 	}
 
+	/// <summary>
+	/// UseWPF is what makes System.Xaml implicit; an assembly that uses the XAML services without
+	/// WPF gets no UseWPF, so nothing supplies the reference and the export has to keep it.
+	/// </summary>
+	[Test]
+	public void SystemXamlIsKeptWhenTheAssemblyIsNotWpf()
+	{
+		string project = WriteProjectFile(LibraryReferencing("System.Xaml"));
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain(@"Include=""System.Xaml"""));
+			Assert.That(project, Does.Not.Contain("UseWPF"));
+		}
+	}
+
+	/// <summary>
+	/// Every assembly of the UseWPF set is a duplicate reference (MSB3243) once the project sets
+	/// the property.
+	/// </summary>
+	[Test]
+	public void WpfProjectDropsEveryReferenceUseWpfSupplies()
+	{
+		string project = WriteProjectFile(LibraryReferencing(UseWpfReferences));
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain("<UseWPF>True</UseWPF>"));
+			foreach (string name in UseWpfReferences)
+			{
+				Assert.That(project, Does.Not.Contain(name), $"{name} is supplied by UseWPF");
+			}
+		}
+	}
+
+	/// <summary>
+	/// WPF and Windows Forms are not alternatives: an assembly can use both, and then both sets of
+	/// implicit references are supplied only if both properties are written.
+	/// </summary>
+	[Test]
+	public void AssemblyUsingWpfAndWindowsFormsSetsBothProperties()
+	{
+		string project = WriteProjectFile(LibraryReferencing("PresentationFramework", "System.Windows.Forms", "System.Drawing"));
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain("<UseWPF>True</UseWPF>"));
+			Assert.That(project, Does.Contain("<UseWindowsForms>True</UseWindowsForms>"));
+			Assert.That(project, Does.Not.Contain("PresentationFramework"));
+			Assert.That(project, Does.Not.Contain("System.Windows.Forms"));
+			Assert.That(project, Does.Not.Contain("System.Drawing"));
+		}
+	}
+
+	/// <summary>
+	/// The interop assembly is implicit only where both worlds meet; a project that sets just one
+	/// of the two properties has to reference it itself.
+	/// </summary>
+	[Test]
+	public void WindowsFormsIntegrationIsImplicitOnlyWhenBothAreInPlay()
+	{
+		string wpfOnly = WriteProjectFile(LibraryReferencing("PresentationFramework", "WindowsFormsIntegration"));
+		string windowsFormsOnly = WriteProjectFile(LibraryReferencing("System.Windows.Forms", "WindowsFormsIntegration"));
+		string both = WriteProjectFile(LibraryReferencing("PresentationFramework", "System.Windows.Forms", "WindowsFormsIntegration"));
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(wpfOnly, Does.Contain(@"Include=""WindowsFormsIntegration"""));
+			Assert.That(windowsFormsOnly, Does.Contain(@"Include=""WindowsFormsIntegration"""));
+			Assert.That(both, Does.Not.Contain("WindowsFormsIntegration"));
+		}
+	}
+
 	static ITypeDefinition FindType(IDecompilerTypeSystem typeSystem, string fullTypeName)
 	{
 		var type = typeSystem.FindType(new FullTypeName(fullTypeName)).GetDefinition();
@@ -245,6 +345,35 @@ public sealed class WpfProjectExportTests
 			}
 			""", OutputKind.WindowsApplication, presentationFramework, presentationCore);
 	}
+
+	/// <summary>
+	/// Compiles a .NET Framework library referencing exactly the named assemblies. Which references
+	/// the export keeps is decided by assembly name, so the referenced assemblies only need the
+	/// right name and one public type each to survive as a reference in the compiled metadata.
+	/// </summary>
+	string LibraryReferencing(params string[] assemblyNames)
+	{
+		string fields = string.Join(Environment.NewLine,
+			assemblyNames.Select((name, index) => $"public Stubs.{MarkerTypeName(name)} field{index};"));
+		return Compile("ReferenceFixture",
+			AssemblyAttributes(".NETFramework,Version=v4.7.2", targetPlatform: null)
+			+ "public class UsesEverything { " + fields + " }",
+			OutputKind.DynamicallyLinkedLibrary,
+			assemblyNames.Select(Stub).ToArray());
+	}
+
+	string Stub(string assemblyName)
+	{
+		if (!stubAssemblies.TryGetValue(assemblyName, out string path))
+		{
+			path = CompileTo(assemblyName + ".dll", assemblyName,
+				$"namespace Stubs {{ public class {MarkerTypeName(assemblyName)} {{ }} }}");
+			stubAssemblies.Add(assemblyName, path);
+		}
+		return path;
+	}
+
+	static string MarkerTypeName(string assemblyName) => assemblyName.Replace(".", "_");
 
 	static string AssemblyAttributes(string targetFramework, string targetPlatform, string supportedOSPlatform = null)
 	{
