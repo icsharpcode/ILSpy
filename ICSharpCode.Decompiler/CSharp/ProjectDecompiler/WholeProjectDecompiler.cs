@@ -1177,6 +1177,27 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			return TargetServices.DetectTargetFramework(module).Moniker != null;
 		}
+
+		/// <summary>
+		/// Determines whether the XAML file whose root object is <paramref name="rootType"/> belongs
+		/// into an MSBuild &lt;ApplicationDefinition&gt; item instead of a &lt;Page&gt; item.
+		/// The WPF markup compiler generates the program entry point from the application definition,
+		/// so a module that has no entry point of its own - a library that happens to contain an
+		/// <c>Application</c> subclass - must not get one.
+		/// </summary>
+		public static bool IsApplicationDefinition(ITypeDefinition? rootType, MetadataFile? module)
+		{
+			if (rootType == null)
+				return false;
+			if (module is not PEFile { Reader.PEHeaders.CorHeader.EntryPointTokenOrRelativeVirtualAddress: not 0 })
+				return false;
+			foreach (var baseType in rootType.GetNonInterfaceBaseTypes())
+			{
+				if (baseType.FullName == "System.Windows.Application")
+					return true;
+			}
+			return false;
+		}
 	}
 
 	public record struct ProjectItemInfo(string ItemType, string FileName)
