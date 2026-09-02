@@ -171,6 +171,23 @@ public sealed class WpfProjectExportTests
 	}
 
 	/// <summary>
+	/// UseWPF brings in the whole Windows Desktop framework reference. Listing one of its
+	/// assemblies again is a duplicate reference (MSB3243), or a missing one (MSB3245) when the
+	/// hint path does not survive the move to the machine that rebuilds the project.
+	/// </summary>
+	[Test]
+	public void ReferencesSuppliedByUseWpfAreNotListed()
+	{
+		string project = WriteProjectFile(WpfApplication(targetFramework: ".NETCoreApp,Version=v10.0", targetPlatform: "Windows7.0"));
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Not.Contain("PresentationCore"));
+			Assert.That(project, Does.Not.Contain("PresentationFramework"));
+		}
+	}
+
+	/// <summary>
 	/// The markup compiler generates the program entry point into the application definition, so
 	/// the XAML file of the Application subclass is the one item that must not be a Page (#2253).
 	/// </summary>

@@ -44,6 +44,25 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const string FalseString = "False";
 		const string AnyCpuString = "AnyCPU";
 
+		/// <summary>
+		/// References the .NET SDK adds by itself when UseWPF is set, both through the implicit
+		/// Microsoft.WindowsDesktop.App framework reference on .NET Core and through the implicit
+		/// .NET Framework references. Listing them a second time is a duplicate reference (MSB3243),
+		/// or an unresolvable one (MSB3245) once the hint path no longer points anywhere.
+		/// Membership must not be decided by probing the machine that runs the export: the
+		/// Windows Desktop runtime pack is absent on non-Windows hosts, and the exported project
+		/// has to come out the same everywhere.
+		/// </summary>
+		static readonly HashSet<string> WpfImplicitReferences = new HashSet<string> {
+			"PresentationCore",
+			"System.Windows.Controls.Ribbon",
+			"UIAutomationClient",
+			"UIAutomationClientSideProviders",
+			"UIAutomationProvider",
+			"UIAutomationTypes",
+			"WindowsBase",
+		};
+
 		static readonly HashSet<string> ImplicitReferences = new HashSet<string> {
 			"mscorlib",
 			"netstandard",
@@ -446,6 +465,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			foreach (var reference in module.AssemblyReferences)
 			{
 				if (ImplicitReferences.Contains(reference.Name))
+				{
+					continue;
+				}
+				if (projectType == ProjectType.Wpf && WpfImplicitReferences.Contains(reference.Name))
 				{
 					continue;
 				}
