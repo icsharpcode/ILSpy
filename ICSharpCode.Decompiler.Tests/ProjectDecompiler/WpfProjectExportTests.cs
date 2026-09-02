@@ -157,6 +157,20 @@ public sealed class WpfProjectExportTests
 	}
 
 	/// <summary>
+	/// NETSDK1137: Microsoft.NET.Sdk carries the Windows Desktop targets itself since .NET 5, and
+	/// says so whenever a project still asks for the separate SDK.
+	/// </summary>
+	[TestCase(".NETCoreApp,Version=v10.0", "Microsoft.NET.Sdk")]
+	[TestCase(".NETFramework,Version=v4.7.2", "Microsoft.NET.Sdk")]
+	[TestCase(".NETCoreApp,Version=v3.1", "Microsoft.NET.Sdk.WindowsDesktop")]
+	public void WindowsDesktopSdkOnlyForNetCore3(string targetFramework, string expectedSdk)
+	{
+		string project = WriteProjectFile(WpfApplication(targetFramework, targetPlatform: null));
+
+		Assert.That(project, Does.Contain($@"<Project Sdk=""{expectedSdk}"">"));
+	}
+
+	/// <summary>
 	/// The markup compiler generates the program entry point into the application definition, so
 	/// the XAML file of the Application subclass is the one item that must not be a Page (#2253).
 	/// </summary>

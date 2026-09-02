@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			xml.WriteStartElement("Project");
 
 			var projectType = GetProjectType(module);
-			xml.WriteAttributeString("Sdk", GetSdkString(projectType));
+			xml.WriteAttributeString("Sdk", GetSdkString(projectType, TargetServices.DetectTargetFramework(module)));
 
 			using (new Group(xml, "PropertyGroup"))
 			{
@@ -477,13 +477,20 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			xml.WriteEndElement();
 		}
 
-		static string GetSdkString(ProjectType projectType)
+		static string GetSdkString(ProjectType projectType, TargetFramework targetFramework)
 		{
 			switch (projectType)
 			{
 				case ProjectType.WinForms:
 				case ProjectType.Wpf:
-					return "Microsoft.NET.Sdk.WindowsDesktop";
+					// Microsoft.NET.Sdk carries the Windows Desktop targets itself since .NET 5 and
+					// warns (NETSDK1137) about projects that still name the separate SDK; only
+					// .NET Core 3.x, where the desktop targets are not imported for a plain
+					// framework moniker, still needs it.
+					return targetFramework.Identifier == NetCoreAppIdentifier
+						&& targetFramework.VersionNumber >= 300 && targetFramework.VersionNumber < 500
+						? "Microsoft.NET.Sdk.WindowsDesktop"
+						: "Microsoft.NET.Sdk";
 				case ProjectType.Web:
 					return "Microsoft.NET.Sdk.Web";
 				default:
