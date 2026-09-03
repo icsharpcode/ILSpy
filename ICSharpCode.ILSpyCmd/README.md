@@ -64,6 +64,9 @@ Options:
   --no-dead-stores                        Remove dead stores.
   -d|--dump-package                       Dump package assemblies into a folder. This requires the output directory
                                           option.
+  --bundle-entry <name>                   The assembly inside a single-file bundle (or other package) to work on, as
+                                          printed when such a file is passed without this option. Ignored for input
+                                          files that are not packages.
   --nested-directories                    Use nested directories for namespaces.
   --disable-updatecheck                   If using ilspycmd in a tight loop or fully automated scenario, you might want
                                           to disable the automatic update check.
