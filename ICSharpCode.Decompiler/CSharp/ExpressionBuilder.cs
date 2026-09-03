@@ -803,7 +803,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), inst.Type));
 			return new MemberReferenceExpression(typeofExpr, "TypeHandle")
 				.WithILInstruction(inst)
-				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
+				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.RuntimeTypeHandle), inst.Type));
 		}
 
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)
@@ -3554,7 +3554,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return new UndocumentedExpression { UndocumentedExpressionType = UndocumentedExpressionType.ArgListAccess }
 			.WithILInstruction(inst)
-				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeArgumentHandle"))));
+				.WithRR(new TypeResolveResult(compilation.FindType(KnownTypeCode.RuntimeArgumentHandle)));
 		}
 
 		protected internal override TranslatedExpression VisitMakeRefAny(MakeRefAny inst, TranslationContext context)
@@ -3569,7 +3569,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Arguments = { arg.Detach() }
 			}
 			.WithILInstruction(inst)
-				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "TypedReference"))));
+				.WithRR(new TypeResolveResult(compilation.FindType(KnownTypeCode.TypedReference)));
 		}
 
 		protected internal override TranslatedExpression VisitRefAnyType(RefAnyType inst, TranslationContext context)
@@ -3579,7 +3579,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Arguments = { Translate(inst.Argument).Expression.Detach() }
 			}, "TypeHandle")
 				.WithILInstruction(inst)
-				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle"))));
+				.WithRR(new TypeResolveResult(compilation.FindType(KnownTypeCode.RuntimeTypeHandle)));
 		}
 
 		protected internal override TranslatedExpression VisitRefAnyValue(RefAnyValue inst, TranslationContext context)

@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var falseStore = new StLoc(v, falseValue).WithILRange(falseValue);
 				var trueBlock = new Block { Instructions = { trueStore } }.WithILRange(trueStore);
 				var falseBlock = new Block { Instructions = { falseStore } }.WithILRange(falseStore);
-				var expanded = new IfInstruction(condition, trueBlock, falseBlock);
+				var expanded = new IfInstruction(condition, trueBlock, falseBlock, context.TypeSystem.FindType(KnownTypeCode.Void));
 				expanded.AddILRange(ifInst);
 				expanded.AddILRange(stloc);
 				stloc.ReplaceWith(expanded);

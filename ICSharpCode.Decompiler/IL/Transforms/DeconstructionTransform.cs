@@ -1147,7 +1147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					var receiver = nested.Receiver!;
 					match.SubPatterns.Add(BuildPatternMatch(nested, receiver,
-						new DeconstructResultInstruction(i, receiver.StackType, new LdLoc(matchVariable))));
+						new DeconstructResultInstruction(i, receiver.Type, receiver.StackType, new LdLoc(matchVariable))));
 				}
 				else
 				{
@@ -1156,7 +1156,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					match.SubPatterns.Add(
 						new MatchInstruction(
 							result,
-							new DeconstructResultInstruction(i, result.StackType, new LdLoc(matchVariable))
+							new DeconstructResultInstruction(i, result.Type, result.StackType, new LdLoc(matchVariable))
 						)
 					);
 				}
@@ -1188,7 +1188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (TupleType.GetTupleElementTypes(nested.Variable.Type).IsDefaultOrEmpty)
 						nested.Variable.Type = nested.Type;
 					match.SubPatterns.Add(BuildTuplePatternMatch(nested, nested.Variable,
-						new DeconstructResultInstruction(i, nested.Variable.StackType, new LdLoc(matchVariable))));
+						new DeconstructResultInstruction(i, node.Type.ElementTypes[i], nested.Variable.StackType, new LdLoc(matchVariable))));
 				}
 				else
 				{
@@ -1207,7 +1207,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					match.SubPatterns.Add(
 						new MatchInstruction(
 							result,
-							new DeconstructResultInstruction(i, result.StackType, new LdLoc(matchVariable))
+							new DeconstructResultInstruction(i, node.Type.ElementTypes[i], result.StackType, new LdLoc(matchVariable))
 						)
 					);
 				}

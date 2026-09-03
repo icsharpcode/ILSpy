@@ -161,6 +161,20 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.O : StackType.I4;
+
+		public override IType InferType(ICompilation compilation)
+		{
+			IType boolType = compilation.FindType(KnownTypeCode.Boolean);
+			if (LiftingKind == ComparisonLiftingKind.ThreeValuedLogic)
+			{
+				return NullableType.Create(compilation, boolType);
+			}
+			else
+			{
+				return boolType;
+			}
+		}
+
 		public bool IsLifted => LiftingKind != ComparisonLiftingKind.None;
 		public StackType UnderlyingResultType => StackType.I4;
 

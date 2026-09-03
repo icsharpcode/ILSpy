@@ -156,6 +156,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType => type.GetStackType();
 
+		public override IType InferType(ICompilation compilation) => type;
+
 		public bool IsChecked => (BinderFlags & CSharpBinderFlags.CheckedContext) != 0;
 
 		public bool IsExplicit => (BinderFlags & CSharpBinderFlags.ConvertExplicit) != 0;
@@ -223,6 +225,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType => StackType.O;
 
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
+
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
 			index += ArgumentInfoOffset;
@@ -256,6 +260,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -292,6 +297,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -330,6 +336,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -362,6 +369,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -402,6 +410,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => Type.GetStackType();
+		public override IType InferType(ICompilation compilation) => Type;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -440,6 +449,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -482,6 +492,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -541,6 +552,18 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		public override IType InferType(ICompilation compilation)
+		{
+			switch (Operation)
+			{
+				case ExpressionType.IsFalse:
+				case ExpressionType.IsTrue:
+					return compilation.FindType(KnownTypeCode.Boolean);
+				default:
+					return SpecialType.Dynamic;
+			}
+		}
+
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
 			switch (index)
@@ -575,6 +598,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{
@@ -607,6 +631,8 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType => StackType.I4;
+
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Boolean);
 
 		public override CSharpArgumentInfo GetArgumentInfoOfChild(int index)
 		{

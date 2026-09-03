@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		/// <summary>
 		/// Infers the C# type an instruction expects of the child in <paramref name="childIndex"/>,
-		/// i.e. the counterpart to <see cref="InferType"/>: that one asks what a value is, this one
+		/// i.e. the counterpart to <see cref="ILInstruction.InferType"/>: that one asks what a value is, this one
 		/// asks what the position it flows into says it should be.
 		///
 		/// Returns SpecialType.UnknownType where the position names nothing.
@@ -198,131 +198,6 @@ namespace ICSharpCode.Decompiler.IL
 					return compilation?.FindType(KnownTypeCode.Boolean) ?? SpecialType.UnknownType;
 				case NewArr newArr:
 					return compilation?.FindType(KnownTypeCode.Int32) ?? SpecialType.UnknownType;
-				default:
-					return SpecialType.UnknownType;
-			}
-		}
-
-		/// <summary>
-		/// Infers the C# type for an IL instruction.
-		/// 
-		/// Returns SpecialType.UnknownType for unsupported instructions.
-		/// </summary>
-		/// <remarks>
-		/// For instructions with StackType.O that produce a value type, or
-		/// instructions with StackType.Ref, we should aim to return the actual type
-		/// instead of SpecialType.UnknownType.
-		/// 
-		/// If not returning UnknownType, must return a type that can store
-		/// the result of the instruction without loss of information.
-		/// </remarks>
-		public static IType InferType(this ILInstruction inst, ICompilation compilation)
-		{
-			Debug.Assert(compilation != null);
-			switch (inst)
-			{
-				case NewObj newObj:
-					return newObj.Method.DeclaringType ?? SpecialType.UnknownType;
-				case NewArr newArr:
-					return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);
-				case Call call:
-					return call.Method.ReturnType;
-				case CallVirt callVirt:
-					return callVirt.Method.ReturnType;
-				case CallIndirect calli:
-					return calli.FunctionPointerType.ReturnType;
-				case UserDefinedLogicOperator logicOp:
-					return logicOp.Method.ReturnType;
-				case LdObj ldobj:
-					return ldobj.Type;
-				case StObj stobj:
-					return stobj.Type;
-				case LdLoc ldloc:
-					return ldloc.Variable.Type;
-				case StLoc stloc:
-					return stloc.Variable.Type;
-				case LdLoca ldloca:
-					return new ByReferenceType(ldloca.Variable.Type);
-				case LdFlda ldflda:
-					return new ByReferenceType(ldflda.Field.Type);
-				case LdsFlda ldsflda:
-					return new ByReferenceType(ldsflda.Field.Type);
-				case LdElema ldelema:
-					if (ldelema.Array.InferType(compilation) is ArrayType arrayType)
-					{
-						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type))
-						{
-							return new ByReferenceType(arrayType.ElementType);
-						}
-					}
-					return new ByReferenceType(ldelema.Type);
-				case Comp comp:
-					switch (comp.LiftingKind)
-					{
-						case ComparisonLiftingKind.None:
-						case ComparisonLiftingKind.CSharp:
-							return compilation.FindType(KnownTypeCode.Boolean);
-						case ComparisonLiftingKind.ThreeValuedLogic:
-							return NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
-						default:
-							return SpecialType.UnknownType;
-					}
-				case BinaryNumericInstruction bni:
-					if (bni.IsLifted)
-						return SpecialType.UnknownType;
-					switch (bni.Operator)
-					{
-						case BinaryNumericOperator.BitAnd:
-						case BinaryNumericOperator.BitOr:
-						case BinaryNumericOperator.BitXor:
-							var left = bni.Left.InferType(compilation);
-							var right = bni.Right.InferType(compilation);
-							if (left.Equals(right) && (left.IsCSharpPrimitiveIntegerType() || left.IsCSharpNativeIntegerType() || left.IsKnownType(KnownTypeCode.Boolean)))
-								return left;
-							else
-								return SpecialType.UnknownType;
-						default:
-							return SpecialType.UnknownType;
-					}
-				case LdLen ldLen:
-					if (compilation == null)
-						return SpecialType.UnknownType;
-					// Mirrors ExpressionBuilder.VisitLdLen, which picks Array.Length or
-					// Array.LongLength based on the result type alone.
-					return compilation.FindType(ldLen.ResultType == StackType.I4 ? KnownTypeCode.Int32 : KnownTypeCode.Int64);
-				case DefaultValue defaultValue:
-					return defaultValue.Type;
-				case ILFunction func when func.DelegateType != null:
-					return func.DelegateType;
-				case IfInstruction ifInst:
-					// For structs and byrefs, we don't want to return Unknown as a fallback to
-					// to FindType(StackType) wouldn't work. Valid IL should have the same
-					// type on both branches so we just return the first that works.
-					var thenType = ifInst.TrueInst.InferType(compilation);
-					if (thenType.CannotBeReconstructedFromStackType())
-					{
-						return thenType;
-					}
-					var elseType = ifInst.FalseInst.InferType(compilation);
-					if (elseType.CannotBeReconstructedFromStackType())
-					{
-						return elseType;
-					}
-					if (thenType.Equals(elseType))
-					{
-						return thenType;
-					}
-					return SpecialType.UnknownType;
-				case SwitchInstruction switchInst:
-					foreach (var section in switchInst.Sections)
-					{
-						var bodyType = section.Body.InferType(compilation);
-						if (bodyType.CannotBeReconstructedFromStackType())
-						{
-							return bodyType;
-						}
-					}
-					return SpecialType.UnknownType;
 				default:
 					return SpecialType.UnknownType;
 			}

@@ -223,11 +223,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (swap)
 					{
-						condition.Condition = IfInstruction.LogicAnd(Comp.LogicNot(inst.Condition), condition.Condition);
+						condition.Condition = IfInstruction.LogicAnd(Comp.LogicNot(inst.Condition), condition.Condition, context.TypeSystem);
 					}
 					else
 					{
-						condition.Condition = IfInstruction.LogicAnd(inst.Condition, condition.Condition);
+						condition.Condition = IfInstruction.LogicAnd(inst.Condition, condition.Condition, context.TypeSystem);
 					}
 				}
 			}
@@ -433,11 +433,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 					if (forCondition == null)
 					{
-						forCondition = new IfInstruction(condition, whileCondition.TrueInst, whileCondition.FalseInst);
+						forCondition = new IfInstruction(condition, whileCondition.TrueInst, whileCondition.FalseInst,
+							whileCondition.InferType(context.TypeSystem));
 					}
 					else
 					{
-						forCondition.Condition = IfInstruction.LogicAnd(forCondition.Condition, condition);
+						forCondition.Condition = IfInstruction.LogicAnd(forCondition.Condition, condition, context.TypeSystem);
 					}
 					numberOfConditions++;
 				}

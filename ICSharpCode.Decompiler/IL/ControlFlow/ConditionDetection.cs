@@ -440,7 +440,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& trueBlock.Instructions[0].MatchIfInstruction(out var nestedCondition, out var nestedTrueInst))
 			{
 				context.Step("Combine 'if (cond1 && cond2)' in then-branch", ifInst);
-				ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, nestedCondition);
+				ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, nestedCondition, context.TypeSystem);
 				ifInst.TrueInst = nestedTrueInst;
 			}
 		}

@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				nonNullInst = arg;
 				removedRewrapOrNullableCtor = true;
 			}
-			else if (nonNullInst.MatchNullableRewrap(out arg))
+			else if (nonNullInst.MatchNullableRewrap(out arg, out _))
 			{
 				nonNullInst = arg;
 				removedRewrapOrNullableCtor = true;
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// testedVar != null ? testedVar.AccessChain : null
 				// => testedVar?.AccessChain
 				IntroduceUnwrap(testedVar, varLoad, mode);
-				var result = new NullableRewrap(nonNullInst);
+				var result = new NullableRewrap(nonNullInst, returnType);
 				context.EndStep(result);
 				return result;
 			}
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// testedVar != null ? testedVar.AccessChain : default(T?)
 				// => testedVar?.AccessChain
 				IntroduceUnwrap(testedVar, varLoad, mode);
-				var result = new NullableRewrap(nonNullInst);
+				var result = new NullableRewrap(nonNullInst, type);
 				context.EndStep(result);
 				return result;
 			}
@@ -154,8 +154,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Span<T> is excluded because it cannot be wrapped in Nullable<T> for the ?. / ?? form)
 				IntroduceUnwrap(testedVar, varLoad, mode);
 				var result = new NullCoalescingInstruction(
+					nullInst.InferType(context.TypeSystem),
 					NullCoalescingKind.NullableWithValueFallback,
-					new NullableRewrap(nonNullInst),
+					new NullableRewrap(nonNullInst, NullableType.Create(context.TypeSystem, returnType)),
 					nullInst
 				) {
 					UnderlyingResultType = nullInst.ResultType
@@ -231,7 +232,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (body == null || body.Instructions.Count != 1)
 				return;
 			var bodyInst = body.Instructions[0];
-			if (bodyInst.MatchNullableRewrap(out var arg))
+			if (bodyInst.MatchNullableRewrap(out var arg, out _))
 			{
 				bodyInst = arg;
 			}
@@ -241,9 +242,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (testedVar != null) { testedVar.AccessChain(); }
 			// => testedVar?.AccessChain();
 			IntroduceUnwrap(testedVar, varLoad, mode);
-			var replacement = new NullableRewrap(
-				bodyInst
-			).WithILRange(ifInst);
+			var returnType = bodyInst.InferType(context.TypeSystem);
+			if (returnType.Kind != TypeKind.Void)
+			{
+				returnType = NullableType.Create(context.TypeSystem, returnType);
+			}
+			var replacement = new NullableRewrap(bodyInst, returnType).WithILRange(ifInst);
 			ifInst.ReplaceWith(replacement);
 			context.EndStep(replacement);
 		}
@@ -404,17 +408,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case Mode.ReferenceType:
 				case Mode.UnconstrainedType:
 					// Wrap varLoad in nullable.unwrap:
-					replacement = new NullableUnwrap(varLoad.ResultType, varLoad, refInput: varLoad.ResultType == StackType.Ref);
+					replacement = new NullableUnwrap(varLoad.InferType(context.TypeSystem), varLoad.ResultType, varLoad, refInput: varLoad.ResultType == StackType.Ref);
 					break;
 				case Mode.NullableByValue:
 					Debug.Assert(NullableLiftingTransform.MatchGetValueOrDefault(varLoad, testedVar));
 					replacement = new NullableUnwrap(
+						varLoad.InferType(context.TypeSystem),
 						varLoad.ResultType,
 						new LdLoc(testedVar).WithILRange(varLoad.Children[0])
 					).WithILRange(varLoad);
 					break;
 				case Mode.NullableByReference:
 					replacement = new NullableUnwrap(
+						varLoad.InferType(context.TypeSystem),
 						varLoad.ResultType,
 						new LdLoc(testedVar).WithILRange(varLoad.Children[0]),
 						refInput: true

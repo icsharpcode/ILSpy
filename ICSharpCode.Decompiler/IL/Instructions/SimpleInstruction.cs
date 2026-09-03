@@ -17,6 +17,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler.TypeSystem;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
@@ -73,6 +75,11 @@ namespace ICSharpCode.Decompiler.IL
 			get { return ExpectedResultType; }
 		}
 
+		public override IType InferType(ICompilation compilation)
+		{
+			return compilation.FindType(ExpectedResultType);
+		}
+
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -99,6 +106,11 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType {
 			get { return ExpectedResultType; }
+		}
+
+		public override IType InferType(ICompilation compilation)
+		{
+			return compilation.FindType(ExpectedResultType);
 		}
 
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)

@@ -65,10 +65,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// RefOutput can only be used if RefInput is also used.
 		/// </summary>
 		public bool RefOutput { get => ResultType == StackType.Ref; }
+		public IType Type { get; }
 
-		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput = false)
+		public NullableUnwrap(IType type, StackType unwrappedType, ILInstruction argument, bool refInput = false)
 			: base(OpCode.NullableUnwrap, argument)
 		{
+			this.Type = type;
 			this.ResultType = unwrappedType;
 			this.RefInput = refInput;
 			if (unwrappedType == StackType.Ref)
@@ -105,6 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType { get; }
+		public override IType InferType(ICompilation compilation) => Type;
 	}
 
 	partial class NullableRewrap
@@ -131,9 +134,10 @@ namespace ICSharpCode.Decompiler.IL
 				if (Argument.ResultType == StackType.Void)
 					return StackType.Void;
 				else
-					return StackType.O;
+					return StackType.VT;
 			}
 		}
+		public override IType InferType(ICompilation compilation) => Type;
 
 		internal override bool PrepareExtract(int childIndex, ExtractionContext ctx)
 		{

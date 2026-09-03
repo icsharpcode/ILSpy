@@ -44,7 +44,11 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly InstructionCollection<Block> Blocks;
 
 		public ContainerKind Kind { get; set; }
-		public StackType ExpectedResultType { get; set; }
+		IType? expectedResultType; // null means void
+		public IType? ExpectedResultType {
+			get => expectedResultType;
+			set => expectedResultType = value;
+		}
 
 		int leaveCount;
 
@@ -80,16 +84,16 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public BlockContainer(ContainerKind kind = ContainerKind.Normal, StackType expectedResultType = StackType.Void) : base(OpCode.BlockContainer)
+		public BlockContainer(ContainerKind kind = ContainerKind.Normal, IType? expectedResultType = null) : base(OpCode.BlockContainer)
 		{
 			this.Kind = kind;
 			this.Blocks = new InstructionCollection<Block>(this, 0);
-			this.ExpectedResultType = expectedResultType;
+			this.expectedResultType = expectedResultType;
 		}
 
 		public override ILInstruction Clone()
 		{
-			BlockContainer clone = new BlockContainer(this.Kind, this.ExpectedResultType);
+			BlockContainer clone = new BlockContainer(this.Kind, this.expectedResultType);
 			clone.AddILRange(this);
 			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
 			// Adjust branch instructions to point to the new container
@@ -234,6 +238,20 @@ namespace ICSharpCode.Decompiler.IL
 					Debug.Assert(bodyStartBlock == Blocks[1]);
 					break;
 			}
+		}
+
+		public override StackType ResultType {
+			get {
+				if (expectedResultType != null)
+					return expectedResultType.GetStackType();
+				else
+					return StackType.Void;
+			}
+		}
+
+		public override IType InferType(ICompilation compilation)
+		{
+			return expectedResultType ?? compilation.FindType(StackType.Void);
 		}
 
 		protected override InstructionFlags ComputeFlags()

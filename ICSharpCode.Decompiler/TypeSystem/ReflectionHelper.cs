@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case StackType.Unknown:
 					return SpecialType.UnknownType;
 				case StackType.Ref:
-					return new ByReferenceType(SpecialType.UnknownType);
+					return new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
 				default:
 					return compilation.FindType(stackType.ToKnownTypeCode(sign));
 			}
