@@ -54,11 +54,7 @@ public class FoldingContextMenuTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		view.HasFoldings.Should().BeTrue("decompiling a type produces brace foldings");
 
@@ -100,11 +96,7 @@ public class FoldingContextMenuTests
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
-		for (int i = 0; i < 8; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			await Task.Delay(25);
-		}
+		await Waiters.WaitForIdleAsync();
 
 		// ILSpy collapses method-body folds by default, leaving the outer type-body fold open. Two of
 		// those collapsed method folds are disjoint siblings: right-click "Toggle folding" on one while

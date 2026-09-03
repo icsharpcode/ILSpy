@@ -92,7 +92,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (e.Data.GetDataPresent(AssemblyTreeNode.DataFormat) || e.Data.GetDataPresent(FileDropFormat))
 			{
-				e.Effects = ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.Move;
+				// Offer every effect and let the drag source pick: some external sources (e.g. FileLocator
+				// Pro) only permit Copy, and answering just Move makes OLE reject the drop with a no-drop cursor.
+				e.Effects = ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.Move
+					| ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.Copy
+					| ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.Link;
 				return true;
 			}
 			e.Effects = ICSharpCode.ILSpyX.TreeView.PlatformAbstractions.XPlatDragDropEffects.None;

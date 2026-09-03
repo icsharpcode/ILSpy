@@ -92,10 +92,7 @@ public class DocumentationLinkTests
 		MessageBus<NavigateToReferenceEventArgs>.Subscribers += capture;
 		try
 		{
-			var centre = link.TranslatePoint(
-				new Point(link.Bounds.Width / 2, link.Bounds.Height / 2), window)!.Value;
-			window.MouseDown(centre, MouseButton.Left);
-			window.MouseUp(centre, MouseButton.Left);
+			await window.ClickAsync(() => link);
 		}
 		finally
 		{

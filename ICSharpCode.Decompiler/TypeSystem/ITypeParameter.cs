@@ -129,19 +129,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Represents the variance of a type parameter.
 	/// </summary>
-	public enum VarianceModifier : byte
+	public enum VarianceModifier : sbyte
 	{
 		/// <summary>
 		/// The type parameter is not variant.
 		/// </summary>
-		Invariant,
+		Invariant = 0,
 		/// <summary>
 		/// The type parameter is covariant (used in output position).
 		/// </summary>
-		Covariant,
+		Covariant = 1,
 		/// <summary>
 		/// The type parameter is contravariant (used in input position).
 		/// </summary>
-		Contravariant
+		Contravariant = -1
 	};
+
+	static class VarianceExtensions
+	{
+		/// <summary>
+		/// Combines variance modifiers.
+		/// It's like a multiplication where Invariant is 0, Covariant is +1 and Contravariant is -1.
+		/// </summary>
+		public static VarianceModifier Combine(this VarianceModifier a, VarianceModifier b)
+		{
+			// By picking matching enum values, we can actually implement this as multiplication.
+			return (VarianceModifier)((sbyte)a * (sbyte)b);
+		}
+	}
 }

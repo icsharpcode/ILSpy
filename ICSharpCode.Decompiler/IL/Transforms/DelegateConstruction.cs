@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
 			// how the lambda body is being transformed.
 			value.ReplaceWith(function);
-			function.CheckInvariant(ILPhase.Normal);
+			function.CheckInvariant(ILPhase.Normal, context.TypeSystem);
 
 			var contextPrefix = targetMethod.Name;
 			foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter))

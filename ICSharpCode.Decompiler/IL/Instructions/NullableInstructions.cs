@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -64,10 +65,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// RefOutput can only be used if RefInput is also used.
 		/// </summary>
 		public bool RefOutput { get => ResultType == StackType.Ref; }
+		public IType Type { get; }
 
-		public NullableUnwrap(StackType unwrappedType, ILInstruction argument, bool refInput = false)
+		public NullableUnwrap(IType type, StackType unwrappedType, ILInstruction argument, bool refInput = false)
 			: base(OpCode.NullableUnwrap, argument)
 		{
+			this.Type = type;
 			this.ResultType = unwrappedType;
 			this.RefInput = refInput;
 			if (unwrappedType == StackType.Ref)
@@ -76,9 +79,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			if (this.RefInput)
 			{
 				Debug.Assert(Argument.ResultType == StackType.Ref, "nullable.unwrap expects reference to nullable type as input");
@@ -104,13 +107,14 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public override StackType ResultType { get; }
+		public override IType InferType(ICompilation compilation) => Type;
 	}
 
 	partial class NullableRewrap
 	{
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(Argument.HasFlag(InstructionFlags.MayUnwrapNull));
 		}
 
@@ -130,9 +134,10 @@ namespace ICSharpCode.Decompiler.IL
 				if (Argument.ResultType == StackType.Void)
 					return StackType.Void;
 				else
-					return StackType.O;
+					return StackType.VT;
 			}
 		}
+		public override IType InferType(ICompilation compilation) => Type;
 
 		internal override bool PrepareExtract(int childIndex, ExtractionContext ctx)
 		{

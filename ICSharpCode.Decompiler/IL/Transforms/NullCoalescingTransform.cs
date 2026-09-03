@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (trueInst.MatchStLoc(stloc.Variable, out var fallbackValue))
 			{
 				context.Step("NullCoalescingTransform: simple (reference types)", stloc);
-				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
+				stloc.Value = new NullCoalescingInstruction(stloc.Variable.Type, NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
@@ -85,7 +85,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& useOfTemporary.MatchLdLoc(temporary))
 			{
 				context.Step("NullCoalescingTransform: with temporary variable (reference types)", stloc);
-				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
+				stloc.Value = new NullCoalescingInstruction(stloc.Variable.Type, NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
@@ -99,8 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (context.Settings.ThrowExpressions && trueInst is Throw throwInst)
 			{
 				context.Step("NullCoalescingTransform (reference types + throw expression)", stloc);
-				throwInst.resultType = StackType.O;
-				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, throwInst);
+				stloc.Value = new NullCoalescingInstruction(stloc.Variable.Type, NullCoalescingKind.Ref, stloc.Value, throwInst);
 				block.Instructions.RemoveAt(pos + 1); // remove if instruction
 				ILInlining.InlineOneIfPossible(block, pos, InliningOptions.None, context);
 				return true;
@@ -156,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var paramLoadChildIndex = paramLoad.ChildIndex;
 			var throwInstParent = throwInst.Parent;
 			var throwInstChildIndex = throwInst.ChildIndex;
-			var expressionWithThrow = new NullCoalescingInstruction(NullCoalescingKind.Ref, paramLoad, throwInst);
+			var expressionWithThrow = new NullCoalescingInstruction(paramLoad.Variable.Type, NullCoalescingKind.Ref, paramLoad, throwInst);
 			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 1], paramLoad.Variable, expressionWithThrow,
 				InliningOptions.None);
 			if (result.Type != ILInlining.FindResultType.Found || result.LoadInst is not LdLoc firstUse)
@@ -173,7 +172,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var temp = function.RegisterVariable(VariableKind.StackSlot, paramLoad.Variable.Type);
 			firstUse.Variable = temp;
-			throwInst.resultType = StackType.O;
 			var stloc = new StLoc(temp, expressionWithThrow);
 			stloc.AddILRange(guard);
 			block.Instructions[pos] = stloc;
@@ -230,18 +228,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var throwInstParent = throwInst.Parent;
 			var throwInstChildIndex = throwInst.ChildIndex;
+			var underlyingType = NullableType.GetUnderlyingType(call.Method.DeclaringType);
 			var nullCoalescingWithThrow = new NullCoalescingInstruction(
+				underlyingType,
 				NullCoalescingKind.NullableWithValueFallback,
 				stloc.Value,
 				throwInst);
-			var resultType = NullableType.GetUnderlyingType(call.Method.DeclaringType).GetStackType();
+			var resultType = underlyingType.GetStackType();
 			nullCoalescingWithThrow.UnderlyingResultType = resultType;
 			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], v, nullCoalescingWithThrow, InliningOptions.None);
 			if (result.Type == ILInlining.FindResultType.Found
 				&& NullableLiftingTransform.MatchGetValueOrDefault(result.LoadInst.Parent, v))
 			{
 				context.Step("NullCoalescingTransform (value types + throw expression)", stloc);
-				throwInst.resultType = resultType;
 				result.LoadInst.Parent.ReplaceWith(nullCoalescingWithThrow);
 				block.Instructions.RemoveRange(pos, 2); // remove store(s) and if instruction
 				return true;

@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					transform.Run(block, pos, ctx);
 #if DEBUG
-					block.Instructions[pos].CheckInvariant(ILPhase.Normal);
+					block.Instructions[pos].CheckInvariant(ILPhase.Normal, context.TypeSystem);
 					for (int i = Math.Max(0, pos - 100); i < pos; ++i)
 					{
 						if (block.Instructions[i].IsDirty)

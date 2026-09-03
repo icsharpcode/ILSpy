@@ -35,7 +35,7 @@
 		new OpCode("CallInstruction", "Instruction with a list of arguments.",
 			AbstractBaseClass, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}),
 			CustomConstructor, CustomWriteTo, MayThrow, SideEffect),
-		new OpCode("PatternInstruction", "Base class for pattern matching in ILAst.", AbstractBaseClass, ResultType("Unknown")) { Namespace = "ICSharpCode.Decompiler.IL.Patterns" },
+		new OpCode("PatternInstruction", "Base class for pattern matching in ILAst.", AbstractBaseClass, ResultType("SpecialType.UnknownType")) { Namespace = "ICSharpCode.Decompiler.IL.Patterns" },
 		new OpCode("CompoundAssignmentInstruction", "Common instruction for compound assignments.",
 			AbstractBaseClass, CustomConstructor, CustomArguments(("target", null), ("value", null))),
 		new OpCode("DynamicInstruction", "Instruction representing a dynamic call site.",
@@ -53,10 +53,10 @@
 			CustomChildren(new [] {
 				new ChildInfo("body"),
 				new ChildInfo("localFunctions") { IsCollection = true, Type = "ILFunction" }
-			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("DelegateType?.GetStackType() ?? StackType.O")
+			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("DelegateType ?? SpecialType.UnknownType")
 		),
 		new OpCode("BlockContainer", "A container of IL blocks.",
-			ResultType("this.ExpectedResultType"), CustomConstructor, CustomVariableName("container"),
+			CustomConstructor, CustomVariableName("container"),
 			MatchCondition("Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match)")),
 		new OpCode("Block", "A block of IL instructions.",
 			CustomConstructor, CustomVariableName("block"),
@@ -64,7 +64,7 @@
 			MatchCondition("Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match)"),
 			MatchCondition("this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match)")),
 		new OpCode("PinnedRegion", "A region where a pinned variable is used (initial representation of future fixed statement).",
-			ResultType("Void"),
+			VoidResult,
 			HasVariableOperand("Store"),
 			CustomChildren(new []{
 				new ChildInfo("init") { CanInlineInto = true },
@@ -76,7 +76,7 @@
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted")),
 		new OpCode("numeric.compound", "Common instruction for numeric compound assignments.",
 			CustomClassName("NumericCompoundAssign"), BaseClass("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
-			MayThrow, HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo,
+			MayThrow, HasTypeOperand, ResultType("this.type"), CustomWriteTo,
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator"),
 			MatchCondition("this.EvalMode == o.EvalMode"),
 			MatchCondition("this.TargetKind == o.TargetKind"),
@@ -92,13 +92,13 @@
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
 		new OpCode("dynamic.compound", "Common instruction for dynamic compound assignments.",
 			CustomClassName("DynamicCompoundAssign"), BaseClass("CompoundAssignmentInstruction"),
-			MayThrow, SideEffect, CustomWriteTo, CustomConstructor, ResultType("O"),
+			MayThrow, SideEffect, CustomWriteTo, CustomConstructor, ResultType("SpecialType.Dynamic", "O"),
 			MatchCondition("this.EvalMode == o.EvalMode"),
 			MatchCondition("this.TargetKind == o.TargetKind"),
 			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
 		new OpCode("bit.not", "Bitwise NOT", Unary, CustomConstructor, MatchCondition("IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType")),
-		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
+		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("RuntimeArgumentHandle", "VT")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
 			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch,
 			MatchCondition("this.TargetBlock == o.TargetBlock")),
@@ -123,7 +123,7 @@
 			MatchCondition("IsLifted == o.IsLifted && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match)")),
 		new OpCode("switch.section", "Switch section within a switch statement",
 			CustomClassName("SwitchSection"), CustomChildren(new [] { new ChildInfo("body") }),
-			CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void"),
+			CustomConstructor, CustomComputeFlags, CustomWriteTo, VoidResult,
 			MatchCondition("this.Labels.SetEquals(o.Labels) && this.HasNullLabel == o.HasNullLabel")),
 		new OpCode("try.catch", "Try-catch statement.",
 			BaseClass("TryInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo,
@@ -133,7 +133,8 @@
 			CustomChildren(new [] {
 				new ChildInfo("filter"),
 				new ChildInfo("body"),
-			}), HasVariableOperand("Store", generateCheckInvariant: false), CustomWriteTo, CustomComputeFlags),
+			}), HasVariableOperand("Store", generateCheckInvariant: false),
+			CustomWriteTo, CustomComputeFlags, VoidResult),
 		new OpCode("try.finally", "Try-finally statement",
 			BaseClass("TryInstruction"), CustomConstructor, CustomWriteTo, CustomComputeFlags,
 			MatchCondition("TryBlock.PerformMatch(o.TryBlock, ref match) && finallyBlock.PerformMatch(o.finallyBlock, ref match)")),
@@ -145,12 +146,12 @@
 			CustomChildren(new [] {
 				new ArgumentInfo("onExpression") { ExpectedTypes = new[] { "O" }},
 				new ChildInfo("body")
-			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
+			}), CustomWriteTo, ControlFlow, SideEffect, VoidResult),
 		new OpCode("using", "Using statement", CustomClassName("UsingInstruction"), HasVariableOperand("Store"),
 			CustomChildren(new [] {
 				new ArgumentInfo("resourceExpression") { ExpectedTypes = new[] { "O" }},
 				new ChildInfo("body")
-			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
+			}), CustomWriteTo, ControlFlow, SideEffect, VoidResult),
 		new OpCode("debug.break", "Breakpoint instruction",
 			NoArguments, VoidResult, SideEffect),
 		new OpCode("comp", "Comparison. The inputs must be both integers; or both floats; or both object references. "
@@ -174,19 +175,19 @@
 			Unary, CustomConstructor,
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType && IsLifted == o.IsLifted")),
 		new OpCode("ldloc", "Loads the value of a local variable. (ldarg/ldloc)",
-			CustomClassName("LdLoc"), NoArguments, HasVariableOperand("Load"), ResultType("variable.StackType")),
+			CustomClassName("LdLoc"), NoArguments, HasVariableOperand("Load"), ResultType("variable.Type", "variable.StackType")),
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
-			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand("Address")),
+			CustomClassName("LdLoca"), NoArguments, ResultType("new ByReferenceType(variable.Type)", "Ref"), HasVariableOperand("Address")),
 		new OpCode("stloc", "Stores a value into a local variable. (IL: starg/stloc)" + Environment.NewLine
 				+ "Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())",
 			CustomClassName("StLoc"), HasVariableOperand("Store", generateCheckInvariant: false), CustomArguments(("value", null)),
-			ResultType("variable.StackType")),
+			ResultType("variable.Type", "variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
-			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref"), HasTypeOperand),
+			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("new ByReferenceType(type)", "Ref"), HasTypeOperand),
 		new OpCode("3vl.bool.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
-			CustomClassName("ThreeValuedBoolAnd"), Binary, ResultType("O")),
+			CustomClassName("ThreeValuedBoolAnd"), Binary),
 		new OpCode("3vl.bool.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
-			CustomClassName("ThreeValuedBoolOr"), Binary, ResultType("O")),
+			CustomClassName("ThreeValuedBoolOr"), Binary),
 		new OpCode("nullable.unwrap", "The input operand must be one of:" + Environment.NewLine
 				+ "  1. a nullable value type" + Environment.NewLine
 				+ "  2. a reference type" + Environment.NewLine
@@ -200,114 +201,132 @@
 				+ "If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type)."
 				+ "If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,"
 				+ "the nullable.rewrap instruction evaluates to null.",
-			Unary, CustomComputeFlags),
+			Unary, CustomComputeFlags, HasTypeOperand),
 
 		new OpCode("ldstr", "Loads a constant string.",
-			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
+			CustomClassName("LdStr"), LoadConstant("string"), ResultType("String", "Obj")),
 		new OpCode("ldstr.utf8", "Loads a constant byte string (as ReadOnlySpan&lt;byte&gt;).",
-			CustomClassName("LdStrUtf8"), LoadConstant("string"), ResultType("O")),
+			CustomClassName("LdStrUtf8"), LoadConstant("string"),
+				ResultType("new ParameterizedType(compilation.FindType(KnownTypeCode.ReadOnlySpanOfT), compilation.FindType(KnownTypeCode.Boolean))", "VT")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
-			LoadConstant("int"), ResultType("I4")),
+			LoadConstant("int"), ResultType("Int32", "I4")),
 		new OpCode("ldc.i8", "Loads a constant 64-bit integer.",
-			LoadConstant("long"), ResultType("I8")),
+			LoadConstant("long"), ResultType("Int64", "I8")),
 		new OpCode("ldc.f4", "Loads a constant 32-bit floating-point number.",
-			LoadConstant("float"), ResultType("F4")),
+			LoadConstant("float"), ResultType("Single", "F4")),
 		new OpCode("ldc.f8", "Loads a constant 64-bit floating-point number.",
-			LoadConstant("double"), ResultType("F8")),
+			LoadConstant("double"), ResultType("Double", "F8")),
 		new OpCode("ldc.decimal", "Loads a constant decimal.",
-			LoadConstant("decimal"), ResultType("O")),
+			LoadConstant("decimal"), ResultType("Decimal", "O")),
 		new OpCode("ldnull", "Loads the null reference.",
-			CustomClassName("LdNull"), NoArguments, ResultType("O")),
+			CustomClassName("LdNull"), NoArguments, ResultType("Object", "Obj")),
 		new OpCode("ldftn", "Load method pointer",
-			CustomClassName("LdFtn"), NoArguments, HasMethodOperand(), ResultType("I")),
+			CustomClassName("LdFtn"), NoArguments, HasMethodOperand(), ResultType("IntPtr", "I")),
 		new OpCode("ldvirtftn", "Load method pointer",
-			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand(), MayThrow, ResultType("I")),
+			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand(), MayThrow, ResultType("IntPtr", "I")),
 		new OpCode("ldvirtdelegate", "Virtual delegate construction",
 			CustomClassName("LdVirtDelegate"), Unary, HasTypeOperand, HasMethodOperand(),
-			MayThrow, ResultType("O")),
+			MayThrow, ResultType("this.type", "Obj")),
 		new OpCode("ldtypetoken", "Loads runtime representation of metadata token",
-			CustomClassName("LdTypeToken"), NoArguments, HasTypeOperand, ResultType("O")),
+			CustomClassName("LdTypeToken"), NoArguments, HasTypeOperand, ResultType("RuntimeTypeHandle", "VT")),
 		new OpCode("ldmembertoken", "Loads runtime representation of metadata token",
-			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand, ResultType("O")),
+			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand,
+			ResultType("compilation.FindType(member is IField ? KnownTypeCode.RuntimeFieldHandle : KnownTypeCode.RuntimeMethodHandle)", "VT")),
 		new OpCode("localloc", "Allocates space in the stack frame",
-			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
+			ResultType("new PointerType(compilation.FindType(KnownTypeCode.Void))", "I"),
+			CustomClassName("LocAlloc"), Unary, MayThrow),
 		new OpCode("localloc.span", "Allocates space in the stack frame and wraps it in a Span",
-			CustomClassName("LocAllocSpan"), Unary, HasTypeOperand, ResultType("O"), MayThrow),
+			CustomClassName("LocAllocSpan"), Unary, HasTypeOperand, ResultType("this.type", "VT"), MayThrow),
 		new OpCode("cpblk", "memcpy(destAddress, sourceAddress, size);",
 			CustomArguments(("destAddress", new[] { "I", "Ref" }), ("sourceAddress", new[] { "I", "Ref" }), ("size", new[] { "I4" })),
 			MayThrow, MemoryAccess,
-			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult),
 		new OpCode("initblk", "memset(address, value, size)",
 			CustomArguments(("address", new[] { "I", "Ref" }), ("value", new[] { "I4" }), ("size", new[] { "I4" })),
 			MayThrow, MemoryAccess,
-			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult),
 
 		new OpCode("ldflda", "Load address of instance field",
 			CustomClassName("LdFlda"), CustomArguments(("target", null)), MayThrowIfNotDelayed, HasFieldOperand,
-			ResultType("target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref")),
+			ResultType(
+				"target.ResultType.IsIntegerType() ? new PointerType(field.Type) : new ByReferenceType(field.Type)",
+				"target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref")),
 		new OpCode("ldsflda", "Load static field address",
-			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
+			CustomClassName("LdsFlda"), NoArguments, ResultType("new ByReferenceType(field.Type)", "Ref"), HasFieldOperand),
 			
 		new OpCode("castclass", "Casts an object to a class.",
-			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("type.GetStackType()")),
+			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("this.type")),
 		new OpCode("isinst", "Test if object is instance of class or interface.",
-			CustomClassName("IsInst"), Unary, HasTypeOperand, ResultType("O")),
+			CustomClassName("IsInst"), Unary, HasTypeOperand, ResultType("Object", "Obj")),
 		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
 			CustomClassName("LdObj"), CustomArguments(("target", new[] { "Ref", "I" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
-			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
-		new OpCode("ldobj.if.ref", "If argument is a ref to a reference type, loads the object reference, stores it in a temporary, and evaluates to the address of that temporary (address.of(ldobj(arg))). Otherwise, returns the argument ref as-is.<para>This instruction represents the memory-load semantics of callvirt with a generic type as receiver (where the IL always takes a ref, but only methods on value types expect one, for method on reference types there's an implicit ldobj, which this instruction makes explicit in order to preserve the order-of-evaluation).</para>",
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("this.type")),
+		new OpCode("ldobj.if.ref", "If argument is a ref to a reference type, loads the object reference, stores it in a temporary, " +
+			"and evaluates to the address of that temporary (address.of(ldobj(arg))). Otherwise, returns the argument ref as-is.<para>" + 
+			"This instruction represents the memory-load semantics of callvirt with a generic type as receiver (where the IL always takes " +
+			"a ref, but only methods on value types expect one, for method on reference types there's an implicit ldobj, which this "+
+			"instruction makes explicit in order to preserve the order-of-evaluation).</para>",
 			CustomClassName("LdObjIfRef"), CustomArguments(("target", new[] { "Ref", "I" })), HasTypeOperand, MemoryAccess,
-			MayThrow, ResultType("Ref")),
+			MayThrow, ResultType("new ByReferenceType(this.type)", "Ref")),
 		new OpCode("stobj", "Indirect store (store to ref/pointer)." + Environment.NewLine
-				+ "Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())",
-			CustomClassName("StObj"), CustomArguments(("target", new[] { "Ref", "I" }), ("value", new[] { "type.GetStackType()" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
+				+ "Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, "
+				+ "sign/zero extended back to I4 based on type.GetSign())",
+			CustomClassName("StObj"),
+			CustomArguments(("target", new[] { "Ref", "I" }), ("value", new[] { "type.GetStackType()" })),
+			HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
-			ResultType("UnalignedPrefix == 0 ? type.GetStackType() : StackType.Void"),
+			ResultType("UnalignedPrefix == 0 ? type : compilation.FindType(KnownTypeCode.Void)",
+			           "UnalignedPrefix == 0 ? type.GetStackType() : StackType.Void"),
 			CustomInvariant("CheckTargetSlot();")),
 
 		new OpCode("box", "Boxes a value.",
-			Unary, HasTypeOperand, ResultType("O")),
+			Unary, HasTypeOperand, ResultType("Object", "Obj")),
 		new OpCode("unbox", "Compute address inside box.",
-			Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
+			Unary, HasTypeOperand, MayThrow, ResultType("new ByReferenceType(this.type)", "Ref")),
 		new OpCode("unbox.any", "Unbox a value.",
-			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("type.GetStackType()")),
+			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("this.type")),
 		new OpCode("newobj", "Creates an object instance and calls the constructor.",
-			CustomClassName("NewObj"), Call, ResultType("Method.DeclaringType.GetStackType()")),
+			CustomClassName("NewObj"), Call, ResultType("Method.DeclaringType")),
 		new OpCode("newarr", "Creates an array instance.",
-			CustomClassName("NewArr"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("indices") { IsCollection = true } }, true), MayThrow, ResultType("O")),
+			CustomClassName("NewArr"), HasTypeOperand,
+			CustomChildren(new [] { new ArgumentInfo("indices") { IsCollection = true } }, true),
+			MayThrow, ResultType("new ArrayType(compilation, this.Type, this.Indices.Count)", "Obj")),
 		new OpCode("default.value", "Returns the default value for a type.",
-			NoArguments, HasTypeOperand, ResultType("type.GetStackType()")),
+			NoArguments, HasTypeOperand, ResultType("this.type")),
 		new OpCode("throw", "Throws an exception.",
-			Unary, MayThrow, HasFlag("InstructionFlags.EndPointUnreachable"), ResultType("this.resultType")),
+			Unary, MayThrow, VoidResult, HasFlag("InstructionFlags.EndPointUnreachable")),
 		new OpCode("rethrow", "Rethrows the current exception.",
 			NoArguments, MayThrow, UnconditionalBranch),
 		new OpCode("sizeof", "Gets the size of a type in bytes.",
-			CustomClassName("SizeOf"), NoArguments, HasTypeOperand, ResultType("I4")),
+			CustomClassName("SizeOf"), NoArguments, HasTypeOperand, ResultType("Int32", "I4")),
 		
 		new OpCode("ldlen", "Returns the length of an array as 'native unsigned int'.",
 			CustomClassName("LdLen"), CustomArguments(("array", new[] { "O" })), CustomConstructor, CustomWriteTo, MayThrow),
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			BoolFlag("WithSystemIndex"),
-			MayThrowIfNotDelayed, ResultType("Ref"), SupportsReadonlyPrefix),
+			MayThrowIfNotDelayed, ResultType("new ByReferenceType(this.Type)", "Ref"), SupportsReadonlyPrefix),
 		new OpCode("ldelema.inlinearray", "Load address of inline array element.",
 			CustomClassName("LdElemaInlineArray"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
-			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
+			MayThrow, ResultType("new ByReferenceType(this.Type)", "Ref"), SupportsReadonlyPrefix),
 		new OpCode("get.pinnable.reference", "Retrieves a pinnable reference for the input object." + Environment.NewLine
 				+ "The input must be an object reference (O)." + Environment.NewLine
 				+ "If the input is an array/string, evaluates to a reference to the first element/character, or to a null reference if the array is null or empty." + Environment.NewLine
 				+ "Otherwise, uses the GetPinnableReference method to get the reference, or evaluates to a null reference if the input is null." + Environment.NewLine,
-			CustomArguments(("argument", new[] { "O" })), ResultType("Ref"), HasMethodOperand(nullable: true)),
+			CustomArguments(("argument", new[] { "O" })),
+			HasTypeOperand,
+			ResultType("new ByReferenceType(this.Type)", "Ref"), HasMethodOperand(nullable: true)),
 		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
-			CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo, ResultType("I4")),
+			CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo, ResultType("Int32", "I4")),
 
 		new OpCode("expression.tree.cast", "ILAst representation of Expression.Convert.",
-			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo, ResultType("type.GetStackType()"),
+			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo,
+			ResultType("this.type"),
 			MatchCondition("this.IsChecked == o.IsChecked")),
 
 		new OpCode("user.logic.operator", "Use of user-defined &amp;&amp; or || operator.",
 			CustomClassName("UserDefinedLogicOperator"),
-			HasMethodOperand(), ResultType("O"),
+			HasMethodOperand(), ResultType("method.ReturnType"),
 			CustomChildren(new []{
 				new ChildInfo("left") { CanInlineInto = true },
 				new ChildInfo("right") { CanInlineInto = false } // only executed depending on value of left
@@ -352,14 +371,15 @@
 			CustomChildren(new []{
 				new ChildInfo("testedOperand") { CanInlineInto = true },
 				new ChildInfo("subPatterns") { IsCollection = true }
-			}), ResultType("I4"), CustomWriteTo, SideEffect, MayThrow, ControlFlow, CustomInvariant("AdditionalInvariants();")),
+			}), ResultType("Boolean", "I4"), CustomWriteTo, SideEffect, MayThrow, ControlFlow, CustomInvariant("AdditionalInvariants();")),
 
 		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
-			CustomClassName("MakeRefAny"), Unary, HasTypeOperand, ResultType("O")),
+			CustomClassName("MakeRefAny"), Unary, HasTypeOperand, ResultType("TypedReference", "VT")),
 		new OpCode("refanytype", "Push the type token stored in a typed reference.",
-			CustomClassName("RefAnyType"), Unary, ResultType("O")),
+			CustomClassName("RefAnyType"), Unary, ResultType("RuntimeTypeHandle", "VT")),
 		new OpCode("refanyval", "Push the address stored in a typed reference.",
-			CustomClassName("RefAnyValue"), Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
+			CustomClassName("RefAnyValue"), Unary, HasTypeOperand, MayThrow,
+			ResultType("new ByReferenceType(type)", "Ref")),
 
 		new OpCode("yield.return", "Yield an element from an iterator.",
 			MayBranch, // yield return may end up returning if the consumer disposes the iterator
@@ -368,10 +388,10 @@
 		// note: "yield break" is always represented using a "leave" instruction
 		new OpCode("await", "C# await operator.",
 			SideEffect, // other code can run with arbitrary side effects while we're waiting
-			CustomArguments(("value", null)), ResultType("GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown")),
+			CustomArguments(("value", null)), ResultType("GetResultMethod?.ReturnType ?? SpecialType.UnknownType")),
 
 		new OpCode("deconstruct", "Deconstruction statement",
-			CustomClassName("DeconstructInstruction"), CustomConstructor, ResultType("Void"), CustomWriteTo),
+			CustomClassName("DeconstructInstruction"), CustomConstructor, VoidResult, CustomWriteTo),
 		new OpCode("deconstruct.result", "Represents a deconstructed value",
 			CustomClassName("DeconstructResultInstruction"), CustomConstructor, CustomInvariant("AdditionalInvariants();"),
 			Unary, CustomWriteTo),
@@ -455,9 +475,9 @@ namespace <#=opCode.Namespace#>
 		}
 <#		} #>
 <#		if (opCode.Invariants.Count > 0) { #>
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 <#			foreach (var invariant in opCode.Invariants) {#>
 			<#=invariant#>
 <#			} #>
@@ -715,24 +735,28 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	// ResultType trait: the instruction has the specified result type.
-	static Action<OpCode> ResultType(string type)
+	static Action<OpCode> ResultType(string type, string stackType = null)
 	{
-		if (!type.Contains("."))
-			type = "StackType." + type;
+		if (!type.Contains(".") && !type.Contains("("))
+			type = "compilation.FindType(KnownTypeCode." + type + ")";
+		if (stackType != null && !stackType.Contains("."))
+			stackType = "StackType." + stackType;
+		stackType ??= "(" + type + ").GetStackType()";
 		return opCode => {
-			opCode.Members.Add("public override StackType ResultType { get { return " + type + "; } }");
+			opCode.Members.Add("public override StackType ResultType => " + stackType + ";");
+			opCode.Members.Add("public override IType InferType(ICompilation compilation) => " + type + ";");
 		};
 	}
 	
 	// VoidResult trait: the instruction has no result and is not usable as an argument
-	static Action<OpCode> VoidResult = ResultType("Void");
+	static Action<OpCode> VoidResult = ResultType("Void", "Void");
 
 	// ResultTypeParam trait: the instruction takes its result type as ctor parameter
 	static Action<OpCode> ResultTypeParam = opCode => {
 		opCode.ConstructorParameters.Add("StackType resultType");
 		opCode.ConstructorBody.Add("this.resultType = resultType;");
 		opCode.Members.Add("StackType resultType;");
-		opCode.Members.Add("public override StackType ResultType { get { return resultType; } }");
+		opCode.Members.Add("public override StackType ResultType => resultType;");
 	};
 
 	// MayThrow trait: the instruction may throw exceptions

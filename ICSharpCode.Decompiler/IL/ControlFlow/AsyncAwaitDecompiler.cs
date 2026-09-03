@@ -143,9 +143,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			InlineBodyOfMoveNext(function);
-			function.CheckInvariant(ILPhase.InAsyncAwait);
+			function.CheckInvariant(ILPhase.InAsyncAwait, context.TypeSystem);
 			CleanUpBodyOfMoveNext(function);
-			function.CheckInvariant(ILPhase.InAsyncAwait);
+			function.CheckInvariant(ILPhase.InAsyncAwait, context.TypeSystem);
 
 			AnalyzeStateMachine(function);
 			DetectAwaitPattern(function);
@@ -158,11 +158,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			FinalizeInlineMoveNext(function);
 			if (methodType == AsyncMethodType.AsyncEnumerable || methodType == AsyncMethodType.AsyncEnumerator)
 			{
-				((BlockContainer)function.Body).ExpectedResultType = StackType.Void;
+				((BlockContainer)function.Body).ExpectedResultType = context.TypeSystem.FindType(KnownTypeCode.Void);
 			}
 			else
 			{
-				((BlockContainer)function.Body).ExpectedResultType = underlyingReturnType.GetStackType();
+				((BlockContainer)function.Body).ExpectedResultType = underlyingReturnType;
 			}
 
 			// Re-run control flow simplification over the newly constructed set of gotos,

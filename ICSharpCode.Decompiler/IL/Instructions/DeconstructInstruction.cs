@@ -256,17 +256,14 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						return false;
 					}
-					if (stobj.Target.InferType(typeSystem) is ByReferenceType brt)
-						expectedType = brt.ElementType;
-					else
-					{
-						// Pointer targets do not infer a ByReferenceType. stobj.Type cannot stand
-						// in for the element type: it comes from the store opcode, which is
-						// sign-agnostic, so a uint* and an int* both report int32 and a byte*
-						// reports sbyte. Recover the declared type instead, and only fall back to
-						// the store where the target is not a pointer at all.
-						expectedType = GetPointerElementType(stobj.Target, typeSystem) ?? stobj.Type;
-					}
+					// stobj.Type comes from the store opcode and is sign-agnostic (an int* and a
+					// uint* target both store int32), so for pointer targets the element type of
+					// the target's inferred type must be used instead.
+					expectedType = stobj.Target.InferType(typeSystem) switch {
+						ByReferenceType brt => brt.ElementType,
+						PointerType ptr => ptr.ElementType,
+						_ => stobj.Type
+					};
 					value = stobj.Value;
 					return true;
 				default:
@@ -274,31 +271,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		/// <summary>
-		/// The element type of a pointer-typed target. A pointer passing through a stack slot
-		/// is typed IntPtr there, so the declared type has to be taken from the definition the
-		/// slot was filled from. Returns null if the target is not a pointer.
-		/// </summary>
-		static IType GetPointerElementType(ILInstruction target, ICompilation typeSystem)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			// Bounded because a definition chain could be cyclic in invalid IL.
-			for (int step = 0; step < 4; step++)
-			{
-				if (target.InferType(typeSystem) is PointerType pointerType)
-					return pointerType.ElementType;
-				if (!target.MatchLdLoc(out var v) || !v.IsSingleDefinition
-					|| v.StoreInstructions.Count != 1 || !(v.StoreInstructions[0] is StLoc store))
-				{
-					return null;
-				}
-				target = store.Value;
-			}
-			return null;
-		}
-
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			var patternVariables = new HashSet<ILVariable>();
 			var conversionVariables = new HashSet<ILVariable>();
 
@@ -323,7 +298,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			foreach (var inst in assignments.Instructions)
 			{
-				if (!(IsAssignment(inst, typeSystem: null, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
+				if (!(IsAssignment(inst, compilation, out _, out var value) && value.MatchLdLoc(out var inputVariable)))
 					throw new InvalidOperationException("inst is not an assignment!");
 				Debug.Assert(patternVariables.Contains(inputVariable) || conversionVariables.Contains(inputVariable));
 			}

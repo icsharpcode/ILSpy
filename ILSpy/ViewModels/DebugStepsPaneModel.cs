@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Composition;
+using System.Linq;
 
 using Avalonia.Threading;
 
@@ -40,15 +41,14 @@ using ICSharpCode.ILSpy.Util;
 namespace ICSharpCode.ILSpy.ViewModels
 {
 	/// <summary>
-	/// Bottom-aligned tool pane that surfaces the step tree from the active
-	/// <see cref="Languages.IDebugStepProvider"/> language — ILAst (one step per IL transform) or
-	/// C# (one step per AST transform). The ViewModel owns the cross-language / cross-decompile
-	/// state (active language, current Stepper.Steps list, per-language options) so it doesn't
-	/// matter when the matching View materialises — the View just binds to <see cref="Steps"/>
-	/// and lights up whenever the current language is a step provider and a decompile finishes.
+	/// Bottom-aligned tool pane that surfaces the step tree the C# language records while decompiling:
+	/// the IL transforms of each member, the ILAst-to-C# seam, then the C# AST transforms. The
+	/// ViewModel owns the cross-decompile state (active language, current Stepper.Steps list) so it
+	/// doesn't matter when the matching View materialises — the View just binds to <see cref="Steps"/>
+	/// and lights up whenever C# is the current language and a decompile finishes.
 	///
-	/// Compiled only in Debug builds — Release users don't see the pane or the languages
-	/// that populate it.
+	/// Compiled only in Debug builds — Release users don't see the pane, and the decompiler they
+	/// run against records no steps to put in it.
 	/// </summary>
 	[Export]
 	[ExportToolPane(ContentId = PaneContentId, Alignment = ToolPaneAlignment.Bottom, Order = 1, IsVisibleByDefault = false)]
@@ -57,29 +57,38 @@ namespace ICSharpCode.ILSpy.ViewModels
 	{
 		public const string PaneContentId = "DebugSteps";
 
+		/// <summary>
+		/// Whether the C# language should record the IL transforms of every member into its
+		/// <see cref="Stepper"/>. Every retained step pins the ILAst it captured, so recording a whole
+		/// type costs tens of thousands of nodes (System.Linq.Enumerable: 85k, ~35 MB) and a third
+		/// again as much decompilation time - worth it while the pane is on screen to show them,
+		/// wasted while it is closed. Reached from the C# language through composition: the pane is a
+		/// [Shared] export, so the background decompile resolves this very instance.
+		/// </summary>
+		public bool IsRecording { get; private set; }
+
 		readonly LanguageService? languageService;
 
-		IDebugStepProvider? activeLanguage;
+		CSharpLanguage? activeLanguage;
 		int lastSelectedStep = int.MaxValue;
 
 		/// <summary>
-		/// App-wide ILAst writing options shared between the BlockIL language (which reads
-		/// them while emitting the transformed IL) and the DebugSteps view (whose four
-		/// checkboxes toggle their values). Static singleton state because the language is
-		/// MEF-shared and decompiles on background tasks that have no view-model reference.
+		/// App-wide ILAst writing options shared between the C# language (which reads them while
+		/// emitting the ILAst a halted IL step stopped in) and the DebugSteps view (whose four
+		/// checkboxes toggle their values). Reached from the C# language through composition, the same
+		/// way <see cref="IsRecording"/> is.
 		/// </summary>
-		public static ILAstWritingOptions WritingOptions { get; } = new() {
+		public ILAstWritingOptions WritingOptions { get; } = new() {
 			UseFieldSugar = true,
 			UseLogicOperationSugar = true,
 		};
 
 		/// <summary>
-		/// Options controls for the active step-provider language (e.g. ILAst's writing options),
-		/// or null when the language has none. The view selects a template by runtime type, so the
-		/// options shown swap with the language.
+		/// The writing options the checkboxes above the step tree bind to. They govern the ILAst dump
+		/// an IL-phase step renders, which is one step selection away at any time, so unlike the step
+		/// list they are always applicable.
 		/// </summary>
-		[ObservableProperty]
-		object? options;
+		public ILAstWritingOptions Options => WritingOptions;
 
 		/// <summary>
 		/// The recorded transform steps currently backing <see cref="Steps"/>. Tracked so that
@@ -109,9 +118,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 		StepNodeViewModel? selectedStep;
 
 		/// <summary>
-		/// True while the current language is an <see cref="IDebugStepProvider"/>. When false,
-		/// the view replaces the step tree with a "not available" note instead of leaving the
-		/// previous language's stale tree (whose commands would trigger pointless re-decompiles).
+		/// True while the current language records steps, i.e. while it is C#. When false, the view
+		/// replaces the step tree with a "not available" note instead of leaving the previous
+		/// language's stale tree (whose commands would trigger pointless re-decompiles).
 		/// </summary>
 		[ObservableProperty]
 		bool isAvailable;
@@ -174,7 +183,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			// ToolPaneRegistry which materialises this VM which would import DockWorkspace).
 			// Lazy lookup at command-execution time breaks the cycle.
 
-			// Language flips go through LanguageService.CurrentLanguage; the BlockILLanguage
+			// Language flips go through LanguageService.CurrentLanguage; the C# language
 			// pumps StepperUpdated when its decompile finishes. The selection-changed event
 			// is the signal that the user picked a new tree node — clear the step list so
 			// the previous run's nodes aren't shown against a fresh selection. All three
@@ -210,13 +219,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 
 		void TryAttachToCurrentLanguage()
 		{
-			if (languageService?.CurrentLanguage is IDebugStepProvider il)
-				AttachToLanguage(il);
+			if (languageService?.CurrentLanguage is CSharpLanguage csharp)
+				AttachToLanguage(csharp);
 			else
 				DetachFromLanguage();
 		}
 
-		void AttachToLanguage(IDebugStepProvider language)
+		void AttachToLanguage(CSharpLanguage language)
 		{
 			if (ReferenceEquals(activeLanguage, language))
 			{
@@ -230,7 +239,6 @@ namespace ICSharpCode.ILSpy.ViewModels
 			activeLanguage = language;
 			language.StepperUpdated += OnStepperUpdated;
 			SetStepsSource(language.Stepper.Steps);
-			Options = language.StepOptions;
 			IsAvailable = true;
 		}
 
@@ -242,13 +250,17 @@ namespace ICSharpCode.ILSpy.ViewModels
 			{
 				activeLanguage.StepperUpdated -= OnStepperUpdated;
 				activeLanguage = null;
-				Options = null;
 			}
 		}
 
 		void OnStepperUpdated(object? sender, System.EventArgs e)
 		{
 			Dispatcher.UIThread.Post(() => {
+				// A run that started while the pane was open can finish after it closed. Taking its
+				// update would pin the tree straight back into a pane nobody is looking at, undoing
+				// the release that closing just performed.
+				if (!IsRecording)
+					return;
 				if (activeLanguage != null)
 				{
 					SetStepsSource(activeLanguage.Stepper.Steps);
@@ -322,6 +334,9 @@ namespace ICSharpCode.ILSpy.ViewModels
 		static void SnapshotExpansion(StepNodeViewModel node)
 		{
 			node.ExpansionBeforeFilter = node.IsExpanded;
+			// A subtree nobody has expanded has no wrappers and so no expansion state to save.
+			if (!node.HasMaterializedChildren)
+				return;
 			foreach (var child in node.Children)
 				SnapshotExpansion(child);
 		}
@@ -332,6 +347,8 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (node.ExpansionBeforeFilter is bool expanded)
 				node.IsExpanded = expanded;
 			node.ExpansionBeforeFilter = null;
+			if (!node.HasMaterializedChildren)
+				return;
 			foreach (var child in node.Children)
 				RestoreExpansion(child);
 		}
@@ -343,15 +360,32 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// </summary>
 		static bool ApplyFilterToNode(StepNodeViewModel node, string filter)
 		{
-			bool descendantMatches = false;
-			foreach (var child in node.Children)
-				descendantMatches |= ApplyFilterToNode(child, filter);
-			bool selfMatches = node.Description.Contains(filter, System.StringComparison.OrdinalIgnoreCase);
+			bool selfMatches = Matches(node.Description, filter);
+			// Ask the recorded steps, not the wrappers: a subtree with no match stays hidden, and
+			// wrapping it only to hide it would put a view-model on the UI thread for every step of a
+			// recorded type - tens of thousands of them, on the first keystroke.
+			bool descendantMatches = node.Step.Children.Any(step => SubtreeMatches(step, filter));
 			node.IsVisible = selfMatches || descendantMatches;
 			if (descendantMatches)
 				node.IsExpanded = true;
+			// Descend into wrappers that exist either because the path is being revealed or because
+			// an earlier pass built them: those carry visibility state that has to be corrected.
+			if (descendantMatches || node.HasMaterializedChildren)
+			{
+				foreach (var child in node.Children)
+					ApplyFilterToNode(child, filter);
+			}
 			return selfMatches || descendantMatches;
 		}
+
+		static bool SubtreeMatches(Stepper.Node step, string filter)
+		{
+			return Matches(step.Description, filter)
+				|| step.Children.Any(child => SubtreeMatches(child, filter));
+		}
+
+		static bool Matches(string description, string filter)
+			=> description.Contains(filter, System.StringComparison.OrdinalIgnoreCase);
 
 		void OnSelectionChanged(object? sender, AssemblyTreeSelectionChangedEventArgs e)
 		{
@@ -385,12 +419,51 @@ namespace ICSharpCode.ILSpy.ViewModels
 			RequestRedecompile(lastSelectedStep, isDebug: false);
 		}
 
+		/// <summary>
+		/// The C# language whether or not it is the current one. The steps are pinned on the MEF-shared
+		/// language instance, so releasing them cannot depend on which language happens to be selected:
+		/// switching to IL detaches this pane but leaves the recorded tree exactly where it was.
+		/// </summary>
+		CSharpLanguage? StepRecordingLanguage =>
+			activeLanguage ?? languageService?.Languages.OfType<CSharpLanguage>().FirstOrDefault();
+
+		/// <summary>
+		/// Turns step recording on while the pane is on screen. Enabling re-runs the current decompile,
+		/// because the run that produced the displayed output recorded no steps; disabling drops the
+		/// tree the language is still holding, which is where the retained ILAst lives.
+		/// </summary>
+		internal void SetRecordingEnabled(bool enabled)
+		{
+			if (IsRecording == enabled)
+				return;
+			IsRecording = enabled;
+			// The workspace carries the flag into every run it starts, including the ones the user
+			// triggers by selecting another node, so closing the pane has to clear it there too.
+			if (AppComposition.TryGetExport<DockWorkspace>() is { } workspace)
+				workspace.RecordSteps = enabled;
+			if (enabled)
+			{
+				// C# is the only language that records anything, so re-running any other one would
+				// throw away the view the user is looking at to produce a tree that stays empty.
+				if (activeLanguage != null)
+					RequestRedecompile(int.MaxValue, isDebug: false);
+			}
+			else
+			{
+				SetStepsSource(null);
+				StepRecordingLanguage?.ReleaseSteps();
+			}
+		}
+
 		void RequestRedecompile(int stepLimit, bool isDebug, int? highlightStep = null)
 		{
 			lastSelectedStep = stepLimit;
 			// Composition unavailable in design-time previews; the gesture is a no-op there.
 			var dock = AppComposition.TryGetExport<DockWorkspace>();
-			dock?.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug, highlightStep);
+			if (dock == null)
+				return;
+			dock.RecordSteps = IsRecording;
+			dock.ActiveDecompilerTab?.RestartDecompileWithStepLimit(stepLimit, isDebug, highlightStep);
 		}
 	}
 }

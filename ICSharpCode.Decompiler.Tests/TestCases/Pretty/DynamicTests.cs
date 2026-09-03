@@ -368,6 +368,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		private static byte[] GetData()
+		{
+			return null;
+		}
+
+		private static void M4(dynamic d, int i)
+		{
+		}
+
+#if CS60
+		// #3704: the call target of a dynamic member access on a static type is
+		// typeof(DynamicTests), which has to reach the call site.
+		private static void StaticTargetOnDynamicCall(dynamic d)
+		{
+			DynamicTests.M4(d, GetData()?.Length ?? 0);
+		}
+#endif
+
 		private static void NotDynamicDispatch(dynamic d)
 		{
 			DynamicTests.M(d);

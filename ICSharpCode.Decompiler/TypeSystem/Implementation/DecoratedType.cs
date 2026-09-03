@@ -60,7 +60,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public abstract IType AcceptVisitor(TypeVisitor visitor);
 
+		public abstract override int GetHashCode();
 		public abstract bool Equals(IType other);
+		public sealed override bool Equals(object obj)
+		{
+			return Equals(obj as IType);
+		}
 
 		IEnumerable<IMethod> IType.GetAccessors(Predicate<IMethod> filter, GetMemberOptions options)
 		{

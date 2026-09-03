@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.IO.Compression;
@@ -119,7 +120,7 @@ Examples:
 
 #if DEBUG
 		// ILAst is the decompiler's own working representation: it exists to debug transforms
-		// while developing ILSpy, so - like the UI's ILAst language - it ships in debug builds
+		// while developing ILSpy, so - like the UI's Debug Steps pane - it ships in debug builds
 		// only and is absent from the released tool.
 		[Option("--ilast", "Show the decompiler's intermediate representation (ILAst) of method bodies, after the full IL transform pipeline. Select what to dump with --type or --member; without either, every method of the assembly is dumped.", CommandOptionType.NoValue)]
 		public bool ShowILAstFlag { get; }
@@ -187,6 +188,9 @@ Examples:
 
 		[Option("-d|--dump-package", "Dump package assemblies into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
 		public bool DumpPackageFlag { get; }
+
+		[Option("--bundle-entry <name>", "The assembly inside a single-file bundle (or other package) to work on, as printed when such a file is passed without this option. Ignored for input files that are not packages.", CommandOptionType.SingleValue)]
+		public string BundleEntryName { get; }
 
 		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
 		public bool NestedDirectories { get; }
@@ -314,6 +318,11 @@ Examples:
 					return ExitCodeForDecompilationErrors();
 				}
 			}
+			catch (PackageEntryRequiredException ex)
+			{
+				app.Error.WriteLine(ex.Message);
+				return ex.ExitCode;
+			}
 			catch (Exception ex)
 			{
 				app.Error.WriteLine(ex.ToString());
@@ -416,6 +425,8 @@ Examples:
 						return ProgramExitCodes.EX_USAGE;
 					}
 
+					using var tableModule = LoadInputModule(fileName);
+
 					if (outputDirectory != null)
 					{
 						// per-file writer, disposed here: the shared 'output' is only closed once
@@ -423,10 +434,10 @@ Examples:
 						// but the last when dumping multiple assemblies
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
 						using var tableOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + $".{table}.{(JsonOutputFlag ? "json" : "txt")}");
-						return MetadataTableDumper.DumpTable(fileName, tableOutput, table, JsonOutputFlag);
+						return MetadataTableDumper.DumpTable(tableModule, tableOutput, table, JsonOutputFlag);
 					}
 
-					return MetadataTableDumper.DumpTable(fileName, output, table, JsonOutputFlag);
+					return MetadataTableDumper.DumpTable(tableModule, output, table, JsonOutputFlag);
 				}
 				else
 				{
@@ -537,18 +548,33 @@ Examples:
 			return decompilerSettings;
 		}
 
+		/// <summary>
+		/// Loads the module to work on. A package (single-file bundle, archive) is not an
+		/// assembly: the entry to use must be named with --bundle-entry.
+		/// </summary>
+		PEFile LoadInputModule(string assemblyFileName, bool applyWinRTProjections = true)
+		{
+			return InputFileLoader.Load(assemblyFileName, BundleEntryName, applyWinRTProjections);
+		}
+
 		CSharpDecompiler GetDecompiler(string assemblyFileName) => GetDecompiler(assemblyFileName, out _);
 
 		CSharpDecompiler GetDecompiler(string assemblyFileName, out DecompilerSettings settings)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
 			{
 				resolver.AddSearchDirectory(path);
 			}
 			settings = GetSettings(module);
-			return new CSharpDecompiler(assemblyFileName, resolver, settings) {
+			if (!settings.ApplyWindowsRuntimeProjections)
+			{
+				// Whether the projections are wanted is only known once the settings have been
+				// read, which needs the module: load it again to get the metadata as stored.
+				module = LoadInputModule(assemblyFileName, applyWinRTProjections: false);
+			}
+			return new CSharpDecompiler(module, resolver, settings) {
 				DebugInfoProvider = TryLoadPDB(module)
 			};
 		}
@@ -568,7 +594,7 @@ Examples:
 
 		int ListResources(string assemblyFileName, TextWriter output)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			foreach (var path in ResourceExtensions.EnumerateResourcePaths(module))
 			{
 				output.WriteLine(path);
@@ -578,7 +604,7 @@ Examples:
 
 		int ExtractResource(string assemblyFileName, string resourceName, TextWriter output, string outputDirectory, CommandLineApplication app)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			if (!ResourceExtensions.TryGetResource(module, resourceName, out object value))
 			{
 				app.Error.WriteLine($"Resource '{resourceName}' not found.");
@@ -647,7 +673,7 @@ Examples:
 
 		int ShowIL(string assemblyFileName, TextWriter output)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			output.WriteLine($"// IL code: {module.Name}");
 			var disassembler = new ReflectionDisassembler(new PlainTextOutput(output), CancellationToken.None) {
 				DebugInfo = TryLoadPDB(module),
@@ -681,17 +707,24 @@ Examples:
 
 			if (MemberIdString != null)
 			{
-				if (!TryResolveMember(decompiler.TypeSystem, MemberIdString, out EntityHandle handle, out string error))
+				if (!TryResolveMembers(decompiler.TypeSystem, MemberIdString, out var handles, out string error))
 				{
 					Console.Error.WriteLine(error);
 					return ProgramExitCodes.EX_DATAERR;
 				}
-				if (handle.Kind != HandleKind.MethodDefinition)
+				// The short form of an overloaded method names the whole group; dumping every
+				// body beats picking one of them silently.
+				var resolved = handles.Where(h => h.Kind == HandleKind.MethodDefinition).ToArray();
+				if (resolved.Length == 0)
 				{
 					Console.Error.WriteLine($"'{MemberIdString}' does not name a method; ILAst exists for method bodies only.");
 					return ProgramExitCodes.EX_DATAERR;
 				}
-				methods = new[] { mainModule.GetDefinition((MethodDefinitionHandle)handle) };
+				if (resolved.Length > 1)
+				{
+					Console.Error.WriteLine($"'{MemberIdString.Trim()}' names {resolved.Length} methods; the ILAst of each is written below.");
+				}
+				methods = resolved.Select(h => mainModule.GetDefinition((MethodDefinitionHandle)h)).ToArray();
 			}
 			else if (TypeName != null)
 			{
@@ -754,7 +787,7 @@ Examples:
 
 		ProjectId DecompileAsProject(string assemblyFileName, string projectFileName)
 		{
-			var module = new PEFile(assemblyFileName);
+			var module = LoadInputModule(assemblyFileName);
 			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
 			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
 			{
@@ -808,13 +841,34 @@ Examples:
 		{
 			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
 
-			if (!TryResolveMember(decompiler.TypeSystem, idOrToken, out EntityHandle handle, out string error))
+			if (!TryResolveMembers(decompiler.TypeSystem, idOrToken, out var handles, out string error))
 			{
 				Console.Error.WriteLine(error);
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
-			output.Write(decompiler.DecompileAsString(handle));
+			// A short-form id names an overload group. Showing every member beats making the
+			// user re-run with a full signature, but the output must say so: otherwise several
+			// members arrive with nothing explaining why more than one was asked for.
+			if (handles.Length > 1)
+			{
+				var metadataFile = decompiler.TypeSystem.MainModule.MetadataFile;
+				output.WriteLine($"// '{idOrToken.Trim()}' names {handles.Length} members; all of them are shown below.");
+				foreach (var member in handles)
+				{
+					output.WriteLine($"// {metadataFile.GetIdString(member)}");
+				}
+				output.WriteLine();
+			}
+
+			bool first = true;
+			foreach (var member in handles)
+			{
+				if (!first)
+					output.WriteLine();
+				output.Write(decompiler.DecompileAsString(member));
+				first = false;
+			}
 			ReportDecompilationErrors(assemblyFileName, decompiler.Errors);
 			return 0;
 		}
@@ -828,7 +882,24 @@ Examples:
 		/// </summary>
 		static bool TryResolveMember(IDecompilerTypeSystem typeSystem, string idOrToken, out EntityHandle handle, out string error)
 		{
-			handle = default;
+			if (!TryResolveMembers(typeSystem, idOrToken, out var handles, out error))
+			{
+				handle = default;
+				return false;
+			}
+			handle = handles[0];
+			return true;
+		}
+
+		/// <summary>
+		/// As <see cref="TryResolveMember"/>, but reports every member the reference names. A
+		/// documentation id written without a parameter list names an overload group, and the
+		/// short form is what a user reaches for: spelling out the signature means knowing the
+		/// overload count beforehand, which is the thing they came here to find out.
+		/// </summary>
+		static bool TryResolveMembers(IDecompilerTypeSystem typeSystem, string idOrToken, out ImmutableArray<EntityHandle> handles, out string error)
+		{
+			handles = ImmutableArray<EntityHandle>.Empty;
 			error = null;
 			string trimmed = idOrToken.Trim();
 
@@ -855,32 +926,55 @@ Examples:
 					error = $"Metadata token {trimmed} does not reference a type or member of this module.";
 					return false;
 				}
-				handle = candidate;
+				handles = ImmutableArray.Create(candidate);
 				return true;
 			}
 
-			IEntity entity;
+			var mainModule = typeSystem.MainModule.MetadataFile;
+			ImmutableArray<EntityHandle> found;
 			try
 			{
-				entity = IdStringProvider.FindEntity(trimmed, new SimpleTypeResolveContext(typeSystem.MainModule));
+				(_, found) = DocumentationIdSearch.Find(trimmed, new[] { mainModule });
 			}
 			catch (ReflectionNameParseException ex)
 			{
 				error = $"'{trimmed}' is not a valid documentation id string: {ex.Message}";
 				return false;
 			}
-			if (entity == null || entity.MetadataToken.IsNil)
+			if (found.IsEmpty)
 			{
-				error = $"Member '{trimmed}' was not found in this module. Expected an XML documentation id string (e.g. \"M:System.String.Concat(System.String,System.String)\") or a metadata token (e.g. 0x06000005).";
+				// "It exists, but not here" is worth saying: naming the assembly it does live in
+				// tells the user which one to point at, where a bare not-found leaves them
+				// guessing whether they mistyped the id.
+				if (ResolveElsewhere(typeSystem, trimmed) is { } elsewhere)
+				{
+					error = $"Member '{trimmed}' is defined in '{elsewhere.AssemblyName}', not in this module.";
+					return false;
+				}
+				error = $"Member '{trimmed}' was not found in this module. Expected an XML documentation id string (e.g. \"M:System.String.Concat(System.String,System.String)\") or a metadata token (e.g. 0x06000005). The parameter list and generic arities may be left off.";
 				return false;
 			}
-			if (entity.ParentModule != typeSystem.MainModule)
-			{
-				error = $"Member '{trimmed}' is defined in '{entity.ParentModule?.AssemblyName}', not in this module.";
-				return false;
-			}
-			handle = entity.MetadataToken;
+			handles = found;
 			return true;
+		}
+
+		/// <summary>
+		/// The module that defines the given id, when it is not the one being decompiled. Only an
+		/// exact id is tried: the loose ladder exists to help someone name a member of the module
+		/// in front of them, not to go hunting through its references.
+		/// </summary>
+		static IModule ResolveElsewhere(IDecompilerTypeSystem typeSystem, string idString)
+		{
+			try
+			{
+				var entity = IdStringProvider.FindEntity(idString, new SimpleTypeResolveContext(typeSystem.MainModule));
+				if (entity != null && entity.ParentModule != typeSystem.MainModule)
+					return entity.ParentModule;
+			}
+			catch (ReflectionNameParseException)
+			{
+			}
+			return null;
 		}
 
 		/// <summary>
@@ -1098,10 +1192,8 @@ Examples:
 
 		int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
 		{
-			var module = new PEFile(assemblyFileName,
-				new FileStream(assemblyFileName, FileMode.Open, FileAccess.Read),
-				PEStreamOptions.PrefetchEntireImage,
-				metadataOptions: MetadataReaderOptions.None);
+			// PDB generation works on the metadata as it is stored, so no WinRT projections here.
+			var module = LoadInputModule(assemblyFileName, applyWinRTProjections: false);
 
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(module))
 			{

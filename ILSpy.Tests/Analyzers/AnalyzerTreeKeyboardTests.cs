@@ -154,12 +154,7 @@ public class AnalyzerTreeKeyboardTests
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
-		for (int i = 0; i < 6; i++)
-		{
-			Dispatcher.UIThread.RunJobs();
-			tree.UpdateLayout();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 		tree.Focus();
 		Dispatcher.UIThread.RunJobs();
 

@@ -154,7 +154,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary><c>System.Index</c></summary>
 		Index,
 		/// <summary><c>System.Range</c></summary>
-		Range
+		Range,
+		/// <summary><c>System.RuntimeArgumentHandle</c></summary>
+		RuntimeArgumentHandle,
+		/// <summary><c>System.RuntimeTypeHandle</c></summary>
+		RuntimeTypeHandle,
+		/// <summary><c>System.RuntimeFieldHandle</c></summary>
+		RuntimeFieldHandle,
+		/// <summary><c>System.RuntimeMethodHandle</c></summary>
+		RuntimeMethodHandle,
 	}
 
 	/// <summary>
@@ -163,7 +171,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class KnownTypeReference : ITypeReference
 	{
-		internal const int KnownTypeCodeCount = (int)KnownTypeCode.Range + 1;
+		internal const int KnownTypeCodeCount = (int)KnownTypeCode.RuntimeMethodHandle + 1;
 
 		static readonly KnownTypeReference?[] knownTypeReferences = new KnownTypeReference?[KnownTypeCodeCount] {
 			null, // None
@@ -229,6 +237,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new KnownTypeReference(KnownTypeCode.IAsyncEnumeratorOfT, TypeKind.Interface, "System.Collections.Generic", "IAsyncEnumerator", 1),
 			new KnownTypeReference(KnownTypeCode.Index, TypeKind.Struct, "System", "Index", 0),
 			new KnownTypeReference(KnownTypeCode.Range, TypeKind.Struct, "System", "Range", 0),
+			new KnownTypeReference(KnownTypeCode.RuntimeArgumentHandle, TypeKind.Struct, "System", "RuntimeArgumentHandle", 0),
+			new KnownTypeReference(KnownTypeCode.RuntimeTypeHandle, TypeKind.Struct, "System", "RuntimeTypeHandle", 0),
+			new KnownTypeReference(KnownTypeCode.RuntimeFieldHandle, TypeKind.Struct, "System", "RuntimeFieldHandle", 0),
+			new KnownTypeReference(KnownTypeCode.RuntimeMethodHandle, TypeKind.Struct, "System", "RuntimeMethodHandle", 0),
 		};
 
 		/// <summary>

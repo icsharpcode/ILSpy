@@ -120,6 +120,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								storesToRemove.Add(stLoc);
 							if (value.MatchLdFld(out cacheFieldLoad, out var targetFieldCopy) && cacheFieldLoad.MatchLdsFld(out cacheFieldCopy) && cacheField.Equals(cacheFieldCopy) && targetField.Equals(targetFieldCopy))
 								storesToRemove.Add(stLoc);
+							if (TransformExpressionTrees.MatchGetTypeFromHandle(value, out _))
+								storesToRemove.Add(stLoc);
 						}
 					}
 				}
@@ -147,6 +149,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			return variable.Kind == VariableKind.StackSlot
 				|| (variable.Kind == VariableKind.Local && variable.StateMachineField != null);
+		}
+
+		/// <summary>
+		/// Matches a GetTypeFromHandle call, or a load of a variable that is assigned one exactly once. The
+		/// latter form occurs when control flow in a later argument forces the value off the evaluation stack.
+		/// Any variable kind qualifies: only the type is read here.
+		/// </summary>
+		static bool MatchTypeOf(ILInstruction inst, out IType type)
+		{
+			if (TransformExpressionTrees.MatchGetTypeFromHandle(inst, out type))
+				return true;
+			return inst.MatchLdLoc(out var variable)
+				&& variable.IsSingleDefinition
+				&& variable.StoreInstructions.FirstOrDefault() is StLoc initStore
+				&& TransformExpressionTrees.MatchGetTypeFromHandle(initStore.Value, out type);
 		}
 
 		static void FindDynamicCallSitesInBlock(Block block, Dictionary<IField, CallSiteInfo> callsites, ILTransformContext context)
@@ -243,33 +260,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					);
 				case BinderMethodKind.InvokeConstructor:
 					var arguments = targetInvokeCall.Arguments.Skip(2).ToArray();
-					// Extract type information from targetInvokeCall:
-					// Must either be an inlined type or
-					// a reference to a variable that is initialized with a type.
-					if (!TransformExpressionTrees.MatchGetTypeFromHandle(arguments[0], out var type))
-					{
-						if (!(arguments[0].MatchLdLoc(out var temp) && temp.IsSingleDefinition && temp.StoreInstructions.FirstOrDefault() is StLoc initStore))
-							return null;
-						if (!TransformExpressionTrees.MatchGetTypeFromHandle(initStore.Value, out type))
-							return null;
-					}
-					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
+					// ArgumentInfos[0] is always IsStaticType here: an object creation names the type it constructs.
+					if (!MatchTypeOf(arguments[0], out var type))
+						return null;
+					deadArguments.AddRange(targetInvokeCall.Arguments.Take(3));
 					return new DynamicInvokeConstructorInstruction(
 						binderFlags: callsite.Flags,
 						type: type ?? SpecialType.UnknownType,
 						context: callsite.Context,
 						argumentInfo: callsite.ArgumentInfos,
-						arguments: arguments
+						arguments: arguments.Skip(1).ToArray()
 					);
 				case BinderMethodKind.InvokeMember:
+					var memberArguments = targetInvokeCall.Arguments.Skip(2).ToArray();
+					IType staticTargetType = null;
+					if (callsite.ArgumentInfos[0].HasFlag(CSharpArgumentInfoFlags.IsStaticType)
+						&& MatchTypeOf(memberArguments[0], out staticTargetType))
+					{
+						deadArguments.Add(memberArguments[0]);
+						memberArguments = memberArguments.Skip(1).ToArray();
+					}
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));
 					return new DynamicInvokeMemberInstruction(
 						binderFlags: callsite.Flags,
 						name: callsite.MemberName,
 						typeArguments: callsite.TypeArguments,
 						context: callsite.Context,
+						staticTargetType: staticTargetType,
 						argumentInfo: callsite.ArgumentInfos,
-						arguments: targetInvokeCall.Arguments.Skip(2).ToArray()
+						arguments: memberArguments
 					);
 				case BinderMethodKind.IsEvent:
 					deadArguments.AddRange(targetInvokeCall.Arguments.Take(2));

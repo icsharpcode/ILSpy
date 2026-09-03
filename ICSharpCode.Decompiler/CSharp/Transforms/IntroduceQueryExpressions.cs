@@ -142,6 +142,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			MemberReferenceExpression? mre = invocation.Target as MemberReferenceExpression;
 			if (mre == null || IsNullConditional(mre.Target))
 				return null;
+			if (mre.TypeArguments.Count > 0)
+				return null;
 			switch (mre.MemberName)
 			{
 				case "Select":
@@ -346,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static bool IsComplexQuery(MemberReferenceExpression mre)
 		{
-			return ((mre.Target is InvocationExpression && mre.Parent is InvocationExpression) || mre.Parent?.Parent is QueryClause);
+			return (mre.Target is InvocationExpression && mre.Parent is InvocationExpression) || mre.Parent?.Parent is QueryClause;
 		}
 
 		QueryFromClause MakeFromClause(ParameterDeclaration parameter, Expression body)
@@ -411,6 +413,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!MatchSimpleLambda(invocation.Arguments.Single(), out var parameter, out _))
 				return false;
 			if (parameter.Name != expectedParameterName)
+				return false;
+			if (mre.TypeArguments.Count > 0)
 				return false;
 
 			if (mre.MemberName == "OrderBy" || mre.MemberName == "OrderByDescending")

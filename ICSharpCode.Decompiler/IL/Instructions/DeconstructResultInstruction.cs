@@ -28,14 +28,18 @@ namespace ICSharpCode.Decompiler.IL
 		public int Index { get; }
 
 		public override StackType ResultType { get; }
+		public IType Type { get; }
 
-		public DeconstructResultInstruction(int index, StackType resultType, ILInstruction argument)
+		public DeconstructResultInstruction(int index, IType type, StackType resultType, ILInstruction argument)
 			: base(OpCode.DeconstructResultInstruction, argument)
 		{
 			Debug.Assert(index >= 0);
 			Index = index;
+			Type = type;
 			ResultType = resultType;
+			Debug.Assert(type.GetStackType() == resultType);
 		}
+		public override IType InferType(ICompilation compilation) => Type;
 
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{

@@ -327,6 +327,10 @@ namespace ICSharpCode.ILSpy.Languages
 			};
 			decompiler.Stepper.StepLimit = options.StepLimit;
 			decompiler.Stepper.IsDebug = options.IsDebug;
+			// The Debug Steps pane walks the whole pipeline, so the IL transforms record into the same
+			// stepper as the C# AST transforms. Which runs record is decided by whoever started the
+			// decompile, not by the pane's state at the moment this runs on a background task.
+			decompiler.RecordSteps = options.RecordSteps;
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			return decompiler;
@@ -354,11 +358,11 @@ namespace ICSharpCode.ILSpy.Languages
 			{
 				var members = CollectFieldsAndCtors(methodDefinition.DeclaringTypeDefinition!, methodDefinition.IsStatic);
 				decompiler.AstTransforms.Add(new SelectCtorTransform(methodDefinition));
-				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler);
 			}
 			else
 			{
-				WriteCode(output, options, decompiler.Decompile(method.MetadataToken), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(method.MetadataToken), decompiler);
 			}
 			OnCSharpDecompiled(decompiler, output, options);
 		}
@@ -371,7 +375,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(property, output, options);
 			WriteCommentLine(output, TypeToString(property.DeclaringType));
-			WriteCode(output, options, decompiler.Decompile(property.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.Decompile(property.MetadataToken), decompiler);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -381,14 +385,14 @@ namespace ICSharpCode.ILSpy.Languages
 			WriteCommentLine(output, TypeToString(field.DeclaringType));
 			if (field.IsConst)
 			{
-				WriteCode(output, options, decompiler.Decompile(field.MetadataToken), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(field.MetadataToken), decompiler);
 			}
 			else
 			{
 				var members = CollectFieldsAndCtors(field.DeclaringTypeDefinition!, field.IsStatic);
 				var resolvedField = decompiler.TypeSystem.MainModule.GetDefinition((FieldDefinitionHandle)field.MetadataToken);
 				decompiler.AstTransforms.Add(new SelectFieldTransform(resolvedField));
-				WriteCode(output, options, decompiler.Decompile(members), decompiler.Stepper);
+				WriteCode(output, options, decompiler.Decompile(members), decompiler);
 			}
 			OnCSharpDecompiled(decompiler, output, options);
 		}
@@ -417,7 +421,7 @@ namespace ICSharpCode.ILSpy.Languages
 			CSharpDecompiler decompiler = BeginDecompile(extension, output, options);
 			WriteCommentLine(output, TypeToString(commentType,
 				ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames | ConversionFlags.SupportExtensionDeclarations));
-			WriteCode(output, options, decompiler.DecompileExtension(extension.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.DecompileExtension(extension.MetadataToken), decompiler);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -425,7 +429,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(ev, output, options);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType));
-			WriteCode(output, options, decompiler.Decompile(ev.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.Decompile(ev.MetadataToken), decompiler);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -433,7 +437,7 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = BeginDecompile(type, output, options);
 			WriteCommentLine(output, TypeToString(type, ConversionFlags.UseFullyQualifiedTypeNames | ConversionFlags.UseFullyQualifiedEntityNames));
-			WriteCode(output, options, decompiler.Decompile(type.MetadataToken), decompiler.Stepper);
+			WriteCode(output, options, decompiler.Decompile(type.MetadataToken), decompiler);
 			OnCSharpDecompiled(decompiler, output, options);
 		}
 
@@ -520,7 +524,7 @@ namespace ICSharpCode.ILSpy.Languages
 			SyntaxTree st = options.FullDecompilation
 				? decompiler.DecompileWholeModuleAsSingleFile()
 				: decompiler.DecompileModuleAndAssemblyAttributes();
-			WriteCode(output, options, st, decompiler.Stepper);
+			WriteCode(output, options, st, decompiler);
 			return null;
 		}
 
@@ -732,37 +736,53 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 		}
 
-		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, Stepper stepper)
+		static void WriteCode(ITextOutput output, DecompilationOptions options, SyntaxTree syntaxTree, CSharpDecompiler decompiler)
 		{
-			var settings = options.DecompilerSettings;
-			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
-			output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
-			TokenWriter tokenWriter = new TextTokenWriter(output, settings);
-			// Node-range tracking (NodeLookup) is only consumed by the debug-step highlighter, which
-			// resolves nothing without a step limit. Skip it on a normal decompile so the common path
-			// doesn't pay the per-node/per-annotation bookkeeping; AvaloniaEditTextOutput is an
-			// ISmartTextOutput, so the branch below still gives it full syntax highlighting.
-			if (output is TextView.AvaloniaEditTextOutput avaloniaOutput && options.StepLimit != int.MaxValue)
-				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, avaloniaOutput);
-			else if (output is TextView.ISmartTextOutput smartOutput)
-				tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, smartOutput);
+			if (!TryWriteILAst(output, options, decompiler))
+			{
+				var settings = options.DecompilerSettings;
+				syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
+				output.IndentationString = settings.CSharpFormattingOptions.IndentationString;
+				TokenWriter tokenWriter = new TextTokenWriter(output, settings);
+				// Node-range tracking (NodeLookup) is only consumed by the debug-step highlighter, which
+				// resolves nothing without a step limit. Skip it on a normal decompile so the common path
+				// doesn't pay the per-node/per-annotation bookkeeping; AvaloniaEditTextOutput is an
+				// ISmartTextOutput, so the branch below still gives it full syntax highlighting.
+				if (output is TextView.AvaloniaEditTextOutput avaloniaOutput && options.StepLimit != int.MaxValue)
+					tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, avaloniaOutput);
+				else if (output is TextView.ISmartTextOutput smartOutput)
+					tokenWriter = new CSharpHighlightingTokenWriter(tokenWriter, smartOutput);
 
-			// For the on-screen C# view, harvest the IL-offset/line map for body bookmarks during this
-			// single formatting pass (see Bookmarks.BookmarkDebugInfoCollector). The collector is the
-			// outermost writer so its StartNode sees each node's start line before any token is written.
-			// Other outputs (IL view, ilspycmd's plain text) are not AvaloniaEditTextOutput and are unaffected.
-			Bookmarks.BookmarkDebugInfoCollector? bookmarkCollector = null;
-			if (output is TextView.AvaloniaEditTextOutput bookmarkOutput)
-				tokenWriter = bookmarkCollector = new Bookmarks.BookmarkDebugInfoCollector(tokenWriter, bookmarkOutput);
+				// For the on-screen C# view, harvest the IL-offset/line map for body bookmarks during this
+				// single formatting pass (see Bookmarks.BookmarkDebugInfoCollector). The collector is the
+				// outermost writer so its StartNode sees each node's start line before any token is written.
+				// Other outputs (IL view, ilspycmd's plain text) are not AvaloniaEditTextOutput and are unaffected.
+				Bookmarks.BookmarkDebugInfoCollector? bookmarkCollector = null;
+				if (output is TextView.AvaloniaEditTextOutput bookmarkOutput)
+					tokenWriter = bookmarkCollector = new Bookmarks.BookmarkDebugInfoCollector(tokenWriter, bookmarkOutput);
 
-			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
-			bookmarkCollector?.Publish();
+				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(tokenWriter, settings.CSharpFormattingOptions));
+				bookmarkCollector?.Publish();
+			}
+			// Shared by both renderings: ILInstruction.WriteTo marks its node ranges the same way the
+			// C# token writer marks the AST's, so the highlighter resolves a step against whichever
+			// text was just written.
 			if (output is TextView.AvaloniaEditTextOutput nodeOutput
-				&& TextView.DebugStepHighlighter.TryResolve(stepper, options.StepLimit, options.HighlightStep, nodeOutput.NodeLookup, out var range))
+				&& TextView.DebugStepHighlighter.TryResolve(decompiler.Stepper, options.StepLimit, options.HighlightStep, nodeOutput.NodeLookup, out var range))
 			{
 				nodeOutput.DebugStepHighlight = range;
 			}
 		}
+
+		// Writes the ILAst the pipeline was halted in, when a Debug Steps replay stopped it before
+		// there was any C# to show, and reports whether it wrote anything. Implemented under DEBUG in
+		// CSharpLanguage.DebugSteps.cs; in Release nothing sets a step limit, so it never writes.
+		private static partial bool TryWriteILAst(ITextOutput output, DecompilationOptions options, CSharpDecompiler decompiler);
+
+#if !DEBUG
+		private static partial bool TryWriteILAst(ITextOutput output, DecompilationOptions options, CSharpDecompiler decompiler)
+			=> false;
+#endif
 
 		void AddWarningMessage(MetadataFile module, ITextOutput output, string line1, string? line2 = null,
 			string? buttonText = null, global::Avalonia.Media.IImage? buttonImage = null,

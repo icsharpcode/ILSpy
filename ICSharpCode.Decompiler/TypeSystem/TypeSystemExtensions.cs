@@ -310,8 +310,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					case KnownTypeCode.IntPtr:
 					case KnownTypeCode.UIntPtr:
 					case KnownTypeCode.TypedReference:
-						//case KnownTypeCode.ArgIterator:
-						//case KnownTypeCode.RuntimeArgumentHandle:
+					//case KnownTypeCode.ArgIterator:
+					case KnownTypeCode.RuntimeArgumentHandle:
 						return true;
 				}
 				if (type.Kind == TypeKind.Struct)

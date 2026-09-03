@@ -22,6 +22,7 @@
 
 using System.IO;
 using System.Text;
+using System.Xml;
 using System.Xml.Linq;
 
 namespace ICSharpCode.BamlDecompiler.Xaml
@@ -35,6 +36,59 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 			if (value[0] == '{')
 				return "{}" + value;
 			return value;
+		}
+
+		/// <summary>
+		/// Escapes the characters XML cannot carry - obfuscators put them into BAML strings, and
+		/// XML 1.0 has no representation for them at all, not even a numeric character reference.
+		/// The escapes are spelled the way the C# output spells them, so one convention covers
+		/// both languages: the short form where C# has one, "\uXXXX" otherwise.
+		/// Characters XML can carry - tab, newline, astral characters - are left untouched, and a
+		/// literal backslash is not doubled, because XAML itself has no escape syntax to undo.
+		/// </summary>
+		public static string EscapeInvalidXmlCharacters(string value)
+		{
+			if (string.IsNullOrEmpty(value))
+				return value;
+
+			StringBuilder escaped = null;
+			for (int i = 0; i < value.Length; i++)
+			{
+				char c = value[i];
+				if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
+				{
+					escaped?.Append(c).Append(value[i + 1]);
+					i++;
+					continue;
+				}
+				if (XmlConvert.IsXmlChar(c))
+				{
+					escaped?.Append(c);
+					continue;
+				}
+				escaped ??= new StringBuilder(value.Length).Append(value, 0, i);
+				escaped.Append(EscapeChar(c));
+			}
+			return escaped?.ToString() ?? value;
+		}
+
+		static string EscapeChar(char c)
+		{
+			switch (c)
+			{
+				case '\0':
+					return "\\0";
+				case '\a':
+					return "\\a";
+				case '\b':
+					return "\\b";
+				case '\f':
+					return "\\f";
+				case '\v':
+					return "\\v";
+				default:
+					return "\\u" + ((int)c).ToString("x4");
+			}
 		}
 
 		public static string ToString(this XamlContext ctx, XElement elem, XamlType type)

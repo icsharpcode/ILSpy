@@ -177,4 +177,12 @@
     <Compile Remove="Properties\DecompilerVersionInfo.template.cs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Update="IL\Instructions.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Instructions.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
 </Project>

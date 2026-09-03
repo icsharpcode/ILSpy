@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -37,6 +38,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			SwitchWithGoto(2);
 			SwitchWithGoto(3);
 			SwitchWithGoto(4);
+			JsonPathTest();
 		}
 
 		static void TestCase<T>(Func<T, string> target, params T[] args)
@@ -244,6 +246,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					Console.WriteLine("default");
 					break;
 			}
+		}
+
+		public static void JsonPathTest()
+		{
+			Console.WriteLine("JsonPathTest:");
+			for (int i = 0; i < 5; i++)
+			{
+				for (int j = 0; j < 5; j++)
+				{
+					Console.WriteLine("JsonPath({0}, {1}) = {2}", i, j, JsonPath(i, j));
+				}
+			}
+		}
+
+		public static string JsonPath(int continuationCount, int count)
+		{
+			StringBuilder sb = new StringBuilder("$");
+#if CS80
+			(int, bool) pair = continuationCount switch {
+				0 => (count - 1, true),
+				1 => (0, true),
+				_ => (continuationCount, false)
+			};
+			(int frameCount, bool includeCurrent) = pair;
+			for (int i = 0; i < frameCount; i++)
+				sb.Append(i);
+			if (includeCurrent)
+				sb.Append('c');
+#endif
+			return sb.ToString();
 		}
 	}
 }

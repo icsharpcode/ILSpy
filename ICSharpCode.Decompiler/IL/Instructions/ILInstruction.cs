@@ -81,9 +81,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(b, msg);
 		}
 
+		/// <summary>
+		/// Verifies the invariants of this instruction and its descendants. Only active in debug builds.
+		/// </summary>
+		/// <param name="phase">Which set of invariants applies; they tighten as the pipeline progresses.</param>
+		/// <param name="compilation">The compilation the instruction tree was decoded against, so that
+		/// invariants involving types can be resolved against the same type system the decompiler uses.</param>
 		[Conditional("DEBUG")]
-		internal virtual void CheckInvariant(ILPhase phase)
+		internal virtual void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
+			Debug.Assert(compilation != null);
 			foreach (var child in Children)
 			{
 				Debug.Assert(child.Parent == this);
@@ -92,9 +99,11 @@ namespace ICSharpCode.Decompiler.IL
 				// exception: nested ILFunctions (lambdas)
 				Debug.Assert(this is ILFunction || child.flags != invalidFlags || this.flags == invalidFlags);
 				Debug.Assert(child.IsConnected == this.IsConnected);
-				child.CheckInvariant(phase);
+				child.CheckInvariant(phase, compilation);
 			}
 			Debug.Assert((this.DirectFlags & ~this.Flags) == 0, "All DirectFlags must also appear in this.Flags");
+			var inferredType = this.InferType(compilation);
+			Debug.Assert(inferredType.GetStackType() == this.ResultType);
 		}
 
 		/// <summary>
@@ -209,19 +218,26 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public abstract StackType ResultType { get; }
 
-		/* Not sure if it's a good idea to offer this on all instructions --
-		 *   e.g. ldloc for a local of type `int?` would return StackType.O (because it's not a lifted operation),
-		 *   even though the underlying type is int = StackType.I4.
 		/// <summary>
-		/// Gets the underlying result type of the value produced by this instruction.
-		/// 
-		/// If this is a lifted operation, the ResultType will be `StackType.O` (because Nullable{T} is a struct),
-		/// and UnderlyingResultType will be result type of the corresponding non-lifted operation.
-		/// 
-		/// If this is not a lifted operation, the underlying result type is equal to the result type.
+		/// Gets a possible C# type that could be used to store the result of this instruction.
 		/// </summary>
-		public virtual StackType UnderlyingResultType { get => ResultType; }
-		*/
+		/// <remarks>
+		/// Post-condition: this.InferType().GetStackType() == this.ResultType.
+		/// 
+		/// This must be a type suitable for use a local variable (i.e. `ldnull` uses `object`, not `NullType`).
+		/// 
+		/// If this function returns a small integer type, the instruction is guaranteed to
+		/// evaluate to a value that fits into that type (when the I4 evaluation result is
+		/// interpreted as int/uint depending on the small integer type's sign).
+		/// 
+		/// For instructions producing an non-nullable value type, this function must return that
+		/// exact type.
+		/// For nullable value types, this function may return `int?` when actually the instruction
+		/// produces a nullable I4, which might end up being a `bool?` expression in C#.
+		/// Similarly, for reference types, this function may return `object` when actually the C#
+		/// type is a more specific reference type.
+		/// </remarks>
+		public abstract IType InferType(ICompilation compilation);
 
 		internal static StackType CommonResultType(StackType a, StackType b)
 		{

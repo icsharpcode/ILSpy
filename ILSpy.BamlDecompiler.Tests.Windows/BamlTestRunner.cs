@@ -136,6 +136,12 @@ namespace ILSpy.BamlDecompiler.Tests
 		}
 
 		[Test]
+		public void Issue1688()
+		{
+			RunTest("cases/issue1688");
+		}
+
+		[Test]
 		public void Issue2052()
 		{
 			RunTest("cases/issue2052");

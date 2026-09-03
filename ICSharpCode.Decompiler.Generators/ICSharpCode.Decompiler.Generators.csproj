@@ -9,8 +9,8 @@
     <!-- Opt out of the repo's central package management for this project: a source generator must
          reference a Roslyn no newer than the running compiler, but the repo's $(RoslynVersion) tracks
          the (newer) preview SDK compiler. Pin to a stable lower version any supported host can load.
-         The stable package lives on nuget.org; the local NuGet.config reaches it past the repo-root
-         source mapping that otherwise routes Microsoft.CodeAnalysis.* to the dotnet-tools feed. -->
+         The stable package lives on nuget.org only; the repo-root NuGet.config maps
+         Microsoft.CodeAnalysis.* to nuget.org as well as to the dotnet-tools feed for that reason. -->
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
 

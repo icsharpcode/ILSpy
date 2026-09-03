@@ -24,12 +24,17 @@
 // changes across real-world code. The textual complement to the Windows
 // round-trip tests, which verify correctness but not output quality.
 //
-// usage: dotnet run decompdiff.cs -- --old <ILSpy-checkout|Decompiler.dll> --new <ILSpy-checkout|Decompiler.dll>
-//                                    [-o <report-dir>] [--build] [--refs <dir>]... <dll|dir>...
+// usage: dotnet run decompdiff.cs -- --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...>
+//                                    [-o <report-dir>] [--build] [--refs <dir>]... <dll|dir|@list>...
 //
 // - checkout args are built on demand (Release; restore keeps packages.lock.json
 //   whole via -p:RestoreEnablePackagePruning=false); pass --build to force rebuild.
-// - corpus dirs are scanned recursively for *.dll (e.g. ~/.cache/nugetfuzz).
+// - a commit-ish (branch, tag, sha, FETCH_HEAD) is resolved against the repository
+//   the tool is run from and checked out into a worktree under
+//   ~/.cache/decompdiff/<repo>/<commit>, kept and reused so a rerun keeps the
+//   Release build it already contains.
+// - corpus dirs are scanned recursively for *.dll (e.g. ~/.cache/nugetfuzz); @list reads
+//   the entries from a file, one per line, as nugetfuzz does with its package list.
 // - changed/errored types are written to <report-dir>/{old,new}/...; inspect with
 //   `git diff --no-index <report-dir>/old <report-dir>/new`, or open the generated
 //   <report-dir>/index.html, which carries the same data with inline diffs.
@@ -37,10 +42,11 @@
 //
 // Reference handling: every assembly is decompiled out of a staging directory that
 // holds symlinks to itself, its original neighbours, and the transitive closure of
-// its references as found in --refs directories, the machine-wide NuGet cache, and
-// the .NET Framework reference-assembly packs. UniversalAssemblyResolver searches
-// that directory first (ResolveInternal -> SearchDirectory), so staging fixes both
-// classic failure modes - a sibling package that does not sit next to the assembly,
+// its references as found in --refs directories, the machine-wide NuGet cache, the
+// nugetfuzz package cache, and the reference-assembly pack matching the assembly's
+// own target framework. UniversalAssemblyResolver searches that directory first
+// (ResolveInternal -> SearchDirectory), so staging fixes both classic failure modes
+// - a sibling package that does not sit next to the assembly,
 // and the Windows-only mscorlib lookup that throws "Version not supported" on Linux
 // - while still driving the stable 2-arg CSharpDecompiler ctor. Both sides read the
 // SAME staging directory, so whatever stays unresolved degrades them identically
@@ -92,13 +98,24 @@ for (int i = 0; i < args.Length; i++)
 			refDirs.Add(args[++i]);
 			break;
 		default:
-			corpus.Add(args[i]);
+			// @file lists corpus entries one per line, the same spelling nugetfuzz uses. Shells
+			// differ on how (or whether) a file expands into arguments, so the tool reads it.
+			if (args[i].StartsWith('@'))
+			{
+				corpus.AddRange(File.ReadAllLines(args[i][1..])
+					.Select(l => l.Trim())
+					.Where(l => l.Length > 0 && !l.StartsWith('#')));
+			}
+			else
+			{
+				corpus.Add(args[i]);
+			}
 			break;
 	}
 }
 if (oldSpec == null || newSpec == null || corpus.Count == 0)
 {
-	Console.Error.WriteLine("usage: decompdiff --old <ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--build] [--refs <dir>]... <dll|dir>...");
+	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--build] [--refs <dir>]... <dll|dir|@list>...");
 	return 1;
 }
 reportDir ??= "decompdiff-report";
@@ -113,8 +130,19 @@ if (Directory.Exists(reportDir))
 }
 Directory.CreateDirectory(reportDir);
 
-var oldSide = Side.Create("old", oldSpec, forceBuild);
-var newSide = Side.Create("new", newSpec, forceBuild);
+Side oldSide, newSide;
+try
+{
+	oldSide = Side.Create("old", oldSpec, forceBuild);
+	newSide = Side.Create("new", newSpec, forceBuild);
+}
+catch (ArgumentException ex)
+{
+	// A mistyped branch name is the easiest way to get here, and its message says more
+	// than the stack trace does.
+	Console.Error.WriteLine(ex.Message);
+	return 1;
+}
 Console.WriteLine($"old: {oldSide.Description}");
 Console.WriteLine($"new: {newSide.Description}");
 
@@ -299,70 +327,175 @@ static string MetricNotes(ChangedType c)
 }
 
 // Locates reference assemblies by simple name and stages them next to the assembly
-// being decompiled. Sources, in order: the --refs directories (indexed once), the
-// machine-wide NuGet cache (probed per name, so nothing scans ~40k packages), and
-// the .NET Framework reference-assembly packs restored under it - the last one is
-// what makes classic net4x assemblies decompilable on Linux at all, since their
-// mscorlib otherwise only exists behind a Windows path lookup.
+// being decompiled. Sources, in order: the reference-assembly pack for the assembly's
+// own target framework, the --refs directories (indexed once), and the machine-wide
+// NuGet cache (probed per name, so nothing scans ~40k packages).
+//
+// The pack has to be chosen per assembly and has to win: a net9.0 assembly resolved
+// against the .NET Framework packs finds mscorlib but not ValueTask or the async
+// method builders, which collapses whole type hierarchies to Unknown and leaves
+// AsyncAwaitDecompiler unable to recognise a state machine at all. The packs are also
+// what makes classic net4x assemblies decompilable on Linux, whose mscorlib otherwise
+// only exists behind a Windows path lookup.
 sealed class RefIndex
 {
 	readonly Dictionary<string, string> byName = new(StringComparer.OrdinalIgnoreCase);
 	readonly List<string> probeRoots = new();
+	readonly string nugetRoot;
+	// Reference assemblies are picked per corpus assembly, keyed by its TargetFrameworkAttribute:
+	// a net9.0 assembly resolved against the .NET Framework packs finds mscorlib but not ValueTask
+	// or the async method builders, which collapses whole type hierarchies to Unknown and leaves
+	// AsyncAwaitDecompiler unable to recognise a state machine at all.
+	readonly Dictionary<string, Dictionary<string, string>> byFramework = new(StringComparer.OrdinalIgnoreCase);
 	public string Description { get; }
 
 	public RefIndex(List<string> refDirs, List<string> corpus)
 	{
 		foreach (var dir in refDirs.Concat(corpus).Where(Directory.Exists))
-			IndexDirectory(dir);
-		var nugetRoot = Environment.GetEnvironmentVariable("NUGET_PACKAGES")
+			IndexDirectory(dir, byName);
+		nugetRoot = Environment.GetEnvironmentVariable("NUGET_PACKAGES")
 			?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
 		if (Directory.Exists(nugetRoot))
 			probeRoots.Add(nugetRoot);
-		foreach (var pack in EnumerateFrameworkRefPacks(nugetRoot))
-			IndexDirectory(pack);
+		// nugetfuzz's package cache uses the same <id>/<version>/lib/<tfm> layout and holds the
+		// dependency closure of everything it downloaded. It is the usual source of the corpus,
+		// so its packages are exactly the ones a corpus assembly's own references point at.
+		var fuzzCache = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "nugetfuzz");
+		if (Directory.Exists(fuzzCache))
+			probeRoots.Add(fuzzCache);
+		Description = $"{byName.Count} assemblies indexed"
+			+ (probeRoots.Count > 0 ? $", NuGet cache probe at {string.Join(", ", probeRoots)}" : "");
+	}
+
+	// The reference assemblies for one target framework moniker, indexed by simple name.
+	// Empty when no matching pack is installed, in which case resolution falls back to the
+	// --refs directories, the corpus and the NuGet cache probe.
+	public Dictionary<string, string> IndexFor(string? targetFramework)
+	{
+		var key = targetFramework ?? "";
+		if (byFramework.TryGetValue(key, out var index))
+			return index;
+		index = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var dir in RefPackDirs(key))
+			IndexDirectory(dir, index);
+		byFramework[key] = index;
+		return index;
+	}
+
+	// Ref-pack directories for a TargetFrameworkAttribute value, most specific first.
+	IEnumerable<string> RefPackDirs(string targetFramework)
+	{
+		var version = TfmVersion(targetFramework);
+		if (targetFramework.StartsWith(".NETCoreApp", StringComparison.OrdinalIgnoreCase) && version != null)
+		{
+			// The WindowsDesktop and AspNetCore packs come first: Microsoft.NETCore.App.Ref ships
+			// stub facades for their assemblies (its WindowsBase.dll has no DependencyObject), and
+			// whichever is indexed first wins.
+			foreach (var pack in new[] { "microsoft.windowsdesktop.app.ref", "microsoft.aspnetcore.app.ref", "microsoft.netcore.app.ref" })
+			{
+				var dir = CorePackDir(pack, version);
+				if (dir != null)
+					yield return dir;
+			}
+			yield break;
+		}
+		// .NETFramework and .NETStandard both resolve against the classic reference assemblies,
+		// but only a .NETFramework version selects a pack: a .NETStandard version is not a net4x
+		// version, and feeding 2.0 to the picker would pick net45, whose Facades carry no
+		// netstandard.dll. netstandard targets take the newest pack, with the widest facade set.
+		var netFxVersion = targetFramework.StartsWith(".NETFramework", StringComparison.OrdinalIgnoreCase)
+			? version : null;
+		foreach (var dir in EnumerateFrameworkRefPacks(nugetRoot, netFxVersion))
+			yield return dir;
 		// On Windows the same reference assemblies also ship with the targeting packs, so a
 		// net4x corpus resolves there without restoring the NuGet package first.
 		var installedFxRefs = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
 			"Reference Assemblies", "Microsoft", "Framework", ".NETFramework");
 		if (Directory.Exists(installedFxRefs))
-			IndexDirectory(installedFxRefs);
-		Description = $"{byName.Count} assemblies indexed"
-			+ (probeRoots.Count > 0 ? $", NuGet cache probe at {string.Join(", ", probeRoots)}" : "");
+			yield return installedFxRefs;
+	}
+
+	static Version? TfmVersion(string targetFramework)
+	{
+		var i = targetFramework.IndexOf("Version=v", StringComparison.OrdinalIgnoreCase);
+		return i >= 0 && Version.TryParse(targetFramework[(i + 9)..], out var v) ? v : null;
+	}
+
+	// ref/<tfm> of a .NET (Core) shared-framework pack. Never falls back to "newest available":
+	// the packs only go back to 3.0, so a netcoreapp1.x/2.x assembly would silently bind against
+	// a current BCL and decompile as a wall of Unknown. Better to resolve nothing and say so.
+	string? CorePackDir(string packId, Version version)
+	{
+		var root = Path.Combine(nugetRoot, packId);
+		if (!Directory.Exists(root))
+			return null;
+		var versions = Directory.EnumerateDirectories(root)
+			.Select(d => (Dir: d, V: Version.TryParse(Path.GetFileName(d).Split('-')[0], out var v) ? v : null))
+			.Where(x => x.V != null)
+			.OrderBy(x => x.V)
+			.ToList();
+		var pick = versions.LastOrDefault(x => x.V!.Major == version.Major && x.V.Minor == version.Minor).Dir
+			?? versions.LastOrDefault(x => x.V!.Major <= version.Major).Dir;
+		if (pick == null)
+			return null;
+		var refRoot = Path.Combine(pick, "ref");
+		return Directory.Exists(refRoot) ? Directory.EnumerateDirectories(refRoot).FirstOrDefault() : null;
 	}
 
 	// Reference assemblies for .NET Framework targets; the newest pack wins, and its
 	// Facades subdirectory carries the type-forwarding shims netstandard code needs.
-	static IEnumerable<string> EnumerateFrameworkRefPacks(string nugetRoot)
+	// The single .NET Framework reference-assembly pack to bind against: the smallest one that
+	// is still a superset of the requested version, or the newest installed when no version is
+	// given (.NETStandard, which wants the widest set of facades). Indexing every installed pack
+	// instead would let the oldest one win by name and hide the newer BCL from every assembly.
+	static IEnumerable<string> EnumerateFrameworkRefPacks(string nugetRoot, Version? requested)
 	{
 		if (!Directory.Exists(nugetRoot))
 			yield break;
-		foreach (var pkg in Directory.EnumerateDirectories(nugetRoot, "microsoft.netframework.referenceassemblies.*")
-			.OrderBy(d => d))
+		var packs = Directory.EnumerateDirectories(nugetRoot, "microsoft.netframework.referenceassemblies.net4*")
+			.Select(d => (Dir: d, V: PackVersion(Path.GetFileName(d))))
+			.Where(x => x.V != null)
+			.OrderBy(x => x.V)
+			.ToList();
+		var pick = (requested != null ? packs.FirstOrDefault(x => x.V >= requested).Dir : null)
+			?? packs.LastOrDefault().Dir;
+		if (pick == null)
+			yield break;
+		foreach (var dir in Directory.EnumerateDirectories(pick, "v*", SearchOption.AllDirectories))
 		{
-			foreach (var dir in Directory.EnumerateDirectories(pkg, "v*", SearchOption.AllDirectories))
-			{
-				yield return dir;
-				var facades = Path.Combine(dir, "Facades");
-				if (Directory.Exists(facades))
-					yield return facades;
-			}
+			yield return dir;
+			var facades = Path.Combine(dir, "Facades");
+			if (Directory.Exists(facades))
+				yield return facades;
 		}
 	}
 
-	void IndexDirectory(string dir)
+	// "microsoft.netframework.referenceassemblies.net472" -> 4.7.2
+	static Version? PackVersion(string packageId)
+	{
+		var tfm = packageId[(packageId.LastIndexOf('.') + 1)..];
+		return tfm.Length > 3 && tfm.StartsWith("net", StringComparison.Ordinal)
+			&& Version.TryParse(string.Join('.', tfm[3..].ToCharArray()), out var v) ? v : null;
+	}
+
+	static void IndexDirectory(string dir, Dictionary<string, string> index)
 	{
 		foreach (var dll in Directory.EnumerateFiles(dir, "*.dll", SearchOption.AllDirectories))
 		{
 			var name = Path.GetFileNameWithoutExtension(dll);
 			// First indexed wins: --refs directories are added before the corpus, so an
 			// explicitly supplied reference is never shadowed by a corpus copy.
-			if (!byName.ContainsKey(name))
-				byName[name] = dll;
+			if (!index.ContainsKey(name))
+				index[name] = dll;
 		}
 	}
 
-	public string? Find(string simpleName)
+	public string? Find(string simpleName, Dictionary<string, string> frameworkIndex)
 	{
+		// The target framework's own reference assemblies outrank everything else: a corpus
+		// neighbour or a stray NuGet copy of System.Runtime would otherwise decide the BCL.
+		if (frameworkIndex.TryGetValue(simpleName, out var fxHit))
+			return fxHit;
 		if (byName.TryGetValue(simpleName, out var hit))
 			return hit;
 		foreach (var root in probeRoots)
@@ -391,6 +524,7 @@ sealed class RefIndex
 	// plus the reference names nothing could supply.
 	public static (string Staged, List<string> Missing) Stage(string dll, string stageRoot, RefIndex refs)
 	{
+		var frameworkIndex = refs.IndexFor(TargetFrameworkOf(dll));
 		var dir = Path.Combine(stageRoot, StageName(dll));
 		Directory.CreateDirectory(dir);
 		// Whatever sat next to the assembly keeps sitting next to it, so staging never
@@ -400,29 +534,37 @@ sealed class RefIndex
 		Link(dll, dir);
 		var missing = new List<string>();
 		var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		var queue = new Queue<string>();
+		// The flag records whether a name was reached through a reference assembly, which
+		// decides whether its absence is worth reporting.
+		var queue = new Queue<(string Name, bool ViaRefPack)>();
 		foreach (var name in ReferencesOf(dll))
-			queue.Enqueue(name);
+			queue.Enqueue((name, false));
 		while (queue.Count > 0)
 		{
-			var name = queue.Dequeue();
+			var (name, viaRefPack) = queue.Dequeue();
 			if (!seen.Add(name))
 				continue;
 			var staged = Path.Combine(dir, name + ".dll");
 			if (!File.Exists(staged))
 			{
-				var found = refs.Find(name);
+				var found = refs.Find(name, frameworkIndex);
 				if (found == null)
 				{
-					missing.Add(name);
+					// Reference assemblies name GAC-only internals - SMDiagnostics and
+					// System.ServiceModel.Internals are referenced from twenty .NET Framework
+					// ref assemblies and ship in no pack and no package. Nothing can supply
+					// them, so listing them as coverable by --refs is a false lead.
+					if (!viaRefPack)
+						missing.Add(name);
 					continue;
 				}
 				Link(found, dir);
 			}
 			// A staged reference brings its own references along: the type system follows
 			// base types and type-forwards across the whole closure, not just one hop.
+			var transitiveViaRefPack = viaRefPack || frameworkIndex.ContainsKey(name);
 			foreach (var transitive in ReferencesOf(staged))
-				queue.Enqueue(transitive);
+				queue.Enqueue((transitive, transitiveViaRefPack));
 		}
 		missing.Sort(StringComparer.OrdinalIgnoreCase);
 		return (Path.Combine(dir, Path.GetFileName(dll)), missing);
@@ -452,6 +594,42 @@ sealed class RefIndex
 			// Developer Mode enabled; copying costs disk but keeps staging working.
 			File.Copy(source, link, overwrite: true);
 		}
+	}
+
+	// The assembly's TargetFrameworkAttribute value (e.g. ".NETCoreApp,Version=v9.0"), or null
+	// when it carries none - which is normal for the .NET Framework era and for ref assemblies.
+	public static string? TargetFrameworkOf(string dll)
+	{
+		try
+		{
+			using var stream = File.OpenRead(dll);
+			using var pe = new PEReader(stream);
+			if (!pe.HasMetadata)
+				return null;
+			var md = pe.GetMetadataReader();
+			foreach (var handle in md.GetAssemblyDefinition().GetCustomAttributes())
+			{
+				var attr = md.GetCustomAttribute(handle);
+				if (attr.Constructor.Kind != HandleKind.MemberReference)
+					continue;
+				var ctor = md.GetMemberReference((MemberReferenceHandle)attr.Constructor);
+				if (ctor.Parent.Kind != HandleKind.TypeReference)
+					continue;
+				var type = md.GetTypeReference((TypeReferenceHandle)ctor.Parent);
+				if (md.GetString(type.Name) != "TargetFrameworkAttribute")
+					continue;
+				// blob: prolog (0x0001), then a SerString holding the moniker.
+				var reader = md.GetBlobReader(attr.Value);
+				if (reader.ReadUInt16() != 1)
+					return null;
+				return reader.ReadSerializedString();
+			}
+		}
+		catch (Exception ex) when (ex is BadImageFormatException or IOException)
+		{
+			// Native or corrupt file: nothing to read.
+		}
+		return null;
 	}
 
 	public static List<string> ReferencesOf(string dll)
@@ -719,9 +897,19 @@ class Side
 			// The dll timestamp exposes stale pre-existing builds; --build forces a fresh one.
 			description = $"{checkout} ({GitDescribe(checkout)}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
 		}
+		else if (TryResolveCommit(spec, out var commit, out var repoRoot))
+		{
+			// A git ref, so a PR or a tag can be diffed without preparing checkouts by hand.
+			// The worktree is keyed by commit and kept: reusing it reuses the Release build
+			// already sitting in its bin/, which is what dominates the runtime of a rerun.
+			var checkout = EnsureWorktree(repoRoot, commit);
+			dllPath = BuildCheckout(checkout, forceBuild);
+			description = $"{spec} ({commit[..9]}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
+		}
 		else
 		{
-			throw new ArgumentException($"--{name} {spec}: no such file or directory");
+			throw new ArgumentException(
+				$"--{name} {spec}: not a file, a directory, or a commit-ish in the repository at {Environment.CurrentDirectory}");
 		}
 		var alc = new DecompilerLoadContext(name, dllPath);
 		return new Side(alc.LoadFromAssemblyPath(dllPath), description);
@@ -760,24 +948,66 @@ class Side
 			throw new InvalidOperationException($"{exe} {arguments} failed:\n{output}");
 	}
 
-	static string GitDescribe(string checkout)
+	// Resolves a commit-ish against the repository the tool is run from. Files and directories
+	// win over refs, so a branch sharing a name with a directory still needs the path spelled out.
+	static bool TryResolveCommit(string spec, out string commit, out string repoRoot)
+	{
+		commit = "";
+		repoRoot = "";
+		var root = Git(Environment.CurrentDirectory, "rev-parse", "--show-toplevel");
+		if (root == null)
+			return false;
+		var resolved = Git(root, "rev-parse", "--verify", "--quiet", spec + "^{commit}");
+		if (string.IsNullOrEmpty(resolved))
+			return false;
+		commit = resolved;
+		repoRoot = root;
+		return true;
+	}
+
+	// Worktrees live outside the repository, so they never show up in its status or get
+	// swept up by a clean; `git worktree list` still shows them, and they are safe to delete.
+	static string EnsureWorktree(string repoRoot, string commit)
+	{
+		var dir = Path.Combine(
+			Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+			".cache", "decompdiff", Path.GetFileName(repoRoot), commit);
+		if (Directory.Exists(dir))
+			return dir;
+		Directory.CreateDirectory(Path.GetDirectoryName(dir)!);
+		Console.WriteLine($"  $ git worktree add --detach {dir} {commit[..9]}");
+		if (Git(repoRoot, "worktree", "add", "--detach", dir, commit) == null)
+			throw new InvalidOperationException($"git worktree add failed for {commit}");
+		return dir;
+	}
+
+	// Runs git and returns its trimmed stdout, or null if it could not be run or failed.
+	static string? Git(string workingDirectory, params string[] arguments)
 	{
 		try
 		{
-			var psi = new ProcessStartInfo("git", "describe --always --dirty --exclude *") {
-				WorkingDirectory = checkout,
+			var psi = new ProcessStartInfo("git") {
+				WorkingDirectory = workingDirectory,
 				RedirectStandardOutput = true,
 				RedirectStandardError = true,
 			};
+			foreach (var argument in arguments)
+				psi.ArgumentList.Add(argument);
 			using var p = Process.Start(psi)!;
 			var output = p.StandardOutput.ReadToEnd().Trim();
 			p.WaitForExit();
-			return p.ExitCode == 0 && output.Length > 0 ? output : "unknown";
+			return p.ExitCode == 0 ? output : null;
 		}
 		catch
 		{
-			return "unknown";
+			return null;
 		}
+	}
+
+	static string GitDescribe(string checkout)
+	{
+		var output = Git(checkout, "describe", "--always", "--dirty", "--exclude", "*");
+		return string.IsNullOrEmpty(output) ? "unknown" : output;
 	}
 
 	// Decompiles every top-level type; null when the assembly itself cannot be

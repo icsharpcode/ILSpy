@@ -751,7 +751,7 @@ matching is cheap. (See also <span class="filecite">doc/ILAst Pattern Matching.m
 
 <h3>5.6 Invariants</h3>
 
-<p><code>CheckInvariant(ILPhase)</code> verifies parent/child consistency, flag correctness, and
+<p><code>CheckInvariant(ILPhase, ICompilation)</code> verifies parent/child consistency, flag correctness, and
 connectedness. The phase parameter exists because invariants tighten over time: in
 <code>ILPhase.InILReader</code>, branches may still point at offsets; from
 <code>ILPhase.Normal</code> on, the full rules apply. <code>ILFunction.RunTransforms</code> checks the

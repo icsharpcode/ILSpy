@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				var value = assemblyReferences;
 				if (value.IsDefault)
 				{
-					value = Metadata.AssemblyReferences.Select(r => new AssemblyReference(this.Metadata, r)).ToImmutableArray();
+					value = Metadata.AssemblyReferences.Select(r => new AssemblyReference(this, r)).ToImmutableArray();
 					assemblyReferences = value;
 				}
 				return value;

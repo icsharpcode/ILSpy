@@ -877,5 +877,54 @@ namespace LocalFunctions
 			static extern int EnumWindows(long hWnd, long lParam);
 		}
 #endif
+
+		public int Issue3714_LocalFunctionInsideLambda()
+		{
+			int outer = 1;
+#if !OPT
+			Action action = () => {
+#else
+			((Action)(() => {
+#endif
+				int inner = 2;
+				Local(3);
+				Console.WriteLine(inner);
+				void Local(int d)
+				{
+					inner += d;
+					outer += d;
+				}
+#if !OPT
+			};
+			action();
+#else
+			}))();
+#endif
+			return outer;
+		}
+
+		public void Issue3008_DisplayClassForwardedThroughLocalFunction(int start)
+		{
+			Run();
+			void Run()
+			{
+				int captured = start;
+				A();
+				Console.WriteLine(captured);
+				void A()
+				{
+					captured++;
+					if (captured < 10)
+					{
+						B();
+					}
+				}
+				void B()
+				{
+					captured += 2;
+					A();
+				}
+			}
+		}
 	}
 }

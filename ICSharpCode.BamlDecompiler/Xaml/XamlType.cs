@@ -69,7 +69,7 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 				xmlNs = ctx.XmlNs.LookupXmlns(FullAssemblyName, TypeNamespace);
 			// Sometimes there's no reference to System.Xaml even if x:Type is used
 			if (xmlNs == null)
-				xmlNs = ctx.TryGetXmlNamespace(Assembly, TypeNamespace);
+				xmlNs = XamlContext.TryGetXmlNamespace(Assembly, TypeNamespace, elem);
 
 			if (xmlNs == null)
 			{

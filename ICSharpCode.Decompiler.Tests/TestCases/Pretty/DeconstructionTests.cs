@@ -165,6 +165,55 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public static MyInt? StaticNMy { get; set; }
 		}
 
+		private class DeeplyNestedSource<T>
+		{
+			public void Deconstruct(out T top, out InnerOuterDeconstructable middle)
+			{
+				top = default;
+				middle = default;
+			}
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		private struct InnerDeconstructable
+		{
+			public void Deconstruct(out int x, out int y)
+			{
+				x = 0;
+				y = 0;
+			}
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		private struct InnerOuterDeconstructable
+		{
+			public void Deconstruct(out int x, out InnerDeconstructable y)
+			{
+				x = 0;
+				y = default;
+			}
+		}
+
+		private class NestedSource<T>
+		{
+			public void Deconstruct(out T outer, out InnerDeconstructable inner)
+			{
+				outer = default;
+				inner = default;
+			}
+		}
+
+		private class NestedSourceInnerFirst<T>
+		{
+			public void Deconstruct(out InnerDeconstructable inner, out T outer)
+			{
+				inner = default;
+				outer = default;
+			}
+		}
+
+		private (string, string) tupleField;
+
 		private DeconstructionSource<T, T2> GetSource<T, T2>()
 		{
 			return null;
@@ -216,6 +265,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		private AssignmentTargets Get(int i)
+		{
+			return null;
+		}
+
+		private NestedSource<T> GetNestedSource<T>()
+		{
+			return null;
+		}
+
+		private NestedSourceInnerFirst<T> GetNestedSourceInnerFirst<T>()
+		{
+			return null;
+		}
+
+		private DeeplyNestedSource<T> GetDeeplyNestedSource<T>()
 		{
 			return null;
 		}
@@ -559,17 +623,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// leaf instead of becoming a nested designation.
 		public void LocalVariable_TupleInner_ElementUsedOutside()
 		{
-#if OPT
-			(int, (int, int)) tuple = GetTuple<int, (int, int)>();
-			int item = tuple.Item1;
-			(int, int) item2 = tuple.Item2;
-			Console.WriteLine(item);
-			Console.WriteLine(item2.Item1);
-#else
 			var (value, tuple2) = GetTuple<int, (int, int)>();
 			Console.WriteLine(value);
 			Console.WriteLine(tuple2.Item1);
-#endif
 		}
 
 		// Same, but the escaping element is in the first position. Every leaf of the
@@ -1023,5 +1079,178 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			var (num2, text2) = structSource;
 			Console.WriteLine(num2 + text2 + structSource.Dummy);
 		}
+
+		public void DeconstructInIfElse(bool flag)
+		{
+			if (flag)
+			{
+				var (value, value2) = GetSource<string, string>();
+				Console.WriteLine(value);
+				Console.WriteLine(value2);
+			}
+			else
+			{
+				var (value3, value4) = GetTuple<string, string>();
+				Console.WriteLine(value3);
+				Console.WriteLine(value4);
+			}
+		}
+
+		public void DeconstructInsideSwitchCase(int selector)
+		{
+			switch (selector)
+			{
+				case 1:
+					var (value3, value4) = GetSource<string, string>();
+					Console.WriteLine(value3);
+					Console.WriteLine(value4);
+					break;
+				case 2:
+					var (value, value2) = GetTuple<string, string>();
+					Console.WriteLine(value);
+					Console.WriteLine(value2);
+					break;
+				default:
+					Console.WriteLine("default");
+					break;
+			}
+		}
+
+		public void DeconstructInsideTry()
+		{
+			try
+			{
+				var (value, value2) = GetSource<string, string>();
+				Console.WriteLine(value);
+				Console.WriteLine(value2);
+			}
+			catch
+			{
+				Console.WriteLine("oops");
+			}
+		}
+
+		public void DeconstructInWhileLoop_Tuple()
+		{
+			while (true)
+			{
+				var (value, value2) = GetTuple<string, string>();
+				Console.WriteLine(value);
+				Console.WriteLine(value2);
+			}
+		}
+
+		public void DeconstructThreeTupleListForEach(List<(string, int, double)> tuples)
+		{
+			foreach (var (text, num, num2) in tuples)
+			{
+				Console.WriteLine(text + ": " + num + ", " + num2);
+			}
+		}
+
+		public void IndexerSource_Tuple(Dictionary<int, (string, int)> dict, int key)
+		{
+			var (value, value2) = dict[key];
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
+
+		public void Mixed_LocalAndField_Custom()
+		{
+			string value;
+			(value, Get(0).StringField) = GetSource<string, string>();
+			Console.WriteLine(value);
+		}
+
+		public void Mixed_LocalAndField_Tuple()
+		{
+			string value;
+			(value, Get(0).StringField) = GetTuple<string, string>();
+			Console.WriteLine(value);
+		}
+
+		public void Nested_InnerDiscardFirst_Custom()
+		{
+			var (value, (_, value2)) = GetNestedSource<string>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
+
+		public void Nested_InnerDiscardLast_Custom()
+		{
+			var (value, (value2, _)) = GetNestedSource<string>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
+
+		public void Nested_NestedAtPosition0_Custom()
+		{
+			var ((value, value2), value3) = GetNestedSourceInnerFirst<string>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+		}
+
+		public void Nested_NoConversion_Custom()
+		{
+			var (value, (value2, value3)) = GetNestedSource<string>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+		}
+
+		public void Nested_PropertyTargets_Custom()
+		{
+			(Get(0).String, (Get(1).Int, Get(2).Int)) = GetNestedSource<string>();
+		}
+
+		public void Nested_ThreeLevels_Custom()
+		{
+			var (value, (value2, (value3, value4))) = GetDeeplyNestedSource<string>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			Console.WriteLine(value3);
+			Console.WriteLine(value4);
+		}
+
+		public void Property_NoConversion_ReverseOrderFetches_Custom()
+		{
+			(Get(1).My, Get(0).NMy) = GetSource<MyInt, MyInt?>();
+		}
+
+		public void Property_NoConversion_ReverseOrderFetches_Tuple()
+		{
+			(Get(1).My, Get(0).NMy) = GetTuple<MyInt, MyInt?>();
+		}
+
+		public void StaticProperty_NoConversion_Custom()
+		{
+			(AssignmentTargets.StaticNMy, AssignmentTargets.StaticMy) = GetSource<MyInt?, MyInt>();
+		}
+
+		public void StaticProperty_NoConversion_Tuple()
+		{
+			(AssignmentTargets.StaticNMy, AssignmentTargets.StaticMy) = GetTuple<MyInt?, MyInt>();
+		}
+
+		public void TupleFieldSource()
+		{
+			var (value, value2) = tupleField;
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+		}
+
+		// #4059: csc reuses the same out-slot temporaries for both calls, and hands them to the
+		// second one in the opposite order, so neither deconstruction is recognized.
+		//public void TwoBackToBackDeconstructs_Custom()
+		//{
+		//	var (value, value2) = GetSource<string, string>();
+		//	Console.WriteLine(value);
+		//	Console.WriteLine(value2);
+		//	var (value3, value4) = GetSource<string, string>();
+		//	Console.WriteLine(value3);
+		//	Console.WriteLine(value4);
+		//}
+
 	}
 }

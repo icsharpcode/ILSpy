@@ -726,21 +726,30 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				? new List<LoadedAssembly>(newlyLoaded)
 				: AssemblyList?.GetAssemblies().ToList() ?? new List<LoadedAssembly>();
 
-			if (args.NavigateTo is { Length: > 0 } navigateTo)
-				await NavigateOnLaunchAsync(navigateTo, relevant);
-			else if (newlyLoaded.Count == 1 && FindAssemblyNode(newlyLoaded[0]) is { } singleNode)
+			// Only a target that actually resolved gets to own the selection. An ID naming
+			// nothing falls through to the same single-assembly selection that opening the
+			// file without --navigateto would have made, rather than leaving the tree empty
+			// with no indication of what went wrong.
+			bool navigationHandled = args.NavigateTo is { Length: > 0 } navigateTo
+				&& await NavigateOnLaunchAsync(navigateTo, relevant);
+			if (!navigationHandled && newlyLoaded.Count == 1 && FindAssemblyNode(newlyLoaded[0]) is { } singleNode)
 				SelectNode(singleNode);
 
 			// Search-pane wiring lands with task 6. Until then the arg parses but is a no-op
 			// rather than crashing.
 		}
 
-		async Task NavigateOnLaunchAsync(string navigateTo, IList<LoadedAssembly> relevant)
+		/// <summary>
+		/// Navigates to the given target. Returns false if it named nothing, leaving the
+		/// selection for the caller to fill in.
+		/// </summary>
+		async Task<bool> NavigateOnLaunchAsync(string navigateTo, IList<LoadedAssembly> relevant)
 		{
 			// "none" is a sentinel used by the WPF VS add-in to suppress initial navigation —
-			// the real target arrives later via IPC.
+			// the real target arrives later via IPC. Nothing else may claim the selection
+			// either, so this counts as handled.
 			if (navigateTo == "none")
-				return;
+				return true;
 
 			if (navigateTo.StartsWith("N:", StringComparison.Ordinal))
 			{
@@ -757,10 +766,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					if (nsNode != null)
 					{
 						SelectNode(nsNode);
-						return;
+						return true;
 					}
 				}
-				return;
+				return false;
 			}
 
 			// A gone or unreadable assembly resolves to null and is skipped by the entity search
@@ -768,29 +777,61 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			foreach (var asm in relevant)
 				await asm.GetMetadataFileOrNullAsync().ConfigureAwait(true);
 
-			var entity = await Task.Run(() => FindEntityInRelevantAssemblies(navigateTo, relevant));
-			if (entity != null)
+			var group = await Task.Run(() => FindEntitiesInRelevantAssemblies(navigateTo, relevant));
+			if (group.Count == 0)
+				return false;
+			// The short form of an overloaded member names the whole group, and no single
+			// overload answers it better than its siblings. Selecting all of them shows every
+			// one while staying at the member level, where the group is what the user was
+			// pointing at; picking one would hide that there was anything to pick.
+			var nodes = new List<SharpTreeNode>(group.Count);
+			foreach (var entity in group)
 			{
-				var node = FindTreeNode(entity);
-				if (node != null)
-					SelectNode(node);
+				if (FindTreeNode(entity) is { } found)
+					nodes.Add(found);
 			}
+			if (nodes.Count == 0)
+				return false;
+			SelectNodes(nodes);
+			return true;
 		}
 
 		internal static IEntity? FindEntityInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
+			var group = FindEntitiesInRelevantAssemblies(navigateTo, relevantAssemblies);
+			return group.Count == 0 ? null : group[0];
+		}
+
+		/// <summary>
+		/// Resolves a navigation target to every entity it names. A member ID written without
+		/// its signature names an overload group; the caller decides how to present one.
+		/// </summary>
+		internal static IReadOnlyList<IEntity> FindEntitiesInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
+		{
 			// Reference assemblies are skipped so the search keeps looking for another
 			// assembly that might have a usable definition.
 			IReadOnlyList<MetadataFile> modules = [.. from asm in relevantAssemblies let mod = asm.GetMetadataFileOrNull() where mod != null && !mod.IsReferenceAssembly() select mod];
-			var (module, handle) = IdStringProvider.FindEntity(navigateTo, modules);
-			if (module == null || handle.IsNil)
-				(module, handle) = FindMemberViaTypeForwarders(navigateTo, modules);
-			if (module == null || handle.IsNil)
-				return null;
-			var metadataModule = module.GetLoadedAssembly().GetTypeSystemOrNull()?.MainModule as MetadataModule;
-			if (metadataModule == null)
-				return null;
-			return metadataModule.ResolveEntity(handle);
+			// The id came from a command line, so it is searched with the omission-tolerant
+			// ladder rather than resolved exactly: a parameter list or a generic arity that has
+			// to be spelled out is one the caller had to know before asking.
+			var (module, handles) = DocumentationIdSearch.Find(navigateTo, modules);
+			if (module == null || handles.IsEmpty)
+			{
+				var (forwardedModule, handle) = FindMemberViaTypeForwarders(navigateTo, modules);
+				if (forwardedModule == null || handle.IsNil)
+					return [];
+				module = forwardedModule;
+				handles = [handle];
+			}
+			if (module.GetLoadedAssembly().GetTypeSystemOrNull()?.MainModule is not MetadataModule metadataModule)
+				return [];
+			var entities = new List<IEntity>(handles.Length);
+			foreach (var handle in handles)
+			{
+				if (metadataModule.ResolveEntity(handle) is { } entity)
+					entities.Add(entity);
+			}
+			return entities;
 		}
 
 		/// <summary>

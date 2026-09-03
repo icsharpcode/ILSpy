@@ -17,6 +17,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
+using System.Linq;
+
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -162,86 +165,39 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
-		/// Infers the C# type for an IL instruction.
-		/// 
-		/// Returns SpecialType.UnknownType for unsupported instructions.
+		/// Infers the C# type an instruction expects of the child in <paramref name="childIndex"/>,
+		/// i.e. the counterpart to <see cref="ILInstruction.InferType"/>: that one asks what a value is, this one
+		/// asks what the position it flows into says it should be.
+		///
+		/// Returns SpecialType.UnknownType where the position names nothing.
 		/// </summary>
-		public static IType InferType(this ILInstruction inst, ICompilation? compilation)
+		/// <remarks>
+		/// Where a value's own type is only its stack type - `I4` being `int`, `bool`, `char` and
+		/// every enum at once - the consumer often still knows, because a parameter, a return type
+		/// or a field carries its type in metadata.
+		/// </remarks>
+		public static IType InferExpectedType(this ILInstruction inst, int childIndex, ICompilation? compilation)
 		{
 			switch (inst)
 			{
-				case NewObj newObj:
-					return newObj.Method.DeclaringType ?? SpecialType.UnknownType;
-				case NewArr newArr:
-					if (compilation != null)
-						return new ArrayType(compilation, newArr.Type, newArr.Indices.Count);
-					else
+				case CallInstruction call:
+					if (childIndex == 0 && call.IsInstanceCall)
+						return call.ConstrainedTo ?? call.Method.DeclaringType;
+					return call.GetParameter(childIndex)?.Type ?? SpecialType.UnknownType;
+				case Leave leave when childIndex == 0:
+					// the value of a leave is a return value only where it leaves the function body
+					var function = leave.Ancestors.OfType<ILFunction>().FirstOrDefault();
+					if (function == null || leave.TargetContainer != function.Body)
 						return SpecialType.UnknownType;
-				case Call call:
-					return call.Method.ReturnType;
-				case CallVirt callVirt:
-					return callVirt.Method.ReturnType;
-				case CallIndirect calli:
-					return calli.FunctionPointerType.ReturnType;
-				case UserDefinedLogicOperator logicOp:
-					return logicOp.Method.ReturnType;
-				case LdObj ldobj:
-					return ldobj.Type;
-				case StObj stobj:
+					return function.Method?.ReturnType ?? SpecialType.UnknownType;
+				case StObj stobj when childIndex == 1:
 					return stobj.Type;
-				case LdLoc ldloc:
-					return ldloc.Variable.Type;
-				case StLoc stloc:
+				case StLoc stloc when childIndex == 0:
 					return stloc.Variable.Type;
-				case LdLoca ldloca:
-					return new ByReferenceType(ldloca.Variable.Type);
-				case LdFlda ldflda:
-					return new ByReferenceType(ldflda.Field.Type);
-				case LdsFlda ldsflda:
-					return new ByReferenceType(ldsflda.Field.Type);
-				case LdElema ldelema:
-					if (ldelema.Array.InferType(compilation) is ArrayType arrayType)
-					{
-						if (TypeUtils.IsCompatibleTypeForMemoryAccess(arrayType.ElementType, ldelema.Type))
-						{
-							return new ByReferenceType(arrayType.ElementType);
-						}
-					}
-					return new ByReferenceType(ldelema.Type);
-				case Comp comp:
-					if (compilation == null)
-						return SpecialType.UnknownType;
-					switch (comp.LiftingKind)
-					{
-						case ComparisonLiftingKind.None:
-						case ComparisonLiftingKind.CSharp:
-							return compilation.FindType(KnownTypeCode.Boolean);
-						case ComparisonLiftingKind.ThreeValuedLogic:
-							return NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
-						default:
-							return SpecialType.UnknownType;
-					}
-				case BinaryNumericInstruction bni:
-					if (bni.IsLifted)
-						return SpecialType.UnknownType;
-					switch (bni.Operator)
-					{
-						case BinaryNumericOperator.BitAnd:
-						case BinaryNumericOperator.BitOr:
-						case BinaryNumericOperator.BitXor:
-							var left = bni.Left.InferType(compilation);
-							var right = bni.Right.InferType(compilation);
-							if (left.Equals(right) && (left.IsCSharpPrimitiveIntegerType() || left.IsCSharpNativeIntegerType() || left.IsKnownType(KnownTypeCode.Boolean)))
-								return left;
-							else
-								return SpecialType.UnknownType;
-						default:
-							return SpecialType.UnknownType;
-					}
-				case DefaultValue defaultValue:
-					return defaultValue.Type;
-				case ILFunction func when func.DelegateType != null:
-					return func.DelegateType;
+				case IfInstruction ifInst when childIndex == 0:
+					return compilation?.FindType(KnownTypeCode.Boolean) ?? SpecialType.UnknownType;
+				case NewArr newArr:
+					return compilation?.FindType(KnownTypeCode.Int32) ?? SpecialType.UnknownType;
 				default:
 					return SpecialType.UnknownType;
 			}

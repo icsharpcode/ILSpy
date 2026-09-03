@@ -71,14 +71,13 @@ namespace ICSharpCode.ILSpyCmd
 				&& supportedTables.Contains(table);
 		}
 
-		public static int DumpTable(string assemblyFileName, TextWriter output, TableIndex table, bool asJson)
+		public static int DumpTable(PEFile module, TextWriter output, TableIndex table, bool asJson)
 		{
-			using var module = new PEFile(assemblyFileName);
 			var metadata = module.Metadata;
 			var rows = LoadRows(metadata, table);
 			if (asJson)
 			{
-				WriteJson(output, assemblyFileName, table, rows);
+				WriteJson(output, module.FileName, table, rows);
 			}
 			else
 			{

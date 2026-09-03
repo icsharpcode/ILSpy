@@ -87,14 +87,9 @@ namespace ICSharpCode.Decompiler.IL
 			return Method.Parameters[argumentIndex - firstParamIndex];
 		}
 
-		public override StackType ResultType {
-			get {
-				if (OpCode == OpCode.NewObj)
-					return Method.DeclaringType.GetStackType();
-				else
-					return Method.ReturnType.GetStackType();
-			}
-		}
+		// Note: NewObj is overriding ResultType+InferType.
+		public override StackType ResultType => Method.ReturnType.GetStackType();
+		public override IType InferType(ICompilation compilation) => Method.ReturnType;
 
 		/// <summary>
 		/// Gets the expected stack type for passing the this pointer in a method call.
@@ -121,9 +116,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			int firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
 			if (firstArgument == 1)

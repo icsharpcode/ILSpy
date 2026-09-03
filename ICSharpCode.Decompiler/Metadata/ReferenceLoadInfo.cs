@@ -22,6 +22,15 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.Metadata
 {
+	/// <summary>
+	/// Implemented by assembly resolvers that keep a log of how each reference was resolved, so that
+	/// the type system can report a reference it could not follow to the same place.
+	/// </summary>
+	public interface IReferenceLoadInfoProvider
+	{
+		ReferenceLoadInfo LoadInfo { get; }
+	}
+
 	public class ReferenceLoadInfo
 	{
 		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new Dictionary<string, UnresolvedAssemblyNameReference>();

@@ -21,6 +21,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
@@ -33,6 +34,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.TryBlock = tryBlock;
 		}
+
+		public sealed override StackType ResultType => StackType.Void;
+		public sealed override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 
 		ILInstruction tryBlock = null!;
 		public ILInstruction TryBlock {
@@ -78,10 +82,6 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(' ');
 				handler.WriteTo(output, options);
 			}
-		}
-
-		public override StackType ResultType {
-			get { return StackType.Void; }
 		}
 
 		protected override InstructionFlags ComputeFlags()
@@ -140,16 +140,12 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class TryCatchHandler
 	{
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			Debug.Assert(Parent is TryCatch);
 			Debug.Assert(filter.ResultType == StackType.I4);
 			Debug.Assert(this.IsDescendantOf(variable.Function!));
-		}
-
-		public override StackType ResultType {
-			get { return StackType.Void; }
 		}
 
 		protected override InstructionFlags ComputeFlags()
@@ -224,12 +220,6 @@ namespace ICSharpCode.Decompiler.IL
 			TryBlock.WriteTo(output, options);
 			output.Write(" finally ");
 			finallyBlock.WriteTo(output, options);
-		}
-
-		public override StackType ResultType {
-			get {
-				return TryBlock.ResultType;
-			}
 		}
 
 		protected override InstructionFlags ComputeFlags()
@@ -323,10 +313,6 @@ namespace ICSharpCode.Decompiler.IL
 			faultBlock.WriteTo(output, options);
 		}
 
-		public override StackType ResultType {
-			get { return TryBlock.ResultType; }
-		}
-
 		protected override InstructionFlags ComputeFlags()
 		{
 			// The endpoint of the try-fault is unreachable iff the try endpoint is unreachable
@@ -384,10 +370,5 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-	}
-
-	public partial class Throw
-	{
-		internal StackType resultType = StackType.Void;
 	}
 }

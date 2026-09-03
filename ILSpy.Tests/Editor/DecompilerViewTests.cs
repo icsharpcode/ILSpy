@@ -460,11 +460,7 @@ public class DecompilerViewTests
 		await Waiters.WaitForAsync(() => tab.SyntaxExtension == ".xml" && tab.Text.Contains("<root>"));
 
 		// Drain the layout so ApplyDocument's PropertyChanged handler has executed.
-		for (int i = 0; i < 5; i++)
-		{
-			global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-			await Task.Delay(20);
-		}
+		await Waiters.WaitForIdleAsync();
 		host.Capture("xml-folding");
 
 		// Assert — FoldingManager is installed (private field, reflected) and produced fold
@@ -547,12 +543,12 @@ public class DecompilerViewTests
 
 			// Switch the language — the buggy path was here.
 			var languageService = AppComposition.Current.GetExport<LanguageService>();
-			var blockIL = languageService.Languages.OfType<ILAstLanguage>()
-				.Single(l => l.Name == "ILAst");
-			languageService.CurrentLanguage = blockIL;
+			var il = languageService.Languages.OfType<ILLanguage>()
+				.Single(l => l.Name == "IL");
+			languageService.CurrentLanguage = il;
 
 			await vm.DockWorkspace.WaitForDecompiledTextAsync();
-			TestCapture.Step("ilast-method");
+			TestCapture.Step("il-method");
 
 			// Force GC to flush any unobserved Task faults that escaped via the dispatcher.
 			System.GC.Collect();
@@ -560,7 +556,7 @@ public class DecompilerViewTests
 			System.GC.Collect();
 
 			unobserved.Should().BeNull(
-				$"C# → ILAst language switch must not leak an unobserved task fault; saw: {unobserved}");
+				$"C# → IL language switch must not leak an unobserved task fault; saw: {unobserved}");
 		}
 		finally
 		{

@@ -112,6 +112,86 @@ public class CommandLineArgumentsTests
 	}
 
 	[AvaloniaTest]
+	public async Task NavigateTo_Accepts_A_Member_Id_Without_Its_Signature()
+	{
+		// A cref may name a member without a parameter list, which is what a user reaches for:
+		// spelling out the signature means knowing the overload count beforehand. Where the
+		// short form names exactly one member, it selects that member.
+
+		// Arrange - boot, and open an assembly with a member that has no overloads.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		string path = typeof(CommandLineArgumentsTests).Assembly.Location;
+		var args = CommandLineArguments.Create(new[] {
+			path, "--navigateto", "M:ICSharpCode.ILSpy.Tests.NavigateToSample.OnlyOne" });
+
+		// Act.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - selection landed on the member itself.
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
+		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(MethodTreeNode));
+		((MethodTreeNode)vm.AssemblyTreeModel.SelectedItem!).MethodDefinition.Name.Should().Be("OnlyOne");
+	}
+
+	[AvaloniaTest]
+	public async Task NavigateTo_Short_Form_Of_An_Overloaded_Member_Selects_Every_Overload()
+	{
+		// The short form of an overloaded member names the whole group, and no single overload
+		// is a better answer than its siblings. Selecting all of them shows every one without
+		// leaving the member level: falling back to the declaring type would bury the group in
+		// a large type's decompilation, and picking one would hide that there was a choice.
+
+		// Arrange - boot, and open an assembly with an overloaded member.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+
+		string path = typeof(CommandLineArgumentsTests).Assembly.Location;
+		var args = CommandLineArguments.Create(new[] {
+			path, "--navigateto", "M:ICSharpCode.ILSpy.Tests.NavigateToSample.Overloaded" });
+
+		// Act.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - every overload is selected, and nothing else.
+		vm.AssemblyTreeModel.SelectedItems.Should().HaveCount(2);
+		vm.AssemblyTreeModel.SelectedItems.Should().AllSatisfy(node =>
+			((MethodTreeNode)node).MethodDefinition.Name.Should().Be("Overloaded"));
+	}
+
+	[AvaloniaTest]
+	public async Task NavigateTo_Falls_Back_To_The_Loaded_Assembly_When_The_Id_Does_Not_Resolve()
+	{
+		// An ID that names nothing must not leave the tree on an empty selection with no
+		// indication of what happened: the assembly the user asked to open is still the best
+		// answer, and it is what opening it without --navigateto would have selected.
+
+		// Arrange - boot, then ask to open an assembly the default list does not contain.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		vm.AssemblyTreeModel.SelectedItems.Clear();
+
+		string path = typeof(CommandLineArgumentsTests).Assembly.Location;
+		var args = CommandLineArguments.Create(new[] { path, "--navigateto", "M:No.Such.Type.NoSuchMember" });
+
+		// Act.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - the requested assembly is selected.
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull(
+			"an unresolvable target must fall back to the assembly that was opened");
+		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(AssemblyTreeNode));
+		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be(path);
+	}
+
+	[AvaloniaTest]
 	public async Task NavigateTo_Skips_A_Missing_Session_Assembly_Instead_Of_Crashing()
 	{
 		// A restored session can still list an assembly whose file has since been deleted or
@@ -139,4 +219,17 @@ public class CommandLineArgumentsTests
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
 		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be("System.Linq.Enumerable");
 	}
+}
+
+/// <summary>
+/// Fixture for --navigateto: one member with no overloads, and one with several, so the short
+/// form of a member ID can be exercised in both shapes.
+/// </summary>
+public class NavigateToSample
+{
+	public void OnlyOne(int a, int b) { }
+
+	public void Overloaded(int a) { }
+
+	public void Overloaded(string a) { }
 }

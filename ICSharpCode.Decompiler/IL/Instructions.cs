@@ -540,7 +540,8 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		protected PatternInstruction(OpCode opCode) : base(opCode)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Unknown; } }
+		public override StackType ResultType => (SpecialType.UnknownType).GetStackType();
+		public override IType InferType(ICompilation compilation) => SpecialType.UnknownType;
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -738,7 +739,8 @@ namespace ICSharpCode.Decompiler.IL
 		public Nop() : base(OpCode.Nop)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNop(this);
@@ -819,7 +821,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.CloneVariables();
 			return clone;
 		}
-		public override StackType ResultType { get { return DelegateType?.GetStackType() ?? StackType.O; } }
+		public override StackType ResultType => (DelegateType ?? SpecialType.UnknownType).GetStackType();
+		public override IType InferType(ICompilation compilation) => DelegateType ?? SpecialType.UnknownType;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitILFunction(this);
@@ -844,7 +847,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class BlockContainer : ILInstruction
 	{
-		public override StackType ResultType { get { return this.ExpectedResultType; } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitBlockContainer(this);
@@ -900,7 +903,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Init = init;
 			this.Body = body;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		ILVariable variable;
 		public ILVariable Variable {
 			get { return variable; }
@@ -1038,9 +1042,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as PinnedRegion;
 			return o != null && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			DebugAssert(Variable.Kind == VariableKind.PinnedRegionLocal);
@@ -1083,7 +1087,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => (this.type).GetStackType();
+		public override IType InferType(ICompilation compilation) => this.type;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNumericCompoundAssign(this);
@@ -1142,7 +1147,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Common instruction for dynamic compound assignments.</summary>
 	public sealed partial class DynamicCompoundAssign : CompoundAssignmentInstruction
 	{
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => SpecialType.Dynamic;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
@@ -1204,7 +1210,8 @@ namespace ICSharpCode.Decompiler.IL
 		public Arglist() : base(OpCode.Arglist)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.VT;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.RuntimeArgumentHandle);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitArglist(this);
@@ -1229,7 +1236,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Unconditional branch. <c>goto target;</c></summary>
 	public sealed partial class Branch : SimpleInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
@@ -1313,7 +1321,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLeave(this);
@@ -1612,7 +1621,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitSwitchSection(this);
@@ -1767,6 +1777,8 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitTryCatchHandler(this);
@@ -1913,7 +1925,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return onExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
@@ -1940,9 +1953,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LockInstruction;
 			return o != null && this.onExpression.PerformMatch(o.onExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(onExpression.ResultType == StackType.O);
 		}
 	}
@@ -2057,7 +2070,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayWriteLocals | resourceExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
@@ -2084,9 +2098,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as UsingInstruction;
 			return o != null && variable == o.variable && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			DebugAssert(resourceExpression.ResultType == StackType.O);
@@ -2101,7 +2115,8 @@ namespace ICSharpCode.Decompiler.IL
 		public DebugBreak() : base(OpCode.DebugBreak)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.SideEffect;
@@ -2234,7 +2249,8 @@ namespace ICSharpCode.Decompiler.IL
 		public Ckfinite(ILInstruction argument) : base(OpCode.Ckfinite, argument)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -2329,7 +2345,8 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 
-		public override StackType ResultType { get { return variable.StackType; } }
+		public override StackType ResultType => variable.StackType;
+		public override IType InferType(ICompilation compilation) => variable.Type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayReadLocals;
@@ -2363,9 +2380,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdLoc;
 			return o != null && variable == o.variable;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 		}
@@ -2380,7 +2397,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.variable = variable ?? throw new ArgumentNullException(nameof(variable));
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(variable.Type);
 		ILVariable variable;
 		public ILVariable Variable {
 			get { return variable; }
@@ -2437,9 +2455,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdLoca;
 			return o != null && variable == o.variable;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 		}
@@ -2538,7 +2556,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return variable.StackType; } }
+		public override StackType ResultType => variable.StackType;
+		public override IType InferType(ICompilation compilation) => variable.Type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayWriteLocals | value.Flags;
@@ -2637,7 +2656,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(type);
 		IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type {
@@ -2690,7 +2710,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ThreeValuedBoolAnd(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedBoolAnd, left, right)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitThreeValuedBoolAnd(this);
@@ -2718,7 +2738,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ThreeValuedBoolOr(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedBoolOr, left, right)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitThreeValuedBoolOr(this);
@@ -2784,10 +2804,26 @@ namespace ICSharpCode.Decompiler.IL
 	/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable&lt;T&gt; if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
 	public sealed partial class NullableRewrap : UnaryInstruction
 	{
-		public NullableRewrap(ILInstruction argument) : base(OpCode.NullableRewrap, argument)
+		public NullableRewrap(ILInstruction argument, IType type) : base(OpCode.NullableRewrap, argument)
 		{
+			this.type = type;
 		}
-
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNullableRewrap(this);
@@ -2803,7 +2839,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as NullableRewrap;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 }
@@ -2817,7 +2853,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly string Value;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.Obj;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.String);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2854,7 +2891,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly string Value;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.VT;
+		public override IType InferType(ICompilation compilation) => new ParameterizedType(compilation.FindType(KnownTypeCode.ReadOnlySpanOfT), compilation.FindType(KnownTypeCode.Boolean));
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2891,7 +2929,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly int Value;
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Int32);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2928,7 +2967,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly long Value;
-		public override StackType ResultType { get { return StackType.I8; } }
+		public override StackType ResultType => StackType.I8;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Int64);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -2965,7 +3005,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly float Value;
-		public override StackType ResultType { get { return StackType.F4; } }
+		public override StackType ResultType => StackType.F4;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Single);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3002,7 +3043,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly double Value;
-		public override StackType ResultType { get { return StackType.F8; } }
+		public override StackType ResultType => StackType.F8;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Double);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3039,7 +3081,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly decimal Value;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.O;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Decimal);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3074,7 +3117,8 @@ namespace ICSharpCode.Decompiler.IL
 		public LdNull() : base(OpCode.LdNull)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.Obj;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Object);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLdNull(this);
@@ -3106,7 +3150,8 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.I; } }
+		public override StackType ResultType => StackType.I;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.IntPtr);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3148,7 +3193,8 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.I; } }
+		public override StackType ResultType => StackType.I;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.IntPtr);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -3209,7 +3255,8 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.Obj;
+		public override IType InferType(ICompilation compilation) => this.type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -3268,7 +3315,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.VT;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.RuntimeTypeHandle);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3307,7 +3355,8 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMember member;
 		/// <summary>Returns the token operand.</summary>
 		public IMember Member { get { return member; } }
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.VT;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(member is IField ? KnownTypeCode.RuntimeFieldHandle : KnownTypeCode.RuntimeMethodHandle);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -3342,7 +3391,8 @@ namespace ICSharpCode.Decompiler.IL
 		public LocAlloc(ILInstruction argument) : base(OpCode.LocAlloc, argument)
 		{
 		}
-		public override StackType ResultType { get { return StackType.I; } }
+		public override StackType ResultType => StackType.I;
+		public override IType InferType(ICompilation compilation) => new PointerType(compilation.FindType(KnownTypeCode.Void));
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -3386,7 +3436,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.VT;
+		public override IType InferType(ICompilation compilation) => this.type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -3524,7 +3575,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return destAddress.Flags | sourceAddress.Flags | size.Flags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
@@ -3567,9 +3619,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as Cpblk;
 			return o != null && this.destAddress.PerformMatch(o.destAddress, ref match) && this.sourceAddress.PerformMatch(o.sourceAddress, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(destAddress.ResultType == StackType.I || destAddress.ResultType == StackType.Ref);
 			DebugAssert(sourceAddress.ResultType == StackType.I || sourceAddress.ResultType == StackType.Ref);
 			DebugAssert(size.ResultType == StackType.I4);
@@ -3675,7 +3727,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return address.Flags | value.Flags | size.Flags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
@@ -3718,9 +3771,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as Initblk;
 			return o != null && this.address.PerformMatch(o.address, ref match) && this.value.PerformMatch(o.value, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(address.ResultType == StackType.I || address.ResultType == StackType.Ref);
 			DebugAssert(value.ResultType == StackType.I4);
 			DebugAssert(size.ResultType == StackType.I4);
@@ -3791,7 +3844,8 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IField @field;
 		/// <summary>Returns the field operand.</summary>
 		public IField Field { get { return @field; } }
-		public override StackType ResultType { get { return target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref; } }
+		public override StackType ResultType => target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref;
+		public override IType InferType(ICompilation compilation) => target.ResultType.IsIntegerType() ? new PointerType(field.Type) : new ByReferenceType(field.Type);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
@@ -3841,7 +3895,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.@field = @field;
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(field.Type);
 		readonly IField @field;
 		/// <summary>Returns the field operand.</summary>
 		public IField Field { get { return @field; } }
@@ -3886,7 +3941,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => (this.type).GetStackType();
+		public override IType InferType(ICompilation compilation) => this.type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -3940,7 +3996,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.Obj;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Object);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4040,7 +4097,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => (this.type).GetStackType();
+		public override IType InferType(ICompilation compilation) => this.type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
@@ -4081,9 +4139,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdObj;
 			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 		}
 	}
@@ -4154,7 +4212,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(this.type);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
@@ -4191,9 +4250,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdObjIfRef;
 			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 		}
 	}
@@ -4287,7 +4346,8 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return UnalignedPrefix == 0 ? type.GetStackType() : StackType.Void; } }
+		public override StackType ResultType => UnalignedPrefix == 0 ? type.GetStackType() : StackType.Void;
+		public override IType InferType(ICompilation compilation) => UnalignedPrefix == 0 ? type : compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
@@ -4330,9 +4390,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as StObj;
 			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
 			DebugAssert(value.ResultType == type.GetStackType());
 			CheckTargetSlot();
@@ -4354,7 +4414,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.Obj;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Object);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4399,7 +4460,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(this.type);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -4453,7 +4515,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => (this.type).GetStackType();
+		public override IType InferType(ICompilation compilation) => this.type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
@@ -4500,7 +4563,8 @@ namespace ICSharpCode.Decompiler.IL
 		public NewObj(IMethod method) : base(OpCode.NewObj, method)
 		{
 		}
-		public override StackType ResultType { get { return Method.DeclaringType.GetStackType(); } }
+		public override StackType ResultType => (Method.DeclaringType).GetStackType();
+		public override IType InferType(ICompilation compilation) => Method.DeclaringType;
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNewObj(this);
@@ -4570,7 +4634,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.Obj;
+		public override IType InferType(ICompilation compilation) => new ArrayType(compilation, this.Type, this.Indices.Count);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow;
@@ -4632,7 +4697,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => (this.type).GetStackType();
+		public override IType InferType(ICompilation compilation) => this.type;
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4667,7 +4733,8 @@ namespace ICSharpCode.Decompiler.IL
 		public Throw(ILInstruction argument) : base(OpCode.Throw, argument)
 		{
 		}
-		public override StackType ResultType { get { return this.resultType; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
@@ -4704,7 +4771,8 @@ namespace ICSharpCode.Decompiler.IL
 		public Rethrow() : base(OpCode.Rethrow)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
@@ -4748,7 +4816,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Int32);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -4856,9 +4925,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdLen;
 			return o != null && this.array.PerformMatch(o.array, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(array.ResultType == StackType.O);
 		}
 	}
@@ -4938,7 +5007,8 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public bool WithSystemIndex;
 		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(this.Type);
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
 		public bool IsReadOnly { get; set; }
 		protected override InstructionFlags ComputeFlags()
@@ -5063,7 +5133,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Indices.AddRange(this.Indices.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(this.Type);
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
 		public bool IsReadOnly { get; set; }
 		protected override InstructionFlags ComputeFlags()
@@ -5120,9 +5191,10 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public sealed partial class GetPinnableReference : ILInstruction, IInstructionWithMethodOperand
 	{
-		public GetPinnableReference(ILInstruction argument, IMethod? method) : base(OpCode.GetPinnableReference)
+		public GetPinnableReference(ILInstruction argument, IType type, IMethod? method) : base(OpCode.GetPinnableReference)
 		{
 			this.Argument = argument;
+			this.type = type;
 			this.method = method;
 		}
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
@@ -5175,7 +5247,14 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Argument = this.argument.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(this.Type);
 		readonly IMethod? method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod? Method => method;
@@ -5192,6 +5271,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
+			output.Write(' ');
+			type.WriteTo(output);
 			if (method != null)
 			{
 				output.Write(' ');
@@ -5216,11 +5297,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
 		{
 			var o = other as GetPinnableReference;
-			return o != null && this.argument.PerformMatch(o.argument, ref match) && object.Equals(method, o.method);
+			return o != null && this.argument.PerformMatch(o.argument, ref match) && type.Equals(o.type) && object.Equals(method, o.method);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -5280,7 +5361,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Argument = this.argument.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Int32);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return argument.Flags;
@@ -5307,9 +5389,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as StringToInt;
 			return o != null && this.argument.PerformMatch(o.argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -5325,7 +5407,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType => (this.type).GetStackType();
+		public override IType InferType(ICompilation compilation) => this.type;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -5368,7 +5451,8 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
 		public IMethod Method => method;
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => (method.ReturnType).GetStackType();
+		public override IType InferType(ICompilation compilation) => method.ReturnType;
 		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
@@ -5831,9 +5915,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicConvertInstruction;
 			return o != null && type.Equals(o.type) && this.argument.PerformMatch(o.argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -5919,9 +6003,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicGetMemberInstruction;
 			return o != null && this.target.PerformMatch(o.target, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.O);
 		}
 	}
@@ -6024,9 +6108,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicSetMemberInstruction;
 			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(target.ResultType == StackType.O);
 		}
 	}
@@ -6467,9 +6551,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DynamicIsEventInstruction;
 			return o != null && this.argument.PerformMatch(o.argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(argument.ResultType == StackType.O);
 		}
 	}
@@ -6581,7 +6665,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.SubPatterns.AddRange(this.SubPatterns.Select(arg => (ILInstruction)arg.Clone()));
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.I4; } }
+		public override StackType ResultType => StackType.I4;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Boolean);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayWriteLocals | testedOperand.Flags | SubPatterns.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.SideEffect | InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
@@ -6608,9 +6693,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as MatchInstruction;
 			return o != null && variable == o.variable && object.Equals(method, o.method) && this.IsDeconstructCall == o.IsDeconstructCall && this.IsDeconstructTuple == o.IsDeconstructTuple && this.CheckType == o.CheckType && this.CheckNotNull == o.CheckNotNull && this.testedOperand.PerformMatch(o.testedOperand, ref match) && Patterns.ListMatch.DoMatch(this.SubPatterns, o.SubPatterns, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			DebugAssert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function!));
 			DebugAssert(phase <= ILPhase.InILReader || variable.Function!.Variables[variable.IndexInFunction] == variable);
 			AdditionalInvariants();
@@ -6632,7 +6717,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.VT;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.TypedReference);
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
@@ -6670,7 +6756,8 @@ namespace ICSharpCode.Decompiler.IL
 		public RefAnyType(ILInstruction argument) : base(OpCode.RefAnyType, argument)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType => StackType.VT;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.RuntimeTypeHandle);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitRefAnyType(this);
@@ -6705,7 +6792,8 @@ namespace ICSharpCode.Decompiler.IL
 			get { return type; }
 			set { type = value; InvalidateFlags(); }
 		}
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType => StackType.Ref;
+		public override IType InferType(ICompilation compilation) => new ByReferenceType(type);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
@@ -6803,7 +6891,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayBranch | InstructionFlags.SideEffect | value.Flags;
@@ -6899,7 +6988,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown; } }
+		public override StackType ResultType => (GetResultMethod?.ReturnType ?? SpecialType.UnknownType).GetStackType();
+		public override IType InferType(ICompilation compilation) => GetResultMethod?.ReturnType ?? SpecialType.UnknownType;
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.SideEffect | value.Flags;
@@ -6941,7 +7031,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Deconstruction statement</summary>
 	public sealed partial class DeconstructInstruction : ILInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType => StackType.Void;
+		public override IType InferType(ICompilation compilation) => compilation.FindType(KnownTypeCode.Void);
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDeconstructInstruction(this);
@@ -6984,9 +7075,9 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as DeconstructResultInstruction;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
-		internal override void CheckInvariant(ILPhase phase)
+		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
-			base.CheckInvariant(phase);
+			base.CheckInvariant(phase, compilation);
 			AdditionalInvariants();
 		}
 	}
@@ -8568,15 +8659,17 @@ namespace ICSharpCode.Decompiler.IL
 			right = default(ILInstruction);
 			return false;
 		}
-		public bool MatchNullableRewrap([NotNullWhen(true)] out ILInstruction? argument)
+		public bool MatchNullableRewrap([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type)
 		{
 			var inst = this as NullableRewrap;
 			if (inst != null)
 			{
 				argument = inst.Argument;
+				type = inst.Type;
 				return true;
 			}
 			argument = default(ILInstruction);
+			type = default(IType);
 			return false;
 		}
 		public bool MatchLdStr([NotNullWhen(true)] out string? value)
@@ -8989,16 +9082,18 @@ namespace ICSharpCode.Decompiler.IL
 			array = default(ILInstruction);
 			return false;
 		}
-		public bool MatchGetPinnableReference([NotNullWhen(true)] out ILInstruction? argument, out IMethod? method)
+		public bool MatchGetPinnableReference([NotNullWhen(true)] out ILInstruction? argument, [NotNullWhen(true)] out IType? type, out IMethod? method)
 		{
 			var inst = this as GetPinnableReference;
 			if (inst != null)
 			{
 				argument = inst.Argument;
+				type = inst.Type;
 				method = inst.Method;
 				return true;
 			}
 			argument = default(ILInstruction);
+			type = default(IType);
 			method = default(IMethod?);
 			return false;
 		}

@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					return;
 				// Two exact bounds that differ only in tuple element names are not conflicting;
 				// their names are merged instead (kept where both agree, dropped otherwise).
-				IType merged = MergeTupleNames(ExactBound, type);
+				IType merged = MergeSimilarTypes(ExactBound, type, VarianceModifier.Invariant);
 				if (merged != null)
 					ExactBound = merged;
 				else
@@ -986,8 +986,14 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				// merged - kept where both sides agree, dropped where they conflict. See
 				// MergeTupleNames in Roslyn's MethodTypeInference.cs.
 				IType fixedTo = tp.ExactBound;
-				foreach (var b in tp.LowerBounds.Concat(tp.UpperBounds))
-					fixedTo = MergeTupleNames(fixedTo, b) ?? fixedTo;
+				foreach (var b in tp.LowerBounds)
+				{
+					fixedTo = MergeSimilarTypes(fixedTo, b, VarianceModifier.Covariant) ?? fixedTo;
+				}
+				foreach (var b in tp.UpperBounds)
+				{
+					fixedTo = MergeSimilarTypes(fixedTo, b, VarianceModifier.Contravariant) ?? fixedTo;
+				}
 				// the exact bound determines the result, up to the merged element names
 				tp.FixedTo = fixedTo;
 				// check validity
@@ -1000,8 +1006,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// Same Roslyn-style merge, over lower and upper bounds together as Roslyn's Fix does,
 			// so bounds that differ only in tuple element names don't survive into
 			// FindTypesInBounds as distinct candidates.
-			var (lowerBounds, upperBounds) = MergeShapeEquivalentBounds(tp.LowerBounds, tp.UpperBounds);
-			var types = CreateNestedInstance().FindTypesInBounds(lowerBounds, upperBounds);
+			var types = CreateNestedInstance().FindTypesInBounds(tp.LowerBounds, tp.UpperBounds);
 			Log.Unindent();
 			if (algorithm == TypeInferenceAlgorithm.ImprovedReturnAllResults)
 			{
@@ -1018,22 +1023,31 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 
 		/// <summary>
-		/// Merges the tuple element names of two types that are equal apart from those names:
-		/// a name is kept where both sides agree and dropped where they conflict. Returns
-		/// <c>null</c> if the types differ in anything else.
+		/// Merges similar types that differ only in any of these aspects.
+		///  * tuple element names: a name is kept where both sides agree and dropped where they conflict.
+		///  * object/dynamic: dynamic is preferred over object. 
+		///  * nullability: depends on the variance of the position.
+		/// Returns <c>null</c> if the types differ in any other aspects.
 		/// </summary>
-		static IType MergeTupleNames(IType a, IType b)
+		static IType MergeSimilarTypes(IType a, IType b, VarianceModifier variance)
 		{
 			if (a.Equals(b))
 				return a;
-			// Roslyn merges differing nullability based on the variance of the position; this
-			// implementation does not track that, so differently annotated types are left alone.
-			if (a.Nullability != b.Nullability)
-				return null;
-			if (a is NullabilityAnnotatedType na && b is NullabilityAnnotatedType nb)
+			if (a is NullabilityAnnotatedType || b is NullabilityAnnotatedType)
 			{
-				return MergeTupleNames(na.TypeWithoutAnnotation, nb.TypeWithoutAnnotation)
-					?.ChangeNullability(a.Nullability);
+				var nullability = MergeNullability(a.Nullability, b.Nullability, variance);
+				var merged = MergeSimilarTypes(a.WithoutNullability(), b.WithoutNullability(), variance);
+				if (merged == null)
+					return null;
+				return merged.ChangeNullability(nullability);
+			}
+			if (a.Kind == TypeKind.Dynamic && b.IsKnownType(KnownTypeCode.Object))
+			{
+				return a;
+			}
+			if (b.Kind == TypeKind.Dynamic && a.IsKnownType(KnownTypeCode.Object))
+			{
+				return b;
 			}
 			if (a is TupleType ta && b is TupleType tb
 				&& ta.ElementTypes.Length == tb.ElementTypes.Length)
@@ -1041,7 +1055,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				var mergedElements = ImmutableArray.CreateBuilder<IType>(ta.ElementTypes.Length);
 				for (int i = 0; i < ta.ElementTypes.Length; i++)
 				{
-					var merged = MergeTupleNames(ta.ElementTypes[i], tb.ElementTypes[i]);
+					// Note: even though ValueTuple has invariant type parameters,
+					// Roslyn merges tuple element types in a covariant manner.
+					var merged = MergeSimilarTypes(
+						ta.ElementTypes[i], tb.ElementTypes[i],
+						variance.Combine(VarianceModifier.Covariant));
 					if (merged == null)
 						return null;
 					mergedElements.Add(merged);
@@ -1055,72 +1073,124 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					ta.GetDefinition()?.ParentModule);
 			}
 			if (a is ParameterizedType pa && b is ParameterizedType pb
-				&& pa.GenericType.Equals(pb.GenericType)
 				&& pa.TypeArguments.Count == pb.TypeArguments.Count)
 			{
+				var genericType = MergeSimilarTypes(pa.GenericType, pb.GenericType, variance);
+				if (genericType == null)
+					return null;
 				var mergedArgs = new IType[pa.TypeArguments.Count];
 				for (int i = 0; i < pa.TypeArguments.Count; i++)
 				{
-					var merged = MergeTupleNames(pa.TypeArguments[i], pb.TypeArguments[i]);
+					var merged = MergeSimilarTypes(
+						pa.TypeArguments[i], pb.TypeArguments[i],
+						variance.Combine(pa.TypeParameters[i].Variance));
 					if (merged == null)
 						return null;
 					mergedArgs[i] = merged;
 				}
-				return new ParameterizedType(pa.GenericType, mergedArgs);
+				return new ParameterizedType(genericType, mergedArgs);
 			}
 			if (a is ArrayType arrA && b is ArrayType arrB && arrA.Dimensions == arrB.Dimensions)
 			{
-				var mergedElem = MergeTupleNames(arrA.ElementType, arrB.ElementType);
+				// Roslyn ArrayTypeSymbol merges in a covariant manner.
+				var mergedElem = MergeSimilarTypes(
+					arrA.ElementType, arrB.ElementType,
+					variance.Combine(VarianceModifier.Covariant));
 				if (mergedElem == null)
 					return null;
-				return new ArrayType(arrA.Compilation, mergedElem, arrA.Dimensions, arrA.Nullability);
+				var nullability = MergeNullability(arrA.Nullability, arrB.Nullability, variance);
+				return new ArrayType(arrA.Compilation, mergedElem, arrA.Dimensions, nullability);
+			}
+			if (a is ByReferenceType refA && b is ByReferenceType refB)
+			{
+				var mergedElem = MergeSimilarTypes(
+					refA.ElementType, refB.ElementType,
+					variance.Combine(VarianceModifier.Invariant));
+				if (mergedElem == null)
+					return null;
+				return new ByReferenceType(mergedElem);
+			}
+			if (a is PointerType ptrA && b is PointerType ptrB)
+			{
+				var mergedElem = MergeSimilarTypes(
+					ptrA.ElementType, ptrB.ElementType,
+					variance.Combine(VarianceModifier.Invariant));
+				if (mergedElem == null)
+					return null;
+				return new PointerType(mergedElem);
+			}
+			if (a is FunctionPointerType fnPtrA && b is FunctionPointerType fnPtrB
+				&& fnPtrA.CallingConvention == fnPtrB.CallingConvention
+				&& fnPtrA.CustomCallingConventions.SequenceEqual(fnPtrB.CustomCallingConventions)
+				&& fnPtrA.ReturnIsRefReadOnly == fnPtrB.ReturnIsRefReadOnly
+				&& fnPtrA.ParameterTypes.Length == fnPtrB.ParameterTypes.Length
+				&& fnPtrA.ParameterReferenceKinds.SequenceEqual(fnPtrB.ParameterReferenceKinds))
+			{
+				var mergedReturn = MergeSimilarTypes(
+					fnPtrA.ReturnType, fnPtrB.ReturnType,
+					variance.Combine(VarianceModifier.Covariant));
+				if (mergedReturn == null)
+					return null;
+				var mergedParameters = ImmutableArray.CreateBuilder<IType>(fnPtrA.ParameterTypes.Length);
+				for (int i = 0; i < fnPtrA.ParameterTypes.Length; i++)
+				{
+					var mergedParameter = MergeSimilarTypes(
+						fnPtrA.ParameterTypes[i], fnPtrB.ParameterTypes[i],
+						variance.Combine(VarianceModifier.Contravariant));
+					if (mergedParameter == null)
+						return null;
+					mergedParameters.Add(mergedParameter);
+				}
+				return fnPtrA.WithSignature(mergedReturn, mergedParameters.MoveToImmutable());
+			}
+			if (a is ModifiedType modA && b is ModifiedType modB
+				&& modA.Kind == modB.Kind
+				&& modA.Modifier.Equals(modB.Modifier))
+			{
+				var mergedElem = MergeSimilarTypes(modA.ElementType, modB.ElementType, variance);
+				if (mergedElem == null)
+					return null;
+				return new ModifiedType(modA.Modifier, mergedElem, modA.Kind == TypeKind.ModReq);
+			}
+			if (a is UnknownType unknownTypeA && b is UnknownType unknownTypeB
+				&& unknownTypeA.FullTypeName == unknownTypeB.FullTypeName)
+			{
+				if (unknownTypeA.IsReferenceType == unknownTypeB.IsReferenceType)
+					return unknownTypeA;
+				else
+					return unknownTypeA.WithoutReferenceTypeKnowledge();
 			}
 			return null;
 		}
 
-		/// <summary>
-		/// Collapses bounds that are equal modulo tuple element names (possibly nested) into a
-		/// single merged type via <see cref="MergeTupleNames"/>, across both bound sets. Bounds
-		/// without a shape-equivalent partner are returned as-is.
-		/// </summary>
-		static (IReadOnlyList<IType> LowerBounds, IReadOnlyList<IType> UpperBounds) MergeShapeEquivalentBounds(
-			IReadOnlyCollection<IType> lowerBounds, IReadOnlyCollection<IType> upperBounds)
+		static Nullability MergeNullability(Nullability a, Nullability b, VarianceModifier variance)
 		{
-			if (lowerBounds.Count + upperBounds.Count < 2)
-				return (lowerBounds.ToArray(), upperBounds.ToArray());
-			var mergedBounds = new List<IType>();
-			bool anyNamesMerged = false;
-			foreach (var bound in lowerBounds.Concat(upperBounds))
-			{
-				bool absorbed = false;
-				for (int i = 0; i < mergedBounds.Count && !absorbed; i++)
-				{
-					IType merged = MergeTupleNames(mergedBounds[i], bound);
-					if (merged != null)
-					{
-						// Bounds that are already equal merge to the existing entry itself;
-						// only a new type means element names were actually merged.
-						anyNamesMerged |= !ReferenceEquals(merged, mergedBounds[i]);
-						mergedBounds[i] = merged;
-						absorbed = true;
-					}
-				}
-				if (!absorbed)
-					mergedBounds.Add(bound);
-			}
-			if (!anyNamesMerged)
-				return (lowerBounds.ToArray(), upperBounds.ToArray());
-			return (MapToMergedBounds(lowerBounds, mergedBounds), MapToMergedBounds(upperBounds, mergedBounds));
-		}
-
-		/// <summary>
-		/// Replaces each bound with the entry of <paramref name="mergedBounds"/> it was merged into.
-		/// Merging only changes element names, never the shape, so every bound is still
-		/// shape-equivalent to exactly one of those entries.
-		/// </summary>
-		static IType[] MapToMergedBounds(IEnumerable<IType> bounds, List<IType> mergedBounds)
-		{
-			return bounds.Select(b => mergedBounds.First(m => MergeTupleNames(m, b) != null)).Distinct().ToArray();
+			// Like Roslyn's MergeNullableAnnotation()
+			return (variance, a, b) switch {
+				// Covariant merging rules: Nullable wins over Oblivious which wins over NotNullable.
+				(VarianceModifier.Covariant, Nullability.Nullable, _) => Nullability.Nullable,
+				(VarianceModifier.Covariant, _, Nullability.Nullable) => Nullability.Nullable,
+				(VarianceModifier.Covariant, Nullability.Oblivious, _) => Nullability.Oblivious,
+				(VarianceModifier.Covariant, _, Nullability.Oblivious) => Nullability.Oblivious,
+				(VarianceModifier.Covariant, Nullability.NotNullable, Nullability.NotNullable) => Nullability.NotNullable,
+				// Contravariant merging rules: NotNullable wins over Oblivious which wins over Nullable.
+				(VarianceModifier.Contravariant, Nullability.NotNullable, _) => Nullability.NotNullable,
+				(VarianceModifier.Contravariant, _, Nullability.NotNullable) => Nullability.NotNullable,
+				(VarianceModifier.Contravariant, Nullability.Oblivious, _) => Nullability.Oblivious,
+				(VarianceModifier.Contravariant, _, Nullability.Oblivious) => Nullability.Oblivious,
+				(VarianceModifier.Contravariant, Nullability.Nullable, Nullability.Nullable) => Nullability.Nullable,
+				// Invariant merging rules: NotNullable wins over Nullable which wins over Oblivious.
+				// Weird but that's what Roslyn does:
+				//  static T M<T>(ref T x, ref T y) => x;
+				//  M(ref nullableArray, nonNullableArray);
+				//  T is inferred as int[] and then the first argument reports a "possible null reference assignment" warning.
+				(VarianceModifier.Invariant, Nullability.NotNullable, _) => Nullability.NotNullable,
+				(VarianceModifier.Invariant, _, Nullability.NotNullable) => Nullability.NotNullable,
+				(VarianceModifier.Invariant, Nullability.Nullable, _) => Nullability.Nullable,
+				(VarianceModifier.Invariant, _, Nullability.Nullable) => Nullability.Nullable,
+				(VarianceModifier.Invariant, Nullability.Oblivious, Nullability.Oblivious) => Nullability.Oblivious,
+				_ => throw new NotSupportedException("Unexpected nullability combination: " + a + ", " + b + " with variance " + variance)
+			};
 		}
 		#endregion
 
@@ -1160,7 +1230,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// <summary>
 		/// Finds a type that satisfies the given lower and upper bounds.
 		/// </summary>
-		public IType FindTypeInBounds(IReadOnlyList<IType> lowerBounds, IReadOnlyList<IType> upperBounds)
+		public IType FindTypeInBounds(IReadOnlyCollection<IType> lowerBounds, IReadOnlyCollection<IType> upperBounds)
 		{
 			if (lowerBounds == null)
 				throw new ArgumentNullException(nameof(lowerBounds));
@@ -1180,13 +1250,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		static IType GetFirstTypePreferNonInterfaces(IReadOnlyList<IType> result)
+		static IType GetFirstTypePreferNonInterfaces(IReadOnlyCollection<IType> result)
 		{
 			return result.FirstOrDefault(c => c.Kind != TypeKind.Interface)
 				?? result.FirstOrDefault() ?? SpecialType.UnknownType;
 		}
 
-		IReadOnlyList<IType> FindTypesInBounds(IReadOnlyList<IType> lowerBounds, IReadOnlyList<IType> upperBounds)
+		IReadOnlyCollection<IType> FindTypesInBounds(IReadOnlyCollection<IType> lowerBounds, IReadOnlyCollection<IType> upperBounds)
 		{
 			// If there's only a single type; return that single type.
 			// If both inputs are empty, return the empty list.
@@ -1201,8 +1271,57 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			Log.WriteCollection("FindTypesInBound, LowerBounds=", lowerBounds);
 			Log.WriteCollection("FindTypesInBound, UpperBounds=", upperBounds);
 
+			// Deduplicate types. This also merges types that differ only in tuple
+			// element names and/or object/dynamic.
+			// The specification doesn't mention this step, but Roslyn does it,
+			// and it's crucial for tuple element names and nested nullabilities in otherwise
+			// equivalent types.
+			Nullability? topLevelNullability = null;
+			var candidateMergeDict = new Dictionary<IType, IType>();
+			void AddCandidates(IReadOnlyCollection<IType> bounds, VarianceModifier variance)
+			{
+				// This helper function works like Roslyn's MethodTypeInference.AddAllCandidates().
+				// It deduplicates similar types and merges them into a single candidate type,
+				// handling differences in nullability, tuple element names, and object/dynamic,
+				// but only if the type is otherwise completely identical.
+				foreach (var bound in bounds)
+				{
+					if (topLevelNullability.HasValue)
+					{
+						topLevelNullability = MergeNullability(topLevelNullability.Value, bound.Nullability, variance);
+					}
+					else
+					{
+						topLevelNullability = bound.Nullability;
+					}
+					var key = bound.AcceptVisitor(NormalizeTypeVisitor.KeyForTypeMerging);
+					if (candidateMergeDict.TryGetValue(key, out var existing))
+					{
+						var merged = MergeSimilarTypes(existing, bound, variance);
+						Log.WriteLine(" Merged similar types " + existing + " and " + bound + " into " + merged);
+						if (merged != null)
+						{
+							candidateMergeDict[key] = merged;
+						}
+						else
+						{
+							Debug.Fail("MergeSimilarTypes should always be able to merge;"
+								 + " is the KeyForTypeMerging visitor misconfigured?");
+						}
+					}
+					else
+					{
+						candidateMergeDict.Add(key, bound);
+					}
+				}
+			}
+			AddCandidates(lowerBounds, VarianceModifier.Covariant);
+			AddCandidates(upperBounds, VarianceModifier.Contravariant);
+
+			Log.WriteCollection("FindTypesInBound, Merged types from bounds=", candidateMergeDict.Values);
+
 			// First try the Fixing algorithm from the C# spec (§12.6.3.13)
-			List<IType> candidateTypes = lowerBounds.Union(upperBounds)
+			List<IType> candidateTypes = candidateMergeDict.Values
 				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c).IsValid))
 				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b).IsValid))
 				.ToList(); // evaluate the query only once
@@ -1214,6 +1333,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			candidateTypes = candidateTypes.Where(
 				c => candidateTypes.All(o => conversions.ImplicitConversion(o, c).IsValid)
 			).ToList();
+
+			// Apply the merged top-level nullability:
+			Debug.Assert(topLevelNullability.HasValue);
+			// Roslyn has a different approach in MergeOrRemoveCandidates, which can
+			// differ in behavior when there's both lower+upper bounds
+			// -- e.g. `static void M<T>(T x, Action<T> a)` called with `M("s", (object? o) => {}))`
+			// is inferred as `T = object?` by Roslyn, but `T = object` by us.
+			// To match Roslyn exactly, we'd need to handle the topLevelNullability per-candidate.
+			for (int i = 0; i < candidateTypes.Count; i++)
+			{
+				candidateTypes[i] = candidateTypes[i].ChangeNullability(topLevelNullability.Value);
+			}
 
 			// If the specified algorithm produces a single candidate, we return
 			// that candidate.
@@ -1231,10 +1362,11 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (lowerBounds.Count > 0)
 			{
 				// Find candidates by using the lower bounds:
-				var hashSet = new HashSet<ITypeDefinition>(lowerBounds[0].GetAllBaseTypeDefinitions());
-				for (int i = 1; i < lowerBounds.Count; i++)
+				var lowerBoundsList = lowerBounds.ToList();
+				var hashSet = new HashSet<ITypeDefinition>(lowerBoundsList[0].GetAllBaseTypeDefinitions());
+				for (int i = 1; i < lowerBoundsList.Count; i++)
 				{
-					hashSet.IntersectWith(lowerBounds[i].GetAllBaseTypeDefinitions());
+					hashSet.IntersectWith(lowerBoundsList[i].GetAllBaseTypeDefinitions());
 				}
 				candidateTypeDefinitions = hashSet.ToList();
 			}

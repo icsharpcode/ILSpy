@@ -94,6 +94,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- A .resources container holding two stream entries, so this assembly itself is the module
+         WholeProjectDecompiler's per-entry resource path can be exercised against. -->
+    <EmbeddedResource Include="Helpers\TwoStreamEntries.resources" LogicalName="TwoStreamEntries.g.resources" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
   </ItemGroup>
@@ -264,6 +270,8 @@
     <None Include="TestCases\Ugly\AggressiveScalarReplacementOfAggregates.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoArrayInitializers.Expected.cs" />
     <None Include="TestCases\Ugly\NoArrayInitializers.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoAutomaticProperties.Expected.cs" />
+    <None Include="TestCases\Ugly\NoAutomaticProperties.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <None Include="TestCases\Ugly\NoDecimalConstants.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoExtensionMethods.Expected.cs" />
@@ -272,6 +280,8 @@
     <None Include="TestCases\Ugly\NoFieldKeyword.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoForEachStatement.Expected.cs" />
     <None Include="TestCases\Ugly\NoForEachStatement.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\NoGetterOnlyAutomaticProperties.Expected.cs" />
+    <None Include="TestCases\Ugly\NoGetterOnlyAutomaticProperties.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoInitAccessors.Expected.cs" />
     <None Include="TestCases\Ugly\NoInitAccessors.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoLocalFunctions.Expected.cs" />
