@@ -18,8 +18,6 @@
 
 using System.Linq;
 
-using Avalonia.Threading;
-
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
@@ -80,7 +78,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			Dispatcher.UIThread.Invoke(EnsureLazyChildren);
+			EnsureLazyChildren();
 			foreach (var child in Children.OfType<ILSpyTreeNode>())
 			{
 				child.Decompile(language, output, options);

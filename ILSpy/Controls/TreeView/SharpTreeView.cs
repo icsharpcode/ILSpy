@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Threading;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -129,6 +130,15 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			}
 			if (Root != null)
 			{
+				// The tree becomes reachable from the UI here, so this is where the UI thread takes
+				// ownership of it. Avalonia raises property changes on the UI thread, so the calling
+				// thread is the right owner. Every SharpTreeView in the app routes through Reload,
+				// so this single call claims every displayed tree.
+				//
+				// The dispatcher invoke goes with it: EnsureLazyChildren uses it to get back onto
+				// this thread when a background decompile realizes a node's children, which the
+				// tree model cannot do for itself - it must not name a UI framework.
+				Root.SetOwner(Thread.CurrentThread, action => Dispatcher.UIThread.Invoke(action));
 				if (!(ShowRoot && ShowRootExpander))
 					Root.IsExpanded = true;
 				flattener = new TreeFlattener(Root, ShowRoot);

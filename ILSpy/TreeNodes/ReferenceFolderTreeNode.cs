@@ -19,8 +19,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using Avalonia.Threading;
-
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.Properties;
@@ -69,8 +67,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			output.WriteLine($"Effective TargetFramework-Id: {effectiveTargetFramework}");
 			output.WriteLine($"Detected RuntimePack: {runtimePack}");
 
-			// Children realise lazily on the UI thread; we may run from a background decompile.
-			Dispatcher.UIThread.Invoke(EnsureLazyChildren);
+			EnsureLazyChildren();
 			output.WriteLine();
 			output.WriteLine("Referenced assemblies (in metadata order):");
 			foreach (var node in Children.OfType<ILSpyTreeNode>())
