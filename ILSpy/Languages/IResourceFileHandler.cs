@@ -68,6 +68,13 @@ namespace ICSharpCode.ILSpy.Languages
 
 		public DecompilationOptions DecompilationOptions { get; }
 
+		/// <summary>
+		/// MSBuild item type for the entry currently being written, when it differs from the
+		/// handler's <see cref="IResourceFileHandler.EntryType"/>. XAML recovered from BAML is a
+		/// "Page", except for the file defining the application, which is an "ApplicationDefinition".
+		/// </summary>
+		public string? EntryTypeOverride { get; set; }
+
 		public ResourceFileHandlerContext(DecompilationOptions options)
 		{
 			this.DecompilationOptions = options;

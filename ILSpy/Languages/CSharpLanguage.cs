@@ -616,7 +616,7 @@ namespace ICSharpCode.ILSpy.Languages
 						continue;
 					entryStream.Position = 0;
 					fileName = handler.WriteResourceToFile(assembly, fileName, entryStream, context);
-					var item = new ProjectItemInfo(handler.EntryType, fileName) { PartialTypes = context.PartialTypes };
+					var item = new ProjectItemInfo(context.EntryTypeOverride ?? handler.EntryType, fileName) { PartialTypes = context.PartialTypes };
 					item = item.With(context.AdditionalProperties);
 					return new[] { item };
 				}

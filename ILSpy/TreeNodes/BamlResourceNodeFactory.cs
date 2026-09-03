@@ -92,6 +92,8 @@ namespace ICSharpCode.ILSpy.Baml
 				foreach (var member in result.GeneratedMembers)
 					partialTypeInfo.AddDeclaredMember(member);
 				context.AddPartialTypeInfo(partialTypeInfo);
+				if (WholeProjectDecompiler.IsApplicationDefinition(typeDefinition, typeSystem.MainModule.MetadataFile))
+					context.EntryTypeOverride = "ApplicationDefinition";
 			}
 			else
 			{

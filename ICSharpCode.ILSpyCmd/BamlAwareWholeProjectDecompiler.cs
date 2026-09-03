@@ -83,7 +83,10 @@ namespace ICSharpCode.ILSpyCmd
 				Directory.CreateDirectory(directory);
 			result.Xaml.Save(fullPath);
 
-			var item = new ProjectItemInfo("Page", xamlFileName)
+			string itemType = IsApplicationDefinition(typeDefinition, bamlTypeSystem.MainModule.MetadataFile)
+				? "ApplicationDefinition"
+				: "Page";
+			var item = new ProjectItemInfo(itemType, xamlFileName)
 				.With("Generator", "MSBuild:Compile")
 				.With("SubType", "Designer");
 			if (partialTypeInfo != null)

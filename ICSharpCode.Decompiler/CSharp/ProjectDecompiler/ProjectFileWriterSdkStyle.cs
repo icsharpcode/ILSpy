@@ -38,22 +38,50 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		const string AspNetCorePrefix = "Microsoft.AspNetCore";
 		const string PresentationFrameworkName = "PresentationFramework";
 		const string WindowsFormsName = "System.Windows.Forms";
+		const string WindowsFormsIntegrationName = "WindowsFormsIntegration";
+		const string NetCoreAppIdentifier = ".NETCoreApp";
+		const string WindowsPlatformName = "Windows";
 		const string TrueString = "True";
 		const string FalseString = "False";
 		const string AnyCpuString = "AnyCPU";
 
+		/// <summary>
+		/// References the .NET SDK adds by itself when UseWPF is set, both through the implicit
+		/// Microsoft.WindowsDesktop.App framework reference on .NET Core and through the implicit
+		/// .NET Framework references. Listing them a second time is a duplicate reference (MSB3243),
+		/// or an unresolvable one (MSB3245) once the hint path no longer points anywhere.
+		/// Membership must not be decided by probing the machine that runs the export: the
+		/// Windows Desktop runtime pack is absent on non-Windows hosts, and the exported project
+		/// has to come out the same everywhere.
+		/// The SDK gates the version-specific members of this set on the target framework version,
+		/// which an assembly satisfies by construction: it can only reference what its own target
+		/// framework ships.
+		/// </summary>
+		static readonly HashSet<string> WpfImplicitReferences = new HashSet<string> {
+			"PresentationCore",
+			"PresentationFramework",
+			"System.Windows.Controls.Ribbon",
+			"System.Xaml",
+			"UIAutomationClient",
+			"UIAutomationClientSideProviders",
+			"UIAutomationProvider",
+			"UIAutomationTypes",
+			"WindowsBase",
+		};
+
+		/// <summary>
+		/// References the SDK adds for every project, whatever it uses: they are either implicit
+		/// for .NET Framework targets or part of the Microsoft.NETCore.App shared framework.
+		/// </summary>
 		static readonly HashSet<string> ImplicitReferences = new HashSet<string> {
 			"mscorlib",
 			"netstandard",
-			"PresentationFramework",
 			"System",
 			"System.Diagnostics.Debug",
 			"System.Diagnostics.Tools",
 			"System.Drawing",
 			"System.Runtime",
 			"System.Runtime.Extensions",
-			"System.Windows.Forms",
-			"System.Xaml",
 		};
 
 		/// <summary>
@@ -68,7 +96,20 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			"EmbeddedResource",
 		};
 
-		enum ProjectType { Default, WinForms, Wpf, Web }
+		/// <summary>
+		/// What an assembly uses of the Windows desktop stacks. WPF and Windows Forms are not
+		/// alternatives: an assembly can use both, and each brings its own set of implicit
+		/// references and its own SDK property.
+		/// </summary>
+		[Flags]
+		enum ProjectType
+		{
+			Default = 0,
+			WinForms = 1,
+			Wpf = 2,
+			Web = 4,
+			Desktop = WinForms | Wpf,
+		}
 
 		/// <summary>
 		/// Gets the default instance of the <see cref="ProjectFileWriterSdkStyle"/> class.
@@ -94,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			xml.WriteStartElement("Project");
 
 			var projectType = GetProjectType(module);
-			xml.WriteAttributeString("Sdk", GetSdkString(projectType));
+			xml.WriteAttributeString("Sdk", GetSdkString(projectType, TargetServices.DetectTargetFramework(module)));
 
 			using (new Group(xml, "PropertyGroup"))
 			{
@@ -155,7 +196,19 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			WriteDesktopExtensions(xml, projectType);
 
-			xml.WriteElementString("TargetFramework", GetTargetFrameworkMoniker(module, project));
+			string moniker = GetTargetFrameworkMoniker(module, project);
+			string? platform = GetTargetPlatform(module, projectType);
+			if (platform != null)
+			{
+				moniker += "-" + platform;
+			}
+			xml.WriteElementString("TargetFramework", moniker);
+
+			string? minVersion = platform != null ? GetTargetPlatformMinVersion(module, platform) : null;
+			if (minVersion != null)
+			{
+				xml.WriteElementString("TargetPlatformMinVersion", minVersion);
+			}
 
 			// 'AnyCPU' is default, so only need to specify platform if it differs
 			if (platformName != AnyCpuString)
@@ -167,6 +220,68 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			{
 				xml.WriteElementString("Prefer32Bit", TrueString);
 			}
+		}
+
+		/// <summary>
+		/// Gets the target platform part of the target framework moniker, e.g. "windows7.0" in
+		/// "net10.0-windows7.0". Only .NET 5 and later monikers carry one; "net472" or
+		/// "netcoreapp3.1" with a platform suffix names no target pack at all.
+		/// </summary>
+		/// <returns>The lower-case platform, or null when the moniker takes none.</returns>
+		static string? GetTargetPlatform(MetadataFile module, ProjectType projectType)
+		{
+			var targetFramework = TargetServices.DetectTargetFramework(module);
+			if (targetFramework.Identifier != NetCoreAppIdentifier || targetFramework.VersionNumber < 500)
+			{
+				return null;
+			}
+
+			string? platform = TargetServices.DetectTargetPlatform(module);
+			if (platform == null && (projectType & ProjectType.Desktop) != 0)
+			{
+				// Assemblies built before platform-suffixed monikers existed carry no
+				// TargetPlatformAttribute, but WPF and Windows Forms are Windows-only and the SDK
+				// rejects the project outright (NETSDK1136) unless the moniker says so.
+				platform = WindowsPlatformName;
+			}
+
+			return platform?.ToLowerInvariant();
+		}
+
+		/// <summary>
+		/// Gets the lowest platform version the assembly supports, when it is lower than the version
+		/// it targets. Without it the exported project would raise its own floor to the target version.
+		/// </summary>
+		static string? GetTargetPlatformMinVersion(MetadataFile module, string platform)
+		{
+			string? supported = TargetServices.DetectSupportedOSPlatform(module)?.ToLowerInvariant();
+			if (supported == null)
+			{
+				return null;
+			}
+
+			var (supportedName, supportedVersion) = SplitPlatform(supported);
+			var (platformName, platformVersion) = SplitPlatform(platform);
+			if (supportedName != platformName || supportedVersion.Length == 0 || supportedVersion == platformVersion)
+			{
+				return null;
+			}
+
+			return supportedVersion;
+		}
+
+		/// <summary>
+		/// Splits a platform such as "windows10.0.17763.0" into its name and its version.
+		/// </summary>
+		static (string Name, string Version) SplitPlatform(string platform)
+		{
+			int versionStart = 0;
+			while (versionStart < platform.Length && !char.IsDigit(platform[versionStart]))
+			{
+				versionStart++;
+			}
+
+			return (platform.Substring(0, versionStart), platform.Substring(versionStart));
 		}
 
 		/// <summary>
@@ -207,7 +322,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			else
 			{
 				// 'Library' is default, so only need to specify output type for executables (excludes ProjectType.Web)
-				if (projectType == ProjectType.Web)
+				if (projectType.HasFlag(ProjectType.Web))
 				{
 					xml.WriteElementString("OutputType", "Library");
 				}
@@ -216,11 +331,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		static void WriteDesktopExtensions(XmlTextWriter xml, ProjectType projectType)
 		{
-			if (projectType == ProjectType.Wpf)
+			if (projectType.HasFlag(ProjectType.Wpf))
 			{
 				xml.WriteElementString("UseWPF", TrueString);
 			}
-			else if (projectType == ProjectType.WinForms)
+			if (projectType.HasFlag(ProjectType.WinForms))
 			{
 				xml.WriteElementString("UseWindowsForms", TrueString);
 			}
@@ -349,26 +464,25 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <returns>An enumerable of assembly references.</returns>
 		protected virtual IEnumerable<AssemblyReference> GetReferences(MetadataFile module, IProjectInfoProvider project)
 		{
-			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == ".NETCoreApp";
+			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == NetCoreAppIdentifier;
+			var projectType = GetProjectType(module);
 			var targetPacks = new HashSet<string>();
 			if (isNetCoreApp)
 			{
 				targetPacks.Add("Microsoft.NETCore.App");
-				switch (GetProjectType(module))
+				if ((projectType & ProjectType.Desktop) != 0)
 				{
-					case ProjectType.WinForms:
-					case ProjectType.Wpf:
-						targetPacks.Add("Microsoft.WindowsDesktop.App");
-						break;
-					case ProjectType.Web:
-						targetPacks.Add("Microsoft.AspNetCore.App");
-						targetPacks.Add("Microsoft.AspNetCore.All");
-						break;
+					targetPacks.Add("Microsoft.WindowsDesktop.App");
+				}
+				if (projectType.HasFlag(ProjectType.Web))
+				{
+					targetPacks.Add("Microsoft.AspNetCore.App");
+					targetPacks.Add("Microsoft.AspNetCore.All");
 				}
 			}
 			foreach (var reference in module.AssemblyReferences)
 			{
-				if (ImplicitReferences.Contains(reference.Name))
+				if (IsSuppliedBySdk(reference.Name, projectType))
 				{
 					continue;
 				}
@@ -378,6 +492,28 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				}
 				yield return reference;
 			}
+		}
+
+		/// <summary>
+		/// Determines whether the SDK adds the named reference by itself, given what the project uses.
+		/// Each set matches an _SDKImplicitReference group of the SDK and carries the same condition.
+		/// </summary>
+		static bool IsSuppliedBySdk(string referenceName, ProjectType projectType)
+		{
+			if (ImplicitReferences.Contains(referenceName))
+			{
+				return true;
+			}
+			if (projectType.HasFlag(ProjectType.Wpf) && WpfImplicitReferences.Contains(referenceName))
+			{
+				return true;
+			}
+			if (projectType.HasFlag(ProjectType.WinForms) && referenceName == WindowsFormsName)
+			{
+				return true;
+			}
+			// The interop assembly is implicit only where both stacks meet.
+			return projectType.HasFlag(ProjectType.Desktop) && referenceName == WindowsFormsIntegrationName;
 		}
 
 		/// <summary>
@@ -400,41 +536,51 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			xml.WriteEndElement();
 		}
 
-		static string GetSdkString(ProjectType projectType)
+		static string GetSdkString(ProjectType projectType, TargetFramework targetFramework)
 		{
-			switch (projectType)
+			if (projectType.HasFlag(ProjectType.Web))
 			{
-				case ProjectType.WinForms:
-				case ProjectType.Wpf:
-					return "Microsoft.NET.Sdk.WindowsDesktop";
-				case ProjectType.Web:
-					return "Microsoft.NET.Sdk.Web";
-				default:
-					return "Microsoft.NET.Sdk";
+				// A project names a single SDK, and Microsoft.NET.Sdk.Web is the wider one: it
+				// imports Microsoft.NET.Sdk, which carries the desktop targets UseWPF and
+				// UseWindowsForms need. The desktop SDK carries no web targets, so an assembly
+				// that looks like both is exported as a web project.
+				return "Microsoft.NET.Sdk.Web";
 			}
+
+			// Microsoft.NET.Sdk carries the Windows Desktop targets itself since .NET 5 and
+			// warns (NETSDK1137) about projects that still name the separate SDK; only
+			// .NET Core 3.x, where the desktop targets are not imported for a plain
+			// framework moniker, still needs it.
+			if ((projectType & ProjectType.Desktop) != 0
+				&& targetFramework.Identifier == NetCoreAppIdentifier
+				&& targetFramework.VersionNumber >= 300 && targetFramework.VersionNumber < 500)
+			{
+				return "Microsoft.NET.Sdk.WindowsDesktop";
+			}
+
+			return "Microsoft.NET.Sdk";
 		}
 
 		static ProjectType GetProjectType(MetadataFile module)
 		{
+			var projectType = ProjectType.Default;
 			foreach (var referenceName in module.AssemblyReferences.Select(r => r.Name))
 			{
 				if (referenceName.StartsWith(AspNetCorePrefix, StringComparison.Ordinal))
 				{
-					return ProjectType.Web;
+					projectType |= ProjectType.Web;
 				}
-
-				if (referenceName == PresentationFrameworkName)
+				else if (referenceName == PresentationFrameworkName)
 				{
-					return ProjectType.Wpf;
+					projectType |= ProjectType.Wpf;
 				}
-
-				if (referenceName == WindowsFormsName)
+				else if (referenceName == WindowsFormsName)
 				{
-					return ProjectType.WinForms;
+					projectType |= ProjectType.WinForms;
 				}
 			}
 
-			return ProjectType.Default;
+			return projectType;
 		}
 
 		readonly struct Group : IDisposable
