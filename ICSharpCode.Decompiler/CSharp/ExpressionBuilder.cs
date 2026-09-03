@@ -2923,7 +2923,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 				{
 					IType targetTypeHint = constrainedTo ?? memberDeclaringType;
-					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType, constrainedTo) == StackType.Ref)
+					if (target is Conv {
+						Kind: ConversionKind.Invalid,
+						InputType: StackType.Ref,
+						TargetType: IL.PrimitiveType.Unknown
+					} && targetTypeHint.Kind == TypeKind.Unknown)
+					{
+						target = target.UnwrapConv(ConversionKind.Invalid);
+					}
+					StackType expectedThisPointerType = CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType, constrainedTo);
+					bool requiresManagedReference = expectedThisPointerType == StackType.Ref
+						|| (expectedThisPointerType == StackType.Unknown && target.ResultType == StackType.Ref);
+					if (requiresManagedReference)
 					{
 						if (target.ResultType == StackType.Ref)
 						{
@@ -2935,13 +2946,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					}
 					var translatedTarget = Translate(target, targetTypeHint);
-					if (CallInstruction.ExpectedTypeForThisPointer(memberDeclaringType, constrainedTo) == StackType.Ref)
+					if (requiresManagedReference)
 					{
 						// When accessing members on value types, ensure we use a reference of the correct type,
 						// and not a pointer or a reference to a different type (issue #1333)
-						if (!(translatedTarget.Type is ByReferenceType brt && NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, constrainedTo ?? memberDeclaringType)))
+						IType expectedTargetType = constrainedTo ?? memberDeclaringType;
+						if (!(translatedTarget.Type is ByReferenceType brt
+							&& NormalizeTypeVisitor.TypeErasure.EquivalentTypes(brt.ElementType, expectedTargetType)))
 						{
-							translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(constrainedTo ?? memberDeclaringType), this);
+							translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(expectedTargetType), this);
 						}
 					}
 					if (translatedTarget.Expression is DirectionExpression)
