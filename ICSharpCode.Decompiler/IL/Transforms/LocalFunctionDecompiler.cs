@@ -141,22 +141,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var useSite in info.UseSites)
 					{
 						DetermineCaptureAndDeclarationScope(info, useSite);
+					}
 
-						if (context.Function.Method.IsConstructor)
+					if (context.Function.Method.IsConstructor)
+					{
+						// Local functions reached from a field initializer usually capture nothing, so
+						// the closure analysis leaves no scope behind; the innermost block containing
+						// all use-sites is a better place for them than the whole constructor body.
+						// Use-sites spread over separate function bodies have no common block
+						// container at all; there the scope from the closure analysis stands.
+						BlockContainer useSiteScope = null;
+						foreach (var useSite in info.UseSites)
 						{
-							if (localFunction.DeclarationScope == null)
-							{
-								localFunction.DeclarationScope = BlockContainer.FindClosestContainer(useSite);
-							}
-							else
-							{
-								localFunction.DeclarationScope = FindCommonAncestorInstruction<BlockContainer>(useSite, localFunction.DeclarationScope);
-								if (localFunction.DeclarationScope == null)
-								{
-									localFunction.DeclarationScope = (BlockContainer)context.Function.Body;
-								}
-							}
+							useSiteScope = useSiteScope == null
+								? BlockContainer.FindClosestContainer(useSite)
+								: FindCommonAncestorInstruction<BlockContainer>(useSite, useSiteScope);
+							if (useSiteScope == null)
+								break;
 						}
+						localFunction.DeclarationScope = useSiteScope
+							?? localFunction.DeclarationScope
+							?? (BlockContainer)context.Function.Body;
 					}
 
 					if (localFunction.DeclarationScope == null)
@@ -341,9 +346,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!(TransformDisplayClassUsage.IsPotentialClosure(context, field.Type.GetDefinition()) || context.Function.Method.DeclaringType.Equals(field.Type)))
 				return null;
-			foreach (var v in context.Function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables))
+			return FindClosureVariableOfType(field.Type);
+		}
+
+		/// <summary>
+		/// Finds the variable holding the display class instance of the given type, anywhere in the
+		/// function tree currently being decompiled.
+		/// </summary>
+		private ILVariable FindClosureVariableOfType(IType type)
+		{
+			foreach (var v in context.Function.Descendants.OfType<ILFunction>().Prepend(context.Function).SelectMany(f => f.Variables))
 			{
-				if (!(TransformDisplayClassUsage.IsClosure(context, v, out var varType, out _) && varType.Equals(field.Type)))
+				if (!(TransformDisplayClassUsage.IsClosure(context, v, out var varType, out _) && varType.Equals(type)))
 					continue;
 				return v;
 			}
@@ -713,6 +727,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (closureVar.Kind == VariableKind.NamedArgument)
 				return false;
+			if (parameterIndex >= 0 && closureVar.Kind == VariableKind.Parameter)
+			{
+				// The use-site sits inside another local function that received the display class as
+				// a parameter and forwards it. A parameter has no initializer, so the scope the
+				// display class was created in has to be recovered from the variable holding it.
+				closureVar = FindClosureVariableOfType(closureVar.Type.UnwrapByRef()) ?? closureVar;
+			}
 			var initializer = GetClosureInitializer(closureVar);
 			if (initializer == null)
 				return false;
