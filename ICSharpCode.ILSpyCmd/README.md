@@ -39,8 +39,8 @@ Options:
                                           containers are listed individually as '<container>/<entry>'.
   --resource <name>                       Extract a single resource by name (as printed by --list-resources). Resources
                                           whose name ends with '.baml' are decompiled to XAML.
-  --decompile-baml                        When used with -p, decompile BAML resources to XAML files (Page items) instead
-                                          of leaving them as raw byte streams.
+  --decompile-baml                        Deprecated: -p decompiles BAML resources to XAML files (Page items) on its
+                                          own. Accepted so that existing scripts keep working.
   --dump-table <table>                    Dump a metadata table: prints RID, token, names, heap offsets and coded
                                           indexes of every row. <table> is the ECMA-335 table name (e.g. TypeDef,
                                           Property, MethodSemantics; case-insensitive) or table number (decimal or
@@ -121,8 +121,8 @@ Examples:
     Extract a single resource. If the name ends with .baml, the output is decompiled XAML; otherwise raw bytes.
         ilspycmd sample.dll --resource sample.g.resources/mainwindow.baml -o c:\decompiled
 
-    Decompile assembly as a compilable project and convert all BAML resources to XAML Page items.
-        ilspycmd sample.dll -p -o c:\decompiled --decompile-baml
+    Decompile assembly as a compilable project. BAML resources become XAML Page items.
+        ilspycmd sample.dll -p -o c:\decompiled
 ```
 
 ## Generate HTML diagrammers

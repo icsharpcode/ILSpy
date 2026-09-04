@@ -82,8 +82,8 @@ Examples:
     Extract a single resource. If the name ends with .baml, the output is decompiled XAML; otherwise raw bytes.
         ilspycmd sample.dll --resource sample.g.resources/mainwindow.baml -o c:\decompiled
 
-    Decompile assembly as a compilable project and convert all BAML resources to XAML Page items.
-        ilspycmd sample.dll -p -o c:\decompiled --decompile-baml
+    Decompile assembly as a compilable project. BAML resources become XAML Page items.
+        ilspycmd sample.dll -p -o c:\decompiled
 ")]
 	[HelpOption("-h|--help")]
 	[ProjectOptionRequiresOutputDirectoryValidation]
@@ -145,7 +145,7 @@ Examples:
 		[Option("--resource <name>", "Extract a single resource by name (as printed by --list-resources). Resources whose name ends with '.baml' are decompiled to XAML.", CommandOptionType.SingleValue)]
 		public string ResourceName { get; }
 
-		[Option("--decompile-baml", "When used with -p, decompile BAML resources to XAML files (Page items) instead of leaving them as raw byte streams.", CommandOptionType.NoValue)]
+		[Option("--decompile-baml", "Deprecated: -p decompiles BAML resources to XAML files (Page items) on its own. Accepted so that existing scripts keep working.", CommandOptionType.NoValue)]
 		public bool DecompileBamlFlag { get; }
 
 		[Option("--dump-table <table>", "Dump a metadata table: prints RID, token, names, heap offsets and coded indexes of every row. <table> is the ECMA-335 table name (e.g. TypeDef, Property, MethodSemantics; case-insensitive) or table number (decimal or 0x-prefixed hex, e.g. 0x17).", CommandOptionType.SingleValue)]
@@ -795,19 +795,14 @@ Examples:
 			}
 			var settings = GetSettings(module);
 			var debugInfo = TryLoadPDB(module);
-			WholeProjectDecompiler decompiler;
-			if (DecompileBamlFlag)
-			{
-				var bamlTypeSystem = new BamlDecompilerTypeSystem(module, resolver);
-				var bamlSettings = new BamlDecompilerSettings {
-					ThrowOnAssemblyResolveErrors = settings.ThrowOnAssemblyResolveErrors
-				};
-				decompiler = new BamlAwareWholeProjectDecompiler(settings, resolver, resolver, debugInfo, bamlTypeSystem, bamlSettings);
-			}
-			else
-			{
-				decompiler = new WholeProjectDecompiler(settings, resolver, null, resolver, debugInfo);
-			}
+			// A WPF assembly keeps its XAML as BAML, so a project exported without converting it
+			// back is missing every window and page it is made of.
+			var bamlTypeSystem = new BamlDecompilerTypeSystem(module, resolver);
+			var bamlSettings = new BamlDecompilerSettings {
+				ThrowOnAssemblyResolveErrors = settings.ThrowOnAssemblyResolveErrors
+			};
+			WholeProjectDecompiler decompiler = new BamlAwareWholeProjectDecompiler(settings, resolver, resolver,
+				debugInfo, bamlTypeSystem, bamlSettings);
 			ProjectId projectId;
 			using (var projectFileWriter = new StreamWriter(File.Create(projectFileName)))
 				projectId = decompiler.DecompileProject(module, Path.GetDirectoryName(projectFileName), projectFileWriter);

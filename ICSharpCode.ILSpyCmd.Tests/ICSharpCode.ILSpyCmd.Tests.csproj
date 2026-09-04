@@ -24,4 +24,10 @@
     <ProjectReference Include="..\ICSharpCode.ILSpyCmd\ICSharpCode.ILSpyCmd.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- A BAML stream inside a .g.resources container, the way the WPF build puts one into an
+         assembly, so that exporting this assembly as a project has one to convert. -->
+    <EmbeddedResource Include="fixtures\test.g.resources" LogicalName="ICSharpCode.ILSpyCmd.Tests.g.resources" />
+  </ItemGroup>
+
 </Project>
