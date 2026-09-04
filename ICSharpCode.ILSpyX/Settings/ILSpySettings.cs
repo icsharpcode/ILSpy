@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Xml;
 using System.Xml.Linq;
@@ -113,12 +114,44 @@ namespace ICSharpCode.ILSpyX.Settings
 				}
 				catch (XmlException)
 				{
+					// The file cannot be parsed, and it is about to be replaced by the one written
+					// below. It is the only copy of whatever the user had - assembly lists above all -
+					// and a file that fails to parse is usually one typo away from readable, so it is
+					// kept instead of overwritten (issue #2919).
+					KeepUnreadableFile(config);
 					doc = new XDocument(new XElement("ILSpy"));
 				}
 				doc.Root!.SetAttributeValue("version", DecompilerVersionInfo.Major + "." + DecompilerVersionInfo.Minor + "." + DecompilerVersionInfo.Build + "." + DecompilerVersionInfo.Revision);
 				action(doc.Root);
 				doc.Save(config, SaveOptions.None);
 				this.root = doc.Root;
+			}
+		}
+
+		/// <summary>
+		/// Moves a settings file that could not be read out of the way, under a name that says what
+		/// it is and never replaces an earlier one - two bad starts in a row must not cost the copy
+		/// that still has the data.
+		/// </summary>
+		static void KeepUnreadableFile(string config)
+		{
+			try
+			{
+				if (!File.Exists(config))
+					return;
+				string baseName = config + ".broken-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture);
+				string kept = baseName;
+				for (int attempt = 1; File.Exists(kept); attempt++)
+					kept = baseName + "-" + attempt;
+				File.Move(config, kept);
+			}
+			catch (IOException)
+			{
+				// Keeping the file is what matters; failing to name the copy must not stop settings
+				// from being saved.
+			}
+			catch (UnauthorizedAccessException)
+			{
 			}
 		}
 
