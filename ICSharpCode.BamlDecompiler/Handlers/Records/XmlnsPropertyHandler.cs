@@ -58,12 +58,20 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 			foreach (var asmId in record.AssemblyIds)
 			{
 				var assembly = ctx.Baml.ResolveAssembly(asmId);
-				ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace));
+				// A clr-namespace declaration names its CLR namespace itself. Leaving that unread
+				// means no lookup by namespace can ever find the declaration the document made,
+				// and every type in it gets a second prefix of its own (issue #2253).
+				XamlUtils.TryParseClrNamespace(record.XmlNamespace, out string declaredClrNamespace);
+				ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace, declaredClrNamespace) {
+					Assembly = assembly.Assembly
+				});
 
 				if (assembly.Assembly?.IsMainModule == true)
 				{
 					foreach (var clrNs in ResolveCLRNamespaces(assembly.Assembly, record.XmlNamespace))
-						ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace, clrNs));
+						ctx.XmlNs.Add(new NamespaceMap(record.Prefix, assembly.FullAssemblyName, record.XmlNamespace, clrNs) {
+							Assembly = assembly.Assembly
+						});
 				}
 			}
 

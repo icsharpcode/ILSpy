@@ -126,7 +126,7 @@ namespace ICSharpCode.BamlDecompiler
 			}
 
 			var clrNs = type.Namespace;
-			var xmlNs = XmlNs.LookupXmlns(fullAssemblyName, clrNs);
+			var xmlNs = XmlNs.LookupXmlns(fullAssemblyName, clrNs, type.Name);
 
 			typeMap[id] = xamlType = new XamlType(assembly, fullAssemblyName, clrNs, type.Name, GetXmlNamespace(xmlNs)) {
 				ResolvedType = type

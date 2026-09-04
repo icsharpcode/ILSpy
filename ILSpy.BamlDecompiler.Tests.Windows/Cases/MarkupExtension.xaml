@@ -1,4 +1,4 @@
-<Label xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" DataContext="{Binding Blub}" Content="{Binding Path=Blah, StringFormat={}{0} items}">
+<Label xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" DataContext="{Binding Blub}" Content="{Binding Path=Blah, StringFormat='{}{0} items'}">
 	<FrameworkElement.Style>
 		<Style />
 	</FrameworkElement.Style>
