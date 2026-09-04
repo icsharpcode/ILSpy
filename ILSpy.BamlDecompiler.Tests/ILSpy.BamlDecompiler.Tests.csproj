@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="FacadeAssemblyTests.cs" />
     <Compile Include="InvalidXmlCharacterTests.cs" />
     <Compile Include="MissingReferencesTests.cs" />
     <Compile Include="MarkupExtensionQuotingTests.cs" />
