@@ -81,6 +81,32 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		[Test]
+		public async Task TheCodeBehindSitsNextToItsDocument()
+		{
+			// WPF tooling pairs MainWindow.xaml with MainWindow.xaml.cs by name and location; a
+			// code-behind anywhere else is an unrelated file as far as the project is concerned.
+			await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p", "-o", outputDirectory);
+
+			string documentDirectory = Path.Combine(outputDirectory, "ICSharpCode.ILSpyCmd.Tests.Views");
+			Assert.Multiple(() => {
+				Assert.That(File.Exists(Path.Combine(documentDirectory, "DeepPage.xaml")), Is.True, "the document");
+				Assert.That(File.Exists(Path.Combine(documentDirectory, "DeepPage.xaml.cs")), Is.True, "its code-behind");
+			});
+		}
+
+		[Test]
+		public async Task DocumentsFollowTheNamespaceDirectoriesToo()
+		{
+			await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p", "--nested-directories", "-o", outputDirectory);
+
+			string documentDirectory = Path.Combine(outputDirectory, "ICSharpCode", "ILSpyCmd", "Tests", "Views");
+			Assert.Multiple(() => {
+				Assert.That(File.Exists(Path.Combine(documentDirectory, "DeepPage.xaml")), Is.True, "the document");
+				Assert.That(File.Exists(Path.Combine(documentDirectory, "DeepPage.xaml.cs")), Is.True, "its code-behind");
+			});
+		}
+
+		[Test]
 		public async Task TheOldOptInFlagStillWorks()
 		{
 			// It is documented and scripted against; asking for what is now the default has to
