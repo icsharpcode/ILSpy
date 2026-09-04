@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -301,11 +302,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						switch (invocation.Method.Name)
 						{
 							case "Add":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, false);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, "op_Addition", false);
 							case "AddChecked":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, true);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, "op_Addition", true);
 							case "And":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitAnd);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitAnd, "op_BitwiseAnd");
 							case "AndAlso":
 								return ConvertLogicOperator(invocation, true);
 							case "ArrayAccess":
@@ -326,11 +327,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "ConvertChecked":
 								return ConvertCast(invocation, true);
 							case "Divide":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Div);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Div, "op_Division");
 							case "Equal":
 								return ConvertComparison(invocation, ComparisonKind.Equality);
 							case "ExclusiveOr":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitXor);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitXor, "op_ExclusiveOr");
 							case "Field":
 								return ConvertField(invocation, typeHint);
 							case "GreaterThan":
@@ -342,7 +343,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "Lambda":
 								return ConvertLambda(invocation);
 							case "LeftShift":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftLeft);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftLeft, "op_LeftShift");
 							case "LessThan":
 								return ConvertComparison(invocation, ComparisonKind.LessThan);
 							case "LessThanOrEqual":
@@ -352,11 +353,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "MemberInit":
 								return ConvertMemberInit(invocation);
 							case "Modulo":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Rem);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Rem, "op_Modulus");
 							case "Multiply":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, false);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, "op_Multiply", false);
 							case "MultiplyChecked":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, true);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, "op_Multiply", true);
 							case "Negate":
 								return ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
 							case "NegateChecked":
@@ -374,7 +375,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "OnesComplement":
 								return ConvertNotOperator(invocation);
 							case "Or":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitOr);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitOr, "op_BitwiseOr");
 							case "OrElse":
 								return ConvertLogicOperator(invocation, false);
 							case "Property":
@@ -382,11 +383,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "Quote":
 								return ConvertQuote(invocation);
 							case "RightShift":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftRight);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftRight, "op_RightShift");
 							case "Subtract":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, "op_Subtraction", false);
 							case "SubtractChecked":
-								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, true);
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, "op_Subtraction", true);
 							case "TypeAs":
 								return ConvertTypeAs(invocation);
 							case "TypeIs":
@@ -484,7 +485,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (() => new LdLen(StackType.I4, converted()), context.TypeSystem.FindType(KnownTypeCode.Int32));
 		}
 
-		(Func<ILInstruction>, IType) ConvertBinaryNumericOperator(CallInstruction invocation, BinaryNumericOperator op, bool? isChecked = null)
+		(Func<ILInstruction>, IType) ConvertBinaryNumericOperator(CallInstruction invocation, BinaryNumericOperator op, string operatorName, bool? isChecked = null)
 		{
 			if (invocation.Arguments.Count < 2)
 				return (null, SpecialType.UnknownType);
@@ -494,11 +495,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var (right, rightType) = ConvertInstruction(invocation.Arguments[1]);
 			if (right == null)
 				return (null, SpecialType.UnknownType);
+
 			IMember method;
 			switch (invocation.Arguments.Count)
 			{
 				case 2:
-					if (op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight)
+					if (op is BinaryNumericOperator.ShiftLeft or BinaryNumericOperator.ShiftRight)
 					{
 						if (!NullableType.GetUnderlyingType(rightType).IsKnownType(KnownTypeCode.Int32))
 							return (null, SpecialType.UnknownType);
@@ -507,6 +509,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						if (!rightType.Equals(leftType))
 							return (null, SpecialType.UnknownType);
+					}
+					if (leftType.IsKnownType(KnownTypeCode.Decimal))
+					{
+						method = leftType.GetMethods(m => m.IsOperator && m.Name == operatorName).FirstOrDefault();
+						if (method == null)
+							return (null, SpecialType.UnknownType);
+						return (() => new Call((IMethod)method) {
+							Arguments = { left(), right() }
+						}, method.ReturnType);
 					}
 					return (() => new BinaryNumericInstruction(op, left(), right(),
 						NullableType.GetUnderlyingType(leftType).GetStackType(),
