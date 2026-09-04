@@ -855,6 +855,8 @@ class LoggingResolver(IAssemblyResolver inner, List<string> dirs, Func<IAssembly
 	public readonly Dictionary<string, string?> Resolutions = new();
 	readonly Dictionary<string, MetadataFile?> loaded = new();
 
+	public IDisposable? BeginSnapshot() => inner.BeginSnapshot();
+
 	public MetadataFile? Resolve(IAssemblyReference reference)
 	{
 		var file = ResolveFromDirs(reference) ?? inner.Resolve(reference);

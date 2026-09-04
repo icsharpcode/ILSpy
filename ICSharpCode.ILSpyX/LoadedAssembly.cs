@@ -615,6 +615,12 @@ namespace ICSharpCode.ILSpyX
 			/// </summary>
 			public ReferenceLoadInfo LoadInfo => referenceLoadInfo;
 
+			/// <inheritdoc/>
+			public IDisposable? BeginSnapshot()
+			{
+				return parent.GetUniversalResolver(applyWinRTProjections).BeginSnapshot();
+			}
+
 			public MetadataFile? Resolve(IAssemblyReference reference)
 			{
 				return ResolveAsync(reference).GetAwaiter().GetResult();

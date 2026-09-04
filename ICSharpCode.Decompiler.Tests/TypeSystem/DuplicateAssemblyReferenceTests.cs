@@ -173,6 +173,9 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		/// </summary>
 		class VersionedResolver : IAssemblyResolver
 		{
+			/// <inheritdoc/>
+			public IDisposable BeginSnapshot() => null;
+
 			static readonly string runtimeDirectory = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
 			readonly string directory;

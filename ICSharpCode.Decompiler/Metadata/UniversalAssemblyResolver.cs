@@ -19,6 +19,7 @@
 #nullable enable
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -76,6 +77,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		readonly Lazy<DotNetCorePathFinder> dotNetCorePathFinder;
+		ConcurrentDictionary<string, string>? versionFolders;
 		readonly bool throwOnError;
 		readonly PEStreamOptions streamOptions;
 		readonly MetadataReaderOptions metadataOptions;
@@ -84,6 +86,39 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly List<string?> directories = new List<string?>();
 		static readonly List<string> gac_paths = GetGacPaths();
 		static readonly DecompilerRuntime decompilerRuntime;
+
+		/// <inheritdoc/>
+		public IDisposable? BeginSnapshot()
+		{
+			versionFolders = new ConcurrentDictionary<string, string>();
+			return new Snapshot(this);
+		}
+
+		/// <summary>
+		/// The version folder to use inside <paramref name="basePath"/>, determined by
+		/// <paramref name="valueFactory"/> once per open scope, and on every call outside one.
+		/// </summary>
+		internal string GetOrAddVersionFolder(string basePath, Func<string, string> valueFactory)
+		{
+			return versionFolders is { } cache ? cache.GetOrAdd(basePath, valueFactory) : valueFactory(basePath);
+		}
+
+		/// <summary>
+		/// Holds what the resolver read from the file system until it is disposed. Two of these on
+		/// one resolver do not stack: the first to end takes the cache with it, and the other reads
+		/// the file system again.
+		/// </summary>
+		sealed class Snapshot : IDisposable
+		{
+			readonly UniversalAssemblyResolver resolver;
+
+			public Snapshot(UniversalAssemblyResolver resolver)
+			{
+				this.resolver = resolver;
+			}
+
+			public void Dispose() => resolver.versionFolders = null;
+		}
 
 		public void AddSearchDirectory(string? directory)
 		{
@@ -358,6 +393,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				dotNetCorePathFinder = new DotNetCorePathFinder(targetFrameworkIdentifier, targetFrameworkVersion, runtimePack);
 			else
 				dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, targetFramework, runtimePack, targetFrameworkIdentifier, targetFrameworkVersion);
+			dotNetCorePathFinder.Owner = this;
 			foreach (var directory in directories)
 			{
 				dotNetCorePathFinder.AddSearchDirectory(directory);
@@ -555,9 +591,12 @@ namespace ICSharpCode.Decompiler.Metadata
 			return IsZeroOrAllOnes(reference.Version) || reference.IsRetargetable;
 		}
 
+		static readonly string[] assemblyExtensions = { ".dll", ".exe" };
+		static readonly string[] windowsMetadataExtensions = { ".winmd", ".dll" };
+
 		string? SearchDirectory(IAssemblyReference name, string directory)
 		{
-			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".dll", ".exe" };
+			var extensions = name.IsWindowsRuntime ? windowsMetadataExtensions : assemblyExtensions;
 			foreach (var extension in extensions)
 			{
 				string file = Path.Combine(directory, name.Name + extension);
@@ -772,17 +811,17 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
+		static readonly string[] gacFolders = { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
+		static readonly string[] gacFolderPrefixes = { string.Empty, "v4.0_" };
+
 		static string? GetAssemblyInNetGac(IAssemblyReference reference)
 		{
-			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
-			var prefixes = new[] { string.Empty, "v4.0_" };
-
 			for (int i = 0; i < gac_paths.Count; i++)
 			{
-				for (int j = 0; j < gacs.Length; j++)
+				for (int j = 0; j < gacFolders.Length; j++)
 				{
-					var gac = Path.Combine(gac_paths[i], gacs[j]);
-					var file = GetAssemblyFile(reference, prefixes[i], gac);
+					var gac = Path.Combine(gac_paths[i], gacFolders[j]);
+					var file = GetAssemblyFile(reference, gacFolderPrefixes[i], gac);
 					if (File.Exists(file))
 						return file;
 				}
@@ -792,10 +831,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			// the whole GAC rather than a fallback within one folder.
 			for (int i = 0; i < gac_paths.Count; i++)
 			{
-				for (int j = 0; j < gacs.Length; j++)
+				for (int j = 0; j < gacFolders.Length; j++)
 				{
-					var gac = Path.Combine(gac_paths[i], gacs[j]);
-					var file = FindUnifiedAssemblyInGacFolder(reference, prefixes[i], gac);
+					var gac = Path.Combine(gac_paths[i], gacFolders[j]);
+					var file = FindUnifiedAssemblyInGacFolder(reference, gacFolderPrefixes[i], gac);
 					if (file != null)
 						return file;
 				}
@@ -865,10 +904,9 @@ namespace ICSharpCode.Decompiler.Metadata
 		/// </summary>
 		public static IEnumerable<AssemblyNameReference> EnumerateGac()
 		{
-			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
 			foreach (var path in GetGacPaths())
 			{
-				foreach (var gac in gacs)
+				foreach (var gac in gacFolders)
 				{
 					string rootPath = Path.Combine(path, gac);
 					if (!Directory.Exists(rootPath))

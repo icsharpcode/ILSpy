@@ -50,6 +50,9 @@ namespace ILSpy.BamlDecompiler.Tests
 		/// </summary>
 		sealed class WpfHidingResolver : IAssemblyResolver
 		{
+			/// <inheritdoc/>
+			public IDisposable BeginSnapshot() => null;
+
 			static readonly HashSet<string> hidden = new(StringComparer.OrdinalIgnoreCase) {
 				"WindowsBase", "PresentationCore", "PresentationFramework", "PresentationUI", "System.Xaml"
 			};
