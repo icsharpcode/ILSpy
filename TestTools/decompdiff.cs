@@ -684,6 +684,7 @@ static class Report
 			ins { background:var(--add); color:var(--addfg); text-decoration:none; display:block; }
 			del { background:var(--del); color:var(--delfg); text-decoration:none; display:block; }
 			span.ctx { display:block; color:var(--muted); }
+			span.hunk { display:block; color:var(--muted); opacity:0.7; }
 			#filter { width:100%; padding:8px; margin:8px 0; border:1px solid var(--line); border-radius:6px;
 			          background:var(--bg); color:var(--fg); font:13px ui-monospace,monospace; }
 			ul { padding-left:20px; } li { font-family:ui-monospace,monospace; font-size:12.5px; }
@@ -709,12 +710,10 @@ static class Report
 			foreach (var c in m.Changed.OrderByDescending(c => Math.Abs(c.New.Lines - c.Old.Lines)))
 			{
 				var file = SanitizeFileName(c.Location.Replace(" / ", "/")) + ".cs";
-				var oldCode = ReadIfExists(Path.Combine(m.ReportDir, "old", file));
-				var newCode = ReadIfExists(Path.Combine(m.ReportDir, "new", file));
 				var delta = c.New.Lines - c.Old.Lines;
 				html.AppendLine($"<details><summary>{Esc(c.Location)} "
 					+ $"<span class=meta>({c.Old.Lines} &rarr; {c.New.Lines} lines, {delta:+#;-#;0})</span></summary>");
-				html.AppendLine($"<pre>{Diff(oldCode, newCode)}</pre></details>");
+				html.AppendLine($"<pre>{Diff(Path.Combine(m.ReportDir, "old", file), Path.Combine(m.ReportDir, "new", file))}</pre></details>");
 			}
 			html.AppendLine("""
 				<script>
@@ -752,80 +751,52 @@ static class Report
 		return $"<tr><td>{Esc(name)}</td><td>{o}</td><td>{n}</td><td{cls}>{delta:+#;-#;0}</td></tr>";
 	}
 
-	static string ReadIfExists(string path) => File.Exists(path) ? File.ReadAllText(path) : "";
-
-	// Line diff: common prefix/suffix are cheap to strip and usually account for nearly
-	// everything, leaving a middle small enough for an O(n*m) LCS. Beyond the cap the
-	// middle is shown as a plain replacement rather than spending minutes on alignment.
-	const int LcsCap = 1500;
-
-	static string Diff(string oldCode, string newCode)
+	// Delegates the actual line diffing to `git diff --no-index`: it has a real
+	// Myers/patience implementation with move detection and heuristics tuned over two
+	// decades, which a hand-rolled LCS here could never match - and its -U3 context
+	// windowing is exactly what the previous prefix/suffix trimming was trying to fake.
+	// Both files were already written to disk by DumpPair, so they are diffed in place.
+	static string Diff(string oldFile, string newFile)
 	{
-		var a = oldCode.ReplaceLineEndings("\n").Split('\n');
-		var b = newCode.ReplaceLineEndings("\n").Split('\n');
-		int start = 0;
-		while (start < a.Length && start < b.Length && a[start] == b[start])
-			start++;
-		int endA = a.Length, endB = b.Length;
-		while (endA > start && endB > start && a[endA - 1] == b[endB - 1])
-		{
-			endA--;
-			endB--;
-		}
-		var sb = new StringBuilder();
-		// A few lines of context on each side make the hunk readable on its own.
-		for (int i = Math.Max(0, start - 3); i < start; i++)
-			sb.Append("<span class=ctx>").Append(Esc(a[i])).Append("</span>");
-		int lenA = endA - start, lenB = endB - start;
-		if (lenA <= LcsCap && lenB <= LcsCap)
-		{
-			foreach (var (tag, line) in LcsDiff(a[start..endA], b[start..endB]))
-				sb.Append(tag switch { '+' => "<ins>", '-' => "<del>", _ => "<span class=ctx>" })
-					.Append(Esc(line))
-					.Append(tag switch { '+' => "</ins>", '-' => "</del>", _ => "</span>" });
-		}
-		else
-		{
-			for (int i = start; i < endA; i++)
-				sb.Append("<del>").Append(Esc(a[i])).Append("</del>");
-			for (int i = start; i < endB; i++)
-				sb.Append("<ins>").Append(Esc(b[i])).Append("</ins>");
-		}
-		for (int i = endA; i < Math.Min(a.Length, endA + 3); i++)
-			sb.Append("<span class=ctx>").Append(Esc(a[i])).Append("</span>");
-		return sb.ToString();
+		var psi = new ProcessStartInfo("git") {
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+		};
+		foreach (var arg in new[] { "diff", "--no-index", "--no-color", "-U3", "--", ExistingOrNullDevice(oldFile), ExistingOrNullDevice(newFile) })
+			psi.ArgumentList.Add(arg);
+		using var p = Process.Start(psi)!;
+		var output = p.StandardOutput.ReadToEnd();
+		p.WaitForExit();
+		// exit code 1 just means differences were found; anything else is a real failure.
+		return p.ExitCode is 0 or 1 ? RenderUnifiedDiff(output) : Esc(p.StandardError.ReadToEnd());
 	}
 
-	static List<(char Tag, string Line)> LcsDiff(string[] a, string[] b)
+	// A changed type is only ever missing one side's file when it appeared/disappeared
+	// entirely, which DumpPair never does for a "changed" entry - kept defensive anyway.
+	static string ExistingOrNullDevice(string path)
+		=> File.Exists(path) ? path : (OperatingSystem.IsWindows() ? "NUL" : "/dev/null");
+
+	// Renders a unified diff body (as produced by `git diff`) as HTML, skipping the
+	// file-header lines (diff/index/---/+++) which name the throwaway temp files.
+	static string RenderUnifiedDiff(string unifiedDiff)
 	{
-		var lcs = new int[a.Length + 1, b.Length + 1];
-		for (int i = a.Length - 1; i >= 0; i--)
-			for (int j = b.Length - 1; j >= 0; j--)
-				lcs[i, j] = a[i] == b[j] ? lcs[i + 1, j + 1] + 1 : Math.Max(lcs[i + 1, j], lcs[i, j + 1]);
-		var result = new List<(char, string)>();
-		int x = 0, y = 0;
-		while (x < a.Length && y < b.Length)
+		var sb = new StringBuilder();
+		foreach (var line in unifiedDiff.ReplaceLineEndings("\n").Split('\n'))
 		{
-			if (a[x] == b[y])
+			if (line.Length == 0 || line.StartsWith("diff --git") || line.StartsWith("index ")
+				|| line.StartsWith("--- ") || line.StartsWith("+++ ") || line.StartsWith("\\ No newline"))
+				continue;
+			if (line.StartsWith("@@"))
 			{
-				result.Add((' ', a[x]));
-				x++;
-				y++;
+				sb.Append("<span class=hunk>").Append(Esc(line)).Append("</span>");
+				continue;
 			}
-			else if (lcs[x + 1, y] >= lcs[x, y + 1])
-			{
-				result.Add(('-', a[x++]));
-			}
-			else
-			{
-				result.Add(('+', b[y++]));
-			}
+			var tag = line[0];
+			sb.Append(tag switch { '+' => "<ins>", '-' => "<del>", _ => "<span class=ctx>" })
+				.Append(Esc(line[1..]))
+				.Append(tag switch { '+' => "</ins>", '-' => "</del>", _ => "</span>" });
 		}
-		while (x < a.Length)
-			result.Add(('-', a[x++]));
-		while (y < b.Length)
-			result.Add(('+', b[y++]));
-		return result;
+		return sb.ToString();
 	}
 
 	static string Esc(string s) => s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
