@@ -238,8 +238,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			try
 			{
-				FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-				return new PEFile(fileName, stream, streamOptions, metadataOptions);
+				return LoadModuleFromFile(fileName);
 			}
 			catch (BadImageFormatException ex)
 			{
@@ -252,6 +251,19 @@ namespace ICSharpCode.Decompiler.Metadata
 					throw makeException(ex);
 			}
 			return null;
+		}
+
+		/// <summary>
+		/// Loads the module stored at <paramref name="fileName"/>, once the file for a reference
+		/// has been found. Override to accept file formats other than a plain PE image. Throws
+		/// <see cref="BadImageFormatException"/> or <see cref="IOException"/> for a file that is
+		/// not a loadable module; the caller turns that into null or a
+		/// <see cref="ResolutionException"/> according to the throwOnError setting.
+		/// </summary>
+		protected virtual MetadataFile LoadModuleFromFile(string fileName)
+		{
+			FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+			return new PEFile(fileName, stream, streamOptions, metadataOptions);
 		}
 
 		public Task<MetadataFile?> ResolveAsync(IAssemblyReference name)

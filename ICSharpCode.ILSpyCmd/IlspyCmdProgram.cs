@@ -557,16 +557,26 @@ Examples:
 			return InputFileLoader.Load(assemblyFileName, BundleEntryName, applyWinRTProjections);
 		}
 
+		/// <summary>
+		/// Resolves the references of <paramref name="module"/> from next to the input file, the
+		/// -r directories, and the usual framework locations.
+		/// </summary>
+		UniversalAssemblyResolver CreateResolver(string assemblyFileName, PEFile module)
+		{
+			var resolver = new FileLoaderAssemblyResolver(assemblyFileName, module.Metadata.DetectTargetFrameworkId());
+			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
+			{
+				resolver.AddSearchDirectory(path);
+			}
+			return resolver;
+		}
+
 		CSharpDecompiler GetDecompiler(string assemblyFileName) => GetDecompiler(assemblyFileName, out _);
 
 		CSharpDecompiler GetDecompiler(string assemblyFileName, out DecompilerSettings settings)
 		{
 			var module = LoadInputModule(assemblyFileName);
-			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
-			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
-			{
-				resolver.AddSearchDirectory(path);
-			}
+			var resolver = CreateResolver(assemblyFileName, module);
 			settings = GetSettings(module);
 			if (!settings.ApplyWindowsRuntimeProjections)
 			{
@@ -617,9 +627,7 @@ Examples:
 			bool isBaml = resourceName.EndsWith(".baml", StringComparison.OrdinalIgnoreCase);
 			if (isBaml && value is byte[] bamlBytes)
 			{
-				var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
-				foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
-					resolver.AddSearchDirectory(path);
+				var resolver = CreateResolver(assemblyFileName, module);
 				var bamlSettings = new BamlDecompilerSettings {
 					ThrowOnAssemblyResolveErrors = GetSettings(module).ThrowOnAssemblyResolveErrors
 				};
@@ -788,11 +796,7 @@ Examples:
 		ProjectId DecompileAsProject(string assemblyFileName, string projectFileName)
 		{
 			var module = LoadInputModule(assemblyFileName);
-			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
-			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
-			{
-				resolver.AddSearchDirectory(path);
-			}
+			var resolver = CreateResolver(assemblyFileName, module);
 			var settings = GetSettings(module);
 			var debugInfo = TryLoadPDB(module);
 			WholeProjectDecompiler decompiler;
