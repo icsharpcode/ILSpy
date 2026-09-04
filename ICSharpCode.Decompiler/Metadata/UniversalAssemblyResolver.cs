@@ -788,7 +788,65 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
+			// An exact version match is always preferred, so unification is a separate pass over
+			// the whole GAC rather than a fallback within one folder.
+			for (int i = 0; i < gac_paths.Count; i++)
+			{
+				for (int j = 0; j < gacs.Length; j++)
+				{
+					var gac = Path.Combine(gac_paths[i], gacs[j]);
+					var file = FindUnifiedAssemblyInGacFolder(reference, prefixes[i], gac);
+					if (file != null)
+						return file;
+				}
+			}
+
 			return null;
+		}
+
+		/// <summary>
+		/// Finds an assembly whose version differs from the requested one, because the runtime
+		/// unifies references to in-box assemblies onto whatever version the installed framework
+		/// carries. The versions genuinely differ: the .NET Framework 4.7.2/4.8 reference
+		/// assemblies of about a hundred assemblies (System.IO.Compression is 4.2.0.0, System.Runtime
+		/// is 4.1.2.0, ...) are higher than the 4.0.0.0 implementations in the GAC, which is the
+		/// only version ever installed there (issue #2080).
+		///
+		/// Unification is approximated by the highest installed version that shares the major
+		/// version and the public key token of the reference. The major version is what separates
+		/// assemblies that share a name but are different products, e.g. Microsoft.Build.Framework
+		/// 4.0.0.0 and 15.x.
+		/// </summary>
+		internal static string? FindUnifiedAssemblyInGacFolder(IAssemblyReference reference, string prefix, string gac)
+		{
+			var requestedVersion = reference.Version;
+			if (requestedVersion == null || reference.PublicKeyToken == null)
+				return null;
+			string assemblyDirectory = Path.Combine(gac, reference.Name);
+			if (!Directory.Exists(assemblyDirectory))
+				return null;
+			// The folder name is "{prefix}{version}_{culture}_{publicKeyToken}"; the culture of a
+			// non-satellite assembly is empty, which leaves the two underscores adjacent.
+			string suffix = "__" + reference.PublicKeyToken.ToHexString(8);
+			string? bestFile = null;
+			Version? bestVersion = null;
+			foreach (var candidate in Directory.EnumerateDirectories(assemblyDirectory, prefix + "*" + suffix))
+			{
+				string folderName = Path.GetFileName(candidate);
+				string versionText = folderName.Substring(prefix.Length, folderName.Length - prefix.Length - suffix.Length);
+				if (!Version.TryParse(versionText, out var version))
+					continue;
+				if (version.Major != requestedVersion.Major)
+					continue;
+				if (bestVersion != null && version <= bestVersion)
+					continue;
+				string file = Path.Combine(candidate, reference.Name + ".dll");
+				if (!File.Exists(file))
+					continue;
+				bestFile = file;
+				bestVersion = version;
+			}
+			return bestFile;
 		}
 
 		static string GetAssemblyFile(IAssemblyReference reference, string prefix, string gac)
