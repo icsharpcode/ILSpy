@@ -172,6 +172,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					context.Step("Convert Expression Tree", instruction);
 					var newLambda = (ILFunction)lambda();
+					if (newLambda == null)
+						return false;
 					SetExpressionTreeFlag(newLambda, (CallInstruction)instruction);
 					instruction.ReplaceWith(newLambda);
 					context.EndStep(newLambda);
@@ -642,8 +644,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						else
 						{
-							if (!rightType.Equals(leftType))
+							// Compare the stack types rather than the types themselves: a conversion
+							// of a small integer type to Int32 leaves its operand unchanged, because
+							// such values already occupy an I4 stack slot, so the two sides of
+							// `(short a, int b) => a + b` are Int16 and Int32 at this point.
+							if (NullableType.GetUnderlyingType(rightType).GetStackType()
+								!= NullableType.GetUnderlyingType(leftType).GetStackType())
+							{
 								return null;
+							}
 						}
 						if (leftType.IsKnownType(KnownTypeCode.Decimal))
 						{
