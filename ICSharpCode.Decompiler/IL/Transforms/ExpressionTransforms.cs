@@ -416,20 +416,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!(value.MatchLocAlloc(out sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])))
 					return false;
-				var newVariable = initializerVariable.Function.RegisterVariable(VariableKind.InitializerTarget, type);
-				foreach (var load in initializerVariable.LoadInstructions.ToArray())
-				{
-					ILInstruction newInst = new LdLoc(newVariable);
-					newInst.AddILRange(load);
-					if (load.Parent != initializer)
-						newInst = new Conv(newInst, PrimitiveType.I, false, Sign.None);
-					load.ReplaceWith(newInst);
-				}
-				foreach (var store in initializerVariable.StoreInstructions.ToArray())
-				{
-					store.Variable = newVariable;
-				}
-				value.ReplaceWith(new LocAllocSpan(newObj.Arguments[1], type));
+				// The block addresses the allocation through the localloc pointer and only its
+				// result is the span, so the constructor becomes the block's final instruction
+				// instead of retyping the initializer variable to Span&lt;T&gt;.
+				initializer.FinalInstruction = new NewObj(newObj.Method) {
+					Arguments = { new LdLoc(initializerVariable), newObj.Arguments[1] }
+				}.WithILRange(newObj);
 				locallocSpan = initializer;
 				return true;
 			}
