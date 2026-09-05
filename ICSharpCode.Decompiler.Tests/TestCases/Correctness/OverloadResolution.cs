@@ -32,6 +32,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Generics();
 			ConstructorTest();
 			TestIndexer();
+			TestIndexerWithNamedArguments();
+			TestRedeclaredDefaultValues();
+#if !MCS2
+			TestNamedWithOmittedOptional();
+#endif
 			Issue1281();
 			Issue1747();
 			CallAmbiguousOutParam();
@@ -330,6 +335,87 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 		#endregion
 
+		#region Named arguments with omitted optional arguments
+		// mcs 2.6.4 crashes while emitting a call that names its arguments and leaves an optional
+		// one out.
+#if !MCS2
+		static void TestNamedWithOmittedOptional()
+		{
+			var obj = new NamedOptionalTests();
+			obj.M(b: Trace(2), a: Trace(1));
+			obj.N(y: Trace(1), x: Trace(2));
+			obj.N(z: Trace(1), x: Trace(2));
+		}
+
+		class NamedOptionalTests
+		{
+			public void M(int a, int b, int c = 3)
+			{
+				Console.WriteLine("M(" + a + ", " + b + ", " + c + ")");
+			}
+
+			public void N(int x, int y = 10, int z = 20)
+			{
+				Console.WriteLine("N(" + x + ", " + y + ", " + z + ")");
+			}
+		}
+#endif
+		#endregion
+
+		#region Redeclared default values
+		static void TestRedeclaredDefaultValues()
+		{
+			var derived = new DerivedDefaultValue();
+			Console.WriteLine(derived[1, 10]);
+			Console.WriteLine(derived.Method(1, 10));
+		}
+
+		class BaseDefaultValue
+		{
+			public virtual int this[int x, int y = 10] {
+				get {
+					return x + y;
+				}
+			}
+
+			public virtual int Method(int x, int y = 10)
+			{
+				return x + y;
+			}
+		}
+
+		class DerivedDefaultValue : BaseDefaultValue
+		{
+			public override int this[int x, int y = 20] {
+				get {
+					return x + y + 1;
+				}
+			}
+
+			public override int Method(int x, int y = 20)
+			{
+				return x + y + 1;
+			}
+		}
+		#endregion
+
+		#region Indexer with named arguments
+		static void TestIndexerWithNamedArguments()
+		{
+			var obj = new NamedArgumentIndexerTests();
+			Console.WriteLine(obj[y: Trace(1), x: Trace(2)]);
+			obj[y: Trace(3), x: Trace(4)] = Trace(5);
+			Console.WriteLine(obj[y: Trace(6), x: Trace(7)] = Trace(8));
+			obj[y: Trace(9), x: Trace(10)] += 5;
+		}
+
+		static int Trace(int i)
+		{
+			Console.WriteLine("Trace(" + i + ")");
+			return i;
+		}
+		#endregion
+
 		#region Out Parameter
 		static void AmbiguousOutParam(out string a)
 		{
@@ -600,6 +686,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 		#endregion
+	}
+
+	class NamedArgumentIndexerTests
+	{
+		public int this[int x, int y] {
+			get {
+				Console.WriteLine("get_Item(" + x + ", " + y + ")");
+				return x;
+			}
+			set {
+				Console.WriteLine("set_Item(" + x + ", " + y + ", " + value + ")");
+			}
+		}
 	}
 
 	class IndexerTests
