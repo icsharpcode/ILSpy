@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 	/// An unknown type where (part) of the name is known.
 	/// </summary>
 	[Serializable]
-	public class UnknownType : AbstractType, ITypeDefinitionOrUnknown, ITypeReference
+	public class UnknownType : AbstractType, ITypeDefinitionOrUnknown
 	{
 		readonly bool namespaceKnown;
 		readonly FullTypeName fullTypeName;
@@ -69,13 +69,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public override TypeKind Kind {
 			get { return TypeKind.Unknown; }
-		}
-
-		IType ITypeReference.Resolve(ITypeResolveContext context)
-		{
-			if (context == null)
-				throw new ArgumentNullException(nameof(context));
-			return this;
 		}
 
 		public override ITypeDefinitionOrUnknown GetDefinitionOrUnknown()
