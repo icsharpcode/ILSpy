@@ -5130,6 +5130,35 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst);
 		}
 
+		protected internal override TranslatedExpression VisitLdMemberToken(LdMemberToken inst, TranslationContext context)
+		{
+			// fields: __ldtoken(DeclaringType.Member)
+			// methods: __ldtoken(DeclaringType.Member(parameter-types))
+			var classType = astBuilder.ConvertType(inst.Member.DeclaringType);
+			var mre = new MemberReferenceExpression(
+				new TypeReferenceExpression(classType),
+				inst.Member.Name
+			);
+			Expression memberExpr = mre.WithRR(new MemberResolveResult(null, inst.Member));
+			if (inst.Member is IMethod method)
+			{
+				foreach (var t in method.TypeArguments)
+				{
+					mre.TypeArguments.Add(astBuilder.ConvertType(t));
+				}
+				var inv = new InvocationExpression(memberExpr);
+				foreach (var param in method.Parameters)
+				{
+					inv.Arguments.Add(new TypeReferenceExpression(astBuilder.ConvertType(param.Type)));
+				}
+				memberExpr = inv;
+			}
+			var tokenType = inst.Member is IField ? KnownTypeCode.RuntimeFieldHandle : KnownTypeCode.RuntimeMethodHandle;
+			return new InvocationExpression(new IdentifierExpression("__ldtoken"), memberExpr)
+				.WithRR(new ResolveResult(compilation.FindType(tokenType)))
+				.WithILInstruction(inst);
+		}
+
 		protected internal override TranslatedExpression VisitCallIndirect(CallIndirect inst, TranslationContext context)
 		{
 			if (inst.IsInstance)
