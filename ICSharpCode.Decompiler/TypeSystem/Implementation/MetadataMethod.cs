@@ -102,12 +102,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				// with MethodAttributes.SpecialName or MethodAttributes.RTSpecialName
 				string name = this.Name;
 				int index = name.LastIndexOf('.');
-				if (index > 0)
+				// Test the op_ prefix on a slice first: this branch runs for every static
+				// non-generic method, and only operator names warrant the substring.
+				if (index > 0 && name.AsSpan(index + 1).StartsWith("op_".AsSpan(), StringComparison.Ordinal))
 				{
 					name = name.Substring(index + 1);
 
-					if (name.StartsWith("op_", StringComparison.Ordinal)
-						&& CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) != null)
+					if (CSharp.Syntax.OperatorDeclaration.GetOperatorType(name) != null)
 					{
 						this.symbolKind = SymbolKind.Operator;
 					}
