@@ -103,6 +103,26 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 
+		/// <summary>
+		/// The load of the initializer target an ArrayInitializer block evaluates to. The block
+		/// may end in the implicit conversion of that array to Span&lt;T&gt;/ReadOnlySpan&lt;T&gt;,
+		/// which is returned in <paramref name="conversion"/>; everything else about the block is
+		/// the same in both shapes.
+		/// </summary>
+		internal static LdLoc? MatchArrayInitializerFinal(ILInstruction finalInstruction, out IMethod? conversion)
+		{
+			conversion = null;
+			if (finalInstruction is CallInstruction { Arguments.Count: 1 } call
+				&& call.Method.IsOperator && call.Method.Name == "op_Implicit"
+				&& (call.Method.ReturnType.IsKnownType(KnownTypeCode.SpanOfT)
+					|| call.Method.ReturnType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)))
+			{
+				conversion = call.Method;
+				finalInstruction = call.Arguments[0];
+			}
+			return finalInstruction as LdLoc;
+		}
+
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
@@ -138,7 +158,7 @@ namespace ICSharpCode.Decompiler.IL
 					}
 					break;
 				case BlockKind.ArrayInitializer:
-					var final = finalInstruction as LdLoc;
+					var final = MatchArrayInitializerFinal(finalInstruction, out _);
 					Debug.Assert(final != null && final.Variable.IsSingleDefinition && final.Variable.Kind == VariableKind.InitializerTarget);
 					IType? type = null;
 					Debug.Assert(Instructions[0].MatchStLoc(final!.Variable, out var init) && init.MatchNewArr(out type));

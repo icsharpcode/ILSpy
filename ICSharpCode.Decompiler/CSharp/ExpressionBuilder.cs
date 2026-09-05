@@ -3880,7 +3880,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
-			var final = block.FinalInstruction as LdLoc;
+			var final = Block.MatchArrayInitializerFinal(block.FinalInstruction, out var arrayToSpan);
 			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out IType? type))
 				throw new ArgumentException("given Block is invalid!");
 			if (stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
@@ -3961,8 +3961,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
 			if (!type.ContainsAnonymousType())
 				expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
-			return expr.WithILInstruction(block)
-				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
+			ResolveResult rr = new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions),
+				newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults);
+			if (arrayToSpan != null)
+			{
+				// The block converts its array to Span<T>/ReadOnlySpan<T>. The conversion is
+				// implicit in C#, so the array initializer stands on its own, but the expression
+				// still has the span type: the block evaluates to a span, not to an array.
+				rr = new ConversionResolveResult(arrayToSpan.ReturnType, rr,
+					Conversion.UserDefinedConversion(arrayToSpan, isImplicit: true,
+						Conversion.IdentityConversion, Conversion.IdentityConversion));
+			}
+			return expr.WithILInstruction(block).WithRR(rr);
 		}
 
 		TranslatedExpression TranslateStackAllocInitializer(Block block, IType typeHint)

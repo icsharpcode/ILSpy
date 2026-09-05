@@ -568,19 +568,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						parameterTypes = signature.ParameterTypes;
 					}
 					// Search for the matching method:
-					method = null;
-					foreach (var m in methods)
-					{
-						if (m.TypeParameters.Count != signature.GenericParameterCount)
-							continue;
-						if (signature.Header.IsInstance != !m.IsStatic)
-							continue;
-						if (CompareSignatures(m.Parameters, parameterTypes) && CompareTypes(m.ReturnType, signature.ReturnType))
-						{
-							method = m;
-							break;
-						}
-					}
+					method = FindMethod(methods, signature, parameterTypes);
 				}
 				else
 				{
@@ -600,6 +588,60 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				method = new VarArgInstanceMethod(method, signature.ParameterTypes.Skip(signature.RequiredParameterCount));
 			}
 			return method;
+		}
+
+		/// <summary>
+		/// Resolves a method on <paramref name="declaringType"/> by name and signature.
+		/// If the type declares no such method - because the reference is missing, or the
+		/// method does not exist on the version at hand - a fake method carrying the requested
+		/// signature is returned, as for a method reference that cannot be resolved.
+		/// </summary>
+		/// <remarks>
+		/// The signature is matched against the members of <paramref name="declaringType"/> as
+		/// they are seen from the outside, so for a parameterized type it is written in terms of
+		/// the type arguments, not the type parameters. This is the lookup a decompiler step
+		/// needs when it has to name a specific method - a conversion operator, say - rather
+		/// than one it read from metadata.
+		/// </remarks>
+		public IMethod ResolveMethod(IType declaringType, string name, MethodSignature<IType> signature)
+		{
+			if (declaringType == null)
+				throw new ArgumentNullException(nameof(declaringType));
+			if (name == null)
+				throw new ArgumentNullException(nameof(name));
+			IEnumerable<IMethod> methods;
+			if (name == ".ctor")
+			{
+				methods = declaringType.GetConstructors();
+			}
+			else
+			{
+				methods = declaringType.GetMethods(m => m.Name == name)
+					.Concat(declaringType.GetAccessors(m => m.Name == name));
+			}
+			return FindMethod(methods, signature, signature.ParameterTypes)
+				?? CreateFakeMethod(declaringType, name, signature);
+		}
+
+		/// <summary>
+		/// The single method among <paramref name="candidates"/> that matches the signature, or
+		/// null. <paramref name="parameterTypes"/> is passed separately because a vararg
+		/// signature is matched against its required parameters plus __arglist.
+		/// </summary>
+		static IMethod FindMethod(IEnumerable<IMethod> candidates, MethodSignature<IType> signature, ImmutableArray<IType> parameterTypes)
+		{
+			foreach (var method in candidates)
+			{
+				if (method.TypeParameters.Count != signature.GenericParameterCount)
+					continue;
+				if (signature.Header.IsInstance != !method.IsStatic)
+					continue;
+				if (CompareSignatures(method.Parameters, parameterTypes) && CompareTypes(method.ReturnType, signature.ReturnType))
+				{
+					return method;
+				}
+			}
+			return null;
 		}
 
 		static readonly NormalizeTypeVisitor normalizeTypeVisitor = new NormalizeTypeVisitor {
