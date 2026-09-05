@@ -824,7 +824,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Adapts a converted call target to the 'this' argument expected by a call on
 		/// expectedType: takes its address (ldloca or addressof) where a by-reference 'this' is
-		/// required, and boxes it where a boxed value type is required. If exactly one of the
+		/// required, and boxes a value type where the method is declared on a reference type.
+		/// If exactly one of the
 		/// expected type and the result is unknown, a conv to the other side's primitive type is
 		/// inserted, so that missing references do not produce mismatched call arguments.
 		/// </summary>
@@ -848,10 +849,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					break;
 				case StackType.Obj:
-					result = target;
-					break;
-				case StackType.VT:
-					result = new Box(target, targetType);
+					// An expression tree leaves the boxing of a value-type receiver implicit:
+					// Expression.Call carries no Convert node for it, the boxing follows from the
+					// method being declared on a reference type. Enum.HasFlag(...) invoked on an
+					// enum value is the common case.
+					if (targetType.IsReferenceType == false)
+					{
+						result = BoxValue(target, targetType);
+					}
+					else
+					{
+						result = target;
+					}
 					break;
 				default:
 					result = target;
@@ -954,7 +963,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (operandType.IsSmallIntegerType() && targetType.IsKnownType(KnownTypeCode.Int32))
 					return exprInst;
 				if (operandType.IsReferenceType == false && targetType.IsReferenceType == true)
-					return new Box(exprInst, operandType);
+					return BoxValue(exprInst, operandType);
 				return new ExpressionTreeCast(targetType, exprInst, isChecked);
 			};
 		}
@@ -1850,6 +1859,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					};
 			}
 			return null;
+		}
+
+		/// <summary>
+		/// box records the type of the value it boxes, so an expression-tree cast to that
+		/// same type in front of it carries nothing the box does not already say.
+		/// </summary>
+		static Box BoxValue(ILInstruction value, IType type)
+		{
+			if (value is ExpressionTreeCast { IsChecked: false } cast && cast.Type.Equals(type))
+			{
+				value = cast.Argument;
+			}
+			return new Box(value, type);
 		}
 
 		/// <summary>
