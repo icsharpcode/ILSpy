@@ -658,7 +658,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							NullableType.GetUnderlyingType(leftType).GetStackType(),
 							NullableType.GetUnderlyingType(rightType).GetStackType(),
 							isChecked == true,
-							leftType.GetSign(),
+							GetSignForOperator(op, isChecked == true, leftType),
 							isLifted: NullableType.IsNullable(leftType) || NullableType.IsNullable(rightType));
 					};
 				// call Add(left, right, methodInfo): user-defined operator
@@ -906,6 +906,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// call Convert(expr, call GetTypeFromHandle(ldtypetoken T))
 		/// =&gt;
 		/// expression.tree.cast T(expr)
+		///
+		/// call Convert(expr, call GetTypeFromHandle(ldtypetoken T), methodInfo)
+		/// =&gt;
+		/// call methodInfo(expr)
+		///
+		/// The three-argument overload carries the user-defined conversion operator, which
+		/// includes the decimal conversions; it is lifted when the operand is Nullable&lt;T&gt;.
 		/// A conversion from a small integer type to Int32 produces the operand unchanged,
 		/// because such values already occupy an I4 stack slot.
 		/// </summary>
@@ -918,6 +925,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var expr = ConvertInstruction(invocation.Arguments[0]);
 			if (expr == null)
 				return null;
+			if (invocation.Arguments.Count == 3 && MatchGetMethodFromHandle(invocation.Arguments[2], out var conversionOperator))
+			{
+				var unliftedOperator = (IMethod)conversionOperator;
+				return () => {
+					var exprInst = expr();
+					if (exprInst == null)
+						return null;
+					var op_Method = unliftedOperator;
+					if (NullableType.IsNullable(exprInst.InferType(context.TypeSystem)))
+					{
+						op_Method = CSharpOperators.LiftUserDefinedOperator(unliftedOperator);
+						if (op_Method == null)
+							return new ExpressionTreeCast(targetType, exprInst, isChecked);
+					}
+					return new Call(op_Method) {
+						Arguments = { exprInst }
+					};
+				};
+			}
 			return () => {
 				var exprInst = expr();
 				if (exprInst == null)
@@ -1412,7 +1438,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var function = lambdaStack.Peek();
 				var initializer = function.RegisterVariable(VariableKind.InitializerTarget, ctor.DeclaringType);
 
-				var initializerBlock = new Block(BlockKind.CollectionInitializer);
+				var initializerBlock = new Block(BlockKind.ObjectInitializer);
 				initializerBlock.FinalInstruction = new LdLoc(initializer);
 				initializerBlock.Instructions.Add(new StLoc(initializer, newObj()));
 				initializerBlock.Instructions.AddRange(convertedArguments.Select(f => f(initializer)));
@@ -1807,7 +1833,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							underlyingType.GetStackType(),
 							underlyingType.GetStackType(),
 							isChecked == true,
-							argumentType.GetSign(),
+							GetSignForOperator(op, isChecked == true, argumentType),
 							isLifted: NullableType.IsNullable(argumentType));
 					};
 				// call Negate(expression, methodInfo): user-defined op_UnaryNegation
@@ -1819,6 +1845,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					};
 			}
 			return null;
+		}
+
+		/// <summary>
+		/// The sign is part of the IL opcode only where it changes the operation: for the
+		/// checked add/sub/mul (add.ovf vs add.ovf.un) and for div/rem/shr. Everywhere else
+		/// ILReader leaves it at Sign.None, so a converted expression tree must do the same
+		/// to produce the same ILAst as the equivalent lambda.
+		/// </summary>
+		static Sign GetSignForOperator(BinaryNumericOperator op, bool isChecked, IType type)
+		{
+			switch (op)
+			{
+				case BinaryNumericOperator.Div:
+				case BinaryNumericOperator.Rem:
+				case BinaryNumericOperator.ShiftRight:
+					return type.GetSign();
+				case BinaryNumericOperator.Add:
+				case BinaryNumericOperator.Sub:
+				case BinaryNumericOperator.Mul:
+					return isChecked ? type.GetSign() : Sign.None;
+				default:
+					return Sign.None;
+			}
 		}
 
 		/// <summary>
