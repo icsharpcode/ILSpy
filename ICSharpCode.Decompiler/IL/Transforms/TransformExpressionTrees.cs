@@ -913,6 +913,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///
 		/// The three-argument overload carries the user-defined conversion operator, which
 		/// includes the decimal conversions; it is lifted when the operand is Nullable&lt;T&gt;.
+		/// A conversion from a value type to a reference type is a boxing conversion and
+		/// produces box T(expr), where T is the operand type.
 		/// A conversion from a small integer type to Int32 produces the operand unchanged,
 		/// because such values already occupy an I4 stack slot.
 		/// </summary>
@@ -948,8 +950,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var exprInst = expr();
 				if (exprInst == null)
 					return null;
-				if (exprInst.InferType(context.TypeSystem).IsSmallIntegerType() && targetType.IsKnownType(KnownTypeCode.Int32))
+				var operandType = exprInst.InferType(context.TypeSystem);
+				if (operandType.IsSmallIntegerType() && targetType.IsKnownType(KnownTypeCode.Int32))
 					return exprInst;
+				if (operandType.IsReferenceType == false && targetType.IsReferenceType == true)
+					return new Box(exprInst, operandType);
 				return new ExpressionTreeCast(targetType, exprInst, isChecked);
 			};
 		}
