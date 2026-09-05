@@ -852,8 +852,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// An expression tree leaves the boxing of a value-type receiver implicit:
 					// Expression.Call carries no Convert node for it, the boxing follows from the
 					// method being declared on a reference type. Enum.HasFlag(...) invoked on an
-					// enum value is the common case.
-					if (targetType.IsReferenceType == false)
+					// enum value is the common case. An unconstrained type parameter has to be
+					// boxed as well, because it might be a value type at runtime.
+					if (targetType.IsReferenceType != true)
 					{
 						result = BoxValue(target, targetType);
 					}
