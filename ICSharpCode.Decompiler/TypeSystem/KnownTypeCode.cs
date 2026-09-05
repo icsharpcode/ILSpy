@@ -168,8 +168,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	/// <summary>
 	/// Contains well-known type references.
 	/// </summary>
-	[Serializable]
-	public sealed class KnownTypeReference : ITypeReference
+	public sealed class KnownTypeReference
 	{
 		internal const int KnownTypeCodeCount = (int)KnownTypeCode.RuntimeMethodHandle + 1;
 
@@ -300,11 +299,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public TopLevelTypeName TypeName => new TopLevelTypeName(namespaceName, name, typeParameterCount);
-
-		public IType Resolve(ITypeResolveContext context)
-		{
-			return context.Compilation.FindType(knownTypeCode);
-		}
 
 		public override string ToString()
 		{
