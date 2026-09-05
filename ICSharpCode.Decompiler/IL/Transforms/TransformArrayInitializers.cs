@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				return false;
 			var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
-			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, initialValue, size);
+			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, inst.Method.DeclaringType, initialValue, size);
 			return replacement != null;
 		}
 
@@ -138,7 +138,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (elementTypeSize <= 0 || initialValue.Length % elementTypeSize != 0)
 				return false;
 			var size = initialValue.Length / elementTypeSize;
-			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, initialValue, size);
+			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, inst.Method.ReturnType, initialValue, size);
 			return replacement != null;
 		}
 
@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchGetStaticFieldAddress(get_Item, out _);
 		}
 
-		private static ILInstruction DecodeArrayInitializerOrUTF8StringLiteral(StatementTransformContext context, IType elementType, BlobReader initialValue, int size)
+		private static ILInstruction DecodeArrayInitializerOrUTF8StringLiteral(StatementTransformContext context, IType elementType, IType targetType, BlobReader initialValue, int size)
 		{
 			if (context.Settings.Utf8StringLiterals && elementType.IsKnownType(KnownTypeCode.Byte)
 				&& DecodeUTF8String(initialValue, size, out string text))
@@ -160,7 +160,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList))
 			{
 				var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
-				return BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
+				ILInstruction result = BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
+				if (targetType.IsKnownType(KnownTypeCode.SpanOfT) || targetType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				{
+					// The block builds an array where a Span<T>/ReadOnlySpan<T> is expected, so it
+					// needs the conversion the C# compiler would have applied. It has to wrap the
+					// block: an ArrayInitializer block must keep ldloc as its final instruction.
+					var op_Implicit = targetType.GetMethods(m => m.IsOperator && m.Name == "op_Implicit"
+						&& m.Parameters.Count == 1
+						&& m.Parameters[0].Type.Kind == TypeKind.Array).FirstOrDefault();
+					if (op_Implicit == null)
+					{
+						// Without the operator the conversion cannot be expressed; leave the
+						// original call alone rather than produce an array where a span belongs.
+						return null;
+					}
+					result = new Call(op_Implicit) { Arguments = { result } };
+				}
+				return result;
 			}
 
 			return null;
