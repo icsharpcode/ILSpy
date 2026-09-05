@@ -375,18 +375,219 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		static List<IMember> DetectMemberOrder(ITypeDefinition recordTypeDef, Dictionary<IField, IProperty> backingFieldToAutoProperty)
+		List<IMember> DetectMemberOrder(ITypeDefinition recordTypeDef, Dictionary<IField, IProperty> backingFieldToAutoProperty)
 		{
 			// For records, the order of members is important:
 			// Equals/GetHashCode/PrintMembers must agree on an order of fields+properties.
-			// The IL metadata has the order of fields and the order of properties, but we
-			// need to detect the correct interleaving.
-			// We could try to detect this from the PrintMembers body, but let's initially
-			// restrict ourselves to the common case where the record only uses properties.
+			// The IL metadata has the order of fields and the order of properties, but not the
+			// interleaving of the two, so it is read back out of the members the compiler generated
+			// from the declaration order (issue #3568).
 			var subst = recordTypeDef.AsParameterizedType().GetSubstitution();
-			return recordTypeDef.Properties.Select(p => p.Specialize(subst)).Concat(
+			var allMembers = recordTypeDef.Properties.Select(p => p.Specialize(subst)).Concat(
 				recordTypeDef.Fields.Select(f => (IField)f.Specialize(subst)).Where(f => !backingFieldToAutoProperty.ContainsKey(f))
 			).ToList();
+			var declarationOrder = DetectDeclarationOrder(allMembers);
+			if (declarationOrder == null)
+			{
+				// Nothing to read the order from: the properties-first order is right for a record
+				// that uses only properties, which is the common case.
+				return allMembers;
+			}
+			// A generated member mentions neither EqualityContract, nor a static member, nor a
+			// private one that carries no state. Those keep the position they had, and the members
+			// whose order was read off fill the positions that are left, in that order.
+			var ordered = new List<IMember>(allMembers.Count);
+			int next = 0;
+			foreach (var member in allMembers)
+			{
+				if (declarationOrder.Contains(member))
+					ordered.Add(declarationOrder[next++]);
+				else
+					ordered.Add(member);
+			}
+			return ordered;
+		}
+
+		/// <summary>
+		/// The declaration order of the members, as far as the generated members reveal it.
+		/// <para>
+		/// Equals compares every member that carries state, in declaration order, and skips a
+		/// property without a backing field; PrintMembers prints every public member, in the same
+		/// order, and skips a private one. Neither alone sees all of them, so the two sequences are
+		/// merged along the members they share.
+		/// </para>
+		/// </summary>
+		List<IMember>? DetectDeclarationOrder(List<IMember> allMembers)
+		{
+			var equalityOrder = DetectOrderFromEquals(allMembers);
+			var printOrder = DetectOrderFromPrintMembers(allMembers);
+			if (equalityOrder == null)
+				return printOrder;
+			if (printOrder == null)
+				return equalityOrder;
+			return MergeAlongCommonMembers(equalityOrder, printOrder);
+		}
+
+		/// <summary>
+		/// Merges two orderings of overlapping subsets into one. Members the two disagree about -
+		/// which can only be members that appear in one of them - are ordered by
+		/// <paramref name="first"/>, whose sequence is the one the equality members follow.
+		/// </summary>
+		static List<IMember> MergeAlongCommonMembers(List<IMember> first, List<IMember> second)
+		{
+			var result = new List<IMember>();
+			int i = 0, j = 0;
+			while (i < first.Count && j < second.Count)
+			{
+				if (first[i].Equals(second[j]))
+				{
+					result.Add(first[i]);
+					i++;
+					j++;
+				}
+				else if (!second.Skip(j).Contains(first[i]))
+				{
+					// Only the first sequence has this one, so it goes here.
+					result.Add(first[i]);
+					i++;
+				}
+				else if (!first.Skip(i).Contains(second[j]))
+				{
+					result.Add(second[j]);
+					j++;
+				}
+				else
+				{
+					// Both sequences still hold both members, in opposite orders. Only one of the
+					// two can be right and nothing here says which, so the equality order wins.
+					result.Add(first[i]);
+					i++;
+				}
+			}
+			foreach (var member in first.Skip(i).Concat(second.Skip(j)))
+			{
+				if (!result.Contains(member))
+					result.Add(member);
+			}
+			return result;
+		}
+
+		/// <summary>
+		/// The members compared by the generated Equals, in the order it compares them.
+		/// </summary>
+		List<IMember>? DetectOrderFromEquals(List<IMember> allMembers)
+		{
+			var equalsMethod = recordTypeDef.GetMethods(
+				m => m.Name == "Equals" && m.Parameters.Count == 1 && !m.IsStatic
+					&& IsRecordType(m.Parameters[0].Type),
+				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+			if (equalsMethod == null)
+				return null;
+			var body = DecompileBody(equalsMethod);
+			if (body == null || body.Instructions.Count == 0)
+				return null;
+			if (!body.Instructions[0].MatchReturn(out var returnValue))
+				return null;
+			if (returnValue.MatchLogicOr(out _, out var rhs))
+			{
+				// this == other || ...
+				returnValue = rhs;
+			}
+			var order = new List<IMember>();
+			foreach (var condition in UnpackLogicAndChain(returnValue))
+			{
+				// callvirt Equals(call get_Default(), ldfld <A>k__BackingField(ldloc this), ...)
+				if (condition is not CallVirt { Method: { Name: "Equals" } } equalsCall)
+					continue;
+				if (equalsCall.Arguments.Count != 3)
+					continue;
+				if (!MatchMemberAccessOnThis(equalsCall.Arguments[1], allMembers, out var member))
+					continue;
+				if (!order.Contains(member))
+					order.Add(member);
+			}
+			return order.Count > 0 ? order : null;
+		}
+
+		/// <summary>
+		/// The members printed by the generated PrintMembers, in the order it prints them. The names
+		/// come from the string constants it appends, which say "Name = " and ", Name = ".
+		/// </summary>
+		List<IMember>? DetectOrderFromPrintMembers(List<IMember> allMembers)
+		{
+			var printMembers = recordTypeDef.GetMethods(
+				m => m.Name == "PrintMembers" && m.Parameters.Count == 1 && !m.IsStatic,
+				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+			if (printMembers == null)
+				return null;
+			var body = DecompileBody(printMembers);
+			if (body == null)
+				return null;
+			var function = body.Ancestors.OfType<ILFunction>().SingleOrDefault();
+			var builder = function?.Variables.SingleOrDefault(
+				v => v.Kind == VariableKind.Parameter && v.Index == 0);
+			if (builder == null)
+				return null;
+			var order = new List<IMember>();
+			// The name and the " = " after it are one constant for a current compiler and separate
+			// appends for an older one, so consecutive constants are joined before being read.
+			string? pending = null;
+			foreach (var instruction in body.Instructions)
+			{
+				if (MatchStringBuilderAppend(instruction, builder, out var value)
+					&& value.MatchLdStr(out string? text))
+				{
+					pending += text;
+					continue;
+				}
+				if (pending != null && !AddMemberNamedBy(pending))
+					return null;
+				pending = null;
+			}
+			if (pending != null && !AddMemberNamedBy(pending))
+				return null;
+			return order.Count > 0 ? order : null;
+
+			bool AddMemberNamedBy(string text)
+			{
+				if (!text.EndsWith(" = ", StringComparison.Ordinal))
+					return true; // the separator alone, or a constant that names nothing
+				string name = text.Substring(0, text.Length - " = ".Length);
+				if (name.StartsWith(", ", StringComparison.Ordinal))
+					name = name.Substring(2);
+				var member = allMembers.FirstOrDefault(m => m.Name == name);
+				if (member == null)
+					return false;
+				if (!order.Contains(member))
+					order.Add(member);
+				return true;
+			}
+		}
+
+		/// <summary>
+		/// The member a generated body reads off "this": a field directly, or the property a
+		/// backing field belongs to.
+		/// </summary>
+		bool MatchMemberAccessOnThis(ILInstruction inst, List<IMember> allMembers,
+			[NotNullWhen(true)] out IMember? member)
+		{
+			member = null;
+			if (inst.MatchLdFld(out var target, out var field) || inst.MatchLdFlda(out target, out field))
+			{
+				if (!target.MatchLdThis())
+					return false;
+				if (backingFieldToAutoProperty.TryGetValue(field, out var property))
+					member = property;
+				else
+					member = allMembers.FirstOrDefault(m => m.Equals(field));
+			}
+			else if (inst is CallInstruction { Arguments: { Count: 1 } } getterCall
+				&& getterCall.Arguments[0].MatchLdThis())
+			{
+				member = allMembers.OfType<IProperty>().FirstOrDefault(
+					p => getterCall.Method.Equals(p.Getter));
+			}
+			return member != null;
 		}
 
 		/// <summary>
