@@ -64,6 +64,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		MetadataFile? ResolveModule(MetadataFile mainModule, string moduleName);
 		Task<MetadataFile?> ResolveAsync(IAssemblyReference reference);
 		Task<MetadataFile?> ResolveModuleAsync(MetadataFile mainModule, string moduleName);
+
+		/// <summary>
+		/// Lets the resolver hold what it reads from the file system until the scope is disposed,
+		/// so that a whole reference closure asks the same directories once. Null to hold nothing.
+		/// </summary>
+		IDisposable? BeginSnapshot();
 #endif
 	}
 

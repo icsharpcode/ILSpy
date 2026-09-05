@@ -287,7 +287,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			int referencedAssembliesResolved = 0;
 			try
 			{
-				referencedAssembliesResolved = await InitializeCoreAsync(mainModule, assemblyResolver).ConfigureAwait(false);
+				// The whole reference closure is resolved here, and every reference in it asks the
+				// same framework directories the same questions. A resolver that can hold what it
+				// read answers them once for this build and forgets it again afterwards.
+				using (assemblyResolver.BeginSnapshot())
+				{
+					referencedAssembliesResolved = await InitializeCoreAsync(mainModule, assemblyResolver).ConfigureAwait(false);
+				}
 			}
 			finally
 			{

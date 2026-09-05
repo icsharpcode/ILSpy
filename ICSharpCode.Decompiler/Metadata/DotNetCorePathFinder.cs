@@ -78,6 +78,12 @@ namespace ICSharpCode.Decompiler.Metadata
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 		readonly string preferredRuntimePack;
 
+		/// <summary>
+		/// The resolver this path finder belongs to, which holds any open scope. Null when nobody
+		/// owns it, and then every scan below reads the file system.
+		/// </summary>
+		internal UniversalAssemblyResolver Owner { get; set; }
+
 		public DotNetCorePathFinder(TargetFrameworkIdentifier targetFramework, Version targetFrameworkVersion,
 			string preferredRuntimePack)
 		{
@@ -108,6 +114,10 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				packages = LoadPackageInfos(depsJsonFileName, targetFrameworkIdString).ToArray();
 
+				// Every runtime component of a package resolves to the same folder, so without
+				// this the same directory is probed once per assembly the package contains, for
+				// every reference that is looked up.
+				var knownPackageBasePaths = new HashSet<string>();
 				foreach (var path in LookupPaths)
 				{
 					if (string.IsNullOrWhiteSpace(path))
@@ -120,7 +130,7 @@ namespace ICSharpCode.Decompiler.Metadata
 						{
 							var itemPath = Path.GetDirectoryName(item);
 							var fullPath = Path.Combine(path, p.Name, p.Version, itemPath).ToLowerInvariant();
-							if (Directory.Exists(fullPath))
+							if (knownPackageBasePaths.Add(fullPath) && Directory.Exists(fullPath))
 								packageBasePaths.Add(fullPath);
 						}
 					}
@@ -146,13 +156,15 @@ namespace ICSharpCode.Decompiler.Metadata
 		{
 			foreach (var basePath in searchPaths.Concat(packageBasePaths))
 			{
-				if (File.Exists(Path.Combine(basePath, name.Name + ".dll")))
+				var file = Path.Combine(basePath, name.Name + ".dll");
+				if (File.Exists(file))
 				{
-					return Path.Combine(basePath, name.Name + ".dll");
+					return file;
 				}
-				else if (File.Exists(Path.Combine(basePath, name.Name + ".exe")))
+				file = Path.Combine(basePath, name.Name + ".exe");
+				if (File.Exists(file))
 				{
-					return Path.Combine(basePath, name.Name + ".exe");
+					return file;
 				}
 			}
 
@@ -223,7 +235,9 @@ namespace ICSharpCode.Decompiler.Metadata
 
 			if (preferredRuntimePack != null)
 			{
-				runtimePacks = new[] { preferredRuntimePack }.Concat(runtimePacks);
+				// The preferred pack is usually one of the defaults as well; listing it twice means
+				// scanning its directory twice for every reference that is not in it.
+				runtimePacks = new[] { preferredRuntimePack }.Concat(RuntimePacks.Where(p => p != preferredRuntimePack));
 			}
 
 			foreach (string pack in runtimePacks)
@@ -232,14 +246,18 @@ namespace ICSharpCode.Decompiler.Metadata
 				string basePath = Path.Combine(dotnetBasePath, "shared", pack);
 				if (!Directory.Exists(basePath))
 					continue;
-				var closestVersion = GetClosestVersionFolder(basePath, targetFrameworkVersion);
-				if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll")))
+				var closestVersion = Owner != null
+					? Owner.GetOrAddVersionFolder(basePath, p => GetClosestVersionFolder(p, targetFrameworkVersion))
+					: GetClosestVersionFolder(basePath, targetFrameworkVersion);
+				var file = Path.Combine(basePath, closestVersion, name.Name + ".dll");
+				if (File.Exists(file))
 				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".dll");
+					return file;
 				}
-				else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe")))
+				file = Path.Combine(basePath, closestVersion, name.Name + ".exe");
+				if (File.Exists(file))
 				{
-					return Path.Combine(basePath, closestVersion, name.Name + ".exe");
+					return file;
 				}
 			}
 			runtimePack = null;

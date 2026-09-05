@@ -299,6 +299,9 @@ namespace ICSharpCode.ILSpyX
 
 	public sealed class PackageFolder : IAssemblyResolver
 	{
+		/// <inheritdoc/>
+		public IDisposable? BeginSnapshot() => null;
+
 		/// <summary>
 		/// Gets the short name of the folder.
 		/// </summary>
