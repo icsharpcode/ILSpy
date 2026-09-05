@@ -152,12 +152,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array).WithILRange(inst.Left));
 					inst.Right = rightWithoutConv;
 				}
-				else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.O)
+				else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.Obj)
 				{
 					// C++/CLI sometimes uses this weird comparison with null:
 					context.Step("comp(conv o->i (ldloc obj) == conv i4->i <sign extend>(ldc.i4 0))", inst);
 					// -> comp(ldloc obj == ldnull)
-					inst.InputType = StackType.O;
+					inst.InputType = StackType.Obj;
 					inst.Left = conv.Argument;
 					inst.Right = new LdNull().WithILRange(inst.Right);
 					inst.Right.AddILRange(rightWithoutConv);
@@ -296,9 +296,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var ldObj = new LdObj(nullableValue, inst.Method.DeclaringType);
 				var replacement = new NullCoalescingInstruction(
 					NullableType.GetUnderlyingType(inst.Method.DeclaringType),
-					NullCoalescingKind.NullableWithValueFallback, ldObj, fallback) {
-					UnderlyingResultType = fallback.ResultType
-				};
+					NullCoalescingKind.NullableWithValueFallback, ldObj, fallback);
 				inst.ReplaceWith(replacement.WithILRange(inst));
 				context.EndStep(replacement);
 				replacement.AcceptVisitor(this);
@@ -418,20 +416,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!(value.MatchLocAlloc(out sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])))
 					return false;
-				var newVariable = initializerVariable.Function.RegisterVariable(VariableKind.InitializerTarget, type);
-				foreach (var load in initializerVariable.LoadInstructions.ToArray())
-				{
-					ILInstruction newInst = new LdLoc(newVariable);
-					newInst.AddILRange(load);
-					if (load.Parent != initializer)
-						newInst = new Conv(newInst, PrimitiveType.I, false, Sign.None);
-					load.ReplaceWith(newInst);
-				}
-				foreach (var store in initializerVariable.StoreInstructions.ToArray())
-				{
-					store.Variable = newVariable;
-				}
-				value.ReplaceWith(new LocAllocSpan(newObj.Arguments[1], type));
+				// The block addresses the allocation through the localloc pointer and only its
+				// result is the span, so the constructor becomes the block's final instruction
+				// instead of retyping the initializer variable to Span&lt;T&gt;.
+				initializer.FinalInstruction = new NewObj(newObj.Method) {
+					Arguments = { new LdLoc(initializerVariable), newObj.Arguments[1] }
+				}.WithILRange(newObj);
 				locallocSpan = initializer;
 				return true;
 			}

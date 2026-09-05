@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Immutable;
 using System.Reflection.Metadata;
 using System.Text;
 
@@ -68,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					context.Step("HandleRuntimeHelperInitializeArray: single-dim", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
+					var block = BlockFromInitializer(tempStore, elementType, null, arrayLength, values);
 					var newStore = new StLoc(v, block);
 					body.Instructions[pos] = newStore;
 					body.Instructions.RemoveAt(initArrayPos);
@@ -118,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!field.HasFlag(System.Reflection.FieldAttributes.HasFieldRVA))
 				return false;
 			var initialValue = field.GetInitialValue(context.PEFile, context.TypeSystem);
-			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, initialValue, size);
+			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, inst.Method.DeclaringType, initialValue, size);
 			return replacement != null;
 		}
 
@@ -138,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (elementTypeSize <= 0 || initialValue.Length % elementTypeSize != 0)
 				return false;
 			var size = initialValue.Length / elementTypeSize;
-			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, initialValue, size);
+			replacement = DecodeArrayInitializerOrUTF8StringLiteral(context, elementType, inst.Method.ReturnType, initialValue, size);
 			return replacement != null;
 		}
 
@@ -149,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchGetStaticFieldAddress(get_Item, out _);
 		}
 
-		private static ILInstruction DecodeArrayInitializerOrUTF8StringLiteral(StatementTransformContext context, IType elementType, BlobReader initialValue, int size)
+		private static ILInstruction DecodeArrayInitializerOrUTF8StringLiteral(StatementTransformContext context, IType elementType, IType targetType, BlobReader initialValue, int size)
 		{
 			if (context.Settings.Utf8StringLiterals && elementType.IsKnownType(KnownTypeCode.Byte)
 				&& DecodeUTF8String(initialValue, size, out string text))
@@ -160,7 +161,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (DecodeArrayInitializer(elementType, initialValue, new[] { size }, valuesList))
 			{
 				var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType));
-				return BlockFromInitializer(tempStore, elementType, new[] { size }, valuesList.ToArray());
+				IMethod op_Implicit = null;
+				if (targetType.IsKnownType(KnownTypeCode.SpanOfT) || targetType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT))
+				{
+					// The block builds an array where a Span<T>/ReadOnlySpan<T> is expected, so it
+					// ends in the conversion the C# compiler would have applied.
+					op_Implicit = context.TypeSystem.MainModule.ResolveMethod(targetType, "op_Implicit",
+						new MethodSignature<IType>(
+							new SignatureHeader(SignatureKind.Method, SignatureCallingConvention.Default, SignatureAttributes.None),
+							returnType: targetType,
+							requiredParameterCount: 1,
+							genericParameterCount: 0,
+							parameterTypes: ImmutableArray.Create<IType>(new ArrayType(context.TypeSystem, elementType))));
+				}
+				return BlockFromInitializer(tempStore, elementType, op_Implicit, new[] { size }, valuesList.ToArray());
 			}
 
 			return null;
@@ -243,7 +257,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (HandleRuntimeHelpersInitializeArray(body, pos + 1, v, elementType, length, out var values, out var initArrayPos))
 				{
 					context.Step("HandleRuntimeHelpersInitializeArray: multi-dim", inst);
-					var block = BlockFromInitializer(v, elementType, length, values);
+					var block = BlockFromInitializer(v, elementType, null, length, values);
 					var newStore = new StLoc(v, block);
 					body.Instructions[pos].ReplaceWith(newStore);
 					body.Instructions.RemoveAt(initArrayPos);
@@ -820,7 +834,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& initializer.OpCode == OpCode.Block;
 		}
 
-		static Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
+		static Block BlockFromInitializer(ILVariable v, IType elementType, IMethod arrayToSpan, int[] arrayLength, ILInstruction[] values)
 		{
 			var block = new Block(BlockKind.ArrayInitializer);
 			block.Instructions.Add(new StLoc(v, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
@@ -841,7 +855,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.Add(StElem(new LdLoc(v), indices.ToArray(), value, elementType));
 				indices.Clear();
 			}
-			block.FinalInstruction = new LdLoc(v);
+			ILInstruction final = new LdLoc(v);
+			if (arrayToSpan != null)
+			{
+				final = new Call(arrayToSpan) { Arguments = { final } };
+			}
+			block.FinalInstruction = final;
 			return block;
 		}
 
@@ -949,7 +968,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("InlineRuntimeHelpersInitializeArray: single-dim", inst);
 			var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.TypeSystem, elementType, arrayLength.Length));
-			var block = BlockFromInitializer(tempStore, elementType, arrayLength, valuesList.ToArray());
+			var block = BlockFromInitializer(tempStore, elementType, null, arrayLength, valuesList.ToArray());
 			body.Instructions[pos] = block;
 			context.EndStep(block);
 			ILInlining.InlineIfPossible(body, pos, context);

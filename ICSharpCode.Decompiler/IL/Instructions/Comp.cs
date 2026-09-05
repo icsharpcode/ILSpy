@@ -160,7 +160,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Sign = sign;
 		}
 
-		public override StackType ResultType => LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.O : StackType.I4;
+		public override StackType ResultType => LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.VT : StackType.I4;
 
 		public override IType InferType(ICompilation compilation)
 		{
@@ -183,13 +183,19 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase, compilation);
 			if (LiftingKind == ComparisonLiftingKind.None)
 			{
-				Debug.Assert(Left.ResultType == InputType);
-				Debug.Assert(Right.ResultType == InputType);
+				// As a special case, we allow comparing a value type with null (but only in the non-lifted Comp).
+				// This is useful for unconstrained generics: these are treated as VT
+				// because they might be value types, but they can also be compared with null
+				// because they might be reference types. (the original IL uses `box` for this,
+				// but we drop the box in the ILAst to avoid a special case in PatternMatchingTransform etc.)
+				// TODO: these are unclean semantics; we should probably drop this special case and adjust the other transforms.
+				Debug.Assert(Left.ResultType == InputType || Left is LdNull);
+				Debug.Assert(Right.ResultType == InputType || Right is LdNull);
 			}
 			else
 			{
-				Debug.Assert(Left.ResultType == InputType || Left.ResultType == StackType.O);
-				Debug.Assert(Right.ResultType == InputType || Right.ResultType == StackType.O);
+				Debug.Assert(Left.ResultType == InputType || Left.ResultType == StackType.VT);
+				Debug.Assert(Right.ResultType == InputType || Right.ResultType == StackType.VT);
 			}
 		}
 
@@ -250,7 +256,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Unsafe.As(ref a) op Unsafe.As(ref b), which requires that a and b are variables
 			// and not expressions. Returning false in those cases prevents inlining.
 			// However if one of the arguments is LdNull, then we don't need the Unsafe.As trickery, and can always inline.
-			if (kind.IsEqualityOrInequality() || this.InputType != StackType.O)
+			if (kind.IsEqualityOrInequality() || this.InputType != StackType.Obj)
 			{
 				// OK, won't need Unsafe.As.
 				return true;
