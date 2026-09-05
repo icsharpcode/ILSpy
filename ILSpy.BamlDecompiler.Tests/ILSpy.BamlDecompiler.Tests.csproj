@@ -46,6 +46,7 @@
     <Compile Include="FacadeAssemblyTests.cs" />
     <Compile Include="InvalidXmlCharacterTests.cs" />
     <Compile Include="MissingReferencesTests.cs" />
+    <Compile Include="TransitiveReferenceTests.cs" />
     <Compile Include="MarkupExtensionQuotingTests.cs" />
     <Compile Include="RuntimeNamePropertyTests.cs" />
     <Compile Include="StartupUriTests.cs" />

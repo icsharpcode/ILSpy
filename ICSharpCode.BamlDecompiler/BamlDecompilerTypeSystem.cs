@@ -126,6 +126,15 @@ namespace ICSharpCode.BamlDecompiler
 				if (asm != null)
 				{
 					referencedAssemblies.Add(asm);
+					// Whether an element is a markup extension is decided by walking its base types,
+					// and a base type can sit in an assembly the document's own assembly never names.
+					// Stopping at the assemblies it does name leaves such a type unresolved, the
+					// extension unrecognised, and the decompiler's placeholder namespace in the XAML
+					// (issue #2930).
+					foreach (var indirectReference in asm.AssemblyReferences)
+					{
+						assemblyReferenceQueue.Enqueue((true, asm, indirectReference));
+					}
 					var metadata = asm.Metadata;
 					foreach (var h in metadata.ExportedTypes)
 					{
