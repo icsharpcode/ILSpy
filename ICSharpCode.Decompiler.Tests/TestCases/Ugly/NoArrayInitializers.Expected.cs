@@ -1,4 +1,3 @@
-using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -19,7 +18,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Ugly
 		public int[] LiteralArray()
 		{
 			int[] array = new int[3];
-			RuntimeHelpers.InitializeArray(array, (RuntimeFieldHandle)/*OpCode not supported: LdMemberToken*/);
+			RuntimeHelpers.InitializeArray(array, __ldtoken(_003CPrivateImplementationDetails_003E._4636993D3E1DA4E9D6B8F87B79E8F7C6D018580D52661950EABC3845C5897A4D));
 			return array;
 		}
 
