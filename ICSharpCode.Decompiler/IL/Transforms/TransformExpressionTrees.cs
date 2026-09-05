@@ -547,13 +547,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		(Func<ILVariable, ILInstruction>, IType) ConvertBind(CallInstruction invocation)
+		Func<ILVariable, ILInstruction> ConvertBind(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
-				return (null, SpecialType.UnknownType);
+				return null;
 			var (value, typeValue) = ConvertInstruction(invocation.Arguments[1]);
 			if (value == null)
-				return (null, SpecialType.UnknownType);
+				return null;
 			if (MatchGetMethodFromHandle(invocation.Arguments[0], out var member))
 			{
 				var method = (IMethod)member;
@@ -571,19 +571,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			else
 			{
-				return (null, SpecialType.UnknownType);
+				return null;
 			}
 			switch (member)
 			{
 				case IMethod method:
 					if (method.IsStatic)
-						return (targetVariable => new Call(method) { Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
+						return targetVariable => new Call(method) { Arguments = { new LdLoc(targetVariable), value() } };
 					else
-						return (targetVariable => new CallVirt(method) { Arguments = { new LdLoc(targetVariable), value() } }, method.ReturnType);
+						return targetVariable => new CallVirt(method) { Arguments = { new LdLoc(targetVariable), value() } };
 				case IField field:
-					return (targetVariable => new StObj(new LdFlda(new LdLoc(targetVariable), (IField)member) { DelayExceptions = true }, value(), member.ReturnType), field.ReturnType);
+					return targetVariable => new StObj(new LdFlda(new LdLoc(targetVariable), (IField)member) { DelayExceptions = true }, value(), member.ReturnType);
 			}
-			return (null, SpecialType.UnknownType);
+			return null;
 		}
 
 		(Func<ILInstruction>, IType) ConvertCall(CallInstruction invocation)
@@ -1056,7 +1056,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Func<ILVariable, ILInstruction> arg;
 				if (arguments[i] is CallInstruction bind && bind.Method.FullName == "System.Linq.Expressions.Expression.Bind")
 				{
-					arg = ConvertBind(bind).Item1;
+					arg = ConvertBind(bind);
 					if (arg == null)
 						return (null, SpecialType.UnknownType);
 				}
