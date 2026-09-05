@@ -387,23 +387,26 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 			string GetFileFileNameForHandle(TypeDefinitionHandle h)
 			{
-				var type = metadata.GetTypeDefinition(h);
-				string file = CleanUpFileName(metadata.GetString(type.Name), ".cs");
-				string ns = metadata.GetString(type.Namespace);
-				if (string.IsNullOrEmpty(ns))
+				// A code-behind class belongs to the document it completes: WPF tooling expects
+				// MainWindow.xaml.cs beside MainWindow.xaml, and treats a stray MainWindow.cs
+				// elsewhere in the tree as an unrelated file.
+				foreach (var partialType in partialTypes)
 				{
-					return file;
-				}
-				else
-				{
-					string dir = Settings.UseNestedDirectoriesForNamespaces ? CleanUpPath(ns) : CleanUpDirectoryName(ns);
-					if (directories.Add(dir))
+					if (partialType.DeclaringTypeDefinitionHandle == h && partialType.CompanionFileName != null)
 					{
-						var path = Path.Combine(TargetDirectory, dir);
-						CreateDirectory(path);
+						string companionDirectory = Path.GetDirectoryName(partialType.CompanionFileName)!;
+						if (!string.IsNullOrEmpty(companionDirectory) && directories.Add(companionDirectory))
+							CreateDirectory(Path.Combine(TargetDirectory, companionDirectory));
+						return partialType.CompanionFileName + ".cs";
 					}
-					return Path.Combine(dir, file);
 				}
+
+				var type = metadata.GetTypeDefinition(h);
+				string fileName = GetFileNameForType(metadata.GetString(type.Namespace), metadata.GetString(type.Name), ".cs");
+				string directory = Path.GetDirectoryName(fileName)!;
+				if (!string.IsNullOrEmpty(directory) && directories.Add(directory))
+					CreateDirectory(Path.Combine(TargetDirectory, directory));
+				return fileName;
 			}
 
 			void ProcessFiles(List<IGrouping<string, TypeDefinitionHandle>> files)
@@ -972,6 +975,30 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// Removes invalid characters from file names and reduces their length,
 		/// but keeps file extensions and path structure intact.
 		/// </summary>
+		/// <summary>
+		/// The path of a file belonging to a type: the namespace becomes directories or one
+		/// flattened directory name, depending on
+		/// <see cref="DecompilerSettings.UseNestedDirectoriesForNamespaces"/>. Everything a type
+		/// owns - its C# file and the XAML document it is the code-behind of - goes here, so the
+		/// two end up next to each other.
+		/// </summary>
+		public static string GetFileNameForType(string @namespace, string typeName, string extension,
+			bool useNestedDirectoriesForNamespaces)
+		{
+			string file = CleanUpFileName(typeName, extension);
+			if (string.IsNullOrEmpty(@namespace))
+				return file;
+			string directory = useNestedDirectoriesForNamespaces
+				? CleanUpPath(@namespace)
+				: CleanUpDirectoryName(@namespace);
+			return Path.Combine(directory, file);
+		}
+
+		protected string GetFileNameForType(string @namespace, string typeName, string extension)
+		{
+			return GetFileNameForType(@namespace, typeName, extension, Settings.UseNestedDirectoriesForNamespaces);
+		}
+
 		public static string SanitizeFileName(string fileName)
 		{
 			return CleanUpName(fileName, separateAtDots: false, treatAsFileName: true, treatAsPath: true);

@@ -20,6 +20,7 @@
 	THE SOFTWARE.
 */
 
+using System;
 using System.IO;
 using System.Text;
 using System.Xml;
@@ -29,6 +30,84 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 {
 	internal static class XamlUtils
 	{
+		static readonly char[] markupExtensionSpecialCharacters = { ',', '=', '\'', '"', '\\' };
+
+		/// <summary>
+		/// Quotes an argument of a markup extension if the parser reading the document again would
+		/// take part of it for grammar: ',' and '=' separate arguments from one another, a quote
+		/// character starts a quoted value, '\' escapes whatever follows it, and whitespace at
+		/// either end is dropped. A value carrying none of those is left as it is, because quoting
+		/// every value would rewrite every document that never needed it.
+		/// <para>
+		/// Braces are grammar only where they are unbalanced: a stray '{' opens an extension and a
+		/// stray '}' closes the surrounding one, while a matched pair inside a value ("{0:C}",
+		/// "Element[{ns}Name]") is read as text and stays unquoted. A value beginning with '{' is
+		/// a nested extension that is already written as one, so it is left alone; the "{}" that
+		/// escapes a leading brace is not, because inside an extension it would open one.
+		/// </para>
+		/// </summary>
+		public static string QuoteMarkupExtensionValue(string value)
+		{
+			if (value == null)
+				return null;
+			if (value.StartsWith("{", StringComparison.Ordinal) && !value.StartsWith("{}", StringComparison.Ordinal))
+			{
+				return value; // a nested markup extension, already written as one
+			}
+			if (value.Length > 0
+				&& !value.StartsWith("{}", StringComparison.Ordinal)
+				&& value.IndexOfAny(markupExtensionSpecialCharacters) < 0
+				&& BracesAreBalanced(value)
+				&& !char.IsWhiteSpace(value[0])
+				&& !char.IsWhiteSpace(value[value.Length - 1]))
+			{
+				return value;
+			}
+
+			var quoted = new StringBuilder(value.Length + 2);
+			quoted.Append('\'');
+			foreach (char c in value)
+			{
+				if (c == '\'' || c == '\\')
+					quoted.Append('\\');
+				quoted.Append(c);
+			}
+			quoted.Append('\'');
+			return quoted.ToString();
+		}
+
+		static bool BracesAreBalanced(string value)
+		{
+			int depth = 0;
+			foreach (char c in value)
+			{
+				if (c == '{')
+					depth++;
+				else if (c == '}' && --depth < 0)
+					return false;
+			}
+			return depth == 0;
+		}
+
+		/// <summary>
+		/// Reads the CLR namespace out of a "clr-namespace:Some.Namespace;assembly=Some.Assembly"
+		/// declaration. Such a declaration names its CLR namespace itself; the other form of XML
+		/// namespace ("http://...") maps to CLR namespaces through XmlnsDefinition attributes
+		/// instead, and has none of its own.
+		/// </summary>
+		public static bool TryParseClrNamespace(string xmlNamespace, out string clrNamespace)
+		{
+			const string prefix = "clr-namespace:";
+			clrNamespace = null;
+			if (xmlNamespace == null || !xmlNamespace.StartsWith(prefix, StringComparison.Ordinal))
+				return false;
+			clrNamespace = xmlNamespace.Substring(prefix.Length);
+			int assembly = clrNamespace.IndexOf(';');
+			if (assembly >= 0)
+				clrNamespace = clrNamespace.Substring(0, assembly);
+			return true;
+		}
+
 		public static string Escape(string value)
 		{
 			if (value.Length == 0)

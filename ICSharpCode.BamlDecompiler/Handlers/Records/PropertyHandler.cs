@@ -49,11 +49,37 @@ namespace ICSharpCode.BamlDecompiler.Handlers
 				if (xamlProp.IsAttachedTo(elemType))
 					return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, true), value);
 
-				if (xamlProp.PropertyName == "Name" && elemType.ResolvedType.GetDefinition()?.ParentModule.IsMainModule == true)
+				if (IsRuntimeNameOfElement(xamlProp, elemType))
 					return new XAttribute(ctx.GetKnownNamespace("Name", XamlContext.KnownNamespace_Xaml), value);
 
 				return new XAttribute(xamlProp.ToXName(ctx, parent.Xaml, false), value);
 			}
+		}
+
+		/// <summary>
+		/// Whether <paramref name="property"/> is the name of <paramref name="elementType"/> as
+		/// x:Name means it, so that the directive can be written instead of the property.
+		/// <para>
+		/// x:Name is recorded as the runtime name property of the element, which is
+		/// FrameworkElement.Name for everything WPF - a property of the framework, not of the
+		/// assembly being decompiled. A type of that assembly declaring a property of its own called
+		/// "Name" is an ordinary property: writing the directive for it registers a name and leaves
+		/// the property unset, which still compiles and silently means something else (issue #2253).
+		/// </para>
+		/// </summary>
+		internal static bool IsRuntimeNameOfElement(XamlProperty property, XamlType elementType)
+		{
+			if (property.PropertyName != "Name")
+				return false;
+			if (elementType?.ResolvedType.GetDefinition()?.ParentModule.IsMainModule != true)
+				return false;
+			// The type that declares the property, not the one the document names as the owner of
+			// the attribute: a control of the assembly being decompiled inherits Name from the
+			// framework, and the document names the control. Only a Name the type declares itself
+			// is a property of its own rather than the runtime name.
+			var declaringType = property.ResolvedMember?.DeclaringTypeDefinition
+				?? property.DeclaringType?.ResolvedType?.GetDefinition();
+			return declaringType?.ParentModule.IsMainModule != true;
 		}
 	}
 }

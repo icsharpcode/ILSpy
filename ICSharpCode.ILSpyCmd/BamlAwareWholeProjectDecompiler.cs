@@ -67,8 +67,10 @@ namespace ICSharpCode.ILSpyCmd
 				: null;
 			if (typeDefinition != null)
 			{
-				xamlFileName = SanitizeFileName(typeDefinition.ReflectionName + ".xaml");
-				partialTypeInfo = new PartialTypeInfo(typeDefinition);
+				// Next to where the type's own C# file goes, so that the code-behind can be named
+				// after the document and land beside it.
+				xamlFileName = GetFileNameForType(typeDefinition.Namespace, typeDefinition.Name, ".xaml");
+				partialTypeInfo = new PartialTypeInfo(typeDefinition) { CompanionFileName = xamlFileName };
 				foreach (var member in result.GeneratedMembers)
 					partialTypeInfo.AddDeclaredMember(member);
 			}

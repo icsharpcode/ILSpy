@@ -79,16 +79,17 @@ namespace ICSharpCode.ILSpy.Baml
 				CancellationToken = context.DecompilationOptions.CancellationToken,
 			};
 			var result = decompiler.Decompile(stream);
-			// If the BAML root names a CLR partial-class type, prefer the type's reflection name
-			// for the .xaml file so it lines up with the matching .xaml.cs the C# project writer
-			// emits. Otherwise just swap extensions on the existing resource name.
+			// If the BAML root names a CLR partial-class type, the document goes where that type's
+			// own C# file goes, and the code-behind is then named after the document and lands
+			// beside it. Otherwise just swap extensions on the existing resource name.
 			var typeDefinition = result.TypeName.HasValue
 				? typeSystem.MainModule.GetTypeDefinition(result.TypeName.Value.TopLevelTypeName)
 				: null;
 			if (typeDefinition != null)
 			{
-				fileName = WholeProjectDecompiler.SanitizeFileName(typeDefinition.ReflectionName + ".xaml");
-				var partialTypeInfo = new PartialTypeInfo(typeDefinition);
+				fileName = WholeProjectDecompiler.GetFileNameForType(typeDefinition.Namespace, typeDefinition.Name, ".xaml",
+					context.DecompilationOptions.DecompilerSettings.UseNestedDirectoriesForNamespaces);
+				var partialTypeInfo = new PartialTypeInfo(typeDefinition) { CompanionFileName = fileName };
 				foreach (var member in result.GeneratedMembers)
 					partialTypeInfo.AddDeclaredMember(member);
 				context.AddPartialTypeInfo(partialTypeInfo);

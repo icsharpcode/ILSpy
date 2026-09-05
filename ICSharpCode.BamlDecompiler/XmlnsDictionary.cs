@@ -40,11 +40,11 @@ namespace ICSharpCode.BamlDecompiler
 			Element = elem;
 		}
 
-		public string LookupXmlns(string fullAssemblyName, string clrNs)
+		public string LookupXmlns(string fullAssemblyName, string clrNs, string typeName = null)
 		{
 			foreach (var ns in this)
 			{
-				if (fullAssemblyName == ns.FullAssemblyName && ns.CLRNamespace == clrNs)
+				if (NamespaceMap.Matches(ns, fullAssemblyName, clrNs, typeName))
 					return ns.XMLNamespace;
 			}
 
@@ -119,11 +119,11 @@ namespace ICSharpCode.BamlDecompiler
 			return null;
 		}
 
-		public string LookupXmlns(string fullAssemblyName, string clrNs)
+		public string LookupXmlns(string fullAssemblyName, string clrNs, string typeName = null)
 		{
 			foreach (var map in piMappings)
 			{
-				if (fullAssemblyName == map.Value.FullAssemblyName && map.Value.CLRNamespace == clrNs)
+				if (NamespaceMap.Matches(map.Value, fullAssemblyName, clrNs, typeName))
 					return map.Key;
 			}
 
@@ -132,7 +132,7 @@ namespace ICSharpCode.BamlDecompiler
 			{
 				foreach (var ns in scope)
 				{
-					if (fullAssemblyName == ns.FullAssemblyName && ns.CLRNamespace == clrNs)
+					if (NamespaceMap.Matches(ns, fullAssemblyName, clrNs, typeName))
 						return ns.XMLNamespace;
 				}
 

@@ -40,6 +40,29 @@ namespace ICSharpCode.BamlDecompiler
 				"System.Xml, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"
 			};
 
+		// A type each of these assemblies must define for the module resolved under its name to be
+		// the assembly BAML means by it. .NET ships a WindowsBase facade on every platform - it
+		// resolves everywhere and carries none of the WPF types, because those live in the
+		// WindowsDesktop runtime pack - and a module like that has to give way to the synthetic
+		// stand-in the way an assembly that does not resolve at all does. Without this, a document
+		// using System.Windows.Point or Size is lost outright on a machine without WPF.
+		static readonly Dictionary<string, TopLevelTypeName> wellKnownProbeTypes = new(StringComparer.OrdinalIgnoreCase) {
+			["WindowsBase"] = new TopLevelTypeName("System.Windows", "Point"),
+			["PresentationCore"] = new TopLevelTypeName("System.Windows.Media", "Brush"),
+			["PresentationFramework"] = new TopLevelTypeName("System.Windows.Controls", "Button")
+		};
+
+		/// <summary>
+		/// Whether <paramref name="file"/> is the assembly its name claims, rather than a facade
+		/// standing where it should be.
+		/// </summary>
+		static bool IsTheAssemblyItIsNamedAfter(MetadataFile file)
+		{
+			if (!wellKnownProbeTypes.TryGetValue(file.Name, out var probeType))
+				return true;
+			return !file.GetTypeDefinition(probeType).IsNil;
+		}
+
 		// The WPF assemblies whose types serialize under the presentation XML namespace. When one of
 		// these has to be synthesized (e.g. inspecting a WPF binary on a non-Windows machine), the
 		// synthetic module reproduces its XmlnsDefinitionAttribute mapping so known types still emit
@@ -120,6 +143,10 @@ namespace ICSharpCode.BamlDecompiler
 					}
 				}
 			}
+			// A facade standing in for a well-known assembly is worse than nothing: it satisfies the
+			// name, so no stand-in is synthesized, and then every type BAML expects from it is
+			// missing. Drop it and let the stand-in below take its place.
+			referencedAssemblies.RemoveAll(file => !IsTheAssemblyItIsNamedAfter(file));
 			var mainModuleWithOptions = mainModule.WithOptions(TypeSystemOptions.Default);
 			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(TypeSystemOptions.Default));
 			// Substitute a synthetic stand-in for every well-known BAML assembly that could not be

@@ -173,8 +173,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 						w.WriteAttributeString("Include", item.FileName);
 						if (item.AdditionalProperties != null)
 						{
+							// Item metadata as attributes is MSBuild 15 syntax. This format is what an
+							// export targets when the toolchain predates that, so the metadata goes where
+							// every non-SDK project keeps it: in child elements.
 							foreach (var (key, value) in item.AdditionalProperties)
-								w.WriteAttributeString(key, value);
+								w.WriteElementString(key, value);
 						}
 						w.WriteEndElement();
 					}
