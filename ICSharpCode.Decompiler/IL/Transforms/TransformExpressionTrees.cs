@@ -888,7 +888,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		Func<ILInstruction> ConvertConstant(CallInstruction invocation)
 		{
-			if (!MatchConstantCall(invocation, out var value, out var type))
+			if (!MatchConstantCall(invocation, out var value))
 				return null;
 			if (value.MatchBox(out var arg, out var boxType))
 			{
@@ -897,6 +897,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return () => ConvertValue(arg, invocation);
 			}
 			return () => ConvertValue(value, invocation);
+
+			static bool MatchConstantCall(ILInstruction inst, out ILInstruction value)
+			{
+				value = null;
+				if (inst is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Constant")
+				{
+					value = call.Arguments[0];
+					// The two-argument overload passes the constant's type as typeof(T);
+					// legacy csc uses the one-argument overload for display-class instances.
+					return call.Arguments.Count != 2 || MatchGetTypeFromHandle(call.Arguments[1], out _);
+				}
+				return false;
+			}
 		}
 
 		Func<ILInstruction> ConvertElementInit(CallInstruction invocation)
@@ -1510,29 +1523,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool IsExpressionTreeParameter(ILVariable variable)
 		{
 			return variable.Type.FullName == "System.Linq.Expressions.ParameterExpression";
-		}
-
-		bool MatchConstantCall(ILInstruction inst, out ILInstruction value, out IType type)
-		{
-			value = null;
-			type = null;
-			if (inst is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Constant")
-			{
-				value = call.Arguments[0];
-				if (call.Arguments.Count == 2)
-					return MatchGetTypeFromHandle(call.Arguments[1], out type);
-				type = value switch {
-					LdNull => SpecialType.NullType,
-					LdStr => context.TypeSystem.FindType(KnownTypeCode.String),
-					LdcF4 => context.TypeSystem.FindType(KnownTypeCode.Single),
-					LdcF8 => context.TypeSystem.FindType(KnownTypeCode.Double),
-					LdcI4 => context.TypeSystem.FindType(KnownTypeCode.Int32),
-					LdcI8 => context.TypeSystem.FindType(KnownTypeCode.Int64),
-					_ => value.InferType(context.TypeSystem),
-				};
-				return true;
-			}
-			return false;
 		}
 
 		internal static bool MatchGetTypeFromHandle(ILInstruction inst, out IType type)
