@@ -3963,16 +3963,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			ResolveResult rr = new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions),
 				newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults);
+			var initializer = expr.WithILInstruction(block).WithRR(rr);
 			if (arrayToSpan != null)
 			{
-				// The block converts its array to Span<T>/ReadOnlySpan<T>. The conversion is
-				// implicit in C#, so the array initializer stands on its own, but the expression
-				// still has the span type: the block evaluates to a span, not to an array.
-				rr = new ConversionResolveResult(arrayToSpan.ReturnType, rr,
-					Conversion.UserDefinedConversion(arrayToSpan, isImplicit: true,
-						Conversion.IdentityConversion, Conversion.IdentityConversion));
+				var arrayToSpanRR = new ConversionResolveResult(arrayToSpan.DeclaringType, rr, Conversion.ImplicitSpanConversion);
+				initializer = new CastExpression(ConvertType(arrayToSpan.DeclaringType), expr).WithoutILInstruction().WithRR(arrayToSpanRR);
 			}
-			return expr.WithILInstruction(block).WithRR(rr);
+			return initializer;
 		}
 
 		TranslatedExpression TranslateStackAllocInitializer(Block block, IType typeHint)

@@ -1187,6 +1187,18 @@ namespace ICSharpCode.Decompiler.CSharp
 								arguments.Add(new TranslatedExpression(expressionBuilder.GetDefaultValueExpression(type3).WithoutILInstruction()));
 						}
 						return true;
+					case ConversionResolveResult { Conversion.IsImplicitSpanConversion: true, Input: ArrayCreateResolveResult { Type: ArrayType { ElementType: var type3 }, SizeArguments: [{ ConstantValue: int arrayLength }] } }:
+						elementType = type3;
+						var expr = paramsArgument.Expression is CastExpression cast ? cast.Expression : paramsArgument.Expression;
+						arguments = new(((ArrayCreateExpression)expr).Initializer?.Elements.Select(e => new TranslatedExpression(e)) ?? []);
+						parameters = new List<IParameter>(arrayLength);
+						for (int i = 0; i < arrayLength; i++)
+						{
+							parameters.Add(new DefaultParameter(type3, string.Empty));
+							if (arguments.Count <= i)
+								arguments.Add(new TranslatedExpression(expressionBuilder.GetDefaultValueExpression(type3).WithoutILInstruction()));
+						}
+						return true;
 					default:
 						return false;
 				}
