@@ -1128,7 +1128,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			ref List<TranslatedExpression> arguments)
 		{
 			var expressionBuilder = this.expressionBuilder;
-			if (ExtractArguments(out var elementType, out var expandedParameters, out var expandedArguments))
+			if (ExtractArguments(out var expandedParameters, out var expandedArguments))
 			{
 				expandedParameters.InsertRange(0, expectedParameters);
 				expandedArguments.InsertRange(0, arguments);
@@ -1144,18 +1144,30 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return false;
 
-			bool ExtractArguments([NotNullWhen(true)] out IType? elementType, [NotNullWhen(true)] out List<IParameter>? parameters, [NotNullWhen(true)] out List<TranslatedExpression>? arguments)
+			bool ExtractArguments([NotNullWhen(true)] out List<IParameter>? parameters, [NotNullWhen(true)] out List<TranslatedExpression>? arguments)
 			{
-				elementType = null;
 				parameters = null;
 				arguments = null;
+				// Every expanded argument binds to the element type of the params collection, so
+				// that is the type the parameters standing in for them carry. The argument itself
+				// may be an array of a more derived element type, because the collection is
+				// covariant in it. Unpack it the same way overload resolution does, and give up
+				// where overload resolution would give up on the expanded form as well.
+				IType paramsElementType;
+				if (parameter.Type is ArrayType { Dimensions: 1 } paramsArray)
+					paramsElementType = paramsArray.ElementType;
+				else if (parameter.Type.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
+					|| parameter.Type.IsKnownType(KnownTypeCode.SpanOfT)
+					|| parameter.Type.IsArrayInterfaceType())
+					paramsElementType = parameter.Type.TypeArguments[0];
+				else
+					return false;
 				switch (paramsArgument.ResolveResult)
 				{
 					case CSharpInvocationResolveResult { Member: IMethod method, Arguments: var args }:
 						// match System.Array.Empty<T>()
-						if (args is [] && method is { IsStatic: true, FullName: "System.Array.Empty", TypeArguments: [var type] })
+						if (args is [] && method is { IsStatic: true, FullName: "System.Array.Empty", TypeArguments: [_] })
 						{
-							elementType = type;
 							arguments = new();
 							parameters = new();
 							return true;
@@ -1170,33 +1182,30 @@ namespace ICSharpCode.Decompiler.CSharp
 							&& declaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)
 							&& paramType.Equals(type2))
 						{
-							elementType = type2;
 							arguments = new() { new TranslatedExpression(oce.Arguments.Single()) };
-							parameters = new() { new DefaultParameter(type2, string.Empty) };
+							parameters = new() { new DefaultParameter(paramsElementType, string.Empty) };
 							return true;
 						}
 						return false;
-					case ArrayCreateResolveResult { Type: ArrayType { ElementType: var type3 }, SizeArguments: [{ ConstantValue: int arrayLength }] }:
-						elementType = type3;
+					case ArrayCreateResolveResult { SizeArguments: [{ ConstantValue: int arrayLength }] }:
 						arguments = new(((ArrayCreateExpression)paramsArgument.Expression).Initializer?.Elements.Select(e => new TranslatedExpression(e)) ?? []);
 						parameters = new List<IParameter>(arrayLength);
 						for (int i = 0; i < arrayLength; i++)
 						{
-							parameters.Add(new DefaultParameter(type3, string.Empty));
+							parameters.Add(new DefaultParameter(paramsElementType, string.Empty));
 							if (arguments.Count <= i)
-								arguments.Add(new TranslatedExpression(expressionBuilder.GetDefaultValueExpression(type3).WithoutILInstruction()));
+								arguments.Add(new TranslatedExpression(expressionBuilder.GetDefaultValueExpression(paramsElementType).WithoutILInstruction()));
 						}
 						return true;
-					case ConversionResolveResult { Conversion.IsImplicitSpanConversion: true, Input: ArrayCreateResolveResult { Type: ArrayType { ElementType: var type3 }, SizeArguments: [{ ConstantValue: int arrayLength }] } }:
-						elementType = type3;
+					case ConversionResolveResult { Conversion.IsImplicitSpanConversion: true, Input: ArrayCreateResolveResult { SizeArguments: [{ ConstantValue: int arrayLength }] } }:
 						var expr = paramsArgument.Expression is CastExpression cast ? cast.Expression : paramsArgument.Expression;
 						arguments = new(((ArrayCreateExpression)expr).Initializer?.Elements.Select(e => new TranslatedExpression(e)) ?? []);
 						parameters = new List<IParameter>(arrayLength);
 						for (int i = 0; i < arrayLength; i++)
 						{
-							parameters.Add(new DefaultParameter(type3, string.Empty));
+							parameters.Add(new DefaultParameter(paramsElementType, string.Empty));
 							if (arguments.Count <= i)
-								arguments.Add(new TranslatedExpression(expressionBuilder.GetDefaultValueExpression(type3).WithoutILInstruction()));
+								arguments.Add(new TranslatedExpression(expressionBuilder.GetDefaultValueExpression(paramsElementType).WithoutILInstruction()));
 						}
 						return true;
 					default:
