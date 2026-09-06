@@ -3966,8 +3966,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var initializer = expr.WithILInstruction(block).WithRR(rr);
 			if (arrayToSpan != null)
 			{
-				var arrayToSpanRR = new ConversionResolveResult(arrayToSpan.DeclaringType, rr, Conversion.ImplicitSpanConversion);
-				initializer = new CastExpression(ConvertType(arrayToSpan.DeclaringType), expr).WithoutILInstruction().WithRR(arrayToSpanRR);
+				var arrayToSpanRR = new ConversionResolveResult(arrayToSpan.ReturnType, rr, Conversion.ImplicitSpanConversion);
+				initializer = new CastExpression(ConvertType(arrayToSpan.ReturnType), expr).WithoutILInstruction().WithRR(arrayToSpanRR);
 			}
 			return initializer;
 		}
