@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
@@ -67,6 +68,9 @@ namespace ICSharpCode.Decompiler
 		}
 
 		// This constructor is needed for serialization.
+#if NET5_0_OR_GREATER
+		[Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
 		protected DecompilerException(SerializationInfo info, StreamingContext context) : base(info, context)
 		{
 		}
@@ -105,6 +109,9 @@ namespace ICSharpCode.Decompiler
 				return type;
 		}
 
+#if NET5_0_OR_GREATER
+		[UnconditionalSuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "All uses of the MethodInfo returned from frame.GetMethod() are null-checked.")]
+#endif
 		static string GetStackTrace(Exception exception)
 		{
 			// Output stacktrace in custom format (very similar to Exception.StackTrace

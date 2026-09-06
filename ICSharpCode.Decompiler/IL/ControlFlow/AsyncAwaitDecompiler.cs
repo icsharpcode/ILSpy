@@ -767,7 +767,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var metadata = context.PEFile.Metadata;
 			var moveNextMethod = metadata.GetTypeDefinition((TypeDefinitionHandle)stateMachineType.MetadataToken)
 				.GetMethods().FirstOrDefault(f => metadata.GetString(metadata.GetMethodDefinition(f).Name) == "MoveNext");
-			if (moveNextMethod == null)
+			if (moveNextMethod.IsNil)
 				throw new SymbolicAnalysisFailedException();
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);
 			if (!(moveNextFunction.Body is BlockContainer blockContainer))
