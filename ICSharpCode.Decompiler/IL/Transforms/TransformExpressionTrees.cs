@@ -1156,9 +1156,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (value.MatchBox(out var arg, out var boxType))
 			{
-				if (boxType.Kind == TypeKind.Enum || boxType.IsKnownType(KnownTypeCode.Boolean))
-					return () => new ExpressionTreeCast(boxType, ConvertValue(arg, invocation), false);
-				return () => ConvertValue(arg, invocation);
+				return () => {
+					// A constant narrower than its stack type - a bool, a char, an enum, one of
+					// the small integers - builds as a plain ldc.i4 that infers as int, and
+					// consumers compare inferred types. The cast keeps the type the tree
+					// declared for it.
+					var constantValue = ConvertValue(arg, invocation);
+					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(constantValue.InferType(context.TypeSystem), boxType))
+						return new ExpressionTreeCast(boxType, constantValue, false);
+					return constantValue;
+				};
 			}
 			return () => ConvertValue(value, invocation);
 

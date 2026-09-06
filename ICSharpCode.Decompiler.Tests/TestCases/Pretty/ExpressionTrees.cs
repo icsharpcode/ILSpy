@@ -416,6 +416,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(X(), () => "abc"[1] == 'b');
 		}
 
+		public void ConditionalWithNarrowConstant(string s)
+		{
+			ToCode(X(), () => (s.Length < 1) ? '\0' : s[0]);
+			ToCode(X(), () => (s.Length < 1) ? ((byte)0) : ((byte)s[0]));
+			ToCode(X(), () => (s.Length < 1) ? ((short)0) : ((short)s[0]));
+		}
+
 		public void StringsImplicitCast()
 		{
 			int i = 1;
