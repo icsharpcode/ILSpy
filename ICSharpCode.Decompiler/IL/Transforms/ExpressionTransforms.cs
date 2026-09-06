@@ -414,6 +414,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!initializer.Instructions[0].MatchStLoc(out var initializerVariable, out var value))
 					return false;
+				if (!TypeUtils.IsCompatiblePointerTypeForMemoryAccess(initializerVariable.Type, elementType))
+					return false;
 				if (!(value.MatchLocAlloc(out sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])))
 					return false;
 				// The block addresses the allocation through the localloc pointer and only its

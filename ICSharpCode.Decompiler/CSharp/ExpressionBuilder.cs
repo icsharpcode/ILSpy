@@ -586,11 +586,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLocAllocSpan(LocAllocSpan inst, TranslationContext context)
 		{
-			return TranslateLocAllocSpan(inst, context.TypeHint, out _)
+			return TranslateLocAllocSpan(inst, out _)
 				.WithILInstruction(inst).WithRR(new ResolveResult(inst.Type));
 		}
 
-		StackAllocExpression TranslateLocAllocSpan(LocAllocSpan inst, IType typeHint, out IType elementType)
+		StackAllocExpression TranslateLocAllocSpan(LocAllocSpan inst, out IType elementType)
 		{
 			elementType = inst.Type.TypeArguments[0];
 			TranslatedExpression countExpression = Translate(inst.Argument)
@@ -3985,6 +3985,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				final = spanCtor.Arguments[0] as LdLoc;
 				resultType = spanCtor.Method.DeclaringType;
+				// The following function expects typeHint to be a pointer type.
+				typeHint = new PointerType(spanCtor.Method.DeclaringType.TypeArguments[0]);
 			}
 			if (stloc == null || final == null || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
@@ -4008,7 +4010,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					stackAllocExpression = TranslateLocAlloc(locAlloc, typeHint, out elementType);
 					break;
 				case LocAllocSpan locAllocSpan:
-					stackAllocExpression = TranslateLocAllocSpan(locAllocSpan, typeHint, out elementType);
+					stackAllocExpression = TranslateLocAllocSpan(locAllocSpan, out elementType);
 					break;
 				default:
 					throw new ArgumentException("given Block is invalid!");
