@@ -171,8 +171,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (lambda != null)
 				{
 					context.Step("Convert Expression Tree", instruction);
-					var newLambda = (ILFunction)lambda();
-					if (newLambda == null)
+					// A builder returns null where a nested conversion declined; the cast has to
+					// tolerate that, and anything that is not an ILFunction is no lambda to put
+					// in the call's place either. The tree then stays as the Expression calls
+					// that built it.
+					if (lambda() is not ILFunction newLambda)
 						return false;
 					SetExpressionTreeFlag(newLambda, (CallInstruction)instruction);
 					instruction.ReplaceWith(newLambda);
