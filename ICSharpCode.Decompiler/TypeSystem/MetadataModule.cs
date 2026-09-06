@@ -537,43 +537,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				string name = metadata.GetString(memberRef.Name);
 				signature = memberRef.DecodeMethodSignature(TypeProvider,
 					new GenericContext(declaringTypeDefinition?.TypeParameters));
-				if (declaringTypeDefinition != null)
-				{
-					// Find the set of overloads to search:
-					IEnumerable<IMethod> methods;
-					if (name == ".ctor")
-					{
-						methods = declaringTypeDefinition.GetConstructors();
-					}
-					else if (name == ".cctor")
-					{
-						methods = declaringTypeDefinition.Methods.Where(m => m.IsConstructor && m.IsStatic);
-					}
-					else
-					{
-						methods = declaringTypeDefinition.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
-							.Concat(declaringTypeDefinition.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
-					}
-					// Determine the expected parameters from the signature:
-					ImmutableArray<IType> parameterTypes;
-					if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
-					{
-						parameterTypes = signature.ParameterTypes
-							.Take(signature.RequiredParameterCount)
-							.Concat(new[] { SpecialType.ArgList })
-							.ToImmutableArray();
-					}
-					else
-					{
-						parameterTypes = signature.ParameterTypes;
-					}
-					// Search for the matching method:
-					method = FindMethod(methods, signature, parameterTypes);
-				}
-				else
-				{
-					method = null;
-				}
+				method = declaringTypeDefinition != null ? FindMethod(declaringTypeDefinition, name, signature) : null;
 				if (method == null)
 				{
 					method = CreateFakeMethod(declaringType, name, signature);
@@ -609,27 +573,48 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				throw new ArgumentNullException(nameof(declaringType));
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
-			IEnumerable<IMethod> methods;
-			if (name == ".ctor")
-			{
-				methods = declaringType.GetConstructors();
-			}
-			else
-			{
-				methods = declaringType.GetMethods(m => m.Name == name)
-					.Concat(declaringType.GetAccessors(m => m.Name == name));
-			}
-			return FindMethod(methods, signature, signature.ParameterTypes)
+			return FindMethod(declaringType, name, signature)
 				?? CreateFakeMethod(declaringType, name, signature);
 		}
 
 		/// <summary>
-		/// The single method among <paramref name="candidates"/> that matches the signature, or
-		/// null. <paramref name="parameterTypes"/> is passed separately because a vararg
-		/// signature is matched against its required parameters plus __arglist.
+		/// The single method on <paramref name="declaringType"/> that matches the name and the
+		/// signature, or null. Only the methods the type itself declares are candidates, because
+		/// a signature always names the type that declares the method.
 		/// </summary>
-		static IMethod FindMethod(IEnumerable<IMethod> candidates, MethodSignature<IType> signature, ImmutableArray<IType> parameterTypes)
+		static IMethod FindMethod(IType declaringType, string name, MethodSignature<IType> signature)
 		{
+			// Find the set of overloads to search:
+			IEnumerable<IMethod> candidates;
+			if (name == ".ctor")
+			{
+				candidates = declaringType.GetConstructors();
+			}
+			else if (name == ".cctor")
+			{
+				// GetConstructors() only returns instance constructors.
+				candidates = declaringType.GetDefinition()?.Methods.Where(m => m.IsConstructor && m.IsStatic) ?? [];
+			}
+			else
+			{
+				candidates = declaringType.GetMethods(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers)
+					.Concat(declaringType.GetAccessors(m => m.Name == name, GetMemberOptions.IgnoreInheritedMembers));
+			}
+			// Determine the expected parameters from the signature: a vararg signature is matched
+			// against its required parameters plus __arglist.
+			ImmutableArray<IType> parameterTypes;
+			if (signature.Header.CallingConvention == SignatureCallingConvention.VarArgs)
+			{
+				parameterTypes = signature.ParameterTypes
+					.Take(signature.RequiredParameterCount)
+					.Concat(new[] { SpecialType.ArgList })
+					.ToImmutableArray();
+			}
+			else
+			{
+				parameterTypes = signature.ParameterTypes;
+			}
+			// Search for the matching method:
 			foreach (var method in candidates)
 			{
 				if (method.TypeParameters.Count != signature.GenericParameterCount)
