@@ -97,8 +97,10 @@ A corpus argument is a dll, a directory scanned recursively for dlls, or `@file`
 per line (`#` comments allowed).
 
 An `--old`/`--new` argument is a path to `ICSharpCode.Decompiler.dll`, an ILSpy checkout, or a
-commit-ish. A checkout is restored and built in Release on demand. **Watch the timestamp in the
-header line**: an existing Release build is reused as-is; pass `--build` to force a rebuild.
+commit-ish. A checkout is restored and built in Release on every run, so what is measured is the
+code the argument names. `--no-build` reuses the build a checkout already carries, which is worth
+it once a run is repeated against unchanged sides and costly to get wrong otherwise - it warns and
+prints the build's timestamp, and **the header line repeats that timestamp** either way.
 
 A commit-ish (branch, tag, sha, `FETCH_HEAD`) is resolved against the repository the tool is run
 from and checked out into a worktree under `~/.cache/decompdiff/<repo>/<commit>`, so diffing two
