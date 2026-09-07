@@ -243,20 +243,22 @@ namespace ICSharpCode.ILSpy.Docking
 		{
 			var inner = e.Inner;
 
-			// On Reset (assembly list wholesale-cleared), drop ALL history — every entry is
-			// stale by definition.
-			if (inner.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
-			{
-				PruneHistoryAfterAssemblyListChange(removed: null);
+			// A Move carries the moved entry in OldItems, but the list only got reordered.
+			if (inner.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Move)
 				return;
-			}
 
-			if (inner.OldItems is not { Count: > 0 } oldItems)
-				return;
-			var removed = new HashSet<ICSharpCode.ILSpyX.LoadedAssembly>(
-				oldItems.OfType<ICSharpCode.ILSpyX.LoadedAssembly>());
-			if (removed.Count == 0)
-				return;
+			// On Reset the list was cleared wholesale: every entry is stale by definition, and
+			// `removed == null` below stands for "all of them".
+			HashSet<ICSharpCode.ILSpyX.LoadedAssembly>? removed = null;
+			if (inner.Action != System.Collections.Specialized.NotifyCollectionChangedAction.Reset)
+			{
+				if (inner.OldItems is not { Count: > 0 } oldItems)
+					return;
+				removed = new HashSet<ICSharpCode.ILSpyX.LoadedAssembly>(
+					oldItems.OfType<ICSharpCode.ILSpyX.LoadedAssembly>());
+				if (removed.Count == 0)
+					return;
+			}
 
 			PruneHistoryAfterAssemblyListChange(removed);
 
@@ -277,7 +279,7 @@ namespace ICSharpCode.ILSpy.Docking
 					var owner = n.AncestorsAndSelf().OfType<TreeNodes.AssemblyTreeNode>().LastOrDefault();
 					if (owner is null)
 						continue;
-					if (removed.Contains(owner.LoadedAssembly))
+					if (removed == null || removed.Contains(owner.LoadedAssembly))
 						anyTouchesRemoved = true;
 					else
 						anyAlive = true;

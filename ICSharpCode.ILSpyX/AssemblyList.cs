@@ -451,8 +451,24 @@ namespace ICSharpCode.ILSpyX
 			{
 				List<LoadedAssembly> list = new List<LoadedAssembly>(assemblies);
 				list.Sort(index, Math.Min(count, list.Count - index), comparer);
-				assemblies.Clear();
-				assemblies.AddRange(list);
+				// Reorder in place. Rebuilding the collection through Clear() would raise a Reset,
+				// which says every entry went away - and consumers that hold on to what the list
+				// contained (the navigation history, the open tabs) would throw it all away for a
+				// change that removes nothing.
+				for (int i = 0; i < list.Count; i++)
+				{
+					if (ReferenceEquals(assemblies[i], list[i]))
+						continue;
+					// Both hold the same entries, so the item is somewhere after i.
+					for (int j = i + 1; j < assemblies.Count; j++)
+					{
+						if (ReferenceEquals(assemblies[j], list[i]))
+						{
+							assemblies.Move(j, i);
+							break;
+						}
+					}
+				}
 			}
 		}
 
