@@ -18,6 +18,8 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
@@ -26,6 +28,9 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Languages;
+using ICSharpCode.ILSpy.Metadata;
+using ICSharpCode.ILSpy.Metadata.CorTables;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Views;
@@ -59,6 +64,79 @@ public class CommandLineArgumentsTests
 
 		// Assert — language is now IL.
 		languageService.CurrentLanguage.Name.Should().Be("IL");
+	}
+
+	[AvaloniaTest]
+	public async Task NavigateTo_An_Id_That_Names_Nothing_Reports_What_Was_Searched()
+	{
+		// An ID that resolves to nothing used to leave the tree untouched and say nothing, so a
+		// jump that silently did not happen looked like a jump to the wrong place. The target
+		// and the assemblies that were searched are written to the pane the jump would have
+		// filled (issue #2093).
+
+		// Arrange - boot, and decompile something so the main tab really is a decompiler tab.
+		// Whether one is active at startup is a race, and the report lands elsewhere when it
+		// is not; the sibling test below covers that case.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		vm.DockWorkspace.ActiveDecompilerTab.Should().NotBeNull("the report's preferred sink must exist");
+
+		var args = CommandLineArguments.Create(new[] { "--navigateto", "M:No.Such.Type.NoSuchMember" });
+
+		// Act - apply the args.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - the pane the jump would have filled names the target that was not found.
+		var tab = vm.DockWorkspace.ActiveDecompilerTab;
+		tab.Should().NotBeNull("the report goes to the decompiler pane");
+		tab!.Text.Should().Contain("M:No.Such.Type.NoSuchMember");
+	}
+
+	[AvaloniaTest]
+	public async Task NavigateTo_Reports_An_Unresolved_Id_Even_Without_An_Active_Decompiler_Tab()
+	{
+		// DockWorkspace.ShowText writes to the active decompiler tab and silently does nothing
+		// when the active content is something else, which is a real state at startup and
+		// whenever a metadata table is in front. A report that can go missing is no better than
+		// the silence it replaces.
+
+		// Arrange - boot and put a metadata table in front, so there is no decompiler tab.
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var vm = (MainWindowViewModel)window.DataContext!;
+		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
+		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
+			.GetChild<MetadataTreeNode>()
+			.GetChild<MetadataTablesTreeNode>()
+			.GetChild<TypeDefTableTreeNode>();
+		vm.AssemblyTreeModel.SelectNode(typeDefNode);
+		await vm.DockWorkspace.WaitForMetadataTabAsync();
+		vm.DockWorkspace.ActiveDecompilerTab.Should().BeNull("the metadata table must be in front");
+
+		var args = CommandLineArguments.Create(new[] { "--navigateto", "M:No.Such.Type.NoSuchMember" });
+
+		// Act - apply the args.
+		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
+
+		// Assert - the report opened a tab of its own rather than vanishing. ActiveDecompilerTab
+		// only ever names the main tab's content, which the metadata table still occupies, so
+		// the new tab is looked for among the open documents.
+		await Waiters.WaitForAsync(() => ReportTabs(vm).Any());
+		ReportTabs(vm).Single().Text.Should().Contain("M:No.Such.Type.NoSuchMember");
+
+		static IEnumerable<DecompilerTabPageModel> ReportTabs(MainWindowViewModel vm)
+			=> vm.DockWorkspace.Documents?.VisibleDockables?
+				.OfType<ContentTabPage>()
+				.Select(t => t.Content)
+				.OfType<DecompilerTabPageModel>()
+				.Where(t => t.Title == "Navigation")
+			?? [];
 	}
 
 	[AvaloniaTest]
