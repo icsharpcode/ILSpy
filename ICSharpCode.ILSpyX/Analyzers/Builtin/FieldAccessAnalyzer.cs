@@ -33,42 +33,61 @@ using ILOpCode = System.Reflection.Metadata.ILOpCode;
 namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 {
 	/// <summary>
-	/// Finds methods where this field is read.
+	/// Finds methods where this field is written.
 	/// </summary>
 	[ExportAnalyzer(Header = "Assigned By", Order = 20)]
 	[Shared]
 	class AssignedByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
-		public AssignedByFieldAccessAnalyzer() : base(true) { }
+		public AssignedByFieldAccessAnalyzer() : base(FieldAccessKind.Write) { }
 	}
 
 	/// <summary>
-	/// Finds methods where this field is written.
+	/// Finds methods where this field is read.
 	/// </summary>
 	[ExportAnalyzer(Header = "Read By", Order = 10)]
 	[Shared]
 	class ReadByFieldAccessAnalyzer : FieldAccessAnalyzer
 	{
-		public ReadByFieldAccessAnalyzer() : base(false) { }
+		public ReadByFieldAccessAnalyzer() : base(FieldAccessKind.Read) { }
 	}
 
 	/// <summary>
-	/// Finds methods where this field is read or written.
+	/// Finds methods that load this field's address.
+	/// </summary>
+	[ExportAnalyzer(Header = "Address Taken By", Order = 30)]
+	[Shared]
+	class AddressTakenByFieldAccessAnalyzer : FieldAccessAnalyzer
+	{
+		public AddressTakenByFieldAccessAnalyzer() : base(FieldAccessKind.AddressOf) { }
+	}
+
+	enum FieldAccessKind
+	{
+		Read,
+		Write,
+		AddressOf
+	}
+
+	/// <summary>
+	/// Finds methods that access this field in one particular way.
 	/// </summary>
 	class FieldAccessAnalyzer : IAnalyzer
 	{
 		const GetMemberOptions Options = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
 
-		readonly bool showWrites; // true: show writes; false: show read access
+		readonly FieldAccessKind kind;
 
-		public FieldAccessAnalyzer(bool showWrites)
+		public FieldAccessAnalyzer(FieldAccessKind kind)
 		{
-			this.showWrites = showWrites;
+			this.kind = kind;
 		}
 
 		public bool Show(ISymbol? symbol)
 		{
-			return symbol is IField field && (!showWrites || !field.IsConst);
+			// A constant is inlined at every use: there is nothing to assign to and no address
+			// to take.
+			return symbol is IField field && (kind == FieldAccessKind.Read || !field.IsConst);
 		}
 
 		public IEnumerable<ISymbol> Analyze(ISymbol analyzedSymbol, AnalyzerContext context)
@@ -201,13 +220,18 @@ namespace ICSharpCode.ILSpyX.Analyzers.Builtin
 			{
 				case ILOpCode.Ldfld:
 				case ILOpCode.Ldsfld:
-					return !showWrites;
+					return kind == FieldAccessKind.Read;
 				case ILOpCode.Stfld:
 				case ILOpCode.Stsfld:
-					return showWrites;
+					return kind == FieldAccessKind.Write;
 				case ILOpCode.Ldflda:
 				case ILOpCode.Ldsflda:
-					return true; // always show address-loading
+					// An address load says only that something needed a reference to the field.
+					// What happens through that reference is decided by the consumer - calling a
+					// method on a value-type field reads it, passing it as a ref argument may
+					// write it - and the IL scan here does not look at the consumer, so it is
+					// neither a read nor a write.
+					return kind == FieldAccessKind.AddressOf;
 				default:
 					return false;
 			}
