@@ -85,20 +85,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseDebug = 0x1,
 		Force32Bit = 0x2,
 		Library = 0x4,
-		/// Testing our own disassembler, or working around a bug in ildasm.
+		// Testing our own disassembler, or working around a bug in ildasm.
 		UseOwnDisassembler = 0x8,
-		/// Work around bug in .NET 5 ilasm (https://github.com/dotnet/runtime/issues/32400)
+		// Work around bug in .NET 5 ilasm (https://github.com/dotnet/runtime/issues/32400)
 		UseLegacyAssembler = 0x10,
-		/// UseSortByNameFilter, implies UseOwnDisassembler
+		// UseSortByNameFilter, implies UseOwnDisassembler
 		SortedOutput = 0x20,
 	}
 
 	public static partial class Tester
 	{
-		public const string CurrentNetCoreVersion = "11.0";
-		public const string CurrentNetCoreAppVersion = ".NETCoreApp,Version=v11.0";
-		public const string CurrentNetCoreRefAsmVersion = "11.0.0-preview.5.26302.115";
-
 		public static readonly string TesterPath;
 		public static readonly string TestCasePath;
 
@@ -123,9 +119,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			TesterPath = Path.GetDirectoryName(typeof(Tester).Assembly.Location);
 			TestCasePath = Path.Combine(TesterPath, "../../../../TestCases");
 #if DEBUG
-			testRunnerBasePath = Path.Combine(TesterPath, $"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net{CurrentNetCoreVersion}");
+			testRunnerBasePath = Path.Combine(TesterPath, $"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Debug/net{CurrentNetCoreVersion.Version}");
 #else
-			testRunnerBasePath = Path.Combine(TesterPath, $"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net{CurrentNetCoreVersion}");
+			testRunnerBasePath = Path.Combine(TesterPath, $"../../../../../ICSharpCode.Decompiler.TestRunner/bin/Release/net{CurrentNetCoreVersion.Version}");
 #endif
 			// To parse: <Project><ItemGroup><PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.8.0-3.final" />
 			packagesPropsFile = Path.Combine(TesterPath, "../../../../../Directory.Packages.props");
@@ -165,7 +161,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			await vswhereToolset.Fetch().ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch("5.0.0", sourcePath: "ref/net5.0").ConfigureAwait(false);
 			await RefAssembliesToolset.Fetch("9.0.0", sourcePath: "ref/net9.0").ConfigureAwait(false);
-			await RefAssembliesToolset.Fetch(CurrentNetCoreRefAsmVersion, sourcePath: $"ref/net{CurrentNetCoreVersion}").ConfigureAwait(false);
+			await RefAssembliesToolset.Fetch(CurrentNetCoreVersion.RefAsmVersion, sourcePath: $"ref/net{CurrentNetCoreVersion.Version}").ConfigureAwait(false);
 
 #if DEBUG
 			const string testRunnerConfig = "Debug";
@@ -472,7 +468,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static IReadOnlyList<string> CoreDefaultReferences => coreDefaultReferences;
 
 		static readonly Dictionary<string, Lazy<string>> targetFrameworkAttributeSnippetFiles = new() {
-			{ CurrentNetCoreAppVersion, new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(CurrentNetCoreAppVersion)) },
+			{ CurrentNetCoreVersion.AppVersion, new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(CurrentNetCoreVersion.AppVersion)) },
 			{ ".NETCoreApp,Version=v9.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v9.0")) },
 			{ ".NETCoreApp,Version=v5.0", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v5.0")) },
 			{ ".NETCoreApp,Version=v2.2", new Lazy<string>(() => GetTargetFrameworkAttributeSnippetFile(".NETCoreApp,Version=v2.2")) },
@@ -670,7 +666,7 @@ namespace System.Runtime.CompilerServices
 					CompilerOptions.UseRoslyn2_10_0 => ("2.10.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v2.2"),
 					CompilerOptions.UseRoslyn3_11_0 => ("3.11.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v5.0"),
 					CompilerOptions.UseRoslyn4_14_0 => ("4.14.0", "latest", targetNet40 ? null : ".NETCoreApp,Version=v9.0"),
-					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest", targetNet40 ? null : CurrentNetCoreAppVersion)
+					_ => (roslynLatestVersion, flags.HasFlag(CompilerOptions.Preview) ? "preview" : "latest", targetNet40 ? null : CurrentNetCoreVersion.AppVersion)
 				};
 
 				var cscPath = roslynToolset.GetCSharpCompiler(roslynVersion);
@@ -953,7 +949,7 @@ namespace System.Runtime.CompilerServices
 			}
 
 			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(assemblyName),
-				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(RefAssembliesToolset.GetPath(CurrentNetCoreAppVersion), r))),
+				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(RefAssembliesToolset.GetPath(CurrentNetCoreVersion.AppVersion), r))),
 				new CSharpCompilationOptions(
 					OutputKind.DynamicallyLinkedLibrary,
 					platform: Platform.AnyCpu,
