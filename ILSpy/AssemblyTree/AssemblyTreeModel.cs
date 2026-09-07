@@ -969,6 +969,10 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// </summary>
 		void OnActiveAssemblyListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
+			// A Move carries the moved entry in OldItems, but nothing left the list: sorting must
+			// not look like removal to anything downstream.
+			if (e.Action == NotifyCollectionChangedAction.Move)
+				return;
 			// Prune navigation-history entries that pointed at tree nodes inside removed
 			// assemblies BEFORE re-publishing — Back/Forward consumers (the toolbar
 			// commands + dropdowns) re-evaluate their CanExecute when the bus fires, so
