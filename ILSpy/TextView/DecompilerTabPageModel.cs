@@ -346,6 +346,14 @@ namespace ICSharpCode.ILSpy.TextView
 					n.PropertyChanged -= OnCurrentNodePropertyChanged;
 				currentNodes = value.ToArray();
 				cachedBaseTitle = ComposeBaseTitle();
+				if (currentNodes.Count == 0)
+				{
+					// Emptying the tab has to take the title with it. Nothing below assigns one
+					// for an empty tab - StartDecompile has nothing to decompile and returns -
+					// so the tab would keep naming the member it no longer shows. ComposeBaseTitle
+					// already names the empty case.
+					Title = cachedBaseTitle;
+				}
 				foreach (var n in currentNodes)
 					n.PropertyChanged += OnCurrentNodePropertyChanged;
 				// Let host chrome (the omnibar breadcrumb) react to the tab re-targeting a node.

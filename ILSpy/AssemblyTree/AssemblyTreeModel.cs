@@ -29,6 +29,8 @@ using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Avalonia.Threading;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.Decompiler;
@@ -527,7 +529,17 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			// that subscribe to CurrentAssemblyListChangedEventArgs see add/remove events
 			// from the live list.
 			if (AssemblyList is { } previous)
+			{
 				previous.CollectionChanged -= OnActiveAssemblyListCollectionChanged;
+				// Everything below builds a new tree, so the selection, the open tabs and the
+				// navigation history all describe a list that is about to stop being shown.
+				// Nothing is removed from that list - it is the list itself that goes away - so
+				// no collection event announces it, and the panes are told with the same Reset
+				// that clearing a list raises, which is the one path that discards all of it.
+				SelectedItems.Clear();
+				Util.MessageBus.Send(this, new Util.CurrentAssemblyListChangedEventArgs(
+					new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset)));
+			}
 			AssemblyList = list;
 			list.CollectionChanged += OnActiveAssemblyListCollectionChanged;
 			if (list.GetAssemblies().Length == 0 && list.ListName == AssemblyListManager.DefaultListName)
@@ -1027,9 +1039,33 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			}
 			Util.MessageBus.Send(this, new Util.CurrentAssemblyListChangedEventArgs(e));
 
+			// The removed assemblies took the selected node with them. Hand the selection to the
+			// nearest survivor so the tree does not come back empty-handed while it still has
+			// something to show; the tree view does this for its own Delete gesture, but a
+			// removal from anywhere else (the context menu, a command, a reload) would not.
+			// With nothing left there is nothing to select, and the panes stay empty.
+			if (e.OldItems is { Count: > 0 })
+				SelectSurvivorAfterRemoval(e.OldStartingIndex);
+
 			// List-dependent menu commands (Clear assembly list, Remove assemblies with load errors)
 			// re-evaluate CanExecute now that the list gained or lost entries.
 			Commands.CommandManager.InvalidateRequerySuggested();
+		}
+
+		/// <summary>
+		/// Puts the selection back on the row nearest to where the removed ones were, once the
+		/// tree has caught up with the removal. Does nothing while something is still selected -
+		/// only some of the removed assemblies held the selection, or none did.
+		/// </summary>
+		void SelectSurvivorAfterRemoval(int removedIndex)
+		{
+			Dispatcher.UIThread.Post(() => {
+				if (SelectedItems.Count > 0)
+					return;
+				if (Root is not { } root || root.Children.Count == 0)
+					return;
+				SelectNode(root.Children[Math.Clamp(removedIndex, 0, root.Children.Count - 1)]);
+			}, DispatcherPriority.Background);
 		}
 
 		// Coalesces burst F5 / programmatic Refresh() calls into a single async pipeline.
