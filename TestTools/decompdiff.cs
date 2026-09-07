@@ -25,10 +25,12 @@
 // round-trip tests, which verify correctness but not output quality.
 //
 // usage: dotnet run decompdiff.cs -- --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...>
-//                                    [-o <report-dir>] [--build] [--refs <dir>]... <dll|dir|@list>...
+//                                    [-o <report-dir>] [--no-build] [--refs <dir>]... <dll|dir|@list>...
 //
-// - checkout args are built on demand (Release; restore keeps packages.lock.json
-//   whole via -p:RestoreEnablePackagePruning=false); pass --build to force rebuild.
+// - checkout args are built (Release; restore keeps packages.lock.json whole via
+//   -p:RestoreEnablePackagePruning=false) on every run, because a build older than
+//   the checkout measures code that is not the one named; pass --no-build to reuse
+//   the build a checkout already carries.
 // - a commit-ish (branch, tag, sha, FETCH_HEAD) is resolved against the repository
 //   the tool is run from and checked out into a worktree under
 //   ~/.cache/decompdiff/<repo>/<commit>, kept and reused so a rerun keeps the
@@ -75,7 +77,7 @@ catch (AssertionFailedException)
 }
 
 string? oldSpec = null, newSpec = null, reportDir = null;
-bool forceBuild = false;
+bool skipBuild = false;
 var corpus = new List<string>();
 var refDirs = new List<string>();
 for (int i = 0; i < args.Length; i++)
@@ -92,7 +94,10 @@ for (int i = 0; i < args.Length; i++)
 			reportDir = args[++i];
 			break;
 		case "--build":
-			forceBuild = true;
+			// Building is what happens anyway; accepted so older invocations keep working.
+			break;
+		case "--no-build":
+			skipBuild = true;
 			break;
 		case "--refs":
 			refDirs.Add(args[++i]);
@@ -115,7 +120,7 @@ for (int i = 0; i < args.Length; i++)
 }
 if (oldSpec == null || newSpec == null || corpus.Count == 0)
 {
-	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--build] [--refs <dir>]... <dll|dir|@list>...");
+	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--no-build] [--refs <dir>]... <dll|dir|@list>...");
 	return 1;
 }
 reportDir ??= "decompdiff-report";
@@ -133,8 +138,8 @@ Directory.CreateDirectory(reportDir);
 Side oldSide, newSide;
 try
 {
-	oldSide = Side.Create("old", oldSpec, forceBuild);
-	newSide = Side.Create("new", newSpec, forceBuild);
+	oldSide = Side.Create("old", oldSpec, skipBuild);
+	newSide = Side.Create("new", newSpec, skipBuild);
 }
 catch (ArgumentException ex)
 {
@@ -852,7 +857,7 @@ class Side
 		Description = description;
 	}
 
-	public static Side Create(string name, string spec, bool forceBuild)
+	public static Side Create(string name, string spec, bool skipBuild)
 	{
 		string dllPath;
 		string description;
@@ -864,8 +869,8 @@ class Side
 		else if (Directory.Exists(spec))
 		{
 			var checkout = Path.GetFullPath(spec);
-			dllPath = BuildCheckout(checkout, forceBuild);
-			// The dll timestamp exposes stale pre-existing builds; --build forces a fresh one.
+			dllPath = BuildCheckout(checkout, skipBuild);
+			// The dll timestamp is in the header so a --no-build run says what it measured.
 			description = $"{checkout} ({GitDescribe(checkout)}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
 		}
 		else if (TryResolveCommit(spec, out var commit, out var repoRoot))
@@ -874,7 +879,7 @@ class Side
 			// The worktree is keyed by commit and kept: reusing it reuses the Release build
 			// already sitting in its bin/, which is what dominates the runtime of a rerun.
 			var checkout = EnsureWorktree(repoRoot, commit);
-			dllPath = BuildCheckout(checkout, forceBuild);
+			dllPath = BuildCheckout(checkout, skipBuild);
 			description = $"{spec} ({commit[..9]}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
 		}
 		else
@@ -886,7 +891,7 @@ class Side
 		return new Side(alc.LoadFromAssemblyPath(dllPath), description);
 	}
 
-	static string BuildCheckout(string checkout, bool forceBuild)
+	static string BuildCheckout(string checkout, bool skipBuild)
 	{
 		var csproj = Path.Combine(checkout, "ICSharpCode.Decompiler", "ICSharpCode.Decompiler.csproj");
 		if (!File.Exists(csproj))
@@ -896,8 +901,13 @@ class Side
 			? Directory.EnumerateFiles(binDir, "ICSharpCode.Decompiler.dll", SearchOption.AllDirectories)
 				.OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
 			: null;
-		if (existing != null && !forceBuild)
+		if (existing != null && skipBuild)
+		{
+			Console.Error.WriteLine($"  warning: --no-build, reusing {existing}");
+			Console.Error.WriteLine($"  warning: built {File.GetLastWriteTime(existing):yyyy-MM-dd HH:mm} - if that predates the checkout's"
+				+ " last change, the diff describes code neither side is on");
 			return existing;
+		}
 		// A bare restore would prune the repo's packages.lock.json files; keep them whole.
 		Run("dotnet", $"restore \"{csproj}\" -p:RestoreEnablePackagePruning=false");
 		Run("dotnet", $"build \"{csproj}\" -c Release --no-restore");
