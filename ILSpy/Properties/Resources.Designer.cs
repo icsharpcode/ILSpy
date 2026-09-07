@@ -2426,6 +2426,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Could not find &apos;{0}&apos; in the assemblies that were opened:.
+        /// </summary>
+        public static string NavigationTargetNotFound {
+            get {
+                return ResourceManager.GetString("NavigationTargetNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to New list.
         /// </summary>
         public static string NewList {

@@ -27,6 +27,20 @@
     <PackageReference Include="NSubstitute" />
   </ItemGroup>
 
+  <!-- A real reference assembly to test navigation against: the compiler writes one for this
+       project, carrying the ReferenceAssembly attribute and the same members as the output
+       assembly, which is exactly the pair a targeting pack and its runtime form. Copying it
+       next to the tests keeps the fixture off machine-specific NuGet paths. -->
+  <PropertyGroup>
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+  </PropertyGroup>
+
+  <Target Name="CopyReferenceAssemblyFixture" AfterTargets="Build" Inputs="@(IntermediateRefAssembly)"
+          Outputs="$(OutDir)ReferenceAssemblyFixture\$(TargetFileName)">
+    <MakeDir Directories="$(OutDir)ReferenceAssemblyFixture" />
+    <Copy SourceFiles="@(IntermediateRefAssembly)" DestinationFolder="$(OutDir)ReferenceAssemblyFixture" />
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj" />
     <!-- Build the sample plugin so the composition test has something to load, but DON'T copy

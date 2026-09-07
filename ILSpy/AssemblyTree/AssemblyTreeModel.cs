@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Composition;
@@ -734,9 +735,34 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				&& await NavigateOnLaunchAsync(navigateTo, relevant);
 			if (!navigationHandled && newlyLoaded.Count == 1 && FindAssemblyNode(newlyLoaded[0]) is { } singleNode)
 				SelectNode(singleNode);
+			// An ID that named nothing leaves the tree wherever it was, which on its own says
+			// only that the jump did not happen. Name the target and what was searched, in the
+			// pane the jump would have filled.
+			if (!navigationHandled && args.NavigateTo is { Length: > 0 } unresolved)
+				ReportUnresolvedNavigationTarget(unresolved, relevant);
 
 			// Search-pane wiring lands with task 6. Until then the arg parses but is a no-op
 			// rather than crashing.
+		}
+
+		static void ReportUnresolvedNavigationTarget(string navigateTo, IList<LoadedAssembly> searched)
+		{
+			var output = new TextView.AvaloniaEditTextOutput { Title = "Navigation" };
+			output.WriteLine(string.Format(Properties.Resources.NavigationTargetNotFound, navigateTo));
+			foreach (var asm in searched)
+			{
+				output.WriteLine("    " + asm.FileName);
+			}
+			if (AppEnv.AppComposition.TryGetExport<Docking.DockWorkspace>() is not { } dockWorkspace)
+				return;
+			// ShowText writes to the active decompiler tab and does nothing at all when the
+			// active content is something else - a metadata table, or nothing yet at startup,
+			// which is exactly when this report is written. A report that can go missing is no
+			// better than the silence it replaces, so fall back to a tab of its own.
+			if (dockWorkspace.ActiveDecompilerTab != null)
+				dockWorkspace.ShowText(output);
+			else
+				dockWorkspace.ShowTextInNewTab(output.Title, output);
 		}
 
 		/// <summary>
@@ -808,20 +834,31 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		/// </summary>
 		internal static IReadOnlyList<IEntity> FindEntitiesInRelevantAssemblies(string navigateTo, IEnumerable<LoadedAssembly> relevantAssemblies)
 		{
-			// Reference assemblies are skipped so the search keeps looking for another
-			// assembly that might have a usable definition.
-			IReadOnlyList<MetadataFile> modules = [.. from asm in relevantAssemblies let mod = asm.GetMetadataFileOrNull() where mod != null && !mod.IsReferenceAssembly() select mod];
-			// The id came from a command line, so it is searched with the omission-tolerant
-			// ladder rather than resolved exactly: a parameter list or a generic arity that has
-			// to be spelled out is one the caller had to know before asking.
-			var (module, handles) = DocumentationIdSearch.Find(navigateTo, modules);
-			if (module == null || handles.IsEmpty)
+			IReadOnlyList<MetadataFile> loaded = [.. from asm in relevantAssemblies let mod = asm.GetMetadataFileOrNull() where mod != null select mod];
+			// A definition with a body says more than a signature-only one, so the reference
+			// assemblies are searched only once the others have come up empty. Skipping them
+			// outright would leave the target unresolved for the assembly list a project's
+			// references make up, which is what the VS add-in passes (issue #2093).
+			var (module, handles) = FindInModules([.. loaded.Where(mod => !mod.IsReferenceAssembly())]);
+			if (module == null)
+				(module, handles) = FindInModules([.. loaded.Where(mod => mod.IsReferenceAssembly())]);
+			if (module == null)
+				return [];
+
+			(MetadataFile? Module, ImmutableArray<EntityHandle> Handles) FindInModules(IReadOnlyList<MetadataFile> modules)
 			{
+				if (modules.Count == 0)
+					return default;
+				// The id came from a command line, so it is searched with the omission-tolerant
+				// ladder rather than resolved exactly: a parameter list or a generic arity that
+				// has to be spelled out is one the caller had to know before asking.
+				var (found, foundHandles) = DocumentationIdSearch.Find(navigateTo, modules);
+				if (found != null && !foundHandles.IsEmpty)
+					return (found, foundHandles);
 				var (forwardedModule, handle) = FindMemberViaTypeForwarders(navigateTo, modules);
 				if (forwardedModule == null || handle.IsNil)
-					return [];
-				module = forwardedModule;
-				handles = [handle];
+					return default;
+				return (forwardedModule, [handle]);
 			}
 			if (module.GetLoadedAssembly().GetTypeSystemOrNull()?.MainModule is not MetadataModule metadataModule)
 				return [];
