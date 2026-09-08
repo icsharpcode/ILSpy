@@ -787,7 +787,14 @@ namespace ICSharpCode.ILSpy.Docking
 		void ShowSelectedNode()
 		{
 			using var _ = ICSharpCode.ILSpy.AppEnv.AppLog.Phase("DockWorkspace.ShowSelectedNode");
-			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>().ToArray();
+			// Detached rows are skipped. Removing a set of assemblies takes their nodes out of the
+			// tree in one step but the list control drops them from its selection one at a time, so
+			// this runs again for each intermediate selection on the way to empty -- every one of
+			// them holding nodes that are no longer in the tree. Showing those would decompile an
+			// assembly the user just removed, and the result would land on top of the emptied tab.
+			var nodes = assemblyTreeModel.SelectedItems.OfType<ILSpyTreeNode>()
+				.Where(node => node.Parent != null)
+				.ToArray();
 			if (nodes.Length == 0)
 			{
 				lastShownNodes = null;
