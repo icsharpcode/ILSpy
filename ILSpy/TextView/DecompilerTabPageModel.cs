@@ -641,6 +641,13 @@ namespace ICSharpCode.ILSpy.TextView
 				ICSharpCode.ILSpy.AppEnv.AppLog.Mark($"DecompileAsync #{callNumber}: {rendered.Length} chars, {(output.Foldings?.Count ?? 0)} foldings, {(output.References?.Count ?? 0)} refs");
 				using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}: Dispatcher.InvokeAsync (apply Text + props, triggers ApplyDocument)"))
 					await Dispatcher.UIThread.InvokeAsync(() => {
+						// Re-check on the UI thread, not just before rendering: collecting the text
+						// and waiting for this callback both take time, and a cancel that lands in
+						// that window (the assembly was removed from the list, the user selected
+						// something else) must not let the finished output overwrite whatever state
+						// the tab has been put into since.
+						if (cts.Token.IsCancellationRequested)
+							return;
 						Title = cachedBaseTitle;
 						ApplyOutput(output, effectiveSyntaxExtension, rendered);
 					});
