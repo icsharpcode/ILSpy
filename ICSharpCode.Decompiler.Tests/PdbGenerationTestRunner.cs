@@ -427,7 +427,7 @@ namespace ICSharpCode.Decompiler.Tests
 			string outputBase = Path.Combine(TestCasePath, nameof(RuntimeAsync) + ".expected");
 			Tester.CompileCSharpWithPdb(outputBase, new Dictionary<string, string> {
 				{ Path.GetFileName(sourceFile), File.ReadAllText(sourceFile) }
-			}, CompilerOptions.EnableRuntimeAsync);
+			}, CompilerOptions.EnableRuntimeAsync | CompilerOptions.Library);
 			string peFileName = outputBase + ".dll";
 
 			var module = new PEFile(peFileName);
@@ -448,6 +448,99 @@ namespace ICSharpCode.Decompiler.Tests
 				Assert.That(reader.GetGuid(cdi.Kind), Is.Not.EqualTo(KnownGuids.MethodSteppingInformation),
 					"runtime-async methods have no yield/resume offsets; no stepping information should be emitted");
 			}
+		}
+
+		[Test]
+		public void AsyncSteppingCatchHandler()
+		{
+			// The catch handler field of the async stepping blob is the generated handler's IL offset
+			// plus one, and only for async void methods; 0 otherwise. A consumer decodes it as
+			// (value - 1), so a raw offset points into the middle of an instruction and Mono.Cecil
+			// throws while reading the body, taking ILLink with it (#2823). Both PDBs here describe
+			// the same assembly, so the compiler's value is a direct oracle.
+			(string peFileName, string pdbFileName) = CompileTestCase(nameof(AsyncSteppingCatchHandler));
+
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+
+			using var generatedPdb = new MemoryStream();
+			new PortablePdbWriter { NoLogo = true }
+				.WritePdb(module, decompiler, new DecompilerSettings(), generatedPdb);
+
+			generatedPdb.Position = 0;
+			var actual = ReadCatchHandlerOffsets(
+				MetadataReaderProvider.FromPortablePdbStream(generatedPdb).GetMetadataReader(), module.Metadata);
+			using var compilerPdb = File.OpenRead(pdbFileName);
+			var expected = ReadCatchHandlerOffsets(
+				MetadataReaderProvider.FromPortablePdbStream(compilerPdb).GetMetadataReader(), module.Metadata);
+
+			Assert.That(expected, Is.Not.Empty, "the fixture produced no async stepping information to compare against");
+			Assert.That(Format(actual), Is.EqualTo(Format(expected)));
+
+			static string Format(Dictionary<string, uint> offsets)
+				=> string.Join("\n", offsets.OrderBy(pair => pair.Key, StringComparer.Ordinal)
+					.Select(pair => $"{pair.Key}: 0x{pair.Value:x}"));
+		}
+
+		[Test]
+		public void AsyncSteppingEntryPoint()
+		{
+			// The compiler records a catch handler for two shapes, not one: an async void method, and
+			// an async entry point - which returns Task. Both are shapes nothing is expected to await,
+			// so an exception escaping them should reach the debugger as user-unhandled. The fixture
+			// holds all three cases with identical bodies, so only the entry-point and return-type
+			// distinctions can account for a difference.
+			// Without CompilerOptions.Library the fixture is compiled as an executable, which is what
+			// gives it an entry point to recognise.
+			(string peFileName, string pdbFileName) = CompileTestCase(nameof(AsyncSteppingEntryPoint),
+				CompilerOptions.None);
+
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+
+			using var generatedPdb = new MemoryStream();
+			new PortablePdbWriter { NoLogo = true }
+				.WritePdb(module, decompiler, new DecompilerSettings(), generatedPdb);
+
+			generatedPdb.Position = 0;
+			var actual = ReadCatchHandlerOffsets(
+				MetadataReaderProvider.FromPortablePdbStream(generatedPdb).GetMetadataReader(), module.Metadata);
+			using var compilerPdb = File.OpenRead(pdbFileName);
+			var expected = ReadCatchHandlerOffsets(
+				MetadataReaderProvider.FromPortablePdbStream(compilerPdb).GetMetadataReader(), module.Metadata);
+
+			Assert.That(expected.Count, Is.EqualTo(4), "the fixture should produce four async state machines");
+			Assert.That(expected.Values.Count(offset => offset != 0), Is.EqualTo(2),
+				"only the async void method and the entry point should carry a catch handler");
+			Assert.That(Format(actual), Is.EqualTo(Format(expected)));
+
+			static string Format(Dictionary<string, uint> offsets)
+				=> string.Join("\n", offsets.OrderBy(pair => pair.Key, StringComparer.Ordinal)
+					.Select(pair => $"{pair.Key}: 0x{pair.Value:x}"));
+		}
+
+		/// <summary>
+		/// The catch handler offset out of every MethodSteppingInformation blob, keyed by the name of
+		/// the method that carries it.
+		/// </summary>
+		private static Dictionary<string, uint> ReadCatchHandlerOffsets(MetadataReader pdb, MetadataReader pe)
+		{
+			var offsets = new Dictionary<string, uint>();
+			foreach (var handle in pdb.CustomDebugInformation)
+			{
+				var cdi = pdb.GetCustomDebugInformation(handle);
+				if (pdb.GetGuid(cdi.Kind) != KnownGuids.MethodSteppingInformation)
+					continue;
+				var method = pe.GetMethodDefinition((MethodDefinitionHandle)cdi.Parent);
+				var declaringType = pe.GetTypeDefinition(method.GetDeclaringType());
+				offsets[$"{pe.GetString(declaringType.Name)}.{pe.GetString(method.Name)}"]
+					= pdb.GetBlobReader(cdi.Value).ReadUInt32();
+			}
+			return offsets;
 		}
 
 		private class TestProgressReporter : IProgress<DecompilationProgress>
@@ -585,17 +678,19 @@ namespace ICSharpCode.Decompiler.Tests
 			TestSequencePoints(knownResidual: true);
 		}
 
-		private static void CompileCSharpWithPdb(string outputBase, string sourceFile)
+		private static void CompileCSharpWithPdb(string outputBase, string sourceFile,
+			CompilerOptions compilerOptions = CompilerOptions.Library)
 		{
 			Tester.CompileCSharpWithPdb(outputBase, new Dictionary<string, string> {
 				{ Path.GetFileName(sourceFile), File.ReadAllText(sourceFile) }
-			});
+			}, compilerOptions);
 		}
 
-		private (string peFileName, string pdbFileName) CompileTestCase(string testName)
+		private (string peFileName, string pdbFileName) CompileTestCase(string testName,
+			CompilerOptions compilerOptions = CompilerOptions.Library)
 		{
 			string sourceFile = Path.Combine(TestCasePath, testName + ".cs");
-			CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), sourceFile);
+			CompileCSharpWithPdb(Path.Combine(TestCasePath, testName + ".expected"), sourceFile, compilerOptions);
 
 			string peFileName = Path.Combine(TestCasePath, testName + ".expected.dll");
 			string pdbFileName = Path.Combine(TestCasePath, testName + ".expected.pdb");

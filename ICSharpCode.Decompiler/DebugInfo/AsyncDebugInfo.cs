@@ -25,6 +25,10 @@ namespace ICSharpCode.Decompiler.DebugInfo
 {
 	public readonly struct AsyncDebugInfo
 	{
+		/// <summary>
+		/// IL offset of the compiler-generated catch handler whose exceptions the debugger should
+		/// report as user-unhandled, or -1 when there is none to record.
+		/// </summary>
 		public readonly int CatchHandlerOffset;
 		public readonly ImmutableArray<Await> Awaits;
 
@@ -49,7 +53,9 @@ namespace ICSharpCode.Decompiler.DebugInfo
 		public BlobBuilder BuildBlob(MethodDefinitionHandle moveNext)
 		{
 			BlobBuilder blob = new BlobBuilder();
-			blob.WriteUInt32((uint)CatchHandlerOffset);
+			// The field is the handler's offset plus one; 0 is the encoding for "none", which is why
+			// a consumer reading it back subtracts one before resolving it to an instruction.
+			blob.WriteUInt32((uint)(CatchHandlerOffset + 1));
 			foreach (var await in Awaits)
 			{
 				blob.WriteUInt32((uint)await.YieldOffset);
