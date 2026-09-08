@@ -272,7 +272,8 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 					Tree.Root = model.Root;
 					WireDropSelection(model);
 				}
-				selectionBinder = new ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
+				selectionBinder = new ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder(
+					Tree, model.SelectedItems, model.BatchSelectionChange);
 			}
 		}
 

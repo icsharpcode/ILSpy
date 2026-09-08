@@ -252,7 +252,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		public bool IsNodeFullyVisible(SharpTreeNode node)
 		{
 			ArgumentNullException.ThrowIfNull(node);
-			var scrollViewer = this.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
+			var scrollViewer = ScrollHost;
 			if (scrollViewer is null)
 				return false;
 			if (ContainerFromItem(node) is Control row && row.IsVisible
@@ -260,6 +260,17 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				return top.Y >= 0 && top.Y + row.Bounds.Height <= scrollViewer.Viewport.Height;
 			return false;
 		}
+
+		ScrollViewer? scrollHost;
+
+		/// <summary>
+		/// The template's <see cref="ScrollViewer"/>, looked up once. Callers that ask per node --
+		/// a selection sync checks every selected row -- would otherwise walk the visual tree once
+		/// per call. Re-resolved while null so a query made before the template is applied does not
+		/// cache the miss.
+		/// </summary>
+		ScrollViewer? ScrollHost
+			=> scrollHost ??= this.GetVisualDescendants().OfType<ScrollViewer>().FirstOrDefault();
 
 		/// <summary>Moves the (single) selection to <paramref name="node"/> and focuses it.
 		/// Used by keyboard navigation where selection must follow the caret.</summary>
