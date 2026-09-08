@@ -23,6 +23,7 @@ using System.Composition;
 using System.Linq;
 
 using Avalonia.Media;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -85,10 +86,38 @@ namespace ICSharpCode.ILSpy.Search
 
 		void OnPropertyChangedDispatch(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is nameof(SearchTerm) or nameof(SelectedSearchMode))
-				RestartSearch();
+			// Typing is debounced; picking a mode is a single deliberate act, so it restarts at once.
+			if (e.PropertyName == nameof(SearchTerm))
+				RestartSearchAfterTypingPause();
 			if (e.PropertyName == nameof(SelectedSearchMode))
+			{
+				RestartSearch();
 				PersistSelectedMode();
+			}
+		}
+
+		// Long enough to swallow the gaps within a typed word, short enough that a search still
+		// feels like it starts as soon as the user stops.
+		static readonly TimeSpan SearchTermDebounce = TimeSpan.FromMilliseconds(200);
+		DispatcherTimer? searchTermDebounce;
+
+		/// <summary>
+		/// Restarts the search once typing pauses, instead of on every keystroke.
+		/// </summary>
+		/// <remarks>
+		/// Each restart cancels the walk in progress and starts another one on the thread pool, so
+		/// typing a twenty-character term used to start and abandon twenty searches, of which only
+		/// the last could finish.
+		/// </remarks>
+		void RestartSearchAfterTypingPause()
+		{
+			searchTermDebounce ??= new DispatcherTimer(SearchTermDebounce, DispatcherPriority.Input, (_, _) => {
+				searchTermDebounce!.Stop();
+				RestartSearch();
+			});
+			// Restarting the timer is what makes the wait "since the last keystroke".
+			searchTermDebounce.Stop();
+			searchTermDebounce.Start();
 		}
 
 		SearchModeEntry? ResolvePersistedMode()
