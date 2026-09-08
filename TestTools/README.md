@@ -6,6 +6,7 @@ in-repo test suite cannot: it decompiles fixtures we wrote, these decompile what
 | tool | question it answers |
 |---|---|
 | `nugetfuzz.cs` | Does the decompiler *crash* on real code? (asserts, exceptions, IL warnings) |
+| `nugetfuzz.cs --pdb` | Is the *PDB* we generate for real code well-formed, and can a consumer read it? |
 | `decompdiff.cs` | Did a change make the *output* better or worse? (readability across two builds) |
 | `nuget-top.ps1` | Where do I get a corpus? (downloads the most-downloaded packages) |
 
@@ -39,6 +40,43 @@ warnings, so treat a sudden warning spike as a reference problem until proven ot
 Environment variables: `NUGETFUZZ_VERBOSE` (per-type progress), `NUGETFUZZ_DUMP=<dir>` (write the
 decompiled C#), `NUGETFUZZ_LEDGER=<file>` (append findings as JSONL instead of writing a
 per-run HTML report), `NUGETFUZZ_HTML=<file>` (report path), `NUGET_PACKAGES` (package cache).
+
+### Checking generated PDBs
+
+`--pdb` swaps the type-by-type sweep for a different question: it generates a portable PDB for
+each assembly with `PortablePdbWriter` and checks it two ways. First Mono.Cecil - the consumer
+ILLink uses, and the one that crashed in #2823 - has to read every method body *through* the PDB,
+which is what makes it decode the custom debug information. Then a structural lint over the PDB
+metadata checks that what it says is true of the assembly: IL offsets land on instruction
+boundaries and inside the method, sequence points increase and point at real text in the embedded
+source, local slots exist in the local signature, scopes nest, async stepping information decodes
+to a real catch handler of a method whose kickoff shape allows one, the hoisted-local scope table
+reaches the highest slot the state machine's field names declare, and the import scope table has
+a single root. Findings are reported as one `PDB` kind with a bracketed category in the message.
+
+```pwsh
+dotnet run nugetfuzz.cs -- --pdb Microsoft.Extensions.Http
+dotnet run nugetfuzz.cs -- --pdb @crawl/top-200.corpus.txt
+```
+
+Generating a whole assembly's PDB costs far more than decompiling its types, so `--pdb` is for a
+curated corpus, not for the catalog sweep. Assemblies without a CodeView debug directory entry
+are skipped: the writer takes the PDB id from that entry and a consumer rejects a PDB whose id
+does not match it, the same reason `ilspycmd -genpdb` refuses them.
+
+The `Debug.Assert` in the writer that fires on real-world input would unwind out of `WritePdb` and
+leave nothing to check, so for the duration of that call the assert listener records instead of
+throwing. The assertion is still reported; the PDB it produced is still checked.
+
+`--pdb-lint` runs the same two checks against the PDB an assembly already ships with - beside it
+as a `.pdb`, or embedded in the PE. This is how the lint is calibrated, and it is the first thing
+to run after touching a check: a PDB the C# compiler wrote must produce **no** findings at all, so
+anything reported there is a defect in the lint rather than in ILSpy.
+
+```pwsh
+dotnet run nugetfuzz.cs -- --pdb-lint ../ICSharpCode.Decompiler/bin/Debug/netstandard2.0/ICSharpCode.Decompiler.dll
+dotnet run nugetfuzz.cs -- --pdb-lint ~/.cache/nugetfuzz     # every dll that ships symbols
+```
 
 ### Sweeping the whole catalog
 

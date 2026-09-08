@@ -18,6 +18,7 @@
 
 #:project ../ICSharpCode.Decompiler/ICSharpCode.Decompiler.csproj
 #:package NuGet.Packaging@*
+#:package Mono.Cecil@0.11.6
 #:property PublishAot=false
 
 // nugetfuzz: downloads nuget packages (sequentially), resolves their dependency
@@ -25,10 +26,20 @@
 // Microsoft.NETFramework.ReferenceAssemblies packages), then decompiles every
 // assembly type-by-type and reports Debug.Assert failures / exceptions.
 //
-// usage: dotnet run nugetfuzz.cs -- [--download-only] <PackageId[@Version]>... | @packagelist.txt
+// With --pdb it instead generates a portable PDB for each assembly and checks it: Mono.Cecil
+// (the consumer ILLink uses) has to be able to read every method body through it, and the PDB
+// metadata has to satisfy a structural lint. --pdb-lint runs the same checks against a PDB that
+// already exists next to the assembly, which is how the lint is calibrated: it must report
+// nothing at all for a PDB the C# compiler wrote.
+//
+// usage: dotnet run nugetfuzz.cs -- [--download-only|--pdb] <PackageId[@Version]>... | @packagelist.txt
+//        dotnet run nugetfuzz.cs -- --pdb-lint <file.dll|dir>... | @corpus.txt
 
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -36,7 +47,13 @@ using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+
+// Cecil is used through aliases: its MethodDefinition/SequencePoint/MethodBody names collide with
+// System.Reflection.Metadata's and the decompiler's, and every one of the three is used here.
+using Cecil = Mono.Cecil;
+using CecilCil = Mono.Cecil.Cil;
 
 using NuGet.Frameworks;
 using NuGet.Packaging;
@@ -64,7 +81,7 @@ var installedTfm = NuGetFramework.Parse($"net{Environment.Version.Major}.{Enviro
 var net48 = NuGetFramework.Parse("net48");
 var reducer = new FrameworkReducer();
 var failures = new Dictionary<string, Finding>();
-int assemblyCount = 0, typeCount = 0;
+int assemblyCount = 0, typeCount = 0, pdbChecked = 0, pdbSkipped = 0;
 long charCount = 0, refsResolved = 0, refsTotal = 0;
 bool verbose = Environment.GetEnvironmentVariable("NUGETFUZZ_VERBOSE") != null;
 var dumpDir = Environment.GetEnvironmentVariable("NUGETFUZZ_DUMP");
@@ -111,40 +128,58 @@ if (args is ["--report", var ledgerPath, ..])
 // Populates the cache without decompiling: the sweep is the slow part, and a corpus
 // only needs the assemblies on disk.
 var downloadOnly = args.Contains("--download-only");
-var packages = args
-	.Where(a => a != "--download-only")
+// Generates a PDB per assembly and checks it, instead of decompiling type by type. The two are
+// alternatives rather than additions: a whole-assembly PDB is far more expensive than the type
+// sweep, and they answer different questions.
+var pdbMode = args.Contains("--pdb");
+// Checks the PDB the assembly already ships with. Calibration, not a sweep.
+var pdbLint = args.Contains("--pdb-lint");
+var arguments = args
+	.Where(a => !a.StartsWith("--"))
 	.SelectMany(a => a.StartsWith('@') ? File.ReadAllLines(a[1..]) : new[] { a })
 	.Select(l => l.Trim())
 	.Where(l => l.Length > 0 && !l.StartsWith('#'))
 	.ToList();
-if (packages.Count == 0)
+if (arguments.Count == 0)
 {
-	Console.Error.WriteLine("usage: nugetfuzz [--download-only] <PackageId[@Version]>... | @packagelist.txt");
+	Console.Error.WriteLine("usage: nugetfuzz [--download-only|--pdb] <PackageId[@Version]>... | @packagelist.txt");
+	Console.Error.WriteLine("       nugetfuzz --pdb-lint <file.dll|dir>... | @corpus.txt");
 	Console.Error.WriteLine("       nugetfuzz --report <ledger.jsonl> [out.html]");
 	return 1;
 }
 
-foreach (var spec in packages)
+if (pdbLint)
 {
-	try
+	foreach (var dll in ExpandDlls(arguments))
+		LintExistingPdb(dll);
+}
+else
+{
+	foreach (var spec in arguments)
 	{
-		await ProcessPackage(spec);
-	}
-	catch (Exception ex) when (
-		ex is InvalidOperationException && ex.Message.Contains("not found")
-		|| ex is InvalidDataException)
-	{
-		// Deleted/delisted package or corrupt nupkg on nuget.org - not a decompiler issue.
-		Console.WriteLine($"  skip {spec}: {ex.Message}");
-	}
-	catch (Exception ex)
-	{
-		Report(spec, "-", "-", ex);
+		try
+		{
+			await ProcessPackage(spec);
+		}
+		catch (Exception ex) when (
+			ex is InvalidOperationException && ex.Message.Contains("not found")
+			|| ex is InvalidDataException)
+		{
+			// Deleted/delisted package or corrupt nupkg on nuget.org - not a decompiler issue.
+			Console.WriteLine($"  skip {spec}: {ex.Message}");
+		}
+		catch (Exception ex)
+		{
+			Report(spec, "-", "-", ex);
+		}
 	}
 }
 
 Console.WriteLine();
-Console.WriteLine($"=== {assemblyCount} assemblies, {typeCount} types decompiled ({charCount} chars), {refsResolved}/{refsTotal} refs resolved, {failures.Count} distinct failures ({failures.Values.Sum(f => f.Count)} total) ===");
+if (pdbMode || pdbLint)
+	Console.WriteLine($"=== {assemblyCount} assemblies, {pdbChecked} PDBs checked, {pdbSkipped} skipped, {failures.Count} distinct failures ({failures.Values.Sum(f => f.Count)} total) ===");
+else
+	Console.WriteLine($"=== {assemblyCount} assemblies, {typeCount} types decompiled ({charCount} chars), {refsResolved}/{refsTotal} refs resolved, {failures.Count} distinct failures ({failures.Values.Sum(f => f.Count)} total) ===");
 foreach (var entry in failures.Values.OrderByDescending(f => f.Count))
 	Console.WriteLine($"{entry.Count,6}x {entry.Describe()}");
 // A sweep runs this program once per package, so per-run findings are appended to a
@@ -579,6 +614,12 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 		}
 		Console.WriteLine($"  {name}");
 		assemblyCount++;
+		if (pdbMode)
+		{
+			CheckGeneratedPdb(pkg, name, module, decompiler, dllPath, orderedDirs);
+			ReportResolutions(logResolver);
+			return;
+		}
 		foreach (var type in decompiler.TypeSystem.MainModule.TopLevelTypeDefinitions.ToList())
 		{
 			using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(60));
@@ -613,23 +654,603 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 				Report(pkg, name, type.FullTypeName.ToString(), ex);
 			}
 		}
-		var resolutions = logResolver.Resolutions;
-		var unresolved = resolutions.Where(kv => kv.Value == null).Select(kv => kv.Key).OrderBy(k => k).ToList();
-		refsTotal += resolutions.Count;
-		refsResolved += resolutions.Count - unresolved.Count;
-		Console.WriteLine($"    refs: {resolutions.Count - unresolved.Count}/{resolutions.Count} resolved");
-		if (verbose)
+		ReportResolutions(logResolver);
+	}
+}
+
+void ReportResolutions(LoggingResolver logResolver)
+{
+	var resolutions = logResolver.Resolutions;
+	var unresolved = resolutions.Where(kv => kv.Value == null).Select(kv => kv.Key).OrderBy(k => k).ToList();
+	refsTotal += resolutions.Count;
+	refsResolved += resolutions.Count - unresolved.Count;
+	Console.WriteLine($"    refs: {resolutions.Count - unresolved.Count}/{resolutions.Count} resolved");
+	if (verbose)
+	{
+		foreach (var kv in resolutions.OrderBy(kv => kv.Key))
+			Console.WriteLine($"      {kv.Key} -> {kv.Value ?? "NOT FOUND"}");
+	}
+	else
+	{
+		foreach (var u in unresolved)
+			Console.WriteLine($"    ! unresolved: {u}");
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// PDB verification. Two independent checks over the same PDB: the Cecil round-trip answers "can
+// the consumer ILLink uses read this at all", which is how #2823 surfaced; the lint answers "is
+// what it reads true of the assembly", which a crash-free but wrong PDB still fails.
+// ---------------------------------------------------------------------------------------------
+
+void CheckGeneratedPdb(string pkg, string asm, PEFile module, CSharpDecompiler decompiler,
+	string dllPath, List<string> searchDirs)
+{
+	// The writer takes the PDB id from the PE's CodeView debug directory entry, and a consumer
+	// rejects a PDB whose id does not match that entry, so without one there is nothing to check
+	// - the same reason ilspycmd refuses these assemblies.
+	if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(module))
+	{
+		Console.WriteLine("    skip: no CodeView debug directory entry");
+		pdbSkipped++;
+		return;
+	}
+	var pdbStream = new MemoryStream();
+	var asserts = new List<string>();
+	using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)))
+	{
+		decompiler.CancellationToken = cts.Token;
+		Trace.Listeners.Clear();
+		Trace.Listeners.Add(new CollectAsserts(asserts));
+		try
 		{
-			foreach (var kv in resolutions.OrderBy(kv => kv.Key))
-				Console.WriteLine($"      {kv.Key} -> {kv.Value ?? "NOT FOUND"}");
+			new PortablePdbWriter { NoLogo = true }
+				.WritePdb(module, decompiler, new DecompilerSettings(), pdbStream);
 		}
-		else
+		catch (OperationCanceledException)
 		{
-			foreach (var u in unresolved)
-				Console.WriteLine($"    ! unresolved: {u}");
+			Report(pkg, asm, "<pdb>", new TimeoutException("PDB generation timed out (10min)"));
+			return;
+		}
+		catch (Exception ex)
+		{
+			Report(pkg, asm, "<pdb>", ex);
+			return;
+		}
+		finally
+		{
+			Trace.Listeners.Clear();
+			Trace.Listeners.Add(new ThrowOnAssert());
+		}
+	}
+	// Metadata tokens in an assertion message vary per method; without normalising them one
+	// defect would fill the ledger with a finding per method it fired on.
+	foreach (var message in asserts.Select(m => Regex.Replace(m, @"\b[0-9A-Fa-f]{8}\b", "<token>")).Distinct())
+		Report(pkg, asm, "<pdb>", new AssertionFailedException(message));
+
+	pdbChecked++;
+	var bodies = CollectBodyFacts(dllPath, searchDirs);
+	CecilRoundTrip(pkg, asm, dllPath, pdbStream, searchDirs);
+	pdbStream.Position = 0;
+	using var provider = MetadataReaderProvider.FromPortablePdbStream(pdbStream);
+	LintPdb(pkg, asm, module.Metadata, provider.GetMetadataReader(), bodies, EntryPoint(module.Reader));
+}
+
+// Runs the same two checks against the PDB an assembly already ships with. This is how the lint
+// is calibrated: a PDB the C# compiler wrote must produce no findings at all, so anything
+// reported here is a defect in the lint rather than in ILSpy.
+void LintExistingPdb(string dllPath)
+{
+	var asm = Path.GetFileName(dllPath);
+	using var peStream = File.OpenRead(dllPath);
+	PEReader peReader;
+	try
+	{
+		peReader = new PEReader(peStream);
+		if (!peReader.HasMetadata)
+			return;
+	}
+	catch (BadImageFormatException)
+	{
+		return;
+	}
+	using (peReader)
+	{
+		// A PDB next to the assembly if there is one, otherwise the one embedded in the PE.
+		MemoryStream? pdbStream = null;
+		MetadataReaderProvider? provider = null;
+		var pdbPath = Path.ChangeExtension(dllPath, ".pdb");
+		try
+		{
+			if (File.Exists(pdbPath))
+			{
+				var bytes = File.ReadAllBytes(pdbPath);
+				// "BSJB": a Windows PDB is a different format the portable reader cannot open.
+				if (bytes.Length < 4 || BitConverter.ToUInt32(bytes, 0) != 0x424A5342)
+				{
+					pdbSkipped++;
+					return;
+				}
+				pdbStream = new MemoryStream(bytes);
+				provider = MetadataReaderProvider.FromPortablePdbStream(pdbStream, MetadataStreamOptions.LeaveOpen);
+			}
+			else
+			{
+				var embedded = peReader.ReadDebugDirectory()
+					.FirstOrDefault(e => e.Type == DebugDirectoryEntryType.EmbeddedPortablePdb);
+				if (embedded.Type != DebugDirectoryEntryType.EmbeddedPortablePdb)
+					return;
+				provider = peReader.ReadEmbeddedPortablePdbDebugDirectoryData(embedded);
+			}
+		}
+		catch (Exception ex) when (ex is IOException or BadImageFormatException)
+		{
+			pdbSkipped++;
+			return;
+		}
+		using (provider)
+		using (pdbStream)
+		{
+			Console.WriteLine($"  {asm}");
+			assemblyCount++;
+			pdbChecked++;
+			var bodies = CollectBodyFacts(dllPath, null);
+			CecilRoundTrip("-", asm, dllPath, pdbStream, null);
+			LintPdb("-", asm, peReader.GetMetadataReader(), provider.GetMetadataReader(), bodies,
+				EntryPoint(peReader));
 		}
 	}
 }
+
+Cecil.ReaderParameters CecilParameters(List<string>? searchDirs, Stream? symbols, bool readSymbols)
+{
+	var resolver = new Cecil.DefaultAssemblyResolver();
+	foreach (var dir in searchDirs ?? [])
+		resolver.AddSearchDirectory(dir);
+	var parameters = new Cecil.ReaderParameters { AssemblyResolver = resolver };
+	if (!readSymbols)
+		return parameters;
+	parameters.ReadSymbols = true;
+	if (symbols != null)
+	{
+		symbols.Position = 0;
+		parameters.SymbolReaderProvider = new CecilCil.PortablePdbReaderProvider();
+		parameters.SymbolStream = symbols;
+	}
+	else
+	{
+		parameters.SymbolReaderProvider = new CecilCil.EmbeddedPortablePdbReaderProvider();
+	}
+	return parameters;
+}
+
+// Parses every method body without symbols, so the lint has the assembly's own truth about
+// instruction boundaries, exception handlers and local counts to check the PDB against - and
+// still has it for the very methods whose debug information breaks the round-trip below.
+Dictionary<int, BodyFacts> CollectBodyFacts(string dllPath, List<string>? searchDirs)
+{
+	var facts = new Dictionary<int, BodyFacts>();
+	try
+	{
+		using var assembly = Cecil.AssemblyDefinition.ReadAssembly(dllPath, CecilParameters(searchDirs, null, readSymbols: false));
+		foreach (var type in assembly.MainModule.GetTypes())
+		{
+			foreach (var method in type.Methods)
+			{
+				if (!method.HasBody)
+					continue;
+				try
+				{
+					var body = method.Body;
+					facts[(int)method.MetadataToken.RID] = new BodyFacts(
+						body.CodeSize,
+						body.Instructions.Select(i => i.Offset).ToHashSet(),
+						body.ExceptionHandlers
+							.Where(h => h.HandlerType == CecilCil.ExceptionHandlerType.Catch)
+							.Select(h => h.HandlerStart.Offset).ToHashSet(),
+						body.Variables.Count);
+				}
+				catch (Exception)
+				{
+					// A body that will not parse without symbols says nothing about the PDB; the
+					// lint simply has no facts to check that one method against.
+				}
+			}
+		}
+	}
+	catch (Exception ex)
+	{
+		Console.WriteLine($"    ! body scan failed: {ex.GetType().Name}: {FirstLine(ex.Message)}");
+	}
+	return facts;
+}
+
+// Reads every method body through the PDB, which is what makes Cecil decode the custom debug
+// information attached to it. This is the path that fails in #2823 and inside ILLink.
+void CecilRoundTrip(string pkg, string asm, string dllPath, Stream? pdbStream, List<string>? searchDirs)
+{
+	Cecil.AssemblyDefinition assembly;
+	try
+	{
+		assembly = Cecil.AssemblyDefinition.ReadAssembly(dllPath, CecilParameters(searchDirs, pdbStream, readSymbols: true));
+	}
+	catch (CecilCil.SymbolsNotMatchingException)
+	{
+		Report(pkg, asm, "<pdb>", new PdbFinding(
+			"[MATCH] the PDB does not match the assembly's CodeView debug directory entry"));
+		return;
+	}
+	catch (Exception ex)
+	{
+		Report(pkg, asm, "<pdb>", new PdbFinding(
+			$"[CECIL] {ex.GetType().Name} opening the assembly with the PDB: {FirstLine(ex.Message)}"));
+		return;
+	}
+	using (assembly)
+	{
+		foreach (var type in assembly.MainModule.GetTypes())
+		{
+			foreach (var method in type.Methods)
+			{
+				if (!method.HasBody)
+					continue;
+				try
+				{
+					_ = method.Body;
+					_ = method.DebugInformation.SequencePoints;
+				}
+				catch (Cecil.AssemblyResolutionException)
+				{
+					// A reference the corpus does not contain, not a defect in the PDB.
+				}
+				catch (Exception ex)
+				{
+					// The Cecil frame separates distinct decode failures; the method name goes
+					// into the location, so the message stays the same for all of them.
+					var frame = (ex.StackTrace ?? "").Split('\n').Select(l => l.Trim())
+						.FirstOrDefault(l => l.Contains("Mono.Cecil")) ?? "";
+					Report(pkg, asm, method.FullName, new PdbFinding(
+						$"[CECIL] {ex.GetType().Name} reading a method body through the PDB @ {frame}"));
+				}
+			}
+		}
+	}
+}
+
+// Structural lint: everything the PDB claims has to be true of the assembly it describes. The
+// category is a prefix on the message, so one finding kind covers all of them in the report.
+void LintPdb(string pkg, string asm, MetadataReader pe, MetadataReader pdb, Dictionary<int, BodyFacts> bodies,
+	MethodDefinitionHandle entryPoint)
+{
+	var sourceLines = new Dictionary<int, string[]?>();
+
+	string MethodName(int rid)
+	{
+		if (rid <= 0 || rid > pe.MethodDefinitions.Count)
+			return "<pdb>";
+		var method = pe.GetMethodDefinition(MetadataTokens.MethodDefinitionHandle(rid));
+		var type = pe.GetTypeDefinition(method.GetDeclaringType());
+		var ns = pe.GetString(type.Namespace);
+		return $"{(ns.Length > 0 ? ns + "." : "")}{pe.GetString(type.Name)}.{pe.GetString(method.Name)}";
+	}
+
+	// One report per method per defect: a method with hundreds of sequence points would
+	// otherwise contribute hundreds of hits for a single mistake.
+	void Once(HashSet<string> seen, int rid, string message)
+	{
+		if (seen.Add(message))
+			Report(pkg, asm, MethodName(rid), new PdbFinding(message));
+	}
+
+	// The embedded source, as lines, for checking that sequence points point at real text.
+	string[]? EmbeddedLines(DocumentHandle handle)
+	{
+		int key = MetadataTokens.GetRowNumber(handle);
+		if (sourceLines.TryGetValue(key, out var cached))
+			return cached;
+		string[]? lines = null;
+		foreach (var infoHandle in pdb.GetCustomDebugInformation(handle))
+		{
+			var info = pdb.GetCustomDebugInformation(infoHandle);
+			if (pdb.GetGuid(info.Kind) != KnownGuids.EmbeddedSource)
+				continue;
+			var blob = pdb.GetBlobBytes(info.Value);
+			if (blob.Length < 4)
+				break;
+			// int32 uncompressed size, then the bytes - deflated when the size is non-zero.
+			int uncompressedSize = BitConverter.ToInt32(blob, 0);
+			using var raw = new MemoryStream(blob, 4, blob.Length - 4);
+			using Stream content = uncompressedSize > 0
+				? new DeflateStream(raw, CompressionMode.Decompress)
+				: raw;
+			using var reader = new StreamReader(content, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+			lines = reader.ReadToEnd().Replace("\r\n", "\n").Split('\n');
+			break;
+		}
+		sourceLines[key] = lines;
+		return lines;
+	}
+
+	// The MethodDebugInformation table is parallel to MethodDef: a consumer indexes it by
+	// method row, so a short table silently shifts every method's debug info.
+	if (pdb.MethodDebugInformation.Count != pe.MethodDefinitions.Count)
+	{
+		Report(pkg, asm, "<pdb>", new PdbFinding(
+			"[DOCS] the MethodDebugInformation row count differs from the MethodDef row count"));
+	}
+
+	bool anySequencePoints = false;
+	foreach (var infoHandle in pdb.MethodDebugInformation)
+	{
+		var info = pdb.GetMethodDebugInformation(infoHandle);
+		if (info.SequencePointsBlob.IsNil)
+			continue;
+		int rid = MetadataTokens.GetRowNumber(infoHandle);
+		bodies.TryGetValue(rid, out var facts);
+		var seen = new HashSet<string>();
+		int previousOffset = -1;
+		foreach (var point in info.GetSequencePoints())
+		{
+			anySequencePoints = true;
+			// Offsets are delta-encoded, so a non-increasing one is not just out of order:
+			// it aliases into the record that means "the document changed here".
+			if (point.Offset <= previousOffset)
+				Once(seen, rid, "[SEQPOINT] sequence point offsets are not strictly increasing");
+			previousOffset = point.Offset;
+			if (facts != null && !facts.InstructionOffsets.Contains(point.Offset))
+				Once(seen, rid, "[OFFSET] a sequence point offset is not an instruction boundary");
+			if (point.IsHidden)
+				continue;
+			if (point.StartLine > point.EndLine
+				|| (point.StartLine == point.EndLine && point.StartColumn >= point.EndColumn))
+			{
+				Once(seen, rid, "[SEQPOINT] a sequence point span is empty or inverted");
+			}
+			var lines = EmbeddedLines(point.Document);
+			if (lines == null)
+				continue;
+			if (point.EndLine > lines.Length)
+				Once(seen, rid, "[SOURCE] a sequence point points past the end of the embedded source");
+			else if (SpanIsBlank(lines, point.StartLine, point.StartColumn, point.EndLine, point.EndColumn))
+				Once(seen, rid, "[SOURCE] a sequence point span covers only whitespace");
+		}
+	}
+	if (anySequencePoints && pdb.Documents.Count == 0)
+		Report(pkg, asm, "<pdb>", new PdbFinding("[DOCS] the PDB has sequence points but no documents"));
+
+	// The table is sorted by method, then start offset, then descending length, so the
+	// enclosing scope of a row is always the innermost one still open.
+	int currentMethod = 0;
+	var open = new List<(int Start, int End)>();
+	var scopeSeen = new HashSet<string>();
+	foreach (var scopeHandle in pdb.LocalScopes)
+	{
+		var scope = pdb.GetLocalScope(scopeHandle);
+		int rid = MetadataTokens.GetRowNumber(scope.Method);
+		if (rid != currentMethod)
+		{
+			currentMethod = rid;
+			open.Clear();
+			scopeSeen.Clear();
+		}
+		bodies.TryGetValue(rid, out var facts);
+		int start = scope.StartOffset, end = scope.EndOffset;
+		if (facts != null)
+		{
+			if (!facts.InstructionOffsets.Contains(start))
+				Once(scopeSeen, rid, "[OFFSET] a local scope starts at an offset that is not an instruction boundary");
+			if (end > facts.CodeSize)
+				Once(scopeSeen, rid, "[OFFSET] a local scope extends past the end of the method body");
+			else if (end != facts.CodeSize && !facts.InstructionOffsets.Contains(end))
+				Once(scopeSeen, rid, "[OFFSET] a local scope ends at an offset that is not an instruction boundary");
+		}
+		while (open.Count > 0 && open[^1].End <= start)
+			open.RemoveAt(open.Count - 1);
+		if (open.Count > 0 && end > open[^1].End)
+			Once(scopeSeen, rid, "[LOCALS] a local scope is not nested inside its enclosing scope");
+		open.Add((start, end));
+		var slots = new HashSet<int>();
+		foreach (var variableHandle in scope.GetLocalVariables())
+		{
+			var variable = pdb.GetLocalVariable(variableHandle);
+			if (facts != null && variable.Index >= facts.LocalCount)
+				Once(scopeSeen, rid, "[LOCALS] a local variable slot is past the end of the method's local signature");
+			if (!slots.Add(variable.Index))
+				Once(scopeSeen, rid, "[LOCALS] two local variables in one scope share a slot");
+		}
+	}
+
+	// The expression evaluator resolves unqualified names by walking a scope up to the single
+	// module-level root. A second root means some scopes hang off nothing, and everything
+	// under them resolves against an empty chain no matter what the other root holds.
+	// (An import scope carrying no imports at all is legal - a file need not have usings.)
+	int rootImportScopes = 0;
+	foreach (var importScopeHandle in pdb.ImportScopes)
+	{
+		if (pdb.GetImportScope(importScopeHandle).Parent.IsNil)
+			rootImportScopes++;
+	}
+	if (rootImportScopes > 1)
+	{
+		Report(pkg, asm, "<pdb>", new PdbFinding(
+			"[IMPORTS] the import scope table has more than one root, so some scopes chain to nothing"));
+	}
+
+	foreach (var infoHandle in pdb.CustomDebugInformation)
+	{
+		var info = pdb.GetCustomDebugInformation(infoHandle);
+		if (info.Parent.Kind != HandleKind.MethodDefinition)
+			continue;
+		int rid = MetadataTokens.GetRowNumber((MethodDefinitionHandle)info.Parent);
+		bodies.TryGetValue(rid, out var facts);
+		var kind = pdb.GetGuid(info.Kind);
+		var seen = new HashSet<string>();
+		if (kind == KnownGuids.MethodSteppingInformation)
+			CheckAsyncStepping(pdb.GetBlobReader(info.Value), rid, facts, seen);
+		else if (kind == KnownGuids.StateMachineHoistedLocalScopes)
+			CheckHoistedScopes(pdb.GetBlobReader(info.Value), rid, facts, seen);
+	}
+
+	void CheckAsyncStepping(BlobReader reader, int rid, BodyFacts? facts, HashSet<string> seen)
+	{
+		try
+		{
+			if (reader.RemainingBytes < 4)
+			{
+				Once(seen, rid, "[ASYNC] the async stepping blob is truncated");
+				return;
+			}
+			long catchHandler = reader.ReadUInt32();
+			if (catchHandler != 0)
+			{
+				// The field is the handler's offset plus one, and only for async void
+				// methods; 0 otherwise. A consumer decodes it as (value - 1), so a raw
+				// offset resolves to an address in the middle of an instruction.
+				var kickoff = pdb.GetMethodDebugInformation(MetadataTokens.MethodDebugInformationHandle(rid))
+					.GetStateMachineKickoffMethod();
+				// The compiler records a handler for an async void method and for an async entry
+				// point - both are shapes nothing is expected to await, so the debugger should treat
+				// the exception as user-unhandled - and an async entry point returns Task.
+				if (!kickoff.IsNil && !IsUserEntryPoint(pe, kickoff, entryPoint) && !ReturnsVoid(pe, kickoff))
+					Once(seen, rid, "[ASYNC] async stepping information records a catch handler for a method whose kickoff method does not return void");
+				int decoded = (int)catchHandler - 1;
+				if (facts != null && !facts.InstructionOffsets.Contains(decoded))
+					Once(seen, rid, "[OFFSET] the async stepping catch handler does not decode to an instruction boundary");
+				else if (facts != null && !facts.CatchHandlerStarts.Contains(decoded))
+					Once(seen, rid, "[ASYNC] the async stepping catch handler does not decode to the start of a catch handler");
+			}
+			while (reader.RemainingBytes > 0)
+			{
+				int yield = (int)reader.ReadUInt32();
+				int resume = (int)reader.ReadUInt32();
+				int resumeMethod = reader.ReadCompressedInteger();
+				if (facts != null && !facts.InstructionOffsets.Contains(yield))
+					Once(seen, rid, "[OFFSET] an async yield offset is not an instruction boundary");
+				if (facts != null && !facts.InstructionOffsets.Contains(resume))
+					Once(seen, rid, "[OFFSET] an async resume offset is not an instruction boundary");
+				if (resumeMethod != rid)
+					Once(seen, rid, "[ASYNC] an async resume method is not the method carrying the stepping information");
+			}
+		}
+		catch (BadImageFormatException)
+		{
+			Once(seen, rid, "[ASYNC] the async stepping blob is malformed");
+		}
+	}
+
+	void CheckHoistedScopes(BlobReader reader, int rid, BodyFacts? facts, HashSet<string> seen)
+	{
+		int rows = 0;
+		while (reader.RemainingBytes >= 8)
+		{
+			int start = (int)reader.ReadUInt32();
+			int length = (int)reader.ReadUInt32();
+			rows++;
+			if (facts != null && start + length > facts.CodeSize)
+				Once(seen, rid, "[OFFSET] a state machine hoisted local scope extends past the end of the method body");
+		}
+		// The debugger indexes this table by the slot number it parses out of the state
+		// machine's own field names, so rows missing at the end drop those locals entirely.
+		if (rows < HoistedSlotCount(pe, rid))
+			Once(seen, rid, "[STATEMACHINE] the state machine hoisted local scope table has fewer rows than the state machine has hoisted slots");
+	}
+}
+
+// True when every character the span covers is whitespace - a sequence point the debugger would
+// highlight as an empty stretch of the source it is embedded next to.
+static bool SpanIsBlank(string[] lines, int startLine, int startColumn, int endLine, int endColumn)
+{
+	for (int line = startLine; line <= endLine && line <= lines.Length; line++)
+	{
+		var text = lines[line - 1];
+		int from = line == startLine ? Math.Min(startColumn - 1, text.Length) : 0;
+		int to = line == endLine ? Math.Min(endColumn - 1, text.Length) : text.Length;
+		if (to > from && text[from..to].Trim().Length > 0)
+			return false;
+	}
+	return true;
+}
+
+// A debugger finds a hoisted local by parsing the slot number N out of the state machine's own
+// field names and reading row N-1 of the hoisted scope table, so the table has to reach the
+// highest slot the debugger will ask for. Only user-visible hoisted fields are ever asked for:
+// <name>5__N holds a hoisted local and <>8__N a hoisted display class, while <>s__N compiler
+// temporaries and <>u__N awaiters share the same slot counter but are never looked up - which is
+// why the compiler's own table stops at the last user-visible slot rather than at the last field.
+static int HoistedSlotCount(MetadataReader pe, int methodRid)
+{
+	var method = pe.GetMethodDefinition(MetadataTokens.MethodDefinitionHandle(methodRid));
+	int max = 0;
+	foreach (var fieldHandle in pe.GetTypeDefinition(method.GetDeclaringType()).GetFields())
+	{
+		var match = Regex.Match(pe.GetString(pe.GetFieldDefinition(fieldHandle).Name), @"^<.*>[58]__([0-9]+)$");
+		if (match.Success)
+			max = Math.Max(max, int.Parse(match.Groups[1].Value));
+	}
+	return max;
+}
+
+// The assembly's entry point, or nil when there is none or it lives in another module of a
+// multi-module assembly (where the token is a File token rather than a method definition).
+static MethodDefinitionHandle EntryPoint(PEReader pe)
+{
+	int token = pe.PEHeaders.CorHeader?.EntryPointTokenOrRelativeVirtualAddress ?? 0;
+	return (token >> 24) == 0x06 && (token & 0xFFFFFF) != 0
+		? MetadataTokens.MethodDefinitionHandle(token & 0xFFFFFF)
+		: default;
+}
+
+// Whether a state machine's kickoff is the entry point as the user wrote it. An async entry
+// point compiles to the user's method plus a '<Main>' wrapper that awaits it, and it is the
+// wrapper the entry point token names, so the kickoff is recognised through it: same declaring
+// type, and the only two names the compiler gives a user entry point.
+static bool IsUserEntryPoint(MetadataReader pe, MethodDefinitionHandle kickoff, MethodDefinitionHandle entryPoint)
+{
+	if (entryPoint.IsNil)
+		return false;
+	if (kickoff == entryPoint)
+		return true;
+	var wrapper = pe.GetMethodDefinition(entryPoint);
+	if (pe.GetString(wrapper.Name) != "<Main>")
+		return false;
+	var definition = pe.GetMethodDefinition(kickoff);
+	var name = pe.GetString(definition.Name);
+	return (name == "Main" || name == "<Main>$")
+		&& definition.GetDeclaringType() == wrapper.GetDeclaringType();
+}
+
+// Reads just the return type out of a method signature: enough to tell an async void kickoff
+// method from an async Task one, without a type system or a resolved reference closure.
+static bool ReturnsVoid(MetadataReader pe, MethodDefinitionHandle handle)
+{
+	var reader = pe.GetBlobReader(pe.GetMethodDefinition(handle).Signature);
+	var header = reader.ReadSignatureHeader();
+	if (header.IsGeneric)
+		reader.ReadCompressedInteger();
+	reader.ReadCompressedInteger();
+	while (reader.RemainingBytes > 0)
+	{
+		byte element = reader.ReadByte();
+		// CMOD_REQD / CMOD_OPT may precede the return type.
+		if (element is 0x1f or 0x20)
+		{
+			reader.ReadCompressedInteger();
+			continue;
+		}
+		return element == 0x01;
+	}
+	return false;
+}
+
+// The paths of a corpus argument: a dll, or a directory scanned recursively for dlls.
+static IEnumerable<string> ExpandDlls(IEnumerable<string> entries)
+	=> entries
+		.SelectMany(e => Directory.Exists(e)
+			? Directory.EnumerateFiles(e, "*.dll", SearchOption.AllDirectories)
+			: [e])
+		.Where(f => !f.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase))
+		.Distinct()
+		.OrderBy(f => f, StringComparer.Ordinal);
 
 void Report(string pkg, string asm, string type, Exception ex)
 {
@@ -642,7 +1263,8 @@ void Report(string pkg, string asm, string type, Exception ex)
 		.FirstOrDefault(l => l.Contains("ICSharpCode.Decompiler")) ?? "";
 	var kind = inner is AssertionFailedException ? "ASSERT"
 		: inner is TimeoutException ? "TIMEOUT"
-		: inner is DecompilerWarning ? "WARNING" : "EXCEPTION";
+		: inner is DecompilerWarning ? "WARNING"
+		: inner is PdbFinding ? "PDB" : "EXCEPTION";
 	var key = $"{kind}|{inner.GetType().Name}|{inner.Message}|{topFrame}";
 	var location = $"{pkg} / {asm} / {type}";
 	if (failures.TryGetValue(key, out var existing))
@@ -774,6 +1396,7 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 		           color:#a8791f; border:1px solid #a8791f55; margin-left:6px; }
 		.ASSERT { border-left:4px solid #d97706; } .EXCEPTION { border-left:4px solid #dc2626; }
 		.TIMEOUT { border-left:4px solid #7c3aed; } .WARNING { border-left:4px solid #2563eb; }
+		.PDB { border-left:4px solid #0d9488; }
 		#filter { width:100%; padding:8px; margin:8px 0; border:1px solid var(--line); border-radius:6px;
 		          background:var(--bg); color:var(--fg); font:13px ui-monospace,monospace; }
 		</style></head><body>
@@ -841,9 +1464,39 @@ record LedgerEntry(string Record, string Kind, string ExceptionType, string Mess
 
 record VersionIndex(string[] versions);
 
+// What the PDB lint needs to know about a method body, read from the assembly alone.
+record BodyFacts(int CodeSize, HashSet<int> InstructionOffsets, HashSet<int> CatchHandlerStarts, int LocalCount);
+
 class AssertionFailedException(string message) : Exception(message);
 
 class DecompilerWarning(string message) : Exception(message);
+
+// A defect in a generated PDB. The message describes the shape of the defect and never the
+// instance that hit it - Report() dedupes on the message, so naming a method or an offset in it
+// would turn one bug into one finding per method.
+class PdbFinding(string message) : Exception(message);
+
+// Records assertion failures instead of throwing them. Debug.Assert unwinding out of the middle
+// of PortablePdbWriter would leave no PDB to check, and the writer is known to assert on
+// real-world input; with Trace.Listeners holding only this one, execution continues past the
+// assert and still produces a PDB to look at. The call site has to be captured here: nothing
+// throws, so there is no stack left to read afterwards, and a message-less Debug.Assert would
+// otherwise be reported as an empty string naming no code at all.
+class CollectAsserts(List<string> messages) : TraceListener
+{
+	public override void Fail(string? message, string? detailMessage)
+	{
+		var frame = Environment.StackTrace.Split('\n').Select(l => l.Trim())
+			.FirstOrDefault(l => l.Contains("ICSharpCode.Decompiler")) ?? "";
+		messages.Add($"{message} {detailMessage}".Trim() + $" @ {frame}");
+	}
+	public override void Write(string? message)
+	{
+	}
+	public override void WriteLine(string? message)
+	{
+	}
+}
 
 // Resolves assembly references from the given directories (in priority order) before
 // falling back to the wrapped resolver, and records every resolution and its outcome.
