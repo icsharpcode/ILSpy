@@ -178,6 +178,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void DeleteCore() => assembly.AssemblyList.Unload(assembly);
 
+		// Removing the assemblies one at a time makes every listener of the list (navigation
+		// history, running search, command re-query, open tabs) do its full reaction once per
+		// assembly; UnloadRange raises a single change for the whole set instead.
+		public override void Delete(SharpTreeNode[] nodes)
+		{
+			ArgumentNullException.ThrowIfNull(nodes);
+			assembly.AssemblyList.UnloadRange(nodes.OfType<AssemblyTreeNode>().Select(n => n.assembly));
+			// A set that also holds other deletable node types still has to lose those.
+			foreach (var node in nodes)
+			{
+				if (node is not AssemblyTreeNode)
+					node.Delete();
+			}
+		}
+
 		public override bool Save()
 		{
 			// Intercept the File → Save Code flow for valid managed assemblies whose active
@@ -647,9 +662,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				if (context.SelectedTreeNodes == null)
 					return;
-				// Snapshot before mutation — Unload reshapes the tree and the live selection.
-				foreach (var node in context.SelectedTreeNodes.OfType<AssemblyTreeNode>().ToArray())
-					node.Delete();
+				// Snapshot before mutation — unloading reshapes the tree and the live selection.
+				var nodes = context.SelectedTreeNodes.OfType<AssemblyTreeNode>().ToArray();
+				if (nodes.Length > 0)
+					nodes[0].Delete(nodes);
 			}
 		}
 
