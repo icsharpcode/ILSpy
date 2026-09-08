@@ -751,34 +751,30 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 		protected internal override void VisitNullCoalescingInstruction(NullCoalescingInstruction inst)
 		{
-			HandleBinaryWithOptionalEvaluation(inst, inst.ValueInst, inst.FallbackInst);
+			HandleOptionalEvaluation(inst, inst.FallbackInst, precedingArgument: inst.ValueInst);
 		}
 
 		protected internal override void VisitCachedDelegate(CachedDelegate inst)
 		{
-			DebugStartPoint(inst);
-			State cachedState = state.Clone();
-			inst.Argument.AcceptVisitor(this);
-			state.JoinWith(cachedState);
-			DebugEndPoint(inst);
+			HandleOptionalEvaluation(inst, inst.Argument);
 		}
 
 		protected internal override void VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst)
 		{
-			HandleBinaryWithOptionalEvaluation(inst, inst.Left, inst.Right);
+			HandleOptionalEvaluation(inst, inst.Right, precedingArgument: inst.Left);
 		}
 
 		protected internal override void VisitUserDefinedLogicOperator(UserDefinedLogicOperator inst)
 		{
-			HandleBinaryWithOptionalEvaluation(inst, inst.Left, inst.Right);
+			HandleOptionalEvaluation(inst, inst.Right, precedingArgument: inst.Left);
 		}
 
-		void HandleBinaryWithOptionalEvaluation(ILInstruction parent, ILInstruction left, ILInstruction right)
+		void HandleOptionalEvaluation(ILInstruction parent, ILInstruction optionalArgument, ILInstruction precedingArgument = null)
 		{
 			DebugStartPoint(parent);
-			left.AcceptVisitor(this);
+			precedingArgument?.AcceptVisitor(this);
 			State branchState = state.Clone();
-			right.AcceptVisitor(this);
+			optionalArgument.AcceptVisitor(this);
 			state.JoinWith(branchState);
 			DebugEndPoint(parent);
 		}

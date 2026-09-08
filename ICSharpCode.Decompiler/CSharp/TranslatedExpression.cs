@@ -27,7 +27,6 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 #nullable enable
@@ -255,7 +254,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						case ConversionResolveResult conversion:
 						{
 							if (Expression is CastExpression cast && CastCanBeMadeImplicit(
-									Resolver.CSharpConversions.Get(expressionBuilder.compilation),
+									expressionBuilder,
 									conversion.Conversion,
 									conversion.Input.Type,
 									type, targetType
@@ -271,13 +270,10 @@ namespace ICSharpCode.Decompiler.CSharp
 							else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 								  && oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion)
 							{
-								// C# 11 caches static method groups. Keep explicit construction when the IL creates a fresh delegate.
-								if (conversion.Conversion.Method.IsStatic
-									&& conversion.Conversion.Method is not LocalFunctionMethod { IsStaticLocalFunction: false }
-									&& conversion.Conversion.Method.Parameters.Count == type.GetDelegateInvokeMethod()?.Parameters.Count
-									&& expressionBuilder.settings.GetMinimumRequiredVersion() >= LanguageVersion.CSharp11_0
-									&& expressionBuilder.currentFunction.Kind != ILFunctionKind.ExpressionTree
-									&& !ILInstructions.Any(i => i is CachedDelegate))
+								// Preserve explicit construction if a method-group conversion would introduce caching.
+								// Delegate types containing anonymous types must be inferred instead.
+								if (expressionBuilder.MethodGroupConversionWouldBeCached(conversion.Conversion)
+									&& (!expressionBuilder.settings.AnonymousTypes || !type.ContainsAnonymousType()))
 								{
 									return this;
 								}
@@ -360,7 +356,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var conversions = Resolver.CSharpConversions.Get(compilation);
 			if (ResolveResult is ConversionResolveResult conv && Expression is CastExpression cast2
 				&& !conv.Conversion.IsUserDefined
-				&& CastCanBeMadeImplicit(conversions, conv.Conversion, conv.Input.Type, type, targetType))
+				&& CastCanBeMadeImplicit(expressionBuilder, conv.Conversion, conv.Input.Type, type, targetType))
 			{
 				var unwrapped = Unwrapped(this.UnwrapChild(cast2.Expression));
 				if (allowImplicitConversion)
@@ -690,8 +686,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// would have the same semantics as the existing cast from 'inputType' to 'oldTargetType'.
 		/// The existing cast is classified in 'conversion'.
 		/// </summary>
-		bool CastCanBeMadeImplicit(Resolver.CSharpConversions conversions, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
+		bool CastCanBeMadeImplicit(ExpressionBuilder expressionBuilder, Conversion conversion, IType inputType, IType oldTargetType, IType newTargetType)
 		{
+			if (conversion.IsMethodGroupConversion && oldTargetType.Kind == TypeKind.Delegate
+				&& !expressionBuilder.settings.UseImplicitMethodGroupConversion)
+				return false;
+			var conversions = Resolver.CSharpConversions.Get(expressionBuilder.compilation);
 			if (!conversion.IsImplicit)
 			{
 				// If the cast was required for the old conversion, avoid making it implicit.

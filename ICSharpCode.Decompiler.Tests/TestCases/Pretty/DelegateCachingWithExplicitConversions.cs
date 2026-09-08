@@ -20,11 +20,8 @@ using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	internal static class DelegateCaching
+	internal static class DelegateCachingWithExplicitConversions
 	{
-		public delegate void CustomDelegate();
-
-		// Issue #3921: explicit construction must preserve a fresh delegate on each call.
 		public static Action FreshDelegate()
 		{
 			return new Action(M);
@@ -32,17 +29,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Action CachedDelegate()
 		{
-			return M;
-		}
-
-		public static object FreshDelegateAsObject()
-		{
-			return new CustomDelegate(M);
-		}
-
-		public static object CachedDelegateAsObject()
-		{
-			return (CustomDelegate)M;
+			return (Action)M;
 		}
 
 		private static void M()

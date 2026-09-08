@@ -339,9 +339,22 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task DelegateCachingWithExplicitConversions([ValueSource(nameof(roslyn4OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => settings.UseImplicitMethodGroupConversion = false);
+		}
+
+		[Test]
 		public async Task AnonymousTypes([ValueSource(nameof(defaultOptionsWithMcs))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public async Task AnonymousTypeMethodGroups([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			// Older compilers emit uncached method groups even when decompiling to a language version that supports caching.
+			await RunForLibrary(cscOptions: cscOptions, settings: new DecompilerSettings { FileScopedNamespaces = false });
 		}
 
 		[Test]
@@ -679,6 +692,8 @@ namespace ICSharpCode.Decompiler.Tests
 		public async Task FunctionPointers([ValueSource(nameof(roslyn3OrNewerOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
+			// Disabling implicit delegate conversions must not introduce function-pointer casts.
+			await RunForLibrary(cscOptions: cscOptions, configureDecompiler: settings => settings.UseImplicitMethodGroupConversion = false);
 		}
 
 		[Test]
@@ -1070,12 +1085,12 @@ namespace ICSharpCode.Decompiler.Tests
 			await RunForLibrary(cscOptions: cscOptions);
 		}
 
-		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, Action<DecompilerSettings> configureDecompiler = null)
+		async Task RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, Action<DecompilerSettings> configureDecompiler = null, DecompilerSettings settings = null)
 		{
-			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, configureDecompiler);
+			await Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, configureDecompiler, settings);
 		}
 
-		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, Action<DecompilerSettings> configureDecompiler = null)
+		async Task Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, Action<DecompilerSettings> configureDecompiler = null, DecompilerSettings settings = null)
 		{
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 			var exeFile = TestsAssemblyOutput.GetFilePath(TestCasePath, testName, Tester.GetSuffix(cscOptions) + ".exe");
@@ -1097,7 +1112,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			// 2. Decompile
-			var settings = Tester.GetSettings(cscOptions);
+			settings ??= Tester.GetSettings(cscOptions);
 			configureDecompiler?.Invoke(settings);
 			var decompiled = await Tester.DecompileCSharp(exeFile, settings).ConfigureAwait(false);
 

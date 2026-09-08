@@ -2037,7 +2037,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		private bool CanUseDelegateConstruction(IMethod targetMethod, ILInstruction thisArg, IMethod invokeMethod)
+		static bool IsBoundExtensionMethod(IMethod method, IMethod? invokeMethod)
+		{
+			return method.IsExtensionMethod && method.Parameters.Count - 1 == invokeMethod?.Parameters.Count;
+		}
+
+		private static bool CanUseDelegateConstruction(IMethod targetMethod, ILInstruction thisArg, IMethod? invokeMethod)
 		{
 			// Accessors cannot be directly referenced as method group in C#
 			// see https://github.com/icsharpcode/ILSpy/issues/1741#issuecomment-540179101
@@ -2045,36 +2050,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				return false;
 			if (targetMethod.IsStatic)
 			{
-				// If the invoke method is known, we can compare the parameter counts to figure out whether the
-				// delegate is static or binds the first argument
-				if (invokeMethod != null)
+				if (invokeMethod == null)
 				{
-					if (invokeMethod.Parameters.Count == targetMethod.Parameters.Count)
-					{
-						return thisArg.MatchLdNull();
-					}
-					else if (targetMethod.IsExtensionMethod && invokeMethod.Parameters.Count == targetMethod.Parameters.Count - 1)
-					{
-						return true;
-					}
-					else
-					{
-						return false;
-					}
-				}
-				else
-				{
-					// delegate type unknown:
+					// Delegate type unknown.
 					return thisArg.MatchLdNull() || targetMethod.IsExtensionMethod;
 				}
+				// An unbound static delegate supplies every method parameter through Invoke.
+				if (invokeMethod.Parameters.Count == targetMethod.Parameters.Count)
+					return thisArg.MatchLdNull();
+				return IsBoundExtensionMethod(targetMethod, invokeMethod);
 			}
-			else
-			{
-				// targetMethod is instance method
-				if (invokeMethod != null && invokeMethod.Parameters.Count != targetMethod.Parameters.Count)
-					return false;
-				return true;
-			}
+			return invokeMethod == null || invokeMethod.Parameters.Count == targetMethod.Parameters.Count;
 		}
 
 		internal TranslatedExpression Build(LdVirtDelegate inst)
@@ -2124,7 +2110,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Debug.Assert(localFunction != null);
 				return (default, addTypeArguments: true, localFunction.Name!, ToMethodGroup(method, localFunction));
 			}
-			if (method.IsExtensionMethod && method.Parameters.Count - 1 == invokeMethod?.Parameters.Count)
+			if (IsBoundExtensionMethod(method, invokeMethod))
 			{
 				IType targetType = method.Parameters[0].Type;
 				if (targetType.Kind == TypeKind.ByReference && thisArg is Box thisArgBox)
@@ -2242,13 +2228,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression HandleDelegateConstruction(IType delegateType, IMethod method, ExpectedTargetDetails expectedTargetDetails, ILInstruction thisArg, ILInstruction inst)
 		{
 			var invokeMethod = delegateType.GetDelegateInvokeMethod();
+			bool capturesFirstArgument = !method.IsStatic || IsBoundExtensionMethod(method, invokeMethod);
 			var targetExpression = BuildDelegateReference(method, invokeMethod, expectedTargetDetails, thisArg);
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(delegateType), targetExpression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					delegateType,
 					targetExpression.ResolveResult,
-					Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, false)));
+					Conversion.MethodGroupConversion(method, expectedTargetDetails.CallOpCode == OpCode.CallVirt, capturesFirstArgument)));
 			return oce;
 		}
 

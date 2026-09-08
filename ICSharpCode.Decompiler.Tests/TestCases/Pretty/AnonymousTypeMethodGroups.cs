@@ -16,37 +16,33 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	internal static class DelegateCaching
+	internal static class AnonymousTypeMethodGroups
 	{
-		public delegate void CustomDelegate();
-
-		// Issue #3921: explicit construction must preserve a fresh delegate on each call.
-		public static Action FreshDelegate()
+		public static object AnonymousTypeArgument()
 		{
-			return new Action(M);
+			return new[] {
+				new {
+					X = 1
+				}
+			}.Select(Identity).Single();
 		}
 
-		public static Action CachedDelegate()
+		public static object AnonymousArrayTypeArgument()
 		{
-			return M;
+			return new[] { new[] {
+					new {
+						X = 1
+					}
+			} }.Select(Identity).Single();
 		}
 
-		public static object FreshDelegateAsObject()
+		private static T Identity<T>(T value)
 		{
-			return new CustomDelegate(M);
-		}
-
-		public static object CachedDelegateAsObject()
-		{
-			return (CustomDelegate)M;
-		}
-
-		private static void M()
-		{
+			return value;
 		}
 	}
 }
