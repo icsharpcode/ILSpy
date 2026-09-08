@@ -754,6 +754,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			HandleBinaryWithOptionalEvaluation(inst, inst.ValueInst, inst.FallbackInst);
 		}
 
+		protected internal override void VisitCachedDelegate(CachedDelegate inst)
+		{
+			DebugStartPoint(inst);
+			State cachedState = state.Clone();
+			inst.Argument.AcceptVisitor(this);
+			state.JoinWith(cachedState);
+			DebugEndPoint(inst);
+		}
+
 		protected internal override void VisitDynamicLogicOperatorInstruction(DynamicLogicOperatorInstruction inst)
 		{
 			HandleBinaryWithOptionalEvaluation(inst, inst.Left, inst.Right);

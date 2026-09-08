@@ -558,6 +558,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CallBuilder(this, typeSystem, settings).Build(inst, context.TypeHint);
 		}
 
+		protected internal override TranslatedExpression VisitCachedDelegate(CachedDelegate inst, TranslationContext context)
+		{
+			return Translate(inst.Argument, context.TypeHint).WithILInstruction(inst);
+		}
+
 		protected internal override TranslatedExpression VisitLdVirtDelegate(LdVirtDelegate inst, TranslationContext context)
 		{
 			return new CallBuilder(this, typeSystem, settings).Build(inst);

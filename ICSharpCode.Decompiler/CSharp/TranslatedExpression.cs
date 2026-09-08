@@ -27,6 +27,7 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 #nullable enable
@@ -270,6 +271,16 @@ namespace ICSharpCode.Decompiler.CSharp
 							else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 								  && oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion)
 							{
+								// C# 11 caches static method groups. Keep explicit construction when the IL creates a fresh delegate.
+								if (conversion.Conversion.Method.IsStatic
+									&& conversion.Conversion.Method is not LocalFunctionMethod { IsStaticLocalFunction: false }
+									&& conversion.Conversion.Method.Parameters.Count == type.GetDelegateInvokeMethod()?.Parameters.Count
+									&& expressionBuilder.settings.GetMinimumRequiredVersion() >= LanguageVersion.CSharp11_0
+									&& expressionBuilder.currentFunction.Kind != ILFunctionKind.ExpressionTree
+									&& !ILInstructions.Any(i => i is CachedDelegate))
+								{
+									return this;
+								}
 								return this.UnwrapChild(oce.Arguments.Single());
 							}
 							break;
