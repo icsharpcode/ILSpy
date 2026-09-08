@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpyX
 		/// Technically read accesses need locking when done on non-GUI threads... but whenever possible, use the
 		/// thread-safe <see cref="GetAssemblies()"/> method.
 		/// </remarks>
-		readonly ObservableCollection<LoadedAssembly> assemblies = new ObservableCollection<LoadedAssembly>();
+		readonly AssemblyCollection assemblies = new AssemblyCollection();
 
 		/// <summary>
 		/// Assembly lookup by filename.
@@ -426,6 +426,70 @@ namespace ICSharpCode.ILSpyX
 			// Removed from the list but NOT disposed: open tabs / tree nodes may still hold its
 			// MetadataFile and there's no safe point to know they don't. The GC reclaims it once
 			// the last reference is gone.
+		}
+
+		/// <summary>
+		/// Removes every assembly in <paramref name="assembliesToUnload"/> in one step.
+		/// </summary>
+		/// <remarks>
+		/// Removing them one at a time is not equivalent: each removal raises its own collection
+		/// change, and consumers react to one of those by pruning navigation history, restarting a
+		/// running search, re-querying every command and re-decompiling the surviving selection.
+		/// Repeating that per assembly is what made clearing an expanded list freeze the UI.
+		/// Contiguous runs are removed as ranges, so listeners keep the indices and the removed
+		/// items they need to splice their own state. Emptying the list this way still reports a
+		/// Remove rather than the Reset <see cref="Clear"/> raises: consumers treat Reset as
+		/// "re-read everything" and several of them short-circuit their per-removal cleanup on it,
+		/// which would leave tabs and navigation history pointing at unloaded assemblies.
+		/// </remarks>
+		public void UnloadRange(IEnumerable<LoadedAssembly> assembliesToUnload)
+		{
+			ArgumentNullException.ThrowIfNull(assembliesToUnload);
+			VerifyAccess();
+			var doomed = new HashSet<LoadedAssembly>(assembliesToUnload);
+			if (doomed.Count == 0)
+				return;
+			lock (lockObj)
+			{
+				// Only the named entries leave byFilename, so an assembly a background thread is
+				// still loading survives -- unlike Clear(), which drops the lookup wholesale.
+				foreach (var assembly in doomed)
+					byFilename.Remove(assembly.FileName);
+				// Backwards, so the indices of the runs not yet visited stay valid.
+				for (int end = assemblies.Count - 1; end >= 0;)
+				{
+					if (!doomed.Contains(assemblies[end]))
+					{
+						end--;
+						continue;
+					}
+					int start = end;
+					while (start > 0 && doomed.Contains(assemblies[start - 1]))
+						start--;
+					assemblies.RemoveAssemblies(start, end - start + 1);
+					end = start - 1;
+				}
+			}
+			// Removed from the list but NOT disposed -- see Unload.
+		}
+
+		sealed class AssemblyCollection : ObservableCollection<LoadedAssembly>
+		{
+			public void RemoveAssemblies(int index, int count)
+			{
+				if (count <= 0)
+					return;
+				CheckReentrancy();
+				var removed = new List<LoadedAssembly>(count);
+				for (int i = 0; i < count; i++)
+					removed.Add(Items[index + i]);
+				for (int i = 0; i < count; i++)
+					Items.RemoveAt(index);
+				OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs(nameof(Count)));
+				OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Item[]"));
+				OnCollectionChanged(new NotifyCollectionChangedEventArgs(
+					NotifyCollectionChangedAction.Remove, removed, index));
+			}
 		}
 
 		public void Clear()

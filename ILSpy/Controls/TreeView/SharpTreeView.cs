@@ -483,8 +483,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			if (nodes.Length == 0 || !nodes.All(n => n.CanDelete()))
 				return false;
 			int index = nodes.Min(flattener.IndexOf);
-			foreach (var node in nodes)
-				node.Delete();
+			nodes[0].Delete(nodes);
 			// The deleted rows leave the selection with the source; pick the nearest survivor.
 			if (SelectedItems!.Count == 0 && flattener.Count > 0)
 				SelectAndFocus((SharpTreeNode)flattener[Math.Clamp(index, 0, flattener.Count - 1)]!);
