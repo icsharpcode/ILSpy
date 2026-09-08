@@ -2,6 +2,11 @@
   <PropertyGroup>
     <NoWarn>$(NoWarn);NU1510</NoWarn>
   </PropertyGroup>
+  
+  <!-- https://learn.microsoft.com/en-us/dotnet/core/tools/sdk-errors/netsdk1238 -->
+  <PropertyGroup>
+    <CheckSdkVulnerabilities>true</CheckSdkVulnerabilities>
+  </PropertyGroup>
 
   <PropertyGroup>
     <!-- Warnings are errors repo-wide so a clean build stays clean; individual projects can opt
