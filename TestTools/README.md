@@ -187,48 +187,17 @@ Unresolved references are listed in the summary.
 
 ## allocview
 
-Answers "which types are allocated during a decompiler run, and by which part of the decompiler".
-
-**Collecting the trace needs no tool and no code in ILSpy.** The runtime writes one itself when
-these variables are set, so the same recipe works for `ilspycmd`, the ILSpy UI, the test host or
-anything else:
-
-```pwsh
-$env:DOTNET_EnableEventPipe=1
-$env:DOTNET_EventPipeConfig="Microsoft-Windows-DotNETRuntime:0x1:5"
-$env:DOTNET_EventPipeOutputPath="alloc.nettrace"
-ilspycmd SomeAssembly.dll -o out
-```
-
-`0x1` is the GC keyword and `5` is verbose, which is the combination that turns on
-`GCAllocationTick`. The file is written when the process exits, so for the UI: set the variables,
-start it, do the thing, close it. `dotnet-trace collect --profile gc-verbose -- <command>`
-produces an equivalent trace if you prefer a tool.
-
-Then turn the trace into a flamegraph and a summary:
+Turns a trace of a decompiler run into a byte-weighted allocation flamegraph for
+[speedscope](https://www.speedscope.app) plus a summary by area of the decompiler:
 
 ```pwsh
 dotnet run allocview.cs -- alloc.nettrace
-dotnet run allocview.cs -- alloc.nettrace -o alloc.speedscope.json --types 40
 ```
 
-The `.speedscope.json` opens at <https://www.speedscope.app> (a static page - the file is read in
-the browser and not uploaded). It is a **byte-weighted** profile: the flamegraph is "which call
-paths allocated how much", with the allocated type as the deepest frame, rather than the
-time-weighted profile `dotnet-trace convert --format Speedscope` produces. The text summary groups
-the same bytes by area of the decompiler - ILAst, type system, C# AST and so on - attributing each
-allocation by the decompiler namespace its type name mentions, or, when the runtime reports a
-nested or compiler-generated type without one, by the innermost decompiler frame that allocated it.
-
-Two things to keep in mind. `GCAllocationTick` fires about once per 100 KB allocated per type, so
-this is a **sampling** profile: proportions are meaningful, absolute totals are an estimate, and a
-type that never accumulates 100 KB may not appear at all. And resolving call stacks converts the
-trace to an `.etlx` file beside it, which is several times larger and is reused by later runs -
-delete it along with the trace.
-
-For comparison, on Windows PerfView opens the `.nettrace` directly and its "GC Heap Alloc Ignore
-Free" view shows the same data with a full caller tree; this tool exists because that view is
-Windows-only and knows nothing about which allocations belong to which part of the decompiler.
+Collecting the trace needs no tool and no code in ILSpy - the runtime writes one when
+`DOTNET_EnableEventPipe` is set, for `ilspycmd`, the UI or a test run alike.
+**[allocview.md](allocview.md) has the full recipe**, including how to read the flamegraph and
+what the sampling does and does not tell you.
 
 ## Windows notes
 
