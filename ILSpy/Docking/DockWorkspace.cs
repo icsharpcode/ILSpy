@@ -202,11 +202,11 @@ namespace ICSharpCode.ILSpy.Docking
 					factory.InitLayout(Layout);
 			}
 
+			// A selection change reaches ShowSelectedNode through OnAssemblyTreePropertyChanged:
+			// the model raises SelectedItem whenever the selection settles, including once at the
+			// end of a bulk edit. Subscribing to SelectedItems.CollectionChanged as well would run
+			// it a second time, and once per node during a bulk edit.
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
-			assemblyTreeModel.SelectedItems.CollectionChanged += (_, _) => {
-				if (!syncingTreeFromActiveTab)
-					ShowSelectedNode();
-			};
 			languageService.PropertyChanged += OnLanguagePropertyChanged;
 
 			ToolPaneMenuItems = toolPaneRegistry.Panes
