@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 
@@ -32,25 +34,45 @@ namespace ICSharpCode.ILSpy.Views
 	{
 		TextBox listNameBox = null!;
 		Button okButton = null!;
+		TextBlock nameTakenText = null!;
+		Func<string, bool> isNameTaken = static _ => false;
 
 		public CreateListDialog()
 		{
 			InitializeComponent();
 			listNameBox = this.FindControl<TextBox>("ListNameBox")!;
 			okButton = this.FindControl<Button>("OkButton")!;
-			listNameBox.TextChanged += (_, _) => okButton.IsEnabled = !string.IsNullOrWhiteSpace(listNameBox.Text);
+			nameTakenText = this.FindControl<TextBlock>("NameTakenText")!;
+			nameTakenText.Text = Properties.Resources.ListExistsAlready;
+			listNameBox.TextChanged += (_, _) => Validate();
 			okButton.Click += (_, _) => Close(listNameBox.Text);
 			((Button)this.FindControl<Button>("CancelButton")!).Click += (_, _) => Close(null);
 		}
 
-		public CreateListDialog(string title, string? initialText = null) : this()
+		/// <param name="isNameTaken">
+		/// Decides whether the entered name is already in use. Every caller writes into the same
+		/// set of assembly-list names, so a name that is taken cannot be accepted: the operation
+		/// behind the prompt would do nothing at all and the dialog would look like it had
+		/// worked. OK stays disabled for as long as the name collides.
+		/// </param>
+		public CreateListDialog(string title, string? initialText = null, Func<string, bool>? isNameTaken = null) : this()
 		{
 			Title = title;
+			this.isNameTaken = isNameTaken ?? this.isNameTaken;
 			if (!string.IsNullOrEmpty(initialText))
 			{
 				listNameBox.Text = initialText;
 				listNameBox.SelectAll();
 			}
+			Validate();
+		}
+
+		void Validate()
+		{
+			var name = listNameBox.Text;
+			bool taken = !string.IsNullOrWhiteSpace(name) && isNameTaken(name);
+			nameTakenText.IsVisible = taken;
+			okButton.IsEnabled = !string.IsNullOrWhiteSpace(name) && !taken;
 		}
 
 		void InitializeComponent() => AvaloniaXamlLoader.Load(this);

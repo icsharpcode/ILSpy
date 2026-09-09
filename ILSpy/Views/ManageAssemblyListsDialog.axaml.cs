@@ -106,11 +106,18 @@ namespace ICSharpCode.ILSpy.Views
 		/// <summary>The lists control, exposed for tests to drive the selection.</summary>
 		internal ListBox ListsControl => listsBox;
 
-		async Task<string?> PromptAsync(string title, string? initialText = null)
-		{
-			var dlg = new CreateListDialog(title, initialText);
-			return await dlg.ShowDialog<string?>(this);
-		}
+		async Task<string?> PromptAsync(string title, string? initialText = null, string? allowedName = null)
+			=> await CreatePrompt(title, initialText, allowedName).ShowDialog<string?>(this);
+
+		/// <summary>
+		/// Builds the name prompt for one of the CRUD flows. <paramref name="allowedName"/> is the
+		/// name the flow may keep - the name of the list being renamed - which is not a collision
+		/// with itself. Separated from <see cref="PromptAsync"/> so it can be driven by tests
+		/// without a modal window.
+		/// </summary>
+		internal CreateListDialog CreatePrompt(string title, string? initialText = null, string? allowedName = null)
+			=> new CreateListDialog(title, initialText,
+				name => name != allowedName && manager.AssemblyLists.Contains(name));
 
 		async Task NewListAsync()
 		{
@@ -135,7 +142,7 @@ namespace ICSharpCode.ILSpy.Views
 		{
 			if (SelectedListName is not { } selected)
 				return;
-			var name = await PromptAsync("Rename Assembly List", selected);
+			var name = await PromptAsync("Rename Assembly List", selected, allowedName: selected);
 			if (string.IsNullOrWhiteSpace(name) || name == selected || manager.AssemblyLists.Contains(name))
 				return;
 			manager.RenameList(selected, name);
