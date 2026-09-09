@@ -42,6 +42,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.MermaidDiagrammer;
+using ICSharpCode.ILSpyX.Metadata;
 using ICSharpCode.ILSpyX.PdbProvider;
 
 using McMaster.Extensions.CommandLineUtils;
@@ -425,7 +426,8 @@ Examples:
 						return ProgramExitCodes.EX_USAGE;
 					}
 
-					using var tableModule = LoadInputModule(fileName);
+					// a standalone Portable PDB is a valid input here: it carries the debug tables
+					using var tableModule = InputFileLoader.LoadMetadata(fileName, BundleEntryName);
 
 					if (outputDirectory != null)
 					{

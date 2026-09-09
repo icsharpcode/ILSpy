@@ -64,15 +64,30 @@ namespace ICSharpCode.ILSpyCmd
 		/// </exception>
 		public static PEFile Load(string fileName, string entryName, bool applyWinRTProjections = true)
 		{
+			var file = LoadMetadata(fileName, entryName, applyWinRTProjections);
+			if (file is PEFile module)
+			{
+				return module;
+			}
+			file.Dispose();
+			throw new BadImageFormatException($"'{fileName}' contains metadata, but no PE image.");
+		}
+
+		/// <summary>
+		/// Like <see cref="Load"/>, but also accepts a file that carries metadata without a PE
+		/// image around it: a standalone Portable PDB, or a raw metadata blob.
+		/// </summary>
+		public static MetadataFile LoadMetadata(string fileName, string entryName, bool applyWinRTProjections = true)
+		{
 			var context = new FileLoadContext(applyWinRTProjections, null);
 			var result = LoadFile(fileName, context);
 			if (result?.Package is { } package)
 			{
 				return LoadPackageEntry(package, entryName, context);
 			}
-			if (result?.MetadataFile is PEFile module)
+			if (result?.MetadataFile is { } file)
 			{
-				return module;
+				return file;
 			}
 			// Not a file any loader recognized: let PEFile report what is wrong with it, which is
 			// the error the tool has always produced for such input.

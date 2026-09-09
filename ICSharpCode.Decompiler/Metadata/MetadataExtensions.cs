@@ -604,6 +604,28 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		/// <summary>
+		/// Enumerates the StateMachineMethod table of a Portable PDB, yielding the MoveNext
+		/// method and the kickoff method of each row. SRM exposes the table only through
+		/// <c>MethodDebugInformation.GetStateMachineKickoffMethod</c>, which cannot enumerate
+		/// the rows, so the columns are read directly.
+		/// </summary>
+		public static IEnumerable<(MethodDefinitionHandle MoveNextMethod, MethodDefinitionHandle KickoffMethod)> GetStateMachineMethods(this MetadataReader metadata)
+		{
+			int rowCount = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
+			var reader = metadata.AsBlobReader();
+			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
+			int methodSize = SimpleIndexSize(metadata, TableIndex.MethodDef);
+			CheckRowSize(metadata, TableIndex.StateMachineMethod, 2 * methodSize);
+			for (int rid = 1; rid <= rowCount; rid++)
+			{
+				int moveNextRow = methodSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				int kickoffRow = methodSize == 2 ? reader.ReadUInt16() : reader.ReadInt32();
+				yield return (MetadataTokens.MethodDefinitionHandle(moveNextRow),
+					MetadataTokens.MethodDefinitionHandle(kickoffRow));
+			}
+		}
+
+		/// <summary>
 		/// Enumerates one of the five *Ptr indirection tables (EventPtr, FieldPtr, MethodPtr,
 		/// ParamPtr, PropertyPtr), yielding the referenced entity of each row.
 		/// </summary>
