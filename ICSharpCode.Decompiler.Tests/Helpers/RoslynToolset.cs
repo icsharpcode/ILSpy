@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 		}
 
-		public async Task Fetch(string version, string packageName = "Microsoft.NETCore.App.Ref", string sourcePath = "ref/net5.0")
+		public async Task Fetch(string version, string packageName = CurrentNetCoreVersion.RefAsmPackage, string sourcePath = "ref/net5.0")
 		{
 			string path = Path.Combine(baseDir, version, sourcePath);
 			if (!Directory.Exists(path))
