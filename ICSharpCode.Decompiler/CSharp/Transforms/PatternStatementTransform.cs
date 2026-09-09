@@ -949,7 +949,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// structurally; arbitrary accessor bodies do not. A field of a different
 					// type is not this property's storage, and removing it while printing
 					// `field` would substitute storage of the property's type instead.
-					&& candidate.Type.Equals(propertyType)
+					&& NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(candidate.ReturnType, propertyType)
 					&& NameCouldBeBackingFieldOfAutomaticProperty(candidate.Name, out var propertyName)
 					&& propertyName == property.Name)
 				{
