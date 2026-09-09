@@ -928,7 +928,8 @@ namespace System.Runtime.CompilerServices
 			}
 		}
 
-		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles, CompilerOptions compilerOptions = CompilerOptions.None)
+		public static void CompileCSharpWithPdb(string assemblyName, Dictionary<string, string> sourceFiles,
+			CompilerOptions compilerOptions = CompilerOptions.None)
 		{
 			var parseOptions = new CSharpParseOptions(languageVersion: Microsoft.CodeAnalysis.CSharp.LanguageVersion.Latest);
 			if (compilerOptions.HasFlag(CompilerOptions.EnableRuntimeAsync))
@@ -951,7 +952,9 @@ namespace System.Runtime.CompilerServices
 			var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(assemblyName),
 				syntaxTrees, coreDefaultReferences.Select(r => MetadataReference.CreateFromFile(Path.Combine(RefAssembliesToolset.GetPath(CurrentNetCoreVersion.AppVersion), r))),
 				new CSharpCompilationOptions(
-					OutputKind.DynamicallyLinkedLibrary,
+					compilerOptions.HasFlag(CompilerOptions.Library)
+						? OutputKind.DynamicallyLinkedLibrary
+						: OutputKind.ConsoleApplication,
 					platform: Platform.AnyCpu,
 					optimizationLevel: OptimizationLevel.Release,
 					allowUnsafe: true,

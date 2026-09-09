@@ -25,6 +25,7 @@ using System.Reflection.Metadata;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -60,6 +61,29 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var definition = metadata.GetMethodDefinition(method);
 			var entrypoint = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(module.CorHeader?.EntryPointTokenOrRelativeVirtualAddress ?? 0);
 			return method == entrypoint && metadata.GetString(definition.Name).Equals("<Main>", StringComparison.Ordinal);
+		}
+
+		static bool IsCalledByEntryPoint(MetadataFile module, MethodDefinitionHandle method)
+		{
+			var entrypoint = System.Reflection.Metadata.Ecma335.MetadataTokens.MethodDefinitionHandle(module.CorHeader?.EntryPointTokenOrRelativeVirtualAddress ?? 0);
+			if (entrypoint.IsNil || !IsCompilerGeneratedMainMethod(module, entrypoint))
+				return false;
+			var shim = module.Metadata.GetMethodDefinition(entrypoint);
+			if (shim.RelativeVirtualAddress == 0)
+				return false;
+			var blob = module.GetMethodBody(shim.RelativeVirtualAddress).GetILReader();
+			while (blob.RemainingBytes > 0)
+			{
+				var code = blob.DecodeOpCode();
+				if (code != ILOpCode.Call)
+				{
+					blob.SkipOperand(code);
+					continue;
+				}
+				if (MetadataTokenHelpers.EntityHandleOrNil(blob.ReadInt32()) == method)
+					return true;
+			}
+			return false;
 		}
 
 		enum AsyncMethodType
@@ -116,6 +140,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!context.Settings.AsyncAwait)
 				return; // abort if async/await decompilation is disabled
 			this.context = context;
+			catchHandlerOffset = -1;
 			fieldToParameterMap.Clear();
 			cachedFieldToParameterMap.Clear();
 			awaitBlocks.Clear();
@@ -180,7 +205,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			awaitDebugInfos.SortBy(row => row.YieldOffset);
-			function.AsyncDebugInfo = new AsyncDebugInfo(catchHandlerOffset, awaitDebugInfos.ToImmutableArray());
+			// The catchHandlerOffset marks the compiler-generated catch block. We need to distinguish
+			// a few cases:
+			// 1) async void methods always record the offset
+			// 2) the kickoff method of the async Main entry point always records the offset
+			// 3) in all the other cases nothing (-1) is emitted by csc.
+			var kickoff = function.Method?.MetadataToken ?? default;
+			bool recordCatchHandler = methodType == AsyncMethodType.Void
+				|| (kickoff.Kind == HandleKind.MethodDefinition
+					&& IsCalledByEntryPoint(context.PEFile, (MethodDefinitionHandle)kickoff));
+			function.AsyncDebugInfo = new AsyncDebugInfo(recordCatchHandler ? catchHandlerOffset : -1,
+				awaitDebugInfos.ToImmutableArray());
 		}
 
 		// Runtime-async analog of fieldToParameterMap's `<>4__this` capture: in a struct method,
