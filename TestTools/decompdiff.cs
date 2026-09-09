@@ -255,7 +255,7 @@ summary.AppendLine($"|---|---|---|---|");
 summary.AppendLine(MetricRow("lines", oldTotals.Lines, newTotals.Lines));
 summary.AppendLine(MetricRow("goto statements", oldTotals.Gotos, newTotals.Gotos));
 summary.AppendLine(MetricRow("//IL_ warning comments", oldTotals.IlWarnings, newTotals.IlWarnings));
-summary.AppendLine(MetricRow("compiler-generated name leaks (<>)", oldTotals.GeneratedNames, newTotals.GeneratedNames));
+summary.AppendLine(MetricRow("compiler-generated name leaks", oldTotals.GeneratedNames, newTotals.GeneratedNames));
 summary.AppendLine();
 summary.AppendLine($"types: {unchanged} unchanged, {changed.Count} changed, {newErrors} NEW errors, {fixedErrors} fixed errors, {bothErrors} errored in both");
 summary.AppendLine();
@@ -832,11 +832,21 @@ record ChangedType(string Location, Metrics Old, Metrics New);
 
 record struct Metrics(int Lines, int Gotos, int IlWarnings, int GeneratedNames)
 {
+	// Names that the decompiler's own identifier rules reject: every character of an
+	// identifier must be a letter, digit or '_' (EscapeInvalidIdentifiers.IsValid), and the
+	// mangled ones start with '<' or contain '$' (SRMExtensions.IsGeneratedName). The input
+	// is output text rather than identifiers, so the shapes are matched lexically: a
+	// bracketed part followed by an identifier character ("<>c", "<P>k__BackingField",
+	// "<Main>$"), or a '$' between identifier characters ("VB$AnonymousType_0"). Real C#
+	// never puts an identifier character directly after a generic argument list's '>', so
+	// generic instantiations do not match.
+	const string GeneratedNamePattern = @"<[A-Za-z0-9_.,<> ]*>[A-Za-z0-9_$]|[A-Za-z0-9_]\$[A-Za-z0-9_$]";
+
 	public static Metrics Measure(string code) => new(
 		code.Count(c => c == '\n') + 1,
 		Regex.Matches(code, @"\bgoto ").Count,
 		Regex.Matches(code, @"//IL_[0-9a-fA-F]+:").Count,
-		Regex.Matches(code, @"<>").Count);
+		Regex.Matches(code, GeneratedNamePattern).Count);
 
 	public static Metrics operator +(Metrics a, Metrics b)
 		=> new(a.Lines + b.Lines, a.Gotos + b.Gotos, a.IlWarnings + b.IlWarnings, a.GeneratedNames + b.GeneratedNames);

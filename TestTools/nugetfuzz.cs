@@ -47,6 +47,8 @@ using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
 
@@ -81,6 +83,7 @@ var installedTfm = NuGetFramework.Parse($"net{Environment.Version.Major}.{Enviro
 var net48 = NuGetFramework.Parse("net48");
 var reducer = new FrameworkReducer();
 var failures = new Dictionary<string, Finding>();
+var formatting = new DecompilerSettings().CSharpFormattingOptions;
 int assemblyCount = 0, typeCount = 0, pdbChecked = 0, pdbSkipped = 0;
 long charCount = 0, refsResolved = 0, refsTotal = 0;
 bool verbose = Environment.GetEnvironmentVariable("NUGETFUZZ_VERBOSE") != null;
@@ -626,17 +629,34 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 			decompiler.CancellationToken = cts.Token;
 			try
 			{
-				var code = decompiler.DecompileTypeAsString(type.FullTypeName);
+				var tree = decompiler.DecompileType(type.FullTypeName);
+				var code = SyntaxTreeToString(tree);
 				typeCount++;
 				charCount += code.Length;
 				// Compiler-generated types (<Module>, <PrivateImplementationDetails>,
 				// VB$AnonymousType_*, ...) are still decompiled to shake out edge cases,
 				// but empty output is normal for them ('<' and '$' match the decompiler's
 				// own generated-name detection in SRMExtensions.IsGeneratedName).
-				if (string.IsNullOrWhiteSpace(code) && !type.Name.StartsWith('<') && !type.Name.Contains('$'))
+				bool generatedType = type.Name.StartsWith('<') || type.Name.Contains('$');
+				if (string.IsNullOrWhiteSpace(code) && !generatedType)
 					Report(pkg, name, type.FullTypeName.ToString(), new InvalidDataException("empty decompilation output"));
 				else if (dumpDir != null)
 					File.WriteAllText(Path.Combine(dumpDir, SanitizeFileName($"{pkg}.{type.FullTypeName}.cs")), code);
+				// An identifier may only contain letters, digits and '_' (the rule
+				// EscapeInvalidIdentifiers.IsValid applies for project output). Any other name in
+				// the tree is a compiler-generated entity the decompiler failed to fold away, and
+				// the output does not compile. Inside a generated type everything is mangled by
+				// definition, so only user-written types are checked.
+				if (!generatedType)
+				{
+					foreach (var leak in tree.DescendantsAndSelf.OfType<Identifier>()
+						.Select(i => i.Name)
+						.Where(n => !n.All(ch => char.IsLetterOrDigit(ch) || ch == '_'))
+						.Distinct())
+					{
+						Report(pkg, name, type.FullTypeName.ToString(), new LeakedName(leak));
+					}
+				}
 				// ILFunction warnings (unknown result types, stack type mismatches, invalid IL)
 				// surface in the output as "//IL_xxxx: <message>" comments.
 				foreach (var warning in Regex.Matches(code, @"//IL_[0-9a-fA-F]+: (.*)")
@@ -656,6 +676,13 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 		}
 		ReportResolutions(logResolver);
 	}
+}
+
+string SyntaxTreeToString(SyntaxTree syntaxTree)
+{
+	var w = new StringWriter();
+	syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, formatting));
+	return w.ToString();
 }
 
 void ReportResolutions(LoggingResolver logResolver)
@@ -1264,6 +1291,7 @@ void Report(string pkg, string asm, string type, Exception ex)
 	var kind = inner is AssertionFailedException ? "ASSERT"
 		: inner is TimeoutException ? "TIMEOUT"
 		: inner is DecompilerWarning ? "WARNING"
+		: inner is LeakedName ? "LEAK"
 		: inner is PdbFinding ? "PDB" : "EXCEPTION";
 	var key = $"{kind}|{inner.GetType().Name}|{inner.Message}|{topFrame}";
 	var location = $"{pkg} / {asm} / {type}";
@@ -1396,7 +1424,7 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 		           color:#a8791f; border:1px solid #a8791f55; margin-left:6px; }
 		.ASSERT { border-left:4px solid #d97706; } .EXCEPTION { border-left:4px solid #dc2626; }
 		.TIMEOUT { border-left:4px solid #7c3aed; } .WARNING { border-left:4px solid #2563eb; }
-		.PDB { border-left:4px solid #0d9488; }
+		.PDB { border-left:4px solid #0d9488; } .LEAK { border-left:4px solid #db2777; }
 		#filter { width:100%; padding:8px; margin:8px 0; border:1px solid var(--line); border-radius:6px;
 		          background:var(--bg); color:var(--fg); font:13px ui-monospace,monospace; }
 		</style></head><body>
@@ -1407,7 +1435,7 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 		+ $"({findings.Sum(f => f.Count)} total)"
 		+ (dumpDir != null ? $"<br>decompiled sources dumped to {Esc(dumpDir)}" : "") + "</div>");
 	html.AppendLine("<input id=filter placeholder='filter by message, type, package or frame'>");
-	foreach (var kind in new[] { "ASSERT", "EXCEPTION", "TIMEOUT", "WARNING" })
+	foreach (var kind in new[] { "ASSERT", "EXCEPTION", "TIMEOUT", "LEAK", "WARNING", "PDB" })
 	{
 		var group = findings.Where(f => f.Kind == kind).OrderByDescending(f => f.Count).ToList();
 		if (group.Count == 0)
@@ -1470,6 +1498,13 @@ record BodyFacts(int CodeSize, HashSet<int> InstructionOffsets, HashSet<int> Cat
 class AssertionFailedException(string message) : Exception(message);
 
 class DecompilerWarning(string message) : Exception(message);
+
+// A compiler-generated name that reached the output. The message keeps only the shape of
+// the name - the part in angle brackets is the enclosing member and the digits are per
+// occurrence - so that one bucket collects every hit of the same unfolded construct.
+class LeakedName(string name)
+	: Exception("leaked compiler-generated name: "
+		+ Regex.Replace(Regex.Replace(name, "<[^<>]*>", "<>"), "[0-9]+", "N"));
 
 // A defect in a generated PDB. The message describes the shape of the defect and never the
 // instance that hit it - Report() dedupes on the message, so naming a method or an offset in it
