@@ -137,6 +137,9 @@ var downloadOnly = args.Contains("--download-only");
 var pdbMode = args.Contains("--pdb");
 // Checks the PDB the assembly already ships with. Calibration, not a sweep.
 var pdbLint = args.Contains("--pdb-lint");
+// Findings first hit by the assembly being decompiled. They get their reference context
+// once it is done, because the resolver keeps discovering references until then.
+var pendingContext = new List<string>();
 var arguments = args
 	.Where(a => !a.StartsWith("--"))
 	.SelectMany(a => a.StartsWith('@') ? File.ReadAllLines(a[1..]) : new[] { a })
@@ -623,7 +626,7 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 		if (pdbMode)
 		{
 			CheckGeneratedPdb(pkg, name, module, decompiler, dllPath, orderedDirs);
-			ReportResolutions(logResolver);
+			ReportResolutions(logResolver, dllPath, orderedDirs);
 			return;
 		}
 		foreach (var type in decompiler.TypeSystem.MainModule.TopLevelTypeDefinitions.ToList())
@@ -677,7 +680,7 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 				Report(pkg, name, type.FullTypeName.ToString(), ex);
 			}
 		}
-		ReportResolutions(logResolver);
+		ReportResolutions(logResolver, dllPath, orderedDirs);
 	}
 }
 
@@ -688,10 +691,21 @@ string SyntaxTreeToString(SyntaxTree syntaxTree)
 	return w.ToString();
 }
 
-void ReportResolutions(LoggingResolver logResolver)
+void ReportResolutions(LoggingResolver logResolver, string dllPath, List<string> orderedDirs)
 {
 	var resolutions = logResolver.Resolutions;
 	var unresolved = resolutions.Where(kv => kv.Value == null).Select(kv => kv.Key).OrderBy(k => k).ToList();
+	// What it takes to reproduce a finding by hand: the assembly it came from and the
+	// references it was decompiled against, which are what the report is read for once
+	// a warning turns out to be a reference problem rather than a decompiler defect.
+	var context = new StringBuilder($"assembly: {dllPath}");
+	foreach (var dir in orderedDirs)
+		context.Append($"{Environment.NewLine}  -r {dir}");
+	foreach (var (refName, refPath) in resolutions.OrderBy(kv => kv.Key, StringComparer.Ordinal))
+		context.Append($"{Environment.NewLine}  {refName} -> {refPath ?? "NOT FOUND"}");
+	foreach (var key in pendingContext)
+		failures[key] = failures[key] with { Context = context.ToString() };
+	pendingContext.Clear();
 	refsTotal += resolutions.Count;
 	refsResolved += resolutions.Count - unresolved.Count;
 	Console.WriteLine($"    refs: {resolutions.Count - unresolved.Count}/{resolutions.Count} resolved");
@@ -1307,6 +1321,7 @@ void Report(string pkg, string asm, string type, Exception ex)
 	{
 		failures[key] = new Finding(kind, inner.GetType().Name, FirstLine(inner.Message),
 			FirstLine(topFrame), location, ex.ToString(), 1);
+		pendingContext.Add(key);
 		Console.WriteLine($"  [{kind}] {location}");
 		foreach (var line in ex.ToString().Split('\n').Take(30))
 			Console.WriteLine("      " + line.TrimEnd());
@@ -1327,7 +1342,7 @@ static void AppendToLedger(string path, IEnumerable<Finding> findings, int assem
 		// often than a decompiler defect ("might be due to ... missing references" is what
 		// the warning itself says), and the report separates the two on this basis.
 		lines.Add(JsonSerializer.Serialize(new LedgerEntry("finding", f.Kind, f.ExceptionType, f.Message,
-			f.Frame, f.FirstLocation, f.Detail, f.Count, 0, 0, refsResolved, refsTotal)));
+			f.Frame, f.FirstLocation, f.Detail, f.Count, 0, 0, refsResolved, refsTotal, f.Context)));
 	}
 	lines.Add(JsonSerializer.Serialize(new LedgerEntry("totals", "", "", "", "", "", "", 0,
 		assemblies, types, refsResolved, refsTotal)));
@@ -1388,7 +1403,7 @@ static void RenderLedger(string ledgerPath, string outPath)
 		merged[key] = merged.TryGetValue(key, out var existing)
 			? existing with { Count = existing.Count + entry.Count }
 			: new Finding(entry.Kind, entry.ExceptionType, entry.Message, entry.Frame,
-				entry.FirstLocation, entry.Detail, entry.Count);
+				entry.FirstLocation, entry.Detail, entry.Count, entry.Context);
 		// Ledger lines written before this attribution existed carry 0/0; treat those as
 		// unknown rather than clean, so they are never presented as confirmed defects.
 		(entry.RefsTotal > 0 && entry.RefsResolved == entry.RefsTotal ? clean : degraded).Add(key);
@@ -1453,7 +1468,8 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 				: "";
 			html.AppendLine($"<details class={kind}><summary><span class=count>{f.Count}x</span> "
 				+ $"{Esc(f.ExceptionType)}: {Esc(f.Message)}{suspect}</summary>");
-			html.AppendLine($"<pre>first: {Esc(f.FirstLocation)}\nframe: {Esc(f.Frame)}\n\n{Esc(f.Detail)}</pre></details>");
+			var context = f.Context.Length > 0 ? $"{Esc(f.Context)}\n" : "";
+			html.AppendLine($"<pre>first: {Esc(f.FirstLocation)}\nframe: {Esc(f.Frame)}\n{context}\n{Esc(f.Detail)}</pre></details>");
 		}
 	}
 	html.AppendLine("""
@@ -1482,7 +1498,7 @@ static string FirstLine(string s)
 // One deduplicated defect: Count counts every location that hit it, Detail keeps the
 // full exception text of the first one for triage.
 record Finding(string Kind, string ExceptionType, string Message, string Frame,
-	string FirstLocation, string Detail, int Count)
+	string FirstLocation, string Detail, int Count, string Context = "")
 {
 	public string Describe()
 		=> $"[{Kind}] {ExceptionType}: {Message} @ {Frame}  (first: {FirstLocation})";
@@ -1491,7 +1507,7 @@ record Finding(string Kind, string ExceptionType, string Message, string Frame,
 // One line of the sweep ledger: either a deduplicated finding or a per-run totals record.
 record LedgerEntry(string Record, string Kind, string ExceptionType, string Message, string Frame,
 	string FirstLocation, string Detail, int Count, int Assemblies, int Types,
-	long RefsResolved, long RefsTotal);
+	long RefsResolved, long RefsTotal, string Context = "");
 
 record VersionIndex(string[] versions);
 
