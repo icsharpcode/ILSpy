@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public const string Version = "11.0";
 		public const string AppVersion = ".NETCoreApp,Version=v11.0";
-		public const string RefAsmVersion = "11.0.0-preview.5.26302.115";
+		public const string RefAsmVersion = "11.0.0-rc.1.26425.128";
 
 		public const string RefAsmPackage = "Microsoft.NETCore.App.Ref";
 	}
