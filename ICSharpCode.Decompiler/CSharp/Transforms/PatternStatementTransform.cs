@@ -197,7 +197,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m1.Success)
 				return null;
 			var variable = m1.Get<IdentifierExpression>("variable").Single().GetILVariable();
-			AstNode? next = node.NextSibling;
+			AstNode? next = node.GetNextNonEmptyStatement();
 			if (next == null)
 				return null;
 			if (next is ForStatement forStatement && ForStatementUsesVariable(forStatement, variable))
@@ -598,7 +598,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m = default(Match);
 			while (i < upperBounds.Length && MatchLowerBound(i, out var indexVariable, collection, stmt))
 			{
-				m = forOnArrayMultiDimPattern.Match(stmt.GetNextStatement());
+				m = forOnArrayMultiDimPattern.Match(stmt.GetNextNonEmptyStatement());
 				if (!m.Success)
 					return false;
 				var upperBound = m.Get<IdentifierExpression>("upperBoundVariable").Single().GetILVariable();
@@ -654,7 +654,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value?.ToString() ?? "", out int index) || index != i)
 					break;
 				upperBounds[i] = m.Get<IdentifierExpression>("variable").Single().GetILVariable()!;
-				stmt = stmt.GetNextStatement();
+				stmt = stmt.GetNextNonEmptyStatement();
 				i++;
 			} while (stmt != null && upperBounds != null && i < upperBounds.Length);
 
@@ -664,7 +664,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			statementsToDelete.Add(stmt);
 			// The matched multi-dimensional foreach pattern guarantees a statement after stmt.
-			statementsToDelete.Add(stmt.GetNextStatement()!);
+			statementsToDelete.Add(stmt.GetNextNonEmptyStatement()!);
 			var itemVariable = foreachVariable.GetILVariable();
 			if (itemVariable == null || !itemVariable.IsSingleDefinition
 				|| (itemVariable.Kind != IL.VariableKind.Local && itemVariable.Kind != IL.VariableKind.StackSlot)
@@ -1261,34 +1261,79 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Destructor
-		static readonly BlockStatement destructorBodyPattern = new BlockStatement {
-			new TryCatchStatement {
-				TryBlock = new AnyNode("body"),
-				FinallyBlock = new BlockStatement {
-					new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
-				}
-			}
+		static readonly TryCatchStatement destructorTryFinallyPattern = new TryCatchStatement {
+			TryBlock = new AnyNode("body"),
+			FinallyBlock = new AnyNode("finallyBlock")
 		};
+
+		static readonly Statement baseFinalizeCallPattern = new ExpressionStatement(
+			new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize")));
 
 		static readonly MethodDeclaration destructorPattern = new MethodDeclaration {
 			Attributes = { new Repeat(new AnyNode()) },
 			Modifiers = Modifiers.Any,
 			ReturnType = new PrimitiveType("void"),
 			Name = "Finalize",
-			Body = destructorBodyPattern
+			Body = new AnyNode()
 		};
+
+		/// <summary>
+		/// Matches the body a compiler emits for a destructor - a single try statement whose
+		/// finally block does nothing but call <c>base.Finalize()</c> - and returns the try block
+		/// holding the user-written code, or <c>null</c> if <paramref name="body"/> has another
+		/// shape. Comment placeholders around the two statements are skipped: leaving the method
+		/// in its "override Finalize" shape over a decompiler warning produces output that does
+		/// not compile (CS0249).
+		/// </summary>
+		static BlockStatement? MatchDestructorBody(BlockStatement body)
+		{
+			var statement = body.Statements.GetFirstNonEmptyStatementOrDefault();
+			if (statement is not TryCatchStatement || statement.GetNextNonEmptyStatement() != null)
+				return null;
+			Match m = destructorTryFinallyPattern.Match(statement);
+			if (!m.Success)
+				return null;
+			var finalizeCall = m.Get<BlockStatement>("finallyBlock").Single()
+				.Statements.GetFirstNonEmptyStatementOrDefault();
+			if (finalizeCall == null || finalizeCall.GetNextNonEmptyStatement() != null
+				|| !baseFinalizeCallPattern.IsMatch(finalizeCall))
+			{
+				return null;
+			}
+			return m.Get<BlockStatement>("body").Single();
+		}
+
+		/// <summary>
+		/// Moves the comment placeholders of <paramref name="oldBody"/> to the front of
+		/// <paramref name="newBody"/>, which replaces it. They describe the member, so dropping
+		/// them with the body they happen to sit in would lose a decompiler warning.
+		/// </summary>
+		static void MovePlaceholderComments(BlockStatement oldBody, BlockStatement newBody)
+		{
+			var anchor = newBody.Statements.FirstOrNull();
+			foreach (var placeholder in oldBody.Statements.OfType<EmptyStatement>().ToList())
+			{
+				placeholder.Detach();
+				if (anchor != null)
+					newBody.Statements.InsertBefore(anchor, placeholder);
+				else
+					newBody.Statements.Add(placeholder);
+			}
+		}
 
 		DestructorDeclaration? TransformDestructor(MethodDeclaration methodDef)
 		{
 			Match m = destructorPattern.Match(methodDef);
-			if (m.Success)
+			if (m.Success && methodDef.Body is BlockStatement oldBody
+				&& MatchDestructorBody(oldBody) is BlockStatement tryBlock)
 			{
 				context.Step("Convert Finalize method to destructor", methodDef);
 				DestructorDeclaration dd = new DestructorDeclaration();
 				methodDef.Attributes.MoveTo(dd.Attributes);
 				dd.CopyAnnotationsFrom(methodDef);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
-				dd.Body = m.Get<BlockStatement>("body").Single().Detach();
+				MovePlaceholderComments(oldBody, tryBlock);
+				dd.Body = tryBlock.Detach();
 				// A destructor only appears inside a type declaration, so the context tracker
 				// has an enclosing type at this point.
 				dd.Name = currentTypeDefinition!.Name;
@@ -1301,11 +1346,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		DestructorDeclaration? TransformDestructorBody(DestructorDeclaration dtorDef)
 		{
-			Match m = destructorBodyPattern.Match(dtorDef.Body);
-			if (m.Success)
+			if (dtorDef.Body is BlockStatement oldBody
+				&& MatchDestructorBody(oldBody) is BlockStatement tryBlock)
 			{
 				context.Step("Simplify destructor body", dtorDef);
-				dtorDef.Body = m.Get<BlockStatement>("body").Single().Detach();
+				MovePlaceholderComments(oldBody, tryBlock);
+				dtorDef.Body = tryBlock.Detach();
 				return dtorDef;
 			}
 			return null;
@@ -1455,7 +1501,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!context.Settings.UseEnhancedUsing)
 				return usingStatement;
 
-			if (usingStatement.GetNextStatement() != null || !(usingStatement.Parent is BlockStatement))
+			if (usingStatement.GetNextNonEmptyStatement() != null || !(usingStatement.Parent is BlockStatement))
 				return usingStatement;
 
 			if (!(usingStatement.ResourceAcquisition is VariableDeclarationStatement))

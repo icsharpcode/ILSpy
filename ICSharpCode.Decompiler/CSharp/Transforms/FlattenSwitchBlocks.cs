@@ -33,10 +33,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			foreach (var switchSection in rootNode.Descendants.OfType<SwitchSection>())
 			{
-				if (switchSection.Statements.Count != 1)
+				var onlyStatement = switchSection.Statements.GetFirstNonEmptyStatementOrDefault();
+				if (onlyStatement == null || onlyStatement.GetNextNonEmptyStatement() != null)
 					continue;
 
-				var blockStatement = switchSection.Statements.First() as BlockStatement;
+				var blockStatement = onlyStatement as BlockStatement;
 				if (blockStatement == null || blockStatement.Statements.Any(ContainsLocalDeclaration))
 					continue;
 
