@@ -1092,12 +1092,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					return new Call(operatorMethod) { Arguments = { leftInst, rightInst } };
 				}
-				// A comparison of type parameters has no C# spelling: `v == other` is CS0019 for
-				// one, and boxing both operands would change the comparison the tree asks for -
-				// Equal on two T is value equality once T is a value type, box identity is not.
-				// Leave the tree as the Expression calls that built it.
-				if (leftType.Kind == TypeKind.TypeParameter || rightType.Kind == TypeKind.TypeParameter)
+				// A comparison of type parameters has no C# spelling unless the parameter is known
+				// to be a reference type: `v == other` is CS0019 for an unconstrained one, and boxing
+				// both operands would change the comparison the tree asks for - Equal on two T is
+				// value equality once T is a value type, box identity is not. A parameter constrained
+				// to a reference type compares as one, which is both what the tree asks for and what
+				// `t == null` spells. Leave the rest as the Expression calls that built it.
+				if (leftType is { Kind: TypeKind.TypeParameter, IsReferenceType: not true }
+					|| rightType is { Kind: TypeKind.TypeParameter, IsReferenceType: not true })
+				{
 					return null;
+				}
 				var lifting = NullableType.IsNullable(leftType) ? ComparisonLiftingKind.CSharp : ComparisonLiftingKind.None;
 				var utype = NullableType.GetUnderlyingType(leftType);
 				return new Comp(kind, lifting, utype.GetStackType(), utype.GetSign(), leftInst, rightInst);
