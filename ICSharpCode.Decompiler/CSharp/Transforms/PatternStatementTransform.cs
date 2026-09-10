@@ -1019,6 +1019,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return td.HasFlag(System.Reflection.TypeAttributes.BeforeFieldInit);
 		}
 
+		/// <summary>
+		/// Maps each backing field to whether its references outside the owning property's
+		/// accessors can still be expressed once the field declaration is gone: <c>true</c> for
+		/// rescuable constructor stores only, <c>false</c> for anything else. A field absent from
+		/// the map has no outside references at all and is therefore also expressible.
+		/// </summary>
 		Dictionary<IField, bool> BuildOutsideReferenceIndex(AstNode root)
 		{
 			var verdicts = new Dictionary<IField, bool>();
@@ -1190,10 +1196,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 
 		/// <summary>
-		/// True when <paramref name="node"/> is the left-hand side of a plain assignment to
+		/// True when <paramref name="node"/> is a target of a plain assignment to
 		/// <paramref name="field"/> inside a constructor of the field's declaring type - the
 		/// only outside reference the "field" keyword can still express (as a property
-		/// initializer, or an assignment to a setter-less property).
+		/// initializer, or an assignment to a setter-less property). A deconstruction target
+		/// counts only in the second form: it assigns several members at once, so it can never
+		/// move into an initializer, and a property that kept a setter would invoke it.
 		/// </summary>
 		/// <remarks>
 		/// Shared by <see cref="OutsideReferencesAreExpressible"/>, which decides whether the
@@ -1205,8 +1213,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </remarks>
 		static bool IsConstructorStore(AstNode node, IField field, IMethod? enclosingMethod)
 		{
-			if (node.Parent is not AssignmentExpression { Operator: AssignmentOperatorType.Assign } assignment
-				|| assignment.Left != node)
+			AstNode currentNode = node;
+			bool viaDeconstruction = false;
+			while (true)
+			{
+				if (currentNode.Parent is AssignmentExpression { Operator: AssignmentOperatorType.Assign }
+					&& currentNode.Slot == AssignmentExpression.LeftSlot)
+				{
+					break;
+				}
+				if (currentNode.Parent is TupleExpression)
+				{
+					viaDeconstruction = true;
+					currentNode = currentNode.Parent;
+					continue;
+				}
+				return false;
+			}
+			if (viaDeconstruction
+				&& (!IsBackingFieldOfAutomaticProperty(field, out var property) || property.CanSet))
 			{
 				return false;
 			}
