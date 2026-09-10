@@ -567,6 +567,9 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 	}
 	using (module)
 	{
+		// The file name alone is ambiguous across a sweep: the same simple name ships in many
+		// packages and many TFM folders. Identify findings by full assembly name plus path.
+		name = $"{module.FullName} ({dllPath})";
 		// ".NETCoreApp,Version=v5.0" -> 5.0; null for .NET Framework / netstandard modules.
 		Version? coreVersion = null;
 		var tfmId = module.DetectTargetFrameworkId();
@@ -768,7 +771,6 @@ void CheckGeneratedPdb(string pkg, string asm, PEFile module, CSharpDecompiler d
 // reported here is a defect in the lint rather than in ILSpy.
 void LintExistingPdb(string dllPath)
 {
-	var asm = Path.GetFileName(dllPath);
 	using var peStream = File.OpenRead(dllPath);
 	PEReader peReader;
 	try
@@ -783,6 +785,7 @@ void LintExistingPdb(string dllPath)
 	}
 	using (peReader)
 	{
+		var asm = $"{peReader.GetMetadataReader().GetFullAssemblyName()} ({dllPath})";
 		// A PDB next to the assembly if there is one, otherwise the one embedded in the PE.
 		MemoryStream? pdbStream = null;
 		MetadataReaderProvider? provider = null;
