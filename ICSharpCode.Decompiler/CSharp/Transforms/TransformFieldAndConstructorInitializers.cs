@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				bool skippedStmts = false;
 
 				Statement? stmt;
-				for (stmt = ctor.Body?.Statements.FirstOrDefault(); stmt != null; stmt = stmt.GetNextStatement())
+				for (stmt = ctor.Body?.Statements.GetFirstNonEmptyStatementOrDefault(); stmt != null; stmt = stmt.GetNextNonEmptyStatement())
 				{
 					var m = memberInitializerPattern.Match(stmt);
 					if (!m.Success)
@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							: ThisCallClassPattern.Match(stmt);
 						if (m.Success)
 						{
-							sequence.CoversFullBody = stmt.GetNextStatement() == null;
+							sequence.CoversFullBody = stmt.GetNextNonEmptyStatement() == null;
 						}
 					}
 				}
@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (ctor.Body is null)
 					return false;
 				var stmts = ctor.Body.Statements;
-				var otherStmt = stmts.FirstOrDefault();
+				var otherStmt = stmts.GetFirstNonEmptyStatementOrDefault();
 				foreach (var (stmt, member, initializer, _) in Statements)
 				{
 					var m = memberInitializerPattern.Match(otherStmt);
@@ -249,7 +249,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						StatementToOtherCtorsMap[stmt] = list;
 					}
 					list.Add((otherStmt, otherInitializer));
-					otherStmt = otherStmt.GetNextStatement();
+					otherStmt = otherStmt.GetNextNonEmptyStatement();
 				}
 				return true;
 			}
@@ -369,7 +369,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					else
 					{
 						// find this-ctor call
-						var stmt = ctor.Body?.Statements.FirstOrDefault();
+						var stmt = ctor.Body?.Statements.GetFirstNonEmptyStatementOrDefault();
 						var m = ctorMethod.DeclaringType.Kind == TypeKind.Struct
 							? ThisCallStructPattern.Match(stmt)
 							: ThisCallClassPattern.Match(stmt);
@@ -527,7 +527,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				if (constructorDeclaration.Body is null)
 					return false;
-				Statement stmt = constructorDeclaration.Body.Statements.FirstOrDefault()!;
+				Statement stmt = constructorDeclaration.Body.Statements.GetFirstNonEmptyStatementOrDefault()!;
 				var isValueType = ctorMethod.DeclaringType.Kind == TypeKind.Struct;
 
 				// value types may omit the constructor initializer completely

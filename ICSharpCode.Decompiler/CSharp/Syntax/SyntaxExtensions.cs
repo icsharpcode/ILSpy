@@ -61,6 +61,37 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return (Statement?)next;
 		}
 
+		/// <summary>
+		/// The first statement of <paramref name="statements"/> that is not an
+		/// <see cref="EmptyStatement"/>, or <c>null</c> if there is none.
+		/// </summary>
+		/// <remarks>
+		/// An empty statement is either a stray ';' or a placeholder carrying a comment the
+		/// decompiler emitted (a warning, an unconvertible block, a "try-fault" marker, ...).
+		/// Neither is a statement in the sense a transform matching a statement sequence means,
+		/// so every such transform has to look past them or it silently stops recognizing its
+		/// pattern as soon as one of those comments lands in the middle of the sequence.
+		/// </remarks>
+		public static Statement? GetFirstNonEmptyStatementOrDefault(this AstNodeCollection<Statement> statements)
+		{
+			return statements.FirstOrNull(statement => statement is not EmptyStatement);
+		}
+
+		/// <summary>
+		/// The next statement after <paramref name="statement"/> that is not an
+		/// <see cref="EmptyStatement"/>, or <c>null</c> if there is none.
+		/// </summary>
+		/// <remarks>
+		/// See <see cref="GetFirstNonEmptyStatementOrDefault"/> for why the skip is needed.
+		/// </remarks>
+		public static Statement? GetNextNonEmptyStatement(this Statement statement)
+		{
+			var next = statement.GetNextStatement();
+			while (next is EmptyStatement)
+				next = next.GetNextStatement();
+			return next;
+		}
+
 		public static bool IsArgList(this AstType? type)
 		{
 			var simpleType = type as SimpleType;
