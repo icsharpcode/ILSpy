@@ -558,6 +558,37 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CallBuilder(this, typeSystem, settings).Build(inst, context.TypeHint);
 		}
 
+		protected internal override TranslatedExpression VisitCachedDelegate(CachedDelegate inst, TranslationContext context)
+		{
+			var expression = Translate(inst.Argument, context.TypeHint);
+			if (expression.Expression is ObjectCreateExpression objectCreation && objectCreation.Arguments.Count == 1
+				&& expression.ResolveResult is ConversionResolveResult { Conversion.IsMethodGroupConversion: true })
+			{
+				// A method-group conversion allows caching; explicit construction would allocate.
+				// ConvertTo can remove the cast when the context supplies the delegate type.
+				var cast = new CastExpression(objectCreation.Type.Detach(), objectCreation.Arguments.Single().Detach())
+					.CopyAnnotationsFrom(objectCreation);
+				return new TranslatedExpression(cast, expression.ResolveResult).WithILInstruction(inst);
+			}
+			return expression.WithILInstruction(inst);
+		}
+
+		/// <summary>
+		/// Gets whether the C# compiler would cache a method-group conversion in the current context.
+		/// </summary>
+		internal bool MethodGroupConversionWouldBeCached(Conversion conversion)
+		{
+			if (settings.GetMinimumRequiredVersion() < LanguageVersion.CSharp11_0
+				|| currentFunction.Kind == ILFunctionKind.ExpressionTree
+				|| decompilationContext.CurrentMember is { SymbolKind: SymbolKind.Constructor, IsStatic: true })
+			{
+				return false;
+			}
+			// Local-function symbols report IsStatic even when the C# declaration cannot be static.
+			return !conversion.DelegateCapturesFirstArgument
+				&& conversion.Method is not LocalFunctionMethod { IsStaticLocalFunction: false };
+		}
+
 		protected internal override TranslatedExpression VisitLdVirtDelegate(LdVirtDelegate inst, TranslationContext context)
 		{
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
