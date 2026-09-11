@@ -224,6 +224,8 @@
     <Compile Remove="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.cs" />
     <None Include="TestCases\ILPretty\Issue3729.il" />
+    <Compile Remove="TestCases\VBPretty\Issue3659.cs" />
+    <None Include="TestCases\VBPretty\Issue3659.cs" />
     <Compile Remove="TestCases\ILPretty\SpanConversionOperatorMismatch.cs" />
     <None Include="TestCases\ILPretty\SpanConversionOperatorMismatch.cs" />
     <Compile Remove="TestCases\ILPretty\FSharpLoops_Debug.cs" />

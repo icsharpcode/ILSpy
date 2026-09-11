@@ -133,6 +133,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Issue3659([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			await Run(options: options | CompilerOptions.Library);
+		}
+
+		[Test]
 		public async Task Issue1906([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await Run(options: options | CompilerOptions.Library);

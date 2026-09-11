@@ -71,7 +71,75 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					PropagateExceptionVariable(context, catchBlock);
 				}
+				else if (catchBlock.Filter is BlockContainer filterContainer
+					&& MatchTypeTestConjunction(catchBlock.Variable, filterContainer,
+						out var conjunctionType, out var typeTest)
+					&& conjunctionType.GetStackType() == catchBlock.Variable.StackType)
+				{
+					context.Step($"Detected catch-when type test for {catchBlock.Variable.Name}", typeTest);
+					catchBlock.Variable.Type = conjunctionType;
+					var remainder = typeTest.Right;
+					typeTest.ReplaceWith(remainder);
+					context.EndStep(remainder);
+
+					PropagateExceptionVariable(context, catchBlock);
+				}
 			}
+		}
+
+		/// <summary>
+		/// BlockContainer {
+		/// 	Block entryPoint (incoming: 1) {
+		/// 		leave container(bit.and(bit.and(comp(isinst T(ldloc exceptionVar) != ldnull), cond1), cond2))
+		/// 	}
+		/// }
+		/// The Visual Basic compiler emits the whole filter as one non-short-circuiting
+		/// expression rather than the block chain csc emits, so the type test sits in a
+		/// conjunction instead of a branch. On a match, typeTest is the innermost `bit.and`,
+		/// whose right operand is the filter that remains once the test moves to the catch type.
+		/// </summary>
+		bool MatchTypeTestConjunction(ILVariable exceptionVar, BlockContainer container,
+			out IType exceptionType, out BinaryNumericInstruction typeTest)
+		{
+			exceptionType = null;
+			typeTest = null;
+			var entryPoint = container.EntryPoint;
+			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1 || entryPoint.Instructions.Count != 1)
+				return false;
+			if (!entryPoint.Instructions[0].MatchLeave(container, out var condition))
+				return false;
+			// Once the test moves to the catch type, the other conjuncts stop running for a
+			// non-matching exception, which is only invisible if they have no side effects.
+			if (!SemanticHelper.IsPure(condition.Flags))
+				return false;
+			// The test is the leftmost operand of a left-nested chain of `&`.
+			while (condition is BinaryNumericInstruction { Operator: BinaryNumericOperator.BitAnd } and)
+			{
+				if (MatchTypeTest(and.Left, exceptionVar, out exceptionType))
+				{
+					typeTest = and;
+					return true;
+				}
+				condition = and.Left;
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// comp(isinst T(ldloc exceptionVar) != ldnull), however the compiler spelled the null test.
+		/// </summary>
+		static bool MatchTypeTest(ILInstruction condition, ILVariable exceptionVar, out IType exceptionType)
+		{
+			exceptionType = null;
+			if (condition is not Comp comp || !comp.Right.MatchLdNull())
+				return false;
+			// `cgt.un x, null` is how both compilers spell `x != null` for a reference.
+			if (comp.Kind != ComparisonKind.Inequality
+				&& !(comp.Kind == ComparisonKind.GreaterThan && comp.InputType == StackType.O))
+				return false;
+			if (!comp.Left.MatchIsInst(out var argument, out exceptionType))
+				return false;
+			return argument.MatchLdLoc(exceptionVar);
 		}
 
 		/// <summary>
