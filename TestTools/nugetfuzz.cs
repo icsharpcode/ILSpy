@@ -557,6 +557,10 @@ async Task<string> GetPackage(string id, NuGetVersion version)
 
 async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs, NuGetFramework matchTarget, string? fallbackDir)
 {
+	// An assembly that bails out before reporting its resolutions leaves findings behind that
+	// never received a context. Dropping them here keeps the next assembly from stamping its
+	// own references onto them, which would name the wrong reference set for the finding.
+	pendingContext.Clear();
 	var name = Path.GetFileName(dllPath);
 	PEFile module;
 	try
