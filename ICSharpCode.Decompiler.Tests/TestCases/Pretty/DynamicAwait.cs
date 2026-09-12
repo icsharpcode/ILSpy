@@ -92,6 +92,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static async Task DynamicAwaitInTryCatch(dynamic d)
 		{
+			// Optimized pre-Roslyn state machines keep the bookkeeping of an await inside a try
+			// block in locals that survive decompilation as dead stores; a plain await on a Task
+			// produces the same three stores.
+#if EXPECTED_OUTPUT && OPT && LEGACY_CSC
+			int num = default(int);
+			int num2 = num;
+			int num3 = 0;
+#endif
 			try
 			{
 				d.Before = 1;
@@ -151,7 +159,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// awaited dynamic stored in a dynamic local, then used (#1388)
 		private static async Task<dynamic> AwaitDynamicIntoUsedLocal()
 		{
+			// The pre-Roslyn compiler copies the awaited value into its own local first.
+#if LEGACY_CSC
+			dynamic dynamic = GetDynamic();
+			dynamic val = await dynamic;
+#else
 			dynamic val = await GetDynamic();
+#endif
 			val.UseMe();
 			return val;
 		}
@@ -159,7 +173,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		// dynamic-dispatched awaited call with a dynamic-converted result (#1928)
 		private static async Task<string> AwaitDynamicConvertResult(dynamic d)
 		{
+#if LEGACY_CSC
+			dynamic val = d.RunAsync();
+			return (string)(await val);
+#else
 			return (string)(await d.RunAsync());
+#endif
 		}
 
 		// --- static-type call target spilled across an await ---
@@ -182,13 +201,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static async Task AwaitDynamicMethodResult(dynamic d)
 		{
+#if LEGACY_CSC
+			dynamic val = d.RunAsync();
+			await val;
+#else
 			await d.RunAsync();
+#endif
 		}
 
 		private static async Task AwaitDynamicLocalWithStatementBefore()
 		{
-			// Optimized builds drop the local's debug name, so the decompiler regenerates one from the type.
-#if OPT
+			// Optimized builds drop the local's debug name, so the decompiler regenerates one from
+			// the type; the pre-Roslyn compiler never emits the name in the first place.
+#if OPT || LEGACY_CSC
 			dynamic dynamic = GetDynamic();
 			Console.WriteLine("before await");
 			await dynamic;
