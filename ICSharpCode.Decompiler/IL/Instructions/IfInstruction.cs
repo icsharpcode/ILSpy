@@ -123,6 +123,12 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			output.Write(OpCode);
+			if (resultType != null)
+			{
+				output.Write(" [");
+				output.Write(resultType.ReflectionName);
+				output.Write(']');
+			}
 			output.Write(" (");
 			condition.WriteTo(output, options);
 			output.Write(") ");

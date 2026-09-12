@@ -96,10 +96,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			}
 			else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
-				&& inst.Right.MatchLdcI4(0) && (IfInstruction.IsInConditionSlot(inst) || inst.Left is Comp))
+				&& inst.Right.MatchLdcI4(0)
+				&& (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
+				   || inst.Left.MatchLdcI4(0) || inst.Left.MatchLdcI4(1)))
 			{
-				// if (comp(x != 0)) ==> if (x)
-				// comp(comp(...) != 0) => comp(...)
+				// When `x` is known to be 0 or 1:
+				// `comp(x != 0) => x`
 				context.Step("Remove redundant comp(... != 0)", inst);
 				inst.Left.AddILRange(inst);
 				var left = inst.Left;
