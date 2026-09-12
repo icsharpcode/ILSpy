@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.IL
 		public StackType UnderlyingResultType => resultType;
 
 		public sealed override StackType ResultType {
-			get => IsLifted ? StackType.O : resultType;
+			get => IsLifted ? StackType.VT : resultType;
 		}
 
 		public override IType InferType(ICompilation compilation)

@@ -22,6 +22,7 @@ ILSpy.Installer/wix/
 **/.vscode/
 DecompilerTests.config.json
 *.trx
+report/
 # Claude Code local session/skills directory
 /.claude/
 /.understand-anything

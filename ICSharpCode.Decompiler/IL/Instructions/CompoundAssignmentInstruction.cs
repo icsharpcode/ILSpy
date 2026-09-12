@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.type = type;
 			this.AddILRange(binary);
 			Debug.Assert(evalMode == CompoundEvalMode.EvaluatesToNewValue || Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub);
-			Debug.Assert(this.ResultType == (IsLifted ? StackType.O : UnderlyingResultType));
+			Debug.Assert(this.ResultType == (IsLifted ? StackType.VT : UnderlyingResultType));
 		}
 
 		/// <summary>

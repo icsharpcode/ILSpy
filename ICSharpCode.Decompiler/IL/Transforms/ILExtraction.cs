@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			FlagsBeingMoved |= predecessor.Flags;
 			MoveActions.Add(delegate {
-				var type = context.TypeSystem.FindType(predecessor.ResultType);
+				var type = predecessor.InferType(context.TypeSystem);
 				var v = Function.RegisterVariable(VariableKind.StackSlot, type);
 				predecessor.ReplaceWith(new LdLoc(v));
 				return new StLoc(v, predecessor);
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 					}
 					int insertIndex = inst.ChildIndex;
-					var type = context.TypeSystem.FindType(instToExtract.ResultType);
+					var type = instToExtract.InferType(context.TypeSystem);
 					// Move instToExtract itself:
 					var v = function.RegisterVariable(VariableKind.StackSlot, type);
 					instToExtract.ReplaceWith(new LdLoc(v));

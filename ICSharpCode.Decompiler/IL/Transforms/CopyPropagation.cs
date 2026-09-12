@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int j = 0; j < uninlinedArgs.Length; j++)
 			{
 				var arg = copiedExpr.Children[j];
-				var type = context.TypeSystem.FindType(arg.ResultType);
+				var type = arg.InferType(context.TypeSystem);
 				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType) {
 					Name = "C_" + arg.StartILOffset,
 					HasGeneratedName = true,

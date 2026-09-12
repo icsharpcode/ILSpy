@@ -92,7 +92,7 @@
 			MatchCondition("Value.PerformMatch(o.Value, ref match)")),
 		new OpCode("dynamic.compound", "Common instruction for dynamic compound assignments.",
 			CustomClassName("DynamicCompoundAssign"), BaseClass("CompoundAssignmentInstruction"),
-			MayThrow, SideEffect, CustomWriteTo, CustomConstructor, ResultType("SpecialType.Dynamic", "O"),
+			MayThrow, SideEffect, CustomWriteTo, CustomConstructor, ResultType("SpecialType.Dynamic", "Obj"),
 			MatchCondition("this.EvalMode == o.EvalMode"),
 			MatchCondition("this.TargetKind == o.TargetKind"),
 			MatchCondition("Target.PerformMatch(o.Target, ref match)"),
@@ -144,12 +144,12 @@
 			MatchCondition("faultBlock.PerformMatch(o.faultBlock, ref match)")),
 		new OpCode("lock", "Lock statement", CustomClassName("LockInstruction"),
 			CustomChildren(new [] {
-				new ArgumentInfo("onExpression") { ExpectedTypes = new[] { "O" }},
+				new ArgumentInfo("onExpression") { ExpectedTypes = new[] { "Obj" }},
 				new ChildInfo("body")
 			}), CustomWriteTo, ControlFlow, SideEffect, VoidResult),
 		new OpCode("using", "Using statement", CustomClassName("UsingInstruction"), HasVariableOperand("Store"),
 			CustomChildren(new [] {
-				new ArgumentInfo("resourceExpression") { ExpectedTypes = new[] { "O" }},
+				new ArgumentInfo("resourceExpression") { ExpectedTypes = new[] { "Obj", "VT" }},
 				new ChildInfo("body")
 			}), CustomWriteTo, ControlFlow, SideEffect, VoidResult),
 		new OpCode("debug.break", "Breakpoint instruction",
@@ -217,7 +217,7 @@
 		new OpCode("ldc.f8", "Loads a constant 64-bit floating-point number.",
 			LoadConstant("double"), ResultType("Double", "F8")),
 		new OpCode("ldc.decimal", "Loads a constant decimal.",
-			LoadConstant("decimal"), ResultType("Decimal", "O")),
+			LoadConstant("decimal"), ResultType("Decimal", "VT")),
 		new OpCode("ldnull", "Loads the null reference.",
 			CustomClassName("LdNull"), NoArguments, ResultType("Object", "Obj")),
 		new OpCode("ldftn", "Load method pointer",
@@ -301,7 +301,7 @@
 			CustomClassName("SizeOf"), NoArguments, HasTypeOperand, ResultType("Int32", "I4")),
 		
 		new OpCode("ldlen", "Returns the length of an array as 'native unsigned int'.",
-			CustomClassName("LdLen"), CustomArguments(("array", new[] { "O" })), CustomConstructor, CustomWriteTo, MayThrow),
+			CustomClassName("LdLen"), CustomArguments(("array", new[] { "Obj" })), CustomConstructor, CustomWriteTo, MayThrow),
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			BoolFlag("WithSystemIndex"),
@@ -310,14 +310,15 @@
 			CustomClassName("LdElemaInlineArray"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			MayThrow, ResultType("new ByReferenceType(this.Type)", "Ref"), SupportsReadonlyPrefix),
 		new OpCode("get.pinnable.reference", "Retrieves a pinnable reference for the input object." + Environment.NewLine
-				+ "The input must be an object reference (O)." + Environment.NewLine
+				+ "The input must be an object reference (Obj)." + Environment.NewLine
 				+ "If the input is an array/string, evaluates to a reference to the first element/character, or to a null reference if the array is null or empty." + Environment.NewLine
 				+ "Otherwise, uses the GetPinnableReference method to get the reference, or evaluates to a null reference if the input is null." + Environment.NewLine,
-			CustomArguments(("argument", new[] { "O" })),
+			CustomArguments(("argument", new[] { "Obj" })),
 			HasTypeOperand,
 			ResultType("new ByReferenceType(this.Type)", "Ref"), HasMethodOperand(nullable: true)),
-		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
-			CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo, ResultType("Int32", "I4")),
+		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string)."
+		        + "The input can be a `string` or a `ReadOnlySpan&lt;char&gt;`.",
+			CustomArguments(("argument", new[] { "Obj", "VT" })), CustomConstructor, CustomWriteTo, ResultType("Int32", "I4")),
 
 		new OpCode("expression.tree.cast", "ILAst representation of Expression.Convert.",
 			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo,
@@ -347,11 +348,11 @@
 		new OpCode("dynamic.unary.operator", "ILAst representation of a unary operator inside a dynamic expression (maps to Binder.UnaryOperation).",
 			CustomClassName("DynamicUnaryOperatorInstruction"), Dynamic, CustomArguments(("operand", null)), CustomWriteTo),
 		new OpCode("dynamic.convert", "ILAst representation of a cast inside a dynamic expression (maps to Binder.Convert).",
-			CustomClassName("DynamicConvertInstruction"), Dynamic, HasTypeOperand, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
+			CustomClassName("DynamicConvertInstruction"), Dynamic, HasTypeOperand, CustomArguments(("argument", new[] { "Obj" })), CustomWriteTo),
 		new OpCode("dynamic.getmember", "ILAst representation of a property get method call inside a dynamic expression (maps to Binder.GetMember).",
-			CustomClassName("DynamicGetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "O" })), CustomConstructor, CustomWriteTo),
+			CustomClassName("DynamicGetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "Obj" })), CustomConstructor, CustomWriteTo),
 		new OpCode("dynamic.setmember", "ILAst representation of a property set method call inside a dynamic expression (maps to Binder.SetMember).",
-			CustomClassName("DynamicSetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "O" }), ("value", null)), CustomWriteTo),
+			CustomClassName("DynamicSetMemberInstruction"), Dynamic, CustomArguments(("target", new[] { "Obj" }), ("value", null)), CustomWriteTo),
 		new OpCode("dynamic.getindex", "ILAst representation of an indexer get method call inside a dynamic expression (maps to Binder.GetIndex).",
 			CustomClassName("DynamicGetIndexInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
 		new OpCode("dynamic.setindex", "ILAst representation of an indexer set method call inside a dynamic expression (maps to Binder.SetIndex).",
@@ -363,7 +364,7 @@
 		new OpCode("dynamic.invoke", "ILAst representation of a delegate invocation inside a dynamic expression (maps to Binder.Invoke).",
 			CustomClassName("DynamicInvokeInstruction"), Dynamic, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}), CustomWriteTo),
 		new OpCode("dynamic.isevent", "ILAst representation of a call to the Binder.IsEvent method inside a dynamic expression.",
-			CustomClassName("DynamicIsEventInstruction"), Dynamic, CustomArguments(("argument", new[] { "O" })), CustomWriteTo),
+			CustomClassName("DynamicIsEventInstruction"), Dynamic, CustomArguments(("argument", new[] { "Obj" })), CustomWriteTo),
 
 		new OpCode("match", "ILAst representation of C# patterns",
 			CustomClassName("MatchInstruction"), HasVariableOperand("Store"), HasMethodOperand(nullable: true),
@@ -925,7 +926,7 @@ namespace ICSharpCode.Decompiler.IL
 							checkString += " || ";
 						checkString += arg + ".ResultType == " + expectedTypeCode;
 					}
-					opCode.Invariants.Add("DebugAssert(" + checkString + ");");
+					opCode.Invariants.Add("Debug.Assert(" + checkString + ");");
 				}
 			}
 			opCode.WriteArguments.Add("output.Write(')');");

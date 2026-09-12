@@ -123,6 +123,12 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			output.Write(OpCode);
+			if (resultType != null)
+			{
+				output.Write(" [");
+				output.Write(resultType.ReflectionName);
+				output.Write(']');
+			}
 			output.Write(" (");
 			condition.WriteTo(output, options);
 			output.Write(") ");
@@ -142,8 +148,8 @@ namespace ICSharpCode.Decompiler.IL
 			var slot = inst.SlotInfo;
 			if (slot == IfInstruction.ConditionSlot)
 				return true;
-			if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
-				return IsInConditionSlot(inst.Parent!);
+			//if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
+			//	return IsInConditionSlot(inst.Parent!);
 			if (inst.Parent is Comp comp)
 			{
 				if (comp.Left == inst && comp.Right.MatchLdcI4(0))

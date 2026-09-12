@@ -81,15 +81,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (inst.Right.MatchLdNull() && inst.Left.MatchBox(out var arg, out var type) && type.Kind == TypeKind.TypeParameter)
 			{
-				if (inst.Kind == ComparisonKind.Equality)
+				if (inst.Kind is ComparisonKind.Equality or ComparisonKind.Inequality)
 				{
 					context.Step("comp(box T(..) == ldnull) -> comp(.. == ldnull)", inst);
 					inst.Left = arg;
-				}
-				if (inst.Kind == ComparisonKind.Inequality)
-				{
-					context.Step("comp(box T(..) != ldnull) -> comp(.. != ldnull)", inst);
-					inst.Left = arg;
+					inst.InputType = arg.ResultType;
 				}
 			}
 		}
