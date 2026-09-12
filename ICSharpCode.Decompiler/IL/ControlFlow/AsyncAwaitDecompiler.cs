@@ -1344,6 +1344,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			smallestAwaiterVarIndex = int.MaxValue;
 			foreach (var container in function.Descendants.OfType<BlockContainer>())
 			{
+				foreach (var block in container.Blocks)
+					InlineAwaiterCopies(block);
 				// Fold the runtime ICriticalNotifyCompletion type-check that the compiler emits when the
 				// awaiter's static type is not known to implement it (dynamic awaiters, some generic awaiters)
 				// into the canonical single-call form that AnalyzeAwaitBlock recognizes.
@@ -1629,7 +1631,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!onCompletedBlock.Instructions[2].MatchBranch(out var mergeBlock2) || mergeBlock2 != mergeBlock)
 				return false;
 
-			if (mergeBlock.Instructions.Count != 1 || !(mergeBlock.Instructions[0] is Leave mergeLeave))
+			// The pre-Roslyn compiler clears doFinallyBodies right before leaving MoveNext;
+			// AnalyzeAwaitBlock expects that store directly in front of the leave.
+			int leavePos = MatchStoreDoFinallyBodies(mergeBlock.Instructions.FirstOrDefault()) ? 1 : 0;
+			if (mergeBlock.Instructions.Count != leavePos + 1 || !(mergeBlock.Instructions[leavePos] is Leave mergeLeave))
 				return false;
 
 			// Rewrite `block` into the canonical single-call form.
@@ -1641,10 +1646,55 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveRange(count - 2, 2); // if + br
 			block.Instructions.RemoveAt(isInstPos); // isinst store
 			block.Instructions.Add(awaitCall);
+			if (leavePos > 0)
+			{
+				block.Instructions.Add(mergeBlock.Instructions[0].Clone());
+			}
 			var newLeave = (Leave)mergeLeave.Clone();
 			moveNextLeaves.Add(newLeave);
 			block.Instructions.Add(newLeave);
 			return true;
+		}
+
+		/// <summary>
+		/// Matches the 'stloc doFinallyBodies(ldc.i4 0)' the pre-Roslyn compiler emits before leaving MoveNext.
+		/// </summary>
+		bool MatchStoreDoFinallyBodies(ILInstruction inst)
+		{
+			if (doFinallyBodies == null || inst == null)
+				return false;
+			return inst.MatchStLoc(out var v, out var value)
+				&& v.Kind == VariableKind.Local
+				&& v.Type.IsKnownType(KnownTypeCode.Boolean)
+				&& v.Index == doFinallyBodies.Index
+				&& value.MatchLdcI4(0);
+		}
+
+		/// <summary>
+		/// The pre-Roslyn compiler copies the awaiter into a fresh local right before each dynamic call site
+		/// and each completion-interface type test on it. The await matchers identify an await by its awaiter
+		/// variable, so inline those copies.
+		/// </summary>
+		void InlineAwaiterCopies(Block block)
+		{
+			for (int i = block.Instructions.Count - 1; i >= 0; i--)
+			{
+				if (block.Instructions[i] is StLoc { Variable: { Kind: VariableKind.Local, IsSingleDefinition: true, LoadCount: 1, AddressCount: 0 } copy, Value: LdLoc } store
+					&& IsAwaiterAccess(copy.LoadInstructions[0].Parent))
+				{
+					ILInlining.InlineOne(store, InliningOptions.Aggressive, context);
+				}
+			}
+
+			static bool IsAwaiterAccess(ILInstruction inst)
+			{
+				if (inst is DynamicGetMemberInstruction { Name: "IsCompleted" } or DynamicInvokeMemberInstruction { Name: "GetResult" })
+					return true;
+				if (!inst.MatchIsInst(out _, out var type) && !inst.MatchCastClass(out _, out type))
+					return false;
+				return type.FullName is "System.Runtime.CompilerServices.ICriticalNotifyCompletion"
+					or "System.Runtime.CompilerServices.INotifyCompletion";
+			}
 		}
 
 		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state, out int yieldOffset)
@@ -1654,15 +1704,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			state = 0;
 			yieldOffset = -1;
 			int pos = block.Instructions.Count - 2;
-			if (pos >= 0 && doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies)
+			if (pos >= 0 && doFinallyBodies != null && block.Instructions[pos] is StLoc)
 			{
-				if (!(storeDoFinallyBodies.Variable.Kind == VariableKind.Local
-					  && storeDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
-					  && storeDoFinallyBodies.Variable.Index == doFinallyBodies.Index))
-				{
-					return false;
-				}
-				if (!storeDoFinallyBodies.Value.MatchLdcI4(0))
+				if (!MatchStoreDoFinallyBodies(block.Instructions[pos]))
 					return false;
 				pos--;
 			}
@@ -2008,6 +2052,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				{
 					// keep pulling in trivial branch targets until this block can grow no further
 				}
+				// Only now is each awaiter copy in the same block as the call site that uses it.
+				InlineAwaiterCopies(block);
 			}
 		}
 
@@ -2085,11 +2131,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// stloc awaiterVar(ldfld awaiterField(ldloc this))
 				if (!instr.MatchStLoc(awaiterVar, out var value))
 					return false;
-				if (value is CastClass cast && cast.Type.Equals(awaiterVar.Type))
+				// If the awaiter is a reference type, it might get stored in a field of type `object`
+				// and cast back to the awaiter type in the resume block (pre-Roslyn: with unbox.any)
+				if ((value.MatchCastClass(out var castArg, out var castType) || value.MatchUnboxAny(out castArg, out castType))
+					&& castType.Equals(awaiterVar.Type))
 				{
-					// If the awaiter is a reference type, it might get stored in a field of type `object`
-					// and cast back to the awaiter type in the resume block
-					value = cast.Argument;
+					value = castArg;
 				}
 				if (!value.MatchLdFld(out var target, out var field))
 					return false;
