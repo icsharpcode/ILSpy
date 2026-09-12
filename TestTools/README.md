@@ -37,6 +37,24 @@ net4x. Getting these right matters - binding a WPF assembly against the stub fac
 `NETCore.App.Ref` collapses whole type hierarchies to `Unknown` and invents hundreds of bogus
 warnings, so treat a sudden warning spike as a reference problem until proven otherwise.
 
+Every finding therefore carries the assembly it came from and the references that assembly was
+decompiled against - the search directories in priority order, and what each reference resolved
+to - so that judgement can be made from the report rather than from a second run, and so a
+finding can be reproduced by hand:
+
+```
+assembly: ~/.cache/nugetfuzz/fluentvalidation/12.1.1/lib/net8.0/FluentValidation.dll
+  -r ~/.cache/nugetfuzz/fluentvalidation/12.1.1/lib/net8.0
+  -r ~/.cache/nugetfuzz/microsoft.netcore.app.ref/8.0.31/ref/net8.0
+  System.Runtime, Version=8.0.0.0, ... -> ~/.cache/nugetfuzz/microsoft.netcore.app.ref/8.0.31/ref/net8.0/System.Runtime.dll
+  Some.Package, Version=1.0.0.0, ...  -> NOT FOUND
+```
+
+The reference set is recorded once the assembly is finished, not when the finding is first hit:
+the resolver keeps discovering references for as long as it decompiles. This is the same data
+`NUGETFUZZ_VERBOSE` prints, and it is the bulk of a ledger line - findings dedupe, so it is
+carried once per distinct finding, not once per hit.
+
 Environment variables: `NUGETFUZZ_VERBOSE` (per-type progress), `NUGETFUZZ_DUMP=<dir>` (write the
 decompiled C#), `NUGETFUZZ_LEDGER=<file>` (append findings as JSONL instead of writing a
 per-run HTML report), `NUGETFUZZ_HTML=<file>` (report path), `NUGET_PACKAGES` (package cache).
