@@ -1136,21 +1136,36 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 
+
 		TranslatedExpression TryUniteEqualityOperandType(TranslatedExpression left, TranslatedExpression right)
 		{
-			// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
-			// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
 			if (left.ResolveResult.IsCompileTimeConstant &&
 				left.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
 				(left.ResolveResult.ConstantValue as int?) == 0 &&
-				NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
-				right.Expression is BinaryOperatorExpression binaryExpr &&
-				binaryExpr.Operator == BinaryOperatorType.BitwiseAnd)
+				AvoidConvertingZeroToEnum(right))
 			{
 				return AdjustConstantExpressionToType(left, compilation.FindType(KnownTypeCode.Int32));
 			}
 			else
 				return AdjustConstantExpressionToType(left, right.Type);
+
+			static bool AvoidConvertingZeroToEnum(TranslatedExpression right)
+			{
+				var enumType = NullableType.GetUnderlyingType(right.Type);
+				if (enumType.Kind != TypeKind.Enum)
+					return false;
+				// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
+				// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
+				if (right.Expression is BinaryOperatorExpression { Operator: BinaryOperatorType.BitwiseAnd })
+				{
+					return true;
+				}
+				// Don't use a cast `if (e == (EnumType)0)`, prefer using the integer 0 directly.
+				bool hasZero = (enumType.GetDefinition() is { } typeDef &&
+					 typeDef.Fields.Any(f => f.GetConstantValue() is { } val
+					 && (ulong)CSharpPrimitiveCast.Cast(TypeCode.UInt64, val, false) == 0L));
+				return !hasZero;
+			}
 		}
 
 		bool IsSpecialCasedReferenceComparisonWithNull(TranslatedExpression lhs, TranslatedExpression rhs)

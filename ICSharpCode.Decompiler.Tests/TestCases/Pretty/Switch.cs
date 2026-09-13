@@ -1642,7 +1642,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					break;
 			}
 #if NET40 || !ROSLYN4
-			return key != (ConsoleKey)0;
+			return key != 0;
 #else
 			return key != ConsoleKey.None;
 #endif
