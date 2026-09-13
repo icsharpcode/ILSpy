@@ -29,6 +29,7 @@ using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -5387,6 +5388,16 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithILInstruction(matchInstruction);
 					}
 				case Comp comp:
+					if (comp.MatchLogicNot(out var operand) && MatchInstruction.IsPatternMatch(operand, out _, settings))
+					{
+						// logic.not as a pattern
+						Expression sub = TranslatePattern(operand, leftHandType).Expression;
+						if (sub is UnaryOperatorExpression { Operator: UnaryOperatorType.PatternNot } uoe)
+						{
+							return uoe.Expression.Detach().WithILInstruction(comp);
+						}
+						return new UnaryOperatorExpression(UnaryOperatorType.PatternNot, sub).WithILInstruction(comp);
+					}
 					TranslatedExpression constantValue;
 					if (comp.Right is DefaultValue dv)
 					{

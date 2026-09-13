@@ -599,18 +599,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				context.Step("conditional operator", inst);
 				IType type = v.Type;
-				// Try to tighten the type; this matters esp. for logic.and/logic.or:
+				// Try to tighten the type to `bool`; this matters esp. for logic.and/logic.or:
 				IType type1 = value1.InferType(context.TypeSystem);
 				IType type2 = value2.InferType(context.TypeSystem);
-				if (type1.IsKnownType(KnownTypeCode.Boolean) && (
-					type2.IsKnownType(KnownTypeCode.Boolean)
-					|| value2 is LdcI4 { Value: 0 or 1 }
-				))
+				if (type1.IsKnownType(KnownTypeCode.Boolean)
+					&& (type2.IsKnownType(KnownTypeCode.Boolean) || value2 is LdcI4 { Value: 0 or 1 }))
 				{
 					type = type1;
 				}
-				else if (type2.IsKnownType(KnownTypeCode.Boolean)
-				 && value1 is LdcI4 { Value: 0 or 1 })
+				else if (type2.IsKnownType(KnownTypeCode.Boolean) && value1 is LdcI4 { Value: 0 or 1 })
 				{
 					type = type2;
 				}
@@ -1023,6 +1020,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				handler.Filter = condition;
 				context.EndStep(condition);
 			}
+		}
+
+		protected internal override void VisitMatchInstruction(MatchInstruction inst)
+		{
+			inst.TestedOperand.AcceptVisitor(this);
+			// Do not recurse into the sub-patterns: patterns are restricted to use only certain ILInstructions,
+			// and arbitrary transforms might not stay within that allowed set of instructions.
 		}
 	}
 }
