@@ -28,13 +28,48 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 	public class NamedArgumentTransform : IStatementTransform
 	{
+		/// <summary>
+		/// How many arguments may carry a name: a setter's last one is the assigned value, which is
+		/// written as the right-hand side.
+		/// </summary>
+		static int NameableArgumentCount(CallInstruction call)
+		{
+			if (call.Method.AccessorKind is System.Reflection.MethodSemanticsAttributes.Setter
+				or System.Reflection.MethodSemanticsAttributes.Adder
+				or System.Reflection.MethodSemanticsAttributes.Remover)
+			{
+				return call.Arguments.Count - 1;
+			}
+			return call.Arguments.Count;
+		}
+
 		internal static FindResult CanIntroduceNamedArgument(CallInstruction call, ILInstruction child, ILVariable v, ILInstruction expressionBeingMoved)
 		{
 			Debug.Assert(child.Parent == call);
 			if (call.IsInstanceCall && child.ChildIndex == 0)
 				return FindResult.Stop; // cannot use named arg to move expressionBeingMoved before this pointer
-			if (call.Method.IsOperator || call.Method.IsAccessor)
-				return FindResult.Stop; // cannot use named arg for operators or accessors
+			if (call.Method.IsOperator)
+				return FindResult.Stop; // cannot use named arg for operators
+			bool isIndexerSetter = false;
+			if (call.Method.IsAccessor)
+			{
+				// Only an indexer access has an argument list that can carry names.
+				if (call.Method.AccessorOwner!.SymbolKind != SymbolKind.Indexer)
+					return FindResult.Stop;
+				// A name replaces the call with a block: a call-inline-assign block is matched by
+				// the call it holds, and a compound assignment requires a call in its target.
+				if (call.Parent is Block { Kind: BlockKind.CallInlineAssign })
+					return FindResult.Stop;
+				if (call.Parent is CompoundAssignmentInstruction { TargetKind: CompoundTargetKind.Property } compoundAssignment
+					&& compoundAssignment.Target == call)
+				{
+					return FindResult.Stop;
+				}
+				// A setter's last argument is the assigned value, written as the right-hand side.
+				isIndexerSetter = call.Method.AccessorKind == System.Reflection.MethodSemanticsAttributes.Setter;
+				if (isIndexerSetter && child.ChildIndex == call.Arguments.Count - 1)
+					return FindResult.Stop;
+			}
 			if (call.Method is VarArgInstanceMethod)
 				return FindResult.Stop; // CallBuilder doesn't support named args when using varargs
 			if (call.Method.IsConstructor)
@@ -45,7 +80,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (call.Method.Parameters.Any(p => string.IsNullOrEmpty(p.Name)))
 				return FindResult.Stop; // cannot use named arguments
-			for (int i = child.ChildIndex; i < call.Arguments.Count; i++)
+			int nameableArgumentCount = isIndexerSetter ? call.Arguments.Count - 1 : call.Arguments.Count;
+			Debug.Assert(nameableArgumentCount == NameableArgumentCount(call));
+			for (int i = child.ChildIndex; i < nameableArgumentCount; i++)
 			{
 				var r = ILInlining.FindLoadInNext(call.Arguments[i], v, expressionBeingMoved, InliningOptions.None);
 				if (r.Type == FindResultType.Found)
@@ -87,11 +124,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-			foreach (var arg in call.Arguments)
+			// A block only holds what CanIntroduceNamedArgument admitted.
+			Debug.Assert(!call.Method.IsAccessor || call.Method.AccessorOwner!.SymbolKind == SymbolKind.Indexer);
+			int nameableArgumentCount = NameableArgumentCount(call);
+			for (int i = 0; i < nameableArgumentCount; i++)
 			{
-				if (arg.MatchLdLoc(v))
+				if (call.Arguments[i].MatchLdLoc(v))
 				{
-					return FindResult.NamedArgument(arg, arg);
+					return FindResult.NamedArgument(call.Arguments[i], call.Arguments[i]);
 				}
 			}
 			return FindResult.Stop;
