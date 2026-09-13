@@ -92,7 +92,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// "logic.not(arg)" is sugar for "comp(arg != ldc.i4 0)"
 			if (inst.MatchLogicNot(out var arg))
 			{
-				VisitLogicNot(inst, arg);
+				var toVisit = HandleLogicNot(inst, arg, context);
+				(toVisit ?? arg).AcceptVisitor(this);
 				return;
 			}
 			else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
@@ -238,9 +239,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		void VisitLogicNot(Comp inst, ILInstruction arg)
+		/// <summary>
+		/// Handles combining negations with comparisons and logical operations.
+		/// Returns the instruction that `inst` was replaced with; or null is no transformation was made.
+		/// </summary>
+		static ILInstruction HandleLogicNot(Comp inst, ILInstruction arg, ILTransformContext context)
 		{
-			ILInstruction lhs, rhs;
 			if (arg is Comp comp)
 			{
 				if ((!comp.InputType.IsFloatType() && !comp.IsLifted) || comp.Kind.IsEqualityOrInequality())
@@ -250,10 +254,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					comp.AddILRange(inst);
 					inst.ReplaceWith(comp);
 					context.EndStep(comp);
+					return comp;
 				}
-				comp.AcceptVisitor(this);
 			}
-			else if (arg.MatchLogicAnd(out lhs, out rhs))
+			else if (arg.MatchLogicAnd(out var lhs, out var rhs))
 			{
 				// logic.not(if (lhs) rhs else ldc.i4 0)
 				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
@@ -266,7 +270,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ifInst.FalseInst = Comp.LogicNot(rhs).WithILRange(inst);
 				inst.ReplaceWith(ifInst);
 				context.EndStep(ifInst);
-				ifInst.AcceptVisitor(this);
+				return ifInst;
 			}
 			else if (arg.MatchLogicOr(out lhs, out rhs))
 			{
@@ -281,12 +285,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ifInst.FalseInst = new LdcI4(0).WithILRange(ldc1);
 				inst.ReplaceWith(ifInst);
 				context.EndStep(ifInst);
-				ifInst.AcceptVisitor(this);
+				return ifInst;
 			}
-			else
-			{
-				arg.AcceptVisitor(this);
-			}
+			return null;
 		}
 
 		protected internal override void VisitCall(Call inst)
@@ -1027,6 +1028,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inst.TestedOperand.AcceptVisitor(this);
 			// Do not recurse into the sub-patterns: patterns are restricted to use only certain ILInstructions,
 			// and arbitrary transforms might not stay within that allowed set of instructions.
+			foreach (var subPattern in inst.SubPatterns)
+			{
+				// However, we still need to simplify negations:
+				foreach (var potentialNegation in subPattern.Descendants.OfType<Comp>())
+				{
+					if (potentialNegation.MatchLogicNot(out var arg))
+					{
+						HandleLogicNot(potentialNegation, arg, context);
+					}
+				}
+			}
 		}
 	}
 }
