@@ -588,18 +588,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
 		{
 			// if (cond) stloc A(V1) else stloc A(V2) --> stloc A(if (cond) V1 else V2)
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || trueInst.Instructions.Count != 1)
+			if (inst.TrueInst is not Block trueInst || trueInst.Instructions.Count != 1)
 				return inst;
-			Block falseInst = inst.FalseInst as Block;
-			if (falseInst == null || falseInst.Instructions.Count != 1)
+			if (inst.FalseInst is not Block falseInst || falseInst.Instructions.Count != 1)
 				return inst;
 			ILVariable v;
 			ILInstruction value1, value2;
-			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2))
+			if (trueInst.Instructions[0].MatchStLoc(out v, out value1)
+				&& falseInst.Instructions[0].MatchStLoc(v, out value2))
 			{
 				context.Step("conditional operator", inst);
-				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1, v.Type);
+				IType type = v.Type;
+				// Try to tighten the type; this matters esp. for logic.and/logic.or:
+				IType type1 = value1.InferType(context.TypeSystem);
+				IType type2 = value2.InferType(context.TypeSystem);
+				if (type1.IsKnownType(KnownTypeCode.Boolean) && (
+					type2.IsKnownType(KnownTypeCode.Boolean)
+					|| value2 is LdcI4 { Value: 0 or 1 }
+				))
+				{
+					type = type1;
+				}
+				else if (type2.IsKnownType(KnownTypeCode.Boolean)
+				 && value1 is LdcI4 { Value: 0 or 1 })
+				{
+					type = type2;
+				}
+				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1, type);
 				newIf.AddILRange(inst);
 				var stLoc = new StLoc(v, newIf);
 				inst.ReplaceWith(stLoc);

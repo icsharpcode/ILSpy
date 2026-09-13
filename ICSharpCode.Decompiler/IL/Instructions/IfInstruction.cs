@@ -39,7 +39,15 @@ namespace ICSharpCode.Decompiler.IL
 	partial class IfInstruction : ILInstruction
 	{
 		// null means void
-		readonly IType? resultType;
+		IType? csharpType;
+
+		public IType? CSharpType {
+			get => csharpType;
+			set {
+				Debug.Assert(this.ResultType == (value?.GetStackType() ?? StackType.Void));
+				csharpType = value;
+			}
+		}
 
 		public IfInstruction(ILInstruction condition, ILInstruction trueInst,
 			ILInstruction? falseInst = null, IType? resultType = null) : base(OpCode.IfInstruction)
@@ -48,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.TrueInst = trueInst;
 			falseInst ??= new Nop();
 			this.FalseInst = falseInst;
-			this.resultType = resultType;
+			this.csharpType = resultType;
 			Debug.Assert(condition.ResultType == StackType.I4);
 			Debug.Assert(trueInst.ResultType == this.ResultType
 				|| trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable));
@@ -80,15 +88,15 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType {
 			get {
-				if (resultType != null)
-					return resultType.GetStackType();
+				if (csharpType != null)
+					return csharpType.GetStackType();
 				return StackType.Void;
 			}
 		}
 		public override IType InferType(ICompilation compilation)
 		{
-			if (resultType != null)
-				return resultType;
+			if (csharpType != null)
+				return csharpType;
 			return compilation.FindType(KnownTypeCode.Void);
 		}
 		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow;
@@ -101,7 +109,8 @@ namespace ICSharpCode.Decompiler.IL
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
-			if (options.UseLogicOperationSugar)
+			if (options.UseLogicOperationSugar
+				&& csharpType != null && csharpType.IsKnownType(KnownTypeCode.Boolean))
 			{
 				if (MatchLogicAnd(out var lhs, out var rhs))
 				{
@@ -123,10 +132,10 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			output.Write(OpCode);
-			if (resultType != null)
+			if (csharpType != null)
 			{
 				output.Write(" [");
-				output.Write(resultType.ReflectionName);
+				output.Write(csharpType.ReflectionName);
 				output.Write(']');
 			}
 			output.Write(" (");
