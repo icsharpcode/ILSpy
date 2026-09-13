@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// For lifted conversions, corresponds to the underlying target type.
 		/// 
-		/// Target type == PrimitiveType.None can happen for implicit conversions to O in invalid IL.
+		/// Target type == PrimitiveType.None can happen for implicit conversions to Obj in invalid IL.
 		/// </remarks>
 		public readonly PrimitiveType TargetType;
 
@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			base.CheckInvariant(phase, compilation);
 			// Debug.Assert(Kind != ConversionKind.Invalid); // invalid conversion can happen with invalid IL/missing references
-			Debug.Assert(Argument.ResultType == (IsLifted ? StackType.O : InputType));
+			Debug.Assert(Argument.ResultType == (IsLifted ? StackType.VT : InputType));
 			Debug.Assert(!(IsLifted && Kind == ConversionKind.StopGCTracking));
 		}
 
@@ -231,7 +231,7 @@ namespace ICSharpCode.Decompiler.IL
 						case StackType.F8:
 							return ConversionKind.FloatToInt;
 						case StackType.Ref:
-						case StackType.O:
+						case StackType.Obj:
 							return ConversionKind.StopGCTracking;
 						default:
 							return ConversionKind.Invalid;
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.IL
 						case StackType.F8:
 							return ConversionKind.FloatToInt;
 						case StackType.Ref:
-						case StackType.O:
+						case StackType.Obj:
 							return ConversionKind.StopGCTracking;
 						default:
 							return ConversionKind.Invalid;
@@ -296,7 +296,7 @@ namespace ICSharpCode.Decompiler.IL
 						case StackType.I:
 						case StackType.I8:
 							return ConversionKind.StartGCTracking;
-						case StackType.O:
+						case StackType.Obj:
 							return ConversionKind.ObjectInterior;
 						default:
 							return ConversionKind.Invalid;

@@ -60,6 +60,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		// A comparison against a class-constrained type parameter is legal C#, and reference
+		// comparison is exactly what the tree asks for, so these round-trip as lambdas.
+		private class ClassConstrainedGeneric<T> where T : class
+		{
+			public void ReferenceComparisons()
+			{
+				ToCode(X(), (T t) => t == null);
+				ToCode(X(), (T t) => t != null);
+				ToCode(X(), (T a, T b) => a == b);
+				ToCode(X(), (T t) => t != null && t.ToString().Length > 0);
+				ToCode(X(), (T t) => Check(t == null));
+			}
+
+			private static bool Check(bool b)
+			{
+				return b;
+			}
+		}
+
 		private class AssertTest
 		{
 			private struct DataStruct
@@ -414,6 +433,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void CharNoCast()
 		{
 			ToCode(X(), () => "abc"[1] == 'b');
+		}
+
+		public void ConditionalWithNarrowConstant(string s)
+		{
+			ToCode(X(), () => (s.Length < 1) ? '\0' : s[0]);
+			ToCode(X(), () => (s.Length < 1) ? ((byte)0) : ((byte)s[0]));
+			ToCode(X(), () => (s.Length < 1) ? ((short)0) : ((short)s[0]));
 		}
 
 		public void StringsImplicitCast()

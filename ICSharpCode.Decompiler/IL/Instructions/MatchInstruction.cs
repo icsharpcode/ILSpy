@@ -174,6 +174,7 @@ namespace ICSharpCode.Decompiler.IL
 				OpCode.LdcI4 => true,
 				OpCode.LdcI8 => true,
 				OpCode.LdNull => true,
+				OpCode.DefaultValue => inst.ResultType == StackType.Obj || ((DefaultValue)inst).Type.IsKnownType(KnownTypeCode.NullableOfT),
 				_ => false
 			};
 		}

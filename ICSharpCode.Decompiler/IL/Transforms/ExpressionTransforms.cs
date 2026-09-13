@@ -92,14 +92,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// "logic.not(arg)" is sugar for "comp(arg != ldc.i4 0)"
 			if (inst.MatchLogicNot(out var arg))
 			{
-				VisitLogicNot(inst, arg);
+				var toVisit = HandleLogicNot(inst, arg, context);
+				(toVisit ?? arg).AcceptVisitor(this);
 				return;
 			}
 			else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
-				&& inst.Right.MatchLdcI4(0) && (IfInstruction.IsInConditionSlot(inst) || inst.Left is Comp))
+				&& inst.Right.MatchLdcI4(0)
+				&& (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
+				   || inst.Left.MatchLdcI4(0) || inst.Left.MatchLdcI4(1)))
 			{
-				// if (comp(x != 0)) ==> if (x)
-				// comp(comp(...) != 0) => comp(...)
+				// When `x` is known to be 0 or 1:
+				// `comp(x != 0) => x`
 				context.Step("Remove redundant comp(... != 0)", inst);
 				inst.Left.AddILRange(inst);
 				var left = inst.Left;
@@ -152,12 +155,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array).WithILRange(inst.Left));
 					inst.Right = rightWithoutConv;
 				}
-				else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.O)
+				else if (inst.Left is Conv conv && conv.TargetType == PrimitiveType.I && conv.Argument.ResultType == StackType.Obj)
 				{
 					// C++/CLI sometimes uses this weird comparison with null:
 					context.Step("comp(conv o->i (ldloc obj) == conv i4->i <sign extend>(ldc.i4 0))", inst);
 					// -> comp(ldloc obj == ldnull)
-					inst.InputType = StackType.O;
+					inst.InputType = StackType.Obj;
 					inst.Left = conv.Argument;
 					inst.Right = new LdNull().WithILRange(inst.Right);
 					inst.Right.AddILRange(rightWithoutConv);
@@ -236,9 +239,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		void VisitLogicNot(Comp inst, ILInstruction arg)
+		/// <summary>
+		/// Handles combining negations with comparisons and logical operations.
+		/// Returns the instruction that `inst` was replaced with; or null is no transformation was made.
+		/// </summary>
+		static ILInstruction HandleLogicNot(Comp inst, ILInstruction arg, ILTransformContext context)
 		{
-			ILInstruction lhs, rhs;
 			if (arg is Comp comp)
 			{
 				if ((!comp.InputType.IsFloatType() && !comp.IsLifted) || comp.Kind.IsEqualityOrInequality())
@@ -248,10 +254,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					comp.AddILRange(inst);
 					inst.ReplaceWith(comp);
 					context.EndStep(comp);
+					return comp;
 				}
-				comp.AcceptVisitor(this);
 			}
-			else if (arg.MatchLogicAnd(out lhs, out rhs))
+			else if (arg.MatchLogicAnd(out var lhs, out var rhs))
 			{
 				// logic.not(if (lhs) rhs else ldc.i4 0)
 				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
@@ -264,7 +270,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ifInst.FalseInst = Comp.LogicNot(rhs).WithILRange(inst);
 				inst.ReplaceWith(ifInst);
 				context.EndStep(ifInst);
-				ifInst.AcceptVisitor(this);
+				return ifInst;
 			}
 			else if (arg.MatchLogicOr(out lhs, out rhs))
 			{
@@ -279,12 +285,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ifInst.FalseInst = new LdcI4(0).WithILRange(ldc1);
 				inst.ReplaceWith(ifInst);
 				context.EndStep(ifInst);
-				ifInst.AcceptVisitor(this);
+				return ifInst;
 			}
-			else
-			{
-				arg.AcceptVisitor(this);
-			}
+			return null;
 		}
 
 		protected internal override void VisitCall(Call inst)
@@ -296,9 +299,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var ldObj = new LdObj(nullableValue, inst.Method.DeclaringType);
 				var replacement = new NullCoalescingInstruction(
 					NullableType.GetUnderlyingType(inst.Method.DeclaringType),
-					NullCoalescingKind.NullableWithValueFallback, ldObj, fallback) {
-					UnderlyingResultType = fallback.ResultType
-				};
+					NullCoalescingKind.NullableWithValueFallback, ldObj, fallback);
 				inst.ReplaceWith(replacement.WithILRange(inst));
 				context.EndStep(replacement);
 				replacement.AcceptVisitor(this);
@@ -416,22 +417,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				if (!initializer.Instructions[0].MatchStLoc(out var initializerVariable, out var value))
 					return false;
+				if (!TypeUtils.IsCompatiblePointerTypeForMemoryAccess(initializerVariable.Type, elementType))
+					return false;
 				if (!(value.MatchLocAlloc(out sizeInBytes) && MatchesElementCount(sizeInBytes, elementType, newObj.Arguments[1])))
 					return false;
-				var newVariable = initializerVariable.Function.RegisterVariable(VariableKind.InitializerTarget, type);
-				foreach (var load in initializerVariable.LoadInstructions.ToArray())
-				{
-					ILInstruction newInst = new LdLoc(newVariable);
-					newInst.AddILRange(load);
-					if (load.Parent != initializer)
-						newInst = new Conv(newInst, PrimitiveType.I, false, Sign.None);
-					load.ReplaceWith(newInst);
-				}
-				foreach (var store in initializerVariable.StoreInstructions.ToArray())
-				{
-					store.Variable = newVariable;
-				}
-				value.ReplaceWith(new LocAllocSpan(newObj.Arguments[1], type));
+				// The block addresses the allocation through the localloc pointer and only its
+				// result is the span, so the constructor becomes the block's final instruction
+				// instead of retyping the initializer variable to Span&lt;T&gt;.
+				initializer.FinalInstruction = new NewObj(newObj.Method) {
+					Arguments = { new LdLoc(initializerVariable), newObj.Arguments[1] }
+				}.WithILRange(newObj);
 				locallocSpan = initializer;
 				return true;
 			}
@@ -594,18 +589,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		IfInstruction HandleConditionalOperator(IfInstruction inst)
 		{
 			// if (cond) stloc A(V1) else stloc A(V2) --> stloc A(if (cond) V1 else V2)
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || trueInst.Instructions.Count != 1)
+			if (inst.TrueInst is not Block trueInst || trueInst.Instructions.Count != 1)
 				return inst;
-			Block falseInst = inst.FalseInst as Block;
-			if (falseInst == null || falseInst.Instructions.Count != 1)
+			if (inst.FalseInst is not Block falseInst || falseInst.Instructions.Count != 1)
 				return inst;
 			ILVariable v;
 			ILInstruction value1, value2;
-			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2))
+			if (trueInst.Instructions[0].MatchStLoc(out v, out value1)
+				&& falseInst.Instructions[0].MatchStLoc(v, out value2))
 			{
 				context.Step("conditional operator", inst);
-				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1, v.Type);
+				IType type = v.Type;
+				// Try to tighten the type to `bool`; this matters esp. for logic.and/logic.or:
+				IType type1 = value1.InferType(context.TypeSystem);
+				IType type2 = value2.InferType(context.TypeSystem);
+				if (type1.IsKnownType(KnownTypeCode.Boolean)
+					&& (type2.IsKnownType(KnownTypeCode.Boolean) || value2 is LdcI4 { Value: 0 or 1 }))
+				{
+					type = type1;
+				}
+				else if (type2.IsKnownType(KnownTypeCode.Boolean) && value1 is LdcI4 { Value: 0 or 1 })
+				{
+					type = type2;
+				}
+				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1, type);
 				newIf.AddILRange(inst);
 				var stLoc = new StLoc(v, newIf);
 				inst.ReplaceWith(stLoc);
@@ -1013,6 +1020,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("TransformCatchWhen", entryPoint.Instructions[0]);
 				handler.Filter = condition;
 				context.EndStep(condition);
+			}
+		}
+
+		protected internal override void VisitMatchInstruction(MatchInstruction inst)
+		{
+			inst.TestedOperand.AcceptVisitor(this);
+			// Do not recurse into the sub-patterns: patterns are restricted to use only certain ILInstructions,
+			// and arbitrary transforms might not stay within that allowed set of instructions.
+			foreach (var subPattern in inst.SubPatterns)
+			{
+				// However, we still need to simplify negations:
+				foreach (var potentialNegation in subPattern.Descendants.OfType<Comp>())
+				{
+					if (potentialNegation.MatchLogicNot(out var arg))
+					{
+						HandleLogicNot(potentialNegation, arg, context);
+					}
+				}
 			}
 		}
 	}

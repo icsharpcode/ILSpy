@@ -52,6 +52,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(IsNull(new OverloadedOperators()));
 			Console.WriteLine(NullIs(new OverloadedOperators()));
 			Console.WriteLine(NullIsNot(new OverloadedOperators()));
+
+			Console.WriteLine("IntBranchInConditionSlot:");
+			IntBranchInConditionSlot(1, 0x100, false);
+			IntBranchInConditionSlot(0, 0x100, true);
+			NegatedIntBranchInConditionSlot(1, 0x100, false);
+			NegatedIntBranchInConditionSlot(0, 0x100, true);
 			return 0;
 		}
 
@@ -90,6 +96,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("uint: {0} == Id(uint.MaxValue) = {1}", i, i == Id(uint.MaxValue));
 			Console.WriteLine("uint: {0} == -1 = {1}", i, i == -1);
 			Console.WriteLine("uint: {0} == Id(-1) = {1}", i, i == Id(-1));
+		}
+
+		// The conditional has an int-valued true branch and a bool false branch, so it is
+		// compiled to an I4 value that the surrounding 'if' tests for non-zero. Converting
+		// that value to bool must keep the non-zero test: truncating it to 8 bits first
+		// loses every bit from 8 up, and flags = 0x100 then reads as false.
+		static void IntBranchInConditionSlot(int x, int flags, bool other)
+		{
+			if ((x > 0) ? (flags != 0) : other)
+				Console.WriteLine("true");
+			else
+				Console.WriteLine("false");
+		}
+
+		static void NegatedIntBranchInConditionSlot(int x, int flags, bool other)
+		{
+			if (!((x > 0) ? (flags != 0) : other))
+				Console.WriteLine("negated: false");
+			else
+				Console.WriteLine("negated: true");
 		}
 
 		static void Issue2398(long value)

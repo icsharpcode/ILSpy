@@ -158,9 +158,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					NullCoalescingKind.NullableWithValueFallback,
 					new NullableRewrap(nonNullInst, NullableType.Create(context.TypeSystem, returnType)),
 					nullInst
-				) {
-					UnderlyingResultType = nullInst.ResultType
-				};
+				);
 				context.EndStep(result);
 				return result;
 			}
@@ -243,7 +241,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// => testedVar?.AccessChain();
 			IntroduceUnwrap(testedVar, varLoad, mode);
 			var returnType = bodyInst.InferType(context.TypeSystem);
-			if (returnType.Kind != TypeKind.Void)
+			if (returnType.Kind != TypeKind.Void && NullableType.IsNonNullableValueType(returnType))
 			{
 				returnType = NullableType.Create(context.TypeSystem, returnType);
 			}

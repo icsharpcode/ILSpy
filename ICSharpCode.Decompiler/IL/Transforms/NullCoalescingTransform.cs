@@ -234,8 +234,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				NullCoalescingKind.NullableWithValueFallback,
 				stloc.Value,
 				throwInst);
-			var resultType = underlyingType.GetStackType();
-			nullCoalescingWithThrow.UnderlyingResultType = resultType;
 			var result = ILInlining.FindLoadInNext(block.Instructions[pos + 2], v, nullCoalescingWithThrow, InliningOptions.None);
 			if (result.Type == ILInlining.FindResultType.Found
 				&& NullableLiftingTransform.MatchGetValueOrDefault(result.LoadInst.Parent, v))

@@ -73,6 +73,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Type = type;
 			this.ResultType = unwrappedType;
 			this.RefInput = refInput;
+			Debug.Assert(type.GetStackType() == this.ResultType);
 			if (unwrappedType == StackType.Ref)
 			{
 				Debug.Assert(refInput);
@@ -82,13 +83,14 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase, ICompilation compilation)
 		{
 			base.CheckInvariant(phase, compilation);
+			Debug.Assert(!RefOutput || RefInput, "RefOutput can only be used if RefInput is also used");
 			if (this.RefInput)
 			{
 				Debug.Assert(Argument.ResultType == StackType.Ref, "nullable.unwrap expects reference to nullable type as input");
 			}
 			else
 			{
-				Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
+				Debug.Assert(Argument.ResultType is StackType.Obj or StackType.VT, "nullable.unwrap expects nullable type as input");
 			}
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
 		}
@@ -134,7 +136,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (Argument.ResultType == StackType.Void)
 					return StackType.Void;
 				else
-					return StackType.VT;
+					return Type.GetStackType(); // Obj or VT
 			}
 		}
 		public override IType InferType(ICompilation compilation) => Type;

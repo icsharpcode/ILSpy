@@ -332,6 +332,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return UseSpan(span);
 		}
 
+		public string GetSpan5()
+		{
+			Span<char> span = stackalloc char[4] { '1', '2', '3', '4' };
+			return UseSpan(span);
+		}
+
 		public void Issue2103a()
 		{
 			Span<byte> span = stackalloc byte[3] { 1, 2, 3 };
@@ -354,12 +360,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine((stackalloc byte[3])[1]);
 		}
 
-		public string UseSpan(Span<int> span)
-		{
-			throw new NotImplementedException();
-		}
-
-		public string UseSpan(Span<decimal> span)
+		public string UseSpan<T>(Span<T> span)
 		{
 			throw new NotImplementedException();
 		}

@@ -29,6 +29,7 @@ using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -586,11 +587,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitLocAllocSpan(LocAllocSpan inst, TranslationContext context)
 		{
-			return TranslateLocAllocSpan(inst, context.TypeHint, out _)
+			return TranslateLocAllocSpan(inst, out _)
 				.WithILInstruction(inst).WithRR(new ResolveResult(inst.Type));
 		}
 
-		StackAllocExpression TranslateLocAllocSpan(LocAllocSpan inst, IType typeHint, out IType elementType)
+		StackAllocExpression TranslateLocAllocSpan(LocAllocSpan inst, out IType elementType)
 		{
 			elementType = inst.Type.TypeArguments[0];
 			TranslatedExpression countExpression = Translate(inst.Argument)
@@ -883,7 +884,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					inst.Variable.Type = translatedValue.Type;
 				}
-				else if (inst.Value.MatchDefaultValue(out var type) && IsOtherValueType(type))
+				else if (inst.Value.MatchDefaultValue(out var type) && type.GetStackType() == StackType.VT)
 				{
 					inst.Variable.Type = type;
 				}
@@ -907,14 +908,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool CanUseTypeForStackSlot(ILVariable v, IType type)
 			{
 				return v.IsSingleDefinition
-					|| IsOtherValueType(type)
-					|| v.StackType == StackType.Ref
 					|| AllStoresUseConsistentType(v.StoreInstructions, type);
-			}
-
-			bool IsOtherValueType(IType type)
-			{
-				return type.IsReferenceType == false && type.GetStackType() == StackType.O;
 			}
 
 			bool AllStoresUseConsistentType(IReadOnlyList<IStoreInstruction> storeInstructions, IType expectedType)
@@ -1089,7 +1083,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				|| !rr.Type.IsKnownType(KnownTypeCode.Boolean))
 			{
 				IType targetType;
-				if (inst.InputType == StackType.O)
+				if (inst.InputType == StackType.Obj)
 				{
 					targetType = compilation.FindType(KnownTypeCode.Object);
 				}
@@ -1143,21 +1137,36 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 
+
 		TranslatedExpression TryUniteEqualityOperandType(TranslatedExpression left, TranslatedExpression right)
 		{
-			// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
-			// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
 			if (left.ResolveResult.IsCompileTimeConstant &&
 				left.ResolveResult.Type.IsCSharpPrimitiveIntegerType() &&
 				(left.ResolveResult.ConstantValue as int?) == 0 &&
-				NullableType.GetUnderlyingType(right.Type).Kind == TypeKind.Enum &&
-				right.Expression is BinaryOperatorExpression binaryExpr &&
-				binaryExpr.Operator == BinaryOperatorType.BitwiseAnd)
+				AvoidConvertingZeroToEnum(right))
 			{
 				return AdjustConstantExpressionToType(left, compilation.FindType(KnownTypeCode.Int32));
 			}
 			else
 				return AdjustConstantExpressionToType(left, right.Type);
+
+			static bool AvoidConvertingZeroToEnum(TranslatedExpression right)
+			{
+				var enumType = NullableType.GetUnderlyingType(right.Type);
+				if (enumType.Kind != TypeKind.Enum)
+					return false;
+				// Special case for enum flag check "(enum & EnumType.SomeValue) == 0"
+				// so that the const 0 value is printed as 0 integer and not as enum type, e.g. EnumType.None
+				if (right.Expression is BinaryOperatorExpression { Operator: BinaryOperatorType.BitwiseAnd })
+				{
+					return true;
+				}
+				// Don't use a cast `if (e == (EnumType)0)`, prefer using the integer 0 directly.
+				bool hasZero = (enumType.GetDefinition() is { } typeDef &&
+					 typeDef.Fields.Any(f => f.GetConstantValue() is { } val
+					 && (ulong)CSharpPrimitiveCast.Cast(TypeCode.UInt64, val, false) == 0L));
+				return !hasZero;
+			}
 		}
 
 		bool IsSpecialCasedReferenceComparisonWithNull(TranslatedExpression lhs, TranslatedExpression rhs)
@@ -1227,7 +1236,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				left = left.ConvertTo(inputType, this);
 				right = right.ConvertTo(inputType, this);
 			}
-			else if (inst.InputType == StackType.O)
+			else if (inst.InputType == StackType.Obj)
 			{
 				// Unsafe.As<object, UIntPtr>(ref left) op Unsafe.As<object, UIntPtr>(ref right)
 				// TTo Unsafe.As<TFrom, TTo>(ref TFrom source)
@@ -3887,7 +3896,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
-			var final = block.FinalInstruction as LdLoc;
+			var final = Block.MatchArrayInitializerFinal(block.FinalInstruction, out var arrayToSpan);
 			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out IType? type))
 				throw new ArgumentException("given Block is invalid!");
 			if (stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
@@ -3968,14 +3977,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
 			if (!type.ContainsAnonymousType())
 				expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
-			return expr.WithILInstruction(block)
-				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
+			ResolveResult rr = new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions),
+				newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults);
+			var initializer = expr.WithILInstruction(block).WithRR(rr);
+			if (arrayToSpan != null)
+			{
+				var arrayToSpanRR = new ConversionResolveResult(arrayToSpan.ReturnType, rr, Conversion.ImplicitSpanConversion);
+				initializer = new CastExpression(ConvertType(arrayToSpan.ReturnType), expr).WithoutILInstruction().WithRR(arrayToSpanRR);
+			}
+			return initializer;
 		}
 
 		TranslatedExpression TranslateStackAllocInitializer(Block block, IType typeHint)
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
+			// The block may end in the Span<T>/ReadOnlySpan<T> constructor wrapping the
+			// allocation, in which case the block evaluates to the span, not to the pointer.
 			var final = block.FinalInstruction as LdLoc;
+			IType? resultType = null;
+			if (final == null && block.FinalInstruction is NewObj { Arguments.Count: 2 } spanCtor
+				&& (spanCtor.Method.DeclaringType.IsKnownType(KnownTypeCode.SpanOfT)
+					|| spanCtor.Method.DeclaringType.IsKnownType(KnownTypeCode.ReadOnlySpanOfT)))
+			{
+				final = spanCtor.Arguments[0] as LdLoc;
+				resultType = spanCtor.Method.DeclaringType;
+				// The following function expects typeHint to be a pointer type.
+				typeHint = new PointerType(spanCtor.Method.DeclaringType.TypeArguments[0]);
+			}
 			if (stloc == null || final == null || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
 			StackAllocExpression stackAllocExpression;
@@ -3998,7 +4026,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					stackAllocExpression = TranslateLocAlloc(locAlloc, typeHint, out elementType);
 					break;
 				case LocAllocSpan locAllocSpan:
-					stackAllocExpression = TranslateLocAllocSpan(locAllocSpan, typeHint, out elementType);
+					stackAllocExpression = TranslateLocAllocSpan(locAllocSpan, out elementType);
 					break;
 				default:
 					throw new ArgumentException("given Block is invalid!");
@@ -4037,7 +4065,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				expectedOffset++;
 			}
 			return stackAllocExpression.WithILInstruction(block)
-				.WithRR(new ResolveResult(stloc.Variable.Type));
+				.WithRR(new ResolveResult(resultType ?? stloc.Variable.Type));
 		}
 
 		TranslatedExpression TranslateWithInitializer(Block block)
@@ -4227,13 +4255,12 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 							else
 							{
-								// fall back to 'ref byte' if we can't determine a referenced type otherwise
-								targetType = new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
+								targetType = inst.InferType(compilation);
 							}
 						}
 						else
 						{
-							targetType = FindType(inst.ResultType, context.TypeHint.GetSign());
+							targetType = inst.InferType(compilation);
 						}
 					}
 				}
@@ -4313,7 +4340,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else
 				{
-					Debug.Assert(inst.Value.ResultType == StackType.O);
+					Debug.Assert(inst.Value.ResultType == StackType.VT);
 					Debug.Assert(inst.IsLifted);
 					Debug.Assert(inst.Type == governingType);
 				}
@@ -4397,10 +4424,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 			{
 				resultType = inst.InferType(compilation);
-				if (resultType.Kind == TypeKind.Unknown || resultType.GetStackType() != inst.ResultType)
-				{
-					resultType = compilation.FindType(inst.ResultType);
-				}
 			}
 
 			var expressionsForTypeInference = new List<TranslatedExpression>();
@@ -5365,7 +5388,29 @@ namespace ICSharpCode.Decompiler.CSharp
 							.WithILInstruction(matchInstruction);
 					}
 				case Comp comp:
-					var constantValue = Translate(comp.Right, leftHandType);
+					if (comp.MatchLogicNot(out var operand) && MatchInstruction.IsPatternMatch(operand, out _, settings))
+					{
+						// logic.not as a pattern
+						Expression sub = TranslatePattern(operand, leftHandType).Expression;
+						if (sub is UnaryOperatorExpression { Operator: UnaryOperatorType.PatternNot } uoe)
+						{
+							return uoe.Expression.Detach().WithILInstruction(comp);
+						}
+						return new UnaryOperatorExpression(UnaryOperatorType.PatternNot, sub).WithILInstruction(comp);
+					}
+					TranslatedExpression constantValue;
+					if (comp.Right is DefaultValue dv)
+					{
+						// Translate(comp.Right) would create `(int?)null` but we don't want a cast here.
+						Debug.Assert(dv.ResultType == StackType.Obj || dv.Type.IsKnownType(KnownTypeCode.NullableOfT));
+						constantValue = new NullReferenceExpression()
+							.WithoutILInstruction()
+							.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
+					}
+					else
+					{
+						constantValue = Translate(comp.Right, leftHandType);
+					}
 					switch (comp.Kind)
 					{
 						case ComparisonKind.Equality:

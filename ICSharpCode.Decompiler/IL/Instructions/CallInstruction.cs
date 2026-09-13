@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the expected stack type for passing the this pointer in a method call.
 		/// Returns StackType.Ref if constrainedTo is not null,
-		/// StackType.O for reference types (this pointer passed as object reference),
+		/// StackType.Obj for reference types (this pointer passed as object reference),
 		/// and StackType.Ref for type parameters and value types (this pointer passed as managed reference).
 		/// 
 		/// Returns StackType.Unknown if the input type is unknown.
@@ -108,7 +108,7 @@ namespace ICSharpCode.Decompiler.IL
 			switch (declaringType.IsReferenceType)
 			{
 				case true:
-					return StackType.O;
+					return StackType.Obj;
 				case false:
 					return StackType.Ref;
 				default:
@@ -123,12 +123,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
 			if (firstArgument == 1)
 			{
-				if (!(Arguments[0].ResultType == ExpectedTypeForThisPointer(Method.DeclaringType, ConstrainedTo)))
+				var arg = Arguments[0];
+				var expectedType = ExpectedTypeForThisPointer(Method.DeclaringType, ConstrainedTo);
+				if (arg.ResultType != expectedType)
 					Debug.Fail($"Stack type mismatch in 'this' argument in call to {Method.Name}()");
 			}
 			for (int i = 0; i < Method.Parameters.Count; ++i)
 			{
-				if (!(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType()))
+				var arg = Arguments[firstArgument + i];
+				var param = Method.Parameters[i];
+				if (arg.ResultType != param.Type.GetStackType())
 					Debug.Fail($"Stack type mismatch in parameter {i} in call to {Method.Name}()");
 			}
 		}
