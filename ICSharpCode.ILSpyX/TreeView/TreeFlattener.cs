@@ -76,6 +76,29 @@ namespace ICSharpCode.ILSpyX.TreeView
 				RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, list, index));
 		}
 
+		// The moved node's run keeps its identity here as well: one ranged Move instead of a
+		// Remove/Add pair, so a consumer that tracks items rather than indices (selection, realized
+		// containers) survives a reorder. Both indices are positions in the list as it stands before
+		// the move, which is what NotifyCollectionChangedEventArgs specifies for a move.
+		public void NodesMoved(int oldIndex, int newIndex, IEnumerable<SharpTreeNode> nodes)
+		{
+			if (!includeRoot)
+			{
+				oldIndex--;
+				newIndex--;
+			}
+			IList list = nodes as IList ?? new List<SharpTreeNode>(nodes);
+			if (list.Count == 0 || oldIndex == newIndex)
+				return;
+			// A forward move reports where the run ENDS up, not where it starts. The consumer
+			// (Avalonia's VirtualizingStackPanel) applies a ranged move by removing OldItems.Count
+			// rows at OldStartingIndex and re-inserting them at NewStartingIndex - (Count - 1), so a
+			// run reported by its final start index lands short by its own length. For a single row -
+			// a collapsed node, and every move the assembly list makes - the two readings coincide.
+			int reportedNewIndex = newIndex > oldIndex ? newIndex + list.Count - 1 : newIndex;
+			RaiseCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, list, reportedNewIndex, oldIndex));
+		}
+
 		public void Stop()
 		{
 			Debug.Assert(root.treeFlattener == this);
