@@ -33,4 +33,40 @@ namespace ICSharpCode.ILSpy.Tests.Analyzers.Library.TestCases.Main
 			return int.Parse("1234");
 		}
 	}
+
+	// Fixture for the field-access analysers. A field of a value type reached through a
+	// method call is loaded by address (ldflda/ldsflda), which says nothing about whether
+	// the call writes to it - issue #2372.
+	class FieldAccess
+	{
+		public bool instanceFlag;
+		public static bool staticFlag;
+
+		public string ReadsInstanceFlagByAddress()
+		{
+			// callvirt Boolean::ToString(ldflda instanceFlag)
+			return instanceFlag.ToString();
+		}
+
+		public static string ReadsStaticFlagByAddress()
+		{
+			// call Boolean::ToString(ldsflda staticFlag)
+			return staticFlag.ToString();
+		}
+
+		public bool ReadsInstanceFlag()
+		{
+			return instanceFlag;
+		}
+
+		public void WritesInstanceFlag()
+		{
+			instanceFlag = true;
+		}
+
+		public static void WritesStaticFlag()
+		{
+			staticFlag = true;
+		}
+	}
 }
