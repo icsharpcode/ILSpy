@@ -201,6 +201,15 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 		public virtual void OnChildrenChanged(NotifyCollectionChangedEventArgs e)
 		{
+			if (e.Action == NotifyCollectionChangedAction.Move)
+			{
+				// A move keeps the node and its parent, so none of the attach/detach work below
+				// applies: only the node's position in the flat list changes, and it takes its
+				// visible descendants with it as one run.
+				MoveChild((SharpTreeNode)e.OldItems![0]!, e.NewStartingIndex);
+				RaiseIsLastChangedIfNeeded(e);
+				return;
+			}
 			if (e.OldItems != null)
 			{
 				foreach (SharpTreeNode node in e.OldItems)
@@ -269,6 +278,31 @@ namespace ICSharpCode.ILSpyX.TreeView
 
 			RaisePropertyChanged(nameof(ShowExpander));
 			RaiseIsLastChangedIfNeeded(e);
+		}
+
+		void MoveChild(SharpTreeNode node, int newIndex)
+		{
+			Debug.Assert(node.modelParent == this);
+			if (!node.isVisible)
+			{
+				// Not part of the flat list, so the reorder of modelChildren is all there is to do.
+				return;
+			}
+			int oldVisibleIndex = GetVisibleIndexForNode(node);
+			List<SharpTreeNode> movedNodes = node.VisibleDescendantsAndSelf().ToList();
+			SharpTreeNode moveEnd = node;
+			while (moveEnd.modelChildren != null && moveEnd.modelChildren.Count > 0)
+				moveEnd = moveEnd.modelChildren.Last();
+			RemoveNodes(node, moveEnd);
+
+			// Same rule as insertion: the node goes after its predecessor's last descendant, or
+			// directly after this parent when it becomes the first child.
+			SharpTreeNode? insertionPos = newIndex == 0 ? null : modelChildren?[newIndex - 1];
+			while (insertionPos != null && insertionPos.modelChildren != null && insertionPos.modelChildren.Count > 0)
+				insertionPos = insertionPos.modelChildren.Last();
+			InsertNodeAfter(insertionPos ?? this, node);
+
+			GetListRoot().treeFlattener?.NodesMoved(oldVisibleIndex, GetVisibleIndexForNode(node), movedNodes);
 		}
 		#endregion
 

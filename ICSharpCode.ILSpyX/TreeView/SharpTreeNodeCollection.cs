@@ -146,6 +146,28 @@ namespace ICSharpCode.ILSpyX.TreeView
 			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, newNodes, index));
 		}
 
+		/// <summary>
+		/// Moves the node at <paramref name="oldIndex"/> to <paramref name="newIndex"/>, where
+		/// <paramref name="newIndex"/> is the position the node ends up at in the reordered
+		/// collection. Raised as a single <see cref="NotifyCollectionChangedAction.Move"/>, so the
+		/// node keeps its identity: a consumer that would throw away per-item state on a
+		/// remove/insert pair - selection, an expanded subtree, a container - keeps it.
+		/// </summary>
+		public void Move(int oldIndex, int newIndex)
+		{
+			ThrowOnReentrancy();
+			if ((uint)oldIndex >= (uint)list.Count)
+				throw new ArgumentOutOfRangeException(nameof(oldIndex));
+			if ((uint)newIndex >= (uint)list.Count)
+				throw new ArgumentOutOfRangeException(nameof(newIndex));
+			if (oldIndex == newIndex)
+				return;
+			var node = list[oldIndex];
+			list.RemoveAt(oldIndex);
+			list.Insert(newIndex, node);
+			OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, node, newIndex, oldIndex));
+		}
+
 		public void RemoveAt(int index)
 		{
 			ThrowOnReentrancy();

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Linq;
 
 using Avalonia.Controls;
@@ -271,5 +272,32 @@ public class SharpTreeViewTests
 			for (int i = 0; i < childCount; i++)
 				Children.Add(new TestNode($"{text}_{i}"));
 		}
+	}
+
+	[AvaloniaTest]
+	public void Moving_An_Expanded_Node_Reorders_The_Rendered_Rows()
+	{
+		var (_, tree, root) = Host();
+		var b = (TestNode)root.Children[1];
+		b.IsExpanded = true;
+		Dispatcher.UIThread.RunJobs();
+		RenderedRows(tree).Should().Equal("A", "B", "B1", "C");
+
+		// B carries B1 with it: the run [B, B1] moves past C.
+		root.Children.Move(1, 2);
+		Dispatcher.UIThread.RunJobs();
+
+		RenderedRows(tree).Should().Equal("A", "C", "B", "B1");
+	}
+
+	static List<string> RenderedRows(SharpTreeView tree)
+	{
+		var rows = new List<string>();
+		for (int i = 0; i < tree.ItemCount; i++)
+		{
+			var container = tree.ContainerFromIndex(i);
+			rows.Add((container?.DataContext as SharpTreeNode)?.Text?.ToString() ?? "<unrealized>");
+		}
+		return rows;
 	}
 }

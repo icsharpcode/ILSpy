@@ -48,6 +48,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					case NotifyCollectionChangedAction.Remove:
 						Children.RemoveRange(e.OldStartingIndex, e.OldItems!.Count);
 						break;
+					case NotifyCollectionChangedAction.Move:
+						// Sorting the list reorders it in place. Mirror that as a move rather than a
+						// remove/insert pair, so the node - and with it the selection, the expanded
+						// subtree below it and its row - survives the reorder.
+						Children.Move(e.OldStartingIndex, e.NewStartingIndex);
+						break;
 					case NotifyCollectionChangedAction.Reset:
 						Children.Clear();
 						Children.AddRange(assemblyList.GetAssemblies().Select(a => new AssemblyTreeNode(a)));
