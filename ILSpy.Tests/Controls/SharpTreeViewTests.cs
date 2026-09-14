@@ -18,12 +18,15 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 using Avalonia.Input;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -288,6 +291,107 @@ public class SharpTreeViewTests
 		Dispatcher.UIThread.RunJobs();
 
 		RenderedRows(tree).Should().Equal("A", "C", "B", "B1");
+	}
+
+	/// <summary>Builds <paramref name="rootCount"/> top-level rows in a viewport too short to show
+	/// them all, with one expandable node, so an expansion has somewhere to scroll.</summary>
+	static (Window window, SharpTreeView tree, ScrollViewer scrollViewer, TestNode[] nodes) ShortViewport(
+		int rootCount, int expandableIndex, int childCount)
+	{
+		var nodes = Enumerable.Range(0, rootCount)
+			.Select(i => i == expandableIndex
+				? new TestNode($"N{i}", Enumerable.Range(0, childCount)
+					.Select(c => new TestNode($"N{i}.{c}")).ToArray())
+				: new TestNode($"N{i}"))
+			.ToArray();
+		var root = new TestNode("root", nodes);
+		var tree = new SharpTreeView { ShowRoot = false, Root = root };
+		var window = new Window { Content = tree, Width = 300, Height = 180 };
+		window.Show();
+		Dispatcher.UIThread.RunJobs();
+		return (window, tree, tree.GetVisualDescendants().OfType<ScrollViewer>().First(), nodes);
+	}
+
+	/// <summary>Expands a node the way a user does, with Right on its focused row.</summary>
+	static void PressRightOn(Window window, SharpTreeView tree, SharpTreeNode node)
+	{
+		tree.SelectedItem = node;
+		Dispatcher.UIThread.RunJobs();
+		tree.ContainerFromItem(node)?.Focus();
+		Dispatcher.UIThread.RunJobs();
+		window.KeyPress(Key.Right, RawInputModifiers.None, PhysicalKey.ArrowRight, null);
+		Dispatcher.UIThread.RunJobs();
+	}
+
+	[AvaloniaTest]
+	public void Expanding_A_Node_Scrolls_Children_That_Do_Not_Fit_Into_View()
+	{
+		var (window, tree, scrollViewer, nodes) = ShortViewport(rootCount: 15, expandableIndex: 5, childCount: 5);
+		var parent = nodes[5];
+		scrollViewer.Offset.Y.Should().Be(0, "nothing has moved the viewport yet");
+
+		PressRightOn(window, tree, parent);
+
+		tree.IsNodeFullyVisible(parent.Children[^1])
+			.Should().BeTrue("the expansion reveals children below the viewport, so the view scrolls to show them");
+		tree.IsNodeFullyVisible(parent)
+			.Should().BeTrue("the scroll is bounded by the expanded node: it never leaves the viewport");
+	}
+
+	[AvaloniaTest]
+	public void Expanding_A_Node_Whose_Children_Already_Fit_Leaves_The_Viewport_Alone()
+	{
+		var (window, tree, scrollViewer, nodes) = ShortViewport(rootCount: 15, expandableIndex: 1, childCount: 2);
+		var parent = nodes[1];
+
+		PressRightOn(window, tree, parent);
+
+		scrollViewer.Offset.Y.Should().Be(0, "the children fit below the node, so there is nothing to scroll to");
+		tree.IsNodeFullyVisible(parent.Children[^1]).Should().BeTrue();
+	}
+
+	[AvaloniaTest]
+	public void Expanding_A_Node_With_More_Children_Than_Fit_Keeps_The_Node_Visible()
+	{
+		var (window, tree, _, nodes) = ShortViewport(rootCount: 15, expandableIndex: 5, childCount: 30);
+		var parent = nodes[5];
+
+		PressRightOn(window, tree, parent);
+
+		tree.IsNodeFullyVisible(parent)
+			.Should().BeTrue("showing every child would push the node off the top, so the scroll stops at the node");
+		tree.IsNodeFullyVisible(parent.Children[0])
+			.Should().BeTrue("as many children as fit are shown below it");
+	}
+
+	[AvaloniaTest]
+	public async Task Clicking_The_Expander_Scrolls_The_Children_Into_View()
+	{
+		// The mouse path never passes through SharpTreeView: the row template's toggle writes
+		// IsExpanded straight to the node, so the reveal hangs off the toggle's Click.
+		var (window, tree, _, nodes) = ShortViewport(rootCount: 15, expandableIndex: 5, childCount: 5);
+		var parent = nodes[5];
+
+		await window.ClickAsync(() => tree.ContainerFromItem(parent)?.GetVisualDescendants()
+			.OfType<ToggleButton>().FirstOrDefault(b => b.Name == "PART_Expander"));
+		Dispatcher.UIThread.RunJobs();
+
+		parent.IsExpanded.Should().BeTrue("precondition: the click toggled the node open");
+		tree.IsNodeFullyVisible(parent.Children[^1])
+			.Should().BeTrue("a click on the expander reveals the children, just as the keyboard does");
+	}
+
+	[AvaloniaTest]
+	public void Expanding_A_Node_In_Code_Does_Not_Move_The_Viewport()
+	{
+		// Revealing a node expands its ancestors first (ScrollIntoNodeView, TreeSelectionBinder)
+		// and positions the viewport itself afterwards; a scroll per ancestor would fight that.
+		var (_, _, scrollViewer, nodes) = ShortViewport(rootCount: 15, expandableIndex: 5, childCount: 5);
+
+		nodes[5].IsExpanded = true;
+		Dispatcher.UIThread.RunJobs();
+
+		scrollViewer.Offset.Y.Should().Be(0, "only a user gesture reveals the children");
 	}
 
 	static List<string> RenderedRows(SharpTreeView tree)

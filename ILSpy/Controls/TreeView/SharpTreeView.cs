@@ -59,7 +59,6 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowLines), defaultValue: true);
 
 		TreeFlattener? flattener;
-		bool doNotScrollOnExpanding;
 		string searchBuffer = string.Empty;
 		DispatcherTimer? searchResetTimer;
 
@@ -92,6 +91,12 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			AddHandler(DragDrop.DragOverEvent, OnDragOver);
 			AddHandler(DragDrop.DropEvent, OnDrop);
 			AddHandler(DragDrop.DragLeaveEvent, (_, _) => HideInsertMarker());
+			// The row template's expander writes IsExpanded straight to the node, so an expansion
+			// made with the mouse never passes through this control; its Click is what identifies
+			// one. Only a gesture scrolls: code that expands nodes to reveal a selection (see
+			// ScrollIntoNodeView) or to open every match of a filter positions the viewport itself,
+			// and a scroll per expanded node would fight it.
+			AddHandler(Button.ClickEvent, OnExpanderClick, RoutingStrategies.Bubble, handledEventsToo: true);
 		}
 
 		public SharpTreeNode? Root {
@@ -184,32 +189,47 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			node.ActivateItem(args);
 			if (!e.Handled && node.ShowExpander)
 			{
-				node.IsExpanded = !node.IsExpanded;
+				SetExpanded(node, !node.IsExpanded);
 				e.Handled = true;
 			}
 		}
 
-		/// <summary>
-		/// Called when a visible node expands so its newly shown children are scrolled into view
-		/// (without scrolling the node itself off the top).
-		/// </summary>
-		internal void HandleExpanding(SharpTreeNode node)
+		void OnExpanderClick(object? sender, RoutedEventArgs e)
 		{
-			if (doNotScrollOnExpanding)
+			if (e.Source is ToggleButton { Name: "PART_Expander" } expander
+				&& expander.DataContext is SharpTreeNode { IsExpanded: true } node)
+			{
+				HandleExpanding(node);
+			}
+		}
+
+		/// <summary>Expands or collapses <paramref name="node"/> as a user gesture, so an expansion
+		/// reveals its children the way <see cref="HandleExpanding"/> describes.</summary>
+		void SetExpanded(SharpTreeNode node, bool expanded)
+		{
+			if (node.IsExpanded == expanded)
 				return;
+			node.IsExpanded = expanded;
+			if (expanded)
+				HandleExpanding(node);
+		}
+
+		/// <summary>
+		/// Scrolls the rows a just-expanded node revealed into view, the way the native Windows
+		/// tree control does: far enough to show the new children, but never so far that the
+		/// expanded node itself leaves the viewport. Both steps only move the viewport when their
+		/// row lies outside it, so expanding a node whose children already fit below it does not
+		/// scroll at all.
+		/// </summary>
+		void HandleExpanding(SharpTreeNode node)
+		{
 			SharpTreeNode lastVisibleChild = node;
-			while (true)
-			{
-				var child = lastVisibleChild.Children.LastOrDefault(c => c.IsVisible);
-				if (child == null)
-					break;
+			while (lastVisibleChild.Children.LastOrDefault(c => c.IsVisible) is { } child)
 				lastVisibleChild = child;
-			}
-			if (lastVisibleChild != node)
-			{
-				ScrollRowIntoView(lastVisibleChild, centre: false);
-				Dispatcher.UIThread.Post(() => ScrollRowIntoView(node, centre: false), DispatcherPriority.Loaded);
-			}
+			if (lastVisibleChild == node)
+				return;
+			ScrollRowIntoView(lastVisibleChild, centre: false);
+			ScrollRowIntoView(node, centre: false);
 		}
 
 		/// <summary>Scrolls the node into view (unless <paramref name="scroll"/> is false) and gives it
@@ -252,10 +272,8 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		public void ScrollIntoNodeView(SharpTreeNode node)
 		{
 			ArgumentNullException.ThrowIfNull(node);
-			doNotScrollOnExpanding = true;
 			foreach (var ancestor in node.Ancestors())
 				ancestor.IsExpanded = true;
-			doNotScrollOnExpanding = false;
 			CenterNodeInView(node);
 		}
 
@@ -403,7 +421,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				{
 					case Key.Left:
 						if (node.IsExpanded)
-							node.IsExpanded = false;
+							SetExpanded(node, false);
 						else if (node.Parent != null && !node.Parent.IsRoot)
 							SelectAndFocus(node.Parent);
 						else
@@ -412,7 +430,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 						break;
 					case Key.Right:
 						if (!node.IsExpanded && node.ShowExpander)
-							node.IsExpanded = true;
+							SetExpanded(node, true);
 						else if (node.Children.Count > 0)
 							SelectAndFocus(node.Children.First(c => c.IsVisible));
 						else
@@ -420,16 +438,18 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 						e.Handled = true;
 						break;
 					case Key.Add:
-						node.IsExpanded = true;
+						SetExpanded(node, true);
 						e.Handled = true;
 						break;
 					case Key.Subtract:
-						node.IsExpanded = false;
+						SetExpanded(node, false);
 						e.Handled = true;
 						break;
 					case Key.Multiply:
 						node.IsExpanded = true;
 						ExpandRecursively(node);
+						// The whole subtree is open now, so this reveals as much of it as fits.
+						HandleExpanding(node);
 						e.Handled = true;
 						break;
 					case Key.Enter:
