@@ -177,6 +177,8 @@ namespace ICSharpCode.Decompiler.IL
 		UnboxAny,
 		/// <summary>Creates an object instance and calls the constructor.</summary>
 		NewObj,
+		/// <summary>Reuses a cached delegate, evaluating the argument only when the cache is empty.</summary>
+		CachedDelegate,
 		/// <summary>Creates an array instance.</summary>
 		NewArr,
 		/// <summary>Returns the default value for a type.</summary>
@@ -4581,6 +4583,103 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Reuses a cached delegate, evaluating the argument only when the cache is empty.</summary>
+	public sealed partial class CachedDelegate : ILInstruction
+	{
+		public CachedDelegate(ILInstruction argument) : base(OpCode.CachedDelegate)
+		{
+			this.Argument = argument;
+		}
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument");
+		ILInstruction argument = null!;
+		public ILInstruction Argument {
+			get { return this.argument; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.argument, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index)
+			{
+				case 0:
+					return this.argument;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index)
+			{
+				case 0:
+					this.Argument = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index)
+			{
+				case 0:
+					return ArgumentSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (CachedDelegate)ShallowClone();
+			clone.Argument = this.argument.Clone();
+			return clone;
+		}
+		public override StackType ResultType => Argument.ResultType;
+		public override IType InferType(ICompilation compilation) => Argument.InferType(compilation);
+		protected override InstructionFlags ComputeFlags()
+		{
+			return argument.Flags | InstructionFlags.ControlFlow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
+		}
+		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
+		{
+			WriteILRange(output, options);
+			output.Write(OpCode);
+			output.Write('(');
+			this.argument.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCachedDelegate(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitCachedDelegate(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCachedDelegate(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction? other, ref Patterns.Match match)
+		{
+			var o = other as CachedDelegate;
+			return o != null && this.argument.PerformMatch(o.argument, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Creates an array instance.</summary>
 	public sealed partial class NewArr : ILInstruction
 	{
@@ -7412,6 +7511,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitCachedDelegate(CachedDelegate inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitNewArr(NewArr inst)
 		{
 			Default(inst);
@@ -7819,6 +7922,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitNewObj(NewObj inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitCachedDelegate(CachedDelegate inst)
 		{
 			return Default(inst);
 		}
@@ -8232,6 +8339,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitCachedDelegate(CachedDelegate inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitNewArr(NewArr inst, C context)
 		{
 			return Default(inst, context);
@@ -8433,6 +8544,7 @@ namespace ICSharpCode.Decompiler.IL
 			"unbox",
 			"unbox.any",
 			"newobj",
+			"cached.delegate",
 			"newarr",
 			"default.value",
 			"throw",
@@ -9001,6 +9113,17 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			argument = default(ILInstruction);
 			type = default(IType);
+			return false;
+		}
+		public bool MatchCachedDelegate([NotNullWhen(true)] out ILInstruction? argument)
+		{
+			var inst = this as CachedDelegate;
+			if (inst != null)
+			{
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
 			return false;
 		}
 		public bool MatchNewArr([NotNullWhen(true)] out IType? type)

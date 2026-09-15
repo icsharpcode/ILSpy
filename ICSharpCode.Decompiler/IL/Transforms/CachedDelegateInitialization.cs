@@ -33,44 +33,38 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			for (int i = context.IndexOfFirstAlreadyTransformedInstruction - 1; i >= 0; i--)
 			{
-				if (block.Instructions[i] is IfInstruction inst)
+				if (block.Instructions[i] is IfInstruction inst && TryTransform(block, i, inst))
 				{
-					if (CachedDelegateInitializationWithField(inst))
-					{
-						block.Instructions.RemoveAt(i);
-						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
-						continue;
-					}
-					if (CachedDelegateInitializationWithLocal(inst))
-					{
-						ILInlining.InlineOneIfPossible(block, i, InliningOptions.Aggressive, context);
-						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
-						continue;
-					}
-					if (CachedDelegateInitializationRoslynInStaticWithLocal(inst) || CachedDelegateInitializationRoslynWithLocal(inst))
-					{
-						block.Instructions.RemoveAt(i);
-						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
-						continue;
-					}
-					if (CachedDelegateInitializationVB(inst))
-					{
-						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
-						continue;
-					}
-					if (CachedDelegateInitializationVBWithReturn(inst))
-					{
-						block.Instructions.RemoveAt(i);
-						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
-						continue;
-					}
-					if (CachedDelegateInitializationVBWithClosure(inst))
-					{
-						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
-						continue;
-					}
+					context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 				}
 			}
+		}
+
+		bool TryTransform(Block block, int i, IfInstruction inst)
+		{
+			if (CachedDelegateInitializationWithField(inst))
+			{
+				block.Instructions.RemoveAt(i);
+				return true;
+			}
+			if (CachedDelegateInitializationWithLocal(inst))
+			{
+				ILInlining.InlineOneIfPossible(block, i, InliningOptions.Aggressive, context);
+				return true;
+			}
+			if (CachedDelegateInitializationRoslynWithLocal(inst))
+			{
+				block.Instructions.RemoveAt(i);
+				return true;
+			}
+			if (CachedDelegateInitializationVB(inst))
+				return true;
+			if (CachedDelegateInitializationVBWithReturn(inst))
+			{
+				block.Instructions.RemoveAt(i);
+				return true;
+			}
+			return CachedDelegateInitializationVBWithClosure(inst);
 		}
 
 		/// <summary>
@@ -79,7 +73,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// ... one usage of CachedAnonMethodDelegate ...
 		/// =>
-		/// ... one usage of DelegateConstruction ...
+		/// ... one usage of cached.delegate(DelegateConstruction) ...
 		/// </summary>
 		bool CachedDelegateInitializationWithField(IfInstruction inst)
 		{
@@ -101,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (usages.Length != 1)
 				return false;
 			context.Step("CachedDelegateInitializationWithField", inst);
-			usages[0].ReplaceWith(value);
+			usages[0].ReplaceWith(new CachedDelegate(value));
 			context.EndStep(value);
 			return true;
 		}
@@ -111,7 +105,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///     stloc v(DelegateConstruction)
 		/// }
 		/// =>
-		/// stloc v(DelegateConstruction)
+		/// stloc v(cached.delegate(DelegateConstruction))
 		/// </summary>
 		bool CachedDelegateInitializationWithLocal(IfInstruction inst)
 		{
@@ -141,40 +135,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step("CachedDelegateInitializationWithLocal", inst);
 			((Block)otherStore.Parent).Instructions.Remove(otherStore);
+			((StLoc)storeInst).Value = new CachedDelegate(value);
 			inst.ReplaceWith(storeInst);
 			context.EndStep(storeInst);
-			return true;
-		}
-
-		/// <summary>
-		/// stloc s(ldobj(ldsflda(CachedAnonMethodDelegate))
-		/// if (comp(ldloc s == null)) {
-		///		stloc s(stobj(ldsflda(CachedAnonMethodDelegate), DelegateConstruction))
-		///	}
-		///	=>
-		///	stloc s(DelegateConstruction)
-		/// </summary>
-		bool CachedDelegateInitializationRoslynInStaticWithLocal(IfInstruction inst)
-		{
-			Block trueInst = inst.TrueInst as Block;
-			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
-				return false;
-			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
-				return false;
-			var storeInst = trueInst.Instructions.Last() as StLoc;
-			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-			if (storeBeforeIf == null || storeInst == null || storeBeforeIf.Variable != s || storeInst.Variable != s)
-				return false;
-			if (!(storeInst.Value is StObj stobj) || !(storeBeforeIf.Value is LdObj ldobj))
-				return false;
-			if (!(stobj.Value is NewObj))
-				return false;
-			if (!stobj.Target.MatchLdsFlda(out var field1) || !ldobj.Target.MatchLdsFlda(out var field2) || !field1.Equals(field2))
-				return false;
-			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
-				return false;
-			context.Step("CachedDelegateInitializationRoslynInStaticWithLocal", inst);
-			storeBeforeIf.Value = stobj.Value;
 			return true;
 		}
 
@@ -184,7 +147,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		stloc s(stobj(ldflda(CachedAnonMethodDelegate), DelegateConstruction))
 		///	}
 		///	=>
-		///	stloc s(DelegateConstruction)
+		///	stloc s(cached.delegate(DelegateConstruction))
+		/// The same pattern applies to static cache fields accessed with ldsflda.
 		/// </summary>
 		bool CachedDelegateInitializationRoslynWithLocal(IfInstruction inst)
 		{
@@ -199,14 +163,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(storeInst.Value is StObj stobj) || !(storeBeforeIf.Value is LdObj ldobj))
 				return false;
-			if (!(stobj.Value is NewObj))
+			if (stobj.Value is not NewObj delegateConstruction)
 				return false;
-			if (!stobj.Target.MatchLdFlda(out var _, out var field1) || !ldobj.Target.MatchLdFlda(out var __, out var field2) || !field1.Equals(field2))
+			bool sameField = (stobj.Target, ldobj.Target) switch {
+				(LdsFlda first, LdsFlda second) => first.Field.Equals(second.Field),
+				(LdFlda first, LdFlda second) => first.Field.Equals(second.Field),
+				_ => false
+			};
+			if (!sameField)
 				return false;
-			if (!DelegateConstruction.MatchDelegateConstruction((NewObj)stobj.Value, out _, out _, out _, true))
+			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationRoslynWithLocal", inst);
-			storeBeforeIf.Value = stobj.Value;
+			storeBeforeIf.Value = new CachedDelegate(delegateConstruction);
 			return true;
 		}
 
@@ -217,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc s(ldobj System.Action(ldsflda $I4-1))
 		/// }
 		/// =>
-		///	stloc s(DelegateConstruction)
+		///	stloc s(cached.delegate(DelegateConstruction))
 		/// </summary>
 		bool CachedDelegateInitializationVB(IfInstruction inst)
 		{
@@ -249,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationVB", inst);
-			var stloc = new StLoc(s, delegateConstruction);
+			var stloc = new StLoc(s, new CachedDelegate(delegateConstruction));
 			inst.ReplaceWith(stloc);
 			context.EndStep(stloc);
 			return true;
@@ -261,7 +230,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		///	leave IL_0005 (stsfld CachedAnonMethodDelegate(DelegateConstruction))
 		/// =>
-		/// leave IL_0005 (DelegateConstruction)
+		/// leave IL_0005 (cached.delegate(DelegateConstruction))
 		/// </summary>
 		bool CachedDelegateInitializationVBWithReturn(IfInstruction inst)
 		{
@@ -279,7 +248,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationVBWithReturn", inst);
-			leaveAfterIf.Value = delegateConstruction;
+			leaveAfterIf.Value = new CachedDelegate(delegateConstruction);
 			return true;
 		}
 
@@ -290,7 +259,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	stloc s(stobj delegateType(ldflda CachedAnonMethodDelegate(ldloc closure), DelegateConstruction))
 		/// }
 		/// =>
-		///	stloc s(DelegateConstruction)
+		///	stloc s(cached.delegate(DelegateConstruction))
 		/// </summary>
 		bool CachedDelegateInitializationVBWithClosure(IfInstruction inst)
 		{
@@ -322,7 +291,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.MatchDelegateConstruction(delegateConstruction, out _, out _, out _, true))
 				return false;
 			context.Step("CachedDelegateInitializationVBWithClosure", inst);
-			var stloc = new StLoc(s, delegateConstruction);
+			var stloc = new StLoc(s, new CachedDelegate(delegateConstruction));
 			inst.ReplaceWith(stloc);
 			context.EndStep(stloc);
 			return true;
