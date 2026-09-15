@@ -133,6 +133,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Issue3659([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			await Run(options: options | CompilerOptions.Library);
+		}
+
+		[Test]
 		public async Task Issue1906([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await Run(options: options | CompilerOptions.Library);
@@ -140,6 +146,13 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public async Task Issue2192([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			IgnoreIfVbRuntimeSubstituted(options);
+			await Run(options: options | CompilerOptions.Library);
+		}
+
+		[Test]
+		public async Task VBOnError([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			IgnoreIfVbRuntimeSubstituted(options);
 			await Run(options: options | CompilerOptions.Library);
@@ -159,6 +172,13 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public async Task VBNonGenericForEach([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			IgnoreIfVbRuntimeSubstituted(options);
+			await Run(options: options | CompilerOptions.Library);
+		}
+
+		[Test]
+		public async Task VBTryCatchFinally([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			IgnoreIfVbRuntimeSubstituted(options);
 			await Run(options: options | CompilerOptions.Library);

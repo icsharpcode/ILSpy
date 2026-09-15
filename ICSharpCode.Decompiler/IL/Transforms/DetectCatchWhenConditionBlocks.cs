@@ -71,7 +71,63 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 					PropagateExceptionVariable(context, catchBlock);
 				}
+				else if (catchBlock.Filter is BlockContainer filterContainer
+					&& MatchVBOnErrorCatchFilter(context, catchBlock.Variable, filterContainer, out exceptionType, out var typeTest)
+					&& exceptionType.GetStackType() == catchBlock.Variable.StackType)
+				{
+					context.Step($"Detected catch-when for {catchBlock.Variable.Name} (bit.and)", typeTest);
+					catchBlock.Variable.Type = exceptionType;
+					var condition = typeTest.Right;
+					typeTest.ReplaceWith(condition);
+					context.EndStep(condition);
+
+					PropagateExceptionVariable(context, catchBlock);
+				}
 			}
+		}
+
+		/// <summary>
+		/// BlockContainer {
+		/// 	Block entryPoint (incoming: 1) {
+		/// 		leave container(bit.and(bit.and(comp(isinst System.Exception(ldloc exceptionVar) > ldnull), comp.unsigned(ldloc activeHandler > ldc.i4 0)), logic.not(ldloc resumeTarget)))
+		/// 	}
+		/// }
+		/// Only emitted for On Error Resume Next/GoTo.
+		/// </summary>
+		bool MatchVBOnErrorCatchFilter(ILTransformContext context, ILVariable exceptionVar, BlockContainer container, out IType exceptionType, out BinaryNumericInstruction typeTest)
+		{
+			exceptionType = null;
+			typeTest = null;
+			var entryPoint = container.EntryPoint;
+			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1 || entryPoint.Instructions.Count != 1)
+				return false;
+			if (!entryPoint.Instructions[0].MatchLeave(container, out var condition))
+				return false;
+			if (condition is not BinaryNumericInstruction { Operator: BinaryNumericOperator.BitAnd, Left: BinaryNumericInstruction { Operator: BinaryNumericOperator.BitAnd } bitAnd } outer)
+				return false;
+			if (!outer.Right.MatchCompUnsignedZero(ComparisonKind.Equality, out var resumeTarget) || !resumeTarget.MatchLdLoc(out _))
+				return false;
+			if (!bitAnd.Right.MatchCompUnsignedZero(ComparisonKind.Inequality, out var activeHandler) || !activeHandler.MatchLdLoc(out _))
+				return false;
+			if (bitAnd.Left is not Comp comp)
+				return false;
+			EarlyExpressionTransforms.FixComparisonKindLdNull(comp, context);
+			if (!MatchIsInstNotNull(comp, exceptionVar, out _, out exceptionType) || !exceptionType.IsKnownType(KnownTypeCode.Exception))
+				return false;
+			typeTest = bitAnd;
+			return true;
+		}
+
+		/// <summary>
+		/// comp(isinst exceptionType(ldloc exceptionVar) != ldnull)
+		/// </summary>
+		static bool MatchIsInstNotNull(ILInstruction condition, ILVariable exceptionVar, out ILInstruction exceptionSlot, out IType exceptionType)
+		{
+			exceptionSlot = null;
+			exceptionType = null;
+			return condition.MatchCompNotEqualsNull(out var arg)
+				&& arg.MatchIsInst(out exceptionSlot, out exceptionType)
+				&& exceptionSlot.MatchLdLoc(exceptionVar);
 		}
 
 		/// <summary>
@@ -195,18 +251,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// br falseBlock
 				if (!entryPoint.Instructions[0].MatchIfInstruction(out var condition, out var branch))
 					return false;
-				if (!condition.MatchCompNotEquals(out var left, out var right))
+				if (!MatchIsInstNotNull(condition, exceptionVar, out exceptionSlot, out exceptionType))
 					return false;
 				if (!entryPoint.Instructions[1].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
 					return false;
-				if (!left.MatchIsInst(out exceptionSlot, out exceptionType))
-					return false;
-				if (!exceptionSlot.MatchLdLoc(exceptionVar))
-					return false;
-				if (right.MatchLdNull())
-				{
-					return branch.MatchBranch(out whenConditionBlock);
-				}
+				return branch.MatchBranch(out whenConditionBlock);
 			}
 			return false;
 		}
