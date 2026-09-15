@@ -99,9 +99,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
 				&& inst.Right.MatchLdcI4(0)
 				&& (inst.Left.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean)
-				   || inst.Left.MatchLdcI4(0) || inst.Left.MatchLdcI4(1)))
+				   || inst.Left.MatchLdcI4(0) || inst.Left.MatchLdcI4(1)
+				   // `x` is used only as a condition here, so its exact value does not matter,
+				   // only whether it is zero or not. This preserves patterns such as
+				   // `comp(call GetValueOrDefault() != 0)` that NullableLiftingTransform relies on.
+				   // IfInstruction is excluded because an int-valued conditional (e.g.
+				   // `(c ? flags : other)`, where only values 0/1 would be lossless) must not be
+				   // turned into a bool, which would truncate it to 8 bits.
+				   || (IfInstruction.IsInConditionSlot(inst) && inst.Left is not IfInstruction)))
 			{
-				// When `x` is known to be 0 or 1:
+				// When `x` is known to be 0 or 1 (or is only tested for non-zero):
 				// `comp(x != 0) => x`
 				context.Step("Remove redundant comp(... != 0)", inst);
 				inst.Left.AddILRange(inst);

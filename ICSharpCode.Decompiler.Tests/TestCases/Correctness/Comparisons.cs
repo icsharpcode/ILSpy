@@ -58,7 +58,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			IntBranchInConditionSlot(0, 0x100, true);
 			NegatedIntBranchInConditionSlot(1, 0x100, false);
 			NegatedIntBranchInConditionSlot(0, 0x100, true);
+
+			Console.WriteLine("LiftedNullCoalescingComparison:");
+			LiftedNullCoalescingComparison(null);
+			LiftedNullCoalescingComparison(0);
+			LiftedNullCoalescingComparison(1);
 			return 0;
+		}
+
+		// Issue #4136: a lifted null comparison over a `??` operand. Keeping the `??` form
+		// (instead of expanding to an explicit HasValue/GetValueOrDefault test) must not
+		// change the result, especially for the null case.
+		static void LiftedNullCoalescingComparison(int? value)
+		{
+			Console.WriteLine((value ?? 0) == 0);
+			Console.WriteLine((value ?? 1) == 0);
+			Console.WriteLine((value ?? 2) != 0);
 		}
 
 		static void TestFloatOp(string name, Func<float, float, bool> f)
