@@ -278,6 +278,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task VBOnErrorCorrectness([ValueSource(nameof(noMonoOptions))] CompilerOptions options)
+		{
+			await RunVB(options: options);
+		}
+
+		[Test]
 		public async Task MemberLookup([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);
@@ -497,6 +503,18 @@ namespace ICSharpCode.Decompiler.Tests
 				outputFile = await Tester.CompileVB(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: testOutputFileName).ConfigureAwait(false);
 				string decompiledCodeFile = await Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options)).ConfigureAwait(false);
+				if ((options & CompilerOptions.UseRoslynMask) == 0)
+				{
+					// For second pass, use roslyn instead of the legacy csc.
+					// VB error handling compiles to exception filters, which C# 5 cannot express.
+					options |= CompilerOptions.UseRoslynLatest | CompilerOptions.TargetNet40;
+				}
+				else if ((options & CompilerOptions.UseRoslyn2_10_0) != 0 && (options & CompilerOptions.TargetNet40) == 0)
+				{
+					// The .NET Core 2.2 Microsoft.VisualBasic.dll lacks most of the VB runtime
+					// that decompiled VB code calls, such as Information.Err.
+					options = (options & ~CompilerOptions.UseRoslyn2_10_0) | CompilerOptions.UseRoslynLatest;
+				}
 				decompiledOutputFile = await Tester.CompileCSharp(decompiledCodeFile, options).ConfigureAwait(false);
 
 				await Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile, (options & CompilerOptions.UseTestRunner) != 0, (options & CompilerOptions.Force32Bit) != 0);
