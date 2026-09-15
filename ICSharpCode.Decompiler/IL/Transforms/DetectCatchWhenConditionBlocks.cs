@@ -72,15 +72,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					PropagateExceptionVariable(context, catchBlock);
 				}
 				else if (catchBlock.Filter is BlockContainer filterContainer
-					&& MatchTypeTestConjunction(catchBlock.Variable, filterContainer,
-						out var conjunctionType, out var typeTest)
-					&& conjunctionType.GetStackType() == catchBlock.Variable.StackType)
+					&& MatchVBOnErrorCatchFilter(context, catchBlock.Variable, filterContainer, out exceptionType, out var typeTest)
+					&& exceptionType.GetStackType() == catchBlock.Variable.StackType)
 				{
-					context.Step($"Detected catch-when type test for {catchBlock.Variable.Name}", typeTest);
-					catchBlock.Variable.Type = conjunctionType;
-					var remainder = typeTest.Right;
-					typeTest.ReplaceWith(remainder);
-					context.EndStep(remainder);
+					context.Step($"Detected catch-when for {catchBlock.Variable.Name} (bit.and)", typeTest);
+					catchBlock.Variable.Type = exceptionType;
+					var condition = typeTest.Right;
+					typeTest.ReplaceWith(condition);
+					context.EndStep(condition);
 
 					PropagateExceptionVariable(context, catchBlock);
 				}
@@ -90,16 +89,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// BlockContainer {
 		/// 	Block entryPoint (incoming: 1) {
-		/// 		leave container(bit.and(bit.and(comp(isinst T(ldloc exceptionVar) != ldnull), cond1), cond2))
+		/// 		leave container(bit.and(bit.and(comp(isinst System.Exception(ldloc exceptionVar) > ldnull), comp.unsigned(ldloc activeHandler > ldc.i4 0)), logic.not(ldloc resumeTarget)))
 		/// 	}
 		/// }
-		/// The Visual Basic compiler emits the whole filter as one non-short-circuiting
-		/// expression rather than the block chain csc emits, so the type test sits in a
-		/// conjunction instead of a branch. On a match, typeTest is the innermost `bit.and`,
-		/// whose right operand is the filter that remains once the test moves to the catch type.
+		/// Only emitted for On Error Resume Next/GoTo.
 		/// </summary>
-		bool MatchTypeTestConjunction(ILVariable exceptionVar, BlockContainer container,
-			out IType exceptionType, out BinaryNumericInstruction typeTest)
+		bool MatchVBOnErrorCatchFilter(ILTransformContext context, ILVariable exceptionVar, BlockContainer container, out IType exceptionType, out BinaryNumericInstruction typeTest)
 		{
 			exceptionType = null;
 			typeTest = null;
@@ -108,38 +103,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!entryPoint.Instructions[0].MatchLeave(container, out var condition))
 				return false;
-			// Once the test moves to the catch type, the other conjuncts stop running for a
-			// non-matching exception, which is only invisible if they have no side effects.
-			if (!SemanticHelper.IsPure(condition.Flags))
+			if (condition is not BinaryNumericInstruction { Operator: BinaryNumericOperator.BitAnd, Left: BinaryNumericInstruction { Operator: BinaryNumericOperator.BitAnd } bitAnd } outer)
 				return false;
-			// The test is the leftmost operand of a left-nested chain of `&`.
-			while (condition is BinaryNumericInstruction { Operator: BinaryNumericOperator.BitAnd } and)
-			{
-				if (MatchTypeTest(and.Left, exceptionVar, out exceptionType))
-				{
-					typeTest = and;
-					return true;
-				}
-				condition = and.Left;
-			}
-			return false;
+			if (!outer.Right.MatchCompUnsignedZero(ComparisonKind.Equality, out var resumeTarget) || !resumeTarget.MatchLdLoc(out _))
+				return false;
+			if (!bitAnd.Right.MatchCompUnsignedZero(ComparisonKind.Inequality, out var activeHandler) || !activeHandler.MatchLdLoc(out _))
+				return false;
+			if (bitAnd.Left is not Comp comp)
+				return false;
+			EarlyExpressionTransforms.FixComparisonKindLdNull(comp, context);
+			if (!MatchIsInstNotNull(comp, exceptionVar, out _, out exceptionType) || !exceptionType.IsKnownType(KnownTypeCode.Exception))
+				return false;
+			typeTest = bitAnd;
+			return true;
 		}
 
 		/// <summary>
-		/// comp(isinst T(ldloc exceptionVar) != ldnull), however the compiler spelled the null test.
+		/// comp(isinst exceptionType(ldloc exceptionVar) != ldnull)
 		/// </summary>
-		static bool MatchTypeTest(ILInstruction condition, ILVariable exceptionVar, out IType exceptionType)
+		static bool MatchIsInstNotNull(ILInstruction condition, ILVariable exceptionVar, out ILInstruction exceptionSlot, out IType exceptionType)
 		{
+			exceptionSlot = null;
 			exceptionType = null;
-			if (condition is not Comp comp || !comp.Right.MatchLdNull())
-				return false;
-			// `cgt.un x, null` is how both compilers spell `x != null` for a reference.
-			if (comp.Kind != ComparisonKind.Inequality
-				&& !(comp.Kind == ComparisonKind.GreaterThan && comp.InputType == StackType.O))
-				return false;
-			if (!comp.Left.MatchIsInst(out var argument, out exceptionType))
-				return false;
-			return argument.MatchLdLoc(exceptionVar);
+			return condition.MatchCompNotEqualsNull(out var arg)
+				&& arg.MatchIsInst(out exceptionSlot, out exceptionType)
+				&& exceptionSlot.MatchLdLoc(exceptionVar);
 		}
 
 		/// <summary>
@@ -263,18 +251,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// br falseBlock
 				if (!entryPoint.Instructions[0].MatchIfInstruction(out var condition, out var branch))
 					return false;
-				if (!condition.MatchCompNotEquals(out var left, out var right))
+				if (!MatchIsInstNotNull(condition, exceptionVar, out exceptionSlot, out exceptionType))
 					return false;
 				if (!entryPoint.Instructions[1].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
 					return false;
-				if (!left.MatchIsInst(out exceptionSlot, out exceptionType))
-					return false;
-				if (!exceptionSlot.MatchLdLoc(exceptionVar))
-					return false;
-				if (right.MatchLdNull())
-				{
-					return branch.MatchBranch(out whenConditionBlock);
-				}
+				return branch.MatchBranch(out whenConditionBlock);
 			}
 			return false;
 		}

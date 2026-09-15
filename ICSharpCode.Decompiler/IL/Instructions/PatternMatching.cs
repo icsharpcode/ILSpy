@@ -17,6 +17,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 using ICSharpCode.Decompiler.TypeSystem;
@@ -465,6 +466,24 @@ namespace ICSharpCode.Decompiler.IL
 				right = null;
 				return false;
 			}
+		}
+
+		/// <summary>
+		/// For <paramref name="kind"/> == Equality, matches 'comp(arg == ldc.i4 0)' or 'comp.unsigned(arg &lt;= ldc.i4 0)'.
+		/// For <paramref name="kind"/> == Inequality, matches 'comp(arg != ldc.i4 0)' or 'comp.unsigned(arg > ldc.i4 0)'.
+		/// </summary>
+		public bool MatchCompUnsignedZero(ComparisonKind kind, [NotNullWhen(true)] out ILInstruction? arg)
+		{
+			Debug.Assert(kind.IsEqualityOrInequality());
+			var unsignedKind = kind == ComparisonKind.Equality ? ComparisonKind.LessThanOrEqual : ComparisonKind.GreaterThan;
+			if (this is Comp { IsLifted: false } comp && comp.Right.MatchLdcI4(0)
+				&& (comp.Kind == kind || (comp.Kind == unsignedKind && comp.Sign == Sign.Unsigned)))
+			{
+				arg = comp.Left;
+				return true;
+			}
+			arg = null;
+			return false;
 		}
 
 		public bool MatchLdFld([NotNullWhen(true)] out ILInstruction? target, [NotNullWhen(true)] out IField? field)
