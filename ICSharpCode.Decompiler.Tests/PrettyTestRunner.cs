@@ -525,7 +525,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public async Task DynamicAwait([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		public async Task DynamicAwait([ValueSource(nameof(defaultOptions))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);
 		}
