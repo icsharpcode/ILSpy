@@ -1242,22 +1242,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool requireTarget;
 			if ((allowedTransforms & ReferenceTransformation.RequireTarget) != 0)
 			{
-				if (settings.AlwaysQualifyMemberReferences || expressionBuilder.HidesVariableWithName(method.Name))
+				if (method.IsLocalFunction)
 				{
+					// A local function is never reached through a target.
+					requireTarget = settings.AlwaysQualifyMemberReferences
+						|| expressionBuilder.HidesVariableWithName(method.Name);
+				}
+				else if (method.Name == ".ctor" || method.Name == ".cctor")
+				{
+					// Always use target for base/this-ctor-call, the constructor initializer pattern depends on this
 					requireTarget = true;
 				}
 				else
 				{
-					if (method.IsLocalFunction)
-						requireTarget = false;
-					else if (method.IsStatic)
-						requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) || method.Name == ".cctor";
-					else if (method.Name == ".ctor")
-						requireTarget = true; // always use target for base/this-ctor-call, the constructor initializer pattern depends on this
-					else if (target.Expression is BaseReferenceExpression)
-						requireTarget = (expectedTargetDetails.CallOpCode != OpCode.CallVirt && method.IsVirtual);
-					else
-						requireTarget = target.Expression is not ThisReferenceExpression;
+					requireTarget = expressionBuilder.RequiresQualifier(method, target,
+						nonVirtualDispatch: expectedTargetDetails.CallOpCode != OpCode.CallVirt);
 				}
 			}
 			else
@@ -1347,13 +1346,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		ExpressionWithResolveResult HandleAccessorCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
 			TranslatedExpression target, ArgumentList argumentList)
 		{
-			bool requireTarget;
-			if (settings.AlwaysQualifyMemberReferences || method.AccessorOwner!.SymbolKind == SymbolKind.Indexer || expressionBuilder.HidesVariableWithName(method.AccessorOwner.Name))
-				requireTarget = true;
-			else if (method.IsStatic)
-				requireTarget = !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition);
-			else
-				requireTarget = !(target.Expression is ThisReferenceExpression);
+			// An indexer has no name of its own to write, so it can never drop its target.
+			bool requireTarget = method.AccessorOwner!.SymbolKind == SymbolKind.Indexer
+				|| expressionBuilder.RequiresQualifier(method.AccessorOwner, target,
+					nonVirtualDispatch: expectedTargetDetails.CallOpCode != OpCode.CallVirt);
 			bool isSetter = method.ReturnType.IsKnownType(KnownTypeCode.Void);
 
 			TranslatedExpression value = default(TranslatedExpression);
@@ -1641,8 +1637,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					memberStatic: method.IsStatic,
 					memberDeclaringType: method.DeclaringType);
 				// check if target is required
-				bool requireTarget = expressionBuilder.HidesVariableWithName(method.Name)
-					|| (method.IsStatic ? !expressionBuilder.IsCurrentOrContainingType(method.DeclaringTypeDefinition) : !(target.Expression is ThisReferenceExpression));
+				bool requireTarget = expressionBuilder.RequiresQualifier(method, target,
+					nonVirtualDispatch: expectedTargetDetails.CallOpCode != OpCode.CallVirt);
 				var disambiguator = Disambiguator.ForMethodReference(expressionBuilder, method, targetType,
 					target, requireTarget, expectedTargetDetails, isExtensionMethodReference: false);
 				ResolveResult? result = disambiguator.Result;
