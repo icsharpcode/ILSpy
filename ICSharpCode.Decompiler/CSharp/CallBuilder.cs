@@ -37,7 +37,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	struct CallBuilder
+	partial struct CallBuilder
 	{
 		struct ExpectedTargetDetails
 		{
@@ -587,7 +587,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref target,
-				ref argumentList, CallTransformation.All, out IParameterizedMember? foundMethod);
+				ref argumentList, ReferenceTransformation.All, out IParameterizedMember? foundMethod);
 			// GetRequiredTransformationsForCall always assigns foundMethod (the resolved overload or 'method').
 			Debug.Assert(foundMethod != null);
 
@@ -606,15 +606,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			Expression targetExpr;
 			string methodName = method.Name;
 			AstNodeCollection<AstType> typeArgumentList;
-			if ((transform & CallTransformation.NoNamedArgsForPrettiness) != 0)
+			if ((transform & ReferenceTransformation.NoNamedArgsForPrettiness) != 0)
 			{
 				argumentList.AddNamesToPrimitiveValues = false;
 			}
-			if ((transform & CallTransformation.NoOptionalArgumentAllowed) != 0)
+			if ((transform & ReferenceTransformation.NoOptionalArgumentAllowed) != 0)
 			{
 				argumentList.FirstOptionalArgumentIndex = -1;
 			}
-			if ((transform & CallTransformation.RequireTarget) != 0)
+			if ((transform & ReferenceTransformation.RequireTarget) != 0)
 			{
 				targetExpr = new MemberReferenceExpression(target.Expression, methodName);
 				typeArgumentList = ((MemberReferenceExpression)targetExpr).TypeArguments;
@@ -640,7 +640,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				typeArgumentList = ((IdentifierExpression)targetExpr).TypeArguments;
 			}
 
-			if ((transform & CallTransformation.RequireTypeArguments) != 0 && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
+			if ((transform & ReferenceTransformation.RequireTypeArguments) != 0 && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
 				typeArgumentList.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 			return new InvocationExpression(targetExpr, argumentList.GetArgumentExpressions())
 				.WithRR(new CSharpInvocationResolveResult(target.ResolveResult, foundMethod,
@@ -752,8 +752,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			argumentList.AddNamesToPrimitiveValues = false;
 			argumentList.UseImplicitlyTypedOut = false;
 			var transform = GetRequiredTransformationsForCall(expectedTargetDetails, method, ref unused,
-				ref argumentList, CallTransformation.None, out _);
-			Debug.Assert((transform & ~(CallTransformation.NoOptionalArgumentAllowed | CallTransformation.NoNamedArgsForPrettiness)) == 0);
+				ref argumentList, ReferenceTransformation.None, out _);
+			Debug.Assert((transform & ~(ReferenceTransformation.NoOptionalArgumentAllowed | ReferenceTransformation.NoNamedArgsForPrettiness)) == 0);
 
 			// Calls with only one argument do not need an array initializer expression to wrap them.
 			// Any special cases are handled by the caller (i.e., ExpressionBuilder.TranslateObjectAndCollectionInitializer)
@@ -772,7 +772,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				skipCount = 0;
 			}
 
-			if ((transform & CallTransformation.NoOptionalArgumentAllowed) != 0)
+			if ((transform & ReferenceTransformation.NoOptionalArgumentAllowed) != 0)
 				argumentList.FirstOptionalArgumentIndex = -1;
 
 			return new ArrayInitializerExpression(argumentList.GetArgumentExpressions(skipCount))
@@ -1229,7 +1229,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		[Flags]
-		enum CallTransformation
+		enum ReferenceTransformation
 		{
 			None = 0,
 			RequireTarget = 1,
@@ -1243,15 +1243,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			All = 0x1f,
 		}
 
-		private CallTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
-			ref TranslatedExpression target, ref ArgumentList argumentList, CallTransformation allowedTransforms, out IParameterizedMember? foundMethod)
+		private ReferenceTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
+			ref TranslatedExpression target, ref ArgumentList argumentList, ReferenceTransformation allowedTransforms, out IParameterizedMember? foundMethod)
 		{
-			CallTransformation transform = CallTransformation.None;
+			ReferenceTransformation transform = ReferenceTransformation.None;
 
 			// initialize requireTarget flag
 			bool requireTarget;
 			ResolveResult? targetResolveResult;
-			if ((allowedTransforms & CallTransformation.RequireTarget) != 0)
+			if ((allowedTransforms & ReferenceTransformation.RequireTarget) != 0)
 			{
 				if (settings.AlwaysQualifyMemberReferences || expressionBuilder.HidesVariableWithName(method.Name))
 				{
@@ -1284,7 +1284,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool requireTypeArguments;
 			IType[] typeArguments;
 			bool appliedRequireTypeArgumentsShortcut = false;
-			if (method.TypeParameters.Count > 0 && (allowedTransforms & CallTransformation.RequireTypeArguments) != 0
+			if (method.TypeParameters.Count > 0 && (allowedTransforms & ReferenceTransformation.RequireTypeArguments) != 0
 				&& !IsPossibleExtensionMethodCallOnNull(method, argumentList.Arguments))
 			{
 				// The ambiguity resolution below only adds type arguments as last resort measure, however there are
@@ -1340,13 +1340,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						argumentList.UseImplicitlyTypedOut = false;
 						continue;
 					case OverloadResolutionErrors.TypeInferenceFailed:
-						if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0)
+						if ((allowedTransforms & ReferenceTransformation.RequireTypeArguments) != 0)
 						{
 							goto case OverloadResolutionErrors.WrongNumberOfTypeArguments;
 						}
 						goto default;
 					case OverloadResolutionErrors.WrongNumberOfTypeArguments:
-						Debug.Assert((allowedTransforms & CallTransformation.RequireTypeArguments) != 0);
+						Debug.Assert((allowedTransforms & ReferenceTransformation.RequireTypeArguments) != 0);
 						if (requireTypeArguments)
 							goto default;
 						requireTypeArguments = true;
@@ -1382,19 +1382,19 @@ namespace ICSharpCode.Decompiler.CSharp
 							argumentList.UseImplicitlyTypedOut = false;
 							CastArguments(argumentList.Arguments, argumentList.ExpectedParameters);
 						}
-						else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !requireTarget)
+						else if ((allowedTransforms & ReferenceTransformation.RequireTarget) != 0 && !requireTarget)
 						{
 							requireTarget = true;
 							targetResolveResult = target.ResolveResult;
 						}
-						else if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && !targetCasted)
+						else if ((allowedTransforms & ReferenceTransformation.RequireTarget) != 0 && !targetCasted)
 						{
 							if (skipTargetCast && requireTarget != originalRequireTarget)
 							{
 								requireTarget = originalRequireTarget;
 								if (!originalRequireTarget)
 									targetResolveResult = null;
-								allowedTransforms &= ~CallTransformation.RequireTarget;
+								allowedTransforms &= ~ReferenceTransformation.RequireTarget;
 							}
 							else
 							{
@@ -1403,15 +1403,15 @@ namespace ICSharpCode.Decompiler.CSharp
 								targetResolveResult = target.ResolveResult;
 							}
 						}
-						else if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0 && !requireTypeArguments)
+						else if ((allowedTransforms & ReferenceTransformation.RequireTypeArguments) != 0 && !requireTypeArguments)
 						{
 							requireTypeArguments = true;
 							typeArguments = method.TypeArguments.ToArray();
 						}
-						else if ((allowedTransforms & CallTransformation.EnforceExplicitIn) != 0)
+						else if ((allowedTransforms & ReferenceTransformation.EnforceExplicitIn) != 0)
 						{
 							EnforceExplicitIn(argumentList.Arguments, argumentList.ExpectedParameters);
-							allowedTransforms &= ~CallTransformation.EnforceExplicitIn;
+							allowedTransforms &= ~ReferenceTransformation.EnforceExplicitIn;
 						}
 						else
 						{
@@ -1423,14 +1423,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				foundMethod = method;
 				break;
 			}
-			if ((allowedTransforms & CallTransformation.RequireTarget) != 0 && requireTarget)
-				transform |= CallTransformation.RequireTarget;
-			if ((allowedTransforms & CallTransformation.RequireTypeArguments) != 0 && requireTypeArguments)
-				transform |= CallTransformation.RequireTypeArguments;
+			if ((allowedTransforms & ReferenceTransformation.RequireTarget) != 0 && requireTarget)
+				transform |= ReferenceTransformation.RequireTarget;
+			if ((allowedTransforms & ReferenceTransformation.RequireTypeArguments) != 0 && requireTypeArguments)
+				transform |= ReferenceTransformation.RequireTypeArguments;
 			if (argumentList.FirstOptionalArgumentIndex < 0)
-				transform |= CallTransformation.NoOptionalArgumentAllowed;
+				transform |= ReferenceTransformation.NoOptionalArgumentAllowed;
 			if (!argumentList.AddNamesToPrimitiveValues)
-				transform |= CallTransformation.NoNamedArgsForPrettiness;
+				transform |= ReferenceTransformation.NoNamedArgsForPrettiness;
 			return transform;
 		}
 
