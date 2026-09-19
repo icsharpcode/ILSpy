@@ -25,6 +25,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Tests.Helpers;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using Microsoft.CodeAnalysis;
@@ -107,7 +108,7 @@ public sealed class WpfProjectExportTests
 		foreach (var module in openedModules)
 			module.Dispose();
 		if (Directory.Exists(tempDirectory))
-			Directory.Delete(tempDirectory, recursive: true);
+			Tester.RepeatOnIOError(() => Directory.Delete(tempDirectory, recursive: true));
 	}
 
 	/// <summary>

@@ -19,6 +19,7 @@
 using System.IO;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.Tests.Helpers;
 
 using NUnit.Framework;
 
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.Tests
 		public void TearDown()
 		{
 			if (Directory.Exists(gacDirectory))
-				Directory.Delete(gacDirectory, recursive: true);
+				Tester.RepeatOnIOError(() => Directory.Delete(gacDirectory, recursive: true));
 		}
 
 		string AddAssembly(string name, string version, string publicKeyToken, string culture = "")

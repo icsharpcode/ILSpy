@@ -1161,26 +1161,37 @@ namespace System.Runtime.CompilerServices
 			}
 		}
 
-		internal static void RepeatOnIOError(Action action, int numTries = 5)
+		/// <summary>
+		/// Retries an IO operation that a virus scanner, the indexer or a compiler that has only
+		/// just exited can still hold a handle on, backing off between attempts. Every caller is
+		/// deleting a temp file, so a failure is reported and swallowed: the file is left behind,
+		/// which costs nothing, where throwing out of a fixture teardown reports an error for a
+		/// run that otherwise passed.
+		/// </summary>
+		internal static void RepeatOnIOError(Action action, int numTries = 8)
 		{
-			for (int i = 0; i < numTries - 1; i++)
+			Exception lastError = null;
+			int delay = 10;
+			for (int i = 0; i < numTries; i++)
 			{
 				try
 				{
 					action();
 					return;
 				}
-				catch (IOException)
+				catch (IOException ex)
 				{
+					lastError = ex;
 				}
-				catch (UnauthorizedAccessException)
+				catch (UnauthorizedAccessException ex)
 				{
 					// potential virus scanner problem
+					lastError = ex;
 				}
-				Thread.Sleep(10);
+				Thread.Sleep(delay);
+				delay = Math.Min(delay * 2, 500);
 			}
-			// If the last try still fails, don't catch the exception
-			action();
+			TestContext.Out.WriteLine($"Cleanup could not delete a temp file after {numTries} tries, leaving it behind: {lastError?.Message}");
 		}
 
 		public static async Task SignAssembly(string assemblyPath, string keyFilePath)

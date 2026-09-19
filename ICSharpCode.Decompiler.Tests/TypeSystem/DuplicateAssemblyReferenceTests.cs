@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -113,6 +114,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 
 		string directory;
 		string mainAssemblyPath;
+		readonly List<MetadataFile> openedModules = new List<MetadataFile>();
 
 		[OneTimeSetUp]
 		public async Task SetUp()
@@ -129,7 +131,11 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[OneTimeTearDown]
 		public void TearDown()
 		{
-			Directory.Delete(directory, recursive: true);
+			// A PEFile keeps the assembly mapped, so the directory cannot be removed while any
+			// of the modules these tests opened is still around.
+			foreach (var module in openedModules)
+				module.Dispose();
+			Tester.RepeatOnIOError(() => Directory.Delete(directory, recursive: true));
 		}
 
 		Task<string> AssembleAsync(string name, string il)
@@ -142,7 +148,8 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		DecompilerTypeSystem CreateTypeSystem()
 		{
 			var mainModule = new PEFile(mainAssemblyPath);
-			return new DecompilerTypeSystem(mainModule, new VersionedResolver(directory));
+			openedModules.Add(mainModule);
+			return new DecompilerTypeSystem(mainModule, new VersionedResolver(directory, openedModules));
 		}
 
 		[Test]
@@ -179,10 +186,12 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 			static readonly string runtimeDirectory = Path.GetDirectoryName(typeof(object).Assembly.Location);
 
 			readonly string directory;
+			readonly List<MetadataFile> openedModules;
 
-			public VersionedResolver(string directory)
+			public VersionedResolver(string directory, List<MetadataFile> openedModules)
 			{
 				this.directory = directory;
+				this.openedModules = openedModules;
 			}
 
 			public MetadataFile Resolve(IAssemblyReference reference)
@@ -190,7 +199,11 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 				string path = reference.Name == "Lib"
 					? Path.Combine(directory, $"Lib.v{reference.Version.Major}.dll")
 					: Path.Combine(runtimeDirectory, reference.Name + ".dll");
-				return File.Exists(path) ? new PEFile(path) : null;
+				if (!File.Exists(path))
+					return null;
+				var module = new PEFile(path);
+				openedModules.Add(module);
+				return module;
 			}
 
 			public MetadataFile ResolveModule(MetadataFile mainModule, string moduleName) => null;
