@@ -267,6 +267,84 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		}
 
 		[Test]
+		public void SplitTypeParameterCountFromName()
+		{
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("List`1", out int tpc), Is.EqualTo("List"));
+			Assert.That(tpc, Is.EqualTo(1));
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Dictionary`2", out tpc), Is.EqualTo("Dictionary"));
+			Assert.That(tpc, Is.EqualTo(2));
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Foo`12", out tpc), Is.EqualTo("Foo"));
+			Assert.That(tpc, Is.EqualTo(12));
+		}
+
+		[Test]
+		public void SplitTypeParameterCountWithoutBacktick()
+		{
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("String", out int tpc), Is.EqualTo("String"));
+			Assert.That(tpc, Is.EqualTo(0));
+		}
+
+		[Test]
+		public void SplitTypeParameterCountUsesTheLastBacktick()
+		{
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Outer`1+Inner`2", out int tpc), Is.EqualTo("Outer`1+Inner"));
+			Assert.That(tpc, Is.EqualTo(2));
+		}
+
+		[Test]
+		public void SplitTypeParameterCountKeepsNameWhenSuffixIsNotAPlainNumber()
+		{
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Foo`", out int tpc), Is.EqualTo("Foo`"));
+			Assert.That(tpc, Is.EqualTo(0));
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Foo`x", out tpc), Is.EqualTo("Foo`x"));
+			Assert.That(tpc, Is.EqualTo(0));
+			// Only plain digits form an arity: a signed suffix is not a legal reflection name.
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Foo`+1", out tpc), Is.EqualTo("Foo`+1"));
+			Assert.That(tpc, Is.EqualTo(0));
+			// An arity beyond int.MaxValue is rejected, not truncated.
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Foo`2147483648", out tpc), Is.EqualTo("Foo`2147483648"));
+			Assert.That(tpc, Is.EqualTo(0));
+			Assert.That(ReflectionHelper.SplitTypeParameterCountFromReflectionName("Foo`99999999999999999999", out tpc), Is.EqualTo("Foo`99999999999999999999"));
+			Assert.That(tpc, Is.EqualTo(0));
+		}
+
+		[Test]
+		public void TopLevelTypeNameParsesNamespaceNameAndArity()
+		{
+			var t = new TopLevelTypeName("System.Collections.Generic.List`1");
+			Assert.That(t.Namespace, Is.EqualTo("System.Collections.Generic"));
+			Assert.That(t.Name, Is.EqualTo("List"));
+			Assert.That(t.TypeParameterCount, Is.EqualTo(1));
+		}
+
+		[Test]
+		public void TopLevelTypeNameWithoutNamespace()
+		{
+			var t = new TopLevelTypeName("List`1");
+			Assert.That(t.Namespace, Is.EqualTo(string.Empty));
+			Assert.That(t.Name, Is.EqualTo("List"));
+			Assert.That(t.TypeParameterCount, Is.EqualTo(1));
+		}
+
+		[Test]
+		public void TopLevelTypeNameWithoutArity()
+		{
+			var t = new TopLevelTypeName("System.String");
+			Assert.That(t.Namespace, Is.EqualTo("System"));
+			Assert.That(t.Name, Is.EqualTo("String"));
+			Assert.That(t.TypeParameterCount, Is.EqualTo(0));
+		}
+
+		[Test]
+		public void TopLevelTypeNameIgnoresBacktickInsideTheNamespace()
+		{
+			var t = new TopLevelTypeName("A`1.B");
+			Assert.That(t.Namespace, Is.EqualTo("A`1"));
+			Assert.That(t.Name, Is.EqualTo("B"));
+			Assert.That(t.TypeParameterCount, Is.EqualTo(0));
+		}
+
+		[Test]
 		public void ParseInvalidReflectionName13()
 		{
 			var context = new SimpleTypeResolveContext(compilation.MainModule);
