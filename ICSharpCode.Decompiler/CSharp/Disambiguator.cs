@@ -577,7 +577,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				return OverloadResolutionErrors.None;
 			}
-			// Where arguments were left out, writing them out again answers both.
+			// Both causes are corrected by writing the omitted arguments out again.
 			return Arguments.FirstOptionalArgumentIndex >= 0
 				? OverloadResolutionErrors.MissingArgumentForRequiredParameter
 				: OverloadResolutionErrors.AmbiguousMatch;
@@ -1013,8 +1013,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						Arguments.UseImplicitlyTypedOut = false;
 					}
-					CastArguments(new ArraySegment<TranslatedExpression>(Arguments.Arguments, 0,
-						Arguments.GetActualArgumentCount()), Arguments.ExpectedParameters);
+					// Every step list places NoOptionalArgumentAllowed before this step, so by the
+					// time the casts go on no argument is left out and the whole list is cast.
+					CastArguments(Arguments.Arguments, Arguments.ExpectedParameters);
 					return true;
 				case ReferenceTransformation.EnforceExplicitIn:
 					EnforceExplicitIn(Arguments.Arguments, Arguments.ExpectedParameters);

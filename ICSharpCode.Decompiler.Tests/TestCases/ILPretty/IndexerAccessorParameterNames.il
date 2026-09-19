@@ -68,3 +68,64 @@
         ret
     }
 }
+
+// COM interop assemblies declare indexers whose value parameter carries no name. Only the
+// indices are ever named, so the missing name does not stop the indices from being named.
+.class public auto ansi beforefieldinit UnnamedValueParameter
+    extends [CORE_ASSEMBLY]System.Object
+{
+    .custom instance void [CORE_ASSEMBLY]System.Reflection.DefaultMemberAttribute::.ctor(string) = ( 01 00 04 49 74 65 6D 00 00 )
+
+    .method public hidebysig specialname instance int32 get_Item (int32 x, int32 y) cil managed
+    {
+        .maxstack 8
+        ldarg.1
+        ret
+    }
+
+    .method public hidebysig specialname instance void set_Item (int32 x, int32 y, int32) cil managed
+    {
+        .maxstack 8
+        ret
+    }
+
+    .property instance int32 Item(int32, int32)
+    {
+        .get instance int32 UnnamedValueParameter::get_Item(int32, int32)
+        .set instance void UnnamedValueParameter::set_Item(int32, int32, int32)
+    }
+
+    .method private hidebysig instance int32 Get (int32 i) cil managed
+    {
+        .maxstack 8
+        ldarg.1
+        ret
+    }
+
+    // this[y: Get(1), x: Get(2)] = 3;
+    .method public hidebysig instance void Use () cil managed
+    {
+        .maxstack 4
+        .locals init (int32 V_0)
+        ldarg.0
+        ldarg.0
+        ldc.i4.1
+        call instance int32 UnnamedValueParameter::Get(int32)
+        stloc.0
+        ldarg.0
+        ldc.i4.2
+        call instance int32 UnnamedValueParameter::Get(int32)
+        ldloc.0
+        ldc.i4.3
+        call instance void UnnamedValueParameter::set_Item(int32, int32, int32)
+        ret
+    }
+
+    .method public hidebysig specialname rtspecialname instance void .ctor () cil managed
+    {
+        .maxstack 8
+        ldarg.0
+        call instance void [CORE_ASSEMBLY]System.Object::.ctor()
+        ret
+    }
+}

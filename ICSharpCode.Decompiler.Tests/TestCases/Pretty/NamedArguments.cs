@@ -167,6 +167,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Use(this[o: (object)((Get(1) == 1) ? "a" : "b"), i: Get(2)], 0, 0);
 		}
+
 		public void NamedArgsForOverriddenIndexer(DerivedNames derived)
 		{
 			// The names are the base indexer's, which is what the call instruction names.

@@ -140,6 +140,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 			{
 				Debug.Assert(skipCount == 0);
+				// Zip stops at the shorter sequence, so names that ran short would silently drop
+				// the arguments past their end instead of leaving them unnamed.
+				Debug.Assert(argumentNames.Length == argumentCount);
 				return Arguments.Take(argumentCount).Zip(argumentNames,
 					(arg, name) => {
 						if (name == null)
@@ -1039,12 +1042,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// value out of the argument list; one written as a call passes it like any other.
 			bool isSetter = method.ReturnType.IsKnownType(KnownTypeCode.Void)
 				&& (writtenAsAssignment || IsWrittenAsMemberAccess(method));
-			// A named argument of an indexer access names a parameter of the indexer, which the type
-			// system takes from the getter. The accessor being called may name the same parameters
-			// differently - C# cannot declare that, but other languages can.
-			IReadOnlyList<IParameter> namedParameters = method.AccessorOwner is IProperty { IsIndexer: true } indexer
-				? indexer.Parameters
-				: method.Parameters;
+			IReadOnlyList<IParameter> namedParameters = GetNamedParameters(method);
 			for (int i = firstParamIndex; i < callArguments.Count; i++)
 			{
 				IParameter parameter;
@@ -1379,8 +1377,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(targetType, argument.ResolveResult, conv));
 		}
 
-		/// <summary>Whether the accessor is written as a property or indexer access. One with more
-		/// parameters than that syntax has room for is written as a call, assigned value and all.</summary>
+		/// <summary>The parameters a call takes its argument names from: for an indexer access the
+		/// indexer's, which the type system reads off the getter, not the accessor's. C# cannot
+		/// declare accessors that name them differently, but other languages can.</summary>
+		internal static IReadOnlyList<IParameter> GetNamedParameters(IMethod method)
+		{
+			return method.AccessorOwner is IProperty { IsIndexer: true } indexer
+				? indexer.Parameters
+				: method.Parameters;
+		}
+
+		/// <summary>Whether the accessor is written as a property or indexer access. An accessor
+		/// with more parameters than that syntax takes is written as a call, including the
+		/// assigned value.</summary>
 		static bool IsWrittenAsMemberAccess(IMethod method)
 		{
 			if (!method.IsAccessor)
@@ -1398,24 +1407,33 @@ namespace ICSharpCode.Decompiler.CSharp
 				|| expressionBuilder.RequiresQualifier(method.AccessorOwner, target,
 					nonVirtualDispatch: expectedTargetDetails.CallOpCode != OpCode.CallVirt);
 			bool isSetter = method.ReturnType.IsKnownType(KnownTypeCode.Void);
-			// An access spells its index out anyway, and the steps answer a name the member does
-			// not have with a cast of the target rather than by giving the name up.
+			// Readability names are for arguments a call would otherwise leave unexplained; an
+			// access writes its index out regardless. Ambiguity is resolved by casting the target.
 			argumentList.AddNamesToPrimitiveValues = false;
+			// The accessor is probed with GetArgumentResolveResultsDirect(), which does not
+			// substitute OutVarResolveResult, so an implicitly typed out variable would be emitted
+			// against an argument list the disambiguator never validated.
+			argumentList.UseImplicitlyTypedOut = false;
 
 			TranslatedExpression value = default(TranslatedExpression);
 			if (isSetter)
 			{
-				// The assigned value is not part of the reference being spelled out, so it is taken
-				// out before anything counts, names or casts the arguments.
+				// The assigned value is not part of the member reference, so it is removed before
+				// the arguments are counted, named or cast.
 				value = argumentList.Arguments[argumentList.Length - 1];
 				argumentList.Arguments = argumentList.Arguments.Take(argumentList.Length - 1).ToArray();
 				argumentList.ArgumentToParameterMap = argumentList.ArgumentToParameterMap
 					?.Take(argumentList.ArgumentToParameterMap.Count - 1).ToArray();
 			}
 
-			// Dropping every argument would turn an indexer access into a property access.
-			if (argumentList.FirstOptionalArgumentIndex == 0
-				&& method.AccessorOwner.SymbolKind == SymbolKind.Indexer)
+			// An indexer access and an index initializer element both spell out at least one index,
+			// so the first one is kept whatever its default is: dropping every argument would turn
+			// the one into a property access and leave the other with no element to assign to.
+			// An index initializer is written as an element access even for a parameterized
+			// property, which is why the symbol kind alone does not decide this.
+			if (argumentList.FirstOptionalArgumentIndex == 0 && argumentList.Length > 0
+				&& (method.AccessorOwner.SymbolKind == SymbolKind.Indexer
+					|| target.ResolveResult is InitializedObjectResolveResult))
 			{
 				argumentList.FirstOptionalArgumentIndex = 1;
 			}
@@ -1426,16 +1444,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			target = disambiguator.Target;
 			argumentList = disambiguator.Arguments;
 
-			var arguments = argumentList.GetArgumentExpressions().ToList();
 			var rr = new MemberResolveResult(target.ResolveResult, foundMember);
+			// Only an indexer access writes an argument list; a property access has none, so the
+			// expressions are built solely on the branches that put them in the output.
+			bool hasArguments = argumentList.GetActualArgumentCount() != 0;
 
 			if (isSetter)
 			{
 				TranslatedExpression expr;
 
-				if (arguments.Count != 0)
+				if (hasArguments)
 				{
-					expr = new IndexerExpression(target.ResolveResult is InitializedObjectResolveResult ? null : target.Expression, arguments)
+					expr = new IndexerExpression(target.ResolveResult is InitializedObjectResolveResult ? null : target.Expression,
+						argumentList.GetArgumentExpressions())
 						.WithoutILInstruction().WithRR(rr);
 				}
 				else if (requireTarget)
@@ -1465,9 +1486,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			else
 			{
-				if (arguments.Count != 0)
+				if (hasArguments)
 				{
-					return new IndexerExpression(target.Expression, arguments)
+					return new IndexerExpression(target.Expression, argumentList.GetArgumentExpressions())
 						.WithoutILInstruction().WithRR(rr);
 				}
 				else if (requireTarget)

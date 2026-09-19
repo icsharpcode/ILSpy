@@ -32,6 +32,29 @@
         .set instance void ParameterizedPropertyInitializer::set_Foo(int32, int32)
     }
 
+    // The same, with an index parameter whose argument is its declared default. An index
+    // initializer still has to write the index out: there is no member-access form to fall back to.
+    .method public hidebysig specialname instance int32 get_Bar ([opt] int32 x) cil managed
+    {
+        .param [1] = int32(7)
+        .maxstack 8
+        ldarg.1
+        ret
+    }
+
+    .method public hidebysig specialname instance void set_Bar ([opt] int32 x, int32 'value') cil managed
+    {
+        .param [1] = int32(7)
+        .maxstack 8
+        ret
+    }
+
+    .property instance int32 Bar(int32)
+    {
+        .get instance int32 ParameterizedPropertyInitializer::get_Bar(int32)
+        .set instance void ParameterizedPropertyInitializer::set_Bar(int32, int32)
+    }
+
     .method public hidebysig static void Consume (class ParameterizedPropertyInitializer p) cil managed
     {
         .maxstack 8
@@ -46,6 +69,18 @@
         ldc.i4.7
         ldc.i4.5
         call instance void ParameterizedPropertyInitializer::set_Foo(int32, int32)
+        call void ParameterizedPropertyInitializer::Consume(class ParameterizedPropertyInitializer)
+        ret
+    }
+
+    .method public hidebysig static void UseOptional () cil managed
+    {
+        .maxstack 8
+        newobj instance void ParameterizedPropertyInitializer::.ctor()
+        dup
+        ldc.i4.7
+        ldc.i4.5
+        call instance void ParameterizedPropertyInitializer::set_Bar(int32, int32)
         call void ParameterizedPropertyInitializer::Consume(class ParameterizedPropertyInitializer)
         ret
     }
