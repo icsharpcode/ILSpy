@@ -37,7 +37,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					if (CachedDelegateInitializationWithField(inst))
 					{
-						block.Instructions.RemoveAt(i);
 						context.IndexOfFirstAlreadyTransformedInstruction = block.Instructions.Count;
 						continue;
 					}
@@ -95,13 +94,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.MatchDelegateConstruction(value.UnwrapConv(ConversionKind.Invalid) as NewObj, out _, out _, out _, true))
 				return false;
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
-			if (nextInstruction == null)
-				return false;
-			var usages = nextInstruction.Descendants.Where(i => i.MatchLdsFld(field)).ToArray();
+			var usages = nextInstruction?.Descendants.Where(i => i.MatchLdsFld(field)).ToArray() ?? [];
+			if (usages.Length == 0)
+			{
+				// A discarded method-group conversion ("_ = (Action)M;") caches the
+				// delegate without ever reading the cache back. Keep the conversion,
+				// which still allocates, and drop the caching around it.
+				context.Step("CachedDelegateInitializationWithField (unused)", inst);
+				inst.ReplaceWith(value);
+				context.EndStep(value);
+				return true;
+			}
 			if (usages.Length != 1)
 				return false;
 			context.Step("CachedDelegateInitializationWithField", inst);
 			usages[0].ReplaceWith(value);
+			((Block)inst.Parent).Instructions.RemoveAt(inst.ChildIndex);
 			context.EndStep(value);
 			return true;
 		}
