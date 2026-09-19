@@ -587,6 +587,45 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 
+		/// <summary>
+		/// Stage one: what the name binds to from this target, looked up the way this form of
+		/// reference is written. A null target is the unqualified lookup, not the absence of one.
+		/// </summary>
+		static ResolveResult? LookUpName(ExpressionBuilder expressionBuilder, ResolveResult? target,
+			string name, IReadOnlyList<IType> typeArguments, bool invocation)
+		{
+			CSharpResolver resolver = expressionBuilder.resolver;
+			return target == null
+				? resolver.ResolveSimpleName(name, typeArguments, isInvocationTarget: invocation)
+				: CreateLookup(resolver).Lookup(target, name, typeArguments, isInvocation: invocation);
+		}
+
+		/// <summary>
+		/// Stage three: did overload resolution settle on the member meant? An empty candidate
+		/// set carries no error of its own - there is no best candidate to hold one - so it is
+		/// reported here.
+		/// </summary>
+		static OverloadResolutionErrors CheckBestCandidate(OverloadResolution or,
+			ExpectedTargetDetails expectedTargetDetails, IMember expected, out IParameterizedMember? found)
+		{
+			if (or.BestCandidateErrors != OverloadResolutionErrors.None)
+			{
+				found = null;
+				return or.BestCandidateErrors;
+			}
+			if (or.IsAmbiguous)
+			{
+				found = null;
+				return OverloadResolutionErrors.AmbiguousMatch;
+			}
+			found = or.GetBestCandidateWithSubstitutedTypeArguments();
+			if (found == null)
+				return OverloadResolutionErrors.AmbiguousMatch;
+			return IsAppropriateCallTarget(expectedTargetDetails, expected, found)
+				? OverloadResolutionErrors.None
+				: OverloadResolutionErrors.AmbiguousMatch;
+		}
+
 		static MemberLookup CreateLookup(CSharpResolver resolver)
 		{
 			return new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
@@ -674,36 +713,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					or.AddCandidate(m);
 				}
 			}
-			else if (target == null)
-			{
-				var result = resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: true)
-					as MethodGroupResolveResult;
-				if (result == null)
-					return OverloadResolutionErrors.AmbiguousMatch;
-				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-			}
 			else
 			{
-				var result = lookup.Lookup(target, method.Name, typeArguments, isInvocation: true) as MethodGroupResolveResult;
-				if (result == null)
+				if (LookUpName(expressionBuilder, target, method.Name, typeArguments, invocation: true)
+					is not MethodGroupResolveResult methodGroup)
 					return OverloadResolutionErrors.AmbiguousMatch;
-				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+				or.AddMethodLists(methodGroup.MethodsGroupedByDeclaringType.ToArray());
 			}
 			bestCandidateIsExpandedForm = or.BestCandidateIsExpandedForm;
-			if (or.BestCandidateErrors != OverloadResolutionErrors.None)
-				return or.BestCandidateErrors;
-			if (or.IsAmbiguous)
-				return OverloadResolutionErrors.AmbiguousMatch;
-			foundMember = or.GetBestCandidateWithSubstitutedTypeArguments();
-			if (foundMember == null)
-			{
-				// Overload resolution reports no error for an empty candidate set - there is no
-				// best candidate to carry one - so a call that matched nothing has to be reported
-				// as unresolvable here.
-				return OverloadResolutionErrors.AmbiguousMatch;
-			}
-			if (!IsAppropriateCallTarget(expectedTargetDetails, method, foundMember))
-				return OverloadResolutionErrors.AmbiguousMatch;
+			var resolutionErrors = CheckBestCandidate(or, expectedTargetDetails, method, out foundMember);
+			if (resolutionErrors != OverloadResolutionErrors.None)
+				return resolutionErrors;
+			// Reporting no error means a candidate was found.
+			Debug.Assert(foundMember != null);
 			var map = or.GetArgumentToParameterMap();
 			for (int i = 0; i < arguments.Length; i++)
 			{
@@ -727,42 +749,26 @@ namespace ICSharpCode.Decompiler.CSharp
 			Log.WriteLine("IsUnambiguousAccess: Performing overload resolution for " + method);
 			Log.WriteCollection("  Arguments: ", arguments.Select(a => a.ResolveResult));
 
-			foundMember = null;
-			if (target == null)
+			IMember accessorOwner = method.AccessorOwner!;
+			// An indexer has no name to look up, so its candidates come from the indexer list and
+			// overload resolution picks among them; everything else binds by name.
+			if (target != null && accessorOwner.SymbolKind == SymbolKind.Indexer)
 			{
-				var result = resolver.ResolveSimpleName(method.AccessorOwner!.Name,
-					EmptyList<IType>.Instance,
-					isInvocationTarget: false) as MemberResolveResult;
-				if (result == null || result.IsError)
-					return false;
-				foundMember = result.Member;
+				var or = CreateOverloadResolution(resolver, arguments.SelectArray(a => a.ResolveResult),
+					argumentNames, Empty<IType>.Array);
+				or.AddMethodLists(CreateLookup(resolver).LookupIndexers(target));
+				var errors = CheckBestCandidate(or, expectedTargetDetails, accessorOwner, out var best);
+				foundMember = best;
+				return errors == OverloadResolutionErrors.None;
 			}
-			else
+			if (LookUpName(expressionBuilder, target, accessorOwner.Name, EmptyList<IType>.Instance,
+					invocation: false) is not MemberResolveResult { IsError: false } resolved)
 			{
-				var lookup = CreateLookup(resolver);
-				if (method.AccessorOwner!.SymbolKind == SymbolKind.Indexer)
-				{
-					var or = CreateOverloadResolution(resolver, arguments.SelectArray(a => a.ResolveResult),
-						argumentNames, Empty<IType>.Array);
-					or.AddMethodLists(lookup.LookupIndexers(target));
-					if (or.BestCandidateErrors != OverloadResolutionErrors.None)
-						return false;
-					if (or.IsAmbiguous)
-						return false;
-					foundMember = or.GetBestCandidateWithSubstitutedTypeArguments();
-				}
-				else
-				{
-					var result = lookup.Lookup(target,
-						method.AccessorOwner!.Name,
-						EmptyList<IType>.Instance,
-						isInvocation: false) as MemberResolveResult;
-					if (result == null || result.IsError)
-						return false;
-					foundMember = result.Member;
-				}
+				foundMember = null;
+				return false;
 			}
-			return foundMember != null && IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, foundMember);
+			foundMember = resolved.Member;
+			return IsAppropriateCallTarget(expectedTargetDetails, accessorOwner, foundMember);
 		}
 
 		bool IsUnambiguousMethodReference(ExpectedTargetDetails expectedTargetDetails, IMethod method, ResolveResult? target, IReadOnlyList<IType> typeArguments, bool isExtensionMethodReference, [NotNullWhen(true)] out ResolveResult? result)
@@ -790,22 +796,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				or = CreateOverloadResolution(resolver,
 					method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)),
 					argumentNames: null, typeArguments.ToArray());
-				if (target == null)
-				{
-					result = resolver.ResolveSimpleName(method.Name, typeArguments, isInvocationTarget: false);
-					if (!(result is MethodGroupResolveResult mgrr))
-						return false;
-					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
-				}
-				else
-				{
-					result = lookup.Lookup(target, method.Name, typeArguments, isInvocation: false);
-					if (!(result is MethodGroupResolveResult mgrr))
-						return false;
-					or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
-				}
+				result = LookUpName(expressionBuilder, target, method.Name, typeArguments, invocation: false);
+				if (result is not MethodGroupResolveResult methodGroup)
+					return false;
+				or.AddMethodLists(methodGroup.MethodsGroupedByDeclaringType.ToArray());
 			}
 
+			// Deliberately not CheckBestCandidate: unlike the other two checks this one does not
+			// reject BestCandidateErrors or an ambiguous result, and a method group carries no
+			// arguments to be ambiguous over. Whether that holds for the type arguments too is
+			// untested, so it is left as it was rather than tightened blind.
 			var foundMethod = or.GetBestCandidateWithSubstitutedTypeArguments();
 			if (!IsAppropriateCallTarget(expectedTargetDetails, method, foundMethod))
 				return false;
