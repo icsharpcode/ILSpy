@@ -298,6 +298,18 @@
         <Style Selector="MenuItem /template/ TextBlock#PART_InputGestureText">
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+        <!-- TabItem: the Simple theme paints tab headers with ThemeForegroundLowBrush, a fixed
+             #808080 that does not vary with the theme variant, and hovers them with
+             ThemeControlHighlightMidBrush, which is #828282 in Dark - text and fill are then
+             the same gray. Route the text through the window foreground and hover with a
+             translucent neutral that reads on both canvases and stays distinct from the
+             blue selected fill. -->
+        <Style Selector="TabItem">
+            <Setter Property="Foreground" Value="{DynamicResource ILSpy.WindowForeground}" />
+        </Style>
+        <Style Selector="TabItem:pointerover:not(:selected) /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#33808080" />
+        </Style>
         <Style Selector="ContextMenu">
             <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />

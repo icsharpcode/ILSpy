@@ -254,7 +254,7 @@ public class ThemeManagerTests
 
 	// WCAG relative-luminance contrast, computed independently of the production code so the
 	// tests don't validate themselves.
-	static double Contrast(AvColor color, AvColor surface)
+	internal static double Contrast(AvColor color, AvColor surface)
 	{
 		var (a, b) = (Luminance(color) + 0.05, Luminance(surface) + 0.05);
 		return a > b ? a / b : b / a;
