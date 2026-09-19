@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -173,6 +174,7 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 ";
 
 		string inputDirectory;
+		readonly List<MetadataFile> openedModules = new List<MetadataFile>();
 		string frameworkDirectory;
 		string mainAssemblyPath;
 
@@ -202,7 +204,9 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		[OneTimeTearDown]
 		public void TearDown()
 		{
-			Directory.Delete(Path.GetDirectoryName(inputDirectory), recursive: true);
+			foreach (var module in openedModules)
+				module.Dispose();
+			Tester.RepeatOnIOError(() => Directory.Delete(Path.GetDirectoryName(inputDirectory), recursive: true));
 		}
 
 		static Task<string> AssembleAsync(string directory, string name, string il)
@@ -215,12 +219,17 @@ namespace ICSharpCode.Decompiler.Tests.TypeSystem
 		DecompilerTypeSystem CreateTypeSystem()
 		{
 			var mainModule = new PEFile(mainAssemblyPath);
+			openedModules.Add(mainModule);
 			// The target framework decides which probe runs first, and the bug only shows on the
 			// .NET Core path finder, which the .NET Standard identifier selects.
 			var resolver = new UniversalAssemblyResolver(mainAssemblyPath, throwOnError: false,
 				".NETStandard,Version=v2.0");
 			resolver.AddSearchDirectory(frameworkDirectory);
-			return new DecompilerTypeSystem(mainModule, resolver);
+			var typeSystem = new DecompilerTypeSystem(mainModule, resolver);
+			// The resolver opens the framework and implementation assemblies as it probes; every
+			// one of them keeps its file mapped until it is disposed.
+			openedModules.AddRange(typeSystem.Modules.Select(m => m.MetadataFile).Where(f => f != null && f != mainModule));
+			return typeSystem;
 		}
 
 		IParameter GetParameterOf(DecompilerTypeSystem typeSystem, string methodName)

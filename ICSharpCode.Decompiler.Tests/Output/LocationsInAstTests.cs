@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -55,6 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		const string SequencePointSampleName = "ICSharpCode.Decompiler.Tests.TestCases.LocationsInAst.SequencePointSample";
 
 		static CompilerResults compiledSamples;
+		static readonly List<MetadataFile> openedModules = new List<MetadataFile>();
 
 		[OneTimeSetUp]
 		public void CompileSamples()
@@ -66,6 +68,9 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		[OneTimeTearDown]
 		public void DeleteCompiledSamples()
 		{
+			// The module keeps the assembly mapped, so it has to go before the file can.
+			foreach (var module in openedModules)
+				module.Dispose();
 			compiledSamples?.DeleteTempFiles();
 		}
 
@@ -73,6 +78,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		{
 			string assemblyPath = compiledSamples.PathToAssembly;
 			var module = new PEFile(assemblyPath);
+			openedModules.Add(module);
 			var resolver = new UniversalAssemblyResolver(assemblyPath, false, module.Metadata.DetectTargetFrameworkId());
 			settings = new DecompilerSettings();
 			return new CSharpDecompiler(module, resolver, settings);

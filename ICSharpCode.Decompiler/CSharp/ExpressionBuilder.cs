@@ -290,13 +290,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			return null;
 		}
 
-		bool RequiresQualifier(IMember member, TranslatedExpression target)
+		/// <summary>
+		/// Whether a reference to <paramref name="member"/> has to name its target to reach it.
+		/// Dropping a "base." qualifier leaves the reference to dispatch virtually, which reaches
+		/// the same member unless the member can be overridden and the IL did not dispatch
+		/// virtually - so <paramref name="nonVirtualDispatch"/> is what a base target turns on. A
+		/// reference that does not dispatch at all, such as a field access, never needs it.
+		/// Overridable, not virtual: an abstract or overriding member is dispatched virtually
+		/// without carrying the keyword, and a sealed override can no longer be overridden, so
+		/// dispatching it virtually reaches the same member anyway.
+		/// </summary>
+		internal bool RequiresQualifier(IMember member, TranslatedExpression target, bool nonVirtualDispatch = false)
 		{
 			if (settings.AlwaysQualifyMemberReferences || HidesVariableWithName(member.Name))
 				return true;
 			if (member.IsStatic)
 				return !IsCurrentOrContainingType(member.DeclaringTypeDefinition);
-			return !(target.Expression is ThisReferenceExpression || target.Expression is BaseReferenceExpression);
+			if (target.Expression is BaseReferenceExpression)
+				return nonVirtualDispatch && member.IsOverridable;
+			return target.Expression is not ThisReferenceExpression;
 		}
 
 		/// <summary>
@@ -367,46 +379,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				requireTarget = RequiresQualifier(field, target);
 			}
-			bool targetCasted = false;
-			var targetResolveResult = requireTarget ? target.ResolveResult : null;
-
-			bool IsAmbiguousAccess(out MemberResolveResult? result)
-			{
-				if (targetResolveResult == null)
-				{
-					result = resolver.ResolveSimpleName(field.Name, EmptyList<IType>.Instance, isInvocationTarget: false) as MemberResolveResult;
-				}
-				else
-				{
-					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentModule);
-					result = lookup.Lookup(target.ResolveResult, field.Name, EmptyList<IType>.Instance, isInvocation: false) as MemberResolveResult;
-				}
-				return result == null || result.IsError || !result.Member.Equals(field, NormalizeTypeVisitor.TypeErasure);
-			}
-
-			MemberResolveResult? mrr;
-			while (IsAmbiguousAccess(out mrr))
-			{
-				if (!requireTarget)
-				{
-					requireTarget = true;
-					targetResolveResult = target.ResolveResult;
-				}
-				else if (!targetCasted)
-				{
-					targetCasted = true;
-					target = target.ConvertTo(field.DeclaringType, this);
-					targetResolveResult = target.ResolveResult;
-				}
-				else
-				{
-					// the field reference is still ambiguous, however, mrr might refer to a different member,
-					// e.g., in the case of auto events, their backing fields have the same name.
-					// "this.Event" is ambiguous, but should refer to the field, not the event.
-					mrr = null;
-					break;
-				}
-			}
+			var disambiguator = Disambiguator.ForField(this, field, target, requireTarget);
+			// On giving up, the reference stays ambiguous, however the resolved member might be a
+			// different one, e.g., in the case of auto events, whose backing fields have the same
+			// name. "this.Event" is ambiguous, but should refer to the field, not the event.
+			MemberResolveResult? mrr = disambiguator.Resolved ? (MemberResolveResult?)disambiguator.Result : null;
+			requireTarget = disambiguator.RequireTarget;
+			target = disambiguator.Target;
 
 			if (mrr == null || !requireTarget)
 			{
@@ -4580,7 +4559,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					boxedOperand = boxCast.Expression;
 					lookupTarget = boxing.Input;
 				}
-				if (!callBuilder.CheckSimpleCall(lookupTarget, inst.GetAwaiterMethod, inst.GetAwaiterCallOpCode))
+				if (!Disambiguator.CheckSimpleCall(this, lookupTarget, inst.GetAwaiterMethod, inst.GetAwaiterCallOpCode))
 				{
 					value = value.ConvertTo(expectedType, this);
 				}

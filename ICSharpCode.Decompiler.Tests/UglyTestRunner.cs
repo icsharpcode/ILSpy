@@ -218,6 +218,24 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run(cscOptions: cscOptions);
 		}
 
+		// AlwaysQualifyMemberReferences is turned on for the WinForms InitializeComponent method,
+		// which is also decompiled with implicit method group conversion off - so the method group
+		// has to be qualified like every other member reference.
+		[Test]
+		public async Task QualifiedMethodGroup([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				AlwaysQualifyMemberReferences = true,
+				UseImplicitMethodGroupConversion = false
+			});
+		}
+
+		[Test]
+		public async Task BaseQualifier([ValueSource(nameof(roslynOnlyOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
 		async Task RunForLibrary([CallerMemberName] string testName = null, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			await Run(testName, cscOptions | CompilerOptions.Library, decompilerSettings);

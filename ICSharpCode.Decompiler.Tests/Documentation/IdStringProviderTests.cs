@@ -553,9 +553,7 @@ namespace ModreqParams
 			roslynIdMap = null;
 			if (tempDllPath != null && File.Exists(tempDllPath))
 			{
-				try
-				{ File.Delete(tempDllPath); }
-				catch { /* best effort cleanup */ }
+				Tester.RepeatOnIOError(() => File.Delete(tempDllPath));
 			}
 		}
 

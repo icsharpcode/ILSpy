@@ -273,6 +273,10 @@
     <None Include="TestCases\Pretty\NullableRefTypes.cs" />
     <Compile Remove="TestCases\Ugly\AggressiveScalarReplacementOfAggregates.Expected.cs" />
     <None Include="TestCases\Ugly\AggressiveScalarReplacementOfAggregates.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\QualifiedMethodGroup.Expected.cs" />
+    <None Include="TestCases\Ugly\QualifiedMethodGroup.Expected.cs" />
+    <Compile Remove="TestCases\Ugly\BaseQualifier.Expected.cs" />
+    <None Include="TestCases\Ugly\BaseQualifier.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoArrayInitializers.Expected.cs" />
     <None Include="TestCases\Ugly\NoArrayInitializers.Expected.cs" />
     <Compile Remove="TestCases\Ugly\NoAutomaticProperties.Expected.cs" />
