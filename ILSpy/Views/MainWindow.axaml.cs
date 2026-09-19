@@ -16,13 +16,17 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.ComponentModel;
 using System.Composition;
+using System.Runtime.InteropServices;
 
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform;
+using Avalonia.Threading;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.ViewModels;
@@ -73,6 +77,8 @@ namespace ICSharpCode.ILSpy.Views
 			AddHandler(PointerReleasedEvent, OnBrowserNavigationPointerReleased,
 				RoutingStrategies.Bubble, handledEventsToo: true);
 			ApplySessionSettings(settingsService.SessionSettings);
+			if (OperatingSystem.IsWindows())
+				Win32Properties.AddWndProcHookCallback(this, TaskbarIconWndProcHook);
 			Opened += async (_, _) => {
 				AppLog.Mark("MainWindow.Opened fired");
 				using (AppLog.Phase("AssemblyTreeModel.Initialize"))
@@ -131,6 +137,42 @@ namespace ICSharpCode.ILSpy.Views
 				// Surfacing the report must never itself crash startup.
 				System.Diagnostics.Debug.WriteLine($"[MainWindow] SurfaceCompositionErrors failed: {ex}");
 			}
+		}
+
+		const uint WM_SETTINGCHANGE = 0x001A;
+		const uint WM_POWERBROADCAST = 0x0218;
+		const int PBT_APMRESUMEAUTOMATIC = 0x12;
+
+		bool windowIconRefreshPending;
+
+		// The Windows taskbar re-queries window icons when the system theme flips. A query that
+		// arrives while the UI thread is not pumping messages (typically right after resume from
+		// hibernate, which is also when a scheduled light/dark switch fires) goes unanswered, and
+		// the taskbar button stays blank because nothing prompts the taskbar to ask again.
+		// These messages are only dispatched once the thread pumps again, so re-sending the icon
+		// shortly afterwards repairs the button. The delay coalesces the burst of
+		// ImmersiveColorSet broadcasts a single theme flip produces.
+		IntPtr TaskbarIconWndProcHook(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+		{
+			bool iconMayBeLost = (msg == WM_POWERBROADCAST && wParam == PBT_APMRESUMEAUTOMATIC)
+				|| (msg == WM_SETTINGCHANGE && Marshal.PtrToStringUni(lParam) == "ImmersiveColorSet");
+			if (iconMayBeLost && !windowIconRefreshPending)
+			{
+				windowIconRefreshPending = true;
+				DispatcherTimer.RunOnce(() => {
+					windowIconRefreshPending = false;
+					ReapplyWindowIcon();
+				}, TimeSpan.FromSeconds(2));
+			}
+			return IntPtr.Zero;
+		}
+
+		// The platform window ignores an assignment of the WindowIcon instance it already holds,
+		// so re-sending the icon to the OS requires a new instance.
+		internal void ReapplyWindowIcon()
+		{
+			using var stream = AssetLoader.Open(new Uri("avares://ILSpy/Assets/ILSpy.ico"));
+			Icon = new WindowIcon(stream);
 		}
 
 		void ApplySessionSettings(SessionSettings session)
