@@ -57,11 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp
 	}
 
 	/// <summary>
-	/// Begins escalating a field access. A field is only ever qualified and then cast; it has
-	/// no arguments and no type arguments to make explicit.
-	/// </summary>
-
-	/// <summary>
 	/// Finds the shortest spelling of a member reference that still resolves back to the member
 	/// the IL referenced. A short spelling may bind to something else in the output's
 	/// name-lookup context, so it is re-resolved and, while it does not bind back, made more
@@ -85,7 +80,6 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	internal struct Disambiguator
 	{
-
 		static readonly ReferenceTransformation[] FieldSteps = {
 			ReferenceTransformation.RequireTarget,
 			ReferenceTransformation.CastTarget,
