@@ -57,11 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp
 	}
 
 	/// <summary>
-	/// Begins escalating a field access. A field is only ever qualified and then cast; it has
-	/// no arguments and no type arguments to make explicit.
-	/// </summary>
-
-	/// <summary>
 	/// Finds the shortest spelling of a member reference that still resolves back to the member
 	/// the IL referenced. A short spelling may bind to something else in the output's
 	/// name-lookup context, so it is re-resolved and, while it does not bind back, made more
@@ -85,7 +80,6 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	internal struct Disambiguator
 	{
-
 		static readonly ReferenceTransformation[] FieldSteps = {
 			ReferenceTransformation.RequireTarget,
 			ReferenceTransformation.CastTarget,
@@ -192,6 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		static readonly ReferenceTransformation[] AccessorSteps = {
+			ReferenceTransformation.NoOptionalArgumentAllowed,
 			ReferenceTransformation.CastArguments,
 			ReferenceTransformation.RequireTarget,
 			ReferenceTransformation.CastTarget,
@@ -213,8 +208,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			if (argumentList.Length == 0)
 			{
-				// Nothing to cast: a property access, or an indexer assignment whose value has
-				// already been split off.
+				// Nothing to cast, whatever the other steps do: a property access, or an indexer
+				// assignment whose value has already been taken out.
 				disambiguator.MarkApplied(ReferenceTransformation.CastArguments);
 			}
 			disambiguator.Resolved = disambiguator.Run();
@@ -496,8 +491,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					// The check can resolve a member and still reject it, so the result is
 					// what it returns, not whether it found something.
 					bool unambiguous = IsUnambiguousAccess(expectedTargetDetails,
-						LookupTarget, accessor, Arguments.Arguments, Arguments.ArgumentNames,
-						out var foundAccessorOwner);
+						LookupTarget, accessor, Arguments.GetArgumentResolveResultsDirect(),
+						Arguments.GetArgumentNames(), out var foundAccessorOwner)
+						&& OmittedArgumentsAreDefaultsOf(Arguments, foundAccessorOwner);
 					FoundMember = foundAccessorOwner;
 					return unambiguous
 						? OverloadResolutionErrors.None
@@ -532,20 +528,59 @@ namespace ICSharpCode.Decompiler.CSharp
 			return OverloadResolutionErrors.None;
 		}
 
+		/// <summary>
+		/// Whether the arguments left out of the call are the default values of the member it
+		/// resolves to. They were compared against the parameters of the method the call
+		/// instruction names, which for a virtual call is the base declaration; an override may
+		/// redeclare a different default, and then leaving the argument out changes the value that
+		/// is passed.
+		/// </summary>
+		static bool OmittedArgumentsAreDefaultsOf(ArgumentList argumentList, IMember? foundMember)
+		{
+			int argumentCount = argumentList.Length;
+			int omittedFrom = argumentList.GetActualArgumentCount();
+			if (omittedFrom >= argumentCount)
+				return true;
+			if (foundMember is not IParameterizedMember foundParameterizedMember)
+				return false;
+			var parameters = foundParameterizedMember.Parameters;
+			// Names may leave out a parameter in the middle, so what was dropped is found through
+			// the map rather than by position. Its first entries are the target's.
+			var map = argumentList.ArgumentToParameterMap;
+			int firstParamIndex = map != null ? map.Count - argumentList.Length : 0;
+			for (int i = omittedFrom; i < argumentCount; i++)
+			{
+				int parameterIndex = map != null ? map[i + firstParamIndex] : i;
+				if (parameterIndex < 0 || parameterIndex >= parameters.Count)
+					return false;
+				if (!CallBuilder.IsOptionalArgument(parameters[parameterIndex], argumentList.Arguments[i]))
+					return false;
+			}
+			return true;
+		}
+
 		OverloadResolutionErrors ProbeCall(IMethod method)
 		{
 			var errors = IsUnambiguousCall(expressionBuilder, expectedTargetDetails, method, LookupTarget,
 				TypeArguments, Arguments.GetArgumentResolveResults().ToArray(),
-				Arguments.GetArgumentNames(), Arguments.FirstOptionalArgumentIndex,
-				out var foundMember, out bool bestCandidateIsExpandedForm);
+				Arguments.GetArgumentNames(), out var foundMember,
+				out bool bestCandidateIsExpandedForm);
 			FoundMember = foundMember;
 			if (errors != OverloadResolutionErrors.None)
 				return errors;
-			// Resolving to the same method in the other of its normal and expanded form still
-			// means the spelling is wrong, and no single error describes that.
-			return bestCandidateIsExpandedForm != Arguments.IsExpandedForm
-				? OverloadResolutionErrors.AmbiguousMatch
-				: OverloadResolutionErrors.None;
+			// Resolution succeeding does not make the spelling right. It can have reached the
+			// method in the other of its normal and expanded form, or through omitted arguments
+			// that are not the defaults the member found declares; neither has an error of its
+			// own to report.
+			if (bestCandidateIsExpandedForm == Arguments.IsExpandedForm
+				&& OmittedArgumentsAreDefaultsOf(Arguments, foundMember))
+			{
+				return OverloadResolutionErrors.None;
+			}
+			// Where arguments were left out, writing them out again answers both.
+			return Arguments.FirstOptionalArgumentIndex >= 0
+				? OverloadResolutionErrors.MissingArgumentForRequiredParameter
+				: OverloadResolutionErrors.AmbiguousMatch;
 		}
 
 		/// <summary>
@@ -646,7 +681,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static OverloadResolutionErrors IsUnambiguousCall(ExpressionBuilder expressionBuilder,
 			ExpectedTargetDetails expectedTargetDetails, IMethod method,
 			ResolveResult? target, IType[] typeArguments, ResolveResult[] arguments,
-			string[]? argumentNames, int firstOptionalArgumentIndex,
+			string[]? argumentNames,
 			out IParameterizedMember? foundMember, out bool bestCandidateIsExpandedForm)
 		{
 			CSharpResolver resolver = expressionBuilder.resolver;
@@ -656,10 +691,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Log.WriteLine("IsUnambiguousCall: Performing overload resolution for " + method);
 			Log.WriteCollection("  Arguments: ", arguments);
-
-			argumentNames = firstOptionalArgumentIndex < 0 || argumentNames == null
-				? argumentNames
-				: argumentNames.Take(firstOptionalArgumentIndex).ToArray();
 
 			var or = CreateOverloadResolution(resolver, arguments, argumentNames, typeArguments);
 			if (expectedTargetDetails.CallOpCode == OpCode.NewObj)
@@ -744,17 +775,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method,
-			IList<TranslatedExpression> arguments, string[]? argumentNames, [NotNullWhen(true)] out IMember? foundMember)
+			IList<ResolveResult> arguments, string[]? argumentNames, [NotNullWhen(true)] out IMember? foundMember)
 		{
 			Log.WriteLine("IsUnambiguousAccess: Performing overload resolution for " + method);
-			Log.WriteCollection("  Arguments: ", arguments.Select(a => a.ResolveResult));
+			Log.WriteCollection("  Arguments: ", arguments);
 
 			IMember accessorOwner = method.AccessorOwner!;
 			// An indexer has no name to look up, so its candidates come from the indexer list and
 			// overload resolution picks among them; everything else binds by name.
 			if (target != null && accessorOwner.SymbolKind == SymbolKind.Indexer)
 			{
-				var or = CreateOverloadResolution(resolver, arguments.SelectArray(a => a.ResolveResult),
+				var or = CreateOverloadResolution(resolver, arguments.ToArray(),
 					argumentNames, Empty<IType>.Array);
 				or.AddMethodLists(CreateLookup(resolver).LookupIndexers(target));
 				var errors = CheckBestCandidate(or, expectedTargetDetails, accessorOwner, out var best);
@@ -982,7 +1013,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						Arguments.UseImplicitlyTypedOut = false;
 					}
-					CastArguments(Arguments.Arguments, Arguments.ExpectedParameters);
+					CastArguments(new ArraySegment<TranslatedExpression>(Arguments.Arguments, 0,
+						Arguments.GetActualArgumentCount()), Arguments.ExpectedParameters);
 					return true;
 				case ReferenceTransformation.EnforceExplicitIn:
 					EnforceExplicitIn(Arguments.Arguments, Arguments.ExpectedParameters);
