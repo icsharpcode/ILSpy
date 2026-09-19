@@ -454,6 +454,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task IndexerAccessorParameterNames()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task ParameterizedPropertySetterCall()
 		{
 			await Run();

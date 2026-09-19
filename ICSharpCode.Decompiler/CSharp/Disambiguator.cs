@@ -537,8 +537,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var errors = IsUnambiguousCall(expressionBuilder, expectedTargetDetails, method, LookupTarget,
 				TypeArguments, Arguments.GetArgumentResolveResults().ToArray(),
-				Arguments.GetArgumentNames(), Arguments.FirstOptionalArgumentIndex,
-				out var foundMember, out bool bestCandidateIsExpandedForm);
+				Arguments.GetArgumentNames(), out var foundMember,
+				out bool bestCandidateIsExpandedForm);
 			FoundMember = foundMember;
 			if (errors != OverloadResolutionErrors.None)
 				return errors;
@@ -647,7 +647,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal static OverloadResolutionErrors IsUnambiguousCall(ExpressionBuilder expressionBuilder,
 			ExpectedTargetDetails expectedTargetDetails, IMethod method,
 			ResolveResult? target, IType[] typeArguments, ResolveResult[] arguments,
-			string[]? argumentNames, int firstOptionalArgumentIndex,
+			string[]? argumentNames,
 			out IParameterizedMember? foundMember, out bool bestCandidateIsExpandedForm)
 		{
 			CSharpResolver resolver = expressionBuilder.resolver;
@@ -657,10 +657,6 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			Log.WriteLine("IsUnambiguousCall: Performing overload resolution for " + method);
 			Log.WriteCollection("  Arguments: ", arguments);
-
-			argumentNames = firstOptionalArgumentIndex < 0 || argumentNames == null
-				? argumentNames
-				: argumentNames.Take(firstOptionalArgumentIndex).ToArray();
 
 			var or = CreateOverloadResolution(resolver, arguments, argumentNames, typeArguments);
 			if (expectedTargetDetails.CallOpCode == OpCode.NewObj)
