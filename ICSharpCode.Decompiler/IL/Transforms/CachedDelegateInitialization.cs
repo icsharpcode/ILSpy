@@ -99,10 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				// A discarded method-group conversion ("_ = (Action)M;") caches the
 				// delegate without ever reading the cache back. Keep the conversion,
-				// which still allocates, and drop the caching around it -- but only
-				// once the rest of the method is known not to read the field either.
-				if (context.Function.Descendants.Any(i => i != left && i.MatchLdsFld(field)))
-					return false;
+				// which still allocates, and drop the caching around it.
 				context.Step("CachedDelegateInitializationWithField (unused)", inst);
 				inst.ReplaceWith(value);
 				context.EndStep(value);
