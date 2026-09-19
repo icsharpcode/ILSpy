@@ -192,6 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		static readonly ReferenceTransformation[] AccessorSteps = {
+			ReferenceTransformation.NoOptionalArgumentAllowed,
 			ReferenceTransformation.CastArguments,
 			ReferenceTransformation.RequireTarget,
 			ReferenceTransformation.CastTarget,
@@ -213,8 +214,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			if (argumentList.Length == 0)
 			{
-				// Nothing to cast: a property access, or an indexer assignment whose value has
-				// already been split off.
+				// Nothing to cast, whatever the other steps do: a property access, or an indexer
+				// assignment whose value has already been taken out.
 				disambiguator.MarkApplied(ReferenceTransformation.CastArguments);
 			}
 			disambiguator.Resolved = disambiguator.Run();
@@ -496,8 +497,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					// The check can resolve a member and still reject it, so the result is
 					// what it returns, not whether it found something.
 					bool unambiguous = IsUnambiguousAccess(expectedTargetDetails,
-						LookupTarget, accessor, Arguments.Arguments, Arguments.ArgumentNames,
-						out var foundAccessorOwner);
+						LookupTarget, accessor, Arguments.GetArgumentResolveResultsDirect(),
+						Arguments.GetArgumentNames(), out var foundAccessorOwner);
 					FoundMember = foundAccessorOwner;
 					return unambiguous
 						? OverloadResolutionErrors.None
@@ -744,17 +745,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		bool IsUnambiguousAccess(ExpectedTargetDetails expectedTargetDetails, ResolveResult? target, IMethod method,
-			IList<TranslatedExpression> arguments, string[]? argumentNames, [NotNullWhen(true)] out IMember? foundMember)
+			IList<ResolveResult> arguments, string[]? argumentNames, [NotNullWhen(true)] out IMember? foundMember)
 		{
 			Log.WriteLine("IsUnambiguousAccess: Performing overload resolution for " + method);
-			Log.WriteCollection("  Arguments: ", arguments.Select(a => a.ResolveResult));
+			Log.WriteCollection("  Arguments: ", arguments);
 
 			IMember accessorOwner = method.AccessorOwner!;
 			// An indexer has no name to look up, so its candidates come from the indexer list and
 			// overload resolution picks among them; everything else binds by name.
 			if (target != null && accessorOwner.SymbolKind == SymbolKind.Indexer)
 			{
-				var or = CreateOverloadResolution(resolver, arguments.SelectArray(a => a.ResolveResult),
+				var or = CreateOverloadResolution(resolver, arguments.ToArray(),
 					argumentNames, Empty<IType>.Array);
 				or.AddMethodLists(CreateLookup(resolver).LookupIndexers(target));
 				var errors = CheckBestCandidate(or, expectedTargetDetails, accessorOwner, out var best);
@@ -982,7 +983,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					{
 						Arguments.UseImplicitlyTypedOut = false;
 					}
-					CastArguments(Arguments.Arguments, Arguments.ExpectedParameters);
+					CastArguments(new ArraySegment<TranslatedExpression>(Arguments.Arguments, 0,
+						Arguments.GetActualArgumentCount()), Arguments.ExpectedParameters);
 					return true;
 				case ReferenceTransformation.EnforceExplicitIn:
 					EnforceExplicitIn(Arguments.Arguments, Arguments.ExpectedParameters);

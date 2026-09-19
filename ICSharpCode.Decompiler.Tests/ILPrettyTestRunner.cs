@@ -441,6 +441,24 @@ namespace ICSharpCode.Decompiler.Tests
 			await Run();
 		}
 
+		[Test]
+		public async Task ParamsPropertySetter()
+		{
+			await Run();
+		}
+
+		[Test]
+		public async Task ParameterizedPropertyInitializer()
+		{
+			await Run();
+		}
+
+		[Test]
+		public async Task ParameterizedPropertySetterCall()
+		{
+			await Run();
+		}
+
 		async Task Run([CallerMemberName] string testName = null, DecompilerSettings settings = null,
 			AssemblerOptions assemblerOptions = AssemblerOptions.Library)
 		{
