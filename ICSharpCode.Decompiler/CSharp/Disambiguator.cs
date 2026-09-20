@@ -814,8 +814,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				result = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
 				if (result == null)
 					return false;
+				// The receiver is the target, not an argument: the delegate being built has one
+				// parameter fewer than the method, so passing the receiver's parameter too leaves
+				// overload resolution with one argument too many and it reports every candidate
+				// ambiguous.
 				or = ((MethodGroupResolveResult)result).PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation,
-					method.Parameters.SelectReadOnlyArray(p => new TypeResolveResult(p.Type)),
+					method.Parameters.Skip(1).Select(p => (ResolveResult)new TypeResolveResult(p.Type)).ToArray(),
 					argumentNames: null, allowExtensionMethods: true);
 				if (or == null || or.IsAmbiguous)
 					return false;
