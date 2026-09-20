@@ -66,13 +66,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return FirstOptionalArgumentIndex;
 		}
 
-		public string[]? GetArgumentNames(int skipCount = 0)
+		/// <summary>
+		/// The name to write each argument with, indexed like <see cref="Arguments"/>; null where
+		/// every argument is written positionally.
+		/// </summary>
+		public string[]? GetArgumentNames()
 		{
 			string[]? argumentNames = ArgumentNames;
 			if (AddNamesToPrimitiveValues && IsPrimitiveValue.Any() && !IsExpandedForm
 					&& !ParameterNames.Any(string.IsNullOrEmpty))
 			{
-				Debug.Assert(skipCount == 0);
 				if (argumentNames == null)
 				{
 					argumentNames = new string[Arguments.Length];
@@ -106,8 +109,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			return Arguments
 				.SelectWithIndex(GetResolveResult)
-				.Skip(skipCount)
 				.Take(GetActualArgumentCount())
+				.Skip(skipCount)
 				.ToArray();
 
 			ResolveResult GetResolveResult(int index, TranslatedExpression expression)
@@ -122,28 +125,27 @@ namespace ICSharpCode.Decompiler.CSharp
 		public IList<ResolveResult> GetArgumentResolveResultsDirect(int skipCount = 0)
 		{
 			return Arguments
-				.Skip(skipCount)
 				.Take(GetActualArgumentCount())
+				.Skip(skipCount)
 				.Select(a => a.ResolveResult)
 				.ToArray();
 		}
 
 		public IEnumerable<Expression> GetArgumentExpressions(int skipCount = 0)
 		{
-			var argumentNames = GetArgumentNames(skipCount);
+			var argumentNames = GetArgumentNames();
 			int argumentCount = GetActualArgumentCount();
 			var useImplicitlyTypedOut = UseImplicitlyTypedOut;
 			if (argumentNames == null)
 			{
-				return Arguments.Skip(skipCount).Take(argumentCount).Select(arg => AddAnnotations(arg.Expression));
+				return Arguments.Take(argumentCount).Skip(skipCount).Select(arg => AddAnnotations(arg.Expression));
 			}
 			else
 			{
-				Debug.Assert(skipCount == 0);
 				// Zip stops at the shorter sequence, so names that ran short would silently drop
 				// the arguments past their end instead of leaving them unnamed.
 				Debug.Assert(argumentNames.Length == argumentCount);
-				return Arguments.Take(argumentCount).Zip(argumentNames,
+				return Arguments.Take(argumentCount).Skip(skipCount).Zip(argumentNames.Skip(skipCount),
 					(arg, name) => {
 						if (name == null)
 							return AddAnnotations(arg.Expression);
@@ -631,6 +633,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				argumentList.FirstOptionalArgumentIndex = -1;
 			}
+
+			if (TryUseExtensionMethodSyntax(foundMethod, transform, argumentList, out var extensionTarget,
+				out var extensionTargetResolveResult))
+			{
+				return new InvocationExpression(extensionTarget, argumentList.GetArgumentExpressions(skipCount: 1))
+					.WithRR(new CSharpInvocationResolveResult(extensionTargetResolveResult, foundMethod,
+						argumentList.GetArgumentResolveResultsDirect(skipCount: 1),
+						isExtensionMethodInvocation: true, isExpandedForm: argumentList.IsExpandedForm));
+			}
+
 			if ((transform & ReferenceTransformation.RequireTarget) != 0)
 			{
 				targetExpr = new MemberReferenceExpression(target.Expression, methodName);
@@ -1265,6 +1277,99 @@ namespace ICSharpCode.Decompiler.CSharp
 				|| a.AttributeType.IsKnownType(KnownAttribute.CallerLineNumber)))
 				return false;
 			return object.Equals(parameter.GetConstantValue(), arg.ResolveResult.ConstantValue);
+		}
+
+		/// <summary>
+		/// Extension method syntax is the shortest spelling of a call to an extension method: the
+		/// first argument becomes the target and the rest stay arguments. It is only available
+		/// when the name resolves back to <paramref name="foundMethod"/> from that target, which a
+		/// competing instance method, another extension method in scope or an inaccessible
+		/// declaring type can all prevent - then the call is written as the static call it is in
+		/// IL and this returns false.
+		/// <paramref name="transform"/> must be the one the call is being written with, because
+		/// whether the type arguments are spelled out decides which overloads the name reaches.
+		/// </summary>
+		private bool TryUseExtensionMethodSyntax(IParameterizedMember foundMethod, ReferenceTransformation transform,
+			ArgumentList argumentList, [NotNullWhen(true)] out MemberReferenceExpression? memberRef,
+			[NotNullWhen(true)] out ResolveResult? targetResolveResult)
+		{
+			memberRef = null;
+			targetResolveResult = null;
+			// The overload the call resolves to, not the one the IL named: the two can differ in
+			// the type arguments inference substitutes, and the check below compares the candidate
+			// it finds against this one for equality.
+			if (foundMethod is not IMethod method)
+				return false;
+			// IsExtensionMethod is false unless settings.ExtensionMethods asked the type system
+			// for it, so it is the gate for the setting as well.
+			if (!method.IsExtensionMethod || argumentList.Length == 0)
+				return false;
+			// Without using declarations every type is named in full instead. An extension method
+			// has no such spelling: the namespace has to be imported for the name to be found.
+			if (!settings.UsingDeclarations)
+				return false;
+			// The target is the first argument, so it has to be written first and positionally.
+			var argumentNames = argumentList.GetArgumentNames();
+			if (argumentNames?[0] != null)
+				return false;
+			if (argumentList.ArgumentToParameterMap is { } map && map[0] != 0)
+				return false;
+			if (argumentList.FirstOptionalArgumentIndex == 0)
+				return false;
+
+			var firstArgument = argumentList.Arguments[0];
+			bool writeTypeArguments = (transform & ReferenceTransformation.RequireTypeArguments) != 0
+				&& (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType()));
+			IType[] typeArguments = writeTypeArguments ? method.TypeArguments.ToArray() : Empty<IType>.Array;
+
+			var directionExpression = firstArgument.Expression as DirectionExpression;
+			ResolveResult target = firstArgument.ResolveResult;
+			if (target is ConstantResolveResult { ConstantValue: null } nullLiteral)
+			{
+				// A null literal has no type of its own; the target type is the one the parameter
+				// gives it, which the cast below then writes out.
+				target = new ConversionResolveResult(method.Parameters[0].Type, nullLiteral,
+					Conversion.NullLiteralConversion);
+			}
+			else if (directionExpression != null)
+			{
+				if (!settings.RefExtensionMethods || directionExpression.FieldDirection == FieldDirection.Out)
+					return false;
+				target = directionExpression.Expression.GetResolveResult();
+			}
+
+			int actualArgumentCount = argumentList.GetActualArgumentCount();
+			string[]? remainingNames = argumentNames?.Take(actualArgumentCount).Skip(1).ToArray();
+			if (remainingNames != null && remainingNames.All(name => name == null))
+				remainingNames = null;
+			if (!resolver.CanTransformToExtensionMethodCall(method, typeArguments, target,
+				argumentList.GetArgumentResolveResults(skipCount: 1).ToArray(), remainingNames))
+			{
+				return false;
+			}
+
+			Expression targetExpression;
+			if (directionExpression != null)
+			{
+				// 'ref x.Ext()' is not a thing: the target carries the reference implicitly.
+				targetExpression = directionExpression.Expression.Detach();
+			}
+			else if (firstArgument.Expression is NullReferenceExpression)
+			{
+				targetExpression = new CastExpression(
+					expressionBuilder.ConvertType(method.Parameters[0].Type), firstArgument.Expression);
+			}
+			else
+			{
+				targetExpression = firstArgument.Expression;
+			}
+			memberRef = new MemberReferenceExpression(targetExpression, method.Name);
+			if (writeTypeArguments)
+			{
+				memberRef.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
+			}
+			targetResolveResult = target;
+			return true;
 		}
 
 		private ReferenceTransformation GetRequiredTransformationsForCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
