@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Composition;
 using System.Linq;
@@ -64,24 +65,73 @@ namespace ICSharpCode.ILSpy.Search
 			Title = "Search";
 			SelectedSearchMode = ResolvePersistedMode() ?? SearchModes[0];
 			PropertyChanged += OnPropertyChangedDispatch;
-			// Refresh search results when the active assembly list mutates. Skip the
-			// restart when ONLY auto-loaded (dependency) assemblies are added — those
-			// fire from navigating through results in a large assembly and would cause
-			// a tight feedback loop / flicker (issue #3734).
+			// Refresh search results when the active assembly list mutates, once it settles.
 			Util.MessageBus<Util.CurrentAssemblyListChangedEventArgs>.Subscribers += OnAssemblyListChanged;
 		}
 
+		// Assemblies arrive in bursts: decompiling what the user clicked loads its references,
+		// each of which reports its own change. Restarting per report cancels a walk that is
+		// already competing with the decompilation for the thread pool, and only the last of them
+		// could finish. Waiting for the list to settle runs one search, over the complete list
+		// (issue #3734).
+		static readonly TimeSpan AssemblyListSettle = TimeSpan.FromMilliseconds(500);
+		// ... but a list that keeps trickling must not defer the results forever.
+		static readonly TimeSpan AssemblyListSettleCap = TimeSpan.FromSeconds(2);
+
+		DispatcherTimer? assemblyListSettle;
+		DateTime firstUnsettledChange;
+		readonly List<LoadedAssembly> assembliesAddedSinceSearch = new();
+		bool needsFullRestart;
+
 		void OnAssemblyListChanged(object? sender, Util.CurrentAssemblyListChangedEventArgs e)
 		{
-			var inner = e.Inner;
-			if (inner.Action == NotifyCollectionChangedAction.Add
-				&& inner.NewItems?.Cast<LoadedAssembly>().All(asm => asm.IsAutoLoaded) == true)
-			{
-				return;
-			}
 			if (string.IsNullOrEmpty(SearchTerm))
 				return;
-			RestartSearch();
+
+			var inner = e.Inner;
+			if (inner.Action == NotifyCollectionChangedAction.Add && inner.NewItems != null)
+			{
+				// Added assemblies can only add matches, so what is already shown stays valid.
+				assembliesAddedSinceSearch.AddRange(inner.NewItems.Cast<LoadedAssembly>());
+			}
+			else
+			{
+				// A removal or a reset can invalidate what is on screen; only a full walk is safe.
+				needsFullRestart = true;
+			}
+
+			if (assemblyListSettle == null)
+			{
+				firstUnsettledChange = DateTime.UtcNow;
+				assemblyListSettle = new DispatcherTimer(AssemblyListSettle,
+					DispatcherPriority.Background, (_, _) => SearchTheSettledList());
+			}
+			else if (DateTime.UtcNow - firstUnsettledChange >= AssemblyListSettleCap)
+			{
+				SearchTheSettledList();
+				return;
+			}
+			assemblyListSettle.Stop();
+			assemblyListSettle.Start();
+		}
+
+		void SearchTheSettledList()
+		{
+			assemblyListSettle?.Stop();
+			assemblyListSettle = null;
+			var added = assembliesAddedSinceSearch.ToList();
+			bool full = needsFullRestart;
+			assembliesAddedSinceSearch.Clear();
+			needsFullRestart = false;
+
+			if (string.IsNullOrEmpty(SearchTerm))
+				return;
+			// Extending is only sound on top of a finished walk for the same term: one still in
+			// flight has not seen the whole list, and a cancelled one left it partial.
+			if (full || currentSearch is not { IsCompleted: true } || added.Count == 0)
+				RestartSearch();
+			else
+				RestartSearch(extendWith: added);
 		}
 
 		void OnPropertyChangedDispatch(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -251,11 +301,15 @@ namespace ICSharpCode.ILSpy.Search
 
 		RunningSearch? currentSearch;
 
-		void RestartSearch()
+		/// <param name="extendWith">
+		/// When given, only these assemblies are walked and the results already shown are kept.
+		/// </param>
+		void RestartSearch(IReadOnlyList<LoadedAssembly>? extendWith = null)
 		{
 			currentSearch?.Cancel();
 			currentSearch = null;
-			Results.Clear();
+			if (extendWith == null)
+				Results.Clear();
 			IsSearching = false;
 
 			var term = SearchTerm ?? string.Empty;
@@ -287,7 +341,8 @@ namespace ICSharpCode.ILSpy.Search
 				apiVisibility,
 				factory,
 				Results,
-				sortComparer);
+				sortComparer,
+				extendWith);
 			run.Completed += OnRunCompleted;
 			currentSearch = run;
 			IsSearching = true;
