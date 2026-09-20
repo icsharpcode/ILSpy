@@ -265,6 +265,83 @@ public class ResourceFactoryTests
 			$"entry '{name}' should be routed to a specialised node, not the generic entry node");
 	}
 
+	/// <summary>
+	/// Builds a .resources container holding one stream entry per name and returns the entry names
+	/// the tree shows, in tree order. The names come back in display form, i.e. after
+	/// ILAmbience.EscapeName has replaced whitespace with a "\uXXXX" sequence.
+	/// </summary>
+	static string?[] EntryNames(string containerName, params string[] entryNames)
+	{
+		EnsureComposition();
+		var node = ResourceEntryNode.Create(new ByteArrayResource(containerName, BuildResources(
+			entryNames.Select(n => (n, (object)new byte[] { 1, 2, 3 })).ToArray())));
+		node.GetType().Should().Be(typeof(ResourcesFileTreeNode),
+			$"'{containerName}' must be handled by the .resources container node");
+		((ResourcesFileTreeNode)node).EnsureLazyChildren();
+		var names = node.Children.Cast<ILSpyTreeNode>().Select(c => c.Text?.ToString()).ToArray();
+		names.Should().HaveCount(entryNames.Length, "every stream entry becomes one child node");
+		return names;
+	}
+
+	[AvaloniaTest]
+	public void Wpf_Generated_Container_Shows_Entry_Names_Unescaped()
+	{
+		// WPF's build tasks key every Page and Resource item in "<AssemblyName>.g.resources" by
+		// the item's relative path, lower-cased and URI-escaped: a space becomes "%20" and every
+		// non-ASCII character becomes a run of UTF-8 escapes. Those escapes are not part of the
+		// name, so the tree has to show the decoded name (issue #3526).
+		var names = EntryNames("WpfApp.g.resources",
+			"mainwindow.baml",
+			// the escaped form of a file named in Chinese and containing a space
+			"%e4%b8%bb%20%e7%aa%97%e4%bd%93.baml",
+			"my%20images/logo.png");
+
+		// ILAmbience.EscapeName renders the decoded space as " " for display; what matters
+		// is that the percent escapes are gone.
+		names.Should().BeEquivalentTo(
+			"mainwindow.baml",
+			"\u4E3B\\u0020\u7A97\u4F53.baml",
+			"my\\u0020images/logo.png");
+	}
+
+	[AvaloniaTest]
+	public void Satellite_Wpf_Generated_Container_Shows_Entry_Names_Unescaped()
+	{
+		// Satellite assemblies carry the same generated container once per culture, named
+		// "<AssemblyName>.g.<culture>.resources". Its entry names are escaped the same way.
+		EntryNames("WpfApp.g.de-DE.resources", "my%20images/logo.png")
+			.Should().BeEquivalentTo("my\\u0020images/logo.png");
+	}
+
+	[AvaloniaTest]
+	public void Ordinary_Container_Keeps_Percent_Escapes_In_Entry_Names()
+	{
+		// Only the WPF-generated containers hold escaped names. Anywhere else a percent sign is
+		// an ordinary character of the entry name and the name has to come through unchanged;
+		// decoding it would rename a legitimate "discount%25.png" entry to "discount%.png".
+		EntryNames("WpfApp.resources", "my%20images/logo.png", "discount%25.png")
+			.Should().BeEquivalentTo("my%20images/logo.png", "discount%25.png");
+	}
+
+	[AvaloniaTest]
+	public void Wpf_Generated_Container_Keeps_Invalid_Percent_Escapes()
+	{
+		// A percent sign that does not start a complete two-hex-digit escape cannot have come out
+		// of the escaper, and Uri.UnescapeDataString leaves such a sequence alone. A percent sign
+		// that is part of a WPF-generated name arrives as "%25" and does decode.
+		EntryNames("WpfApp.g.resources", "100%off.png", "%zz.png", "%4.png", "50%%.png", "%25.png")
+			.Should().BeEquivalentTo("100%off.png", "%zz.png", "%4.png", "50%%.png", "%.png");
+	}
+
+	[AvaloniaTest]
+	public void Wpf_Generated_Container_Sorts_By_The_Displayed_Name()
+	{
+		// Children are sorted by the name the tree shows. "%7a" is 'z', so sorting the escaped
+		// names instead would list "a%7a.png" first - '%' sorts before 'b'.
+		EntryNames("WpfApp.g.resources", "c.png", "a%7a.png", "ab.png")
+			.Should().Equal("ab.png", "az.png", "c.png");
+	}
+
 	[AvaloniaTest]
 	public void Resources_File_Decompile_Lists_Stream_Entries()
 	{

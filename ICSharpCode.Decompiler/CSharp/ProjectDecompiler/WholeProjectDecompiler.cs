@@ -737,10 +737,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// (and into "&lt;AssemblyName&gt;.g.&lt;culture&gt;.resources" in satellite assemblies), keyed by
 		/// the item's relative path, lower-cased and URI-escaped: a folder named "My Images" becomes
 		/// "my%20images". Those escapes are not part of the name and have to be decoded before the
-		/// name is turned into a file name, otherwise the percent sign is sanitized away and
-		/// "my%20images/logo.png" lands in a directory called "my-20images".
+		/// name is displayed or turned into a file name, otherwise the percent sign is sanitized
+		/// away and "my%20images/logo.png" lands in a directory called "my-20images". No other
+		/// container has escaped names: a percent sign there is part of the entry name.
 		/// </summary>
-		static bool IsWpfGeneratedResourceContainer(string resourceName)
+		public static bool IsWpfGeneratedResourceContainer(string resourceName)
 		{
 			const string extension = ".resources";
 			if (!resourceName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
