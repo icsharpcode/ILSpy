@@ -113,6 +113,19 @@ public class NetFrameworkProcessesTests
 	}
 
 	[Test]
+	public void A_Process_Without_A_Desktop_Clr_Is_Ruled_Out_Without_Reading_Its_Modules()
+	{
+		// The test host runs on CoreCLR, which publishes no desktop IPC block.
+		NetFrameworkProcesses.MayHostDesktopClr(Environment.ProcessId).Should().BeFalse();
+	}
+
+	[Test]
+	public void A_Desktop_Clr_Process_Is_A_Candidate_For_The_Module_Scan()
+	{
+		NetFrameworkProcesses.MayHostDesktopClr(host!.Id).Should().BeTrue();
+	}
+
+	[Test]
 	public void A_Desktop_Clr_Process_Is_Found_And_Described()
 	{
 		var listed = TheHostAsListed();

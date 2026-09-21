@@ -21,8 +21,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading;
+
+using Microsoft.Win32.SafeHandles;
 
 namespace ICSharpCode.ILSpy.Processes
 {
@@ -38,9 +41,24 @@ namespace ICSharpCode.ILSpy.Processes
 	/// have no file anywhere - both are invisible on this path.
 	/// </summary>
 	[SupportedOSPlatform("windows")]
-	static class NetFrameworkProcesses
+	static partial class NetFrameworkProcesses
 	{
 		static readonly string[] DesktopClrModules = { "clr.dll", "mscorwks.dll", "mscorsvr.dll" };
+
+		// The shared-memory block every desktop CLR publishes under its process id, which is
+		// how the Framework-era debugger and profiler APIs find managed processes. The v4
+		// runtime adds a version infix; the runtime asks for the Global namespace first and
+		// falls back to its own session's.
+		static readonly string[] IpcBlockNamePrefixes = {
+			@"Global\Cor_Private_IPCBlock_v4_", "Cor_Private_IPCBlock_v4_",
+			@"Global\Cor_Private_IPCBlock_", "Cor_Private_IPCBlock_",
+		};
+
+		const uint FILE_MAP_READ = 0x0004;
+		const int ERROR_FILE_NOT_FOUND = 2;
+
+		[LibraryImport("kernel32.dll", EntryPoint = "OpenFileMappingW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		private static partial SafeFileHandle OpenFileMapping(uint desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, string name);
 
 		public static IEnumerable<RunningDotNetProcess> Enumerate(ISet<int> alreadyListed, CancellationToken cancellationToken)
 		{
@@ -49,13 +67,34 @@ namespace ICSharpCode.ILSpy.Processes
 				cancellationToken.ThrowIfCancellationRequested();
 				using (process)
 				{
-					if (alreadyListed.Contains(process.Id))
+					if (alreadyListed.Contains(process.Id) || !MayHostDesktopClr(process.Id))
 						continue;
 					var described = TryDescribe(process);
 					if (described != null)
 						yield return described;
 				}
 			}
+		}
+
+		/// <summary>
+		/// Whether the process could be running a desktop CLR, answered by a name lookup
+		/// instead of its module list. Reading a module list costs several cross-process
+		/// memory reads per loaded module - seconds for a single suspended or paged-out
+		/// process, and unbounded on a busy machine - which is too much to spend on every
+		/// process of the machine when only a handful host the desktop CLR.
+		/// </summary>
+		internal static bool MayHostDesktopClr(int pid)
+		{
+			foreach (string prefix in IpcBlockNamePrefixes)
+			{
+				using var block = OpenFileMapping(FILE_MAP_READ, false, prefix + pid);
+				// Only "no such object" rules a name out. A block that exists but belongs to
+				// another user is refused rather than missing, and that process stays a
+				// candidate so the module read decides about it as it does for the rest.
+				if (!block.IsInvalid || Marshal.GetLastPInvokeError() != ERROR_FILE_NOT_FOUND)
+					return true;
+			}
+			return false;
 		}
 
 		static RunningDotNetProcess? TryDescribe(Process process)
