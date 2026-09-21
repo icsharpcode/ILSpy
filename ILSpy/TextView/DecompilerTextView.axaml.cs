@@ -119,6 +119,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// the TextArea's nested-handler chain so the gesture surfaces a search bar without
 			// us wiring KeyBindings manually. Stored for tests; runtime path is the gesture.
 			SearchPanel = AvaloniaEdit.Search.SearchPanel.Install(Editor);
+			SearchPanel.SetSearchResultsBrush(Editor.SearchResultsBrush);
 
 			// AvaloniaEdit defaults to "Ctrl+Click to follow hyperlink" on its built-in
 			// LinkElementGenerator and propagates that flag onto every VisualLineLinkText it
@@ -361,6 +362,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			base.OnAttachedToVisualTree(e);
 			ICSharpCode.ILSpy.Themes.ThemeManager.Current.ThemeChanged += OnThemeChangedRebuildHighlighting;
+			SearchPanel.SetSearchResultsBrush(Editor.SearchResultsBrush);
 			// Ctrl toggles between highlight and navigate for reference clicks; listen at the
 			// top level because the keyboard focus is usually elsewhere while hovering.
 			cursorKeyEventSource = global::Avalonia.Controls.TopLevel.GetTopLevel(this);
@@ -387,6 +389,7 @@ namespace ICSharpCode.ILSpy.TextView
 		// re-coloured instances -- so the already-decompiled output repaints with the new palette.
 		void OnThemeChangedRebuildHighlighting(object? sender, System.EventArgs e)
 		{
+			SearchPanel.SetSearchResultsBrush(Editor.SearchResultsBrush);
 			if (boundModel?.HighlightingSpans is not { Count: > 0 } spans)
 				return;
 			var model = new RichTextModel();
