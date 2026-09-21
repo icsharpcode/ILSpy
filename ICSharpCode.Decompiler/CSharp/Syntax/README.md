@@ -160,7 +160,7 @@ A few things that are easy to get wrong when editing the generator or the nodes 
 
 - **Build the way the repo expects.** Use the root pwsh scripts, and the OpenSSL env var is required:
   `OPENSSL_ENABLE_SHA1_SIGNATURES=1 pwsh ./build.ps1 -Configuration Debug --no-restore`. A bare
-  `dotnet build` prunes the lock files (see the root `CLAUDE.md`).
+  `dotnet build` prunes the lock files (see the root `AGENTS.md`).
 - **The generator is a cached analyzer assembly.** Editing a **node** file re-runs the generator (node
   files are its input). Editing **the generator's own source** may *not* re-run it on an incremental
   build -- the consuming project keeps using the cached analyzer. Force a fresh run by clearing the

@@ -3,7 +3,7 @@
 How to review a pull request, a branch, or a working-tree diff in this repository. Written for
 both human and agent reviewers; the agent-specific rules are called out where they differ.
 
-`CLAUDE.md` carries the two rules that have to hold before you have even decided you are
+`AGENTS.md` carries the two rules that have to hold before you have even decided you are
 reviewing. Everything below applies once you are.
 
 ## Scope

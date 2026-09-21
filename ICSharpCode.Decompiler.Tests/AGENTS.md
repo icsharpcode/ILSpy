@@ -30,7 +30,7 @@ First test run on a machine: the `[SetUpFixture]` in `TestTraceListener.cs` call
 packs from NuGet (network required; cached under the test output directory afterwards) and
 builds the self-contained `ICSharpCode.Decompiler.TestRunner`. Package downloads check the
 `ILSpy-tests/nuget` folder first, so the `ILSpy-tests` submodule must be initialized (see the
-root `CLAUDE.md` section on the submodule).
+root `AGENTS.md` section on the submodule).
 
 ## Test kinds
 
@@ -117,7 +117,7 @@ produced for that compiler's IL. This beats hand-running csc versions.
 dotnet test --solution ILSpy.sln --report-trx --filter FullyQualifiedName~PrettyTestRunner.SwitchExpressions
 ```
 
-(Microsoft.Testing.Platform syntax; see root `CLAUDE.md` "Test discipline".) A failing
+(Microsoft.Testing.Platform syntax; see root `AGENTS.md` "Test discipline".) A failing
 comparison prints an aligned diff with ` + `/` - ` markers. On failure the decompiled output
 file is left on disk for inspection (Correctness failures print its path; output diffs are
 also written to `%TEMP%/<test>.original.out` / `.decompiled.out`).
