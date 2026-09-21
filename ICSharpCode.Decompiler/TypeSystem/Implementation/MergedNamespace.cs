@@ -152,7 +152,10 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						// and using the main assembly can cause a stack overflow if there
 						// are internal assembly attributes.
 					}
-					anyTypeDef = typeDef;
+					// If there's multiple possible matches prefer the first one -- we most likely are
+					// in the context of the assembly being decompiled, which usually is the first in the list,
+					// so this increases the odds of picking the correct type.
+					anyTypeDef ??= typeDef;
 				}
 			}
 			return anyTypeDef;
