@@ -67,8 +67,18 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 
 		public bool IsAttachedTo(XamlType type)
 		{
-			if (type == null || ResolvedMember == null || type.ResolvedType == null)
+			if (type == null)
 				return true;
+
+			if (ResolvedMember == null || type.ResolvedType == null)
+			{
+				// A property of an assembly that cannot be resolved never resolves either, so the
+				// walk below is unavailable and only the identity the document itself records is
+				// left. A property whose recorded owner is the element's own type is one of its
+				// own; treating it as attached writes "Type.Property" for a property that has no
+				// attached accessors, which the XAML parser rejects.
+				return !IsDeclaredBy(type);
+			}
 
 			var declType = ResolvedMember.DeclaringType;
 			var t = type.ResolvedType;
@@ -80,6 +90,19 @@ namespace ICSharpCode.BamlDecompiler.Xaml
 				t = t.DirectBaseTypes.FirstOrDefault();
 			} while (t != null);
 			return true;
+		}
+
+		/// <summary>
+		/// Whether the type the document names as the owner of this property is
+		/// <paramref name="type"/> itself, comparing what the BAML records carry rather than
+		/// resolved types.
+		/// </summary>
+		bool IsDeclaredBy(XamlType type)
+		{
+			return DeclaringType != null
+				&& DeclaringType.TypeName == type.TypeName
+				&& DeclaringType.TypeNamespace == type.TypeNamespace
+				&& DeclaringType.FullAssemblyName == type.FullAssemblyName;
 		}
 
 		public XName ToXName(XamlContext ctx, XElement parent, bool isFullName = true)

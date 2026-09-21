@@ -50,6 +50,7 @@
     <Compile Include="MarkupExtensionQuotingTests.cs" />
     <Compile Include="RuntimeNamePropertyTests.cs" />
     <Compile Include="StartupUriTests.cs" />
+    <Compile Include="UnresolvedPropertyTests.cs" />
     <Compile Include="XmlNamespaceResolutionTests.cs" />
     <Compile Include="XmlnsDeclarationPlacementTests.cs" />
   </ItemGroup>
