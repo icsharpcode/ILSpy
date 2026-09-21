@@ -36,11 +36,10 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.Search;
 
 /// <summary>
-/// Pins the auto-refresh path that landed alongside the master-rebase port: when
-/// assemblies are added/removed from the active list, the search pane restarts the
-/// current query — except when ONLY auto-loaded (dependency) assemblies are added,
-/// which would otherwise cause a tight feedback loop while navigating to a result
-/// in a large assembly (WPF #3734 fix mirrored).
+/// Pins the auto-refresh path: when assemblies are added to or removed from the active list, the
+/// search pane restarts the current query. The restart waits for the list to settle rather than
+/// firing per arrival - see <see cref="SearchListSettleTests"/>, which covers the burst and the
+/// auto-loaded cases this fixture used to describe.
 /// </summary>
 [TestFixture]
 public class SearchPaneAssemblyListChangedTests
@@ -75,11 +74,11 @@ public class SearchPaneAssemblyListChangedTests
 	}
 
 	[AvaloniaTest]
-	public async Task Search_Skips_Restart_When_Only_AutoLoaded_Assemblies_Are_Added()
+	public async Task Search_Handles_An_AutoLoaded_Add()
 	{
-		// Auto-loaded dependencies fire from result navigation in a large assembly; restarting
-		// the search there would feed back into more loads → more events → flicker. The
-		// handler MUST take the early-out path.
+		// Auto-loaded dependencies used to be skipped outright, which kept the feedback loop shut
+		// but left matches inside them out of the results. They are searched now; the loop is held
+		// off by waiting for the list to settle instead.
 		var (_, vm) = await TestHarness.BootAsync();
 
 		var search = AppComposition.Current.GetExport<SearchPaneModel>();
@@ -90,9 +89,6 @@ public class SearchPaneAssemblyListChangedTests
 		var args = new NotifyCollectionChangedEventArgs(
 			NotifyCollectionChangedAction.Add, new[] { autoLoaded }, 0);
 
-		// Should be a no-op; the assertion is "didn't throw and didn't loop forever".
-		// (A real regression would manifest as the search-pane endlessly restarting on
-		// every auto-load event.)
 		var act = () => MessageBus.Send(this, new CurrentAssemblyListChangedEventArgs(args));
 		TestCapture.Step("before-autoloaded-add");
 		act.Should().NotThrow();

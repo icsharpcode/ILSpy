@@ -18,11 +18,13 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Composition;
 using System.Linq;
 
 using Avalonia.Media;
+using Avalonia.Threading;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -63,32 +65,109 @@ namespace ICSharpCode.ILSpy.Search
 			Title = "Search";
 			SelectedSearchMode = ResolvePersistedMode() ?? SearchModes[0];
 			PropertyChanged += OnPropertyChangedDispatch;
-			// Refresh search results when the active assembly list mutates. Skip the
-			// restart when ONLY auto-loaded (dependency) assemblies are added — those
-			// fire from navigating through results in a large assembly and would cause
-			// a tight feedback loop / flicker (issue #3734).
+			// Refresh search results when the active assembly list mutates, once it settles.
 			Util.MessageBus<Util.CurrentAssemblyListChangedEventArgs>.Subscribers += OnAssemblyListChanged;
 		}
 
+		// Assemblies arrive in bursts: decompiling what the user clicked loads its references,
+		// each of which reports its own change. Restarting per report cancels a walk that is
+		// already competing with the decompilation for the thread pool, and only the last of them
+		// could finish. Waiting for the list to settle runs one search, over the complete list
+		// (issue #3734).
+		static readonly TimeSpan AssemblyListSettle = TimeSpan.FromMilliseconds(500);
+		// ... but a list that keeps trickling must not defer the results forever.
+		static readonly TimeSpan AssemblyListSettleCap = TimeSpan.FromSeconds(2);
+
+		DispatcherTimer? assemblyListSettle;
+		DateTime firstUnsettledChange;
+		readonly List<LoadedAssembly> assembliesAddedSinceSearch = new();
+		bool needsFullRestart;
+
 		void OnAssemblyListChanged(object? sender, Util.CurrentAssemblyListChangedEventArgs e)
 		{
-			var inner = e.Inner;
-			if (inner.Action == NotifyCollectionChangedAction.Add
-				&& inner.NewItems?.Cast<LoadedAssembly>().All(asm => asm.IsAutoLoaded) == true)
-			{
-				return;
-			}
 			if (string.IsNullOrEmpty(SearchTerm))
 				return;
-			RestartSearch();
+
+			var inner = e.Inner;
+			if (inner.Action == NotifyCollectionChangedAction.Add && inner.NewItems != null)
+			{
+				// Added assemblies can only add matches, so what is already shown stays valid.
+				assembliesAddedSinceSearch.AddRange(inner.NewItems.Cast<LoadedAssembly>());
+			}
+			else
+			{
+				// A removal or a reset can invalidate what is on screen; only a full walk is safe.
+				needsFullRestart = true;
+			}
+
+			if (assemblyListSettle == null)
+			{
+				firstUnsettledChange = DateTime.UtcNow;
+				assemblyListSettle = new DispatcherTimer(AssemblyListSettle,
+					DispatcherPriority.Background, (_, _) => SearchTheSettledList());
+			}
+			else if (DateTime.UtcNow - firstUnsettledChange >= AssemblyListSettleCap)
+			{
+				SearchTheSettledList();
+				return;
+			}
+			assemblyListSettle.Stop();
+			assemblyListSettle.Start();
+		}
+
+		void SearchTheSettledList()
+		{
+			assemblyListSettle?.Stop();
+			assemblyListSettle = null;
+			var added = assembliesAddedSinceSearch.ToList();
+			bool full = needsFullRestart;
+			assembliesAddedSinceSearch.Clear();
+			needsFullRestart = false;
+
+			if (string.IsNullOrEmpty(SearchTerm))
+				return;
+			// Extending is only sound on top of a finished walk for the same term: one still in
+			// flight has not seen the whole list, and a cancelled one left it partial.
+			if (full || currentSearch is not { IsCompleted: true } || added.Count == 0)
+				RestartSearch();
+			else
+				RestartSearch(extendWith: added);
 		}
 
 		void OnPropertyChangedDispatch(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName is nameof(SearchTerm) or nameof(SelectedSearchMode))
-				RestartSearch();
+			// Typing is debounced; picking a mode is a single deliberate act, so it restarts at once.
+			if (e.PropertyName == nameof(SearchTerm))
+				RestartSearchAfterTypingPause();
 			if (e.PropertyName == nameof(SelectedSearchMode))
+			{
+				RestartSearch();
 				PersistSelectedMode();
+			}
+		}
+
+		// Long enough to swallow the gaps within a typed word, short enough that a search still
+		// feels like it starts as soon as the user stops.
+		static readonly TimeSpan SearchTermDebounce = TimeSpan.FromMilliseconds(200);
+		DispatcherTimer? searchTermDebounce;
+
+		/// <summary>
+		/// Restarts the search once typing pauses, instead of on every keystroke.
+		/// </summary>
+		/// <remarks>
+		/// Each restart cancels the walk in progress and starts another one on the thread pool, so
+		/// typing a twenty-character term used to start and abandon twenty searches, of which only
+		/// the last could finish.
+		/// </remarks>
+		void RestartSearchAfterTypingPause()
+		{
+			searchTermDebounce ??= new DispatcherTimer(SearchTermDebounce, DispatcherPriority.Input, (_, _) => {
+				searchTermDebounce!.Stop();
+				RestartSearch();
+			});
+			// Restarting the timer is what makes the wait "since the last keystroke".
+			searchTermDebounce.Stop();
+			searchTermDebounce.Start();
 		}
 
 		SearchModeEntry? ResolvePersistedMode()
@@ -222,11 +301,15 @@ namespace ICSharpCode.ILSpy.Search
 
 		RunningSearch? currentSearch;
 
-		void RestartSearch()
+		/// <param name="extendWith">
+		/// When given, only these assemblies are walked and the results already shown are kept.
+		/// </param>
+		void RestartSearch(IReadOnlyList<LoadedAssembly>? extendWith = null)
 		{
 			currentSearch?.Cancel();
 			currentSearch = null;
-			Results.Clear();
+			if (extendWith == null)
+				Results.Clear();
 			IsSearching = false;
 
 			var term = SearchTerm ?? string.Empty;
@@ -258,7 +341,8 @@ namespace ICSharpCode.ILSpy.Search
 				apiVisibility,
 				factory,
 				Results,
-				sortComparer);
+				sortComparer,
+				extendWith);
 			run.Completed += OnRunCompleted;
 			currentSearch = run;
 			IsSearching = true;
