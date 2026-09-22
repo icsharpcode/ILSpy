@@ -68,6 +68,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// highlight (square corners, no border) instead of a recoloured run.
 			TextArea.SelectionCornerRadius = 0;
 			TextArea.Bind(TextArea.SelectionBrushProperty, this.GetResourceObservable("ILSpy.EditorSelectionBrush"));
+			this.Bind(SearchResultsBrushProperty, this.GetResourceObservable("ILSpy.EditorSearchResultsBrush"));
 			this.Bind(BackgroundProperty, this.GetResourceObservable("ILSpy.EditorBackground"));
 		}
 
