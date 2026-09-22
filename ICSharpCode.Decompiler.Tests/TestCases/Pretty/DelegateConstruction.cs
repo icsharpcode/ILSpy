@@ -529,7 +529,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction
 
 		public static void ExtensionDelegateReference(IEnumerable<int> ints)
 		{
-			Use2(ints.Select<int, int>);
+			Use2(ints.Select);
 		}
 
 #if CS70

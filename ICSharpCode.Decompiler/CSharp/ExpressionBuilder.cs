@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.compilation = decompilationContext.Compilation;
 			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(
 				compilation.MainModule,
-				decompileRun.UsingScope,
+				decompileRun.GetUsingScopeFor(decompilationContext.CurrentTypeDefinition?.Namespace),
 				decompilationContext.CurrentTypeDefinition,
 				decompilationContext.CurrentMember
 				));
