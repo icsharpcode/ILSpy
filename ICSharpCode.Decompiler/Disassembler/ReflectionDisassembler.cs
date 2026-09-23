@@ -1276,6 +1276,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.Public, "public" },
 		};
 
+#pragma warning disable SYSLIB0050 // Type or member is obsolete
 		internal static readonly EnumNameCollection<FieldAttributes> fieldAttributes = new EnumNameCollection<FieldAttributes>() {
 			{ FieldAttributes.Static, "static" },
 			{ FieldAttributes.Literal, "literal" },
@@ -1284,6 +1285,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.RTSpecialName, "rtspecialname" },
 			{ FieldAttributes.NotSerialized, "notserialized" },
 		};
+#pragma warning restore SYSLIB0050 // Type or member is obsolete
 
 		public void DisassembleField(MetadataFile module, FieldDefinitionHandle handle)
 		{
@@ -1584,6 +1586,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.UnicodeClass, "unicode" },
 		};
 
+#pragma warning disable SYSLIB0050 // Type or member is obsolete
 		internal static readonly EnumNameCollection<TypeAttributes> typeAttributes = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.Abstract, "abstract" },
 			{ TypeAttributes.Sealed, "sealed" },
@@ -1594,6 +1597,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.BeforeFieldInit, "beforefieldinit" },
 			{ TypeAttributes.HasSecurity, null },
 		};
+#pragma warning restore SYSLIB0050 // Type or member is obsolete
 
 		public void DisassembleType(MetadataFile module, TypeDefinitionHandle type)
 		{

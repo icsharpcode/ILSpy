@@ -57,6 +57,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		/// <param name="info">The object that holds the serialized object data.</param>
 		/// <param name="context">The contextual information about the source or destination.</param>
+#if NET5_0_OR_GREATER
+		[Obsolete("This API supports obsolete formatter-based serialization. It should not be called or extended by application code.", DiagnosticId = "SYSLIB0051", UrlFormat = "https://aka.ms/dotnet-warnings/{0}")]
+#endif
 		protected ReferenceResolvingException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context)
 			: base(info, context)
 		{
