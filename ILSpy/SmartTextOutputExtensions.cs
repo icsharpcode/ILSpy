@@ -20,7 +20,6 @@ using System;
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -92,7 +91,6 @@ namespace ICSharpCode.ILSpy
 
 			output.AddUIElement(() => {
 				var button = new Button {
-					Cursor = new Cursor(StandardCursorType.Arrow),
 					Margin = new Thickness(2),
 					Padding = new Thickness(9, 1, 9, 1),
 					MinWidth = 73,

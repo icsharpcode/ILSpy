@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 
 using Avalonia.Controls;
+using Avalonia.Input;
 
 using AvaloniaEdit.Rendering;
 
@@ -74,6 +75,11 @@ namespace ICSharpCode.ILSpy.TextView
 			if (!realised.TryGetValue(offset, out var control))
 			{
 				control = uiElements[r].Value();
+				// Inline controls are visual children of AvaloniaEdit's TextView and inherit the text
+				// area's I-beam. They are widgets, not text, so default them to the arrow; a factory
+				// that sets its own cursor (e.g. a hand on a link) keeps it.
+				if (!control.IsSet(InputElement.CursorProperty))
+					control.Cursor = DecompilerTextView.ArrowCursor;
 				realised[offset] = control;
 			}
 			return new InlineObjectElement(0, control);
