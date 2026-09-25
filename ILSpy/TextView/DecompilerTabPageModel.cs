@@ -43,6 +43,14 @@ using ICSharpCode.ILSpy.ViewModels;
 
 namespace ICSharpCode.ILSpy.TextView
 {
+	public sealed class NavigateRequestedEventArgs(ReferenceSegment segment, object? source = null, bool inNewTabPage = false) : EventArgs
+	{
+		public ReferenceSegment Segment { get; } = segment ?? throw new ArgumentNullException(nameof(segment));
+		public object Reference { get; } = segment.Reference ?? throw new ArgumentException("The reference segment must have a reference.", nameof(segment));
+		public object? Source { get; } = source;
+		public bool InNewTabPage { get; } = inNewTabPage;
+	}
+
 	/// <summary>
 	/// A document tab that hosts decompiled output for a single tree node. Re-decompiles when
 	/// <see cref="CurrentNode"/> changes; previous in-flight decompilations are cancelled so a
@@ -274,10 +282,10 @@ namespace ICSharpCode.ILSpy.TextView
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)
 		/// resolves the target on the assembly tree side.
 		/// </summary>
-		public event System.Action<ReferenceSegment>? NavigateRequested;
+		public event EventHandler<NavigateRequestedEventArgs>? NavigateRequested;
 
-		internal void RaiseNavigateRequested(ReferenceSegment segment)
-			=> NavigateRequested?.Invoke(segment);
+		internal void RaiseNavigateRequested(ReferenceSegment segment, bool inNewTabPage = false)
+			=> NavigateRequested?.Invoke(this, new NavigateRequestedEventArgs(segment, inNewTabPage: inNewTabPage));
 
 		/// <summary>
 		/// Fired when the user activates an AvaloniaEdit hyperlink. Subscribers return

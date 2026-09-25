@@ -121,7 +121,7 @@ public class MemberReferenceHighlightTests
 		fieldSegments.Count(r => r.IsDefinition).Should().Be(1);
 		fieldSegments.Should().HaveCountGreaterThanOrEqualTo(3, "the field has one definition and two uses");
 		bool navigated = false;
-		tab.NavigateRequested += _ => navigated = true;
+		tab.NavigateRequested += (_, _) => navigated = true;
 
 		var use = fieldSegments.First(r => !r.IsDefinition);
 		view.OnReferenceClicked(use);
@@ -176,7 +176,7 @@ public class MemberReferenceHighlightTests
 
 		var fieldSegments = SegmentsOf(tab, nameof(MemberHighlightSample.Field));
 		var use = fieldSegments.First(r => !r.IsDefinition);
-		view.OnReferenceClicked(use, ctrlHeld: true);
+		view.OnReferenceClicked(use, DecompilerTextView.ReferenceClickKind.Navigate);
 
 		view.LocalReferenceMarks.Should().BeEmpty(
 			"Ctrl+Click must navigate even with the setting enabled");
@@ -212,7 +212,7 @@ public class MemberReferenceHighlightTests
 		var point = textView.TranslatePoint(visual, window)!.Value;
 
 		bool navigated = false;
-		tab.NavigateRequested += _ => navigated = true;
+		tab.NavigateRequested += (_, _) => navigated = true;
 
 		window.MouseDown(point, MouseButton.Left);
 		window.MouseUp(point, MouseButton.Left);
@@ -271,7 +271,7 @@ public class MemberReferenceHighlightTests
 		view.LocalReferenceMarks.Should().NotBeEmpty();
 
 		// A subsequent navigating click (Ctrl) on another member clears the previous marks.
-		view.OnReferenceClicked(use, ctrlHeld: true);
+		view.OnReferenceClicked(use, DecompilerTextView.ReferenceClickKind.Navigate);
 		view.LocalReferenceMarks.Should().BeEmpty();
 	}
 }

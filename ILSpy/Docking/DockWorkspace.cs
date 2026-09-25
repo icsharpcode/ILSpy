@@ -660,17 +660,15 @@ namespace ICSharpCode.ILSpy.Docking
 			}
 		}
 
-		void OnNavigateRequested(ReferenceSegment segment)
+		void OnNavigateRequested(object? sender, NavigateRequestedEventArgs e)
 		{
 			// Hyperlink click in the decompiler view: resolve the segment's reference to a tree
 			// node and select it. Falls through silently when we don't know how to model the
 			// reference (only types/members/EntityReferences are supported today).
-			if (segment.Reference == null)
-				return;
 			// EntityReferences with a non-"decompile" protocol (e.g. metadata://) get a first
 			// pass through registered IProtocolHandler exports. The first handler returning a
 			// non-null node wins; if none match we fall through to the default resolver.
-			if (segment.Reference is ICSharpCode.ILSpy.EntityReference entity
+			if (e.Reference is ICSharpCode.ILSpy.EntityReference entity
 				&& entity.Protocol != "decompile")
 			{
 				var module = entity.ResolveAssembly(assemblyTreeModel.AssemblyList!);
@@ -681,15 +679,23 @@ namespace ICSharpCode.ILSpy.Docking
 						var resolved = handler.Resolve(entity.Protocol, module, entity.Handle, out _);
 						if (resolved != null)
 						{
-							assemblyTreeModel.SelectedItem = resolved;
+							if (e.InNewTabPage)
+								OpenNodeInNewTab(resolved);
+							else
+								assemblyTreeModel.SelectedItem = resolved;
 							return;
 						}
 					}
 				}
 			}
-			var node = assemblyTreeModel.FindTreeNode(segment.Reference);
+			var node = assemblyTreeModel.FindTreeNode(e.Reference);
 			if (node != null)
-				assemblyTreeModel.SelectedItem = node;
+			{
+				if (e.InNewTabPage)
+					OpenNodeInNewTab(node);
+				else
+					assemblyTreeModel.SelectedItem = node;
+			}
 		}
 
 		static IEnumerable<Commands.IProtocolHandler> TryGetProtocolHandlers()

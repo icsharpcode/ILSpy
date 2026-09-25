@@ -83,7 +83,7 @@ public class HoverOnlyReferenceTests
 		hoverOnly.Should().NotBeEmpty("the dynamic member access 'd.Property' is a hover-only reference");
 
 		var navigated = false;
-		tab.NavigateRequested += _ => navigated = true;
+		tab.NavigateRequested += (_, _) => navigated = true;
 		view.OnReferenceClicked(hoverOnly.First());
 
 		navigated.Should().BeFalse("clicking a hover-only reference must not navigate");
