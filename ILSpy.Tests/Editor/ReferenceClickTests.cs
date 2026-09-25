@@ -90,7 +90,7 @@ public class ReferenceClickTests
 		var (_, point) = FindVisibleReference(window, view, tab);
 
 		var navigated = false;
-		tab.NavigateRequested += _ => navigated = true;
+		tab.NavigateRequested += (_, _) => navigated = true;
 
 		window.MouseDown(point, MouseButton.Left);
 		window.MouseMove(point + new Point(60, 0));
@@ -105,15 +105,58 @@ public class ReferenceClickTests
 	public async Task Stationary_Click_On_A_Link_Navigates()
 	{
 		var (window, view, tab) = await SetupAsync();
-		var (_, point) = FindVisibleReference(window, view, tab);
+		var (segment, point) = FindVisibleReference(window, view, tab);
 
 		var navigated = false;
-		tab.NavigateRequested += _ => navigated = true;
+		NavigateRequestedEventArgs? args = null;
+		tab.NavigateRequested += (_, e) => {
+			navigated = true;
+			args = e;
+		};
 
 		window.MouseDown(point, MouseButton.Left);
 		window.MouseUp(point, MouseButton.Left);
 
 		navigated.Should().BeTrue("a click without dragging follows the link");
+		args.Should().NotBeNull();
+		args!.Segment.Should().BeSameAs(segment);
+		args.Reference.Should().BeSameAs(segment.Reference);
+		args.Source.Should().BeNull();
+		args.InNewTabPage.Should().BeFalse();
+	}
+
+	[AvaloniaTest]
+	public async Task Middle_Click_On_A_Link_Navigates_In_New_Tab()
+	{
+		var (window, view, tab) = await SetupAsync();
+		var (segment, point) = FindVisibleReference(window, view, tab);
+
+		NavigateRequestedEventArgs? args = null;
+		tab.NavigateRequested += (_, e) => args = e;
+
+		window.MouseDown(point, MouseButton.Middle);
+		window.MouseUp(point, MouseButton.Middle);
+
+		args.Should().NotBeNull();
+		args!.Segment.Should().BeSameAs(segment);
+		args.Reference.Should().BeSameAs(segment.Reference);
+		args.InNewTabPage.Should().BeTrue();
+	}
+
+	[AvaloniaTest]
+	public async Task Ctrl_Middle_Click_On_A_Link_Navigates_In_New_Tab()
+	{
+		var (window, view, tab) = await SetupAsync();
+		var (_, point) = FindVisibleReference(window, view, tab);
+
+		NavigateRequestedEventArgs? args = null;
+		tab.NavigateRequested += (_, e) => args = e;
+
+		window.MouseDown(point, MouseButton.Middle, RawInputModifiers.Control);
+		window.MouseUp(point, MouseButton.Middle, RawInputModifiers.Control);
+
+		args.Should().NotBeNull();
+		args!.InNewTabPage.Should().BeTrue("middle-click chooses the target tab; Ctrl only forces navigation over highlighting");
 	}
 
 	[AvaloniaTest]
@@ -121,7 +164,7 @@ public class ReferenceClickTests
 	{
 		var (window, view, tab) = await SetupAsync();
 		var (_, point) = FindVisibleReference(window, view, tab);
-		tab.NavigateRequested += _ => { };
+		tab.NavigateRequested += (_, _) => { };
 
 		// A stationary click navigates; the gesture must end cleanly so that afterwards moving
 		// the mouse with no button held does not extend a selection (issue #3793).
