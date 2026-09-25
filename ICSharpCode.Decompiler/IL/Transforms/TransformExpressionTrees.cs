@@ -1202,9 +1202,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				var trueInstType = trueValue.InferType(context.TypeSystem);
 				var falseInstType = falseValue.InferType(context.TypeSystem);
-				if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(trueInstType, falseInstType))
+				IType? resultType = null;
+				if (NormalizeTypeVisitor.TypeErasure.EquivalentTypes(trueInstType, falseInstType))
+					resultType = trueInstType;
+				else if (conversions.IsImplicitReferenceConversion(falseInstType, trueInstType))
+					resultType = trueInstType;
+				else if (conversions.IsImplicitReferenceConversion(trueInstType, falseInstType))
+					resultType = falseInstType;
+				if (resultType == null)
 					return null;
-				return new IfInstruction(conditionValue, trueValue, falseValue, trueInstType);
+				return new IfInstruction(conditionValue, trueValue, falseValue, resultType);
 			};
 		}
 
