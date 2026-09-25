@@ -369,7 +369,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		internal static IEnumerable<string> GetErrorCommentLines(Exception error)
 		{
-			yield return "ILSpy could not decompile this. Please report the exception below,";
+			yield return error is DecompilerException decompilerException
+				? $"ILSpy could not decompile this member: {GetErrorHeadline(decompilerException)}"
+				: "ILSpy could not decompile this member.";
+			yield return "Please report the exception below,";
 			yield return "along with the assembly it came from, at " + DecompilationErrorReportUrl;
 			foreach (string line in error.ToString().Split('\n'))
 			{
@@ -2474,7 +2477,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				// One method the decompiler cannot handle must not cost the user the type or, when
 				// exporting a project, the assembly around it: keep the signature, put the error in
 				// front of it, and let the remaining members decompile.
-				errors.Add(innerException as DecompilerException ?? new DecompilerException(module, method, innerException));
+				var decompilationError = innerException as DecompilerException ?? new DecompilerException(module, method, innerException);
+				errors.Add(decompilationError);
 				// The unwind left this member's step groups open; close them so the members after it are
 				// recorded as its siblings instead of disappearing into the group that failed.
 				Stepper.EndOpenGroups(groupDepth);
@@ -2491,7 +2495,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// code does - and the body keeps the member's shape intact.
 					var errorBody = new BlockStatement();
 					var errorStatement = new EmptyStatement();
-					foreach (string line in GetErrorCommentLines(innerException))
+					foreach (string line in GetErrorCommentLines(decompilationError))
 					{
 						errorStatement.AddTrailingTrivia(new Comment(" " + line));
 					}
@@ -2501,7 +2505,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				else
 				{
 					// Definitions-only output has no body to put the error in.
-					foreach (string line in GetErrorCommentLines(innerException))
+					foreach (string line in GetErrorCommentLines(decompilationError))
 					{
 						entityDecl.AddLeadingTrivia(new Comment(" " + line));
 					}
