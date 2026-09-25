@@ -334,7 +334,7 @@ static string MetricNotes(ChangedType c)
 // Locates reference assemblies by simple name and stages them next to the assembly
 // being decompiled. Sources, in order: the reference-assembly pack for the assembly's
 // own target framework, the --refs directories (indexed once), and the machine-wide
-// NuGet cache (probed per name, so nothing scans ~40k packages).
+// NuGet cache (probed per package name first, then indexed by contained assembly names).
 //
 // The pack has to be chosen per assembly and has to win: a net9.0 assembly resolved
 // against the .NET Framework packs finds mscorlib but not ValueTask or the async
@@ -345,6 +345,7 @@ static string MetricNotes(ChangedType c)
 sealed class RefIndex
 {
 	readonly Dictionary<string, string> byName = new(StringComparer.OrdinalIgnoreCase);
+	Dictionary<string, string>? byPackageAssemblyName;
 	readonly List<string> probeRoots = new();
 	readonly string nugetRoot;
 	// Reference assemblies are picked per corpus assembly, keyed by its TargetFrameworkAttribute:
@@ -521,8 +522,43 @@ sealed class RefIndex
 				return candidate;
 			}
 		}
+		if (PackageAssemblyIndex().TryGetValue(simpleName, out hit))
+		{
+			byName[simpleName] = hit;
+			return hit;
+		}
 		byName[simpleName] = null!;   // negative cache: probing the filesystem twice buys nothing
 		return null;
+	}
+
+	Dictionary<string, string> PackageAssemblyIndex()
+	{
+		if (byPackageAssemblyName != null)
+			return byPackageAssemblyName;
+		var index = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		foreach (var root in probeRoots)
+		{
+			foreach (var packageDir in Directory.EnumerateDirectories(root))
+			{
+				foreach (var versionDir in Directory.EnumerateDirectories(packageDir)
+					.OrderByDescending(d => Path.GetFileName(d), StringComparer.OrdinalIgnoreCase))
+				{
+					foreach (var baseDirName in new[] { "lib", "ref" })
+					{
+						var baseDir = Path.Combine(versionDir, baseDirName);
+						if (!Directory.Exists(baseDir))
+							continue;
+						foreach (var dll in Directory.EnumerateFiles(baseDir, "*.dll", SearchOption.AllDirectories))
+						{
+							var name = Path.GetFileNameWithoutExtension(dll);
+							if (!index.ContainsKey(name))
+								index[name] = dll;
+						}
+					}
+				}
+			}
+		}
+		return byPackageAssemblyName = index;
 	}
 
 	// Builds the staging directory for one assembly and returns the path to decompile
