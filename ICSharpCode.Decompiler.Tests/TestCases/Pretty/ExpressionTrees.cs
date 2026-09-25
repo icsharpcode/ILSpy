@@ -442,6 +442,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			ToCode(X(), () => (s.Length < 1) ? ((short)0) : ((short)s[0]));
 		}
 
+		public void CallArgumentConditionalWithExplicitResultType()
+		{
+			ParameterExpression parameterExpression = Expression.Parameter(typeof(bool), "condition");
+			Expression.Lambda<Func<bool, bool>>(Expression.Call(new Func<object, bool>(AcceptObject).Method, Expression.Condition(parameterExpression, Expression.Constant(1), Expression.Constant("text"), typeof(object))), new ParameterExpression[1] { parameterExpression });
+		}
+
+		public void CallArgumentConditionalWithReferenceConversion(bool condition)
+		{
+			ToCode(X(), (bool b) => AcceptObject(b ? ((Exception)new ArgumentException()) : ((Exception)new InvalidOperationException())));
+			ToCode(X(), (bool b) => AcceptObject(b ? ((Exception)new InvalidOperationException()) : ((Exception)new ArgumentException())));
+			ToCode(X(), () => AcceptObject(condition ? ((object)new ArgumentException()) : ((object)new InvalidOperationException())));
+			ToCode(X(), () => AcceptObject(condition ? ((object)new InvalidOperationException()) : ((object)new ArgumentException())));
+		}
+
 		public void StringsImplicitCast()
 		{
 			int i = 1;
@@ -489,6 +503,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private bool MyEquals(ExpressionTrees other)
 		{
 			throw new NotImplementedException();
+		}
+
+		private static bool AcceptObject(object value)
+		{
+			return value != null;
 		}
 
 		public void MethodGroupAsExtensionMethod()
