@@ -827,7 +827,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!(body.Instructions.Single() is Leave leave))
 				return false;
 			// leave IL_0000 (call GetTypeFromHandle(ldtypetoken R))
-			if (!TransformExpressionTrees.MatchGetTypeFromHandle(leave.Value, out IType ty))
+			if (!TransformExpressionTrees.MatchGetTypeFromHandle(leave.Value, out var ty))
 				return false;
 			return IsRecordType(ty);
 		}
