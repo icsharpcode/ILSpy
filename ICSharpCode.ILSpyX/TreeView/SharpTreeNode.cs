@@ -212,11 +212,18 @@ namespace ICSharpCode.ILSpyX.TreeView
 			}
 			if (e.OldItems != null)
 			{
+				// Detach the whole set before announcing any of it. The per-node notifications
+				// below reach the selection, and a listener that reacts to the first of them would
+				// otherwise still find the rest of the same removal attached, and treat those as a
+				// selection the user made -- ending with the last node of the set on its own.
 				foreach (SharpTreeNode node in e.OldItems)
 				{
 					Debug.Assert(node.modelParent == this);
 					node.modelParent = null;
 					node.OnParentChanged();
+				}
+				foreach (SharpTreeNode node in e.OldItems)
+				{
 					Debug.WriteLine("Removing {0} from {1}", node, this);
 					SharpTreeNode removeEnd = node;
 					while (removeEnd.modelChildren != null && removeEnd.modelChildren.Count > 0)
@@ -702,6 +709,18 @@ namespace ICSharpCode.ILSpyX.TreeView
 		public virtual void DeleteCore()
 		{
 			throw new NotSupportedException(GetType().Name + " does not support deletion");
+		}
+
+		/// <summary>
+		/// Deletes <paramref name="nodes"/> -- the whole set the user asked to remove, this node
+		/// included. Override when the underlying model can drop a set in one operation, so its
+		/// listeners see one change instead of one per node.
+		/// </summary>
+		public virtual void Delete(SharpTreeNode[] nodes)
+		{
+			ArgumentNullException.ThrowIfNull(nodes);
+			foreach (var node in nodes)
+				node.Delete();
 		}
 
 		public virtual IPlatformDataObject Copy(SharpTreeNode[] nodes)

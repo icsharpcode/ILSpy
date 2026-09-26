@@ -40,12 +40,20 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 	{
 		readonly SharpTreeView tree;
 		readonly ObservableCollection<SharpTreeNode> modelSelection;
+		readonly Func<IDisposable>? batchSelectionChange;
 		bool syncing;
 
-		public TreeSelectionBinder(SharpTreeView tree, ObservableCollection<SharpTreeNode> modelSelection)
+		/// <param name="batchSelectionChange">
+		/// Optional: opens a scope over which the view-model coalesces its selection fan-out, so a
+		/// sync that touches many rows costs one notification instead of one per row. Panes whose
+		/// model has no such scope pass null and get the per-item behaviour.
+		/// </param>
+		public TreeSelectionBinder(SharpTreeView tree, ObservableCollection<SharpTreeNode> modelSelection,
+			Func<IDisposable>? batchSelectionChange = null)
 		{
 			this.tree = tree ?? throw new ArgumentNullException(nameof(tree));
 			this.modelSelection = modelSelection ?? throw new ArgumentNullException(nameof(modelSelection));
+			this.batchSelectionChange = batchSelectionChange;
 			tree.SelectionChanged += OnTreeSelectionChanged;
 			tree.Loaded += OnTreeLoaded;
 			modelSelection.CollectionChanged += OnModelSelectionChanged;
@@ -83,14 +91,22 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			try
 			{
 				var current = tree.SelectedItems!.OfType<SharpTreeNode>().ToHashSet();
+				// One batch for the whole reconciliation: each add/remove otherwise fans out into a
+				// full command re-query and a decompile of the intermediate selection.
+				using var batch = batchSelectionChange?.Invoke();
+				// Membership comes from a set, not a scan of modelSelection per node -- with every
+				// row selected the linear scan made this quadratic.
+				var kept = new HashSet<SharpTreeNode>();
 				for (int i = modelSelection.Count - 1; i >= 0; i--)
 				{
-					if (!current.Contains(modelSelection[i]))
+					if (current.Contains(modelSelection[i]))
+						kept.Add(modelSelection[i]);
+					else
 						modelSelection.RemoveAt(i);
 				}
 				foreach (var node in current)
 				{
-					if (!modelSelection.Contains(node))
+					if (!kept.Contains(node))
 						modelSelection.Add(node);
 				}
 			}
