@@ -763,7 +763,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			if (context.Settings.FieldKeyword)
 				return TransformFieldBackedProperty(propertyDeclaration, property);
-			if (!CanTransformToAutomaticProperty(property, !(property.DeclaringTypeDefinition?.Fields.Any(f => f.Name == "_" + property.Name && f.IsCompilerGenerated()) ?? false)))
+			if (!CanTransformToAutomaticProperty(property, accessorsMustBeCompilerGenerated: false))
 				return null;
 			IField? field = null;
 			Match m = automaticPropertyPattern.Match(propertyDeclaration);
@@ -786,7 +786,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			field = (IField)field.MemberDefinition;
 			if (propertyDeclaration.Setter?.HasModifier(Modifiers.Readonly) == true || (propertyDeclaration.HasModifier(Modifiers.Readonly) && propertyDeclaration.Setter is not null))
 				return null;
-			if (field.IsCompilerGenerated() && field.DeclaringTypeDefinition == property.DeclaringTypeDefinition)
+			if (IsPropertyBackingField(property, field))
 			{
 				context.Step("Convert property to auto-property", propertyDeclaration);
 				// Clearing the accessor body turns it into an auto-property accessor.
@@ -938,26 +938,40 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (property.Parameters.Count > 0 || property.DeclaringTypeDefinition == null)
 				return false;
 			// A type definition's fields are unspecialized, so compare against the property
-			// DEFINITION's return type; a specialized property in a generic type would
+			// definition's return type; a specialized property in a generic type would
 			// otherwise never match its own backing field.
 			var propertyType = ((IProperty)property.MemberDefinition).ReturnType;
 			foreach (var candidate in property.DeclaringTypeDefinition.Fields)
 			{
-				if (candidate.IsCompilerGenerated()
-					&& candidate.IsStatic == property.IsStatic
-					// The trivial accessor bodies of a classic auto-property guaranteed this
-					// structurally; arbitrary accessor bodies do not. A field of a different
-					// type is not this property's storage, and removing it while printing
-					// `field` would substitute storage of the property's type instead.
-					&& NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(candidate.ReturnType, propertyType)
-					&& NameCouldBeBackingFieldOfAutomaticProperty(candidate.Name, out var propertyName)
-					&& propertyName == property.Name)
-				{
-					field = candidate;
-					return true;
-				}
+				if (candidate.IsStatic != property.IsStatic)
+					continue;
+				if (!NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(candidate.ReturnType, propertyType))
+					continue;
+				if (!NameCouldBeBackingFieldOfAutomaticProperty(candidate.Name, out var propertyName) || propertyName != property.Name)
+					continue;
+				if (!candidate.IsCompilerGenerated() && !IsMetadataPropertyBackingField(property, candidate))
+					continue;
+				field = candidate;
+				return true;
 			}
 			return false;
+		}
+
+		static bool IsPropertyBackingField(IProperty property, IField field)
+		{
+			return field.DeclaringTypeDefinition == property.DeclaringTypeDefinition
+				&& field.IsStatic == property.IsStatic
+				&& (field.IsCompilerGenerated() || IsMetadataPropertyBackingField(property, field));
+		}
+
+		static bool IsMetadataPropertyBackingField(IProperty property, IField field)
+		{
+			if (property.MetadataToken.IsNil || field.MetadataToken.IsNil)
+				return false;
+			if (field.ParentModule is not MetadataModule module)
+				return false;
+			return module.MetadataFile.PropertyAndEventBackingFieldLookup.IsPropertyBackingField((FieldDefinitionHandle)field.MetadataToken, out var propertyHandle)
+				&& property.MetadataToken == propertyHandle;
 		}
 
 		/// <summary>
