@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 
 namespace ICSharpCode.ILSpy.Commands
 {
@@ -77,11 +78,33 @@ namespace ICSharpCode.ILSpy.Commands
 		/// </summary>
 		public static void InvalidateRequerySuggested()
 		{
-			var dispatcher = global::Avalonia.Threading.Dispatcher.UIThread;
-			if (dispatcher.CheckAccess())
+			// Coalesced, like the WPF CommandManager this mirrors: a raise walks every bound menu
+			// item and toolbar button and re-evaluates its CanExecute, so a caller that reports a
+			// burst of state changes (a multi-row selection, a batch of removed assemblies) would
+			// otherwise pay for that walk once per change. Posting at Background priority also lets
+			// the state settle first, so commands re-evaluate once against the final state.
+			if (Interlocked.Exchange(ref raisePending, 1) != 0)
+				return;
+			global::Avalonia.Threading.Dispatcher.UIThread.Post(
+				RaisePending, global::Avalonia.Threading.DispatcherPriority.Background);
+		}
+
+		static int raisePending;
+
+		static void RaisePending()
+		{
+			// The flag stays set for the duration of the raise, so an InvalidateRequerySuggested
+			// issued by a CanExecute handler folds into the raise already in progress instead of
+			// posting another one. Clearing it first would let the two re-post each other forever,
+			// and the dispatcher would never drain.
+			try
+			{
 				Raise();
-			else
-				dispatcher.Post(Raise);
+			}
+			finally
+			{
+				Interlocked.Exchange(ref raisePending, 0);
+			}
 		}
 
 		static void Raise()
