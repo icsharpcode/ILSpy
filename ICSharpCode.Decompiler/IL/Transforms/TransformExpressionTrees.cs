@@ -16,9 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
@@ -85,13 +88,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// v must be a single-definition local or stack slot of type
 		/// System.Linq.Expressions.ParameterExpression.
 		/// </summary>
-		bool MatchParameterVariableAssignment(ILInstruction expr, out ILVariable parameterReferenceVar, out IType type, out string name)
+		bool MatchParameterVariableAssignment(ILInstruction expr, [NotNullWhen(true)] out ILVariable parameterReferenceVar, [NotNullWhen(true)] out IType type, [NotNullWhen(true)] out string name)
 		{
 			// stloc(v, call(Expression::Parameter, call(Type::GetTypeFromHandle, ldtoken(...)), ldstr(...)))
-			type = null;
-			name = null;
-			if (!expr.MatchStLoc(out parameterReferenceVar, out var init))
+			parameterReferenceVar = null!;
+			type = null!;
+			name = null!;
+			if (!expr.MatchStLoc(out var variable, out var init))
 				return false;
+			parameterReferenceVar = variable;
 			if (!parameterReferenceVar.IsSingleDefinition)
 				return false;
 			if (!(parameterReferenceVar.Kind == VariableKind.Local || parameterReferenceVar.Kind == VariableKind.StackSlot))
@@ -102,21 +107,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(initCall.Method.FullNameIs("System.Linq.Expressions.Expression", "Parameter")))
 				return false;
-			CallInstruction typeArg = initCall.Arguments[0] as CallInstruction;
+			CallInstruction? typeArg = initCall.Arguments[0] as CallInstruction;
 			if (typeArg == null || typeArg.Arguments.Count != 1)
 				return false;
 			if (!typeArg.Method.FullNameIs("System.Type", "GetTypeFromHandle"))
 				return false;
-			return typeArg.Arguments[0].MatchLdTypeToken(out type) && initCall.Arguments[1].MatchLdStr(out name);
+			if (!typeArg.Arguments[0].MatchLdTypeToken(out var typeFromToken))
+				return false;
+			if (!initCall.Arguments[1].MatchLdStr(out var parameterName))
+				return false;
+			type = typeFromToken;
+			name = parameterName;
+			return true;
 		}
 
-		StatementTransformContext context;
-		Dictionary<ILVariable, (IType, string)> parameters;
-		Dictionary<ILVariable, ILVariable> parameterMapping;
-		List<ILInstruction> instructionsToRemove;
-		Stack<ILFunction> lambdaStack;
-		CSharpConversions conversions;
-		CSharpResolver resolver;
+		StatementTransformContext context = null!;
+		Dictionary<ILVariable, (IType, string)> parameters = null!;
+		Dictionary<ILVariable, ILVariable> parameterMapping = null!;
+		List<ILInstruction> instructionsToRemove = null!;
+		Stack<ILFunction> lambdaStack = null!;
+		CSharpConversions conversions = null!;
+		CSharpResolver resolver = null!;
 
 		/// <summary>
 		/// Starting at pos, collects the leading run of lambda parameter declarations
@@ -208,7 +219,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// expression tree type, Delegate otherwise. The returned delegate does the actual
 		/// building: nothing is mutated until it is invoked.
 		/// </summary>
-		Func<ILInstruction> ConvertLambda(CallInstruction instruction)
+		Func<ILInstruction?>? ConvertLambda(CallInstruction instruction)
 		{
 			if (instruction.Method.Name != "Lambda" || instruction.Arguments.Count != 2 || instruction.Method.ReturnType.FullName != "System.Linq.Expressions.Expression" || instruction.Method.ReturnType.TypeArguments.Count != 1)
 				return null;
@@ -232,7 +243,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			return BuildFunction;
 
-			ILFunction BuildFunction()
+			ILInstruction? BuildFunction()
 			{
 				lambdaStack.Push(function);
 				var convertedBody = bodyInstruction();
@@ -265,7 +276,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// yields an ILFunction its DelegateType and kind are taken from the return type of
 		/// the argument call; see <see cref="SetExpressionTreeFlag"/>.
 		/// </summary>
-		Func<ILInstruction> ConvertQuote(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertQuote(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 1)
 				return null;
@@ -281,7 +292,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				return BuildQuote;
 
-				ILInstruction BuildQuote()
+				ILInstruction? BuildQuote()
 				{
 					var f = converted();
 					if (f is ILFunction lambda && argument is CallInstruction call)
@@ -289,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						SetExpressionTreeFlag(lambda, call);
 					}
 
-					return f;
+					return f!;
 				}
 			}
 		}
@@ -366,14 +377,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// If typeHint is given and the built instruction has a different stack type, it is
 		/// wrapped in a conv to that stack type.
 		/// </summary>
-		Func<ILInstruction> ConvertInstruction(ILInstruction instruction, IType typeHint = null)
+		Func<ILInstruction?>? ConvertInstruction(ILInstruction instruction, IType? typeHint = null)
 		{
 			var inst = Convert();
 
 			if (inst == null)
 				return null;
 
-			ILInstruction DoConvert()
+			ILInstruction? DoConvert()
 			{
 				var result = inst();
 				if (result == null)
@@ -389,7 +400,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return DoConvert;
 
-			Func<ILInstruction> Convert()
+			Func<ILInstruction?>? Convert()
 			{
 				switch (instruction)
 				{
@@ -493,11 +504,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						return null;
 					case ILFunction function:
-						ILFunction ApplyChangesToILFunction()
+						ILInstruction? ApplyChangesToILFunction()
 						{
 							if (function.Kind == ILFunctionKind.ExpressionTree)
 							{
-								function.DelegateType = UnwrapExpressionTree(function.DelegateType);
+								function.DelegateType = UnwrapExpressionTree(function.DelegateType!);
 								function.Kind = ILFunctionKind.Delegate;
 							}
 							return function;
@@ -560,7 +571,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The element type T is taken from the inferred type of the converted array expression;
 		/// conversion fails if that type is not an array type.
 		/// </summary>
-		Func<ILInstruction> ConvertArrayIndex(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertArrayIndex(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -570,14 +581,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				arguments = new[] { invocation.Arguments[1] };
 
-			ILInstruction Convert()
+			ILInstruction? Convert()
 			{
 				var arrayInst = array();
 				if (arrayInst == null)
 					return null;
 				if (arrayInst.InferType(context.TypeSystem) is not ArrayType type)
 					return null;
-				Func<ILInstruction>[] toBeConverted = new Func<ILInstruction>[arguments.Count];
+				Func<ILInstruction?>[] toBeConverted = new Func<ILInstruction?>[arguments.Count];
 				for (int i = 0; i < arguments.Count; i++)
 				{
 					var converted = ConvertInstruction(arguments[i]);
@@ -585,7 +596,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					toBeConverted[i] = converted;
 				}
-				return new LdObj(new LdElema(type.ElementType, arrayInst, toBeConverted.SelectArray(f => f())) { DelayExceptions = true }, type.ElementType);
+				var indices = toBeConverted.SelectArray(f => f());
+				if (indices.Any(index => index == null))
+					return null;
+				return new LdObj(new LdElema(type.ElementType, arrayInst, indices!) { DelayExceptions = true }, type.ElementType);
 			}
 			return Convert;
 		}
@@ -595,14 +609,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =&gt;
 		/// ldlen.i4(array)
 		/// </summary>
-		Func<ILInstruction> ConvertArrayLength(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertArrayLength(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 1)
 				return null;
 			var converted = ConvertInstruction(invocation.Arguments[0]);
 			if (converted == null)
 				return null;
-			return () => new LdLen(StackType.I4, converted());
+			return () => {
+				var array = converted();
+				if (array == null)
+					return null;
+				return new LdLen(StackType.I4, array);
+			};
 		}
 
 		/// <summary>
@@ -617,7 +636,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// other operators require the two operand types to match. The four-argument shape lifts
 		/// the given method if the left operand type is nullable.
 		/// </summary>
-		Func<ILInstruction> ConvertBinaryNumericOperator(CallInstruction invocation, BinaryNumericOperator op, string operatorName, bool? isChecked = null)
+		Func<ILInstruction?>? ConvertBinaryNumericOperator(CallInstruction invocation, BinaryNumericOperator op, string operatorName, bool? isChecked = null)
 		{
 			if (invocation.Arguments.Count < 2)
 				return null;
@@ -640,9 +659,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return null;
 						var leftType = leftInst.InferType(context.TypeSystem);
 						var rightType = rightInst.InferType(context.TypeSystem);
+						var leftUnderlyingType = NullableType.GetUnderlyingType(leftType);
+						var rightUnderlyingType = NullableType.GetUnderlyingType(rightType);
 						if (op is BinaryNumericOperator.ShiftLeft or BinaryNumericOperator.ShiftRight)
 						{
-							if (!NullableType.GetUnderlyingType(rightType).IsKnownType(KnownTypeCode.Int32))
+							if (!rightUnderlyingType.IsKnownType(KnownTypeCode.Int32))
 								return null;
 						}
 						else
@@ -651,34 +672,47 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// of a small integer type to Int32 leaves its operand unchanged, because
 							// such values already occupy an I4 stack slot, so the two sides of
 							// `(short a, int b) => a + b` are Int16 and Int32 at this point.
-							if (NullableType.GetUnderlyingType(rightType).GetStackType()
-								!= NullableType.GetUnderlyingType(leftType).GetStackType())
+							if (leftUnderlyingType.GetStackType() != rightUnderlyingType.GetStackType())
 							{
-								return null;
+								if (leftUnderlyingType.Kind != TypeKind.Unknown && rightUnderlyingType.Kind != TypeKind.Unknown)
+									return null;
 							}
 						}
-						if (leftType.IsKnownType(KnownTypeCode.Decimal))
+						var type = leftType.Kind == TypeKind.Unknown ? rightType : leftType;
+						if (type.IsKnownType(KnownTypeCode.Decimal))
 						{
-							var op_Method = leftType.GetMethods(m => m.IsOperator && m.Name == operatorName).FirstOrDefault();
+							var op_Method = type.GetMethods(m => m.IsOperator && m.Name == operatorName).FirstOrDefault();
 							if (op_Method == null)
 								return null;
 							return new Call(op_Method) {
 								Arguments = { leftInst, rightInst }
 							};
 						}
-						return new BinaryNumericInstruction(op, leftInst, rightInst,
-							NullableType.GetUnderlyingType(leftType).GetStackType(),
-							NullableType.GetUnderlyingType(rightType).GetStackType(),
+						var isLifted = NullableType.IsNullable(leftType) || NullableType.IsNullable(rightType);
+						var inst = new BinaryNumericInstruction(op, leftInst, rightInst,
+							leftUnderlyingType.GetStackType(),
+							rightUnderlyingType.GetStackType(),
 							isChecked == true,
 							GetSignForOperator(op, isChecked == true, leftType),
-							isLifted: NullableType.IsNullable(leftType) || NullableType.IsNullable(rightType));
+							isLifted: isLifted);
+						if (isLifted)
+						{
+							inst.CSharpResultType = NullableType.Create(context.TypeSystem, leftUnderlyingType.Kind == TypeKind.Unknown ? rightUnderlyingType : leftUnderlyingType);
+						}
+						return inst;
 					};
 				// call Add(left, right, methodInfo): user-defined operator
 				case 3:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[2], out method))
 						return null;
-					return () => new Call((IMethod)method) {
-						Arguments = { left(), right() }
+					return () => {
+						var leftInst = left();
+						var rightInst = right();
+						if (leftInst == null || rightInst == null)
+							return null;
+						return new Call((IMethod)method) {
+							Arguments = { leftInst, rightInst }
+						};
 					};
 				// call Add(left, right, ldc.i4 liftToNull, methodInfo): the shape of the
 				// comparison factories; no arithmetic or bitwise factory declares it
@@ -694,7 +728,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return null;
 						var op_Method = (IMethod)method;
 						if (NullableType.IsNullable(leftInst.InferType(context.TypeSystem)))
-							op_Method = CSharpOperators.LiftUserDefinedOperator(op_Method);
+							op_Method = CSharpOperators.LiftUserDefinedOperator(op_Method)!;
 						return new Call(op_Method) {
 							Arguments = { leftInst, rightInst }
 						};
@@ -712,7 +746,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// stobj T(delayex.ldflda F(ldloc target), value)
 		/// The returned builder takes the variable holding the object being initialized.
 		/// </summary>
-		Func<ILVariable, ILInstruction> ConvertBind(CallInstruction invocation)
+		Func<ILVariable, ILInstruction?>? ConvertBind(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -742,11 +776,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				case IMethod method:
 					if (method.IsStatic)
-						return targetVariable => new Call(method) { Arguments = { new LdLoc(targetVariable), value() } };
+					{
+						return targetVariable => {
+							var valueInst = value();
+							if (valueInst == null)
+								return null;
+							return new Call(method) { Arguments = { new LdLoc(targetVariable), valueInst } };
+						};
+					}
 					else
-						return targetVariable => new CallVirt(method) { Arguments = { new LdLoc(targetVariable), value() } };
+					{
+						return targetVariable => {
+							var valueInst = value();
+							if (valueInst == null)
+								return null;
+							return new CallVirt(method) { Arguments = { new LdLoc(targetVariable), valueInst } };
+						};
+					}
 				case IField field:
-					return targetVariable => new StObj(new LdFlda(new LdLoc(targetVariable), (IField)member) { DelayExceptions = true }, value(), member.ReturnType);
+					return targetVariable => {
+						var valueInst = value();
+						if (valueInst == null)
+							return null;
+						return new StObj(new LdFlda(new LdLoc(targetVariable), field) { DelayExceptions = true }, valueInst, member.ReturnType);
+					};
 			}
 			return null;
 		}
@@ -765,12 +818,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The argument list is normally a single array-initializer block; if it is not, the
 		/// remaining arguments of the invocation are taken as the argument list directly.
 		/// </summary>
-		Func<ILInstruction> ConvertCall(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertCall(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count < 2)
 				return null;
-			IList<ILInstruction> arguments = null;
-			Func<ILInstruction> targetConverter = null;
+			IList<ILInstruction>? arguments = null;
+			Func<ILInstruction?>? targetConverter = null;
 			if (MatchGetMethodFromHandle(invocation.Arguments[0], out var member))
 			{
 				// static method
@@ -792,6 +845,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 				}
 			}
+			else
+			{
+				return null;
+			}
 			if (arguments == null)
 				return null;
 			IMethod method = (IMethod)member;
@@ -804,12 +861,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				if (!MatchGetTypeFromHandle(UnpackConstant(arguments[0]), out var delegateType))
 					return null;
-				return () => new NewObj(delegateType.GetConstructors().Single()) {
-					Arguments = { convertedArguments[1](), new LdFtn((IMethod)targetMethod) }
+				return () => {
+					var target = convertedArguments[1]();
+					if (target == null)
+						return null;
+					return new NewObj(delegateType.GetConstructors().Single()) {
+						Arguments = { target, new LdFtn((IMethod)targetMethod) }
+					};
 				};
 			}
 
-			CallInstruction BuildCall()
+			CallInstruction? BuildCall()
 			{
 				CallInstruction call;
 				if (method.IsStatic)
@@ -827,7 +889,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					call.Arguments.Add(PrepareCallTarget(method.DeclaringType, target, target.InferType(context.TypeSystem)));
 				}
-				call.Arguments.AddRange(convertedArguments.Select(f => f()));
+				foreach (var f in convertedArguments)
+				{
+					var arg = f();
+					if (arg == null)
+						return null;
+					call.Arguments.Add(arg);
+				}
 				return call;
 			}
 			return BuildCall;
@@ -909,9 +977,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Converts each argument using the corresponding parameter type of method as type hint.
 		/// Returns null if any argument cannot be converted.
 		/// </summary>
-		Func<ILInstruction>[] ConvertCallArguments(IList<ILInstruction> arguments, IMethod method)
+		Func<ILInstruction?>[]? ConvertCallArguments(IList<ILInstruction> arguments, IMethod method)
 		{
-			var converted = new Func<ILInstruction>[arguments.Count];
+			var converted = new Func<ILInstruction?>[arguments.Count];
 			Debug.Assert(arguments.Count == method.Parameters.Count);
 			for (int i = 0; i < arguments.Count; i++)
 			{
@@ -940,7 +1008,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// A conversion from a small integer type to Int32 produces the operand unchanged,
 		/// because such values already occupy an I4 stack slot.
 		/// </summary>
-		Func<ILInstruction> ConvertCast(CallInstruction invocation, bool isChecked)
+		Func<ILInstruction?>? ConvertCast(CallInstruction invocation, bool isChecked)
 		{
 			if (invocation.Arguments.Count < 2)
 				return null;
@@ -990,7 +1058,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Nullable or NullableWithValueFallback, everything else gives Ref.
 		/// The three-argument overload, which carries an explicit conversion lambda, is not matched.
 		/// </summary>
-		Func<ILInstruction> ConvertCoalesce(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertCoalesce(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1037,7 +1105,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// string operands; otherwise comp.i4(left == right), lifted[C#] when left is Nullable&lt;T&gt;.
 		/// Equal stands for whichever factory kind selects: NotEqual, LessThan, GreaterThan, ...
 		/// </summary>
-		Func<ILInstruction> ConvertComparison(CallInstruction invocation, ComparisonKind kind)
+		Func<ILInstruction?>? ConvertComparison(CallInstruction invocation, ComparisonKind kind)
 		{
 			if (invocation.Arguments.Count < 2)
 				return null;
@@ -1056,7 +1124,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					var op_Method = (IMethod)method;
 					if (NullableType.IsNullable(leftInst.InferType(context.TypeSystem)))
+					{
 						op_Method = CSharpOperators.LiftUserDefinedOperator(op_Method);
+						if (op_Method == null)
+							return null;
+					}
 					return new Call(op_Method) { Arguments = { leftInst, rightInst } };
 				};
 			}
@@ -1074,7 +1146,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (leftType.IsKnownType(KnownTypeCode.String) && rightType.IsKnownType(KnownTypeCode.String))
 				{
-					IMethod operatorMethod;
+					IMethod? operatorMethod;
 					switch (kind)
 					{
 						case ComparisonKind.Equality:
@@ -1116,7 +1188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The builder bails out unless the condition infers to bool and both branches infer to types
 		/// that are equivalent under type erasure; the true branch's type becomes the result type.
 		/// </summary>
-		Func<ILInstruction> ConvertCondition(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertCondition(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 3)
 				return null;
@@ -1139,9 +1211,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				var trueInstType = trueValue.InferType(context.TypeSystem);
 				var falseInstType = falseValue.InferType(context.TypeSystem);
-				if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(trueInstType, falseInstType))
+				IType? resultType = null;
+				if (NormalizeTypeVisitor.TypeErasure.EquivalentTypes(trueInstType, falseInstType))
+					resultType = trueInstType;
+				else if (conversions.IsImplicitReferenceConversion(falseInstType, trueInstType))
+					resultType = trueInstType;
+				else if (conversions.IsImplicitReferenceConversion(trueInstType, falseInstType))
+					resultType = falseInstType;
+				if (resultType == null)
 					return null;
-				return new IfInstruction(conditionValue, trueValue, falseValue, trueInstType);
+				return new IfInstruction(conditionValue, trueValue, falseValue, resultType);
 			};
 		}
 
@@ -1155,7 +1234,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Roslyn emits the two-argument Constant(object, Type) overload; the legacy .NET Framework
 		/// csc uses the one-argument Constant(object) overload for display-class instances.
 		/// </summary>
-		Func<ILInstruction> ConvertConstant(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertConstant(CallInstruction invocation)
 		{
 			if (!MatchConstantCall(invocation, out var value))
 				return null;
@@ -1167,6 +1246,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// consumers compare inferred types. The cast keeps the type the tree
 					// declared for it.
 					var constantValue = ConvertValue(arg, invocation);
+					if (constantValue == null)
+						return null;
 					if (!NormalizeTypeVisitor.TypeErasure.EquivalentTypes(constantValue.InferType(context.TypeSystem), boxType))
 						return new ExpressionTreeCast(boxType, constantValue, false);
 					return constantValue;
@@ -1174,7 +1255,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return () => ConvertValue(value, invocation);
 
-			static bool MatchConstantCall(ILInstruction inst, out ILInstruction value)
+			static bool MatchConstantCall(ILInstruction inst, [NotNullWhen(true)] out ILInstruction? value)
 			{
 				value = null;
 				if (inst is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Constant")
@@ -1195,7 +1276,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// callvirt Add(args), or call Add(args) for a static method, with no target argument yet;
 		/// ConvertListInit inserts the collection instance at index 0.
 		/// </summary>
-		Func<ILInstruction> ConvertElementInit(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertElementInit(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1203,7 +1284,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return null;
-			var args = new Func<ILInstruction>[arguments.Count];
+			var args = new Func<ILInstruction?>[arguments.Count];
 			for (int i = 0; i < arguments.Count; i++)
 			{
 				var arg = ConvertInstruction(arguments[i]);
@@ -1212,12 +1293,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				args[i] = arg;
 			}
 
-			ILInstruction BuildCall()
+			ILInstruction? BuildCall()
 			{
 				CallInstruction call = member.IsStatic
 					? (CallInstruction)new Call((IMethod)member)
 					: new CallVirt((IMethod)member);
-				call.Arguments.AddRange(args.Select(f => f()));
+				foreach (var f in args)
+				{
+					var arg = f();
+					if (arg == null)
+						return null;
+					call.Arguments.Add(arg);
+				}
 				return call;
 			}
 			return BuildCall;
@@ -1234,11 +1321,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// A by-ref typeHint on a field whose type is not by-ref-like drops the ldobj, so the field
 		/// address itself is produced.
 		/// </summary>
-		Func<ILInstruction> ConvertField(CallInstruction invocation, IType typeHint)
+		Func<ILInstruction?>? ConvertField(CallInstruction invocation, IType? typeHint)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
-			Func<ILInstruction> targetConverter = null;
+			Func<ILInstruction?>? targetConverter = null;
 			if (!invocation.Arguments[0].MatchLdNull())
 			{
 				targetConverter = ConvertInstruction(invocation.Arguments[0]);
@@ -1249,7 +1336,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			return BuildField;
 
-			ILInstruction BuildField()
+			ILInstruction? BuildField()
 			{
 				ILInstruction inst;
 				if (targetConverter == null)
@@ -1259,6 +1346,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				else
 				{
 					var target = targetConverter();
+					if (target == null)
+						return null;
 					if (member.DeclaringType.IsReferenceType == true)
 					{
 						inst = new LdFlda(target, (IField)member) { DelayExceptions = true };
@@ -1283,7 +1372,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The invoke method comes from the delegate type the target infers to; the builder bails out
 		/// if that type has none, or if an argument fails to convert.
 		/// </summary>
-		Func<ILInstruction> ConvertInvoke(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertInvoke(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1293,7 +1382,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 				return null;
 
-			ILInstruction BuildCall()
+			ILInstruction? BuildCall()
 			{
 				var target = targetConverter();
 				if (target == null)
@@ -1306,7 +1395,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				var call = new CallVirt(invokeMethod);
 				call.Arguments.Add(target);
-				call.Arguments.AddRange(convertedArguments.Select(f => f()));
+				foreach (var f in convertedArguments)
+				{
+					var arg = f();
+					if (arg == null)
+						return null;
+					call.Arguments.Add(arg);
+				}
 				return call;
 			}
 			return BuildCall;
@@ -1323,7 +1418,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	final: ldloc initializer
 		/// }
 		/// </summary>
-		Func<ILInstruction> ConvertListInit(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertListInit(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count < 2)
 				return null;
@@ -1345,7 +1440,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (arguments == null || arguments.Count == 0)
 				return null;
-			Func<ILVariable, ILInstruction>[] convertedArguments = new Func<ILVariable, ILInstruction>[arguments.Count];
+			Func<ILVariable, ILInstruction?>[] convertedArguments = new Func<ILVariable, ILInstruction?>[arguments.Count];
 			for (int i = 0; i < arguments.Count; i++)
 			{
 				if (arguments[i] is CallInstruction elementInit && elementInit.Method.FullName == "System.Linq.Expressions.Expression.ElementInit")
@@ -1354,7 +1449,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (arg == null)
 						return null;
 
-					convertedArguments[i] = v => { var a = arg(); ((CallInstruction)a).Arguments.Insert(0, new LdLoc(v)); return a; };
+					convertedArguments[i] = v => {
+						var a = arg();
+						if (a is not CallInstruction call)
+							return null;
+						call.Arguments.Insert(0, new LdLoc(v));
+						return call;
+					};
 				}
 				else
 				{
@@ -1365,15 +1466,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			Block BuildBlock()
+			ILInstruction? BuildBlock()
 			{
 				var initializerBlock = new Block(BlockKind.CollectionInitializer);
 
 				ILFunction function = lambdaStack.Peek();
 				var initializer = function.RegisterVariable(VariableKind.InitializerTarget, ctor.DeclaringType);
 				initializerBlock.FinalInstruction = new LdLoc(initializer);
-				initializerBlock.Instructions.Add(new StLoc(initializer, newObj()));
-				initializerBlock.Instructions.AddRange(convertedArguments.Select(f => f(initializer)));
+				var newObjInst = newObj();
+				if (newObjInst == null)
+					return null;
+				initializerBlock.Instructions.Add(new StLoc(initializer, newObjInst));
+				foreach (var f in convertedArguments)
+				{
+					var inst = f(initializer);
+					if (inst == null)
+						return null;
+					initializerBlock.Instructions.Add(inst);
+				}
 				return initializerBlock;
 			}
 			return BuildBlock;
@@ -1390,7 +1500,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// call method(left, right); the four-argument form lifts the user-defined operator
 		/// if the left operand infers to Nullable&lt;T&gt;.
 		/// </summary>
-		Func<ILInstruction> ConvertLogicOperator(CallInstruction invocation, bool and)
+		Func<ILInstruction?>? ConvertLogicOperator(CallInstruction invocation, bool and)
 		{
 			if (invocation.Arguments.Count < 2)
 				return null;
@@ -1405,13 +1515,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				// call AndAlso(left, right): built-in operator
 				case 2:
-					return () => and ? IfInstruction.LogicAnd(left(), right(), context.TypeSystem) : IfInstruction.LogicOr(left(), right(), context.TypeSystem);
+					return () => {
+						var leftInst = left();
+						var rightInst = right();
+						if (leftInst == null || rightInst == null)
+							return null;
+						return and ? IfInstruction.LogicAnd(leftInst, rightInst, context.TypeSystem) : IfInstruction.LogicOr(leftInst, rightInst, context.TypeSystem);
+					};
 				// call AndAlso(left, right, methodInfo): user-defined operator
 				case 3:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[2], out method))
 						return null;
-					return () => new Call((IMethod)method) {
-						Arguments = { left(), right() }
+					return () => {
+						var leftInst = left();
+						var rightInst = right();
+						if (leftInst == null || rightInst == null)
+							return null;
+						return new Call((IMethod)method) {
+							Arguments = { leftInst, rightInst }
+						};
 					};
 				// call AndAlso(left, right, ldc.i4 liftToNull, methodInfo): AndAlso and OrElse
 				// declare no such overload
@@ -1427,7 +1549,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return null;
 						var op_Method = (IMethod)method;
 						if (NullableType.IsNullable(leftInst.InferType(context.TypeSystem)))
+						{
 							op_Method = CSharpOperators.LiftUserDefinedOperator(op_Method);
+							if (op_Method == null)
+								return null;
+						}
 						return new Call(op_Method) {
 							Arguments = { leftInst, rightInst }
 						};
@@ -1447,7 +1573,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// Only Expression.Bind elements are supported; any other binding kind fails the match.
 		/// </summary>
-		Func<ILInstruction> ConvertMemberInit(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertMemberInit(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1461,10 +1587,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (arguments == null || arguments.Count == 0)
 				return null;
 
-			Func<ILVariable, ILInstruction>[] convertedArguments = new Func<ILVariable, ILInstruction>[arguments.Count];
+			Func<ILVariable, ILInstruction?>[] convertedArguments = new Func<ILVariable, ILInstruction?>[arguments.Count];
 			for (int i = 0; i < arguments.Count; i++)
 			{
-				Func<ILVariable, ILInstruction> arg;
+				Func<ILVariable, ILInstruction?>? arg;
 				if (arguments[i] is CallInstruction bind && bind.Method.FullName == "System.Linq.Expressions.Expression.Bind")
 				{
 					arg = ConvertBind(bind);
@@ -1478,15 +1604,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				convertedArguments[i] = arg;
 			}
 
-			ILInstruction BuildBlock()
+			ILInstruction? BuildBlock()
 			{
 				var function = lambdaStack.Peek();
 				var initializer = function.RegisterVariable(VariableKind.InitializerTarget, ctor.DeclaringType);
 
 				var initializerBlock = new Block(BlockKind.ObjectInitializer);
 				initializerBlock.FinalInstruction = new LdLoc(initializer);
-				initializerBlock.Instructions.Add(new StLoc(initializer, newObj()));
-				initializerBlock.Instructions.AddRange(convertedArguments.Select(f => f(initializer)));
+				var newObjInst = newObj();
+				if (newObjInst == null)
+					return null;
+				initializerBlock.Instructions.Add(new StLoc(initializer, newObjInst));
+				foreach (var f in convertedArguments)
+				{
+					var inst = f(initializer);
+					if (inst == null)
+						return null;
+					initializerBlock.Instructions.Add(inst);
+				}
 
 				return initializerBlock;
 			}
@@ -1499,7 +1634,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// newarr T(bounds)
 		/// </summary>
-		Func<ILInstruction> ConvertNewArrayBounds(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertNewArrayBounds(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1509,7 +1644,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (arguments.Count == 0)
 				return null;
-			var indices = new Func<ILInstruction>[arguments.Count];
+			var indices = new Func<ILInstruction?>[arguments.Count];
 			for (int i = 0; i < arguments.Count; i++)
 			{
 				var index = ConvertInstruction(arguments[i]);
@@ -1517,7 +1652,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return null;
 				indices[i] = index;
 			}
-			return () => new NewArr(type, indices.SelectArray(f => f()));
+			return () => {
+				var indexInstructions = indices.SelectArray(f => f());
+				if (indexInstructions.Any(index => index == null))
+					return null;
+				return new NewArr(type, indexInstructions!);
+			};
 		}
 
 		/// <summary>
@@ -1530,7 +1670,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// }
 		/// An empty value list produces a bare newarr T(ldc.i4 0) instead of a block.
 		/// </summary>
-		Func<ILInstruction> ConvertNewArrayInit(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertNewArrayInit(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1541,7 +1681,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ArrayType arrayType = new ArrayType(context.BlockContext.TypeSystem, type);
 			if (arguments.Count == 0)
 				return () => new NewArr(type, new LdcI4(0));
-			var convertedArguments = new Func<ILInstruction>[arguments.Count];
+			var convertedArguments = new Func<ILInstruction?>[arguments.Count];
 			for (int i = 0; i < arguments.Count; i++)
 			{
 				ILInstruction item = arguments[i];
@@ -1551,7 +1691,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				convertedArguments[i] = value;
 			}
 
-			ILInstruction BuildInitializer()
+			ILInstruction? BuildInitializer()
 			{
 				var block = (Block)invocation.Arguments[1];
 				var function = lambdaStack.Peek();
@@ -1560,7 +1700,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				initializer.Instructions.Add(new StLoc(variable, new NewArr(type, new LdcI4(convertedArguments.Length))));
 				for (int i = 0; i < convertedArguments.Length; i++)
 				{
-					initializer.Instructions.Add(new StObj(new LdElema(type, new LdLoc(variable), new LdcI4(i)) { DelayExceptions = true }, convertedArguments[i](), type));
+					var value = convertedArguments[i]();
+					if (value == null)
+						return null;
+					initializer.Instructions.Add(new StObj(new LdElema(type, new LdLoc(variable), new LdcI4(i)) { DelayExceptions = true }, value, type));
 				}
 				initializer.FinalInstruction = new LdLoc(variable);
 				return initializer;
@@ -1578,7 +1721,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -&gt; the constructor named by ctorInfo, which is
 		/// castclass ConstructorInfo(call GetMethodFromHandle(ldmembertoken .ctor, ldtypetoken T)).
 		/// </summary>
-		bool MatchNew(CallInstruction invocation, out IMethod ctor)
+		bool MatchNew(CallInstruction invocation, [NotNullWhen(true)] out IMethod? ctor)
 		{
 			ctor = null;
 			if (invocation.Method.Name != "New")
@@ -1620,7 +1763,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// accessors, has no ILAst equivalent and is dropped.
 		/// ctorInfo is castclass ConstructorInfo(call GetMethodFromHandle(ldmembertoken .ctor, ldtypetoken T)).
 		/// </summary>
-		Func<ILInstruction> ConvertNewObject(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertNewObject(CallInstruction invocation)
 		{
 			switch (invocation.Arguments.Count)
 			{
@@ -1645,7 +1788,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
 						return null;
 					IMethod method = (IMethod)member;
-					Func<ILInstruction>[] convertedArguments = ConvertCallArguments(arguments, method);
+					Func<ILInstruction?>[]? convertedArguments = ConvertCallArguments(arguments, method);
 					if (convertedArguments == null)
 						return null;
 					return () => BuildNewObj(method, convertedArguments);
@@ -1662,10 +1805,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return () => BuildNewObj(method, convertedArguments);
 			}
 
-			ILInstruction BuildNewObj(IMethod method, Func<ILInstruction>[] args)
+			ILInstruction? BuildNewObj(IMethod method, Func<ILInstruction?>[] args)
 			{
 				var newObj = new NewObj(method);
-				newObj.Arguments.AddRange(args.Select(f => f()));
+				foreach (var f in args)
+				{
+					var arg = f();
+					if (arg == null)
+						return null;
+					newObj.Arguments.Add(arg);
+				}
 				return newObj;
 			}
 
@@ -1682,7 +1831,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// call op_LogicalNot(value)
 		/// </summary>
-		Func<ILInstruction> ConvertNotOperator(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertNotOperator(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count < 1)
 				return null;
@@ -1708,8 +1857,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case 2:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var method))
 						return null;
-					return () => new Call((IMethod)method) {
-						Arguments = { argument() }
+					return () => {
+						var argumentInst = argument();
+						if (argumentInst == null)
+							return null;
+						return new Call((IMethod)method) {
+							Arguments = { argumentInst }
+						};
 					};
 				default:
 					return null;
@@ -1725,11 +1879,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// emits no target argument. The target is adapted to the accessor's this-pointer
 		/// stack type (address-of or box for value types).
 		/// </summary>
-		Func<ILInstruction> ConvertProperty(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertProperty(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count < 2)
 				return null;
-			Func<ILInstruction> targetConverter = null;
+			Func<ILInstruction?>? targetConverter = null;
 			if (!invocation.Arguments[0].MatchLdNull())
 			{
 				targetConverter = ConvertInstruction(invocation.Arguments[0]);
@@ -1746,7 +1900,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var convertedArguments = ConvertCallArguments(arguments, (IMethod)member);
 			if (convertedArguments == null)
 				return null;
-			ILInstruction BuildProperty()
+			ILInstruction? BuildProperty()
 			{
 				CallInstruction call;
 				if (member.IsStatic)
@@ -1764,7 +1918,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return null;
 					call.Arguments.Add(PrepareCallTarget(member.DeclaringType, target, target.InferType(context.TypeSystem)));
 				}
-				call.Arguments.AddRange(convertedArguments.Select(f => f()));
+				foreach (var f in convertedArguments)
+				{
+					var arg = f();
+					if (arg == null)
+						return null;
+					call.Arguments.Add(arg);
+				}
 				return call;
 			}
 			return BuildProperty;
@@ -1777,7 +1937,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// For T = Nullable&lt;U&gt; the result is wrapped in unbox.any T, because isinst on a
 		/// nullable type tests for boxed U per ECMA-335, III.4.6.
 		/// </summary>
-		Func<ILInstruction> ConvertTypeAs(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertTypeAs(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1786,9 +1946,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (converted == null)
 				return null;
-			ILInstruction BuildTypeAs()
+			ILInstruction? BuildTypeAs()
 			{
-				ILInstruction inst = new IsInst(converted(), type);
+				var value = converted();
+				if (value == null)
+					return null;
+				ILInstruction inst = new IsInst(value, type);
 				// We must follow ECMA-335, III.4.6:
 				// If typeTok is a nullable type, Nullable<T>, it is interpreted as "boxed" T.
 				if (type.IsKnownType(KnownTypeCode.NullableOfT))
@@ -1803,7 +1966,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// comp.obj(isinst T(value) != ldnull)
 		/// </summary>
-		Func<ILInstruction> ConvertTypeIs(CallInstruction invocation)
+		Func<ILInstruction?>? ConvertTypeIs(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return null;
@@ -1812,7 +1975,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			var resultType = context.TypeSystem.FindType(KnownTypeCode.Boolean);
 			if (converted != null)
-				return () => new Comp(ComparisonKind.Inequality, Sign.None, new IsInst(converted(), type), new LdNull());
+			{
+				return () => {
+					var value = converted();
+					if (value == null)
+						return null;
+					return new Comp(ComparisonKind.Inequality, Sign.None, new IsInst(value, type), new LdNull());
+				};
+			}
 			return null;
 		}
 
@@ -1832,7 +2002,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =&gt;
 		/// call op_UnaryNegation(argument)
 		/// </summary>
-		Func<ILInstruction> ConvertUnaryNumericOperator(CallInstruction invocation, BinaryNumericOperator op, bool? isChecked = null)
+		Func<ILInstruction?>? ConvertUnaryNumericOperator(CallInstruction invocation, BinaryNumericOperator op, bool? isChecked = null)
 		{
 			if (invocation.Arguments.Count < 1)
 				return null;
@@ -1860,7 +2030,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 								left = new LdcI8(0);
 								break;
 							case StackType.I:
-								left = new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None);
+								left = new Conv(new LdcI4(0), PrimitiveType.I!, false, Sign.None);
 								break;
 							case StackType.F4:
 								left = new LdcF4(0);
@@ -1885,8 +2055,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case 2:
 					if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var method))
 						return null;
-					return () => new Call((IMethod)method) {
-						Arguments = { argument() }
+					return () => {
+						var argumentInst = argument();
+						if (argumentInst == null)
+							return null;
+						return new Call((IMethod)method) {
+							Arguments = { argumentInst }
+						};
 					};
 			}
 			return null;
@@ -1940,7 +2115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// a display-class local and registering it as a captured variable of the enclosing
 		/// ILFunction. Everything else is cloned.
 		/// </summary>
-		ILInstruction ConvertValue(ILInstruction value, ILInstruction context)
+		ILInstruction? ConvertValue(ILInstruction value, ILInstruction context)
 		{
 			switch (value)
 			{
@@ -1963,8 +2138,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						if (ldloc.Variable.CaptureScope == null)
 						{
-							ldloc.Variable.CaptureScope = BlockContainer.FindClosestContainer(context);
-							var f = ldloc.Variable.CaptureScope.Ancestors.OfType<ILFunction>().FirstOrDefault();
+							var captureScope = BlockContainer.FindClosestContainer(context)!;
+							ldloc.Variable.CaptureScope = captureScope;
+							var f = captureScope.Ancestors.OfType<ILFunction>().FirstOrDefault();
 							if (f != null)
 							{
 								f.CapturedVariables.Add(ldloc.Variable);
@@ -2006,13 +2182,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// call GetTypeFromHandle(ldtypetoken T)
 		/// Hands back T.
 		/// </summary>
-		internal static bool MatchGetTypeFromHandle(ILInstruction inst, out IType type)
+		internal static bool MatchGetTypeFromHandle(ILInstruction inst, [NotNullWhen(true)] out IType type)
 		{
-			type = null;
-			return inst is CallInstruction getTypeCall
-				&& getTypeCall.Method.FullName == "System.Type.GetTypeFromHandle"
-				&& getTypeCall.Arguments.Count == 1
-				&& getTypeCall.Arguments[0].MatchLdTypeToken(out type);
+			type = null!;
+			if (inst is not CallInstruction getTypeCall
+				|| getTypeCall.Method.FullName != "System.Type.GetTypeFromHandle"
+				|| getTypeCall.Arguments.Count != 1)
+			{
+				return false;
+			}
+			if (!getTypeCall.Arguments[0].MatchLdTypeToken(out var typeToken))
+				return false;
+			type = typeToken;
+			return true;
 		}
 
 		/// <summary>
@@ -2020,9 +2202,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Hands back the method M; see MatchFromHandleParameterList for the accepted
 		/// argument lists of the GetMethodFromHandle call.
 		/// </summary>
-		bool MatchGetMethodFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetMethodFromHandle(ILInstruction inst, [NotNullWhen(true)] out IMember member)
 		{
-			member = null;
+			member = null!;
 			//castclass System.Reflection.MethodInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
 			if (!inst.MatchCastClass(out var arg, out var type))
 				return false;
@@ -2038,9 +2220,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Hands back the constructor C; see MatchFromHandleParameterList for the accepted
 		/// argument lists of the GetMethodFromHandle call.
 		/// </summary>
-		bool MatchGetConstructorFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetConstructorFromHandle(ILInstruction inst, [NotNullWhen(true)] out IMember member)
 		{
-			member = null;
+			member = null!;
 			//castclass System.Reflection.ConstructorInfo(call GetMethodFromHandle(ldmembertoken op_Addition))
 			if (!inst.MatchCastClass(out var arg, out var type))
 				return false;
@@ -2056,9 +2238,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Hands back the field F; see MatchFromHandleParameterList for the accepted
 		/// argument lists of the call.
 		/// </summary>
-		bool MatchGetFieldFromHandle(ILInstruction inst, out IMember member)
+		bool MatchGetFieldFromHandle(ILInstruction inst, [NotNullWhen(true)] out IMember member)
 		{
-			member = null;
+			member = null!;
 			if (!(inst is CallInstruction call && call.Method.FullName == "System.Reflection.FieldInfo.GetFieldFromHandle"))
 				return false;
 			return MatchFromHandleParameterList(call, out member);
@@ -2070,18 +2252,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// of a generic type. Hands back M; the declaring-type token is only checked for shape,
 		/// because the member token already carries the specialized member.
 		/// </summary>
-		static bool MatchFromHandleParameterList(CallInstruction call, out IMember member)
+		static bool MatchFromHandleParameterList(CallInstruction call, [NotNullWhen(true)] out IMember member)
 		{
-			member = null;
+			member = null!;
 			switch (call.Arguments.Count)
 			{
 				case 1:
-					if (!call.Arguments[0].MatchLdMemberToken(out member))
+					if (!call.Arguments[0].MatchLdMemberToken(out var memberToken))
 						return false;
+					member = memberToken;
 					break;
 				case 2:
-					if (!call.Arguments[0].MatchLdMemberToken(out member))
+					if (!call.Arguments[0].MatchLdMemberToken(out memberToken))
 						return false;
+					member = memberToken;
 					if (!call.Arguments[1].MatchLdTypeToken(out _))
 						return false;
 					break;
@@ -2103,9 +2287,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// sequence 0..n-1. An empty list is also matched outside a block, as
 		/// newarr ParameterExpression/Expression(ldc.i4 0) or call Array.Empty().
 		/// </summary>
-		bool MatchArgumentList(ILInstruction inst, out IList<ILInstruction> arguments)
+		bool MatchArgumentList(ILInstruction inst, [NotNullWhen(true)] out IList<ILInstruction> arguments)
 		{
-			arguments = null;
+			arguments = null!;
 			if (!(inst is Block block && block.Kind == BlockKind.ArrayInitializer))
 			{
 				if (IsEmptyParameterList(inst))
