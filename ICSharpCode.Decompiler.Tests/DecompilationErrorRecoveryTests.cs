@@ -57,6 +57,8 @@ namespace ICSharpCode.Decompiler.Tests
 			using (Assert.EnterMultipleScope())
 			{
 				Assert.That(code, Does.Contain(StepperTesting.SimulatedFailure), "the exception text must show up in the output");
+				Assert.That(code, Does.Contain("Error decompiling @"), "the comment must include the metadata token");
+				Assert.That(code, Does.Contain("WholeProjectDecompiler.CleanUpFileName"), "the comment must include the containing type and member name");
 				Assert.That(code, Does.Contain(CSharpDecompiler.DecompilationErrorReportUrl), "users need to be told where to report this");
 				Assert.That(code, Does.Contain("public static string CleanUpFileName"), "the failing member keeps its signature");
 				Assert.That(code, Does.Contain("DecompileProject"), "the other members of the type are unaffected");
