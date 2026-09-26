@@ -442,6 +442,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Issue4180()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task ParamsPropertySetter()
 		{
 			await Run();

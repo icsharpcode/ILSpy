@@ -226,10 +226,28 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
 			ParenthesizeIfRequired(unaryOperatorExpression.Expression, GetPrecedence(unaryOperatorExpression));
+			if (unaryOperatorExpression.Operator == UnaryOperatorType.Minus && IsNegativePrimitive(unaryOperatorExpression.Expression))
+				Parenthesize(unaryOperatorExpression.Expression);
 			UnaryOperatorExpression? child = unaryOperatorExpression.Expression as UnaryOperatorExpression;
 			if (child != null && InsertParenthesesForReadability)
 				Parenthesize(child);
 			base.VisitUnaryOperatorExpression(unaryOperatorExpression);
+		}
+
+		static bool IsNegativePrimitive(Expression expression)
+		{
+			if (expression is not PrimitiveExpression primitive || primitive.Value == null)
+				return false;
+			return primitive.Value switch {
+				sbyte value => value < 0,
+				short value => value < 0,
+				int value => value < 0,
+				long value => value < 0,
+				float value => value < 0,
+				double value => value < 0,
+				decimal value => value < 0,
+				_ => false
+			};
 		}
 
 		public override void VisitCastExpression(CastExpression castExpression)
