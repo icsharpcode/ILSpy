@@ -659,9 +659,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							return null;
 						var leftType = leftInst.InferType(context.TypeSystem);
 						var rightType = rightInst.InferType(context.TypeSystem);
+						var leftUnderlyingType = NullableType.GetUnderlyingType(leftType);
+						var rightUnderlyingType = NullableType.GetUnderlyingType(rightType);
 						if (op is BinaryNumericOperator.ShiftLeft or BinaryNumericOperator.ShiftRight)
 						{
-							if (!NullableType.GetUnderlyingType(rightType).IsKnownType(KnownTypeCode.Int32))
+							if (!rightUnderlyingType.IsKnownType(KnownTypeCode.Int32))
 								return null;
 						}
 						else
@@ -670,27 +672,34 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// of a small integer type to Int32 leaves its operand unchanged, because
 							// such values already occupy an I4 stack slot, so the two sides of
 							// `(short a, int b) => a + b` are Int16 and Int32 at this point.
-							if (NullableType.GetUnderlyingType(rightType).GetStackType()
-								!= NullableType.GetUnderlyingType(leftType).GetStackType())
+							if (leftUnderlyingType.GetStackType() != rightUnderlyingType.GetStackType())
 							{
-								return null;
+								if (leftUnderlyingType.Kind != TypeKind.Unknown && rightUnderlyingType.Kind != TypeKind.Unknown)
+									return null;
 							}
 						}
-						if (leftType.IsKnownType(KnownTypeCode.Decimal))
+						var type = leftType.Kind == TypeKind.Unknown ? rightType : leftType;
+						if (type.IsKnownType(KnownTypeCode.Decimal))
 						{
-							var op_Method = leftType.GetMethods(m => m.IsOperator && m.Name == operatorName).FirstOrDefault();
+							var op_Method = type.GetMethods(m => m.IsOperator && m.Name == operatorName).FirstOrDefault();
 							if (op_Method == null)
 								return null;
 							return new Call(op_Method) {
 								Arguments = { leftInst, rightInst }
 							};
 						}
-						return new BinaryNumericInstruction(op, leftInst, rightInst,
-							NullableType.GetUnderlyingType(leftType).GetStackType(),
-							NullableType.GetUnderlyingType(rightType).GetStackType(),
+						var isLifted = NullableType.IsNullable(leftType) || NullableType.IsNullable(rightType);
+						var inst = new BinaryNumericInstruction(op, leftInst, rightInst,
+							leftUnderlyingType.GetStackType(),
+							rightUnderlyingType.GetStackType(),
 							isChecked == true,
 							GetSignForOperator(op, isChecked == true, leftType),
-							isLifted: NullableType.IsNullable(leftType) || NullableType.IsNullable(rightType));
+							isLifted: isLifted);
+						if (isLifted)
+						{
+							inst.CSharpResultType = NullableType.Create(context.TypeSystem, leftUnderlyingType.Kind == TypeKind.Unknown ? rightUnderlyingType : leftUnderlyingType);
+						}
+						return inst;
 					};
 				// call Add(left, right, methodInfo): user-defined operator
 				case 3:
