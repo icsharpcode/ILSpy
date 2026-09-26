@@ -19,10 +19,15 @@
 using AwesomeAssertions;
 
 using ICSharpCode.Decompiler.Documentation;
+using ICSharpCode.Decompiler.Metadata;
 
 using ICSharpCode.ILSpyX;
 
 using NUnit.Framework;
+
+using System.IO;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 
 namespace ICSharpCode.ILSpy.Tests.TextView;
 
@@ -59,5 +64,34 @@ public class XmlDocumentationTests
 			+ "tooltip would be empty without this");
 		documentation.Should().Contain("<summary",
 			"the raw documentation string must include the <summary> tag the renderer parses");
+	}
+
+	[Test]
+	public void XmlDocLoader_Does_Not_Use_RefPack_For_Nonexistent_Runtime_Path()
+	{
+		var tempDir = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName());
+		try
+		{
+			var runtimeAssemblyPath = Path.Combine(tempDir, "shared", "Microsoft.NETCore.App", "10.0.0", "System.Private.CoreLib.dll");
+			var refPackDir = Path.Combine(tempDir, "packs", "Microsoft.NETCore.App.Ref", "10.0.0", "ref", "net10.0");
+			Directory.CreateDirectory(refPackDir);
+			File.WriteAllText(Path.Combine(refPackDir, "System.Runtime.xml"),
+				"""
+				<?xml version="1.0"?>
+				<doc><members><member name="M:System.String.Concat(System.String,System.String)"><summary>wrong docs</summary></member></members></doc>
+				""");
+			using var stream = File.OpenRead(typeof(object).Assembly.Location);
+			using var coreLib = new PEFile(runtimeAssemblyPath, stream,
+				PEStreamOptions.PrefetchEntireImage, MetadataReaderOptions.None);
+
+			var provider = XmlDocLoader.LoadDocumentation(coreLib);
+
+			((object?)provider).Should().BeNull(
+				"a synthetic or in-memory assembly name should not be treated as an installed runtime assembly path");
+		}
+		finally
+		{
+			Directory.Delete(tempDir, true);
+		}
 	}
 }
