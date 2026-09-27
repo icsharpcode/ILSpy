@@ -36,6 +36,7 @@
 //        dotnet run nugetfuzz.cs -- --pdb-lint <file.dll|dir>... | @corpus.txt
 
 using System.Diagnostics;
+using System.Globalization;
 using System.IO.Compression;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -653,10 +654,10 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 				else if (dumpDir != null)
 					File.WriteAllText(Path.Combine(dumpDir, SanitizeFileName($"{pkg}.{type.FullTypeName}.cs")), code);
 				// An identifier may only contain letters, digits and '_' (the rule
-				// EscapeInvalidIdentifiers.IsValid applies for project output). Any other name in
-				// the tree is a compiler-generated entity the decompiler failed to fold away, and
-				// the output does not compile. Inside a generated type everything is mangled by
-				// definition, so only user-written types are checked.
+				// EscapeInvalidIdentifiers.IsValid applies for project output). Generated-name
+				// shapes are compiler-generated entities the decompiler failed to fold away;
+				// non-printable or otherwise invalid names are obfuscator output. Inside a generated
+				// type everything is mangled by definition, so only user-written types are checked.
 				if (!generatedType)
 				{
 					foreach (var leak in tree.DescendantsAndSelf.OfType<Identifier>()
@@ -664,7 +665,8 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 						.Where(n => !n.All(ch => char.IsLetterOrDigit(ch) || ch == '_'))
 						.Distinct())
 					{
-						Report(pkg, name, type.FullTypeName.ToString(), new LeakedName(leak));
+						Report(pkg, name, type.FullTypeName.ToString(),
+							IsCompilerGeneratedNameLeak(leak) ? new LeakedName(leak) : new ObfuscatedName(leak));
 					}
 				}
 				// ILFunction warnings (unknown result types, stack type mismatches, invalid IL)
@@ -1313,6 +1315,7 @@ void Report(string pkg, string asm, string type, Exception ex)
 		: inner is TimeoutException ? "TIMEOUT"
 		: inner is DecompilerWarning ? "WARNING"
 		: inner is LeakedName ? "LEAK"
+		: inner is ObfuscatedName ? "OBFUSCATED"
 		: inner is PdbFinding ? "PDB" : "EXCEPTION";
 	var key = $"{kind}|{inner.GetType().Name}|{inner.Message}|{topFrame}";
 	var location = $"{pkg} / {asm} / {type}";
@@ -1412,6 +1415,21 @@ static void RenderLedger(string ledgerPath, string outPath)
 		// unknown rather than clean, so they are never presented as confirmed defects.
 		(entry.RefsTotal > 0 && entry.RefsResolved == entry.RefsTotal ? clean : degraded).Add(key);
 	}
+	foreach (var (key, value) in merged.ToArray())
+	{
+		if (value.Kind == "LEAK" && TryReclassifyObfuscatedLeak(value) is { } reclassified)
+		{
+			merged.Remove(key);
+			var newKey = $"{reclassified.Kind}|{reclassified.ExceptionType}|{reclassified.Message}|{reclassified.Frame}";
+			merged[newKey] = merged.TryGetValue(newKey, out var existing)
+				? existing with { Count = existing.Count + reclassified.Count }
+				: reclassified;
+			if (degraded.Remove(key))
+				degraded.Add(newKey);
+			if (clean.Remove(key))
+				clean.Add(newKey);
+		}
+	}
 	if (malformed > 0)
 		Console.WriteLine($"  ({malformed} malformed ledger lines skipped)");
 	// A finding seen even once with every reference resolved is trustworthy; one that only
@@ -1455,6 +1473,7 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 		.ASSERT { border-left:4px solid #d97706; } .EXCEPTION { border-left:4px solid #dc2626; }
 		.TIMEOUT { border-left:4px solid #7c3aed; } .WARNING { border-left:4px solid #2563eb; }
 		.PDB { border-left:4px solid #0d9488; } .LEAK { border-left:4px solid #db2777; }
+		.OBFUSCATED { border-left:4px solid #64748b; }
 		#filter { width:100%; padding:8px; margin:8px 0; border:1px solid var(--line); border-radius:6px;
 		          background:var(--bg); color:var(--fg); font:13px ui-monospace,monospace; }
 		</style></head><body>
@@ -1468,7 +1487,7 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 		});
 
 		int partIndex = 1;
-		foreach (var kind in new[] { "ASSERT", "EXCEPTION", "TIMEOUT", "LEAK", "WARNING", "PDB" })
+		foreach (var kind in new[] { "ASSERT", "EXCEPTION", "TIMEOUT", "LEAK", "OBFUSCATED", "WARNING", "PDB" })
 		{
 			var group = findings.Where(f => f.Kind == kind).OrderByDescending(f => f.Count).ToList();
 			if (group.Count == 0)
@@ -1538,6 +1557,37 @@ static string FirstLine(string s)
 	return i < 0 ? s : s[..i];
 }
 
+static bool IsNonPrintable(char ch)
+{
+	return char.GetUnicodeCategory(ch) is UnicodeCategory.Control
+		or UnicodeCategory.Format
+		or UnicodeCategory.Surrogate
+		or UnicodeCategory.OtherNotAssigned;
+}
+
+static bool IsCompilerGeneratedNameLeak(string name)
+{
+	if (name.Any(IsNonPrintable))
+		return false;
+	var simpleName = name[(name.LastIndexOf('.') + 1)..];
+	return simpleName.StartsWith('<') || name.Contains('$');
+}
+
+static Finding? TryReclassifyObfuscatedLeak(Finding finding)
+{
+	const string prefix = "leaked compiler-generated name: ";
+	if (!finding.Message.StartsWith(prefix, StringComparison.Ordinal))
+		return null;
+	var name = finding.Message[prefix.Length..];
+	if (IsCompilerGeneratedNameLeak(name))
+		return null;
+	return finding with {
+		Kind = "OBFUSCATED",
+		ExceptionType = nameof(ObfuscatedName),
+		Message = "obfuscated name: " + name
+	};
+}
+
 // One deduplicated defect: Count counts every location that hit it, Detail keeps the
 // full exception text of the first one for triage.
 record Finding(string Kind, string ExceptionType, string Message, string Frame,
@@ -1567,6 +1617,53 @@ class DecompilerWarning(string message) : Exception(message);
 class LeakedName(string name)
 	: Exception("leaked compiler-generated name: "
 		+ Regex.Replace(Regex.Replace(name, "<[^<>]*>", "<>"), "[0-9]+", "N"));
+
+// An invalid identifier with non-printable characters. C# compilers use printable characters
+// for generated names; non-printable names are treated as obfuscator output so they do not get
+// mixed into compiler-generated-name leak buckets.
+class ObfuscatedName(string name)
+	: Exception("obfuscated name: " + NameShape(name))
+{
+	static string NameShape(string name)
+	{
+		var builder = new StringBuilder(name.Length);
+		foreach (var ch in name)
+		{
+			if (char.GetUnicodeCategory(ch) is UnicodeCategory.Control
+				or UnicodeCategory.Format
+				or UnicodeCategory.Surrogate
+				or UnicodeCategory.OtherNotAssigned)
+			{
+				builder.Append($"\\u{(int)ch:X4}");
+			}
+			else
+			{
+				builder.Append(ch);
+			}
+		}
+		return Regex.Replace(builder.ToString(), "[0-9]+", "N");
+	}
+}
+
+sealed class LineWriter : IDisposable
+{
+	readonly StreamWriter writer;
+
+	public LineWriter(string path)
+	{
+		writer = new StreamWriter(path, append: false, Encoding.UTF8);
+	}
+
+	public void AppendLine(string text)
+	{
+		writer.WriteLine(text);
+	}
+
+	public void Dispose()
+	{
+		writer.Dispose();
+	}
+}
 
 // A defect in a generated PDB. The message describes the shape of the defect and never the
 // instance that hit it - Report() dedupes on the message, so naming a method or an offset in it
