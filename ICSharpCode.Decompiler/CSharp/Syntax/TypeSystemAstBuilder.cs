@@ -453,6 +453,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					case ParameterizedType pt:
 						if (UseNullableSpecifierForValueTypes && pt.IsKnownType(KnownTypeCode.NullableOfT))
 						{
+							if (pt.TypeArguments[0].Kind == TypeKind.Unknown)
+								goto default;
 							return ConvertType(pt.TypeArguments[0]).MakeNullableType();
 						}
 						astType = ConvertTypeHelper(pt.GenericType, pt.TypeArguments);
