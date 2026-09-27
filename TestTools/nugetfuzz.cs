@@ -1429,8 +1429,16 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 	bool IsDegraded(Finding f) =>
 		degradedKeys?.Contains($"{f.Kind}|{f.ExceptionType}|{f.Message}|{f.Frame}") == true;
 	string Esc(string s) => s.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
-	var html = new StringBuilder();
-	html.AppendLine("""
+	var fullPath = Path.GetFullPath(path);
+	var outputDir = Path.GetDirectoryName(fullPath)!;
+	Directory.CreateDirectory(outputDir);
+	var partsDir = Path.Combine(outputDir, Path.GetFileName(fullPath) + ".parts-" + Guid.NewGuid().ToString("N"));
+	Directory.CreateDirectory(partsDir);
+	var parts = new List<string>();
+	try
+	{
+		WritePart("000-header.html", writer => {
+			writer.WriteLine("""
 		<!doctype html><html><head><meta charset="utf-8"><title>nugetfuzz report</title>
 		<style>
 		:root { color-scheme: light dark; --bg:#fff; --fg:#1a1a1a; --muted:#666; --line:#d8d8d8; --chip:#f0f0f0; }
@@ -1451,32 +1459,38 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 		          background:var(--bg); color:var(--fg); font:13px ui-monospace,monospace; }
 		</style></head><body>
 		""");
-	html.AppendLine("<h1>nugetfuzz report</h1>");
-	html.AppendLine($"<div class=meta>{assemblies} assemblies, {types} types decompiled, "
-		+ $"{refsResolved}/{refsTotal} references resolved, {findings.Count} distinct findings "
-		+ $"({findings.Sum(f => f.Count)} total)"
-		+ (dumpDir != null ? $"<br>decompiled sources dumped to {Esc(dumpDir)}" : "") + "</div>");
-	html.AppendLine("<input id=filter placeholder='filter by message, type, package or frame'>");
-	foreach (var kind in new[] { "ASSERT", "EXCEPTION", "TIMEOUT", "LEAK", "WARNING", "PDB" })
-	{
-		var group = findings.Where(f => f.Kind == kind).OrderByDescending(f => f.Count).ToList();
-		if (group.Count == 0)
-			continue;
-		html.AppendLine($"<h2>{kind} ({group.Count} distinct, {group.Sum(f => f.Count)} hits)</h2>");
-		foreach (var f in group)
+			writer.WriteLine("<h1>nugetfuzz report</h1>");
+			writer.WriteLine($"<div class=meta>{assemblies} assemblies, {types} types decompiled, "
+				+ $"{refsResolved}/{refsTotal} references resolved, {findings.Count} distinct findings "
+				+ $"({findings.Sum(f => f.Count)} total)"
+				+ (dumpDir != null ? $"<br>decompiled sources dumped to {Esc(dumpDir)}" : "") + "</div>");
+			writer.WriteLine("<input id=filter placeholder='filter by message, type, package or frame'>");
+		});
+
+		int partIndex = 1;
+		foreach (var kind in new[] { "ASSERT", "EXCEPTION", "TIMEOUT", "LEAK", "WARNING", "PDB" })
 		{
-			// Only ever seen while references were missing: flagged, not hidden - the
-			// warning text itself blames missing references, so it is weak evidence.
-			var suspect = IsDegraded(f)
-				? " <span class=suspect title='only seen in runs with unresolved references'>refs incomplete</span>"
-				: "";
-			html.AppendLine($"<details class={kind}><summary><span class=count>{f.Count}x</span> "
-				+ $"{Esc(f.ExceptionType)}: {Esc(f.Message)}{suspect}</summary>");
-			var context = f.Context.Length > 0 ? $"{Esc(f.Context)}\n" : "";
-			html.AppendLine($"<pre>first: {Esc(f.FirstLocation)}\nframe: {Esc(f.Frame)}\n{context}\n{Esc(f.Detail)}</pre></details>");
+			var group = findings.Where(f => f.Kind == kind).OrderByDescending(f => f.Count).ToList();
+			if (group.Count == 0)
+				continue;
+			WritePart($"{partIndex++:000}-{kind}.html", writer => {
+				writer.WriteLine($"<h2>{kind} ({group.Count} distinct, {group.Sum(f => f.Count)} hits)</h2>");
+				foreach (var f in group)
+				{
+					// Only ever seen while references were missing: flagged, not hidden - the
+					// warning text itself blames missing references, so it is weak evidence.
+					var suspect = IsDegraded(f)
+						? " <span class=suspect title='only seen in runs with unresolved references'>refs incomplete</span>"
+						: "";
+					writer.WriteLine($"<details class={kind}><summary><span class=count>{f.Count}x</span> "
+						+ $"{Esc(f.ExceptionType)}: {Esc(f.Message)}{suspect}</summary>");
+					var context = f.Context.Length > 0 ? $"{Esc(f.Context)}\n" : "";
+					writer.WriteLine($"<pre>first: {Esc(f.FirstLocation)}\nframe: {Esc(f.Frame)}\n{context}\n{Esc(f.Detail)}</pre></details>");
+				}
+			});
 		}
-	}
-	html.AppendLine("""
+
+		WritePart("999-footer.html", writer => writer.WriteLine("""
 		<script>
 		const box = document.getElementById('filter');
 		box.addEventListener('input', () => {
@@ -1486,8 +1500,33 @@ static void WriteHtmlReport(string path, List<Finding> findings, int assemblies,
 		});
 		</script>
 		</body></html>
-		""");
-	File.WriteAllText(path, html.ToString());
+		"""));
+
+		var tempOutput = fullPath + ".tmp";
+		using (var output = File.Create(tempOutput))
+		{
+			foreach (var part in parts)
+			{
+				using var input = File.OpenRead(part);
+				input.CopyTo(output);
+			}
+		}
+		File.Move(tempOutput, fullPath, true);
+	}
+	finally
+	{
+		Directory.Delete(partsDir, true);
+	}
+
+	void WritePart(string fileName, Action<StreamWriter> write)
+	{
+		var part = Path.Combine(partsDir, fileName);
+		using (var writer = new StreamWriter(part, false, Encoding.UTF8))
+		{
+			write(writer);
+		}
+		parts.Add(part);
+	}
 }
 
 static string SanitizeFileName(string s)
