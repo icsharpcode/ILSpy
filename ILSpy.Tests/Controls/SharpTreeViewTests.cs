@@ -156,6 +156,32 @@ public class SharpTreeViewTests
 		a.IsSelected.Should().BeFalse("moving the selection clears the old node's flag");
 	}
 
+	[AvaloniaTest]
+	public void Removing_Selected_Subtree_Prunes_Selection_In_One_Observable_State()
+	{
+		var (_, tree, root) = Host();
+		var b = (TestNode)root.Children[1];
+		var b1 = (TestNode)b.Children[0];
+		b.IsExpanded = true;
+		Dispatcher.UIThread.RunJobs();
+		tree.SelectedItems!.Add(b);
+		tree.SelectedItems.Add(b1);
+		Dispatcher.UIThread.RunJobs();
+
+		var observedSelections = new List<TestNode[]>();
+		tree.SelectionChanged += (_, _) => observedSelections.Add(
+			tree.SelectedItems!.OfType<TestNode>().ToArray());
+
+		root.Children.Remove(b);
+		Dispatcher.UIThread.RunJobs();
+
+		observedSelections.Should().ContainSingle();
+		observedSelections[0].Should().BeEmpty("removed rows must not leak as intermediate tree selections");
+		tree.SelectedItems!.Cast<object>().Should().BeEmpty();
+		b.IsSelected.Should().BeFalse();
+		b1.IsSelected.Should().BeFalse();
+	}
+
 	/// <summary>The number of rows the flattener should expose for a tree rooted in
 	/// <paramref name="root"/> when the root itself is not shown.</summary>
 	static int VisibleRowCount(SharpTreeNode root)

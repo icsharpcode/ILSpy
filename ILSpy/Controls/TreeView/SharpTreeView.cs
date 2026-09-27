@@ -61,6 +61,8 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		TreeFlattener? flattener;
 		string searchBuffer = string.Empty;
 		DispatcherTimer? searchResetTimer;
+		bool pruningRemovedRowsFromSelection;
+		List<object>? prunedRemovedRows;
 
 		static SharpTreeView()
 		{
@@ -130,6 +132,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		{
 			if (flattener != null)
 			{
+				flattener.CollectionChanged -= OnFlattenerCollectionChanged;
 				flattener.Stop();
 				flattener = null;
 			}
@@ -147,14 +150,55 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 				if (!(ShowRoot && ShowRootExpander))
 					Root.IsExpanded = true;
 				flattener = new TreeFlattener(Root, ShowRoot);
+				flattener.CollectionChanged += OnFlattenerCollectionChanged;
 				ItemsSource = flattener;
 			}
 			else
 			{
 				ItemsSource = null;
 			}
-			// Avalonia's ListBox removes items from the selection automatically when they leave the
-			// source (a collapsed ancestor hides them), so no manual deselect-on-hide is needed.
+		}
+
+		void OnFlattenerCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (SelectedItems == null)
+				return;
+
+			SharpTreeNode[] removedRows = e.Action switch {
+				NotifyCollectionChangedAction.Remove when e.OldItems != null => e.OldItems
+					.OfType<SharpTreeNode>()
+					.Where(SelectedItems.Contains)
+					.ToArray(),
+				NotifyCollectionChangedAction.Reset => SelectedItems
+					.OfType<SharpTreeNode>()
+					.Where(node => flattener?.Contains(node) != true)
+					.ToArray(),
+				_ => []
+			};
+			if (removedRows.Length == 0)
+				return;
+
+			prunedRemovedRows = [];
+			pruningRemovedRowsFromSelection = true;
+			try
+			{
+				foreach (var node in removedRows)
+					SelectedItems.Remove(node);
+			}
+			finally
+			{
+				pruningRemovedRowsFromSelection = false;
+			}
+
+			var removedSelection = prunedRemovedRows;
+			prunedRemovedRows = null;
+			if (removedSelection is { Count: > 0 })
+			{
+				RaiseEvent(new SelectionChangedEventArgs(
+					SelectionChangedEvent,
+					removedSelection,
+					Array.Empty<object>()) { Source = this });
+			}
 		}
 
 		protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey)
@@ -172,6 +216,14 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 
 		void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
 		{
+			if (pruningRemovedRowsFromSelection)
+			{
+				foreach (var item in e.RemovedItems)
+					prunedRemovedRows!.Add(item);
+				e.Handled = true;
+				return;
+			}
+
 			foreach (SharpTreeNode node in e.RemovedItems)
 				node.IsSelected = false;
 			foreach (SharpTreeNode node in e.AddedItems)
