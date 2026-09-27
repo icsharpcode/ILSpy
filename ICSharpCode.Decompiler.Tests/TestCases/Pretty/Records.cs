@@ -88,6 +88,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if CS110
+		public record WithRequiredMembers
+		{
+			public required Type ServiceType { get; init; }
+
+			public required object ServiceKey { get; init; }
+		}
+#endif
+
 		[AttributeUsage(AttributeTargets.All)]
 		public class RecordTestAttribute : Attribute
 		{
