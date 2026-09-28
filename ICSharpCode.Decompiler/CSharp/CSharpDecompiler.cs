@@ -733,10 +733,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		static bool IsClosureType(SRM.TypeDefinition type, MetadataReader metadata)
 		{
 			var name = metadata.GetString(type.Name);
+			if (name.Contains("DisplayClass") || name.Contains("AnonStorey") || name.Contains("Closure$") || name.Contains("<>c"))
+				return type.Name.IsGeneratedName(metadata) || type.IsCompilerGenerated(metadata);
 			if (!type.Name.IsGeneratedName(metadata) || !type.IsCompilerGenerated(metadata))
 				return false;
-			if (name.Contains("DisplayClass") || name.Contains("AnonStorey") || name.Contains("Closure$"))
-				return true;
 			return type.BaseType.IsKnownType(metadata, KnownTypeCode.Object) && !type.GetInterfaceImplementations().Any();
 		}
 
