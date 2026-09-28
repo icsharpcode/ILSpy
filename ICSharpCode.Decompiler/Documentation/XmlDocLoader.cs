@@ -124,6 +124,8 @@ namespace ICSharpCode.Decompiler.Documentation
 		{
 			if (string.IsNullOrEmpty(assemblyFileName))
 				return null;
+			if (!File.Exists(assemblyFileName))
+				return null;
 			var versionDir = Path.GetDirectoryName(assemblyFileName);
 			if (versionDir == null)
 				return null;
