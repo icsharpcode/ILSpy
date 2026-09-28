@@ -713,7 +713,7 @@ static class Report
 			  :root { --bg:#16181c; --fg:#e6e6e6; --muted:#9aa0a6; --line:#333;
 			          --add:#12261a; --addfg:#7ee2a8; --del:#2b1416; --delfg:#ff9c92; --chip:#24262b; }
 			}
-			body { background:var(--bg); color:var(--fg); font:14px/1.5 system-ui,sans-serif; margin:0 auto; padding:24px; max-width:1100px; }
+			body { background:var(--bg); color:var(--fg); font:14px/1.5 system-ui,sans-serif; margin:0; padding:24px; }
 			h1 { font-size:20px; margin:0 0 4px; } h2 { font-size:16px; margin:28px 0 8px; }
 			.meta { color:var(--muted); font-size:13px; }
 			table { border-collapse:collapse; margin:12px 0; } th,td { border:1px solid var(--line); padding:4px 10px; text-align:right; }
@@ -721,7 +721,7 @@ static class Report
 			.pos { color:var(--delfg); } .neg { color:var(--addfg); }
 			details { border:1px solid var(--line); border-radius:6px; margin:6px 0; background:var(--chip); }
 			summary { cursor:pointer; padding:8px 10px; font-family:ui-monospace,monospace; font-size:13px; }
-			pre { margin:0; padding:10px; overflow-x:auto; background:var(--bg); font:12px/1.45 ui-monospace,monospace; }
+			pre { margin:0; padding:10px; overflow-x:auto; white-space:pre-wrap; overflow-wrap:anywhere; background:var(--bg); font:12px/1.45 ui-monospace,monospace; }
 			ins { background:var(--add); color:var(--addfg); text-decoration:none; display:block; }
 			del { background:var(--del); color:var(--delfg); text-decoration:none; display:block; }
 			span.ctx { display:block; color:var(--muted); }
