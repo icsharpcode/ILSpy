@@ -202,11 +202,11 @@ namespace ICSharpCode.ILSpy.Docking
 					factory.InitLayout(Layout);
 			}
 
+			// A selection change reaches ShowSelectedNode through OnAssemblyTreePropertyChanged:
+			// the model raises SelectedItem whenever the selection settles, including once at the
+			// end of a bulk edit. Subscribing to SelectedItems.CollectionChanged as well would run
+			// it a second time, and once per node during a bulk edit.
 			assemblyTreeModel.PropertyChanged += OnAssemblyTreePropertyChanged;
-			assemblyTreeModel.SelectedItems.CollectionChanged += (_, _) => {
-				if (!syncingTreeFromActiveTab)
-					ShowSelectedNode();
-			};
 			languageService.PropertyChanged += OnLanguagePropertyChanged;
 
 			ToolPaneMenuItems = toolPaneRegistry.Panes
@@ -799,6 +799,16 @@ namespace ICSharpCode.ILSpy.Docking
 				lastShownNodes = null;
 				return;
 			}
+			var activeAssemblies = new HashSet<ICSharpCode.ILSpyX.LoadedAssembly>(
+				assemblyTreeModel.AssemblyList?.GetAssemblies() ?? []);
+			if (nodes.Any(n => n.AncestorsAndSelf()
+				.OfType<AssemblyTreeNode>()
+				.Any(a => !activeAssemblies.Contains(a.LoadedAssembly))))
+			{
+				lastShownNodes = null;
+				ClearActiveDecompilerTab();
+				return;
+			}
 			// SelectedItems.CollectionChanged and SelectedItem PropertyChanged both fan into
 			// here on a single click, so dedupe to avoid creating two TabPageModels for the
 			// same selection — the second one's columns would replace the first's, but the
@@ -1045,6 +1055,15 @@ namespace ICSharpCode.ILSpy.Docking
 
 		public DecompilerTabPageModel? ActiveDecompilerTab
 			=> factory.MainTab?.Content as DecompilerTabPageModel is { IsStaticContent: false } d ? d : null;
+
+		public void ClearActiveDecompilerTab()
+		{
+			if (ActiveDecompilerTab is not { } tab)
+				return;
+			tab.ClearContent();
+			if (factory.MainTab is { } main)
+				main.SourceNode = null;
+		}
 
 		/// <summary>
 		/// Forwards to <see cref="DecompilerTabPageModel.RunWithCancellation"/> on the active

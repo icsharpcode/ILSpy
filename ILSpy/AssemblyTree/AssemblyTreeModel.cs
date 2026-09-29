@@ -109,21 +109,16 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			ArgumentNullException.ThrowIfNull(nodes);
 			if (SelectionMatches(nodes))
 				return;
-			batchingSelectionChange = true;
-			try
+			using (BatchSelectionChange())
 			{
 				SelectedItems.Clear();
+				var seen = new HashSet<SharpTreeNode>();
 				foreach (var node in nodes)
 				{
-					if (node != null && !SelectedItems.Contains(node))
+					if (node != null && seen.Add(node))
 						SelectedItems.Add(node);
 				}
 			}
-			finally
-			{
-				batchingSelectionChange = false;
-			}
-			RaiseSelectionChanged();
 		}
 
 		bool SelectionMatches(IReadOnlyList<SharpTreeNode> nodes)
@@ -204,10 +199,49 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				decompTab.HighlightedReference = e.Source;
 		}
 
-		// True while the SelectedItem setter is replacing the collection via Clear()+Add();
-		// suppresses the selection-changed fan-out until the final state is in place so consumers
-		// never observe the transient empty/multi mid-replace.
-		bool batchingSelectionChange;
+		// Greater than zero while a bulk edit is rewriting SelectedItems; suppresses the
+		// selection-changed fan-out until the final state is in place so consumers never observe a
+		// transient empty/multi mid-replace, and so the fan-out costs one pass rather than one per
+		// node. RaiseSelectionChanged reaches a full command re-query, a session-settings write, a
+		// message-bus broadcast and a decompile of the new selection, so running it per node is
+		// what made selecting a large subtree freeze the UI.
+		int selectionBatchDepth;
+
+		// Set when a change actually arrived while a batch was open, so a batch that rewrote the
+		// selection to what it already was closes without notifying anyone.
+		bool selectionChangedDuringBatch;
+
+		/// <summary>
+		/// Suppresses the selection fan-out for the lifetime of the returned scope, then raises it
+		/// exactly once. Nests; only the outermost scope raises.
+		/// </summary>
+		public IDisposable BatchSelectionChange() => new SelectionBatchScope(this);
+
+		sealed class SelectionBatchScope : IDisposable
+		{
+			readonly AssemblyTreeModel model;
+			bool disposed;
+
+			public SelectionBatchScope(AssemblyTreeModel model)
+			{
+				this.model = model;
+				model.selectionBatchDepth++;
+			}
+
+			public void Dispose()
+			{
+				if (disposed)
+					return;
+				disposed = true;
+				if (--model.selectionBatchDepth > 0)
+					return;
+				if (model.selectionChangedDuringBatch)
+				{
+					model.selectionChangedDuringBatch = false;
+					model.RaiseSelectionChanged();
+				}
+			}
+		}
 
 		void OnSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 		{
@@ -218,10 +252,13 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				foreach (SharpTreeNode n in e.OldItems)
 					n.IsSelected = false;
 
-			// During a SelectedItem-setter batch the fan-out is deferred to the single
-			// RaiseSelectionChanged() the setter issues once the final selection is in place.
-			if (batchingSelectionChange)
+			// Inside a batch the fan-out is deferred to the single RaiseSelectionChanged() the
+			// outermost scope issues once the final selection is in place.
+			if (selectionBatchDepth > 0)
+			{
+				selectionChangedDuringBatch = true;
 				return;
+			}
 			RaiseSelectionChanged();
 		}
 
