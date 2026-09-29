@@ -317,6 +317,7 @@ namespace ICSharpCode.ILSpy.TextView
 		// LoadedAssembly.Text -> metadata, which AVs when an assembly was unloaded
 		// between selection and the title update.
 		string cachedBaseTitle = "(unnamed)";
+		int titleVersion;
 
 		// IsStaticContent is inherited from ContentPageModel: true for static pages (e.g. About)
 		// excludes this tab from the "current decompile target" lookup, so later tree-node
@@ -370,6 +371,30 @@ namespace ICSharpCode.ILSpy.TextView
 				OnPropertyChanged(nameof(CurrentNode));
 				StartDecompile();
 			}
+		}
+
+		internal void ClearContent()
+		{
+			titleVersion++;
+			activeCts?.Cancel();
+			foreach (var n in currentNodes)
+				n.PropertyChanged -= OnCurrentNodePropertyChanged;
+			currentNodes = System.Array.Empty<ILSpyTreeNode>();
+			cachedBaseTitle = ComposeBaseTitle();
+			Title = cachedBaseTitle;
+			HighlightingModel = null;
+			HighlightingSpans = null;
+			Foldings = null;
+			References = null;
+			DefinitionLookup = null;
+			DebugInfo = null;
+			DebugStepHighlight = null;
+			UIElements = null;
+			Text = string.Empty;
+			IsDecompiling = false;
+			TaskbarProgress?.SetState(TaskbarProgressState.None);
+			OnPropertyChanged(nameof(CurrentNodes));
+			OnPropertyChanged(nameof(CurrentNode));
 		}
 
 		void OnCurrentNodePropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -531,10 +556,12 @@ namespace ICSharpCode.ILSpy.TextView
 			using var _phase = ICSharpCode.ILSpy.AppEnv.AppLog.Phase($"DecompileAsync #{callNumber}");
 			activeCts?.Cancel();
 			var cts = activeCts = new CancellationTokenSource();
+			int requestTitleVersion = ++titleVersion;
 			var nodes = currentNodes;
 			var language = Language;
 			if (nodes.Count == 0 || language == null)
 			{
+				Title = cachedBaseTitle;
 				// Clear the per-decompile artefacts alongside Text. If we leave Foldings /
 				// HighlightingModel / References pointing at the previous decompile's state,
 				// the next ApplyDocument fires (via SyntaxExtension or Text setter) tries to
@@ -562,7 +589,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// editor state is left untouched so cancellation falls back cleanly.
 			Title = ComposeSpinnerTitle(0, cachedBaseTitle);
 			TaskbarProgress?.SetState(TaskbarProgressState.Indeterminate);
-			_ = RunSpinnerAsync(cts.Token);
+			_ = RunSpinnerAsync(cts.Token, requestTitleVersion);
 
 			try
 			{
@@ -654,7 +681,7 @@ namespace ICSharpCode.ILSpy.TextView
 						// that window (the assembly was removed from the list, the user selected
 						// something else) must not let the finished output overwrite whatever state
 						// the tab has been put into since.
-						if (cts.Token.IsCancellationRequested)
+						if (cts.Token.IsCancellationRequested || requestTitleVersion != titleVersion)
 							return;
 						Title = cachedBaseTitle;
 						ApplyOutput(output, effectiveSyntaxExtension, rendered);
@@ -670,7 +697,7 @@ namespace ICSharpCode.ILSpy.TextView
 				// "Decompiling…" overlay is far worse than leaving the previous output visible.
 				// Skip the reset if a newer request has already taken over (activeCts is rotated
 				// at the top of DecompileAsync).
-				if (ReferenceEquals(activeCts, cts))
+				if (ReferenceEquals(activeCts, cts) && requestTitleVersion == titleVersion)
 				{
 					void StopSpinner()
 					{
@@ -697,10 +724,10 @@ namespace ICSharpCode.ILSpy.TextView
 		static string ComposeSpinnerTitle(int frame, string baseTitle)
 			=> $"{SpinnerFrames[frame % SpinnerFrames.Length]} {baseTitle}";
 
-		async Task RunSpinnerAsync(CancellationToken token)
+		async Task RunSpinnerAsync(CancellationToken token, int spinnerTitleVersion)
 		{
 			int frame = 1;
-			while (!token.IsCancellationRequested)
+			while (!token.IsCancellationRequested && spinnerTitleVersion == titleVersion)
 			{
 				try
 				{
@@ -710,7 +737,7 @@ namespace ICSharpCode.ILSpy.TextView
 				{
 					return;
 				}
-				if (token.IsCancellationRequested || !IsDecompiling)
+				if (token.IsCancellationRequested || !IsDecompiling || spinnerTitleVersion != titleVersion)
 					return;
 				Title = ComposeSpinnerTitle(frame++, cachedBaseTitle);
 			}
@@ -731,6 +758,7 @@ namespace ICSharpCode.ILSpy.TextView
 			ArgumentNullException.ThrowIfNull(taskCreation);
 			activeCts?.Cancel();
 			var cts = activeCts = new CancellationTokenSource();
+			int requestTitleVersion = ++titleVersion;
 			ProgressTitle = progressTitle ?? ICSharpCode.ILSpy.Properties.Resources.Decompiling;
 			ResetProgress();
 			IsDecompiling = true;
@@ -739,14 +767,14 @@ namespace ICSharpCode.ILSpy.TextView
 			// strip advertises the running work, exactly like an in-place decompile does.
 			cachedBaseTitle = Title;
 			Title = ComposeSpinnerTitle(0, cachedBaseTitle);
-			_ = RunSpinnerAsync(cts.Token);
+			_ = RunSpinnerAsync(cts.Token, requestTitleVersion);
 			try
 			{
 				return await taskCreation(cts.Token).ConfigureAwait(true);
 			}
 			finally
 			{
-				if (ReferenceEquals(activeCts, cts))
+				if (ReferenceEquals(activeCts, cts) && requestTitleVersion == titleVersion)
 				{
 					void StopSpinner()
 					{
