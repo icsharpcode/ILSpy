@@ -279,8 +279,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new TransformFieldAndConstructorInitializers(), // must run after DeclareVariables
 				new PrettifyAssignments(), // must run after DeclareVariables
 				new IntroduceUsingDeclarations(),
-				new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
-				new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
+				new IntroduceQueryExpressions(), // needs the extension method syntax CallBuilder writes
 				new CombineQueryExpressions(),
 				new NormalizeBlockStatements(),
 				new FlattenSwitchBlocks(),

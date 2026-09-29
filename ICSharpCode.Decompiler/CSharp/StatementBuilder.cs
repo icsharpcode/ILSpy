@@ -633,7 +633,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				m = getEnumeratorPattern.Match(resource);
 				if (!m.Success)
 				{
-					// ... or the extension GetEnumeratorPattern.
+					// ... or the extension GetEnumeratorPattern. CallBuilder writes the call this
+					// way when extension method syntax would not resolve back to the method, e.g.
+					// where two imported namespaces both offer a GetEnumerator extension.
 					m = extensionGetEnumeratorPattern.Match(resource);
 					if (!m.Success)
 						return false;
@@ -650,6 +652,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Check if the resource expression matches the GetEnumerator pattern.
 				m = getEnumeratorPattern.Match(resource);
 				if (!m.Success)
+					return false;
+				// An extension GetEnumerator written in extension method syntax is spelled like an
+				// instance call, so the pattern alone no longer tells them apart.
+				if (resource.GetSymbol() is IMethod { IsExtensionMethod: true })
 					return false;
 			}
 			isAsync = ((MemberReferenceExpression)((InvocationExpression)resource).Target).MemberName == "GetAsyncEnumerator";

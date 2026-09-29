@@ -1017,6 +1017,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task ExtensionMethods([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions cscOptions)
+		{
+			await RunForLibrary(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public async Task CS9_ExtensionGetEnumerator([ValueSource(nameof(roslyn3OrNewerWithNet40Options))] CompilerOptions cscOptions)
 		{
 			await RunForLibrary(cscOptions: cscOptions);

@@ -48,6 +48,31 @@ namespace ICSharpCode.Decompiler
 
 		public UsingScope UsingScope { get; }
 
+		readonly Dictionary<string, UsingScope> nestedUsingScopes = new Dictionary<string, UsingScope>();
+
+		/// <summary>
+		/// <see cref="UsingScope"/> as seen from inside <paramref name="namespaceName"/>.
+		/// C# looks for extension methods one namespace at a time, innermost first, so a scope that
+		/// is not nested into the namespace the code is written in lets an extension method declared
+		/// there compete with merely imported ones instead of beating them. Memoized, because the
+		/// list of extension methods a scope can reach is built once per scope.
+		/// </summary>
+		public UsingScope GetUsingScopeFor(string namespaceName)
+		{
+			if (string.IsNullOrEmpty(namespaceName))
+				return UsingScope;
+			if (!nestedUsingScopes.TryGetValue(namespaceName, out var scope))
+			{
+				scope = UsingScope;
+				foreach (string part in namespaceName.Split('.'))
+				{
+					scope = scope.WithNestedNamespace(part);
+				}
+				nestedUsingScopes.Add(namespaceName, scope);
+			}
+			return scope;
+		}
+
 		public DecompileRun(DecompilerSettings settings, UsingScope usingScope)
 		{
 			this.Settings = settings ?? throw new ArgumentNullException(nameof(settings));

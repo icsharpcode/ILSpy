@@ -146,6 +146,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				currentNamespace = oldNamespace;
 			}
 
+			public override void VisitInvocationExpression(InvocationExpression invocationExpression)
+			{
+				// A call written in extension method syntax no longer names its declaring type,
+				// so nothing else in the tree asks for that namespace to be imported - and
+				// without the import the name does not resolve back to this method.
+				if (invocationExpression.GetResolveResult() is CSharpInvocationResolveResult {
+					IsExtensionMethodInvocation: true, Member: var extensionMethod
+				})
+				{
+					AddImportedNamespace(extensionMethod.DeclaringType);
+				}
+				base.VisitInvocationExpression(invocationExpression);
+			}
+
 			public override void VisitForeachStatement(ForeachStatement foreachStatement)
 			{
 				var annotation = foreachStatement.Annotation<ForeachAnnotation>();

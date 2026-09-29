@@ -1476,8 +1476,7 @@ new DeclareVariables(), <span class="cm">// should run after most transforms tha
 new TransformFieldAndConstructorInitializers(), <span class="cm">// must run after DeclareVariables</span>
 new PrettifyAssignments(), <span class="cm">// must run after DeclareVariables</span>
 new IntroduceUsingDeclarations(),
-new IntroduceExtensionMethods(), <span class="cm">// must run after IntroduceUsingDeclarations</span>
-new IntroduceQueryExpressions(), <span class="cm">// must run after IntroduceExtensionMethods</span>
+new IntroduceQueryExpressions(), <span class="cm">// needs the extension method syntax CallBuilder writes</span>
 new CombineQueryExpressions(),
 new NormalizeBlockStatements(),
 new FlattenSwitchBlocks(),
@@ -1522,10 +1521,11 @@ eventual imports to answer ambiguity questions &#8212; null propagation, for exa
 <code>a != null ? Extensions.Method(a) : null</code> to <code>a?.Method()</code> only if it can
 guarantee the extension-method form will resolve unambiguously. Since many compiler-generated calls
 have disappeared by the time the AST exists, the AST-derived set is a subset of the
-<code>DecompileRun</code>'s, and only this subset gets directives. Only after imports exist can
-<strong><code>IntroduceExtensionMethods</code></strong> rewrite
-<code>Enumerable.Where(xs, p)</code> to <code>xs.Where(p)</code> (an ordering that predates the
-<code>DecompileRun</code> namespace superset), and only after <em>that</em> can
+<code>DecompileRun</code>'s, and only this subset gets directives. Extension-method syntax &#8212; <code>Enumerable.Where(xs, p)</code> written as
+<code>xs.Where(p)</code> &#8212; is not decided here: <code>CallBuilder</code> picks it while it
+builds the call, resolving against the <code>DecompileRun</code> superset. The collector
+therefore has to import the namespace of any call it finds in that form, because nothing in the
+tree names the declaring type any more. Only then can
 <strong><code>IntroduceQueryExpressions</code></strong> rebuild <code>from&nbsp;&hellip;
 select</code> query syntax (running the C# spec's query translation backwards), with
 <strong><code>CombineQueryExpressions</code></strong> merging nested queries and dissolving the
