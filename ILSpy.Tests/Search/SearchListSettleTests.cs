@@ -55,8 +55,9 @@ public class SearchListSettleTests
 				started++;
 		};
 		search.SearchTerm = "Object";
-		await PumpAsync(TimeSpan.FromMilliseconds(400));   // let the typing debounce elapse
-		started = 0;                                        // count only what the burst causes
+		await Waiters.WaitForAsync(() => started > 0);
+		await Waiters.WaitForAsync(() => !search.IsSearching);
+		started = 0; // Count only what the assembly-list change causes.
 		return (search, vm.AssemblyTreeModel.AssemblyList!, () => started);
 	}
 
