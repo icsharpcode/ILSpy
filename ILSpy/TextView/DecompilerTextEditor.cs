@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel;
+using System.Linq;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -100,6 +101,17 @@ namespace ICSharpCode.ILSpy.TextView
 				FontFamily = new FontFamily(displaySettings.SelectedFont);
 			if (displaySettings.SelectedFontSize > 0)
 				FontSize = EditorZoom.EffectiveFontSize(displaySettings);
+			PrepareLineNumberMarginsForRender();
+		}
+
+		internal void PrepareLineNumberMarginsForRender()
+		{
+			foreach (var margin in TextArea.LeftMargins.OfType<LineNumberMargin>())
+			{
+				margin.SetValue(TextBlock.FontFamilyProperty, FontFamily);
+				margin.SetValue(TextBlock.FontSizeProperty, FontSize);
+				margin.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+			}
 		}
 
 		static DisplaySettings? TryGetDisplaySettings()
