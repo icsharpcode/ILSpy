@@ -187,6 +187,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				text = null;
 				return false;
 			}
+			bool hasImplicitNullTerminator = blob.RemainingBytes == size + 1 && blob.CurrentPointer[size] == 0;
 			for (int i = 0; i < size; i++)
 			{
 				byte val = blob.CurrentPointer[i];
@@ -194,7 +195,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					// Allow explicit null-termination character.
 				}
-				else if (val < 0x20 && val is not ((byte)'\r' or (byte)'\n' or (byte)'\t'))
+				else if (!hasImplicitNullTerminator && val < 0x20 && val is not ((byte)'\r' or (byte)'\n' or (byte)'\t'))
 				{
 					// If the string has control characters, it's probably binary data and not a string.
 					text = null;
