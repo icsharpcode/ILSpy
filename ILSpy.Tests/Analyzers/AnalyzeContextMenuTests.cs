@@ -20,7 +20,9 @@ using System.Linq;
 using System.Reflection.Metadata;
 using System.Threading.Tasks;
 
+using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
+using Avalonia.Input;
 
 using AwesomeAssertions;
 
@@ -133,6 +135,24 @@ public class AnalyzeContextMenuTests
 	}
 
 	[AvaloniaTest]
+	public async Task Analyze_Command_CanExecute_Tracks_The_Assembly_Tree_Selection()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		var command = AppComposition.Current.GetExport<AnalyzeCommand>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectNode(typeNode);
+
+		command.CanExecute(null).Should().BeTrue("a selected member can be analyzed");
+
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		vm.AssemblyTreeModel.SelectNode(assemblyNode);
+
+		command.CanExecute(null).Should().BeFalse("assembly nodes are not analyzable members");
+	}
+
+	[AvaloniaTest]
 	public async Task Pressing_Ctrl_R_On_The_Assembly_Tree_Analyses_The_Selected_Member()
 	{
 		// Ctrl+R while a member is selected on the assembly tree pane must surface the
@@ -140,7 +160,6 @@ public class AnalyzeContextMenuTests
 
 		var (window, vm) = await TestHarness.BootAsync();
 
-		var pane = await window.WaitForComponent<ICSharpCode.ILSpy.AssemblyTree.AssemblyListPane>();
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
@@ -149,13 +168,10 @@ public class AnalyzeContextMenuTests
 		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
 		var beforeCount = analyzerVm.Root.Children.Count;
 
-		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
-		grid.RaiseEvent(new global::Avalonia.Input.KeyEventArgs {
-			Key = global::Avalonia.Input.Key.R,
-			KeyModifiers = global::Avalonia.Input.KeyModifiers.Control,
-			RoutedEvent = global::Avalonia.Input.InputElement.KeyDownEvent,
-			Source = grid,
-		});
+		window.KeyPress(Key.R,
+			RawInputModifiers.Control,
+			PhysicalKey.R,
+			keySymbol: null);
 		TestCapture.Step("ctrl-r-pressed");
 
 		analyzerVm.Root.Children.Count.Should().Be(beforeCount + 1,
