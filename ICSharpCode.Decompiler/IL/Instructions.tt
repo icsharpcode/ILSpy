@@ -207,7 +207,7 @@
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("String", "Obj")),
 		new OpCode("ldstr.utf8", "Loads a constant byte string (as ReadOnlySpan&lt;byte&gt;).",
 			CustomClassName("LdStrUtf8"), LoadConstant("string"),
-				ResultType("new ParameterizedType(compilation.FindType(KnownTypeCode.ReadOnlySpanOfT), compilation.FindType(KnownTypeCode.Boolean))", "VT")),
+				ResultType("new ParameterizedType(compilation.FindType(KnownTypeCode.ReadOnlySpanOfT), compilation.FindType(KnownTypeCode.Byte))", "VT")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
 			LoadConstant("int"), ResultType("Int32", "I4")),
 		new OpCode("ldc.i8", "Loads a constant 64-bit integer.",

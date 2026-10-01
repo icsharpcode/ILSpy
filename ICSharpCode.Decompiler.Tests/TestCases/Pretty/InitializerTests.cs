@@ -472,6 +472,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static ReadOnlySpan<byte> UTF8LiteralWithNullTerminator => "Hello, world!\0"u8;
 		public static ReadOnlySpan<byte> UTF8LiteralEmpty => ""u8;
 		public static ReadOnlySpan<byte> UTF8LiteralWithEscapeSequences => "line1\nline2\t\"quoted\"\\"u8;
+		public static ReadOnlySpan<byte> UTF8LiteralWithEscapedControlCharacters => "PK\u0003\u0004"u8;
 #endif
 		#endregion
 
@@ -853,6 +854,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static ReadOnlySpan<int> ReadOnlySpanInitializer_Int32Array()
 		{
 			return new int[3] { 1, 2, 3 };
+		}
+
+		public static string ReadOnlySpanInitializer_OverloadResolution()
+		{
+			return SelectSpanOverload((ReadOnlySpan<byte>)new byte[3] { 1, 2, 3 });
+		}
+
+		private static string SelectSpanOverload(byte[] bytes)
+		{
+			return "array";
+		}
+
+		private static string SelectSpanOverload(ReadOnlySpan<byte> bytes)
+		{
+			return "span";
 		}
 #endif
 

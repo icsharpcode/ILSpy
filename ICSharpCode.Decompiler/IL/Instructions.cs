@@ -2892,7 +2892,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public readonly string Value;
 		public override StackType ResultType => StackType.VT;
-		public override IType InferType(ICompilation compilation) => new ParameterizedType(compilation.FindType(KnownTypeCode.ReadOnlySpanOfT), compilation.FindType(KnownTypeCode.Boolean));
+		public override IType InferType(ICompilation compilation) => new ParameterizedType(compilation.FindType(KnownTypeCode.ReadOnlySpanOfT), compilation.FindType(KnownTypeCode.Byte));
 		protected override void WriteToCore(ITextOutput output, ILAstWritingOptions options)
 		{
 			WriteILRange(output, options);
