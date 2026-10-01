@@ -34,6 +34,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using AvaloniaEdit.Document;
+using AvaloniaEdit.Editing;
 using AvaloniaEdit.Folding;
 using AvaloniaEdit.Highlighting;
 
@@ -177,6 +178,41 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			foreach (var margin in Editor.TextArea.LeftMargins)
 				margin.Cursor = ArrowCursor;
+		}
+
+		void KeepBookmarkMarginBeforeLineNumbers()
+		{
+			if (bookmarkMargin == null)
+				return;
+
+			var margins = Editor.TextArea.LeftMargins;
+			var lineNumberIndex = -1;
+			for (var i = 0; i < margins.Count; i++)
+			{
+				if (margins[i] is LineNumberMargin)
+				{
+					lineNumberIndex = i;
+					break;
+				}
+			}
+			var bookmarkIndex = margins.IndexOf(bookmarkMargin);
+			if (lineNumberIndex < 0 || bookmarkIndex < 0 || bookmarkIndex < lineNumberIndex)
+				return;
+
+			var lineNumberMargin = margins[lineNumberIndex];
+			Control? separator = null;
+			if (lineNumberIndex + 1 < margins.Count
+				&& margins[lineNumberIndex + 1] is global::Avalonia.Controls.Shapes.Line)
+				separator = margins[lineNumberIndex + 1];
+
+			if (separator != null)
+				margins.Remove(separator);
+			margins.Remove(lineNumberMargin);
+
+			bookmarkIndex = margins.IndexOf(bookmarkMargin);
+			margins.Insert(bookmarkIndex + 1, lineNumberMargin);
+			if (separator != null)
+				margins.Insert(bookmarkIndex + 2, separator);
 		}
 
 		void OnPreviewKeyDownForOmnibar(object? sender, KeyEventArgs e)
@@ -649,6 +685,11 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				case nameof(DisplaySettings.ShowLineNumbers):
 					Editor.ShowLineNumbers = s.ShowLineNumbers;
+					if (Editor.ShowLineNumbers)
+					{
+						KeepBookmarkMarginBeforeLineNumbers();
+						Editor.PrepareLineNumberMarginsForRender();
+					}
 					break;
 				case nameof(DisplaySettings.EnableWordWrap):
 					Editor.WordWrap = s.EnableWordWrap;

@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 
 using AvaloniaEdit.Editing;
@@ -74,5 +76,38 @@ public class MarginCursorTests
 			margin.Cursor.Should().BeSameAs(DecompilerTextView.ArrowCursor,
 				$"the {margin.GetType().Name} is a click target, so it must show the arrow rather than the text I-beam");
 		}
+	}
+
+	[AvaloniaTest]
+	public async Task Toggling_Line_Numbers_On_Live_Keeps_Gutter_Order_And_Positive_Font_Size()
+	{
+		var (window, vm) = await TestHarness.BootAsync(1);
+		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
+		settings.ShowLineNumbers = false;
+
+		var coreLibName = typeof(object).Assembly.GetName().Name!;
+		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
+		vm.AssemblyTreeModel.SelectNode(objectNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var view = await window.WaitForComponent<DecompilerTextView>();
+
+		settings.ShowLineNumbers = true;
+		var margins = view.Editor.TextArea.LeftMargins;
+		var lineNumberMargin = margins.OfType<LineNumberMargin>()
+			.Should().ContainSingle("line numbers should render after being toggled on live").Which;
+		margins.IndexOf(margins.OfType<BookmarkMargin>().Single())
+			.Should().Be(margins.IndexOf(lineNumberMargin) - 1,
+				"the bookmark gutter must stay left of line numbers when line numbers are toggled on live");
+		GetLineNumberMarginEmSize(lineNumberMargin).Should().BeGreaterThan(0);
+
+		window.UpdateLayout();
+		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+	}
+
+	static double GetLineNumberMarginEmSize(LineNumberMargin margin)
+	{
+		return (double)typeof(LineNumberMargin)
+			.GetProperty("EmSize", BindingFlags.Instance | BindingFlags.NonPublic)!
+			.GetValue(margin)!;
 	}
 }
