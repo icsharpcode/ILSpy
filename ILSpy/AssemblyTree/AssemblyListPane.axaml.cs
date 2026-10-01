@@ -67,8 +67,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 			// Drag-reorder + file drop are owned by SharpTreeView (delegated to the tree nodes).
 			Tree.AddHandler(PointerPressedEvent, OnTreePointerPressed, RoutingStrategies.Tunnel);
 			Tree.AddHandler(ContextRequestedEvent, OnTreeContextRequested, RoutingStrategies.Bubble, handledEventsToo: true);
-			Tree.KeyDown += OnTreeKeyDown;
-
 			var registry = AppComposition.TryGetExport<ContextMenuEntryRegistry>();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
 
@@ -226,31 +224,6 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				&& hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node is ILSpyTreeNode node)
 			{
 				OpenNodeInNewTab(node);
-				e.Handled = true;
-			}
-		}
-
-		#endregion
-
-		#region Keyboard (assembly-specific: Ctrl+R; Delete is handled by SharpTreeView)
-
-		void OnTreeKeyDown(object? sender, KeyEventArgs e)
-		{
-			if (DataContext is not AssemblyTreeModel model)
-				return;
-			if (e.Key == Key.R && e.KeyModifiers == KeyModifiers.Control)
-			{
-				var members = model.SelectedItems.OfType<IMemberTreeNode>()
-					.Select(n => n.Member)
-					.Where(m => m is not null and not ICSharpCode.Decompiler.TypeSystem.IField { IsConst: true })
-					.ToList();
-				if (members.Count == 0)
-					return;
-				var analyzerVm = AppComposition.TryGetExport<ICSharpCode.ILSpy.Analyzers.AnalyzerTreeViewModel>();
-				if (analyzerVm == null)
-					return;
-				foreach (var member in members)
-					analyzerVm.Analyze(member!);
 				e.Handled = true;
 			}
 		}

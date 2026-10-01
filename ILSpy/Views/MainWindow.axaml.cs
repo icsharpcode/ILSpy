@@ -49,7 +49,10 @@ namespace ICSharpCode.ILSpy.Views
 		}
 
 		[ImportingConstructor]
-		public MainWindow(MainWindowViewModel viewModel, SettingsService settingsService)
+		public MainWindow(
+			MainWindowViewModel viewModel,
+			SettingsService settingsService,
+			ICSharpCode.ILSpy.Analyzers.AnalyzeCommand analyzeCommand)
 		{
 			AppLog.Mark("MainWindow ctor entered");
 			this.settingsService = settingsService;
@@ -62,6 +65,10 @@ namespace ICSharpCode.ILSpy.Views
 			// gesture that triggered the DBus call. No-op unless that category is enabled.
 			InputDiagnostics.Attach(this);
 			ICSharpCode.ILSpy.MainMenu.Attach(this);
+			KeyBindings.Add(new KeyBinding {
+				Gesture = new KeyGesture(Key.R, KeyModifiers.Control),
+				Command = analyzeCommand,
+			});
 			// Mouse back/forward buttons navigate the history, like Alt+Left / Alt+Right. There is
 			// no KeyBinding equivalent for pointer buttons, so listen window-wide. The press is
 			// swallowed while tunnelling (the window is the first stop) so the control under the
