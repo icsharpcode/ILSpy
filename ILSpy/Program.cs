@@ -71,7 +71,9 @@ namespace ICSharpCode.ILSpy
 			// internally, so no separate App-level attach is needed -- a second call throws
 			// "already attached"). The avdt global tool connects over this bridge. Gated on DEBUG
 			// because the DiagnosticsSupport assets are excluded from Release.
-			builder = builder.WithDeveloperTools();
+			// DevTools would otherwise claim F12 at the raw-input level, ahead of the Go to Declaration
+			// shortcut that the Navigate menu binds to F12.
+			builder = builder.WithDeveloperTools(options => options.Gesture = new Avalonia.Input.KeyGesture(Avalonia.Input.Key.F12, Avalonia.Input.KeyModifiers.Control | Avalonia.Input.KeyModifiers.Shift));
 #endif
 			return builder.LogToTrace();
 		}
