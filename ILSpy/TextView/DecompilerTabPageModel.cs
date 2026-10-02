@@ -259,6 +259,13 @@ namespace ICSharpCode.ILSpy.TextView
 		public DecompilerTextViewState? PendingViewState { get; set; }
 
 		/// <summary>
+		/// Applies a view state (caret, scroll) to the live editor immediately, for navigation that
+		/// lands on the already-displayed document (no document-apply step runs to consume
+		/// <see cref="PendingViewState"/>). Set by the text view; null until a view is attached.
+		/// </summary>
+		public System.Action<DecompilerTextViewState>? ApplyViewState { get; set; }
+
+		/// <summary>
 		/// A bookmark to scroll to the next time this document is (re)applied. Set by bookmark
 		/// navigation before the target node is decompiled; the text view reads it in its
 		/// document-apply step, computes the line from the saved token, positions the caret and plays
@@ -277,6 +284,12 @@ namespace ICSharpCode.ILSpy.TextView
 
 		/// <summary>Moves to the next (true) / previous (false) bookmark within this document. Set by the text view.</summary>
 		public System.Action<bool>? NavigateBookmarkInFile { get; set; }
+
+		/// <summary>
+		/// Moves the caret to a document offset, scrolls it into view, flashes the caret highlight and
+		/// focuses the editor. Set by the text view; null while no view is attached.
+		/// </summary>
+		public System.Action<int>? NavigateToOffset { get; set; }
 
 		/// <summary>
 		/// Fired when the user clicks a cross-document reference. The host (DockWorkspace)

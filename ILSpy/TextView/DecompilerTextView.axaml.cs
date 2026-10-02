@@ -151,6 +151,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
 
 			SetupZoomAndCopy();
+			SetupInFileNavigation();
 
 			// Ctrl+L focuses the omnibar into search mode (browser address-bar gesture). Tunnel so
 			// it wins before AvaloniaEdit's own key handling while focus is anywhere in the editor.
@@ -1061,6 +1062,8 @@ namespace ICSharpCode.ILSpy.TextView
 				previous.CaptureViewState = null;
 				previous.NavigateBookmarkInFile = null;
 				previous.ScrollToBookmark = null;
+				previous.ApplyViewState = null;
+				previous.NavigateToOffset = null;
 			}
 
 			boundModel = DataContext as DecompilerTabPageModel;
@@ -1076,6 +1079,10 @@ namespace ICSharpCode.ILSpy.TextView
 				// Direct scroll for a bookmark activated on the already-displayed node, where no
 				// document-apply step runs to consume PendingBookmark.
 				model.ScrollToBookmark = bookmark => ApplyBookmark(bookmark);
+				// Direct caret/scroll restore for navigation to the already-displayed document.
+				model.ApplyViewState = ApplyViewStateNow;
+				// Caret jumps requested by the File Structure pane and the Go to File Member popup.
+				model.NavigateToOffset = NavigateToOffsetNow;
 				ApplyDocument(model);
 				// Point the breadcrumb at this tab's node (the bar owns its own VM, so feed it the
 				// node rather than letting it inherit the document DataContext).
@@ -1153,6 +1160,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// force-close even if the popup currently wants to stay (mouseClick: true).
 			TryCloseExistingPopup(mouseClick: true);
 			ClearLocalReferenceMarks();
+			ClearCaretUsageMarks();
 			ClearDebugStepMarks();
 			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
 			Editor.Document.Text = model.Text;
