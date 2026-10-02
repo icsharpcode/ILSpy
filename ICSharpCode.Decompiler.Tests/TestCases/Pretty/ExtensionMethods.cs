@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -61,6 +63,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return text.Print;
 		}
+
+		public void NullConditionalDoesNotHideInvalidExtensionMethodSyntax()
+		{
+			IEnumerable<string> enumerable = new List<string> { "ABC", "DEF" };
+#if EXPECTED_OUTPUT && OPT
+			Console.WriteLine((enumerable != null) ? Enumerable.Count(enumerable) : 0);
+#else
+			int value = ((enumerable != null) ? Enumerable.Count(enumerable) : 0);
+			Console.WriteLine(value);
+#endif
+		}
 	}
 
 	public static class ExtensionMethodsProvider
@@ -96,6 +109,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void Ambiguous(this ExtensionMethods.HasInstanceMethod x, int i)
 		{
+		}
+
+		public static int Count(this IEnumerable source)
+		{
+			return 5;
 		}
 	}
 }

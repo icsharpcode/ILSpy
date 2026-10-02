@@ -2877,6 +2877,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		{
 			if (target is LambdaResolveResult)
 				return false;
+			var normalLookup = ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.Expression);
+			if (normalLookup is MemberResolveResult { Member.SymbolKind: not SymbolKind.Method })
+				return false;
 			var rr = ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
 			if (rr == null)
 				return false;
