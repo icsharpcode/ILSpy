@@ -456,6 +456,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 
 			Children.Add(new ReferenceFolderTreeNode(module, this));
+			if (module.IsAssembly)
+				Children.Add(new ICSharpCode.ILSpy.Dependencies.ReferencedByFolderTreeNode(module, this));
 
 			if (module.Resources.Any())
 				Children.Add(new ResourceListTreeNode(module));

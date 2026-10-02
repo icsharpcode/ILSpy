@@ -58,10 +58,11 @@ public class AnalyzeContextMenuTests
 	}
 
 	[AvaloniaTest]
-	public async Task Analyze_Entry_Is_Visible_For_Member_Tree_Nodes_And_Hidden_For_AssemblyTreeNode()
+	public async Task Analyze_Entry_Is_Visible_For_Member_And_Assembly_Tree_Nodes()
 	{
 		// AnalyzeContextMenuEntry visibility contract: visible when every selected node is
-		// an IMemberTreeNode (types, methods, fields, properties, events), hidden otherwise.
+		// an IMemberTreeNode (types, methods, fields, properties, events) or an assembly
+		// (analyzed as a whole module), hidden otherwise.
 
 		var (_, vm) = await TestHarness.BootAsync();
 
@@ -75,7 +76,7 @@ public class AnalyzeContextMenuTests
 
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = new[] { (SharpTreeNode)assemblyNode } })
-			.Should().BeFalse("AssemblyTreeNode isn't an IMemberTreeNode — Analyze must hide");
+			.Should().BeTrue("an assembly is analyzed as a module (Referenced By, Dependent Code)");
 
 		entry.IsVisible(new TextViewContext { SelectedTreeNodes = null })
 			.Should().BeFalse("no selection means no entity to analyse");
@@ -149,7 +150,12 @@ public class AnalyzeContextMenuTests
 		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
 		vm.AssemblyTreeModel.SelectNode(assemblyNode);
 
-		command.CanExecute(null).Should().BeFalse("assembly nodes are not analyzable members");
+		command.CanExecute(null).Should().BeTrue("assembly nodes are analyzed as whole modules");
+
+		var referencesFolder = assemblyNode.Children.First(c => c.GetType().Name == "ReferenceFolderTreeNode");
+		vm.AssemblyTreeModel.SelectNode(referencesFolder);
+
+		command.CanExecute(null).Should().BeFalse("a references folder is neither a member nor an assembly");
 	}
 
 	[AvaloniaTest]
