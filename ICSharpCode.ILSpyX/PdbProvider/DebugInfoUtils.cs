@@ -22,9 +22,12 @@ using System.IO;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 
 using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.Symbols;
 
 #nullable enable
 
@@ -59,6 +62,26 @@ namespace ICSharpCode.ILSpyX.PdbProvider
 				// Ignore PDB load errors
 			}
 			return null;
+		}
+
+		/// <summary>
+		/// Looks up the module's PDB on the locator's symbol path (downloading it if needed) and loads
+		/// it. Returns <c>null</c> when no matching PDB is found.
+		/// </summary>
+		public static async Task<IDebugInfoProvider?> LoadSymbolsFromSymbolPathAsync(PEFile module,
+			SymbolLocator locator, CancellationToken cancellationToken = default)
+		{
+			string? pdbFileName = await locator.FindPdbAsync(module.Reader, cancellationToken).ConfigureAwait(false);
+			if (pdbFileName == null)
+				return null;
+			try
+			{
+				return FromFile(module, pdbFileName);
+			}
+			catch (Exception ex) when (ex is BadImageFormatException || ex is COMException || ex is IOException)
+			{
+				return null;
+			}
 		}
 
 		public static IDebugInfoProvider? FromFile(PEFile module, string pdbFileName)
