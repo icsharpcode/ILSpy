@@ -29,7 +29,9 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.FileStructure;
 using ICSharpCode.ILSpy.Search;
+using ICSharpCode.ILSpy.TypeHierarchy;
 
 using NUnit.Framework;
 
@@ -87,6 +89,20 @@ public class ToolPaneRegistryTests
 		allDockables.OfType<AssemblyTreeModel>().Should().ContainSingle();
 		allDockables.OfType<SearchPaneModel>().Should().BeEmpty("Search is hidden until invoked");
 		allDockables.OfType<AnalyzerTreeViewModel>().Should().BeEmpty("Analyzer is hidden until invoked");
+		allDockables.OfType<TypeHierarchyViewModel>().Should().BeEmpty("Type Hierarchy is hidden until invoked");
+		allDockables.OfType<FileStructureViewModel>().Should().BeEmpty("File Structure is hidden until invoked");
+	}
+
+	[AvaloniaTest]
+	public void Registry_Lists_The_Structure_Panes_In_Their_Dock_Zones()
+	{
+		var registry = AppComposition.Current.GetExport<ToolPaneRegistry>();
+		var byType = registry.Panes.ToDictionary(p => p.Pane.GetType(), p => p.Metadata);
+
+		byType[typeof(TypeHierarchyViewModel)].Alignment.Should().Be(ToolPaneAlignment.Bottom);
+		byType[typeof(TypeHierarchyViewModel)].IsVisibleByDefault.Should().BeFalse();
+		byType[typeof(FileStructureViewModel)].Alignment.Should().Be(ToolPaneAlignment.Right);
+		byType[typeof(FileStructureViewModel)].IsVisibleByDefault.Should().BeFalse();
 	}
 
 	static System.Collections.Generic.IEnumerable<Dock.Model.Core.IDockable> FlattenDockables(Dock.Model.Core.IDockable root)

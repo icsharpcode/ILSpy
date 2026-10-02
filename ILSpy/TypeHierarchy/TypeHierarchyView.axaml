@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:th="using:ICSharpCode.ILSpy.TypeHierarchy"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+             x:Class="ICSharpCode.ILSpy.TypeHierarchy.TypeHierarchyView"
+             x:DataType="th:TypeHierarchyViewModel">
+	<Panel>
+		<TextBlock IsVisible="{Binding Target, Converter={x:Static ObjectConverters.IsNull}}"
+		           HorizontalAlignment="Center" VerticalAlignment="Center"
+		           Margin="8" TextWrapping="Wrap" Opacity="0.7"
+		           Text="Place the caret on a type or member (or select one in the assembly tree) and choose Navigate > Type Hierarchy." />
+		<!-- Expansion is two-way so expanding a row in the view triggers the node's lazy load. -->
+		<TreeView Name="HierarchyTree"
+		          ItemsSource="{Binding Roots}"
+		          SelectedItem="{Binding SelectedNode, Mode=TwoWay}">
+			<TreeView.Styles>
+				<Style Selector="TreeViewItem" x:DataType="th:TypeHierarchyNode">
+					<Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+				</Style>
+			</TreeView.Styles>
+			<TreeView.ItemTemplate>
+				<TreeDataTemplate DataType="th:TypeHierarchyNode" ItemsSource="{Binding Children}">
+					<StackPanel Orientation="Horizontal" Spacing="4">
+						<Image Source="{Binding Icon}" Width="16" Height="16" VerticalAlignment="Center" />
+						<TextBlock Text="{Binding Text}" VerticalAlignment="Center" />
+					</StackPanel>
+				</TreeDataTemplate>
+			</TreeView.ItemTemplate>
+		</TreeView>
+	</Panel>
+</UserControl>
