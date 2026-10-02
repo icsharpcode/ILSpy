@@ -27,6 +27,11 @@ namespace ICSharpCode.ILSpyCmd.Tests
 	/// </summary>
 	internal static class CliTestRunner
 	{
+		static volatile StringWriter currentOutput;
+
+		/// <summary>The standard output captured so far by the run in progress, for long-running commands.</summary>
+		public static string CurrentOutput() => currentOutput?.ToString() ?? string.Empty;
+
 		public static async Task<(int ExitCode, string Output, string Error)> RunAsync(params string[] args)
 		{
 			var originalOut = Console.Out;
@@ -35,6 +40,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			var stderr = new StringWriter();
 			try
 			{
+				currentOutput = stdout;
 				Console.SetOut(stdout);
 				Console.SetError(stderr);
 				int exitCode = await ILSpyCmdProgram.Main(args);
@@ -42,6 +48,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			}
 			finally
 			{
+				currentOutput = null;
 				Console.SetOut(originalOut);
 				Console.SetError(originalError);
 			}
