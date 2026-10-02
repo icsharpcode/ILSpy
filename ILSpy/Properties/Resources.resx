@@ -810,6 +810,9 @@ Are you sure you want to continue?</value>
   <data name="LoadAssembliesThatWereLoadedInTheLastInstance" xml:space="preserve">
     <value>Load assemblies that were loaded in the last instance.</value>
   </data>
+  <data name="LoadSymbolsFromSymbolServer" xml:space="preserve">
+    <value>Load Symbols from Symbol Server</value>
+  </data>
   <data name="Loading" xml:space="preserve">
     <value>Loading...</value>
   </data>
@@ -1195,6 +1198,9 @@ Do you want to continue?</value>
   <data name="StyleTheWindowTitleBar" xml:space="preserve">
     <value>Style the window title bar</value>
   </data>
+  <data name="Symbols" xml:space="preserve">
+    <value>Symbols</value>
+  </data>
   <data name="TabSize" xml:space="preserve">
     <value>Tab size:</value>
   </data>
@@ -1257,6 +1263,9 @@ Do you want to continue?</value>
   </data>
   <data name="View" xml:space="preserve">
     <value>View</value>
+  </data>
+  <data name="ViewOriginalSource" xml:space="preserve">
+    <value>View Original Source</value>
   </data>
   <data name="VisualStudioSolutionFileSlnAllFiles" xml:space="preserve">
     <value>Visual Studio Solution file|*.sln|All files|*.*</value>

@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ICSharpCode.ILSpy.Options"
+             mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="400"
+             x:Class="ICSharpCode.ILSpy.Options.Panels.SymbolSettingsPanel"
+             x:DataType="vm:SymbolSettingsViewModel">
+	<StackPanel Spacing="6" Margin="6">
+		<TextBlock Text="Symbol path (_NT_SYMBOL_PATH syntax: directories, srv*[cache*]https://server, cache*dir; separated by ';')"
+		           TextWrapping="Wrap" />
+		<TextBox Text="{Binding Settings.SymbolPath, Mode=TwoWay}" AcceptsReturn="False" TextWrapping="Wrap" />
+		<CheckBox IsChecked="{Binding Settings.UseEnvironmentSymbolPath, Mode=TwoWay}"
+		          Content="Search the _NT_SYMBOL_PATH environment variable first" />
+		<TextBlock Text="Download cache directory (empty for the default)" />
+		<TextBox Text="{Binding Settings.CacheDirectory, Mode=TwoWay}" Watermark="{Binding Service.CacheDirectory}" />
+		<CheckBox IsChecked="{Binding Settings.AutoDownload, Mode=TwoWay}"
+		          Content="Download missing symbols automatically when an assembly is opened" />
+
+		<TextBlock Text="Local symbol server" FontWeight="Bold" Margin="0,12,0,0" />
+		<TextBlock TextWrapping="Wrap"
+		           Text="Serves the open assemblies' PDBs to debuggers on this machine; assemblies without symbols get a portable PDB with the decompiled sources embedded. Add the address below as a symbol server in the debugger." />
+		<CheckBox IsChecked="{Binding Settings.StartSymbolServer, Mode=TwoWay}"
+		          Content="Start the symbol server when ILSpy starts" />
+		<StackPanel Orientation="Horizontal" Spacing="6">
+			<TextBlock Text="Port:" VerticalAlignment="Center" />
+			<NumericUpDown Value="{Binding Settings.SymbolServerPort, Mode=TwoWay}" Minimum="0" Maximum="65535"
+			               Increment="1" FormatString="0" MinWidth="120" />
+		</StackPanel>
+		<StackPanel Orientation="Horizontal" Spacing="6">
+			<Button Command="{Binding Service.ToggleServerCommand}">
+				<Panel>
+					<TextBlock Text="Start" IsVisible="{Binding !Service.IsServerRunning}" />
+					<TextBlock Text="Stop" IsVisible="{Binding Service.IsServerRunning}" />
+				</Panel>
+			</Button>
+			<SelectableTextBlock Text="{Binding Service.ServerAddress}" VerticalAlignment="Center" />
+		</StackPanel>
+		<TextBlock Text="{Binding Service.ServerError}" Foreground="Red" TextWrapping="Wrap"
+		           IsVisible="{Binding Service.ServerError, Converter={x:Static ObjectConverters.IsNotNull}}" />
+	</StackPanel>
+</UserControl>

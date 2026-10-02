@@ -111,6 +111,7 @@ namespace ICSharpCode.ILSpy
 		public AssemblyListManager AssemblyListManager => assemblyListManager ??= new(SpySettings) {
 			ApplyWinRTProjections = DecompilerSettings.ApplyWindowsRuntimeProjections,
 			UseDebugSymbols = DecompilerSettings.UseDebugSymbols,
+			SymbolLocator = Symbols.SymbolService.CreateLocator(GetSettings<Symbols.SymbolSettings>(), null),
 		};
 
 		/// <summary>

@@ -43,6 +43,7 @@ using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.MermaidDiagrammer;
 using ICSharpCode.ILSpyX.PdbProvider;
+using ICSharpCode.ILSpyX.Symbols;
 
 using McMaster.Extensions.CommandLineUtils;
 
@@ -135,6 +136,19 @@ Examples:
 		[FileExistsOrNull]
 		[Option("-usepdb|--use-varnames-from-pdb", "Use variable names from PDB.", CommandOptionType.SingleOrNoValue)]
 		public (bool IsSet, string Value) InputPDBFile { get; }
+
+		[Option("--symbol-path <path>", "Look up PDBs that are not next to the assembly on this symbol path (_NT_SYMBOL_PATH syntax: directories, srv*[cache*]https://server, cache*dir; separated by ';'). 'default' stands for the Microsoft and NuGet symbol servers. Implies --use-varnames-from-pdb.", CommandOptionType.SingleValue)]
+		public string SymbolPathText { get; }
+
+		[Option("--symbol-cache <dir>", "Directory where PDBs downloaded from symbol servers are cached. Defaults to the ILSpy symbol cache under the local application data folder.", CommandOptionType.SingleValue)]
+		public string SymbolCacheDirectory { get; }
+
+		[Option("--serve-symbols <port>", "Run a local symbol server at http://localhost:<port>/ for the input assemblies until Ctrl+C. It serves each assembly, its own PDB, or a portable PDB generated on demand with the decompiled sources embedded. Port 0 picks a free port.", CommandOptionType.SingleValue)]
+		[Range(0, 65535)]
+		public int? ServeSymbolsPort { get; }
+
+		/// <summary>Stops a running <c>--serve-symbols</c> session in addition to Ctrl+C.</summary>
+		internal static CancellationToken ServeSymbolsStopToken { get; set; }
 
 		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
 		public string[] EntityTypes { get; } = Array.Empty<string>();
@@ -286,6 +300,10 @@ Examples:
 					}
 					SolutionCreator.WriteSolutionFile(Path.Combine(outputDirectory, Path.GetFileNameWithoutExtension(outputDirectory) + ".sln"), projects);
 					return ExitCodeForDecompilationErrors();
+				}
+				else if (ServeSymbolsPort != null)
+				{
+					return await ServeSymbolsAsync(ServeSymbolsPort.Value, app);
 				}
 				else if (GenerateDiagrammer)
 				{
@@ -1266,14 +1284,67 @@ Examples:
 
 		IDebugInfoProvider TryLoadPDB(PEFile module)
 		{
-			if (InputPDBFile.IsSet)
-			{
-				if (InputPDBFile.Value == null)
-					return DebugInfoUtils.LoadSymbols(module);
+			if (InputPDBFile.IsSet && InputPDBFile.Value != null)
 				return DebugInfoUtils.FromFile(module, InputPDBFile.Value);
-			}
+			if (!InputPDBFile.IsSet && SymbolPathText == null)
+				return null;
+			var local = DebugInfoUtils.LoadSymbols(module);
+			if (local != null || SymbolPathText == null)
+				return local;
+			var locator = new SymbolLocator(SymbolPath.Parse(
+				SymbolPathText.Equals("default", StringComparison.OrdinalIgnoreCase) ? SymbolPath.DefaultSymbolPath : SymbolPathText,
+				SymbolCacheDirectory));
+			return DebugInfoUtils.LoadSymbolsFromSymbolPathAsync(module, locator).GetAwaiter().GetResult();
+		}
 
-			return null;
+		async Task<int> ServeSymbolsAsync(int port, CommandLineApplication app)
+		{
+			var modules = new List<SymbolStoreModule>();
+			foreach (var file in InputAssemblyNames)
+			{
+				// Symbols describe the metadata as stored, so no WinRT projections here.
+				var module = LoadInputModule(file, applyWinRTProjections: false);
+				modules.Add(new SymbolStoreModule(module, () => CreateResolver(file, module),
+					TryLoadPDB(module)?.SourceFileName ?? DebugInfoUtils.LoadSymbols(module)?.SourceFileName,
+					CanServeFile: BundleEntryName == null));
+			}
+			string cacheDirectory = Path.Combine(SymbolCacheDirectory ?? SymbolPath.DefaultCacheDirectory, "decompiled");
+			var store = new DecompiledSymbolStore(_ => Task.FromResult<IReadOnlyList<SymbolStoreModule>>(modules),
+				GetSettings, cacheDirectory);
+			store.PdbGenerated += (module, pdb) => Console.Out.WriteLine($"Generated {pdb} for {module}");
+			using var host = new SymbolServerHost(store, port);
+			host.RequestServed += (path, status) => Console.Out.WriteLine($"{status} {path}");
+			host.Start();
+			Console.Out.WriteLine($"Serving symbols for {modules.Count} assemblies at {host.BaseAddress} (Ctrl+C to stop).");
+			Console.Out.Flush();
+
+			var stopped = new TaskCompletionSource();
+			ConsoleCancelEventHandler onCancel = (_, e) => {
+				e.Cancel = true;
+				stopped.TrySetResult();
+			};
+			Console.CancelKeyPress += onCancel;
+			try
+			{
+				using var registration = ServeSymbolsStopToken.Register(() => stopped.TrySetResult());
+				await stopped.Task;
+			}
+			finally
+			{
+				Console.CancelKeyPress -= onCancel;
+				await host.StopAsync();
+			}
+			return 0;
+		}
+
+		UniversalAssemblyResolver CreateResolver(string assemblyFileName, PEFile module)
+		{
+			var resolver = new UniversalAssemblyResolver(assemblyFileName, false, module.Metadata.DetectTargetFrameworkId());
+			foreach (var path in (ReferencePaths ?? Array.Empty<string>()))
+			{
+				resolver.AddSearchDirectory(path);
+			}
+			return resolver;
 		}
 	}
 }

@@ -488,6 +488,12 @@ namespace ICSharpCode.ILSpyX
 				if (result.MetadataFile is PEFile module)
 				{
 					debugInfoProvider = LoadDebugInfo(module);
+					if (debugInfoProvider == null && useDebugSymbols && PdbFileName == null && !IsAutoLoaded
+						&& assemblyList.SymbolLocator is { AutoDownload: true } locator)
+					{
+						debugInfoProvider = await LoadDebugInfoFromSymbolPathCoreAsync(module, locator, CancellationToken.None)
+							.ConfigureAwait(false);
+					}
 				}
 			}
 			else if (result.Package != null)
@@ -568,6 +574,32 @@ namespace ICSharpCode.ILSpyX
 				}
 			}
 			return null;
+		}
+
+		/// <summary>
+		/// Looks up this assembly's PDB on the locator's symbol path and, when found, uses it as the
+		/// debug info. This is an explicit request, so it applies even when debug symbols are not
+		/// used by default. Returns <c>null</c> (keeping the current debug info) when no PDB is found.
+		/// </summary>
+		public async Task<IDebugInfoProvider?> LoadDebugInfoFromSymbolPathAsync(Symbols.SymbolLocator locator,
+			CancellationToken cancellationToken = default)
+		{
+			if (await GetMetadataFileOrNullAsync().ConfigureAwait(false) is not PEFile module)
+				return null;
+			var provider = await LoadDebugInfoFromSymbolPathCoreAsync(module, locator, cancellationToken).ConfigureAwait(false);
+			if (provider != null)
+				debugInfoProvider = provider;
+			return provider;
+		}
+
+		async Task<IDebugInfoProvider?> LoadDebugInfoFromSymbolPathCoreAsync(PEFile module,
+			Symbols.SymbolLocator locator, CancellationToken cancellationToken)
+		{
+			var provider = await DebugInfoUtils.LoadSymbolsFromSymbolPathAsync(module, locator, cancellationToken)
+				.ConfigureAwait(false);
+			if (provider != null)
+				PdbFileName = provider.SourceFileName;
+			return provider;
 		}
 
 		public async Task<IDebugInfoProvider?> LoadDebugInfo(string fileName)

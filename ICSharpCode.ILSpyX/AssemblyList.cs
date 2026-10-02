@@ -132,6 +132,17 @@ namespace ICSharpCode.ILSpyX
 
 		public bool ApplyWinRTProjections { get; set; }
 		public bool UseDebugSymbols { get; set; }
+
+		Symbols.SymbolLocator? symbolLocator;
+
+		/// <summary>
+		/// The symbol locator used for assemblies of this list; defaults to the manager's.
+		/// </summary>
+		public Symbols.SymbolLocator? SymbolLocator {
+			get => symbolLocator ?? manager?.SymbolLocator;
+			set => symbolLocator = value;
+		}
+
 		public FileLoaderRegistry LoaderRegistry => this.manager.LoaderRegistry;
 
 		/// <summary>

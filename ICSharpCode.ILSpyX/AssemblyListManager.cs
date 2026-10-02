@@ -59,6 +59,13 @@ namespace ICSharpCode.ILSpyX
 
 		public bool UseDebugSymbols { get; set; }
 
+		/// <summary>
+		/// Locates PDBs on a symbol path for assemblies whose debug info is not found locally;
+		/// <c>null</c> disables symbol-server lookups. Read at load time, so changes apply to
+		/// assemblies loaded afterwards.
+		/// </summary>
+		public Symbols.SymbolLocator? SymbolLocator { get; set; }
+
 		public ObservableCollection<string> AssemblyLists { get; } = [];
 
 		public FileLoaderRegistry LoaderRegistry { get; } = new();

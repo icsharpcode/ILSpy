@@ -1,4 +1,4 @@
-// Copyright (c) 2026 Siegfried Pammer
+// Copyright (c) 2026 Piero Viano
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,42 +16,37 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using System.Xml.Linq;
 
-namespace ICSharpCode.ILSpyCmd.Tests
+using CommunityToolkit.Mvvm.ComponentModel;
+
+using ICSharpCode.ILSpy.AppEnv;
+using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Symbols;
+
+namespace ICSharpCode.ILSpy.Options
 {
-	/// <summary>
-	/// Runs ilspycmd in-process with captured console streams.
-	/// </summary>
-	internal static class CliTestRunner
+	/// <summary>Viewmodel for the Symbols panel: symbol path, cache, and the local symbol server.</summary>
+	[ExportOptionPage(Order = 35)]
+	public sealed partial class SymbolSettingsViewModel : ObservableObject, IOptionPage
 	{
-		static volatile StringWriter currentOutput;
+		public string Title => Resources.Symbols;
 
-		/// <summary>The standard output captured so far by the run in progress, for long-running commands.</summary>
-		public static string CurrentOutput() => currentOutput?.ToString() ?? string.Empty;
+		[ObservableProperty]
+		SymbolSettings settings = null!;
 
-		public static async Task<(int ExitCode, string Output, string Error)> RunAsync(params string[] args)
+		[ObservableProperty]
+		SymbolService service = null!;
+
+		public void Load(SettingsService settingsService)
 		{
-			var originalOut = Console.Out;
-			var originalError = Console.Error;
-			var stdout = new StringWriter();
-			var stderr = new StringWriter();
-			try
-			{
-				currentOutput = stdout;
-				Console.SetOut(stdout);
-				Console.SetError(stderr);
-				int exitCode = await ILSpyCmdProgram.Main(args);
-				return (exitCode, stdout.ToString(), stderr.ToString());
-			}
-			finally
-			{
-				currentOutput = null;
-				Console.SetOut(originalOut);
-				Console.SetError(originalError);
-			}
+			Service = AppComposition.Current.GetExport<SymbolService>();
+			Settings = Service.Settings;
+		}
+
+		public void LoadDefaults()
+		{
+			Settings.LoadFromXml(new XElement("SymbolSettings"));
 		}
 	}
 }
