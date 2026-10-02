@@ -107,6 +107,9 @@ namespace ICSharpCode.ILSpy
 					? new StartupErrorWindow(StartupExceptions.Items)
 					: mainWindow ?? new MainWindow();
 				AppLog.Mark("MainWindow assigned to desktop.MainWindow");
+				try
+				{ Composition?.GetExport<Symbols.SymbolService>().StartServerIfEnabled(); }
+				catch (Exception ex) { Trace.TraceError("Starting the symbol server failed: " + ex); }
 				desktop.Exit += (_, _) => {
 					try
 					{ Composition?.GetExport<SettingsService>().Save(); }

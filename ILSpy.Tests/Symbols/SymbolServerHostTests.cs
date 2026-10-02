@@ -48,7 +48,7 @@ public class SymbolServerHostTests
 		var assembly = list.OpenAssembly(fixture.AssemblyPath);
 		await assembly.GetMetadataFileAsync();
 		var store = new DecompiledSymbolStore(() => list.GetAssemblies(),
-			() => new DecompilerSettings(), SymbolFixture.NewTempDirectory());
+			_ => new DecompilerSettings(), SymbolFixture.NewTempDirectory());
 		var host = new SymbolServerHost(store);
 		host.Start();
 		using var reader = new PEReader(File.OpenRead(fixture.AssemblyPath));
@@ -118,7 +118,7 @@ public class SymbolServerHostTests
 
 		served.Host.IsRunning.Should().BeFalse();
 		served.Host.BaseAddress.Should().BeNull();
-		using var again = new SymbolServerHost(new DecompiledSymbolStore(() => [], () => new DecompilerSettings(), SymbolFixture.NewTempDirectory()), port);
+		using var again = new SymbolServerHost(new DecompiledSymbolStore(() => [], _ => new DecompilerSettings(), SymbolFixture.NewTempDirectory()), port);
 		again.Start();
 		again.BaseAddress!.Port.Should().Be(port);
 	}

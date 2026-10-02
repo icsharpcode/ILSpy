@@ -67,7 +67,7 @@ namespace ICSharpCode.ILSpyX.Symbols
 		/// Returns the last path segment, splitting on both separators: the CodeView path is the
 		/// build machine's path and may use either convention regardless of the current OS.
 		/// </summary>
-		internal static string GetFileName(string path)
+		public static string GetFileName(string path)
 		{
 			int index = path.LastIndexOfAny(new[] { '/', '\\' });
 			return index < 0 ? path : path.Substring(index + 1);

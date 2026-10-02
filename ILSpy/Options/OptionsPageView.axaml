@@ -39,6 +39,9 @@
 							<DataTemplate x:DataType="vm:MiscSettingsViewModel">
 								<panels:MiscSettingsPanel />
 							</DataTemplate>
+							<DataTemplate x:DataType="vm:SymbolSettingsViewModel">
+								<panels:SymbolSettingsPanel />
+							</DataTemplate>
 						</ContentControl.DataTemplates>
 					</ContentControl>
 				</DataTemplate>

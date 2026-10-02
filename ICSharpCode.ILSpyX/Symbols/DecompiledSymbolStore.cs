@@ -32,71 +32,100 @@ using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpyX.Symbols
 {
+	/// <summary>A module served by a <see cref="DecompiledSymbolStore"/>.</summary>
+	/// <param name="Resolver">Creates the resolver used to decompile the module.</param>
+	/// <param name="PdbFileName">The module's own PDB on disk, if any; served instead of a
+	/// generated one when it matches.</param>
+	/// <param name="CanServeFile">Whether <see cref="PEFile.FileName"/> is a file on disk that can be
+	/// served under the PE key (not, e.g., an entry of a bundle).</param>
+	public sealed record SymbolStoreModule(PEFile Module, Func<IAssemblyResolver> Resolver, string? PdbFileName, bool CanServeFile);
+
 	/// <summary>
-	/// Serves the symbols of a set of assemblies under their symbol-server keys:
+	/// Serves the symbols of a set of modules under their symbol-server keys:
 	/// <list type="bullet">
 	/// <item>the PE file itself under its time stamp / image size key;</item>
-	/// <item>for portable-PDB keys, the assembly's own PDB when one is loaded from disk and matches,
+	/// <item>for portable-PDB keys, the module's own PDB when it is on disk and matches,
 	/// otherwise a portable PDB generated on demand with the decompiled sources embedded, so a
 	/// debugger can step through code that ships without symbols.</item>
 	/// </list>
 	/// Windows-PDB keys are not served: a generated portable PDB cannot satisfy a Windows-PDB
-	/// signature.
+	/// signature. Generated PDBs are cached on disk by key.
 	/// </summary>
 	public sealed class DecompiledSymbolStore : ISymbolFileSource
 	{
-		readonly Func<IEnumerable<LoadedAssembly>> assemblies;
-		readonly Func<DecompilerSettings> settings;
+		readonly Func<CancellationToken, Task<IReadOnlyList<SymbolStoreModule>>> modules;
+		readonly Func<PEFile, DecompilerSettings> settings;
 		readonly string cacheDirectory;
 		readonly ConcurrentDictionary<string, Lazy<Task<string?>>> generated = new(StringComparer.OrdinalIgnoreCase);
 
-		/// <param name="assemblies">The assemblies to serve; queried on every request.</param>
-		/// <param name="settings">The settings used to decompile generated PDBs.</param>
+		/// <param name="modules">The modules to serve; queried on every request.</param>
+		/// <param name="settings">The settings used to decompile a module's generated PDB.</param>
 		/// <param name="cacheDirectory">Where generated PDBs are written.</param>
-		public DecompiledSymbolStore(Func<IEnumerable<LoadedAssembly>> assemblies,
-			Func<DecompilerSettings> settings, string cacheDirectory)
+		public DecompiledSymbolStore(Func<CancellationToken, Task<IReadOnlyList<SymbolStoreModule>>> modules,
+			Func<PEFile, DecompilerSettings> settings, string cacheDirectory)
 		{
-			this.assemblies = assemblies ?? throw new ArgumentNullException(nameof(assemblies));
+			this.modules = modules ?? throw new ArgumentNullException(nameof(modules));
 			this.settings = settings ?? throw new ArgumentNullException(nameof(settings));
 			this.cacheDirectory = cacheDirectory ?? throw new ArgumentNullException(nameof(cacheDirectory));
 		}
 
-		/// <summary>Raised when a PDB is generated, with the assembly file name and the PDB path.</summary>
+		/// <param name="assemblies">The assemblies to serve; queried on every request.</param>
+		public DecompiledSymbolStore(Func<IEnumerable<LoadedAssembly>> assemblies,
+			Func<PEFile, DecompilerSettings> settings, string cacheDirectory)
+			: this(_ => FromAssembliesAsync((assemblies ?? throw new ArgumentNullException(nameof(assemblies)))()),
+				settings, cacheDirectory)
+		{
+		}
+
+		static async Task<IReadOnlyList<SymbolStoreModule>> FromAssembliesAsync(IEnumerable<LoadedAssembly> assemblies)
+		{
+			var result = new List<SymbolStoreModule>();
+			foreach (var assembly in assemblies)
+			{
+				if (await assembly.GetMetadataFileOrNullAsync().ConfigureAwait(false) is not PEFile module)
+					continue;
+				result.Add(new SymbolStoreModule(module, () => assembly.GetAssemblyResolver(),
+					assembly.GetDebugInfoOrNull()?.SourceFileName ?? assembly.PdbFileName,
+					assembly.ParentBundle == null));
+			}
+			return result;
+		}
+
+		/// <summary>Raised when a PDB is generated, with the module file name and the PDB path.</summary>
 		public event Action<string, string>? PdbGenerated;
 
 		public async Task<string?> GetFileAsync(string key, CancellationToken cancellationToken)
 		{
-			foreach (var assembly in assemblies())
+			foreach (var entry in await modules(cancellationToken).ConfigureAwait(false))
 			{
-				if (await assembly.GetMetadataFileOrNullAsync().ConfigureAwait(false) is not PEFile module)
-					continue;
+				var module = entry.Module;
 				var peKey = SymbolKey.GetPEKey(module.Reader, module.FileName);
 				if (peKey != null && peKey.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
-					return assembly.ParentBundle == null && File.Exists(assembly.FileName) ? assembly.FileName : null;
+					return entry.CanServeFile && File.Exists(module.FileName) ? module.FileName : null;
 				foreach (var pdbKey in SymbolKey.GetPdbKeys(module.Reader))
 				{
 					if (pdbKey.Kind != SymbolFileKind.PortablePdb || !pdbKey.Key.Equals(key, StringComparison.OrdinalIgnoreCase))
 						continue;
-					var existing = assembly.GetDebugInfoOrNull()?.SourceFileName ?? assembly.PdbFileName;
+					var existing = entry.PdbFileName;
 					if (existing != null && File.Exists(existing) && SymbolLocator.Matches(existing, pdbKey))
 						return existing;
-					return await GetOrGenerateAsync(assembly, module, pdbKey, cancellationToken).ConfigureAwait(false);
+					return await GetOrGenerateAsync(entry, pdbKey, cancellationToken).ConfigureAwait(false);
 				}
 			}
 			return null;
 		}
 
-		Task<string?> GetOrGenerateAsync(LoadedAssembly assembly, PEFile module, SymbolKey key, CancellationToken cancellationToken)
+		Task<string?> GetOrGenerateAsync(SymbolStoreModule entry, SymbolKey key, CancellationToken cancellationToken)
 		{
 			var lazy = generated.GetOrAdd(key.Key, k => new Lazy<Task<string?>>(
-				() => Task.Run(() => Generate(assembly, module, key, CancellationToken.None))));
+				() => Task.Run(() => Generate(entry, key))));
 			var task = lazy.Value;
 			if (task.IsFaulted)
 				generated.TryRemove(new KeyValuePair<string, Lazy<Task<string?>>>(key.Key, lazy));
 			return task.WaitAsync(cancellationToken);
 		}
 
-		string? Generate(LoadedAssembly assembly, PEFile module, SymbolKey key, CancellationToken cancellationToken)
+		string? Generate(SymbolStoreModule entry, SymbolKey key)
 		{
 			string path = Path.Combine(cacheDirectory, key.Key.Replace('/', Path.DirectorySeparatorChar));
 			if (File.Exists(path) && SymbolLocator.Matches(path, key))
@@ -105,16 +134,14 @@ namespace ICSharpCode.ILSpyX.Symbols
 			string tempPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
 			try
 			{
-				var decompilerSettings = settings();
+				var decompilerSettings = settings(entry.Module);
 				using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write))
 				{
-					var decompiler = new CSharpDecompiler(module, assembly.GetAssemblyResolver(), decompilerSettings) {
-						CancellationToken = cancellationToken
-					};
-					new PortablePdbWriter().WritePdb(module, decompiler, decompilerSettings, stream);
+					var decompiler = new CSharpDecompiler(entry.Module, entry.Resolver(), decompilerSettings);
+					new PortablePdbWriter().WritePdb(entry.Module, decompiler, decompilerSettings, stream);
 				}
 				File.Move(tempPath, path, overwrite: true);
-				PdbGenerated?.Invoke(assembly.FileName, path);
+				PdbGenerated?.Invoke(entry.Module.FileName, path);
 				return path;
 			}
 			finally

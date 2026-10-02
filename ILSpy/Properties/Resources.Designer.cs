@@ -3188,6 +3188,33 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Load Symbols from Symbol Server.
+        /// </summary>
+        public static string LoadSymbolsFromSymbolServer {
+            get {
+                return ResourceManager.GetString("LoadSymbolsFromSymbolServer", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View Original Source.
+        /// </summary>
+        public static string ViewOriginalSource {
+            get {
+                return ResourceManager.GetString("ViewOriginalSource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Symbols.
+        /// </summary>
+        public static string Symbols {
+            get {
+                return ResourceManager.GetString("Symbols", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select PDB....
         /// </summary>
         public static string SelectPDB {
