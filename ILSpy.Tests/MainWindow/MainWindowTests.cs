@@ -61,6 +61,26 @@ public class MainWindowTests
 	}
 
 	[AvaloniaTest]
+	public void ReapplyWindowIcon_Hands_The_Platform_A_New_Icon_Instance()
+	{
+		// The platform window ignores an Icon assignment of the instance it already holds, so
+		// re-sending the icon to the OS taskbar only works with a fresh WindowIcon.
+
+		// Arrange
+		var window = AppComposition.Current.GetExport<MainWindow>();
+		window.Show();
+		var before = window.Icon;
+		before.Should().NotBeNull();
+
+		// Act
+		window.ReapplyWindowIcon();
+
+		// Assert
+		window.Icon.Should().NotBeNull();
+		window.Icon.Should().NotBeSameAs(before);
+	}
+
+	[AvaloniaTest]
 	public async Task Assembly_Tree_Pane_Is_Visible_In_Layout()
 	{
 		// The dock layout must materialise an AssemblyListPane on first show with non-zero
