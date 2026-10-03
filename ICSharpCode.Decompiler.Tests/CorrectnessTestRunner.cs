@@ -284,6 +284,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task VBWithEventsWinFormsCorrectness([ValueSource(nameof(roslyn2OrNewerOptions))] CompilerOptions options)
+		{
+			await RunVB(options: options);
+		}
+
+		[Test]
 		public async Task MemberLookup([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			await RunCS(options: options);

@@ -272,6 +272,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return new List<IAstTransform> {
 				new PatternStatementTransform(),
+				new RewriteVisualBasicWithEventsInInitializeComponent(),
 				new ReplaceMethodCallsWithOperators(), // must run before DeclareVariables.EnsureExpressionStatementsAreValid
 				new IntroduceUnsafeModifier(),
 				new AddCheckedBlocks(),
@@ -497,6 +498,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						if ((settings.AutomaticProperties || settings.FieldKeyword)
 							&& module.PropertyAndEventBackingFieldLookup.IsPropertyBackingField(fieldHandle, out var propertyHandle))
 						{
+							if (HasAccessedThroughPropertyAttribute(field, metadata))
+								return false;
 							// GetterOnlyAutomaticProperties exists so output stays compilable on
 							// toolchains that predate C# 6 getter-only auto-properties. Switching it off
 							// is a stronger statement than leaving FieldKeyword at its default, and it
@@ -540,6 +543,20 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var name = metadata.GetString(field.Name);
 			return name.StartsWith("<", StringComparison.Ordinal) && name.EndsWith(">P", StringComparison.Ordinal);
+		}
+
+		static bool HasAccessedThroughPropertyAttribute(SRM.FieldDefinition field, MetadataReader metadata)
+		{
+			foreach (var attrHandle in field.GetCustomAttributes())
+			{
+				var attrType = metadata.GetCustomAttribute(attrHandle).GetAttributeType(metadata);
+				var fullTypeName = attrType.GetFullTypeName(metadata);
+				if (fullTypeName.ReflectionName == "System.Runtime.CompilerServices.AccessedThroughPropertyAttribute"
+					|| fullTypeName.ReflectionName == "Microsoft.VisualBasic.CompilerServices.AccessedThroughPropertyAttribute"
+					|| fullTypeName.Name == "AccessedThroughPropertyAttribute")
+					return true;
+			}
+			return false;
 		}
 
 		static bool IsAccessorInterfaceImplementationRuntimeHelper(PEFile module, MethodDefinitionHandle handle)

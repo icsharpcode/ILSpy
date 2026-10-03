@@ -171,6 +171,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task VBWithEventsWinForms([ValueSource(nameof(defaultOptions))] CompilerOptions options)
+		{
+			await Run(options: options | CompilerOptions.Library);
+		}
+
+		[Test]
 		public async Task VBNonGenericForEach([ValueSource(nameof(defaultOptions))] CompilerOptions options)
 		{
 			IgnoreIfVbRuntimeSubstituted(options);

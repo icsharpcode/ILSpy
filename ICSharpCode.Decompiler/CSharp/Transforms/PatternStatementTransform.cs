@@ -761,6 +761,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			IProperty? property = propertyDeclaration.GetSymbol() as IProperty;
 			if (property == null)
 				return null;
+			if (HasAccessedThroughPropertyFieldAttribute(propertyDeclaration))
+				return null;
 			if (context.Settings.FieldKeyword)
 				return TransformFieldBackedProperty(propertyDeclaration, property);
 			if (!CanTransformToAutomaticProperty(property, accessorsMustBeCompilerGenerated: false))
@@ -784,6 +786,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// In generic types the accessor bodies reference the field specialized by the
 			// type's own type parameters; the field declaration's symbol is the definition.
 			field = (IField)field.MemberDefinition;
+			if (HasAccessedThroughPropertyAttribute(field))
+				return null;
 			if (propertyDeclaration.Setter?.HasModifier(Modifiers.Readonly) == true || (propertyDeclaration.HasModifier(Modifiers.Readonly) && propertyDeclaration.Setter is not null))
 				return null;
 			if (IsPropertyBackingField(property, field))
@@ -848,6 +852,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		PropertyDeclaration? TransformFieldBackedProperty(PropertyDeclaration propertyDeclaration, IProperty property)
 		{
 			if (!TryGetBackingField(property, out var field))
+				return null;
+			if (HasAccessedThroughPropertyAttribute(field))
 				return null;
 			if (!OutsideReferencesAreExpressible(propertyDeclaration, field))
 			{
@@ -955,6 +961,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return true;
 			}
 			return false;
+		}
+
+		internal static bool HasAccessedThroughPropertyAttribute(IField field)
+		{
+			return field.GetAttributes().Any(IsAccessedThroughPropertyAttribute);
+		}
+
+		static bool IsAccessedThroughPropertyAttribute(IAttribute attr)
+		{
+			return attr.AttributeType.FullName == "System.Runtime.CompilerServices.AccessedThroughPropertyAttribute"
+				|| attr.AttributeType.FullName == "Microsoft.VisualBasic.CompilerServices.AccessedThroughPropertyAttribute";
+		}
+
+		static bool HasAccessedThroughPropertyFieldAttribute(PropertyDeclaration propertyDeclaration)
+		{
+			return propertyDeclaration.Attributes.Any(section => section.AttributeTarget == "field"
+				&& section.Attributes.Any(attr => attr.Type.ToString().EndsWith("AccessedThroughProperty", StringComparison.Ordinal)
+					|| attr.Type.ToString().EndsWith("AccessedThroughPropertyAttribute", StringComparison.Ordinal)));
 		}
 
 		static bool IsPropertyBackingField(IProperty property, IField field)
