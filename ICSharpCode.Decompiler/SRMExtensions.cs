@@ -35,6 +35,9 @@ namespace ICSharpCode.Decompiler
 {
 	public static partial class SRMExtensions
 	{
+		internal const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
+		internal const MethodImplAttributes MethodImplAsync = (MethodImplAttributes)0x2000;
+
 		public static bool HasFlag(this TypeDefinition typeDefinition, TypeAttributes attribute)
 			=> (typeDefinition.Attributes & attribute) == attribute;
 		public static bool HasFlag(this MethodDefinition methodDefinition, MethodAttributes attribute)
@@ -159,6 +162,25 @@ namespace ICSharpCode.Decompiler
 			if (!accessors.Remover.IsNil)
 				return accessors.Remover;
 			return accessors.Raiser;
+		}
+
+		public static ImmutableArray<MethodImplementationHandle> GetMethodImplementations(
+			this MethodDefinitionHandle handle, MetadataReader reader)
+		{
+			var resultBuilder = ImmutableArray.CreateBuilder<MethodImplementationHandle>();
+			var typeDefinition = reader.GetTypeDefinition(reader.GetMethodDefinition(handle)
+				.GetDeclaringType());
+
+			foreach (var methodImplementationHandle in typeDefinition.GetMethodImplementations())
+			{
+				var methodImplementation = reader.GetMethodImplementation(methodImplementationHandle);
+				if (methodImplementation.MethodBody == handle)
+				{
+					resultBuilder.Add(methodImplementationHandle);
+				}
+			}
+
+			return resultBuilder.ToImmutable();
 		}
 
 		public static EntityHandle GetGenericType(this in TypeSpecification ts, MetadataReader metadata)

@@ -42,6 +42,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Solution;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpyX.MermaidDiagrammer;
+using ICSharpCode.ILSpyX.Metadata;
 using ICSharpCode.ILSpyX.PdbProvider;
 
 using McMaster.Extensions.CommandLineUtils;
@@ -151,7 +152,10 @@ Examples:
 		[Option("--dump-table <table>", "Dump a metadata table: prints RID, token, names, heap offsets and coded indexes of every row. <table> is the ECMA-335 table name (e.g. TypeDef, Property, MethodSemantics; case-insensitive) or table number (decimal or 0x-prefixed hex, e.g. 0x17).", CommandOptionType.SingleValue)]
 		public string DumpTableName { get; }
 
-		[Option("--json", "Output as JSON. Currently only supported together with --dump-table.", CommandOptionType.NoValue)]
+		[Option("--dump-pdb", "Dump the debug information of the assembly's PDB: documents, per-method sequence points, the scope tree with its variables, constants and imports, and custom debug information. Reads both Portable and Windows PDBs. Use -usepdb:<file> to point at a PDB that is not next to the assembly.", CommandOptionType.NoValue)]
+		public bool DumpPdbFlag { get; }
+
+		[Option("--json", "Output as JSON. Only supported together with --dump-table or --dump-pdb.", CommandOptionType.NoValue)]
 		public bool JsonOutputFlag { get; }
 
 		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
@@ -260,9 +264,9 @@ Examples:
 				Directory.CreateDirectory(outputDirectory);
 			}
 
-			if (JsonOutputFlag && DumpTableName == null)
+			if (JsonOutputFlag && DumpTableName == null && !DumpPdbFlag)
 			{
-				app.Error.WriteLine("The --json option is currently only supported together with --dump-table.");
+				app.Error.WriteLine("The --json option is only supported together with --dump-table or --dump-pdb.");
 				return ProgramExitCodes.EX_USAGE;
 			}
 
@@ -425,7 +429,8 @@ Examples:
 						return ProgramExitCodes.EX_USAGE;
 					}
 
-					using var tableModule = LoadInputModule(fileName);
+					// a standalone Portable PDB is a valid input here: it carries the debug tables
+					using var tableModule = InputFileLoader.LoadMetadata(fileName, BundleEntryName);
 
 					if (outputDirectory != null)
 					{
@@ -438,6 +443,18 @@ Examples:
 					}
 
 					return MetadataTableDumper.DumpTable(tableModule, output, table, JsonOutputFlag);
+				}
+				else if (DumpPdbFlag)
+				{
+					if (outputDirectory != null)
+					{
+						// per-file writer, disposed here, for the same reason as in --dump-table
+						string outputName = Path.GetFileNameWithoutExtension(fileName);
+						using var pdbOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + $".pdb.{(JsonOutputFlag ? "json" : "txt")}");
+						return DumpPdb(fileName, pdbOutput, app);
+					}
+
+					return DumpPdb(fileName, output, app);
 				}
 				else
 				{
@@ -1261,6 +1278,20 @@ Examples:
 				}
 			}
 
+			return 0;
+		}
+
+		int DumpPdb(string assemblyFileName, TextWriter output, CommandLineApplication app)
+		{
+			try
+			{
+				PdbDumper.Dump(assemblyFileName, InputPDBFile.IsSet ? InputPDBFile.Value : null, output, JsonOutputFlag);
+			}
+			catch (PdbDumper.NoDebugSymbolsException ex)
+			{
+				app.Error.WriteLine(ex.Message);
+				return ProgramExitCodes.EX_NOINPUT;
+			}
 			return 0;
 		}
 

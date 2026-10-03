@@ -285,9 +285,6 @@ Are you sure you want to continue?</value>
   <data name="DEBUGDisassemble" xml:space="preserve">
     <value>DEBUG -- Disassemble All</value>
   </data>
-  <data name="DEBUGDumpPDBAsXML" xml:space="preserve">
-    <value>DEBUG -- Dump PDB as XML</value>
-  </data>
   <data name="DebugSteps" xml:space="preserve">
     <value>Debug Steps</value>
   </data>

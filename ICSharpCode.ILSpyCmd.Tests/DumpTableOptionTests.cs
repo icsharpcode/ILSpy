@@ -184,6 +184,70 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		[Test]
+		public async Task DocumentTableListsSourceFiles()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "Document");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("DumpTableOptionTests.cs"));
+			Assert.That(result.Output, Does.Contain("HashAlgorithm"));
+		}
+
+		[Test]
+		public async Task LocalVariableTableContainsNamedLocal()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "LocalVariable");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Match(@"\b(scopeProbe|result)\b"));
+		}
+
+		[Test]
+		public async Task MethodDebugInformationTableHasRows()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "MethodDebugInformation");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("SequencePoints"));
+			Assert.That(result.Output, Does.Contain("LocalSignature"));
+			Assert.That(result.Output, Does.Not.Contain("0 rows"));
+		}
+
+		[Test]
+		public async Task CustomDebugInformationTableNamesKnownKinds()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "CustomDebugInformation");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("KindName"));
+			// every Roslyn-built assembly carries the compilation-options record
+			Assert.That(result.Output, Does.Contain("Compilation Options"));
+		}
+
+		[Test]
+		public async Task DebugTablesCanBeDumpedFromStandalonePdb()
+		{
+			string pdbPath = Path.ChangeExtension(testAssemblyPath, ".pdb");
+			Assert.That(File.Exists(pdbPath), Is.True, pdbPath);
+
+			var result = await RunAsync(pdbPath, "--disable-updatecheck", "--dump-table", "Document");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("DumpTableOptionTests.cs"));
+		}
+
+		[Test]
+		public async Task CorTableOfAnAssemblyIsEmptyInItsPdb()
+		{
+			string pdbPath = Path.ChangeExtension(testAssemblyPath, ".pdb");
+
+			var result = await RunAsync(pdbPath, "--disable-updatecheck", "--dump-table", "TypeDef");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("0 rows"));
+		}
+
+		[Test]
 		public async Task TableNameIsCaseInsensitive()
 		{
 			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "property");

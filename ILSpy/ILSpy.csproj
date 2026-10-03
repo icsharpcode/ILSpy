@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
@@ -129,18 +129,6 @@
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\ICSharpCode.BamlDecompiler\ICSharpCode.BamlDecompiler.csproj" />
-  </ItemGroup>
-
-  <!-- DEBUG-only Pdb2Xml command requires Microsoft.DiaSymReader, which uses native COM
-       interop and is Windows-only AT RUNTIME. The packages are referenced on every build host
-       (Debug only) so that restore produces an identical packages.lock.json regardless of OS;
-       a Windows-host-gated reference makes the lock diverge between Windows and Linux restores.
-       The consuming command file is still gated by DEBUG and WINDOWS, so on non-Windows the
-       packages are restored but unused. -->
-  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
-    <PackageReference Include="Microsoft.DiaSymReader" />
-    <PackageReference Include="Microsoft.DiaSymReader.Native" />
   </ItemGroup>
 
   <!-- The Debug Steps pane is a DEBUG-only diagnostic. The code-behind and viewmodel

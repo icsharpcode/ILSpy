@@ -215,9 +215,6 @@ namespace ICSharpCode.ILSpy.Commands
 	// DEBUG-only DisassembleAllCommand also moved to DecompileAllCommand.cs to keep all
 	// three parallel-decompile/disassemble stress-test commands in one place.
 
-	// DEBUG-only Pdb2XmlCommand moved to its own file with `#if DEBUG && WINDOWS` gating.
-	// On non-Windows or non-Debug builds the entry simply isn't compiled.
-
 	[ExportMainMenuCommand(ParentMenuID = nameof(Resources._File), Header = nameof(Resources._RemoveAssembliesWithLoadErrors), MenuCategory = "AssemblyList", MenuOrder = 11)]
 	[Shared]
 	[method: ImportingConstructor]

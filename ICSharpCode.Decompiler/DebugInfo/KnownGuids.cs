@@ -18,7 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
+
+#nullable enable
 
 namespace ICSharpCode.Decompiler.DebugInfo
 {
@@ -45,5 +46,30 @@ namespace ICSharpCode.Decompiler.DebugInfo
 
 		public static readonly Guid HashAlgorithmSHA1 = new Guid("ff1816ec-aa5e-4d10-87f7-6f4963833460");
 		public static readonly Guid HashAlgorithmSHA256 = new Guid("8829d00f-11b8-4213-878b-770e8597ac16");
+
+		static readonly Dictionary<Guid, string> customDebugInformationKindNames = new() {
+			{ StateMachineHoistedLocalScopes, "State Machine Hoisted Local Scopes" },
+			{ DynamicLocalVariables, "Dynamic Local Variables" },
+			{ DefaultNamespaces, "Default Namespaces" },
+			{ EditAndContinueLocalSlotMap, "Edit And Continue Local Slot Map" },
+			{ EditAndContinueLambdaAndClosureMap, "Edit And Continue Lambda And Closure Map" },
+			{ EncStateMachineStateMap, "Edit And Continue State Machine State Map" },
+			{ EmbeddedSource, "Embedded Source" },
+			{ SourceLink, "Source Link" },
+			{ MethodSteppingInformation, "Method Stepping Information" },
+			{ CompilationOptions, "Compilation Options" },
+			{ CompilationMetadataReferences, "Compilation Metadata References" },
+			{ TupleElementNames, "Tuple Element Names" },
+			{ TypeDefinitionDocuments, "Type Definition Documents" },
+		};
+
+		/// <summary>
+		/// The name of a CustomDebugInformation kind, or null if <paramref name="kind"/> is none
+		/// of the kinds Roslyn documents.
+		/// </summary>
+		public static string? GetCustomDebugInformationKindName(Guid kind)
+		{
+			return customDebugInformationKindNames.TryGetValue(kind, out var name) ? name : null;
+		}
 	}
 }
