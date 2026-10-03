@@ -199,7 +199,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "LocalVariable");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
-			Assert.That(result.Output, Does.Contain("result"));
+			Assert.That(result.Output, Does.Match(@"\b(scopeProbe|result)\b"));
 		}
 
 		[Test]

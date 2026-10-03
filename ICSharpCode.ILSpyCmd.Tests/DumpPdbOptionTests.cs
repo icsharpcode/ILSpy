@@ -52,7 +52,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			// a local of this test class, only knowable from the PDB
-			Assert.That(result.Output, Does.Contain("result"));
+			Assert.That(result.Output, Does.Match(@"\b(scopeProbe|result)\b"));
 		}
 
 		[Test]
