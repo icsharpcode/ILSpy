@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpyCmd
 			return new PEFile(fileName, metadataOptions: MetadataOptions(context));
 		}
 
-		static LoadResult LoadFile(string fileName, FileLoadContext context)
+		internal static LoadResult LoadFile(string fileName, FileLoadContext context)
 		{
 			using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 			foreach (var loader in loaders.RegisteredLoaders)
@@ -220,6 +220,27 @@ namespace ICSharpCode.ILSpyCmd
 			return context.ApplyWinRTProjections
 				? MetadataReaderOptions.ApplyWindowsRuntimeProjections
 				: MetadataReaderOptions.None;
+		}
+	}
+
+	/// <summary>
+	/// Resolves references the way the input file is loaded: a referenced file goes through the
+	/// file loaders first, so a Xamarin compressed module (or any other format a loader
+	/// understands) next to the input resolves like a plain assembly. A file no loader claims
+	/// is loaded as a PE image, as the base resolver does.
+	/// </summary>
+	sealed class FileLoaderAssemblyResolver : UniversalAssemblyResolver
+	{
+		static readonly FileLoadContext context = new FileLoadContext(ApplyWinRTProjections: true, null);
+
+		public FileLoaderAssemblyResolver(string mainAssemblyFileName, string targetFramework)
+			: base(mainAssemblyFileName, throwOnError: false, targetFramework)
+		{
+		}
+
+		protected override MetadataFile LoadModuleFromFile(string fileName)
+		{
+			return InputFileLoader.LoadFile(fileName, context)?.MetadataFile ?? base.LoadModuleFromFile(fileName);
 		}
 	}
 }
