@@ -1240,17 +1240,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value2);
 		}
 
-		// #4059: csc reuses the same out-slot temporaries for both calls, and hands them to the
-		// second one in the opposite order, so neither deconstruction is recognized.
-		//public void TwoBackToBackDeconstructs_Custom()
-		//{
-		//	var (value, value2) = GetSource<string, string>();
-		//	Console.WriteLine(value);
-		//	Console.WriteLine(value2);
-		//	var (value3, value4) = GetSource<string, string>();
-		//	Console.WriteLine(value3);
-		//	Console.WriteLine(value4);
-		//}
+		public void TwoBackToBackDeconstructs_Custom()
+		{
+			var (value, value2) = GetSource<string, string>();
+			Console.WriteLine(value);
+			Console.WriteLine(value2);
+			var (value3, value4) = GetSource<string, string>();
+			Console.WriteLine(value3);
+			Console.WriteLine(value4);
+		}
 
 	}
 }
