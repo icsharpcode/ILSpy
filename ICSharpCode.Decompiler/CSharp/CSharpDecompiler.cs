@@ -2245,6 +2245,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// without this the decompiled program does not compile (CS5001).
 					methodDecl.Name = "Main";
 				}
+				FixPrivateVirtualMemberModifiers(methodDecl, method);
 				FixParameterNames(methodDecl);
 				var methodDefinition = metadata.GetMethodDefinition((MethodDefinitionHandle)method.MetadataToken);
 				if (!settings.LocalFunctions && LocalFunctionDecompiler.LocalFunctionNeedsAccessibilityChange(method.ParentModule!.MetadataFile, (MethodDefinitionHandle)method.MetadataToken))
@@ -2824,6 +2825,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					int lastDot = property.Name.LastIndexOf('.');
 					propertyDecl.Name = property.Name.Substring(lastDot + 1);
 				}
+				FixPrivateVirtualMemberModifiers(propertyDecl, property);
 				FixParameterNames(propertyDecl);
 				Accessor? getter, setter;
 				if (propertyDecl is PropertyDeclaration)
@@ -2905,6 +2907,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				{
 					eventDecl.Name = ev.Name.Substring(lastDot + 1);
 				}
+				FixPrivateVirtualMemberModifiers(eventDecl, ev);
 				if (isAutomaticEvent)
 				{
 					AutoEventDecompiler.AddFieldLikeEventAttributes((EventDeclaration)eventDecl, typeSystemAstBuilder, ev, backingField!);
@@ -2939,6 +2942,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				DecompilerEventSource.Log.DecompileMemberStop(ev, DecompiledMemberKind.Event);
 			}
+		}
+
+		static void FixPrivateVirtualMemberModifiers(EntityDeclaration declaration, IMember member)
+		{
+			if (member.Accessibility != Accessibility.Private || member.DeclaringType.Kind == TypeKind.Interface)
+				return;
+			if (!member.IsVirtual && !member.IsAbstract && !member.IsOverride)
+				return;
+			declaration.Modifiers &= ~Modifiers.Private;
+			declaration.Modifiers |= Modifiers.Protected;
 		}
 
 		#region Sequence Points
