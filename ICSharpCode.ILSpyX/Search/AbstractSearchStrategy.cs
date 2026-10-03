@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading;
 
@@ -69,12 +70,40 @@ namespace ICSharpCode.ILSpyX.Search
 
 	public abstract class AbstractSearchStrategy
 	{
+		enum TermOperator
+		{
+			Contains,
+			NotContains,
+			Exact,
+			Fuzzy
+		}
+
+		readonly struct PreparedTerm
+		{
+			// For Exact this is the unstripped term (including the '=' prefix), because the
+			// comparison below works with an offset of 1 and the full term length; for Fuzzy
+			// it is the stripped term lowered once with ToLowerInvariant; for the others it
+			// is the term with any '+'/'-' prefix stripped.
+			public readonly string Text;
+			public readonly TermOperator Operator;
+
+			public PreparedTerm(TermOperator op, string text)
+			{
+				this.Operator = op;
+				this.Text = text;
+			}
+		}
+
 		protected readonly string[] searchTerm;
 		protected readonly Regex? regex;
 		protected readonly bool fullNameSearch;
 		protected readonly bool omitGenerics;
 		protected readonly SearchRequest searchRequest;
 		private readonly IProducerConsumerCollection<SearchResult> resultQueue;
+		// The search terms are invariant for the lifetime of a strategy (each keystroke
+		// creates a new request + strategy), so prefix stripping and lowercasing are done
+		// once here instead of per candidate name in IsMatch.
+		private readonly PreparedTerm[] preparedTerms;
 
 		protected AbstractSearchStrategy(SearchRequest request, IProducerConsumerCollection<SearchResult> resultQueue)
 		{
@@ -84,6 +113,39 @@ namespace ICSharpCode.ILSpyX.Search
 			this.searchRequest = request;
 			this.fullNameSearch = request.FullNameSearch;
 			this.omitGenerics = request.OmitGenerics;
+			this.preparedTerms = PrepareTerms(request.Keywords);
+		}
+
+		static PreparedTerm[] PrepareTerms(string[] keywords)
+		{
+			var result = new List<PreparedTerm>(keywords.Length);
+			foreach (string term in keywords)
+			{
+				if (string.IsNullOrEmpty(term))
+					continue;
+				switch (term[0])
+				{
+					case '+': // must contain
+						result.Add(new PreparedTerm(TermOperator.Contains, term.Substring(1)));
+						break;
+					case '-': // should not contain
+						if (term.Length > 1)
+							result.Add(new PreparedTerm(TermOperator.NotContains, term.Substring(1)));
+						break;
+					case '=': // exact match
+						if (term.Length > 1)
+							result.Add(new PreparedTerm(TermOperator.Exact, term));
+						break;
+					case '~':
+						if (term.Length > 1)
+							result.Add(new PreparedTerm(TermOperator.Fuzzy, term.Substring(1).ToLowerInvariant()));
+						break;
+					default:
+						result.Add(new PreparedTerm(TermOperator.Contains, term));
+						break;
+				}
+			}
+			return result.ToArray();
 		}
 
 		public abstract void Search(MetadataFile module, CancellationToken cancellationToken);
@@ -95,39 +157,32 @@ namespace ICSharpCode.ILSpyX.Search
 				return regex.IsMatch(name);
 			}
 
-			for (int i = 0; i < searchTerm.Length; ++i)
+			foreach (var term in preparedTerms)
 			{
 				// How to handle overlapping matches?
-				var term = searchTerm[i];
-				if (string.IsNullOrEmpty(term))
-					continue;
-				string text = name;
-				switch (term[0])
+				switch (term.Operator)
 				{
-					case '+': // must contain
-						term = term.Substring(1);
-						goto default;
-					case '-': // should not contain
-						if (term.Length > 1 && text.IndexOf(term.Substring(1), StringComparison.OrdinalIgnoreCase) >= 0)
+					case TermOperator.NotContains:
+						if (name.IndexOf(term.Text, StringComparison.OrdinalIgnoreCase) >= 0)
 							return false;
 						break;
-					case '=': // exact match
+					case TermOperator.Exact:
 					{
-						var equalCompareLength = text.IndexOf('`');
+						var equalCompareLength = name.IndexOf('`');
 						if (equalCompareLength == -1)
-							equalCompareLength = text.Length;
+							equalCompareLength = name.Length;
 
-						if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength),
+						if (String.Compare(term.Text, 1, name, 0, Math.Max(term.Text.Length, equalCompareLength),
 							StringComparison.OrdinalIgnoreCase) != 0)
 							return false;
 					}
 					break;
-					case '~':
-						if (term.Length > 1 && !IsNoncontiguousMatch(text.ToLower(), term.Substring(1).ToLower()))
+					case TermOperator.Fuzzy:
+						if (!IsNoncontiguousMatch(name, term.Text))
 							return false;
 						break;
 					default:
-						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
+						if (name.IndexOf(term.Text, StringComparison.OrdinalIgnoreCase) < 0)
 							return false;
 						break;
 				}
@@ -135,26 +190,26 @@ namespace ICSharpCode.ILSpyX.Search
 			return true;
 		}
 
-		bool IsNoncontiguousMatch(string text, string searchTerm)
+		static bool IsNoncontiguousMatch(ReadOnlySpan<char> text, ReadOnlySpan<char> loweredSearchTerm)
 		{
-			if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchTerm))
+			if (text.IsEmpty || loweredSearchTerm.IsEmpty)
 			{
 				return false;
 			}
 			var textLength = text.Length;
-			if (searchTerm.Length > textLength)
+			if (loweredSearchTerm.Length > textLength)
 			{
 				return false;
 			}
 			var i = 0;
-			for (int searchIndex = 0; searchIndex < searchTerm.Length;)
+			for (int searchIndex = 0; searchIndex < loweredSearchTerm.Length;)
 			{
 				while (i != textLength)
 				{
-					if (text[i] == searchTerm[searchIndex])
+					if (char.ToLowerInvariant(text[i]) == loweredSearchTerm[searchIndex])
 					{
 						// Check if all characters in searchTerm have been matched
-						if (searchTerm.Length == ++searchIndex)
+						if (loweredSearchTerm.Length == ++searchIndex)
 							return true;
 						i++;
 						break;

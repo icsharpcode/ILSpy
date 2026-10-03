@@ -83,19 +83,38 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static string SplitTypeParameterCountFromReflectionName(string reflectionName, out int typeParameterCount)
 		{
 			int pos = reflectionName.LastIndexOf('`');
-			if (pos < 0)
+			if (pos >= 0 && TryParseTypeParameterCount(reflectionName, pos + 1, out typeParameterCount))
 			{
-				typeParameterCount = 0;
-				return reflectionName;
+				return reflectionName.Substring(0, pos);
 			}
-			else
+			typeParameterCount = 0;
+			return reflectionName;
+		}
+
+		/// <summary>
+		/// Parses a type parameter count that starts at <paramref name="start"/> and extends to
+		/// the end of <paramref name="reflectionName"/>. Only plain ASCII digits are accepted
+		/// (no sign or whitespace), because that is all a legal reflection name can contain.
+		/// netstandard2.0 has no span-based int.TryParse, so the digits are accumulated manually
+		/// to avoid allocating a throwaway substring.
+		/// </summary>
+		internal static bool TryParseTypeParameterCount(string reflectionName, int start, out int typeParameterCount)
+		{
+			typeParameterCount = 0;
+			if (start >= reflectionName.Length)
+				return false;
+			long value = 0;
+			for (int i = start; i < reflectionName.Length; i++)
 			{
-				string typeCount = reflectionName.Substring(pos + 1);
-				if (int.TryParse(typeCount, out typeParameterCount))
-					return reflectionName.Substring(0, pos);
-				else
-					return reflectionName;
+				char c = reflectionName[i];
+				if (c < '0' || c > '9')
+					return false;
+				value = value * 10 + (c - '0');
+				if (value > int.MaxValue)
+					return false;
 			}
+			typeParameterCount = (int)value;
+			return true;
 		}
 		#endregion
 
