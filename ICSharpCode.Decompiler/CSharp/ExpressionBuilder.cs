@@ -363,6 +363,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// It feels a bit hacky, though.
 			if (settings.AutomaticProperties
 				&& PatternStatementTransform.IsBackingFieldOfAutomaticProperty(field, out var property)
+				&& !PatternStatementTransform.HasAccessedThroughPropertyAttribute(field)
 				&& decompilationContext.CurrentMember != property
 				&& (property.CanSet || settings.GetterOnlyAutomaticProperties))
 			{
@@ -428,6 +429,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// field: on recompile the keyword binds to a freshly synthesized backing field
 				// while the original stays declared and unwritten - silently different storage.
 				if (!PatternStatementTransform.TryGetBackingField(property, out var backingField)
+					|| PatternStatementTransform.HasAccessedThroughPropertyAttribute(backingField)
 					|| !field.MemberDefinition.Equals(backingField.MemberDefinition))
 				{
 					return false;

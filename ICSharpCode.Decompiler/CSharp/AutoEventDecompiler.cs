@@ -26,6 +26,7 @@ using System.Threading;
 
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -40,6 +41,141 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	static class AutoEventDecompiler
 	{
+		internal sealed class VisualBasicWithEventsInfo
+		{
+			public IProperty Property { get; }
+			public IField BackingField { get; }
+			public IReadOnlyList<VisualBasicWithEventsSubscription> Subscriptions { get; }
+
+			public VisualBasicWithEventsInfo(IProperty property, IField backingField, IReadOnlyList<VisualBasicWithEventsSubscription> subscriptions)
+			{
+				Property = property;
+				BackingField = backingField;
+				Subscriptions = subscriptions;
+			}
+		}
+
+		internal sealed class VisualBasicWithEventsSubscription
+		{
+			public IEvent Event { get; }
+			public IMethod Handler { get; }
+
+			public VisualBasicWithEventsSubscription(IEvent ev, IMethod handler)
+			{
+				Event = ev;
+				Handler = handler;
+			}
+		}
+
+		public static bool TryAnalyzeVisualBasicWithEventsProperty(PropertyDeclaration propertyDeclaration,
+			[NotNullWhen(true)] out VisualBasicWithEventsInfo? info)
+		{
+			info = null;
+			if (propertyDeclaration.GetSymbol() is not IProperty property || propertyDeclaration.Setter?.Body == null)
+				return false;
+			if (property.Parameters.Count != 0 || property.Setter == null)
+				return false;
+
+			IField? backingField = null;
+			foreach (var assignment in propertyDeclaration.Setter.Body.Descendants.OfType<AssignmentExpression>())
+			{
+				if (assignment.Operator != AssignmentOperatorType.Assign)
+					continue;
+				if (assignment.Right is not IdentifierExpression { Identifier: "value" })
+					continue;
+				if (assignment.Left.GetSymbol() is not IField field)
+					continue;
+				field = (IField)field.MemberDefinition;
+				if (backingField != null && !backingField.Equals(field))
+					return false;
+				backingField = field;
+			}
+			if (backingField == null || !LooksLikeVisualBasicWithEventsBackingField(property, backingField))
+				return false;
+
+			var localHandlers = new Dictionary<string, IMethod>();
+			foreach (var declaration in propertyDeclaration.Setter.Body.Descendants.OfType<VariableDeclarationStatement>())
+			{
+				foreach (var variable in declaration.Variables)
+				{
+					if (TryGetEventHandler(variable.Initializer, out var handler))
+					{
+						localHandlers[variable.Name] = handler;
+					}
+				}
+			}
+
+			var added = new List<VisualBasicWithEventsSubscription>();
+			var removed = new List<VisualBasicWithEventsSubscription>();
+			foreach (var assignment in propertyDeclaration.Setter.Body.Descendants.OfType<AssignmentExpression>())
+			{
+				if (assignment.Operator is not (AssignmentOperatorType.Add or AssignmentOperatorType.Subtract))
+					continue;
+				if (assignment.Left.GetSymbol() is not IEvent ev)
+					continue;
+				if (!TryGetEventHandler(assignment.Right, out var handler))
+				{
+					if (assignment.Right is IdentifierExpression identifier
+						&& localHandlers.TryGetValue(identifier.Identifier, out var localHandler))
+					{
+						handler = localHandler;
+					}
+					else
+					{
+						continue;
+					}
+				}
+				var subscription = new VisualBasicWithEventsSubscription(ev, handler);
+				if (assignment.Operator == AssignmentOperatorType.Add)
+					added.Add(subscription);
+				else
+					removed.Add(subscription);
+			}
+
+			if (added.Count == 0 || removed.Count != added.Count)
+				return false;
+			foreach (var subscription in added)
+			{
+				if (!removed.Any(r => r.Event.Equals(subscription.Event) && r.Handler.Equals(subscription.Handler)))
+					return false;
+			}
+
+			info = new VisualBasicWithEventsInfo(property, backingField, added);
+			return true;
+		}
+
+		static bool LooksLikeVisualBasicWithEventsBackingField(IProperty property, IField field)
+		{
+			if (field.DeclaringTypeDefinition == null || !field.DeclaringTypeDefinition.Equals(property.DeclaringTypeDefinition))
+				return false;
+			if (field.IsStatic != property.IsStatic)
+				return false;
+			if (!NormalizeTypeVisitor.IgnoreNullability.EquivalentTypes(field.ReturnType, property.ReturnType))
+				return false;
+			if (field.Name == "_" + property.Name)
+				return true;
+			foreach (var attr in field.GetAttributes())
+			{
+				if (attr.AttributeType.FullName != "Microsoft.VisualBasic.CompilerServices.AccessedThroughPropertyAttribute")
+					continue;
+				if (attr.FixedArguments.Length == 1 && attr.FixedArguments[0].Value as string == property.Name)
+					return true;
+			}
+			return false;
+		}
+
+		static bool TryGetEventHandler(Expression? expression, [NotNullWhen(true)] out IMethod? handler)
+		{
+			handler = null;
+			Expression? target = expression;
+			if (target is ObjectCreateExpression objectCreate && objectCreate.Arguments.Count == 1)
+			{
+				target = objectCreate.Arguments.Single();
+			}
+			handler = target?.GetSymbol() as IMethod;
+			return handler != null;
+		}
+
 		/// <summary>
 		/// Determines whether <paramref name="ev"/> is an automatic event, memoizing the verdict
 		/// in <paramref name="decompileRun"/> so that all consumers decide from the same analysis.

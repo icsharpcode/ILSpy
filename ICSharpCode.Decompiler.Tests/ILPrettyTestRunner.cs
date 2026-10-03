@@ -118,6 +118,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public async Task Issue3136()
+		{
+			await Run();
+		}
+
+		[Test]
 		public async Task Issue1918()
 		{
 			await Run();
