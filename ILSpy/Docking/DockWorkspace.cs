@@ -803,7 +803,7 @@ namespace ICSharpCode.ILSpy.Docking
 				assemblyTreeModel.AssemblyList?.GetAssemblies() ?? []);
 			if (nodes.Any(n => n.AncestorsAndSelf()
 				.OfType<AssemblyTreeNode>()
-				.Any(a => !activeAssemblies.Contains(a.LoadedAssembly))))
+				.Any(a => !IsActiveAssemblyOrPackageEntry(a.LoadedAssembly, activeAssemblies))))
 			{
 				lastShownNodes = null;
 				ClearActiveDecompilerTab();
@@ -877,6 +877,17 @@ namespace ICSharpCode.ILSpy.Docking
 			main.SourceNode = nodes.Length == 1 ? nodes[0] : null;
 			using (ICSharpCode.ILSpy.AppEnv.AppLog.Phase("ShowSelectedNode: ActivateMainTabIfNeeded"))
 				ActivateMainTabIfNeeded(main);
+		}
+
+		static bool IsActiveAssemblyOrPackageEntry(ICSharpCode.ILSpyX.LoadedAssembly assembly,
+			HashSet<ICSharpCode.ILSpyX.LoadedAssembly> activeAssemblies)
+		{
+			for (var current = assembly; current != null; current = current.ParentBundle)
+			{
+				if (activeAssemblies.Contains(current))
+					return true;
+			}
+			return false;
 		}
 
 		// The "exactly one preview tab" rule: tree selections always route to the single preview
