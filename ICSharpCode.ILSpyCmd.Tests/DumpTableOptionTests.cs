@@ -248,6 +248,27 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		[Test]
+		public async Task DebugTableFromAssemblyWithoutPortablePdbReportsMissingSymbols()
+		{
+			string tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+			Directory.CreateDirectory(tempDir);
+			try
+			{
+				string assemblyPath = Path.Combine(tempDir, Path.GetFileName(testAssemblyPath));
+				File.Copy(testAssemblyPath, assemblyPath);
+
+				var result = await RunAsync(assemblyPath, "--disable-updatecheck", "--dump-table", "Document");
+
+				Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_NOINPUT));
+				Assert.That(result.Error, Does.Contain("No Portable PDB debug metadata"));
+			}
+			finally
+			{
+				Directory.Delete(tempDir, recursive: true);
+			}
+		}
+
+		[Test]
 		public async Task TableNameIsCaseInsensitive()
 		{
 			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "property");

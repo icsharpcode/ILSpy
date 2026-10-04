@@ -72,6 +72,26 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		[Test]
+		public async Task DumpPdbListsMethodCustomDebugInformation()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("CDI:"));
+		}
+
+		[Test]
+		public async Task DumpPdbJsonListsMethodCustomDebugInformation()
+		{
+			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb", "--json");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			using var doc = JsonDocument.Parse(result.Output);
+			var methods = doc.RootElement.GetProperty("methods").EnumerateArray();
+			Assert.That(methods.Any(m => m.GetProperty("customDebugInformation").GetArrayLength() > 0), Is.True);
+		}
+
+		[Test]
 		public async Task DumpPdbReportsMissingSymbols()
 		{
 			// a reference assembly ships without any PDB next to it

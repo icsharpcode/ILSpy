@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpyX.Metadata
 		{
 			var methods = EnumerateTypes(module.Types)
 				.SelectMany(t => t.Methods)
-				.Where(m => m.DebugInformation != null && HasContent(m.DebugInformation))
+				.Where(HasContent)
 				.ToList();
 			var documents = CollectDocuments(methods);
 
@@ -170,12 +170,19 @@ namespace ICSharpCode.ILSpyX.Metadata
 			}
 		}
 
-		static bool HasContent(MethodDebugInformation debugInfo)
+		static bool HasContent(MethodDefinition method)
 		{
+			var debugInfo = method.DebugInformation;
 			return debugInfo.HasSequencePoints
 				|| debugInfo.Scope != null
 				|| debugInfo.StateMachineKickOffMethod != null
-				|| debugInfo.HasCustomDebugInformations;
+				|| debugInfo.HasCustomDebugInformations
+				|| method.HasCustomDebugInformations;
+		}
+
+		static IEnumerable<CustomDebugInformation> EnumerateCustomDebugInformation(MethodDefinition method)
+		{
+			return method.DebugInformation.CustomDebugInformations.Concat(method.CustomDebugInformations);
 		}
 
 		/// <summary>
@@ -209,6 +216,13 @@ namespace ICSharpCode.ILSpyX.Metadata
 		static string FormatOffset(InstructionOffset offset)
 		{
 			return offset.IsEndOfMethod ? "end" : FormatOffset(offset.Offset);
+		}
+
+		static string FormatCatchHandlerOffset(InstructionOffset offset)
+		{
+			if (offset.IsEndOfMethod)
+				return "end";
+			return offset.Offset < 0 ? "none" : FormatOffset(offset.Offset);
 		}
 
 		static string FormatSpan(SequencePoint point)
@@ -257,7 +271,7 @@ namespace ICSharpCode.ILSpyX.Metadata
 				StateMachineScopeDebugInformation scopes =>
 					$"{info.Kind} " + string.Join(", ", scopes.Scopes.Select(s => $"{FormatOffset(s.Start)}..{FormatOffset(s.End)}")),
 				AsyncMethodBodyDebugInformation async =>
-					$"{info.Kind} catch handler {FormatOffset(async.CatchHandler)}, {async.Resumes.Count} resume point(s)",
+					$"{info.Kind} catch handler {FormatCatchHandlerOffset(async.CatchHandler)}, {async.Resumes.Count} resume point(s)",
 				EmbeddedSourceDebugInformation embedded => $"{info.Kind} ({embedded.Content?.Length ?? 0} bytes, compressed={embedded.Compress})",
 				SourceLinkDebugInformation sourceLink => $"{info.Kind} {sourceLink.Content}",
 				_ => info.Kind.ToString(),
@@ -310,7 +324,7 @@ namespace ICSharpCode.ILSpyX.Metadata
 				}
 				if (debugInfo.Scope != null)
 					WriteScopeText(output, debugInfo.Scope, "    ");
-				foreach (var info in debugInfo.CustomDebugInformations)
+				foreach (var info in EnumerateCustomDebugInformation(method))
 				{
 					output.WriteLine($"    CDI: {DescribeCustomDebugInformation(info)}");
 				}
@@ -408,7 +422,7 @@ namespace ICSharpCode.ILSpyX.Metadata
 					}
 
 					writer.WriteStartArray("customDebugInformation");
-					foreach (var info in debugInfo.CustomDebugInformations)
+					foreach (var info in EnumerateCustomDebugInformation(method))
 					{
 						writer.WriteStartObject();
 						writer.WriteString("kind", info.Kind.ToString());

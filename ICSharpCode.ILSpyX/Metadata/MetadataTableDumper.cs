@@ -39,6 +39,14 @@ namespace ICSharpCode.ILSpyX.Metadata
 	/// </summary>
 	public static class MetadataTableDumper
 	{
+		public sealed class NoPortableDebugMetadataException : Exception
+		{
+			public NoPortableDebugMetadataException(string message)
+				: base(message)
+			{
+			}
+		}
+
 		// The Cor tables plus the eight Portable-PDB debug tables, matching what the GUI's
 		// metadata view shows. EnC tables are out of scope. A table that does not exist in the
 		// file being dumped simply has no rows.
@@ -82,7 +90,7 @@ namespace ICSharpCode.ILSpyX.Metadata
 		{
 			// the rows of a debug table live in the PDB, which for a PE file is either embedded
 			// in it or sits next to it; the provider owns the reader, so it outlives the dump
-			using var debugInfo = TryLoadDebugMetadata(module, table);
+			using var debugInfo = LoadDebugMetadata(module, table);
 			var source = debugInfo?.ToMetadataFile() ?? module;
 			var rows = LoadRows(source.Metadata, table);
 			if (asJson)
@@ -111,15 +119,22 @@ namespace ICSharpCode.ILSpyX.Metadata
 		/// <summary>
 		/// Finds the debug metadata belonging to <paramref name="module"/> when a debug table is
 		/// asked for and the module itself carries no such rows. Null when the module already is
-		/// (or has) the right metadata, or when no Portable PDB could be found.
+		/// (or has) the right metadata, or when the input already is standalone debug metadata.
 		/// </summary>
-		static PortableDebugInfoProvider? TryLoadDebugMetadata(MetadataFile module, TableIndex table)
+		/// <exception cref="NoPortableDebugMetadataException">No Portable PDB could be found for a PE file.</exception>
+		static PortableDebugInfoProvider? LoadDebugMetadata(MetadataFile module, TableIndex table)
 		{
 			if (!IsDebugTable(table) || module.Metadata.GetTableRowCount(table) > 0)
 				return null;
 			if (module is not PEFile peFile)
 				return null;
-			return DebugInfoUtils.LoadSymbols(peFile) as PortableDebugInfoProvider;
+
+			var debugInfo = DebugInfoUtils.LoadSymbols(peFile);
+			if (debugInfo is PortableDebugInfoProvider portableDebugInfo)
+				return portableDebugInfo;
+			if (debugInfo is IDisposable disposableDebugInfo)
+				disposableDebugInfo.Dispose();
+			throw new NoPortableDebugMetadataException($"No Portable PDB debug metadata found for '{module.FileName}'.");
 		}
 
 		/// <summary>

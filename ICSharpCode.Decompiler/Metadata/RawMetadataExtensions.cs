@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			int rowCount = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
 			var reader = metadata.AsBlobReader();
 			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
-			int methodSize = SimpleIndexSize(metadata, TableIndex.MethodDef);
+			int methodSize = metadata.GetTableRowSize(TableIndex.StateMachineMethod) / 2;
 			CheckRowSize(metadata, TableIndex.StateMachineMethod, 2 * methodSize);
 			for (int rid = 1; rid <= rowCount; rid++)
 			{

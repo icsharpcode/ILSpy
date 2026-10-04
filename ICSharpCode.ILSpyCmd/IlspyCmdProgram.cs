@@ -432,17 +432,25 @@ Examples:
 					// a standalone Portable PDB is a valid input here: it carries the debug tables
 					using var tableModule = InputFileLoader.LoadMetadata(fileName, BundleEntryName);
 
-					if (outputDirectory != null)
+					try
 					{
-						// per-file writer, disposed here: the shared 'output' is only closed once
-						// at the end of the run, which would lose the buffered tail of every file
-						// but the last when dumping multiple assemblies
-						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						using var tableOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + $".{table}.{(JsonOutputFlag ? "json" : "txt")}");
-						return MetadataTableDumper.DumpTable(tableModule, tableOutput, table, JsonOutputFlag);
-					}
+						if (outputDirectory != null)
+						{
+							// per-file writer, disposed here: the shared 'output' is only closed once
+							// at the end of the run, which would lose the buffered tail of every file
+							// but the last when dumping multiple assemblies
+							string outputName = Path.GetFileNameWithoutExtension(fileName);
+							using var tableOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + $".{table}.{(JsonOutputFlag ? "json" : "txt")}");
+							return MetadataTableDumper.DumpTable(tableModule, tableOutput, table, JsonOutputFlag);
+						}
 
-					return MetadataTableDumper.DumpTable(tableModule, output, table, JsonOutputFlag);
+						return MetadataTableDumper.DumpTable(tableModule, output, table, JsonOutputFlag);
+					}
+					catch (MetadataTableDumper.NoPortableDebugMetadataException ex)
+					{
+						app.Error.WriteLine(ex.Message);
+						return ProgramExitCodes.EX_NOINPUT;
+					}
 				}
 				else if (DumpPdbFlag)
 				{
