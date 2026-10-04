@@ -319,6 +319,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 
 		private S s1;
 		private S s2;
+		private static int mixedArrayInitializerValue = 5;
 
 		#region Field initializer tests
 		private static V3f[] Issue1336_rg0 = new V3f[3] {
@@ -605,6 +606,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests
 		public static void ArrayInt()
 		{
 			X(Y(), new int[10] { 1, -2, 2000000000, 4, 5, -6, 7, 8, 9, 10 });
+		}
+
+		public static int[] MixedArrayInitializer()
+		{
+			return new int[15] {
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 1, 2147483647, -2147483648, mixedArrayInitializerValue
+			};
 		}
 
 		public static void ArrayUInt()

@@ -70,9 +70,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.Step("HandleRuntimeHelperInitializeArray: single-dim", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, null, arrayLength, values);
-					var newStore = new StLoc(v, block);
+					int initializerInstructionsToRemove = 1;
+					var initializerStart = initArrayPos + 1;
+					var simpleInitializerVariable = v;
+					int copyInstructionsToRemove = 0;
+					// Legacy csc stores the initialized array into another local before writing
+					// the non-constant element stores through that copy.
+					if (initializerStart < body.Instructions.Count
+						&& body.Instructions[initializerStart].MatchStLoc(out var copy, out var copiedValue)
+						&& copiedValue.MatchLdLoc(v))
+					{
+						simpleInitializerVariable = copy;
+						initializerStart++;
+						copyInstructionsToRemove = 1;
+					}
+					var targetVariable = v;
+					if (arrayLength.Length == 1 && HandleSimpleArrayInitializer(function, body, initializerStart, simpleInitializerVariable, arrayLength, out var mixedArrayValues, out var simpleInitializerInstructionsToRemove))
+					{
+						targetVariable = simpleInitializerVariable;
+						for (int i = 0; i < mixedArrayValues.Length; i++)
+						{
+							if (mixedArrayValues[i].Value != null)
+								values[2 * i] = mixedArrayValues[i].Value;
+						}
+						block = BlockFromInitializer(tempStore, elementType, null, arrayLength, values);
+						initializerInstructionsToRemove = 1 + copyInstructionsToRemove + simpleInitializerInstructionsToRemove;
+					}
+					var newStore = new StLoc(targetVariable, block);
 					body.Instructions[pos] = newStore;
-					body.Instructions.RemoveAt(initArrayPos);
+					body.Instructions.RemoveRange(initArrayPos, initializerInstructionsToRemove);
 					context.EndStep(newStore);
 					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
