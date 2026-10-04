@@ -94,6 +94,23 @@ namespace ICSharpCode.ILSpyCmd
 			return new PEFile(fileName, metadataOptions: MetadataOptions(context));
 		}
 
+		/// <summary>
+		/// Loads the selected package entry when <paramref name="fileName"/> is a package, and
+		/// returns false for ordinary files so callers can keep path-based behavior.
+		/// </summary>
+		public static bool TryLoadPackageEntry(string fileName, string entryName, bool applyWinRTProjections, out PEFile module)
+		{
+			var context = new FileLoadContext(applyWinRTProjections, null);
+			var result = LoadFile(fileName, context);
+			if (result?.Package is { } package)
+			{
+				module = LoadPackageEntry(package, entryName, context);
+				return true;
+			}
+			module = null;
+			return false;
+		}
+
 		static LoadResult LoadFile(string fileName, FileLoadContext context)
 		{
 			using var stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);

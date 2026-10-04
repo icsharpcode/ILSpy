@@ -66,6 +66,24 @@ namespace ICSharpCode.ILSpyX.Metadata
 		public static void Dump(string assemblyFileName, string? pdbFileName, TextWriter output, bool asJson)
 		{
 			using var module = ReadModuleWithSymbols(assemblyFileName, pdbFileName);
+			Dump(module, assemblyFileName, output, asJson);
+		}
+
+		/// <summary>
+		/// Writes the debug information of the assembly image in <paramref name="assemblyStream"/> to <paramref name="output"/>.
+		/// </summary>
+		/// <param name="pdbFileName">
+		/// The PDB to read. When null, only symbols embedded in the assembly image can be used.
+		/// </param>
+		/// <exception cref="NoDebugSymbolsException">No readable debug symbols were found.</exception>
+		public static void Dump(Stream assemblyStream, string assemblyName, string? pdbFileName, TextWriter output, bool asJson)
+		{
+			using var module = ReadModuleWithSymbols(assemblyStream, assemblyName, pdbFileName);
+			Dump(module, assemblyName, output, asJson);
+		}
+
+		static void Dump(ModuleDefinition module, string assemblyName, TextWriter output, bool asJson)
+		{
 			var methods = EnumerateTypes(module.Types)
 				.SelectMany(t => t.Methods)
 				.Where(m => m.DebugInformation != null && HasContent(m.DebugInformation))
@@ -73,23 +91,15 @@ namespace ICSharpCode.ILSpyX.Metadata
 			var documents = CollectDocuments(methods);
 
 			if (asJson)
-				WriteJson(output, module, assemblyFileName, documents, methods);
+				WriteJson(output, module, assemblyName, documents, methods);
 			else
-				WriteText(output, module, assemblyFileName, documents, methods);
+				WriteText(output, module, assemblyName, documents, methods);
 		}
 
 		static ModuleDefinition ReadModuleWithSymbols(string assemblyFileName, string? pdbFileName)
 		{
 			var parameters = new ReaderParameters { ReadSymbols = true, InMemory = true };
-			if (pdbFileName != null)
-			{
-				// SymbolStream is only honoured together with an explicit provider, and the
-				// provider must match the format of the file the user named
-				parameters.SymbolStream = File.OpenRead(pdbFileName);
-				parameters.SymbolReaderProvider = IsWindowsPdb(pdbFileName)
-					? new Mono.Cecil.Pdb.NativePdbReaderProvider()
-					: new Mono.Cecil.Cil.PortablePdbReaderProvider();
-			}
+			ApplyExplicitSymbolFile(parameters, pdbFileName);
 			ModuleDefinition module;
 			try
 			{
@@ -106,6 +116,42 @@ namespace ICSharpCode.ILSpyX.Metadata
 				throw new NoDebugSymbolsException($"No debug symbols found for '{assemblyFileName}'.");
 			}
 			return module;
+		}
+
+		static ModuleDefinition ReadModuleWithSymbols(Stream assemblyStream, string assemblyName, string? pdbFileName)
+		{
+			var parameters = new ReaderParameters { ReadSymbols = true, InMemory = true };
+			ApplyExplicitSymbolFile(parameters, pdbFileName);
+			ModuleDefinition module;
+			try
+			{
+				assemblyStream.Position = 0;
+				module = ModuleDefinition.ReadModule(assemblyStream, parameters);
+			}
+			catch (Exception ex) when (ex is FileNotFoundException or InvalidOperationException or BadImageFormatException)
+			{
+				throw new NoDebugSymbolsException(
+					$"No debug symbols could be read for '{assemblyName}'.", ex);
+			}
+			if (module.SymbolReader == null)
+			{
+				module.Dispose();
+				throw new NoDebugSymbolsException($"No debug symbols found for '{assemblyName}'.");
+			}
+			return module;
+		}
+
+		static void ApplyExplicitSymbolFile(ReaderParameters parameters, string? pdbFileName)
+		{
+			if (pdbFileName == null)
+				return;
+
+			// SymbolStream is only honoured together with an explicit provider, and the
+			// provider must match the format of the file the user named
+			parameters.SymbolStream = File.OpenRead(pdbFileName);
+			parameters.SymbolReaderProvider = IsWindowsPdb(pdbFileName)
+				? new Mono.Cecil.Pdb.NativePdbReaderProvider()
+				: new Mono.Cecil.Cil.PortablePdbReaderProvider();
 		}
 
 		static bool IsWindowsPdb(string pdbFileName)

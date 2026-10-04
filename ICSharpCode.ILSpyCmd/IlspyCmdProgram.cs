@@ -1285,7 +1285,20 @@ Examples:
 		{
 			try
 			{
-				PdbDumper.Dump(assemblyFileName, InputPDBFile.IsSet ? InputPDBFile.Value : null, output, JsonOutputFlag);
+				string pdbFileName = InputPDBFile.IsSet ? InputPDBFile.Value : null;
+				if (InputFileLoader.TryLoadPackageEntry(assemblyFileName, BundleEntryName, applyWinRTProjections: false, out var module))
+				{
+					using (module)
+					{
+						var image = module.Reader.GetEntireImage().GetContent().ToArray();
+						using var assemblyStream = new MemoryStream(image, writable: false);
+						PdbDumper.Dump(assemblyStream, module.FileName, pdbFileName, output, JsonOutputFlag);
+					}
+				}
+				else
+				{
+					PdbDumper.Dump(assemblyFileName, pdbFileName, output, JsonOutputFlag);
+				}
 			}
 			catch (PdbDumper.NoDebugSymbolsException ex)
 			{

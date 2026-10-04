@@ -198,6 +198,19 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		[Test]
+		public async Task NamedEntryWorksInDumpPdbMode()
+		{
+			string pdbPath = Path.ChangeExtension(testAssemblyPath, ".pdb");
+
+			var result = await RunAsync(bundlePath, "--disable-updatecheck", "--bundle-entry", "Sample.dll",
+				"--dump-pdb", "-usepdb:" + pdbPath);
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Output, Does.Contain("Documents"));
+			Assert.That(result.Output, Does.Contain("BundleEntryOptionTests.cs"));
+		}
+
+		[Test]
 		public async Task UnknownEntryNameListsValidEntries()
 		{
 			var result = await RunAsync(bundlePath, "--disable-updatecheck", "--bundle-entry", "NotThere.dll");
