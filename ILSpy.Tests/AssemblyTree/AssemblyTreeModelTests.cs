@@ -188,4 +188,24 @@ public class AssemblyTreeModelTests
 		sibling.Children.Should().BeEmpty(
 			"only the folders on the path down to the target get expanded.");
 	}
+
+	[AvaloniaTest]
+	public async Task Selecting_a_type_inside_a_package_entry_decompiles_it()
+	{
+		var (_, vm) = await TestHarness.BootAsync();
+		await vm.OpenAssemblyAsync(CreatePackage());
+
+		var nested = (await vm.AssemblyTreeModel.AssemblyList!.GetAllAssemblies())
+			.Single(a => a.FileName == "lib/net10.0/Nested.dll");
+		var type = nested.GetTypeSystemOrNull()!.MainModule.TypeDefinitions
+			.Single(t => t.Name == FixtureAssembly.TypeName);
+		var node = vm.AssemblyTreeModel.FindTreeNode(type);
+		((object?)node).Should().BeOfType<TypeTreeNode>();
+
+		vm.AssemblyTreeModel.SelectNode(node!);
+		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+
+		tab.Text.Should().Contain(FixtureAssembly.TypeName,
+			"a live package-entry node must not be mistaken for a stale node from a removed assembly");
+	}
 }
