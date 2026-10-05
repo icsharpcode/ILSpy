@@ -34,7 +34,6 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Copyright>Copyright 2022-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
     <PackageTags>C# Decompiler ILSpy</PackageTags>
-    <GenerateSBOM>true</GenerateSBOM>
 
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -62,6 +61,7 @@
 
   <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+	<GenerateSBOM>true</GenerateSBOM>
   </PropertyGroup>
 
   <!-- Inject ILSpyUpdateAssemblyInfo as dependency of the GetPackageVersion

@@ -49,13 +49,6 @@
          build .resources fixtures with typed serialized-object entries (NRBF-wrapped
          ImageListStreamer blobs) without depending on the obsolete BinaryFormatter. -->
     <PackageReference Include="System.Resources.Extensions" />
-
-    <!-- Windows-only native packages that the matching ILSpy commands gate
-         behind `Debug + IsOSPlatform(Windows)`. Available unconditionally here because
-         the project itself only builds on Windows. -->
-    <PackageReference Include="Microsoft.DiaSymReader.Converter.Xml" />
-    <PackageReference Include="Microsoft.DiaSymReader" />
-    <PackageReference Include="Microsoft.DiaSymReader.Native" />
   </ItemGroup>
 
   <ItemGroup>

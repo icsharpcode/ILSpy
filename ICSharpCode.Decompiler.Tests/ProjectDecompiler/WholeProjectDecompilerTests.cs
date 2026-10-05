@@ -125,8 +125,9 @@ public sealed class WholeProjectDecompilerTests
 
 		StringWriter projectFileWriter = new();
 		// Two embedded .resources containers and nothing else, so both go through WriteResourceToFile
-		// and the test never touches the disk.
-		decompiler.DecompileProject(new PEFile("Microsoft.DiaSymReader.Converter.Xml.dll"), targetDirectory, projectFileWriter);
+		// and the test never touches the disk. String entries keep each container in one piece.
+		using var assembly = CreateAssemblyWithResources(() => "value", ("First.resources", "key"), ("Second.resources", "key"));
+		decompiler.DecompileProject(new PEFile("Test.dll", assembly), targetDirectory, projectFileWriter);
 		AssertDirectoryDoesntExist(targetDirectory);
 
 		using (Assert.EnterMultipleScope())
@@ -246,6 +247,13 @@ public sealed class WholeProjectDecompilerTests
 	/// are what makes the export write the entries out as individual files.
 	/// </summary>
 	static Stream CreateAssemblyWithResources(params (string ContainerName, string EntryName)[] resources)
+		=> CreateAssemblyWithResources(() => new MemoryStream(new byte[] { 1, 2, 3 }), resources);
+
+	/// <summary>
+	/// As above, with every entry holding a value of its own from <paramref name="entryValue"/>.
+	/// A container with an entry that is not a stream is exported as a single file.
+	/// </summary>
+	static Stream CreateAssemblyWithResources(Func<object> entryValue, params (string ContainerName, string EntryName)[] resources)
 	{
 		var compilation = CSharpCompilation.Create("Test",
 			new[] { CSharpSyntaxTree.ParseText("[assembly: System.Runtime.Versioning.TargetFramework(\".NETCoreApp,Version=v8.0\")] class C { }") },
@@ -259,7 +267,7 @@ public sealed class WholeProjectDecompilerTests
 			{
 				foreach (var entry in container)
 				{
-					writer.AddResource(entry.EntryName, new MemoryStream(new byte[] { 1, 2, 3 }));
+					writer.AddResource(entry.EntryName, entryValue());
 				}
 			}
 			byte[] bytes = contents.ToArray();
