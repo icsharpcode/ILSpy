@@ -45,7 +45,11 @@ Options:
                                           indexes of every row. <table> is the ECMA-335 table name (e.g. TypeDef,
                                           Property, MethodSemantics; case-insensitive) or table number (decimal or
                                           0x-prefixed hex, e.g. 0x17).
-  --json                                  Output as JSON. Currently only supported together with --dump-table.
+  --dump-pdb                              Dump the debug information of the assembly's PDB: documents, per-method
+                                          sequence points, the scope tree with its variables, constants and imports, and
+                                          custom debug information. Reads both Portable and Windows PDBs. Use
+                                          -usepdb:<file> to point at a PDB that is not next to the assembly.
+  --json                                  Output as JSON. Only supported together with --dump-table or --dump-pdb.
   -lv|--languageversion <version>         C# Language version: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6,
                                           CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp10_0,
                                           CSharp11_0, CSharp12_0, CSharp13_0, Preview or Latest

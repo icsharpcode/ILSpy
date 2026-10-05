@@ -64,19 +64,51 @@ namespace ICSharpCode.ILSpyCmd
 		/// </exception>
 		public static PEFile Load(string fileName, string entryName, bool applyWinRTProjections = true)
 		{
+			var file = LoadMetadata(fileName, entryName, applyWinRTProjections);
+			if (file is PEFile module)
+			{
+				return module;
+			}
+			file.Dispose();
+			throw new BadImageFormatException($"'{fileName}' contains metadata, but no PE image.");
+		}
+
+		/// <summary>
+		/// Like <see cref="Load"/>, but also accepts a file that carries metadata without a PE
+		/// image around it: a standalone Portable PDB, or a raw metadata blob.
+		/// </summary>
+		public static MetadataFile LoadMetadata(string fileName, string entryName, bool applyWinRTProjections = true)
+		{
 			var context = new FileLoadContext(applyWinRTProjections, null);
 			var result = LoadFile(fileName, context);
 			if (result?.Package is { } package)
 			{
 				return LoadPackageEntry(package, entryName, context);
 			}
-			if (result?.MetadataFile is PEFile module)
+			if (result?.MetadataFile is { } file)
 			{
-				return module;
+				return file;
 			}
 			// Not a file any loader recognized: let PEFile report what is wrong with it, which is
 			// the error the tool has always produced for such input.
 			return new PEFile(fileName, metadataOptions: MetadataOptions(context));
+		}
+
+		/// <summary>
+		/// Loads the selected package entry when <paramref name="fileName"/> is a package, and
+		/// returns false for ordinary files so callers can keep path-based behavior.
+		/// </summary>
+		public static bool TryLoadPackageEntry(string fileName, string entryName, bool applyWinRTProjections, out PEFile module)
+		{
+			var context = new FileLoadContext(applyWinRTProjections, null);
+			var result = LoadFile(fileName, context);
+			if (result?.Package is { } package)
+			{
+				module = LoadPackageEntry(package, entryName, context);
+				return true;
+			}
+			module = null;
+			return false;
 		}
 
 		static LoadResult LoadFile(string fileName, FileLoadContext context)

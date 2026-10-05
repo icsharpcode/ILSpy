@@ -40,16 +40,10 @@ namespace ICSharpCode.ILSpy.Metadata.DebugTables
 		protected override IReadOnlyList<StateMachineMethodEntry> LoadTable()
 		{
 			var list = new List<StateMachineMethodEntry>();
-			var metadata = metadataFile.Metadata;
-			var length = metadata.GetTableRowCount(TableIndex.StateMachineMethod);
-			var reader = metadata.AsBlobReader();
-			reader.Offset = metadata.GetTableMetadataOffset(TableIndex.StateMachineMethod);
-			int methodDefSize = metadata.GetTableRowCount(TableIndex.MethodDef) < ushort.MaxValue ? 2 : 4;
-			for (int rid = 1; rid <= length; rid++)
+			int rid = 0;
+			foreach (var (moveNext, kickoff) in metadataFile.Metadata.GetStateMachineMethods())
 			{
-				var moveNext = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
-				var kickoff = MetadataTokens.MethodDefinitionHandle(methodDefSize == 2 ? reader.ReadInt16() : reader.ReadInt32());
-				list.Add(new StateMachineMethodEntry(metadataFile, rid, moveNext, kickoff));
+				list.Add(new StateMachineMethodEntry(metadataFile, ++rid, moveNext, kickoff));
 			}
 			return list;
 		}

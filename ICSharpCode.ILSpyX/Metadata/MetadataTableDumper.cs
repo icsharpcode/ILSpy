@@ -25,9 +25,11 @@ using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 
+using ICSharpCode.Decompiler.DebugInfo;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.ILSpyX.PdbProvider;
 
-namespace ICSharpCode.ILSpyCmd
+namespace ICSharpCode.ILSpyX.Metadata
 {
 	/// <summary>
 	/// Implements the --dump-table mode: prints every row of a metadata table (RID, token,
@@ -35,9 +37,19 @@ namespace ICSharpCode.ILSpyCmd
 	/// The columns of every table are spelled out explicitly (in ECMA-335 declaration order)
 	/// so the output stays deterministic across runtime versions.
 	/// </summary>
-	internal static class MetadataTableDumper
+	public static class MetadataTableDumper
 	{
-		// The Cor tables the GUI's metadata view supports; EnC and Portable-PDB tables are out of scope.
+		public sealed class NoPortableDebugMetadataException : Exception
+		{
+			public NoPortableDebugMetadataException(string message)
+				: base(message)
+			{
+			}
+		}
+
+		// The Cor tables plus the eight Portable-PDB debug tables, matching what the GUI's
+		// metadata view shows. EnC tables are out of scope. A table that does not exist in the
+		// file being dumped simply has no rows.
 		static readonly TableIndex[] supportedTables = {
 			TableIndex.Module, TableIndex.TypeRef, TableIndex.TypeDef, TableIndex.FieldPtr,
 			TableIndex.Field, TableIndex.MethodPtr, TableIndex.MethodDef, TableIndex.ParamPtr,
@@ -50,6 +62,9 @@ namespace ICSharpCode.ILSpyCmd
 			TableIndex.FieldRva, TableIndex.Assembly, TableIndex.AssemblyRef, TableIndex.File,
 			TableIndex.ExportedType, TableIndex.ManifestResource, TableIndex.NestedClass,
 			TableIndex.GenericParam, TableIndex.MethodSpec, TableIndex.GenericParamConstraint,
+			TableIndex.Document, TableIndex.MethodDebugInformation, TableIndex.LocalScope,
+			TableIndex.LocalVariable, TableIndex.LocalConstant, TableIndex.ImportScope,
+			TableIndex.StateMachineMethod, TableIndex.CustomDebugInformation,
 		};
 
 		public static string SupportedTableNames => string.Join(", ",
@@ -71,19 +86,55 @@ namespace ICSharpCode.ILSpyCmd
 				&& supportedTables.Contains(table);
 		}
 
-		public static int DumpTable(PEFile module, TextWriter output, TableIndex table, bool asJson)
+		public static int DumpTable(MetadataFile module, TextWriter output, TableIndex table, bool asJson)
 		{
-			var metadata = module.Metadata;
-			var rows = LoadRows(metadata, table);
+			// the rows of a debug table live in the PDB, which for a PE file is either embedded
+			// in it or sits next to it; the provider owns the reader, so it outlives the dump
+			using var debugInfo = LoadDebugMetadata(module, table);
+			var source = debugInfo?.ToMetadataFile() ?? module;
+			var rows = LoadRows(source.Metadata, table);
 			if (asJson)
 			{
-				WriteJson(output, module.FileName, table, rows);
+				WriteJson(output, source.FileName, table, rows);
 			}
 			else
 			{
 				WriteConsoleTable(output, rows);
 			}
 			return 0;
+		}
+
+		/// <summary>
+		/// True for the eight Portable-PDB debug tables, whose rows are stored in debug metadata
+		/// rather than in the assembly.
+		/// </summary>
+		public static bool IsDebugTable(TableIndex table)
+		{
+			return table is TableIndex.Document or TableIndex.MethodDebugInformation
+				or TableIndex.LocalScope or TableIndex.LocalVariable or TableIndex.LocalConstant
+				or TableIndex.ImportScope or TableIndex.StateMachineMethod
+				or TableIndex.CustomDebugInformation;
+		}
+
+		/// <summary>
+		/// Finds the debug metadata belonging to <paramref name="module"/> when a debug table is
+		/// asked for and the module itself carries no such rows. Null when the module already is
+		/// (or has) the right metadata, or when the input already is standalone debug metadata.
+		/// </summary>
+		/// <exception cref="NoPortableDebugMetadataException">No Portable PDB could be found for a PE file.</exception>
+		static PortableDebugInfoProvider? LoadDebugMetadata(MetadataFile module, TableIndex table)
+		{
+			if (!IsDebugTable(table) || module.Metadata.GetTableRowCount(table) > 0)
+				return null;
+			if (module is not PEFile peFile)
+				return null;
+
+			var debugInfo = DebugInfoUtils.LoadSymbols(peFile);
+			if (debugInfo is PortableDebugInfoProvider portableDebugInfo)
+				return portableDebugInfo;
+			if (debugInfo is IDisposable disposableDebugInfo)
+				disposableDebugInfo.Dispose();
+			throw new NoPortableDebugMetadataException($"No Portable PDB debug metadata found for '{module.FileName}'.");
 		}
 
 		/// <summary>
@@ -389,6 +440,87 @@ namespace ICSharpCode.ILSpyCmd
 							("Constraint", constraint.Type)));
 					}
 					break;
+				case TableIndex.Document:
+					foreach (var h in metadata.Documents)
+					{
+						var document = metadata.GetDocument(h);
+						rows.Add(Row(metadata, MetadataTokens.GetRowNumber(h), h,
+							("Name", document.Name),
+							("HashAlgorithm", document.HashAlgorithm),
+							("Hash", document.Hash),
+							("Language", document.Language)));
+					}
+					break;
+				case TableIndex.MethodDebugInformation:
+					foreach (var h in metadata.MethodDebugInformation)
+					{
+						var debugInfo = metadata.GetMethodDebugInformation(h);
+						rows.Add(Row(metadata, MetadataTokens.GetRowNumber(h), h,
+							("Document", debugInfo.Document),
+							("SequencePoints", debugInfo.SequencePointsBlob),
+							("LocalSignature", (EntityHandle)debugInfo.LocalSignature)));
+					}
+					break;
+				case TableIndex.LocalScope:
+					foreach (var h in metadata.LocalScopes)
+					{
+						var scope = metadata.GetLocalScope(h);
+						rows.Add(Row(metadata, MetadataTokens.GetRowNumber(h), h,
+							("Method", scope.Method),
+							("ImportScope", scope.ImportScope),
+							("VariableList", scope.GetLocalVariables().FirstOrDefault()),
+							("ConstantList", scope.GetLocalConstants().FirstOrDefault()),
+							("StartOffset", scope.StartOffset),
+							("Length", scope.Length)));
+					}
+					break;
+				case TableIndex.LocalVariable:
+					foreach (var h in metadata.LocalVariables)
+					{
+						var localVariable = metadata.GetLocalVariable(h);
+						rows.Add(Row(metadata, MetadataTokens.GetRowNumber(h), h,
+							("Attributes", localVariable.Attributes),
+							("Index", localVariable.Index),
+							("Name", localVariable.Name)));
+					}
+					break;
+				case TableIndex.LocalConstant:
+					foreach (var h in metadata.LocalConstants)
+					{
+						var localConstant = metadata.GetLocalConstant(h);
+						rows.Add(Row(metadata, MetadataTokens.GetRowNumber(h), h,
+							("Name", localConstant.Name),
+							("Signature", localConstant.Signature)));
+					}
+					break;
+				case TableIndex.ImportScope:
+					foreach (var h in metadata.ImportScopes)
+					{
+						var scope = metadata.GetImportScope(h);
+						rows.Add(Row(metadata, MetadataTokens.GetRowNumber(h), h,
+							("Parent", scope.Parent),
+							("Imports", scope.ImportsBlob)));
+					}
+					break;
+				case TableIndex.StateMachineMethod:
+					foreach (var (moveNext, kickoff) in metadata.GetStateMachineMethods())
+					{
+						rows.Add(Row(metadata, ++rid, table,
+							("MoveNextMethod", moveNext),
+							("KickoffMethod", kickoff)));
+					}
+					break;
+				case TableIndex.CustomDebugInformation:
+					foreach (var h in metadata.CustomDebugInformation)
+					{
+						var debugInfo = metadata.GetCustomDebugInformation(h);
+						rows.Add(Row(metadata, MetadataTokens.GetRowNumber(h), h,
+							("Parent", debugInfo.Parent),
+							("Kind", debugInfo.Kind),
+							("KindName", GetCustomDebugInformationKindName(metadata, debugInfo.Kind)),
+							("Value", debugInfo.Value)));
+					}
+					break;
 				case TableIndex.EventPtr:
 				case TableIndex.FieldPtr:
 				case TableIndex.MethodPtr:
@@ -463,6 +595,26 @@ namespace ICSharpCode.ILSpyCmd
 					return FormatValue(metadata, (EntityHandle)pdh);
 				case ModuleReferenceHandle mrh:
 					return FormatValue(metadata, (EntityHandle)mrh);
+				case StandaloneSignatureHandle ssh:
+					return FormatValue(metadata, (EntityHandle)ssh);
+				case DocumentHandle dh:
+					return FormatValue(metadata, (EntityHandle)dh);
+				case MethodDebugInformationHandle mdih:
+					return FormatValue(metadata, (EntityHandle)mdih);
+				case LocalScopeHandle lsh:
+					return FormatValue(metadata, (EntityHandle)lsh);
+				case LocalVariableHandle lvh:
+					return FormatValue(metadata, (EntityHandle)lvh);
+				case LocalConstantHandle lch:
+					return FormatValue(metadata, (EntityHandle)lch);
+				case ImportScopeHandle ish:
+					return FormatValue(metadata, (EntityHandle)ish);
+				case CustomDebugInformationHandle cdih:
+					return FormatValue(metadata, (EntityHandle)cdih);
+				// the document name is a blob in a dedicated encoding; SRM decodes it to the
+				// source path, which is what the row is about
+				case DocumentNameBlobHandle dnbh:
+					return dnbh.IsNil ? "" : metadata.GetString(dnbh);
 				case Enum e:
 					return e.ToString();
 				case bool b:
@@ -476,6 +628,13 @@ namespace ICSharpCode.ILSpyCmd
 						throw new InvalidOperationException($"Unhandled metadata handle type {value.GetType().Name}.");
 					return Convert.ToString(value, CultureInfo.InvariantCulture) ?? "";
 			}
+		}
+
+		static string GetCustomDebugInformationKindName(MetadataReader metadata, GuidHandle kind)
+		{
+			if (kind.IsNil)
+				return "";
+			return KnownGuids.GetCustomDebugInformationKindName(metadata.GetGuid(kind)) ?? "Unknown";
 		}
 
 		static string FormatHex(int value)
