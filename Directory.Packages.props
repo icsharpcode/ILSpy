@@ -11,7 +11,7 @@
     <RoslynVersion>5.11.0-1.26426.105</RoslynVersion>
     <NetPackageVersion>10.0.12</NetPackageVersion>
     <TomsToolboxVersion>2.24.0</TomsToolboxVersion>
-    <AvaloniaVersion>12.1.2</AvaloniaVersion>
+    <AvaloniaVersion>12.1.3</AvaloniaVersion>
     <DockVersion>12.1.0.6</DockVersion>
   </PropertyGroup>
   <ItemGroup>
@@ -30,7 +30,7 @@
     <PackageVersion Include="Dock.Controls.Recycling" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="$(DockVersion)" />
-    <PackageVersion Include="ProDataGrid" Version="12.1.0.4" />
+    <PackageVersion Include="ProDataGrid" Version="12.1.0.6" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
     <PackageVersion Include="CliWrap" Version="3.10.5" />
@@ -43,30 +43,21 @@
     <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="$(RoslynVersion)" />
     <PackageVersion Include="Microsoft.CodeAnalysis.VisualBasic" Version="$(RoslynVersion)" />
-    <PackageVersion Include="Microsoft.DiaSymReader.Converter.Xml" Version="1.1.0-beta2-22171-02" />
-    <PackageVersion Include="Microsoft.DiaSymReader" Version="1.4.0" />
-    <PackageVersion Include="Microsoft.DiaSymReader.Native" Version="17.0.0-beta1.21524.1" />
-    <!-- Security overrides: the Microsoft.DiaSymReader / .PortablePdb chain pulls NETStandard.Library
-         1.6.1, which drags in vulnerable 4.3.0 builds of these. They are framework-provided at runtime
-         on net10.0; transitive pinning (above) applies these patched versions so NuGet audit
-         (NU1902/NU1903) passes. -->
-    <PackageVersion Include="System.Net.Http" Version="4.3.4" />
-    <PackageVersion Include="System.Private.Uri" Version="4.3.2" />
-    <PackageVersion Include="System.Text.RegularExpressions" Version="4.3.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
+    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.13" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.0" />
-    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.4.0" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1" />
+    <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.4.1" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
-    <PackageVersion Include="NUnit" Version="4.6.1" />
+    <PackageVersion Include="NUnit" Version="5.0.0" />
     <PackageVersion Include="NUnit3TestAdapter" Version="6.3.0" />
+    <PackageVersion Include="coverlet.MTP" Version="10.1.0" />
     <PackageVersion Include="NuGet.Frameworks" Version="7.9.0" />
     <PackageVersion Include="NuGet.Protocol" Version="7.9.0" />
     <PackageVersion Include="PowerShellStandard.Library" Version="5.1.1" />
@@ -80,7 +71,6 @@
     <PackageVersion Include="System.Formats.Nrbf" Version="$(NetPackageVersion)" />
     <PackageVersion Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
     <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="coverlet.MTP" Version="10.0.1" />
   </ItemGroup>
   <ItemGroup>
     <GlobalPackageReference Include="TomsToolbox.Composition.Analyzer" Version="$(TomsToolboxVersion)" />
