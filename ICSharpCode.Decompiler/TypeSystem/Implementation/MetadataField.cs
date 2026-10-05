@@ -147,11 +147,13 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				b.Add(KnownAttribute.FieldOffset, KnownTypeCode.Int32, offset);
 			}
 
+#pragma warning disable SYSLIB0050 // Type or member is obsolete
 			// NonSerializedAttribute
 			if ((fieldDef.Attributes & FieldAttributes.NotSerialized) != 0)
 			{
 				b.Add(KnownAttribute.NonSerialized);
 			}
+#pragma warning restore SYSLIB0050 // Type or member is obsolete
 
 			// SpecialName
 			if ((fieldDef.Attributes & (FieldAttributes.SpecialName | FieldAttributes.RTSpecialName)) == FieldAttributes.SpecialName)
