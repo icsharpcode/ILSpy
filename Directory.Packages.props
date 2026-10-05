@@ -49,7 +49,7 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
-    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.13" />
+    <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.4.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.4.1" />
