@@ -94,8 +94,7 @@
 			<DataTemplate x:CompileBindings="False">
 				<Panel Background="Transparent" ToolTip.Tip="{Binding ToolTip}">
 					<!-- Classic tree connector lines, behind the content. -->
-					<ctrl:TreeLines Node="{Binding}" Level="{Binding Level}"
-					                IsVisible="{Binding ShowLines, RelativeSource={RelativeSource AncestorType=tv:SharpTreeView}}" />
+					<ctrl:TreeLines Node="{Binding}" Level="{Binding Level}" />
 					<StackPanel Orientation="Horizontal" Height="20">
 						<!-- Indent spacer = (Level - 1) * step (top level sits flush left). -->
 						<Border Width="{Binding Level, Converter={x:Static tv:TreeIndentConverter.Instance}}" />

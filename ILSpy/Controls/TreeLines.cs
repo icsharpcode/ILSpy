@@ -22,6 +22,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 
+using ICSharpCode.ILSpy.Controls.TreeView;
 using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.Controls
@@ -48,12 +49,19 @@ namespace ICSharpCode.ILSpy.Controls
 		public static readonly StyledProperty<int> LevelProperty =
 			AvaloniaProperty.Register<TreeLines, int>(nameof(Level));
 
+		/// <summary>
+		/// Inherited from the hosting <see cref="SharpTreeView"/>; stays at its default (lines
+		/// shown) where there is none.
+		/// </summary>
+		public static readonly StyledProperty<bool> ShowLinesProperty =
+			SharpTreeView.ShowLinesProperty.AddOwner<TreeLines>();
+
 		static TreeLines()
 		{
 			// Classic Windows-Explorer dotted connector lines.
 			var pen = new Pen(Brushes.Gray, 1) { DashStyle = new DashStyle(new double[] { 1, 1 }, 0) };
 			Pen = pen.ToImmutable();
-			AffectsRender<TreeLines>(NodeProperty, LevelProperty);
+			AffectsRender<TreeLines>(NodeProperty, LevelProperty, ShowLinesProperty);
 			IsHitTestVisibleProperty.OverrideDefaultValue<TreeLines>(false);
 		}
 
@@ -73,7 +81,7 @@ namespace ICSharpCode.ILSpy.Controls
 		public override void Render(DrawingContext context)
 		{
 			var node = Node;
-			if (node == null || node.IsRoot)
+			if (node == null || node.IsRoot || !GetValue(ShowLinesProperty))
 				return;
 
 			double height = Bounds.Height;

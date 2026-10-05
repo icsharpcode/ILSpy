@@ -557,7 +557,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				ShowAssemblyList(list);
 		}
 
-		void ShowAssemblyList(AssemblyList list)
+		internal void ShowAssemblyList(AssemblyList list)
 		{
 			using var _ = AppEnv.AppLog.Phase("ShowAssemblyList(list)");
 			// Detach the previous list's collection-changed wiring so the MessageBus
@@ -631,6 +631,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 						loadTasks.Add(Task.Run(async () => {
 							try
 							{ await assembly.GetLoadResultAsync().ConfigureAwait(false); }
+							catch (Exception)
+							{
+								// A file that cannot be loaded is an expected outcome, recorded on the
+								// LoadedAssembly itself (HasLoadError). It must not fault the sweep.
+							}
 							finally
 							{ throttle.Release(); }
 						}));

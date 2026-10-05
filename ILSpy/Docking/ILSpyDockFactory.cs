@@ -199,6 +199,12 @@ namespace ICSharpCode.ILSpy.Docking
 			if (layout is IRootDock { Id: { Length: > 0 } rootId } root)
 				DockableLocator[rootId] = () => root;
 
+			// Dock's theme template binds against DockCapabilityOverrides.{CanDrag, CanDrop} on
+			// every dockable, the docks included. A layout restored from disk carries none, so
+			// fill them in here, where both fresh and restored layouts pass through.
+			foreach (var dockable in Flatten(layout))
+				dockable.DockCapabilityOverrides ??= new DockCapabilityOverrides();
+
 			base.InitLayout(layout);
 		}
 
@@ -527,6 +533,7 @@ namespace ICSharpCode.ILSpy.Docking
 				Alignment = dockAlignment,
 				VisibleDockables = CreateList(System.Array.Empty<IDockable>()),
 				DockCapabilityPolicy = new DockCapabilityPolicy(),
+				DockCapabilityOverrides = new DockCapabilityOverrides(),
 			};
 
 			switch (alignment)

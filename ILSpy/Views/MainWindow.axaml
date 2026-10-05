@@ -42,7 +42,16 @@
 		<local:MainToolBar DockPanel.Dock="Top" />
 
 		<!-- Update banner: docks under the toolbar, IsVisible-bound to the panel viewmodel. -->
-		<views:UpdatePanel DockPanel.Dock="Top" DataContext="{Binding UpdatePanel}" />
+		<!-- Hosted through a content template rather than given a DataContext binding of its own:
+		     the panel then never inherits the window's view model, against which its compiled
+		     bindings cannot resolve. -->
+		<ContentControl DockPanel.Dock="Top" Content="{Binding UpdatePanel}">
+			<ContentControl.ContentTemplate>
+				<DataTemplate x:DataType="vm:UpdatePanelViewModel">
+					<views:UpdatePanel />
+				</DataTemplate>
+			</ContentControl.ContentTemplate>
+		</ContentControl>
 
 		<!-- Status bar (hidden by default, like WPF) -->
 		<Border DockPanel.Dock="Bottom" Height="26" IsVisible="False" Name="statusBar">

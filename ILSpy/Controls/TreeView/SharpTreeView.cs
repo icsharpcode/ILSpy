@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowRootExpander), defaultValue: false);
 
 		public static readonly StyledProperty<bool> ShowLinesProperty =
-			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowLines), defaultValue: true);
+			AvaloniaProperty.Register<SharpTreeView, bool>(nameof(ShowLines), defaultValue: true, inherits: true);
 
 		TreeFlattener? flattener;
 		string searchBuffer = string.Empty;
