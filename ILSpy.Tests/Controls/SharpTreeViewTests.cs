@@ -32,6 +32,7 @@ using AwesomeAssertions;
 
 using ICSharpCode.ILSpyX.TreeView;
 
+using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.Controls.TreeView;
 
 using NUnit.Framework;
@@ -63,6 +64,20 @@ public class SharpTreeViewTests
 		window.Show();
 		Dispatcher.UIThread.RunJobs();
 		return (window, tree, root);
+	}
+
+	[AvaloniaTest]
+	public void ShowLines_Reaches_The_Connector_Lines_Of_Every_Row()
+	{
+		var (_, tree, _) = Host();
+		var lines = tree.GetVisualDescendants().OfType<TreeLines>().ToList();
+		lines.Should().NotBeEmpty("every realized row carries a TreeLines");
+		lines.Should().OnlyContain(l => l.GetValue(TreeLines.ShowLinesProperty), "lines are shown by default");
+
+		tree.ShowLines = false;
+
+		lines.Should().OnlyContain(l => !l.GetValue(TreeLines.ShowLinesProperty),
+			"the rows take the setting from the tree view they are in");
 	}
 
 	[AvaloniaTest]
