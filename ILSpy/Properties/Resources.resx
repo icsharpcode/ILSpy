@@ -756,6 +756,18 @@ Are you sure you want to continue?</value>
   <data name="GenerationWasCancelled" xml:space="preserve">
     <value>Generation was cancelled.</value>
   </data>
+  <data name="GoToBaseSymbols" xml:space="preserve">
+    <value>Go to Base Symbols</value>
+  </data>
+  <data name="GoToDeclaration" xml:space="preserve">
+    <value>Go to Declaration</value>
+  </data>
+  <data name="GoToDerivedSymbols" xml:space="preserve">
+    <value>Go to Derived Symbols</value>
+  </data>
+  <data name="GoToImplementation" xml:space="preserve">
+    <value>Go to Implementation</value>
+  </data>
   <data name="GoToToken" xml:space="preserve">
     <value>Go to token</value>
   </data>
@@ -830,6 +842,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
+  </data>
+  <data name="NavigateTo" xml:space="preserve">
+    <value>Navigate To...</value>
   </data>
   <data name="Navigation" xml:space="preserve">
     <value>Navigation</value>
@@ -1302,6 +1317,9 @@ Do you want to continue?</value>
   </data>
   <data name="_LoadDependencies" xml:space="preserve">
     <value>_Load Dependencies</value>
+  </data>
+  <data name="_Navigate" xml:space="preserve">
+    <value>_Navigate</value>
   </data>
   <data name="_New" xml:space="preserve">
     <value>_New</value>

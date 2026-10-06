@@ -151,6 +151,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///     Looks up a localized string similar to _Navigate.
+        /// </summary>
+        public static string _Navigate {
+            get {
+                return ResourceManager.GetString("_Navigate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _New.
         /// </summary>
         public static string _New {
@@ -2182,6 +2191,42 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///     Looks up a localized string similar to Go to Base Symbols.
+        /// </summary>
+        public static string GoToBaseSymbols {
+            get {
+                return ResourceManager.GetString("GoToBaseSymbols", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///     Looks up a localized string similar to Go to Declaration.
+        /// </summary>
+        public static string GoToDeclaration {
+            get {
+                return ResourceManager.GetString("GoToDeclaration", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///     Looks up a localized string similar to Go to Derived Symbols.
+        /// </summary>
+        public static string GoToDerivedSymbols {
+            get {
+                return ResourceManager.GetString("GoToDerivedSymbols", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///     Looks up a localized string similar to Go to Implementation.
+        /// </summary>
+        public static string GoToImplementation {
+            get {
+                return ResourceManager.GetString("GoToImplementation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Go to token.
         /// </summary>
         public static string GoToToken {
@@ -2385,6 +2430,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Name {
             get {
                 return ResourceManager.GetString("Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///     Looks up a localized string similar to Navigate To....
+        /// </summary>
+        public static string NavigateTo {
+            get {
+                return ResourceManager.GetString("NavigateTo", resourceCulture);
             }
         }
         
