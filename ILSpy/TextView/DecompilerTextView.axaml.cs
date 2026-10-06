@@ -135,6 +135,10 @@ namespace ICSharpCode.ILSpy.TextView
 			// like the About-page resource generator). Decompiler output uses hyperlinks
 			// extensively for in-app navigation — a plain click is the expected affordance.
 			Editor.Options.RequireControlModifierForHyperlinkClick = false;
+			// The view is read-only, so Tab has nothing to indent; with AcceptsTab the text area marks
+			// the key handled and the focus could never leave the editor. Leaving it unhandled lets
+			// Tab / Shift+Tab move the keyboard focus like in every other control.
+			Editor.Options.AcceptsTab = false;
 
 			SetupElementGenerators();
 			SetupBackgroundRenderers();
