@@ -19,6 +19,7 @@
 using System.Composition;
 using System.Linq;
 
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpyX.TreeView;
 
 namespace ICSharpCode.ILSpy.Analyzers
@@ -28,7 +29,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 	/// pane root. Only visible on rows whose parent is the analyzer root (the per-entity
 	/// rows); search-tree-node headers and result rows can't be removed individually.
 	/// </summary>
-	[ExportContextMenuEntry(Header = "Remove", Icon = "Images/Delete", Order = 9200)]
+	[ExportContextMenuEntry(Header = nameof(Resources.Remove), Icon = "Images/Delete", Order = 9200)]
 	[Shared]
 	public sealed class RemoveAnalyzeContextMenuEntry : IContextMenuEntry
 	{

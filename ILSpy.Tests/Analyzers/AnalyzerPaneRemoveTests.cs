@@ -26,6 +26,7 @@ using AwesomeAssertions;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy;
+using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy.Analyzers;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -46,7 +47,7 @@ public class AnalyzerPaneRemoveTests
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == "Remove"
+			.Single(e => e.Metadata.Header == nameof(Resources.Remove)
 				&& e.Value is RemoveAnalyzeContextMenuEntry)
 			.Value;
 
@@ -70,7 +71,7 @@ public class AnalyzerPaneRemoveTests
 
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
 		var entry = registry.Entries
-			.Single(e => e.Metadata.Header == "Remove"
+			.Single(e => e.Metadata.Header == nameof(Resources.Remove)
 				&& e.Value is RemoveAnalyzeContextMenuEntry)
 			.Value;
 
