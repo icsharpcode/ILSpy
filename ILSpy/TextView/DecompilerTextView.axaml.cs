@@ -151,6 +151,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
 
 			SetupZoomAndCopy();
+			SetupCaretUsageHighlight();
 
 			// Ctrl+L focuses the omnibar into search mode (browser address-bar gesture). Tunnel so
 			// it wins before AvaloniaEdit's own key handling while focus is anywhere in the editor.
@@ -1153,6 +1154,7 @@ namespace ICSharpCode.ILSpy.TextView
 			// force-close even if the popup currently wants to stay (mouseClick: true).
 			TryCloseExistingPopup(mouseClick: true);
 			ClearLocalReferenceMarks();
+			ClearCaretUsageMarks();
 			ClearDebugStepMarks();
 			Editor.SyntaxHighlighting = HighlightingService.GetByExtension(model.SyntaxExtension);
 			Editor.Document.Text = model.Text;

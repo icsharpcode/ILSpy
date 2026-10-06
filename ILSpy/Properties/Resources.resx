@@ -771,6 +771,9 @@ Are you sure you want to continue?</value>
   <data name="HighlightMemberReferences" xml:space="preserve">
     <value>Single-click highlights member references (Ctrl+Click navigates)</value>
   </data>
+  <data name="HighlightUsagesAtCaret" xml:space="preserve">
+    <value>Highlight usages of the symbol under the caret</value>
+  </data>
   <data name="ILSpyAboutPageTxt" xml:space="preserve">
     <value>ILSpyAboutPage.txt</value>
   </data>
