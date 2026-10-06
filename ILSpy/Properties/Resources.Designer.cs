@@ -1939,6 +1939,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Dependent Code.
+        /// </summary>
+        public static string DependentCode {
+            get {
+                return ResourceManager.GetString("DependentCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Derived Types.
         /// </summary>
         public static string DerivedTypes {
@@ -2912,6 +2921,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string R_ename {
             get {
                 return ResourceManager.GetString("R_ename", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Referenced By.
+        /// </summary>
+        public static string ReferencedBy {
+            get {
+                return ResourceManager.GetString("ReferencedBy", resourceCulture);
             }
         }
         

@@ -84,6 +84,41 @@ namespace ICSharpCode.ILSpy.Analyzers
 			return node;
 		}
 
+		/// <summary>
+		/// Adds a whole module (assembly) to the analyzer pane, reusing the existing row for the same
+		/// loaded file, and selects it. Its children are the analyzers that apply to modules
+		/// ("Referenced By", "Dependent Code", ...).
+		/// </summary>
+		public AnalyzerEntityTreeNode Analyze(IModule module)
+		{
+			ArgumentNullException.ThrowIfNull(module);
+			var existing = Root.Children
+				.OfType<AnalyzedModuleTreeNode>()
+				.FirstOrDefault(n => n.Module.MetadataFile != null
+					&& ReferenceEquals(n.Module.MetadataFile, module.MetadataFile));
+			if (existing != null)
+			{
+				SyncSelection(existing);
+				return existing;
+			}
+			var node = new AnalyzedModuleTreeNode(module, source: null);
+			Root.Children.Add(node);
+			node.IsExpanded = true;
+			SyncSelection(node);
+			return node;
+		}
+
+		/// <summary>Dispatches to <see cref="Analyze(IEntity)"/> or <see cref="Analyze(IModule)"/>.</summary>
+		public AnalyzerEntityTreeNode Analyze(ISymbol symbol)
+		{
+			return symbol switch {
+				IEntity entity => Analyze(entity),
+				IModule module => Analyze(module),
+				_ => throw new ArgumentOutOfRangeException(nameof(symbol),
+					$"Symbol {symbol?.GetType().FullName} is not supported by the analyzer pane.")
+			};
+		}
+
 		static bool IsSameEntity(IEntity? a, IEntity b)
 		{
 			// Entities reaching the pane come from different type systems (the assembly tree's,

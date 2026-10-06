@@ -69,8 +69,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
 			{
 				// Top-level analyzer rows are already analysed (Remove is the entry for those);
-				// result rows underneath promote their entity to a new top-level row.
-				return nodes.All(n => n is IMemberTreeNode
+				// result rows underneath promote their entity to a new top-level row. Assembly
+				// nodes analyse the whole module.
+				return nodes.All(n => (n is IMemberTreeNode || n is AssemblyTreeNode)
 					&& n is not AnalyzerEntityTreeNode { Parent.IsRoot: true });
 			}
 			// Right-clicking a resolved symbol in the decompiled code: the reference carries the entity.
@@ -80,7 +81,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public static bool IsEnabledForContext(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
-				return nodes.OfType<IMemberTreeNode>().All(n => IsAnalysable(n.Member));
+				return nodes.All(n => SymbolOf(n) is { } symbol && IsAnalysable(symbol));
 			return context.Reference?.Reference is IEntity entity && IsAnalysable(entity);
 		}
 
@@ -100,28 +101,44 @@ namespace ICSharpCode.ILSpy.Analyzers
 			return false;
 		}
 
-		// The analysable entities for this invocation: a tree-node selection (assembly/analyzer tree),
+		// The analysable symbols for this invocation: a tree-node selection (assembly/analyzer tree),
 		// or the single resolved entity under a right-clicked code reference (decompiler text view).
-		static System.Collections.Generic.List<IEntity> MembersToAnalyse(TextViewContext context)
+		static System.Collections.Generic.List<ISymbol> MembersToAnalyse(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
 			{
-				return nodes.OfType<IMemberTreeNode>()
-					.Select(n => n.Member)
+				return nodes.Select(SymbolOf)
 					.Where(IsAnalysable)
 					.Select(m => m!)
 					.ToList();
 			}
 			if (context.Reference?.Reference is IEntity entity && IsAnalysable(entity))
-				return new System.Collections.Generic.List<IEntity> { entity };
-			return new System.Collections.Generic.List<IEntity>();
+				return new System.Collections.Generic.List<ISymbol> { entity };
+			return new System.Collections.Generic.List<ISymbol>();
 		}
 
 		/// <summary>
-		/// Const fields are textual literals at every use-site rather than entities the
-		/// analyser can match against — exclude them so the entry stays disabled.
+		/// The symbol a selected node stands for: the member of a member row, the module of an
+		/// assembly node or of a module row in the analyzer pane.
 		/// </summary>
-		static bool IsAnalysable(IEntity? entity) => entity is not null and not IField { IsConst: true };
+		internal static ISymbol? SymbolOf(ICSharpCode.ILSpyX.TreeView.SharpTreeNode node) => node switch {
+			ICSharpCode.ILSpy.Analyzers.TreeNodes.AnalyzedModuleTreeNode moduleNode => moduleNode.Module,
+			IMemberTreeNode memberNode => memberNode.Member,
+			AssemblyTreeNode { LoadedAssembly.IsLoadedAsValidAssembly: true } assemblyNode
+				=> assemblyNode.LoadedAssembly.GetTypeSystemOrNull()?.MainModule,
+			_ => null,
+		};
+
+		/// <summary>
+		/// Const fields are textual literals at every use-site rather than entities the
+		/// analyser can match against, so they are excluded and the entry stays disabled. Modules
+		/// are analysable when they carry metadata.
+		/// </summary>
+		static bool IsAnalysable(ISymbol? symbol) => symbol switch {
+			IModule module => module.MetadataFile != null,
+			IEntity entity => entity is not IField { IsConst: true },
+			_ => false,
+		};
 	}
 
 	[Export]
