@@ -1216,6 +1216,9 @@ Do you want to continue?</value>
   <data name="UILanguage_System" xml:space="preserve">
     <value>System</value>
   </data>
+  <data name="UnresolvedReferencesReport" xml:space="preserve">
+    <value>Unresolved References Report</value>
+  </data>
   <data name="UpdateILSpyFound" xml:space="preserve">
     <value>No update for ILSpy found.</value>
   </data>
@@ -1302,6 +1305,9 @@ Do you want to continue?</value>
   </data>
   <data name="_LoadDependencies" xml:space="preserve">
     <value>_Load Dependencies</value>
+  </data>
+  <data name="_Navigate" xml:space="preserve">
+    <value>_Navigate</value>
   </data>
   <data name="_New" xml:space="preserve">
     <value>_New</value>

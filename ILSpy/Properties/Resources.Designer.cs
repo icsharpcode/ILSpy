@@ -151,6 +151,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to _Navigate.
+        /// </summary>
+        public static string _Navigate {
+            get {
+                return ResourceManager.GetString("_Navigate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _New.
         /// </summary>
         public static string _New {
@@ -3544,6 +3553,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string UILanguage_System {
             get {
                 return ResourceManager.GetString("UILanguage_System", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unresolved References Report.
+        /// </summary>
+        public static string UnresolvedReferencesReport {
+            get {
+                return ResourceManager.GetString("UnresolvedReferencesReport", resourceCulture);
             }
         }
         
