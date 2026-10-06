@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Reflection.Metadata;
 
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
@@ -796,29 +797,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region ResolveResult
 		public static ISymbol GetSymbol(this ResolveResult rr)
 		{
-			if (rr is LocalResolveResult)
+			switch (rr)
 			{
-				return ((LocalResolveResult)rr).Variable;
-			}
-			else if (rr is MemberResolveResult)
-			{
-				return ((MemberResolveResult)rr).Member;
-			}
-			else if (rr is TypeResolveResult)
-			{
-				return ((TypeResolveResult)rr).Type.GetDefinition();
-			}
-			else if (rr is ConversionResolveResult)
-			{
-				return ((ConversionResolveResult)rr).Input.GetSymbol();
-			}
-			else if (rr is DynamicMemberResolveResult dynamicMember)
-			{
-				return dynamicMember.Symbol;
-			}
-			else if (rr is DynamicInvocationResolveResult dynamicInvocation)
-			{
-				return dynamicInvocation.Symbol;
+				case LocalResolveResult lrr:
+					return lrr.Variable;
+				case MemberResolveResult mrr:
+					return mrr.Member;
+				case TypeResolveResult trr:
+					return trr.Type.GetDefinition();
+				case ConversionResolveResult crr:
+					return crr.Input.GetSymbol();
+				case MethodGroupResolveResult mgrr:
+					return mgrr.Methods.FirstOrDefault();
+				case DynamicMemberResolveResult dynamicMember:
+					return dynamicMember.Symbol;
+				case DynamicInvocationResolveResult dynamicInvocation:
+					return dynamicInvocation.Symbol;
 			}
 
 			return null;
