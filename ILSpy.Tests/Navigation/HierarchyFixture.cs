@@ -28,7 +28,7 @@ using ICSharpCode.ILSpy.ViewModels;
 namespace ICSharpCode.ILSpy.Tests;
 
 /// <summary>
-/// Emits a small assembly with a known inheritance graph for the type-hierarchy tests:
+/// Emits a small assembly with a known inheritance graph for the navigation tests:
 /// <code>
 /// interface IShape { double Area(); }
 /// abstract class ShapeBase : IShape { abstract double Area(); }
