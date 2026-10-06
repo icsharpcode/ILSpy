@@ -124,7 +124,9 @@ namespace ICSharpCode.Decompiler
 			}
 			if (symbol != null && node.Slot?.Kind == Slots.Type && node.Parent is ObjectCreateExpression)
 			{
-				var ctorSymbol = node.Parent.GetSymbol();
+				var ctorSymbol = node.Parent.Annotation<NewObj>()?.Method
+					?? node.Parent.Annotation<DynamicInvokeConstructorInstruction>()?.Type.GetDefinition()
+					?? node.Parent.GetSymbol();
 				if (ctorSymbol != null)
 					symbol = ctorSymbol;
 			}
@@ -364,7 +366,11 @@ namespace ICSharpCode.Decompiler
 								output.WriteReference(t, token, false);
 								return;
 							case IMember m:
-								if (IsDynamicMemberReference(node))
+								if (node is InvocationExpression && node.Annotation<ResolveResult>() is DynamicInvocationResolveResult)
+								{
+									output.Write(token);
+								}
+								else if (IsDynamicMemberReference(node))
 									output.WriteLocalReference(token, m, isHoverOnly: true);
 								else
 									output.WriteReference(m, token, false);

@@ -4660,9 +4660,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			IEnumerable<ILInstruction> argumentValues = inst.StaticTargetType != null ? inst.Arguments : inst.Arguments.Skip(1);
 			var arguments = TranslateDynamicArguments(argumentValues, inst.ArgumentInfo.Skip(1)).ToList();
+			var symbolDeclaringType = inst.StaticTargetType ?? DynamicArgumentType(inst.ArgumentInfo[0]);
 			return new InvocationExpression(targetExpr, arguments.Select(a => a.Expression))
 				.WithILInstruction(inst)
-				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray(), symbol: CreateDynamicInvokeMemberSymbol(inst.Name, inst.ArgumentInfo[0], inst.ArgumentInfo.Skip(1).ToArray(), inst.TypeArguments)));
+				.WithRR(new DynamicInvocationResolveResult(target.ResolveResult, DynamicInvocationType.Invocation, arguments.Select(a => a.ResolveResult).ToArray(), symbol: CreateDynamicInvokeMemberSymbol(inst.Name, symbolDeclaringType, inst.ArgumentInfo.Skip(1).ToArray(), inst.TypeArguments)));
 		}
 
 		protected internal override TranslatedExpression VisitDynamicInvokeInstruction(DynamicInvokeInstruction inst, TranslationContext context)
@@ -4737,12 +4738,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// typed by <see cref="DynamicArgumentType"/>, so the member reference carries a navigable symbol /
 		/// hover tooltip.
 		/// </summary>
-		IMember CreateDynamicInvokeMemberSymbol(string name, CSharpArgumentInfo targetInfo, IReadOnlyList<CSharpArgumentInfo> argumentInfo, IReadOnlyList<IType> typeArguments)
+		IMember CreateDynamicInvokeMemberSymbol(string name, IType declaringType, IReadOnlyList<CSharpArgumentInfo> argumentInfo, IReadOnlyList<IType> typeArguments)
 		{
 			var method = new FakeMethod(compilation, SymbolKind.Method) {
 				Name = name,
 				ReturnType = SpecialType.Dynamic,
-				DeclaringType = DynamicArgumentType(targetInfo),
+				DeclaringType = declaringType,
 			};
 			if (argumentInfo.Count > 0)
 			{
