@@ -2227,6 +2227,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Highlight usages of the symbol under the caret.
+        /// </summary>
+        public static string HighlightUsagesAtCaret {
+            get {
+                return ResourceManager.GetString("HighlightUsagesAtCaret", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to ILSpyAboutPage.txt.
         /// </summary>
         public static string ILSpyAboutPageTxt {
