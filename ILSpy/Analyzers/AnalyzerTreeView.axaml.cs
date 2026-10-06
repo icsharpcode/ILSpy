@@ -80,7 +80,9 @@ namespace ICSharpCode.ILSpy.Analyzers
 		{
 			boundModel = model;
 			Tree.Root = model.Root;
-			selectionBinder = new ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
+			// focusOnSelect: an Analyze request from anywhere lands the user in the pane, on the new row
+			// (WPF's AnalyzerTreeView focused its row on every selection change).
+			selectionBinder = new TreeSelectionBinder(Tree, model.SelectedItems, focusOnSelect: true);
 			analyzeBinding.CommandParameter = model.SelectedItems;
 		}
 

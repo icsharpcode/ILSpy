@@ -23,8 +23,10 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -33,14 +35,16 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 	/// <summary>
 	/// Two-way binds a <see cref="SharpTreeView"/>'s selection to a view-model's
 	/// <see cref="ObservableCollection{SharpTreeNode}"/>: user selection flows into the model, and a
-	/// model-driven change (restore, navigate, freshly-opened nodes) reveals + focuses the primary in
-	/// the tree. One implementation shared by every tree pane, replacing the per-pane sync code.
+	/// model-driven change (restore, navigate, freshly-opened nodes) reveals the primary in the tree
+	/// and focuses it when the tree already owns the keyboard focus (see the focusOnSelect parameter).
+	/// One implementation shared by every tree pane, replacing the per-pane sync code.
 	/// </summary>
 	public sealed class TreeSelectionBinder : IDisposable
 	{
 		readonly SharpTreeView tree;
 		readonly ObservableCollection<SharpTreeNode> modelSelection;
 		readonly Func<IDisposable>? batchSelectionChange;
+		readonly bool focusOnSelect;
 		bool syncing;
 
 		/// <param name="batchSelectionChange">
@@ -48,12 +52,19 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 		/// sync that touches many rows costs one notification instead of one per row. Panes whose
 		/// model has no such scope pass null and get the per-item behaviour.
 		/// </param>
+		/// <param name="focusOnSelect">
+		/// True: every model-driven selection moves the keyboard focus to the selected row (the
+		/// Analyzer pane, where an Analyze request lands the user in the pane). False: the row is
+		/// only scrolled into view unless the tree already owns the keyboard focus, so Back/Forward,
+		/// search-result jumps, go-to-definition and tab activation leave the focus where it is.
+		/// </param>
 		public TreeSelectionBinder(SharpTreeView tree, ObservableCollection<SharpTreeNode> modelSelection,
-			Func<IDisposable>? batchSelectionChange = null)
+			Func<IDisposable>? batchSelectionChange = null, bool focusOnSelect = false)
 		{
 			this.tree = tree ?? throw new ArgumentNullException(nameof(tree));
 			this.modelSelection = modelSelection ?? throw new ArgumentNullException(nameof(modelSelection));
 			this.batchSelectionChange = batchSelectionChange;
+			this.focusOnSelect = focusOnSelect;
 			tree.SelectionChanged += OnTreeSelectionChanged;
 			tree.Loaded += OnTreeLoaded;
 			modelSelection.CollectionChanged += OnModelSelectionChanged;
@@ -154,16 +165,19 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 						primary = node;
 					}
 				}
-				// Reveal + focus the primary AFTER layout settles -- a model change that also reshapes
+				// Reveal (+ focus) the primary AFTER layout settles -- a model change that also reshapes
 				// the tree (a reorder rebuilds the flattener) leaves the panel mid-arrange, and a
-				// synchronous ScrollIntoView would throw "Invalid Arrange rectangle".
+				// synchronous ScrollIntoView would throw "Invalid Arrange rectangle". Whether to focus is
+				// decided now, from where the keyboard focus sits at the time of the selection change.
 				if (primary is { } toReveal)
 				{
 					bool wasVisible = visibleBefore.Contains(toReveal);
+					bool focus = focusOnSelect || TreeOwnsKeyboardFocus();
 					Dispatcher.UIThread.Post(() => {
 						if (!wasVisible)
 							tree.ScrollIntoNodeView(toReveal);
-						tree.FocusNode(toReveal, scroll: !wasVisible);
+						if (focus)
+							tree.FocusNode(toReveal, scroll: !wasVisible);
 					});
 				}
 			}
@@ -171,6 +185,17 @@ namespace ICSharpCode.ILSpy.Controls.TreeView
 			{
 				syncing = false;
 			}
+		}
+
+		// WPF's SelectNodes scrolled the row into view without focusing it; the row took the focus
+		// only when the pane itself was activated. The equivalent here: a tree that already holds
+		// the keyboard focus (or a window where nothing holds it yet, e.g. the selection restored at
+		// startup) follows the selection, any other focused control keeps the focus.
+		bool TreeOwnsKeyboardFocus()
+		{
+			var focused = TopLevel.GetTopLevel(tree)?.FocusManager?.GetFocusedElement();
+			return focused is null or TopLevel
+				|| (focused is Visual visual && (ReferenceEquals(visual, tree) || tree.IsVisualAncestorOf(visual)));
 		}
 	}
 }
