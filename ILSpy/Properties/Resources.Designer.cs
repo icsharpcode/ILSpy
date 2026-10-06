@@ -151,6 +151,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to _Navigate.
+        /// </summary>
+        public static string _Navigate {
+            get {
+                return ResourceManager.GetString("_Navigate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _New.
         /// </summary>
         public static string _New {
@@ -2092,6 +2101,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to File Structure.
+        /// </summary>
+        public static string FileStructure {
+            get {
+                return ResourceManager.GetString("FileStructure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Folding.
         /// </summary>
         public static string Folding {
@@ -2178,6 +2196,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string GenerationWasCancelled {
             get {
                 return ResourceManager.GetString("GenerationWasCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Go to File Member....
+        /// </summary>
+        public static string GoToFileMember {
+            get {
+                return ResourceManager.GetString("GoToFileMember", resourceCulture);
             }
         }
         
