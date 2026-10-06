@@ -84,6 +84,28 @@ public class AnalyzeContextMenuTests
 	}
 
 	[AvaloniaTest]
+	public async Task Analyze_Entry_Is_Disabled_For_A_Selection_That_Mixes_Members_And_Other_Nodes()
+	{
+		// IsEnabled must judge the same node shape as IsVisible: a selection that contains a
+		// non-member node is hidden, so it must not report itself as enabled either (a filter over
+		// the member subset would call a type-plus-assembly selection analysable).
+		var (_, vm) = await TestHarness.BootAsync();
+
+		var entry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>()
+			.GetEntry(nameof(Resources.Analyze));
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
+		var mixed = new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { typeNode, assemblyNode } };
+
+		entry.IsVisible(mixed).Should().BeFalse("precondition: a mixed selection hides the entry");
+		entry.IsEnabled(mixed).Should().BeFalse("a mixed selection must be disabled, not enabled-but-hidden");
+		entry.IsEnabled(new TextViewContext { SelectedTreeNodes = new SharpTreeNode[] { assemblyNode } })
+			.Should().BeFalse("a selection without any member node has nothing to analyse");
+	}
+
+	[AvaloniaTest]
 	public async Task Analyze_Is_Visible_And_Works_For_A_Clicked_Code_Reference()
 	{
 		// Right-clicking a resolved symbol (IEntity) in the decompiled code -- not a tree node --

@@ -80,7 +80,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public static bool IsEnabledForContext(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
-				return nodes.OfType<IMemberTreeNode>().All(n => IsAnalysable(n.Member));
+			{
+				// Same node shape as IsVisibleForContext: a selection with a non-member node is not
+				// analysable, rather than "analysable for the member subset" and hidden anyway.
+				return nodes.All(n => n is IMemberTreeNode member && IsAnalysable(member.Member));
+			}
 			return context.Reference?.Reference is IEntity entity && IsAnalysable(entity);
 		}
 
