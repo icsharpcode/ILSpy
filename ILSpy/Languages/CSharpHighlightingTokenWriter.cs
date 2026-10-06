@@ -486,7 +486,9 @@ namespace ICSharpCode.ILSpy.Languages
 			}
 			if (symbol != null && node.Slot?.Kind == Slots.Type && node.Parent is ObjectCreateExpression)
 			{
-				var ctorSymbol = node.Parent.GetSymbol();
+				var ctorSymbol = node.Parent.Annotation<NewObj>()?.Method
+					?? node.Parent.Annotation<DynamicInvokeConstructorInstruction>()?.Type.GetDefinition()
+					?? node.Parent.GetSymbol();
 				if (ctorSymbol != null)
 					symbol = ctorSymbol;
 			}

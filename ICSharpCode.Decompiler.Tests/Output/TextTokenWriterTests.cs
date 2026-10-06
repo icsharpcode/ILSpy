@@ -76,13 +76,22 @@ namespace ICSharpCode.Decompiler.Tests.Output
 		}
 	}
 
+	internal class DynamicInvokeMemberHost
+	{
+		public object DynamicStaticMethod(Type type)
+		{
+			dynamic dynamicType = type;
+			return Activator.CreateInstance(dynamicType);
+		}
+	}
+
 	[TestFixture]
 	public class TextTokenWriterTests
 	{
 		sealed class ReferenceRecordingOutput : ITextOutput
 		{
 			public readonly List<(string Text, IMember Member)> MemberReferences = new();
-			public readonly List<(string Text, object Reference, bool IsDefinition)> LocalReferences = new();
+			public readonly List<(string Text, object Reference, bool IsDefinition, bool IsHoverOnly)> LocalReferences = new();
 			public readonly List<bool> FoldStartDefaultCollapsed = new();
 			public int FoldEndCount;
 
@@ -104,7 +113,7 @@ namespace ICSharpCode.Decompiler.Tests.Output
 
 			public void WriteLocalReference(string text, object reference, bool isDefinition = false, bool isHoverOnly = false)
 			{
-				LocalReferences.Add((text, reference, isDefinition));
+				LocalReferences.Add((text, reference, isDefinition, isHoverOnly));
 			}
 
 			public void MarkDefinitionStart()
@@ -246,6 +255,25 @@ namespace ICSharpCode.Decompiler.Tests.Output
 				// Two nested invocations whose type argument is the enclosing method's type parameter.
 				AssertLocalFunctionReferenceGroup(output, "Echo", expectedUses: 2);
 			});
+		}
+
+		[Test]
+		public void DynamicStaticInvocationReferencesStaticTargetTypeOnMemberNameOnly()
+		{
+			using var module = OpenTestAssembly();
+			var output = DecompileAndCollectReferences(module, typeof(DynamicInvokeMemberHost));
+
+			var references = output.LocalReferences
+				.Where(r => r.Text == "CreateInstance")
+				.ToList();
+
+			Assert.That(references, Has.Count.EqualTo(1));
+			Assert.That(references[0].IsHoverOnly, Is.True);
+			Assert.That(references[0].Reference, Is.InstanceOf<IMember>());
+			var member = (IMember)references[0].Reference;
+			Assert.That(member.DeclaringType.FullName, Is.EqualTo("System.Activator"));
+			Assert.That(member.Name, Is.EqualTo("CreateInstance"));
+			Assert.That(output.LocalReferences.Where(r => r.Text is "(" or ")"), Is.Empty);
 		}
 
 		// Runs inside Assert.Multiple: after a recorded assertion failure, bail out of the checks
