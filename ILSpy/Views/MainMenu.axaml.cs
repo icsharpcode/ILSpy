@@ -59,15 +59,22 @@ public static class MainMenu
 		var menu = new NativeMenu();
 		var topLevelByTag = new Dictionary<string, NativeMenuItem>(StringComparer.Ordinal);
 
-		// Pre-build the three known top-level slots so MEF commands with ParentMenuID set
-		// to "_File" / "_View" / "_Window" attach to them. Additional top-level groups
+		// Pre-build the known top-level slots so MEF commands with ParentMenuID set
+		// to "_File" / "_View" / "_Navigate" / "_Window" attach to them. Additional top-level groups
 		// can still be created later from MEF metadata.
 		AddTopLevel(menu, topLevelByTag, "_File", nameof(Resources._File));
 		var viewItem = AddTopLevel(menu, topLevelByTag, "_View", nameof(Resources._View));
+		var navigateItem = AddTopLevel(menu, topLevelByTag, "_Navigate", nameof(Resources._Navigate));
 		var windowItem = AddTopLevel(menu, topLevelByTag, "_Window", nameof(Resources._Window));
 
 		PopulateViewMenu(viewItem.Menu!, settings.SessionSettings, setThemeCommand);
 		AppendRegistryCommands(menu, topLevelByTag, registry.Commands);
+		// A top-level slot no command attached to would render as an empty, unclickable menu.
+		if (navigateItem.Menu!.Items.Count == 0)
+		{
+			menu.Items.Remove(navigateItem);
+			topLevelByTag.Remove("_Navigate");
+		}
 		AppendWindowDynamicContent(windowItem.Menu!, dockWorkspace);
 
 		if (OperatingSystem.IsMacOS())

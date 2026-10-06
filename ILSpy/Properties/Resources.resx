@@ -1007,6 +1007,12 @@ If this does not solve the problem and your system supports long paths, you can 
   <data name="R_ename" xml:space="preserve">
     <value>R_ename</value>
   </data>
+  <data name="RecentFiles" xml:space="preserve">
+    <value>Recent Files...</value>
+  </data>
+  <data name="RecentLocations" xml:space="preserve">
+    <value>Recent Locations...</value>
+  </data>
   <data name="ReferenceName" xml:space="preserve">
     <value>Reference Name</value>
   </data>
@@ -1302,6 +1308,9 @@ Do you want to continue?</value>
   </data>
   <data name="_LoadDependencies" xml:space="preserve">
     <value>_Load Dependencies</value>
+  </data>
+  <data name="_Navigate" xml:space="preserve">
+    <value>_Navigate</value>
   </data>
   <data name="_New" xml:space="preserve">
     <value>_New</value>
