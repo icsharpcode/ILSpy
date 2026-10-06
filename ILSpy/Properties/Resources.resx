@@ -729,6 +729,9 @@ Are you sure you want to continue?</value>
   <data name="ExtractPackageEntry" xml:space="preserve">
     <value>Extract package entry</value>
   </data>
+  <data name="FileStructure" xml:space="preserve">
+    <value>File Structure</value>
+  </data>
   <data name="Folding" xml:space="preserve">
     <value>Folding</value>
   </data>
@@ -755,6 +758,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="GenerationWasCancelled" xml:space="preserve">
     <value>Generation was cancelled.</value>
+  </data>
+  <data name="GoToFileMember" xml:space="preserve">
+    <value>Go to File Member...</value>
   </data>
   <data name="GoToToken" xml:space="preserve">
     <value>Go to token</value>
@@ -1302,6 +1308,9 @@ Do you want to continue?</value>
   </data>
   <data name="_LoadDependencies" xml:space="preserve">
     <value>_Load Dependencies</value>
+  </data>
+  <data name="_Navigate" xml:space="preserve">
+    <value>_Navigate</value>
   </data>
   <data name="_New" xml:space="preserve">
     <value>_New</value>

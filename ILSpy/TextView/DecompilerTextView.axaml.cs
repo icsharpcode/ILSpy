@@ -1061,6 +1061,7 @@ namespace ICSharpCode.ILSpy.TextView
 				previous.CaptureViewState = null;
 				previous.NavigateBookmarkInFile = null;
 				previous.ScrollToBookmark = null;
+				previous.NavigateToOffset = null;
 			}
 
 			boundModel = DataContext as DecompilerTabPageModel;
@@ -1076,6 +1077,8 @@ namespace ICSharpCode.ILSpy.TextView
 				// Direct scroll for a bookmark activated on the already-displayed node, where no
 				// document-apply step runs to consume PendingBookmark.
 				model.ScrollToBookmark = bookmark => ApplyBookmark(bookmark);
+				// Caret jumps requested by the File Structure pane and the Go to File Member popup.
+				model.NavigateToOffset = NavigateToOffsetNow;
 				ApplyDocument(model);
 				// Point the breadcrumb at this tab's node (the bar owns its own VM, so feed it the
 				// node rather than letting it inherit the document DataContext).
