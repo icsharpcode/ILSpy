@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Avalonia.Controls;
+using Avalonia.Input;
 
 using ICSharpCode.ILSpyX.TreeView;
 
@@ -34,10 +35,23 @@ namespace ICSharpCode.ILSpy.Analyzers
 		AnalyzerTreeViewModel? boundModel;
 		ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
 		readonly TreeContextMenuController contextMenu;
+		// Ctrl+R analyzes the pane's own selection. Avalonia walks KeyBindings from the focused element
+		// up to the window before raising KeyDown, so this binding runs ahead of the window-level one
+		// (which analyzes the assembly tree's selection) while the focus is in the pane, and falls
+		// through to it when nothing analyzable is selected here.
+		readonly KeyBinding analyzeBinding = new() {
+			Gesture = new KeyGesture(Key.R, KeyModifiers.Control),
+			CommandParameter = Array.Empty<SharpTreeNode>(),
+		};
 
 		public AnalyzerTreeView()
 		{
 			InitializeComponent();
+			if (AppComposition.TryGetExport<AnalyzeCommand>() is { } analyze)
+			{
+				analyzeBinding.Command = analyze;
+				KeyBindings.Add(analyzeBinding);
+			}
 			contextMenu = new TreeContextMenuController(Tree,
 				() => boundModel?.SelectedItems ?? (IReadOnlyList<SharpTreeNode>)Array.Empty<SharpTreeNode>());
 			var registry = AppComposition.TryGetExport<ContextMenuEntryRegistry>();
@@ -67,6 +81,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			boundModel = model;
 			Tree.Root = model.Root;
 			selectionBinder = new ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder(Tree, model.SelectedItems);
+			analyzeBinding.CommandParameter = model.SelectedItems;
 		}
 
 		void DetachFromModel()
@@ -74,6 +89,7 @@ namespace ICSharpCode.ILSpy.Analyzers
 			selectionBinder?.Dispose();
 			selectionBinder = null;
 			boundModel = null;
+			analyzeBinding.CommandParameter = Array.Empty<SharpTreeNode>();
 		}
 	}
 }
