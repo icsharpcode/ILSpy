@@ -151,6 +151,7 @@ namespace ICSharpCode.ILSpy.TextView
 			Editor.TextArea.Caret.PositionChanged += OnCaretPositionChanged;
 
 			SetupZoomAndCopy();
+			SetupGoToLine();
 
 			// Ctrl+L focuses the omnibar into search mode (browser address-bar gesture). Tunnel so
 			// it wins before AvaloniaEdit's own key handling while focus is anywhere in the editor.
