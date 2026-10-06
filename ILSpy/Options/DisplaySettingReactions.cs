@@ -86,6 +86,8 @@ namespace ICSharpCode.ILSpy.Options
 			[nameof(DisplaySettings.EnableOmnibar)] = DisplaySettingReaction.EditorLive,
 			// Read at click time inside the text view; nothing needs re-decompilation.
 			[nameof(DisplaySettings.HighlightMemberReferences)] = DisplaySettingReaction.EditorLive,
+			// The text view re-evaluates the caret highlight itself; nothing needs re-decompilation.
+			[nameof(DisplaySettings.HighlightUsagesAtCaret)] = DisplaySettingReaction.EditorLive,
 
 			// No model-side reaction.
 			[nameof(DisplaySettings.StyleWindowTitleBar)] = DisplaySettingReaction.None,

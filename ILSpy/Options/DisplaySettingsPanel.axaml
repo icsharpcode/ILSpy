@@ -79,6 +79,8 @@
 					          Content="{x:Static res:Resources.HighlightCurrentLine}" />
 					<CheckBox IsChecked="{Binding Settings.HighlightMemberReferences, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.HighlightMemberReferences}" />
+					<CheckBox IsChecked="{Binding Settings.HighlightUsagesAtCaret, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HighlightUsagesAtCaret}" />
 					<CheckBox IsChecked="{Binding Settings.ExpandXmlDocumentationComments, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.ExpandXmlDocumentationCommentsAfterDecompilation}" />
 					<CheckBox IsChecked="{Binding Settings.ExpandMemberDefinitions, Mode=TwoWay}"
