@@ -675,6 +675,9 @@ Are you sure you want to continue?</value>
   <data name="Dependencies" xml:space="preserve">
     <value>Dependencies</value>
   </data>
+  <data name="DependentCode" xml:space="preserve">
+    <value>Dependent Code</value>
+  </data>
   <data name="DerivedTypes" xml:space="preserve">
     <value>Derived Types</value>
   </data>
@@ -1009,6 +1012,9 @@ If this does not solve the problem and your system supports long paths, you can 
   </data>
   <data name="ReferenceName" xml:space="preserve">
     <value>Reference Name</value>
+  </data>
+  <data name="ReferencedBy" xml:space="preserve">
+    <value>Referenced By</value>
   </data>
   <data name="ReferencedTypes" xml:space="preserve">
     <value>Referenced Types</value>
