@@ -151,6 +151,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to _Navigate.
+        /// </summary>
+        public static string _Navigate {
+            get {
+                return ResourceManager.GetString("_Navigate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _New.
         /// </summary>
         public static string _New {
@@ -3526,6 +3535,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Type {
             get {
                 return ResourceManager.GetString("Type", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Type Hierarchy.
+        /// </summary>
+        public static string TypeHierarchy {
+            get {
+                return ResourceManager.GetString("TypeHierarchy", resourceCulture);
             }
         }
         

@@ -1210,6 +1210,9 @@ Do you want to continue?</value>
   <data name="Type" xml:space="preserve">
     <value>Type</value>
   </data>
+  <data name="TypeHierarchy" xml:space="preserve">
+    <value>Type Hierarchy</value>
+  </data>
   <data name="UILanguage" xml:space="preserve">
     <value>UI Language</value>
   </data>
@@ -1302,6 +1305,9 @@ Do you want to continue?</value>
   </data>
   <data name="_LoadDependencies" xml:space="preserve">
     <value>_Load Dependencies</value>
+  </data>
+  <data name="_Navigate" xml:space="preserve">
+    <value>_Navigate</value>
   </data>
   <data name="_New" xml:space="preserve">
     <value>_New</value>
