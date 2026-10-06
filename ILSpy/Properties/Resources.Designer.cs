@@ -151,6 +151,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to _Navigate.
+        /// </summary>
+        public static string _Navigate {
+            get {
+                return ResourceManager.GetString("_Navigate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _New.
         /// </summary>
         public static string _New {
@@ -392,6 +401,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string Assembly {
             get {
                 return ResourceManager.GetString("Assembly", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Show Assembly Dependency Diagram.
+        /// </summary>
+        public static string AssemblyDependencyDiagram {
+            get {
+                return ResourceManager.GetString("AssemblyDependencyDiagram", resourceCulture);
             }
         }
         
@@ -2070,6 +2088,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string ExpandXmlDocumentationCommentsAfterDecompilation {
             get {
                 return ResourceManager.GetString("ExpandXmlDocumentationCommentsAfterDecompilation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export Dependency Diagram (Mermaid HTML)....
+        /// </summary>
+        public static string ExportDependencyDiagramMermaid {
+            get {
+                return ResourceManager.GetString("ExportDependencyDiagramMermaid", resourceCulture);
             }
         }
         

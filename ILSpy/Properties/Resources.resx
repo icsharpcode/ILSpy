@@ -149,6 +149,9 @@ Do you want to continue?</value>
   <data name="Assembly" xml:space="preserve">
     <value>Assembly</value>
   </data>
+  <data name="AssemblyDependencyDiagram" xml:space="preserve">
+    <value>Show Assembly Dependency Diagram</value>
+  </data>
   <data name="AssemblySaveCodeDirectoryNotEmpty" xml:space="preserve">
     <value>The directory is not empty. File will be overwritten.
 Are you sure you want to continue?</value>
@@ -719,6 +722,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="ExpandXmlDocumentationCommentsAfterDecompilation" xml:space="preserve">
     <value>Expand XML documentation comments after decompilation</value>
+  </data>
+  <data name="ExportDependencyDiagramMermaid" xml:space="preserve">
+    <value>Export Dependency Diagram (Mermaid HTML)...</value>
   </data>
   <data name="ExportProjectSolution" xml:space="preserve">
     <value>Export Project/Solution...</value>
@@ -1302,6 +1308,9 @@ Do you want to continue?</value>
   </data>
   <data name="_LoadDependencies" xml:space="preserve">
     <value>_Load Dependencies</value>
+  </data>
+  <data name="_Navigate" xml:space="preserve">
+    <value>_Navigate</value>
   </data>
   <data name="_New" xml:space="preserve">
     <value>_New</value>
