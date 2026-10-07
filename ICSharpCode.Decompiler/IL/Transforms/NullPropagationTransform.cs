@@ -20,7 +20,9 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -387,7 +389,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			bool CanTransformToExtensionMethodCall(CallInstruction call, ILTransformContext context)
 			{
-				return context.CSharpResolver.CanTransformToExtensionMethodCall(call.Method);
+				var targetArgument = call.Arguments[0];
+				if ((call.ConstrainedTo ?? call.Method.DeclaringType).IsReferenceType == false && targetArgument.MatchAddressOf(out var arg, out _))
+				{
+					targetArgument = arg;
+				}
+				else if (targetArgument is LdObjIfRef ldObjIfRef)
+				{
+					targetArgument = ldObjIfRef.Target;
+				}
+
+				if (!CanTransformToExtensionMethodCall(targetArgument.InferType(context.TypeSystem)))
+					return false;
+				if (targetArgument.MatchLdLoc(out var targetVariable)
+					&& targetVariable.IsSingleDefinition
+					&& targetVariable.StoreInstructions.SingleOrDefault() is StLoc targetStore)
+				{
+					if (!targetVariable.Type.Equals(targetStore.Value.InferType(context.TypeSystem)))
+						return false;
+					return CanTransformToExtensionMethodCall(targetStore.Value.InferType(context.TypeSystem));
+				}
+				return true;
+
+				bool CanTransformToExtensionMethodCall(IType targetType)
+				{
+					return context.CSharpResolver.CanTransformToExtensionMethodCall(
+						call.Method,
+						Empty<IType>.Array,
+						new ResolveResult(targetType),
+						call.Arguments.Skip(1).Select(a => new ResolveResult(a.InferType(context.TypeSystem))).ToArray(),
+						argumentNames: null);
+				}
 			}
 		}
 
