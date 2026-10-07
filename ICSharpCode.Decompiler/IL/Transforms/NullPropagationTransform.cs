@@ -405,6 +405,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					&& targetVariable.IsSingleDefinition
 					&& targetVariable.StoreInstructions.SingleOrDefault() is StLoc targetStore)
 				{
+					if (!targetVariable.Type.Equals(targetStore.Value.InferType(context.TypeSystem)))
+						return false;
 					return CanTransformToExtensionMethodCall(targetStore.Value.InferType(context.TypeSystem));
 				}
 				return true;
