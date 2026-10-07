@@ -38,10 +38,10 @@ jobs:
       run: dotnet restore ILSpy.XPlat.slnf -p:RestoreEnablePackagePruning=false
 
     - name: Build Debug
-      run: dotnet msbuild ILSpy.XPlat.slnf -p:Configuration=Debug -bl:Debug.binlog
+      run: dotnet msbuild -mt ILSpy.XPlat.slnf -p:Configuration=Debug -bl:Debug.binlog
 
     - name: Build Release
-      run: dotnet msbuild ILSpy.XPlat.slnf -p:Configuration=Release -bl:Release.binlog
+      run: dotnet msbuild -mt ILSpy.XPlat.slnf -p:Configuration=Release -bl:Release.binlog
 
     - name: list files
       if: always()
