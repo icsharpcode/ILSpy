@@ -47,6 +47,44 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		const int TypeCodeStartOfUserTypes = 0x40;
 
 		[Test]
+		public void ResXResourceWriter_DisposeWithoutResources_WritesEmptyFile()
+		{
+			string fileName = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".resx");
+			try
+			{
+				using (new ResXResourceWriter(fileName))
+				{
+				}
+
+				Assert.That(File.Exists(fileName), Is.True);
+				Assert.That(File.ReadAllText(fileName), Does.Contain("<resheader name=\"resmimetype\">"));
+			}
+			finally
+			{
+				File.Delete(fileName);
+			}
+		}
+
+		[Test]
+		public void ResXResourceWriter_UsesConfiguredAssemblyNames()
+		{
+			using var stream = new MemoryStream();
+			using (var writer = new ResXResourceWriter(stream))
+			{
+				writer.WinFormsAssemblyName = ", System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+				writer.MSCorLibAssemblyName = ", mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+				writer.AddResource("number", 1);
+				writer.AddResource("missing", (object?)null);
+			}
+
+			string resx = Encoding.UTF8.GetString(stream.ToArray());
+			Assert.That(resx, Does.Contain("System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0"));
+			Assert.That(resx, Does.Contain("System.Int32, mscorlib, Version=2.0.0.0"));
+			Assert.That(resx, Does.Contain("System.Resources.ResXNullRef, System.Windows.Forms, Version=2.0.0.0"));
+			Assert.That(resx, Does.Not.Contain("Version=4.0.0.0"));
+		}
+
+		[Test]
 		public void WellFormedFile_ReadsAllEntryKinds()
 		{
 			var blob = Build(DeserializingReaderType, new[] { "MyType, MyAssembly" }, new[] {
