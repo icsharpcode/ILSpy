@@ -98,9 +98,32 @@ namespace ICSharpCode.Decompiler.Util
 			Dispose(false);
 		}
 
-		const string WinFormsAssemblyName = ", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-		const string MSCorLibAssemblyName = ", mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-		const string ResXNullRefTypeName = "System.Resources.ResXNullRef" + WinFormsAssemblyName;
+		const string DefaultWinFormsAssemblyName = ", System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+		const string DefaultMSCorLibAssemblyName = ", mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+		string winFormsAssemblyName = DefaultWinFormsAssemblyName;
+		string msCorLibAssemblyName = DefaultMSCorLibAssemblyName;
+
+		public string WinFormsAssemblyName {
+			get => winFormsAssemblyName;
+			set {
+				ThrowIfWritingStarted();
+				winFormsAssemblyName = value ?? throw new ArgumentNullException(nameof(value));
+			}
+		}
+
+		public string MSCorLibAssemblyName {
+			get => msCorLibAssemblyName;
+			set {
+				ThrowIfWritingStarted();
+				msCorLibAssemblyName = value ?? throw new ArgumentNullException(nameof(value));
+			}
+		}
+
+		void ThrowIfWritingStarted()
+		{
+			if (writer != null || written)
+				throw new InvalidOperationException("Assembly names cannot be changed after writing started.");
+		}
 
 		void InitWriter()
 		{
@@ -222,7 +245,7 @@ namespace ICSharpCode.Decompiler.Util
 			{
 				case null:
 					// nulls written as ResXNullRef
-					WriteString(name, "", ResXNullRefTypeName, comment);
+					WriteString(name, "", "System.Resources.ResXNullRef" + WinFormsAssemblyName, comment);
 					break;
 				case string s:
 					WriteString(name, s, null, comment);
