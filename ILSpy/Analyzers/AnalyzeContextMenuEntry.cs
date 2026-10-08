@@ -16,11 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Composition;
 using System.Linq;
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.Commands;
@@ -80,7 +82,11 @@ namespace ICSharpCode.ILSpy.Analyzers
 		public static bool IsEnabledForContext(TextViewContext context)
 		{
 			if (context.SelectedTreeNodes is { Length: > 0 } nodes)
-				return nodes.OfType<IMemberTreeNode>().All(n => IsAnalysable(n.Member));
+			{
+				// Same node shape as IsVisibleForContext: a selection with a non-member node is not
+				// analysable, rather than "analysable for the member subset" and hidden anyway.
+				return nodes.All(n => n is IMemberTreeNode member && IsAnalysable(member.Member));
+			}
 			return context.Reference?.Reference is IEntity entity && IsAnalysable(entity);
 		}
 
@@ -134,17 +140,20 @@ namespace ICSharpCode.ILSpy.Analyzers
 	{
 		public override bool CanExecute(object? parameter)
 		{
-			var context = CreateContext();
+			var context = CreateContext(parameter);
 			return AnalyzeContextMenuEntry.IsVisibleForContext(context)
 				&& AnalyzeContextMenuEntry.IsEnabledForContext(context);
 		}
 
 		public override void Execute(object? parameter)
-			=> AnalyzeContextMenuEntry.Analyze(CreateContext(), analyzerTreeViewModel, dockWorkspace);
+			=> AnalyzeContextMenuEntry.Analyze(CreateContext(parameter), analyzerTreeViewModel, dockWorkspace);
 
-		TextViewContext CreateContext()
+		// The parameter is the selection to analyze: a tree pane binding the shortcut passes its own
+		// (the Analyzer pane promotes its selected result rows); the window-level binding passes
+		// none and analyzes the assembly tree's selection.
+		TextViewContext CreateContext(object? parameter)
 			=> new() {
-				SelectedTreeNodes = assemblyTreeModel.SelectedItems.ToArray(),
+				SelectedTreeNodes = (parameter as IEnumerable<SharpTreeNode> ?? assemblyTreeModel.SelectedItems).ToArray(),
 			};
 	}
 }

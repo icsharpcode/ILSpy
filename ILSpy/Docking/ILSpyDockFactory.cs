@@ -467,6 +467,21 @@ namespace ICSharpCode.ILSpy.Docking
 			};
 
 		/// <summary>
+		/// Activates <paramref name="dockable"/> within its owner, unless it is already the owner's
+		/// active dockable. Dock's <c>ActiveDockable</c> setter re-runs <c>InitActiveDockable</c>, which
+		/// ends in <see cref="SetFocusedDockable"/>, even for an unchanged value, so an unguarded
+		/// re-activation would move the active-pane highlight to the dockable's dock. Callers that
+		/// do want the focus to move pair this with <see cref="SetFocusedDockable"/> (see
+		/// <see cref="ActivateAndFocus"/>).
+		/// </summary>
+		public override void SetActiveDockable(IDockable dockable)
+		{
+			if (dockable.Owner is IDock { ActiveDockable: var active } && ReferenceEquals(active, dockable))
+				return;
+			base.SetActiveDockable(dockable);
+		}
+
+		/// <summary>
 		/// Makes <paramref name="dockable"/> both the active and the focused dockable within
 		/// <paramref name="owner"/>. The two always go together -- surfacing a dockable without
 		/// focusing it (or vice versa) is a half-done activation -- so they're paired here and

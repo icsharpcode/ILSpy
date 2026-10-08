@@ -218,6 +218,53 @@ public class BrowseBackForwardCommandTests
 			"navigating back must not move the active pane to the editor");
 	}
 
+	[AvaloniaTest]
+	public async Task Browse_Back_Keeps_The_Keyboard_Focus_In_The_Editor()
+	{
+		// Back/Forward select the tree node of the previous entry, which must only scroll it into
+		// view: WPF's SelectNodes never took the keyboard focus, so a user reading the code pane
+		// stays in the code pane after Alt+Left / Mouse4.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var (firstMethod, _) = await BuildTwoEntryHistoryAsync(vm);
+		var textArea = window.GetVisualDescendants().OfType<DecompilerTextView>().First().Editor.TextArea;
+		textArea.Focus();
+		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		var focusManager = TopLevel.GetTopLevel(window)!.FocusManager!;
+		focusManager.GetFocusedElement().Should().BeSameAs(textArea, "precondition: the editor must own the focus");
+
+		vm.DockWorkspace.NavigateBackCommand.Execute(null);
+
+		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, firstMethod),
+			description: "BrowseBack must navigate back one history entry");
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Waiters.WaitForIdleAsync();
+		focusManager.GetFocusedElement().Should().BeSameAs(textArea,
+			"navigating back must not move the keyboard focus to the tree row");
+	}
+
+	[AvaloniaTest]
+	public async Task Programmatic_Selection_Moves_The_Focus_Along_When_The_Tree_Owns_It()
+	{
+		// The scroll-only rule applies when the focus is elsewhere; a tree that already owns the
+		// keyboard focus follows the selection to the new row, so keyboard navigation inside the
+		// tree keeps working after a programmatic jump.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var (firstMethod, secondMethod) = await BuildTwoEntryHistoryAsync(vm);
+		var pane = await window.WaitForComponent<AssemblyListPane>();
+		var tree = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		tree.FocusNode(secondMethod);
+		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		var focusManager = TopLevel.GetTopLevel(window)!.FocusManager!;
+		ReferenceEquals((focusManager.GetFocusedElement() as ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem)?.Node, secondMethod)
+			.Should().BeTrue("precondition: the tree row must own the focus");
+
+		vm.AssemblyTreeModel.SelectNode(firstMethod);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await Waiters.WaitForAsync(
+			() => (focusManager.GetFocusedElement() as ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem)?.Node == firstMethod,
+			description: "the focus must follow the selection to the newly selected row");
+	}
+
 	// Selects two methods of System.Linq.Enumerable with a pause in between so the history records
 	// them as two separate entries; returns them in selection order.
 	static async Task<(MethodTreeNode First, MethodTreeNode Second)> BuildTwoEntryHistoryAsync(MainWindowViewModel vm)

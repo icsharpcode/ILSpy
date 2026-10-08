@@ -607,11 +607,9 @@ namespace ICSharpCode.ILSpy.Docking
 			suppressHistoryRecording = true;
 			try
 			{
-				// Only activate a tab that is not already active: Dock's ActiveDockable setter re-runs
-				// InitActiveDockable -> SetFocusedDockable even for an unchanged value, which would
-				// move the active pane to the document on every navigation.
-				if (factory.Documents is { VisibleDockables: { } docs } documents
-					&& docs.Contains(target.Tab) && !ReferenceEquals(documents.ActiveDockable, target.Tab))
+				// Bring the entry's tab to the front (a no-op for the already-active tab, so the active
+				// pane does not move to the document on every navigation).
+				if (factory.Documents is { VisibleDockables: { } docs } && docs.Contains(target.Tab))
 					factory.SetActiveDockable(target.Tab);
 				if (target is TreeNodeEntry treeNode)
 				{
@@ -928,17 +926,14 @@ namespace ICSharpCode.ILSpy.Docking
 		}
 
 		// Brings MainTab to the front of the documents dock so the just-updated content is
-		// what the user sees. No-op when MainTab is already active, when there's no
-		// documents dock, or when a Back/Forward navigation is in flight (ApplyNavigationTarget
-		// has already chosen which tab to activate, including possibly a sibling tab — our
-		// activation would override that intent).
+		// what the user sees. No-op when there's no documents dock, or when a Back/Forward
+		// navigation is in flight (ApplyNavigationTarget has already chosen which tab to activate,
+		// including possibly a sibling tab -- our activation would override that intent).
 		void ActivateMainTabIfNeeded(ContentTabPage main)
 		{
 			if (suppressHistoryRecording)
 				return;
-			if (factory.Documents is not { } docs)
-				return;
-			if (ReferenceEquals(docs.ActiveDockable, main))
+			if (factory.Documents is null)
 				return;
 			factory.SetActiveDockable(main);
 		}

@@ -41,20 +41,7 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 	{
 		ICSharpCode.ILSpy.Controls.TreeView.TreeSelectionBinder? selectionBinder;
 		LanguageSettings? languageSettings;
-		IReadOnlyList<IContextMenuEntryExport> contextMenuEntries = Array.Empty<IContextMenuEntryExport>();
-
-		// Thunderbird-style right-click target: the row whose context menu is open, highlighted
-		// without moving the real selection.
-		SharpTreeViewItem? contextTargetItem;
-		SharpTreeViewItem? contextMenuOpenItem;
-		SharpTreeNode? contextMenuTargetNode;
-		// For a keyboard-invoked menu (Shift+F10 / Apps), the row to re-focus when the menu closes
-		// (closing the popup otherwise drops the keyboard focus and its focus adorner). Null for
-		// pointer-invoked menus.
-		SharpTreeViewItem? focusToRestoreAfterMenu;
-		// Whether the last ContextRequested came from the keyboard (no pointer position). The keyboard
-		// path carries no target row, so the menu adopts the selected row (see OnContextMenuOpening).
-		bool lastContextRequestWasKeyboard;
+		readonly TreeContextMenuController contextMenu;
 
 		public AssemblyListPane()
 		{
@@ -63,10 +50,11 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 				if (DataContext is AssemblyTreeModel m)
 					m.MarkTreeReady();
 			};
-			// Right-press marks the context target without moving selection; MMB opens a new tab.
+			// MMB opens a new tab; the right-click context target is the TreeContextMenuController's.
 			// Drag-reorder + file drop are owned by SharpTreeView (delegated to the tree nodes).
 			Tree.AddHandler(PointerPressedEvent, OnTreePointerPressed, RoutingStrategies.Tunnel);
-			Tree.AddHandler(ContextRequestedEvent, OnTreeContextRequested, RoutingStrategies.Bubble, handledEventsToo: true);
+			contextMenu = new TreeContextMenuController(Tree,
+				() => (DataContext as AssemblyTreeModel)?.SelectedItems ?? (IReadOnlyList<SharpTreeNode>)Array.Empty<SharpTreeNode>());
 			var registry = AppComposition.TryGetExport<ContextMenuEntryRegistry>();
 			AttachContextMenu(registry?.Entries ?? Array.Empty<IContextMenuEntryExport>());
 
@@ -90,137 +78,19 @@ namespace ICSharpCode.ILSpy.AssemblyTree
 		#region Context menu
 
 		internal void AttachContextMenu(IReadOnlyList<IContextMenuEntryExport> entries)
-		{
-			contextMenuEntries = entries;
-			var menu = new ContextMenu();
-			menu.Opening += OnContextMenuOpening;
-			menu.Closed += (_, _) => {
-				RestoreFocusAfterKeyboardMenu();
-				if (!ReferenceEquals(contextTargetItem, contextMenuOpenItem))
-					return;
-				contextMenuTargetNode = null;
-				SetContextTargetItem(null);
-			};
-			Tree.ContextMenu = menu;
-		}
-
-		void OnContextMenuOpening(object? sender, CancelEventArgs e)
-		{
-			if (sender is not ContextMenu menu)
-				return;
-			// A keyboard-invoked menu (Shift+F10 / Apps) carries no pointer position, so OnTreeContextRequested
-			// set no transient target. Adopt the keyboard-FOCUSED row (which may differ from the selection
-			// after Ctrl+Arrow) as the target: opening the popup steals focus and drops the row's focus
-			// adorner, so we mark that row with the same context-target highlight the mouse gives the
-			// right-clicked row, and restore its focus + adorner on close (Avalonia's ContextMenu does not).
-			// Captured here, before the popup opens and takes focus (Opening fires ahead of it), and before
-			// contextMenuOpenItem is latched so the Closed handler still clears the highlight.
-			var focusedRow = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as SharpTreeViewItem;
-			if (lastContextRequestWasKeyboard && focusedRow?.Node != null)
-			{
-				contextMenuTargetNode = focusedRow.Node;
-				SetContextTargetItem(focusedRow);
-				focusToRestoreAfterMenu = focusedRow;
-			}
-			contextMenuOpenItem = contextTargetItem;
-			var built = BuildContextMenuForCurrentState(contextMenuEntries);
-			if (built == null)
-			{
-				// Menu won't open (so Closed won't fire) -- undo the transient target + captured focus.
-				focusToRestoreAfterMenu = null;
-				contextMenuTargetNode = null;
-				SetContextTargetItem(null);
-				e.Cancel = true;
-				return;
-			}
-			menu.Items.Clear();
-			foreach (var item in built.Items.OfType<Control>().ToArray())
-			{
-				built.Items.Remove(item);
-				menu.Items.Add(item);
-			}
-		}
-
-		void RestoreFocusAfterKeyboardMenu()
-		{
-			if (focusToRestoreAfterMenu is not { } toFocus)
-				return;
-			focusToRestoreAfterMenu = null;
-			// Re-focus with a keyboard navigation method so the focus visual (the adorner) comes back,
-			// not just the logical focus. Posted so it runs after the popup has fully torn down.
-			global::Avalonia.Threading.Dispatcher.UIThread.Post(
-				() => toFocus.Focus(NavigationMethod.Tab));
-		}
+			=> contextMenu.Attach(entries);
 
 		internal ContextMenu? BuildContextMenuForCurrentState(IReadOnlyList<IContextMenuEntryExport> entries)
-			=> ContextMenuProvider.Build(entries, CreateContextMenuContext());
+			=> contextMenu.Build(entries);
 
 		internal ContextMenu? BuildContextMenuForCurrentState(
 			IReadOnlyList<IContextMenuEntryExport> entries, SharpTreeNode? rightClickedNode)
-		{
-			contextMenuTargetNode = rightClickedNode;
-			try
-			{
-				return ContextMenuProvider.Build(entries, CreateContextMenuContext());
-			}
-			finally
-			{
-				contextMenuTargetNode = null;
-			}
-		}
-
-		TextViewContext CreateContextMenuContext()
-		{
-			var selection = (DataContext as AssemblyTreeModel)?.SelectedItems.ToArray()
-				?? Array.Empty<SharpTreeNode>();
-			// A right-click outside the selection targets just the clicked row; inside the selection
-			// (or a keyboard-invoked menu with no target) acts on the whole selection.
-			var target = contextMenuTargetNode;
-			var nodes = target != null && !Array.Exists(selection, n => ReferenceEquals(n, target))
-				? new[] { target }
-				: selection;
-			return new TextViewContext {
-				TreeGrid = Tree,
-				SelectedTreeNodes = nodes,
-			};
-		}
-
-		void SetContextTargetItem(SharpTreeViewItem? item)
-		{
-			if (ReferenceEquals(contextTargetItem, item))
-				return;
-			contextTargetItem?.Classes.Remove("contextTarget");
-			contextTargetItem = item;
-			contextTargetItem?.Classes.Add("contextTarget");
-		}
-
-		void OnTreeContextRequested(object? sender, ContextRequestedEventArgs e)
-		{
-			SharpTreeViewItem? item = null;
-			// Keyboard invocation (Shift+F10 / Apps) raises ContextRequested with no pointer position.
-			lastContextRequestWasKeyboard = !e.TryGetPosition(Tree, out var pos);
-			if (!lastContextRequestWasKeyboard && Tree.InputHitTest(pos) is Visual hit)
-				item = hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true);
-			contextMenuTargetNode = item?.Node;
-			SetContextTargetItem(item?.Node != null ? item : null);
-		}
+			=> contextMenu.Build(entries, rightClickedNode);
 
 		void OnTreePointerPressed(object? sender, PointerPressedEventArgs e)
 		{
-			if (e.Source is not Visual hit)
-				return;
-			var point = e.GetCurrentPoint(hit).Properties;
-			if (point.IsRightButtonPressed)
-			{
-				// Swallow the right press so the ListBox doesn't move the selection to the row.
-				if (hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node != null)
-					e.Handled = true;
-				return;
-			}
-			// Any non-right press starts a fresh gesture -- drop a stale right-click target.
-			contextMenuTargetNode = null;
-			SetContextTargetItem(null);
-			if (point.IsMiddleButtonPressed
+			if (e.Source is Visual hit
+				&& e.GetCurrentPoint(hit).Properties.IsMiddleButtonPressed
 				&& hit.FindAncestorOfType<SharpTreeViewItem>(includeSelf: true)?.Node is ILSpyTreeNode node)
 			{
 				OpenNodeInNewTab(node);

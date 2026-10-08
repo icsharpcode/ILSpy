@@ -135,6 +135,10 @@ namespace ICSharpCode.ILSpy.TextView
 			// like the About-page resource generator). Decompiler output uses hyperlinks
 			// extensively for in-app navigation — a plain click is the expected affordance.
 			Editor.Options.RequireControlModifierForHyperlinkClick = false;
+			// The view is read-only, so Tab has nothing to indent; with AcceptsTab the text area marks
+			// the key handled and the focus could never leave the editor. Leaving it unhandled lets
+			// Tab / Shift+Tab move the keyboard focus like in every other control.
+			Editor.Options.AcceptsTab = false;
 
 			SetupElementGenerators();
 			SetupBackgroundRenderers();
@@ -255,6 +259,24 @@ namespace ICSharpCode.ILSpy.TextView
 				OnTextAreaPointerReleasedForReferenceClick,
 				RoutingStrategies.Bubble,
 				handledEventsToo: true);
+			// The gutter margins react to the left button only, like their WPF counterparts:
+			// AvaloniaEdit's line-number margin moves the caret and selects the line, and a fold
+			// marker toggles, on any button. Marking the press handled before it reaches the margin
+			// skips the margin's own press handler. The text area keeps seeing middle presses (a
+			// middle click on a reference opens it in a new tab).
+			Editor.TextArea.AddHandler(InputElement.PointerPressedEvent,
+				OnTextAreaPointerPressedForMargins,
+				RoutingStrategies.Tunnel);
+		}
+
+		void OnTextAreaPointerPressedForMargins(object? sender, PointerPressedEventArgs e)
+		{
+			if (e.GetCurrentPoint(Editor.TextArea).Properties.PointerUpdateKind == PointerUpdateKind.LeftButtonPressed)
+				return;
+			if (e.Source is Visual hit
+				&& hit.FindAncestorOfType<AbstractMargin>(includeSelf: true) is { } margin
+				&& Editor.TextArea.LeftMargins.Contains(margin))
+				e.Handled = true;
 		}
 
 		// Position of the last link-button press, in this control's coordinates; null while no

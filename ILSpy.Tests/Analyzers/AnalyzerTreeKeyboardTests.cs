@@ -30,6 +30,7 @@ using AwesomeAssertions;
 using ICSharpCode.Decompiler.TypeSystem;
 
 using ICSharpCode.ILSpy.Analyzers;
+using ICSharpCode.ILSpy.Analyzers.TreeNodes;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -166,5 +167,57 @@ public class AnalyzerTreeKeyboardTests
 		analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>()
 			.Any(n => n.Member is { } m && m.MetadataToken == ((ITypeDefinition)typeNode.Member!).MetadataToken)
 			.Should().BeTrue("the analyzer pane must hold a node for the type that Ctrl+R analyzed");
+	}
+
+	[AvaloniaTest]
+	public async Task Ctrl_R_On_An_Analyzer_Result_Row_Promotes_It_Instead_Of_The_Assembly_Tree_Selection()
+	{
+		// Ctrl+R with the focus inside the Analyzer pane analyzes the pane's own selection (a result
+		// row becomes a top-level entry), like the pane-level binding did in 10.x. The window-level
+		// Ctrl+R, which analyzes the assembly tree's selection, must not fire for the pane.
+		var (window, vm) = await TestHarness.BootAsync(3);
+		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		var analyzerVm = AppComposition.Current.GetExport<AnalyzerTreeViewModel>();
+
+		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
+			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		typeNode.IsExpanded = true;
+		var method = typeNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == "Empty").MethodDefinition;
+		var analyzed = analyzerVm.Analyze((ITypeDefinition)typeNode.Member!);
+		analyzed.EnsureLazyChildren();
+		// A result row lives underneath an analyzer-search header, never directly under the root.
+		var searchRow = analyzed.Children.OfType<AnalyzerSearchTreeNode>().First();
+		var resultRow = new AnalyzedMethodTreeNode(method, typeNode.Member);
+		searchRow.Children.Add(resultRow);
+		analyzed.IsExpanded = true;
+		searchRow.IsExpanded = true;
+
+		// Park the assembly tree on another analysable type: if the window binding fired instead,
+		// this is what would land in the pane.
+		var decoy = vm.AssemblyTreeModel.FindNode<TypeTreeNode>("System.Linq", "System.Linq", "System.Linq.Lookup`2");
+		vm.AssemblyTreeModel.SelectNode(decoy);
+		await Waiters.WaitForIdleAsync();
+
+		dockWorkspace.ShowToolPane(AnalyzerTreeViewModel.PaneContentId);
+		var view = await window.WaitForComponent<ICSharpCode.ILSpy.Analyzers.AnalyzerTreeView>();
+		var tree = await view.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		tree.SelectedItem = resultRow;
+		Dispatcher.UIThread.RunJobs();
+		tree.FocusNode(resultRow);
+		Dispatcher.UIThread.RunJobs();
+		((object?)analyzerVm.SelectedItems.SingleOrDefault()).Should().BeSameAs(resultRow,
+			"precondition: the pane selection must sit on the result row");
+
+		int before = analyzerVm.Root.Children.Count;
+		window.KeyPress(Key.R, RawInputModifiers.Control, PhysicalKey.R, null);
+		await Waiters.WaitForAsync(() => analyzerVm.Root.Children.Count > before,
+			description: "Ctrl+R in the Analyzer pane must promote the selected result row");
+
+		var promoted = analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>().Last();
+		promoted.Member.Should().BeSameAs(method, "the pane's own selection is what Ctrl+R analyzes");
+		analyzerVm.Root.Children.OfType<AnalyzerEntityTreeNode>()
+			.Any(n => n.Member is { } m && m.MetadataToken == ((ITypeDefinition)decoy.Member!).MetadataToken)
+			.Should().BeFalse("the assembly tree's selection must not be analyzed when the key is pressed inside the pane");
 	}
 }
