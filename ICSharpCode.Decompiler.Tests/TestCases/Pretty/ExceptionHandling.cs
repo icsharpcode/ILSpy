@@ -536,5 +536,40 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("after");
 			}
 		}
+
+		public static void ContinueInCatchInTryFinallyInForeach(int[] arr)
+		{
+			foreach (int value in arr)
+			{
+				try
+				{
+					try
+					{
+						Console.WriteLine(value);
+					}
+					catch (BadImageFormatException)
+					{
+						continue;
+					}
+					Console.WriteLine("after inner try");
+#if OPT
+					goto IL_002c;
+#else
+					goto IL_0038;
+#endif
+				}
+				finally
+				{
+					Console.WriteLine("finally");
+				}
+				continue;
+#if OPT
+				IL_002c:
+#else
+				IL_0038:
+#endif
+				Console.WriteLine("after outer try");
+			}
+		}
 	}
 }
