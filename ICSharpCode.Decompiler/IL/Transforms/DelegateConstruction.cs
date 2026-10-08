@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata;
@@ -195,6 +196,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var ilReader = context.CreateILReader();
 			var body = context.PEFile.GetMethodBody(methodDefinition.RelativeVirtualAddress);
 			var function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.Delegate, context.CancellationToken);
+			if (TryUnwrapVisualBasicDelegateWrapper(function, targetMethod, out var unwrappedMethod))
+			{
+				targetMethod = unwrappedMethod;
+				methodDefinition = context.PEFile.Metadata.GetMethodDefinition((MethodDefinitionHandle)targetMethod.MetadataToken);
+				if (!methodDefinition.HasBody())
+					return null;
+				genericContext = GenericContextFromTypeArguments(targetMethod.Substitution);
+				if (genericContext == null)
+					return null;
+				body = context.PEFile.GetMethodBody(methodDefinition.RelativeVirtualAddress);
+				function = ilReader.ReadIL((MethodDefinitionHandle)targetMethod.MetadataToken, body, genericContext.Value, ILFunctionKind.Delegate, context.CancellationToken);
+			}
 			function.DelegateType = delegateType;
 			// Embed the lambda into the parent function's ILAst, so that "Show steps" can show
 			// how the lambda body is being transformed.
@@ -215,11 +228,74 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			nestedContext.StepStartGroup("DelegateConstruction (nested lambdas)", function);
 			((IILTransform)this).Run(function, nestedContext);
 			nestedContext.StepEndGroup();
+			if (TryUnwrapTransformedVisualBasicDelegateWrapper(function, delegateType, out var unwrappedFunction))
+			{
+				function.ReplaceWith(unwrappedFunction);
+				function = unwrappedFunction;
+			}
 			function.AddILRange(target);
 			function.AddILRange(value);
 			if (value is Call call)
 				function.AddILRange(call.Arguments[1]);
 			return function;
+		}
+
+		static bool TryUnwrapTransformedVisualBasicDelegateWrapper(ILFunction function, IType delegateType, out ILFunction unwrappedFunction)
+		{
+			unwrappedFunction = null;
+			if (function.Body is not BlockContainer container)
+				return false;
+			var block = container.EntryPoint;
+			if (block.Instructions.Count != 2 || !block.Instructions[1].MatchLeave(container, out _))
+				return false;
+			if (block.Instructions[0] is not CallVirt callVirt)
+				return false;
+			if (callVirt.Method.Name != "Invoke" || callVirt.Method.DeclaringType.Kind != TypeKind.Delegate)
+				return false;
+			if (callVirt.Arguments.Count != 1 || callVirt.Arguments[0] is not ILFunction innerFunction)
+				return false;
+			if (innerFunction.DelegateType?.Name.StartsWith("VB$AnonymousDelegate_", StringComparison.Ordinal) != true)
+				return false;
+			innerFunction.DelegateType = delegateType;
+			unwrappedFunction = innerFunction;
+			return true;
+		}
+
+		static bool TryUnwrapVisualBasicDelegateWrapper(ILFunction function, IMethod wrapperMethod, out IMethod unwrappedMethod)
+		{
+			unwrappedMethod = null;
+			if (!wrapperMethod.Name.Contains("$__R", StringComparison.Ordinal))
+				return false;
+			var thisVariable = function.Variables.SingleOrDefault(VariableKindExtensions.IsThis);
+			if (thisVariable == null || function.Body is not BlockContainer container)
+				return false;
+			var block = container.EntryPoint;
+			if (block.Instructions.Count != 2 || !block.Instructions[1].MatchLeave(container, out _))
+				return false;
+			if (block.Instructions[0] is Call call)
+			{
+				if (call.Arguments.Count != 1 || !call.Arguments[0].MatchLdLoc(thisVariable))
+					return false;
+				unwrappedMethod = call.Method;
+			}
+			else if (block.Instructions[0] is CallVirt callVirt)
+			{
+				if (callVirt.Method.Name != "Invoke" || callVirt.Method.DeclaringType.Kind != TypeKind.Delegate)
+					return false;
+				if (callVirt.Arguments.Count != 1 || !MatchDelegateConstruction(callVirt.Arguments[0], out unwrappedMethod, out var target, out _))
+					return false;
+				if (!target.MatchLdLoc(thisVariable))
+					return false;
+			}
+			else
+			{
+				return false;
+			}
+			if (!object.Equals(unwrappedMethod.DeclaringTypeDefinition, wrapperMethod.DeclaringTypeDefinition))
+				return false;
+			if (!IsAnonymousMethod(wrapperMethod.DeclaringTypeDefinition, unwrappedMethod))
+				return false;
+			return true;
 		}
 
 		private static bool ValidateDelegateTarget(ILInstruction inst)
@@ -238,6 +314,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// TODO : ldfld chains must be validated more thoroughly, i.e., we should make sure
 					// that the value of the field is never changed.
 					ILInstruction target = ldobj;
+					// Match delegate targets stored in nested display classes, e.g.
+					// ldobj(ldflda field(ldobj(ldflda field(ldloc displayClass)))).
 					while (target is LdObj || target is LdFlda)
 					{
 						if (target is LdObj o)
@@ -297,6 +375,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							break;
 						case LdObj lo:
 							ILInstruction inner = lo.Target;
+							// Match the same display-class field chain after ValidateDelegateTarget
+							// accepted it: ldobj(ldflda field(ldflda field(ldloc displayClass))).
 							while (inner is LdFlda ldf)
 							{
 								inner = ldf.Target;
