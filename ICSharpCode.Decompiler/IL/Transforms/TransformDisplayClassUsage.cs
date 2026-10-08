@@ -466,7 +466,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			try
 			{
-				if (method.Parameters.Count != 0)
+				if (method.Parameters.Count > 1)
 					return false;
 				var handle = (MethodDefinitionHandle)method.MetadataToken;
 				var module = (MetadataModule)method.ParentModule;
@@ -489,20 +489,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// IL_0000: ldarg.0
 				// IL_0001: call instance void [mscorlib]System.Object::.ctor()
 				// IL_0006: ret
-				var opCode = DecodeOpCodeSkipNop(ref reader);
-				switch (opCode)
-				{
-					case ILOpCode.Ldarg:
-					case ILOpCode.Ldarg_s:
-						if (reader.DecodeIndex(opCode) != 0)
-							return false;
-						break;
-					case ILOpCode.Ldarg_0:
-						// OK
-						break;
-					default:
-						return false;
-				}
+				if (!DecodeLdArg(ref reader, 0))
+					return false;
 				if (DecodeOpCodeSkipNop(ref reader) != ILOpCode.Call)
 					return false;
 				var baseCtorHandle = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
@@ -513,11 +501,68 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!objectCtor.IsConstructor || objectCtor.Parameters.Count != 0)
 					return false;
-				return DecodeOpCodeSkipNop(ref reader) == ILOpCode.Ret;
+				if (method.Parameters.Count == 0)
+					return DecodeOpCodeSkipNop(ref reader) == ILOpCode.Ret;
+				if (!object.Equals(method.Parameters[0].Type.GetDefinition(), method.DeclaringTypeDefinition))
+					return false;
+				if (!DecodeLdArg(ref reader, 1))
+					return false;
+				switch (DecodeOpCodeSkipNop(ref reader))
+				{
+					case ILOpCode.Brfalse:
+						reader.ReadInt32();
+						break;
+					case ILOpCode.Brfalse_s:
+						reader.ReadSByte();
+						break;
+					default:
+						return false;
+				}
+				bool copiedField = false;
+				while (true)
+				{
+					var opCode = DecodeOpCodeSkipNop(ref reader);
+					if (opCode == ILOpCode.Ret)
+						return copiedField;
+					if (!DecodeLdArg(opCode, ref reader, 0))
+						return false;
+					if (!DecodeLdArg(ref reader, 1))
+						return false;
+					if (DecodeOpCodeSkipNop(ref reader) != ILOpCode.Ldfld)
+						return false;
+					var sourceField = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
+					if (DecodeOpCodeSkipNop(ref reader) != ILOpCode.Stfld)
+						return false;
+					var targetField = MetadataTokenHelpers.EntityHandleOrNil(reader.ReadInt32());
+					if (sourceField.IsNil || sourceField != targetField)
+						return false;
+					copiedField = true;
+				}
 			}
 			catch (BadImageFormatException)
 			{
 				return false;
+			}
+		}
+
+		static bool DecodeLdArg(ref BlobReader reader, int expectedIndex)
+		{
+			return DecodeLdArg(DecodeOpCodeSkipNop(ref reader), ref reader, expectedIndex);
+		}
+
+		static bool DecodeLdArg(ILOpCode opCode, ref BlobReader reader, int expectedIndex)
+		{
+			switch (opCode)
+			{
+				case ILOpCode.Ldarg:
+				case ILOpCode.Ldarg_s:
+					return reader.DecodeIndex(opCode) == expectedIndex;
+				case ILOpCode.Ldarg_0:
+					return expectedIndex == 0;
+				case ILOpCode.Ldarg_1:
+					return expectedIndex == 1;
+				default:
+					return false;
 			}
 		}
 

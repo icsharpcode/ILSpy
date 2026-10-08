@@ -478,6 +478,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							return true;
 						if (settings.AnonymousTypes && type.IsAnonymousType(metadata))
 							return true;
+						if (settings.AnonymousMethods && type.IsDelegate(metadata) && name.StartsWith("VB$AnonymousDelegate_", StringComparison.Ordinal))
+							return true;
 						if (settings.Dynamic && type.IsDelegate(metadata) && (name.StartsWith("<>A", StringComparison.Ordinal) || name.StartsWith("<>F", StringComparison.Ordinal)))
 							return true;
 					}
