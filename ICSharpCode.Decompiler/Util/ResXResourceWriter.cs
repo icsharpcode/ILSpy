@@ -295,13 +295,13 @@ namespace ICSharpCode.Decompiler.Util
 
 		public void Close()
 		{
+			if (!written)
+			{
+				Generate();
+			}
+
 			if (writer != null)
 			{
-				if (!written)
-				{
-					Generate();
-				}
-
 				writer.Close();
 				stream = null;
 				filename = null;

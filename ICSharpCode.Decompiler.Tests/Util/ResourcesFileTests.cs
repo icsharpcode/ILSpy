@@ -47,6 +47,25 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		const int TypeCodeStartOfUserTypes = 0x40;
 
 		[Test]
+		public void ResXResourceWriter_DisposeWithoutResources_WritesEmptyFile()
+		{
+			string fileName = Path.Combine(TestContext.CurrentContext.WorkDirectory, Path.GetRandomFileName() + ".resx");
+			try
+			{
+				using (new ResXResourceWriter(fileName))
+				{
+				}
+
+				Assert.That(File.Exists(fileName), Is.True);
+				Assert.That(File.ReadAllText(fileName), Does.Contain("<resheader name=\"resmimetype\">"));
+			}
+			finally
+			{
+				File.Delete(fileName);
+			}
+		}
+
+		[Test]
 		public void WellFormedFile_ReadsAllEntryKinds()
 		{
 			var blob = Build(DeserializingReaderType, new[] { "MyType, MyAssembly" }, new[] {
