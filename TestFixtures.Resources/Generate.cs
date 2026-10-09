@@ -83,19 +83,18 @@ static void WriteImage(string path, IImageEncoder encoder, int size = 64)
 static Image<Rgba32> RenderShape(int size)
 {
     var img = new Image<Rgba32>(size, size, new Rgba32(0xFF, 0xF6, 0xE5));
-    img.Mutate(ctx => {
+    img.Mutate(ctx => ctx.Paint(canvas => {
         // Filled blue circle in the centre.
-        ctx.Fill(new Rgba32(0x33, 0x99, 0xCC),
+        canvas.Fill(Brushes.Solid(Color.FromPixel(new Rgba32(0x33, 0x99, 0xCC))),
             new SixLabors.ImageSharp.Drawing.EllipsePolygon(size / 2f, size / 2f, size * 0.35f));
         // Red diagonal stripe.
-        ctx.DrawLine(new Rgba32(0xCC, 0x33, 0x33),
-            Math.Max(2, size / 16f),
+        canvas.DrawLine(Pens.Solid(Color.FromPixel(new Rgba32(0xCC, 0x33, 0x33)), Math.Max(2, size / 16f)),
             new PointF(0, size),
             new PointF(size, 0));
         // 1px dark border so the bounds are obvious against any background.
-        ctx.Draw(new Rgba32(0x33, 0x33, 0x33), 1,
-            new RectangleF(0, 0, size - 1, size - 1));
-    });
+        canvas.Draw(Pens.Solid(Color.FromPixel(new Rgba32(0x33, 0x33, 0x33)), 1),
+            new Rectangle(0, 0, size - 1, size - 1));
+    }));
     return img;
 }
 

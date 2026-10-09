@@ -4,24 +4,38 @@
     "net10.0": {
       "SixLabors.ImageSharp": {
         "type": "Direct",
-        "requested": "[3.1.11, )",
-        "resolved": "3.1.11",
-        "contentHash": "JfPLyigLthuE50yi6tMt7Amrenr/fA31t2CvJyhy/kQmfulIBAqo5T/YFUSRHtuYPXRSaUHygFeh6Qd933EoSw=="
+        "requested": "[4.1.2, )",
+        "resolved": "4.1.2",
+        "contentHash": "AQ0oouhH/6qmXJC70/k50iVt7SiZRjCgd4tXXiC5ZrB5CvyBwA81HTqb5twcXz8CvTAFxUNV0TAcL83OhyRA1g==",
+        "dependencies": {
+          "System.IO.Hashing": "8.0.0"
+        }
       },
       "SixLabors.ImageSharp.Drawing": {
         "type": "Direct",
-        "requested": "[2.1.4, )",
-        "resolved": "2.1.4",
-        "contentHash": "p4VwtAABggDUhUS5zXldCZHVGfjJl76+SrBHY4biNQ8+890igFK6RL87qIv9GqvEjMcYOar1sPkf2iMQ6uq9/g==",
+        "requested": "[3.1.2, )",
+        "resolved": "3.1.2",
+        "contentHash": "TIaCFLET2xsmFS2E5P1Ws8lmgMDQvMZn4LMh0GBTZUwLurFWnHEI5bq/7T6pQBPU8yjO64YCf2dGRevIa4GudA==",
         "dependencies": {
-          "SixLabors.Fonts": "2.0.4",
-          "SixLabors.ImageSharp": "3.1.5"
+          "SixLabors.Fonts": "3.1.3",
+          "SixLabors.ImageSharp": "4.1.2",
+          "SixLabors.PolygonClipper": "1.0.1"
         }
       },
       "SixLabors.Fonts": {
         "type": "Transitive",
-        "resolved": "2.0.4",
-        "contentHash": "4+NKz8W36injp98lmmM07ncp08HAK8c6FZz8vLoKxRPfJeEVWpBHlLYEbQa5rcqKKYqxUv/RVCrb8XcPhfMKUQ=="
+        "resolved": "3.1.3",
+        "contentHash": "bWO6K25broqTDoaI0vvooNXNjvIAahLpp7cpcaLDmjZDnqrF9GXt7ZRYWxzJQkcoh7P9XNOWoOPq+zZF1JvFbg=="
+      },
+      "SixLabors.PolygonClipper": {
+        "type": "Transitive",
+        "resolved": "1.0.1",
+        "contentHash": "kUJ9mbpsiwEwSk679PobFmQ9UHqvH6QmwBnmbpCAq+P0yPGahQNDgu+/SVjdxJhoe/9d0UwgDvhTcSIWWS4lKg=="
+      },
+      "System.IO.Hashing": {
+        "type": "Transitive",
+        "resolved": "8.0.0",
+        "contentHash": "ne1843evDugl0md7Fjzy6QjJrzsjh46ZKbhf8GwBXb5f/gw97J4bxMs0NQKifDuThh/f0bZ0e62NPl1jzTuRqA=="
       }
     }
   }

@@ -12,7 +12,7 @@
   <ItemGroup>
     <!-- ImageSharp covers every encoder we need (PNG/JPG/BMP/GIF) cross-platform; SkiaSharp's
          encoder list doesn't include BMP/GIF. -->
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.4" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="4.1.2" />
+    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="3.1.2" />
   </ItemGroup>
 </Project>
