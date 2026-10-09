@@ -90,9 +90,9 @@ jobs:
 
     - name: Build
       run: >
-        dotnet build ILSpy.sln --no-restore
+        dotnet build -mt ILSpy.sln --no-restore
         -c ${{ matrix.configuration }}
-        /p:Platform="$env:BuildPlatform" /m
+        /p:Platform="$env:BuildPlatform"
 
     - name: Format check
       run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
