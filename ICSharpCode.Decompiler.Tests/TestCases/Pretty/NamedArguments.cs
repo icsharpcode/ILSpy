@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
+
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class NamedArguments
@@ -172,6 +174,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			// The names are the base indexer's, which is what the call instruction names.
 			Use(((BaseNames)derived)[y: Get(1), x: Get(2)], 0, 0);
+		}
+
+		public int NamedArgsInForeachOverEnumerator(Dictionary<int, int> dict)
+		{
+			int num = 0;
+			foreach (KeyValuePair<int, int> item in dict)
+			{
+				num += Sum(y: Get(item.Key), x: Get(2));
+			}
+			return num;
+		}
+
+		public int NamedArgsInForeachOverEnumeratorInstanceCall(List<KeyValuePair<int, int>> list)
+		{
+			int num = 0;
+			foreach (KeyValuePair<int, int> item in list)
+			{
+				num += Add(y: Get(item.Value), x: Get(2));
+			}
+			return num;
+		}
+
+		public static int Sum(int x, int y)
+		{
+			return x + y;
+		}
+
+		public int Add(int x, int y)
+		{
+			return x + y;
 		}
 	}
 }
