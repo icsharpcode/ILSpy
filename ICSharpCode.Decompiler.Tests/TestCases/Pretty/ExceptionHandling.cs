@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 #if CS60
 using System.IO;
 #endif
@@ -537,38 +538,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public static void ContinueInCatchInTryFinallyInForeach(int[] arr)
+		public static void ContinueInCatchInForeachOverEnumerable(IEnumerable<int> arr)
 		{
-			foreach (int value in arr)
+			foreach (int item in arr)
 			{
 				try
 				{
 					try
 					{
-						Console.WriteLine(value);
+						Console.WriteLine(item);
 					}
 					catch (BadImageFormatException)
 					{
 						continue;
 					}
 					Console.WriteLine("after inner try");
-#if OPT
-					goto IL_002c;
-#else
-					goto IL_0038;
-#endif
 				}
-				finally
+				catch (Exception ex2)
 				{
-					Console.WriteLine("finally");
+					Console.WriteLine(ex2.Message);
 				}
-				continue;
-#if OPT
-				IL_002c:
-#else
-				IL_0038:
-#endif
-				Console.WriteLine("after outer try");
 			}
 		}
 	}
