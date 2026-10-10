@@ -1825,6 +1825,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		IType PreferNativeIntegerType(IType type)
+		{
+			if (settings.NativeIntegers)
+			{
+				if (type.IsKnownType(KnownTypeCode.IntPtr))
+				{
+					return SpecialType.NInt;
+				}
+				else if (type.IsKnownType(KnownTypeCode.UIntPtr))
+				{
+					return SpecialType.NUInt;
+				}
+			}
+			return type;
+		}
+
 		/// <summary>
 		/// Gets a type used for performing arithmetic with the stack type and sign.
 		/// 
@@ -3525,16 +3541,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			IType targetType = inst.Type;
 			var arg = Translate(inst.Argument, typeHint: targetType);
-			if (settings.NativeIntegers && !arg.Type.Equals(targetType))
+			if (!arg.Type.Equals(targetType))
 			{
-				if (targetType.IsKnownType(KnownTypeCode.IntPtr))
-				{
-					targetType = SpecialType.NInt;
-				}
-				else if (targetType.IsKnownType(KnownTypeCode.UIntPtr))
-				{
-					targetType = SpecialType.NUInt;
-				}
+				targetType = PreferNativeIntegerType(targetType);
 			}
 			arg = arg.ConvertTo(targetType, this);
 			var obj = compilation.FindType(KnownTypeCode.Object);
@@ -4241,7 +4250,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 						else
 						{
-							targetType = inst.InferType(compilation);
+							targetType = PreferNativeIntegerType(inst.InferType(compilation));
 						}
 					}
 				}
