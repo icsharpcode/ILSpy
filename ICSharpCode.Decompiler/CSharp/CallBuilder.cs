@@ -26,6 +26,7 @@ using System.Text;
 
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
@@ -594,7 +595,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (settings.LiftNullables && method.Name == "GetValueOrDefault"
 				&& method.DeclaringType.IsKnownType(KnownTypeCode.NullableOfT)
 				&& method.DeclaringType.TypeArguments[0].IsKnownType(KnownTypeCode.Boolean)
-				&& argumentList.Length == 0)
+				&& argumentList.Length == 0
+				&& !IntroduceQueryExpressions.IsNullConditional(target))
 			{
 				argumentList.CheckNoNamedOrOptionalArguments();
 				return new BinaryOperatorExpression(

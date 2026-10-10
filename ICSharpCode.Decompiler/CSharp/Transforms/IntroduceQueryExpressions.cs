@@ -380,7 +380,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsNullConditional(Expression target) => target switch {
+		internal static bool IsNullConditional(Expression target) => target switch {
 			UnaryOperatorExpression { Operator: UnaryOperatorType.NullConditional } => true,
 			MemberReferenceExpression member => IsNullConditional(member.Target),
 			InvocationExpression invocation => IsNullConditional(invocation.Target),

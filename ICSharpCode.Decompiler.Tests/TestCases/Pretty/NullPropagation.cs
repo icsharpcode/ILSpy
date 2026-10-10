@@ -32,6 +32,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public readonly MyStruct ReadonlyStructField;
 			public string Text;
 			public MyClass Field;
+			public bool? NullableBool;
 			public MyClass Property { get; set; }
 			public MyClass this[int index] => null;
 			public MyClass Method(int arg)
@@ -379,6 +380,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			int? x = null;
 			return x?.ToString();
 #endif
+		}
+
+		private static bool Issue3702(MyClass c)
+		{
+			return c?.NullableBool.GetValueOrDefault() ?? false;
+		}
+
+		private static string Issue3702ToString(MyClass c)
+		{
+			return c?.NullableBool.GetValueOrDefault().ToString();
 		}
 	}
 }
