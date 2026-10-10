@@ -385,7 +385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (currentIsIterator)
 					return new YieldBreakStatement().WithILInstruction(inst);
-				else if (!inst.Value.MatchNop())
+				if (!inst.Value.MatchNop())
 				{
 					bool isLambdaOrExprTree = currentFunction.Kind is ILFunctionKind.ExpressionTree or ILFunctionKind.Delegate;
 					var expr = exprBuilder.Translate(inst.Value, typeHint: currentResultType)
@@ -413,7 +413,17 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				}
 				else
+				{
 					return new ReturnStatement().WithILInstruction(inst);
+				}
+			}
+			if (continueTarget != null
+				&& inst.TargetContainer.Parent is TryInstruction tryInstruction
+				&& tryInstruction.Parent is Block block
+				&& block.Instructions.LastOrDefault() is Branch branch
+				&& branch.TargetBlock == continueTarget)
+			{
+				return new ContinueStatement().WithILInstruction(inst);
 			}
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out string? label))
 			{
