@@ -5,14 +5,13 @@
     <RootNamespace>TestFixtures.Generate</RootNamespace>
     <Nullable>enable</Nullable>
     <!-- This generator runs once to (re)build the binary fixtures and isn't part of the
-         solution's CPM scope; pin SkiaSharp inline so the parent Directory.Packages.props
+         solution's CPM scope; pin the image library inline so the parent Directory.Packages.props
          doesn't need to learn about a one-shot tool. -->
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <!-- ImageSharp covers every encoder we need (PNG/JPG/BMP/GIF) cross-platform; SkiaSharp's
-         encoder list doesn't include BMP/GIF. -->
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
-    <PackageReference Include="SixLabors.ImageSharp.Drawing" Version="2.1.4" />
+    <!-- Magick.NET (Apache 2.0, bundles the ImageMagick native library for win/linux/osx) covers every
+         encoder we need (PNG/JPG/BMP/GIF). SkiaSharp's encoder list doesn't include BMP/GIF. -->
+    <PackageReference Include="Magick.NET-Q8-AnyCPU" Version="14.17.2" />
   </ItemGroup>
 </Project>

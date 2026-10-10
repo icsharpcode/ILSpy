@@ -29,24 +29,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Resources;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Drawing.Processing;
-using SixLabors.ImageSharp.Formats;
-using SixLabors.ImageSharp.Formats.Bmp;
-using SixLabors.ImageSharp.Formats.Gif;
-using SixLabors.ImageSharp.Formats.Jpeg;
-using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+using ImageMagick;
+using ImageMagick.Drawing;
 
 var dir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "fixtures");
 dir = Path.GetFullPath(dir);
 Directory.CreateDirectory(dir);
 
-WriteImage(Path.Combine(dir, "logo.png"), new PngEncoder());
-WriteImage(Path.Combine(dir, "logo.bmp"), new BmpEncoder());
-WriteImage(Path.Combine(dir, "logo.jpg"), new JpegEncoder { Quality = 92 });
-WriteImage(Path.Combine(dir, "logo.gif"), new GifEncoder());
+WriteImage(Path.Combine(dir, "logo.png"), MagickFormat.Png);
+WriteImage(Path.Combine(dir, "logo.bmp"), MagickFormat.Bmp);
+WriteImage(Path.Combine(dir, "logo.jpg"), MagickFormat.Jpeg, quality: 92);
+WriteImage(Path.Combine(dir, "logo.gif"), MagickFormat.Gif);
 
 // Multi-frame .ico: 16x16, 32x32, 48x48, each PNG-encoded inside the ICO container so Avalonia
 // can decode the largest frame for preview while a savvy viewer can pick any.
@@ -73,29 +66,35 @@ Console.WriteLine($"Wrote fixtures into {dir}");
 
 // --- helpers ---
 
-static void WriteImage(string path, IImageEncoder encoder, int size = 64)
+static void WriteImage(string path, MagickFormat format, int size = 64, uint quality = 0)
 {
     using var img = RenderShape(size);
-    using var fs = File.Create(path);
-    img.Save(fs, encoder);
+    if (quality > 0)
+        img.Quality = quality;
+    img.Write(path, format);
 }
 
-static Image<Rgba32> RenderShape(int size)
+static MagickImage RenderShape(int size)
 {
-    var img = new Image<Rgba32>(size, size, new Rgba32(0xFF, 0xF6, 0xE5));
-    img.Mutate(ctx => {
+    var img = new MagickImage(new MagickColor("#FFF6E5"), (uint)size, (uint)size);
+    float radius = size * 0.35f;
+    // Drawables is a single fluent command list: stroke/fill settings persist across the
+    // primitives that follow, so each shape resets the ones it does not want.
+    new Drawables()
         // Filled blue circle in the centre.
-        ctx.Fill(new Rgba32(0x33, 0x99, 0xCC),
-            new SixLabors.ImageSharp.Drawing.EllipsePolygon(size / 2f, size / 2f, size * 0.35f));
+        .FillColor(new MagickColor("#3399CC"))
+        .StrokeColor(MagickColors.None)
+        .Ellipse(size / 2.0, size / 2.0, radius, radius, 0, 360)
         // Red diagonal stripe.
-        ctx.DrawLine(new Rgba32(0xCC, 0x33, 0x33),
-            Math.Max(2, size / 16f),
-            new PointF(0, size),
-            new PointF(size, 0));
+        .FillColor(MagickColors.None)
+        .StrokeColor(new MagickColor("#CC3333"))
+        .StrokeWidth(Math.Max(2, size / 16.0))
+        .Line(0, size, size, 0)
         // 1px dark border so the bounds are obvious against any background.
-        ctx.Draw(new Rgba32(0x33, 0x33, 0x33), 1,
-            new RectangleF(0, 0, size - 1, size - 1));
-    });
+        .StrokeColor(new MagickColor("#333333"))
+        .StrokeWidth(1)
+        .Rectangle(0, 0, size - 1, size - 1)
+        .Draw(img);
     return img;
 }
 
@@ -105,13 +104,10 @@ static Image<Rgba32> RenderShape(int size)
 static byte[] BuildIcoOrCur(bool isCursor, int[] sizes)
 {
     var frames = new List<byte[]>(sizes.Length);
-    var pngEncoder = new PngEncoder();
     foreach (var sz in sizes)
     {
         using var img = RenderShape(sz);
-        using var ms = new MemoryStream();
-        img.Save(ms, pngEncoder);
-        frames.Add(ms.ToArray());
+        frames.Add(img.ToByteArray(MagickFormat.Png));
     }
     var fileMs = new MemoryStream();
     var w = new BinaryWriter(fileMs);
