@@ -584,6 +584,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.EndStep(matchCondition);
 				return;
 			}
+			if (inst.TrueInst.MatchLdcI4(1) && inst.FalseInst.MatchLdcI4(0)
+				&& inst.InferType(context.TypeSystem).IsKnownType(KnownTypeCode.Boolean))
+			{
+				context.Step("if (c) true else false -> comp(c != 0)", inst);
+				var comp = new Comp(ComparisonKind.Inequality, Sign.None, inst.Condition, new LdcI4(0));
+				comp.AddILRange(inst);
+				inst.ReplaceWith(comp);
+				context.EndStep(comp);
+				comp.AcceptVisitor(this);
+				return;
+			}
 		}
 
 		IfInstruction HandleConditionalOperator(IfInstruction inst)

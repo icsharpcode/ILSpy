@@ -935,6 +935,53 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//return (a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4);
 			return 0L;
 		}
+
+#if CS90
+		private static IDisposable Open(int length)
+		{
+			return null;
+		}
+
+		public static void NullOrZeroPatternBeforeUsing(int? num)
+		{
+#if EXPECTED_OUTPUT
+			if (!num.HasValue || num.GetValueOrDefault() == 0)
+#else
+			if (num is null or 0)
+#endif
+			{
+				return;
+			}
+			using (Open(num.Value))
+			{
+				Print(num.Value);
+			}
+		}
+
+		public static void NullOrZeroPatternEarlyReturn(int? num)
+		{
+#if EXPECTED_OUTPUT
+#if OPT && !ROSLYN4
+			if ((num ?? 0) != 0)
+#else
+			if (num.HasValue && num.GetValueOrDefault() != 0)
+#endif
+			{
+				Print(num);
+				Print(num.Value);
+				Print(num.Value + 1);
+			}
+#else
+			if (num is null or 0)
+			{
+				return;
+			}
+			Print(num);
+			Print(num.Value);
+			Print(num.Value + 1);
+#endif
+		}
+#endif
 	}
 
 	internal class T04_LiftedCompoundAssignAndBoxing
