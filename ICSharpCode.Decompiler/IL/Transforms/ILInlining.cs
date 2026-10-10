@@ -942,11 +942,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = 0; i < childIndex; ++i)
 				{
 					ILInstruction predecessor = inst.Parent.Children[i];
-					if (!IsSafeForInlineOver(predecessor, expressionBeingMoved))
+					if (!IsSafeForInlineOver(ReorderCheckTarget(predecessor), expressionBeingMoved))
 						return false;
 				}
 			}
 			return true;
+		}
+
+		/// <summary>
+		/// Gets the instruction that an expression must be reorderable with when it is moved past <paramref name="predecessor"/>.
+		/// Inside a named-argument block the predecessors are stores to named-argument temporaries. Such a temporary
+		/// is read only by the block's final call, so the store itself imposes no ordering constraint; only the stored
+		/// value does. This is the same check that inlining performs when it extends a named-argument block
+		/// (<see cref="NamedArgumentTransform.CanExtendNamedArgument"/>), so an expression inlined there can be
+		/// un-inlined again.
+		/// </summary>
+		static ILInstruction ReorderCheckTarget(ILInstruction predecessor)
+		{
+			if (predecessor is StLoc { Variable.Kind: VariableKind.NamedArgument } store
+				&& predecessor.Parent is Block { Kind: BlockKind.CallWithNamedArgs })
+			{
+				return store.Value;
+			}
+			return predecessor;
 		}
 
 		/// <summary>
@@ -966,7 +984,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = 0; i < childIndex; ++i)
 				{
 					ILInstruction predecessor = inst.Parent.Children[i];
-					if (predecessor != thisArg && !IsSafeForInlineOver(predecessor, expressionBeingMoved))
+					if (predecessor != thisArg && !IsSafeForInlineOver(ReorderCheckTarget(predecessor), expressionBeingMoved))
 						return false;
 				}
 			}
