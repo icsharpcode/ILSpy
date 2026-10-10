@@ -4557,7 +4557,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			var value = Translate(inst.Value, typeHint: expectedType);
+			var operand = inst.Value;
+			if (operand is LdObjIfRef ldObjIfRef)
+			{
+				operand = ldObjIfRef.Target;
+			}
+			var value = Translate(operand, typeHint: expectedType);
 			if (value.Expression is DirectionExpression)
 			{
 				// we can deference the managed reference by stripping away the 'ref'
