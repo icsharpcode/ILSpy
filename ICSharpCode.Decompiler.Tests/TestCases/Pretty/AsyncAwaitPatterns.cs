@@ -16,8 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// An await shape that still decompiles to code that does not compile is tracked as #4019 (with
-// expression); it is absent here because it has no correct output to pin yet.
+// An await shape that still decompiles to code that does not compile is tracked as #4017 (type
+// parameter with an interface constraint) and #4018 (static dynamic call); they are absent here
+// because they have no correct output to pin yet.
 
 #pragma warning disable 1998
 using System;
