@@ -272,17 +272,8 @@ namespace ICSharpCode.Decompiler.IL
 					// Allow inlining into the first instruction of the block
 					return childIndex == 0;
 				case BlockKind.CallWithNamedArgs:
-					// The named-argument assignments are evaluated in order before the call,
-					// so an expression can be moved into or out of the first one freely.
-					// For an instance call, Instructions[0] holds the 'this' argument and the
-					// first named argument is Instructions[1]; the caller checks that the moved
-					// expression may be reordered with the 'this' argument.
-					// This mirrors the slots that inlining may extend a named-argument block into
-					// (NamedArgumentTransform.CanExtendNamedArgument), so that an expression inlined
-					// there can later be un-inlined, e.g. when a 'foreach' loop is rebuilt around
-					// the enumerator's Current getter.
-					return childIndex == 0
-						|| (childIndex == 1 && FinalInstruction is CallInstruction { IsInstanceCall: true });
+					// Allow inlining into any instruction of the block
+					return childIndex < Instructions.Count;
 				default:
 					return false;
 			}
