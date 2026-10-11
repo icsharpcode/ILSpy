@@ -942,11 +942,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = 0; i < childIndex; ++i)
 				{
 					ILInstruction predecessor = inst.Parent.Children[i];
-					if (!IsSafeForInlineOver(predecessor, expressionBeingMoved))
+					if (!IsSafeForInlineOver(SkipNamedArgumentStore(predecessor), expressionBeingMoved))
 						return false;
 				}
 			}
 			return true;
+		}
+
+		/// <summary>
+		/// <see cref="StLoc"/> instructions have <see cref="InstructionFlags.MayWriteLocals"/>,
+		/// which we can ignore/skip, if the target variable is a <see cref="VariableKind.NamedArgument"/>,
+		/// because it's guaranteed that these variables are only read in the FinalInstruction.
+		/// </summary>
+		static ILInstruction SkipNamedArgumentStore(ILInstruction predecessor)
+		{
+			if (predecessor is StLoc { Variable.Kind: VariableKind.NamedArgument } store)
+			{
+				Debug.Assert(predecessor.Parent is Block { Kind: BlockKind.CallWithNamedArgs });
+				return store.Value;
+			}
+			return predecessor;
 		}
 
 		/// <summary>
@@ -966,7 +981,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = 0; i < childIndex; ++i)
 				{
 					ILInstruction predecessor = inst.Parent.Children[i];
-					if (predecessor != thisArg && !IsSafeForInlineOver(predecessor, expressionBeingMoved))
+					if (predecessor != thisArg && !IsSafeForInlineOver(SkipNamedArgumentStore(predecessor), expressionBeingMoved))
 						return false;
 				}
 			}

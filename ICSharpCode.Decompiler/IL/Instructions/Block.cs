@@ -283,6 +283,9 @@ namespace ICSharpCode.Decompiler.IL
 				case BlockKind.CallInlineAssign:
 					// Allow inlining into the first instruction of the block
 					return childIndex == 0;
+				case BlockKind.CallWithNamedArgs:
+					// Allow inlining into any instruction of the block
+					return childIndex < Instructions.Count;
 				default:
 					return false;
 			}
