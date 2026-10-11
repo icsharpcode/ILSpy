@@ -318,13 +318,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				return;
 			}
-			TransformAssignment.HandleCompoundAssign(inst, context);
+			if (TransformAssignment.HandleCompoundAssign(inst, context))
+				return;
+			if (TransformCollectionAndObjectInitializers.HandleEmptyWith(inst, context))
+				return;
 		}
 
 		protected internal override void VisitCallVirt(CallVirt inst)
 		{
 			base.VisitCallVirt(inst);
-			TransformAssignment.HandleCompoundAssign(inst, context);
+			if (TransformAssignment.HandleCompoundAssign(inst, context))
+				return;
+			if (TransformCollectionAndObjectInitializers.HandleEmptyWith(inst, context))
+				return;
 		}
 
 		protected internal override void VisitNewObj(NewObj inst)
