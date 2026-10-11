@@ -48,14 +48,14 @@ public class GenericLocalFunctionSample
 }
 
 /// <summary>
-/// Pins the local-reference highlighting for local functions: clicking any occurrence of a
-/// generic local function must paint the definition and every use site as one group.
+/// Pins the local-reference highlighting for local functions: placing the caret on any occurrence
+/// of a generic local function must paint the definition and every use site as one group.
 /// </summary>
 [TestFixture]
 public class LocalReferenceHighlightTests
 {
 	[AvaloniaTest]
-	public async Task Clicking_A_Generic_Local_Function_Use_Highlights_Definition_And_All_Uses()
+	public async Task Caret_On_A_Generic_Local_Function_Use_Highlights_Definition_And_All_Uses()
 	{
 		var (window, vm) = await TestHarness.BootAsync();
 		await vm.OpenAssemblyAsync(typeof(GenericLocalFunctionSample).Assembly.Location);
@@ -74,10 +74,11 @@ public class LocalReferenceHighlightTests
 		localFunctionSegments.Count(r => r.IsDefinition).Should().Be(1);
 
 		var use = localFunctionSegments.First(r => !r.IsDefinition);
-		view.OnReferenceClicked(use);
+		view.Editor.TextArea.Caret.Offset = use.StartOffset + 1;
 
-		view.LocalReferenceMarks.Select(m => m.StartOffset).Should().BeEquivalentTo(
+		view.CaretUsageMarks.Select(m => m.StartOffset).Should().BeEquivalentTo(
 			localFunctionSegments.Select(s => s.StartOffset),
-			"clicking a use must highlight the definition and every use");
+			"placing the caret on a use must highlight the definition and every use");
+		view.LocalReferenceMarks.Should().BeEmpty("local symbol highlights are now driven by the caret");
 	}
 }

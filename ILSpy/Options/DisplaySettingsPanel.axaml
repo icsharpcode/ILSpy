@@ -77,8 +77,10 @@
 					          Content="{x:Static res:Resources.HighlightMatchingBraces}" />
 					<CheckBox IsChecked="{Binding Settings.HighlightCurrentLine, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.HighlightCurrentLine}" />
-					<CheckBox IsChecked="{Binding Settings.HighlightMemberReferences, Mode=TwoWay}"
-					          Content="{x:Static res:Resources.HighlightMemberReferences}" />
+					<CheckBox IsChecked="{Binding Settings.NavigateOnCtrlClick, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.NavigateOnCtrlClick}" />
+					<CheckBox IsChecked="{Binding Settings.HighlightSymbolsUnderCaret, Mode=TwoWay}"
+					          Content="{x:Static res:Resources.HighlightSymbolsUnderCaret}" />
 					<CheckBox IsChecked="{Binding Settings.ExpandXmlDocumentationComments, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.ExpandXmlDocumentationCommentsAfterDecompilation}" />
 					<CheckBox IsChecked="{Binding Settings.ExpandMemberDefinitions, Mode=TwoWay}"

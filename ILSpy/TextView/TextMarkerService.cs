@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 
@@ -39,11 +40,13 @@ namespace ICSharpCode.ILSpy.TextView
 	sealed class TextMarkerService : IBackgroundRenderer
 	{
 		readonly AvaloniaEdit.Rendering.TextView textView;
+		readonly Control resourceHost;
 		TextSegmentCollection<TextMarker>? markers;
 
-		public TextMarkerService(AvaloniaEdit.Rendering.TextView textView)
+		public TextMarkerService(AvaloniaEdit.Rendering.TextView textView, Control resourceHost)
 		{
 			this.textView = textView ?? throw new ArgumentNullException(nameof(textView));
+			this.resourceHost = resourceHost ?? throw new ArgumentNullException(nameof(resourceHost));
 			textView.DocumentChanged += OnDocumentChanged;
 			OnDocumentChanged(null, EventArgs.Empty);
 		}
@@ -101,14 +104,25 @@ namespace ICSharpCode.ILSpy.TextView
 			int viewEnd = visualLines.Last().LastDocumentLine.EndOffset;
 			foreach (var marker in markers.FindOverlappingSegments(viewStart, viewEnd - viewStart))
 			{
-				if (marker.BackgroundColor is not { } bg)
+				if (GetBackgroundBrush(marker) is not { } brush)
 					continue;
 				var geo = new BackgroundGeometryBuilder { AlignToWholePixels = true, CornerRadius = 3 };
 				geo.AddSegment(textView, marker);
 				var geometry = geo.CreateGeometry();
 				if (geometry != null)
-					drawingContext.DrawGeometry(new SolidColorBrush(bg), null, geometry);
+					drawingContext.DrawGeometry(brush, null, geometry);
 			}
+		}
+
+		IBrush? GetBackgroundBrush(TextMarker marker)
+		{
+			if (marker.BackgroundResourceKey != null
+				&& resourceHost.TryFindResource(marker.BackgroundResourceKey, resourceHost.ActualThemeVariant, out var resource)
+				&& resource is IBrush brush)
+			{
+				return brush;
+			}
+			return marker.BackgroundColor is { } bg ? new SolidColorBrush(bg) : null;
 		}
 	}
 
@@ -120,6 +134,7 @@ namespace ICSharpCode.ILSpy.TextView
 	{
 		readonly TextMarkerService service;
 		Color? backgroundColor;
+		string? backgroundResourceKey;
 
 		public TextMarker(TextMarkerService service, int startOffset, int length)
 		{
@@ -134,6 +149,16 @@ namespace ICSharpCode.ILSpy.TextView
 				if (backgroundColor == value)
 					return;
 				backgroundColor = value;
+				service.Redraw(this);
+			}
+		}
+
+		public string? BackgroundResourceKey {
+			get => backgroundResourceKey;
+			set {
+				if (backgroundResourceKey == value)
+					return;
+				backgroundResourceKey = value;
 				service.Redraw(this);
 			}
 		}

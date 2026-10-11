@@ -2218,14 +2218,14 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Single-click highlights member references (Ctrl+Click navigates).
+        ///   Looks up a localized string similar to Highlight symbols under caret.
         /// </summary>
-        public static string HighlightMemberReferences {
+        public static string HighlightSymbolsUnderCaret {
             get {
-                return ResourceManager.GetString("HighlightMemberReferences", resourceCulture);
+                return ResourceManager.GetString("HighlightSymbolsUnderCaret", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to ILSpyAboutPage.txt.
         /// </summary>
@@ -2388,6 +2388,15 @@ namespace ICSharpCode.ILSpy.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Navigate on Ctrl+Click.
+        /// </summary>
+        public static string NavigateOnCtrlClick {
+            get {
+                return ResourceManager.GetString("NavigateOnCtrlClick", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Navigation.
         /// </summary>

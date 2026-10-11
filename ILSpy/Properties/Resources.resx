@@ -768,8 +768,8 @@ Are you sure you want to continue?</value>
   <data name="HighlightMatchingBraces" xml:space="preserve">
     <value>Highlight matching braces</value>
   </data>
-  <data name="HighlightMemberReferences" xml:space="preserve">
-    <value>Single-click highlights member references (Ctrl+Click navigates)</value>
+  <data name="HighlightSymbolsUnderCaret" xml:space="preserve">
+    <value>Highlight symbols under caret</value>
   </data>
   <data name="ILSpyAboutPageTxt" xml:space="preserve">
     <value>ILSpyAboutPage.txt</value>
@@ -830,6 +830,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="Name" xml:space="preserve">
     <value>Name</value>
+  </data>
+  <data name="NavigateOnCtrlClick" xml:space="preserve">
+    <value>Navigate on Ctrl+Click</value>
   </data>
   <data name="Navigation" xml:space="preserve">
     <value>Navigation</value>

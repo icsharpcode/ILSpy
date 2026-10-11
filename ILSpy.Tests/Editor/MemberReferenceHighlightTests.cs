@@ -67,18 +67,16 @@ public class MemberHighlightSample
 }
 
 /// <summary>
-/// Pins the member click-highlight behavior (issue #781): with the setting enabled, a
-/// single click on a member or type reference highlights all its occurrences in the view
-/// and Ctrl+Click navigates; with the setting disabled (the default), plain click keeps
-/// navigating.
+/// Pins reference click navigation: plain clicks navigate by default, and the display setting
+/// can require Ctrl+Click for navigation.
 /// </summary>
 [TestFixture]
 public class MemberReferenceHighlightTests
 {
-	static async Task<(MainWindow Window, DecompilerTextView View, DecompilerTabPageModel Tab)> SetupAsync(bool highlightMemberReferences)
+	static async Task<(MainWindow Window, DecompilerTextView View, DecompilerTabPageModel Tab)> SetupAsync(bool navigateOnCtrlClick)
 	{
 		var (window, vm) = await TestHarness.BootAsync();
-		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.HighlightMemberReferences = highlightMemberReferences;
+		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.NavigateOnCtrlClick = navigateOnCtrlClick;
 		await vm.OpenAssemblyAsync(typeof(MemberHighlightSample).Assembly.Location);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"ILSpy.Tests",
@@ -98,99 +96,58 @@ public class MemberReferenceHighlightTests
 	}
 
 	[AvaloniaTest]
-	public async Task Clicking_A_Member_Navigates_When_The_Setting_Is_Off()
+	public async Task Clicking_A_Member_Navigates_By_Default()
 	{
-		var (_, view, tab) = await SetupAsync(highlightMemberReferences: false);
+		var (_, view, tab) = await SetupAsync(navigateOnCtrlClick: false);
 
 		var fieldSegments = SegmentsOf(tab, nameof(MemberHighlightSample.Field));
+		var definition = fieldSegments.First(r => r.IsDefinition);
 		var use = fieldSegments.First(r => !r.IsDefinition);
 		view.OnReferenceClicked(use);
 
 		view.LocalReferenceMarks.Should().BeEmpty(
-			"with the setting off, a plain click must keep navigating instead of highlighting");
+			"plain clicks no longer create member reference highlights");
+		view.Editor.TextArea.Caret.Offset.Should().BeInRange(definition.StartOffset, definition.EndOffset,
+			"plain clicks navigate to an in-document definition by default");
 	}
 
 	[AvaloniaTest]
-	public async Task Clicking_A_Member_Highlights_All_Occurrences_When_Enabled()
+	public async Task Plain_Click_Does_Not_Navigate_When_Ctrl_Click_Is_Required()
 	{
-		var (_, view, tab) = await SetupAsync(highlightMemberReferences: true);
+		var (_, view, tab) = await SetupAsync(navigateOnCtrlClick: true);
 
 		var fieldSegments = SegmentsOf(tab, nameof(MemberHighlightSample.Field));
-		// Besides the definition and the two uses, punctuation tokens of the declaration
-		// carry the member reference as well; all of them belong to the highlight group.
-		fieldSegments.Count(r => r.IsDefinition).Should().Be(1);
-		fieldSegments.Should().HaveCountGreaterThanOrEqualTo(3, "the field has one definition and two uses");
-		bool navigated = false;
-		tab.NavigateRequested += (_, _) => navigated = true;
-
+		var originalOffset = view.Editor.TextArea.Caret.Offset;
 		var use = fieldSegments.First(r => !r.IsDefinition);
 		view.OnReferenceClicked(use);
 
-		view.LocalReferenceMarks.Select(m => m.StartOffset).Should().BeEquivalentTo(
-			fieldSegments.Select(s => s.StartOffset),
-			"clicking a use must highlight the definition and every use");
-		navigated.Should().BeFalse("a highlighting click must not navigate");
+		view.Editor.TextArea.Caret.Offset.Should().Be(originalOffset);
+		view.LocalReferenceMarks.Should().BeEmpty("plain clicks do not create member reference highlights");
 	}
 
 	[AvaloniaTest]
-	public async Task Highlight_Matches_Specialized_Member_Uses()
+	public async Task Ctrl_Click_Navigates_When_Ctrl_Click_Is_Required()
 	{
-		var (_, view, tab) = await SetupAsync(highlightMemberReferences: true);
-
-		var makeSegments = SegmentsOf(tab, nameof(MemberHighlightSample.Make));
-		// The identifier segments plus the call parentheses, which carry the member
-		// reference as well.
-		makeSegments.Count(r => r.IsDefinition).Should().Be(1);
-		makeSegments.Should().HaveCountGreaterThanOrEqualTo(2, "the generic method has one definition and one call");
-		// The call site carries a specialized method instance, the declaration the definition.
-		var use = makeSegments.First(r => !r.IsDefinition && r.Length > 1);
-		view.OnReferenceClicked(use);
-
-		view.LocalReferenceMarks.Select(m => m.StartOffset).Should().BeEquivalentTo(
-			makeSegments.Select(s => s.StartOffset),
-			"clicking the specialized call site must also highlight the definition");
-	}
-
-	[AvaloniaTest]
-	public async Task Clicking_A_Type_Highlights_All_Its_Parameterizations()
-	{
-		var (_, view, tab) = await SetupAsync(highlightMemberReferences: true);
-
-		var listTypeSegments = tab.References!
-			.Where(r => r.Kind == ReferenceMode.Link && r.Reference is IType { Name: "List" })
-			.ToList();
-		listTypeSegments.Should().HaveCountGreaterThanOrEqualTo(2,
-			"List<T> and List<int> both occur in the view");
-
-		view.OnReferenceClicked(listTypeSegments[0]);
-
-		view.LocalReferenceMarks.Select(m => m.StartOffset).Should().BeEquivalentTo(
-			listTypeSegments.Select(s => s.StartOffset),
-			"clicking a type reference must highlight all its occurrences regardless of type arguments");
-	}
-
-	[AvaloniaTest]
-	public async Task Ctrl_Click_Navigates_When_Enabled()
-	{
-		var (_, view, tab) = await SetupAsync(highlightMemberReferences: true);
+		var (_, view, tab) = await SetupAsync(navigateOnCtrlClick: true);
 
 		var fieldSegments = SegmentsOf(tab, nameof(MemberHighlightSample.Field));
+		var definition = fieldSegments.First(r => r.IsDefinition);
 		var use = fieldSegments.First(r => !r.IsDefinition);
 		view.OnReferenceClicked(use, DecompilerTextView.ReferenceClickKind.Navigate);
 
 		view.LocalReferenceMarks.Should().BeEmpty(
-			"Ctrl+Click must navigate even with the setting enabled");
+			"Ctrl+Click navigates instead of highlighting");
+		view.Editor.TextArea.Caret.Offset.Should().BeInRange(definition.StartOffset, definition.EndOffset);
 	}
 
 	[AvaloniaTest]
-	public async Task Pointer_Click_Highlights_And_Ctrl_Click_Navigates()
+	public async Task Pointer_Click_Respects_Ctrl_Click_Requirement()
 	{
 		// Mirrors ReferenceClickTests.SetupAsync/FindVisibleReference: the System.String
 		// view and its first visible link are the proven coordinate path for pointer
-		// gestures; Stationary_Click_On_A_Link_Navigates pins that this very click
-		// navigates when the setting is off.
+		// gestures.
 		var (window, vm) = await TestHarness.BootAsync();
-		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.HighlightMemberReferences = true;
+		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.NavigateOnCtrlClick = true;
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
 		vm.AssemblyTreeModel.SelectNode(stringNode);
@@ -217,20 +174,20 @@ public class MemberReferenceHighlightTests
 		window.MouseDown(point, MouseButton.Left);
 		window.MouseUp(point, MouseButton.Left);
 
-		view.LocalReferenceMarks.Should().NotBeEmpty("a plain click must highlight, not navigate");
-		navigated.Should().BeFalse();
+		view.LocalReferenceMarks.Should().BeEmpty("plain clicks do not create member reference highlights");
+		navigated.Should().BeFalse("plain clicks do not navigate when Ctrl+Click is required");
 
 		window.MouseDown(point, MouseButton.Left, RawInputModifiers.Control);
 		window.MouseUp(point, MouseButton.Left, RawInputModifiers.Control);
 
-		navigated.Should().BeTrue("Ctrl+Click must navigate to the definition");
+		navigated.Should().BeTrue("Ctrl+Click must navigate");
 	}
 
 	[AvaloniaTest]
-	public async Task Cursor_Shows_Hand_Only_When_A_Click_Would_Navigate()
+	public async Task Cursor_Shows_Hand_Only_When_Click_Would_Navigate()
 	{
 		var (window, vm) = await TestHarness.BootAsync();
-		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.HighlightMemberReferences = true;
+		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.NavigateOnCtrlClick = true;
 		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
 		vm.AssemblyTreeModel.SelectNode(stringNode);
@@ -251,27 +208,13 @@ public class MemberReferenceHighlightTests
 		var visual = textView.GetVisualPosition(position, VisualYPosition.LineMiddle) - textView.ScrollOffset;
 		var point = textView.TranslatePoint(visual, window)!.Value;
 
-		// Without Ctrl a click highlights, so no hand cursor; with Ctrl it navigates.
+		// Without Ctrl a click does not navigate, so no hand cursor; with Ctrl it navigates.
 		window.MouseMove(point);
 		textView.Cursor?.ToString().Should().NotBe("Hand",
-			"with the setting enabled, a plain click highlights instead of navigating");
+			"with the setting enabled, a plain click does not navigate");
 
 		window.MouseMove(point, RawInputModifiers.Control);
 		textView.Cursor?.ToString().Should().Be("Hand",
 			"holding Ctrl makes the click navigate, so the link affordance must show");
-	}
-
-	[AvaloniaTest]
-	public async Task Clicking_Empty_Space_Clears_The_Member_Highlight()
-	{
-		var (_, view, tab) = await SetupAsync(highlightMemberReferences: true);
-
-		var use = SegmentsOf(tab, nameof(MemberHighlightSample.Field)).First(r => !r.IsDefinition);
-		view.OnReferenceClicked(use);
-		view.LocalReferenceMarks.Should().NotBeEmpty();
-
-		// A subsequent navigating click (Ctrl) on another member clears the previous marks.
-		view.OnReferenceClicked(use, DecompilerTextView.ReferenceClickKind.Navigate);
-		view.LocalReferenceMarks.Should().BeEmpty();
 	}
 }

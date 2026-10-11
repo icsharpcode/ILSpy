@@ -109,7 +109,10 @@ namespace ICSharpCode.ILSpy.Options
 		bool enableOmnibar;
 
 		[ObservableProperty]
-		bool highlightMemberReferences;
+		bool navigateOnCtrlClick;
+
+		[ObservableProperty]
+		bool highlightSymbolsUnderCaret = true;
 
 		public XName SectionName => "DisplaySettings";
 
@@ -139,7 +142,8 @@ namespace ICSharpCode.ILSpy.Options
 			StyleWindowTitleBar = (bool?)section.Attribute(nameof(StyleWindowTitleBar)) ?? false;
 			DecodeCustomAttributeBlobs = (bool?)section.Attribute(nameof(DecodeCustomAttributeBlobs)) ?? false;
 			EnableOmnibar = (bool?)section.Attribute(nameof(EnableOmnibar)) ?? false;
-			HighlightMemberReferences = (bool?)section.Attribute(nameof(HighlightMemberReferences)) ?? false;
+			NavigateOnCtrlClick = (bool?)section.Attribute(nameof(NavigateOnCtrlClick)) ?? false;
+			HighlightSymbolsUnderCaret = (bool?)section.Attribute(nameof(HighlightSymbolsUnderCaret)) ?? true;
 		}
 
 		public XElement SaveToXml()
@@ -169,7 +173,8 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue(nameof(StyleWindowTitleBar), StyleWindowTitleBar);
 			section.SetAttributeValue(nameof(DecodeCustomAttributeBlobs), DecodeCustomAttributeBlobs);
 			section.SetAttributeValue(nameof(EnableOmnibar), EnableOmnibar);
-			section.SetAttributeValue(nameof(HighlightMemberReferences), HighlightMemberReferences);
+			section.SetAttributeValue(nameof(NavigateOnCtrlClick), NavigateOnCtrlClick);
+			section.SetAttributeValue(nameof(HighlightSymbolsUnderCaret), HighlightSymbolsUnderCaret);
 			return section;
 		}
 	}
