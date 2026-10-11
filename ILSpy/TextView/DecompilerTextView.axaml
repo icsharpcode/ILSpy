@@ -22,8 +22,7 @@
 		     and carries the shared decompiler-view styling: themed background and selection
 		     highlight, user-selected editor font, redraw on theme-variant changes. -->
 		<textView:DecompilerTextEditor Name="Editor"
-		                               IsReadOnly="True"
-		                               ShowLineNumbers="True" />
+			                               IsReadOnly="True" />
 		<Border Name="WaitAdorner"
 		        Background="{DynamicResource ILSpy.EditorWaitAdornerBackground}"
 		        IsVisible="{Binding IsDecompiling}">
