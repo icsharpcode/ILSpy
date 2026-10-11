@@ -151,6 +151,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to _Navigate.
+        /// </summary>
+        public static string _Navigate {
+            get {
+                return ResourceManager.GetString("_Navigate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to _New.
         /// </summary>
         public static string _New {
@@ -2178,6 +2187,15 @@ namespace ICSharpCode.ILSpy.Properties {
         public static string GenerationWasCancelled {
             get {
                 return ResourceManager.GetString("GenerationWasCancelled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Go to Line....
+        /// </summary>
+        public static string GoToLine {
+            get {
+                return ResourceManager.GetString("GoToLine", resourceCulture);
             }
         }
         
