@@ -21,6 +21,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 using Avalonia.Headless.NUnit;
 using Avalonia.Threading;
@@ -92,6 +93,21 @@ public class DisplaySettingsReactionTests
 		decompileStarts.Should().BeGreaterThan(0,
 			"toggling a decompiler-output display setting must re-decompile the active tab "
 			+ "(the live Options page has no full-refresh-on-close to fall back on)");
+	}
+
+	[Test]
+	public void Show_Line_Numbers_Defaults_To_Off()
+	{
+		new DisplaySettings().ShowLineNumbers.Should().BeFalse();
+
+		var loaded = new DisplaySettings();
+		loaded.LoadFromXml(new XElement("DisplaySettings"));
+		loaded.ShowLineNumbers.Should().BeFalse("a missing attribute keeps the default");
+
+		var on = new DisplaySettings { ShowLineNumbers = true };
+		var reloaded = new DisplaySettings();
+		reloaded.LoadFromXml(on.SaveToXml());
+		reloaded.ShowLineNumbers.Should().BeTrue();
 	}
 
 	[Test]
