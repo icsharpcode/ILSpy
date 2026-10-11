@@ -38,9 +38,8 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.TextView;
 
 /// <summary>
-/// Highlight usages at caret (ReSharper-style): while the caret rests on a symbol, every
-/// occurrence of that symbol in the document is marked. Independent of the click highlight
-/// (<see cref="MemberReferenceHighlightTests"/>), which keeps its own marks.
+/// Highlight symbols under caret (ReSharper-style): while the caret rests on a symbol, every
+/// occurrence of that symbol in the document is marked.
 /// </summary>
 [TestFixture]
 public class CaretUsageHighlightTests
@@ -49,7 +48,7 @@ public class CaretUsageHighlightTests
 	{
 		var (window, vm) = await TestHarness.BootAsync();
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
-		settings.HighlightUsagesAtCaret = enabled;
+		settings.HighlightSymbolsUnderCaret = enabled;
 		await vm.OpenAssemblyAsync(typeof(MemberHighlightSample).Assembly.Location);
 		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
 			"ILSpy.Tests",
@@ -67,18 +66,18 @@ public class CaretUsageHighlightTests
 			.ToList();
 
 	[Test]
-	public void Setting_Defaults_To_Off_And_Round_Trips()
+	public void Setting_Defaults_To_On_And_Round_Trips()
 	{
-		new DisplaySettings().HighlightUsagesAtCaret.Should().BeFalse();
+		new DisplaySettings().HighlightSymbolsUnderCaret.Should().BeTrue();
 
 		var loaded = new DisplaySettings();
 		loaded.LoadFromXml(new XElement("DisplaySettings"));
-		loaded.HighlightUsagesAtCaret.Should().BeFalse("a missing attribute keeps the default");
+		loaded.HighlightSymbolsUnderCaret.Should().BeTrue("a missing attribute keeps the default");
 
-		var on = new DisplaySettings { HighlightUsagesAtCaret = true };
+		var on = new DisplaySettings { HighlightSymbolsUnderCaret = false };
 		var reloaded = new DisplaySettings();
 		reloaded.LoadFromXml(on.SaveToXml());
-		reloaded.HighlightUsagesAtCaret.Should().BeTrue();
+		reloaded.HighlightSymbolsUnderCaret.Should().BeFalse();
 	}
 
 	[AvaloniaTest]
@@ -93,7 +92,7 @@ public class CaretUsageHighlightTests
 		view.CaretUsageMarks.Select(m => m.StartOffset).Should().BeEquivalentTo(
 			fieldSegments.Select(s => s.StartOffset),
 			"the definition and every use of the field under the caret are marked");
-		view.LocalReferenceMarks.Should().BeEmpty("the caret highlight must not touch the click-highlight marks");
+		view.LocalReferenceMarks.Should().BeEmpty("the caret highlight must not touch external reference-highlight marks");
 	}
 
 	[AvaloniaTest]
@@ -147,10 +146,22 @@ public class CaretUsageHighlightTests
 		view.Editor.TextArea.Caret.Offset = use.StartOffset;
 		view.CaretUsageMarks.Should().BeEmpty("the option is off");
 
-		settings.HighlightUsagesAtCaret = true;
+		settings.HighlightSymbolsUnderCaret = true;
 		view.CaretUsageMarks.Should().NotBeEmpty("turning the option on highlights the symbol already under the caret");
 
-		settings.HighlightUsagesAtCaret = false;
+		settings.HighlightSymbolsUnderCaret = false;
 		view.CaretUsageMarks.Should().BeEmpty("turning the option off clears the marks");
+	}
+
+	[AvaloniaTest]
+	public async Task Highlight_Uses_Theme_Resource_Brushes()
+	{
+		var (view, tab, _) = await SetupAsync();
+		var definition = MemberSegments(tab, nameof(MemberHighlightSample.Field)).First(r => r.IsDefinition);
+
+		view.Editor.TextArea.Caret.Offset = definition.StartOffset + 1;
+
+		view.CaretUsageMarks.Should().Contain(m => m.BackgroundResourceKey == "ILSpy.SymbolDefinitionHighlightBrush");
+		view.CaretUsageMarks.Should().Contain(m => m.BackgroundResourceKey == "ILSpy.SymbolHighlightBrush");
 	}
 }

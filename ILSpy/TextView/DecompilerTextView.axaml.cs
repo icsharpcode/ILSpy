@@ -68,11 +68,9 @@ namespace ICSharpCode.ILSpy.TextView
 		// pointer-distance corridor; plain content uses Avalonia's ToolTip attached property.
 		internal readonly record struct HoverContent(Control Control, bool IsRich);
 
-		// Local-reference highlight colours: light-yellow "GreenYellow" for matches and a
-		// softer green for the actual definition.
-		static readonly Color LocalMatchBackground = Colors.GreenYellow;
-		static readonly Color LocalDefinitionBackground = Color.FromArgb(0x80, 0xA0, 0xFF, 0xA0);
 		static readonly Color DebugStepBackground = Color.FromArgb(0x80, 0xFF, 0xD7, 0x66);
+		const string SymbolHighlightBrushKey = "ILSpy.SymbolHighlightBrush";
+		const string SymbolDefinitionHighlightBrushKey = "ILSpy.SymbolDefinitionHighlightBrush";
 
 		// Stay-open corridor for the rich popup: as long as the pointer is closer than
 		// `distanceToPopupLimit` to the popup edges, the popup stays. The limit shrinks toward
@@ -87,7 +85,11 @@ namespace ICSharpCode.ILSpy.TextView
 		TextMarkerService textMarkerService = null!;
 		BracketHighlightRenderer bracketHighlightRenderer = null!;
 		readonly List<TextMarker> localReferenceMarks = new();
+		readonly List<TextMarker> caretUsageMarks = new();
 		readonly List<TextMarker> debugStepMarks = new();
+		// The segment the current caret-usage marks were computed for; re-computing is skipped while
+		// the caret moves within that same segment.
+		ReferenceSegment? caretUsageSegment;
 		int debugStepHighlightVersion;
 		readonly List<AvaloniaEdit.Rendering.VisualLineElementGenerator> activeCustomGenerators = new();
 		RichTextColorizer? activeColorizer;
@@ -132,8 +134,8 @@ namespace ICSharpCode.ILSpy.TextView
 			// AvaloniaEdit defaults to "Ctrl+Click to follow hyperlink" on its built-in
 			// LinkElementGenerator and propagates that flag onto every VisualLineLinkText it
 			// constructs (including those produced by user-added LinkElementGenerator subclasses
-			// like the About-page resource generator). Decompiler output uses hyperlinks
-			// extensively for in-app navigation — a plain click is the expected affordance.
+			// like the About-page resource generator). Decompiler references are handled below
+			// so NavigateOnCtrlClick can be applied consistently.
 			Editor.Options.RequireControlModifierForHyperlinkClick = false;
 			// The view is read-only, so Tab has nothing to indent; with AcceptsTab the text area marks
 			// the key handled and the focus could never leave the editor. Leaving it unhandled lets
@@ -312,11 +314,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 			var segment = GetReferenceSegmentAtPointer(e);
 			if (segment?.Reference == null)
-			{
-				// A click on empty space dismisses the local-reference highlight.
-				ClearLocalReferenceMarks();
 				return;
-			}
 			// AvaloniaEdit's own release handler has already reset its selection mode and released
 			// the pointer capture (it runs first in the bubble phase). Clear the empty caret-click
 			// selection it leaves behind, then navigate; marking the release handled stops it from
@@ -330,7 +328,7 @@ namespace ICSharpCode.ILSpy.TextView
 		// cleared/rebuilt per click) and the bracket-pair outline (repainted on every caret move).
 		void SetupBackgroundRenderers()
 		{
-			textMarkerService = new TextMarkerService(Editor.TextArea.TextView);
+			textMarkerService = new TextMarkerService(Editor.TextArea.TextView, this);
 			Editor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			bracketHighlightRenderer = new BracketHighlightRenderer(Editor.TextArea.TextView);
 		}
@@ -424,6 +422,72 @@ namespace ICSharpCode.ILSpy.TextView
 
 		/// <summary>The currently painted local-reference highlight marks (test observability).</summary>
 		internal IReadOnlyList<TextMarker> LocalReferenceMarks => localReferenceMarks;
+
+		/// <summary>The currently painted symbol-under-caret highlight marks (test observability).</summary>
+		internal IReadOnlyList<TextMarker> CaretUsageMarks => caretUsageMarks;
+
+		void SetupCaretUsageHighlight()
+		{
+			Editor.TextArea.Caret.PositionChanged += (_, _) => UpdateCaretUsageHighlight();
+		}
+
+		/// <summary>
+		/// The reference segment under the caret: one containing the caret offset, or ending right
+		/// before it (caret just after an identifier). Hover-only segments are skipped.
+		/// </summary>
+		ReferenceSegment? GetReferenceSegmentAtCaret()
+		{
+			if (DataContext is not DecompilerTabPageModel { References: { } references })
+				return null;
+			int offset = Editor.TextArea.Caret.Offset;
+			return Pick(references.FindSegmentsContaining(offset))
+				?? (offset > 0 ? Pick(references.FindSegmentsContaining(offset - 1)) : null);
+
+			static ReferenceSegment? Pick(IEnumerable<ReferenceSegment> segments)
+				=> segments.FirstOrDefault(s => s.Reference != null && s.Kind != ReferenceMode.HoverOnly);
+		}
+
+		void UpdateCaretUsageHighlight()
+		{
+			if (currentDisplaySettings is not { HighlightSymbolsUnderCaret: true }
+				|| DataContext is not DecompilerTabPageModel { References: { } references }
+				|| GetReferenceSegmentAtCaret() is not { } segment
+				|| !IsCaretHighlightable(segment))
+			{
+				ClearCaretUsageMarks();
+				return;
+			}
+			if (ReferenceEquals(segment, caretUsageSegment) && caretUsageMarks.Count > 0)
+				return;
+
+			ClearCaretUsageMarks();
+			caretUsageSegment = segment;
+			int textLength = Editor.Document.TextLength;
+			foreach (var r in references)
+			{
+				if (r.Kind == ReferenceMode.HoverOnly || !AreSameReference(segment.Reference!, r.Reference))
+					continue;
+				if (r.StartOffset < 0 || r.EndOffset > textLength)
+					continue;
+				var mark = textMarkerService.Create(r.StartOffset, r.Length);
+				mark.BackgroundResourceKey = r.IsDefinition ? SymbolDefinitionHighlightBrushKey : SymbolHighlightBrushKey;
+				caretUsageMarks.Add(mark);
+			}
+		}
+
+		// Locals and parameters, members, types and unresolved entity references. Opcodes and other
+		// link targets are excluded: marking every occurrence of an IL opcode would be noise.
+		static bool IsCaretHighlightable(ReferenceSegment segment)
+			=> segment.Kind == ReferenceMode.LocalHighlight
+				|| segment.Reference is IMember or IType or EntityReference;
+
+		void ClearCaretUsageMarks()
+		{
+			caretUsageSegment = null;
+			foreach (var mark in caretUsageMarks)
+				textMarkerService.Remove(mark);
+			caretUsageMarks.Clear();
+		}
 
 		// ThemeManager.Current is a process-lived singleton, so subscribing to its ThemeChanged in
 		// the constructor and never detaching would root every DecompilerTextView for the lifetime of
@@ -731,6 +795,12 @@ namespace ICSharpCode.ILSpy.TextView
 					// Off by default; the Options Display "Tab options" toggle shows/hides the bar
 					// live without a re-decompile, per text view.
 					Omnibar.IsVisible = s.EnableOmnibar;
+					break;
+				case nameof(DisplaySettings.NavigateOnCtrlClick):
+					ApplyReferenceCursor(forceNavigation: false);
+					break;
+				case nameof(DisplaySettings.HighlightSymbolsUnderCaret):
+					UpdateCaretUsageHighlight();
 					break;
 			}
 		}
@@ -1325,19 +1395,6 @@ namespace ICSharpCode.ILSpy.TextView
 			return model.References.FindSegmentsContaining(offset).FirstOrDefault();
 		}
 
-		/// <summary>
-		/// True when a plain click on <paramref name="segment"/> paints the occurrence
-		/// highlight instead of navigating: the member-highlight setting is enabled, Ctrl is
-		/// not held, and the reference is a member, type or unresolved entity reference.
-		/// </summary>
-		bool ShouldHighlightInsteadOfNavigate(ReferenceSegment segment, bool forceNavigation)
-		{
-			return !forceNavigation
-				&& segment.Kind == ReferenceMode.Link
-				&& currentDisplaySettings is { HighlightMemberReferences: true }
-				&& segment.Reference is IMember or IType or EntityReference;
-		}
-
 		InputElement? cursorQueryElement;
 		ReferenceSegment? cursorQuerySegment;
 
@@ -1356,7 +1413,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (cursorQueryElement == null || cursorQuerySegment == null)
 				return;
 			bool navigates = cursorQuerySegment.Kind == ReferenceMode.Link
-				&& !ShouldHighlightInsteadOfNavigate(cursorQuerySegment, forceNavigation);
+				&& (forceNavigation || currentDisplaySettings is not { NavigateOnCtrlClick: true });
 			cursorQueryElement.Cursor = new Cursor(navigates ? StandardCursorType.Hand : StandardCursorType.Arrow);
 		}
 
@@ -1382,23 +1439,12 @@ namespace ICSharpCode.ILSpy.TextView
 			if (segment.Kind == ReferenceMode.HoverOnly)
 				return;
 
-			// Local references stay inside this document — paint every match and let the user
-			// scrub through them. Cross-document references clear any existing marks since the
-			// view is about to refresh anyway.
-			if (segment.Kind == ReferenceMode.LocalHighlight)
-			{
-				HighlightLocalReferences(model, segment.Reference);
+			if (segment.Kind != ReferenceMode.Link)
 				return;
-			}
-			// With the member-highlight setting enabled, a plain click on a member or type
-			// reference paints all its occurrences in this view instead of navigating;
-			// Ctrl+Click keeps the navigation behavior. Opcode references always navigate:
-			// highlighting every occurrence of an IL opcode would be noise.
-			if (clickKind == ReferenceClickKind.Default && ShouldHighlightInsteadOfNavigate(segment, forceNavigation: false))
-			{
-				HighlightLocalReferences(model, segment.Reference);
+
+			if (clickKind == ReferenceClickKind.Default && currentDisplaySettings is { NavigateOnCtrlClick: true })
 				return;
-			}
+
 			ClearLocalReferenceMarks();
 
 			// In-document jumps win when the definition is in this same view.
@@ -1432,7 +1478,7 @@ namespace ICSharpCode.ILSpy.TextView
 				if (!AreSameReference(reference, r.Reference))
 					continue;
 				var mark = textMarkerService.Create(r.StartOffset, r.Length);
-				mark.BackgroundColor = r.IsDefinition ? LocalDefinitionBackground : LocalMatchBackground;
+				mark.BackgroundResourceKey = r.IsDefinition ? SymbolDefinitionHighlightBrushKey : SymbolHighlightBrushKey;
 				localReferenceMarks.Add(mark);
 			}
 		}

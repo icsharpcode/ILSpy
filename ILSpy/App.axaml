@@ -44,6 +44,8 @@
                          TextArea style leaves SelectionForeground unset). -->
                     <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#007ACC" Opacity="0.3" />
                     <SolidColorBrush x:Key="ILSpy.EditorSearchResultsBrush" Color="#FFD54F" />
+                    <SolidColorBrush x:Key="ILSpy.SymbolHighlightBrush" Color="#87CEFA" Opacity="0.31" />
+                    <SolidColorBrush x:Key="ILSpy.SymbolDefinitionHighlightBrush" Color="#87CEFA" Opacity="0.50" />
                     <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#80FFFFFF" />
                     <!-- Clickable text: About-page and decompiler-view hyperlinks (AvaloniaEdit's
                          TextView.LinkTextForegroundBrush, see the style below) and the metadata
@@ -118,6 +120,8 @@
                          dark editor background. -->
                     <SolidColorBrush x:Key="ILSpy.EditorSelectionBrush" Color="#3794FF" Opacity="0.35" />
                     <SolidColorBrush x:Key="ILSpy.EditorSearchResultsBrush" Color="#665500" />
+                    <SolidColorBrush x:Key="ILSpy.SymbolHighlightBrush" Color="#2F6F9F" Opacity="0.50" />
+                    <SolidColorBrush x:Key="ILSpy.SymbolDefinitionHighlightBrush" Color="#3794FF" Opacity="0.45" />
                     <SolidColorBrush x:Key="ILSpy.EditorWaitAdornerBackground" Color="#A0000000" />
                     <SolidColorBrush x:Key="ILSpy.LinkForeground" Color="#4DA6FF" />
                     <SolidColorBrush x:Key="ILSpy.ToolbarBackground" Color="#2D2D30" />
