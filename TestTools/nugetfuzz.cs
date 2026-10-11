@@ -230,6 +230,16 @@ async Task ProcessPackage(string spec)
 		matchTarget = net48;
 		pick = PickLib(dir, matchTarget);
 	}
+	else if (await ShouldPreferNetFxAsset(pick.Value.fw))
+	{
+		var netFxPick = PickLib(dir, net48);
+		if (netFxPick != null)
+		{
+			Console.WriteLine($"  ! ref pack {NetCoreRefPack}: nothing published for {pick.Value.fw.Version}, using {netFxPick.Value.fw.GetShortFolderName()} instead of {pick.Value.fw.GetShortFolderName()}");
+			matchTarget = net48;
+			pick = netFxPick;
+		}
+	}
 	if (pick == null)
 	{
 		Console.WriteLine("  no compatible lib assemblies, skipping");
@@ -334,6 +344,17 @@ async Task<List<string>> CollectDependencies(string rootDir, NuGetFramework matc
 		return (target, libRoot);
 	}
 	return null;
+}
+
+async Task<bool> ShouldPreferNetFxAsset(NuGetFramework libFw)
+{
+	if (libFw.Framework != FrameworkConstants.FrameworkIdentifiers.NetCoreApp)
+		return false;
+	var versions = await GetVersions(NetCoreRefPack);
+	if (versions == null)
+		return true;
+	return !versions.Any(v => !v.IsPrerelease && v.Major == libFw.Version.Major && v.Minor == libFw.Version.Minor)
+		&& !versions.Any(v => !v.IsPrerelease && v.Major <= libFw.Version.Major);
 }
 
 // Classic .NET Framework has no reference assemblies on this machine; fetch the
