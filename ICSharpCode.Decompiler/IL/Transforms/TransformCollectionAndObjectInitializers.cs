@@ -34,6 +34,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class TransformCollectionAndObjectInitializers : IStatementTransform
 	{
+		/// <summary>
+		/// Handles 'with' expressions with 0 initializers.
+		/// These do not start with the `stloc` that this transform typically looks for,
+		/// so they are handled separately as part of ExpressionTransforms.
+		/// </summary>
+		public static bool HandleEmptyWith(CallInstruction inst, ILTransformContext context)
+		{
+			if (!context.Settings.WithExpressions)
+				return false;
+			if (inst.Parent is StLoc { Parent: Block { Kind: BlockKind.WithInitializer } })
+				return false;  // already transformed
+			if (!IsRecordCloneMethodCall(inst))
+				return false;
+			var parentChildren = inst.Parent!.Children;
+			int insertionIndex = inst.ChildIndex;
+			context.Step("<Clone>$ to with-expression", inst);
+			var initializerBlock = new Block(BlockKind.WithInitializer);
+			ILVariable finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, inst.InferType(context.TypeSystem));
+			initializerBlock.FinalInstruction = new LdLoc(finalSlot);
+			initializerBlock.Instructions.Add(new StLoc(finalSlot, inst));
+			parentChildren[insertionIndex] = initializerBlock;
+			context.EndStep(inst);
+			// The with-initializer block might later get extended with additional initializers by Run().
+			return true;
+		}
+
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (!context.Settings.ObjectOrCollectionInitializers)
@@ -93,10 +119,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					instType = c.Method.TypeArguments[0];
 					blockKind = BlockKind.ObjectInitializer;
 					break;
-				case CallInstruction ci when context.Settings.WithExpressions && IsRecordCloneMethodCall(ci):
-					instType = ci.Method.DeclaringType;
+				case Block { Kind: BlockKind.WithInitializer, Instructions: [StLoc { Value: var existingInitInst }] }:
+					// Extend existing with-initializer block that was created by HandleEmptyWith.
+					instType = existingInitInst.InferType(context.TypeSystem);
 					blockKind = BlockKind.WithInitializer;
-					initInst = ci.Arguments.Single();
+					initInst = existingInitInst;
 					break;
 				default:
 					var typeDef = v.Type.GetDefinition();

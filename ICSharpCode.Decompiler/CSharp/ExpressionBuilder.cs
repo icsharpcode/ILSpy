@@ -4060,13 +4060,22 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression TranslateWithInitializer(Block block)
 		{
-			var stloc = block.Instructions.FirstOrDefault() as StLoc;
-			var final = block.FinalInstruction as LdLoc;
-			if (stloc == null || final == null || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
+			if (block.Instructions.FirstOrDefault() is not StLoc stloc
+				|| block.FinalInstruction is not LdLoc final
+				|| stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
+			{
 				throw new ArgumentException("given Block is invalid!");
+			}
+			ILInstruction oldValue = stloc.Value;
+			if (stloc.Variable.Type.IsReferenceType == true)
+			{
+				// reference types must involve a <Clone>$() call
+				Debug.Assert(TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall((CallInstruction)stloc.Value));
+				oldValue = ((CallInstruction)stloc.Value).Arguments.Single();
+			}
 
 			WithInitializerExpression withInitializerExpression = new WithInitializerExpression();
-			withInitializerExpression.Expression = Translate(stloc.Value, stloc.Variable.Type);
+			withInitializerExpression.Expression = Translate(oldValue, stloc.Variable.Type);
 			withInitializerExpression.Initializer = BuildArrayInitializerExpression(block, new InitializedObjectResolveResult(stloc.Variable.Type));
 
 			return withInitializerExpression.WithILInstruction(block)

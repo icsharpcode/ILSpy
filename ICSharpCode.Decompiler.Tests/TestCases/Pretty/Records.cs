@@ -129,6 +129,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					}
 				};
 			}
+
+			public Fields EmptyWith(Fields input)
+			{
+				return input with { };
+			}
 		}
 
 		public abstract record WithNestedRecords

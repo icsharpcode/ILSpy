@@ -171,6 +171,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case BlockKind.CollectionInitializer:
 				case BlockKind.ObjectInitializer:
+				case BlockKind.WithInitializer:
 					var final2 = finalInstruction as LdLoc;
 					Debug.Assert(final2 != null);
 					var initVar2 = final2!.Variable;
@@ -178,30 +179,41 @@ namespace ICSharpCode.Decompiler.IL
 					IType? type2 = null;
 					bool condition = Instructions[0].MatchStLoc(final2.Variable, out var init2);
 					Debug.Assert(condition);
-					Debug.Assert(init2 is NewObj
-						|| init2 is DefaultValue
-						|| (init2 is CallInstruction c && c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1)
-						|| (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
-					switch (init2)
+					if (Kind == BlockKind.WithInitializer)
 					{
-						case NewObj newObj:
-							type2 = newObj.Method.DeclaringType;
-							break;
-						case DefaultValue defaultValue:
-							type2 = defaultValue.Type;
-							break;
-						case Block callWithNamedArgs when callWithNamedArgs.Kind == BlockKind.CallWithNamedArgs:
-							type2 = ((CallInstruction)callWithNamedArgs.FinalInstruction).Method.ReturnType;
-							break;
-						case CallInstruction ci2 when TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(ci2):
-							type2 = ci2.Method.DeclaringType;
-							break;
-						case Call c2 when c2.Method.FullNameIs("System.Activator", "CreateInstance") && c2.Method.TypeArguments.Count == 1:
-							type2 = c2.Method.TypeArguments[0];
-							break;
-						default:
-							Debug.Assert(false);
-							break;
+						if (initVar2.Type.IsReferenceType == true)
+						{
+							Debug.Assert(init2 is CallInstruction cloneCall && TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(cloneCall));
+						}
+						type2 = initVar2.Type;
+					}
+					else
+					{
+						Debug.Assert(init2 is NewObj
+							|| init2 is DefaultValue
+							|| (init2 is CallInstruction c && c.Method.FullNameIs("System.Activator", "CreateInstance") && c.Method.TypeArguments.Count == 1)
+							|| (init2 is Block named && named.Kind == BlockKind.CallWithNamedArgs));
+						switch (init2)
+						{
+							case NewObj newObj:
+								type2 = newObj.Method.DeclaringType;
+								break;
+							case DefaultValue defaultValue:
+								type2 = defaultValue.Type;
+								break;
+							case Block callWithNamedArgs when callWithNamedArgs.Kind == BlockKind.CallWithNamedArgs:
+								type2 = ((CallInstruction)callWithNamedArgs.FinalInstruction).Method.ReturnType;
+								break;
+							case CallInstruction ci2 when TransformCollectionAndObjectInitializers.IsRecordCloneMethodCall(ci2):
+								type2 = ci2.Method.DeclaringType;
+								break;
+							case Call c2 when c2.Method.FullNameIs("System.Activator", "CreateInstance") && c2.Method.TypeArguments.Count == 1:
+								type2 = c2.Method.TypeArguments[0];
+								break;
+							default:
+								Debug.Assert(false);
+								break;
+						}
 					}
 					for (int i = 1; i < Instructions.Count; i++)
 					{

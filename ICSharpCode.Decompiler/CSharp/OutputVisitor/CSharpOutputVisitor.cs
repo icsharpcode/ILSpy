@@ -1339,6 +1339,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(withInitializerExpression);
 			withInitializerExpression.Expression.AcceptVisitor(this);
+			Space();
 			WriteKeyword("with");
 			withInitializerExpression.Initializer.AcceptVisitor(this);
 			EndNode(withInitializerExpression);
