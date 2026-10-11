@@ -9,8 +9,9 @@ in-repo test suite cannot: it decompiles fixtures we wrote, these decompile what
 | `nugetfuzz.cs --pdb` | Is the *PDB* we generate for real code well-formed, and can a consumer read it? |
 | `decompdiff.cs` | Did a change make the *output* better or worse? (readability across two builds) |
 | `nuget-top.ps1` | Where do I get a corpus? (downloads the most-downloaded packages) |
+| `allocview.cs` | Where did the *allocations* go? (bytes by type and by area, as a flamegraph) |
 
-Both are [file-based apps](https://learn.microsoft.com/dotnet/core/whats-new/dotnet-10/sdk#file-based-apps):
+They are [file-based apps](https://learn.microsoft.com/dotnet/core/whats-new/dotnet-10/sdk#file-based-apps):
 single `.cs` files run directly by the SDK, no project, no solution entry. They are not built by
 `ILSpy.sln` and not run by CI. Requirements: the .NET SDK from `global.json` (or newer) and, for
 the sweep script, PowerShell 7 (`pwsh`) - both cross-platform.
@@ -183,6 +184,20 @@ assembly against the net4x packs resolves mscorlib but not `ValueTask` or the as
 and every async method then decompiles as a raw state machine. Both sides read the same staging
 directory, so anything still unresolved degrades them identically and the diff stays meaningful.
 Unresolved references are listed in the summary.
+
+## allocview
+
+Turns a trace of a decompiler run into a byte-weighted allocation flamegraph for
+[speedscope](https://www.speedscope.app) plus a summary by area of the decompiler:
+
+```pwsh
+dotnet run allocview.cs -- alloc.nettrace
+```
+
+Collecting the trace needs no tool and no code in ILSpy - the runtime writes one when
+`DOTNET_EnableEventPipe` is set, for `ilspycmd`, the UI or a test run alike.
+**[allocview.md](allocview.md) has the full recipe**, including how to read the flamegraph and
+what the sampling does and does not tell you.
 
 ## Windows notes
 
