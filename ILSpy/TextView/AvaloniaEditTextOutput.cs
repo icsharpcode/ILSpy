@@ -186,6 +186,13 @@ namespace ICSharpCode.ILSpy.TextView
 			CheckLength();
 		}
 
+		public void Write(ReadOnlySpan<char> text)
+		{
+			WriteIndentIfNeeded();
+			builder.Append(text);
+			CheckLength();
+		}
+
 		public void WriteLine()
 		{
 			if (IgnoreNewLineAndIndent)

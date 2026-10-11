@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public readonly TypeSystemAstBuilder TypeSystemAstBuilder;
 		public readonly DecompilerSettings Settings;
 		internal readonly DecompileRun DecompileRun;
-		public Stepper Stepper { get; set; }
+		public Stepper? Stepper { get; set; }
 
 		readonly ITypeResolveContext decompilationContext;
 
@@ -71,7 +71,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			this.TypeSystemAstBuilder = typeSystemAstBuilder;
 			this.CancellationToken = decompileRun.CancellationToken;
 			this.Settings = decompileRun.Settings;
-			this.Stepper = new Stepper();
 		}
 
 		/// <summary>
@@ -82,20 +81,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		[DebuggerStepThrough]
 		internal void Step(string description, AstNode? near = null)
 		{
-			Stepper.Step(description, CreateNodeInfo(near));
+			Stepper?.Step(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
 		[DebuggerStepThrough]
 		internal void StepStartGroup(string description, AstNode? near = null)
 		{
-			Stepper.StartGroup(description, CreateNodeInfo(near));
+			Stepper?.StartGroup(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
 		internal void StepEndGroup(bool keepIfEmpty = false)
 		{
-			Stepper.EndGroup(keepIfEmpty);
+			Stepper?.EndGroup(keepIfEmpty);
 		}
 
 		/// <summary>
@@ -106,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		[Conditional("STEP")]
 		internal void EndStep(AstNode? modifiedNode)
 		{
-			if (Stepper.LastStep != null && modifiedNode != null)
+			if (Stepper?.LastStep != null && modifiedNode != null)
 			{
 				var marker = new DebugStepMarker();
 				modifiedNode.AddAnnotation(marker);

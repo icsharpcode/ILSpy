@@ -49,6 +49,13 @@ namespace ICSharpCode.ILSpy.TextView
 		void EndSpan();
 
 		/// <summary>
+		/// Writes a slice of text without requiring the caller to allocate an intermediate
+		/// string. Implementations that buffer internally should override the default,
+		/// which falls back to <see cref="ITextOutput.Write(string)"/>.
+		/// </summary>
+		void Write(ReadOnlySpan<char> text) => Write(text.ToString());
+
+		/// <summary>
 		/// Title displayed in the document tab's header.
 		/// </summary>
 		string Title { get; set; }

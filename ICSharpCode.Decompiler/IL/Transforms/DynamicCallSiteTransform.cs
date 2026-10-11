@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					continue;
 				if (!callsites.TryGetValue(cacheField, out var callsite))
 					continue;
-				context.Stepper.Step("Transform callsite for " + callsite.MemberName);
+				context.Step("Transform callsite for " + callsite.MemberName, invokeCall);
 				var deadArguments = new List<ILInstruction>();
 				ILInstruction replacement = MakeDynamicInstruction(callsite, invokeCall, deadArguments);
 				if (replacement == null)

@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public IDebugInfoProvider? DebugInfo { get; }
 		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; set; }
-		public Stepper Stepper { get; set; }
+		public Stepper? Stepper { get; set; }
 		public Metadata.MetadataFile PEFile => TypeSystem.MainModule.MetadataFile;
 
 		internal DecompileRun? DecompileRun { get; set; }
@@ -73,7 +73,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
 			this.Settings = settings ?? new DecompilerSettings();
 			this.DebugInfo = debugInfo;
-			Stepper = new Stepper();
 		}
 
 		public ILTransformContext(ILTransformContext context, ILFunction? function = null)
@@ -107,20 +106,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		[DebuggerStepThrough]
 		internal void Step(string description, ILInstruction? near)
 		{
-			Stepper.Step(description, CreateNodeInfo(near));
+			Stepper?.Step(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
 		[DebuggerStepThrough]
 		internal void StepStartGroup(string description, ILInstruction? near = null)
 		{
-			Stepper.StartGroup(description, CreateNodeInfo(near));
+			Stepper?.StartGroup(description, CreateNodeInfo(near));
 		}
 
 		[Conditional("STEP")]
 		internal void StepEndGroup(bool keepIfEmpty = false)
 		{
-			Stepper.EndGroup(keepIfEmpty);
+			Stepper?.EndGroup(keepIfEmpty);
 		}
 
 		/// <summary>
@@ -134,7 +133,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		[Conditional("STEP")]
 		internal void EndStep(ILInstruction? modifiedNode)
 		{
-			if (Stepper.LastStep is { } step && modifiedNode != null)
+			if (Stepper?.LastStep is { } step && modifiedNode != null)
 			{
 				step.ModifiedNode = modifiedNode;
 				step.RecordModifiedNode(modifiedNode, insertFirst: true);

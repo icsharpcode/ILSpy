@@ -35,6 +35,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -577,7 +578,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				{
 					// A single slot reads null only when empty; that is valid only if the slot is optional.
 					// (Collection slots never yield a null index, so this branch is always a single slot.)
-					Debug.Assert(slot.IsOptional, $"required slot '{slot.Name}' on {GetType().Name} must not be empty");
+					DecompilerAssert.That(slot.IsOptional, $"required slot '{slot.Name}' on {GetType().Name} must not be empty");
 					continue;
 				}
 				Debug.Assert(child.parent == this, "child's Parent must point back to this node");

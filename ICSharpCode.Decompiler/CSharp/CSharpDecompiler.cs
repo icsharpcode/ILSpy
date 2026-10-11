@@ -240,8 +240,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Gets or sets whether the pipeline records its steps into <see cref="Stepper"/>, so that one
 		/// step tree spans all of it: the IL transforms of every member, the ILAst-to-C# conversion,
 		/// and the C# AST transforms.
-		/// Off by default, and off means the whole pipeline records nothing: every phase keeps the
-		/// stepper its context creates for itself, which nothing reads. Turning it on is what makes the
+		/// Off by default, and off means the whole pipeline records nothing: contexts do not get a
+		/// stepper unless this is enabled. Turning it on is what makes the
 		/// steps <i>retained</i>, and each retained step pins the ILAst it captured, including the
 		/// instructions its transform removed. That is affordable for the single type a step view
 		/// displays and not for a whole-module decompile, so only callers that show the steps opt in.
@@ -910,8 +910,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var context = new TransformContext(typeSystem, decompileRun, decompilationContext, typeSystemAstBuilder);
 			// Off means off for the whole pipeline: leaving the AST half recording would give the same
 			// pipeline two numbering bases, and an index recorded under one of them means a different
-			// step under the other. Without this the context keeps a stepper of its own, which nothing
-			// reads.
+			// step under the other. Without this the context does not record steps.
 			if (RecordSteps)
 				context.Stepper = Stepper;
 			// The tree handed to the pipeline must already be well-formed; check it once up front so a
