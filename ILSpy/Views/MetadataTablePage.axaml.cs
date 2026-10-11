@@ -28,6 +28,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 
 using ICSharpCode.ILSpy.AppEnv;
@@ -48,6 +49,7 @@ namespace ICSharpCode.ILSpy.Views
 		MetadataTablePageModel? boundModel;
 		DataGridCollectionView? itemsView;
 		DataGridCell? hoveredCell;
+		const int MaxPendingScrollAttempts = 60;
 
 		public MetadataTablePage()
 		{
@@ -392,14 +394,49 @@ namespace ICSharpCode.ILSpy.Views
 		{
 			if (boundModel?.ScrollToRow is not int row)
 				return;
+			ApplyScrollTarget(row, center: false, attempt: 0);
+		}
+
+		void ApplyScrollTarget(int row, bool center, int attempt)
+		{
 			var grid = this.FindControl<DataGrid>("Grid");
-			if (grid == null || boundModel.Items.Count == 0)
+			if (grid == null || boundModel == null || boundModel.Items.Count == 0)
 				return;
 			int idx = Math.Clamp(row, 0, boundModel.Items.Count - 1);
 			var item = boundModel.Items[idx];
-			grid.ScrollIntoView(item, grid.Columns.Count > 0 ? grid.Columns[0] : null);
 			grid.SelectedItem = item;
+			var rowContainer = grid.GetVisualDescendants().OfType<DataGridRow>()
+				.FirstOrDefault(r => ReferenceEquals(r.DataContext, item));
+			if (center && rowContainer != null)
+			{
+				grid.UpdateLayout();
+				CenterRowInView(rowContainer, idx, boundModel.Items.Count);
+				boundModel.ScrollToRow = null;
+				return;
+			}
+			grid.ScrollIntoView(item, grid.Columns.Count > 0 ? grid.Columns[0] : null);
+			if (attempt < MaxPendingScrollAttempts)
+			{
+				Dispatcher.UIThread.Post(
+					() => ApplyScrollTarget(row, center: rowContainer != null, attempt + 1),
+					DispatcherPriority.Background);
+				return;
+			}
+
 			boundModel.ScrollToRow = null;
+		}
+
+		static void CenterRowInView(DataGridRow row, int rowIndex, int rowCount)
+		{
+			var scrollViewer = row.GetVisualAncestors().OfType<ScrollViewer>().FirstOrDefault();
+			if (scrollViewer == null || scrollViewer.Viewport.Height <= 0 || row.Bounds.Height <= 0)
+				return;
+
+			double maxOffset = Math.Max(0, scrollViewer.Extent.Height - scrollViewer.Viewport.Height);
+			double targetOffset = scrollViewer.Extent.Height <= rowCount + 1
+				? rowIndex - (scrollViewer.Viewport.Height - 1) / 2
+				: rowIndex * row.Bounds.Height - (scrollViewer.Viewport.Height - row.Bounds.Height) / 2;
+			scrollViewer.Offset = new Vector(scrollViewer.Offset.X, Math.Clamp(targetOffset, 0, maxOffset));
 		}
 	}
 }
