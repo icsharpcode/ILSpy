@@ -16,11 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless.NUnit;
+using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
@@ -43,7 +48,7 @@ public class MetadataTokenNavigationTests
 		// must dispatch through the docking host to the TypeRef / TypeDef / TypeSpec table
 		// the token belongs to and scroll the receiving grid to the referenced row.
 
-		var (_, vm) = await TestHarness.BootAsync();
+		var (window, vm) = await TestHarness.BootAsync();
 
 		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
 			.GetChild<MetadataTreeNode>()
@@ -54,10 +59,11 @@ public class MetadataTokenNavigationTests
 		var tab = await vm.DockWorkspace.WaitForMetadataTabAsync();
 		TestCapture.Step("typedef-grid");
 
-		// Pick a row whose BaseType is non-zero (skip <Module>) and resolve the expected
-		// target table from the handle's runtime kind.
+		// Pick a TypeDef target near the middle of the destination table so centering is observable.
 		var rowWithBase = tab.Items.Cast<TypeDefTableTreeNode.TypeDefEntry>()
-			.First(e => e.BaseType != 0);
+			.Where(e => MetadataTokens.EntityHandle(e.BaseType).Kind == HandleKind.TypeDefinition)
+			.OrderBy(e => Math.Abs(MetadataTokens.GetRowNumber(MetadataTokens.EntityHandle(e.BaseType)) - typeDefNode.RowCount / 2))
+			.First();
 		var expectedTableIndex = (TableIndex)(int)MetadataTokens.EntityHandle(rowWithBase.BaseType).Kind;
 		var expectedRowNumber = MetadataTokens.GetRowNumber(MetadataTokens.EntityHandle(rowWithBase.BaseType));
 
@@ -78,6 +84,27 @@ public class MetadataTokenNavigationTests
 		landed.Title.Should().Contain(expectedTableIndex.ToString()); // title leads with the kind byte
 		landed.Items.Should().HaveCountGreaterThan((int)(expectedRowNumber - 1),
 			"the target row index must be in range for the destination table");
+		var expectedItem = landed.Items[(int)expectedRowNumber - 1];
+		var metadataPage = await window.WaitForComponent<MetadataTablePage>();
+		var grid = metadataPage.FindControl<DataGrid>("Grid")!;
+		await Waiters.WaitForAsync(
+			() => IsCentered(grid, expectedItem),
+			description: "the target metadata row to be realised and centered after token navigation");
+	}
+
+	static bool IsCentered(DataGrid grid, object expectedItem)
+	{
+		var row = grid.GetVisualDescendants().OfType<DataGridRow>()
+			.FirstOrDefault(r => ReferenceEquals(r.DataContext, expectedItem))!;
+		if (row == null)
+			return false;
+		var scrollViewer = row.GetVisualAncestors().OfType<ScrollViewer>().FirstOrDefault();
+		if (scrollViewer == null || scrollViewer.Bounds.Height <= 0 || row.Bounds.Height <= 0)
+			return false;
+		var rowCenter = row.TranslatePoint(new Point(0, row.Bounds.Height / 2), scrollViewer);
+		if (rowCenter == null)
+			return false;
+		return Math.Abs(rowCenter.Value.Y - scrollViewer.Bounds.Height / 2) <= row.Bounds.Height;
 	}
 
 	[AvaloniaTest]
