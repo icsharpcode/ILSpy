@@ -480,7 +480,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					targetPacks.Add("Microsoft.AspNetCore.All");
 				}
 			}
-			foreach (var reference in module.AssemblyReferences)
+			// The markup compiler resolves XAML type names through the whole reference graph, so a
+			// WPF project lists what its references pull in; a project without XAML keeps the
+			// direct list the C# compiler is content with.
+			var references = projectType.HasFlag(ProjectType.Wpf)
+				? AssemblyReferenceClosure.Of(module, project.AssemblyResolver)
+				: module.AssemblyReferences;
+			foreach (var reference in references)
 			{
 				if (IsSuppliedBySdk(reference.Name, projectType))
 				{

@@ -322,6 +322,69 @@ public sealed class WpfProjectExportTests
 		}
 	}
 
+	/// <summary>
+	/// The XAML markup compiler resolves type names through the whole reference graph, not only
+	/// through the assemblies the module names itself: an exported WPF project has to list what
+	/// its direct references pull in, or a real application does not rebuild (MC1000, MC3050).
+	/// </summary>
+	[Test]
+	public void WpfProjectListsTheReferencesItsReferencesPullIn()
+	{
+		string fixture = Compile("WpfTransitiveFixture",
+			AssemblyAttributes(".NETFramework,Version=v4.7.2", targetPlatform: null)
+			+ "public class UsesMiddle { public Stubs.TransitiveMiddle Middle; public Stubs.PresentationFramework Wpf; }",
+			OutputKind.DynamicallyLinkedLibrary, presentationFramework, MiddleReferencingLeaf());
+
+		string project = WriteProjectFile(fixture, resolveNextToFixture: true);
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain(@"Include=""TransitiveMiddle"""));
+			Assert.That(project, Does.Contain(@"Include=""TransitiveLeaf"""), "the markup compiler needs what the direct references pull in");
+		}
+	}
+
+	/// <summary>
+	/// The non-SDK project format has the same markup compiler behind it.
+	/// </summary>
+	[Test]
+	public void NonSdkWpfProjectListsTheReferencesItsReferencesPullIn()
+	{
+		string fixture = Compile("WpfTransitiveFixtureNonSdk",
+			AssemblyAttributes(".NETFramework,Version=v4.7.2", targetPlatform: null)
+			+ "public class UsesMiddle { public Stubs.TransitiveMiddle Middle; public Stubs.PresentationFramework Wpf; }",
+			OutputKind.DynamicallyLinkedLibrary, presentationFramework, MiddleReferencingLeaf());
+
+		string project = WriteProjectFile(fixture, resolveNextToFixture: true, sdkStyle: false);
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain(@"Include=""TransitiveMiddle"""));
+			Assert.That(project, Does.Contain(@"Include=""TransitiveLeaf"""));
+		}
+	}
+
+	/// <summary>
+	/// Only the markup compiler needs the closure. A project without XAML keeps the direct
+	/// reference list the C# compiler is content with, so nothing it does not use creeps in.
+	/// </summary>
+	[Test]
+	public void PlainLibraryListsOnlyItsDirectReferences()
+	{
+		string fixture = Compile("PlainTransitiveFixture",
+			AssemblyAttributes(".NETFramework,Version=v4.7.2", targetPlatform: null)
+			+ "public class UsesMiddle { public Stubs.TransitiveMiddle Middle; }",
+			OutputKind.DynamicallyLinkedLibrary, MiddleReferencingLeaf());
+
+		string project = WriteProjectFile(fixture, resolveNextToFixture: true);
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(project, Does.Contain(@"Include=""TransitiveMiddle"""));
+			Assert.That(project, Does.Not.Contain("TransitiveLeaf"));
+		}
+	}
+
 	static ITypeDefinition FindType(IDecompilerTypeSystem typeSystem, string fullTypeName)
 	{
 		var type = typeSystem.FindType(new FullTypeName(fullTypeName)).GetDefinition();
@@ -370,6 +433,24 @@ public sealed class WpfProjectExportTests
 			path = CompileTo(assemblyName + ".dll", assemblyName,
 				$"namespace Stubs {{ public class {MarkerTypeName(assemblyName)} {{ }} }}");
 			stubAssemblies.Add(assemblyName, path);
+		}
+		return path;
+	}
+
+	/// <summary>
+	/// A reference with a reference of its own: TransitiveMiddle exposes a type that lives in
+	/// TransitiveLeaf, so its metadata names TransitiveLeaf while a module using only
+	/// TransitiveMiddle does not. Compiled once; the file must not be written twice.
+	/// </summary>
+	string MiddleReferencingLeaf()
+	{
+		if (!stubAssemblies.TryGetValue("TransitiveMiddle", out string path))
+		{
+			string leaf = Stub("TransitiveLeaf");
+			path = CompileTo("TransitiveMiddle.dll", "TransitiveMiddle",
+				"namespace Stubs { public class TransitiveMiddle { public TransitiveLeaf Leaf; } }",
+				OutputKind.DynamicallyLinkedLibrary, leaf);
+			stubAssemblies.Add("TransitiveMiddle", path);
 		}
 		return path;
 	}
@@ -430,16 +511,22 @@ public sealed class WpfProjectExportTests
 		return module;
 	}
 
-	string WriteProjectFile(string fileName)
+	/// <summary>
+	/// By default nothing resolves, which keeps the hint paths out of the project text. A test
+	/// about what the references pull in needs the fixture's neighbours found.
+	/// </summary>
+	string WriteProjectFile(string fileName, bool resolveNextToFixture = false, bool sdkStyle = true)
 	{
+		var resolver = new UniversalAssemblyResolver(resolveNextToFixture ? fileName : null, throwOnError: false, targetFramework: null);
+		IProjectFileWriter writer = sdkStyle ? ProjectFileWriterSdkStyle.Default : ProjectFileWriterDefault.Instance;
 		StringWriter output = new();
-		ProjectFileWriterSdkStyle.Default.Write(output, new TestProjectInfoProvider(tempDirectory), Array.Empty<ProjectItemInfo>(), OpenModule(fileName));
+		writer.Write(output, new TestProjectInfoProvider(tempDirectory, resolver), Array.Empty<ProjectItemInfo>(), OpenModule(fileName));
 		return output.ToString();
 	}
 
-	sealed class TestProjectInfoProvider(string targetDirectory) : IProjectInfoProvider
+	sealed class TestProjectInfoProvider(string targetDirectory, IAssemblyResolver assemblyResolver) : IProjectInfoProvider
 	{
-		public IAssemblyResolver AssemblyResolver { get; } = new UniversalAssemblyResolver(null, false, null);
+		public IAssemblyResolver AssemblyResolver { get; } = assemblyResolver;
 		public IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; } = new AssemblyReferenceClassifier();
 		public CSharp.LanguageVersion LanguageVersion => CSharp.LanguageVersion.Latest;
 		public bool CheckForOverflowUnderflow => false;
