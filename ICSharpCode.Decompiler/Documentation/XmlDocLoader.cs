@@ -80,7 +80,9 @@ namespace ICSharpCode.Decompiler.Documentation
 						// type-forwarded entities (System.String docs live in System.Runtime.xml
 						// but the metadata token comes from System.Private.CoreLib.dll) resolve
 						// transparently.
-						xmlDoc = TryLoadModernRefPackDocumentation(module.FileName);
+						xmlDoc = string.IsNullOrEmpty(module.FileName)
+							? null
+							: TryLoadModernRefPackDocumentation(Path.GetDirectoryName(module.FileName));
 					}
 					cache.Add(module, xmlDoc); // cache null misses too — avoids re-scanning disk
 				}
