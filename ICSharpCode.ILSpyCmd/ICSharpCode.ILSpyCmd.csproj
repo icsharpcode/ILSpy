@@ -64,9 +64,6 @@
     <!-- Native symbols stay out of the AOT packages: on Windows the native PDB alone is over 100 MB. -->
     <StripSymbols Condition="'$(PublishAot)' == 'true'">true</StripSymbols>
     <CopyOutputSymbolsToPublishDirectory Condition="'$(PublishAot)' == 'true'">false</CopyOutputSymbolsToPublishDirectory>
-    <!-- The HTML diagrammer serializes its model with reflection-based System.Text.Json, which Native AOT turns
-         off by default; ILSpyX is rooted below so the trimmer keeps the model's members for it. -->
-    <JsonSerializerIsReflectionEnabledByDefault Condition="'$(PublishAot)' == 'true'">true</JsonSerializerIsReflectionEnabledByDefault>
     <!-- Pack goes through the regular Publish path instead of the build-time shortcut. -->
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <!-- PublishAot adds SDK-pinned ILCompiler/ILLink package references that the committed lock file does not
@@ -79,12 +76,10 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(PublishAot)' == 'true'">
-    <!-- McMaster binds [Option]/[Argument] properties by reflection over the command type; the BAML
-         HandlerMap discovers IHandler implementations via Assembly.GetTypes(); the diagrammer in ILSpyX
-         serializes its model (including anonymous types) by reflection. -->
+    <!-- McMaster binds [Option]/[Argument] properties by reflection over the command type;
+         the BAML HandlerMap discovers IHandler implementations via Assembly.GetTypes(). -->
     <TrimmerRootAssembly Include="ilspycmd" />
     <TrimmerRootAssembly Include="ICSharpCode.BamlDecompiler" />
-    <TrimmerRootAssembly Include="ICSharpCode.ILSpyX" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
