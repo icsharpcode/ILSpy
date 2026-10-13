@@ -73,7 +73,7 @@
          list, so this graph gets its own throwaway lock file instead of a locked restore. -->
     <NuGetLockFilePath>$(BaseIntermediateOutputPath)packages.ridtool.lock.json</NuGetLockFilePath>
     <RestoreLockedMode>false</RestoreLockedMode>
-    <!-- Unannotated dependencies (NuGet.Protocol, Newtonsoft.Json, McMaster) produce trim and AOT analysis
+    <!-- Unannotated dependencies (McMaster, Mono.Cecil) produce trim and AOT analysis
          warnings; the repo-wide TreatWarningsAsErrors must not fail the AOT compile on them. -->
     <IlcTreatWarningsAsErrors>false</IlcTreatWarningsAsErrors>
   </PropertyGroup>
@@ -105,7 +105,6 @@
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="NuGet.Protocol" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 

@@ -17,48 +17,40 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Json;
 using System.Reflection;
-using System.Threading;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-
-using NuGet.Common;
-using NuGet.Protocol;
-using NuGet.Protocol.Core.Types;
-using NuGet.Versioning;
 
 namespace ICSharpCode.ILSpyCmd
 {
-	internal record PackageCheckResult(NuGetVersion RunningVersion, NuGetVersion LatestVersion, bool UpdateRecommendation);
+	internal record PackageCheckResult(Version RunningVersion, Version LatestVersion, bool UpdateRecommendation);
 
 	// Idea from https://github.com/ErikEJ/EFCorePowerTools/blob/master/src/GUI/efcpt/Services/PackageService.cs
 	internal static class DotNetToolUpdateChecker
 	{
-		static NuGetVersion CurrentPackageVersion()
-		{
-			return new NuGetVersion(Assembly.GetEntryAssembly()!.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!
-				.InformationalVersion);
-		}
+		// The flat container is the smallest nuget.org endpoint that lists a package's versions:
+		// {"versions":["1.0.0","1.1.0-preview1",...]}, lowercase ids, prereleases included.
+		const string FlatContainerIndexUrl = "https://api.nuget.org/v3-flatcontainer/{0}/index.json";
 
 		public static async Task<PackageCheckResult> CheckForPackageUpdateAsync(string packageId)
 		{
 			try
 			{
-				using var cache = new SourceCacheContext();
-				var repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
-				var resource = await repository.GetResourceAsync<FindPackageByIdResource>().ConfigureAwait(false);
+				using var http = new HttpClient();
+				var index = await http.GetFromJsonAsync(
+					string.Format(FlatContainerIndexUrl, packageId.ToLowerInvariant()),
+					FlatContainerJsonContext.Default.FlatContainerIndex).ConfigureAwait(false);
 
-				var versions = await resource.GetAllVersionsAsync(
-					packageId,
-					cache,
-					new NullLogger(),
-					CancellationToken.None).ConfigureAwait(false);
+				var latestVersion = LatestStableVersion(index?.Versions ?? Array.Empty<string>());
+				if (latestVersion == null)
+					return null;
+				var runningVersion = RunningVersion(Assembly.GetEntryAssembly()!
+					.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion);
 
-				var latestVersion = versions.Where(v => v.Release == "").MaxBy(v => v);
-				var runningVersion = CurrentPackageVersion();
-				int comparisonResult = latestVersion.CompareTo(runningVersion, VersionComparison.Version);
-
-				return new PackageCheckResult(runningVersion, latestVersion, comparisonResult > 0);
+				return new PackageCheckResult(runningVersion, latestVersion, latestVersion > runningVersion);
 			}
 #pragma warning disable RCS1075 // Avoid empty catch clause that catches System.Exception.
 			catch (Exception)
@@ -68,5 +60,49 @@ namespace ICSharpCode.ILSpyCmd
 
 			return null;
 		}
+
+		/// <summary>
+		/// The highest listed version without a prerelease label, or null if there is none.
+		/// </summary>
+		internal static Version LatestStableVersion(IEnumerable<string> versions)
+		{
+			Version latest = null;
+			foreach (string version in versions)
+			{
+				if (version.Contains('-') || !Version.TryParse(version, out Version parsed))
+					continue;
+				parsed = Normalize(parsed);
+				if (latest == null || parsed > latest)
+					latest = parsed;
+			}
+			return latest;
+		}
+
+		/// <summary>
+		/// The numeric part of an informational version such as "11.1.0.9927-pr4241+0dab0067ec".
+		/// </summary>
+		internal static Version RunningVersion(string informationalVersion)
+		{
+			int end = informationalVersion.IndexOfAny(new[] { '-', '+' });
+			return Normalize(Version.Parse(end < 0 ? informationalVersion : informationalVersion.Substring(0, end)));
+		}
+
+		// System.Version compares a missing component as -1, so "11.1.0" would rank below
+		// "11.1.0.0"; NuGet treats them as equal.
+		static Version Normalize(Version version)
+		{
+			return new Version(version.Major, version.Minor, Math.Max(version.Build, 0), Math.Max(version.Revision, 0));
+		}
+	}
+
+	sealed class FlatContainerIndex
+	{
+		[JsonPropertyName("versions")]
+		public string[] Versions { get; set; }
+	}
+
+	[JsonSerializable(typeof(FlatContainerIndex))]
+	partial class FlatContainerJsonContext : JsonSerializerContext
+	{
 	}
 }
