@@ -23,15 +23,15 @@
       },
       "System.Collections.Immutable": {
         "type": "CentralTransitive",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "tRMzrybcwEEaudfpL9ghzfnSjEVVuhKa5sR86q30mYxXJdcKOLSBkpMFm62CGsbB50diPZta73Pxu8DgjGdDbA=="
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "mUiVD4AJ0way0QDXNEaU/zEMDgn0kzZEW+gjtQrrC7KsB74JKuLC54hCPUxyodlpiwS/ElbQYbiyjHpZfl6ghA=="
       },
       "System.Reflection.Metadata": {
         "type": "CentralTransitive",
-        "requested": "[10.0.12, )",
-        "resolved": "10.0.12",
-        "contentHash": "GvhJ5dVmJAw89wCWCyHXaU4A9iZjUtAW/ucshV6EpDW3l7VD8zHSWO14SHVD3m3jSuSE+FcNTrQFquJSQqJVVA=="
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "YeFLKbvzBrXT4Pv1K20SHAgUKgShHws6d1YZ6szdet9WBdJSRkOftnxJsY8JvV7dGX//AFF4Dk0SVnjl39OMWQ=="
       }
     },
     "net10.0/linux-x64": {},

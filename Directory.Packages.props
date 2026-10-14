@@ -8,11 +8,11 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <PropertyGroup>
-    <RoslynVersion>5.11.0-1.26426.105</RoslynVersion>
-    <NetPackageVersion>10.0.12</NetPackageVersion>
+    <RoslynVersion>5.12.0-1.26502.119</RoslynVersion>
+    <NetPackageVersion>10.0.13</NetPackageVersion>
     <TomsToolboxVersion>2.26.1</TomsToolboxVersion>
     <AvaloniaVersion>12.1.4</AvaloniaVersion>
-    <DockVersion>12.1.0.7</DockVersion>
+    <DockVersion>12.1.0.9</DockVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Avalonia (ILSpy port) -->
@@ -50,7 +50,7 @@
     <PackageVersion Include="Microsoft.NETCore.ILAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.NETCore.ILDAsm" Version="$(NetPackageVersion)" />
     <PackageVersion Include="Microsoft.Sbom.Targets" Version="4.1.5" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.402" />
     <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
     <PackageVersion Include="Microsoft.Testing.Extensions.VSTestBridge" Version="2.5.1" />
     <PackageVersion Include="Mono.Cecil" Version="0.11.6" />
