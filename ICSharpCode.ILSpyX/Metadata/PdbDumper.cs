@@ -96,10 +96,27 @@ namespace ICSharpCode.ILSpyX.Metadata
 				WriteText(output, module, assemblyName, documents, methods);
 		}
 
+		/// <summary>
+		/// Reader parameters that load symbols without Cecil's provider discovery: that discovery
+		/// resolves the Windows PDB reader by type name through Type.GetType, which has no
+		/// reflection metadata to find in a Native AOT build. The explicit provider from
+		/// Mono.Cecil.Pdb covers embedded, Portable and Windows PDBs; a missing PDB surfaces as
+		/// FileNotFoundException, as with the discovery.
+		/// </summary>
+		internal static ReaderParameters CreateReaderParameters(string? pdbFileName)
+		{
+			var parameters = new ReaderParameters {
+				ReadSymbols = true,
+				InMemory = true,
+				SymbolReaderProvider = new Mono.Cecil.Pdb.PdbReaderProvider()
+			};
+			ApplyExplicitSymbolFile(parameters, pdbFileName);
+			return parameters;
+		}
+
 		static ModuleDefinition ReadModuleWithSymbols(string assemblyFileName, string? pdbFileName)
 		{
-			var parameters = new ReaderParameters { ReadSymbols = true, InMemory = true };
-			ApplyExplicitSymbolFile(parameters, pdbFileName);
+			var parameters = CreateReaderParameters(pdbFileName);
 			ModuleDefinition module;
 			try
 			{
