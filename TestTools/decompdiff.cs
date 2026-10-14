@@ -599,7 +599,10 @@ sealed class RefIndex
 						missing.Add(name);
 					continue;
 				}
-				Link(found, dir);
+				// Stage under the name the reference asks for, not the source file's name: the
+				// GAC stores SMDiagnostics as SMdiagnostics.dll, and on a case-sensitive
+				// filesystem the resolver would then miss the file sitting next to it.
+				Link(found, dir, name + Path.GetExtension(found));
 			}
 			// A staged reference brings its own references along: the type system follows
 			// base types and type-forwards across the whole closure, not just one hop.
@@ -620,9 +623,9 @@ sealed class RefIndex
 		return $"{Path.GetFileNameWithoutExtension(full)}-{hash}";
 	}
 
-	static void Link(string source, string targetDir)
+	static void Link(string source, string targetDir, string? linkName = null)
 	{
-		var link = Path.Combine(targetDir, Path.GetFileName(source));
+		var link = Path.Combine(targetDir, linkName ?? Path.GetFileName(source));
 		if (File.Exists(link))
 			return;
 		try
