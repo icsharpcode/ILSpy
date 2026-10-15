@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -36,6 +37,9 @@ namespace ICSharpCode.Decompiler.Documentation
 		static readonly Lazy<XmlDocumentationProvider> mscorlibDocumentation = new Lazy<XmlDocumentationProvider>(LoadMscorlibDocumentation);
 		static readonly ConditionalWeakTable<MetadataFile, XmlDocumentationProvider> cache = new();
 
+#if NET5_0_OR_GREATER
+		[UnconditionalSuppressMessage("SingleFile", "IL3000:Avoid accessing Assembly file path when publishing as a single file", Justification = $"'System.Reflection.Assembly.Location.get' always returns an empty string for assemblies embedded in a single-file app. This is a valid input for {nameof(TryLoadModernRefPackDocumentation)}.")]
+#endif
 		static XmlDocumentationProvider LoadMscorlibDocumentation()
 		{
 			string xmlDocFile = FindXmlDocumentation("mscorlib.dll", TargetRuntime.Net_4_0)
