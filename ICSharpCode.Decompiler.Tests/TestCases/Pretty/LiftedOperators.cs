@@ -618,27 +618,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void StructComplex(TS? a, Func<TS> x)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//if (a == x()) {
-			//	Console.WriteLine();
-			//}
-			//if (a != x()) {
-			//	Console.WriteLine();
-			//}
-			//if (a > x()) {
-			//	Console.WriteLine();
-			//}
+			if (a == x())
+			{
+				Console.WriteLine();
+			}
+			if (a != x())
+			{
+				Console.WriteLine();
+			}
+			if (a > x())
+			{
+				Console.WriteLine();
+			}
 
-			//if (x() == a) {
-			//	Console.WriteLine();
-			//}
-			//if (x() != a) {
-			//	Console.WriteLine();
-			//}
-			//if (x() > a) {
-			//	Console.WriteLine();
-			//}
+			if (x() == a)
+			{
+				Console.WriteLine();
+			}
+			if (x() != a)
+			{
+				Console.WriteLine();
+			}
+			if (x() > a)
+			{
+				Console.WriteLine();
+			}
 		}
 
 		public static void StructValueBasic(TS? a, TS? b, int? i)
@@ -686,39 +690,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void StructValueComplex(TS? a, Func<TS> x, Func<int> i)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//Console.WriteLine(a == x());
-			//Console.WriteLine(a != x());
-			//Console.WriteLine(a > x());
+			Console.WriteLine(a == x());
+			Console.WriteLine(a != x());
+			Console.WriteLine(a > x());
 
-			//Console.WriteLine(x() == a);
-			//Console.WriteLine(x() != a);
-			//Console.WriteLine(x() > a);
+			Console.WriteLine(x() == a);
+			Console.WriteLine(x() != a);
+			Console.WriteLine(x() > a);
 
-			//Console.WriteLine(a + x());
-			//Console.WriteLine(a - x());
-			//Console.WriteLine(a * x());
-			//Console.WriteLine(a / x());
-			//Console.WriteLine(a % x());
-			//Console.WriteLine(a & x());
-			//Console.WriteLine(a | x());
-			//Console.WriteLine(a ^ x());
-			//Console.WriteLine(a << i());
-			//Console.WriteLine(a >> i());
-			//Console.WriteLine(a ?? x());
-			//a += x();
-			//a -= x();
-			//a *= x();
-			//a /= x();
-			//a %= x();
-			//a &= x();
-			//a |= x();
-			//a ^= x();
-			//a <<= i();
-			//a >>= i();
+			Console.WriteLine(a + x());
+			Console.WriteLine(a - x());
+			Console.WriteLine(a * x());
+			Console.WriteLine(a / x());
+			Console.WriteLine(a % x());
+			Console.WriteLine(a & x());
+			Console.WriteLine(a | x());
+			Console.WriteLine(a ^ x());
+			Console.WriteLine(a << i());
+			Console.WriteLine(a >> i());
+			Console.WriteLine(a ?? x());
+			a += x();
+			a -= x();
+			a *= x();
+			a /= x();
+			a %= x();
+			a &= x();
+			a |= x();
+			a ^= x();
+			a <<= i();
+			a >>= i();
 
-			//Console.WriteLine(x() + a);
+			Console.WriteLine(x() + a);
+			// TODO: decompiler introduces a temporary for the array element.
 			//(new TS?[0])[0] += x();
 		}
 
