@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		DisplaySettings? displaySettings;
 
-		public DecompilerTextEditor()
+		public DecompilerTextEditor() : base(new DecompilerTextArea())
 		{
 			// Fallback font for hosts without display settings (e.g. bare test compositions);
 			// overwritten from DisplaySettings on attach.
