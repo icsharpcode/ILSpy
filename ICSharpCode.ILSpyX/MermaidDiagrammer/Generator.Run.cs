@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -56,38 +57,42 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 
 		private string SerializeModel(ClassDiagrammer diagrammer)
 		{
-			object jsonModel = new {
+			/* convert collections to dictionaries for easier access in ES using
+			 * for (let [key, value] of Object.entries(dictionary)) */
+			var model = new DiagrammerModel(
 				diagrammer.OutsideReferences,
-
-				/* convert collections to dictionaries for easier access in ES using
-				 * for (let [key, value] of Object.entries(dictionary)) */
-				TypesByNamespace = diagrammer.TypesByNamespace.ToDictionary(ns => ns.Key,
-					ns => ns.Value.ToDictionary(t => t.Id, t => t))
-			};
+				diagrammer.TypesByNamespace.ToDictionary(ns => ns.Key, ns => ns.Value.ToDictionary(t => t.Id, t => t)));
+			string modelJson = JsonSerializer.Serialize(model, DiagrammerJsonContext.Default.DiagrammerModel);
 
 			// wrap model including the data required for doing the template replacement in a JS build task
 			if (JsonOnly)
 			{
-				jsonModel = new {
+				var bundle = new DiagrammerBundle(
 					diagrammer.SourceAssemblyName,
 					diagrammer.SourceAssemblyVersion,
-					BuilderVersion = DecompilerVersionInfo.FullVersionWithCommitHash,
+					DecompilerVersionInfo.FullVersionWithCommitHash,
 					RepoUrl,
-					// pre-serialize to a string so that we don't have to re-serialize it in the JS build task
-					Model = Serialize(jsonModel)
-				};
+					// pre-serialized so that the JS build task does not have to re-serialize it
+					modelJson);
+				return JsonSerializer.Serialize(bundle, DiagrammerJsonContext.Default.DiagrammerBundle);
 			}
 
-			return Serialize(jsonModel);
+			return modelJson;
 		}
 
-		private static JsonSerializerOptions serializerOptions = new() {
-			WriteIndented = true,
-			// avoid outputting null properties unnecessarily
-			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-		};
+		/// <summary>The JSON model the diagrammer's script works with.</summary>
+		internal sealed record DiagrammerModel(
+			Dictionary<string, string> OutsideReferences,
+			Dictionary<string, Dictionary<string, ClassDiagrammer.Type>> TypesByNamespace);
 
-		private static string Serialize(object json) => JsonSerializer.Serialize(json, serializerOptions);
+		/// <summary>The JSON-only output: the pre-serialized model plus the values a JS build task
+		/// substitutes into the HTML template.</summary>
+		internal sealed record DiagrammerBundle(
+			string SourceAssemblyName,
+			string SourceAssemblyVersion,
+			string BuilderVersion,
+			string RepoUrl,
+			string Model);
 
 		private void GenerateOutput(string assemblyPath, ClassDiagrammer model)
 		{
@@ -133,5 +138,14 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 				File.WriteAllText(Path.Combine(outputFolder, "excluded types.txt"), excludedTypes);
 			}
 		}
+	}
+
+	// Source-generated so the serializer needs no runtime reflection: Native AOT turns reflection-based
+	// System.Text.Json off, and trimming would strip the model's property getters.
+	[JsonSourceGenerationOptions(WriteIndented = true, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+	[JsonSerializable(typeof(GenerateHtmlDiagrammer.DiagrammerModel))]
+	[JsonSerializable(typeof(GenerateHtmlDiagrammer.DiagrammerBundle))]
+	internal partial class DiagrammerJsonContext : JsonSerializerContext
+	{
 	}
 }

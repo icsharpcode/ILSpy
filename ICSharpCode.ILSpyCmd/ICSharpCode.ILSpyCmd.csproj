@@ -43,6 +43,45 @@
 	<RestoreLockedMode>true</RestoreLockedMode>
   </PropertyGroup>
 
+  <!--
+    RID-specific tool packaging (https://learn.microsoft.com/dotnet/core/tools/rid-specific-tools):
+    a pointer package "ilspycmd" plus one package per RID. Opt-in via -p:IlspyCmdRidPackages=true so
+    the default build keeps producing the classic framework-dependent package, unchanged and in the
+    same time. Native AOT packages must be packed on a host with the same OS; CI runs:
+      dotnet pack ICSharpCode.ILSpyCmd -c Release -p:IlspyCmdRidPackages=true                 (pointer)
+      dotnet pack ICSharpCode.ILSpyCmd -c Release -p:IlspyCmdRidPackages=true -r any          (framework-dependent fallback)
+      dotnet pack ICSharpCode.ILSpyCmd -c Release -p:IlspyCmdRidPackages=true -r win-x64      (Native AOT, Windows host)
+      dotnet pack ICSharpCode.ILSpyCmd -c Release -p:IlspyCmdRidPackages=true -r linux-x64    (Native AOT, Linux host)
+    Publish order on a feed: all RID packages first, the pointer package last.
+    A pack with -r also restores the RID-agnostic ICSharpCode.Decompiler.Generators analyzer project with that
+    RID and rewrites its packages.lock.json on disk; discard that change with git checkout.
+  -->
+  <PropertyGroup Condition="'$(IlspyCmdRidPackages)' == 'true'">
+    <ToolPackageRuntimeIdentifiers>win-x64;linux-x64;any</ToolPackageRuntimeIdentifiers>
+    <!-- The pointer pack must not fan out into inner RID packs; each RID is packed explicitly with -r. -->
+    <CreateRidSpecificToolPackages Condition="'$(RuntimeIdentifier)' == ''">false</CreateRidSpecificToolPackages>
+    <PublishAot Condition="'$(RuntimeIdentifier)' != '' and '$(RuntimeIdentifier)' != 'any'">true</PublishAot>
+    <!-- Native symbols stay out of the AOT packages: on Windows the native PDB alone is over 100 MB. -->
+    <StripSymbols Condition="'$(PublishAot)' == 'true'">true</StripSymbols>
+    <CopyOutputSymbolsToPublishDirectory Condition="'$(PublishAot)' == 'true'">false</CopyOutputSymbolsToPublishDirectory>
+    <!-- Pack goes through the regular Publish path instead of the build-time shortcut. -->
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <!-- PublishAot adds SDK-pinned ILCompiler/ILLink package references that the committed lock file does not
+         list, so this graph gets its own throwaway lock file instead of a locked restore. -->
+    <NuGetLockFilePath>$(BaseIntermediateOutputPath)packages.ridtool.lock.json</NuGetLockFilePath>
+    <RestoreLockedMode>false</RestoreLockedMode>
+    <!-- Unannotated dependencies (McMaster, Mono.Cecil) produce trim and AOT analysis
+         warnings; the repo-wide TreatWarningsAsErrors must not fail the AOT compile on them. -->
+    <IlcTreatWarningsAsErrors>false</IlcTreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(PublishAot)' == 'true'">
+    <!-- McMaster binds [Option]/[Argument] properties by reflection over the command type;
+         the BAML HandlerMap discovers IHandler implementations via Assembly.GetTypes(). -->
+    <TrimmerRootAssembly Include="ilspycmd" />
+    <TrimmerRootAssembly Include="ICSharpCode.BamlDecompiler" />
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>NU1605</WarningsAsErrors>
@@ -61,7 +100,6 @@
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.Hosting.CommandLine" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="NuGet.Protocol" />
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 

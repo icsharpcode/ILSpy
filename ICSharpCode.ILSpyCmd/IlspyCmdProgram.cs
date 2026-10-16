@@ -46,6 +46,7 @@ using ICSharpCode.ILSpyX.Metadata;
 using ICSharpCode.ILSpyX.PdbProvider;
 
 using McMaster.Extensions.CommandLineUtils;
+using McMaster.Extensions.CommandLineUtils.Abstractions;
 
 using Microsoft.Extensions.Hosting;
 
@@ -94,7 +95,18 @@ Examples:
 	{
 		// https://natemcmaster.github.io/CommandLineUtils/docs/advanced/generic-host.html
 		// https://github.com/natemcmaster/CommandLineUtils/blob/main/docs/samples/dependency-injection/generic-host/Program.cs
-		public static Task<int> Main(string[] args) => new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args);
+		public static Task<int> Main(string[] args)
+			=> new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args, app => InstantiateValueParsers(app.ValueParsers));
+
+		// McMaster looks up the value parser of every option type at runtime through MakeGenericMethod.
+		// Under Native AOT that only works for generic instantiations the compiler has generated, and
+		// it does not generate them for value types that nothing references statically. These direct
+		// calls cover the value-typed options of this class (the result is cached by the provider).
+		static void InstantiateValueParsers(ValueParserProvider parsers)
+		{
+			parsers.GetParser<(bool IsSet, string Value)>();
+			parsers.GetParser<LanguageVersion>();
+		}
 
 		[FilesExist]
 		[Required]

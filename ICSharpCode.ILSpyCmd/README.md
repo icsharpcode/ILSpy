@@ -6,6 +6,18 @@ To install:
 dotnet tool install --global ilspycmd
 ```
 
+## Platform-specific packages
+
+`ilspycmd` is published as a pointer package that refers to one package per platform; `dotnet tool install`
+and `dnx` pick the matching one, so the command above is all you need.
+
+- Windows x64 and Linux x64 get a Native AOT build (`ilspycmd.win-x64`, `ilspycmd.linux-x64`): it starts
+  faster and does not need a .NET runtime to run.
+- Every other platform gets the framework-dependent build (`ilspycmd.any`), which runs on the .NET 10 runtime.
+
+Installing or updating needs the .NET SDK 10.0.100 or newer on every platform, because older SDKs cannot
+read the pointer package.
+
 Help output (`ilspycmd --help`):
 
 ``` text

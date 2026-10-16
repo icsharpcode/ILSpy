@@ -26,6 +26,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -499,7 +500,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			switch (decompilerRuntime)
 			{
 				case DecompilerRuntime.Mono:
-					framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+					framework_dir = GetRuntimeDirectory();
 					framework_dirs = new[] { framework_dir, Path.Combine(framework_dir, "Facades") };
 					break;
 				case DecompilerRuntime.NETCoreApp:
@@ -520,7 +521,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					framework_dirs = new[] { framework_dir };
 					break;
 				default:
-					framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+					framework_dir = GetRuntimeDirectory();
 					framework_dirs = new[] { framework_dir };
 					break;
 			}
@@ -560,7 +561,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				// regardless of the requested version (the runtime itself rolls forward in the
 				// same way). Without this, e.g. the type-forwards of a netstandard facade
 				// (pointing to a versioned System.Runtime) are unresolvable on such hosts.
-				string runtimeDir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!;
+				string runtimeDir = GetRuntimeDirectory();
 				assembly = SearchDirectory(name, runtimeDir);
 				if (assembly != null)
 					return assembly;
@@ -623,6 +624,17 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		internal static Version ZeroVersion = new Version(0, 0, 0, 0);
 
+		/// <summary>
+		/// The directory of the runtime executing the decompiler (the shared framework on .NET, the
+		/// framework directory on .NET Framework and Mono). Asking the runtime instead of taking the
+		/// directory of the corlib's file keeps this working in single-file and Native AOT apps, where
+		/// the corlib has no file path; there it is the application directory.
+		/// </summary>
+		internal static string GetRuntimeDirectory()
+		{
+			return RuntimeEnvironment.GetRuntimeDirectory().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		}
+
 		string? GetCorlib(IAssemblyReference reference)
 		{
 			var version = reference.Version;
@@ -631,7 +643,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			if (decompilerRuntime != DecompilerRuntime.NETCoreApp)
 			{
 				if (corlib.Version == version || IsSpecialVersionOrRetargetable(reference))
-					return typeof(object).Module.FullyQualifiedName;
+					return Path.Combine(GetRuntimeDirectory(), corlib.Name + ".dll");
 			}
 
 			if (reference.PublicKeyToken == null)
@@ -718,7 +730,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		string? GetMonoMscorlibBasePath(Version version)
 		{
-			var path = Directory.GetParent(typeof(object).Module.FullyQualifiedName)!.Parent!.FullName;
+			var path = Directory.GetParent(GetRuntimeDirectory())!.FullName;
 			if (version.Major == 1)
 				path = Path.Combine(path, "1.0");
 			else if (version.Major == 2)
@@ -781,10 +793,7 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		static string GetCurrentMonoGac()
 		{
-			return Path.Combine(
-				Directory.GetParent(
-					Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName)!)!.FullName,
-				"gac");
+			return Path.Combine(Directory.GetParent(GetRuntimeDirectory())!.FullName, "gac");
 		}
 
 		public static string? GetAssemblyInGac(IAssemblyReference reference)

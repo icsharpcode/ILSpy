@@ -43,10 +43,10 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (xmlDocFile != null)
 				return new XmlDocumentationProvider(xmlDocFile);
 			// On modern .NET there is no .NET Framework reference-assembly documentation;
-			// fall back to the ref pack parallel to the runtime hosting us (corlib lives in
+			// fall back to the ref pack parallel to the runtime hosting us (the runtime lives in
 			// dotnet/shared/Microsoft.NETCore.App/<version>/, the docs in the matching
 			// dotnet/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/ directory).
-			return TryLoadModernRefPackDocumentation(typeof(object).Assembly.Location);
+			return TryLoadModernRefPackDocumentation(UniversalAssemblyResolver.GetRuntimeDirectory());
 		}
 
 		public static XmlDocumentationProvider MscorlibDocumentation {
@@ -80,7 +80,9 @@ namespace ICSharpCode.Decompiler.Documentation
 						// type-forwarded entities (System.String docs live in System.Runtime.xml
 						// but the metadata token comes from System.Private.CoreLib.dll) resolve
 						// transparently.
-						xmlDoc = TryLoadModernRefPackDocumentation(module.FileName);
+						xmlDoc = string.IsNullOrEmpty(module.FileName)
+							? null
+							: TryLoadModernRefPackDocumentation(Path.GetDirectoryName(module.FileName));
 					}
 					cache.Add(module, xmlDoc); // cache null misses too — avoids re-scanning disk
 				}
@@ -88,9 +90,9 @@ namespace ICSharpCode.Decompiler.Documentation
 			}
 		}
 
-		static XmlDocumentationProvider TryLoadModernRefPackDocumentation(string assemblyFileName)
+		static XmlDocumentationProvider TryLoadModernRefPackDocumentation(string runtimeDirectory)
 		{
-			var refPackTfmDir = ResolveModernRefPackTfmDirectory(assemblyFileName);
+			var refPackTfmDir = ResolveModernRefPackTfmDirectory(runtimeDirectory);
 			if (refPackTfmDir == null)
 				return null;
 			List<XmlDocumentationProvider> providers = null;
@@ -120,15 +122,13 @@ namespace ICSharpCode.Decompiler.Documentation
 		/// <c>shared/Microsoft.NETCore.App/&lt;version&gt;/</c> or when the parallel ref pack
 		/// isn't installed.
 		/// </summary>
-		internal static string ResolveModernRefPackTfmDirectory(string assemblyFileName)
+		internal static string ResolveModernRefPackTfmDirectory(string runtimeDirectory)
 		{
-			if (string.IsNullOrEmpty(assemblyFileName))
+			if (string.IsNullOrEmpty(runtimeDirectory))
 				return null;
-			if (!File.Exists(assemblyFileName))
+			if (!Directory.Exists(runtimeDirectory))
 				return null;
-			var versionDir = Path.GetDirectoryName(assemblyFileName);
-			if (versionDir == null)
-				return null;
+			var versionDir = runtimeDirectory;
 			var sharedFramework = Path.GetDirectoryName(versionDir);
 			if (sharedFramework == null || !string.Equals(Path.GetFileName(sharedFramework), "Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
 				return null;

@@ -63,6 +63,16 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void RuntimeDirectoryIsTheDirectoryOfTheRunningCorlib()
+		{
+			// The resolver probes the shared framework of the runtime executing the decompiler. Finding
+			// that directory through the corlib's file path breaks in single-file and Native AOT apps,
+			// where the corlib has no file; the helper has to give the same answer without it.
+			string expected = Path.GetDirectoryName(typeof(object).Assembly.Location);
+			Assert.That(UniversalAssemblyResolver.GetRuntimeDirectory(), Is.EqualTo(expected));
+		}
+
+		[Test]
 		public void HigherReferenceVersionResolvesToTheVersionInstalledInTheGac()
 		{
 			// The 4.8 reference assembly of System.IO.Compression is 4.2.0.0, but the GAC only
