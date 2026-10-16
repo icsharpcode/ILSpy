@@ -23,7 +23,9 @@
 		     shown page; the Decompiler page also hides its non-matching items. Spans the full
 		     width rather than sitting over the strip only, which would mean retemplating
 		     TabControl. -->
-		<TextBox DockPanel.Dock="Top" Name="SearchBox" Margin="8,8,8,0"
+		<!-- Left margin = TabControl padding (4) + TabItem padding (8), so the box lines up
+		     with the page titles below it. -->
+		<TextBox DockPanel.Dock="Top" Name="SearchBox" Margin="12,8,8,8"
 		         PlaceholderText="{x:Static res:Resources.SearchSettings}"
 		         Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
 			<TextBox.InnerRightContent>
