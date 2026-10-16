@@ -150,9 +150,11 @@ public class SearchPrefixParsingTests
 	[Test]
 	public void InAssembly_Prefix_Sets_The_Filter()
 	{
+		// The scope value is a filter only; it must not become a keyword, or every
+		// entity name would have to contain the assembly name to match.
 		var r = Parse("inassembly:mscorlib Foo");
 		r.InAssembly.Should().Be("mscorlib");
-		r.Keywords.Should().BeEquivalentTo("mscorlib", "Foo");
+		r.Keywords.Should().BeEquivalentTo("Foo");
 	}
 
 	[Test]
@@ -160,7 +162,31 @@ public class SearchPrefixParsingTests
 	{
 		var r = Parse("innamespace:System.Linq Enumerable");
 		r.InNamespace.Should().Be("System.Linq");
-		r.Keywords.Should().BeEquivalentTo("System.Linq", "Enumerable");
+		r.Keywords.Should().BeEquivalentTo("Enumerable");
+		// The dot in the scope value is not a request for full-name matching.
+		r.FullNameSearch.Should().BeFalse();
+	}
+
+	[Test]
+	public void InAssembly_Value_Never_Leaks_Into_Keywords()
+	{
+		// Regression test for #4246: an assembly whose name is not a prefix of its
+		// namespaces (Unity's Assembly-CSharp, global namespace) found nothing because the
+		// scope value was matched against every entity name as a keyword.
+		var r = Parse("inassembly:Assembly-CSharp Chip");
+		r.InAssembly.Should().Be("Assembly-CSharp");
+		r.Keywords.Should().BeEquivalentTo("Chip");
+		r.FullNameSearch.Should().BeFalse();
+	}
+
+	[Test]
+	public void Lone_InAssembly_Prefix_Yields_Zero_Keywords()
+	{
+		// A scope filter without a search term is not a search: the strategy factory
+		// returns null for an empty keyword list, matching the WPF-era behaviour.
+		var r = Parse("inassembly:Foo");
+		r.InAssembly.Should().Be("Foo");
+		r.Keywords.Should().BeEmpty();
 	}
 
 	[Test]

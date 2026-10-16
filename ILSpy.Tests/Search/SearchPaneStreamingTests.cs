@@ -171,4 +171,30 @@ public class SearchPaneStreamingTests
 			r => r.Name.Equals("StringComparer", StringComparison.OrdinalIgnoreCase),
 			"'=String' is an exact match, not a prefix match");
 	}
+
+	[AvaloniaTest]
+	public async Task InAssembly_Scope_Restricts_Keyword_Matches_To_That_Assembly()
+	{
+		// Regression test for #4246. The scope value is a filter, not a keyword: the core
+		// library's name is not part of any of its type names, so a scope value that leaked
+		// into the keyword list would reject every candidate and leave the list empty.
+
+		await TestHarness.BootAsync();
+
+		var search = AppComposition.Current.GetExport<SearchPaneModel>();
+		search.Results.Clear();
+		search.SelectedSearchMode = search.SearchModes.First(m => m.Mode == SearchMode.Type);
+		search.SearchTerm = "inassembly:System.Private.CoreLib =String";
+
+		await Waiters.WaitForAsync(
+			() => search.Results.Any(r => r.Name.Equals("String", StringComparison.OrdinalIgnoreCase)),
+			timeout: TimeSpan.FromSeconds(30));
+
+		TestCapture.Step("inassembly-corelib-string-results");
+		search.Results.Should().Contain(r => r.Name.Equals("String", StringComparison.OrdinalIgnoreCase),
+			"the keyword must still be matched inside the scoped assembly");
+		search.Results.Should().OnlyContain(
+			r => r.Assembly.Contains("System.Private.CoreLib", StringComparison.OrdinalIgnoreCase),
+			"inassembly: must restrict results to the named assembly");
+	}
 }

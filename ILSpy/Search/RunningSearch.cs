@@ -307,7 +307,8 @@ namespace ICSharpCode.ILSpy.Search
 		///       <c>c:</c>, <c>n:</c>, <c>r:</c> — set <see cref="SearchRequest.Mode"/>.</item>
 		/// <item><c>a:</c>, <c>af:</c>, <c>an:</c> — assembly mode + <see cref="AssemblySearchKind"/>.</item>
 		/// <item><c>@</c> (single character) — metadata-token mode.</item>
-		/// <item><c>inassembly:</c>, <c>innamespace:</c> — scope filters.</item>
+		/// <item><c>inassembly:</c>, <c>innamespace:</c> — scope filters. Their value is a filter
+		///       only and never becomes a keyword.</item>
 		/// <item><c>/.../</c> — regex match via <see cref="SearchRequest.RegEx"/>.</item>
 		/// <item>Double-quoted tokens — survive whitespace split, quotes stripped from the term.</item>
 		/// </list>
@@ -362,8 +363,22 @@ namespace ICSharpCode.ILSpy.Search
 					term = part;
 				}
 
-				// Term goes into keywords/regex regardless of prefix — the prefix only flips
-				// mode/scope, the keyword is still what gets matched.
+				// Scope prefixes are filters, not search terms: their value is matched against the
+				// assembly / namespace by IsInNamespaceOrAssembly, so it must not be added as a
+				// keyword (every entity name would then have to contain the assembly name) and it
+				// must not influence the full-name / generics heuristics below.
+				switch (prefix?.ToUpperInvariant())
+				{
+					case "INASSEMBLY":
+						request.InAssembly ??= term;
+						continue;
+					case "INNAMESPACE":
+						request.InNamespace ??= term;
+						continue;
+				}
+
+				// Term goes into keywords/regex regardless of a mode prefix — the prefix only
+				// flips the mode, the keyword is still what gets matched.
 				if (regex == null && term.StartsWith("/", StringComparison.Ordinal) && term.Length > 1)
 				{
 					// Wrapped /regex/ form. Closing slash is optional; if present, strip it.
@@ -395,14 +410,6 @@ namespace ICSharpCode.ILSpy.Search
 				{
 					case "@":
 						request.Mode = SearchMode.Token;
-						break;
-					case "INNAMESPACE":
-						if (request.InNamespace == null)
-							request.InNamespace = term;
-						break;
-					case "INASSEMBLY":
-						if (request.InAssembly == null)
-							request.InAssembly = term;
 						break;
 					case "A":
 						request.AssemblySearchKind = AssemblySearchKind.NameOrFileName;
