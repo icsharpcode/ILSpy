@@ -124,6 +124,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					{
 						return false; // non-local code move might change semantics when there's split variables
 					}
+					if (v.Type.IsKnownType(KnownTypeCode.Boolean) != target.Type.IsKnownType(KnownTypeCode.Boolean))
+					{
+						return false;
+					}
 					switch (v.Kind)
 					{
 						case VariableKind.Parameter:
