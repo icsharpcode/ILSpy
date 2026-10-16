@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpy.Options
 		// Mirrors the labels in MiscSettingsPanel.axaml; OptionsTabTests checks the two stay in sync.
 		public IEnumerable<string> SearchableText => [
 			Resources.AllowMultipleInstances,
-			"Load previously open assemblies on startup",
+			Resources.LoadPreviousAssembliesOnStartup,
 		];
 
 		public void Load(SettingsService service)

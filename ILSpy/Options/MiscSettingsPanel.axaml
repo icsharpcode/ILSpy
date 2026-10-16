@@ -11,6 +11,6 @@
 		<CheckBox IsChecked="{Binding Settings.AllowMultipleInstances, Mode=TwoWay}"
 		          Content="{x:Static res:Resources.AllowMultipleInstances}" />
 		<CheckBox IsChecked="{Binding Settings.LoadPreviousAssemblies, Mode=TwoWay}"
-		          Content="Load previously open assemblies on startup" />
+		          Content="{x:Static res:Resources.LoadPreviousAssembliesOnStartup}" />
 	</StackPanel>
 </UserControl>

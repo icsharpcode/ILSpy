@@ -2020,6 +2020,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Enable multiple rows in tab strip.
+        /// </summary>
+        public static string EnableMultipleRowsInTabStrip {
+            get {
+                return ResourceManager.GetString("EnableMultipleRowsInTabStrip", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Enable word wrap.
         /// </summary>
         public static string EnableWordWrap {
@@ -2326,6 +2335,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Load previously open assemblies on startup.
+        /// </summary>
+        public static string LoadPreviousAssembliesOnStartup {
+            get {
+                return ResourceManager.GetString("LoadPreviousAssembliesOnStartup", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Loading....
         /// </summary>
         public static string Loading {
@@ -2378,7 +2396,16 @@ namespace ICSharpCode.ILSpy.Properties {
                 return ResourceManager.GetString("Misc", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to Mouse wheel scroll toggles single/multiple row tab strip.
+        /// </summary>
+        public static string MouseWheelTogglesTabStripRows {
+            get {
+                return ResourceManager.GetString("MouseWheelTogglesTabStripRows", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Name.
         /// </summary>
@@ -3513,6 +3540,15 @@ namespace ICSharpCode.ILSpy.Properties {
         
         /// <summary>
         ///   Looks up a localized string similar to Tab size:.
+        /// </summary>
+        public static string TabOptions {
+            get {
+                return ResourceManager.GetString("TabOptions", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Tab size.
         /// </summary>
         public static string TabSize {
             get {
