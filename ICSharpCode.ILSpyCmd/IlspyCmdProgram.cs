@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpyCmd
 	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
 		ExtendedHelpText = @"
 Remarks:
-  -o is valid with every option and required when using -p.
+  -o is valid with every option and required when using -p or -d.
 
 Examples:
     Decompile assembly to console out.
@@ -88,15 +88,36 @@ Examples:
         ilspycmd sample.dll -p -o c:\decompiled
 ")]
 	[HelpOption("-h|--help")]
-	[ProjectOptionRequiresOutputDirectoryValidation]
+	[OutputDirectoryRequiredValidation]
 	[VersionOptionFromMember("-v|--version", Description = "Show version of ICSharpCode.Decompiler used.",
 		MemberName = nameof(DecompilerVersion))]
 	class ILSpyCmdProgram
 	{
 		// https://natemcmaster.github.io/CommandLineUtils/docs/advanced/generic-host.html
 		// https://github.com/natemcmaster/CommandLineUtils/blob/main/docs/samples/dependency-injection/generic-host/Program.cs
-		public static Task<int> Main(string[] args)
-			=> new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args, app => InstantiateValueParsers(app.ValueParsers));
+		public static async Task<int> Main(string[] args)
+		{
+			try
+			{
+				return await new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args, app => {
+					InstantiateValueParsers(app.ValueParsers);
+					// McMaster reports a failed validation (e.g. -p without -o, a missing input file) and
+					// returns 1; usage mistakes exit with EX_USAGE like every other usage error here.
+					var reportValidationError = app.ValidationErrorHandler;
+					app.ValidationErrorHandler = result => {
+						reportValidationError(result);
+						return ProgramExitCodes.EX_USAGE;
+					};
+				});
+			}
+			catch (CommandParsingException ex)
+			{
+				// An unknown option or an option value that does not parse. CommandLineApplication.Execute
+				// reports these as a usage error, but the generic host lets them escape.
+				Console.Error.WriteLine(ex.Message);
+				return ProgramExitCodes.EX_USAGE;
+			}
+		}
 
 		// McMaster looks up the value parser of every option type at runtime through MakeGenericMethod.
 		// Under Native AOT that only works for generic instantiations the compiler has generated, and

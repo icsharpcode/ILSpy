@@ -108,7 +108,7 @@ Options:
                                           'System.Collections' before 'System' to remove both of them completely.
 
 Remarks:
-  -o is valid with every option and required when using -p.
+  -o is valid with every option and required when using -p or -d.
 
 Examples:
     Decompile assembly to console out.
