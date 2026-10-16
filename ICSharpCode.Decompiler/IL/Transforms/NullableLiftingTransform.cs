@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var (left, right, bits) = DoLiftBinary(comp.Left, comp.Right, comp.LeftExpectedType, comp.RightExpectedType);
 			// due to the restrictions on side effects, we only allow instructions that are pure after lifting.
 			// (we can't check this before lifting due to the calls to GetValueOrDefault())
-			if (left != null && right != null && SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags))
+			if (left != null && right != null && IsPure(left) && IsPure(right))
 			{
 				if (!bits.All(0, nullableVars.Count))
 				{
@@ -615,6 +615,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return comp.MakeLifted(newComparisonKind, left, right);
 			}
 			return null;
+		}
+
+		static bool IsPure(ILInstruction inst)
+		{
+			if (MatchNullableCtor(inst, out _, out var arg))
+			{
+				// call to nullable ctor has Flags.SideEffect, but know it's harmless
+				// (in fact it's likely a call that lifting just introduced)
+				inst = arg;
+			}
+			return SemanticHelper.IsPure(inst.Flags);
 		}
 
 		ILInstruction LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
