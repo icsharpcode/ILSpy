@@ -291,6 +291,15 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextAreaPointerPressedForReferenceClick(object? sender, PointerPressedEventArgs e)
 		{
+			// The Ctrl+F find overlay is a visual child of the TextArea, so a press on it tunnels
+			// through here as well. The release handler resolves the reference by pointer position,
+			// which would find the text the overlay covers, so a press on the overlay must not arm
+			// a reference click (issue #4245).
+			if (e.Source is Visual source && (source == SearchPanel || SearchPanel.IsVisualAncestorOf(source)))
+			{
+				referenceClickStart = null;
+				return;
+			}
 			var properties = e.GetCurrentPoint(this).Properties;
 			referenceClickStart = properties.IsLeftButtonPressed || properties.IsMiddleButtonPressed
 				? e.GetPosition(this)

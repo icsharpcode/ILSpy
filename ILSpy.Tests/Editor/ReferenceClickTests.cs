@@ -175,4 +175,62 @@ public class ReferenceClickTests
 		view.Editor.TextArea.Selection.IsEmpty.Should().BeTrue(
 			"moving the mouse after a click, with no button held, must not select text");
 	}
+
+	/// <summary>
+	/// Scrolls the document until a navigable reference sits inside <paramref name="windowRect"/>
+	/// (window coordinates) and returns a point inside its text.
+	/// </summary>
+	static (ReferenceSegment Segment, Point Point) FindReferenceUnder(
+		MainWindow window, DecompilerTextView view, DecompilerTabPageModel tab, Rect windowRect)
+	{
+		var textView = view.Editor.TextArea.TextView;
+		foreach (var segment in tab.References!.Where(r => r.Reference != null && r.Kind == ReferenceMode.Link && !r.IsDefinition))
+		{
+			var line = view.Editor.Document.GetLineByOffset(segment.StartOffset);
+			// Put the line at the very top of the viewport, where the overlay lives.
+			view.Editor.ScrollTo(line.LineNumber, segment.StartOffset - line.Offset + 1, VisualYPosition.LineTop,
+				referencedVerticalViewPortOffset: 0, minimumScrollFraction: 0);
+			window.UpdateLayout();
+			textView.EnsureVisualLines();
+			var position = new TextViewPosition(line.LineNumber, segment.StartOffset - line.Offset + 2);
+			var visual = textView.GetVisualPosition(position, VisualYPosition.LineMiddle) - textView.ScrollOffset;
+			var point = textView.TranslatePoint(visual, window)!.Value;
+			if (windowRect.Contains(point))
+				return (segment, point);
+		}
+		Assert.Fail($"no navigable reference can be scrolled under {windowRect}");
+		return default;
+	}
+
+	[AvaloniaTest]
+	public async Task Click_On_The_Search_Panel_Does_Not_Follow_The_Link_Behind_It()
+	{
+		var (window, view, tab) = await SetupAsync();
+
+		// Issue #4245: the Ctrl+F overlay is a visual child of the TextArea, so its clicks route
+		// through the same TextArea handlers that resolve reference clicks by pointer position.
+		var panel = view.SearchPanel;
+		panel.Open();
+		window.UpdateLayout();
+		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+
+		// The panel stretches over the whole text area but only its border is hit-testable.
+		var border = panel.GetVisualDescendants().OfType<Avalonia.Controls.Border>().First(b => b.Name == "PART_Border");
+		var borderRect = new Rect(border.TranslatePoint(default, window)!.Value, border.Bounds.Size);
+		var (_, point) = FindReferenceUnder(window, view, tab, borderRect);
+		var hit = window.GetVisualAt(point);
+		hit.Should().NotBeNull();
+		(hit == panel || panel.IsVisualAncestorOf(hit!)).Should().BeTrue(
+			$"the click must land on the search panel, not the text, but hit {hit!.GetType().Name}");
+
+		var navigated = false;
+		tab.NavigateRequested += (_, _) => navigated = true;
+
+		window.MouseDown(point, MouseButton.Left);
+		window.MouseUp(point, MouseButton.Left);
+
+		navigated.Should().BeFalse("a click on the find panel must not follow the reference it covers");
+		panel.IsClosed.Should().BeFalse("the find panel stays open after being clicked");
+	}
 }
