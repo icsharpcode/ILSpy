@@ -251,6 +251,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void IntConstZero(int? a)
+		{
+			if (a == 0)
+			{
+				Console.WriteLine();
+			}
+			if (a != 0)
+			{
+				Console.WriteLine();
+			}
+			if (a > 0)
+			{
+				Console.WriteLine();
+			}
+
+			if (0 == a)
+			{
+				Console.WriteLine();
+			}
+			if (0 != a)
+			{
+				Console.WriteLine();
+			}
+			if (0 > a)
+			{
+				Console.WriteLine();
+			}
+		}
+
 		public static void IntValueBasic(int? a, int? b)
 		{
 			Console.WriteLine(a == b);
@@ -329,8 +358,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void IntValueConst(int? a)
 		{
 			Console.WriteLine(a == 2);
+			Console.WriteLine(a == 0);
 			Console.WriteLine(a != 2);
+			Console.WriteLine(a != 0);
 			Console.WriteLine(a > 2);
+			Console.WriteLine(a > 0);
 
 			Console.WriteLine(2 == a);
 			Console.WriteLine(2 != a);
@@ -798,12 +830,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return b;
 		}
 
-		// TODO: unnecessary cast
-		//public double? ToFloat(int? b)
-		//{
-		//	return b;
-		//}
+		public double? ToFloat(int? b)
+		{
+			return b;
+		}
 
+		// TODO: unnecessary cast
 		//public long? InArithmetic(uint? b)
 		//{
 		//	return 100L + b;
@@ -850,7 +882,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Print((short?)i4);
 				Print((uint?)i4);
 				Print((uint?)i8);
-				//Print((uint?)f); TODO
+				Print((uint?)f);
 			}
 		}
 	}
