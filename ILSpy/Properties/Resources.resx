@@ -850,6 +850,9 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   <data name="NewTab" xml:space="preserve">
     <value>New Tab</value>
   </data>
+  <data name="NoSettingsMatch" xml:space="preserve">
+    <value>No settings match '{0}'</value>
+  </data>
   <data name="NuGetFeedAuthors" xml:space="preserve">
     <value>Author(s):</value>
   </data>
@@ -1080,6 +1083,9 @@ Do you want to continue?</value>
   </data>
   <data name="SearchPane_Search" xml:space="preserve">
     <value>Search</value>
+  </data>
+  <data name="SearchSettings" xml:space="preserve">
+    <value>Search settings</value>
   </data>
   <data name="Searching" xml:space="preserve">
     <value>Searching...</value>

@@ -2453,6 +2453,15 @@ namespace ICSharpCode.ILSpy.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No settings match '{0}'.
+        /// </summary>
+        public static string NoSettingsMatch {
+            get {
+                return ResourceManager.GetString("NoSettingsMatch", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Author(s):.
         /// </summary>
         public static string NuGetFeedAuthors {
@@ -3133,6 +3142,15 @@ namespace ICSharpCode.ILSpy.Properties {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Search settings.
+        /// </summary>
+        public static string SearchSettings {
+            get {
+                return ResourceManager.GetString("SearchSettings", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to Search.
         /// </summary>

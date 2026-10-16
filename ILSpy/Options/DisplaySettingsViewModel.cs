@@ -49,6 +49,42 @@ namespace ICSharpCode.ILSpy.Options
 
 		public System.Collections.Generic.IReadOnlyCollection<string> AllThemes => Themes.ThemeManager.AllThemes;
 
+		// Mirrors the labels in DisplaySettingsPanel.axaml; OptionsTabTests checks the two stay in sync.
+		public IEnumerable<string> SearchableText => [
+			Resources.DisplaySettingsPanel_Theme,
+			Resources.Font,
+			Resources.Size,
+			Resources.Indentation,
+			Resources.UseTabsInsteadOfSpaces,
+			Resources.IndentSize,
+			Resources.TabSize,
+			Resources.DecompilationViewOptions,
+			Resources.ShowLineNumbers,
+			Resources.EnableWordWrap,
+			Resources.EnableFoldingBlocksBraces,
+			Resources.HighlightMatchingBraces,
+			Resources.HighlightCurrentLine,
+			Resources.NavigateOnCtrlClick,
+			Resources.HighlightSymbolsUnderCaret,
+			Resources.ExpandXmlDocumentationCommentsAfterDecompilation,
+			Resources.ExpandMemberDefinitionsAfterDecompilation,
+			Resources.ExpandUsingDeclarationsAfterDecompilation,
+			Resources.ShowInfoFromDebugSymbolsAvailable,
+			Resources.ShowRawOffsetsAndBytesBeforeInstruction,
+			Resources.DecodeCustomAttributeBlobs,
+			Resources.TreeViewOptions,
+			Resources.ShowMetadataTokens,
+			Resources.ShowMetadataTokensInBase10,
+			Resources.HideEmptyMetadataTables,
+			Resources.UseNestedNamespaceNodes,
+			"Tab options",
+			"Enable multiple rows in tab strip",
+			"Mouse wheel scroll toggles single/multiple row tab strip",
+			Resources.ShowOmnibar,
+			Resources.Other,
+			Resources.SortResultsFitness,
+		];
+
 		// Avalonia equivalent of WPF's Fonts.SystemFontFamilies. FontManager.Current populates
 		// from the platform font enumerator (DirectWrite on Windows, FontConfig on Linux,
 		// CoreText on macOS), so the list is realistic on every supported target.

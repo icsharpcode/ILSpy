@@ -42,7 +42,7 @@
 					     implicit conversion only fires at XAML parse time). The viewmodel
 					     projects Settings.SelectedFont through the right type and re-fires
 					     PropertyChanged when the picker selection changes. -->
-					<TextBlock Text="The quick brown fox jumps over the lazy dog"
+					<TextBlock Name="FontPreview" Text="The quick brown fox jumps over the lazy dog"
 					           FontFamily="{Binding CurrentFontFamily}"
 					           FontSize="{Binding Settings.SelectedFontSize}" />
 				</Border>
