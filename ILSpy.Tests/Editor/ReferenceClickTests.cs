@@ -177,11 +177,12 @@ public class ReferenceClickTests
 	}
 
 	/// <summary>
-	/// Scrolls the document until a navigable reference sits inside <paramref name="windowRect"/>
-	/// (window coordinates) and returns a point inside its text.
+	/// Scrolls the document until a navigable reference sits behind <paramref name="overlay"/>
+	/// (a visual that covers part of the text area) and returns a point inside the reference's
+	/// text where a click hit-tests to the overlay rather than the text.
 	/// </summary>
-	static (ReferenceSegment Segment, Point Point) FindReferenceUnder(
-		MainWindow window, DecompilerTextView view, DecompilerTabPageModel tab, Rect windowRect)
+	static (ReferenceSegment Segment, Point Point) FindReferenceBehind(
+		MainWindow window, DecompilerTextView view, DecompilerTabPageModel tab, Visual overlay)
 	{
 		var textView = view.Editor.TextArea.TextView;
 		foreach (var segment in tab.References!.Where(r => r.Reference != null && r.Kind == ReferenceMode.Link && !r.IsDefinition))
@@ -195,10 +196,12 @@ public class ReferenceClickTests
 			var position = new TextViewPosition(line.LineNumber, segment.StartOffset - line.Offset + 2);
 			var visual = textView.GetVisualPosition(position, VisualYPosition.LineMiddle) - textView.ScrollOffset;
 			var point = textView.TranslatePoint(visual, window)!.Value;
-			if (windowRect.Contains(point))
+			// Only the overlay's child controls are hit-testable, not its whole rectangle, so the
+			// hit test is the criterion rather than the overlay's bounds.
+			if (window.GetVisualAt(point) is { } hit && (hit == overlay || overlay.IsVisualAncestorOf(hit)))
 				return (segment, point);
 		}
-		Assert.Fail($"no navigable reference can be scrolled under {windowRect}");
+		Assert.Fail("no navigable reference can be scrolled behind the overlay");
 		return default;
 	}
 
@@ -214,15 +217,7 @@ public class ReferenceClickTests
 		window.UpdateLayout();
 		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-		// The panel stretches over the whole text area but only its border is hit-testable.
-		var border = panel.GetVisualDescendants().OfType<Avalonia.Controls.Border>().First(b => b.Name == "PART_Border");
-		var borderRect = new Rect(border.TranslatePoint(default, window)!.Value, border.Bounds.Size);
-		var (_, point) = FindReferenceUnder(window, view, tab, borderRect);
-		var hit = window.GetVisualAt(point);
-		hit.Should().NotBeNull();
-		(hit == panel || panel.IsVisualAncestorOf(hit!)).Should().BeTrue(
-			$"the click must land on the search panel, not the text, but hit {hit!.GetType().Name}");
+		var (_, point) = FindReferenceBehind(window, view, tab, panel);
 
 		var navigated = false;
 		tab.NavigateRequested += (_, _) => navigated = true;
