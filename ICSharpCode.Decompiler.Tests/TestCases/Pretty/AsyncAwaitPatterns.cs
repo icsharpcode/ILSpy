@@ -16,9 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// Await shapes that still decompile to code that does not compile are tracked as #4017 (type
-// parameter with an interface constraint), #4018 (static dynamic call) and #4019 (with
-// expression); they are absent here because they have no correct output to pin yet.
+// An await shape that still decompiles to code that does not compile is tracked as #4019 (with
+// expression); it is absent here because it has no correct output to pin yet.
 
 #pragma warning disable 1998
 using System;
@@ -537,6 +536,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.AsyncAwait
 		public async Task TypeParameterWithStructConstraint<T>(T awaitable) where T : struct, IAwaitable
 		{
 			await awaitable;
+		}
+
+		public async Task TypeParameterWithInterfaceConstraint<T>(T awaitable) where T : IAwaitable
+		{
+			await awaitable;
+		}
+
+		public async Task TypeParameterArrayElementWithInterfaceConstraint<T>(T[] awaitables) where T : IAwaitable
+		{
+			await awaitables[0];
 		}
 
 		public async Task ConfiguredTaskAwaitable(Task<int> task)
