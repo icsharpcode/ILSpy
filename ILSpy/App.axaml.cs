@@ -55,6 +55,10 @@ namespace ICSharpCode.ILSpy
 		public override void OnFrameworkInitializationCompleted()
 		{
 			AppLog.Mark("App.OnFrameworkInitializationCompleted entered");
+			// Parse the icon set off the UI thread from the first moment the asset loader is
+			// available; the views that need icons are inflated several hundred milliseconds
+			// from now (see Images.PreloadSvgs).
+			_ = Task.Run(Images.PreloadSvgs);
 			ILSpyTraceListener.Install();
 			GlobalExceptionHandler.Install();
 
