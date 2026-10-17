@@ -25,7 +25,7 @@
 // round-trip tests, which verify correctness but not output quality.
 //
 // usage: dotnet run decompdiff.cs -- --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...>
-//                                    [-o <report-dir>] [--no-build] [--refs <dir>]... <dll|dir|@list>...
+//                                    [-o <report-dir>] [--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...
 //
 // - checkout args are built (Release; restore keeps packages.lock.json whole via
 //   -p:RestoreEnablePackagePruning=false) on every run, because a build older than
@@ -37,6 +37,8 @@
 //   Release build it already contains.
 // - corpus dirs are scanned recursively for *.dll (e.g. ~/.cache/nugetfuzz); @list reads
 //   the entries from a file, one per line, as nugetfuzz does with its package list.
+// - --packages passes an @list of package IDs through nugetfuzz --download-only and uses the
+//   resolved lib directories as the corpus.
 // - changed/errored types are written to <report-dir>/{old,new}/...; inspect with
 //   `git diff --no-index <report-dir>/old <report-dir>/new`, or open the generated
 //   <report-dir>/index.html, which carries the same data with inline diffs.
@@ -76,7 +78,7 @@ catch (AssertionFailedException)
 	// hook works
 }
 
-string? oldSpec = null, newSpec = null, reportDir = null;
+string? oldSpec = null, newSpec = null, reportDir = null, packageList = null;
 bool skipBuild = false;
 var corpus = new List<string>();
 var refDirs = new List<string>();
@@ -102,6 +104,9 @@ for (int i = 0; i < args.Length; i++)
 		case "--refs":
 			refDirs.Add(args[++i]);
 			break;
+		case "--packages":
+			packageList = args[++i];
+			break;
 		default:
 			// @file lists corpus entries one per line, the same spelling nugetfuzz uses. Shells
 			// differ on how (or whether) a file expands into arguments, so the tool reads it.
@@ -118,9 +123,46 @@ for (int i = 0; i < args.Length; i++)
 			break;
 	}
 }
-if (oldSpec == null || newSpec == null || corpus.Count == 0)
+if (oldSpec == null || newSpec == null)
 {
-	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--no-build] [--refs <dir>]... <dll|dir|@list>...");
+	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
+	return 1;
+}
+if (packageList != null)
+{
+	var listPath = packageList.StartsWith('@') ? packageList[1..] : packageList;
+	if (!File.Exists(listPath))
+	{
+		Console.Error.WriteLine($"--packages: file not found: {listPath}");
+		return 1;
+	}
+	var nugetfuzz = Path.Combine(Environment.CurrentDirectory, "nugetfuzz.cs");
+	if (!File.Exists(nugetfuzz))
+	{
+		Console.Error.WriteLine($"--packages requires nugetfuzz.cs in {Environment.CurrentDirectory}");
+		return 1;
+	}
+	var corpusFile = Path.Combine(Path.GetTempPath(), $"decompdiff-{Guid.NewGuid():N}.corpus.txt");
+	try
+	{
+		Side.Run("dotnet", $"run \"{nugetfuzz}\" -- --download-only --corpus-out \"{corpusFile}\" \"@{Path.GetFullPath(listPath)}\"");
+		corpus.AddRange(File.ReadAllLines(corpusFile)
+			.Select(l => l.Trim())
+			.Where(l => l.Length > 0 && !l.StartsWith('#')));
+	}
+	catch (Exception ex)
+	{
+		Console.Error.WriteLine($"--packages failed: {ex.Message}");
+		return 1;
+	}
+	finally
+	{
+		File.Delete(corpusFile);
+	}
+}
+if (corpus.Count == 0)
+{
+	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
 	return 1;
 }
 reportDir ??= "decompdiff-report";
@@ -964,7 +1006,7 @@ class Side
 			.OrderByDescending(File.GetLastWriteTimeUtc).First();
 	}
 
-	static void Run(string exe, string arguments)
+	internal static void Run(string exe, string arguments)
 	{
 		Console.WriteLine($"  $ {exe} {arguments}");
 		var psi = new ProcessStartInfo(exe, arguments) {

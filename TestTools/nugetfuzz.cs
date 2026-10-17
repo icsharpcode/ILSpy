@@ -32,7 +32,8 @@
 // already exists next to the assembly, which is how the lint is calibrated: it must report
 // nothing at all for a PDB the C# compiler wrote.
 //
-// usage: dotnet run nugetfuzz.cs -- [--download-only|--pdb] <PackageId[@Version]>... | @packagelist.txt
+// usage: dotnet run nugetfuzz.cs -- [--download-only] [--corpus-out <file>] <PackageId[@Version]>... | @packagelist.txt
+//        dotnet run nugetfuzz.cs -- [--pdb] <PackageId[@Version]>... | @packagelist.txt
 //        dotnet run nugetfuzz.cs -- --pdb-lint <file.dll|dir>... | @corpus.txt
 
 using System.Diagnostics;
@@ -144,29 +145,53 @@ if (args is ["--report", var ledgerPath, ..])
 // Populates the cache without decompiling: the sweep is the slow part, and a corpus
 // only needs the assemblies on disk.
 var downloadOnly = args.Contains("--download-only");
+string? corpusOut = null;
 // Generates a PDB per assembly and checks it, instead of decompiling type by type. The two are
 // alternatives rather than additions: a whole-assembly PDB is far more expensive than the type
 // sweep, and they answer different questions.
 var pdbMode = args.Contains("--pdb");
 // Checks the PDB the assembly already ships with. Calibration, not a sweep.
 var pdbLint = args.Contains("--pdb-lint");
+var packageArgs = new List<string>();
+for (int i = 0; i < args.Length; i++)
+{
+	if (args[i] == "--corpus-out")
+	{
+		if (++i == args.Length || args[i].StartsWith("--"))
+		{
+			Console.Error.WriteLine("--corpus-out requires a path");
+			return 1;
+		}
+		corpusOut = args[i];
+	}
+	else if (!args[i].StartsWith("--"))
+	{
+		packageArgs.Add(args[i]);
+	}
+}
+if (corpusOut != null && !downloadOnly)
+{
+	Console.Error.WriteLine("--corpus-out requires --download-only");
+	return 1;
+}
 // Findings first hit by the assembly being decompiled. They get their reference context
 // once it is done, because the resolver keeps discovering references until then.
 var pendingContext = new List<string>();
-var arguments = args
-	.Where(a => !a.StartsWith("--"))
+var arguments = packageArgs
 	.SelectMany(a => a.StartsWith('@') ? File.ReadAllLines(a[1..]) : new[] { a })
 	.Select(l => l.Trim())
 	.Where(l => l.Length > 0 && !l.StartsWith('#'))
 	.ToList();
 if (arguments.Count == 0)
 {
-	Console.Error.WriteLine("usage: nugetfuzz [--download-only|--pdb] <PackageId[@Version]>... | @packagelist.txt");
+	Console.Error.WriteLine("usage: nugetfuzz [--download-only] [--corpus-out <file>] <PackageId[@Version]>... | @packagelist.txt");
+	Console.Error.WriteLine("       nugetfuzz [--pdb] <PackageId[@Version]>... | @packagelist.txt");
 	Console.Error.WriteLine("       nugetfuzz --pdb-lint <file.dll|dir>... | @corpus.txt");
 	Console.Error.WriteLine("       nugetfuzz --report <ledger.jsonl> [out.html]");
 	return 1;
 }
 
+var corpusDirs = new List<string>();
 if (pdbLint)
 {
 	foreach (var dll in ExpandDlls(arguments))
@@ -192,6 +217,15 @@ else
 			Report(spec, "-", "-", ex);
 		}
 	}
+}
+
+if (corpusOut != null)
+{
+	var fullPath = Path.GetFullPath(corpusOut);
+	var dirs = corpusDirs.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+	Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+	File.WriteAllLines(fullPath, dirs);
+	Console.WriteLine($"{dirs.Count} lib directories -> {fullPath}");
 }
 
 Console.WriteLine();
@@ -267,6 +301,7 @@ async Task ProcessPackage(string spec)
 		// The package and its dependency closure are in the cache now, which is all a
 		// corpus needs; decompiling every type is what the sweep is for.
 		Console.WriteLine($"  cached: {libDir}");
+		corpusDirs.Add(libDir);
 		return;
 	}
 	// The installed runtime dir is a last-resort fallback only: Microsoft.NETCore.App
