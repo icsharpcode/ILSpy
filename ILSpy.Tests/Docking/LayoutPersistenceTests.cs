@@ -36,21 +36,14 @@ using NUnit.Framework;
 namespace ICSharpCode.ILSpy.Tests.Docking;
 
 /// <summary>
-/// Save-side pins for the Avalonia layout-persistence wiring. The Save path writes a
-/// JSON sidecar next to <c>ILSpy.xml</c> using <c>Dock.Serializer.SystemTextJson</c>,
-/// with a custom <c>JsonTypeInfoResolver</c> modifier that strips back-reference
-/// properties (Owner / Factory / Task-shaped properties) so the dock tree doesn't
-/// surface a real cycle that <see cref="System.Text.Json.Serialization.ReferenceHandler.Preserve"/>
-/// can't bridge across Dock's per-element <c>JsonConverterList&lt;T&gt;</c> calls.
-/// <para>
-/// Load currently returns null on this same layout because the emitted JSON has both
-/// <c>$id</c> (from Preserve) and <c>$type</c> (from polymorphism) on the same objects,
-/// and System.Text.Json's reader requires <c>$type</c> to come first — a documented
-/// incompatibility we'd need either a Dock-side fix or a Newtonsoft swap to resolve.
-/// The fallback to <see cref="ILSpyDockFactory.CreateLayout"/> on null load means the
-/// app's user-visible behaviour is "layout still resets each restart" — same as before
-/// — but the infrastructure for the eventual full fix is in place.
-/// </para>
+/// Pins for the Avalonia layout-persistence wiring. <see cref="ILSpyDockFactory.SaveLayout"/>
+/// writes a JSON sidecar next to <c>ILSpy.xml</c> with <c>ILSpyDockJson.Options</c>: plain
+/// System.Text.Json over the Dock.Model types, with resolver modifiers that strip
+/// back-reference, Task-shaped and document-child properties so the tree is a cycle-free
+/// DAG that needs no <c>$id</c>/<c>$ref</c>. <see cref="ILSpyDockFactory.LoadLayout"/> reads
+/// it back, resolving tool panes to their live MEF singletons and repopulating the document
+/// dock with a fresh main tab; any failure yields null so the caller falls back to
+/// <see cref="ILSpyDockFactory.CreateLayout"/>.
 /// </summary>
 [TestFixture]
 public class LayoutPersistenceTests
@@ -225,6 +218,32 @@ public class LayoutPersistenceTests
 			loadedDocs.Should().Be(1,
 				"only the freshly-created MainTab must exist; persisted document children "
 				+ "must not survive the round-trip");
+		}
+		finally
+		{
+			if (File.Exists(path))
+				File.Delete(path);
+		}
+	}
+
+	[AvaloniaTest]
+	public async Task WarmUp_Round_Trips_Without_Composition_And_Leaves_The_Real_Load_Intact()
+	{
+		// The startup warm-up runs on a thread-pool thread while the container is still being
+		// built, so it must get by without MEF, and it must not poison the shared options that
+		// the real load uses right after.
+		bool warmed = await Task.Run(ILSpyDockJson.WarmUp);
+		warmed.Should().BeTrue("the canned Dock.Model.Mvvm layout must serialize and deserialize");
+
+		_ = await TestHarness.BootAsync();
+		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.test.{System.Guid.NewGuid():N}.json");
+		try
+		{
+			ILSpyDockFactory.SaveLayout(path, dockWorkspace.Layout);
+			var registry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
+			var loaded = new ILSpyDockFactory(registry).LoadLayout(path);
+			((object?)loaded).Should().NotBeNull("the real layout must still round-trip after the warm-up");
 		}
 		finally
 		{

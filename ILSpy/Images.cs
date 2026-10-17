@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -45,122 +46,157 @@ namespace ICSharpCode.ILSpy
 	{
 		const string AssetBase = "avares://ILSpy/Assets/Icons/";
 
-		static IImage LoadSvg(string name)
+		// Parsed SVG per icon file name. Parsing is the expensive part of an icon and needs no
+		// UI thread, so it can run anywhere. The Lazy makes a name parse exactly once even
+		// when two threads ask for it at the same time; the second one waits for the first
+		// instead of parsing again.
+		static readonly ConcurrentDictionary<string, Lazy<SvgSource>> svgSources = new();
+
+		static SvgSource ParseSvg(string name)
+			=> svgSources.GetOrAdd(name, static n => new Lazy<SvgSource>(
+				() => SvgSource.Load(AssetBase + n + ".svg", null))).Value;
+
+		static IImage Svg(string name) => new SvgIcon(ParseSvg(name));
+
+		/// <summary>
+		/// Parses every SVG in the icon folder, on whatever thread calls it. Started on a
+		/// thread-pool thread at the very beginning of application startup so that by the
+		/// time the first view asks for an icon, the property getters only wrap sources that
+		/// are already parsed. Measured on the eager version of this class: the first parse
+		/// alone cost about 300 ms (one-time JIT and static initialization of the Svg.Skia
+		/// stack), the remaining 75 about 2 ms each, all on the UI thread. An icon a getter
+		/// asks for before the preload reaches it is parsed by the getter itself, so this is
+		/// purely an optimization; a failure here is swallowed for the same reason.
+		/// </summary>
+		public static void PreloadSvgs()
 		{
-			return new SvgImage {
-				Source = SvgSource.Load(AssetBase + name + ".svg", null)
-			};
+			try
+			{
+				using var _ = AppEnv.AppLog.Phase("Images: SVG preload");
+				foreach (var uri in AssetLoader.GetAssets(new Uri(AssetBase), null))
+				{
+					var file = uri.Segments[^1];
+					if (file.EndsWith(".svg", StringComparison.Ordinal))
+						ParseSvg(file[..^".svg".Length]);
+				}
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[Images] PreloadSvgs failed: {ex}");
+			}
 		}
 
-		static IImage LoadPng(string name)
+		internal static int ParsedSvgCount => svgSources.Count;
+
+		static IImage Png(string name)
 		{
 			using var stream = AssetLoader.Open(new Uri(AssetBase + name + ".png"));
 			return new Bitmap(stream);
 		}
 
 		// Assemblies / packages
-		public static readonly IImage Assembly = LoadSvg(nameof(Assembly));
-		public static readonly IImage AssemblyList = LoadSvg(nameof(AssemblyList));
-		public static readonly IImage AssemblyListGAC = LoadSvg(nameof(AssemblyListGAC));
-		public static readonly IImage AssemblyLoading = LoadSvg(nameof(AssemblyLoading));
-		public static readonly IImage AssemblyWarning = LoadSvg(nameof(AssemblyWarning));
-		public static readonly IImage Warning = LoadSvg(nameof(Warning));
-		public static readonly IImage FindAssembly = LoadSvg(nameof(FindAssembly));
-		public static readonly IImage Search = LoadSvg(nameof(Search));
-		public static readonly IImage Library = LoadSvg(nameof(Library));
-		public static readonly IImage NuGet = LoadPng(nameof(NuGet));
-		public static readonly IImage Process = LoadSvg(nameof(Process));
-		public static readonly IImage MetadataFile = LoadSvg(nameof(MetadataFile));
-		public static readonly IImage WebAssemblyFile = LoadSvg("WebAssembly");
-		public static readonly IImage ProgramDebugDatabase = LoadSvg(nameof(ProgramDebugDatabase));
+		public static IImage Assembly => field ??= Svg(nameof(Assembly));
+		public static IImage AssemblyList => field ??= Svg(nameof(AssemblyList));
+		public static IImage AssemblyListGAC => field ??= Svg(nameof(AssemblyListGAC));
+		public static IImage AssemblyLoading => field ??= Svg(nameof(AssemblyLoading));
+		public static IImage AssemblyWarning => field ??= Svg(nameof(AssemblyWarning));
+		public static IImage Warning => field ??= Svg(nameof(Warning));
+		public static IImage FindAssembly => field ??= Svg(nameof(FindAssembly));
+		public static IImage Search => field ??= Svg(nameof(Search));
+		public static IImage Library => field ??= Svg(nameof(Library));
+		public static IImage NuGet => field ??= Png(nameof(NuGet));
+		public static IImage Process => field ??= Svg(nameof(Process));
+		public static IImage MetadataFile => field ??= Svg(nameof(MetadataFile));
+		public static IImage WebAssemblyFile => field ??= Svg("WebAssembly");
+		public static IImage ProgramDebugDatabase => field ??= Svg(nameof(ProgramDebugDatabase));
 
 		// Toolbar / navigation
-		public static readonly IImage Back = LoadSvg(nameof(Back));
-		public static readonly IImage Forward = LoadSvg(nameof(Forward));
-		public static readonly IImage Open = LoadSvg(nameof(Open));
-		public static readonly IImage Save = LoadSvg(nameof(Save));
-		public static readonly IImage Refresh = LoadSvg(nameof(Refresh));
-		public static readonly IImage Sort = LoadSvg(nameof(Sort));
-		public static readonly IImage CollapseAll = LoadSvg(nameof(CollapseAll));
-		public static readonly IImage Delete = LoadSvg(nameof(Delete));
-		public static readonly IImage ShowPublicOnly = LoadSvg(nameof(ShowPublicOnly));
-		public static readonly IImage ShowPrivateInternal = LoadSvg(nameof(ShowPrivateInternal));
-		public static readonly IImage ShowAll = LoadSvg(nameof(ShowAll));
+		public static IImage Back => field ??= Svg(nameof(Back));
+		public static IImage Forward => field ??= Svg(nameof(Forward));
+		public static IImage Open => field ??= Svg(nameof(Open));
+		public static IImage Save => field ??= Svg(nameof(Save));
+		public static IImage Refresh => field ??= Svg(nameof(Refresh));
+		public static IImage Sort => field ??= Svg(nameof(Sort));
+		public static IImage CollapseAll => field ??= Svg(nameof(CollapseAll));
+		public static IImage Delete => field ??= Svg(nameof(Delete));
+		public static IImage ShowPublicOnly => field ??= Svg(nameof(ShowPublicOnly));
+		public static IImage ShowPrivateInternal => field ??= Svg(nameof(ShowPrivateInternal));
+		public static IImage ShowAll => field ??= Svg(nameof(ShowAll));
 
 		// Bookmarks (file names carry dots, so the dotted variants can't use nameof).
-		public static readonly IImage Bookmark = LoadSvg(nameof(Bookmark));
-		public static readonly IImage BookmarkDisable = LoadSvg("Bookmark.Disable");
-		public static readonly IImage BookmarkNext = LoadSvg("Bookmark.Next");
-		public static readonly IImage BookmarkPrevious = LoadSvg("Bookmark.Previous");
-		public static readonly IImage BookmarkNextInFile = LoadSvg("Bookmark.Next.File");
-		public static readonly IImage BookmarkPreviousInFile = LoadSvg("Bookmark.Previous.File");
-		public static readonly IImage BookmarkClear = LoadSvg("Bookmark.Clear");
+		public static IImage Bookmark => field ??= Svg(nameof(Bookmark));
+		public static IImage BookmarkDisable => field ??= Svg("Bookmark.Disable");
+		public static IImage BookmarkNext => field ??= Svg("Bookmark.Next");
+		public static IImage BookmarkPrevious => field ??= Svg("Bookmark.Previous");
+		public static IImage BookmarkNextInFile => field ??= Svg("Bookmark.Next.File");
+		public static IImage BookmarkPreviousInFile => field ??= Svg("Bookmark.Previous.File");
+		public static IImage BookmarkClear => field ??= Svg("Bookmark.Clear");
 
 		// Type-relation tree nodes (Base Types / Derived Types).
-		public static readonly IImage SuperTypes = LoadSvg(nameof(SuperTypes));
-		public static readonly IImage SubTypes = LoadSvg(nameof(SubTypes));
+		public static IImage SuperTypes => field ??= Svg(nameof(SuperTypes));
+		public static IImage SubTypes => field ??= Svg(nameof(SubTypes));
 
 		// Containers
-		public static readonly IImage Namespace = LoadSvg(nameof(Namespace));
-		public static readonly IImage ReferenceFolder = LoadSvg(nameof(ReferenceFolder));
-		public static readonly IImage MetadataTable = LoadSvg(nameof(MetadataTable));
-		public static readonly IImage MetadataTableGroup = LoadSvg(nameof(MetadataTableGroup));
-		public static readonly IImage Metadata = LoadSvg(nameof(Metadata));
-		public static readonly IImage Heap = LoadSvg(nameof(Heap));
-		public static readonly IImage Header = LoadSvg(nameof(Header));
-		public static readonly IImage FolderClosed = LoadSvg(nameof(FolderClosed));
-		public static readonly IImage FolderOpen = LoadSvg(nameof(FolderOpen));
-		public static readonly IImage ListFolder = LoadSvg(nameof(ListFolder));
-		public static readonly IImage ListFolderOpen = LoadSvg(nameof(ListFolderOpen));
-		public static readonly IImage Resource = LoadSvg(nameof(Resource));
-		public static readonly IImage ResourceResourcesFile = LoadSvg(nameof(ResourceResourcesFile));
+		public static IImage Namespace => field ??= Svg(nameof(Namespace));
+		public static IImage ReferenceFolder => field ??= Svg(nameof(ReferenceFolder));
+		public static IImage MetadataTable => field ??= Svg(nameof(MetadataTable));
+		public static IImage MetadataTableGroup => field ??= Svg(nameof(MetadataTableGroup));
+		public static IImage Metadata => field ??= Svg(nameof(Metadata));
+		public static IImage Heap => field ??= Svg(nameof(Heap));
+		public static IImage Header => field ??= Svg(nameof(Header));
+		public static IImage FolderClosed => field ??= Svg(nameof(FolderClosed));
+		public static IImage FolderOpen => field ??= Svg(nameof(FolderOpen));
+		public static IImage ListFolder => field ??= Svg(nameof(ListFolder));
+		public static IImage ListFolderOpen => field ??= Svg(nameof(ListFolderOpen));
+		public static IImage Resource => field ??= Svg(nameof(Resource));
+		public static IImage ResourceResourcesFile => field ??= Svg(nameof(ResourceResourcesFile));
 
 		// Types
-		public static readonly IImage Class = LoadSvg(nameof(Class));
-		public static readonly IImage Interface = LoadSvg(nameof(Interface));
-		public static readonly IImage Struct = LoadSvg(nameof(Struct));
-		public static readonly IImage Enum = LoadSvg(nameof(Enum));
-		public static readonly IImage Delegate = LoadSvg(nameof(Delegate));
+		public static IImage Class => field ??= Svg(nameof(Class));
+		public static IImage Interface => field ??= Svg(nameof(Interface));
+		public static IImage Struct => field ??= Svg(nameof(Struct));
+		public static IImage Enum => field ??= Svg(nameof(Enum));
+		public static IImage Delegate => field ??= Svg(nameof(Delegate));
 
 		// Methods
-		public static readonly IImage Method = LoadSvg(nameof(Method));
-		public static readonly IImage Constructor = LoadSvg(nameof(Constructor));
-		public static readonly IImage Operator = LoadSvg(nameof(Operator));
-		public static readonly IImage VirtualMethod = LoadSvg(nameof(VirtualMethod));
-		public static readonly IImage ExtensionMethod = LoadSvg(nameof(ExtensionMethod));
-		public static readonly IImage PInvokeMethod = LoadSvg(nameof(PInvokeMethod));
+		public static IImage Method => field ??= Svg(nameof(Method));
+		public static IImage Constructor => field ??= Svg(nameof(Constructor));
+		public static IImage Operator => field ??= Svg(nameof(Operator));
+		public static IImage VirtualMethod => field ??= Svg(nameof(VirtualMethod));
+		public static IImage ExtensionMethod => field ??= Svg(nameof(ExtensionMethod));
+		public static IImage PInvokeMethod => field ??= Svg(nameof(PInvokeMethod));
 
 		// Fields / properties / events
-		public static readonly IImage Field = LoadSvg(nameof(Field));
-		public static readonly IImage FieldReadOnly = LoadSvg(nameof(FieldReadOnly));
-		public static readonly IImage EnumValue = LoadSvg(nameof(EnumValue));
-		public static readonly IImage Property = LoadSvg(nameof(Property));
-		public static readonly IImage Indexer = LoadSvg(nameof(Indexer));
-		public static readonly IImage Event = LoadSvg(nameof(Event));
-		public static readonly IImage Literal = LoadSvg(nameof(Literal));
-		public static readonly IImage ViewCode = LoadSvg(nameof(ViewCode));
+		public static IImage Field => field ??= Svg(nameof(Field));
+		public static IImage FieldReadOnly => field ??= Svg(nameof(FieldReadOnly));
+		public static IImage EnumValue => field ??= Svg(nameof(EnumValue));
+		public static IImage Property => field ??= Svg(nameof(Property));
+		public static IImage Indexer => field ??= Svg(nameof(Indexer));
+		public static IImage Event => field ??= Svg(nameof(Event));
+		public static IImage Literal => field ??= Svg(nameof(Literal));
+		public static IImage ViewCode => field ??= Svg(nameof(ViewCode));
 
 		// Editing / context-menu icons
-		public static readonly IImage Copy = LoadSvg(nameof(Copy));
+		public static IImage Copy => field ??= Svg(nameof(Copy));
 
 		// Reference overlays (small badge layered onto a base icon for TypeRef/MemberRef nodes).
-		internal static readonly IImage ReferenceOverlay = LoadSvg(nameof(ReferenceOverlay));
-		internal static readonly IImage ExportOverlay = LoadSvg(nameof(ExportOverlay));
+		internal static IImage ReferenceOverlay => field ??= Svg(nameof(ReferenceOverlay));
+		internal static IImage ExportOverlay => field ??= Svg(nameof(ExportOverlay));
 
-		public static readonly IImage TypeReference = new LayeredImage(Class, ReferenceOverlay);
-		public static readonly IImage MethodReference = new LayeredImage(Method, ReferenceOverlay);
-		public static readonly IImage FieldReference = new LayeredImage(Field, ReferenceOverlay);
-		public static readonly IImage ExportedType = new LayeredImage(Class, ExportOverlay);
+		public static IImage TypeReference => field ??= new LayeredImage(Class, ReferenceOverlay);
+		public static IImage MethodReference => field ??= new LayeredImage(Method, ReferenceOverlay);
+		public static IImage FieldReference => field ??= new LayeredImage(Field, ReferenceOverlay);
+		public static IImage ExportedType => field ??= new LayeredImage(Class, ExportOverlay);
 
 		// Overlays
-		internal static readonly IImage OverlayProtected = LoadSvg(nameof(OverlayProtected));
-		internal static readonly IImage OverlayInternal = LoadSvg(nameof(OverlayInternal));
-		internal static readonly IImage OverlayProtectedInternal = LoadSvg(nameof(OverlayProtectedInternal));
-		internal static readonly IImage OverlayPrivate = LoadSvg(nameof(OverlayPrivate));
-		internal static readonly IImage OverlayPrivateProtected = LoadSvg(nameof(OverlayPrivateProtected));
-		internal static readonly IImage OverlayCompilerControlled = LoadSvg(nameof(OverlayCompilerControlled));
-		internal static readonly IImage OverlayStatic = LoadSvg(nameof(OverlayStatic));
-		internal static readonly IImage OverlayExtension = LoadSvg(nameof(OverlayExtension));
+		internal static IImage OverlayProtected => field ??= Svg(nameof(OverlayProtected));
+		internal static IImage OverlayInternal => field ??= Svg(nameof(OverlayInternal));
+		internal static IImage OverlayProtectedInternal => field ??= Svg(nameof(OverlayProtectedInternal));
+		internal static IImage OverlayPrivate => field ??= Svg(nameof(OverlayPrivate));
+		internal static IImage OverlayPrivateProtected => field ??= Svg(nameof(OverlayPrivateProtected));
+		internal static IImage OverlayCompilerControlled => field ??= Svg(nameof(OverlayCompilerControlled));
+		internal static IImage OverlayStatic => field ??= Svg(nameof(OverlayStatic));
+		internal static IImage OverlayExtension => field ??= Svg(nameof(OverlayExtension));
 
 		static readonly Dictionary<(IImage Base, AccessOverlayIcon Overlay, bool Static, bool Extension), IImage> iconCache = new();
 
@@ -213,8 +249,8 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Resolve an "Images/Foo" string (from MEF metadata like <c>MenuIcon</c>,
 		/// <c>Icon</c>, or <c>ToolbarIcon</c>) to the corresponding static <see cref="IImage"/>
-		/// field on <see cref="Images"/>. Returns <see langword="null"/> when the path is
-		/// empty or the named field doesn't exist, so callers can skip-and-continue without
+		/// property on <see cref="Images"/>. Returns <see langword="null"/> when the path is
+		/// empty or the named property does not exist, so callers can skip-and-continue without
 		/// breaking the menu/toolbar build.
 		/// </summary>
 		public static IImage? ResolveByPath(string? path)
@@ -224,8 +260,8 @@ namespace ICSharpCode.ILSpy
 			var name = path.StartsWith("Images/", StringComparison.Ordinal)
 				? path["Images/".Length..]
 				: path;
-			var field = typeof(Images).GetField(name, BindingFlags.Public | BindingFlags.Static);
-			return field?.GetValue(null) as IImage;
+			var property = typeof(Images).GetProperty(name, BindingFlags.Public | BindingFlags.Static);
+			return property?.GetValue(null) as IImage;
 		}
 
 		/// <summary>
@@ -251,6 +287,33 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public static Bitmap? LoadBitmap(string? path, int size = 16)
 			=> RenderToBitmap(ResolveByPath(path), size);
+	}
+
+	/// <summary>
+	/// An icon drawn from a parsed SVG. Draws the way <see cref="SvgImage"/> does, but it is
+	/// not an AvaloniaObject: tree nodes and search results resolve their icons on decompiler
+	/// worker threads, and an AvaloniaObject built there is owned by that thread and throws
+	/// as soon as the UI thread measures it. A plain object can be built on any thread.
+	/// </summary>
+	sealed class SvgIcon(SvgSource source) : IImage
+	{
+		public Size Size => source.Picture is { } picture
+			? new Size(picture.CullRect.Width, picture.CullRect.Height)
+			: default;
+
+		public void Draw(DrawingContext context, Rect sourceRect, Rect destRect)
+		{
+			if (source.Picture is not { } picture || Size.Width <= 0 || Size.Height <= 0)
+				return;
+			var cullRect = picture.CullRect;
+			var scale = Matrix.CreateScale(destRect.Width / sourceRect.Width, destRect.Height / sourceRect.Height);
+			var translate = Matrix.CreateTranslation(
+				-sourceRect.X + destRect.X - cullRect.Top,
+				-sourceRect.Y + destRect.Y - cullRect.Left);
+			using (context.PushClip(destRect))
+			using (context.PushTransform(scale * translate))
+				context.Custom(new SvgSourceCustomDrawOperation(new Rect(0, 0, cullRect.Width, cullRect.Height), source));
+		}
 	}
 
 	/// <summary>
