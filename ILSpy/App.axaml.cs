@@ -72,6 +72,11 @@ namespace ICSharpCode.ILSpy
 				StartupExceptions.Items.Add(new ExceptionData(ex));
 			}
 
+			// Pre-pay the first layout (de)serialization's JIT and metadata cost off the UI thread
+			// while the main window is being resolved (see ILSpyDockJson.WarmUp). Started only after
+			// the plugins are loaded, so the dockable-type scan sees every pane type.
+			_ = Task.Run(Docking.ILSpyDockJson.WarmUp);
+
 			try
 			{
 				if (Composition?.GetExport<SettingsService>() is { } settingsService)

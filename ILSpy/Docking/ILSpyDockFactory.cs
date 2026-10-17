@@ -250,7 +250,8 @@ namespace ICSharpCode.ILSpy.Docking
 			try
 			{
 				using var stream = File.OpenRead(path);
-				loaded = System.Text.Json.JsonSerializer.Deserialize<IRootDock>(stream, ILSpyDockJson.Options);
+				using (AppEnv.AppLog.Phase("LoadLayout: deserialize"))
+					loaded = System.Text.Json.JsonSerializer.Deserialize<IRootDock>(stream, ILSpyDockJson.Options);
 			}
 			catch (Exception ex)
 			{
@@ -258,7 +259,10 @@ namespace ICSharpCode.ILSpy.Docking
 				return null;
 			}
 			if (loaded != null)
-				RehydrateFromLoadedLayout(loaded);
+			{
+				using (AppEnv.AppLog.Phase("LoadLayout: rehydrate"))
+					RehydrateFromLoadedLayout(loaded);
+			}
 			return loaded;
 		}
 

@@ -227,6 +227,32 @@ public class LayoutPersistenceTests
 	}
 
 	[AvaloniaTest]
+	public async Task WarmUp_Round_Trips_Without_Composition_And_Leaves_The_Real_Load_Intact()
+	{
+		// The startup warm-up runs on a thread-pool thread while the container is still being
+		// built, so it must get by without MEF, and it must not poison the shared options that
+		// the real load uses right after.
+		bool warmed = await Task.Run(ILSpyDockJson.WarmUp);
+		warmed.Should().BeTrue("the canned Dock.Model.Mvvm layout must serialize and deserialize");
+
+		_ = await TestHarness.BootAsync();
+		var dockWorkspace = AppComposition.Current.GetExport<DockWorkspace>();
+		var path = Path.Combine(Path.GetTempPath(), $"ILSpy.Layout.test.{System.Guid.NewGuid():N}.json");
+		try
+		{
+			ILSpyDockFactory.SaveLayout(path, dockWorkspace.Layout);
+			var registry = AppComposition.Current.GetExport<ICSharpCode.ILSpy.Commands.ToolPaneRegistry>();
+			var loaded = new ILSpyDockFactory(registry).LoadLayout(path);
+			((object?)loaded).Should().NotBeNull("the real layout must still round-trip after the warm-up");
+		}
+		finally
+		{
+			if (File.Exists(path))
+				File.Delete(path);
+		}
+	}
+
+	[AvaloniaTest]
 	public void LoadLayout_Returns_Null_When_The_File_Does_Not_Exist()
 	{
 		// The "no saved layout yet" path on first launch. DockWorkspace falls back

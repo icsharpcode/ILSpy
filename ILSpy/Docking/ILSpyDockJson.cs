@@ -29,6 +29,7 @@ using System.Windows.Input;
 
 using Dock.Model.Controls;
 using Dock.Model.Core;
+using Dock.Model.Mvvm.Controls;
 
 using ICSharpCode.ILSpy.ViewModels;
 
@@ -51,6 +52,48 @@ namespace ICSharpCode.ILSpy.Docking
 	static class ILSpyDockJson
 	{
 		public static JsonSerializerOptions Options { get; } = BuildOptions();
+
+		/// <summary>
+		/// Pre-pays the one-time cost of the first layout (de)serialization on whatever thread
+		/// calls it, so the UI-thread <see cref="ILSpyDockFactory.LoadLayout"/> at startup finds
+		/// everything warm. Measured on the first load of a typical layout: about 2,300 methods
+		/// JIT-compiled for roughly 180 ms, plus 25-50 ms of reflection metadata for the
+		/// Dock.Model.Mvvm types, against under 1 ms for the actual work. Round-tripping a layout
+		/// built from those same model types exercises the same converters and property accessors
+		/// a saved layout needs; it contains no ILSpy pane, so nothing here touches MEF. Returns
+		/// whether the round trip produced a root dock. Best-effort: a failure is only a lost
+		/// optimization, so it is swallowed.
+		/// </summary>
+		public static bool WarmUp()
+		{
+			try
+			{
+				using var _ = AppEnv.AppLog.Phase("ILSpyDockJson: warm-up");
+				var root = new RootDock {
+					VisibleDockables = new ObservableCollection<IDockable> {
+						new ProportionalDock {
+							VisibleDockables = new ObservableCollection<IDockable> {
+								new ToolDock { VisibleDockables = new ObservableCollection<IDockable>() },
+								new ProportionalDockSplitter(),
+								new DocumentDock(),
+							},
+						},
+					},
+					HiddenDockables = new ObservableCollection<IDockable>(),
+					LeftPinnedDockables = new ObservableCollection<IDockable>(),
+					RightPinnedDockables = new ObservableCollection<IDockable>(),
+					TopPinnedDockables = new ObservableCollection<IDockable>(),
+					BottomPinnedDockables = new ObservableCollection<IDockable>(),
+				};
+				var json = JsonSerializer.Serialize<IRootDock>(root, Options);
+				return JsonSerializer.Deserialize<IRootDock>(json, Options) is not null;
+			}
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"[ILSpyDockJson] WarmUp failed: {ex}");
+				return false;
+			}
+		}
 
 		static readonly Type[] PolymorphicBaseTypes = new[] {
 			typeof(IDockable),
@@ -135,6 +178,7 @@ namespace ICSharpCode.ILSpy.Docking
 
 		static IReadOnlyList<Type> ScanCandidateTypes()
 		{
+			using var _ = AppEnv.AppLog.Phase("ILSpyDockJson: candidate type scan");
 			// Filter at the assembly level so we don't call GetTypes() on assemblies that
 			// couldn't possibly contain Dock-model types — System.*, Avalonia.*, Microsoft.*,
 			// AvaloniaEdit, ICSharpCode.Decompiler, etc. all qualify as "won't define an
