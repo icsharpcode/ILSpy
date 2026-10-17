@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var lifted = Lift(ifInst, ifInst.Condition, ifInst.TrueInst, ifInst.FalseInst);
 			if (lifted != null)
 			{
+				context.Step("NullableLiftingTransform", ifInst);
 				ifInst.ReplaceWith(lifted);
 				context.EndStep(lifted);
 				return true;
@@ -271,10 +272,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			ILVariable v;
 			// Handle equality comparisons with bool?:
-			if (MatchGetValueOrDefault(condition, out v)
-				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean))
+			if (MatchGetValueOrDefault(condition, out v))
 			{
-				if (MatchHasValueCall(trueInst, v) && falseInst.MatchLdcI4(0))
+				bool isBoolean = NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean);
+				if (isBoolean && MatchHasValueCall(trueInst, v) && falseInst.MatchLdcI4(0))
 				{
 					// v.GetValueOrDefault() ? v.HasValue : false
 					// ==> v == true
@@ -289,6 +290,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					// v.GetValueOrDefault() ? false : v.HasValue
 					// ==> v == false
+					// Also works with int?:
+					//   v.GetValueOrDefault() != 0 ? false : v.HasValue
+					//   ==> v == 0
 					context.Step("NullableLiftingTransform: v == false", ifInst);
 					return new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp,
 						StackType.I4, Sign.None,
@@ -296,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						trueInst // LdcI4(0)
 					).WithILRange(ifInst);
 				}
-				else if (MatchNegatedHasValueCall(trueInst, v) && falseInst.MatchLdcI4(1))
+				else if (isBoolean && MatchNegatedHasValueCall(trueInst, v) && falseInst.MatchLdcI4(1))
 				{
 					// v.GetValueOrDefault() ? !v.HasValue : true
 					// ==> v != true
@@ -311,6 +315,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				{
 					// v.GetValueOrDefault() ? true : !v.HasValue
 					// ==> v != false
+					// Also works with int?:
+					//   v.GetValueOrDefault() != 0 ? true : !v.HasValue
+					//   ==> v != 0
 					context.Step("NullableLiftingTransform: v != false", ifInst);
 					return new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp,
 						StackType.I4, Sign.None,

@@ -265,15 +265,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine();
 			}
-
-			if (0 == a)
-			{
-				Console.WriteLine();
-			}
-			if (0 != a)
-			{
-				Console.WriteLine();
-			}
 			if (0 > a)
 			{
 				Console.WriteLine();

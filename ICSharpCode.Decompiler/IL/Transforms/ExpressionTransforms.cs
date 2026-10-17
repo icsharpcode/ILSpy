@@ -558,7 +558,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			if (new NullableLiftingTransform(context).Run(inst))
 			{
-				context.Step("NullableLiftingTransform", inst);
 				return;
 			}
 
