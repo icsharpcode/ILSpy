@@ -148,7 +148,13 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteEndElement(); // </PropertyGroup> (Release)
 
 				w.WriteStartElement("ItemGroup"); // References
-				foreach (var r in module.AssemblyReferences)
+												  // The markup compiler resolves XAML type names through the whole reference graph,
+												  // so a WPF project lists what its references pull in.
+				bool isWpf = module.AssemblyReferences.Any(r => r.Name == "PresentationFramework");
+				var references = isWpf
+					? AssemblyReferenceClosure.Of(module, project.AssemblyResolver)
+					: module.AssemblyReferences;
+				foreach (var r in references)
 				{
 					if (r.Name != "mscorlib")
 					{
