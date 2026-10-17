@@ -72,7 +72,9 @@ namespace ICSharpCode.ILSpy.Updates
 
 		internal static async Task<AvailableVersionInfo> GetLatestVersionAsync(HttpClient client, Uri updateUrl)
 		{
-			string data = await GetWithRedirectsAsync(client, updateUrl).ConfigureAwait(false);
+			using var response = await client.GetAsync(updateUrl).ConfigureAwait(false);
+			response.EnsureSuccessStatusCode();
+			string data = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
 			var doc = XDocument.Load(new StringReader(data));
 			var bands = doc.Root!.Elements("band").ToList();
@@ -97,28 +99,6 @@ namespace ICSharpCode.ILSpy.Updates
 
 			LatestAvailableVersion = new AvailableVersionInfo { Version = version, DownloadUrl = url };
 			return LatestAvailableVersion;
-		}
-
-		static async Task<string> GetWithRedirectsAsync(HttpClient client, Uri uri, int maxRedirects = 5)
-		{
-			for (int i = 0; i <= maxRedirects; i++)
-			{
-				using var response = await client.GetAsync(uri).ConfigureAwait(false);
-				if (response.StatusCode is HttpStatusCode.MovedPermanently
-					or HttpStatusCode.Found
-					or HttpStatusCode.TemporaryRedirect
-					or HttpStatusCode.PermanentRedirect)
-				{
-					var location = response.Headers.Location;
-					if (location == null)
-						throw new HttpRequestException($"Redirect from {uri} had no Location header");
-					uri = location.IsAbsoluteUri ? location : new Uri(uri, location);
-					continue;
-				}
-				response.EnsureSuccessStatusCode();
-				return await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-			}
-			throw new HttpRequestException($"Exceeded maximum redirect limit ({maxRedirects}).");
 		}
 
 		/// <summary>
