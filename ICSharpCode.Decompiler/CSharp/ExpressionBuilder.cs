@@ -84,6 +84,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly TypeSystemAstBuilder astBuilder;
 		internal readonly TypeInference typeInference;
 		internal readonly DecompilerSettings settings;
+		internal readonly AdjustmentBuilder adjustmentBuilder;
 		readonly CancellationToken cancellationToken;
 
 		public ExpressionBuilder(StatementBuilder statementBuilder, IDecompilerTypeSystem typeSystem,
@@ -111,6 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.astBuilder.UseNullableSpecifierForValueTypes = settings.LiftNullables;
 			this.astBuilder.AlwaysUseGlobal = settings.AlwaysUseGlobal;
 			this.typeInference = new TypeInference(compilation) { Algorithm = TypeInferenceAlgorithm.Improved };
+			this.adjustmentBuilder = new AdjustmentBuilder(this);
 		}
 
 		public AstType ConvertType(IType type)
@@ -171,42 +173,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				TypeHint = typeHint ?? SpecialType.UnknownType
 			};
 			var cexpr = inst.AcceptVisitor(this, context);
-#if DEBUG
-			if (inst.ResultType != StackType.Void && cexpr.Type.Kind != TypeKind.Unknown && inst.ResultType != StackType.Unknown && cexpr.Type.Kind != TypeKind.None)
-			{
-				// Validate the Translate post-condition (documented at beginning of this file):
-				if (inst.ResultType.IsIntegerType())
-				{
-					Debug.Assert(cexpr.Type.GetStackType().IsIntegerType(), "IL instructions of integer type must convert into C# expressions of integer type");
-					Debug.Assert(cexpr.Type.GetSign() != Sign.None, "Must have a sign specified for zero/sign-extension");
-				}
-				else if (inst is ILiftableInstruction liftable && liftable.IsLifted)
-				{
-					if (liftable.UnderlyingResultType != StackType.Unknown)
-					{
-						Debug.Assert(NullableType.IsNullable(cexpr.Type));
-						IType underlying = NullableType.GetUnderlyingType(cexpr.Type);
-						if (liftable.UnderlyingResultType.IsIntegerType())
-						{
-							Debug.Assert(underlying.GetStackType().IsIntegerType(), "IL instructions of integer type must convert into C# expressions of integer type");
-							Debug.Assert(underlying.GetSign() != Sign.None, "Must have a sign specified for zero/sign-extension");
-						}
-						else
-						{
-							Debug.Assert(underlying.GetStackType() == liftable.UnderlyingResultType);
-						}
-					}
-				}
-				else if (inst.ResultType == StackType.Ref)
-				{
-					Debug.Assert(cexpr.Type.GetStackType() == StackType.Ref || cexpr.Type.GetStackType().IsIntegerType());
-				}
-				else
-				{
-					Debug.Assert(cexpr.Type.GetStackType() == inst.ResultType);
-				}
-			}
-#endif
+			cexpr = cexpr.AddLegacyAdjustments(adjustmentBuilder, inst);
+			Debug.Assert(inst.ResultType == cexpr.AdjustedStackType || inst.ResultType == StackType.Unknown || cexpr.AdjustedStackType == StackType.Unknown);
 			return cexpr;
 		}
 
@@ -1118,7 +1086,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 
-
 		TranslatedExpression TryUniteEqualityOperandType(TranslatedExpression left, TranslatedExpression right)
 		{
 			if (left.ResolveResult.IsCompileTimeConstant &&
@@ -1440,6 +1407,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		TranslatedExpression? HandleManagedPointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
 		{
+			Debug.WriteLine("Handling managed pointer arithmetic");
 			if (!(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub))
 				return null;
 			if (inst.CheckForOverflow || inst.IsLifted)
@@ -1678,7 +1646,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Translate(inst.Left, propagateTypeHint ? context.TypeHint : null);
 			var right = Translate(inst.Right, propagateTypeHint ? context.TypeHint : null);
 
-			if (inst.UnderlyingResultType == StackType.Ref)
+			if (inst.LeftInputType == StackType.Ref || inst.RightInputType == StackType.Ref)
 			{
 				var ptrResult = HandleManagedPointerArithmetic(inst, left, right);
 				if (ptrResult != null)
@@ -2317,6 +2285,20 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitConv(Conv inst, TranslationContext context)
 		{
+			if (inst.Kind == ConversionKind.SignExtend && inst.TargetType == IL.PrimitiveType.I8 && !inst.IsLifted
+				&& inst.Argument is BinaryNumericInstruction { Operator: BinaryNumericOperator.Div } bni)
+			{
+				// C# pointer subtraction is an ugly case: the IL produces type nint, but C# produces type long.
+				// So the C# compiler typically emits `conv.i8(div.i(...))`.
+				// But that would decompile to something like `(long)(nint)(p - q)`, and it's not correct to
+				// omit the intermediate cast in general -- we can only do so because we know that the
+				// actual value of `p - q` fits into `nint` and so the truncation adjustment can be safely skipped.
+				TranslatedExpression? result = HandlePointerSubtraction(bni);
+				if (result != null)
+				{
+					return result.Value;
+				}
+			}
 			Sign hintSign = inst.InputSign;
 			if (hintSign == Sign.None)
 			{
