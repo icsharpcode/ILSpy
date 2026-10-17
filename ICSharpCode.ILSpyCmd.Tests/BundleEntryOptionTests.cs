@@ -234,6 +234,17 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		}
 
 		[Test]
+		public async Task DumpPackageWithoutOutputDirectoryIsReportedAsUsageError()
+		{
+			var result = await RunAsync(bundlePath, "--disable-updatecheck", "-d");
+
+			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
+			Assert.That(result.Error, Does.Contain("--dump-package"));
+			Assert.That(result.Error, Does.Contain("--outputdir"));
+			Assert.That(result.Error, Does.Not.Contain("ArgumentNullException"));
+		}
+
+		[Test]
 		public async Task OrdinaryAssemblyIsUnaffected()
 		{
 			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",

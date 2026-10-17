@@ -26,19 +26,23 @@ using McMaster.Extensions.CommandLineUtils.Validation;
 namespace ICSharpCode.ILSpyCmd
 {
 	[AttributeUsage(AttributeTargets.Class)]
-	public sealed class ProjectOptionRequiresOutputDirectoryValidationAttribute : ValidationAttribute
+	public sealed class OutputDirectoryRequiredValidationAttribute : ValidationAttribute
 	{
-		public ProjectOptionRequiresOutputDirectoryValidationAttribute()
+		public OutputDirectoryRequiredValidationAttribute()
 		{
 		}
 
 		protected override ValidationResult IsValid(object value, ValidationContext context)
 		{
-			if (value is ILSpyCmdProgram obj)
+			if (value is ILSpyCmdProgram obj && string.IsNullOrEmpty(obj.OutputDirectory))
 			{
-				if (obj.CreateCompilableProjectFlag && string.IsNullOrEmpty(obj.OutputDirectory))
+				if (obj.CreateCompilableProjectFlag)
 				{
 					return new ValidationResult("--project cannot be used unless --outputdir is also specified");
+				}
+				if (obj.DumpPackageFlag)
+				{
+					return new ValidationResult("--dump-package cannot be used unless --outputdir is also specified");
 				}
 			}
 			return ValidationResult.Success;
