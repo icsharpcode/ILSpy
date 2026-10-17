@@ -149,6 +149,16 @@ list of lib directories they resolved to - a ready-made corpus for either tool:
 ./nuget-top.ps1 -Count 200 -ListOnly     # just the ids, download nothing
 ```
 
+To materialize a corpus from an existing package-ID list such as `top-500.txt`, run the
+download-only pass and keep the resolved `lib` directories it reports:
+
+```pwsh
+New-Item -ItemType Directory -Force crawl | Out-Null
+dotnet run nugetfuzz.cs -- --download-only "@top-500.txt" | Tee-Object -Variable log
+$log | ForEach-Object { if ($_ -match '^\s*cached:\s*(.+)$') { $Matches[1].Trim() } } |
+    Set-Content crawl/top-500.corpus.txt
+```
+
 The ids come from an empty query against the search service, which orders by download count. The
 download itself is `nugetfuzz --download-only`, so package selection, TFM matching and the
 dependency walk behave exactly as they do in a sweep - only the decompiling is skipped.
