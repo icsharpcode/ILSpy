@@ -314,6 +314,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
+			[DebuggerStepThrough]
 			get { return this.argument; }
 			set {
 				ValidateChild(value);
@@ -393,6 +394,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
+			[DebuggerStepThrough]
 			get { return this.left; }
 			set {
 				ValidateChild(value);
@@ -402,6 +404,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo RightSlot = new SlotInfo("Right", canInlineInto: true);
 		ILInstruction right = null!;
 		public ILInstruction Right {
+			[DebuggerStepThrough]
 			get { return this.right; }
 			set {
 				ValidateChild(value);
@@ -552,6 +555,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
+			[DebuggerStepThrough]
 			get { return this.target; }
 			set {
 				ValidateChild(value);
@@ -561,6 +565,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -768,6 +773,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
+			[DebuggerStepThrough]
 			get { return this.body; }
 			set {
 				ValidateChild(value);
@@ -940,6 +946,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true);
 		ILInstruction init = null!;
 		public ILInstruction Init {
+			[DebuggerStepThrough]
 			get { return this.init; }
 			set {
 				ValidateChild(value);
@@ -949,6 +956,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
+			[DebuggerStepThrough]
 			get { return this.body; }
 			set {
 				ValidateChild(value);
@@ -1274,6 +1282,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -1350,6 +1359,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ConditionSlot = new SlotInfo("Condition", canInlineInto: true);
 		ILInstruction condition = null!;
 		public ILInstruction Condition {
+			[DebuggerStepThrough]
 			get { return this.condition; }
 			set {
 				ValidateChild(value);
@@ -1359,6 +1369,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TrueInstSlot = new SlotInfo("TrueInst");
 		ILInstruction trueInst = null!;
 		public ILInstruction TrueInst {
+			[DebuggerStepThrough]
 			get { return this.trueInst; }
 			set {
 				ValidateChild(value);
@@ -1368,6 +1379,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo FalseInstSlot = new SlotInfo("FalseInst");
 		ILInstruction falseInst = null!;
 		public ILInstruction FalseInst {
+			[DebuggerStepThrough]
 			get { return this.falseInst; }
 			set {
 				ValidateChild(value);
@@ -1458,6 +1470,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueInstSlot = new SlotInfo("ValueInst", canInlineInto: true);
 		ILInstruction valueInst = null!;
 		public ILInstruction ValueInst {
+			[DebuggerStepThrough]
 			get { return this.valueInst; }
 			set {
 				ValidateChild(value);
@@ -1467,6 +1480,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo FallbackInstSlot = new SlotInfo("FallbackInst");
 		ILInstruction fallbackInst = null!;
 		public ILInstruction FallbackInst {
+			[DebuggerStepThrough]
 			get { return this.fallbackInst; }
 			set {
 				ValidateChild(value);
@@ -1574,6 +1588,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
+			[DebuggerStepThrough]
 			get { return this.body; }
 			set {
 				ValidateChild(value);
@@ -1681,6 +1696,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo FilterSlot = new SlotInfo("Filter");
 		ILInstruction filter = null!;
 		public ILInstruction Filter {
+			[DebuggerStepThrough]
 			get { return this.filter; }
 			set {
 				ValidateChild(value);
@@ -1690,6 +1706,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
+			[DebuggerStepThrough]
 			get { return this.body; }
 			set {
 				ValidateChild(value);
@@ -1861,6 +1878,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo OnExpressionSlot = new SlotInfo("OnExpression", canInlineInto: true);
 		ILInstruction onExpression = null!;
 		public ILInstruction OnExpression {
+			[DebuggerStepThrough]
 			get { return this.onExpression; }
 			set {
 				ValidateChild(value);
@@ -1870,6 +1888,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
+			[DebuggerStepThrough]
 			get { return this.body; }
 			set {
 				ValidateChild(value);
@@ -2006,6 +2025,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ResourceExpressionSlot = new SlotInfo("ResourceExpression", canInlineInto: true);
 		ILInstruction resourceExpression = null!;
 		public ILInstruction ResourceExpression {
+			[DebuggerStepThrough]
 			get { return this.resourceExpression; }
 			set {
 				ValidateChild(value);
@@ -2015,6 +2035,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body = null!;
 		public ILInstruction Body {
+			[DebuggerStepThrough]
 			get { return this.body; }
 			set {
 				ValidateChild(value);
@@ -2509,6 +2530,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -2609,6 +2631,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -3490,6 +3513,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo DestAddressSlot = new SlotInfo("DestAddress", canInlineInto: true);
 		ILInstruction destAddress = null!;
 		public ILInstruction DestAddress {
+			[DebuggerStepThrough]
 			get { return this.destAddress; }
 			set {
 				ValidateChild(value);
@@ -3499,6 +3523,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo SourceAddressSlot = new SlotInfo("SourceAddress", canInlineInto: true);
 		ILInstruction sourceAddress = null!;
 		public ILInstruction SourceAddress {
+			[DebuggerStepThrough]
 			get { return this.sourceAddress; }
 			set {
 				ValidateChild(value);
@@ -3508,6 +3533,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
 		ILInstruction size = null!;
 		public ILInstruction Size {
+			[DebuggerStepThrough]
 			get { return this.size; }
 			set {
 				ValidateChild(value);
@@ -3642,6 +3668,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo AddressSlot = new SlotInfo("Address", canInlineInto: true);
 		ILInstruction address = null!;
 		public ILInstruction Address {
+			[DebuggerStepThrough]
 			get { return this.address; }
 			set {
 				ValidateChild(value);
@@ -3651,6 +3678,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -3660,6 +3688,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
 		ILInstruction size = null!;
 		public ILInstruction Size {
+			[DebuggerStepThrough]
 			get { return this.size; }
 			set {
 				ValidateChild(value);
@@ -3793,6 +3822,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
+			[DebuggerStepThrough]
 			get { return this.target; }
 			set {
 				ValidateChild(value);
@@ -4040,6 +4070,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
+			[DebuggerStepThrough]
 			get { return this.target; }
 			set {
 				ValidateChild(value);
@@ -4159,6 +4190,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
+			[DebuggerStepThrough]
 			get { return this.target; }
 			set {
 				ValidateChild(value);
@@ -4272,6 +4304,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
+			[DebuggerStepThrough]
 			get { return this.target; }
 			set {
 				ValidateChild(value);
@@ -4281,6 +4314,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -4852,6 +4886,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array = null!;
 		public ILInstruction Array {
+			[DebuggerStepThrough]
 			get { return this.array; }
 			set {
 				ValidateChild(value);
@@ -4953,6 +4988,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array = null!;
 		public ILInstruction Array {
+			[DebuggerStepThrough]
 			get { return this.array; }
 			set {
 				ValidateChild(value);
@@ -5081,6 +5117,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array = null!;
 		public ILInstruction Array {
+			[DebuggerStepThrough]
 			get { return this.array; }
 			set {
 				ValidateChild(value);
@@ -5200,6 +5237,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
+			[DebuggerStepThrough]
 			get { return this.argument; }
 			set {
 				ValidateChild(value);
@@ -5314,6 +5352,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
+			[DebuggerStepThrough]
 			get { return this.argument; }
 			set {
 				ValidateChild(value);
@@ -5456,6 +5495,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
+			[DebuggerStepThrough]
 			get { return this.left; }
 			set {
 				ValidateChild(value);
@@ -5465,6 +5505,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo RightSlot = new SlotInfo("Right");
 		ILInstruction right = null!;
 		public ILInstruction Right {
+			[DebuggerStepThrough]
 			get { return this.right; }
 			set {
 				ValidateChild(value);
@@ -5562,6 +5603,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
+			[DebuggerStepThrough]
 			get { return this.left; }
 			set {
 				ValidateChild(value);
@@ -5571,6 +5613,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo RightSlot = new SlotInfo("Right");
 		ILInstruction right = null!;
 		public ILInstruction Right {
+			[DebuggerStepThrough]
 			get { return this.right; }
 			set {
 				ValidateChild(value);
@@ -5653,6 +5696,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
 		ILInstruction left = null!;
 		public ILInstruction Left {
+			[DebuggerStepThrough]
 			get { return this.left; }
 			set {
 				ValidateChild(value);
@@ -5662,6 +5706,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo RightSlot = new SlotInfo("Right", canInlineInto: true);
 		ILInstruction right = null!;
 		public ILInstruction Right {
+			[DebuggerStepThrough]
 			get { return this.right; }
 			set {
 				ValidateChild(value);
@@ -5753,6 +5798,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo OperandSlot = new SlotInfo("Operand", canInlineInto: true);
 		ILInstruction operand = null!;
 		public ILInstruction Operand {
+			[DebuggerStepThrough]
 			get { return this.operand; }
 			set {
 				ValidateChild(value);
@@ -5842,6 +5888,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
+			[DebuggerStepThrough]
 			get { return this.argument; }
 			set {
 				ValidateChild(value);
@@ -5930,6 +5977,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
+			[DebuggerStepThrough]
 			get { return this.target; }
 			set {
 				ValidateChild(value);
@@ -6018,6 +6066,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target = null!;
 		public ILInstruction Target {
+			[DebuggerStepThrough]
 			get { return this.target; }
 			set {
 				ValidateChild(value);
@@ -6027,6 +6076,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -6478,6 +6528,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
 		ILInstruction argument = null!;
 		public ILInstruction Argument {
+			[DebuggerStepThrough]
 			get { return this.argument; }
 			set {
 				ValidateChild(value);
@@ -6613,6 +6664,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo TestedOperandSlot = new SlotInfo("TestedOperand", canInlineInto: true);
 		ILInstruction testedOperand = null!;
 		public ILInstruction TestedOperand {
+			[DebuggerStepThrough]
 			get { return this.testedOperand; }
 			set {
 				ValidateChild(value);
@@ -6844,6 +6896,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
@@ -6941,6 +6994,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value = null!;
 		public ILInstruction Value {
+			[DebuggerStepThrough]
 			get { return this.value; }
 			set {
 				ValidateChild(value);
