@@ -73,6 +73,46 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void SharedFrameworkDirectoryIsTheRuntimeDirectoryOnAManagedHost()
+		{
+			// A managed host runs from dotnet/shared/Microsoft.NETCore.App/<version>, which is where
+			// the framework facades live; only single-file and Native AOT hosts, which run from their
+			// application directory, need the fallback to an installed shared framework.
+			Assert.That(UniversalAssemblyResolver.GetSharedFrameworkDirectory(),
+				Is.EqualTo(UniversalAssemblyResolver.GetRuntimeDirectory()));
+		}
+
+		[Test]
+		public void NewestInstalledSharedFrameworkIsPickedForHostsWithoutOne()
+		{
+			string dotnetRoot = Path.Combine(gacDirectory, "dotnet");
+			foreach (string version in new[] { "9.0.1", "10.0.3", "10.0.0-preview.1", "not-a-version" })
+				Directory.CreateDirectory(Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App", version));
+
+			Assert.That(UniversalAssemblyResolver.FindNewestSharedFramework(dotnetRoot),
+				Is.EqualTo(Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App", "10.0.3")));
+		}
+
+		[Test]
+		public void NoInstalledSharedFrameworkGivesNull()
+		{
+			Assert.That(UniversalAssemblyResolver.FindNewestSharedFramework(gacDirectory), Is.Null);
+		}
+
+		[Test]
+		public void CorlibVersionWithoutAFrameworkDirectoryDoesNotAbortTheLookup()
+		{
+			// The corlib lookup by .NET Framework directory is one step of a chain that goes on with
+			// the GAC, the 4.0 framework directory and the shared framework of the running .NET;
+			// a version it has no directory for must hand over to those steps instead of throwing,
+			// which on hosts without a .NET Framework installation was the fate of every corlib
+			// reference once ThrowOnAssemblyResolveErrors was set.
+			var resolver = new UniversalAssemblyResolver(null, throwOnError: true, ".NETFramework,Version=v4.8");
+
+			Assert.That(() => resolver.FindAssemblyFile(Reference("mscorlib", "3.0.0.0", "b77a5c561934e089")), Throws.Nothing);
+		}
+
+		[Test]
 		public void HigherReferenceVersionResolvesToTheVersionInstalledInTheGac()
 		{
 			// The 4.8 reference assembly of System.IO.Compression is 4.2.0.0, but the GAC only

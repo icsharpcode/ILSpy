@@ -43,10 +43,13 @@ namespace ICSharpCode.Decompiler.Documentation
 			if (xmlDocFile != null)
 				return new XmlDocumentationProvider(xmlDocFile);
 			// On modern .NET there is no .NET Framework reference-assembly documentation;
-			// fall back to the ref pack parallel to the runtime hosting us (the runtime lives in
+			// fall back to the ref pack parallel to the shared framework (the runtime lives in
 			// dotnet/shared/Microsoft.NETCore.App/<version>/, the docs in the matching
-			// dotnet/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/ directory).
-			return TryLoadModernRefPackDocumentation(UniversalAssemblyResolver.GetRuntimeDirectory());
+			// dotnet/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/ directory). Single-file
+			// and Native AOT hosts run from their application directory, so for those the shared
+			// framework is the newest installed one.
+			return TryLoadModernRefPackDocumentation(
+				UniversalAssemblyResolver.GetSharedFrameworkDirectory() ?? UniversalAssemblyResolver.GetRuntimeDirectory());
 		}
 
 		public static XmlDocumentationProvider MscorlibDocumentation {

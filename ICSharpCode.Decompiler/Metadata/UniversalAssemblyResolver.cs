@@ -504,20 +504,24 @@ namespace ICSharpCode.Decompiler.Metadata
 					framework_dirs = new[] { framework_dir, Path.Combine(framework_dir, "Facades") };
 					break;
 				case DecompilerRuntime.NETCoreApp:
-					string windir;
+					string? windir = null;
 					try
 					{
 						windir = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
-						if (string.IsNullOrEmpty(windir))
-						{
-							goto default;
-						}
 					}
 					catch (PlatformNotSupportedException)
 					{
-						goto default;
 					}
-					framework_dir = Path.Combine(windir, "Microsoft.NET", "Framework64", "v4.0.30319");
+					if (string.IsNullOrEmpty(windir))
+					{
+						// Hosts without a .NET Framework installation (Linux, macOS): the facades in
+						// the shared framework stand in for the framework directory.
+						framework_dir = GetSharedFrameworkDirectory() ?? GetRuntimeDirectory();
+					}
+					else
+					{
+						framework_dir = Path.Combine(windir, "Microsoft.NET", "Framework64", "v4.0.30319");
+					}
 					framework_dirs = new[] { framework_dir };
 					break;
 				default:
@@ -557,11 +561,12 @@ namespace ICSharpCode.Decompiler.Metadata
 			{
 				// Hosts without a .NET Framework installation (e.g. Linux, macOS) have no GAC;
 				// the only system-wide assembly store there is the shared-framework directory
-				// of the runtime executing the decompiler. Search it as the last resort,
-				// regardless of the requested version (the runtime itself rolls forward in the
-				// same way). Without this, e.g. the type-forwards of a netstandard facade
-				// (pointing to a versioned System.Runtime) are unresolvable on such hosts.
-				string runtimeDir = GetRuntimeDirectory();
+				// (the one running the decompiler, or for single-file and Native AOT hosts the
+				// newest installed one). Search it as the last resort, regardless of the
+				// requested version (the runtime itself rolls forward in the same way). Without
+				// this, e.g. the type-forwards of a netstandard facade (pointing to a versioned
+				// System.Runtime) are unresolvable on such hosts.
+				string runtimeDir = GetSharedFrameworkDirectory() ?? GetRuntimeDirectory();
 				assembly = SearchDirectory(name, runtimeDir);
 				if (assembly != null)
 					return assembly;
@@ -635,6 +640,41 @@ namespace ICSharpCode.Decompiler.Metadata
 			return RuntimeEnvironment.GetRuntimeDirectory().TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 		}
 
+		/// <summary>
+		/// The dotnet/shared/Microsoft.NETCore.App/&lt;version&gt; directory whose facades (mscorlib,
+		/// netstandard, System.*) stand in for frameworks the host has no installation of. For a
+		/// managed host this is the directory of the running runtime; single-file and Native AOT
+		/// apps run from their application directory, which holds no assemblies, so for those it is
+		/// the newest shared framework of the dotnet on PATH. Null when there is neither, in which
+		/// case callers keep probing the runtime directory.
+		/// </summary>
+		internal static string? GetSharedFrameworkDirectory() => sharedFrameworkDirectory.Value;
+
+		static readonly Lazy<string?> sharedFrameworkDirectory = new Lazy<string?>(FindSharedFrameworkDirectory);
+
+		static string? FindSharedFrameworkDirectory()
+		{
+			string runtimeDirectory = GetRuntimeDirectory();
+			string? parent = Path.GetDirectoryName(runtimeDirectory);
+			if (parent != null && string.Equals(Path.GetFileName(parent), "Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
+				return runtimeDirectory;
+			string? dotnetRoot = DotNetCorePathFinder.FindDotNetExeDirectory();
+			return dotnetRoot == null ? null : FindNewestSharedFramework(dotnetRoot);
+		}
+
+		internal static string? FindNewestSharedFramework(string dotnetRoot)
+		{
+			string basePath = Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App");
+			if (!Directory.Exists(basePath))
+				return null;
+			return new DirectoryInfo(basePath).GetDirectories()
+				.Select(DotNetCorePathFinder.ConvertToVersion)
+				.Where(v => v.version != null)
+				.OrderByDescending(v => v.version)
+				.Select(v => v.directory.FullName)
+				.FirstOrDefault();
+		}
+
 		string? GetCorlib(IAssemblyReference reference)
 		{
 			var version = reference.Version;
@@ -671,6 +711,11 @@ namespace ICSharpCode.Decompiler.Metadata
 			return null;
 		}
 
+		// The corlib lookups below are one step of the chain in ResolveInternal, which goes on with
+		// the GAC, the 4.0 framework directory and the shared framework of the running .NET and
+		// ends in a ResolutionException when throwOnError is set. A version or a host (Linux,
+		// macOS) they have no directory for therefore yields null rather than an exception, so the
+		// remaining steps still get their turn.
 		string? GetMscorlibBasePath(Version version, string? publicKeyToken)
 		{
 			string? GetSubFolderForVersion()
@@ -686,8 +731,6 @@ namespace ICSharpCode.Decompiler.Metadata
 					case 4:
 						return "v4.0.30319";
 					default:
-						if (throwOnError)
-							throw new NotSupportedException("Version not supported: " + version);
 						return null;
 				}
 			}
@@ -723,8 +766,6 @@ namespace ICSharpCode.Decompiler.Metadata
 				}
 			}
 
-			if (throwOnError)
-				throw new NotSupportedException("Version not supported: " + version);
 			return null;
 		}
 
@@ -743,11 +784,7 @@ namespace ICSharpCode.Decompiler.Metadata
 			else if (version.Major == 4)
 				path = Path.Combine(path, "4.0");
 			else
-			{
-				if (throwOnError)
-					throw new NotSupportedException("Version not supported: " + version);
 				return null;
-			}
 			return path;
 		}
 
