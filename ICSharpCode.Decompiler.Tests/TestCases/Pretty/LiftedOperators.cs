@@ -463,6 +463,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		// legacy csc has a weird code pattern for decimal<->const comparisons:
+		// 			stloc V_1(newobj Nullable..ctor(ldc.decimal 2))
+		//			if (logic.and(call op_Equality(call GetValueOrDefault(ldloca V_0), ldc.decimal 2), comp.i4(call get_HasValue(ldloca V_0) == call get_HasValue(ldloca V_1))))
+		// It's as-if it's not sure whether to treat it as a constant or not!
+		// We don't bother supporting this weird pattern; let's focus on the saner more modern compilers.
+#if ROSLYN
 		public static void NumberConst(decimal? a)
 		{
 			// TODO: redundant casts.
@@ -496,6 +502,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine();
 			}
 		}
+#endif
 
 		public static void NumberValueBasic(decimal? a, decimal? b)
 		{
@@ -555,6 +562,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			//(new decimal?[0])[0] += x();
 		}
 
+		// legacy csc: same issues as NumberConst
+#if ROSLYN
 		public static void NumberValueConst(decimal? a)
 		{
 			// TODO: redundant casts.
@@ -578,6 +587,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			Console.WriteLine((decimal?)2m + a);
 		}
+#endif
 
 		public static void CompareWithImplictCast(int? a, long? b)
 		{
@@ -589,12 +599,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine();
 			}
+#if ROSLYN
+			// skipped for legacy csc as that has the weird pattern also seen for decimal
+			// where it constructs a `new long?(10L)` only for the HasValue call.
 			// TODO: unnecessary cast
 			if ((long?)a < (long?)10L)
 			{
 				Console.WriteLine();
 			}
+#endif
+#if EXPECTED_OUTPUT
+			// TODO: unnecessary cast
 			if ((long?)a == 10)
+#else
+			if (a == 10L)
+#endif
 			{
 				Console.WriteLine();
 			}
@@ -606,10 +625,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine();
 			}
+#if ROSLYN
+			// skipped for legacy csc as that has the weird pattern also seen for decimal
+			// where it constructs a `new long?(10L)` only for the HasValue call.
 			if ((uint?)a < (uint?)10u)
 			{
 				Console.WriteLine();
 			}
+#endif
 		}
 
 		public static void StructBasic(TS? a, TS? b)
