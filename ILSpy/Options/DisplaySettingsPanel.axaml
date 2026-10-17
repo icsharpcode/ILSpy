@@ -42,7 +42,7 @@
 					     implicit conversion only fires at XAML parse time). The viewmodel
 					     projects Settings.SelectedFont through the right type and re-fires
 					     PropertyChanged when the picker selection changes. -->
-					<TextBlock Text="The quick brown fox jumps over the lazy dog"
+					<TextBlock Name="FontPreview" Text="The quick brown fox jumps over the lazy dog"
 					           FontFamily="{Binding CurrentFontFamily}"
 					           FontSize="{Binding Settings.SelectedFontSize}" />
 				</Border>
@@ -109,12 +109,12 @@
 				</StackPanel>
 			</HeaderedContentControl>
 
-			<HeaderedContentControl Header="Tab options">
+			<HeaderedContentControl Header="{x:Static res:Resources.TabOptions}">
 				<StackPanel Spacing="2" Margin="12,4,0,0">
 					<CheckBox IsChecked="{Binding SessionSettings.MultiLineDocumentTabs, Mode=TwoWay}"
-					          Content="Enable multiple rows in tab strip" />
+					          Content="{x:Static res:Resources.EnableMultipleRowsInTabStrip}" />
 					<CheckBox IsChecked="{Binding SessionSettings.MouseWheelTogglesTabStripRows, Mode=TwoWay}"
-					          Content="Mouse wheel scroll toggles single/multiple row tab strip" />
+					          Content="{x:Static res:Resources.MouseWheelTogglesTabStripRows}" />
 					<CheckBox IsChecked="{Binding Settings.EnableOmnibar, Mode=TwoWay}"
 					          Content="{x:Static res:Resources.ShowOmnibar}" />
 				</StackPanel>

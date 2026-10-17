@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
+
 namespace ICSharpCode.ILSpy.Options
 {
 	/// <summary>
@@ -34,5 +36,20 @@ namespace ICSharpCode.ILSpy.Options
 		void Load(SettingsService settings);
 
 		void LoadDefaults();
+
+		/// <summary>
+		/// Every label, group header and description the page displays. The Options search box
+		/// lists a page only when one of these contains the search text. A page that returns
+		/// nothing is always listed: unknown is not "no match".
+		/// </summary>
+		IEnumerable<string> SearchableText => [];
+
+		/// <summary>
+		/// Called with the current search text (empty when the search is cleared). Pages that
+		/// can narrow their own content do so here; the default leaves the page as it is.
+		/// </summary>
+		void ApplySearch(string text)
+		{
+		}
 	}
 }

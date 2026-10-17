@@ -45,8 +45,8 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class TabOptionsGroupTests
 {
-	const string MultiRowLabel = "Enable multiple rows in tab strip";
-	const string WheelGateLabel = "Mouse wheel scroll toggles single/multiple row tab strip";
+	static readonly string MultiRowLabel = Resources.EnableMultipleRowsInTabStrip;
+	static readonly string WheelGateLabel = Resources.MouseWheelTogglesTabStripRows;
 
 	[AvaloniaTest]
 	public void Tab_Options_Checkboxes_Two_Way_Bind_To_SessionSettings()

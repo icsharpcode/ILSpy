@@ -73,10 +73,11 @@ public class OptionsPageScrollReachTests
 		Dispatcher.UIThread.RunJobs();
 		TestCapture.Step("display-page-selected");
 
-		// Each panel now declares its own ScrollViewer (so per-tab scroll offset is
-		// independent), so the visual tree may contain multiple ScrollViewer instances
-		// — one per panel that's been materialized at least once. Pick the visible one.
-		var scrollViewer = view.GetVisualDescendants().OfType<ScrollViewer>()
+		// Each panel declares its own ScrollViewer (so per-tab scroll offset is independent),
+		// and the search TextBox above the strip carries one in its template too, so scope
+		// the lookup to the Display panel itself and take its visible ScrollViewer.
+		var scrollViewer = view.GetVisualDescendants().OfType<Options.Panels.DisplaySettingsPanel>().Single()
+			.GetVisualDescendants().OfType<ScrollViewer>()
 			.First(sv => sv.IsEffectivelyVisible && sv.Bounds.Height > 0);
 		scrollViewer.Offset = new Vector(0, scrollViewer.Extent.Height);
 		Dispatcher.UIThread.RunJobs();

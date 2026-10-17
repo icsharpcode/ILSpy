@@ -702,6 +702,9 @@ Are you sure you want to continue?</value>
   <data name="EnableFoldingBlocksBraces" xml:space="preserve">
     <value>Enable folding on all blocks in braces</value>
   </data>
+  <data name="EnableMultipleRowsInTabStrip" xml:space="preserve">
+    <value>Enable multiple rows in tab strip</value>
+  </data>
   <data name="EnableWordWrap" xml:space="preserve">
     <value>Enable word wrap</value>
   </data>
@@ -807,6 +810,9 @@ Are you sure you want to continue?</value>
   <data name="LoadAssembliesThatWereLoadedInTheLastInstance" xml:space="preserve">
     <value>Load assemblies that were loaded in the last instance.</value>
   </data>
+  <data name="LoadPreviousAssembliesOnStartup" xml:space="preserve">
+    <value>Load previously open assemblies on startup</value>
+  </data>
   <data name="Loading" xml:space="preserve">
     <value>Loading...</value>
   </data>
@@ -824,6 +830,9 @@ Are you sure you want to continue?</value>
   </data>
   <data name="Misc" xml:space="preserve">
     <value>Misc</value>
+  </data>
+  <data name="MouseWheelTogglesTabStripRows" xml:space="preserve">
+    <value>Mouse wheel scroll toggles single/multiple row tab strip</value>
   </data>
   <data name="NETFrameworkVersion" xml:space="preserve">
     <value>.NET version </value>
@@ -849,6 +858,9 @@ Please disable all filters that might hide the item (i.e. activate "View &gt; Sh
   </data>
   <data name="NewTab" xml:space="preserve">
     <value>New Tab</value>
+  </data>
+  <data name="NoSettingsMatch" xml:space="preserve">
+    <value>No settings match '{0}'</value>
   </data>
   <data name="NuGetFeedAuthors" xml:space="preserve">
     <value>Author(s):</value>
@@ -1081,6 +1093,9 @@ Do you want to continue?</value>
   <data name="SearchPane_Search" xml:space="preserve">
     <value>Search</value>
   </data>
+  <data name="SearchSettings" xml:space="preserve">
+    <value>Search settings</value>
+  </data>
   <data name="Searching" xml:space="preserve">
     <value>Searching...</value>
   </data>
@@ -1194,6 +1209,9 @@ Do you want to continue?</value>
   </data>
   <data name="StyleTheWindowTitleBar" xml:space="preserve">
     <value>Style the window title bar</value>
+  </data>
+  <data name="TabOptions" xml:space="preserve">
+    <value>Tab options</value>
   </data>
   <data name="TabSize" xml:space="preserve">
     <value>Tab size:</value>

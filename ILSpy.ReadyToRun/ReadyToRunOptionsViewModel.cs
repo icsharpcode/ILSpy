@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Composition;
 using System.Xml.Linq;
 
@@ -34,6 +35,14 @@ namespace ICSharpCode.ILSpy.ReadyToRun
 		ReadyToRunOptions options = null!;
 
 		public string Title => global::ILSpy.ReadyToRun.Properties.Resources.ReadyToRun;
+
+		// Mirrors the labels in ReadyToRunOptionsView.axaml.
+		public IEnumerable<string> SearchableText => [
+			global::ILSpy.ReadyToRun.Properties.Resources.DisassemblyFormat,
+			global::ILSpy.ReadyToRun.Properties.Resources.ShowStackUnwindInfo,
+			global::ILSpy.ReadyToRun.Properties.Resources.ShowDebugInfo,
+			global::ILSpy.ReadyToRun.Properties.Resources.ShowGCInfo,
+		];
 
 		public void Load(SettingsService service)
 		{
