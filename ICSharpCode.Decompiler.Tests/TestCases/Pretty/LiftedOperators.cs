@@ -251,6 +251,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void IntConstZero(int? a)
+		{
+			if (a == 0)
+			{
+				Console.WriteLine();
+			}
+			if (a != 0)
+			{
+				Console.WriteLine();
+			}
+			if (a > 0)
+			{
+				Console.WriteLine();
+			}
+			if (0 > a)
+			{
+				Console.WriteLine();
+			}
+		}
+
 		public static void IntValueBasic(int? a, int? b)
 		{
 			Console.WriteLine(a == b);
@@ -329,8 +349,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void IntValueConst(int? a)
 		{
 			Console.WriteLine(a == 2);
+			Console.WriteLine(a == 0);
 			Console.WriteLine(a != 2);
+			Console.WriteLine(a != 0);
 			Console.WriteLine(a > 2);
+			Console.WriteLine(a > 0);
 
 			Console.WriteLine(2 == a);
 			Console.WriteLine(2 != a);
@@ -408,53 +431,78 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NumberComplex(decimal? a, Func<decimal> x)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//if (a == x()) {
-			//	Console.WriteLine();
-			//}
-			//if (a != x()) {
-			//	Console.WriteLine();
-			//}
-			//if (a > x()) {
-			//	Console.WriteLine();
-			//}
+			// TODO: redundant casts.
+			if (a == (decimal?)x())
+			{
+				Console.WriteLine();
+			}
+#if !ROSLYN2
+			if (a != (decimal?)x())
+			{
+				Console.WriteLine();
+			}
+#endif
+			if (a > (decimal?)x())
+			{
+				Console.WriteLine();
+			}
 
-			//if (x() == a) {
-			//	Console.WriteLine();
-			//}
-			//if (x() != a) {
-			//	Console.WriteLine();
-			//}
-			//if (x() > a) {
-			//	Console.WriteLine();
-			//}
+			if ((decimal?)x() == a)
+			{
+				Console.WriteLine();
+			}
+#if !ROSLYN2
+			if ((decimal?)x() != a)
+			{
+				Console.WriteLine();
+			}
+#endif
+			if ((decimal?)x() > a)
+			{
+				Console.WriteLine();
+			}
 		}
 
+		// legacy csc has a weird code pattern for decimal<->const comparisons:
+		// 			stloc V_1(newobj Nullable..ctor(ldc.decimal 2))
+		//			if (logic.and(call op_Equality(call GetValueOrDefault(ldloca V_0), ldc.decimal 2), comp.i4(call get_HasValue(ldloca V_0) == call get_HasValue(ldloca V_1))))
+		// It's as-if it's not sure whether to treat it as a constant or not!
+		// We don't bother supporting this weird pattern; let's focus on the saner more modern compilers.
+#if ROSLYN
 		public static void NumberConst(decimal? a)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//if (a == 2m) {
-			//	Console.WriteLine();
-			//}
-			//if (a != 2m) {
-			//	Console.WriteLine();
-			//}
-			//if (a > 2m) {
-			//	Console.WriteLine();
-			//}
+			// TODO: redundant casts.
+			if (a == (decimal?)2m)
+			{
+				Console.WriteLine();
+			}
+#if !ROSLYN2
+			if (a != (decimal?)2m)
+			{
+				Console.WriteLine();
+			}
+#endif
+			if (a > (decimal?)2m)
+			{
+				Console.WriteLine();
+			}
 
-			//if (2m == a) {
-			//	Console.WriteLine();
-			//}
-			//if (2m != a) {
-			//	Console.WriteLine();
-			//}
-			//if (2m > a) {
-			//	Console.WriteLine();
-			//}
+			if ((decimal?)2m == a)
+			{
+				Console.WriteLine();
+			}
+#if !ROSLYN2
+			if ((decimal?)2m != a)
+			{
+				Console.WriteLine();
+			}
+#endif
+			if ((decimal?)2m > a)
+			{
+				Console.WriteLine();
+			}
 		}
+#endif
 
 		public static void NumberValueBasic(decimal? a, decimal? b)
 		{
@@ -491,58 +539,55 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NumberValueComplex(decimal? a, Func<decimal> x)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//Console.WriteLine(a == x());
-			//Console.WriteLine(a != x());
-			//Console.WriteLine(a > x());
+			// TODO: redundant casts.
+			Console.WriteLine(a == (decimal?)x());
+			Console.WriteLine(a > (decimal?)x());
 
-			//Console.WriteLine(x() == a);
-			//Console.WriteLine(x() != a);
-			//Console.WriteLine(x() > a);
+			Console.WriteLine((decimal?)x() == a);
+			Console.WriteLine((decimal?)x() > a);
 
-			//Console.WriteLine(a + x());
-			//Console.WriteLine(a - x());
-			//Console.WriteLine(a * x());
-			//Console.WriteLine(a / x());
-			//Console.WriteLine(a % x());
-			//Console.WriteLine(a ?? x());
-			//a += x();
-			//a -= x();
-			//a *= x();
-			//a /= x();
-			//a %= x();
+			Console.WriteLine(a + (decimal?)x());
+			Console.WriteLine(a - (decimal?)x());
+			Console.WriteLine(a * (decimal?)x());
+			Console.WriteLine(a / (decimal?)x());
+			Console.WriteLine(a % (decimal?)x());
+			Console.WriteLine(a ?? x());
+			a += (decimal?)x();
+			a -= (decimal?)x();
+			a *= (decimal?)x();
+			a /= (decimal?)x();
+			a %= (decimal?)x();
 
-			//Console.WriteLine(x() + a);
+			Console.WriteLine((decimal?)x() + a);
 			//(new decimal?[0])[0] += x();
 		}
 
+		// legacy csc: same issues as NumberConst
+#if ROSLYN
 		public static void NumberValueConst(decimal? a)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//Console.WriteLine(a == 2m);
-			//Console.WriteLine(a != 2m);
-			//Console.WriteLine(a > 2m);
+			// TODO: redundant casts.
+			Console.WriteLine(a == (decimal?)2m);
+			Console.WriteLine(a > (decimal?)2m);
 
-			//Console.WriteLine(2m == a);
-			//Console.WriteLine(2m != a);
-			//Console.WriteLine(2m > a);
+			Console.WriteLine((decimal?)2m == a);
+			Console.WriteLine((decimal?)2m > a);
 
-			//Console.WriteLine(a + 2m);
-			//Console.WriteLine(a - 2m);
-			//Console.WriteLine(a * 2m);
-			//Console.WriteLine(a / 2m);
-			//Console.WriteLine(a % 2m);
-			//Console.WriteLine(a ?? 2m);
-			//a += 2m;
-			//a -= 2m;
-			//a *= 2m;
-			//a /= 2m;
-			//a %= 2m;
+			Console.WriteLine(a + (decimal?)2m);
+			Console.WriteLine(a - (decimal?)2m);
+			Console.WriteLine(a * (decimal?)2m);
+			Console.WriteLine(a / (decimal?)2m);
+			Console.WriteLine(a % (decimal?)2m);
+			Console.WriteLine(a ?? 2m);
+			a += (decimal?)2m;
+			a -= (decimal?)2m;
+			a *= (decimal?)2m;
+			a /= (decimal?)2m;
+			a %= (decimal?)2m;
 
-			//Console.WriteLine(2m + a);
+			Console.WriteLine((decimal?)2m + a);
 		}
+#endif
 
 		public static void CompareWithImplictCast(int? a, long? b)
 		{
@@ -554,13 +599,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine();
 			}
+#if ROSLYN
+			// skipped for legacy csc as that has the weird pattern also seen for decimal
+			// where it constructs a `new long?(10L)` only for the HasValue call.
 			// TODO: unnecessary cast
-			//if (a < 10L) {
-			//	Console.WriteLine();
-			//}
-			//if (a == 10L) {
-			//	Console.WriteLine();
-			//}
+			if ((long?)a < (long?)10L)
+			{
+				Console.WriteLine();
+			}
+#endif
+#if EXPECTED_OUTPUT
+			// TODO: unnecessary cast
+			if ((long?)a == 10)
+#else
+			if (a == 10L)
+#endif
+			{
+				Console.WriteLine();
+			}
 		}
 
 		public static void CompareWithSignChange(int? a, int? b)
@@ -569,10 +625,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			{
 				Console.WriteLine();
 			}
-			// TODO: unnecessary cast
-			//if ((uint?)a < 10) {
-			//	Console.WriteLine();
-			//}
+#if ROSLYN
+			// skipped for legacy csc as that has the weird pattern also seen for decimal
+			// where it constructs a `new long?(10L)` only for the HasValue call.
+			if ((uint?)a < (uint?)10u)
+			{
+				Console.WriteLine();
+			}
+#endif
 		}
 
 		public static void StructBasic(TS? a, TS? b)
@@ -618,27 +678,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void StructComplex(TS? a, Func<TS> x)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//if (a == x()) {
-			//	Console.WriteLine();
-			//}
-			//if (a != x()) {
-			//	Console.WriteLine();
-			//}
-			//if (a > x()) {
-			//	Console.WriteLine();
-			//}
+			if (a == x())
+			{
+				Console.WriteLine();
+			}
+			if (a != x())
+			{
+				Console.WriteLine();
+			}
+			if (a > x())
+			{
+				Console.WriteLine();
+			}
 
-			//if (x() == a) {
-			//	Console.WriteLine();
-			//}
-			//if (x() != a) {
-			//	Console.WriteLine();
-			//}
-			//if (x() > a) {
-			//	Console.WriteLine();
-			//}
+			if (x() == a)
+			{
+				Console.WriteLine();
+			}
+			if (x() != a)
+			{
+				Console.WriteLine();
+			}
+			if (x() > a)
+			{
+				Console.WriteLine();
+			}
 		}
 
 		public static void StructValueBasic(TS? a, TS? b, int? i)
@@ -686,39 +750,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void StructValueComplex(TS? a, Func<TS> x, Func<int> i)
 		{
-			// Tests deactivated because we insert redundant casts;
-			// TODO: revisit after decision has been made regarding the type system.
-			//Console.WriteLine(a == x());
-			//Console.WriteLine(a != x());
-			//Console.WriteLine(a > x());
+			Console.WriteLine(a == x());
+			Console.WriteLine(a != x());
+			Console.WriteLine(a > x());
 
-			//Console.WriteLine(x() == a);
-			//Console.WriteLine(x() != a);
-			//Console.WriteLine(x() > a);
+			Console.WriteLine(x() == a);
+			Console.WriteLine(x() != a);
+			Console.WriteLine(x() > a);
 
-			//Console.WriteLine(a + x());
-			//Console.WriteLine(a - x());
-			//Console.WriteLine(a * x());
-			//Console.WriteLine(a / x());
-			//Console.WriteLine(a % x());
-			//Console.WriteLine(a & x());
-			//Console.WriteLine(a | x());
-			//Console.WriteLine(a ^ x());
-			//Console.WriteLine(a << i());
-			//Console.WriteLine(a >> i());
-			//Console.WriteLine(a ?? x());
-			//a += x();
-			//a -= x();
-			//a *= x();
-			//a /= x();
-			//a %= x();
-			//a &= x();
-			//a |= x();
-			//a ^= x();
-			//a <<= i();
-			//a >>= i();
+			Console.WriteLine(a + x());
+			Console.WriteLine(a - x());
+			Console.WriteLine(a * x());
+			Console.WriteLine(a / x());
+			Console.WriteLine(a % x());
+			Console.WriteLine(a & x());
+			Console.WriteLine(a | x());
+			Console.WriteLine(a ^ x());
+			Console.WriteLine(a << i());
+			Console.WriteLine(a >> i());
+			Console.WriteLine(a ?? x());
+			a += x();
+			a -= x();
+			a *= x();
+			a /= x();
+			a %= x();
+			a &= x();
+			a |= x();
+			a ^= x();
+			a <<= i();
+			a >>= i();
 
-			//Console.WriteLine(x() + a);
+			Console.WriteLine(x() + a);
+			// TODO: decompiler introduces a temporary for the array element.
 			//(new TS?[0])[0] += x();
 		}
 
@@ -795,12 +858,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return b;
 		}
 
-		// TODO: unnecessary cast
-		//public double? ToFloat(int? b)
-		//{
-		//	return b;
-		//}
+		public double? ToFloat(int? b)
+		{
+			return b;
+		}
 
+		// TODO: unnecessary cast
 		//public long? InArithmetic(uint? b)
 		//{
 		//	return 100L + b;
@@ -847,7 +910,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Print((short?)i4);
 				Print((uint?)i4);
 				Print((uint?)i8);
-				//Print((uint?)f); TODO
+				Print((uint?)f);
 			}
 		}
 	}

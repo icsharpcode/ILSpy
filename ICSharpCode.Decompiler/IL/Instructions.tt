@@ -909,6 +909,7 @@ namespace ICSharpCode.Decompiler.IL
 					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
 					opCode.Members.Add("ILInstruction " + arg + " = null!;");
 					opCode.Members.Add("public ILInstruction " + argProp + " {" + Environment.NewLine
+						+ "\t[DebuggerStepThrough]" + Environment.NewLine
 						+ "\tget { return this." + arg + "; }" + Environment.NewLine
 						+ "\tset {" + Environment.NewLine
 						+ "\t\tValidateChild(value);" + Environment.NewLine
