@@ -517,8 +517,24 @@ namespace ICSharpCode.ILSpy.Docking
 			var dock = FindOrCreateToolDock(entry.Metadata.Alignment);
 			if (dock is null)
 				return pane;
+			// A hidden pane is parked in the root's HiddenDockables, either by HideDockable or by a
+			// loaded layout. AddDockable below re-parents it into the tool dock but leaves that entry
+			// in place -- only Dock's RestoreDockable clears it, and that needs an OriginalOwner a
+			// loaded layout no longer carries. Clear it here, or every hide/show cycle appends
+			// another copy that the layout file then persists and reloads.
+			bool wasHidden = false;
+			if (GetRootDock() is IRootDock { HiddenDockables: { } hiddenDockables })
+			{
+				while (hiddenDockables.Remove(pane))
+				{
+					// Layout files written before this guard can hold the same pane several times.
+					wasHidden = true;
+				}
+			}
 			AddDockable(dock, pane);
 			ActivateAndFocus(dock, pane);
+			if (wasHidden)
+				OnDockableRestored(pane);
 			return pane;
 		}
 

@@ -16,12 +16,16 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
+using System.Threading.Tasks;
+
 using Avalonia.Headless.NUnit;
 
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Docking;
+using ICSharpCode.ILSpy.Search;
 
 using NUnit.Framework;
 
@@ -49,5 +53,25 @@ public class DockWorkspaceTests
 		workspace.ToolPaneMenuItems.Should().HaveCount(4,
 			"AssemblyTree, Search, Analyzers, and Bookmarks are the tool panes wired at this point.");
 #endif
+	}
+
+	[AvaloniaTest]
+	public async Task Showing_a_hidden_pane_removes_it_from_HiddenDockables()
+	{
+		// Hiding a pane parks it in the root's HiddenDockables. ShowToolPane brings it back by
+		// re-adding it to its home dock, so it must also leave the hidden list; otherwise every
+		// hide/show cycle appends another entry, which is then persisted and reloaded.
+		_ = await TestHarness.BootAsync();
+		var workspace = AppComposition.Current.GetExport<DockWorkspace>();
+		var pane = AppComposition.Current.GetExport<SearchPaneModel>();
+		var hidden = () => workspace.Layout.HiddenDockables?.Count(d => ReferenceEquals(d, pane)) ?? 0;
+
+		for (int i = 0; i < 2; i++)
+		{
+			workspace.ShowToolPane(SearchPaneModel.PaneContentId);
+			hidden().Should().Be(0, "a pane that is shown is not hidden (cycle {0})", i);
+			workspace.Factory.HideDockable(pane);
+			hidden().Should().Be(1, "a hidden pane appears exactly once in HiddenDockables (cycle {0})", i);
+		}
 	}
 }
