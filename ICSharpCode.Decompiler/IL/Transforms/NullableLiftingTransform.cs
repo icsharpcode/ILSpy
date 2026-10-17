@@ -81,6 +81,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var lifted = Lift(bni, bni.Left, bni.Right, new LdcI4(0));
 			if (lifted != null)
 			{
+				context.Step("NullableLiftingTransform", bni);
 				bni.ReplaceWith(lifted);
 				context.EndStep(lifted);
 				return true;
@@ -139,6 +140,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var lifted = Lift(ifInst, ifInst.Condition, thenLeave.Value, elseLeave.Value);
 			if (lifted != null)
 			{
+				context.Step("NullableLiftingTransform", ifInst);
 				thenLeave.Value = lifted;
 				ifInst.ReplaceWith(thenLeave);
 				context.EndStep(thenLeave);
