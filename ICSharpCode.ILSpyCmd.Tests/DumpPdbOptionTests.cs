@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DumpPdbListsDocumentsAndSequencePoints()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb");
+			var result = await RunAsync(testAssemblyPath, "--dump-pdb");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("Documents"));
@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DumpPdbShowsLocalVariableNames()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb");
+			var result = await RunAsync(testAssemblyPath, "--dump-pdb");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			// a local of this test class, only knowable from the PDB
@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DumpPdbJsonIsParseableAndHasMethods()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb", "--json");
+			var result = await RunAsync(testAssemblyPath, "--dump-pdb", "--json");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			using var doc = JsonDocument.Parse(result.Output);
@@ -74,7 +74,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DumpPdbListsMethodCustomDebugInformation()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb");
+			var result = await RunAsync(testAssemblyPath, "--dump-pdb");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("CDI:"));
@@ -83,7 +83,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DumpPdbJsonListsMethodCustomDebugInformation()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb", "--json");
+			var result = await RunAsync(testAssemblyPath, "--dump-pdb", "--json");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			using var doc = JsonDocument.Parse(result.Output);
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			// a reference assembly ships without any PDB next to it
 			string noPdbAssembly = typeof(object).Assembly.Location;
 
-			var result = await RunAsync(noPdbAssembly, "--disable-updatecheck", "--dump-pdb");
+			var result = await RunAsync(noPdbAssembly, "--dump-pdb");
 
 			Assert.That(result.ExitCode, Is.Not.EqualTo(0));
 			Assert.That(result.Error, Does.Contain("No debug symbols"));
@@ -109,7 +109,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			string pdbPath = Path.ChangeExtension(testAssemblyPath, ".pdb");
 			Assert.That(File.Exists(pdbPath), Is.True, pdbPath);
 
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-pdb", "-usepdb:" + pdbPath);
+			var result = await RunAsync(testAssemblyPath, "--dump-pdb", "-usepdb:" + pdbPath);
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("DumpPdbOptionTests.cs"));

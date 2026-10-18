@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task JsonOnlyOutputWrapsTheModelWithTheTemplateData()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--generate-diagrammer", "--generate-diagrammer-json-only", "-o", outputDirectory);
+			var result = await RunAsync(testAssemblyPath, "--generate-diagrammer", "--generate-diagrammer-json-only", "-o", outputDirectory);
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			using var bundle = JsonDocument.Parse(File.ReadAllText(Path.Combine(outputDirectory, "model.json")));
@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task HtmlOutputEmbedsTheModel()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--generate-diagrammer", "-o", outputDirectory);
+			var result = await RunAsync(testAssemblyPath, "--generate-diagrammer", "-o", outputDirectory);
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(File.Exists(Path.Combine(outputDirectory, "script.js")), "script.js");

@@ -23,7 +23,9 @@ using System.Threading.Tasks;
 namespace ICSharpCode.ILSpyCmd.Tests
 {
 	/// <summary>
-	/// Runs ilspycmd in-process with captured console streams.
+	/// Runs ilspycmd in-process with captured console streams. The update check is always
+	/// disabled here: it is the one code path that reaches the network, and no CLI test
+	/// exercises it, so no individual test has to remember the flag.
 	/// </summary>
 	internal static class CliTestRunner
 	{
@@ -37,7 +39,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			{
 				Console.SetOut(stdout);
 				Console.SetError(stderr);
-				int exitCode = await ILSpyCmdProgram.Main(args);
+				int exitCode = await ILSpyCmdProgram.Main(["--disable-updatecheck", .. args]);
 				return (exitCode, stdout.ToString(), stderr.ToString());
 			}
 			finally

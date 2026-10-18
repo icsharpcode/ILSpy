@@ -128,7 +128,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task BundleWithoutEntryListsManagedEntries()
 		{
-			var result = await RunAsync(bundlePath, "--disable-updatecheck");
+			var result = await RunAsync(bundlePath);
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("--bundle-entry"));
@@ -141,7 +141,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task BundleWithoutEntryMarksEntryPoint()
 		{
-			var result = await RunAsync(bundlePath, "--disable-updatecheck");
+			var result = await RunAsync(bundlePath);
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("Sample.dll  (entry point)"));
@@ -155,7 +155,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task BundleWithoutRuntimeConfigListsEntriesUnmarked()
 		{
-			var result = await RunAsync(bundleWithoutRuntimeConfigPath, "--disable-updatecheck");
+			var result = await RunAsync(bundleWithoutRuntimeConfigPath);
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("Sample.dll"));
@@ -166,7 +166,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task NamedEntryIsDecompiled()
 		{
-			var result = await RunAsync(bundlePath, "--disable-updatecheck", "--bundle-entry", "Sample.dll",
+			var result = await RunAsync(bundlePath, "--bundle-entry", "Sample.dll",
 				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Add(System.Int32,System.Int32)");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -176,7 +176,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task EntryNameIsMatchedCaseInsensitively()
 		{
-			var result = await RunAsync(bundlePath, "--disable-updatecheck", "--bundle-entry", "sample.DLL",
+			var result = await RunAsync(bundlePath, "--bundle-entry", "sample.DLL",
 				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Add(System.Int32,System.Int32)");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -190,7 +190,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task NamedEntryWorksInILMode()
 		{
-			var result = await RunAsync(bundlePath, "--disable-updatecheck", "--bundle-entry", "Sample.dll", "-il");
+			var result = await RunAsync(bundlePath, "--bundle-entry", "Sample.dll", "-il");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain(".class"));
@@ -202,7 +202,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		{
 			string pdbPath = Path.ChangeExtension(testAssemblyPath, ".pdb");
 
-			var result = await RunAsync(bundlePath, "--disable-updatecheck", "--bundle-entry", "Sample.dll",
+			var result = await RunAsync(bundlePath, "--bundle-entry", "Sample.dll",
 				"--dump-pdb", "-usepdb:" + pdbPath);
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -213,7 +213,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task UnknownEntryNameListsValidEntries()
 		{
-			var result = await RunAsync(bundlePath, "--disable-updatecheck", "--bundle-entry", "NotThere.dll");
+			var result = await RunAsync(bundlePath, "--bundle-entry", "NotThere.dll");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_DATAERR));
 			Assert.That(result.Error, Does.Contain("NotThere.dll"));
@@ -226,7 +226,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		{
 			string outputDir = Path.Combine(tempDirectory, Path.GetRandomFileName());
 
-			var result = await RunAsync(bundlePath, "--disable-updatecheck", "-d", "-o", outputDir);
+			var result = await RunAsync(bundlePath, "-d", "-o", outputDir);
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(File.Exists(Path.Combine(outputDir, "Sample.dll")), Is.True);
@@ -236,7 +236,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DumpPackageWithoutOutputDirectoryIsReportedAsUsageError()
 		{
-			var result = await RunAsync(bundlePath, "--disable-updatecheck", "-d");
+			var result = await RunAsync(bundlePath, "-d");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("--dump-package"));
@@ -247,7 +247,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task OrdinaryAssemblyIsUnaffected()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Add(System.Int32,System.Int32)");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);

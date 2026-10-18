@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task UnknownOptionIsReportedAsUsageError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--no-such-option");
+			var result = await RunAsync(testAssemblyPath, "--no-such-option");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("Unrecognized option '--no-such-option'"));
@@ -46,7 +46,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task InvalidLanguageVersionIsReportedAsUsageError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-lv", "CSharp99", "-t", "Some.Type");
+			var result = await RunAsync(testAssemblyPath, "-lv", "CSharp99", "-t", "Some.Type");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("Invalid value specified for languageversion"));
@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task ProjectWithoutOutputDirectoryIsReportedAsUsageError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p");
+			var result = await RunAsync(testAssemblyPath, "-p");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("--project"));
