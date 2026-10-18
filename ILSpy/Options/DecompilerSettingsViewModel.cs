@@ -52,10 +52,19 @@ namespace ICSharpCode.ILSpy.Options
 
 		public string Title => Resources.Decompiler;
 
+		/// <summary>The groups currently shown: all of <see cref="allGroups"/>, or the subset
+		/// that survives the Options search text (see <see cref="ApplySearch"/>).</summary>
 		[ObservableProperty]
 		DecompilerSettingsGroupViewModel[] settings = System.Array.Empty<DecompilerSettingsGroupViewModel>();
 
+		DecompilerSettingsGroupViewModel[] allGroups = System.Array.Empty<DecompilerSettingsGroupViewModel>();
+
+		string searchText = string.Empty;
+
 		DecompilerSettings decompilerSettings = null!;
+
+		public IEnumerable<string> SearchableText
+			=> allGroups.SelectMany(g => g.Settings.Select(s => s.Description).Prepend(g.Category));
 
 		public void Load(SettingsService settings)
 		{
@@ -65,11 +74,38 @@ namespace ICSharpCode.ILSpy.Options
 
 		void LoadSettings()
 		{
-			Settings = propertyInfos
+			allGroups = propertyInfos
 				.Select(p => new DecompilerSettingsItemViewModel(p, decompilerSettings))
 				.OrderBy(item => item.Category, NaturalStringComparer.Instance)
 				.GroupBy(p => p.Category)
 				.Select(g => new DecompilerSettingsGroupViewModel(g.Key, g.OrderBy(i => i.Description).ToArray()))
+				.ToArray();
+			ApplySearch(searchText);
+		}
+
+		/// <summary>
+		/// Narrows <see cref="Settings"/> to the groups with a hit: a matching category keeps all
+		/// of its items, otherwise only the matching items are kept. The group's tri-state
+		/// checkbox then bulk-toggles just the items shown.
+		/// </summary>
+		public void ApplySearch(string text)
+		{
+			searchText = text;
+			// Narrowed groups are throwaway wrappers around the same items; detach them so the
+			// items don't keep every wrapper from every keystroke alive through PropertyChanged.
+			foreach (var g in Settings.Except(allGroups))
+				g.Detach();
+			if (text.Length == 0)
+			{
+				Settings = allGroups;
+				return;
+			}
+			Settings = allGroups
+				.Select(g => OptionsPageModel.Contains(g.Category, text)
+					? g
+					: new DecompilerSettingsGroupViewModel(g.Category,
+						g.Settings.Where(s => OptionsPageModel.Contains(s.Description, text)).ToArray()))
+				.Where(g => g.Settings.Length > 0)
 				.ToArray();
 		}
 
@@ -101,6 +137,12 @@ namespace ICSharpCode.ILSpy.Options
 		public string Category { get; }
 
 		public DecompilerSettingsItemViewModel[] Settings { get; }
+
+		public void Detach()
+		{
+			foreach (var s in Settings)
+				s.PropertyChanged -= ItemPropertyChanged;
+		}
 
 		partial void OnAreAllItemsCheckedChanged(bool? value)
 		{
