@@ -64,4 +64,13 @@ public class UpdatePanelViewModelTests
 		changed.Should().Contain(nameof(UpdatePanelViewModel.UpdateAvailable),
 			"the banner colour binds to UpdateAvailable, so it must raise PropertyChanged for it");
 	}
+
+	[AvaloniaTest]
+	public void Automatic_update_checks_are_off_in_the_test_settings()
+	{
+		var settings = AppComposition.Current.GetExport<SettingsService>();
+
+		settings.UpdateSettings.AutomaticUpdateCheckEnabled.Should().BeFalse(
+			"MainWindowViewModel fires the startup update check from its constructor, and headless tests must not reach the update feed");
+	}
 }

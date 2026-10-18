@@ -28,8 +28,6 @@ using Avalonia.Controls;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
-using ICSharpCode.ILSpyX.Settings;
-
 using ICSharpCode.ILSpy.AppEnv;
 
 using NUnit.Framework;
@@ -51,8 +49,7 @@ namespace ICSharpCode.ILSpy.Tests;
 /// <para>
 /// The AvaloniaTest command hoists <see cref="ITestAction"/> Before/After onto the Avalonia
 /// dispatcher thread, immediately around the test body, so the container assigned here is the one
-/// the test body resolves. Self-contained on purpose (no dependency on TestApp internals) so the
-/// one file can be dropped into every commit of the build sweep.
+/// the test body resolves. Independent of TestApp internals apart from the shared TestSettingsFile seed.
 /// </para>
 /// </summary>
 [AttributeUsage(AttributeTargets.Assembly)]
@@ -72,8 +69,7 @@ public sealed class ResetAppStateAttribute : Attribute, ITestAction
 		var dir = Path.Combine(SessionsRoot, Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(dir);
 		previousSessionDir = dir;
-		var configPath = Path.Combine(dir, "ILSpy.xml");
-		ILSpySettings.SettingsFilePathProvider = () => configPath;
+		TestSettingsFile.Create(dir);
 
 		// Ensure the one-time plugin/resolver setup has happened. Under PerAssembly,
 		// TestApp.OnFrameworkInitializationCompleted only runs when Avalonia is first built (the
