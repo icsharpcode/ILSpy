@@ -268,10 +268,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return Cli.Wrap(compilerPath).WithArguments(arguments);
 		}
 
+		// NuGetAudit is switched off for this build: the implicit restore would otherwise
+		// query every configured feed for vulnerability data, and under the repo's
+		// warnings-as-errors an unreachable feed fails the build (NU1900). The runner is a
+		// test host whose packages are audited by the regular solution restore already.
 		static async Task BuildTestRunner(string runtime, string config)
 		{
 			await Cli.Wrap("dotnet")
-				.WithArguments(new[] { "build", Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj"), "-r", runtime, "-c", config, "--self-contained" })
+				.WithArguments(new[] { "build", Path.Combine(TesterPath, "../../../../../ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj"), "-r", runtime, "-c", config, "--self-contained", "-p:NuGetAudit=false" })
 				.ExecuteAsync();
 		}
 
