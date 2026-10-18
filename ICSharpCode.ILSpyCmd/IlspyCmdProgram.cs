@@ -399,10 +399,11 @@ Examples:
 					if (outputDirectory != null)
 					{
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
-						output = File.CreateText(Path.Combine(outputDirectory, outputName) + ".il");
+						output = File.CreateText(Path.Combine(outputDirectory,
+							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".il"));
 					}
 
-					return ShowIL(fileName, output);
+					return ShowIL(fileName, output, app);
 				}
 #if DEBUG
 				else if (ShowILAstFlag || AfterTransformName != null)
@@ -729,16 +730,114 @@ Examples:
 			return 0;
 		}
 
-		int ShowIL(string assemblyFileName, TextWriter output)
+		/// <summary>
+		/// Disassembles the module, or the type (--type) or member(s) (--member) selected from it,
+		/// applying the same selection rules as the C# output.
+		/// </summary>
+		int ShowIL(string assemblyFileName, TextWriter output, CommandLineApplication app)
 		{
-			var module = LoadInputModule(assemblyFileName);
+			if (MemberIdString != null && TypeName != null)
+			{
+				app.Error.WriteLine("The --type and --member options are mutually exclusive.");
+				return ProgramExitCodes.EX_USAGE;
+			}
+
+			// The type system resolves the selection; its module is the one the handles belong to.
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
+			var module = decompiler.TypeSystem.MainModule.MetadataFile;
 			output.WriteLine($"// IL code: {module.Name}");
 			var disassembler = new ReflectionDisassembler(new PlainTextOutput(output), CancellationToken.None) {
-				DebugInfo = TryLoadPDB(module),
+				DebugInfo = decompiler.DebugInfoProvider,
 				ShowSequencePoints = ShowILSequencePointsFlag,
 			};
+
+			if (MemberIdString != null)
+			{
+				if (!TryResolveMembers(decompiler.TypeSystem, MemberIdString, out var handles, out string error))
+				{
+					Console.Error.WriteLine(error);
+					return ProgramExitCodes.EX_DATAERR;
+				}
+
+				// A short-form id names an overload group; see DecompileMember for why every
+				// member is shown and why the output has to say so.
+				if (handles.Length > 1)
+				{
+					output.WriteLine($"// '{MemberIdString.Trim()}' names {handles.Length} members; all of them are shown below.");
+					foreach (var member in handles)
+					{
+						output.WriteLine($"// {module.GetIdString(member)}");
+					}
+					output.WriteLine();
+				}
+
+				bool first = true;
+				foreach (var member in handles)
+				{
+					if (!first)
+						output.WriteLine();
+					DisassembleEntity(disassembler, module, member, output);
+					first = false;
+				}
+				return 0;
+			}
+
+			if (TypeName != null)
+			{
+				if (!TryResolveType(decompiler.TypeSystem, TypeName, out ITypeDefinition typeDefinition, out string error))
+				{
+					Console.Error.WriteLine(error);
+					return ProgramExitCodes.EX_DATAERR;
+				}
+				disassembler.DisassembleType(module, (TypeDefinitionHandle)typeDefinition.MetadataToken);
+				return 0;
+			}
+
 			disassembler.WriteModuleContents(module);
 			return 0;
+		}
+
+		/// <summary>
+		/// Writes one entity the way the UI's IL view does: a property or event is followed by
+		/// its accessor methods, since the entity definition alone carries no code.
+		/// </summary>
+		static void DisassembleEntity(ReflectionDisassembler disassembler, MetadataFile module, EntityHandle handle, TextWriter output)
+		{
+			switch (handle.Kind)
+			{
+				case HandleKind.TypeDefinition:
+					disassembler.DisassembleType(module, (TypeDefinitionHandle)handle);
+					break;
+				case HandleKind.MethodDefinition:
+					disassembler.DisassembleMethod(module, (MethodDefinitionHandle)handle);
+					break;
+				case HandleKind.FieldDefinition:
+					disassembler.DisassembleField(module, (FieldDefinitionHandle)handle);
+					break;
+				case HandleKind.PropertyDefinition:
+					disassembler.DisassembleProperty(module, (PropertyDefinitionHandle)handle);
+					var propertyAccessors = module.Metadata.GetPropertyDefinition((PropertyDefinitionHandle)handle).GetAccessors();
+					DisassembleAccessor(propertyAccessors.Getter);
+					DisassembleAccessor(propertyAccessors.Setter);
+					break;
+				case HandleKind.EventDefinition:
+					disassembler.DisassembleEvent(module, (EventDefinitionHandle)handle);
+					var eventAccessors = module.Metadata.GetEventDefinition((EventDefinitionHandle)handle).GetAccessors();
+					DisassembleAccessor(eventAccessors.Adder);
+					DisassembleAccessor(eventAccessors.Remover);
+					DisassembleAccessor(eventAccessors.Raiser);
+					break;
+				default:
+					throw new NotSupportedException($"Cannot disassemble a {handle.Kind} handle.");
+			}
+
+			void DisassembleAccessor(MethodDefinitionHandle accessor)
+			{
+				if (accessor.IsNil)
+					return;
+				output.WriteLine();
+				disassembler.DisassembleMethod(module, accessor);
+			}
 		}
 
 #if DEBUG
