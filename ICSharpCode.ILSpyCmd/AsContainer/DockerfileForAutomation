@@ -1,11 +1,11 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0
+FROM mcr.microsoft.com/dotnet/sdk:10.0
 
 RUN useradd -m -s /bin/bash ilspy
 USER ilspy
 
 WORKDIR /home/ilspy
 
-RUN dotnet tool install -g ilspycmd --version 9.1.0.7988
+RUN dotnet tool install -g ilspycmd --version 11.1.0.9782
 
 RUN echo 'export PATH="$PATH:/home/ilspy/.dotnet/tools/"' >> /home/ilspy/.bashrc
 
