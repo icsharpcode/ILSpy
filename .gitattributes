@@ -8,3 +8,5 @@
 *.spec text eol=lf
 *.desktop text eol=lf
 control.template text eol=lf
+# Executed by bash inside a Linux container host; CRLF breaks the shebang line.
+*.sh text eol=lf

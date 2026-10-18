@@ -1,0 +1,5 @@
+<Project>
+  <!-- Intentionally empty: its presence stops MSBuild's upward Directory.Build.props search at
+       this folder, so the repo-wide build settings (warnings-as-errors, lock files) do not apply
+       to the file-based apps here. They are standalone tools, not part of any solution. -->
+</Project>
