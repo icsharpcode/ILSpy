@@ -19,8 +19,6 @@
 using System;
 using System.IO;
 
-using ICSharpCode.ILSpyX.Settings;
-
 using ICSharpCode.ILSpy.AppEnv;
 
 using ProductionApp = ICSharpCode.ILSpy.App;
@@ -53,8 +51,7 @@ public class TestApp : ProductionApp
 
 		var dir = Path.Combine(sessionsRoot, Guid.NewGuid().ToString("N"));
 		Directory.CreateDirectory(dir);
-		var configPath = Path.Combine(dir, "ILSpy.xml");
-		ILSpySettings.SettingsFilePathProvider = () => configPath;
+		TestSettingsFile.Create(dir);
 		AppDomain.CurrentDomain.ProcessExit += (_, _) => TryDeleteDirectory(dir);
 
 		var composition = AppComposition.Initialize();

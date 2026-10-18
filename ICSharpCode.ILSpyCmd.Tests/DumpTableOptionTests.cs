@@ -36,7 +36,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task TypeDefTableContainsSampleType()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "TypeDef");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "TypeDef");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("RID"));
@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task PropertyTableContainsSampleProperty()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "Property");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "Property");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain(nameof(DumpTableSample.SampleProperty)));
@@ -59,7 +59,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task MethodSemanticsTableShowsAccessors()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "MethodSemantics");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "MethodSemantics");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("Getter"));
@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task NestedClassTableHasRows()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "NestedClass");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "NestedClass");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("NestedClass"));
@@ -79,7 +79,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task ClassLayoutTableHasRows()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "ClassLayout");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "ClassLayout");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("PackingSize"));
@@ -90,7 +90,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task JsonOutputIsParseableAndContainsRows()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "Property", "--json");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "Property", "--json");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			using var doc = JsonDocument.Parse(result.Output);
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task UnknownTableNameReportsUsageError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "Bogus");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "Bogus");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("Bogus"));
@@ -120,7 +120,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task JsonWithoutDumpTableReportsUsageError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--json");
+			var result = await RunAsync(testAssemblyPath, "--json");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("--json"));
@@ -130,7 +130,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		public async Task TableByDecimalNumber()
 		{
 			// 23 == 0x17 == Property
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "23");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "23");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain(nameof(DumpTableSample.SampleProperty)));
@@ -139,7 +139,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task TableByHexNumber()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "0x17");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "0x17");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain(nameof(DumpTableSample.SampleProperty)));
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task OutOfRangeTableNumberReportsUsageError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "0x40");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "0x40");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
 			Assert.That(result.Error, Does.Contain("0x40"));
@@ -165,7 +165,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			try
 			{
 				var result = await RunAsync(testAssemblyPath, ilspyCmdAssemblyPath,
-					"--disable-updatecheck", "--dump-table", "TypeDef", "--json", "-o", outputDir);
+					"--dump-table", "TypeDef", "--json", "-o", outputDir);
 
 				Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 				foreach (string assemblyPath in new[] { testAssemblyPath, ilspyCmdAssemblyPath })
@@ -186,7 +186,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DocumentTableListsSourceFiles()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "Document");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "Document");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("DumpTableOptionTests.cs"));
@@ -196,7 +196,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task LocalVariableTableContainsNamedLocal()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "LocalVariable");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "LocalVariable");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Match(@"\b(scopeProbe|result)\b"));
@@ -205,7 +205,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task MethodDebugInformationTableHasRows()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "MethodDebugInformation");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "MethodDebugInformation");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("SequencePoints"));
@@ -216,7 +216,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task CustomDebugInformationTableNamesKnownKinds()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "CustomDebugInformation");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "CustomDebugInformation");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("KindName"));
@@ -230,7 +230,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			string pdbPath = Path.ChangeExtension(testAssemblyPath, ".pdb");
 			Assert.That(File.Exists(pdbPath), Is.True, pdbPath);
 
-			var result = await RunAsync(pdbPath, "--disable-updatecheck", "--dump-table", "Document");
+			var result = await RunAsync(pdbPath, "--dump-table", "Document");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("DumpTableOptionTests.cs"));
@@ -241,7 +241,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		{
 			string pdbPath = Path.ChangeExtension(testAssemblyPath, ".pdb");
 
-			var result = await RunAsync(pdbPath, "--disable-updatecheck", "--dump-table", "TypeDef");
+			var result = await RunAsync(pdbPath, "--dump-table", "TypeDef");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("0 rows"));
@@ -257,7 +257,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 				string assemblyPath = Path.Combine(tempDir, Path.GetFileName(testAssemblyPath));
 				File.Copy(testAssemblyPath, assemblyPath);
 
-				var result = await RunAsync(assemblyPath, "--disable-updatecheck", "--dump-table", "Document");
+				var result = await RunAsync(assemblyPath, "--dump-table", "Document");
 
 				Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_NOINPUT));
 				Assert.That(result.Error, Does.Contain("No Portable PDB debug metadata"));
@@ -271,7 +271,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task TableNameIsCaseInsensitive()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "--dump-table", "property");
+			var result = await RunAsync(testAssemblyPath, "--dump-table", "property");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain(nameof(DumpTableSample.SampleProperty)));

@@ -60,7 +60,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task BamlBecomesXamlWithoutAskingForIt()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p", "-o", outputDirectory);
+			var result = await RunAsync(testAssemblyPath, "-p", "-o", outputDirectory);
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			string xamlFile = Path.Combine(outputDirectory, "mainwindow.xaml");
@@ -71,7 +71,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task TheProjectNamesTheXamlAsAPage()
 		{
-			await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p", "-o", outputDirectory);
+			await RunAsync(testAssemblyPath, "-p", "-o", outputDirectory);
 
 			string project = ProjectFileContent();
 			Assert.Multiple(() => {
@@ -85,7 +85,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		{
 			// WPF tooling pairs MainWindow.xaml with MainWindow.xaml.cs by name and location; a
 			// code-behind anywhere else is an unrelated file as far as the project is concerned.
-			await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p", "-o", outputDirectory);
+			await RunAsync(testAssemblyPath, "-p", "-o", outputDirectory);
 
 			string documentDirectory = Path.Combine(outputDirectory, "ICSharpCode.ILSpyCmd.Tests.Views");
 			Assert.Multiple(() => {
@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task DocumentsFollowTheNamespaceDirectoriesToo()
 		{
-			await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p", "--nested-directories", "-o", outputDirectory);
+			await RunAsync(testAssemblyPath, "-p", "--nested-directories", "-o", outputDirectory);
 
 			string documentDirectory = Path.Combine(outputDirectory, "ICSharpCode", "ILSpyCmd", "Tests", "Views");
 			Assert.Multiple(() => {
@@ -111,7 +111,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		{
 			// It is documented and scripted against; asking for what is now the default has to
 			// keep meaning the same thing.
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-p", "-o", outputDirectory, "--decompile-baml");
+			var result = await RunAsync(testAssemblyPath, "-p", "-o", outputDirectory, "--decompile-baml");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(File.Exists(Path.Combine(outputDirectory, "mainwindow.xaml")), Is.True);

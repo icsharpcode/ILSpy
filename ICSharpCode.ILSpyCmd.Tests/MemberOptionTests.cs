@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task MethodByDocumentationIdString()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Add(System.Int32,System.Int32)");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task PropertyByDocumentationIdString()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-m", "P:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Answer");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		public async Task MethodByMetadataToken()
 		{
 			int token = typeof(MemberOptionSample).GetMethod(nameof(MemberOptionSample.Add))!.MetadataToken;
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-m", $"0x{token:x8}");
+			var result = await RunAsync(testAssemblyPath, "-m", $"0x{token:x8}");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Output, Does.Contain("int Add(int a, int b)"));
@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task ShortFormWithoutSignatureDecompilesTheMember()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Add");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -86,7 +86,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task ShortFormOfOverloadedMemberDecompilesEveryMember()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Scale");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -100,7 +100,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task UnknownMemberReportsError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-m", "M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.DoesNotExist");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_DATAERR));
@@ -110,7 +110,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task MalformedTokenReportsTokenSpecificError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-m", "0xZZ000001");
+			var result = await RunAsync(testAssemblyPath, "-m", "0xZZ000001");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_DATAERR));
 			Assert.That(result.Error, Does.Contain("metadata token"));
@@ -120,7 +120,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task MemberOfAnotherModuleReportsDistinctError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-m", "M:System.Object.ToString");
+			var result = await RunAsync(testAssemblyPath, "-m", "M:System.Object.ToString");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_DATAERR));
 			Assert.That(result.Error, Does.Contain("defined in"));
@@ -129,7 +129,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task SurroundingWhitespaceIsIgnored()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-m", " M:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Add(System.Int32,System.Int32) ");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -139,7 +139,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task OutOfRangeTokenReportsError()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck", "-m", "0x06ffffff");
+			var result = await RunAsync(testAssemblyPath, "-m", "0x06ffffff");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_DATAERR));
 			Assert.That(result.Error, Does.Contain("0x06ffffff"));
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task TypeAndMemberOptionsAreMutuallyExclusive()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-t", "ICSharpCode.ILSpyCmd.Tests.MemberOptionSample",
 				"-m", "P:ICSharpCode.ILSpyCmd.Tests.MemberOptionSample.Answer");
 

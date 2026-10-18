@@ -37,7 +37,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 
 		static Task<(int ExitCode, string Output, string Error)> RunILAstAsync(params string[] args)
 		{
-			string[] common = { testAssemblyPath, "--disable-updatecheck", "-m", sumLoopId };
+			string[] common = { testAssemblyPath, "-m", sumLoopId };
 			string[] all = new string[common.Length + args.Length];
 			common.CopyTo(all, 0);
 			args.CopyTo(all, common.Length);
@@ -138,7 +138,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task WholeTypeCanBeDumped()
 		{
-			var result = await RunAsync(testAssemblyPath, "--disable-updatecheck",
+			var result = await RunAsync(testAssemblyPath,
 				"-t", "ICSharpCode.ILSpyCmd.Tests.ILAstSample", "--ilast");
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
@@ -161,7 +161,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 				// one transform only: this dumps every method of both assemblies, and the
 				// truncation it guards against does not depend on the pipeline length
 				var result = await RunAsync(testAssemblyPath, ilspyCmdAssemblyPath,
-					"--disable-updatecheck", "--after-transform", "1", "-o", outputDir);
+					"--after-transform", "1", "-o", outputDir);
 
 				Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 				foreach (string assemblyPath in new[] { testAssemblyPath, ilspyCmdAssemblyPath })

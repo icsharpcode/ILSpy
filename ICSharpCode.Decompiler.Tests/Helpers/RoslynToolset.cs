@@ -42,16 +42,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		readonly SourceCacheContext cache;
 		readonly SourceRepository repository, dotnetToolsFeed;
-		readonly FindPackageByIdResource resource, dotnetToolsResource;
 		protected readonly string baseDir;
 
+		// Only the repository handles are created here. Resolving a FindPackageByIdResource
+		// loads the feed's service index over HTTP, so that happens in FetchPackage, and only
+		// for a package that is neither in the ILSpy-tests nuget folder nor already extracted.
+		// A run with every toolset cached therefore needs no network access at all.
 		public AbstractToolset(string baseDir)
 		{
 			this.cache = new SourceCacheContext();
 			this.repository = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
-			this.resource = repository.GetResource<FindPackageByIdResource>();
 			this.dotnetToolsFeed = Repository.Factory.GetCoreV3("https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet-tools/nuget/v3/index.json");
-			this.dotnetToolsResource = dotnetToolsFeed.GetResource<FindPackageByIdResource>();
 			this.baseDir = baseDir;
 		}
 
@@ -94,9 +95,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 				NuGetVersion parsedVersion = NuGetVersion.Parse(version);
 				PackageVersionKind versionKind = ClassifyVersion(parsedVersion);
-				FindPackageByIdResource selectedResource = versionKind == PackageVersionKind.TransportFeed
-					? dotnetToolsResource
-					: resource;
+				SourceRepository selectedFeed = versionKind == PackageVersionKind.TransportFeed
+					? dotnetToolsFeed
+					: repository;
+				FindPackageByIdResource selectedResource = await selectedFeed
+					.GetResourceAsync<FindPackageByIdResource>(cancellationToken).ConfigureAwait(false);
 
 				await selectedResource.CopyNupkgToStreamAsync(
 					packageName,
