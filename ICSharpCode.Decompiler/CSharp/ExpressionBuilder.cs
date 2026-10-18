@@ -50,7 +50,25 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Every translated expression must have:
 	/// * an ILInstruction annotation
 	/// * a ResolveResult annotation
-	/// Post-condition for Translate() calls:
+	/// 
+	/// Post-conditions for Translate() calls:
+	///   * The returned TranslatedExpression must match the semantics of the original ILInstruction.
+	///     * See TranslatedExpression documentation for how those semantics are
+	///       specified in the presence of adjustments.
+	///   * The adjusted type must match the ILInstruction's resulting stack type.
+	/// 	* Exception: either type can be unknown.
+	///   * Evaluated values must match:
+	///     * If the adjusted type is a small integer type, the TranslatedExpression's evaluated
+	///       value converted to `int` (i.e. sign/zero-extended depending on adjusted type)
+	///       must match the ILInstruction's evaluated value.
+	///     * If the adjusted type is a nullable small integer type and the ILInstruction was lifted,
+	///       the TranslatedExpression's evaluated value converted to `int?` must match the
+	///       ILInstruction's evaluated value.
+	///        * TODO: do we need this? we could always use explicit adjustments instead.
+	///     * Otherwise, the TranslatedExpression's evaluated value must match the ILInstruction's
+	///       evaluated value.
+	/// 
+	/// Legacy post-condition for Translate() calls:
 	///   * The type of the ResolveResult must match the StackType of the corresponding ILInstruction,
 	///     except that the width of integer types does not need to match (I4, I and I8 count as the same stack type here)
 	///   * Evaluating the resulting C# expression shall produce the same side effects as evaluating the ILInstruction.

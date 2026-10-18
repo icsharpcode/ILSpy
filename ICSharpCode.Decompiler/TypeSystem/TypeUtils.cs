@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Reflection;
 
 using ICSharpCode.Decompiler.IL;
@@ -106,6 +107,27 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		public static IType GetLargerType(IType type1, IType type2)
 		{
 			return GetSize(type1) >= GetSize(type2) ? type1 : type2;
+		}
+
+		public static KnownTypeCode GetIntegerTypeCode(int size, Sign sign)
+		{
+			if (sign == Sign.None)
+			{
+				sign = Sign.Signed;
+			}
+			return (size, sign) switch {
+				(1, Sign.Signed) => KnownTypeCode.SByte,
+				(1, Sign.Unsigned) => KnownTypeCode.Byte,
+				(2, Sign.Signed) => KnownTypeCode.Int16,
+				(2, Sign.Unsigned) => KnownTypeCode.UInt16,
+				(4, Sign.Signed) => KnownTypeCode.Int32,
+				(4, Sign.Unsigned) => KnownTypeCode.UInt32,
+				(NativeIntSize, Sign.Signed) => KnownTypeCode.IntPtr,
+				(NativeIntSize, Sign.Unsigned) => KnownTypeCode.UIntPtr,
+				(8, Sign.Signed) => KnownTypeCode.Int64,
+				(8, Sign.Unsigned) => KnownTypeCode.UInt64,
+				_ => throw new NotSupportedException()
+			};
 		}
 
 		/// <summary>

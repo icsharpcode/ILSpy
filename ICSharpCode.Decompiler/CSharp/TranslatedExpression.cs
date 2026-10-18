@@ -108,6 +108,17 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// They are also used in cases where an explicit conversion is needed (e.g. oversized integer value
 	/// in IntPtr arithmetic), but we want to delay inserting that cast because it might be unnecessary
 	/// in certain contexts.
+	/// 
+	/// The semantics of a translated expression are determined as follows:
+	/// * for AdjustmentKind.TargetType:
+	///   * The TranslatedExpression's semantic are exactly those of the unadjusted expression
+	///     when that is placed in a target-typed context (with the target type matching
+	///     AdjustedType up to TypeErasure equivalence).
+	///   * Using the unadjusted expression in any other context is not possible (might be invalid C#,
+	///     might have incorrect semantics).
+	/// * for other AdjustmentKind values:
+	///   * 
+	///     
 	/// </remarks>
 	[DebuggerDisplay("{UnadjustedExpression} : {UnadjustedResolveResult} : {Adjustment}")]
 	readonly struct TranslatedExpression
@@ -174,6 +185,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(expression != null && resolveResult != null);
 			Debug.Assert(expression.Annotation<ResolveResult>() == resolveResult);
+			adjustment.CheckInvariant(resolveResult.Type);
 			this.UnadjustedResolveResult = resolveResult;
 			this.UnadjustedExpression = expression;
 			this.Adjustment = adjustment;
@@ -194,6 +206,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		public TranslatedExpression AddAdjustment(AdjustmentBuilder adjustmentBuilder, Adjustment newAdjustment)
 		{
+			newAdjustment.CheckInvariant(AdjustedType);
 			if (newAdjustment.Subsumes(this.Adjustment))
 			{
 				return new TranslatedExpression(UnadjustedExpression, UnadjustedResolveResult, newAdjustment);
@@ -224,16 +237,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				else if (targetSize == originalSize)
 				{
-					var kind = NullableType.IsNullable(newAdjustment.TargetType) ? AdjustmentKind.NullableIntegerNop : AdjustmentKind.None;
 					return new TranslatedExpression(UnadjustedExpression, UnadjustedResolveResult,
-						new Adjustment(kind, newAdjustment.TargetType));
+						new Adjustment(AdjustmentKind.IntegerCast, newAdjustment.TargetType));
 				}
 				else
 				{
 					Debug.Assert(targetSize > originalSize);
 					// Keep sign/zero extension and just change the target type.
 					return new TranslatedExpression(UnadjustedExpression, UnadjustedResolveResult,
-						this.Adjustment.ChangeType(newAdjustment.TargetType));
+						new Adjustment(this.Adjustment.Kind, newAdjustment.TargetType));
 				}
 			}
 			// We cannot store multiple adjustments, so turn the existing adjustment into an
@@ -276,7 +288,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					else
 					{
-						kind = AdjustmentKind.NullableIntegerNop;
+						kind = AdjustmentKind.IntegerCast;
 					}
 					return AddAdjustment(adjustmentBuilder, new Adjustment(kind, instType));
 				}
@@ -288,6 +300,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (instResultType == adjustedStackType || instResultType == StackType.Unknown || adjustedStackType == StackType.Unknown)
 			{
+				// Note: even if C# expression uses a small integer type, the ExpressionBuilder post-condition
+				// allows it to match StackType.I4, so we do not need an explicit adjustment in that case.
 				return this;
 			}
 			if (instResultType == StackType.Void)
@@ -303,11 +317,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				AdjustmentKind kind;
 				if (instResultType.GetSize() < adjustedStackType.GetSize())
 				{
+					// adjustedType cannot be a small integer in this case
 					kind = AdjustmentKind.IntegerTruncation;
 				}
 				else
 				{
 					Debug.Assert(instResultType.GetSize() > adjustedStackType.GetSize());
+					// adjustedType could be a small integer in this case, in which case we combine
+					// e.g. the implicit I1->I4 conversion with the I4->I8 conversion into a single adjustment.
 					kind = this.AdjustedType.GetSign() == Sign.Signed ? AdjustmentKind.SignExtend : AdjustmentKind.ZeroExtend;
 				}
 				return AddAdjustment(adjustmentBuilder, new Adjustment(kind, instType));
