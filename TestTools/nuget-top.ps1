@@ -62,12 +62,9 @@ if ($ListOnly) {
 # decompdiff. nugetfuzz names the lib directory it settled on for each package, and that
 # list IS the corpus - one entry per package, at the target framework it chose.
 $corpusFile = [IO.Path]::ChangeExtension($Out, '.corpus.txt')
-dotnet run nugetfuzz.cs -- --download-only "@$Out" | Tee-Object -Variable log
+dotnet run nugetfuzz.cs -- --download-only --corpus-out "$corpusFile" "@$Out"
 if ($LASTEXITCODE -ne 0) {
 	throw "nugetfuzz exited with $LASTEXITCODE"
 }
-$dirs = $log | ForEach-Object { if ($_ -match '^\s*cached:\s*(.+)$') { $Matches[1].Trim() } }
-Set-Content -Path $corpusFile -Value $dirs
 Write-Host ""
-Write-Host "$($dirs.Count) lib directories -> $corpusFile"
 Write-Host "dotnet run decompdiff.cs -- --old <ref> --new <ref> -o report `@$corpusFile"

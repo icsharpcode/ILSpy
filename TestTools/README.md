@@ -149,6 +149,13 @@ list of lib directories they resolved to - a ready-made corpus for either tool:
 ./nuget-top.ps1 -Count 200 -ListOnly     # just the ids, download nothing
 ```
 
+To materialize a corpus from an existing package-ID list such as `top-500.txt`, use
+`--corpus-out` with the download-only pass:
+
+```pwsh
+dotnet run nugetfuzz.cs -- --download-only --corpus-out crawl/top-500.corpus.txt "@top-500.txt"
+```
+
 The ids come from an empty query against the search service, which orders by download count. The
 download itself is `nugetfuzz --download-only`, so package selection, TFM matching and the
 dependency walk behave exactly as they do in a sweep - only the decompiling is skipped.
@@ -159,6 +166,12 @@ list with `@`, which both tools understand and which needs no help from the shel
 
 ```pwsh
 dotnet run decompdiff.cs -- --old master --new my-branch -o report @crawl/top-200.corpus.txt
+```
+
+`decompdiff` can perform the download and conversion itself when given a package list:
+
+```pwsh
+dotnet run decompdiff.cs -- --old master --new my-branch -o report --packages "@top-500.txt"
 ```
 
 ## decompdiff
