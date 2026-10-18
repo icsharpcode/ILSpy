@@ -16,10 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+using Avalonia;
 using Avalonia.Headless.NUnit;
+using Avalonia.Platform;
 
 using AwesomeAssertions;
-
 
 using NUnit.Framework;
 
@@ -28,6 +33,37 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class IconCompositionTests
 {
+	[AvaloniaTest]
+	public async Task Preload_Parses_Every_Svg_Icon_Off_The_UI_Thread_And_The_Getters_Reuse_It()
+	{
+		// Startup parses the icon set on a thread-pool thread; the property getters on the UI
+		// thread then only wrap what is already parsed. The preload must therefore cover every
+		// SVG shipped in the icon folder, and a getter must hand out one stable instance.
+		int svgAssets = AssetLoader.GetAssets(new Uri("avares://ILSpy/Assets/Icons/"), null)
+			.Count(uri => uri.AbsolutePath.EndsWith(".svg", StringComparison.Ordinal));
+		svgAssets.Should().BeGreaterThan(0, "the icon folder is an Avalonia resource");
+
+		await Task.Run(Images.PreloadSvgs);
+
+		Images.ParsedSvgCount.Should().Be(svgAssets, "every SVG icon must be parsed by the preload");
+		Images.Assembly.Should().BeSameAs(Images.Assembly, "getters cache their image");
+		Images.ResolveByPath("Images/Assembly").Should().BeSameAs(Images.Assembly,
+			"metadata icon paths resolve to the same cached image");
+	}
+
+	[AvaloniaTest]
+	public async Task An_Icon_First_Requested_On_A_Worker_Thread_Still_Renders_On_The_UI_Thread()
+	{
+		// Tree nodes and search results resolve their icons on decompiler worker threads, so
+		// a getter may well run there first. The image it builds must not be owned by that
+		// thread, or the UI thread throws when it measures and draws it.
+		var icon = await Task.Run(() => Images.Interface);
+
+		icon.Should().BeSameAs(Images.Interface, "the worker's instance is the cached one");
+		icon.Size.Should().NotBe(default(Size), "the icon exposes its SVG dimensions");
+		Images.RenderToBitmap(icon).Should().NotBeNull("the UI thread can draw it");
+	}
+
 	[AvaloniaTest]
 	public void Public_Method_Has_No_Overlays_And_Full_Sized_Base()
 	{

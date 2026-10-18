@@ -49,7 +49,10 @@ namespace ICSharpCode.ILSpy.Search
 	{
 		public required SearchMode Mode { get; init; }
 		public required string Name { get; init; }
-		public required IImage Image { get; init; }
+		// Resolved on first read, i.e. when the picker renders, so that building the mode list
+		// in the pane constructor at startup does not touch the icon set yet.
+		public required Func<IImage> ImageFactory { get; init; }
+		public IImage Image => field ??= ImageFactory();
 	}
 
 	[Export]
@@ -197,18 +200,18 @@ namespace ICSharpCode.ILSpy.Search
 		/// strings so users moving between builds see the same labels.
 		/// </summary>
 		public SearchModeEntry[] SearchModes { get; } = new[] {
-			new SearchModeEntry { Mode = SearchMode.TypeAndMember, Name = "Types and Members", Image = Images.Library },
-			new SearchModeEntry { Mode = SearchMode.Type, Name = "Type", Image = Images.Class },
-			new SearchModeEntry { Mode = SearchMode.Member, Name = "Member", Image = Images.Property },
-			new SearchModeEntry { Mode = SearchMode.Method, Name = "Method", Image = Images.Method },
-			new SearchModeEntry { Mode = SearchMode.Field, Name = "Field", Image = Images.Field },
-			new SearchModeEntry { Mode = SearchMode.Property, Name = "Property", Image = Images.Property },
-			new SearchModeEntry { Mode = SearchMode.Event, Name = "Event", Image = Images.Event },
-			new SearchModeEntry { Mode = SearchMode.Literal, Name = "Constant", Image = Images.Literal },
-			new SearchModeEntry { Mode = SearchMode.Token, Name = "Metadata Token", Image = Images.Library },
-			new SearchModeEntry { Mode = SearchMode.Resource, Name = "Resource", Image = Images.Resource },
-			new SearchModeEntry { Mode = SearchMode.Assembly, Name = "Assembly", Image = Images.Assembly },
-			new SearchModeEntry { Mode = SearchMode.Namespace, Name = "Namespace", Image = Images.Namespace },
+			new SearchModeEntry { Mode = SearchMode.TypeAndMember, Name = "Types and Members", ImageFactory = () => Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Type, Name = "Type", ImageFactory = () => Images.Class },
+			new SearchModeEntry { Mode = SearchMode.Member, Name = "Member", ImageFactory = () => Images.Property },
+			new SearchModeEntry { Mode = SearchMode.Method, Name = "Method", ImageFactory = () => Images.Method },
+			new SearchModeEntry { Mode = SearchMode.Field, Name = "Field", ImageFactory = () => Images.Field },
+			new SearchModeEntry { Mode = SearchMode.Property, Name = "Property", ImageFactory = () => Images.Property },
+			new SearchModeEntry { Mode = SearchMode.Event, Name = "Event", ImageFactory = () => Images.Event },
+			new SearchModeEntry { Mode = SearchMode.Literal, Name = "Constant", ImageFactory = () => Images.Literal },
+			new SearchModeEntry { Mode = SearchMode.Token, Name = "Metadata Token", ImageFactory = () => Images.Library },
+			new SearchModeEntry { Mode = SearchMode.Resource, Name = "Resource", ImageFactory = () => Images.Resource },
+			new SearchModeEntry { Mode = SearchMode.Assembly, Name = "Assembly", ImageFactory = () => Images.Assembly },
+			new SearchModeEntry { Mode = SearchMode.Namespace, Name = "Namespace", ImageFactory = () => Images.Namespace },
 		};
 
 		/// <summary>

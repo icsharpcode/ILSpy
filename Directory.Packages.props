@@ -12,7 +12,7 @@
     <NetPackageVersion>10.0.13</NetPackageVersion>
     <TomsToolboxVersion>2.26.1</TomsToolboxVersion>
     <AvaloniaVersion>12.1.4</AvaloniaVersion>
-    <DockVersion>12.1.0.9</DockVersion>
+    <DockVersion>12.1.0.11</DockVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Avalonia (ILSpy port) -->
@@ -29,7 +29,6 @@
     <PackageVersion Include="Dock.Avalonia.Themes.Simple" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Controls.Recycling" Version="$(DockVersion)" />
     <PackageVersion Include="Dock.Model.Mvvm" Version="$(DockVersion)" />
-    <PackageVersion Include="Dock.Serializer.SystemTextJson" Version="$(DockVersion)" />
     <PackageVersion Include="ProDataGrid" Version="12.1.0.6" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />

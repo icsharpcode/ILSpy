@@ -55,6 +55,10 @@ namespace ICSharpCode.ILSpy
 		public override void OnFrameworkInitializationCompleted()
 		{
 			AppLog.Mark("App.OnFrameworkInitializationCompleted entered");
+			// Parse the icon set off the UI thread from the first moment the asset loader is
+			// available; the views that need icons are inflated several hundred milliseconds
+			// from now (see Images.PreloadSvgs).
+			_ = Task.Run(Images.PreloadSvgs);
 			ILSpyTraceListener.Install();
 			GlobalExceptionHandler.Install();
 
@@ -71,6 +75,11 @@ namespace ICSharpCode.ILSpy
 			{
 				StartupExceptions.Items.Add(new ExceptionData(ex));
 			}
+
+			// Pre-pay the first layout (de)serialization's JIT and metadata cost off the UI thread
+			// while the main window is being resolved (see ILSpyDockJson.WarmUp). Started only after
+			// the plugins are loaded, so the dockable-type scan sees every pane type.
+			_ = Task.Run(Docking.ILSpyDockJson.WarmUp);
 
 			try
 			{
