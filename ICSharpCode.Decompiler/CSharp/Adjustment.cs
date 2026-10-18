@@ -36,29 +36,70 @@ namespace ICSharpCode.Decompiler.CSharp;
 enum AdjustmentKind : byte
 {
 	/// <summary>
-	/// No-op conversion of the expression to the adjusted target type.
-	/// (i.e. nothing happens in IL, but the C# type might change)
-	/// No-op adjustments can be safely ignored.
+	/// No adjustment.
+	/// The adjusted type is equal to the unadjusted type.
 	/// </summary>
 	None,
 	/// <summary>
+	/// Indicates that the unadjusted expression it does not have any semantics on its own,
+	/// it *must* be placed in a target-typed context.
+	/// </summary>
+	TargetType,
+	/// <summary>
 	/// Conversion of integer type to larger integer type with sign-extension.
+	/// Can also be used to add nullability.
+	/// Examples:
+	///  * C# `int` to `long`
+	///  * C# `int?` to `long?`
+	///  * C# `sbyte` to `int`
+	///  * `bool` to `long`
+	///  * `SomeEnum` to `int*`
+	///  * `uint` to `ulong` but with sign-extension instead of the natural zero-extension.
+	/// Not all of these are possible as direct casts in C#, but casting both
+	/// both the source and target types to primitive C# integer types
+	/// (with a signed type for the source type) causes an unchecked cast
+	/// between those primitive C# integer types to have the same semantics
+	/// as this adjustment.
 	/// </summary>
 	SignExtend,
 	/// <summary>
 	/// Conversion of integer type to larger integer type with zero-extension.
+	/// Can also be used to add nullability.
+	/// Examples:
+	///  * C# `uint` to `ulong`
+	///  * C# `uint` to `ulong?`
+	///  * C# `uint?` to `ulong?`
+	///  * C# `byte` to `int`
+	///  * `bool` to `long`
+	///  * `char` to `long`
+	///  * `int` to `long` but with zero-extension instead of the natural sign-extension.
+	///  * `SomeEnum` to `int*`
+	/// Not all of these are possible as direct casts in C#, but casting both
+	/// both the source and target types to primitive C# integer types
+	/// (with an unsigned type for the source type) causes an unchecked cast
+	/// between those primitive C# integer types to have the same semantics
+	/// as this adjustment.
 	/// </summary>
 	ZeroExtend,
 	/// <summary>
 	/// Conversion of integer type to smaller integer type.
+	/// Examples:
+	///  * C# `int` to `short`
+	///  * C# `int?` to `short?`
+	///  * C# `long` to `nint`
+	///  * C# `long` to `bool`
 	/// </summary>
 	IntegerTruncation,
 	/// <summary>
-	/// Special case for nullable integer type conversions of the same size
-	/// (where only the nullable wrapper type changes, the underlying integer is a no-op conversion,
-	///  e.g. `int?` to `uint?`)
+	/// Value-preserving integer type conversion.
+	/// Can also be used to add nullability.
+	/// Examples:
+	///  * C# `int` to `uint`
+	///  * C# `int` to `int?`
+	///  * C# `int?` to `uint?`
+	///  * C# `short` to `char`
 	/// </summary>
-	NullableIntegerNop,
+	IntegerCast,
 	/// <summary>
 	/// Represents discarding the expression's value (like a `(void)` cast in C).
 	/// </summary>
@@ -67,6 +108,11 @@ enum AdjustmentKind : byte
 	/// Represents the conversion of a pointer (any IL integer type) to a managed reference.
 	/// (same as ConversionKind.StartGCTracking)
 	/// I4 will be sign/zero extended (depending on source type); I8 will be truncated.
+	/// Examples:
+	///  * `int*` to `ref int`
+	///  * `nint` to `ref SomeStruct`
+	///  * `int` to `ref SomeStruct` (int->nint->ref SomeStruct)
+	///  * `long` to `ref SomeStruct` (long->nint->ref SomeStruct)
 	/// </summary>
 	PointerToManagedRef,
 }
@@ -81,7 +127,8 @@ readonly struct Adjustment
 	public readonly AdjustmentKind Kind;
 
 	/// <summary>
-	/// The target stack type of the adjustment.
+	/// The target stack type after the adjustment.
+	/// Don't rely on this too much -- the adjustment's target type might be a small integer type!
 	/// </summary>
 	public readonly StackType TargetStackType;
 
@@ -107,25 +154,102 @@ readonly struct Adjustment
 	/// </summary>
 	public Adjustment ChangeType(IType newTargetType)
 	{
-		Debug.Assert(newTargetType.GetStackType() == this.TargetStackType);
+		Debug.Assert(CompatibleTypesForAdjustmentSemantics(TargetType, newTargetType));
 		return new Adjustment(this.Kind, newTargetType);
+	}
+
+	/// <summary>
+	/// Determines whether two types can be considered equivalent for the purposes of acting as the adjustment target type.
+	/// </summary>
+	internal static bool CompatibleTypesForAdjustmentSemantics(IType type1, IType type2)
+	{
+		StackType stackType1 = type1.GetStackType();
+		StackType stackType2 = type2.GetStackType();
+		if (stackType1 == StackType.VT && stackType2 == StackType.VT)
+		{
+			if (NullableType.IsNullable(type1) && NullableType.IsNullable(type2))
+			{
+				var utype1 = NullableType.GetUnderlyingType(type1);
+				var utype2 = NullableType.GetUnderlyingType(type2);
+				// nullable integer types are flexible like non-nullable integer types
+				if (utype1.GetStackType().IsIntegerType() && utype2.GetStackType().IsIntegerType())
+				{
+					return utype1.GetSize() == utype2.GetSize();
+				}
+			}
+			return NormalizeTypeVisitor.TypeErasure.EquivalentTypes(type1, type2);
+		}
+		if (stackType1 == StackType.I4 && stackType2 == StackType.I4)
+		{
+			return type1.GetSize() == type2.GetSize();
+		}
+		return stackType1 == stackType2;
 	}
 
 	/// <summary>
 	/// Determines whether this applying `prev`+`this` is equivalent to
 	/// directly applying `this` to the source type.
+	/// 
+	/// If no source type is provided, returns true only if this equivalence
+	/// holds for all possible source types.
 	/// </summary>
 	public bool Subsumes(Adjustment prev)
 	{
 		if (prev.Kind == AdjustmentKind.None)
 			return true;
 		return this.Kind switch {
-			AdjustmentKind.ZeroExtend => prev.Kind is AdjustmentKind.ZeroExtend or AdjustmentKind.NullableIntegerNop,
-			AdjustmentKind.SignExtend => prev.Kind is AdjustmentKind.SignExtend or AdjustmentKind.NullableIntegerNop,
-			AdjustmentKind.IntegerTruncation => prev.Kind is AdjustmentKind.IntegerTruncation or AdjustmentKind.NullableIntegerNop,
+			AdjustmentKind.ZeroExtend => prev.Kind is AdjustmentKind.ZeroExtend or AdjustmentKind.IntegerCast,
+			AdjustmentKind.SignExtend => prev.Kind is AdjustmentKind.SignExtend or AdjustmentKind.IntegerCast,
+			AdjustmentKind.IntegerTruncation => prev.Kind is AdjustmentKind.IntegerTruncation or AdjustmentKind.IntegerCast,
+			AdjustmentKind.IntegerCast => prev.Kind is AdjustmentKind.IntegerCast,
 			AdjustmentKind.PointerToManagedRef => prev.Kind is AdjustmentKind.IntegerTruncation && prev.TargetStackType == StackType.I,
 			_ => false,
 		};
+	}
+
+	/// <summary>
+	/// Checks that this is a valid adjustment for the given source type.
+	/// </summary>
+	[Conditional("DEBUG")]
+	internal void CheckInvariant(IType sourceType)
+	{
+		switch (Kind)
+		{
+			case AdjustmentKind.None:
+				Debug.Assert(sourceType.Equals(this.TargetType));
+				break;
+			case AdjustmentKind.TargetType:
+				Debug.Assert(sourceType.Kind is TypeKind.None or TypeKind.Null);
+				break;
+			case AdjustmentKind.SignExtend:
+			case AdjustmentKind.ZeroExtend:
+			case AdjustmentKind.IntegerCast:
+			case AdjustmentKind.IntegerTruncation:
+				var sourceUType = NullableType.GetUnderlyingType(sourceType);
+				var targetUType = NullableType.GetUnderlyingType(this.TargetType);
+				Debug.Assert(sourceUType.GetStackType().IsIntegerType());
+				Debug.Assert(targetUType.GetStackType().IsIntegerType());
+				if (Kind == AdjustmentKind.IntegerTruncation)
+				{
+					Debug.Assert(sourceUType.GetSize() > targetUType.GetSize());
+				}
+				else if (Kind == AdjustmentKind.IntegerCast)
+				{
+					Debug.Assert(sourceUType.GetSize() == targetUType.GetSize());
+				}
+				else // zero/sign extend
+				{
+					Debug.Assert(sourceUType.GetSize() < targetUType.GetSize());
+				}
+				break;
+			case AdjustmentKind.Voided:
+				Debug.Assert(this.TargetType.IsKnownType(KnownTypeCode.Void));
+				break;
+			case AdjustmentKind.PointerToManagedRef:
+				Debug.Assert(sourceType.GetStackType().IsIntegerType());
+				Debug.Assert(this.TargetType is ByReferenceType);
+				break;
+		}
 	}
 }
 
@@ -144,14 +268,18 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 	/// </summary>
 	public ExpressionWithResolveResult ApplyAdjustment(ExpressionWithResolveResult expr, Adjustment adjustment)
 	{
+		adjustment.CheckInvariant(expr.ResolveResult.Type);
 		switch (adjustment.Kind)
 		{
 			case AdjustmentKind.None:
-				return ConvertNop(expr, adjustment.TargetType);
+				return expr;
+			case AdjustmentKind.TargetType:
+				return new CastExpression(exprBuilder.ConvertType(adjustment.TargetType), expr)
+					.WithRR(new ResolveResult(adjustment.TargetType));
 			case AdjustmentKind.SignExtend:
 			case AdjustmentKind.ZeroExtend:
 			case AdjustmentKind.IntegerTruncation:
-			case AdjustmentKind.NullableIntegerNop:
+			case AdjustmentKind.IntegerCast:
 				return ConvertInteger(expr, adjustment.TargetType, adjustment.Kind);
 			case AdjustmentKind.Voided:
 				// Cannot adjust to `void` in C#. But really, no one should be calling
@@ -175,14 +303,14 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 	/// <summary>
 	/// Converts `expr` to `targetType` without impacting the semantics of the expression.
 	/// 
-	/// Precondition: `targetType` must match the expression's existing stack type.
+	/// Precondition: `targetType` be compatible with the expression's type.
 	/// Postcondition: The resulting expression will be equivalent to `targetType` (modulo type erasure).
 	/// </summary>
 	public ExpressionWithResolveResult ConvertNop(ExpressionWithResolveResult expr, IType targetType)
 	{
+		Debug.Assert(Adjustment.CompatibleTypesForAdjustmentSemantics(targetType, expr.Type));
 		StackType stackType = targetType.GetStackType();
-		Debug.Assert(stackType == expr.Type.GetStackType());
-		if (stackType.IsIntegerType())
+		if (stackType.IsIntegerType() || stackType == StackType.VT && NullableType.GetUnderlyingType(targetType).GetStackType().IsIntegerType())
 		{
 			return ConvertInteger(expr, targetType);
 		}
@@ -268,10 +396,10 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 				).WithRR(new ResolveResult(targetType));
 			}
 		}
-		if (targetUType.IsKnownType(KnownTypeCode.Boolean))
+		if (targetUType.IsKnownType(KnownTypeCode.Boolean) && sourceUType.GetSize() > 1)
 		{
 			// Truncation to `bool` must go through `byte` first.
-			var step = ConvertInteger(expr, compilation.FindType(KnownTypeCode.Byte));
+			var step = ConvertInteger(expr, GetIntegerType(1, Sign.Unsigned, isLifted));
 			return ConvertInteger(step, targetType);
 		}
 		if (kind is AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend)
@@ -281,11 +409,7 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			Sign sign = kind == AdjustmentKind.SignExtend ? Sign.Signed : Sign.Unsigned;
 			if (sourceUType.GetSign() != sign)
 			{
-				var stepType = compilation.FindType(sourceUType.GetStackType(), sign);
-				if (isLifted)
-				{
-					stepType = NullableType.Create(compilation, stepType);
-				}
+				var stepType = GetIntegerType(sourceUType.GetSize(), sign, isLifted);
 				var step = ConvertInteger(expr, stepType);
 				return ConvertInteger(step, targetType);
 			}
@@ -314,8 +438,9 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			return ConvertInteger(step, targetType);
 		}
 		var castExpr = new CastExpression(exprBuilder.ConvertType(targetType), expr);
-		bool couldOverflow = targetUType.GetSize() < sourceType.GetSize()
-			|| (targetUType.GetSize() == sourceUType.GetSize() && targetUType.GetSign() != sourceUType.GetSign());
+		bool couldOverflow = sourceType.GetSize() > targetUType.GetSize()
+			|| (targetUType.GetSign() != sourceUType.GetSign()
+				&& (targetUType.GetSize() == sourceUType.GetSize() || sourceUType.GetSign() == Sign.Signed));
 		if (couldOverflow)
 		{
 			if (expr.ResolveResult.IsCompileTimeConstant)
@@ -330,14 +455,22 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 		return castExpr.WithRR(new ConversionResolveResult(targetType, expr.ResolveResult, Conversion.ExplicitNumericConversion));
 	}
 
-	ExpressionWithResolveResult BoolToInt(ExpressionWithResolveResult expr, IType type)
+	public IType GetIntegerType(int size, Sign sign, bool isLifted = false)
 	{
-		Debug.Assert(expr.Type.IsKnownType(KnownTypeCode.Boolean));
-		return new ConditionalExpression(
-			expr,
-			LdcI4(1),
-			LdcI4(0)
-		).WithRR(new ResolveResult(type));
+		IType type;
+		if (size == TypeUtils.NativeIntSize && exprBuilder.settings.NativeIntegers)
+		{
+			type = sign == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
+		}
+		else
+		{
+			type = compilation.FindType(TypeUtils.GetIntegerTypeCode(size, sign));
+		}
+		if (isLifted)
+		{
+			type = NullableType.Create(compilation, type);
+		}
+		return type;
 	}
 
 	ExpressionWithResolveResult LdcI4(int value)
