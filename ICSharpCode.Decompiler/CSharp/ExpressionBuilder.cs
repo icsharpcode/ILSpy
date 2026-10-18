@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr,
-			bool allowImplicitConversion = false, bool displayAsHex = false)
+			bool allowImplicitConversion, bool displayAsHex = false)
 		{
 			astBuilder.PrintIntegralValuesAsHex = displayAsHex;
 			try
@@ -192,7 +192,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			var cexpr = inst.AcceptVisitor(this, context);
 			cexpr = cexpr.AddLegacyAdjustments(adjustmentBuilder, inst);
+			// The modern post-condition allows returning small integer types where StackType.I4 is expected.
+			// We turn this into an explicit adjustment.
+			if (cexpr.AdjustedType.IsSmallIntegerType())
+			{
+				Debug.Assert(inst.ResultType == StackType.I4);
+				cexpr = cexpr.AddAdjustment(adjustmentBuilder,
+				   cexpr.AdjustedType.GetSign() == Sign.Signed ? AdjustmentKind.SignExtend : AdjustmentKind.ZeroExtend,
+				   compilation.FindType(StackType.I4));
+			}
 			Debug.Assert(inst.ResultType == cexpr.AdjustedStackType || inst.ResultType == StackType.Unknown || cexpr.AdjustedStackType == StackType.Unknown);
+			// Legacy callers can't handle these adjustments that weren't used before:
+			if (cexpr.AdjustedType.IsSmallIntegerType())
+			{
+				return cexpr.ToAdjustedExpression(adjustmentBuilder).WithoutILInstruction();
+			}
+			else if (cexpr.Adjustment.Kind == AdjustmentKind.ZeroExtend && cexpr.UnadjustedType.GetSign() == Sign.Signed)
+			{
+				var converted = adjustmentBuilder.ConvertInteger(cexpr.Unadjusted,
+					adjustmentBuilder.GetIntegerType(cexpr.UnadjustedType.GetSize(), Sign.Unsigned));
+				return converted.WithoutILInstruction().WithAdjustment(cexpr.Adjustment);
+			}
+			else if (cexpr.Adjustment.Kind == AdjustmentKind.SignExtend && cexpr.UnadjustedType.GetSign() == Sign.Unsigned)
+			{
+				var converted = adjustmentBuilder.ConvertInteger(cexpr.Unadjusted,
+					adjustmentBuilder.GetIntegerType(cexpr.UnadjustedType.GetSize(), Sign.Signed));
+				return converted.WithoutILInstruction().WithAdjustment(cexpr.Adjustment);
+			}
 			return cexpr;
 		}
 
@@ -2317,59 +2343,64 @@ namespace ICSharpCode.Decompiler.CSharp
 					return result.Value;
 				}
 			}
+			IType hintUType = NullableType.GetUnderlyingType(context.TypeHint);
 			Sign hintSign = inst.InputSign;
+			// If we're sign/zero-extending, adjust the hint accordingly.
+			if (inst.Kind == ConversionKind.SignExtend)
+			{
+				hintSign = Sign.Signed;
+			}
+			else if (inst.Kind == ConversionKind.ZeroExtend)
+			{
+				hintSign = Sign.Unsigned;
+			}
 			if (hintSign == Sign.None)
 			{
 				hintSign = context.TypeHint.GetSign();
 			}
 			var arg = Translate(inst.Argument, typeHint: FindArithmeticType(inst.InputType, hintSign));
-			IType inputType = NullableType.GetUnderlyingType(arg.Type);
-			StackType inputStackType = inst.InputType;
-			// Note: we're dealing with two conversions here:
-			// a) the implicit conversion from `inputType` to `inputStackType`
-			//    (due to the ExpressionBuilder post-condition being flexible with regards to the integer type width)
-			//    If this is a widening conversion, I'm calling the argument C# type "oversized".
-			//    If this is a narrowing conversion, I'm calling the argument C# type "undersized".
-			// b) the actual conversion instruction from `inputStackType` to `inst.TargetType`
 
-			// Also, we need to be very careful with regards to the conversions we emit:
+			// We need to be very careful with regards to the conversions we emit:
 			// In C#, zero vs. sign-extension depends on the input type,
 			// but in the ILAst conv instruction it depends on the output type.
 			// However, in the conv.ovf instructions, the .NET runtime behavior seems to depend on the input type,
 			// in violation of the ECMA-335 spec!
 
-			IType GetType(KnownTypeCode typeCode)
-			{
-				IType type = compilation.FindType(typeCode);
-				// Prefer n(u)int over (U)IntPtr
-				if (typeCode == KnownTypeCode.IntPtr && settings.NativeIntegers && !type.Equals(context.TypeHint))
-				{
-					type = SpecialType.NInt;
-				}
-				else if (typeCode == KnownTypeCode.UIntPtr && settings.NativeIntegers && !type.Equals(context.TypeHint))
-				{
-					type = SpecialType.NUInt;
-				}
-				if (inst.IsLifted)
-				{
-					type = NullableType.Create(compilation, type);
-				}
-				return type;
-			}
-
 			if (inst.CheckForOverflow || inst.Kind == ConversionKind.IntToFloat)
 			{
-				// We need to first convert the argument to the expected sign.
-				// We also need to perform any input narrowing conversion so that it doesn't get mixed up with the overflow check.
 				Debug.Assert(inst.InputSign != Sign.None);
-				if (inputType.GetSize() > inputStackType.GetSize() || inputType.GetSign() != inst.InputSign)
+				var argUType = NullableType.GetUnderlyingType(arg.AdjustedType);
+				// We need to first convert the argument to the expected sign.
+				if (argUType.GetStackType().IsIntegerType() && argUType.GetSign() != inst.InputSign)
 				{
-					arg = arg.ConvertTo(GetType(inputStackType.ToKnownTypeCode(inst.InputSign)), this);
+					arg = arg.AddAdjustment(adjustmentBuilder,
+						AdjustmentKind.IntegerCast,
+						adjustmentBuilder.GetIntegerType(argUType.GetSize(), inst.InputSign, inst.IsLifted, context.TypeHint));
 				}
-				// Because casts with overflow check match C# semantics (zero/sign-extension depends on source type),
-				// we can just directly cast to the target type.
-				return arg.ConvertTo(GetType(inst.TargetType.ToKnownTypeCode()), this, inst.CheckForOverflow)
-					.WithILInstruction(inst);
+				if (inst.Kind != ConversionKind.IntToFloat && inst.Kind != ConversionKind.FloatToInt)
+				{
+					// For casts with overflow check, we can use ConvertInteger().
+					// It handles all the integer-like special cases (enums, pointers, IntPtr/UIntPtr, etc.) for us.
+					return adjustmentBuilder.ConvertInteger(
+						arg.ToExpression(adjustmentBuilder, allowSmallerIntegerSameSign: true),
+						adjustmentBuilder.GetIntegerType(inst.TargetType.GetSize(), inst.TargetType.GetSign(), inst.IsLifted, context.TypeHint),
+						checkOverflow: true
+					).WithILInstruction(inst);
+				}
+				// For int<->float we'll fall through to the default case adding a cast.
+			}
+
+			// We need to convert to inst.TargetType, or to an equivalent type.
+			IType targetType;
+			if (inst.UnderlyingResultType == hintUType.GetStackType()
+				&& inst.TargetType.GetSize() == hintUType.GetSize()
+				&& NullableType.IsNullable(context.TypeHint) == inst.IsLifted)
+			{
+				targetType = context.TypeHint;
+			}
+			else
+			{
+				targetType = inst.InferType(compilation);
 			}
 
 			switch (inst.Kind)
@@ -2377,108 +2408,66 @@ namespace ICSharpCode.Decompiler.CSharp
 				case ConversionKind.StartGCTracking:
 					// A "start gc tracking" conversion is inserted in the ILAst whenever
 					// some instruction expects a managed pointer, but we pass an unmanaged pointer.
-					// We'll leave the C#-level conversion (from T* to ref T) to the consumer that expects the managed pointer.
-					return arg;
+					// The C#-level conversion (from T* to ref T) is delayed via adjustment.
+					return arg.AddAdjustment(adjustmentBuilder,
+						new Adjustment(AdjustmentKind.PointerToManagedRef, targetType));
 				case ConversionKind.StopGCTracking:
-					if (inputType.Kind == TypeKind.ByReference)
+					if (arg.Adjustment.Kind == AdjustmentKind.PointerToManagedRef)
+					{
+						// ConversionKind.StopGCTracking should only be used with managed references,
+						// but it's possible that we're supposed to stop tracking something we just started to track.
+						// Drop the existing StartGCTracking adjustment and replace it with an integer adjustment.
+						return new TranslatedExpression(arg.UnadjustedExpression).WithAdjustment(
+							AdjustmentBuilder.DetermineIntegerAdjustment(arg.UnadjustedType, inst.ResultType.GetSize()),
+							targetType
+						);
+					}
+					if (arg.AdjustedType is ByReferenceType brt)
 					{
 						if (PointerArithmeticOffset.IsFixedVariable(inst.Argument))
 						{
-							// cast to corresponding pointer type:
-							var pointerType = new PointerType(((ByReferenceType)inputType).ElementType);
-							return arg.ConvertTo(pointerType, this).WithILInstruction(inst);
+							// dereference, then take address, then continue casting if needed
+							var deref = arg.Dereference(adjustmentBuilder);
+							var pointerType = new PointerType(brt.ElementType);
+							var pointerExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, deref)
+								.WithRR(new ResolveResult(pointerType));
+							return pointerExpr.WithILInstruction(inst).WithAdjustment(
+								AdjustmentBuilder.DetermineIntegerAdjustment(pointerType, inst.ResultType.GetSize()),
+								targetType
+							);
 						}
 						else
 						{
 							// emit Unsafe.AsPointer() intrinsic:
 							return CallUnsafeIntrinsic("AsPointer",
-								arguments: new Expression[] { arg },
+								arguments: [arg.ToAdjustedExpression(adjustmentBuilder)],
 								returnType: new PointerType(compilation.FindType(KnownTypeCode.Void)),
 								inst: inst);
 						}
-					}
-					else if (arg.Type.GetStackType().IsIntegerType())
-					{
-						// ConversionKind.StopGCTracking should only be used with managed references,
-						// but it's possible that we're supposed to stop tracking something we just started to track.
-						return arg;
 					}
 					else
 					{
 						goto default;
 					}
 				case ConversionKind.SignExtend:
-					// We just need to ensure the input type before the conversion is signed.
-					// Also, if the argument was translated into an oversized C# type,
-					// we need to perform the truncatation to the input stack type.
-					if (inputType.GetSign() != Sign.Signed || ValueMightBeOversized(arg.ResolveResult, inputStackType))
-					{
-						// Note that an undersized C# type is handled just fine:
-						// If it is unsigned we'll zero-extend it to the width of the inputStackType here,
-						// and it is signed we just combine the two sign-extensions into a single sign-extending conversion.
-						arg = arg.ConvertTo(GetType(inputStackType.ToKnownTypeCode(Sign.Signed)), this);
-					}
-					// Then, we can just return the argument as-is: the ExpressionBuilder post-condition allows us
-					// to force our parent instruction to handle the actual sign-extension conversion.
-					// (our caller may have more information to pick a better fitting target type)
-					return arg.WithILInstruction(inst);
+					// Sign-extension can be delayed via adjustment:
+					return arg.WithILInstruction(inst).AddAdjustment(adjustmentBuilder,
+						AdjustmentKind.SignExtend, targetType);
 				case ConversionKind.ZeroExtend:
-					// If overflow check cannot fail, handle this just like sign extension (except for swapped signs)
-					if (inputType.GetSign() != Sign.Unsigned || inputType.GetSize() > inputStackType.GetSize())
-					{
-						arg = arg.ConvertTo(GetType(inputStackType.ToKnownTypeCode(Sign.Unsigned)), this);
-					}
-					return arg.WithILInstruction(inst);
+					return arg.WithILInstruction(inst).AddAdjustment(adjustmentBuilder,
+						AdjustmentKind.ZeroExtend, targetType);
 				case ConversionKind.Nop:
 					// no need to generate any C# code for a nop conversion
 					return arg.WithILInstruction(inst);
 				case ConversionKind.Truncate:
-					// Note: there are three sizes involved here:
-					// A = inputType.GetSize()
-					// B = inputStackType.GetSize()
-					// C = inst.TargetType.GetSize().
-					// We know that C < B (otherwise this wouldn't be the truncation case).
-					// 1) If C < B < A, we just combine the two truncations into one.
-					// 2) If C < B = A, there's no input conversion, just the truncation
-					// 3) If C <= A < B, all the extended bits get removed again by the truncation.
-					// 4) If A < C < B, some extended bits remain even after truncation.
-					// In cases 1-3, the overall conversion is a truncation or no-op.
-					// In case 4, the overall conversion is a zero/sign extension, but to a smaller
-					// size than the original conversion.
-					if (inst.TargetType.IsSmallIntegerType())
-					{
-						// If the target type is a small integer type, IL will implicitly sign- or zero-extend
-						// the result after the truncation back to StackType.I4.
-						// (which means there's actually 3 conversions involved!)
-						// Note that we must handle truncation to small integer types ourselves:
-						// our caller only sees the StackType.I4 and doesn't know to truncate to the small type.
-
-						if (inputType.GetSize() <= inst.TargetType.GetSize() && inputType.GetSign() == inst.TargetType.GetSign())
-						{
-							// There's no actual truncation involved, and the result of the Conv instruction is extended
-							// the same way as the original instruction
-							// -> we can return arg directly
-							return arg.WithILInstruction(inst);
-						}
-						else
-						{
-							// We need to actually truncate; *or* we need to change the sign for the remaining extension to I4.
-							goto default; // Emit simple cast to inst.TargetType
-						}
-					}
-					else
-					{
-						Debug.Assert(inst.TargetType.GetSize() == inst.UnderlyingResultType.GetSize());
-						// For non-small integer types, we can let the whole unchecked truncation
-						// get handled by our caller (using the ExpressionBuilder post-condition).
-
-						// Case 4 (left-over extension from implicit conversion) can also be handled by our caller.
-						return arg.WithILInstruction(inst);
-					}
+					return arg.WithILInstruction(inst).AddAdjustment(adjustmentBuilder,
+						AdjustmentKind.IntegerTruncation, targetType);
 				case ConversionKind.Invalid:
-					if (inst.InputType == StackType.Unknown && inst.TargetType == IL.PrimitiveType.None && arg.Type.Kind == TypeKind.Unknown)
+					if (inst.InputType is StackType.Unknown or StackType.Obj
+						&& inst.TargetType is IL.PrimitiveType.None or IL.PrimitiveType.Unknown
+						&& arg.Type.Kind == TypeKind.Unknown)
 					{
-						// Unknown -> O conversion.
+						// Unknown <-> O conversion.
 						// Our post-condition allows us to also use expressions with unknown type where O is expected,
 						// so avoid introducing an `(object)` cast because we're likely to cast back to the same unknown type,
 						// just in a signature context where we know that it's a class type.
@@ -2487,60 +2476,26 @@ namespace ICSharpCode.Decompiler.CSharp
 					goto default;
 				default:
 				{
-					// We need to convert to inst.TargetType, or to an equivalent type.
-					IType targetType;
-					if (inst.TargetType == NullableType.GetUnderlyingType(context.TypeHint).ToPrimitiveType()
-						&& NullableType.IsNullable(context.TypeHint) == inst.IsLifted)
+					var castOperand = arg.ToExpression(adjustmentBuilder, allowSmallerIntegerSameSign: true);
+					var castRR = resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveCast(
+						targetType,
+						castOperand.ResolveResult
+					);
+					var cast = new CastExpression(ConvertType(targetType), castOperand);
+					if (inst.Kind is not ConversionKind.FloatPrecisionChange)
 					{
-						targetType = context.TypeHint;
+						if (inst.CheckForOverflow)
+						{
+							cast.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+						}
+						else
+						{
+							cast.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+						}
 					}
-					else if (inst.TargetType == IL.PrimitiveType.Ref)
-					{
-						// converting to unknown ref-type
-						targetType = new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
-					}
-					else if (inst.TargetType == IL.PrimitiveType.None)
-					{
-						// convert to some object type
-						// (e.g. invalid I4->O conversion)
-						targetType = compilation.FindType(KnownTypeCode.Object);
-					}
-					else
-					{
-						targetType = GetType(inst.TargetType.ToKnownTypeCode());
-					}
-					return arg.ConvertTo(targetType, this, inst.CheckForOverflow)
-						.WithILInstruction(inst);
+					return cast.WithRR(castRR).WithILInstruction(inst);
 				}
 			}
-		}
-
-		/// <summary>
-		/// Gets whether the ResolveResult computes a value that might be oversized for the specified stack type.
-		/// </summary>
-		bool ValueMightBeOversized(ResolveResult rr, StackType stackType)
-		{
-			IType inputType = NullableType.GetUnderlyingType(rr.Type);
-			if (inputType.GetSize() <= stackType.GetSize())
-			{
-				// The input type is smaller or equal to the stack type,
-				// it can't be an oversized value.
-				return false;
-			}
-			if (rr is OperatorResolveResult orr)
-			{
-				if (stackType == StackType.I && orr.OperatorType == ExpressionType.Subtract
-					&& orr.Operands.Count == 2
-					&& orr.Operands[0].Type.Kind == TypeKind.Pointer
-					&& orr.Operands[1].Type.Kind == TypeKind.Pointer)
-				{
-					// Even though a pointer subtraction produces a value of type long in C#,
-					// the value will always fit in a native int.
-					return false;
-				}
-			}
-			// We don't have any information about the value, so it might be oversized.
-			return true;
 		}
 
 		protected internal override TranslatedExpression VisitCall(Call inst, TranslationContext context)
@@ -3101,74 +3056,30 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult LdObj(ILInstruction address, IType loadType)
 		{
-			IType addressTypeHint = address.ResultType == StackType.Ref ? new ByReferenceType(loadType) : (IType)new PointerType(loadType);
+			IType addressTypeHint = address.ResultType == StackType.Ref ? new ByReferenceType(loadType) : new PointerType(loadType);
 			var target = Translate(address, typeHint: addressTypeHint);
-			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(target.Type, loadType))
+			if (TypeUtils.IsCompatiblePointerTypeForMemoryAccess(target.AdjustedType, loadType))
 			{
-				ExpressionWithResolveResult result;
-				if (target.Expression is DirectionExpression dirExpr)
-				{
-					// we can dereference the managed reference by stripping away the 'ref'
-					result = target.UnwrapChild(dirExpr.Expression);
-				}
-				else if (target.Type is PointerType pointerType)
-				{
-					if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf)
-					{
-						// We can dereference the pointer by stripping away the '&'
-						result = target.UnwrapChild(uoe.Expression);
-					}
-					else
-					{
-						// Dereference the existing pointer
-						result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-							.WithRR(new ResolveResult(pointerType.ElementType));
-					}
-				}
-				else
-				{
-					// reference type behind non-DirectionExpression?
-					// this case should be impossible, but we can use a pointer cast
-					// just to make sure
-					target = target.ConvertTo(new PointerType(loadType), this);
-					return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-						.WithRR(new ResolveResult(loadType));
-				}
-				// we don't convert result to inst.Type, because the LdObj type
-				// might be inaccurate (it's often System.Object for all reference types),
-				// and our parent node should already insert casts where necessary
-				return result;
+				// Use the pointer's existing element type.
+				return target.Dereference(adjustmentBuilder, ((TypeWithElementType)target.AdjustedType).ElementType);
 			}
 			else
 			{
 				// We need to cast the pointer type:
-				if (target.Expression is DirectionExpression)
+				if (target.AdjustedType.Kind == TypeKind.ByReference || loadType.IsUnmanagedType(settings.IntroduceUnmanagedConstraint))
 				{
-					target = target.ConvertTo(new ByReferenceType(loadType), this);
+					return target.Dereference(adjustmentBuilder, loadType);
 				}
-				else if (!loadType.IsUnmanagedType(settings.IntroduceUnmanagedConstraint))
+				else
 				{
 					// Use: Unsafe.Read<T>(void*)
-					target = target.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), this, allowImplicitConversion: true);
+					var converted = target.ImplicitConvertTo(adjustmentBuilder, new PointerType(compilation.FindType(KnownTypeCode.Void)));
 					return CallUnsafeIntrinsic(
 						name: "Read",
-						arguments: new Expression[] { target },
+						arguments: [converted],
 						returnType: loadType,
-						typeArguments: new IType[] { loadType }
+						typeArguments: [loadType]
 					);
-				}
-				else
-				{
-					target = target.ConvertTo(new PointerType(loadType), this);
-				}
-				if (target.Expression is DirectionExpression dirExpr)
-				{
-					return target.UnwrapChild(dirExpr.Expression);
-				}
-				else
-				{
-					return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-						.WithRR(new ResolveResult(loadType));
 				}
 			}
 		}
@@ -3336,22 +3247,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst);
 				if (inst.ResultType == StackType.Ref)
 				{
-					// `target.field` has pointer-type.
-					if (inst.SlotInfo == PinnedRegion.InitSlot || inst.Parent is Conv { TargetType: IL.PrimitiveType.U })
-					{
-						// Convert pointer to ref if we're in a context where we're going to convert
-						// the ref back to a pointer.
-						return result.ConvertTo(new ByReferenceType(elementType), this);
-					}
-					else
-					{
-						// We can't use `ref *target.field` unless `target` is non-movable,
-						// but we can use `ref target.field[0]`.
-						var arrayAccess = new IndexerExpression(result, new PrimitiveExpression(0))
-							.WithRR(new ResolveResult(elementType));
-						return new DirectionExpression(FieldDirection.Ref, arrayAccess)
-							.WithoutILInstruction().WithRR(new ByReferenceResolveResult(arrayAccess.ResolveResult, ReferenceKind.Ref));
-					}
+					// C# `target.fixed_field` has pointer-type, but IL wanted a ref.
+					return result.WithAdjustment(AdjustmentKind.PointerToManagedRef, new ByReferenceType(elementType));
 				}
 				else
 				{

@@ -119,7 +119,7 @@ enum AdjustmentKind : byte
 
 /// <summary>
 /// Represents an adjustment applied to a C# expression.
-/// See <see cref="TranslatedExpression.Adjusted"/> for how adjustments are applied to expressions.
+/// See <see cref="TranslatedExpression.ToExpression"/> for how adjustments are applied to expressions.
 /// </summary>
 [DebuggerDisplay("{Kind} to {TargetType}")]
 readonly struct Adjustment
@@ -146,16 +146,6 @@ readonly struct Adjustment
 		this.Kind = kind;
 		this.TargetType = targetType;
 		this.TargetStackType = targetType.GetStackType();
-	}
-
-	/// <summary>
-	/// Creates a new adjustment with the same kind and same semantics,
-	/// but a different target type.
-	/// </summary>
-	public Adjustment ChangeType(IType newTargetType)
-	{
-		Debug.Assert(CompatibleTypesForAdjustmentSemantics(TargetType, newTargetType));
-		return new Adjustment(this.Kind, newTargetType);
 	}
 
 	/// <summary>
@@ -202,7 +192,7 @@ readonly struct Adjustment
 			AdjustmentKind.SignExtend => prev.Kind is AdjustmentKind.SignExtend or AdjustmentKind.IntegerCast,
 			AdjustmentKind.IntegerTruncation => prev.Kind is AdjustmentKind.IntegerTruncation or AdjustmentKind.IntegerCast,
 			AdjustmentKind.IntegerCast => prev.Kind is AdjustmentKind.IntegerCast,
-			AdjustmentKind.PointerToManagedRef => prev.Kind is AdjustmentKind.IntegerTruncation && prev.TargetStackType == StackType.I,
+			AdjustmentKind.PointerToManagedRef => prev.Kind is AdjustmentKind.IntegerCast || (prev.Kind is AdjustmentKind.IntegerTruncation && prev.TargetStackType == StackType.I),
 			_ => false,
 		};
 	}
@@ -237,7 +227,7 @@ readonly struct Adjustment
 				{
 					Debug.Assert(sourceUType.GetSize() == targetUType.GetSize());
 				}
-				else // zero/sign extend
+				else // zero/sign extend 
 				{
 					Debug.Assert(sourceUType.GetSize() < targetUType.GetSize());
 				}
@@ -255,7 +245,7 @@ readonly struct Adjustment
 
 class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 {
-	readonly ExpressionBuilder exprBuilder = exprBuilder;
+	internal readonly ExpressionBuilder exprBuilder = exprBuilder;
 	internal readonly ICompilation compilation = exprBuilder.compilation;
 
 	public readonly Adjustment Voided = new(AdjustmentKind.Voided, exprBuilder.compilation.FindType(KnownTypeCode.Void));
@@ -291,9 +281,18 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 				var brt = (ByReferenceType)adjustment.TargetType;
 				expr = ConvertInteger(expr, new PointerType(brt.ElementType));
 				var derefRR = new ResolveResult(brt.ElementType);
-				var deref = new UnaryOperatorExpression(UnaryOperatorType.Dereference, expr)
-					.WithRR(derefRR);
-				return new DirectionExpression(FieldDirection.Ref, deref)
+				Expression deref;
+				if (expr.ResolveResult is MemberResolveResult { Member: IField field }
+					&& CSharpDecompiler.IsFixedField(field, out _, out _))
+				{
+					// For fixed fields, it's better to use `field[0]` instead of `*field`.
+					deref = new IndexerExpression(expr, [new PrimitiveExpression(0)]);
+				}
+				else
+				{
+					deref = new UnaryOperatorExpression(UnaryOperatorType.Dereference, expr);
+				}
+				return new DirectionExpression(FieldDirection.Ref, deref.WithRR(derefRR))
 					.WithRR(new ByReferenceResolveResult(derefRR, ReferenceKind.Ref));
 			default:
 				throw new NotSupportedException($"Unsupported adjustment kind: {adjustment.Kind}");
@@ -334,6 +333,30 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 	}
 
 	/// <summary>
+	/// Determines the appropriate integer adjustment kind when converting from `sourceType` to a target
+	/// integer type of the specified size.
+	/// Zero/sign-extension are differentiated based on the source type's sign.
+	/// </summary>
+	public static AdjustmentKind DetermineIntegerAdjustment(IType sourceType, int targetSize)
+	{
+		Debug.Assert(sourceType.GetStackType().IsIntegerType());
+		Debug.Assert(targetSize > 0);
+		int sourceSize = sourceType.GetSize();
+		if (targetSize > sourceSize)
+		{
+			return sourceType.GetSign() == Sign.Signed ? AdjustmentKind.SignExtend : AdjustmentKind.ZeroExtend;
+		}
+		else if (targetSize < sourceSize)
+		{
+			return AdjustmentKind.IntegerTruncation;
+		}
+		else
+		{
+			return AdjustmentKind.IntegerCast;
+		}
+	}
+
+	/// <summary>
 	/// Converts `expr` to `targetType`.
 	/// Semantically, this is one of:
 	/// - Sign extension
@@ -351,9 +374,11 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 	/// If the input type is nullable, then so must be the target type.
 	/// Postcondition: The resulting expression will have type `targetType`.
 	/// </summary>
-	public ExpressionWithResolveResult ConvertInteger(ExpressionWithResolveResult expr, IType targetType, AdjustmentKind? kind = null)
+	public ExpressionWithResolveResult ConvertInteger(ExpressionWithResolveResult expr, IType targetType,
+		AdjustmentKind? kind = null, bool checkOverflow = false)
 	{
-		Debug.Assert(kind is null or AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend or AdjustmentKind.IntegerTruncation);
+		Debug.Assert(kind is null or AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend
+								  or AdjustmentKind.IntegerTruncation or AdjustmentKind.IntegerCast);
 		var sourceType = expr.Type;
 		if (targetType.Equals(sourceType))
 		{
@@ -399,7 +424,7 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 		if (targetUType.IsKnownType(KnownTypeCode.Boolean) && sourceUType.GetSize() > 1)
 		{
 			// Truncation to `bool` must go through `byte` first.
-			var step = ConvertInteger(expr, GetIntegerType(1, Sign.Unsigned, isLifted));
+			var step = ConvertInteger(expr, GetIntegerType(1, Sign.Unsigned, isLifted), checkOverflow: checkOverflow);
 			return ConvertInteger(step, targetType);
 		}
 		if (kind is AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend)
@@ -409,9 +434,87 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			Sign sign = kind == AdjustmentKind.SignExtend ? Sign.Signed : Sign.Unsigned;
 			if (sourceUType.GetSign() != sign)
 			{
-				var stepType = GetIntegerType(sourceUType.GetSize(), sign, isLifted);
-				var step = ConvertInteger(expr, stepType);
-				return ConvertInteger(step, targetType);
+				var convertVia = GetIntegerType(sourceUType.GetSize(), sign, isLifted);
+				var step = ConvertInteger(expr, convertVia, checkOverflow: checkOverflow);
+				return ConvertInteger(step, targetType, checkOverflow: checkOverflow);
+			}
+		}
+		// Special-case IntPtr and UIntPtr: they behave extremely weird, see IntPtr.txt for details.
+		if (sourceType.IsKnownType(KnownTypeCode.IntPtr))
+		{
+			// Conversion from IntPtr
+			// Direct cast only works correctly for IntPtr -> long.
+			// IntPtr -> int works correctly only in checked context.
+			// Everything else can be worked around by casting via nint/long.
+			if (!(targetType.IsKnownType(KnownTypeCode.Int64) || targetType.Kind == TypeKind.NInt
+				|| (checkOverflow && targetType.IsKnownType(KnownTypeCode.Int32))
+				|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
+			{
+				var convertVia = exprBuilder.settings.NativeIntegers ? SpecialType.NInt : compilation.FindType(KnownTypeCode.Int64);
+				var step = ConvertInteger(expr, convertVia, checkOverflow: checkOverflow);
+				return ConvertInteger(step, targetType, checkOverflow: checkOverflow);
+			}
+		}
+		else if (sourceType.IsKnownType(KnownTypeCode.UIntPtr))
+		{ // Conversion from UIntPtr
+		  // Direct cast only works correctly for UIntPtr -> ulong.
+		  // UIntPtr -> uint works correctly only in checked context.
+		  // Everything else can be worked around by casting via ulong.
+			if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || targetType.Kind == TypeKind.NUInt
+				|| (checkOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))
+				|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
+			{
+				var convertVia = exprBuilder.settings.NativeIntegers ? SpecialType.NUInt : compilation.FindType(KnownTypeCode.UInt64);
+				var step = ConvertInteger(expr, convertVia, checkOverflow: checkOverflow);
+				return ConvertInteger(step, targetType, checkOverflow: checkOverflow);
+			}
+		}
+		if (targetUType.IsKnownType(KnownTypeCode.IntPtr) || targetUType.IsKnownType(KnownTypeCode.UIntPtr))
+		{
+			// Conversion to (U)IntPtr
+			IType? convertVia;
+			if (!CouldOverflow(sourceUType, targetUType))
+			{
+				// Any cast that never overflows can be done directly in both contexts.
+				convertVia = null;
+			}
+			else if (checkOverflow)
+			{
+				// long -> IntPtr: always performs overflow check, so we can use it here
+				// ulong -> UIntPtr: always performs overflow check, so we can use it here
+				var workingType = targetUType.IsKnownType(KnownTypeCode.IntPtr) ? KnownTypeCode.Int64 : KnownTypeCode.UInt64;
+				if (sourceUType.IsKnownType(workingType))
+				{
+					convertVia = null;
+				}
+				else
+				{
+					// anything else: convert via nint/long or nuint/ulong
+					convertVia = compilation.FindType(workingType);
+				}
+			}
+			else
+			{
+				// The only way to truncate to native size without performing an overflow check
+				// in 32-bit mode is to use a pointer sourceType.
+				if (sourceType.Kind.IsAnyPointer())
+				{
+					convertVia = null;
+				}
+				else
+				{
+					convertVia = new PointerType(compilation.FindType(KnownTypeCode.Void));
+				}
+			}
+			if (convertVia != null)
+			{
+				// If nint is available, prefer using that.
+				if (exprBuilder.settings.NativeIntegers)
+				{
+					convertVia = SpecialType.NInt;
+				}
+				var step = ConvertInteger(expr, convertVia, checkOverflow: checkOverflow);
+				return ConvertInteger(step, targetType, checkOverflow: checkOverflow);
 			}
 		}
 		// Now we have two types that are integer/char/enum/pointer.
@@ -419,14 +522,14 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 		{
 			// enum to pointer: C# doesn't allow such casts
 			// -> convert via enum's underlying type
-			var step = ConvertInteger(expr, sourceType.GetEnumUnderlyingType(), kind);
-			return ConvertInteger(step, targetType);
+			var step = ConvertInteger(expr, sourceType.GetEnumUnderlyingType());
+			return ConvertInteger(step, targetType, kind, checkOverflow);
 		}
 		else if (targetUType.Kind == TypeKind.Enum && sourceType.Kind.IsAnyPointer())
 		{
 			// pointer to enum: C# doesn't allow such casts
 			// -> convert via enum's underlying type
-			var step = ConvertInteger(expr, targetUType.GetEnumUnderlyingType(), kind);
+			var step = ConvertInteger(expr, targetUType.GetEnumUnderlyingType(), kind, checkOverflow);
 			return ConvertInteger(step, targetType);
 		}
 		if (targetType.Kind.IsAnyPointer() && sourceType.IsKnownType(KnownTypeCode.Char)
@@ -434,31 +537,68 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 		{
 			// char <-> pointer: C# doesn't allow such casts
 			// -> convert via ushort
-			var step = ConvertInteger(expr, compilation.FindType(KnownTypeCode.UInt16));
-			return ConvertInteger(step, targetType);
+			var step = ConvertInteger(expr, compilation.FindType(KnownTypeCode.UInt16), kind, checkOverflow);
+			return ConvertInteger(step, targetType, kind, checkOverflow);
 		}
 		var castExpr = new CastExpression(exprBuilder.ConvertType(targetType), expr);
-		bool couldOverflow = sourceType.GetSize() > targetUType.GetSize()
-			|| (targetUType.GetSign() != sourceUType.GetSign()
-				&& (targetUType.GetSize() == sourceUType.GetSize() || sourceUType.GetSign() == Sign.Signed));
-		if (couldOverflow)
+		if (expr.ResolveResult.IsCompileTimeConstant)
 		{
-			if (expr.ResolveResult.IsCompileTimeConstant)
+			// We can check concrete if there's an overflow:
+			var castRR = exprBuilder.resolver.WithCheckForOverflow(true).ResolveCast(targetType, expr.ResolveResult);
+			if (castRR.IsCompileTimeConstant && !castRR.IsError)
 			{
-				castExpr.AddAnnotation(AddCheckedBlocks.ExplicitUncheckedAnnotation);
+				// There was no overflow, so we could safely use the cast expression as-is.
+			}
+			else if (checkOverflow)
+			{
+				// Definite overflow at compile-time :/
+				castExpr.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
 			}
 			else
 			{
-				castExpr.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
+				// We need to propagate the constant value:
+				castRR = exprBuilder.resolver.WithCheckForOverflow(false).ResolveCast(targetType, expr.ResolveResult);
+				castExpr.AddAnnotation(AddCheckedBlocks.ExplicitUncheckedAnnotation);
 			}
+			if (castRR.IsCompileTimeConstant && !castRR.IsError)
+			{
+				// We can re-emit the constant, which gives cleaner code
+				// (e.g. `unchecked((uint)(-1)))` turns into `uint.MaxValue`)
+				return exprBuilder.ConvertConstantValue(castRR).WithILInstruction(expr.Expression.Annotations.OfType<ILInstruction>());
+			}
+			return castExpr.WithRR(castRR);
 		}
-		return castExpr.WithRR(new ConversionResolveResult(targetType, expr.ResolveResult, Conversion.ExplicitNumericConversion));
+		else
+		{
+			if (CouldOverflow(sourceUType, targetUType))
+			{
+				// Might overflow at run-time, so ensure it appears in the correct checked/unchecked context.
+				castExpr.AddAnnotation(checkOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			}
+			return castExpr.WithRR(new ResolveResult(targetType));
+		}
 	}
 
-	public IType GetIntegerType(int size, Sign sign, bool isLifted = false)
+	// Whether a C# cast between two integer types could overflow.
+	static bool CouldOverflow(IType sourceUType, IType targetUType)
+	{
+		return sourceUType.GetSize() > targetUType.GetSize()
+					|| (targetUType.GetSign() != sourceUType.GetSign()
+						&& (targetUType.GetSize() == sourceUType.GetSize() || sourceUType.GetSign() == Sign.Signed));
+	}
+
+	public IType GetIntegerType(int size, Sign sign, bool isLifted = false, IType? typeHint = null)
 	{
 		IType type;
-		if (size == TypeUtils.NativeIntSize && exprBuilder.settings.NativeIntegers)
+		if (typeHint != null)
+		{
+			typeHint = NullableType.GetUnderlyingType(typeHint);
+		}
+		if (typeHint != null && typeHint.GetSize() == size && (sign == Sign.None || typeHint.GetSign() == sign))
+		{
+			type = typeHint;
+		}
+		else if (size == TypeUtils.NativeIntSize && exprBuilder.settings.NativeIntegers)
 		{
 			type = sign == Sign.Unsigned ? SpecialType.NUInt : SpecialType.NInt;
 		}

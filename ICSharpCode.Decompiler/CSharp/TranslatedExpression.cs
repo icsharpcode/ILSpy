@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Helper struct so that the compiler can ensure we don't forget both the ILInstruction annotation and the ResolveResult annotation.
 	/// Use '.WithILInstruction(...)' or '.WithoutILInstruction()' to create an instance of this struct.
 	/// </summary>
-	struct ExpressionWithILInstruction
+	readonly struct ExpressionWithILInstruction
 	{
 		public readonly Expression Expression;
 
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Helper struct so that the compiler can ensure we don't forget both the ILInstruction annotation and the ResolveResult annotation.
 	/// Use '.WithRR(...)'.
 	/// </summary>
-	struct ExpressionWithResolveResult
+	readonly struct ExpressionWithResolveResult
 	{
 		public readonly Expression Expression;
 
@@ -91,6 +91,25 @@ namespace ICSharpCode.Decompiler.CSharp
 		public static implicit operator Expression(ExpressionWithResolveResult expression)
 		{
 			return expression.Expression;
+		}
+
+		/// <summary>
+		/// Returns a new TranslatedExpression that represents the specified descendant expression.
+		/// All ILInstruction annotations from the current expression are copied to the descendant expression.
+		/// The descendant expression is detached from the AST.
+		/// </summary>
+		public ExpressionWithResolveResult UnwrapChild(Expression descendant)
+		{
+			if (descendant == Expression)
+				return this;
+			for (AstNode? parent = descendant.Parent; parent != null; parent = parent.Parent)
+			{
+				foreach (var inst in parent.Annotations.OfType<ILInstruction>())
+					descendant.AddAnnotation(inst);
+				if (parent == Expression)
+					return new ExpressionWithResolveResult(descendant.Detach());
+			}
+			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
 	}
 
@@ -129,6 +148,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		// Because ResolveResult is frequently accessed within the ExpressionBuilder, we put it directly
 		// in this struct instead of accessing it through the list of annotations.
 		public readonly ResolveResult UnadjustedResolveResult;
+
+		public ExpressionWithResolveResult Unadjusted => new(UnadjustedExpression, UnadjustedResolveResult);
 
 		public IEnumerable<ILInstruction> ILInstructions {
 			get { return UnadjustedExpression.Annotations.OfType<ILInstruction>(); }
@@ -202,20 +223,29 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
+		/// Stores an adjustment for this translated expression.
+		/// Precondition: This translated expression must not already have an adjustment.
+		/// </summary>
+		public TranslatedExpression WithAdjustment(AdjustmentKind adjustmentKind, IType targetType)
+		{
+			Debug.Assert(this.Adjustment.Kind == AdjustmentKind.None);
+			return new TranslatedExpression(UnadjustedExpression, UnadjustedResolveResult,
+				new Adjustment(adjustmentKind, targetType));
+		}
+
+		/// <summary>
 		/// Appends an adjustment for this translated expression.
 		/// </summary>
 		public TranslatedExpression AddAdjustment(AdjustmentBuilder adjustmentBuilder, Adjustment newAdjustment)
 		{
 			newAdjustment.CheckInvariant(AdjustedType);
+			if (newAdjustment.Kind == AdjustmentKind.None)
+			{
+				return this;
+			}
 			if (newAdjustment.Subsumes(this.Adjustment))
 			{
 				return new TranslatedExpression(UnadjustedExpression, UnadjustedResolveResult, newAdjustment);
-			}
-			if (newAdjustment.Kind == AdjustmentKind.None)
-			{
-				// Merge into existing adjustment
-				return new TranslatedExpression(UnadjustedExpression, UnadjustedResolveResult,
-					this.Adjustment.ChangeType(newAdjustment.TargetType));
 			}
 			if (newAdjustment.Kind == AdjustmentKind.PointerToManagedRef
 				&& this.UnadjustedResolveResult.IsCompileTimeConstant && this.UnadjustedResolveResult.ConstantValue is 0 or 0u
@@ -250,8 +280,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			// We cannot store multiple adjustments, so turn the existing adjustment into an
 			// explicit cast before adding the new adjustment.
-			var adjustedExpr = Adjusted(adjustmentBuilder);
+			var adjustedExpr = ToAdjustedExpression(adjustmentBuilder);
 			return new TranslatedExpression(adjustedExpr.Expression, adjustedExpr.ResolveResult, newAdjustment);
+		}
+
+		/// <summary>
+		/// Appends an adjustment for this translated expression.
+		/// </summary>
+		public TranslatedExpression AddAdjustment(AdjustmentBuilder adjustmentBuilder, AdjustmentKind adjustmentKind, IType targetType)
+		{
+			return AddAdjustment(adjustmentBuilder, new Adjustment(adjustmentKind, targetType));
 		}
 
 		/// <summary>
@@ -288,7 +326,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					else
 					{
-						kind = AdjustmentKind.IntegerCast;
+						// adjustment maybe not needed? depends on how we model the exprbuilder post-condition for nullables.
+						return this;
 					}
 					return AddAdjustment(adjustmentBuilder, new Adjustment(kind, instType));
 				}
@@ -339,11 +378,28 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
+		/// Returns an expression that usually includes the adjustment, except that certain adjustments may be omitted if allowed by a parameter.
+		/// This expression can be used in any context and will always match the expected
+		/// semantics for the TranslatedExpression.
+		/// </summary>
+		public ExpressionWithResolveResult ToExpression(AdjustmentBuilder adjustmentBuilder,
+			bool allowSmallerIntegerSameSign)
+		{
+			if (allowSmallerIntegerSameSign
+				&& Adjustment.Kind is AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend or AdjustmentKind.IntegerCast
+				&& NullableType.GetUnderlyingType(AdjustedType).GetSign() == NullableType.GetUnderlyingType(UnadjustedType).GetSign())
+			{
+				return Unadjusted;
+			}
+			return ToAdjustedExpression(adjustmentBuilder);
+		}
+
+		/// <summary>
 		/// Returns an expression that explicitly includes the adjustment.
 		/// This expression can be used in any context and will always match the expected
 		/// semantics for the TranslatedExpression.
 		/// </summary>
-		public ExpressionWithResolveResult Adjusted(AdjustmentBuilder adjustmentBuilder)
+		public ExpressionWithResolveResult ToAdjustedExpression(AdjustmentBuilder adjustmentBuilder)
 		{
 			var expr = new ExpressionWithResolveResult(Expression, ResolveResult);
 			if (Adjustment.Kind != AdjustmentKind.None || AdjustedType != UnadjustedType)
@@ -351,6 +407,103 @@ namespace ICSharpCode.Decompiler.CSharp
 				expr = adjustmentBuilder.ApplyAdjustment(expr, Adjustment);
 			}
 			return expr;
+		}
+
+		/// <summary>
+		/// Returns this expression after explicitly casting to <paramref name="targetType"/>.
+		/// Precondition: targetType matches the current adjusted stack type.
+		/// </summary>
+		public ExpressionWithResolveResult CastTo(AdjustmentBuilder adjustmentBuilder, IType targetType)
+		{
+			Debug.Assert(Adjustment.CompatibleTypesForAdjustmentSemantics(AdjustedType, targetType));
+			AdjustmentKind kind = this.Adjustment.Kind;
+			// If there's an existing adjustment, we can just switch the type it's adjusting towards.
+			// But if there isn't one, we still need to support casts between compatible types.
+			if (kind == AdjustmentKind.None)
+			{
+				if (targetType.Kind == TypeKind.ByReference)
+				{
+					// It's a ref->ref conversion
+					Debug.Assert(this.AdjustedType.Kind == TypeKind.ByReference);
+					var expr = ToAdjustedExpression(adjustmentBuilder);
+					if (NormalizeTypeVisitor.TypeErasure.EquivalentTypes(this.AdjustedType, targetType))
+					{
+						return expr;
+					}
+					return adjustmentBuilder.exprBuilder.CallUnsafeIntrinsic("As",
+						[expr],
+						typeArguments: [
+							((ByReferenceType)this.AdjustedType).ElementType,
+							((ByReferenceType)targetType).ElementType
+						],
+						returnType: targetType);
+				}
+				else
+				{
+					Debug.Assert(NullableType.GetUnderlyingType(targetType).GetStackType().IsIntegerType());
+					kind = AdjustmentKind.IntegerCast;
+				}
+			}
+			return adjustmentBuilder.ApplyAdjustment(Unadjusted, new Adjustment(kind, targetType));
+		}
+
+		public ExpressionWithResolveResult ImplicitConvertTo(AdjustmentBuilder adjustmentBuilder, IType targetType)
+		{
+			// TODO: implement this property in terms of adjustments
+			return ConvertTo(targetType, adjustmentBuilder.exprBuilder, allowImplicitConversion: true).Unadjusted;
+		}
+
+		/// <summary>
+		/// Returns an expression that dereferences this TranslatedExpression.
+		/// 
+		/// If elementType is given, the pointer/address is cast before dereferencing,
+		/// to guarantee the returned expression will be an lvalue of this type.
+		/// </summary>
+		public ExpressionWithResolveResult Dereference(AdjustmentBuilder adjustmentBuilder,
+			IType? elementType = null)
+		{
+			if (this.AdjustedStackType == StackType.Ref)
+			{
+				ExpressionWithResolveResult expr;
+				if (elementType != null)
+				{
+					expr = CastTo(adjustmentBuilder, new ByReferenceType(elementType));
+				}
+				else
+				{
+					expr = ToAdjustedExpression(adjustmentBuilder);
+				}
+				if (expr.Expression is DirectionExpression dirExpr)
+				{
+					return expr.UnwrapChild(dirExpr.Expression);
+				}
+				Debug.Fail("Expected a DirectionExpression when dereferencing a managed reference.");
+				return expr;
+			}
+			else
+			{
+				Debug.Assert(this.AdjustedStackType.IsIntegerType());
+				ExpressionWithResolveResult expr;
+				if (elementType == null && this.AdjustedType.Kind == TypeKind.Pointer)
+				{
+					expr = ToAdjustedExpression(adjustmentBuilder);
+				}
+				else
+				{
+					elementType ??= adjustmentBuilder.compilation.FindType(KnownTypeCode.Byte);
+					expr = CastTo(adjustmentBuilder, new PointerType(elementType));
+				}
+				if (expr.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf)
+				{
+					// We can dereference the pointer by stripping away the '&'
+					return expr.UnwrapChild(uoe.Expression);
+				}
+				else
+				{
+					return new UnaryOperatorExpression(UnaryOperatorType.Dereference, expr.Expression)
+						.WithRR(new ResolveResult(elementType));
+				}
+			}
 		}
 
 		/// <summary>
