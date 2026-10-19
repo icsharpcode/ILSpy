@@ -12,7 +12,7 @@
     <NetPackageVersion>10.0.13</NetPackageVersion>
     <TomsToolboxVersion>2.26.1</TomsToolboxVersion>
     <AvaloniaVersion>12.1.4</AvaloniaVersion>
-    <DockVersion>12.1.0.11</DockVersion>
+    <DockVersion>12.1.0.12</DockVersion>
   </PropertyGroup>
   <ItemGroup>
     <!-- Avalonia (ILSpy port) -->

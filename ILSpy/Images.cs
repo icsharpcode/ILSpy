@@ -60,9 +60,11 @@ namespace ICSharpCode.ILSpy
 
 		/// <summary>
 		/// Parses every SVG in the icon folder, on whatever thread calls it. Started on a
-		/// thread-pool thread at the very beginning of application startup so that by the
-		/// time the first view asks for an icon, the property getters only wrap sources that
-		/// are already parsed. Measured on the eager version of this class: the first parse
+		/// thread-pool thread as soon as Avalonia's asset loader exists, before App.axaml and
+		/// the themes load, so that by the time the first view asks for an icon, the property
+		/// getters only wrap sources that are already parsed. It competes for the JIT with
+		/// the rest of startup, so it needs that much head start: measured on the eager
+		/// version of this class, the first parse
 		/// alone cost about 300 ms (one-time JIT and static initialization of the Svg.Skia
 		/// stack), the remaining 75 about 2 ms each, all on the UI thread. An icon a getter
 		/// asks for before the preload reaches it is parsed by the getter itself, so this is
