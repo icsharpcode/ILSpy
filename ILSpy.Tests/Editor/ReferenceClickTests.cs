@@ -23,6 +23,7 @@ using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Headless.NUnit;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 
 using AvaloniaEdit;
@@ -193,13 +194,16 @@ public class ReferenceClickTests
 				referencedVerticalViewPortOffset: 0, minimumScrollFraction: 0);
 			window.UpdateLayout();
 			textView.EnsureVisualLines();
-			var position = new TextViewPosition(line.LineNumber, segment.StartOffset - line.Offset + 2);
-			var visual = textView.GetVisualPosition(position, VisualYPosition.LineMiddle) - textView.ScrollOffset;
-			var point = textView.TranslatePoint(visual, window)!.Value;
-			// Only the overlay's child controls are hit-testable, not its whole rectangle, so the
-			// hit test is the criterion rather than the overlay's bounds.
-			if (window.GetVisualAt(point) is { } hit && (hit == overlay || overlay.IsVisualAncestorOf(hit)))
-				return (segment, point);
+			for (int offset = 1; offset <= segment.Length; offset++)
+			{
+				var position = new TextViewPosition(line.LineNumber, segment.StartOffset - line.Offset + offset);
+				var visual = textView.GetVisualPosition(position, VisualYPosition.LineMiddle) - textView.ScrollOffset;
+				var point = textView.TranslatePoint(visual, window)!.Value;
+				// Only the overlay's child controls are hit-testable, not its whole rectangle, so the
+				// hit test is the criterion rather than the overlay's bounds.
+				if (window.GetVisualAt(point) is { } hit && (hit == overlay || overlay.IsVisualAncestorOf(hit)))
+					return (segment, point);
+			}
 		}
 		Assert.Fail("no navigable reference can be scrolled behind the overlay");
 		return default;
@@ -217,6 +221,25 @@ public class ReferenceClickTests
 		window.UpdateLayout();
 		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		var segment = tab.References!.First(r => r.Reference != null && r.Kind == ReferenceMode.Link && !r.IsDefinition);
+		var line = view.Editor.Document.GetLineByOffset(segment.StartOffset);
+		// Align the hit-testable search input with a known reference. The panel fills the text area,
+		// but its controls are right-aligned and platform font metrics can otherwise leave every
+		// available reference outside the controls.
+		view.Editor.ScrollTo(line.LineNumber, segment.StartOffset - line.Offset + 1, VisualYPosition.LineTop,
+			referencedVerticalViewPortOffset: 0, minimumScrollFraction: 0);
+		window.UpdateLayout();
+		view.Editor.TextArea.TextView.EnsureVisualLines();
+		var position = new TextViewPosition(line.LineNumber, segment.StartOffset - line.Offset + 1);
+		var visual = view.Editor.TextArea.TextView.GetVisualPosition(position, VisualYPosition.LineMiddle)
+			- view.Editor.TextArea.TextView.ScrollOffset;
+		var referencePoint = view.Editor.TextArea.TextView.TranslatePoint(visual, window)!.Value;
+		var searchInput = panel.GetVisualDescendants().OfType<Avalonia.Controls.TextBox>().First();
+		var searchInputPoint = searchInput.TranslatePoint(default, window)!.Value;
+		panel.RenderTransform = new TranslateTransform(
+			referencePoint.X - searchInputPoint.X - searchInput.Bounds.Width / 2,
+			referencePoint.Y - searchInputPoint.Y - searchInput.Bounds.Height / 2);
+		window.UpdateLayout();
 		var (_, point) = FindReferenceBehind(window, view, tab, panel);
 
 		var navigated = false;
