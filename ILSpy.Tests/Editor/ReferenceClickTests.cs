@@ -57,8 +57,7 @@ public class ReferenceClickTests
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
-		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
-		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		Waiters.PumpUI(window);
 		window.UpdateLayout();
 		view.Editor.TextArea.TextView.EnsureVisualLines();
 		return (window, view, tab);
@@ -219,8 +218,7 @@ public class ReferenceClickTests
 		var panel = view.SearchPanel;
 		panel.Open();
 		window.UpdateLayout();
-		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
-		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
+		Waiters.PumpUI(window);
 		var segment = tab.References!.First(r => r.Reference != null && r.Kind == ReferenceMode.Link && !r.IsDefinition);
 		var line = view.Editor.Document.GetLineByOffset(segment.StartOffset);
 		// Align the hit-testable search input with a known reference. The panel fills the text area,
@@ -240,6 +238,9 @@ public class ReferenceClickTests
 			referencePoint.X - searchInputPoint.X - searchInput.Bounds.Width / 2,
 			referencePoint.Y - searchInputPoint.Y - searchInput.Bounds.Height / 2);
 		window.UpdateLayout();
+		// The hit tests below (and the click) are answered from the rendered frame, so the moved
+		// panel has to be drawn before they can see it at its new place.
+		Waiters.PumpUI(window);
 		var (_, point) = FindReferenceBehind(window, view, tab, panel);
 
 		var navigated = false;

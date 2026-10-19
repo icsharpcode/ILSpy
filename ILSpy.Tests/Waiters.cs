@@ -23,6 +23,8 @@ using System.Threading.Tasks;
 
 using Avalonia;
 using Avalonia.Headless;
+using Avalonia.Rendering.Composition;
+using Avalonia.Rendering.Composition.Transport;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 
@@ -69,11 +71,33 @@ public static class Waiters
 	/// frame behind: a click can still be delivered to a control the last frame shows but the tree
 	/// no longer has - a closed popup's light-dismiss overlay, for one - and never reach what is
 	/// underneath. Avalonia's own headless input helpers pump both for exactly this reason.
+	/// <para>
+	/// Pass the window (or any visual in it) whose frame the caller is about to hit-test or click.
+	/// <see cref="AvaloniaHeadlessPlatform.ForceRenderTimerTick"/> on its own returns as soon as
+	/// the render thread has accepted the frame, which is before it is drawn and before the visuals'
+	/// readback data - the transforms that hit testing consults - is refreshed; a hit test issued in
+	/// that window still sees the previous frame, so a control that was just moved, added or removed
+	/// is hit (or missed) at its old place. With a visual at hand, this method also waits for the
+	/// batch's <see cref="CompositionBatch.Rendered"/> task, which completes after the readback pass.
+	/// Without one, only the dispatcher and the render timer are pumped.
+	/// </para>
 	/// </remarks>
-	public static void PumpUI()
+	public static void PumpUI(Visual? root = null)
 	{
 		Dispatcher.UIThread.RunJobs();
+		CompositionBatch? batch = null;
+		if (root is not null)
+		{
+			var compositionVisual = ElementComposition.GetElementVisual(root)
+				?? throw new InvalidOperationException("The visual is not attached to a shown window, so there is no frame to render.");
+			batch = compositionVisual.Compositor.RequestCompositionBatchCommitAsync();
+		}
 		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
+		if (batch is null)
+			return;
+		var frame = new DispatcherFrame();
+		batch.Rendered.ContinueWith(_ => frame.Continue = false, TaskScheduler.Default);
+		Dispatcher.UIThread.PushFrame(frame);
 	}
 
 	/// <summary>
