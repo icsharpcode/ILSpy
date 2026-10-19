@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Threading.Tasks;
 
 using Avalonia;
 
@@ -37,6 +38,16 @@ namespace ICSharpCode.ILSpy
 			// window opens.
 			if (!ShouldStartNewInstance(args))
 				return;
+
+			AppLog.Mark("Program.Main: starting");
+			// Pre-pay the first layout (de)serialization's JIT and metadata cost off the UI thread
+			// (see ILSpyDockJson.WarmUp). It needs neither Avalonia nor the container, only the
+			// plugin assemblies loaded so its dockable-type scan sees every pane type, and it
+			// competes for the JIT with everything else that starts up. DockWorkspace loads the
+			// user's layout roughly 300 ms after Avalonia's framework initialization completes;
+			// started here, ahead of Avalonia's own platform setup, the warm-up is done by then.
+			AppComposition.RegisterPluginResolver();
+			_ = Task.Run(Docking.ILSpyDockJson.WarmUp);
 
 			BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 		}
@@ -61,6 +72,10 @@ namespace ICSharpCode.ILSpy
 		{
 			var builder = AppBuilder.Configure<App>()
 				.UsePlatformDetect()
+				// Parse the icon set off the UI thread as soon as the asset loader exists, which is
+				// before App.axaml and the themes load; the views that need icons are inflated well
+				// after that (see Images.PreloadSvgs).
+				.AfterPlatformServicesSetup(_ => Task.Run(Images.PreloadSvgs))
 				// Render popups (menus, flyouts, tooltips) in the window's own overlay layer instead of
 				// separate native child windows. On X11/XWayland native popups can lose focus and
 				// self-dismiss within ~100ms of opening (observed on the document-strip overflow
