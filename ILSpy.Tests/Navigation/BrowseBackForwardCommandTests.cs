@@ -109,7 +109,6 @@ public class BrowseBackForwardCommandTests
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("first-method-decompiled");
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(secondMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("second-method-decompiled");
@@ -264,8 +263,8 @@ public class BrowseBackForwardCommandTests
 			description: "the focus must follow the selection to the newly selected row");
 	}
 
-	// Selects two methods of the sample type with a pause in between so the history records
-	// them as two separate entries; returns them in selection order.
+	// Selects two methods of the sample type so the history records them as two separate
+	// entries; returns them in selection order.
 	static async Task<(MethodTreeNode First, MethodTreeNode Second)> BuildTwoEntryHistoryAsync(MainWindowViewModel vm)
 	{
 		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
@@ -277,7 +276,6 @@ public class BrowseBackForwardCommandTests
 
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(secondMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		return (firstMethod, secondMethod);

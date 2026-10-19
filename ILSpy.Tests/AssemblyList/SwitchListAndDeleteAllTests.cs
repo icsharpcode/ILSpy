@@ -51,8 +51,6 @@ public class SwitchListAndDeleteAllTests
 		var methods = typeNode.Children.OfType<MethodTreeNode>().ToList();
 		vm.AssemblyTreeModel.SelectNode(methods.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe)));
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		// NavigationHistory collapses selections inside 0.5s into one entry.
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(methods.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice)));
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		vm.DockWorkspace.BackHistory.Should().NotBeEmpty("the test needs history to lose");

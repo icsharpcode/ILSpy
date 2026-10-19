@@ -89,8 +89,6 @@ public class AssemblyListResetTests
 			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 		vm.AssemblyTreeModel.SelectNode(first);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		// NavigationHistory collapses selections inside 0.5s into one entry.
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(second);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, second));
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();

@@ -58,16 +58,12 @@ public class NavigationTests
 		firstTab.Text.Should().Contain(nameof(DecompileSample.Describe));
 		TestCapture.Step("first-method-decompiled");
 
-		// NavigationHistory collapses selections that happen within 0.5s into one entry. Wait
-		// past that window so the second selection records a real back-history entry.
-		await Task.Delay(600);
-
-		// Act 2 — select Empty, wait for its decompile.
+		// Act 2 — select the second method, wait for its decompile.
 		vm.AssemblyTreeModel.SelectNode(secondMethod);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, secondMethod));
 		var secondTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		secondTab.Text.Should().Contain(nameof(DecompileSample.Twice));
-		TestCapture.Step("empty-decompiled");
+		TestCapture.Step("second-method-decompiled");
 
 		// Act 3 — fire NavigateBack.
 		vm.DockWorkspace.NavigateBackCommand.CanExecute(null).Should().BeTrue();
@@ -105,14 +101,11 @@ public class NavigationTests
 		var methodC = typeNode.Children.OfType<MethodTreeNode>()
 			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Reset));
 
-		// Act 1 — three distinct selections with >0.6s gaps so each lands as its own entry on
-		// the back stack (NavigationHistory collapses sub-0.5s rapid succession into one entry).
+		// Act 1 — three distinct selections, each landing as its own entry on the back stack.
 		vm.AssemblyTreeModel.SelectNode(methodA);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(methodB);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(methodC);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("third-method-decompiled");
@@ -172,7 +165,6 @@ public class NavigationTests
 		// grouping lands on the back stack.
 		vm.AssemblyTreeModel.SelectNode(baseTypes);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("sample-type-decompiled");

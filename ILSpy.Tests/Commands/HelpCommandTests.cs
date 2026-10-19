@@ -205,9 +205,6 @@ public class HelpCommandTests
 		var decompilerTab = vm.DockWorkspace.ActiveDecompilerTab!;
 		var methodText = decompilerTab.Text;
 
-		// NavigationHistory collapses entries within 0.5s — wait past the window so opening
-		// About records its own entry instead of replacing the tree-node entry.
-		await Task.Delay(600);
 
 		// Act 1 — open the About page.
 		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
