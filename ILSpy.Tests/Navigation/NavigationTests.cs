@@ -41,23 +41,22 @@ public class NavigationTests
 		// the Back command must restore the previously-selected node, re-decompile it, and
 		// scroll the tree so that node is back in view.
 
-		// Arrange — boot the window, wait for assemblies, expand Enumerable, capture two methods
+		// Arrange — boot the window, wait for assemblies, expand the sample type, capture two methods
 		// that we'll bounce between.
 		var (_, vm) = await TestHarness.BootAsync(3);
 
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 
-		// Act 1 — select AsEnumerable, wait for it to decompile.
+		// Act 1 — select the first method, wait for it to decompile.
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		firstTab.Text.Should().Contain("AsEnumerable");
-		TestCapture.Step("as-enumerable-decompiled");
+		firstTab.Text.Should().Contain(nameof(DecompileSample.Describe));
+		TestCapture.Step("first-method-decompiled");
 
 		// NavigationHistory collapses selections that happen within 0.5s into one entry. Wait
 		// past that window so the second selection records a real back-history entry.
@@ -67,7 +66,7 @@ public class NavigationTests
 		vm.AssemblyTreeModel.SelectNode(secondMethod);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, secondMethod));
 		var secondTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		secondTab.Text.Should().Contain("Empty");
+		secondTab.Text.Should().Contain(nameof(DecompileSample.Twice));
 		TestCapture.Step("empty-decompiled");
 
 		// Act 3 — fire NavigateBack.
@@ -76,12 +75,12 @@ public class NavigationTests
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
 		TestCapture.Step("navigated-back");
 
-		// Assert — selection restores to AsEnumerable, the document re-decompiles to its body,
+		// Assert — selection restores to the first method, the document re-decompiles to its body,
 		// and the row is centred back into view.
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, firstMethod));
 		var restoredTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		restoredTab.Text.Should().Contain("AsEnumerable");
-		restoredTab.Text.Should().Contain("return source");
+		restoredTab.Text.Should().Contain(nameof(DecompileSample.Describe));
+		restoredTab.Text.Should().Contain("return Name + Count");
 
 		firstMethod.Should().Be().CenteredInView();
 	}
@@ -94,18 +93,17 @@ public class NavigationTests
 		// and that picking a non-immediate entry jumps multiple steps in one click (with the
 		// displaced entries pushed onto the forward stack).
 
-		// Arrange — boot, wait for assemblies, expand Enumerable, capture three methods.
+		// Arrange — boot, wait for assemblies, expand the sample type, capture three methods.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var methodA = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var methodB = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 		var methodC = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Range");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Reset));
 
 		// Act 1 — three distinct selections with >0.6s gaps so each lands as its own entry on
 		// the back stack (NavigationHistory collapses sub-0.5s rapid succession into one entry).
@@ -117,7 +115,7 @@ public class NavigationTests
 		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(methodC);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("range-decompiled");
+		TestCapture.Step("third-method-decompiled");
 
 		// Act 2 — open the Back SplitButton's flyout. The Opening handler populates the menu
 		// from the current back history.
@@ -137,7 +135,7 @@ public class NavigationTests
 		var items = flyout.Items.OfType<MenuItem>().ToList();
 		((string)items[0].Header!).Should().Be((string)methodB.NavigationText);
 		((string)items[1].Header!).Should().Be((string)methodA.NavigationText);
-		((string)items[0].Header!).Should().Contain("Enumerable",
+		((string)items[0].Header!).Should().Contain(nameof(DecompileSample),
 			"NavigationText must include the declaring type");
 		items[1].CommandParameter.Should().BeOfType<ICSharpCode.ILSpy.Navigation.TreeNodeEntry>();
 		var entry = (ICSharpCode.ILSpy.Navigation.TreeNodeEntry)items[1].CommandParameter!;
@@ -162,13 +160,11 @@ public class NavigationTests
 		// form ("Base Types (System.Exception)"), and TreeNodeEntry.DisplayText must use it
 		// when the node implements ILSpyTreeNode.
 
-		// Arrange — boot, wait for assemblies, expand System.Exception so we can select its
+		// Arrange — boot, expand a type that has a base type so we can select its
 		// BaseTypesTreeNode child.
-		var (window, vm) = await TestHarness.BootAsync(3);
+		var (window, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.Exception");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var baseTypes = typeNode.Children.OfType<BaseTypesTreeNode>().Single();
 
@@ -179,7 +175,7 @@ public class NavigationTests
 		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("exception-type-decompiled");
+		TestCapture.Step("sample-type-decompiled");
 
 		// Open the back-history flyout and read the entry header.
 		var backSplit = window.GetVisualDescendants().OfType<SplitButton>()
@@ -194,7 +190,7 @@ public class NavigationTests
 		var items = flyout.Items.OfType<MenuItem>().ToList();
 		var baseTypesEntry = items.First(i =>
 			((string)i.Header!).StartsWith((string)baseTypes.Text));
-		((string)baseTypesEntry.Header!).Should().Contain("Exception",
+		((string)baseTypesEntry.Header!).Should().Contain(nameof(DecompileSample),
 			"the dropdown header must disambiguate generic grouping nodes via NavigationText");
 		((string)baseTypesEntry.Header!).Should().NotBe((string)baseTypes.Text,
 			"falling back to bare Text would leave the grouping nodes indistinguishable");

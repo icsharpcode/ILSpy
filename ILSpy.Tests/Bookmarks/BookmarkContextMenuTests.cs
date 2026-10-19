@@ -48,10 +48,7 @@ public class BookmarkContextMenuTests
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -74,7 +71,7 @@ public class BookmarkContextMenuTests
 
 		manager.Bookmarks.Should().ContainSingle();
 		view.GetLineForBookmark(manager.Bookmarks[0]).Should().Be(clickedLine);
-		manager.Bookmarks[0].LocationNodeName.Should().Be("System.Object");
+		manager.Bookmarks[0].LocationNodeName.Should().Be(typeof(DecompileSample).FullName);
 	}
 
 	[AvaloniaTest]
@@ -84,10 +81,7 @@ public class BookmarkContextMenuTests
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(objectNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -105,12 +99,12 @@ public class BookmarkContextMenuTests
 		bookmark.ViewState.Should().NotBeNull();
 		bookmark.ViewState = bookmark.ViewState! with { SelectedTreeNodePath = new[] { "Missing assembly", "Missing type" } };
 
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		vm.AssemblyTreeModel.SelectNode(stringNode);
+		var otherNode = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
+		vm.AssemblyTreeModel.SelectNode(otherNode);
 
 		await AppComposition.Current.GetExport<BookmarkNavigator>().NavigateToAsync(bookmark);
 
-		((object?)vm.AssemblyTreeModel.SelectedItem).Should().BeSameAs(stringNode);
+		((object?)vm.AssemblyTreeModel.SelectedItem).Should().BeSameAs(otherNode);
 	}
 
 	[AvaloniaTest]

@@ -51,10 +51,7 @@ public class BookmarkGutterTests
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -97,10 +94,7 @@ public class BookmarkGutterTests
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -136,10 +130,7 @@ public class BookmarkGutterTests
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -211,24 +202,20 @@ public class BookmarkGutterTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-
-		async Task<DecompilerTextView> Show(string typeName)
+		async Task<DecompilerTextView> Show(System.Type sample)
 		{
-			var node = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", typeName);
-			vm.AssemblyTreeModel.SelectNode(node);
-			await vm.DockWorkspace.WaitForDecompiledTextAsync();
+			await vm.ShowSampleAsync(sample);
 			var shown = await window.WaitForComponent<DecompilerTextView>();
 			await Waiters.WaitForIdleAsync();
 			return shown;
 		}
 
-		var view = await Show("System.Object");
+		var view = await Show(typeof(DecompileSample));
 		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
 		var toggle = AppComposition.Current.GetExport<ContextMenuEntryRegistry>().GetEntry(nameof(Resources.BookmarkToggle));
 
-		// A body (IL-offset) anchor, so it only resolves inside System.Object -- a token/line anchor on
-		// the type would also resolve in System.String, which merely references System.Object.
+		// A body (IL-offset) anchor, so it only resolves inside the first sample type -- a token/line
+		// anchor on the type would also resolve in a document that merely references it.
 		Bookmark? bookmark = null;
 		foreach (int candidate in Enumerable.Range(1, view.Editor.Document.LineCount).Where(view.CanToggleBookmarkAtLine))
 		{
@@ -244,18 +231,18 @@ public class BookmarkGutterTests
 			}
 			manager.Clear();
 		}
-		bookmark.Should().NotBeNull("System.Object has a method-body line to anchor to");
-		int objectLine = view.GetLineForBookmark(bookmark!)!.Value;
-		margin.GlyphLinesForTest().Keys.Should().Contain(objectLine, "the gutter shows the bookmark on its own document");
+		bookmark.Should().NotBeNull("the sample type has a method-body line to anchor to");
+		int sampleLine = view.GetLineForBookmark(bookmark!)!.Value;
+		margin.GlyphLinesForTest().Keys.Should().Contain(sampleLine, "the gutter shows the bookmark on its own document");
 
 		// Navigate to another type. The preview tab reuses the same view (and gutter), only swapping the
-		// document text, so the gutter must drop the stale glyph: System.Object's bookmark is not here.
-		var stringView = await Show("System.String");
-		stringView.Should().BeSameAs(view, "the preview tab reuses the view, so this exercises the stale cache");
-		margin.GlyphLinesForTest().Should().BeEmpty("the gutter must rebuild for System.String, where the bookmark does not resolve");
+		// document text, so the gutter must drop the stale glyph: the first type's bookmark is not here.
+		var otherView = await Show(typeof(DecompileSampleOther));
+		otherView.Should().BeSameAs(view, "the preview tab reuses the view, so this exercises the stale cache");
+		margin.GlyphLinesForTest().Should().BeEmpty("the gutter must rebuild for the other type, where the bookmark does not resolve");
 
 		// Returning to the bookmarked document must surface its glyph again.
-		await Show("System.Object");
+		await Show(typeof(DecompileSample));
 		margin.GlyphLinesForTest().Keys.Should().Contain(view.GetLineForBookmark(bookmark!)!.Value,
 			"returning to the bookmarked document must show its glyph again");
 	}

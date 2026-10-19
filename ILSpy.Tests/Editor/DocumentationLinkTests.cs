@@ -109,10 +109,7 @@ public class DocumentationLinkTests
 	public async Task Pressing_Inside_The_Popup_To_Select_Does_Not_Close_It()
 	{
 		var (window, vm) = await TestHarness.BootAsync();
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		vm.AssemblyTreeModel.SelectNode(stringNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		window.UpdateLayout();
 
 		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();

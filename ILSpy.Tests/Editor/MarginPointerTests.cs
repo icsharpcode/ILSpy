@@ -34,7 +34,6 @@ using AwesomeAssertions;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -56,10 +55,7 @@ public class MarginPointerTests
 
 		// A type (not a single method) so the decompiled body carries foldings and the folding margin
 		// is installed.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(objectNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForAsync(() => view.Editor.TextArea.LeftMargins.OfType<FoldingMargin>().Any(),
 			description: "the folding margin to be installed for the decompiled type");

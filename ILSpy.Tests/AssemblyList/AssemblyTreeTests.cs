@@ -873,8 +873,11 @@ public class AssemblyTreeTests
 		// expect to survive, select the sacrificial one, focus the grid.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
-		var sacrificialName = typeof(System.Linq.Enumerable).Assembly.GetName().Name!;
-		var survivorName = typeof(object).Assembly.GetName().Name!;
+		// Three fixtures, the middle one to be deleted, so that whichever neighbour the tree
+		// re-selects afterwards is another small fixture.
+		var survivorName = (await vm.OpenFixtureAsync("Alpha")).ShortName;
+		var sacrificialName = (await vm.OpenFixtureAsync("Bravo")).ShortName;
+		await vm.OpenFixtureAsync("Charlie");
 		var sacrificialNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(sacrificialName);
 		vm.AssemblyTreeModel.SelectNode(sacrificialNode);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, sacrificialNode));
@@ -925,7 +928,11 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 
-		var firstAssembly = model.FindNode<AssemblyTreeNode>("System.Linq");
+		// Three fixtures, the middle one to be deleted first, so that whichever neighbour the
+		// tree re-selects after each Delete is another small fixture.
+		await vm.OpenFixtureAsync("Alpha");
+		var firstAssembly = model.FindNode<AssemblyTreeNode>((await vm.OpenFixtureAsync("Bravo")).ShortName);
+		await vm.OpenFixtureAsync("Charlie");
 		model.SelectNode(firstAssembly);
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, firstAssembly));
 
@@ -1100,10 +1107,11 @@ public class AssemblyTreeTests
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
-		var target = model.FindNode<AssemblyTreeNode>("System.Linq");
+		// Two fixtures without a common prefix, so typing the target's name never lands on the other.
+		var target = model.FindNode<AssemblyTreeNode>((await vm.OpenFixtureAsync("Bravo")).ShortName);
 		var targetText = target.Text?.ToString()!;
 		// Start the selection on a different assembly so the jump is observable.
-		var other = model.FindNode<AssemblyTreeNode>(typeof(object).Assembly.GetName().Name!);
+		var other = model.FindNode<AssemblyTreeNode>((await vm.OpenFixtureAsync("Alpha")).ShortName);
 		model.SelectNode(other);
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, other));
 

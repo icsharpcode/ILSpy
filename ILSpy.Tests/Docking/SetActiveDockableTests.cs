@@ -24,7 +24,6 @@ using Avalonia.Headless.NUnit;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.AssemblyTree;
-using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -43,10 +42,7 @@ public class SetActiveDockableTests
 	public async Task Reactivating_The_Active_Document_Keeps_The_Focused_Dockable()
 	{
 		var (_, vm) = await TestHarness.BootAsync();
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var docs = vm.DockWorkspace.Documents!;
 		var activeDocument = docs.ActiveDockable;

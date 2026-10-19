@@ -54,17 +54,12 @@ namespace ICSharpCode.ILSpy.Tests.TextView;
 [TestFixture]
 public class ILLanguageTooltipTests
 {
-	static async Task<TypeTreeNode> LoadCoreLibStringNodeAsync()
+	static async Task<TypeTreeNode> LoadSampleNodeAsync()
 	{
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		stringNode.IsExpanded = true;
-		return stringNode;
+		var (_, vm) = await TestHarness.BootAsync();
+		var sampleNode = await vm.OpenSampleAsync(typeof(DecompileSample));
+		sampleNode.IsExpanded = true;
+		return sampleNode;
 	}
 
 	static ILLanguage GetILLanguage()
@@ -73,17 +68,17 @@ public class ILLanguageTooltipTests
 	[AvaloniaTest]
 	public async Task Method_Tooltip_Is_The_Disassembled_IL_Header()
 	{
-		var stringNode = await LoadCoreLibStringNodeAsync();
-		var concat = stringNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Concat" && m.MethodDefinition.Parameters.Count == 2)
+		var sampleNode = await LoadSampleNodeAsync();
+		var twice = sampleNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice))
 			.MethodDefinition;
 
-		var tooltip = GetILLanguage().GetRichText(concat, default);
+		var tooltip = GetILLanguage().GetRichText(twice, default);
 
 		tooltip.Should().NotBeNull();
 		tooltip!.Text.Should().StartWith(".method",
 			"the IL hover tooltip must show the disassembled method header, not an ambience one-liner");
-		tooltip.Text.Should().Contain("Concat");
+		tooltip.Text.Should().Contain(nameof(DecompileSample.Twice));
 		tooltip.Text.Should().NotContain("\n",
 			"the header must be collapsed to a single line for the tooltip");
 	}
@@ -91,39 +86,39 @@ public class ILLanguageTooltipTests
 	[AvaloniaTest]
 	public async Task Type_Tooltip_Is_The_Disassembled_IL_Header()
 	{
-		var stringNode = await LoadCoreLibStringNodeAsync();
-		var stringType = (ITypeDefinition)stringNode.Member!;
+		var sampleNode = await LoadSampleNodeAsync();
+		var sampleType = (ITypeDefinition)sampleNode.Member!;
 
-		var tooltip = GetILLanguage().GetRichText(stringType, default);
+		var tooltip = GetILLanguage().GetRichText(sampleType, default);
 
 		tooltip.Should().NotBeNull();
 		tooltip!.Text.Should().StartWith(".class");
-		tooltip.Text.Should().Contain("String");
+		tooltip.Text.Should().Contain(nameof(DecompileSample));
 		tooltip.Text.Should().NotContain("\n");
 	}
 
 	[AvaloniaTest]
 	public async Task Field_Tooltip_Is_The_Disassembled_IL_Header()
 	{
-		var stringNode = await LoadCoreLibStringNodeAsync();
-		var empty = stringNode.Children.OfType<FieldTreeNode>()
-			.First(f => f.FieldDefinition.Name == "Empty")
+		var sampleNode = await LoadSampleNodeAsync();
+		var count = sampleNode.Children.OfType<FieldTreeNode>()
+			.First(f => f.FieldDefinition.Name == nameof(DecompileSample.Count))
 			.FieldDefinition;
 
-		var tooltip = GetILLanguage().GetRichText(empty, default);
+		var tooltip = GetILLanguage().GetRichText(count, default);
 
 		tooltip.Should().NotBeNull();
 		tooltip!.Text.Should().StartWith(".field");
-		tooltip.Text.Should().Contain("Empty");
+		tooltip.Text.Should().Contain(nameof(DecompileSample.Count));
 		tooltip.Text.Should().NotContain("\n");
 	}
 
 	[AvaloniaTest]
 	public async Task OpCode_Hover_Builds_Rich_Content_With_Documentation()
 	{
-		var stringNode = await LoadCoreLibStringNodeAsync();
+		var sampleNode = await LoadSampleNodeAsync();
 		var vm = (MainWindowViewModel)AppComposition.Current.GetExport<MainWindow>().DataContext!;
-		vm.AssemblyTreeModel.SelectNode(stringNode);
+		vm.AssemblyTreeModel.SelectNode(sampleNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
 		var view = new DecompilerTextView { DataContext = tab };
@@ -151,17 +146,17 @@ public class ILLanguageTooltipTests
 		// IL-view member references arrive as unresolved EntityReferences, not IEntity —
 		// this covers the resolve half of the hover chain (BuildHoverContent ->
 		// ResolveEntity -> EntityReference.Resolve via the tab's current node).
-		var stringNode = await LoadCoreLibStringNodeAsync();
+		var sampleNode = await LoadSampleNodeAsync();
 		var vm = (MainWindowViewModel)AppComposition.Current.GetExport<MainWindow>().DataContext!;
-		vm.AssemblyTreeModel.SelectNode(stringNode);
+		vm.AssemblyTreeModel.SelectNode(sampleNode);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
-		var concat = stringNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Concat" && m.MethodDefinition.Parameters.Count == 2)
+		var twice = sampleNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice))
 			.MethodDefinition;
 		var view = new DecompilerTextView { DataContext = tab };
 		var segment = new ReferenceSegment {
-			Reference = new EntityReference(concat.ParentModule!.MetadataFile!, concat.MetadataToken),
+			Reference = new EntityReference(twice.ParentModule!.MetadataFile!, twice.MetadataToken),
 		};
 
 		var content = view.BuildHoverContent(tab, segment);

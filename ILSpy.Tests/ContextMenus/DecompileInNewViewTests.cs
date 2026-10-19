@@ -50,6 +50,22 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class DecompileInNewViewTests
 {
+	/// <summary>
+	/// Opens three small fixture assemblies and returns their top-level tree nodes, so the row
+	/// tests below select and open rows whose decompilation is a handful of types rather than a
+	/// framework assembly's.
+	/// </summary>
+	static async Task<AssemblyTreeNode[]> OpenFixtureRowsAsync(MainWindowViewModel vm)
+	{
+		var nodes = new AssemblyTreeNode[3];
+		foreach (var (name, i) in new[] { "Alpha", "Bravo", "Charlie" }.Select((n, i) => (n, i)))
+		{
+			var loaded = await vm.OpenFixtureAsync(name);
+			nodes[i] = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
+		}
+		return nodes;
+	}
+
 	[AvaloniaTest]
 	public async Task DecompileInNewView_Entry_Is_Registered()
 	{
@@ -117,18 +133,17 @@ public class DecompileInNewViewTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 
 		// A is the active document: select firstMethod and decompile it into the preview tab.
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		firstTab.Text.Should().Contain("AsEnumerable");
+		firstTab.Text.Should().Contain(nameof(DecompileSample.Describe));
 		window.Capture("first-method-active");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -149,10 +164,10 @@ public class DecompileInNewViewTests
 		// The new tab shows B...
 		ReferenceEquals(newTab, firstTab).Should().BeFalse(
 			"a fresh decompiler tab must be created instead of reusing the existing one");
-		newTab.Text.Should().Contain("Empty");
+		newTab.Text.Should().Contain(nameof(DecompileSample.Twice));
 		// ...the original tab still shows A (it was NOT yanked to B by the right-click — this is
 		// the whole point: you keep A and gain B, instead of ending up with B twice)...
-		firstTab.Text.Should().Contain("AsEnumerable");
+		firstTab.Text.Should().Contain(nameof(DecompileSample.Describe));
 		// ...and exactly one tab was added (A + B), not two copies of B.
 		documents.VisibleDockables!.Count.Should().Be(initialCount + 1);
 		window.Capture("a-kept-b-opened");
@@ -174,8 +189,9 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+		var rows = await OpenFixtureRowsAsync(vm);
+		var nodeA = rows[0];
+		var nodeB = rows[1];
 
 		// Make A the active document/selection.
 		vm.AssemblyTreeModel.SelectNode(nodeA);
@@ -185,7 +201,7 @@ public class DecompileInNewViewTests
 
 		var rowB = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.FirstOrDefault(r => RowNodeEquals(r, nodeB));
-		rowB.Should().NotBeNull("the top-level CoreLib row must be realised");
+		rowB.Should().NotBeNull("the top-level row of the second fixture must be realised");
 
 		// Suppressing the right-press must not also suppress the context menu — it still opens
 		// from ContextRequested (raised on release). Watch for it.
@@ -220,8 +236,7 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
-		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows to click");
+		var assemblies = await OpenFixtureRowsAsync(vm);
 		var nodeA = assemblies[0];
 		var nodeB = assemblies[1];
 		var nodeC = assemblies[2];
@@ -281,8 +296,9 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+		var rows = await OpenFixtureRowsAsync(vm);
+		var nodeA = rows[0];
+		var nodeB = rows[1];
 		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await Waiters.WaitForIdleAsync();
 
@@ -315,8 +331,9 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+		var rows = await OpenFixtureRowsAsync(vm);
+		var nodeA = rows[0];
+		var nodeB = rows[1];
 
 		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
@@ -351,8 +368,7 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
-		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
+		var assemblies = await OpenFixtureRowsAsync(vm);
 		var nodeA = assemblies[0];
 		var nodeB = assemblies[1];
 		var nodeC = assemblies[2];
@@ -395,8 +411,7 @@ public class DecompileInNewViewTests
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
 
-		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
-		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
+		var assemblies = await OpenFixtureRowsAsync(vm);
 		var nodeA = assemblies[0];
 		var nodeB = assemblies[1];
 		var nodeC = assemblies[2];

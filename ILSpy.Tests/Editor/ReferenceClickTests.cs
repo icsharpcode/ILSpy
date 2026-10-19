@@ -32,7 +32,6 @@ using AvaloniaEdit.Rendering;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Views;
 
@@ -51,10 +50,7 @@ public class ReferenceClickTests
 	static async Task<(MainWindow Window, DecompilerTextView View, DecompilerTabPageModel Tab)> SetupAsync()
 	{
 		var (window, vm) = await TestHarness.BootAsync();
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		vm.AssemblyTreeModel.SelectNode(stringNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var (_, tab) = await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
 		Waiters.PumpUI(window);

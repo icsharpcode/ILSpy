@@ -86,13 +86,12 @@ public class BrowseBackForwardCommandTests
 		// Arrange — boot the window, load assemblies, expand Enumerable, capture two methods.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 
 		// Locate the View > Back NativeMenuItem.
 		var nativeMenu = NativeMenu.GetMenu(window)
@@ -265,17 +264,16 @@ public class BrowseBackForwardCommandTests
 			description: "the focus must follow the selection to the newly selected row");
 	}
 
-	// Selects two methods of System.Linq.Enumerable with a pause in between so the history records
+	// Selects two methods of the sample type with a pause in between so the history records
 	// them as two separate entries; returns them in selection order.
 	static async Task<(MethodTreeNode First, MethodTreeNode Second)> BuildTwoEntryHistoryAsync(MainWindowViewModel vm)
 	{
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();

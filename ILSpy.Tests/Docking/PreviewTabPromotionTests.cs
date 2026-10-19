@@ -62,8 +62,7 @@ public class PreviewTabPromotionTests
 		// by subsequent tree-node selections, so they're born frozen (IsPreview=false).
 		var (_, vm) = await TestHarness.BootAsync(3);
 
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
 		TestCapture.Step("carve-out-tab-opened");
 
@@ -88,11 +87,10 @@ public class PreviewTabPromotionTests
 		previousMainTab.IsPreview.Should().BeTrue("baseline");
 
 		// Load content into MainTab so the freeze has something meaningful to keep.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		vm.DockWorkspace.SettleSelection();
-		TestCapture.Step("enumerable-selected");
+		TestCapture.Step("sample-selected");
 		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
 			"baseline: tree selection populated MainTab with the chosen node");
 
@@ -128,8 +126,7 @@ public class PreviewTabPromotionTests
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 
 		// Phase 1: load type A into MainTab.
-		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		TestCapture.Step("type-a-selected");
@@ -145,8 +142,7 @@ public class PreviewTabPromotionTests
 
 		// Phase 3: select a different type — NOW a new preview tab should spawn AND
 		// receive the new content.
-		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Private.Uri", "System", "System.Uri");
+		var typeB = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
 		vm.AssemblyTreeModel.SelectNode(typeB);
 		vm.DockWorkspace.SettleSelection();
 		TestCapture.Step("type-b-opens-new-preview");
@@ -222,8 +218,7 @@ public class PreviewTabPromotionTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open a carve-out so close buttons become visible on both tabs.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
 		TestCapture.Step("carve-out-tab-opened");
 
@@ -294,8 +289,7 @@ public class PreviewTabPromotionTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open carve-out so close button is visible.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
 		TestCapture.Step("carve-out-tab-opened");
 
@@ -401,8 +395,7 @@ public class PreviewTabPromotionTests
 		// The right-click context-menu Freeze entry must be visible on the preview MainTab
 		// and hidden (its IsVisible flips) on frozen carve-out tabs.
 		var (window, vm) = await TestHarness.BootAsync(3);
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
 		TestCapture.Step("carve-out-tab-opened");
 
@@ -436,8 +429,7 @@ public class PreviewTabPromotionTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open a carve-out tab via the production code path.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
 		TestCapture.Step("carve-out-tab-opened");
 
@@ -513,8 +505,7 @@ public class PreviewTabPromotionTests
 
 		// Open a carve-out so the close button is visible alongside the freeze (single-tab
 		// scenario hides the close button).
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
 		TestCapture.Step("carve-out-tab-opened");
 
@@ -548,8 +539,7 @@ public class PreviewTabPromotionTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 
 		// Open a carve-out so the close button is realised (single-tab scenario hides it).
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
 		TestCapture.Step("carve-out-tab-opened");
 
@@ -580,16 +570,14 @@ public class PreviewTabPromotionTests
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var docs = vm.DockWorkspace.Documents!;
 
-		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		var theOne = factory.MainTab!;
 		theOne.IsPreview.Should().BeTrue("precondition: the One starts as the preview");
 
 		// A frozen carve-out keeps the dock non-empty so the One isn't the last tab when closed.
-		var typeC = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Private.Uri", "System", "System.Uri");
+		var typeC = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
 		vm.DockWorkspace.OpenNodeInNewTab(typeC);
 		var frozen = docs.VisibleDockables!.OfType<ContentTabPage>().Last(t => t.SourceNode == typeC);
 
@@ -600,8 +588,7 @@ public class PreviewTabPromotionTests
 		docs.VisibleDockables!.Should().Contain(frozen, "the frozen carve-out must survive closing the One");
 
 		// The next selection forges a brand-new One (the closed one is not resurrected).
-		var typeD = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Private.Uri", "System", "System.UriBuilder");
+		var typeD = await vm.OpenSampleAsync(typeof(DecompileSampleBase));
 		vm.AssemblyTreeModel.SelectNode(typeD);
 		vm.DockWorkspace.SettleSelection();
 		var freshOne = factory.MainTab;
@@ -632,8 +619,7 @@ public class PreviewTabPromotionTests
 		theOne.IsPreview.Should().BeTrue("baseline: the One is a preview tab");
 
 		// Open a carve-out (born frozen) and make it the active dockable.
-		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.OpenNodeInNewTab(typeA);
 		var carveOut = vm.DockWorkspace.Documents!.VisibleDockables!
 			.OfType<ContentTabPage>()
@@ -647,8 +633,7 @@ public class PreviewTabPromotionTests
 		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 
 		// Select a different tree node while the frozen carve-out is active.
-		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Private.Uri", "System", "System.Uri");
+		var typeB = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
 		vm.AssemblyTreeModel.SelectNode(typeB);
 		vm.DockWorkspace.SettleSelection();
 		TestCapture.Step("type-b-reuses-the-one");
@@ -676,8 +661,7 @@ public class PreviewTabPromotionTests
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var docs = vm.DockWorkspace.Documents!;
 
-		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		docs.VisibleDockables!.IndexOf(factory.MainTab!).Should().Be(0,
@@ -686,8 +670,7 @@ public class PreviewTabPromotionTests
 		// Freeze it, then select a different node -> a fresh One must appear at index 0.
 		vm.DockWorkspace.FreezeCurrentTab();
 		var frozen = factory.MainTab!;
-		var typeB = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Private.Uri", "System", "System.Uri");
+		var typeB = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
 		vm.AssemblyTreeModel.SelectNode(typeB);
 		vm.DockWorkspace.SettleSelection();
 
@@ -709,14 +692,12 @@ public class PreviewTabPromotionTests
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var docs = vm.DockWorkspace.Documents!;
 
-		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		var theOne = factory.MainTab!;
 		theOne.IsPreview.Should().BeTrue("precondition: the One starts as the preview");
-		var typeC = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Private.Uri", "System", "System.Uri");
+		var typeC = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
 		vm.DockWorkspace.OpenNodeInNewTab(typeC);
 		var frozen = docs.VisibleDockables!.OfType<ContentTabPage>().Last(t => t.SourceNode == typeC);
 		docs.VisibleDockables!.IndexOf(theOne).Should().Be(0, "precondition: the One is at index 0");
@@ -739,8 +720,7 @@ public class PreviewTabPromotionTests
 		var (_, vm) = await TestHarness.BootAsync(3);
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 
-		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		var theOne = factory.MainTab!;
@@ -761,13 +741,11 @@ public class PreviewTabPromotionTests
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 		var docs = vm.DockWorkspace.Documents!;
 
-		var typeA = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		var theOne = factory.MainTab!;
-		var typeC = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Private.Uri", "System", "System.Uri");
+		var typeC = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
 		vm.DockWorkspace.OpenNodeInNewTab(typeC);
 		var frozen = docs.VisibleDockables!.OfType<ContentTabPage>().Last(t => t.SourceNode == typeC);
 

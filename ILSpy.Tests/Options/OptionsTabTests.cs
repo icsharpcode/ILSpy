@@ -36,7 +36,6 @@ using ICSharpCode.ILSpy.Commands;
 using ICSharpCode.ILSpy.Docking;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Views;
 
@@ -96,7 +95,8 @@ public class OptionsTabTests
 		// document is still Options — so the user sees no visible change. The fix:
 		// ShowSelectedNode pulls focus back to MainTab whenever a tree-selection writes
 		// new content there.
-		var (_, vm) = await TestHarness.BootAsync(3);
+		var (_, vm) = await TestHarness.BootAsync();
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 
 		// Open Options and confirm it's the active document.
 		AppComposition.Current.GetExport<MainMenuCommandRegistry>()
@@ -110,8 +110,6 @@ public class OptionsTabTests
 			"baseline: opening Options must make it the active document");
 
 		// Click a tree node — fires the same path as a real user mouse-click.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
 		vm.AssemblyTreeModel.SelectNode(typeNode);
 		TestCapture.Step("tree-node-selected");
 
@@ -285,12 +283,10 @@ public class OptionsTabTests
 		TestCapture.Step("booted");
 
 		// Materialise a DecompilerTextView by selecting a node.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		var editor = await view.WaitForComponent<AvaloniaEdit.TextEditor>();
-		TestCapture.Step("enumerable-decompiled");
+		TestCapture.Step("sample-decompiled");
 
 		var originalSize = settings.DisplaySettings.SelectedFontSize;
 		var newSize = originalSize + 5;
@@ -313,16 +309,8 @@ public class OptionsTabTests
 		// pull focus back to MainTab and yank the user off the Options page they are editing.
 		var (_, vm) = await TestHarness.BootAsync(3);
 
-		// Show some decompiled content first, so there is a decompiler tab to refresh. Use a single
-		// small method, not the whole Enumerable type: the full type takes >15 s in headless and
-		// times out WaitForDecompiledTextAsync under CI load.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		typeNode.IsExpanded = true;
-		var method = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
-		vm.AssemblyTreeModel.SelectNode(method);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		// Show some decompiled content first, so there is a decompiler tab to refresh.
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		// Open Options and confirm it is the active document.
 		AppComposition.Current.GetExport<MainMenuCommandRegistry>()

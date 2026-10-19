@@ -52,11 +52,8 @@ public class BookmarkNavigationViewTests
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
 
-		// Decompile System.Object and bookmark a line below the top so a scroll is observable.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(objectNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		// Decompile the sample type and bookmark a line below the top so a scroll is observable.
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -78,8 +75,9 @@ public class BookmarkNavigationViewTests
 		var bookmark = manager.Bookmarks[0];
 
 		// Switch the active content to a metadata table: now there is no active decompiler tab.
-		var typeDefNode = vm.AssemblyTreeModel.FindCoreLib()
-			.GetChild<MetadataTreeNode>()
+		// The test assembly ships a PDB, so its "Debug Metadata" sibling has to be skipped.
+		var typeDefNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(typeof(DecompileSample).Assembly.GetName().Name!)
+			.GetChild<MetadataTreeNode>(n => (string)n.Text == Resources.Metadata)
 			.GetChild<MetadataTablesTreeNode>()
 			.GetChild<TypeDefTableTreeNode>();
 		vm.AssemblyTreeModel.SelectNode(typeDefNode);
@@ -119,12 +117,8 @@ public class BookmarkNavigationViewTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-
-		// Bookmark a line in System.String.
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		vm.AssemblyTreeModel.SelectNode(stringNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		// Bookmark a line in the sample type.
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await PumpLayoutAsync();
 
@@ -142,12 +136,10 @@ public class BookmarkNavigationViewTests
 		var bookmark = manager.Bookmarks.Should().ContainSingle().Subject;
 
 		// Show a different node, then freeze that tab so the next navigation must spawn a fresh preview.
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(objectNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSampleOther));
 		vm.DockWorkspace.FreezeCurrentTab();
 
-		// Activate the bookmark: a fresh preview tab must decompile System.String and land on the line.
+		// Activate the bookmark: a fresh preview tab must decompile the sample type and land on the line.
 		await AppComposition.Current.GetExport<BookmarkNavigator>().NavigateToAsync(bookmark);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
@@ -164,7 +156,7 @@ public class BookmarkNavigationViewTests
 		var activeView = ActiveView()!;
 
 		int targetLine = activeView.GetLineForBookmark(bookmark) ?? -1;
-		targetLine.Should().BeGreaterThan(1, "the fresh preview shows System.String with the bookmarked line below the top");
+		targetLine.Should().BeGreaterThan(1, "the fresh preview shows the sample type with the bookmarked line below the top");
 		activeView.Editor.TextArea.Caret.Line.Should().Be(targetLine,
 			"opening a fresh preview for a frozen-tab navigation must still scroll to the bookmark");
 		activeView.LastHighlightPlayedLine.Should().Be(targetLine,

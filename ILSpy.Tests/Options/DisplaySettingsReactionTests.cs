@@ -60,15 +60,12 @@ public class DisplaySettingsReactionTests
 	public async Task Toggling_A_Decompiler_Output_Setting_Re_Decompiles_The_Active_Tab()
 	{
 		var (_, vm) = await TestHarness.BootAsync();
-		// Decompile a single small method rather than the whole Enumerable type: the full type
-		// takes >15 s in headless and times out WaitForDecompiledTextAsync under CI load. The
-		// re-decompile reaction under test fires on whatever the active tab shows, so one method
-		// exercises it just as well.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		// The re-decompile reaction under test fires on whatever the active tab shows, so one
+		// small method exercises it just as well as a whole type.
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var method = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 		vm.AssemblyTreeModel.SelectNode(method);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 
