@@ -280,3 +280,11 @@ dotnet_diagnostic.MEF006.severity = silent
 # Files vendored from dotnet/runtime keep their upstream formatting so future syncs diff cleanly.
 [ICSharpCode.Decompiler/Util/Sha1ForNonSecretPurposes.cs]
 generated_code = true
+
+# The decompiler must produce the same text on every host: a framework-dependent app on ICU
+# and a Native AOT app in invariant globalization mode. Culture-sensitive string operations
+# are therefore errors in its sources.
+[ICSharpCode.Decompiler/**.cs]
+dotnet_diagnostic.CA1309.severity = warning
+dotnet_diagnostic.CA1310.severity = warning
+dotnet_diagnostic.CA1311.severity = warning

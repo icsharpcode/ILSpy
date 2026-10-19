@@ -211,7 +211,7 @@ namespace LightJson.Serialization
 					errorPosition = this.scanner.Position;
 					c = this.scanner.Read();
 
-					switch (char.ToLower(c))
+					switch (char.ToLowerInvariant(c))
 					{
 						case '"':
 						case '\\':
@@ -267,7 +267,7 @@ namespace LightJson.Serialization
 		private int ReadHexDigit()
 		{
 			var errorPosition = this.scanner.Position;
-			switch (char.ToUpper(this.scanner.Read()))
+			switch (char.ToUpperInvariant(this.scanner.Read()))
 			{
 				case '0':
 					return 0;

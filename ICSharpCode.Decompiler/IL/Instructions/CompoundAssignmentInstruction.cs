@@ -378,7 +378,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			WriteILRange(output, options);
 			output.Write(OpCode);
-			output.Write("." + Operation.ToString().ToLower());
+			output.Write("." + Operation.ToString().ToLowerInvariant());
 			DynamicInstruction.WriteBinderFlags(BinderFlags, output, options);
 			base.WriteSuffix(output);
 			output.Write(' ');

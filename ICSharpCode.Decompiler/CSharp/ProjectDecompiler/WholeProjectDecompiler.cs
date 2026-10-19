@@ -964,7 +964,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		public static string CleanUpFileName(string text, string? extension)
 		{
-			if (string.IsNullOrEmpty(extension) || extension.StartsWith("."))
+			if (string.IsNullOrEmpty(extension) || extension.StartsWith(".", StringComparison.Ordinal))
 				text = $"{text}{extension}";
 			else
 				text = $"{text}.{extension}";

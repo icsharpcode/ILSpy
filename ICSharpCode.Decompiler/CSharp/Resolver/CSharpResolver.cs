@@ -2387,7 +2387,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return "parameter";
 			if (variableName.Length > 1 && variableName[0] == '_')
 				variableName = variableName.Substring(1);
-			return char.ToLower(variableName[0]) + variableName.Substring(1);
+			return char.ToLowerInvariant(variableName[0]) + variableName.Substring(1);
 		}
 
 		OverloadResolution CreateOverloadResolution(ResolveResult[] arguments, string[] argumentNames = null, IType[] typeArguments = null)

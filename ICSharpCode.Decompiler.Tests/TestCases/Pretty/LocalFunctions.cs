@@ -926,5 +926,26 @@ namespace LocalFunctions
 				}
 			}
 		}
+
+		public int LocalFunctionsInOrdinalOrder(int x)
+		{
+			return Beta() + Zed() + _gamma() + alpha();
+			int Beta()
+			{
+				return x + 1;
+			}
+			int Zed()
+			{
+				return x + 2;
+			}
+			int _gamma()
+			{
+				return x + 3;
+			}
+			int alpha()
+			{
+				return x + 4;
+			}
+		}
 	}
 }

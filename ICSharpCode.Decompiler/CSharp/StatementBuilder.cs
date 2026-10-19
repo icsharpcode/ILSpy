@@ -1499,7 +1499,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DeclareLocalFunctions(ILFunction currentFunction, BlockContainer container, BlockStatement blockStatement)
 		{
-			foreach (var localFunction in currentFunction.LocalFunctions.OrderBy(f => f.Name))
+			foreach (var localFunction in currentFunction.LocalFunctions.OrderBy(f => f.Name, StringComparer.Ordinal))
 			{
 				if (localFunction.DeclarationScope != container)
 					continue;
