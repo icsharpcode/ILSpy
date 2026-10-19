@@ -26,3 +26,5 @@ report/
 # Claude Code local session/skills directory
 /.claude/
 /.understand-anything
+# Written by runuitests.ps1 and the CI test steps.
+test-results/

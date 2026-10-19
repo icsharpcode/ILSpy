@@ -61,8 +61,15 @@ public class TestApp : ProductionApp
 	{
 		if (!Directory.Exists(sessionsRoot))
 			return;
+		// Several test hosts can run at once (runuitests.ps1 shards the suite into concurrent
+		// processes), each creating session directories here while it runs. Only directories
+		// old enough to belong to an earlier run are orphans; a young one is another host's.
+		var orphanAge = DateTime.UtcNow - TimeSpan.FromMinutes(30);
 		foreach (var sub in Directory.EnumerateDirectories(sessionsRoot))
-			TryDeleteDirectory(sub);
+		{
+			if (Directory.GetCreationTimeUtc(sub) < orphanAge)
+				TryDeleteDirectory(sub);
+		}
 	}
 
 	static void TryDeleteDirectory(string dir)
