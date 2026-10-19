@@ -15,10 +15,16 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <!-- The native binary runs in invariant globalization mode, the usual configuration of a
+         Native AOT app; the managed comparison build is made with InvariantGlobalization=false
+         and runs on ICU, so output that depends on the culture or on the globalization mode shows
+         up as a difference between the two. -->
     <InvariantGlobalization>true</InvariantGlobalization>
     <PublishAot>true</PublishAot>
     <!-- Every ILC trim/AOT warning fails the publish, and every method of the decompiler is
-         analyzed (TrimmerRootAssembly below), not only what Main reaches. -->
+         analyzed (TrimmerRootAssembly below), not only what Main reaches. A second publish with
+         RootDecompiler=false leaves the decompiler unrooted, so the native binary of that publish
+         runs with the decompiler trimmed the way it is in a consumer's app. -->
     <IlcTreatWarningsAsErrors>true</IlcTreatWarningsAsErrors>
     <TrimmerSingleWarn>false</TrimmerSingleWarn>
     <!-- ILC defaults the feature switch to false and then removes the [Event] call sites of
@@ -34,7 +40,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
-    <TrimmerRootAssembly Include="ICSharpCode.Decompiler" />
+    <TrimmerRootAssembly Include="ICSharpCode.Decompiler" Condition="'$(RootDecompiler)' != 'false'" />
   </ItemGroup>
 
 </Project>
