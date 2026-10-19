@@ -1,10 +1,6 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-// MemberNotNullWhenAttribute exists in the framework from .NET 5; the guard keeps a .NETCoreApp
-// compile of these sources free of duplicate definitions.
-#if !NET5_0_OR_GREATER
-
 namespace System.Diagnostics.CodeAnalysis
 {
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, Inherited = false, AllowMultiple = true)]
@@ -27,5 +23,3 @@ namespace System.Diagnostics.CodeAnalysis
 		}
 	}
 }
-
-#endif

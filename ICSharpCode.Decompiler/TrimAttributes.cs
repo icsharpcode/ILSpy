@@ -3,9 +3,7 @@
 
 // Trim/AOT annotation attributes for netstandard2.0, where the framework does not define them.
 // ILLink and ILC look these attributes up by namespace and name, not by assembly, so an internal
-// copy is honored exactly like the framework's own (.NET 5 and later). The guard keeps a
-// .NETCoreApp compile of these sources free of duplicate definitions.
-#if !NET5_0_OR_GREATER
+// copy is honored exactly like the framework's own (.NET 5 and later).
 
 #nullable enable
 
@@ -38,5 +36,3 @@ namespace System.Diagnostics.CodeAnalysis
 		public string? Justification { get; set; }
 	}
 }
-
-#endif
