@@ -119,6 +119,12 @@ public class ReferenceClickTests
 		args.Reference.Should().BeSameAs(segment.Reference);
 		args.Source.Should().BeNull();
 		args.InNewTabPage.Should().BeFalse();
+
+		// The gesture must end cleanly so that afterwards moving the mouse with no button held
+		// does not extend a selection (issue #3793).
+		window.MouseMove(point + new Point(60, 0));
+		view.Editor.TextArea.Selection.IsEmpty.Should().BeTrue(
+			"moving the mouse after a click, with no button held, must not select text");
 	}
 
 	[AvaloniaTest]
@@ -153,23 +159,6 @@ public class ReferenceClickTests
 
 		args.Should().NotBeNull();
 		args!.InNewTabPage.Should().BeTrue("middle-click chooses the target tab; Ctrl only forces navigation over highlighting");
-	}
-
-	[AvaloniaTest]
-	public async Task Click_On_A_Link_Then_Moving_The_Mouse_Does_Not_Select_Text()
-	{
-		var (window, view, tab) = await SetupAsync();
-		var (_, point) = FindVisibleReference(window, view, tab);
-		tab.NavigateRequested += (_, _) => { };
-
-		// A stationary click navigates; the gesture must end cleanly so that afterwards moving
-		// the mouse with no button held does not extend a selection (issue #3793).
-		window.MouseDown(point, MouseButton.Left);
-		window.MouseUp(point, MouseButton.Left);
-		window.MouseMove(point + new Point(60, 0));
-
-		view.Editor.TextArea.Selection.IsEmpty.Should().BeTrue(
-			"moving the mouse after a click, with no button held, must not select text");
 	}
 
 	/// <summary>

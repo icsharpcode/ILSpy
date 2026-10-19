@@ -166,28 +166,6 @@ public class BrowseBackForwardCommandTests
 	}
 
 	[AvaloniaTest]
-	public async Task Browse_Back_Keeps_The_Active_Pane()
-	{
-		// Back/Forward re-select a tree node and restore the tab's view state; the tab being
-		// navigated is already the active document, so the navigation must not move the active
-		// pane to it (WPF kept the current view focused). Exercises the command directly, which
-		// is what the Alt+Left key binding and the View menu invoke.
-		var (_, vm) = await TestHarness.BootAsync(3);
-		var (firstMethod, _) = await BuildTwoEntryHistoryAsync(vm);
-		vm.DockWorkspace.ShowToolPane(AssemblyTreeModel.PaneContentId);
-		var activePane = vm.DockWorkspace.Layout.FocusedDockable;
-		activePane.Should().NotBeNull("showing the assembly pane must make it the focused dockable");
-
-		vm.DockWorkspace.NavigateBackCommand.Execute(null);
-
-		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, firstMethod),
-			description: "BrowseBack must navigate back one history entry");
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		vm.DockWorkspace.Layout.FocusedDockable.Should().BeSameAs(activePane,
-			"navigating back must not move the active pane to the editor");
-	}
-
-	[AvaloniaTest]
 	public async Task Browse_Back_Keeps_The_Keyboard_Focus_In_The_Editor()
 	{
 		// Back/Forward select the tree node of the previous entry, which must only scroll it into

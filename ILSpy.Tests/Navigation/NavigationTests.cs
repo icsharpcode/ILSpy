@@ -25,6 +25,7 @@ using Avalonia.VisualTree;
 
 using AwesomeAssertions;
 
+using ICSharpCode.ILSpy.AssemblyTree;
 using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
@@ -65,20 +66,27 @@ public class NavigationTests
 		secondTab.Text.Should().Contain(nameof(DecompileSample.Twice));
 		TestCapture.Step("second-method-decompiled");
 
-		// Act 3 — fire NavigateBack.
+		// Give the assembly pane the focus: the tab being navigated is already the active
+		// document, so Back must not move the active pane to it (WPF kept the current view focused).
+		vm.DockWorkspace.ShowToolPane(AssemblyTreeModel.PaneContentId);
+		var activePane = vm.DockWorkspace.Layout.FocusedDockable;
+		activePane.Should().NotBeNull("showing the assembly pane must make it the focused dockable");
+
+		// Act 3 — fire NavigateBack, which is what the Alt+Left key binding and the View menu invoke.
 		vm.DockWorkspace.NavigateBackCommand.CanExecute(null).Should().BeTrue();
-		// execute vm.DockWorkspace.NavigateBackCommand
 		vm.DockWorkspace.NavigateBackCommand.Execute(null);
 		TestCapture.Step("navigated-back");
 
 		// Assert — selection restores to the first method, the document re-decompiles to its body,
-		// and the row is centred back into view.
+		// the row is centred back into view, and the active pane stays put.
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, firstMethod));
 		var restoredTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		restoredTab.Text.Should().Contain(nameof(DecompileSample.Describe));
 		restoredTab.Text.Should().Contain("return Name + Count");
 
 		firstMethod.Should().Be().CenteredInView();
+		vm.DockWorkspace.Layout.FocusedDockable.Should().BeSameAs(activePane,
+			"navigating back must not move the active pane to the editor");
 	}
 
 	[AvaloniaTest]

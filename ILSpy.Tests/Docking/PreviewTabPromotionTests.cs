@@ -51,13 +51,15 @@ public class PreviewTabPromotionTests
 
 		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
 
-		// Phase 1: load type A into MainTab.
+		// Phase 1: load type A into MainTab. The One lives at documents-dock index 0.
 		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
 		vm.AssemblyTreeModel.SelectNode(typeA);
 		vm.DockWorkspace.SettleSelection();
 		TestCapture.Step("type-a-selected");
 		var frozenTab = factory.MainTab!;
 		var frozenContent = frozenTab.Content;
+		vm.DockWorkspace.Documents!.VisibleDockables!.IndexOf(frozenTab).Should().Be(0,
+			"the One is the leftmost document tab");
 
 		// Phase 2: freeze. Freeze only flips IsPreview on the current MainTab: factory.MainTab
 		// still points at the same (now-frozen) tab and no new tab spawns yet.
@@ -92,6 +94,10 @@ public class PreviewTabPromotionTests
 			"the frozen tab must keep type A — not be overwritten by the new selection");
 		frozenTab.Content.Should().BeSameAs(frozenContent,
 			"frozen tab's Content reference must survive subsequent tree selections");
+		vm.DockWorkspace.Documents!.VisibleDockables!.IndexOf(newMainTab).Should().Be(0,
+			"the fresh One must be created at index 0, leftmost");
+		vm.DockWorkspace.Documents!.VisibleDockables!.IndexOf(frozenTab).Should().BeGreaterThan(0,
+			"the frozen ex-One slides to the right of the new One");
 	}
 
 	[AvaloniaTest]
@@ -425,7 +431,7 @@ public class PreviewTabPromotionTests
 	}
 
 	[AvaloniaTest]
-	public async Task Freeze_Button_Inherits_The_Close_Button_Theme()
+	public async Task Freeze_Button_Inherits_The_Close_Button_Theme_And_Close_Names_Its_Shortcut()
 	{
 		// Visual parity: the freeze button should look like the close button — same size, same
 		// hover background. Both are plain Avalonia.Controls.Button instances; the close
@@ -459,33 +465,9 @@ public class PreviewTabPromotionTests
 			"freeze button must use the same ControlTheme as the close button so size + hover bg match");
 		freezeButton.Classes.Should().NotContain("preview-freeze",
 			"after the Theme-copy refactor the custom class-based styling is unused; the Theme drives all visuals");
-	}
 
-	[AvaloniaTest]
-	public async Task Close_Button_Has_A_Ctrl_W_Tooltip()
-	{
 		// Dock's tab template gives the close button no tooltip. PreviewTabFreezeButtonBehavior
 		// names its Ctrl+W shortcut so the gesture is discoverable on hover.
-		var (window, vm) = await TestHarness.BootAsync(3);
-
-		// Open a carve-out so the close button is realised (single-tab scenario hides it).
-		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
-		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
-		TestCapture.Step("carve-out-tab-opened");
-
-		await Waiters.WaitForAsync(() => window.GetVisualDescendants().OfType<DocumentTabStripItem>().Count() >= 2,
-			System.TimeSpan.FromSeconds(10));
-		global::Avalonia.Threading.Dispatcher.UIThread.RunJobs();
-
-		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
-		var mainTabItem = window.GetVisualDescendants().OfType<DocumentTabStripItem>()
-			.Single(item => ReferenceEquals(item.DataContext, factory.MainTab));
-
-		var closeButton = mainTabItem.GetVisualDescendants()
-			.OfType<global::Avalonia.Controls.Button>()
-			.FirstOrDefault(b => (b.Tag as string) != "PreviewTabFreezeButton");
-		closeButton.Should().NotBeNull("baseline: close button exists as a sibling of the freeze");
-
 		global::Avalonia.Controls.ToolTip.GetTip(closeButton!).Should().Be("Close (Ctrl+W)",
 			"the close button must name its Ctrl+W shortcut on hover");
 	}
@@ -580,36 +562,6 @@ public class PreviewTabPromotionTests
 			"the frozen carve-out must keep its original content");
 		ReferenceEquals(vm.DockWorkspace.Documents.ActiveDockable, theOne).Should().BeTrue(
 			"reusing the One activates it");
-	}
-
-	[AvaloniaTest]
-	public async Task The_Preview_Is_Always_At_Index_0()
-	{
-		// The One lives at documents-dock index 0. After it is frozen, the next selection forges
-		// a fresh One -- which must again land at index 0 (the frozen ex-One slides to the right).
-		var (_, vm) = await TestHarness.BootAsync(3);
-		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
-		var docs = vm.DockWorkspace.Documents!;
-
-		var typeA = await vm.OpenSampleAsync(typeof(DecompileSample));
-		vm.AssemblyTreeModel.SelectNode(typeA);
-		vm.DockWorkspace.SettleSelection();
-		docs.VisibleDockables!.IndexOf(factory.MainTab!).Should().Be(0,
-			"the One is the leftmost document tab");
-
-		// Freeze it, then select a different node -> a fresh One must appear at index 0.
-		vm.DockWorkspace.FreezeCurrentTab();
-		var frozen = factory.MainTab!;
-		var typeB = await vm.OpenSampleAsync(typeof(DecompileSampleOther));
-		vm.AssemblyTreeModel.SelectNode(typeB);
-		vm.DockWorkspace.SettleSelection();
-
-		ReferenceEquals(factory.MainTab, frozen).Should().BeFalse("a fresh One was forged");
-		factory.MainTab!.IsPreview.Should().BeTrue("the fresh One is a preview tab");
-		docs.VisibleDockables!.IndexOf(factory.MainTab!).Should().Be(0,
-			"the fresh One must be created at index 0, leftmost");
-		docs.VisibleDockables!.IndexOf(frozen).Should().BeGreaterThan(0,
-			"the frozen ex-One slides to the right of the new One");
 	}
 
 	[AvaloniaTest]

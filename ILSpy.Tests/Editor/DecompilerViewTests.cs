@@ -99,25 +99,6 @@ public class DecompilerViewTests
 	}
 
 	[AvaloniaTest]
-	public async Task Selecting_Type_Node_Decompiles_Type_Definition()
-	{
-		// Selecting a TypeTreeNode must decompile the full class declaration including
-		// representative members.
-
-		// Arrange — boot.
-		var (_, vm) = await TestHarness.BootAsync();
-
-		// Act — select the type node, wait for the decompile.
-		var (_, tab) = await vm.ShowSampleAsync(typeof(DecompileSample));
-		TestCapture.Step("sample-class");
-
-		// Assert — class declaration + representative member names land in the output.
-		tab.Text.Should().Contain("class " + nameof(DecompileSample));
-		tab.Text.Should().Contain(nameof(DecompileSample.Name));
-		tab.Text.Should().Contain(nameof(DecompileSample.Count));
-	}
-
-	[AvaloniaTest]
 	public async Task Selecting_Property_Node_Decompiles_Property()
 	{
 		// PropertyTreeNode → just the single property's declaration (with type prefix), not
@@ -329,41 +310,14 @@ public class DecompilerViewTests
 	}
 
 	[AvaloniaTest]
-	public async Task Multi_Selection_Tab_Title_Joins_All_Selected_Names_With_Comma()
-	{
-		// Selecting several nodes via Ctrl+Click feeds them all into one decompile. The tab
-		// title must list every selected node's display text comma-joined.
-
-		// Arrange — boot, expand the sample type, grab two methods.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var typeNode = (await vm.OpenSampleAsync(typeof(DecompileSample))).Expand();
-		var describe = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
-		var twice = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
-
-		// Act — replace the selection with both nodes.
-		vm.AssemblyTreeModel.SelectedItems.Clear();
-		vm.AssemblyTreeModel.SelectedItems.Add(describe);
-		vm.AssemblyTreeModel.SelectedItems.Add(twice);
-		TestCapture.Step("multi-selected");
-
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("multi-selection-title");
-
-		// Assert — title is the two display texts joined with ", ".
-		tab.Title.Should().Be($"{describe.Text}, {twice.Text}");
-	}
-
-	[AvaloniaTest]
 	public async Task Multi_Selecting_Methods_Decompiles_All_Of_Them_Into_One_View()
 	{
-		// Multi-selection isn't just a title concern — both methods' bodies must actually be
-		// decompiled into one combined document.
+		// Selecting several nodes via Ctrl+Click feeds them all into one decompile: the tab
+		// title lists every selected node's display text comma-joined, and both methods'
+		// bodies land in one combined document.
 
 		// Arrange — boot, expand the sample type, grab two methods.
-		var (_, vm) = await TestHarness.BootAsync(3);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var typeNode = (await vm.OpenSampleAsync(typeof(DecompileSample))).Expand();
 		var describe = typeNode.Children.OfType<MethodTreeNode>()
@@ -380,8 +334,10 @@ public class DecompilerViewTests
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("multi-selection-decompiled");
 
-		// Assert — both names AND a body-fragment from one of them confirm both bodies
-		// actually rendered (not just signatures).
+		// Assert — the title is the two display texts joined with ", "; both names AND a
+		// body-fragment from one of them confirm both bodies actually rendered (not just
+		// signatures).
+		tab.Title.Should().Be($"{describe.Text}, {twice.Text}");
 		tab.Text.Should().Contain(nameof(DecompileSample.Describe));
 		tab.Text.Should().Contain(nameof(DecompileSample.Twice));
 		tab.Text.Should().Contain("text.Length");
@@ -465,13 +421,20 @@ public class DecompilerViewTests
 		// sets each fold's DefaultClosed from settings.ExpandUsingDeclarations /
 		// ExpandMemberDefinitions. So the live decompile must bridge them in from DisplaySettings;
 		// without the bridge they default false and every fold comes back collapsed.
-		var (_, vm) = await TestHarness.BootAsync(3);
+		var (_, vm) = await TestHarness.BootAsync();
 
 		var settings = AppComposition.Current.GetExport<ICSharpCode.ILSpy.SettingsService>();
 		settings.DisplaySettings.ExpandMemberDefinitions = true;
 		settings.DisplaySettings.ExpandUsingDeclarations = true;
 
 		var (_, tab) = await vm.ShowSampleAsync(typeof(DecompileSample));
+		TestCapture.Step("sample-class");
+
+		// Selecting a TypeTreeNode decompiles the full class declaration including its members
+		// (the expand flags change only the fold state, not the text).
+		tab.Text.Should().Contain("class " + nameof(DecompileSample));
+		tab.Text.Should().Contain(nameof(DecompileSample.Name));
+		tab.Text.Should().Contain(nameof(DecompileSample.Count));
 
 		tab.Foldings.Should().NotBeNull();
 		var foldings = tab.Foldings!;

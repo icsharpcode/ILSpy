@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Tests;
 public class AssemblyTreeTests
 {
 	[AvaloniaTest]
-	public async Task Assembly_Node_Has_Resources_Folder_When_Module_Has_Resources()
+	public async Task Assembly_Node_Has_Resources_Folder_With_Resolvable_Resources_Files()
 	{
 		// Assemblies with embedded resources expose a "Resources" folder under the assembly
 		// node. Verifies the folder is present, contains entries, and every entry is an
@@ -76,6 +76,20 @@ public class AssemblyTreeTests
 		resources.Expand();
 		resources.Children.Should().NotBeEmpty();
 		resources.Children.Should().AllBeAssignableTo<ILSpyTreeNode>();
+
+		// .resources entries get the dedicated ResourcesFileTreeNode handler, which exposes a
+		// string-table or inner ResourceEntryNode children (depending on payload type).
+		var resourceFileNode = resources.Children.OfType<ResourcesFileTreeNode>().FirstOrDefault();
+		((object?)resourceFileNode).Should().NotBeNull(
+			"CoreLib must ship at least one embedded .resources file");
+		resourceFileNode!.Resource.Name.Should().EndWith(".resources");
+
+		resourceFileNode.EnsureLazyChildren();
+
+		// Either inner children or string-table entries — at least one branch must surface
+		// non-empty content.
+		(resourceFileNode.Children.Count > 0 || resourceFileNode.StringTableEntries.Count > 0)
+			.Should().BeTrue("a .resources file must surface either inner ResourceEntryNode children or string-table entries");
 	}
 
 	[AvaloniaTest]
@@ -176,35 +190,7 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Dot_Resources_File_Resolves_To_ResourcesFileTreeNode()
-	{
-		// .resources entries get the dedicated ResourcesFileTreeNode handler, which exposes a
-		// string-table or inner ResourceEntryNode children (depending on payload type).
-
-		// Arrange — boot, wait for assemblies, expand CoreLib's Resources folder.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
-		assemblyNode.Expand();
-		var resources = assemblyNode.Children.OfType<ResourceListTreeNode>().Single();
-		resources.Expand();
-
-		// Act — look up the first .resources file and select it.
-		var resourceFileNode = resources.Children.OfType<ResourcesFileTreeNode>().FirstOrDefault();
-		((object?)resourceFileNode).Should().NotBeNull(
-			"CoreLib must ship at least one embedded .resources file");
-		resourceFileNode!.Resource.Name.Should().EndWith(".resources");
-
-		resourceFileNode.EnsureLazyChildren();
-
-		// Assert — either inner children or string-table entries — at least one branch must
-		// surface non-empty content.
-		(resourceFileNode.Children.Count > 0 || resourceFileNode.StringTableEntries.Count > 0)
-			.Should().BeTrue("a .resources file must surface either inner ResourceEntryNode children or string-table entries");
-	}
-
-	[AvaloniaTest]
-	public async Task Assembly_Node_Has_References_Folder_Child()
+	public async Task Assembly_Node_Has_References_Folder_With_Referenced_Types()
 	{
 		// Each assembly node exposes a "References" folder child whose children are
 		// AssemblyReferenceTreeNodes — one per AssemblyRef row.
@@ -224,6 +210,19 @@ public class AssemblyTreeTests
 		refFolder.Expand();
 		refFolder.Children.Should().NotBeEmpty();
 		refFolder.Children.Should().AllBeAssignableTo<AssemblyReferenceTreeNode>();
+
+		// Each AssemblyReferenceTreeNode contains a "Referenced Types" subnode that lists the
+		// TypeRef rows the host assembly imports from that reference.
+		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
+			.First(n => n.AssemblyReference.Name == "System.Runtime");
+		refNode.Expand();
+
+		var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().Single();
+		typesNode.Expand();
+
+		typesNode.Text.ToString().Should().Contain(Resources.ReferencedTypes);
+		typesNode.Children.Should().NotBeEmpty();
+		typesNode.Children.Should().Contain(c => c is TypeReferenceTreeNode);
 	}
 
 	[AvaloniaTest]
@@ -255,35 +254,6 @@ public class AssemblyTreeTests
 
 		// Assert 2 — icon settles on the resolved Assembly glyph.
 		refNode.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.Assembly);
-	}
-
-	[AvaloniaTest]
-	public async Task Assembly_Reference_Has_Referenced_Types_Subnode()
-	{
-		// Each AssemblyReferenceTreeNode contains a "Referenced Types" subnode that lists the
-		// TypeRef rows the host assembly imports from that reference.
-
-		// Arrange — boot, wait for assemblies, expand System.Linq → References → System.Runtime.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.Expand();
-		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
-		refFolder.Expand();
-
-		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
-			.First(n => n.AssemblyReference.Name == "System.Runtime");
-		refNode.Expand();
-
-		// Act — find the ReferencedTypes subnode and expand it.
-		var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().Single();
-		typesNode.Expand();
-
-		// Assert — header text contains the expected label, and the children include at least
-		// one TypeReferenceTreeNode.
-		typesNode.Text.ToString().Should().Contain(Resources.ReferencedTypes);
-		typesNode.Children.Should().NotBeEmpty();
-		typesNode.Children.Should().Contain(c => c is TypeReferenceTreeNode);
 	}
 
 	[AvaloniaTest]
@@ -486,7 +456,7 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Selecting_Method_Auto_Loads_Referenced_Assemblies()
+	public async Task Selecting_Method_Auto_Loads_Referenced_Assemblies_Which_Are_Not_Persisted()
 	{
 		// Decompiling a method whose body references types from currently-unloaded assemblies
 		// must auto-load those assemblies (so the decompiler can resolve them) — and the
@@ -531,35 +501,10 @@ public class AssemblyTreeTests
 			var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(auto.ShortName);
 			node.IsAutoLoaded.Should().BeTrue();
 		}
-	}
 
-	[AvaloniaTest]
-	public async Task Auto_Loaded_Assemblies_Are_Not_Persisted()
-	{
 		// Auto-loaded assemblies are an artefact of an in-flight decompile, not of the user's
 		// curated list — saving the assembly list must omit them while keeping the ones the
 		// user actually opened.
-
-		// Arrange — boot, wait for assemblies, open + select a method that triggers auto-load.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
-		var loaded = await vm.OpenAssemblyAsync(newAsmPath);
-
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			loaded.ShortName, "System.Net.Http", "System.Net.Http.HttpClient");
-		typeNode.Expand();
-		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
-
-		vm.AssemblyTreeModel.SelectNode(methodNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a => a.IsAutoLoaded));
-
-		// Act — save the assembly list to disk, then read the file back and tally the persisted
-		// FileName entries.
 		var settingsService = AppComposition.Current.GetExport<SettingsService>();
 		var manager = settingsService.AssemblyListManager;
 		manager.SaveList(vm.AssemblyTreeModel.AssemblyList!);
@@ -570,15 +515,9 @@ public class AssemblyTreeTests
 			.Select(e => e.Value)
 			.ToHashSet(System.StringComparer.OrdinalIgnoreCase);
 
-		// Assert — every IsAutoLoaded assembly was omitted; every manual one is present.
-		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies();
-		var autoLoaded = assemblies.Where(a => a.IsAutoLoaded).ToList();
-		autoLoaded.Should().NotBeEmpty();
-		foreach (var asm in autoLoaded)
+		foreach (var asm in addedAssemblies)
 			savedFiles.Should().NotContain(asm.FileName, "auto-loaded assembly {0} must not be persisted", asm.FileName);
-
-		var manualLoaded = assemblies.Where(a => !a.IsAutoLoaded).ToList();
-		foreach (var asm in manualLoaded)
+		foreach (var asm in vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Where(a => !a.IsAutoLoaded))
 			savedFiles.Should().Contain(asm.FileName, "manually loaded assembly {0} must be persisted", asm.FileName);
 	}
 
