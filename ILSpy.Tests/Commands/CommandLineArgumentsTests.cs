@@ -137,33 +137,6 @@ public class CommandLineArgumentsTests
 	}
 
 	[AvaloniaTest]
-	public async Task NavigateTo_Type_Arg_Selects_The_Matching_Type_Node()
-	{
-		// `-n|--navigateto T:<TypeId>` navigates to a type-tree-node at startup. The arg's
-		// content is an XML-doc-style ID string ("T:Some.Type") which the consumer resolves
-		// through the loaded assemblies and selects the matching tree node (which then
-		// triggers a decompile).
-
-		// Arrange — boot, and open an assembly with a small type to navigate to.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
-
-		string path = typeof(DecompileSample).Assembly.Location;
-		var args = CommandLineArguments.Create(new[] { path, "--navigateto", "T:" + typeof(DecompileSample).FullName });
-
-		// Act — apply the args.
-		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
-
-		// Assert — selected item is the sample's TypeTreeNode (ToString returns the
-		// ReflectionName; that's a stable identifier independent of the active language).
-		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
-		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(TypeTreeNode));
-		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be(typeof(DecompileSample).FullName);
-	}
-
-	[AvaloniaTest]
 	public async Task NavigateTo_None_Arg_Leaves_Selection_Empty()
 	{
 		// `-n none` is a sentinel that tells the consumer to clear (or leave empty) the
@@ -292,8 +265,11 @@ public class CommandLineArgumentsTests
 		// Act — applying the args must complete without throwing despite the missing entry.
 		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
 
-		// Assert — the missing assembly was skipped and the present target still resolved.
+		// Assert — the missing assembly was skipped and the present target still resolved to
+		// its TypeTreeNode (ToString returns the ReflectionName; that's a stable identifier
+		// independent of the active language).
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
+		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(TypeTreeNode));
 		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be(typeof(DecompileSample).FullName);
 	}
 }

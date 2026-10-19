@@ -66,22 +66,6 @@ public class DecompileInNewViewTests
 		return nodes;
 	}
 
-	[AvaloniaTest]
-	public async Task DecompileInNewView_Entry_Is_Registered()
-	{
-		// "Decompile in new tab" is a context-menu entry sitting alongside Remove on every
-		// node that decompiles. Verifies the [ExportContextMenuEntry] is discovered.
-
-		// Arrange — boot.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-
-		// Assert — registry contains an entry whose header is the DecompileToNewPanel resource.
-		registry.Entries.Should().Contain(
-			e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel));
-	}
-
 	// audit (2026-05-12): converted 📦 → 🧪. Was calling `entry.IsVisible(synthetic ctx)`
 	// directly with hand-built TextViewContexts; now drives the live `BuildContextMenuForCurrentState`
 	// path with real selection states. The entry's presence/absence in the built menu IS the

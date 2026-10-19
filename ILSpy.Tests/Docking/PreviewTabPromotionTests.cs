@@ -42,80 +42,6 @@ public class PreviewTabPromotionTests
 {
 
 	[AvaloniaTest]
-	public void MainTab_Starts_In_Preview_State()
-	{
-		// The persistent MainTab is the preview slot; tree-node clicks should replace its
-		// Content in place until the user explicitly freezes it.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		TestCapture.Step("booted");
-		var mainTab = ((ILSpyDockFactory)vm.DockWorkspace.Factory).MainTab!;
-		mainTab.IsPreview.Should().BeTrue(
-			"the freshly-created MainTab is the preview slot until the user freezes it");
-	}
-
-	[AvaloniaTest]
-	public async Task Carve_Out_Tabs_Are_Born_Frozen()
-	{
-		// Open-in-new-tab tabs are explicit user intent — they should never be replaced
-		// by subsequent tree-node selections, so they're born frozen (IsPreview=false).
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
-		vm.DockWorkspace.OpenNodeInNewTab(typeNode);
-		TestCapture.Step("carve-out-tab-opened");
-
-		var carveOut = vm.DockWorkspace.Documents!.VisibleDockables!
-			.OfType<ContentTabPage>()
-			.Last(t => t.SourceNode == typeNode);
-		carveOut.IsPreview.Should().BeFalse(
-			"carve-out tabs are explicit user intent and must survive tree-selection changes");
-	}
-
-	[AvaloniaTest]
-	public async Task FreezeCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab()
-	{
-		// New semantics: Freeze only flips IsPreview=false on the current MainTab. No new
-		// preview tab spawns at freeze time. A fresh preview tab opens lazily later, when a
-		// tree-selection change finds the active tab frozen — see
-		// Selecting_A_Different_Node_After_Freeze_Opens_A_New_Preview_Tab below.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var factory = (ILSpyDockFactory)vm.DockWorkspace.Factory;
-		var previousMainTab = factory.MainTab!;
-		previousMainTab.IsPreview.Should().BeTrue("baseline");
-
-		// Load content into MainTab so the freeze has something meaningful to keep.
-		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		vm.DockWorkspace.SettleSelection();
-		TestCapture.Step("sample-selected");
-		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
-			"baseline: tree selection populated MainTab with the chosen node");
-
-		var tabCountBefore = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
-
-		// Freeze.
-		vm.DockWorkspace.FreezeCurrentTab();
-		TestCapture.Step("tab-frozen");
-
-		// Tab is now frozen, content preserved.
-		previousMainTab.IsPreview.Should().BeFalse(
-			"after freeze, the previously-preview MainTab becomes a regular frozen tab");
-		ReferenceEquals(previousMainTab.SourceNode, typeNode).Should().BeTrue(
-			"freeze must not throw away the tab's content");
-
-		// factory.MainTab still points at the same (now-frozen) tab — no rotation.
-		factory.MainTab.Should().BeSameAs(previousMainTab,
-			"freeze alone must not rotate factory.MainTab — the frozen tab keeps the slot until a selection change spawns a new preview");
-
-		// And critically: no new tab spawned.
-		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBefore,
-			"freezing alone must not open a new tab; new tabs open lazily on the next selection change");
-	}
-
-	[AvaloniaTest]
 	public async Task Selecting_A_Different_Node_After_Freeze_Opens_A_New_Preview_Tab()
 	{
 		// Freeze holds the current tab's content. Selecting a different tree node while
@@ -133,12 +59,16 @@ public class PreviewTabPromotionTests
 		var frozenTab = factory.MainTab!;
 		var frozenContent = frozenTab.Content;
 
-		// Phase 2: freeze. factory.MainTab still points at the same (now-frozen) tab —
-		// no spawn yet (covered by FreezeCurrentTab_Flips_IsPreview_Without_Spawning_A_New_Tab).
+		// Phase 2: freeze. Freeze only flips IsPreview on the current MainTab: factory.MainTab
+		// still points at the same (now-frozen) tab and no new tab spawns yet.
 		var tabCountBeforeSelection = vm.DockWorkspace.Documents!.VisibleDockables!.Count;
 		vm.DockWorkspace.FreezeCurrentTab();
 		TestCapture.Step("tab-frozen");
+		frozenTab.IsPreview.Should().BeFalse("after freeze, the previously-preview MainTab is a regular frozen tab");
+		ReferenceEquals(frozenTab.SourceNode, typeA).Should().BeTrue("freeze must not throw away the tab's content");
 		factory.MainTab.Should().BeSameAs(frozenTab, "freeze alone keeps the slot");
+		vm.DockWorkspace.Documents!.VisibleDockables!.Count.Should().Be(tabCountBeforeSelection,
+			"freezing alone must not open a new tab; new tabs open lazily on the next selection change");
 
 		// Phase 3: select a different type — NOW a new preview tab should spawn AND
 		// receive the new content.

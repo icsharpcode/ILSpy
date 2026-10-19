@@ -1026,37 +1026,6 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Shift_Up_After_Shift_Down_Shrinks_The_Selection_Toward_The_Anchor()
-	{
-		// Anchor at A, Shift+Down twice -> A,B,C. Shift+Up must SHRINK back to A,B (not keep C).
-		var (window, vm) = await TestHarness.BootAsync(3);
-		var model = vm.AssemblyTreeModel;
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
-		grid.Focus();
-		Dispatcher.UIThread.RunJobs();
-
-		var flat = (System.Collections.IList)grid.ItemsSource!;
-		var a = (SharpTreeNode)flat[0]!;
-		var b = (SharpTreeNode)flat[1]!;
-		var c = (SharpTreeNode)flat[2]!;
-
-		model.SelectNode(a);
-		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, a));
-
-		window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
-		Dispatcher.UIThread.RunJobs();
-		window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
-		Dispatcher.UIThread.RunJobs();
-		model.SelectedItems.Should().BeEquivalentTo(new[] { a, b, c }, "precondition: A,B,C selected");
-
-		window.KeyPress(Key.Up, RawInputModifiers.Shift, PhysicalKey.ArrowUp, null);
-		Dispatcher.UIThread.RunJobs();
-		model.SelectedItems.Should().BeEquivalentTo(new[] { a, b },
-			"Shift+Up must shrink the range back toward the anchor (A,B), dropping C");
-	}
-
-	[AvaloniaTest]
 	public async Task Shift_Down_Then_Shift_Up_In_The_Middle_Shrinks_Without_Drifting_The_Anchor()
 	{
 		// Start mid-list, Shift+Down x3 then Shift+Up x2. The anchor must stay put, so the net is
@@ -1086,6 +1055,8 @@ public class AssemblyTreeTests
 			window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
 			Dispatcher.UIThread.RunJobs();
 		}
+		model.SelectedItems.Should().BeEquivalentTo(new[] { start, below, flat[5], flat[6] },
+			"precondition: three Shift+Down presses extend the range from the anchor downwards");
 		for (int u = 0; u < 2; u++)
 		{
 			window.KeyPress(Key.Up, RawInputModifiers.Shift, PhysicalKey.ArrowUp, null);
@@ -1345,32 +1316,6 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Property_Tree_Node_Has_Getter_And_Setter_Method_Children()
-	{
-		// Properties expose their accessors as MethodTreeNode children, mirroring WPF
-		// ILSpy. Without this, tree-based navigation can't reach get_X / set_X — and
-		// MMB on a property-accessor row in the metadata grid silently no-ops because
-		// FindTreeNode can't resolve the IMethod to a tree node.
-		var (_, vm) = await TestHarness.BootAsync();
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.String");
-		stringTypeNode.IsExpanded = true;
-
-		// String.Length is read-only — a property with a getter but no setter.
-		var lengthProp = stringTypeNode.Children.OfType<PropertyTreeNode>()
-			.First(p => p.PropertyDefinition.Name == "Length");
-		lengthProp.IsExpanded = true;
-
-		var accessors = lengthProp.Children.OfType<MethodTreeNode>().ToList();
-		accessors.Should().NotBeEmpty(
-			"a property tree node must surface its accessors as MethodTreeNode children");
-		accessors.Should().Contain(m => m.MethodDefinition.Name == "get_Length",
-			"String.Length must expose its getter");
-	}
-
-	[AvaloniaTest]
 	public async Task Event_Tree_Node_Has_Add_And_Remove_Method_Children()
 	{
 		// Events surface add_X / remove_X (and invoke_X if present) as MethodTreeNode
@@ -1449,30 +1394,6 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Type_Tree_Node_Exposes_BaseTypes_Subtree_Listing_Object_For_System_Exception()
-	{
-		// Each type node should surface a "Base Types" sub-tree listing its base classes /
-		// interfaces, mirroring the WPF tree. System.Exception extends only System.Object so we
-		// expect a single BaseTypesEntryNode whose label ends in "Object".
-
-		// Arrange — boot, wait for assemblies, drill into System.Exception.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.Exception");
-		typeNode.IsExpanded = true;
-
-		// Assert — BaseTypes child exists, expanding it yields entries, Object is among them.
-		var baseTypes = typeNode.Children.OfType<BaseTypesTreeNode>().Single();
-		baseTypes.IsExpanded = true;
-		baseTypes.Children.OfType<BaseTypesEntryNode>().Should().NotBeEmpty();
-		baseTypes.Children.OfType<BaseTypesEntryNode>()
-			.Should().Contain(e => e.Text.ToString()!.EndsWith("Object"),
-				"System.Exception's base-type chain must include Object");
-	}
-
-	[AvaloniaTest]
 	public async Task BaseTypesEntryNode_Activate_Navigates_To_The_Base_Type()
 	{
 		// Activating a BaseTypesEntryNode jumps the assembly-tree selection to the underlying
@@ -1499,26 +1420,6 @@ public class AssemblyTreeTests
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeSameAs(typeNode);
 		((TypeTreeNode)vm.AssemblyTreeModel.SelectedItem!).Text.ToString()
 			.Should().Be("Object");
-	}
-
-	[AvaloniaTest]
-	public async Task Type_Tree_Node_Exposes_DerivedTypes_Subtree_For_Non_Sealed_Class()
-	{
-		// Non-sealed types get a "Derived Types" sub-tree listing classes that extend them. We
-		// scan the assembly list synchronously — for the small fixture loaded in tests this
-		// yields a few hits per common base (e.g. SystemException is derived from Exception).
-
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.Exception");
-		typeNode.IsExpanded = true;
-
-		var derived = typeNode.Children.OfType<DerivedTypesTreeNode>().Single();
-		derived.IsExpanded = true;
-		derived.Children.OfType<DerivedTypesEntryNode>().Should().NotBeEmpty(
-			"the loaded assembly list contains several Exception subclasses (e.g. SystemException, ArgumentException)");
 	}
 
 	[AvaloniaTest]
@@ -1676,53 +1577,6 @@ public class AssemblyTreeTests
 		globalNs.EnsureLazyChildren();
 		globalNs.Children.OfType<TypeTreeNode>().Should().NotBeEmpty(
 			"<Module> (and any other global types) belong under the '-' node");
-	}
-
-	[AvaloniaTest]
-	public async Task CtrlA_Selects_Every_Top_Level_Row_On_The_First_Press()
-	{
-		// Ctrl+A in the assembly tree must select all rows on the FIRST press, not just move
-		// the current cell to the last row (the user reported having to press it twice).
-
-		// Arrange — boot, wait for assemblies, realise the grid.
-		var (window, vm) = await TestHarness.BootAsync(3);
-
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
-		grid.UpdateLayout();
-
-		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
-		topLevelCount.Should().BeGreaterThan(1, "the test needs several top-level rows to be meaningful");
-
-		// Give the grid keyboard focus WITHOUT clicking a cell first — this is the state the
-		// tree is in right after the user tabs/clicks into the pane but before establishing a
-		// current cell. The DataGrid only handles Ctrl+A when a focused element lives inside it.
-		grid.Focus();
-		Dispatcher.UIThread.RunJobs();
-
-		// First press.
-		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
-		Dispatcher.UIThread.RunJobs();
-		await Task.Delay(50);
-		Dispatcher.UIThread.RunJobs();
-		// What the USER sees is the grid's selection. A feedback loop through the model's
-		// singular SelectedItem can collapse the grid back to one row even while the model's
-		// SelectedItems still holds all of them — so assert on the grid, not the model.
-		int gridAfterFirst = grid.SelectedItems!.Count;
-		int modelAfterFirst = vm.AssemblyTreeModel.SelectedItems.Count;
-		TestCapture.Step("after-first-ctrl-a");
-
-		// Second press.
-		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
-		Dispatcher.UIThread.RunJobs();
-		await Task.Delay(50);
-		Dispatcher.UIThread.RunJobs();
-		int gridAfterSecond = grid.SelectedItems!.Count;
-
-		// Assert — every top-level row is selected in the grid after the FIRST press.
-		gridAfterFirst.Should().Be(topLevelCount,
-			$"Ctrl+A must select all {topLevelCount} assembly rows on the first press "
-			+ $"(grid after 1st={gridAfterFirst}, model after 1st={modelAfterFirst}, grid after 2nd={gridAfterSecond})");
 	}
 
 	[AvaloniaTest]

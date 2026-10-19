@@ -48,35 +48,6 @@ namespace ICSharpCode.ILSpy.Tests;
 public class BrowseBackForwardCommandTests
 {
 	[AvaloniaTest]
-	public void BrowseBack_And_BrowseForward_Are_Registered_In_View_Menu_With_Alt_Arrow_Gestures()
-	{
-		// Task 26: BrowseBack / BrowseForward are MEF-exported main-menu commands so they appear
-		// in the View menu with InputGestureText that the menu builder turns into both a
-		// displayed gesture and a window-scoped HotKey. Verifies registration, parent menu,
-		// category, gesture text, and that the export carries the right resource header.
-
-		// Arrange — pull the registry directly; no window needed for metadata-only assertions.
-		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
-
-		// Act — find the two exports by header.
-		var back = registry.Commands.SingleOrDefault(
-			c => c.Metadata.Header == nameof(Resources.Back)
-				&& c.Metadata.ParentMenuID == nameof(Resources._View));
-		var forward = registry.Commands.SingleOrDefault(
-			c => c.Metadata.Header == nameof(Resources.Forward)
-				&& c.Metadata.ParentMenuID == nameof(Resources._View));
-
-		// Assert — both exports exist, sit under View > Navigation, carry Alt+Left / Alt+Right.
-		back.Should().NotBeNull("BrowseBack must be exported as a View-menu command");
-		back!.Metadata.MenuCategory.Should().Be(nameof(Resources.Navigation));
-		back.Metadata.InputGestureText.Should().Be("Alt+Left");
-
-		forward.Should().NotBeNull("BrowseForward must be exported as a View-menu command");
-		forward!.Metadata.MenuCategory.Should().Be(nameof(Resources.Navigation));
-		forward.Metadata.InputGestureText.Should().Be("Alt+Right");
-	}
-
-	[AvaloniaTest]
 	public async Task BrowseBack_MenuItem_Forwards_CanExecute_And_Execute_To_DockWorkspace()
 	{
 		// The menu-attached BrowseBack command should be a thin wrapper over
@@ -301,5 +272,13 @@ public class BrowseBackForwardCommandTests
 
 		backItem.Gesture.Should().Be(KeyGesture.Parse("Alt+Left"));
 		forwardItem.Gesture.Should().Be(KeyGesture.Parse("Alt+Right"));
+
+		// Both exports sit in the View menu's Navigation category, which is what groups them
+		// behind a separator.
+		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();
+		registry.Commands
+			.Where(c => c.Metadata.Header is nameof(Resources.Back) or nameof(Resources.Forward))
+			.Should().HaveCount(2)
+			.And.OnlyContain(c => c.Metadata.MenuCategory == nameof(Resources.Navigation));
 	}
 }

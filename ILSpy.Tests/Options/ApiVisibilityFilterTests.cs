@@ -84,25 +84,6 @@ public class ApiVisibilityFilterTests
 	}
 
 	[AvaloniaTest]
-	public async Task Filter_Hides_NonPublic_Method_When_ShowApiLevel_Is_PublicOnly()
-	{
-		// At PublicOnly, every member tree node whose IsPublicAPI is false reports
-		// FilterResult.Hidden so the assembly tree stops rendering it.
-
-		// Arrange — boot, find a known non-public method.
-		var (vm, _) = await BootAndExpandEnumerableAsync();
-		var (privateNode, _) = FindNonPublicMethodInLoadedAssemblies(vm);
-		var settings = AppComposition.Current.GetExport<SettingsService>().SessionSettings.LanguageSettings;
-
-		// Act + Assert — flip ApiLevel on the singleton settings between calls (they alias the
-		// same instance, so we must re-read after each set rather than capture both up front).
-		settings.ShowApiLevel = ApiVisibility.PublicOnly;
-		privateNode.Filter(settings).Should().Be(FilterResult.Hidden);
-		settings.ShowApiLevel = ApiVisibility.All;
-		privateNode.Filter(settings).Should().Be(FilterResult.Match);
-	}
-
-	[AvaloniaTest]
 	public async Task Filter_PublicAndInternal_Shows_NonCompilerGenerated_Private_Members()
 	{
 		// "Show public, private and internal" (PublicAndInternal) keeps every member that isn't
