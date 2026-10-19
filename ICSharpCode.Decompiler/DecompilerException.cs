@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
@@ -105,6 +106,10 @@ namespace ICSharpCode.Decompiler
 				return type;
 		}
 
+		// StackFrame.GetMethod() is annotated RequiresUnreferencedCode because trimmed and Native AOT
+		// apps may have no MethodBase for a frame; the null case is handled below, and nothing is
+		// reflected on beyond what the runtime hands out for the frames it does describe.
+		[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "A null MethodBase is handled by printing the frame through StackFrame.ToString().")]
 		static string GetStackTrace(Exception exception)
 		{
 			// Output stacktrace in custom format (very similar to Exception.StackTrace
@@ -117,7 +122,24 @@ namespace ICSharpCode.Decompiler
 				StackFrame frame = stackTrace.GetFrame(i);
 				MethodBase method = frame.GetMethod();
 				if (method == null)
+				{
+					// Frames without reflection metadata (Native AOT keeps none for most methods): the
+					// runtime still names them through StackFrame.ToString(), e.g.
+					// "Namespace.Type.Method() + 0x2b at offset 43 in file:line:column <filename unknown>:0:0".
+					// Keep the name and drop the offset noise; a frame the runtime cannot name at all
+					// ("<null>" on CoreCLR and .NET Framework) is skipped.
+					string description = frame.ToString();
+					int offsetStart = description.IndexOf(" at offset ", StringComparison.Ordinal);
+					if (offsetStart > 0)
+						description = description.Substring(0, offsetStart);
+					description = description.Trim();
+					if (description.Length == 0 || description == "<null>")
+						continue;
+					if (b.Length > 0)
+						b.AppendLine();
+					b.Append("   at ").Append(description);
 					continue;
+				}
 
 				if (b.Length > 0)
 					b.AppendLine();

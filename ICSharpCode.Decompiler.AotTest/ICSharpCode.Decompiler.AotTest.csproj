@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Native AOT gate for the ICSharpCode.Decompiler package. Publishing this project with ILC analyzes
+    the shipped netstandard2.0 assembly in full and fails on any trim/AOT warning; running the native
+    binary and the managed build on the same inputs checks that the output is identical. It is not in
+    any solution: PublishAot pulls the ILCompiler and runtime packs into every restore, and the gate
+    only makes sense as a publish. CI publishes it on Linux only (job "Decompiler Native AOT gate"
+    in build-ilspy.yml): the ILC analysis does not depend on the host OS, and a Linux host is the
+    one that exercises the resolver's fallback for hosts without a .NET Framework installation.
+    README.md has the commands for a local run.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <PublishAot>true</PublishAot>
+    <!-- Every ILC trim/AOT warning fails the publish, and every method of the decompiler is
+         analyzed (TrimmerRootAssembly below), not only what Main reaches. -->
+    <IlcTreatWarningsAsErrors>true</IlcTreatWarningsAsErrors>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <!-- ILC defaults the feature switch to false and then removes the [Event] call sites of
+         DecompilerEventSource before analysis; the gate wants them analyzed. -->
+    <EventSourceSupport>true</EventSourceSupport>
+    <!-- PublishAot adds SDK-pinned ILCompiler and runtime pack references that a committed lock
+         file cannot carry; the referenced decompiler project still restores in locked mode. -->
+    <RestorePackagesWithLockFile>false</RestorePackagesWithLockFile>
+    <!-- The managed comparison build (PublishAot=false, framework-dependent) runs on whatever
+         runtime the machine has; CI only installs the SDK's own, newer one. -->
+    <RollForward>LatestMajor</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <TrimmerRootAssembly Include="ICSharpCode.Decompiler" />
+  </ItemGroup>
+
+</Project>

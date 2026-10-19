@@ -38,6 +38,7 @@ Test support:
 - `TestPlugin/` — sample plugin exercising the plugin-loading system (`net10.0`)
 - `TestFixtures.Resources/` — generates resource fixtures consumed by the decompiler tests
 - `TestTools/` — file-based apps run by hand against real-world assemblies: `nugetfuzz` (crash/assert sweep over nuget.org packages) and `decompdiff` (output diff between two decompiler builds). In no solution and not run by CI; see `TestTools/README.md`
+- `ICSharpCode.Decompiler.AotTest/` — Native AOT gate for the decompiler package: CI publishes it with `PublishAot` (whole assembly rooted, every ILC warning an error) and compares the native binary's output with the managed build's. In no solution; see its `README.md`
 
 Windows-only frontends, packaging, and tests:
 - `ILSpy.AddIn/`, `ILSpy.AddIn.VS2022/` — Visual Studio add-ins (`net472`)

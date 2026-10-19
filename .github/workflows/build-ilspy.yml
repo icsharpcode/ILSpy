@@ -547,3 +547,85 @@ jobs:
         name: ilspycmd RID packages ${{ matrix.rid }} ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ridpackages/*.nupkg
         if-no-files-found: error
+
+  # Native AOT gate for the ICSharpCode.Decompiler package (ICSharpCode.Decompiler.AotTest, in no
+  # solution). The publish roots the whole netstandard2.0 assembly and treats every ILC trim/AOT
+  # warning as an error, so a new reflection pattern anywhere in the decompiler fails here. The
+  # native binary and the managed build then decompile the same three inputs (a netstandard2.0,
+  # a .NET Framework and a net10.0 assembly) and their output has to match byte for byte; each run
+  # also checks that a DecompilerException thrown from a nested helper still names that helper
+  # (Native AOT keeps no reflection metadata for most frames). Linux only: the analysis is
+  # platform-independent, and the .NET Framework input exercises the resolver's non-Windows
+  # fallback, which finds framework facades through the dotnet on PATH rather than the runtime
+  # directory of the (native) host.
+  DecompilerAotGate:
+    name: Decompiler Native AOT gate
+    needs: Gate
+    if: needs.Gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+
+    - uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
+        dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
+        cache: true
+        cache-dependency-path: '**/packages.lock.json'
+      env:
+        DOTNET_INSTALL_DIR: ${{ runner.temp }}/.dotnet
+        DOTNET_ROOT: ${{ runner.temp }}/.dotnet
+
+    - name: Get Version
+      run: ./BuildTools/ghactions-install.ps1
+
+    - name: Publish (Native AOT, every ILC warning is an error)
+      run: >
+        dotnet publish ICSharpCode.Decompiler.AotTest -c Release -r linux-x64
+        -p:RestoreEnablePackagePruning=false -o aotgate/native
+
+    # Framework-dependent, so that the managed host resolves framework facades from the shared
+    # framework like the native host does (a self-contained host would find them in its own
+    # directory instead).
+    - name: Build (managed, for comparison)
+      run: >
+        dotnet build ICSharpCode.Decompiler.AotTest -c Release -p:PublishAot=false
+        -p:RestoreEnablePackagePruning=false -o aotgate/managed
+
+    - name: Compare native and managed output
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $PSNativeCommandUseErrorActionPreference = $true
+        $native = Resolve-Path aotgate/native/ICSharpCode.Decompiler.AotTest
+        $managed = Resolve-Path aotgate/managed/ICSharpCode.Decompiler.AotTest
+        $cache = (dotnet nuget locals global-packages -l) -replace '^global-packages: ', ''
+        $assemblies = @(
+          (Resolve-Path aotgate/managed/ICSharpCode.Decompiler.dll).Path,
+          "$cache/system.reflection.metadata/9.0.0/lib/net462/System.Reflection.Metadata.dll",
+          "$managed.dll")
+        foreach ($assembly in $assemblies) {
+          $name = [System.IO.Path]::GetFileNameWithoutExtension($assembly)
+          "=== $name"
+          & $native $assembly "aotgate/$name.native.cs"
+          & $managed $assembly "aotgate/$name.managed.cs"
+          $nativeHash = (Get-FileHash "aotgate/$name.native.cs").Hash
+          $managedHash = (Get-FileHash "aotgate/$name.managed.cs").Hash
+          if ($nativeHash -ne $managedHash) { throw "native and managed output differ for $name" }
+          "identical: $((Get-Item "aotgate/$name.native.cs").Length) bytes"
+        }
+
+    - name: Upload decompiled output on failure
+      uses: actions/upload-artifact@v7
+      if: failure()
+      with:
+        name: decompiler-aot-gate-output
+        path: aotgate/*.cs
+        if-no-files-found: ignore

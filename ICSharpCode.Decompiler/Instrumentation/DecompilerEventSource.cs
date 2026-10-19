@@ -20,6 +20,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Tracing;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -92,7 +93,12 @@ namespace ICSharpCode.Decompiler.Instrumentation
 		/// <param name="metadataToken">Metadata token of the member (int-encoded).</param>
 		/// <param name="memberKind">One of the <see cref="DecompiledMemberKind"/> values.</param>
 		/// <param name="ilBodySize">IL body size in bytes; 0 for members without a body.</param>
+		// Four of the events have argument shapes without a typed WriteEvent overload in netstandard2.0,
+		// so they bind to WriteEvent(int, params object[]), which is annotated RequiresUnreferencedCode
+		// ("EventSource will serialize the whole object graph"). Strings and primitives need no
+		// reflection, which is the case the annotation itself names as safe to suppress.
 		[Event(3, Level = EventLevel.Informational, Keywords = Keywords.Decompilation)]
+		[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "All arguments are strings or primitives, which EventSource serializes without reflection.")]
 		public void DecompileMemberStart(string fullName, int metadataToken, int memberKind, int ilBodySize)
 		{
 			WriteEvent(3, fullName, metadataToken, memberKind, ilBodySize);
@@ -123,6 +129,7 @@ namespace ICSharpCode.Decompiler.Instrumentation
 		}
 
 		[Event(8, Level = EventLevel.Informational, Keywords = Keywords.AssemblyResolver)]
+		[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "All arguments are strings or primitives, which EventSource serializes without reflection.")]
 		public void AssemblyResolveStop(string referenceName, string resolvedPath, bool success)
 		{
 			WriteEvent(8, referenceName, resolvedPath, success);
@@ -153,12 +160,14 @@ namespace ICSharpCode.Decompiler.Instrumentation
 		}
 
 		[Event(13, Level = EventLevel.Verbose, Keywords = Keywords.Transforms)]
+		[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "All arguments are strings or primitives, which EventSource serializes without reflection.")]
 		public void ILTransformExecuted(string transformName, int methodToken, double elapsedMs)
 		{
 			WriteEvent(13, transformName, methodToken, elapsedMs);
 		}
 
 		[Event(14, Level = EventLevel.Verbose, Keywords = Keywords.Transforms)]
+		[UnconditionalSuppressMessage("Trimming", "IL2026", Justification = "All arguments are strings or primitives, which EventSource serializes without reflection.")]
 		public void AstTransformExecuted(string transformName, double elapsedMs)
 		{
 			WriteEvent(14, transformName, elapsedMs);
