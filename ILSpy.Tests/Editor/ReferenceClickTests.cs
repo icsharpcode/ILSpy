@@ -193,13 +193,16 @@ public class ReferenceClickTests
 				referencedVerticalViewPortOffset: 0, minimumScrollFraction: 0);
 			window.UpdateLayout();
 			textView.EnsureVisualLines();
-			var position = new TextViewPosition(line.LineNumber, segment.StartOffset - line.Offset + 2);
-			var visual = textView.GetVisualPosition(position, VisualYPosition.LineMiddle) - textView.ScrollOffset;
-			var point = textView.TranslatePoint(visual, window)!.Value;
-			// Only the overlay's child controls are hit-testable, not its whole rectangle, so the
-			// hit test is the criterion rather than the overlay's bounds.
-			if (window.GetVisualAt(point) is { } hit && (hit == overlay || overlay.IsVisualAncestorOf(hit)))
-				return (segment, point);
+			for (int offset = 1; offset <= segment.Length; offset++)
+			{
+				var position = new TextViewPosition(line.LineNumber, segment.StartOffset - line.Offset + offset);
+				var visual = textView.GetVisualPosition(position, VisualYPosition.LineMiddle) - textView.ScrollOffset;
+				var point = textView.TranslatePoint(visual, window)!.Value;
+				// Only the overlay's child controls are hit-testable, not its whole rectangle, so the
+				// hit test is the criterion rather than the overlay's bounds.
+				if (window.GetVisualAt(point) is { } hit && (hit == overlay || overlay.IsVisualAncestorOf(hit)))
+					return (segment, point);
+			}
 		}
 		Assert.Fail("no navigable reference can be scrolled behind the overlay");
 		return default;
