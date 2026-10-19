@@ -5,7 +5,10 @@
     the shipped netstandard2.0 assembly in full and fails on any trim/AOT warning; running the native
     binary and the managed build on the same inputs checks that the output is identical. It is not in
     any solution: PublishAot pulls the ILCompiler and runtime packs into every restore, and the gate
-    only makes sense as a publish. See README.md for the local commands; CI runs the Linux leg.
+    only makes sense as a publish. CI publishes it on Linux only (job "Decompiler Native AOT gate"
+    in build-ilspy.yml): the ILC analysis does not depend on the host OS, and a Linux host is the
+    one that exercises the resolver's fallback for hosts without a .NET Framework installation.
+    README.md has the commands for a local run.
   -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
