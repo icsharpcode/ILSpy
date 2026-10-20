@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					value = Metadata.MemberReferences
 						.Select(r => new MemberReferenceMetadata(Metadata, r))
 						.Where(r => r.Parent == Handle)
-						.OrderBy(r => r.Name)
+						.OrderBy(r => r.Name, StringComparer.Ordinal)
 						.ToImmutableArray();
 					memberReferences = value;
 				}
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					value = Metadata.TypeReferences
 						.Select(r => new TypeReferenceMetadata(Metadata, r))
 						.Where(r => r.ResolutionScope == Handle)
-						.OrderBy(r => r.Name)
+						.OrderBy(r => r.Name, StringComparer.Ordinal)
 						.ToImmutableArray();
 					typeReferences = value;
 				}

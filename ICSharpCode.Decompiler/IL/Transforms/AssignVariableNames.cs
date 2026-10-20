@@ -687,7 +687,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsLowerCase(string name)
 		{
-			return name.Length > 0 && char.ToLower(name[0]) == name[0];
+			return name.Length > 0 && char.ToLowerInvariant(name[0]) == name[0];
 		}
 
 		/// <remarks>
@@ -946,7 +946,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// lowercase the first char, materializing the result in a single allocation
 			// (netstandard2.0 has no string(ReadOnlySpan<char>) constructor)
 			char[] chars = new char[name.Length];
-			chars[0] = char.ToLower(name[0]);
+			chars[0] = char.ToLowerInvariant(name[0]);
 			name.Slice(1).CopyTo(chars.AsSpan(1));
 			string lowerCaseName = new string(chars);
 			if (CSharp.OutputVisitor.CSharpOutputVisitor.IsKeyword(lowerCaseName))

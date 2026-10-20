@@ -562,7 +562,7 @@ namespace ICSharpCode.Decompiler.Metadata
 				// Hosts without a .NET Framework installation (e.g. Linux, macOS) have no GAC;
 				// the only system-wide assembly store there is the shared-framework directory
 				// (the one running the decompiler, or for single-file and Native AOT hosts the
-				// newest installed one). Search it as the last resort, regardless of the
+				// installed one of the same major version). Search it as the last resort, regardless of the
 				// requested version (the runtime itself rolls forward in the same way). Without
 				// this, e.g. the type-forwards of a netstandard facade (pointing to a versioned
 				// System.Runtime) are unresolvable on such hosts.
@@ -641,12 +641,14 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		/// <summary>
-		/// The dotnet/shared/Microsoft.NETCore.App/&lt;version&gt; directory whose facades (mscorlib,
-		/// netstandard, System.*) stand in for frameworks the host has no installation of. For a
-		/// managed host this is the directory of the running runtime; single-file and Native AOT
-		/// apps run from their application directory, which holds no assemblies, so for those it is
-		/// the newest shared framework of the dotnet on PATH. Null when there is neither, in which
-		/// case callers keep probing the runtime directory.
+		/// The directory whose framework facades (mscorlib, netstandard, System.*) stand in for
+		/// frameworks the host has no installation of. A managed host, framework-dependent or
+		/// self-contained, has them next to its running runtime. Single-file and Native AOT apps run
+		/// from their application directory, which holds no assemblies; for those it is the installed
+		/// dotnet/shared/Microsoft.NETCore.App/&lt;version&gt; directory of the same major version as
+		/// the host's runtime, which is what a framework-dependent build of the same app would run on,
+		/// or the newest installed one when that major is absent. Null when there is neither, in
+		/// which case callers keep probing the runtime directory.
 		/// </summary>
 		internal static string? GetSharedFrameworkDirectory() => sharedFrameworkDirectory.Value;
 
@@ -655,24 +657,29 @@ namespace ICSharpCode.Decompiler.Metadata
 		static string? FindSharedFrameworkDirectory()
 		{
 			string runtimeDirectory = GetRuntimeDirectory();
-			string? parent = Path.GetDirectoryName(runtimeDirectory);
-			if (parent != null && string.Equals(Path.GetFileName(parent), "Microsoft.NETCore.App", StringComparison.OrdinalIgnoreCase))
+			if (HasFrameworkFacades(runtimeDirectory))
 				return runtimeDirectory;
 			string? dotnetRoot = DotNetCorePathFinder.FindDotNetExeDirectory();
-			return dotnetRoot == null ? null : FindNewestSharedFramework(dotnetRoot);
+			return dotnetRoot == null ? null : FindSharedFramework(dotnetRoot, Environment.Version.Major);
 		}
 
-		internal static string? FindNewestSharedFramework(string dotnetRoot)
+		internal static bool HasFrameworkFacades(string directory)
+		{
+			return File.Exists(Path.Combine(directory, "mscorlib.dll"));
+		}
+
+		internal static string? FindSharedFramework(string dotnetRoot, int? preferredMajor)
 		{
 			string basePath = Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App");
 			if (!Directory.Exists(basePath))
 				return null;
-			return new DirectoryInfo(basePath).GetDirectories()
+			var installed = new DirectoryInfo(basePath).GetDirectories()
 				.Select(DotNetCorePathFinder.ConvertToVersion)
 				.Where(v => v.version != null)
 				.OrderByDescending(v => v.version)
-				.Select(v => v.directory.FullName)
-				.FirstOrDefault();
+				.ToList();
+			var match = installed.FirstOrDefault(v => v.version.Major == preferredMajor);
+			return (match.directory ?? installed.FirstOrDefault().directory)?.FullName;
 		}
 
 		string? GetCorlib(IAssemblyReference reference)

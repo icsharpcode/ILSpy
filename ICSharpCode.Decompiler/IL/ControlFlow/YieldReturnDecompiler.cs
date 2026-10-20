@@ -1458,7 +1458,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				if (!(call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()))
 					return false;
-				if (!call.Method.Name.StartsWith("<>__Finally"))
+				if (!call.Method.Name.StartsWith("<>__Finally", StringComparison.Ordinal))
 					return false;
 				ITypeDefinition declaringTypeDefinition = call.Method.DeclaringTypeDefinition;
 				if (declaringTypeDefinition.MetadataToken != this.enumeratorType)

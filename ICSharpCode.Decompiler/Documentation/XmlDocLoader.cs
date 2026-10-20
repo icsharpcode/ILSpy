@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.Documentation
 			// dotnet/shared/Microsoft.NETCore.App/<version>/, the docs in the matching
 			// dotnet/packs/Microsoft.NETCore.App.Ref/<version>/ref/<tfm>/ directory). Single-file
 			// and Native AOT hosts run from their application directory, so for those the shared
-			// framework is the newest installed one.
+			// framework is the installed one of the same major version as the host's runtime.
 			return TryLoadModernRefPackDocumentation(
 				UniversalAssemblyResolver.GetSharedFrameworkDirectory() ?? UniversalAssemblyResolver.GetRuntimeDirectory());
 		}

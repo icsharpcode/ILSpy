@@ -211,7 +211,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.Write(OpCode);
 			output.Write('.');
-			output.Write(InputType.ToString().ToLower());
+			output.Write(InputType.ToString().ToLowerInvariant());
 			switch (Sign)
 			{
 				case Sign.Signed:

@@ -306,8 +306,61 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static string FindDotNetExeDirectory()
 		{
+			return FindDotNetExeDirectory(CandidateDotNetDirectories(Environment.GetEnvironmentVariable));
+		}
+
+		/// <summary>
+		/// Where to look for the dotnet executable, in the order the .NET host uses when it starts a
+		/// framework-dependent app: DOTNET_ROOT (optionally suffixed with the process architecture),
+		/// then the default install locations; PATH, which the host never consults, comes last. A
+		/// single-file or Native AOT app resolves framework facades through this, so it has to land
+		/// on the installation a framework-dependent build of it would run on, including on a machine
+		/// where dotnet is installed but not on PATH.
+		/// </summary>
+		internal static IEnumerable<string> CandidateDotNetDirectories(Func<string, string> getEnvironmentVariable)
+		{
+			foreach (var name in new[] { "DOTNET_ROOT_" + RuntimeInformation.ProcessArchitecture.ToString().ToUpperInvariant(), "DOTNET_ROOT" })
+			{
+				string root = getEnvironmentVariable(name);
+				if (!string.IsNullOrEmpty(root))
+					yield return root;
+			}
+			if (Environment.OSVersion.Platform == PlatformID.Unix)
+			{
+				string installLocation = null;
+				try
+				{
+					if (File.Exists("/etc/dotnet/install_location"))
+						installLocation = File.ReadLines("/etc/dotnet/install_location").FirstOrDefault()?.Trim();
+				}
+				catch (IOException)
+				{
+				}
+				catch (UnauthorizedAccessException)
+				{
+				}
+				if (!string.IsNullOrEmpty(installLocation))
+					yield return installLocation;
+				yield return "/usr/share/dotnet";
+				yield return "/usr/lib/dotnet";
+				yield return "/usr/local/share/dotnet";
+			}
+			else
+			{
+				yield return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet");
+			}
+			string path = getEnvironmentVariable("PATH");
+			if (path != null)
+			{
+				foreach (var item in path.Split(Path.PathSeparator))
+					yield return item;
+			}
+		}
+
+		internal static string FindDotNetExeDirectory(IEnumerable<string> candidateDirectories)
+		{
 			string dotnetExeName = (Environment.OSVersion.Platform == PlatformID.Unix) ? "dotnet" : "dotnet.exe";
-			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator))
+			foreach (var item in candidateDirectories)
 			{
 				try
 				{

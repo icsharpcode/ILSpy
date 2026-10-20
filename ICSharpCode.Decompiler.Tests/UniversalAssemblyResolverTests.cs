@@ -16,7 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -83,20 +86,77 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void NewestInstalledSharedFrameworkIsPickedForHostsWithoutOne()
+		public void SharedFrameworkOfTheHostsOwnMajorVersionIsPickedForHostsWithoutOne()
 		{
+			// A framework-dependent net10 app runs on the installed 10.x runtime even when an 11.x
+			// is installed too; a single-file or Native AOT build of it has to take its facades
+			// from that same 10.x so that both resolve the same reference assemblies.
 			string dotnetRoot = Path.Combine(gacDirectory, "dotnet");
-			foreach (string version in new[] { "9.0.1", "10.0.3", "10.0.0-preview.1", "not-a-version" })
-				Directory.CreateDirectory(Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App", version));
+			string shared = Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App");
+			foreach (string version in new[] { "9.0.1", "10.0.3", "10.0.0-preview.1", "11.0.0-rc.2.26504.105", "not-a-version" })
+				Directory.CreateDirectory(Path.Combine(shared, version));
 
-			Assert.That(UniversalAssemblyResolver.FindNewestSharedFramework(dotnetRoot),
-				Is.EqualTo(Path.Combine(dotnetRoot, "shared", "Microsoft.NETCore.App", "10.0.3")));
+			using (Assert.EnterMultipleScope())
+			{
+				Assert.That(UniversalAssemblyResolver.FindSharedFramework(dotnetRoot, preferredMajor: 10), Is.EqualTo(Path.Combine(shared, "10.0.3")), "newest of the host's major");
+				Assert.That(UniversalAssemblyResolver.FindSharedFramework(dotnetRoot, preferredMajor: 12), Is.EqualTo(Path.Combine(shared, "11.0.0-rc.2.26504.105")), "newest overall when the host's major is not installed");
+				Assert.That(UniversalAssemblyResolver.FindSharedFramework(dotnetRoot, preferredMajor: null), Is.EqualTo(Path.Combine(shared, "11.0.0-rc.2.26504.105")), "newest overall without a preference");
+			}
 		}
 
 		[Test]
 		public void NoInstalledSharedFrameworkGivesNull()
 		{
-			Assert.That(UniversalAssemblyResolver.FindNewestSharedFramework(gacDirectory), Is.Null);
+			Assert.That(UniversalAssemblyResolver.FindSharedFramework(gacDirectory, preferredMajor: 10), Is.Null);
+		}
+
+		[Test]
+		public void RuntimeDirectoryWithFacadesIsUsedWhereverItIs()
+		{
+			// A self-contained app carries the framework facades in its own directory, which is not
+			// named like a shared framework; a single-file or Native AOT app's directory holds no
+			// assemblies at all. The facades decide, not the directory name.
+			string selfContained = Path.Combine(gacDirectory, "app");
+			Directory.CreateDirectory(selfContained);
+			Assert.That(UniversalAssemblyResolver.HasFrameworkFacades(selfContained), Is.False, "application directory without assemblies");
+			File.WriteAllBytes(Path.Combine(selfContained, "mscorlib.dll"), new byte[0]);
+			Assert.That(UniversalAssemblyResolver.HasFrameworkFacades(selfContained), Is.True, "application directory with the facades");
+		}
+
+		[Test]
+		public void DotNetDirectoryCandidatesFollowTheHostLookup()
+		{
+			// The .NET host finds the runtime of a framework-dependent app through DOTNET_ROOT and
+			// the default install locations, never through PATH. The lookup for single-file and
+			// Native AOT hosts checks the same places in the same order, so that it lands on the
+			// runtime such an app would run on, and falls back to PATH only after those.
+			var env = new Dictionary<string, string> {
+				["PATH"] = string.Join(Path.PathSeparator.ToString(), "first", "second"),
+				["DOTNET_ROOT"] = "root",
+			};
+			var candidates = DotNetCorePathFinder.CandidateDotNetDirectories(name => env.TryGetValue(name, out var value) ? value : null).ToList();
+			using (Assert.EnterMultipleScope())
+			{
+				Assert.That(candidates.First(), Is.EqualTo("root"));
+				Assert.That(candidates.Skip(candidates.Count - 2), Is.EqualTo(new[] { "first", "second" }), "PATH last");
+				Assert.That(candidates.Count, Is.GreaterThan(3), "default install locations in between");
+			}
+
+			env.Remove("PATH");
+			Assert.That(DotNetCorePathFinder.CandidateDotNetDirectories(name => env.TryGetValue(name, out var value) ? value : null).First(), Is.EqualTo("root"), "no PATH at all");
+		}
+
+		[Test]
+		public void DotNetExecutableIsTakenFromTheFirstCandidateThatHasIt()
+		{
+			string empty = Path.Combine(gacDirectory, "empty");
+			string root = Path.Combine(gacDirectory, "root");
+			Directory.CreateDirectory(empty);
+			Directory.CreateDirectory(root);
+			string exeName = Environment.OSVersion.Platform == PlatformID.Unix ? "dotnet" : "dotnet.exe";
+			File.WriteAllBytes(Path.Combine(root, exeName), new byte[0]);
+
+			Assert.That(DotNetCorePathFinder.FindDotNetExeDirectory(new[] { empty, Path.Combine(gacDirectory, "missing"), root }), Is.EqualTo(root));
 		}
 
 		[Test]

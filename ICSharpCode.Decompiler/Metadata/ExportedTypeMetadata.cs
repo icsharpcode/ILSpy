@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.Metadata
 					value = Metadata.ExportedTypes
 						.Select(r => new ExportedTypeMetadata(Metadata, r))
 						.Where(r => r.Implementation == Handle)
-						.OrderBy(r => r.Namespace)
+						.OrderBy(r => r.Namespace, StringComparer.Ordinal)
 						.ThenBy(r => r.Name)
 						.ToImmutableArray();
 					exportedTypes = value;

@@ -24,7 +24,7 @@ internal class Vocabulary
 
 	readonly List<Rule> plurals = [];
 	readonly List<Rule> singulars = [];
-	readonly HashSet<string> uncountables = new(StringComparer.CurrentCultureIgnoreCase);
+	readonly HashSet<string> uncountables = new(StringComparer.OrdinalIgnoreCase);
 	readonly Regex letterS = new("^([sS])[sS]*$");
 
 	/// <summary>
@@ -196,7 +196,7 @@ internal class Vocabulary
 
 	static string MatchUpperCase(string word, string replacement) =>
 		char.IsUpper(word[0]) &&
-		char.IsLower(replacement[0]) ? StringHumanizeExtensions.Concat(char.ToUpper(replacement[0]), replacement.AsSpan(1)) : replacement;
+		char.IsLower(replacement[0]) ? StringHumanizeExtensions.Concat(char.ToUpperInvariant(replacement[0]), replacement.AsSpan(1)) : replacement;
 
 	/// <summary>
 	/// If the word is the letter s, singular or plural, return the letter s singular
