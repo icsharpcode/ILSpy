@@ -39,7 +39,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// * <c>StLoc</c>
 	/// * <c>TryCatchHandler</c> (for the exception variable)
 	/// * <c>ReachingDefinitionsVisitor.UninitializedVariable</c> for uninitialized variables.
-	/// Note that we do not keep track of <c>LdLoca</c>/references/pointers.
+	/// * <c>LdLoca</c>, but only where the address is known to be assigned without being read
+	///   first, see <c>IsDefiniteAssignment</c>.
+	/// Note that we do not otherwise keep track of <c>LdLoca</c>/references/pointers.
 	/// The analysis will likely be wrong/incomplete for variables with <c>AddressCount != 0</c>.
 	/// 
 	/// Note: this class does not store the computed information, because doing so
@@ -304,6 +306,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					int expectedStoreCount = scope.Variables[vi].StoreInstructions.Count;
 					// Extra store for the uninitialized state.
 					expectedStoreCount += 1;
+					// Extra store for every address load that is a definite assignment.
+					expectedStoreCount += scope.Variables[vi].AddressInstructions.Count(IsDefiniteAssignment);
 					Debug.Assert(stores.Count == expectedStoreCount);
 					stores.CopyTo(allStores, si);
 					// Add all stores except for the first (representing the uninitialized state)
@@ -335,7 +339,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 			foreach (var inst in scope.Descendants)
 			{
-				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals))
+				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals) || IsDefiniteAssignment(inst))
 				{
 					cancellationToken.ThrowIfCancellationRequested();
 					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
@@ -393,6 +397,33 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			inst.Value.AcceptVisitor(this);
 			HandleStore(inst, inst.Variable);
+		}
+
+		protected internal override void VisitLdLoca(LdLoca inst)
+		{
+			if (IsDefiniteAssignment(inst))
+				HandleStore(inst, inst.Variable);
+			else
+				base.VisitLdLoca(inst);
+		}
+
+		/// <summary>
+		/// Gets whether an address load definitely assigns the variable without reading it first,
+		/// which makes it a definition, just like a store.
+		/// <para>
+		/// IL has no such instruction - 'out' is a C# convention over 'ref' - so this holds only
+		/// for the out arguments of a Deconstruct method, where C#'s definite assignment rules
+		/// rule out a read. A Deconstruct method written in IL could read the argument, and the
+		/// possibility is ignored here: without it, two deconstructions that the compiler lowered
+		/// onto the same temporaries stay in one live range and neither can be recognized.
+		/// </para>
+		/// </summary>
+		static bool IsDefiniteAssignment(ILInstruction inst)
+		{
+			// Argument 0 is the receiver of an instance method or the 'this' argument of an
+			// extension method; IsDeconstructMethod requires every parameter after it to be out.
+			return inst is LdLoca { ChildIndex: > 0, Parent: CallInstruction call }
+				&& MatchInstruction.IsDeconstructMethod(call.Method);
 		}
 
 		protected override void HandleMatchStore(MatchInstruction inst)
