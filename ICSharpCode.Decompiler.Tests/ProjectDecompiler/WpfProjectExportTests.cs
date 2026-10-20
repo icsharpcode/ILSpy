@@ -345,6 +345,23 @@ public sealed class WpfProjectExportTests
 	}
 
 	/// <summary>
+	/// The type system and project export use the same complete reference closure. A reference
+	/// used only by a loaded assembly must be available through ReferencedModules as well.
+	/// </summary>
+	[Test]
+	public void TypeSystemLoadsReferencesOfReferencedAssemblies()
+	{
+		string fixture = Compile("WpfTransitiveTypeSystemFixture",
+			AssemblyAttributes(".NETFramework,Version=v4.7.2", targetPlatform: null)
+			+ "public class UsesMiddle { public Stubs.TransitiveMiddle Middle; public Stubs.PresentationFramework Wpf; }",
+			OutputKind.DynamicallyLinkedLibrary, presentationFramework, MiddleReferencingLeaf());
+
+		var (_, typeSystem) = Load(fixture);
+
+		Assert.That(typeSystem.ReferencedModules.Select(m => m.Name), Does.Contain("TransitiveLeaf"));
+	}
+
+	/// <summary>
 	/// The non-SDK project format has the same markup compiler behind it.
 	/// </summary>
 	[Test]
@@ -519,15 +536,17 @@ public sealed class WpfProjectExportTests
 	{
 		var resolver = new UniversalAssemblyResolver(resolveNextToFixture ? fileName : null, throwOnError: false, targetFramework: null);
 		IProjectFileWriter writer = sdkStyle ? ProjectFileWriterSdkStyle.Default : ProjectFileWriterDefault.Instance;
+		var module = OpenModule(fileName);
 		StringWriter output = new();
-		writer.Write(output, new TestProjectInfoProvider(tempDirectory, resolver), Array.Empty<ProjectItemInfo>(), OpenModule(fileName));
+		writer.Write(output, new TestProjectInfoProvider(tempDirectory, resolver, new DecompilerTypeSystem(module, resolver)), Array.Empty<ProjectItemInfo>(), module);
 		return output.ToString();
 	}
 
-	sealed class TestProjectInfoProvider(string targetDirectory, IAssemblyResolver assemblyResolver) : IProjectInfoProvider
+	sealed class TestProjectInfoProvider(string targetDirectory, IAssemblyResolver assemblyResolver, DecompilerTypeSystem typeSystem = null) : IProjectInfoProvider
 	{
 		public IAssemblyResolver AssemblyResolver { get; } = assemblyResolver;
 		public IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; } = new AssemblyReferenceClassifier();
+		public DecompilerTypeSystem TypeSystem { get; } = typeSystem;
 		public CSharp.LanguageVersion LanguageVersion => CSharp.LanguageVersion.Latest;
 		public bool CheckForOverflowUnderflow => false;
 		public Guid ProjectGuid { get; } = Guid.NewGuid();

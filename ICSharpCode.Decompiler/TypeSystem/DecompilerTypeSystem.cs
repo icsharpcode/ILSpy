@@ -513,6 +513,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				{
 					referencedAssemblies.Add(asm);
 					var metadata = asm.Metadata;
+					foreach (var indirectReference in asm.AssemblyReferences)
+					{
+						AddToQueue(true, asm, indirectReference);
+					}
+					QueueModuleReferences(asm);
 					foreach (var h in metadata.ExportedTypes)
 					{
 						var exportedType = metadata.GetExportedType(h);
@@ -626,6 +631,31 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						asm = assemblyResolver.ResolveModuleAsync(mainModule, (string)reference);
 					}
 					assemblyReferenceQueue.Enqueue((isAssembly, mainModule, reference, asm));
+				}
+			}
+
+			void QueueModuleReferences(MetadataFile module)
+			{
+				var metadata = module.Metadata;
+				try
+				{
+					foreach (var h in metadata.GetModuleReferences())
+					{
+						var moduleRef = metadata.GetModuleReference(h);
+						var moduleName = metadata.GetString(moduleRef.Name);
+						foreach (var fileHandle in metadata.AssemblyFiles)
+						{
+							var file = metadata.GetAssemblyFile(fileHandle);
+							if (metadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata)
+							{
+								AddToQueue(false, module, moduleName);
+								break;
+							}
+						}
+					}
+				}
+				catch (BadImageFormatException)
+				{
 				}
 			}
 
