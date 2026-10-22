@@ -84,9 +84,13 @@ public class MetadataDisablesLanguageSwitchingTests
 		// End-to-end: selecting a metadata node populates the MainTab with a
 		// MetadataTablePageModel; the toolbar's LanguageComboBox.IsEnabled binding through
 		// DockWorkspace.ActiveContentTabPage.SupportsLanguageSwitching must flip to false.
-		// Selecting a decompilable type after that must flip it back to true.
+		// Selecting a decompilable type after that must flip it back to true. Any type will
+		// do for that second step, so it uses the sample type from this assembly: decompiling
+		// a CoreLib type builds a CoreLib-scale type system first, which on a loaded CI runner
+		// can take longer than the wait budget.
 
 		var (window, vm) = await TestHarness.BootAsync();
+		var sampleNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 
 		var toolbar = await window.WaitForComponent<MainToolBar>();
 		var languageCombo = toolbar.GetVisualDescendants().OfType<ComboBox>()
@@ -97,7 +101,6 @@ public class MetadataDisablesLanguageSwitchingTests
 			"baseline: with no metadata tab active, the LanguageComboBox is enabled");
 
 		// Navigate to a metadata node (DOS Header is a stable choice — every PE has one).
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
 		var dosHeader = vm.AssemblyTreeModel.FindCoreLib()
 			.GetChild<MetadataTreeNode>()
 			.GetChild<DosHeaderTreeNode>();
@@ -112,10 +115,8 @@ public class MetadataDisablesLanguageSwitchingTests
 			"with a MetadataTablePageModel as the active content, the LanguageComboBox must disable");
 
 		// Now navigate to a decompilable type node and verify the picker re-enables.
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync(System.TimeSpan.FromSeconds(30));
+		vm.AssemblyTreeModel.SelectNode(sampleNode);
+		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		TestCapture.Step("decompiler-tab-active");
 
 		languageCombo.IsEnabled.Should().BeTrue(
