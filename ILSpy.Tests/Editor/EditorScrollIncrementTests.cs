@@ -54,6 +54,25 @@ public class EditorScrollIncrementTests
 	// the editor is attached, because attaching re-applies the display-settings font.
 	const double FontSize = 40;
 
+	// The metrics branch on the desktop. Pin the Windows baseline so the assertions hold on every
+	// CI runner, and restore the real platform afterwards; macOS cases flip the seam themselves.
+	bool isWindows, isMacOS;
+
+	[SetUp]
+	public void PinWindowsPlatform()
+	{
+		(isWindows, isMacOS) = (SystemScrollSettings.IsWindows, SystemScrollSettings.IsMacOS);
+		SystemScrollSettings.IsWindows = true;
+		SystemScrollSettings.IsMacOS = false;
+	}
+
+	[TearDown]
+	public void RestorePlatform()
+	{
+		SystemScrollSettings.IsWindows = isWindows;
+		SystemScrollSettings.IsMacOS = isMacOS;
+	}
+
 	static (Window Window, DecompilerTextEditor Editor, ScrollViewer ScrollViewer) ShowOverflowingEditor()
 	{
 		var text = string.Join("\n", Enumerable.Range(1, 200).Select(i => $"line {i} " + new string('x', 300)));
@@ -113,6 +132,35 @@ public class EditorScrollIncrementTests
 
 		scrollViewer.Offset.X.Should().BeApproximately(expected, 0.01, "one Shift+wheel notch moves one wheel step horizontally (#4173)");
 		scrollViewer.Offset.Y.Should().Be(0, "Shift+wheel must not scroll vertically");
+	}
+
+	// Avalonia.Native divides trackpad deltas by 50 px and mouse-wheel deltas by 5 AppKit line
+	// units before they reach us, and neither carries a precision flag. A fixed 50 px step is the
+	// one value that keeps trackpads 1:1 at every zoom level, so on macOS the step must not follow
+	// the font.
+	[AvaloniaTest]
+	public void On_MacOS_The_Wheel_Step_Is_A_Fixed_50_Pixels_On_Both_Axes()
+	{
+		SystemScrollSettings.IsWindows = false;
+		SystemScrollSettings.IsMacOS = true;
+		var (_, editor, _) = ShowOverflowingEditor();
+		var scrollable = (ILogicalScrollable)editor.TextArea;
+
+		scrollable.ScrollSize.Should().Be(new Size(50, 50), "macOS trackpads report pixels / 50, so 50 px per unit tracks the finger 1:1 regardless of font size");
+	}
+
+	[AvaloniaTest]
+	public void On_MacOS_Shift_Wheel_Scrolls_Horizontally_By_50_Pixels()
+	{
+		SystemScrollSettings.IsWindows = false;
+		SystemScrollSettings.IsMacOS = true;
+		var (window, editor, scrollViewer) = ShowOverflowingEditor();
+		var point = editor.TranslatePoint(new Point(100, 100), window) ?? new Point(100, 100);
+
+		window.MouseWheel(point, new Vector(0, -1), RawInputModifiers.Shift);
+		Dispatcher.UIThread.RunJobs();
+
+		scrollViewer.Offset.X.Should().BeApproximately(50, 0.01, "one unit of Shift+wheel moves 50 px on macOS (#4173)");
 	}
 
 	[AvaloniaTest]

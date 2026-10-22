@@ -39,6 +39,12 @@ namespace ICSharpCode.ILSpy.TextView
 		// Windows' "one screen at a time" choice for the wheel (WHEEL_PAGESCROLL).
 		const uint WheelPageScroll = uint.MaxValue;
 
+		// Which desktop's conventions the scroll metrics follow. Production code leaves these at
+		// the OS values; the headless tests, which run on every desktop, pin the platform they
+		// assert against.
+		internal static bool IsWindows { get; set; } = OperatingSystem.IsWindows();
+		internal static bool IsMacOS { get; set; } = OperatingSystem.IsMacOS();
+
 		static readonly uint wheelScrollLinesSetting = ReadWheelScrollLines();
 
 		/// <summary>Lines scrolled per wheel notch; 3 where the desktop has no such setting.</summary>

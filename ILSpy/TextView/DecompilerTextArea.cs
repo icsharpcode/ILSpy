@@ -48,8 +48,17 @@ namespace ICSharpCode.ILSpy.TextView
 
 		ILogicalScrollable Inner => TextView;
 
+		// Avalonia.Native divides trackpad deltas by 50 px and mouse-wheel deltas by 5 AppKit line
+		// units, and the events carry no precision flag, so one step size has to serve both devices.
+		// 50 px keeps trackpads 1:1 at every font size and zoom level (Apple: scroll precise deltas
+		// by the returned amount) and gives mice the speed every other Avalonia application has;
+		// following the font instead would make trackpads drift with the zoom.
+		const double MacOSWheelStep = 50;
+
 		Size ILogicalScrollable.ScrollSize {
 			get {
+				if (SystemScrollSettings.IsMacOS)
+					return new Size(MacOSWheelStep, MacOSWheelStep);
 				if (SystemScrollSettings.WheelScrollsOnePage)
 					return Inner.Viewport;
 				double step = SystemScrollSettings.WheelScrollLines * TextView.DefaultLineHeight;
