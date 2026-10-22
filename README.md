@@ -48,10 +48,10 @@ How to build
 - Execute `git submodule update --init --recursive` to download the ILSpy-Tests submodule (used by some test cases).
 - Install Visual Studio (documented version: 18.0/2026). You need the following workload components:
   - Workload ".NET Desktop Development". This workload includes the .NET Framework 4.8 SDK and the .NET Framework 4.7.2 targeting pack, as well as the [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) (ILSpy.csproj targets .NET 10.0, but we have net472 projects too). Our unit tests require [.NET 11.0 SDK](https://dotnet.microsoft.com/download/dotnet/11.0).
-  - Workload "Visual Studio extension development" (Note: ILSpy.VSExtensions.slnx is separate from ILSpy.sln and thus this workload is optional)
+  - Workload "Visual Studio extension development" (Note: ILSpy.VSExtensions.slnx is separate from ILSpy.slnx and thus this workload is optional)
   - Individual Component "MSVC v143 - VS 2022 C++ x64/x86 build tools" (or similar)
     - _The VC++ toolset is optional_; if present it is used for `editbin.exe` to modify the stack size used by ILSpy.exe from 1MB to 16MB, because the decompiler makes heavy use of recursion, where small stack sizes lead to problems in very complex methods.
-- Open ILSpy.sln in Visual Studio.
+- Open ILSpy.slnx in Visual Studio.
   - NuGet package restore will automatically download further dependencies
   - Run project "ILSpy" for the ILSpy UI
   - Use the Visual Studio "Test Explorer" to see/run the tests

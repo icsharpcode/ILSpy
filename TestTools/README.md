@@ -13,7 +13,7 @@ in-repo test suite cannot: it decompiles fixtures we wrote, these decompile what
 
 They are [file-based apps](https://learn.microsoft.com/dotnet/core/whats-new/dotnet-10/sdk#file-based-apps):
 single `.cs` files run directly by the SDK, no project, no solution entry. They are not built by
-`ILSpy.sln` and not run by CI. Requirements: the .NET SDK from `global.json` (or newer) and, for
+`ILSpy.slnx` and not run by CI. Requirements: the .NET SDK from `global.json` (or newer) and, for
 the sweep script, PowerShell 7 (`pwsh`) - both cross-platform.
 
 `Directory.Build.props` / `Directory.Packages.props` in this folder are intentionally near-empty:

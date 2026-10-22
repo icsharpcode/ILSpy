@@ -1,6 +1,6 @@
 {
 	"solution": {
-		"path": "ILSpy.sln",
+		"path": "ILSpy.slnx",
 		"projects": [
 			"ICSharpCode.BamlDecompiler\\ICSharpCode.BamlDecompiler.csproj",
 			"ICSharpCode.Decompiler.TestRunner\\ICSharpCode.Decompiler.TestRunner.csproj",

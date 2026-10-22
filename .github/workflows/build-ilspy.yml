@@ -83,19 +83,19 @@ jobs:
 
     - name: Restore the application
       run: >
-        dotnet restore ILSpy.sln
+        dotnet restore ILSpy.slnx
         /p:RestoreEnablePackagePruning=false
         /p:Configuration=${{ matrix.configuration }}
         /p:Platform="$env:BuildPlatform"
 
     - name: Build
       run: >
-        dotnet build -mt ILSpy.sln --no-restore
+        dotnet build -mt ILSpy.slnx --no-restore
         -c ${{ matrix.configuration }}
         /p:Platform="$env:BuildPlatform"
 
     - name: Format check
-      run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.sln
+      run: dotnet-format whitespace --verify-no-changes --verbosity detailed ILSpy.slnx
 
     - name: Execute unit tests
       id: unit-tests
@@ -107,7 +107,7 @@ jobs:
       env:
         DOTNET_gcServer: 0
       run: >
-        dotnet test --solution ilspy.sln
+        dotnet test --solution ILSpy.slnx
         --configuration ${{ matrix.configuration }}
         --no-build --report-trx
         --results-directory test-results/${{ matrix.configuration }}

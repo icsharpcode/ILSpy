@@ -35,7 +35,7 @@
     {
       "id": "c44c4ce4-6430-4087-b926-8e905103e112",
       "type": "markdown",
-      "source": "You must have compiled **ILSpy.sln** first (run \u0022dotnet build ilspy.sln\u0022). Make sure to modify **basePath** to your repository path."
+      "source": "You must have compiled **ILSpy.slnx** first (run \u0022dotnet build ILSpy.slnx\u0022). Make sure to modify **basePath** to your repository path."
     },
     {
       "id": "f0695e89-e072-4406-bac3-5d49affe1237",

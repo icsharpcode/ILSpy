@@ -114,7 +114,7 @@ produced for that compiler's IL. This beats hand-running csc versions.
 ## Running
 
 ```
-dotnet test --solution ILSpy.sln --report-trx --filter FullyQualifiedName~PrettyTestRunner.SwitchExpressions
+dotnet test --solution ILSpy.slnx --report-trx --filter FullyQualifiedName~PrettyTestRunner.SwitchExpressions
 ```
 
 (Microsoft.Testing.Platform syntax; see root `AGENTS.md` "Test discipline".) A failing

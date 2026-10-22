@@ -115,7 +115,7 @@ try {
 		return 0;
 	}
 
-	if (-not (Test-File "ILSpy.sln")) {
+	if (-not (Test-File "ILSpy.slnx")) {
 		Write-Error "Working directory must be the ILSpy repo root!";
 		return 2;
 	}

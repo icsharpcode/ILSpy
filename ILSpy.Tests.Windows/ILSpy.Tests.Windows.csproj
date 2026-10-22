@@ -4,7 +4,7 @@
     <!-- Windows-targeted TFM unlocks Microsoft.DiaSymReader (native COM) + System.Windows
          registry APIs without conditional package gates. EnableWindowsTargeting lets the
          build satisfy the -windows reference assemblies on non-Windows OSes via the
-         cross-targeting pack, so `dotnet build ILSpy.sln` succeeds on Linux/macOS; the
+         cross-targeting pack, so `dotnet build ILSpy.slnx` succeeds on Linux/macOS; the
          tests still only execute on Windows because the binaries P/Invoke into Win32. -->
     <TargetFramework>net11.0-windows</TargetFramework>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>

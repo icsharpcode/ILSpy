@@ -171,7 +171,7 @@ A few things that are easy to get wrong when editing the generator or the nodes 
   reference the expected symbol (e.g. `Slots.Foo`) in code and let the build fail or pass.
 - **Validate with the DEBUG test run.** `CheckInvariant` is `[Conditional("DEBUG")]` and the test host
   runs DEBUG, so after any AST or transform change run the Pretty suite in DEBUG:
-  `OPENSSL_ENABLE_SHA1_SIGNATURES=1 dotnet test --solution ILSpy.sln --report-trx --no-build -c Debug
+  `OPENSSL_ENABLE_SHA1_SIGNATURES=1 dotnet test --solution ILSpy.slnx --report-trx --no-build -c Debug
   --filter "FullyQualifiedName~PrettyTestRunner"`. It checks the output is byte-identical **and**
   exercises `CheckInvariant` across every node shape -- a green run is the real signal, not a green
   build.
