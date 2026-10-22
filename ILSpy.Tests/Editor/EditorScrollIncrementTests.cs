@@ -84,7 +84,7 @@ public class EditorScrollIncrementTests
 	{
 		var (_, editor, _) = ShowOverflowingEditor();
 		var scrollable = (ILogicalScrollable)editor.TextArea;
-		double expected = DecompilerTextArea.WheelScrollLines * editor.TextArea.TextView.DefaultLineHeight;
+		double expected = SystemScrollSettings.WheelScrollLines * editor.TextArea.TextView.DefaultLineHeight;
 
 		scrollable.ScrollSize.Height.Should().BeApproximately(expected, 0.01, "a wheel notch scrolls the system's number of lines");
 		scrollable.ScrollSize.Width.Should().BeApproximately(expected, 0.01, "Shift+wheel scrolls the same distance horizontally (#4173)");
@@ -105,7 +105,7 @@ public class EditorScrollIncrementTests
 	public void Shift_Wheel_Scrolls_Horizontally_By_One_Wheel_Step()
 	{
 		var (window, editor, scrollViewer) = ShowOverflowingEditor();
-		double expected = DecompilerTextArea.WheelScrollLines * editor.TextArea.TextView.DefaultLineHeight;
+		double expected = SystemScrollSettings.WheelScrollLines * editor.TextArea.TextView.DefaultLineHeight;
 		var point = editor.TranslatePoint(new Point(100, 100), window) ?? new Point(100, 100);
 
 		window.MouseWheel(point, new Vector(0, -1), RawInputModifiers.Shift);

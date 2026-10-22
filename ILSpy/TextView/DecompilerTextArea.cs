@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Runtime.InteropServices;
 
 using Avalonia;
 using Avalonia.Controls;
@@ -25,8 +24,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 
 using AvaloniaEdit.Editing;
-
-#pragma warning disable CA1060 // Move pinvokes to native methods class
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -39,10 +36,11 @@ namespace ICSharpCode.ILSpy.TextView
 	/// TextArea implements <see cref="ILogicalScrollable"/> by forwarding to its TextView, so this
 	/// subclass re-implements the interface: everything still forwards to the TextView except the two
 	/// step sizes, which follow WPF AvalonEdit -- a wheel notch moves the system's "lines to scroll"
-	/// (the same distance horizontally), a page is one viewport. Redundant once AvaloniaEdit derives
-	/// the sizes from its own metrics.
+	/// (the same distance horizontally), a page is one viewport. The desktop's wheel settings come
+	/// from <see cref="SystemScrollSettings"/>. Redundant once AvaloniaEdit derives the sizes from
+	/// its own metrics.
 	/// </summary>
-	public sealed partial class DecompilerTextArea : TextArea, ILogicalScrollable
+	public sealed class DecompilerTextArea : TextArea, ILogicalScrollable
 	{
 		// Avalonia resolves the control template via the runtime type; without this the TextArea
 		// template (which hosts the TextView and margins) never applies to the subclass.
@@ -52,9 +50,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 		Size ILogicalScrollable.ScrollSize {
 			get {
-				if (wheelScrollLinesSetting == WheelPageScroll)
+				if (SystemScrollSettings.WheelScrollsOnePage)
 					return Inner.Viewport;
-				double step = WheelScrollLines * TextView.DefaultLineHeight;
+				double step = SystemScrollSettings.WheelScrollLines * TextView.DefaultLineHeight;
 				return new Size(step, step);
 			}
 		}
@@ -76,29 +74,5 @@ namespace ICSharpCode.ILSpy.TextView
 			add => Inner.ScrollInvalidated += value;
 			remove => Inner.ScrollInvalidated -= value;
 		}
-
-		// Windows' "one screen at a time" choice for the wheel (WHEEL_PAGESCROLL).
-		const uint WheelPageScroll = uint.MaxValue;
-
-		static readonly uint wheelScrollLinesSetting = ReadWheelScrollLines();
-
-		/// <summary>
-		/// Lines scrolled per wheel notch: the user's Windows "lines to scroll" setting, 3 (the
-		/// Windows default) on other platforms. Avalonia delivers raw wheel notches and does not
-		/// expose the system setting itself. Read once; a settings change applies after a restart.
-		/// </summary>
-		internal static double WheelScrollLines => wheelScrollLinesSetting;
-
-		static uint ReadWheelScrollLines()
-		{
-			const uint SPI_GETWHEELSCROLLLINES = 0x0068;
-			if (OperatingSystem.IsWindows() && SystemParametersInfoW(SPI_GETWHEELSCROLLLINES, 0, out uint lines, 0))
-				return lines;
-			return 3;
-		}
-
-		[LibraryImport("user32.dll")]
-		[return: MarshalAs(UnmanagedType.Bool)]
-		private static partial bool SystemParametersInfoW(uint uiAction, uint uiParam, out uint pvParam, uint fWinIni);
 	}
 }
