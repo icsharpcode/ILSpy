@@ -163,6 +163,22 @@ public class EditorScrollIncrementTests
 		scrollViewer.Offset.X.Should().BeApproximately(50, 0.01, "one unit of Shift+wheel moves 50 px on macOS (#4173)");
 	}
 
+	// AppKit's NSScrollView.pageScroll and GTK's 0.9 page_increment keep part of the previous page
+	// in view after a page scroll, and the macOS HIG suggests one line of overlap; Windows (WPF)
+	// pages by the full viewport.
+	[AvaloniaTest]
+	public void Off_Windows_A_Page_Keeps_One_Line_Of_The_Previous_Page_Visible()
+	{
+		SystemScrollSettings.IsWindows = false;
+		var (_, editor, scrollViewer) = ShowOverflowingEditor();
+		var scrollable = (ILogicalScrollable)editor.TextArea;
+		double lineHeight = editor.TextArea.TextView.DefaultLineHeight;
+		var viewport = scrollViewer.Viewport;
+
+		scrollable.PageScrollSize.Should().Be(new Size(viewport.Width - lineHeight, viewport.Height - lineHeight), "a page scroll keeps one line of overlap on macOS and Linux");
+		scrollViewer.LargeChange.Height.Should().BeApproximately(viewport.Height - lineHeight, 0.01, "the ScrollViewer derives LargeChange from PageScrollSize");
+	}
+
 	[AvaloniaTest]
 	public void ScrollBar_Page_Down_Scrolls_One_Viewport()
 	{

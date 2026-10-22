@@ -66,7 +66,18 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		Size ILogicalScrollable.PageScrollSize => Inner.Viewport;
+		Size ILogicalScrollable.PageScrollSize {
+			get {
+				var viewport = Inner.Viewport;
+				if (SystemScrollSettings.IsWindows)
+					return viewport;
+				// AppKit (NSScrollView.pageScroll) and GTK (page_increment = 0.9 page) keep part of the
+				// previous page visible after a page scroll, and the macOS HIG suggests one line of
+				// overlap. Windows pages by the full viewport, as WPF did.
+				double overlap = TextView.DefaultLineHeight;
+				return new Size(Math.Max(0, viewport.Width - overlap), Math.Max(0, viewport.Height - overlap));
+			}
+		}
 
 		bool ILogicalScrollable.IsLogicalScrollEnabled => Inner.IsLogicalScrollEnabled;
 		Size IScrollable.Extent => Inner.Extent;
