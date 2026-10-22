@@ -27,7 +27,6 @@ using Avalonia.Headless.NUnit;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 
 using NUnit.Framework;
@@ -69,14 +68,8 @@ public class RunInNewTabTests
 		dock.Documents!.VisibleDockables!.OfType<ContentTabPage>().Count()
 			.Should().BeGreaterThan(tabsBefore, "the long op opens its own tab");
 
-		// Navigate while the op is running: select a node -> the preview tab decompiles. A C#
-		// namespace node decompiles to just its "// Some.Name.Space" comment line, which keeps
-		// this inside the headless decompile-wait budget on slow CI runners (a full type decompile
-		// would not).
-		var navNode = vm.AssemblyTreeModel.FindNode<NamespaceTreeNode>(
-			TreeNavigation.CoreLibName, "System.Runtime.Versioning");
-		vm.AssemblyTreeModel.SelectNode(navNode);
-		await dock.WaitForDecompiledTextAsync();
+		// Navigate while the op is running: select a node -> the preview tab decompiles.
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		await Waiters.WaitForIdleAsync();
 
 		capturedToken.IsCancellationRequested.Should().BeFalse(

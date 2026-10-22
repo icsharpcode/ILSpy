@@ -167,9 +167,7 @@ public class HelpCommandTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 1);
-		var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		vm.AssemblyTreeModel.SelectNode(node);
-		var content = await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		var (_, content) = await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = new DecompilerTextView { DataContext = content };
 		// Force layout so the templated TextEditor child is realised — the view's
@@ -198,19 +196,15 @@ public class HelpCommandTests
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
 
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var method = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "AsEnumerable");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		vm.AssemblyTreeModel.SelectNode(method);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		var decompilerTab = vm.DockWorkspace.ActiveDecompilerTab!;
 		var methodText = decompilerTab.Text;
 
-		// NavigationHistory collapses entries within 0.5s — wait past the window so opening
-		// About records its own entry instead of replacing the tree-node entry.
-		await Task.Delay(600);
 
 		// Act 1 — open the About page.
 		var registry = AppComposition.Current.GetExport<MainMenuCommandRegistry>();

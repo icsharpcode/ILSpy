@@ -143,16 +143,9 @@ public class MemberReferenceHighlightTests
 	[AvaloniaTest]
 	public async Task Pointer_Click_Respects_Ctrl_Click_Requirement()
 	{
-		// Mirrors ReferenceClickTests.SetupAsync/FindVisibleReference: the System.String
-		// view and its first visible link are the proven coordinate path for pointer
-		// gestures.
-		var (window, vm) = await TestHarness.BootAsync();
-		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.NavigateOnCtrlClick = true;
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		vm.AssemblyTreeModel.SelectNode(stringNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
+		// Mirrors ReferenceClickTests.FindVisibleReference: the first visible link of the
+		// sample view is the proven coordinate path for pointer gestures.
+		var (window, view, tab) = await SetupAsync(navigateOnCtrlClick: true);
 		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 		window.UpdateLayout();
@@ -186,13 +179,7 @@ public class MemberReferenceHighlightTests
 	[AvaloniaTest]
 	public async Task Cursor_Shows_Hand_Only_When_Click_Would_Navigate()
 	{
-		var (window, vm) = await TestHarness.BootAsync();
-		AppComposition.Current.GetExport<SettingsService>().DisplaySettings.NavigateOnCtrlClick = true;
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String");
-		vm.AssemblyTreeModel.SelectNode(stringNode);
-		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		var view = window.GetVisualDescendants().OfType<DecompilerTextView>().First();
+		var (window, view, tab) = await SetupAsync(navigateOnCtrlClick: true);
 		AvaloniaHeadlessPlatform.ForceRenderTimerTick();
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();
 		window.UpdateLayout();

@@ -30,7 +30,6 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Bookmarks;
 using ICSharpCode.ILSpy.Languages;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -44,12 +43,12 @@ public class BookmarkAnchoringTests
 	[AvaloniaTest]
 	public async Task Decompiled_type_offers_both_body_and_token_anchors()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
+		var (_, vm) = await TestHarness.BootAsync();
 		var csharp = AppComposition.Current.GetExport<LanguageService>().Languages.First(l => l.Name == "C#");
 
-		var asm = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var typeSystem = asm!.LoadedAssembly.GetTypeSystemOrNull();
-		var type = typeSystem!.MainModule.TypeDefinitions.First(t => t.FullName == "System.Linq.Enumerable");
+		var asm = await vm.OpenAssemblyAsync(typeof(DecompileSample).Assembly.Location);
+		var typeSystem = asm.GetTypeSystemOrNull();
+		var type = typeSystem!.MainModule.TypeDefinitions.First(t => t.FullName == typeof(DecompileSample).FullName);
 
 		var output = new AvaloniaEditTextOutput();
 		csharp.DecompileType(type, output, new DecompilationOptions(new DecompilerSettings()));

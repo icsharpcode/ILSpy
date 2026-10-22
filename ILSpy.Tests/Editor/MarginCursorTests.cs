@@ -33,7 +33,6 @@ using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Bookmarks;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -55,10 +54,7 @@ public class MarginCursorTests
 
 		// A type (not a single method) so the decompiled body carries foldings and the folding margin
 		// is installed.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(objectNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		var view = await window.WaitForComponent<DecompilerTextView>();
 
 		var margins = view.Editor.TextArea.LeftMargins;
@@ -85,10 +81,7 @@ public class MarginCursorTests
 		var settings = AppComposition.Current.GetExport<SettingsService>().DisplaySettings;
 		settings.ShowLineNumbers = false;
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var objectNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(objectNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		var view = await window.WaitForComponent<DecompilerTextView>();
 
 		settings.ShowLineNumbers = true;

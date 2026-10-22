@@ -46,15 +46,12 @@ public class SwitchListAndDeleteAllTests
 {
 	static async Task GiveTheHistorySomethingToHoldAsync(ViewModels.MainWindowViewModel vm)
 	{
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var methods = typeNode.Children.OfType<MethodTreeNode>().ToList();
-		vm.AssemblyTreeModel.SelectNode(methods.First(m => m.MethodDefinition.Name == "AsEnumerable"));
+		vm.AssemblyTreeModel.SelectNode(methods.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe)));
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		// NavigationHistory collapses selections inside 0.5s into one entry.
-		await Task.Delay(600);
-		vm.AssemblyTreeModel.SelectNode(methods.First(m => m.MethodDefinition.Name == "Empty"));
+		vm.AssemblyTreeModel.SelectNode(methods.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice)));
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		vm.DockWorkspace.BackHistory.Should().NotBeEmpty("the test needs history to lose");
 	}

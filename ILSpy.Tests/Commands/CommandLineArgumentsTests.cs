@@ -81,10 +81,7 @@ public class CommandLineArgumentsTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		vm.DockWorkspace.ActiveDecompilerTab.Should().NotBeNull("the report's preferred sink must exist");
 
 		var args = CommandLineArguments.Create(new[] { "--navigateto", "M:No.Such.Type.NoSuchMember" });
@@ -137,32 +134,6 @@ public class CommandLineArgumentsTests
 				.OfType<DecompilerTabPageModel>()
 				.Where(t => t.Title == "Navigation")
 			?? [];
-	}
-
-	[AvaloniaTest]
-	public async Task NavigateTo_Type_Arg_Selects_The_Matching_Type_Node()
-	{
-		// `-n|--navigateto T:<TypeId>` navigates to a type-tree-node at startup. The arg's
-		// content is an XML-doc-style ID string ("T:System.Linq.Enumerable") which the
-		// consumer resolves through the loaded assemblies and selects the matching tree node
-		// (which then triggers a decompile).
-
-		// Arrange — boot.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
-
-		var args = CommandLineArguments.Create(new[] { "--navigateto", "T:System.Linq.Enumerable" });
-
-		// Act — apply the args.
-		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
-
-		// Assert — selected item is the System.Linq.Enumerable TypeTreeNode (ToString returns
-		// the ReflectionName; that's a stable identifier independent of the active language).
-		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
-		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(TypeTreeNode));
-		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be("System.Linq.Enumerable");
 	}
 
 	[AvaloniaTest]
@@ -288,14 +259,18 @@ public class CommandLineArgumentsTests
 			Path.GetTempPath(), "ILSpyMissing_" + Guid.NewGuid().ToString("N"), "gone.dll");
 		vm.AssemblyTreeModel.AssemblyList!.OpenAssembly(missingPath);
 
-		var args = CommandLineArguments.Create(new[] { "--navigateto", "T:System.Linq.Enumerable" });
+		string path = typeof(DecompileSample).Assembly.Location;
+		var args = CommandLineArguments.Create(new[] { path, "--navigateto", "T:" + typeof(DecompileSample).FullName });
 
 		// Act — applying the args must complete without throwing despite the missing entry.
 		await vm.AssemblyTreeModel.HandleCommandLineArgumentsAsync(args);
 
-		// Assert — the missing assembly was skipped and the present target still resolved.
+		// Assert — the missing assembly was skipped and the present target still resolved to
+		// its TypeTreeNode (ToString returns the ReflectionName; that's a stable identifier
+		// independent of the active language).
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeNull();
-		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be("System.Linq.Enumerable");
+		vm.AssemblyTreeModel.SelectedItem!.GetType().Should().Be(typeof(TypeTreeNode));
+		vm.AssemblyTreeModel.SelectedItem!.ToString().Should().Be(typeof(DecompileSample).FullName);
 	}
 }
 

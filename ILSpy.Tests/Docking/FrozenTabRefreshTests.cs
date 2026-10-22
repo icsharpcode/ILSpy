@@ -46,20 +46,19 @@ namespace ICSharpCode.ILSpy.Tests;
 public class FrozenTabRefreshTests
 {
 	/// <summary>
-	/// Boots the app, decompiles Enumerable.Select into the preview tab, freezes it, then
-	/// routes Enumerable.Where into a fresh preview tab. Returns both tab models settled.
+	/// Boots the app, decompiles one sample method into the preview tab, freezes it, then
+	/// routes another sample method into a fresh preview tab. Returns both tab models settled.
 	/// </summary>
 	static async Task<(DecompilerTabPageModel Frozen, DecompilerTabPageModel Preview, MainWindowViewModel Vm)> BootWithFrozenAndPreviewTabsAsync()
 	{
-		var (_, vm) = await TestHarness.BootAsync(3);
+		var (_, vm) = await TestHarness.BootAsync();
 
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var selectNode = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Select" && m.MethodDefinition.Parameters.Count == 2);
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var whereNode = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Where" && m.MethodDefinition.Parameters.Count == 2);
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 
 		vm.AssemblyTreeModel.SelectNode(selectNode);
 		vm.DockWorkspace.SettleSelection();

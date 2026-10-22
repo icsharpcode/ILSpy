@@ -40,14 +40,13 @@ public class AssemblyListResetTests
 {
 	static async Task<MethodTreeNode> DecompileAMethodAsync(ViewModels.MainWindowViewModel vm)
 	{
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var method = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		vm.AssemblyTreeModel.SelectNode(method);
 		var tab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		tab.Text.Should().Contain("AsEnumerable", "the pane must hold something before it can go stale");
+		tab.Text.Should().Contain(nameof(DecompileSample.Describe), "the pane must hold something before it can go stale");
 		return method;
 	}
 
@@ -70,7 +69,7 @@ public class AssemblyListResetTests
 		vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Should().BeEmpty();
 		var tab = vm.DockWorkspace.ActiveDecompilerTab;
 		if (tab != null)
-			tab.Text.Should().NotContain("AsEnumerable", "the assembly it came from is gone");
+			tab.Text.Should().NotContain(nameof(DecompileSample.Describe), "the assembly it came from is gone");
 	}
 
 	[AvaloniaTest]
@@ -82,17 +81,14 @@ public class AssemblyListResetTests
 
 		// Arrange - boot, decompile two members so there is a back entry to lose.
 		var (_, vm) = await TestHarness.BootAsync(3);
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var first = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var second = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 		vm.AssemblyTreeModel.SelectNode(first);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		// NavigationHistory collapses selections inside 0.5s into one entry.
-		await Task.Delay(600);
 		vm.AssemblyTreeModel.SelectNode(second);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, second));
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();

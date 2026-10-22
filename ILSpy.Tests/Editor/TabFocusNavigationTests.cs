@@ -31,7 +31,6 @@ using AvaloniaEdit.Editing;
 using AwesomeAssertions;
 
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -48,9 +47,7 @@ public class TabFocusNavigationTests
 	static async Task<(ICSharpCode.ILSpy.Views.MainWindow Window, TextArea TextArea)> FocusEditorAsync()
 	{
 		var (window, vm) = await TestHarness.BootAsync();
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		vm.AssemblyTreeModel.SelectNode(vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.String"));
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 		var textArea = window.GetVisualDescendants().OfType<DecompilerTextView>().First().Editor.TextArea;
 		textArea.Focus();
 		Avalonia.Threading.Dispatcher.UIThread.RunJobs();

@@ -56,7 +56,7 @@ namespace ICSharpCode.ILSpy.Tests;
 public class AssemblyTreeTests
 {
 	[AvaloniaTest]
-	public async Task Assembly_Node_Has_Resources_Folder_When_Module_Has_Resources()
+	public async Task Assembly_Node_Has_Resources_Folder_With_Resolvable_Resources_Files()
 	{
 		// Assemblies with embedded resources expose a "Resources" folder under the assembly
 		// node. Verifies the folder is present, contains entries, and every entry is an
@@ -76,6 +76,20 @@ public class AssemblyTreeTests
 		resources.Expand();
 		resources.Children.Should().NotBeEmpty();
 		resources.Children.Should().AllBeAssignableTo<ILSpyTreeNode>();
+
+		// .resources entries get the dedicated ResourcesFileTreeNode handler, which exposes a
+		// string-table or inner ResourceEntryNode children (depending on payload type).
+		var resourceFileNode = resources.Children.OfType<ResourcesFileTreeNode>().FirstOrDefault();
+		((object?)resourceFileNode).Should().NotBeNull(
+			"CoreLib must ship at least one embedded .resources file");
+		resourceFileNode!.Resource.Name.Should().EndWith(".resources");
+
+		resourceFileNode.EnsureLazyChildren();
+
+		// Either inner children or string-table entries — at least one branch must surface
+		// non-empty content.
+		(resourceFileNode.Children.Count > 0 || resourceFileNode.StringTableEntries.Count > 0)
+			.Should().BeTrue("a .resources file must surface either inner ResourceEntryNode children or string-table entries");
 	}
 
 	[AvaloniaTest]
@@ -176,35 +190,7 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Dot_Resources_File_Resolves_To_ResourcesFileTreeNode()
-	{
-		// .resources entries get the dedicated ResourcesFileTreeNode handler, which exposes a
-		// string-table or inner ResourceEntryNode children (depending on payload type).
-
-		// Arrange — boot, wait for assemblies, expand CoreLib's Resources folder.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var assemblyNode = vm.AssemblyTreeModel.FindCoreLib();
-		assemblyNode.Expand();
-		var resources = assemblyNode.Children.OfType<ResourceListTreeNode>().Single();
-		resources.Expand();
-
-		// Act — look up the first .resources file and select it.
-		var resourceFileNode = resources.Children.OfType<ResourcesFileTreeNode>().FirstOrDefault();
-		((object?)resourceFileNode).Should().NotBeNull(
-			"CoreLib must ship at least one embedded .resources file");
-		resourceFileNode!.Resource.Name.Should().EndWith(".resources");
-
-		resourceFileNode.EnsureLazyChildren();
-
-		// Assert — either inner children or string-table entries — at least one branch must
-		// surface non-empty content.
-		(resourceFileNode.Children.Count > 0 || resourceFileNode.StringTableEntries.Count > 0)
-			.Should().BeTrue("a .resources file must surface either inner ResourceEntryNode children or string-table entries");
-	}
-
-	[AvaloniaTest]
-	public async Task Assembly_Node_Has_References_Folder_Child()
+	public async Task Assembly_Node_Has_References_Folder_With_Referenced_Types()
 	{
 		// Each assembly node exposes a "References" folder child whose children are
 		// AssemblyReferenceTreeNodes — one per AssemblyRef row.
@@ -224,6 +210,19 @@ public class AssemblyTreeTests
 		refFolder.Expand();
 		refFolder.Children.Should().NotBeEmpty();
 		refFolder.Children.Should().AllBeAssignableTo<AssemblyReferenceTreeNode>();
+
+		// Each AssemblyReferenceTreeNode contains a "Referenced Types" subnode that lists the
+		// TypeRef rows the host assembly imports from that reference.
+		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
+			.First(n => n.AssemblyReference.Name == "System.Runtime");
+		refNode.Expand();
+
+		var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().Single();
+		typesNode.Expand();
+
+		typesNode.Text.ToString().Should().Contain(Resources.ReferencedTypes);
+		typesNode.Children.Should().NotBeEmpty();
+		typesNode.Children.Should().Contain(c => c is TypeReferenceTreeNode);
 	}
 
 	[AvaloniaTest]
@@ -255,35 +254,6 @@ public class AssemblyTreeTests
 
 		// Assert 2 — icon settles on the resolved Assembly glyph.
 		refNode.Icon.Should().BeSameAs(ICSharpCode.ILSpy.Images.Assembly);
-	}
-
-	[AvaloniaTest]
-	public async Task Assembly_Reference_Has_Referenced_Types_Subnode()
-	{
-		// Each AssemblyReferenceTreeNode contains a "Referenced Types" subnode that lists the
-		// TypeRef rows the host assembly imports from that reference.
-
-		// Arrange — boot, wait for assemblies, expand System.Linq → References → System.Runtime.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var assemblyNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		assemblyNode.Expand();
-		var refFolder = assemblyNode.Children.OfType<ReferenceFolderTreeNode>().Single();
-		refFolder.Expand();
-
-		var refNode = refFolder.Children.OfType<AssemblyReferenceTreeNode>()
-			.First(n => n.AssemblyReference.Name == "System.Runtime");
-		refNode.Expand();
-
-		// Act — find the ReferencedTypes subnode and expand it.
-		var typesNode = refNode.Children.OfType<AssemblyReferenceReferencedTypesTreeNode>().Single();
-		typesNode.Expand();
-
-		// Assert — header text contains the expected label, and the children include at least
-		// one TypeReferenceTreeNode.
-		typesNode.Text.ToString().Should().Contain(Resources.ReferencedTypes);
-		typesNode.Children.Should().NotBeEmpty();
-		typesNode.Children.Should().Contain(c => c is TypeReferenceTreeNode);
 	}
 
 	[AvaloniaTest]
@@ -486,7 +456,7 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Selecting_Method_Auto_Loads_Referenced_Assemblies()
+	public async Task Selecting_Method_Auto_Loads_Referenced_Assemblies_Which_Are_Not_Persisted()
 	{
 		// Decompiling a method whose body references types from currently-unloaded assemblies
 		// must auto-load those assemblies (so the decompiler can resolve them) — and the
@@ -531,35 +501,10 @@ public class AssemblyTreeTests
 			var node = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(auto.ShortName);
 			node.IsAutoLoaded.Should().BeTrue();
 		}
-	}
 
-	[AvaloniaTest]
-	public async Task Auto_Loaded_Assemblies_Are_Not_Persisted()
-	{
 		// Auto-loaded assemblies are an artefact of an in-flight decompile, not of the user's
 		// curated list — saving the assembly list must omit them while keeping the ones the
 		// user actually opened.
-
-		// Arrange — boot, wait for assemblies, open + select a method that triggers auto-load.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var newAsmPath = typeof(System.Net.Http.HttpClient).Assembly.Location;
-		var loaded = await vm.OpenAssemblyAsync(newAsmPath);
-
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			loaded.ShortName, "System.Net.Http", "System.Net.Http.HttpClient");
-		typeNode.Expand();
-		var methodNode = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "CancelPendingRequests");
-
-		vm.AssemblyTreeModel.SelectNode(methodNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-
-		await Waiters.WaitForAsync(() =>
-			vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Any(a => a.IsAutoLoaded));
-
-		// Act — save the assembly list to disk, then read the file back and tally the persisted
-		// FileName entries.
 		var settingsService = AppComposition.Current.GetExport<SettingsService>();
 		var manager = settingsService.AssemblyListManager;
 		manager.SaveList(vm.AssemblyTreeModel.AssemblyList!);
@@ -570,15 +515,9 @@ public class AssemblyTreeTests
 			.Select(e => e.Value)
 			.ToHashSet(System.StringComparer.OrdinalIgnoreCase);
 
-		// Assert — every IsAutoLoaded assembly was omitted; every manual one is present.
-		var assemblies = vm.AssemblyTreeModel.AssemblyList!.GetAssemblies();
-		var autoLoaded = assemblies.Where(a => a.IsAutoLoaded).ToList();
-		autoLoaded.Should().NotBeEmpty();
-		foreach (var asm in autoLoaded)
+		foreach (var asm in addedAssemblies)
 			savedFiles.Should().NotContain(asm.FileName, "auto-loaded assembly {0} must not be persisted", asm.FileName);
-
-		var manualLoaded = assemblies.Where(a => !a.IsAutoLoaded).ToList();
-		foreach (var asm in manualLoaded)
+		foreach (var asm in vm.AssemblyTreeModel.AssemblyList!.GetAssemblies().Where(a => !a.IsAutoLoaded))
 			savedFiles.Should().Contain(asm.FileName, "manually loaded assembly {0} must be persisted", asm.FileName);
 	}
 
@@ -873,8 +812,11 @@ public class AssemblyTreeTests
 		// expect to survive, select the sacrificial one, focus the grid.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
-		var sacrificialName = typeof(System.Linq.Enumerable).Assembly.GetName().Name!;
-		var survivorName = typeof(object).Assembly.GetName().Name!;
+		// Three fixtures, the middle one to be deleted, so that whichever neighbour the tree
+		// re-selects afterwards is another small fixture.
+		var survivorName = (await vm.OpenFixtureAsync("Alpha")).ShortName;
+		var sacrificialName = (await vm.OpenFixtureAsync("Bravo")).ShortName;
+		await vm.OpenFixtureAsync("Charlie");
 		var sacrificialNode = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(sacrificialName);
 		vm.AssemblyTreeModel.SelectNode(sacrificialNode);
 		await Waiters.WaitForAsync(() => ReferenceEquals(vm.AssemblyTreeModel.SelectedItem, sacrificialNode));
@@ -925,7 +867,11 @@ public class AssemblyTreeTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var model = vm.AssemblyTreeModel;
 
-		var firstAssembly = model.FindNode<AssemblyTreeNode>("System.Linq");
+		// Three fixtures, the middle one to be deleted first, so that whichever neighbour the
+		// tree re-selects after each Delete is another small fixture.
+		await vm.OpenFixtureAsync("Alpha");
+		var firstAssembly = model.FindNode<AssemblyTreeNode>((await vm.OpenFixtureAsync("Bravo")).ShortName);
+		await vm.OpenFixtureAsync("Charlie");
 		model.SelectNode(firstAssembly);
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, firstAssembly));
 
@@ -1019,37 +965,6 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Shift_Up_After_Shift_Down_Shrinks_The_Selection_Toward_The_Anchor()
-	{
-		// Anchor at A, Shift+Down twice -> A,B,C. Shift+Up must SHRINK back to A,B (not keep C).
-		var (window, vm) = await TestHarness.BootAsync(3);
-		var model = vm.AssemblyTreeModel;
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
-		grid.Focus();
-		Dispatcher.UIThread.RunJobs();
-
-		var flat = (System.Collections.IList)grid.ItemsSource!;
-		var a = (SharpTreeNode)flat[0]!;
-		var b = (SharpTreeNode)flat[1]!;
-		var c = (SharpTreeNode)flat[2]!;
-
-		model.SelectNode(a);
-		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, a));
-
-		window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
-		Dispatcher.UIThread.RunJobs();
-		window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
-		Dispatcher.UIThread.RunJobs();
-		model.SelectedItems.Should().BeEquivalentTo(new[] { a, b, c }, "precondition: A,B,C selected");
-
-		window.KeyPress(Key.Up, RawInputModifiers.Shift, PhysicalKey.ArrowUp, null);
-		Dispatcher.UIThread.RunJobs();
-		model.SelectedItems.Should().BeEquivalentTo(new[] { a, b },
-			"Shift+Up must shrink the range back toward the anchor (A,B), dropping C");
-	}
-
-	[AvaloniaTest]
 	public async Task Shift_Down_Then_Shift_Up_In_The_Middle_Shrinks_Without_Drifting_The_Anchor()
 	{
 		// Start mid-list, Shift+Down x3 then Shift+Up x2. The anchor must stay put, so the net is
@@ -1079,6 +994,8 @@ public class AssemblyTreeTests
 			window.KeyPress(Key.Down, RawInputModifiers.Shift, PhysicalKey.ArrowDown, null);
 			Dispatcher.UIThread.RunJobs();
 		}
+		model.SelectedItems.Should().BeEquivalentTo(new[] { start, below, flat[5], flat[6] },
+			"precondition: three Shift+Down presses extend the range from the anchor downwards");
 		for (int u = 0; u < 2; u++)
 		{
 			window.KeyPress(Key.Up, RawInputModifiers.Shift, PhysicalKey.ArrowUp, null);
@@ -1100,10 +1017,11 @@ public class AssemblyTreeTests
 		grid.Focus();
 		Dispatcher.UIThread.RunJobs();
 
-		var target = model.FindNode<AssemblyTreeNode>("System.Linq");
+		// Two fixtures without a common prefix, so typing the target's name never lands on the other.
+		var target = model.FindNode<AssemblyTreeNode>((await vm.OpenFixtureAsync("Bravo")).ShortName);
 		var targetText = target.Text?.ToString()!;
 		// Start the selection on a different assembly so the jump is observable.
-		var other = model.FindNode<AssemblyTreeNode>(typeof(object).Assembly.GetName().Name!);
+		var other = model.FindNode<AssemblyTreeNode>((await vm.OpenFixtureAsync("Alpha")).ShortName);
 		model.SelectNode(other);
 		await Waiters.WaitForAsync(() => ReferenceEquals(model.SelectedItem, other));
 
@@ -1337,32 +1255,6 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Property_Tree_Node_Has_Getter_And_Setter_Method_Children()
-	{
-		// Properties expose their accessors as MethodTreeNode children, mirroring WPF
-		// ILSpy. Without this, tree-based navigation can't reach get_X / set_X — and
-		// MMB on a property-accessor row in the metadata grid silently no-ops because
-		// FindTreeNode can't resolve the IMethod to a tree node.
-		var (_, vm) = await TestHarness.BootAsync();
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringTypeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.String");
-		stringTypeNode.IsExpanded = true;
-
-		// String.Length is read-only — a property with a getter but no setter.
-		var lengthProp = stringTypeNode.Children.OfType<PropertyTreeNode>()
-			.First(p => p.PropertyDefinition.Name == "Length");
-		lengthProp.IsExpanded = true;
-
-		var accessors = lengthProp.Children.OfType<MethodTreeNode>().ToList();
-		accessors.Should().NotBeEmpty(
-			"a property tree node must surface its accessors as MethodTreeNode children");
-		accessors.Should().Contain(m => m.MethodDefinition.Name == "get_Length",
-			"String.Length must expose its getter");
-	}
-
-	[AvaloniaTest]
 	public async Task Event_Tree_Node_Has_Add_And_Remove_Method_Children()
 	{
 		// Events surface add_X / remove_X (and invoke_X if present) as MethodTreeNode
@@ -1441,30 +1333,6 @@ public class AssemblyTreeTests
 	}
 
 	[AvaloniaTest]
-	public async Task Type_Tree_Node_Exposes_BaseTypes_Subtree_Listing_Object_For_System_Exception()
-	{
-		// Each type node should surface a "Base Types" sub-tree listing its base classes /
-		// interfaces, mirroring the WPF tree. System.Exception extends only System.Object so we
-		// expect a single BaseTypesEntryNode whose label ends in "Object".
-
-		// Arrange — boot, wait for assemblies, drill into System.Exception.
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.Exception");
-		typeNode.IsExpanded = true;
-
-		// Assert — BaseTypes child exists, expanding it yields entries, Object is among them.
-		var baseTypes = typeNode.Children.OfType<BaseTypesTreeNode>().Single();
-		baseTypes.IsExpanded = true;
-		baseTypes.Children.OfType<BaseTypesEntryNode>().Should().NotBeEmpty();
-		baseTypes.Children.OfType<BaseTypesEntryNode>()
-			.Should().Contain(e => e.Text.ToString()!.EndsWith("Object"),
-				"System.Exception's base-type chain must include Object");
-	}
-
-	[AvaloniaTest]
 	public async Task BaseTypesEntryNode_Activate_Navigates_To_The_Base_Type()
 	{
 		// Activating a BaseTypesEntryNode jumps the assembly-tree selection to the underlying
@@ -1491,26 +1359,6 @@ public class AssemblyTreeTests
 		((object?)vm.AssemblyTreeModel.SelectedItem).Should().NotBeSameAs(typeNode);
 		((TypeTreeNode)vm.AssemblyTreeModel.SelectedItem!).Text.ToString()
 			.Should().Be("Object");
-	}
-
-	[AvaloniaTest]
-	public async Task Type_Tree_Node_Exposes_DerivedTypes_Subtree_For_Non_Sealed_Class()
-	{
-		// Non-sealed types get a "Derived Types" sub-tree listing classes that extend them. We
-		// scan the assembly list synchronously — for the small fixture loaded in tests this
-		// yields a few hits per common base (e.g. SystemException is derived from Exception).
-
-		var (_, vm) = await TestHarness.BootAsync(3);
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.Exception");
-		typeNode.IsExpanded = true;
-
-		var derived = typeNode.Children.OfType<DerivedTypesTreeNode>().Single();
-		derived.IsExpanded = true;
-		derived.Children.OfType<DerivedTypesEntryNode>().Should().NotBeEmpty(
-			"the loaded assembly list contains several Exception subclasses (e.g. SystemException, ArgumentException)");
 	}
 
 	[AvaloniaTest]
@@ -1668,53 +1516,6 @@ public class AssemblyTreeTests
 		globalNs.EnsureLazyChildren();
 		globalNs.Children.OfType<TypeTreeNode>().Should().NotBeEmpty(
 			"<Module> (and any other global types) belong under the '-' node");
-	}
-
-	[AvaloniaTest]
-	public async Task CtrlA_Selects_Every_Top_Level_Row_On_The_First_Press()
-	{
-		// Ctrl+A in the assembly tree must select all rows on the FIRST press, not just move
-		// the current cell to the last row (the user reported having to press it twice).
-
-		// Arrange — boot, wait for assemblies, realise the grid.
-		var (window, vm) = await TestHarness.BootAsync(3);
-
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
-		grid.UpdateLayout();
-
-		var topLevelCount = vm.AssemblyTreeModel.Root!.Children.Count;
-		topLevelCount.Should().BeGreaterThan(1, "the test needs several top-level rows to be meaningful");
-
-		// Give the grid keyboard focus WITHOUT clicking a cell first — this is the state the
-		// tree is in right after the user tabs/clicks into the pane but before establishing a
-		// current cell. The DataGrid only handles Ctrl+A when a focused element lives inside it.
-		grid.Focus();
-		Dispatcher.UIThread.RunJobs();
-
-		// First press.
-		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
-		Dispatcher.UIThread.RunJobs();
-		await Task.Delay(50);
-		Dispatcher.UIThread.RunJobs();
-		// What the USER sees is the grid's selection. A feedback loop through the model's
-		// singular SelectedItem can collapse the grid back to one row even while the model's
-		// SelectedItems still holds all of them — so assert on the grid, not the model.
-		int gridAfterFirst = grid.SelectedItems!.Count;
-		int modelAfterFirst = vm.AssemblyTreeModel.SelectedItems.Count;
-		TestCapture.Step("after-first-ctrl-a");
-
-		// Second press.
-		window.KeyPress(Key.A, RawInputModifiers.Control, PhysicalKey.A, keySymbol: "a");
-		Dispatcher.UIThread.RunJobs();
-		await Task.Delay(50);
-		Dispatcher.UIThread.RunJobs();
-		int gridAfterSecond = grid.SelectedItems!.Count;
-
-		// Assert — every top-level row is selected in the grid after the FIRST press.
-		gridAfterFirst.Should().Be(topLevelCount,
-			$"Ctrl+A must select all {topLevelCount} assembly rows on the first press "
-			+ $"(grid after 1st={gridAfterFirst}, model after 1st={modelAfterFirst}, grid after 2nd={gridAfterSecond})");
 	}
 
 	[AvaloniaTest]

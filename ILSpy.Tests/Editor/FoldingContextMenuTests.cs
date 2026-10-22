@@ -29,7 +29,6 @@ using ICSharpCode.ILSpy.Properties;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.TextView;
-using ICSharpCode.ILSpy.TreeNodes;
 
 using NUnit.Framework;
 
@@ -45,13 +44,8 @@ public class FoldingContextMenuTests
 		// them all, then expand them all on a second invocation -- via DecompilerTextView.ToggleAllFoldings.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
-		// A small CoreLib type still yields brace foldings (one per method body) but decompiles fast
-		// enough for the headless 15s wait on slow CI runners; a full System.Linq.Enumerable decompile
-		// does not.
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		// The sample type yields brace foldings (one per method body) and decompiles quickly.
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -90,10 +84,7 @@ public class FoldingContextMenuTests
 		// offset via TextViewContext.TextLocation; reading the caret instead would toggle the wrong block.
 		var (window, vm) = await TestHarness.BootAsync(3);
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();

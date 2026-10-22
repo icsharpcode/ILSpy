@@ -50,20 +50,20 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class DecompileInNewViewTests
 {
-	[AvaloniaTest]
-	public async Task DecompileInNewView_Entry_Is_Registered()
+	/// <summary>
+	/// Opens three small fixture assemblies and returns their top-level tree nodes, so the row
+	/// tests below select and open rows whose decompilation is a handful of types rather than a
+	/// framework assembly's.
+	/// </summary>
+	static async Task<AssemblyTreeNode[]> OpenFixtureRowsAsync(MainWindowViewModel vm)
 	{
-		// "Decompile in new tab" is a context-menu entry sitting alongside Remove on every
-		// node that decompiles. Verifies the [ExportContextMenuEntry] is discovered.
-
-		// Arrange — boot.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-
-		// Assert — registry contains an entry whose header is the DecompileToNewPanel resource.
-		registry.Entries.Should().Contain(
-			e => e.Metadata.Header == nameof(Resources.DecompileToNewPanel));
+		var nodes = new AssemblyTreeNode[3];
+		foreach (var (name, i) in new[] { "Alpha", "Bravo", "Charlie" }.Select((n, i) => (n, i)))
+		{
+			var loaded = await vm.OpenFixtureAsync(name);
+			nodes[i] = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(loaded.ShortName);
+		}
+		return nodes;
 	}
 
 	// audit (2026-05-12): converted 📦 → 🧪. Was calling `entry.IsVisible(synthetic ctx)`
@@ -117,18 +117,17 @@ public class DecompileInNewViewTests
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
 		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			"System.Linq", "System.Linq", "System.Linq.Enumerable");
+		var typeNode = await vm.OpenSampleAsync(typeof(DecompileSample));
 		typeNode.IsExpanded = true;
 		var firstMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.Single(m => m.MethodDefinition.Name == "AsEnumerable");
+			.Single(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
 		var secondMethod = typeNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Empty");
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
 
 		// A is the active document: select firstMethod and decompile it into the preview tab.
 		vm.AssemblyTreeModel.SelectNode(firstMethod);
 		var firstTab = await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		firstTab.Text.Should().Contain("AsEnumerable");
+		firstTab.Text.Should().Contain(nameof(DecompileSample.Describe));
 		window.Capture("first-method-active");
 
 		var pane = await window.WaitForComponent<AssemblyListPane>();
@@ -149,10 +148,10 @@ public class DecompileInNewViewTests
 		// The new tab shows B...
 		ReferenceEquals(newTab, firstTab).Should().BeFalse(
 			"a fresh decompiler tab must be created instead of reusing the existing one");
-		newTab.Text.Should().Contain("Empty");
+		newTab.Text.Should().Contain(nameof(DecompileSample.Twice));
 		// ...the original tab still shows A (it was NOT yanked to B by the right-click — this is
 		// the whole point: you keep A and gain B, instead of ending up with B twice)...
-		firstTab.Text.Should().Contain("AsEnumerable");
+		firstTab.Text.Should().Contain(nameof(DecompileSample.Describe));
 		// ...and exactly one tab was added (A + B), not two copies of B.
 		documents.VisibleDockables!.Count.Should().Be(initialCount + 1);
 		window.Capture("a-kept-b-opened");
@@ -174,8 +173,9 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+		var rows = await OpenFixtureRowsAsync(vm);
+		var nodeA = rows[0];
+		var nodeB = rows[1];
 
 		// Make A the active document/selection.
 		vm.AssemblyTreeModel.SelectNode(nodeA);
@@ -185,7 +185,7 @@ public class DecompileInNewViewTests
 
 		var rowB = grid.GetVisualDescendants().OfType<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeViewItem>()
 			.FirstOrDefault(r => RowNodeEquals(r, nodeB));
-		rowB.Should().NotBeNull("the top-level CoreLib row must be realised");
+		rowB.Should().NotBeNull("the top-level row of the second fixture must be realised");
 
 		// Suppressing the right-press must not also suppress the context menu — it still opens
 		// from ContextRequested (raised on release). Watch for it.
@@ -220,8 +220,7 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
-		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows to click");
+		var assemblies = await OpenFixtureRowsAsync(vm);
 		var nodeA = assemblies[0];
 		var nodeB = assemblies[1];
 		var nodeC = assemblies[2];
@@ -281,8 +280,9 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+		var rows = await OpenFixtureRowsAsync(vm);
+		var nodeA = rows[0];
+		var nodeB = rows[1];
 		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await Waiters.WaitForIdleAsync();
 
@@ -315,8 +315,9 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var nodeA = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>("System.Linq");
-		var nodeB = vm.AssemblyTreeModel.FindNode<AssemblyTreeNode>(TreeNavigation.CoreLibName);
+		var rows = await OpenFixtureRowsAsync(vm);
+		var nodeA = rows[0];
+		var nodeB = rows[1];
 
 		vm.AssemblyTreeModel.SelectNode(nodeA);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
@@ -337,13 +338,14 @@ public class DecompileInNewViewTests
 	}
 
 	[AvaloniaTest]
-	public async Task Activating_A_Single_Node_Tab_Syncs_The_Tree_After_A_Multi_Node_Selection()
+	public async Task Activating_Tabs_After_A_Multi_Node_Selection_Syncs_The_Tree_Both_Ways()
 	{
 		// Regression: once the tree has held a multi-selection (e.g. a tab decompiled from
 		// several nodes), activating a single-node tab must still pull the tree selection over.
 		// The SelectedItem setter replaces the collection via Clear()+Add(); for the count>1 case
 		// that exposed a transient empty selection, whose grid sync deferred its done-flag and
 		// then suppressed the sync for the real value -- so the tree stopped following the tab.
+		// Re-activating the multi-node tab afterwards must bring both original nodes back.
 		var window = AppComposition.Current.GetExport<MainWindow>();
 		window.Show();
 		var vm = (MainWindowViewModel)window.DataContext!;
@@ -351,19 +353,19 @@ public class DecompileInNewViewTests
 		var pane = await window.WaitForComponent<AssemblyListPane>();
 		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
 
-		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
-		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
+		var assemblies = await OpenFixtureRowsAsync(vm);
 		var nodeA = assemblies[0];
 		var nodeB = assemblies[1];
 		var nodeC = assemblies[2];
 
-		// Hold a multi-selection (A + B), as a multi-node decompile tab would.
+		// Hold a multi-selection (A + B): the active (preview) tab decompiles both.
 		vm.AssemblyTreeModel.SelectedItems.Clear();
 		vm.AssemblyTreeModel.SelectedItems.Add(nodeA);
 		vm.AssemblyTreeModel.SelectedItems.Add(nodeB);
 		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		await Waiters.WaitForIdleAsync();
 		vm.AssemblyTreeModel.SelectedItems.Count.Should().Be(2, "precondition: a multi-selection is held");
+		var multiTab = (ContentTabPage)((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!.ActiveDockable!;
 
 		// Open C in a new tab -> activates it -> the tree must follow to C.
 		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
@@ -378,49 +380,16 @@ public class DecompileInNewViewTests
 			"activating the single-node tab must collapse the multi-selection to that one node");
 		ReferenceEquals(GridSelectedNode(grid), nodeC).Should().BeTrue(
 			"the grid's visual selection must follow even after a prior multi-selection");
-	}
 
-	[AvaloniaTest]
-	public async Task Activating_A_Multi_Node_Tab_Restores_Its_Multi_Selection_In_The_Tree()
-	{
-		// A tab decompiled from several nodes carries no single SourceNode, so activating it has
-		// to restore the WHOLE set in the tree -- not nothing, and not just one. Scenario: select
-		// two nodes (multi-node preview tab), open a third in a new tab, then re-activate the
-		// multi-node tab; the tree selection must come back to both original nodes.
-		var window = AppComposition.Current.GetExport<MainWindow>();
-		window.Show();
-		var vm = (MainWindowViewModel)window.DataContext!;
-		await vm.AssemblyTreeModel.WaitForAssembliesAsync(minimumCount: 3);
-		var pane = await window.WaitForComponent<AssemblyListPane>();
-		var grid = await pane.WaitForComponent<ICSharpCode.ILSpy.Controls.TreeView.SharpTreeView>();
+		// A tab decompiled from several nodes carries no single SourceNode, so re-activating it
+		// has to restore the WHOLE set in the tree -- not nothing, and not just one.
 		var documents = ((ILSpyDockFactory)vm.DockWorkspace.Factory).Documents!;
-
-		var assemblies = vm.AssemblyTreeModel.Root!.Children.OfType<AssemblyTreeNode>().Take(3).ToArray();
-		assemblies.Length.Should().BeGreaterThanOrEqualTo(3, "need three top-level rows");
-		var nodeA = assemblies[0];
-		var nodeB = assemblies[1];
-		var nodeC = assemblies[2];
-
-		// 1) Multi-select A + B -> the active (preview) tab decompiles both.
-		vm.AssemblyTreeModel.SelectedItems.Clear();
-		vm.AssemblyTreeModel.SelectedItems.Add(nodeA);
-		vm.AssemblyTreeModel.SelectedItems.Add(nodeB);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		var multiTab = (ContentTabPage)documents.ActiveDockable!;
-
-		// 2) Open C in a new (single-node) tab -> it becomes active, tree -> C.
-		var registry = AppComposition.Current.GetExport<ContextMenuEntryRegistry>();
-		var menu = pane.BuildContextMenuForCurrentState(registry.Entries, rightClickedNode: nodeC);
-		menu!.ClickItem(Resources.DecompileToNewPanel);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
 		ReferenceEquals(multiTab, documents.ActiveDockable).Should().BeFalse(
 			"precondition: the new single-node tab is active, not the multi-node one");
-
-		// 3) Re-activate the multi-node tab.
 		vm.DockWorkspace.Factory.SetActiveDockable(multiTab);
 		await Waiters.WaitForIdleAsync();
 
-		// 4) The tree selection must contain BOTH original nodes again -- in the model...
+		// The tree selection must contain BOTH original nodes again -- in the model...
 		vm.AssemblyTreeModel.SelectedItems.Should().Contain(nodeA)
 			.And.Contain(nodeB);
 		vm.AssemblyTreeModel.SelectedItems.Count.Should().Be(2,

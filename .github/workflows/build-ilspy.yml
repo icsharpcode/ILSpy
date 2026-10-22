@@ -362,12 +362,11 @@ jobs:
         -c Release
         /p:Platform="Any CPU" /m
 
+    # ILSpy.Tests is serial per test host (one headless Avalonia session), so the script runs
+    # it as two concurrent hosts with disjoint filters; two because the heavier shard peaks
+    # at ~3 GB and these runners have 3-4 cores. Each shard writes its own TRX file here.
     - name: Execute UI tests
-      run: >
-        dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj
-        --configuration Release
-        --no-build --report-trx
-        --results-directory test-results
+      run: ./runuitests.ps1 -Shards 2 -Configuration Release -ResultsDirectory test-results
 
     - name: Execute decompiler tests
       id: decompiler-tests

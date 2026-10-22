@@ -45,16 +45,13 @@ namespace ICSharpCode.ILSpy.Tests.Bookmarks;
 public class BookmarkGutterTests
 {
 	[AvaloniaTest]
-	public async Task Clicking_Bookmark_Gutter_Toggles_The_Visible_Line()
+	public async Task Gutter_Clicks_Toggle_Bookmarks_And_A_Removed_Line_Hides_Its_Hover_Preview_Until_The_Pointer_Leaves()
 	{
-		var (window, vm) = await TestHarness.BootAsync(3);
+		var (window, vm) = await TestHarness.BootAsync();
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
+		await vm.ShowSampleAsync(typeof(DecompileSample));
 
 		var view = await window.WaitForComponent<DecompilerTextView>();
 		await Waiters.WaitForIdleAsync();
@@ -62,90 +59,6 @@ public class BookmarkGutterTests
 
 		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
 		margin.Bounds.Width.Should().BeGreaterThan(0, "the bookmark gutter must reserve hit-testable space");
-
-		var textView = view.Editor.TextArea.TextView;
-		textView.EnsureVisualLines();
-		var visualLine = textView.VisualLines.First(line => view.CanToggleBookmarkAtLine(line.FirstDocumentLine.LineNumber));
-		int documentLine = visualLine.FirstDocumentLine.LineNumber;
-		double y = visualLine.GetTextLineVisualYPosition(visualLine.TextLines[0], VisualYPosition.LineMiddle) - textView.VerticalOffset;
-		y.Should().BeInRange(0, margin.Bounds.Height, "the selected visual line must be inside the gutter bounds");
-		var point = margin.TranslatePoint(new Point(margin.Bounds.Width / 2, y), window);
-		point.Should().NotBeNull("the gutter line coordinate must map into the test window");
-
-		int pressed = 0;
-		margin.AddHandler(InputElement.PointerPressedEvent, (_, _) => pressed++, RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
-
-		window.MouseDown(point!.Value, MouseButton.Left);
-		window.MouseUp(point.Value, MouseButton.Left);
-		Dispatcher.UIThread.RunJobs();
-
-		pressed.Should().BeGreaterThan(0, "the real pointer event must hit the bookmark gutter");
-		manager.Bookmarks.Should().ContainSingle();
-		view.GetLineForBookmark(manager.Bookmarks[0]).Should().Be(documentLine);
-
-		window.MouseDown(point.Value, MouseButton.Left);
-		window.MouseUp(point.Value, MouseButton.Left);
-		Dispatcher.UIThread.RunJobs();
-
-		manager.Bookmarks.Should().BeEmpty();
-	}
-
-	[AvaloniaTest]
-	public async Task RightClicking_Bookmark_Gutter_Does_Not_Toggle()
-	{
-		var (window, vm) = await TestHarness.BootAsync(3);
-		var manager = AppComposition.Current.GetExport<BookmarkManager>();
-		manager.Clear();
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-
-		var view = await window.WaitForComponent<DecompilerTextView>();
-		await Waiters.WaitForIdleAsync();
-		window.UpdateLayout();
-
-		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
-		var textView = view.Editor.TextArea.TextView;
-		textView.EnsureVisualLines();
-		var visualLine = textView.VisualLines.First(line => view.CanToggleBookmarkAtLine(line.FirstDocumentLine.LineNumber));
-		double y = visualLine.GetTextLineVisualYPosition(visualLine.TextLines[0], VisualYPosition.LineMiddle) - textView.VerticalOffset;
-		var point = margin.TranslatePoint(new Point(margin.Bounds.Width / 2, y), window);
-		point.Should().NotBeNull("the gutter line coordinate must map into the test window");
-
-		window.MouseDown(point!.Value, MouseButton.Right);
-		window.MouseUp(point.Value, MouseButton.Right);
-		Dispatcher.UIThread.RunJobs();
-
-		manager.Bookmarks.Should().BeEmpty("a right-click in the gutter must not toggle a bookmark");
-
-		// The same coordinate still toggles on a left-click, proving the gesture is button-gated
-		// rather than disabled at that line.
-		window.MouseDown(point.Value, MouseButton.Left);
-		window.MouseUp(point.Value, MouseButton.Left);
-		Dispatcher.UIThread.RunJobs();
-
-		manager.Bookmarks.Should().ContainSingle("a left-click at the same coordinate still toggles");
-	}
-
-	[AvaloniaTest]
-	public async Task Removing_A_Bookmark_From_The_Gutter_Hides_Its_Hover_Preview_Until_The_Pointer_Leaves_The_Line()
-	{
-		var (window, vm) = await TestHarness.BootAsync(3);
-		var manager = AppComposition.Current.GetExport<BookmarkManager>();
-		manager.Clear();
-
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var typeNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", "System.Object");
-		vm.AssemblyTreeModel.SelectNode(typeNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-
-		var view = await window.WaitForComponent<DecompilerTextView>();
-		await Waiters.WaitForIdleAsync();
-		window.UpdateLayout();
-
-		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
 		var textView = view.Editor.TextArea.TextView;
 		textView.EnsureVisualLines();
 		var bookmarkable = textView.VisualLines
@@ -172,11 +85,22 @@ public class BookmarkGutterTests
 		Dispatcher.UIThread.RunJobs();
 		margin.HoverPreviewLine.Should().Be(line0, "hovering a bookmarkable line previews its glyph");
 
-		// Click adds the bookmark; the pointer stays on the line.
+		// A right-click in the gutter must not toggle: the gesture is button-gated.
+		window.MouseDown(point0, MouseButton.Right);
+		window.MouseUp(point0, MouseButton.Right);
+		Dispatcher.UIThread.RunJobs();
+		manager.Bookmarks.Should().BeEmpty("a right-click in the gutter must not toggle a bookmark");
+
+		// A left-click at the same coordinate adds the bookmark on that line; the pointer stays on
+		// the line.
+		int pressed = 0;
+		margin.AddHandler(InputElement.PointerPressedEvent, (_, _) => pressed++, RoutingStrategies.Tunnel | RoutingStrategies.Bubble);
 		window.MouseDown(point0, MouseButton.Left);
 		window.MouseUp(point0, MouseButton.Left);
 		Dispatcher.UIThread.RunJobs();
+		pressed.Should().BeGreaterThan(0, "the real pointer event must hit the bookmark gutter");
 		manager.Bookmarks.Should().ContainSingle();
+		view.GetLineForBookmark(manager.Bookmarks[0]).Should().Be(line0);
 
 		// Clicking again removes it: the line must visibly empty rather than redraw a ghost.
 		window.MouseDown(point0, MouseButton.Left);
@@ -211,24 +135,20 @@ public class BookmarkGutterTests
 		var (window, vm) = await TestHarness.BootAsync(3);
 		var manager = AppComposition.Current.GetExport<BookmarkManager>();
 		manager.Clear();
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-
-		async Task<DecompilerTextView> Show(string typeName)
+		async Task<DecompilerTextView> Show(System.Type sample)
 		{
-			var node = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(coreLibName, "System", typeName);
-			vm.AssemblyTreeModel.SelectNode(node);
-			await vm.DockWorkspace.WaitForDecompiledTextAsync();
+			await vm.ShowSampleAsync(sample);
 			var shown = await window.WaitForComponent<DecompilerTextView>();
 			await Waiters.WaitForIdleAsync();
 			return shown;
 		}
 
-		var view = await Show("System.Object");
+		var view = await Show(typeof(DecompileSample));
 		var margin = view.Editor.TextArea.LeftMargins.OfType<BookmarkMargin>().Single();
 		var toggle = AppComposition.Current.GetExport<ContextMenuEntryRegistry>().GetEntry(nameof(Resources.BookmarkToggle));
 
-		// A body (IL-offset) anchor, so it only resolves inside System.Object -- a token/line anchor on
-		// the type would also resolve in System.String, which merely references System.Object.
+		// A body (IL-offset) anchor, so it only resolves inside the first sample type -- a token/line
+		// anchor on the type would also resolve in a document that merely references it.
 		Bookmark? bookmark = null;
 		foreach (int candidate in Enumerable.Range(1, view.Editor.Document.LineCount).Where(view.CanToggleBookmarkAtLine))
 		{
@@ -244,18 +164,18 @@ public class BookmarkGutterTests
 			}
 			manager.Clear();
 		}
-		bookmark.Should().NotBeNull("System.Object has a method-body line to anchor to");
-		int objectLine = view.GetLineForBookmark(bookmark!)!.Value;
-		margin.GlyphLinesForTest().Keys.Should().Contain(objectLine, "the gutter shows the bookmark on its own document");
+		bookmark.Should().NotBeNull("the sample type has a method-body line to anchor to");
+		int sampleLine = view.GetLineForBookmark(bookmark!)!.Value;
+		margin.GlyphLinesForTest().Keys.Should().Contain(sampleLine, "the gutter shows the bookmark on its own document");
 
 		// Navigate to another type. The preview tab reuses the same view (and gutter), only swapping the
-		// document text, so the gutter must drop the stale glyph: System.Object's bookmark is not here.
-		var stringView = await Show("System.String");
-		stringView.Should().BeSameAs(view, "the preview tab reuses the view, so this exercises the stale cache");
-		margin.GlyphLinesForTest().Should().BeEmpty("the gutter must rebuild for System.String, where the bookmark does not resolve");
+		// document text, so the gutter must drop the stale glyph: the first type's bookmark is not here.
+		var otherView = await Show(typeof(DecompileSampleOther));
+		otherView.Should().BeSameAs(view, "the preview tab reuses the view, so this exercises the stale cache");
+		margin.GlyphLinesForTest().Should().BeEmpty("the gutter must rebuild for the other type, where the bookmark does not resolve");
 
 		// Returning to the bookmarked document must surface its glyph again.
-		await Show("System.Object");
+		await Show(typeof(DecompileSample));
 		margin.GlyphLinesForTest().Keys.Should().Contain(view.GetLineForBookmark(bookmark!)!.Value,
 			"returning to the bookmarked document must show its glyph again");
 	}

@@ -59,29 +59,24 @@ public class AnalyzerResultHighlightTests
 
 		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.String");
-		stringNode.IsExpanded = true;
-		var toStringNode = stringNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "ToString");
-		var concatNode = stringNode.Children.OfType<MethodTreeNode>()
-			.First(m => m.MethodDefinition.Name == "Concat");
-
 		// Materialise the decompiler tab by driving a real navigation first; without this
 		// DockWorkspace.ActiveDecompilerTab is null and the highlight path has no sink.
-		vm.AssemblyTreeModel.SelectNode(stringNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("string-decompiled");
+		var (sampleNode, _) = await vm.ShowSampleAsync(typeof(DecompileSample));
+		sampleNode.IsExpanded = true;
+		var describeNode = sampleNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Describe));
+		var twiceNode = sampleNode.Children.OfType<MethodTreeNode>()
+			.First(m => m.MethodDefinition.Name == nameof(DecompileSample.Twice));
+		TestCapture.Step("sample-decompiled");
 		var decompTab = vm.DockWorkspace.ActiveDecompilerTab;
 		Assert.That(decompTab, Is.Not.Null, "selecting a type must materialise the decompiler tab");
 		decompTab!.HighlightedReference = null;
 
-		var resultNode = new AnalyzedMethodTreeNode(toStringNode.MethodDefinition, source: concatNode.MethodDefinition);
+		var resultNode = new AnalyzedMethodTreeNode(describeNode.MethodDefinition, source: twiceNode.MethodDefinition);
 		resultNode.ActivateItem(new StubArgs());
 		TestCapture.Step("highlighted-source-member");
 
-		((object?)decompTab.HighlightedReference).Should().BeSameAs(concatNode.MethodDefinition,
+		((object?)decompTab.HighlightedReference).Should().BeSameAs(twiceNode.MethodDefinition,
 			"NavigateToReferenceEventArgs.Source (= SourceMember) must land in HighlightedReference so the editor view can paint local-reference marks");
 	}
 
@@ -95,27 +90,22 @@ public class AnalyzerResultHighlightTests
 
 		var (_, vm) = await TestHarness.BootAsync();
 
-		var coreLibName = typeof(object).Assembly.GetName().Name!;
-		var stringNode = vm.AssemblyTreeModel.FindNode<TypeTreeNode>(
-			coreLibName, "System", "System.String");
-		stringNode.IsExpanded = true;
-		var lengthProp = stringNode.Children.OfType<PropertyTreeNode>()
-			.First(p => p.PropertyDefinition.Name == "Length");
-
 		// Same materialisation as the first test.
-		vm.AssemblyTreeModel.SelectNode(stringNode);
-		await vm.DockWorkspace.WaitForDecompiledTextAsync();
-		TestCapture.Step("string-decompiled");
+		var (sampleNode, _) = await vm.ShowSampleAsync(typeof(DecompileSample));
+		sampleNode.IsExpanded = true;
+		var nameProp = sampleNode.Children.OfType<PropertyTreeNode>()
+			.First(p => p.PropertyDefinition.Name == nameof(DecompileSample.Name));
+		TestCapture.Step("sample-decompiled");
 		var decompTab = vm.DockWorkspace.ActiveDecompilerTab!;
-		decompTab.HighlightedReference = lengthProp.PropertyDefinition;
+		decompTab.HighlightedReference = nameProp.PropertyDefinition;
 
 		var topLevel = new AnalyzedMethodTreeNode(
-			stringNode.Children.OfType<MethodTreeNode>().First().MethodDefinition,
+			sampleNode.Children.OfType<MethodTreeNode>().First().MethodDefinition,
 			source: null);
 		topLevel.ActivateItem(new StubArgs());
 		TestCapture.Step("activated-top-level-entity");
 
-		((object?)decompTab.HighlightedReference).Should().BeSameAs(lengthProp.PropertyDefinition,
+		((object?)decompTab.HighlightedReference).Should().BeSameAs(nameProp.PropertyDefinition,
 			"top-level analysed-entity rows have no SourceMember and must not overwrite the active highlight");
 	}
 
