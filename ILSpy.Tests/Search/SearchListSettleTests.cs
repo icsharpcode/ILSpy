@@ -21,7 +21,6 @@ using System.Collections.Specialized;
 using System.Threading.Tasks;
 
 using Avalonia.Headless.NUnit;
-using Avalonia.Threading;
 
 using AwesomeAssertions;
 
@@ -61,16 +60,6 @@ public class SearchListSettleTests
 		return (search, vm.AssemblyTreeModel.AssemblyList!, () => started);
 	}
 
-	static async Task PumpAsync(TimeSpan duration)
-	{
-		var until = DateTime.UtcNow + duration;
-		do
-		{
-			await Task.Delay(20);
-			Dispatcher.UIThread.RunJobs();
-		} while (DateTime.UtcNow < until);
-	}
-
 	static void SendAdd(AssemblyList list, bool autoLoaded)
 	{
 		var added = new LoadedAssembly(list, typeof(int).Assembly.Location) { IsAutoLoaded = autoLoaded };
@@ -89,7 +78,9 @@ public class SearchListSettleTests
 		{
 			SendAdd(list, autoLoaded: false);
 		}
-		await PumpAsync(TimeSpan.FromMilliseconds(900));
+		// The settle timer is stopped and dropped when it fires, so once a search has started
+		// there is nothing left that could start another; waiting for the first one is enough.
+		await Waiters.WaitForAsync(() => searchesStarted() >= 1);
 
 		TestContext.Out.WriteLine($"burst of {BurstSize}: {searchesStarted()} searches in total");
 		searchesStarted().Should().Be(1,
@@ -102,7 +93,7 @@ public class SearchListSettleTests
 		var (_, list, searchesStarted) = await ArrangeAsync();
 
 		SendAdd(list, autoLoaded: true);
-		await PumpAsync(TimeSpan.FromMilliseconds(900));
+		await Waiters.WaitForAsync(() => searchesStarted() >= 1);
 
 		searchesStarted().Should().Be(1,
 			"an auto-loaded dependency can contain matches; skipping it left the results silently "
