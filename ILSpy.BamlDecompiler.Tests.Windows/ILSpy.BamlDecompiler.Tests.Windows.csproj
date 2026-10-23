@@ -8,7 +8,7 @@
 
   <PropertyGroup>
     <!-- The BAML round-trip cases compile WPF XAML into this assembly, so the project is
-         Windows-bound (built and run only in the Windows CI leg via ILSpy.sln). EnableWindowsTargeting
+         Windows-bound (built and run only in the Windows CI leg via ILSpy.slnx). EnableWindowsTargeting
          lets the package graph restore on non-Windows hosts, so the lock file can be generated and
          verified anywhere even though the tests themselves only execute on Windows. -->
     <TargetFramework>net11.0-windows</TargetFramework>

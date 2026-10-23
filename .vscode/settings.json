@@ -3,8 +3,8 @@
     "files.exclude": {
         "ILSpy-tests/**": true
     },
-    "dotnet.defaultSolution": "ILSpy.sln",
+    "dotnet.defaultSolution": "ILSpy.slnx",
     "dotrush.roslyn.projectOrSolutionFiles": [
-        "ILSpy.sln"
+        "ILSpy.slnx"
     ],
 }

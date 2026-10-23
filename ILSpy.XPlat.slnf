@@ -1,6 +1,6 @@
 {
 	"solution": {
-		"path": "ILSpy.sln",
+		"path": "ILSpy.slnx",
 		"projects": [
 			"ICSharpCode.ILSpyCmd\\ICSharpCode.ILSpyCmd.csproj",
 			"ICSharpCode.ILSpyCmd.Tests\\ICSharpCode.ILSpyCmd.Tests.csproj",

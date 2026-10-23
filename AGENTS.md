@@ -45,7 +45,7 @@ Windows-only frontends, packaging, and tests:
 - `ILSpy.Installer/` — WiX installer (`net472`)
 - `ILSpy.BamlDecompiler.Tests/` — BAML-decompiler tests, still WPF/Windows-bound (`net11.0-windows`)
 
-Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the decompiler libs + `ilspycmd` + their tests (no UI — the Linux CI target); `ILSpy.Desktop.slnf` is the UI plus its dependencies and tests; `ILSpy.Installer.sln` covers the legacy packaging, and `ILSpy.VSExtensions.slnx` the VS 2022 extension (`dotnet build`-able).
+Solutions & filters: `ILSpy.slnx` builds everything; `ILSpy.XPlat.slnf` is the decompiler libs + `ilspycmd` + their tests (no UI — the Linux CI target); `ILSpy.Desktop.slnf` is the UI plus its dependencies and tests; `ILSpy.Installer.sln` covers the legacy packaging, and `ILSpy.VSExtensions.slnx` the VS 2022 extension (`dotnet build`-able).
 
 ## ILSpy-tests submodule
 
@@ -67,14 +67,14 @@ Solutions & filters: `ILSpy.sln` builds everything; `ILSpy.XPlat.slnf` is the de
 
 ## Build / restore
 
-- **Use the repo-root pwsh scripts for these tasks, not raw `dotnet` commands** -- they carry the flags that keep the repo consistent and all target `ILSpy.sln` (extra args are forwarded):
+- **Use the repo-root pwsh scripts for these tasks, not raw `dotnet` commands** -- they carry the flags that keep the repo consistent and all target `ILSpy.slnx` (extra args are forwarded):
   - **restore** -> `restore.ps1`
   - **build** -> `build.ps1` (`-Configuration Debug|Release`)
   - **update deps / regenerate lock files** -> `updatedeps.ps1`
   - **format** -> `BuildTools/format.ps1`
   - **clean** -> `clean.ps1`; **publish** -> `publish.ps1`
 - **Why this matters:** `restore.ps1` and `updatedeps.ps1` pass `-p:RestoreEnablePackagePruning=false`, so they keep every `packages.lock.json` whole. A bare `dotnet restore`/`dotnet build` (which restores implicitly) **prunes** the lock files -- silently stripping the transitive/all-RID/DiaSymReader entries the repo deliberately carries -- and surfaces as a spurious `packages.lock.json` diff. Restore with `restore.ps1`, then build with `build.ps1 --no-restore`; if a bare build ever leaves a pruned `packages.lock.json` modified, discard it (`git checkout -- <path>`).
-- **Every project generates a `packages.lock.json`** (`RestorePackagesWithLockFile` is set in the root `Directory.Build.props`); CI NuGet caching keys off these. After adding or bumping a `PackageReference`/`PackageVersion`, regenerate the lock files with `updatedeps.ps1` (i.e. `dotnet restore ILSpy.sln --force-evaluate -p:RestoreEnablePackagePruning=false`) and commit them. The core libraries additionally set `RestoreLockedMode`, so a plain restore there fails until the lock file is refreshed.
+- **Every project generates a `packages.lock.json`** (`RestorePackagesWithLockFile` is set in the root `Directory.Build.props`); CI NuGet caching keys off these. After adding or bumping a `PackageReference`/`PackageVersion`, regenerate the lock files with `updatedeps.ps1` (i.e. `dotnet restore ILSpy.slnx --force-evaluate -p:RestoreEnablePackagePruning=false`) and commit them. The core libraries additionally set `RestoreLockedMode`, so a plain restore there fails until the lock file is refreshed.
 - The pre-commit hook runs `dotnet format` on the **whole solution** -- it IS the formatter. **Always let the hook run; never commit `.cs` with `--no-verify`.** Bypassing it lands unformatted code and forces history-wide reformat rebases later. `--no-verify` is acceptable only for commits that touch no `.cs` (e.g. `.yml`/`.md`-only).
 - **Line endings are a Windows-only concern.** The repo is `* text=auto`, so blobs are stored LF and git renormalizes on commit. On **Windows**, save new files CRLF so the hook's `git add -u` doesn't churn EOLs. On **Linux/macOS**, leave new files LF and do **not** `unix2dos` -- forcing CRLF there makes the whole working tree show as phantom-modified in `git status` (and is normalized back to LF on commit anyway).
 - **Partial commits need stash-and-pop.** The format hook only auto-formats when the staged set equals the working tree. Stash unstaged remainder before committing a subset.
@@ -100,7 +100,7 @@ Never put more than one C# language feature on one branch.
 
 ## Test discipline
 
-- Always run the test suite with `--report-trx` so failures survive: `dotnet test --solution ILSpy.sln --report-trx` (the repo pins Microsoft.Testing.Platform in `global.json`; the bare `dotnet test <sln>` form is the old VSTest syntax). Don't dismiss failures as flaky without first reproducing in isolation, then running repeatedly.
+- Always run the test suite with `--report-trx` so failures survive: `dotnet test --solution ILSpy.slnx --report-trx` (the repo pins Microsoft.Testing.Platform in `global.json`; the bare `dotnet test <sln>` form is the old VSTest syntax). Don't dismiss failures as flaky without first reproducing in isolation, then running repeatedly.
 - **`ILSpy.Tests` is serial by design** (one headless Avalonia session and one process-wide app composition per test host), so it cannot use more than one core in-process. The local optimization is **sharding across processes**: `./runuitests.ps1` runs the built Debug suite as 4 concurrent `dotnet test` hosts with disjoint filters (about 2.5x faster than one host); CI runs the same script with 2 shards on Linux/macOS. For one fixture use `dotnet test --project ILSpy.Tests/ILSpy.Tests.csproj --no-build --filter "FullyQualifiedName~MyFixture"` (the `--treenode-filter` / `--filter-class` forms are rejected by the NUnit bridge).
 - The decompiler test suite (test kinds, fixture structure, how to write tests, the compiler-matrix model) is documented in [ICSharpCode.Decompiler.Tests/AGENTS.md](ICSharpCode.Decompiler.Tests/AGENTS.md).
 - After matcher / rewriter edits, **run the relevant tests, not just the build.** `dotnet build` green ≠ behaviour correct.

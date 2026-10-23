@@ -4,4 +4,4 @@
 # then commit the updated lock files.
 $ErrorActionPreference = 'Stop'
 $env:OPENSSL_ENABLE_SHA1_SIGNATURES = '1'
-dotnet restore ILSpy.sln --force-evaluate -p:RestoreEnablePackagePruning=false @args
+dotnet restore ILSpy.slnx --force-evaluate -p:RestoreEnablePackagePruning=false @args

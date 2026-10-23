@@ -1,0 +1,35 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/doc/">
+    <File Path="doc/Command Line.txt" />
+    <File Path="doc/ILAst.txt" />
+    <File Path="doc/IntPtr.txt" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="NuGet.config" />
+  </Folder>
+  <Project Path="ICSharpCode.BamlDecompiler/ICSharpCode.BamlDecompiler.csproj" />
+  <Project Path="ICSharpCode.Decompiler.Generators/ICSharpCode.Decompiler.Generators.csproj" />
+  <Project Path="ICSharpCode.Decompiler.PowerShell/ICSharpCode.Decompiler.PowerShell.csproj" />
+  <Project Path="ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj" />
+  <Project Path="ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj" />
+  <Project Path="ICSharpCode.Decompiler/ICSharpCode.Decompiler.csproj" />
+  <Project Path="ICSharpCode.ILSpyCmd.Tests/ICSharpCode.ILSpyCmd.Tests.csproj" />
+  <Project Path="ICSharpCode.ILSpyCmd/ICSharpCode.ILSpyCmd.csproj" />
+  <Project Path="ICSharpCode.ILSpyX/ICSharpCode.ILSpyX.csproj" />
+  <Project Path="ILSpy.BamlDecompiler.Tests.Windows/ILSpy.BamlDecompiler.Tests.Windows.csproj" />
+  <Project Path="ILSpy.BamlDecompiler.Tests/ILSpy.BamlDecompiler.Tests.csproj" />
+  <Project Path="ILSpy.ReadyToRun/ILSpy.ReadyToRun.csproj" />
+  <Project Path="ILSpy.Tests.Windows/ILSpy.Tests.Windows.csproj" />
+  <Project Path="ILSpy.Tests/ILSpy.Tests.csproj" />
+  <Project Path="ILSpy/ILSpy.csproj" />
+  <Project Path="TestPlugin/TestPlugin.csproj" />
+</Solution>

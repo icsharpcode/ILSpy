@@ -5,7 +5,7 @@ $env:OPENSSL_ENABLE_SHA1_SIGNATURES = '1'
 
 $configuration = "Debug"
 
-dotnet build ./ILSpy.sln -c $configuration
+dotnet build ./ILSpy.slnx -c $configuration
 
 $output_x64 = "./ILSpy/bin/$configuration/net10.0/win-x64/publish/fwdependent"
 
