@@ -23,8 +23,6 @@ using System.Collections.Generic;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 using ICSharpCode.Decompiler.DebugSteps;
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
@@ -48,27 +46,12 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// visible at a glance. Taken from what the step points at: the IL transforms anchor their
 		/// steps to instructions, the C# ones to syntax nodes. Empty when a step carries no anchor.
 		/// </summary>
-		public string Phase => PhaseOf(Step);
-
-		static string PhaseOf(Stepper.Node step)
-		{
-			switch (step.Position)
-			{
-				case ILInstruction:
-					return "IL";
-				case AstNode:
-					return "C#";
-			}
-			// A group opener carries no position of its own when anchoring it would misattribute a
-			// halt landing on it, so take the phase from the first step underneath that has one.
-			foreach (var child in step.Children)
-			{
-				string phase = PhaseOf(child);
-				if (phase.Length > 0)
-					return phase;
-			}
-			return string.Empty;
-		}
+		public StepPhase Phase => Step.Phase;
+		public string PhaseText => Phase switch {
+			StepPhase.ILAst => "IL",
+			StepPhase.CSharp => "C#",
+			_ => string.Empty
+		};
 
 		IReadOnlyList<StepNodeViewModel>? children;
 
