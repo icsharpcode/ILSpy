@@ -199,12 +199,14 @@ catch (ArgumentException ex)
 Console.WriteLine($"old: {oldSide.Description}");
 Console.WriteLine($"new: {newSide.Description}");
 
+var pathComparer = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
 var assemblies = corpus
 	.SelectMany(a => Directory.Exists(a)
 		? Directory.EnumerateFiles(a, "*.dll", SearchOption.AllDirectories)
 		: [a])
+	.Select(Path.GetFullPath)
 	.Where(f => !f.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase))
-	.Distinct()
+	.Distinct(pathComparer)
 	.OrderBy(f => f)
 	.ToList();
 Console.WriteLine($"corpus: {assemblies.Count} assemblies");
@@ -360,7 +362,7 @@ AsmResult ProcessAssembly(string dll)
 			{
 				r.NewErrors++;
 				r.Transitions.Add($"NEW-ERROR {location}: {n.Error}");
-				DumpPair(location, o.Code!, $"// ERROR: {n.Error}");
+				DumpPair(dll, location, o.Code!, $"// ERROR: {n.Error}");
 			}
 			continue;
 		}
@@ -371,21 +373,25 @@ AsmResult ProcessAssembly(string dll)
 			r.Unchanged++;
 			continue;
 		}
-		r.Changed.Add(new ChangedType(location, o.Metrics, n.Metrics));
-		DumpPair(location, o.Code!, n.Code!);
+		r.Changed.Add(new ChangedType(location, o.Metrics, n.Metrics, DumpPair(dll, location, o.Code!, n.Code!)));
 	}
 	r.Log = $"  {asmName}: {oldTypes.Count} types, {r.Changed.Count} changed";
 	return r;
 }
 
-void DumpPair(string location, string oldCode, string newCode)
+string DumpPair(string dll, string location, string oldCode, string newCode)
 {
+	var identity = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+		Encoding.UTF8.GetBytes(Path.GetFullPath(dll))))[..16];
+	var separator = location.IndexOf(" / ", StringComparison.Ordinal);
+	var reportLocation = $"{location[..separator]}-{identity}/{location[(separator + 3)..]}";
 	foreach (var (side, code) in new[] { ("old", oldCode), ("new", newCode) })
 	{
-		var path = Path.Combine(reportDir, side, Report.SanitizeFileName(location.Replace(" / ", "/")) + ".cs");
+		var path = Path.Combine(reportDir, side, Report.SanitizeFileName(reportLocation) + ".cs");
 		Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 		File.WriteAllText(path, code);
 	}
+	return Report.SanitizeFileName(reportLocation) + ".cs";
 }
 
 static string MetricRow(string name, long oldValue, long newValue)
@@ -702,7 +708,7 @@ sealed class RefIndex
 	static string StageName(string dll)
 	{
 		var full = Path.GetFullPath(dll);
-		var hash = Convert.ToHexString(System.Security.Cryptography.MD5.HashData(Encoding.UTF8.GetBytes(full)))[..8];
+		var hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(full)))[..16];
 		return $"{Path.GetFileNameWithoutExtension(full)}-{hash}";
 	}
 
@@ -717,6 +723,8 @@ sealed class RefIndex
 		}
 		catch (Exception e) when (e is IOException or UnauthorizedAccessException)
 		{
+			if (File.Exists(link))
+				return;
 			// Windows only hands out symlink privileges to elevated processes or with
 			// Developer Mode enabled; copying costs disk but keeps staging working.
 			File.Copy(source, link, overwrite: true);
@@ -836,7 +844,7 @@ static class Report
 			html.AppendLine("<input id=filter placeholder='filter by type or assembly name'>");
 			foreach (var c in m.Changed.OrderByDescending(c => Math.Abs(c.New.Lines - c.Old.Lines)))
 			{
-				var file = SanitizeFileName(c.Location.Replace(" / ", "/")) + ".cs";
+				var file = c.File;
 				var delta = c.New.Lines - c.Old.Lines;
 				html.AppendLine($"<details><summary>{Esc(c.Location)} "
 					+ $"<span class=meta>({c.Old.Lines} &rarr; {c.New.Lines} lines, {delta:+#;-#;0})</span></summary>");
@@ -963,7 +971,7 @@ class AsmResult(string name)
 	public Metrics OldTotals, NewTotals;
 }
 
-record ChangedType(string Location, Metrics Old, Metrics New);
+record ChangedType(string Location, Metrics Old, Metrics New, string File);
 
 record struct Metrics(int Lines, int Gotos, int IlWarnings, int GeneratedNames)
 {
