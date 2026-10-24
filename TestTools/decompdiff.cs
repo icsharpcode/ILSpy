@@ -25,8 +25,9 @@
 // round-trip tests, which verify correctness but not output quality.
 //
 // usage: dotnet run decompdiff.cs -- --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...>
-//                                    [-o <report-dir>] [--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...
+//                                    [-o <report-dir>] [--no-build] [-j <jobs>] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...
 //
+// - assemblies are decompiled in parallel (-j/--jobs, default: processor count).
 // - checkout args are built (Release; restore keeps packages.lock.json whole via
 //   -p:RestoreEnablePackagePruning=false) on every run, because a build older than
 //   the checkout measures code that is not the one named; pass --no-build to reuse
@@ -80,6 +81,7 @@ catch (AssertionFailedException)
 
 string? oldSpec = null, newSpec = null, reportDir = null, packageList = null;
 bool skipBuild = false;
+int jobs = Environment.ProcessorCount;
 var corpus = new List<string>();
 var refDirs = new List<string>();
 for (int i = 0; i < args.Length; i++)
@@ -103,6 +105,10 @@ for (int i = 0; i < args.Length; i++)
 			break;
 		case "--refs":
 			refDirs.Add(args[++i]);
+			break;
+		case "-j":
+		case "--jobs":
+			jobs = Math.Max(1, int.Parse(args[++i]));
 			break;
 		case "--packages":
 			packageList = args[++i];
@@ -216,73 +222,29 @@ int newErrors = 0, fixedErrors = 0, bothErrors = 0;
 var oldTotals = default(Metrics);
 var newTotals = default(Metrics);
 
-foreach (var dll in assemblies)
+var results = new AsmResult[assemblies.Count];
+Parallel.For(0, assemblies.Count, new ParallelOptions { MaxDegreeOfParallelism = jobs }, idx => {
+	results[idx] = ProcessAssembly(assemblies[idx]);
+	Console.WriteLine(results[idx].Log);
+});
+
+// Merged in corpus order so the report does not depend on scheduling.
+foreach (var r in results)
 {
-	var asmName = Path.GetFileNameWithoutExtension(dll);
-	var (staged, missing) = RefIndex.Stage(dll, stageRoot, refIndex);
-	if (missing.Count > 0)
-		unresolvedRefs[asmName] = missing;
-	var oldTypes = oldSide.DecompileAssembly(staged);
-	if (oldTypes == null)
-	{
-		var why = missing.Count > 0 ? $"; unresolved refs: {string.Join(", ", missing.Take(5))}" : "";
-		Console.WriteLine($"  skip {asmName}: not decompilable ({oldSide.LastAssemblyError}{why})");
-		skipped.Add($"{asmName}: {oldSide.LastAssemblyError}{why}");
-		continue;
-	}
-	var newTypes = newSide.DecompileAssembly(staged);
-	if (newTypes == null)
-	{
-		Console.WriteLine($"  NEW-ERROR {asmName}: whole assembly failed only with new version ({newSide.LastAssemblyError})");
-		transitions.Add($"NEW-ERROR (assembly) {asmName}: {newSide.LastAssemblyError}");
-		newErrors++;
-		continue;
-	}
-	asmCount++;
-	int asmChanged = 0;
-	foreach (var name in oldTypes.Keys.Union(newTypes.Keys).OrderBy(n => n))
-	{
-		var o = oldTypes.GetValueOrDefault(name);
-		var n = newTypes.GetValueOrDefault(name);
-		var location = $"{asmName} / {name}";
-		if (o == null || n == null)
-		{
-			transitions.Add($"only-{(o != null ? "old" : "new")} {location}");
-			continue;
-		}
-		if (o.Error != null || n.Error != null)
-		{
-			if (o.Error != null && n.Error != null)
-			{
-				bothErrors++;
-				if (o.Error != n.Error)
-					transitions.Add($"error-changed {location}: {o.Error} -> {n.Error}");
-			}
-			else if (o.Error != null)
-			{
-				fixedErrors++;
-				transitions.Add($"fixed-error {location}: {o.Error}");
-			}
-			else
-			{
-				newErrors++;
-				transitions.Add($"NEW-ERROR {location}: {n.Error}");
-				DumpPair(location, o.Code!, $"// ERROR: {n.Error}");
-			}
-			continue;
-		}
-		oldTotals += o.Metrics;
-		newTotals += n.Metrics;
-		if (o.Code == n.Code)
-		{
-			unchanged++;
-			continue;
-		}
-		asmChanged++;
-		changed.Add(new ChangedType(location, o.Metrics, n.Metrics));
-		DumpPair(location, o.Code!, n.Code!);
-	}
-	Console.WriteLine($"  {asmName}: {oldTypes.Count} types, {asmChanged} changed");
+	if (r.Missing.Count > 0)
+		unresolvedRefs[r.Name] = r.Missing;
+	if (r.Skipped != null)
+		skipped.Add(r.Skipped);
+	if (r.Counted)
+		asmCount++;
+	unchanged += r.Unchanged;
+	changed.AddRange(r.Changed);
+	transitions.AddRange(r.Transitions);
+	newErrors += r.NewErrors;
+	fixedErrors += r.FixedErrors;
+	bothErrors += r.BothErrors;
+	oldTotals += r.OldTotals;
+	newTotals += r.NewTotals;
 }
 
 var summary = new StringBuilder();
@@ -348,6 +310,74 @@ Console.WriteLine();
 Console.Write(summary);
 return newErrors > 0 ? 1 : 0;
 
+AsmResult ProcessAssembly(string dll)
+{
+	var asmName = Path.GetFileNameWithoutExtension(dll);
+	var r = new AsmResult(asmName);
+	var (staged, missing) = RefIndex.Stage(dll, stageRoot, refIndex);
+	r.Missing = missing;
+	var (oldTypes, oldError) = oldSide.DecompileAssembly(staged);
+	if (oldTypes == null)
+	{
+		var why = missing.Count > 0 ? $"; unresolved refs: {string.Join(", ", missing.Take(5))}" : "";
+		r.Log = $"  skip {asmName}: not decompilable ({oldError}{why})";
+		r.Skipped = $"{asmName}: {oldError}{why}";
+		return r;
+	}
+	var (newTypes, newError) = newSide.DecompileAssembly(staged);
+	if (newTypes == null)
+	{
+		r.Log = $"  NEW-ERROR {asmName}: whole assembly failed only with new version ({newError})";
+		r.Transitions.Add($"NEW-ERROR (assembly) {asmName}: {newError}");
+		r.NewErrors++;
+		return r;
+	}
+	r.Counted = true;
+	foreach (var name in oldTypes.Keys.Union(newTypes.Keys).OrderBy(n => n))
+	{
+		var o = oldTypes.GetValueOrDefault(name);
+		var n = newTypes.GetValueOrDefault(name);
+		var location = $"{asmName} / {name}";
+		if (o == null || n == null)
+		{
+			r.Transitions.Add($"only-{(o != null ? "old" : "new")} {location}");
+			continue;
+		}
+		if (o.Error != null || n.Error != null)
+		{
+			if (o.Error != null && n.Error != null)
+			{
+				r.BothErrors++;
+				if (o.Error != n.Error)
+					r.Transitions.Add($"error-changed {location}: {o.Error} -> {n.Error}");
+			}
+			else if (o.Error != null)
+			{
+				r.FixedErrors++;
+				r.Transitions.Add($"fixed-error {location}: {o.Error}");
+			}
+			else
+			{
+				r.NewErrors++;
+				r.Transitions.Add($"NEW-ERROR {location}: {n.Error}");
+				DumpPair(location, o.Code!, $"// ERROR: {n.Error}");
+			}
+			continue;
+		}
+		r.OldTotals += o.Metrics;
+		r.NewTotals += n.Metrics;
+		if (o.Code == n.Code)
+		{
+			r.Unchanged++;
+			continue;
+		}
+		r.Changed.Add(new ChangedType(location, o.Metrics, n.Metrics));
+		DumpPair(location, o.Code!, n.Code!);
+	}
+	r.Log = $"  {asmName}: {oldTypes.Count} types, {r.Changed.Count} changed";
+	return r;
+}
+
 void DumpPair(string location, string oldCode, string newCode)
 {
 	foreach (var (side, code) in new[] { ("old", oldCode), ("new", newCode) })
@@ -386,6 +416,8 @@ static string MetricNotes(ChangedType c)
 // only exists behind a Windows path lookup.
 sealed class RefIndex
 {
+	// Guards the lazily filled indexes below; staging runs on several threads.
+	readonly object gate = new();
 	readonly Dictionary<string, string> byName = new(StringComparer.OrdinalIgnoreCase);
 	Dictionary<string, string>? byPackageAssemblyName;
 	readonly List<string> probeRoots = new();
@@ -421,13 +453,16 @@ sealed class RefIndex
 	public Dictionary<string, string> IndexFor(string? targetFramework)
 	{
 		var key = targetFramework ?? "";
-		if (byFramework.TryGetValue(key, out var index))
+		lock (gate)
+		{
+			if (byFramework.TryGetValue(key, out var index))
+				return index;
+			index = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+			foreach (var dir in RefPackDirs(key))
+				IndexDirectory(dir, index);
+			byFramework[key] = index;
 			return index;
-		index = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-		foreach (var dir in RefPackDirs(key))
-			IndexDirectory(dir, index);
-		byFramework[key] = index;
-		return index;
+		}
 	}
 
 	// Ref-pack directories for a TargetFrameworkAttribute value, most specific first.
@@ -539,6 +574,12 @@ sealed class RefIndex
 	}
 
 	public string? Find(string simpleName, Dictionary<string, string> frameworkIndex)
+	{
+		lock (gate)
+			return FindLocked(simpleName, frameworkIndex);
+	}
+
+	string? FindLocked(string simpleName, Dictionary<string, string> frameworkIndex)
 	{
 		// The target framework's own reference assemblies outrank everything else: a corpus
 		// neighbour or a stray NuGet copy of System.Runtime would otherwise decide the BCL.
@@ -909,6 +950,19 @@ record ReportModel(
 
 record TypeResult(string? Code, string? Error, Metrics Metrics);
 
+class AsmResult(string name)
+{
+	public string Name { get; } = name;
+	public string Log = "";
+	public List<string> Missing = new();
+	public string? Skipped;
+	public bool Counted;
+	public int Unchanged, NewErrors, FixedErrors, BothErrors;
+	public List<ChangedType> Changed = new();
+	public List<string> Transitions = new();
+	public Metrics OldTotals, NewTotals;
+}
+
 record ChangedType(string Location, Metrics Old, Metrics New);
 
 record struct Metrics(int Lines, int Gotos, int IlWarnings, int GeneratedNames)
@@ -940,7 +994,6 @@ class Side
 {
 	readonly Assembly assembly;
 	public string Description { get; }
-	public string? LastAssemblyError { get; private set; }
 
 	Side(Assembly assembly, string description)
 	{
@@ -1083,10 +1136,9 @@ class Side
 	}
 
 	// Decompiles every top-level type; null when the assembly itself cannot be
-	// opened (not managed, type system init failed) - see LastAssemblyError.
-	public Dictionary<string, TypeResult>? DecompileAssembly(string dllPath)
+	// opened (not managed, type system init failed), with the reason in Error.
+	public (Dictionary<string, TypeResult>? Types, string? Error) DecompileAssembly(string dllPath)
 	{
-		LastAssemblyError = null;
 		dynamic decompiler;
 		try
 		{
@@ -1097,8 +1149,7 @@ class Side
 		}
 		catch (Exception ex)
 		{
-			LastAssemblyError = Unwrap(ex).Message;
-			return null;
+			return (null, Unwrap(ex).Message);
 		}
 		var results = new Dictionary<string, TypeResult>();
 		foreach (object type in (IEnumerable)decompiler.TypeSystem.MainModule.TopLevelTypeDefinitions)
@@ -1123,7 +1174,7 @@ class Side
 				results[name] = new TypeResult(null, error, default);
 			}
 		}
-		return results;
+		return (results, null);
 	}
 
 	static object GetProperty(object obj, string name)
