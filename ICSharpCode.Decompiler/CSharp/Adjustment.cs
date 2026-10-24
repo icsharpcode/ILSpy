@@ -421,11 +421,24 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 				).WithRR(new ResolveResult(targetType));
 			}
 		}
-		if (targetUType.IsKnownType(KnownTypeCode.Boolean) && sourceUType.GetSize() > 1)
+		if (targetUType.IsKnownType(KnownTypeCode.Boolean))
 		{
-			// Truncation to `bool` must go through `byte` first.
-			var step = ConvertInteger(expr, GetIntegerType(1, Sign.Unsigned, isLifted), checkOverflow: checkOverflow);
-			return ConvertInteger(step, targetType);
+			if (sourceUType.GetSize() > 1 || (checkOverflow && sourceUType.GetSign() == Sign.Signed))
+			{
+				// Truncation to `bool` must go through `byte` first.
+				// Same if sign change requires overflow checking.
+				var step = ConvertInteger(expr, GetIntegerType(1, Sign.Unsigned, isLifted), checkOverflow: checkOverflow);
+				return ConvertInteger(step, targetType);
+			}
+			else
+			{
+				// Source is already 1 byte, check for `!= 0`
+				return new BinaryOperatorExpression(
+					expr,
+					BinaryOperatorType.InEquality,
+					LdcI4(0)
+				).WithRR(new ResolveResult(targetType));
+			}
 		}
 		if (kind is AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend)
 		{
@@ -445,10 +458,11 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			// Conversion from IntPtr
 			// Direct cast only works correctly for IntPtr -> long.
 			// IntPtr -> int works correctly only in checked context.
+			// IntPtr -> void* works but never checks for overflow.
 			// Everything else can be worked around by casting via nint/long.
 			if (!(targetType.IsKnownType(KnownTypeCode.Int64) || targetType.Kind == TypeKind.NInt
 				|| (checkOverflow && targetType.IsKnownType(KnownTypeCode.Int32))
-				|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
+				|| (!checkOverflow && targetType.Kind.IsAnyPointer())))
 			{
 				var convertVia = exprBuilder.settings.NativeIntegers ? SpecialType.NInt : compilation.FindType(KnownTypeCode.Int64);
 				var step = ConvertInteger(expr, convertVia, checkOverflow: checkOverflow);
@@ -456,13 +470,15 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			}
 		}
 		else if (sourceType.IsKnownType(KnownTypeCode.UIntPtr))
-		{ // Conversion from UIntPtr
-		  // Direct cast only works correctly for UIntPtr -> ulong.
-		  // UIntPtr -> uint works correctly only in checked context.
-		  // Everything else can be worked around by casting via ulong.
+		{
+			// Conversion from UIntPtr
+			// Direct cast only works correctly for UIntPtr -> ulong.
+			// UIntPtr -> uint works correctly only in checked context.
+			// UIntPtr -> void* works and overflow cannot happen as the sign matches.
+			// Everything else can be worked around by casting via ulong.
 			if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || targetType.Kind == TypeKind.NUInt
 				|| (checkOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))
-				|| targetType.Kind.IsAnyPointer() || targetType.Kind == TypeKind.ByReference))
+				|| targetType.Kind.IsAnyPointer()))
 			{
 				var convertVia = exprBuilder.settings.NativeIntegers ? SpecialType.NUInt : compilation.FindType(KnownTypeCode.UInt64);
 				var step = ConvertInteger(expr, convertVia, checkOverflow: checkOverflow);
@@ -582,9 +598,25 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 	// Whether a C# cast between two integer types could overflow.
 	static bool CouldOverflow(IType sourceUType, IType targetUType)
 	{
-		return sourceUType.GetSize() > targetUType.GetSize()
-					|| (targetUType.GetSign() != sourceUType.GetSign()
-						&& (targetUType.GetSize() == sourceUType.GetSize() || sourceUType.GetSign() == Sign.Signed));
+		int sourceSize = sourceUType.GetSize();
+		int targetSize = targetUType.GetSize();
+		if (sourceSize > targetSize)
+			return true; // truncation: overflow definitely possible
+		if (targetUType.GetSign() == sourceUType.GetSign())
+		{
+			return false; // same sign, smaller or equal size: no overflow possible
+		}
+		else
+		{
+			if (sourceUType.GetSign() == Sign.Signed)
+			{
+				return true; // signed -> unsigned overflows for negative values
+			}
+			// unsigned -> signed can overflow only if the types have the same size.
+			return targetSize == sourceSize
+				|| (targetSize == TypeUtils.NativeIntSize && sourceSize >= 4)
+				|| (sourceSize == TypeUtils.NativeIntSize && targetSize >= 4);
+		}
 	}
 
 	public IType GetIntegerType(int size, Sign sign, bool isLifted = false, IType? typeHint = null)
