@@ -394,21 +394,23 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			// C# does not allow casting bool to integer types directly.
 			if (isLifted)
 			{
-				// b != null ? (b.Value ? 1 : 0) : (int?)null
-				var firstCondition = new BinaryOperatorExpression(
+				// I'm not aware of any case where this case can be reached, but to be safe we handle it.
+				// We need switch-expressions to avoid repeatedly evaluating `expr`.
+				// `expr switch { null => (int?)null, true => 1, false => 0 }`
+				return new SwitchExpression(
 					expr,
-					BinaryOperatorType.InEquality,
-					new NullReferenceExpression()
-				);
-				var thenPart = new ConditionalExpression(
-					new MemberReferenceExpression(expr, "Value"),
-					ConvertInteger(LdcI4(1), targetUType, kind),
-					ConvertInteger(LdcI4(0), targetUType, kind)
-				);
-				return new ConditionalExpression(
-					firstCondition,
-					thenPart,
-					new CastExpression(exprBuilder.ConvertType(targetType), new NullReferenceExpression())
+					new SwitchExpressionSection(
+						new NullReferenceExpression(),
+						new CastExpression(exprBuilder.ConvertType(targetType), new NullReferenceExpression())
+					),
+					new SwitchExpressionSection(
+						new PrimitiveExpression(true),
+						new PrimitiveExpression(1)
+					),
+					new SwitchExpressionSection(
+						new PrimitiveExpression(false),
+						new PrimitiveExpression(0)
+					)
 				).WithRR(new ResolveResult(targetType));
 			}
 			else
@@ -433,11 +435,36 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			else
 			{
 				// Source is already 1 byte, check for `!= 0`
-				return new BinaryOperatorExpression(
-					expr,
-					BinaryOperatorType.InEquality,
-					LdcI4(0)
-				).WithRR(new ResolveResult(targetType));
+				if (isLifted)
+				{
+					// I'm not aware of any case where this case can be reached, but to be safe we handle it.
+					// We need switch-expressions to avoid repeatedly evaluating `expr`.
+					// expr switch { null => (bool?)null, 0 => false, _ => true }
+					return new SwitchExpression(
+						expr,
+						new SwitchExpressionSection(
+							new NullReferenceExpression(),
+							new CastExpression(exprBuilder.ConvertType(targetType), new NullReferenceExpression())
+						),
+						new SwitchExpressionSection(
+							new PrimitiveExpression(0),
+							new PrimitiveExpression(false)
+						),
+						new SwitchExpressionSection(
+							new IdentifierExpression("_"),
+							new PrimitiveExpression(true)
+						)
+					).WithRR(new ResolveResult(targetType));
+				}
+				else
+				{
+					// expr != 0
+					return new BinaryOperatorExpression(
+						expr,
+						BinaryOperatorType.InEquality,
+						LdcI4(0)
+					).WithRR(new ResolveResult(targetType));
+				}
 			}
 		}
 		if (kind is AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend)
@@ -559,7 +586,7 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 		var castExpr = new CastExpression(exprBuilder.ConvertType(targetType), expr);
 		if (expr.ResolveResult.IsCompileTimeConstant)
 		{
-			// We can check concrete if there's an overflow:
+			// We can check concretely if there's an overflow:
 			var castRR = exprBuilder.resolver.WithCheckForOverflow(true).ResolveCast(targetType, expr.ResolveResult);
 			if (castRR.IsCompileTimeConstant && !castRR.IsError)
 			{

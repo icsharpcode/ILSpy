@@ -194,6 +194,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			cexpr = cexpr.AddLegacyAdjustments(adjustmentBuilder, inst);
 			// The modern post-condition allows returning small integer types where StackType.I4 is expected.
 			// We turn this into an explicit adjustment.
+			IType oldAdjustedType = cexpr.AdjustedType;
 			if (cexpr.AdjustedType.IsSmallIntegerType())
 			{
 				Debug.Assert(inst.ResultType == StackType.I4);
@@ -210,13 +211,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			else if (cexpr.Adjustment.Kind == AdjustmentKind.ZeroExtend && cexpr.UnadjustedType.GetSign() == Sign.Signed)
 			{
 				var converted = adjustmentBuilder.ConvertInteger(cexpr.Unadjusted,
-					adjustmentBuilder.GetIntegerType(cexpr.UnadjustedType.GetSize(), Sign.Unsigned));
+					adjustmentBuilder.GetIntegerType(cexpr.UnadjustedType.GetSize(), Sign.Unsigned, typeHint: typeHint ?? oldAdjustedType));
 				return converted.WithoutILInstruction().WithAdjustment(cexpr.Adjustment);
 			}
 			else if (cexpr.Adjustment.Kind == AdjustmentKind.SignExtend && cexpr.UnadjustedType.GetSign() == Sign.Unsigned)
 			{
 				var converted = adjustmentBuilder.ConvertInteger(cexpr.Unadjusted,
-					adjustmentBuilder.GetIntegerType(cexpr.UnadjustedType.GetSize(), Sign.Signed));
+					adjustmentBuilder.GetIntegerType(cexpr.UnadjustedType.GetSize(), Sign.Signed, typeHint: typeHint ?? oldAdjustedType));
 				return converted.WithoutILInstruction().WithAdjustment(cexpr.Adjustment);
 			}
 			return cexpr;
@@ -2482,16 +2483,17 @@ namespace ICSharpCode.Decompiler.CSharp
 						castOperand.ResolveResult
 					);
 					var cast = new CastExpression(ConvertType(targetType), castOperand);
-					if (inst.Kind is not ConversionKind.FloatPrecisionChange)
+					if (inst.CheckForOverflow)
 					{
-						if (inst.CheckForOverflow)
-						{
-							cast.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
-						}
-						else
-						{
-							cast.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
-						}
+						cast.AddAnnotation(AddCheckedBlocks.CheckedAnnotation);
+					}
+					else if (inst.Kind is ConversionKind.FloatToInt)
+					{
+						// If overflow checking could be possible but isn't used here,
+						// we need to force unchecked context.
+						// It's only possible for FloatToInt, Nop and Truncate,
+						// and of those only FloatToInt uses this code path.
+						cast.AddAnnotation(AddCheckedBlocks.UncheckedAnnotation);
 					}
 					return cast.WithRR(castRR).WithILInstruction(inst);
 				}
