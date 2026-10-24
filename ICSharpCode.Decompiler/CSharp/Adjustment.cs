@@ -511,7 +511,7 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 				// If nint is available, prefer using that.
 				if (exprBuilder.settings.NativeIntegers)
 				{
-					convertVia = SpecialType.NInt;
+					convertVia = targetUType.IsKnownType(KnownTypeCode.IntPtr) ? SpecialType.NInt : SpecialType.NUInt;
 				}
 				var step = ConvertInteger(expr, convertVia, checkOverflow: checkOverflow);
 				return ConvertInteger(step, targetType, checkOverflow: checkOverflow);
