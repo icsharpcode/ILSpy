@@ -254,12 +254,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				// I4->I->Ref adjustments for nullptr: skip the intermediate step, go directly I4->Ref.
 				return new TranslatedExpression(UnadjustedExpression, UnadjustedResolveResult, newAdjustment);
 			}
-			if (newAdjustment.Kind == AdjustmentKind.IntegerTruncation
+			if (newAdjustment.Kind is AdjustmentKind.IntegerTruncation or AdjustmentKind.IntegerCast
 			 	&& this.Adjustment.Kind is AdjustmentKind.SignExtend or AdjustmentKind.ZeroExtend)
 			{
 				int targetSize = NullableType.GetUnderlyingType(newAdjustment.TargetType).GetSize();
 				int originalSize = NullableType.GetUnderlyingType(this.UnadjustedType).GetSize();
-				// extending and then truncating: the intermediate step is redundant, we can
+				// extending and then truncating (and/or sign changing): the intermediate step is redundant, we can
 				// directly go from the original size to the target size.
 				if (targetSize < originalSize)
 				{
