@@ -796,6 +796,8 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 			try
 			{
 				var tree = decompiler.DecompileType(type.FullTypeName);
+				foreach (var error in decompiler.Errors)
+					Report(pkg, name, type.FullTypeName.ToString(), error);
 				var code = SyntaxTreeToString(tree);
 				lock (stateLock)
 				{
