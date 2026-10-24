@@ -188,12 +188,21 @@ dotnet run decompdiff.cs -- --old ../../ILSpy-master --new . -o report ~/.cache/
 dotnet run decompdiff.cs -- --old v9.1.dll --new v11.dll --refs <dir> corpus.dll
 ```
 
+When run from the ILSpy repository root, `--old` defaults to the merge-base of `origin/master`
+and `--new`. Checkout arguments are built in Release by default; pass `--no-build` to reuse their
+existing output. `--packages` finds `TestTools/nugetfuzz.cs` automatically from the repository root.
+
+```pwsh
+dotnet run TestTools/decompdiff.cs -- --new my-branch --packages @top-500.txt
+```
+
 A corpus argument is a dll, a directory scanned recursively for dlls, or `@file` listing either one
 per line (`#` comments allowed).
 
 An `--old`/`--new` argument is a path to `ICSharpCode.Decompiler.dll`, an ILSpy checkout, or a
-commit-ish. A checkout is restored and built in Release on every run, so what is measured is the
-code the argument names. `--no-build` reuses the build a checkout already carries, which is worth
+commit-ish. If `--old` is omitted, it is the merge-base of `origin/master` and the `--new` commit-ish.
+A checkout is restored and built in Release on every run, so what is measured is the code the
+argument names. `--no-build` reuses the build a checkout already carries, which is worth
 it once a run is repeated against unchanged sides and costly to get wrong otherwise - it warns and
 prints the build's timestamp, and **the header line repeats that timestamp** either way.
 

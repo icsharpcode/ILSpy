@@ -24,14 +24,15 @@
 // changes across real-world code. The textual complement to the Windows
 // round-trip tests, which verify correctness but not output quality.
 //
-// usage: dotnet run decompdiff.cs -- --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...>
-//                                    [-o <report-dir>] [--no-build] [-j <jobs>] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...
+// usage: dotnet run decompdiff.cs -- [--old <commit-ish|ILSpy-checkout|Decompiler.dll>] --new <...>
+//                                    [-o <report-dir>] [--build|--no-build] [-j <jobs>] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...
 //
 // - assemblies are decompiled in parallel (-j/--jobs, default: processor count).
-// - checkout args are built (Release; restore keeps packages.lock.json whole via
+// - checkout args are built by default (Release; restore keeps packages.lock.json whole via
 //   -p:RestoreEnablePackagePruning=false) on every run, because a build older than
 //   the checkout measures code that is not the one named; pass --no-build to reuse
 //   the build a checkout already carries.
+// - when --old is omitted, it defaults to the merge-base of origin/master and --new.
 // - a commit-ish (branch, tag, sha, FETCH_HEAD) is resolved against the repository
 //   the tool is run from and checked out into a worktree under
 //   ~/.cache/decompdiff/<repo>/<commit>, kept and reused so a rerun keeps the
@@ -80,7 +81,7 @@ catch (AssertionFailedException)
 }
 
 string? oldSpec = null, newSpec = null, reportDir = null, packageList = null;
-bool skipBuild = false;
+bool build = true;
 int jobs = Environment.ProcessorCount;
 var corpus = new List<string>();
 var refDirs = new List<string>();
@@ -98,10 +99,10 @@ for (int i = 0; i < args.Length; i++)
 			reportDir = args[++i];
 			break;
 		case "--build":
-			// Building is what happens anyway; accepted so older invocations keep working.
+			build = true;
 			break;
 		case "--no-build":
-			skipBuild = true;
+			build = false;
 			break;
 		case "--refs":
 			refDirs.Add(args[++i]);
@@ -129,10 +130,22 @@ for (int i = 0; i < args.Length; i++)
 			break;
 	}
 }
-if (oldSpec == null || newSpec == null)
+if (newSpec == null)
 {
-	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
+	Console.Error.WriteLine("usage: decompdiff [--old <commit-ish|ILSpy-checkout|Decompiler.dll>] --new <...> [-o report-dir] [--build|--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
 	return 1;
+}
+if (oldSpec == null)
+{
+	try
+	{
+		oldSpec = Side.GetMergeBase(newSpec);
+	}
+	catch (ArgumentException ex)
+	{
+		Console.Error.WriteLine(ex.Message);
+		return 1;
+	}
 }
 if (packageList != null)
 {
@@ -144,8 +157,10 @@ if (packageList != null)
 	}
 	var nugetfuzz = Path.Combine(Environment.CurrentDirectory, "nugetfuzz.cs");
 	if (!File.Exists(nugetfuzz))
+		nugetfuzz = Path.Combine(Environment.CurrentDirectory, "TestTools", "nugetfuzz.cs");
+	if (!File.Exists(nugetfuzz))
 	{
-		Console.Error.WriteLine($"--packages requires nugetfuzz.cs in {Environment.CurrentDirectory}");
+		Console.Error.WriteLine($"--packages requires nugetfuzz.cs in {Environment.CurrentDirectory} or its TestTools subdirectory");
 		return 1;
 	}
 	var corpusFile = Path.Combine(Path.GetTempPath(), $"decompdiff-{Guid.NewGuid():N}.corpus.txt");
@@ -168,7 +183,7 @@ if (packageList != null)
 }
 if (corpus.Count == 0)
 {
-	Console.Error.WriteLine("usage: decompdiff --old <commit-ish|ILSpy-checkout|Decompiler.dll> --new <...> [-o report-dir] [--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
+	Console.Error.WriteLine("usage: decompdiff [--old <commit-ish|ILSpy-checkout|Decompiler.dll>] --new <...> [-o report-dir] [--build|--no-build] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...");
 	return 1;
 }
 reportDir ??= "decompdiff-report";
@@ -186,8 +201,8 @@ Directory.CreateDirectory(reportDir);
 Side oldSide, newSide;
 try
 {
-	oldSide = Side.Create("old", oldSpec, skipBuild);
-	newSide = Side.Create("new", newSpec, skipBuild);
+	oldSide = Side.Create("old", oldSpec, build);
+	newSide = Side.Create("new", newSpec, build);
 }
 catch (ArgumentException ex)
 {
@@ -1009,7 +1024,7 @@ class Side
 		Description = description;
 	}
 
-	public static Side Create(string name, string spec, bool skipBuild)
+	public static Side Create(string name, string spec, bool build)
 	{
 		string dllPath;
 		string description;
@@ -1021,7 +1036,7 @@ class Side
 		else if (Directory.Exists(spec))
 		{
 			var checkout = Path.GetFullPath(spec);
-			dllPath = BuildCheckout(checkout, skipBuild);
+			dllPath = BuildCheckout(checkout, build);
 			// The dll timestamp is in the header so a --no-build run says what it measured.
 			description = $"{checkout} ({GitDescribe(checkout)}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
 		}
@@ -1031,7 +1046,7 @@ class Side
 			// The worktree is keyed by commit and kept: reusing it reuses the Release build
 			// already sitting in its bin/, which is what dominates the runtime of a rerun.
 			var checkout = EnsureWorktree(repoRoot, commit);
-			dllPath = BuildCheckout(checkout, skipBuild);
+			dllPath = BuildCheckout(checkout, build);
 			description = $"{spec} ({commit[..9]}, dll of {File.GetLastWriteTime(dllPath):yyyy-MM-dd HH:mm})";
 		}
 		else
@@ -1043,7 +1058,17 @@ class Side
 		return new Side(alc.LoadFromAssemblyPath(dllPath), description);
 	}
 
-	static string BuildCheckout(string checkout, bool skipBuild)
+	public static string GetMergeBase(string newSpec)
+	{
+		if (!TryResolveCommit(newSpec, out var commit, out var repoRoot))
+			throw new ArgumentException($"--old can be omitted only when --new is a commit-ish in the repository at {Environment.CurrentDirectory}");
+		var mergeBase = Git(repoRoot, "merge-base", "origin/master", commit);
+		if (string.IsNullOrEmpty(mergeBase))
+			throw new ArgumentException($"Could not find the merge-base of origin/master and --new {newSpec}; fetch origin/master first");
+		return mergeBase;
+	}
+
+	static string BuildCheckout(string checkout, bool build)
 	{
 		var csproj = Path.Combine(checkout, "ICSharpCode.Decompiler", "ICSharpCode.Decompiler.csproj");
 		if (!File.Exists(csproj))
@@ -1053,7 +1078,7 @@ class Side
 			? Directory.EnumerateFiles(binDir, "ICSharpCode.Decompiler.dll", SearchOption.AllDirectories)
 				.OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault()
 			: null;
-		if (existing != null && skipBuild)
+		if (existing != null && !build)
 		{
 			Console.Error.WriteLine($"  warning: --no-build, reusing {existing}");
 			Console.Error.WriteLine($"  warning: built {File.GetLastWriteTime(existing):yyyy-MM-dd HH:mm} - if that predates the checkout's"
