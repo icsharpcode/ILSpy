@@ -420,6 +420,27 @@ AsmResult ProcessAssembly(string dll)
 			}
 			continue;
 		}
+		foreach (var method in o.MemberErrors.Keys.Union(n.MemberErrors.Keys).OrderBy(k => k))
+		{
+			var oldMemberError = o.MemberErrors.GetValueOrDefault(method);
+			var newMemberError = n.MemberErrors.GetValueOrDefault(method);
+			if (oldMemberError == null && newMemberError != null)
+			{
+				r.NewErrors++;
+				r.Transitions.Add($"NEW-ERROR (method) {location} / {method}: {newMemberError}");
+			}
+			else if (oldMemberError != null && newMemberError == null)
+			{
+				r.FixedErrors++;
+				r.Transitions.Add($"fixed-error (method) {location} / {method}: {oldMemberError}");
+			}
+			else if (oldMemberError != null && newMemberError != null)
+			{
+				r.BothErrors++;
+				if (oldMemberError != newMemberError)
+					r.Transitions.Add($"error-changed (method) {location} / {method}: {oldMemberError} -> {newMemberError}");
+			}
+		}
 		r.OldTotals += o.Metrics;
 		r.NewTotals += n.Metrics;
 		if (o.Code == n.Code)
@@ -1026,7 +1047,7 @@ record ReportModel(
 	List<string> Transitions, List<string> Skipped, SortedDictionary<string, List<string>> UnresolvedRefs,
 	Metrics OldTotals, Metrics NewTotals, int NewErrors, int FixedErrors, int BothErrors, string ReportDir);
 
-record TypeResult(string? Code, string? Error, Metrics Metrics);
+record TypeResult(string? Code, string? Error, Metrics Metrics, Dictionary<string, string> MemberErrors);
 
 class AsmResult(string name)
 {
@@ -1251,7 +1272,7 @@ class Side
 			{
 				decompiler.CancellationToken = cts.Token;
 				string code = decompiler.DecompileTypeAsString((dynamic)fullTypeName);
-				results[name] = new TypeResult(code, null, Metrics.Measure(code));
+				results[name] = new TypeResult(code, null, Metrics.Measure(code), GetMemberErrors(decompiler));
 			}
 			catch (Exception ex)
 			{
@@ -1259,10 +1280,21 @@ class Side
 				var error = inner is OperationCanceledException
 					? "timeout (60s)"
 					: $"{inner.GetType().Name}: {FirstLine(inner.Message)}";
-				results[name] = new TypeResult(null, error, default);
+				results[name] = new TypeResult(null, error, default, new Dictionary<string, string>());
 			}
 		}
 		return (results, null);
+	}
+
+	static Dictionary<string, string> GetMemberErrors(object decompiler)
+	{
+		var errors = new Dictionary<string, string>();
+		foreach (object error in (IEnumerable)GetProperty(decompiler, "Errors"))
+		{
+			var message = GetProperty(error, "Message").ToString()!;
+			errors[message] = error.ToString()!;
+		}
+		return errors;
 	}
 
 	static object GetProperty(object obj, string name)
