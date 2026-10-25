@@ -28,3 +28,6 @@ report/
 /.understand-anything
 # Written by runuitests.ps1 and the CI test steps.
 test-results/
+# Written by nugetfuzz / decompdiff
+decompdiff-report/
+nugetfuzz-report.html
