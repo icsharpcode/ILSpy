@@ -1460,26 +1460,36 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteFlags(propertyDefinition.Attributes, propertyAttributes, output);
 			var accessors = propertyDefinition.GetAccessors();
 			var declaringType = metadata.GetMethodDefinition(accessors.GetAny()).GetDeclaringType();
-			var signature = propertyDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(declaringType, module));
-
-			if (signature.Header.IsInstance)
-				output.Write("instance ");
-			signature.ReturnType(ILNameSyntax.Signature);
-			output.Write(' ');
-			output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
-
-			output.Write('(');
-			if (signature.ParameterTypes.Length > 0)
+			try
 			{
-				var parameters = metadata.GetMethodDefinition(accessors.GetAny()).GetParameters();
-				int parametersCount = accessors.Getter.IsNil ? parameters.Count - 1 : parameters.Count;
+				var signature = propertyDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(declaringType, module));
 
-				output.WriteLine();
-				output.Indent();
-				WriteParameters(metadata, parameters.Take(parametersCount), signature);
-				output.Unindent();
+				if (signature.Header.IsInstance)
+					output.Write("instance ");
+				signature.ReturnType(ILNameSyntax.Signature);
+				output.Write(' ');
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
+
+				output.Write('(');
+				if (signature.ParameterTypes.Length > 0)
+				{
+					var parameters = metadata.GetMethodDefinition(accessors.GetAny()).GetParameters();
+					int parametersCount = accessors.Getter.IsNil ? parameters.Count - 1 : parameters.Count;
+
+					output.WriteLine();
+					output.Indent();
+					WriteParameters(metadata, parameters.Take(parametersCount), signature);
+					output.Unindent();
+				}
+				output.Write(')');
 			}
-			output.Write(')');
+			catch (BadImageFormatException ex)
+			{
+				output.Write("Error in property ");
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
+				output.Write(": ");
+				output.Write(ex.Message);
+			}
 			return accessors;
 		}
 
