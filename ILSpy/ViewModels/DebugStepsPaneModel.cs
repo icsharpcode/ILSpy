@@ -412,7 +412,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 			// recorded type - tens of thousands of them, on the first keystroke.
 			bool descendantMatches = node.Step.Children.Any(step => SubtreeMatches(step, filter));
 			node.IsVisible = selfMatches || descendantMatches;
-			if (descendantMatches)
+			if (filter != null && descendantMatches)
 				node.IsExpanded = true;
 			// Descend into wrappers that exist either because the path is being revealed or because
 			// an earlier pass built them: those carry visibility state that has to be corrected.

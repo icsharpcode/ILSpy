@@ -156,9 +156,9 @@ public class DebugStepsFilterStateTests
 		vm.FilterText = "";
 		Dispatcher.UIThread.RunJobs();
 
-		matchGroup.IsExpanded.Should().BeTrue(
+		RowFor(tree, MatchGroupDescription).IsExpanded.Should().BeTrue(
 			"a group the user expanded before filtering must still be expanded after the filter is cleared");
-		otherGroup.IsExpanded.Should().BeFalse(
+		RowFor(tree, OtherGroupDescription).IsExpanded.Should().BeFalse(
 			"a group the user never expanded must not stay expanded after the filter is cleared");
 
 		window.Close();
