@@ -101,6 +101,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		/// <summary>
 		/// Gets whether the conversion performs overflow-checking.
+		/// This can be used with these conversion kinds: FloatToInt, Truncate, Nop.
 		/// </summary>
 		public readonly bool CheckForOverflow;
 
@@ -134,10 +135,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// For conversions to integer types, the input Sign is set iff overflow-checking is enabled.
 		/// For conversions to floating-point types, the input sign is always set.
 		/// </summary>
-		/// <remarks>
-		/// The input sign does not have any effect on whether the conversion zero-extends or sign-extends;
-		/// that is purely determined by the <c>TargetType</c>.
-		/// </remarks>
 		public readonly Sign InputSign;
 
 		/// <summary>

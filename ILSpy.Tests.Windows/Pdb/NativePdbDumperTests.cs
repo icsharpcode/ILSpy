@@ -83,7 +83,8 @@ public class NativePdbDumperTests
 		process.WaitForExit();
 		Assert.That(process.ExitCode, Is.Zero, $"csc failed: {output}");
 		Assert.That(File.Exists(pdbPath), Is.True, "csc did not produce a PDB.");
-		DebugInfoUtils.IsWindowsPdb(File.OpenRead(pdbPath)).Should()
+		using var pdbStream = File.OpenRead(pdbPath);
+		DebugInfoUtils.IsWindowsPdb(pdbStream).Should()
 			.BeTrue("the fixture only means anything if the PDB is the native format");
 	}
 

@@ -23,6 +23,8 @@ ILSpy.Installer/wix/
 DecompilerTests.config.json
 *.trx
 report/
+decompdiff-report/
+nugetfuzz-report.html
 # Claude Code local session/skills directory
 /.claude/
 /.understand-anything
