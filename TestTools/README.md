@@ -192,6 +192,14 @@ When run from the ILSpy repository root, `--old` defaults to the merge-base of `
 and `--new`. Checkout arguments are built in Release by default; pass `--no-build` to reuse their
 existing output. `--packages` finds `TestTools/nugetfuzz.cs` automatically from the repository root.
 
+Assemblies are decompiled in parallel by default. Limit concurrency with `-j`, for example `-j 4`;
+report aggregation remains deterministic. For the usual branch comparison, pass only a NuGet
+package-ID list to compare the current worktree with the merge-base of `origin/master`:
+
+```pwsh
+dotnet run TestTools/decompdiff.cs -- top-200.txt
+```
+
 ```pwsh
 dotnet run TestTools/decompdiff.cs -- --new my-branch --packages @top-500.txt
 ```

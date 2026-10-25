@@ -26,6 +26,7 @@
 //
 // usage: dotnet run decompdiff.cs -- [--old <commit-ish|ILSpy-checkout|Decompiler.dll>] --new <...>
 //                                    [-o <report-dir>] [--build|--no-build] [-j <jobs>] [--refs <dir>]... [--packages <@list>] <dll|dir|@list>...
+// short form: dotnet run decompdiff.cs -- <package-list.txt>
 //
 // - assemblies are decompiled in parallel (-j/--jobs, default: processor count).
 // - checkout args are built by default (Release; restore keeps packages.lock.json whole via
@@ -33,6 +34,8 @@
 //   the checkout measures code that is not the one named; pass --no-build to reuse
 //   the build a checkout already carries.
 // - when --old is omitted, it defaults to the merge-base of origin/master and --new.
+// - when --old and --new are omitted, they default to the merge-base of origin/master and the
+//   current worktree.
 // - a commit-ish (branch, tag, sha, FETCH_HEAD) is resolved against the repository
 //   the tool is run from and checked out into a worktree under
 //   ~/.cache/decompdiff/<repo>/<commit>, kept and reused so a rerun keeps the
@@ -83,12 +86,17 @@ catch (AssertionFailedException)
 string? oldSpec = null, newSpec = null, reportDir = null, packageList = null;
 bool build = true;
 int jobs = Environment.ProcessorCount;
+bool help = false;
 var corpus = new List<string>();
 var refDirs = new List<string>();
 for (int i = 0; i < args.Length; i++)
 {
 	switch (args[i])
 	{
+		case "--help":
+		case "-h":
+			help = true;
+			break;
 		case "--old":
 			oldSpec = args[++i];
 			break;
@@ -129,6 +137,37 @@ for (int i = 0; i < args.Length; i++)
 			}
 			break;
 	}
+}
+if (help)
+{
+	Console.WriteLine("decompdiff - compare decompiler output from two builds");
+	Console.WriteLine();
+	Console.WriteLine("Usage:");
+	Console.WriteLine("  dotnet run decompdiff.cs -- [--old <spec>] --new <spec> [options] <dll|dir|@list>...");
+	Console.WriteLine("  dotnet run decompdiff.cs -- <package-list.txt>");
+	Console.WriteLine();
+	Console.WriteLine("Options:");
+	Console.WriteLine("  --old <spec>       Old decompiler DLL, checkout, or commit-ish");
+	Console.WriteLine("  --new <spec>       New decompiler DLL, checkout, or commit-ish");
+	Console.WriteLine("  -o <dir>           Report directory (default: decompdiff-report)");
+	Console.WriteLine("  --build            Build checkout inputs (default)");
+	Console.WriteLine("  --no-build         Reuse existing checkout builds");
+	Console.WriteLine("  -j, --jobs <n>     Maximum assemblies to process concurrently");
+	Console.WriteLine("  --refs <dir>       Additional reference assembly directory (repeatable)");
+	Console.WriteLine("  --packages <@file> Download package IDs through nugetfuzz");
+	Console.WriteLine("  -h, --help         Show this help");
+	return 0;
+}
+if (packageList == null && corpus.Count == 1 && File.Exists(corpus[0])
+	&& Path.GetExtension(corpus[0]).Equals(".txt", StringComparison.OrdinalIgnoreCase))
+{
+	packageList = "@" + corpus[0];
+	corpus.Clear();
+}
+if (oldSpec == null && newSpec == null && packageList != null)
+{
+	newSpec = ".";
+	oldSpec = Side.GetMergeBase(newSpec);
 }
 if (newSpec == null)
 {
