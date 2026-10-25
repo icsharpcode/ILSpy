@@ -542,10 +542,12 @@ sealed class RefIndex
 			}
 			yield break;
 		}
-		// .NETFramework and .NETStandard both resolve against the classic reference assemblies,
-		// but only a .NETFramework version selects a pack: a .NETStandard version is not a net4x
-		// version, and feeding 2.0 to the picker would pick net45, whose Facades carry no
-		// netstandard.dll. netstandard targets take the newest pack, with the widest facade set.
+		// Do not bind .NETStandard assemblies to a .NET Framework reference pack. The classic
+		// mscorlib/System assemblies change type signatures such as Span<T> and introduce
+		// metadata that is not present when the assembly is opened normally by the runtime.
+		// The resolver can use the runtime and package references instead.
+		if (targetFramework.StartsWith(".NETStandard", StringComparison.OrdinalIgnoreCase))
+			yield break;
 		var netFxVersion = targetFramework.StartsWith(".NETFramework", StringComparison.OrdinalIgnoreCase)
 			? version : null;
 		foreach (var dir in EnumerateFrameworkRefPacks(nugetRoot, netFxVersion))
@@ -718,6 +720,7 @@ sealed class RefIndex
 		Link(dll, dir);
 		var missing = new List<string>();
 		var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		bool isNetStandard = TargetFrameworkOf(dll)?.StartsWith(".NETStandard", StringComparison.OrdinalIgnoreCase) == true;
 		// The flag records whether a name was reached through a reference assembly, which
 		// decides whether its absence is worth reporting.
 		var queue = new Queue<(string Name, bool ViaRefPack)>();
@@ -726,6 +729,8 @@ sealed class RefIndex
 		while (queue.Count > 0)
 		{
 			var (name, viaRefPack) = queue.Dequeue();
+			if (isNetStandard && IsPlatformAssembly(name))
+				continue;
 			if (!seen.Add(name))
 				continue;
 			var staged = Path.Combine(dir, name + ".dll");
@@ -755,6 +760,17 @@ sealed class RefIndex
 		}
 		missing.Sort(StringComparer.OrdinalIgnoreCase);
 		return (Path.Combine(dir, Path.GetFileName(dll)), missing);
+	}
+
+	static bool IsPlatformAssembly(string name)
+	{
+		return name.Equals("mscorlib", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("netstandard", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("System", StringComparison.OrdinalIgnoreCase)
+			|| name.StartsWith("System.", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("Microsoft.CSharp", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("Microsoft.VisualBasic", StringComparison.OrdinalIgnoreCase)
+			|| name.StartsWith("Microsoft.Win32.", StringComparison.OrdinalIgnoreCase);
 	}
 
 	// Distinct per source path: two packages can ship the same assembly name with
