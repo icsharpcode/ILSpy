@@ -167,7 +167,7 @@ if (packageList == null && corpus.Count == 1 && File.Exists(corpus[0])
 if (oldSpec == null && newSpec == null && packageList != null)
 {
 	newSpec = ".";
-	oldSpec = Side.GetMergeBase(newSpec);
+	oldSpec = Side.GetMergeBase("HEAD");
 }
 if (newSpec == null)
 {
