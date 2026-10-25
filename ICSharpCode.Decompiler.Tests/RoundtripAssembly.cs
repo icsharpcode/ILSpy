@@ -123,7 +123,6 @@ namespace ICSharpCode.Decompiler.Roundtrip
 		}
 
 		[Test]
-		[Ignore("See https://github.com/icsharpcode/ILSpy/issues/2541 - Waiting for https://github.com/dotnet/roslyn/issues/45929")]
 		public async Task Random_TestCase_1_With_NativeInts()
 		{
 			await RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", LanguageVersion.CSharp9_0);

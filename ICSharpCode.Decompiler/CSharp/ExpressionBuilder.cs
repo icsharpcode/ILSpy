@@ -1678,7 +1678,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Translate(inst.Left, propagateTypeHint ? context.TypeHint : null);
 			var right = Translate(inst.Right, propagateTypeHint ? context.TypeHint : null);
 
-			if (inst.UnderlyingResultType == StackType.Ref)
+			if (inst.LeftInputType == StackType.Ref || inst.RightInputType == StackType.Ref)
 			{
 				var ptrResult = HandleManagedPointerArithmetic(inst, left, right);
 				if (ptrResult != null)

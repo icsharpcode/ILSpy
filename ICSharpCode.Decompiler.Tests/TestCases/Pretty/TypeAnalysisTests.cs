@@ -394,6 +394,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return num2;
 		}
+
+		public static byte CharToByte(char c)
+		{
+			return (byte)c;
+		}
+
+		public static byte CharToByteChecked(char c)
+		{
+			return checked((byte)c);
+		}
+
+		public static UShortEnum ShortToUShortEnum(short s)
+		{
+			return (UShortEnum)s;
+		}
 	}
 
 	public enum UIntEnum : uint
