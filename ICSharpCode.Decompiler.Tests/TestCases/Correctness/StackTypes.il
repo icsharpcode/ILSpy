@@ -347,4 +347,20 @@ pointless:
     callvirt instance string [mscorlib]System.Object::ToString()
     ret
   }
+
+  .method public static 
+  	native int M5 (
+  		int32 ''
+  	) cil managed
+  {
+    // Extracted from Random Tests/TestCase-1::M5
+  	.maxstack 6
+  
+  	IL_002e: ldc.i8 2
+  	IL_0037: conv.i
+  	IL_0038: ldarg 0
+  	IL_003c: conv.ovf.u
+  	IL_003d: mul
+  	IL_0067: ret
+  } // end of method TestCases::M5
 }

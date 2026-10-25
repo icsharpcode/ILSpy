@@ -1071,18 +1071,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				else if (lhsCode == TypeCode.UInt64 || rhsCode == TypeCode.UInt64)
 				{
 					targetType = TypeCode.UInt64;
-					bindingError = IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs);
+					bindingError = IsSigned(lhsCode, lhsUType, lhs) || IsSigned(rhsCode, rhsUType, rhs);
 				}
 				else if (lhsUType.Kind == TypeKind.NUInt || rhsUType.Kind == TypeKind.NUInt)
 				{
-					bindingError = IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs);
+					bindingError = IsSigned(lhsCode, lhsUType, lhs) || IsSigned(rhsCode, rhsUType, rhs);
 					lhs = CastTo(SpecialType.NUInt, isNullable, lhs, allowNullableConstants);
 					rhs = CastTo(SpecialType.NUInt, isNullable, rhs, allowNullableConstants);
 					return !bindingError;
 				}
 				else if (lhsCode == TypeCode.UInt32 || rhsCode == TypeCode.UInt32)
 				{
-					targetType = (IsSigned(lhsCode, lhs) || IsSigned(rhsCode, rhs)) ? TypeCode.Int64 : TypeCode.UInt32;
+					targetType = (IsSigned(lhsCode, lhsUType, lhs) || IsSigned(rhsCode, rhsUType, rhs)) ? TypeCode.Int64 : TypeCode.UInt32;
 				}
 				else if (lhsCode == TypeCode.Int64 || rhsCode == TypeCode.Int64)
 				{
@@ -1104,7 +1104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return !bindingError;
 		}
 
-		bool IsSigned(TypeCode code, ResolveResult rr)
+		static bool IsSigned(TypeCode code, IType utype, ResolveResult rr)
 		{
 			// Determine whether the rr with code==ReflectionHelper.GetTypeCode(NullableType.GetUnderlyingType(rr.Type))
 			// is a signed primitive type.
@@ -1114,6 +1114,13 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				case TypeCode.Int16:
 					return true;
 				case TypeCode.Int32:
+					if (utype.Kind == TypeKind.NInt)
+					{
+						// Even though there are constants of type `nint`, they do not participate in
+						// implicit constant expression conversions.
+						// So treat as an unknown value, which might be negative.
+						return true;
+					}
 					// for int, consider implicit constant expression conversion
 					if (rr.IsCompileTimeConstant && rr.ConstantValue != null && (int)rr.ConstantValue >= 0)
 						return false;

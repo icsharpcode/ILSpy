@@ -259,5 +259,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return (b ? ((nint)i) : ((nint)x)) - y;
 		}
+
+		public nuint MixedSignXor(nint x, nuint y)
+		{
+			return (nuint)x ^ y;
+		}
 	}
 }
