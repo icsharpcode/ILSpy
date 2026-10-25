@@ -2590,7 +2590,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var attr in section.Attributes)
 				{
 					var symbol = attr.Type.GetSymbol();
-					if (symbol is ITypeDefinition td && td.FullTypeName == attributeType.GetTypeName())
+					if (symbol is ITypeDefinitionOrUnknown td && td.FullTypeName == attributeType.GetTypeName())
 					{
 						attr.Remove();
 						found = true;
