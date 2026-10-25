@@ -277,8 +277,8 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 				Debug.Assert(expr.Type.GetStackType() == StackType.Void);
 				return expr;
 			case AdjustmentKind.PointerToManagedRef:
-				// Use: `ref (T*)expr`
-				var brt = (ByReferenceType)adjustment.TargetType;
+				// Use: `ref *(T*)expr`
+				var brt = (ByReferenceType)adjustment.TargetType.SkipModifiers();
 				expr = ConvertInteger(expr, new PointerType(brt.ElementType));
 				var derefRR = new ResolveResult(brt.ElementType);
 				Expression deref;
@@ -297,39 +297,6 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 			default:
 				throw new NotSupportedException($"Unsupported adjustment kind: {adjustment.Kind}");
 		}
-	}
-
-	/// <summary>
-	/// Converts `expr` to `targetType` without impacting the semantics of the expression.
-	/// 
-	/// Precondition: `targetType` be compatible with the expression's type.
-	/// Postcondition: The resulting expression will be equivalent to `targetType` (modulo type erasure).
-	/// </summary>
-	public ExpressionWithResolveResult ConvertNop(ExpressionWithResolveResult expr, IType targetType)
-	{
-		Debug.Assert(Adjustment.CompatibleTypesForAdjustmentSemantics(targetType, expr.Type));
-		StackType stackType = targetType.GetStackType();
-		if (stackType.IsIntegerType() || stackType == StackType.VT && NullableType.GetUnderlyingType(targetType).GetStackType().IsIntegerType())
-		{
-			return ConvertInteger(expr, targetType);
-		}
-		if (NormalizeTypeVisitor.TypeErasure.EquivalentTypes(expr.Type, targetType))
-		{
-			return expr;
-		}
-		if (stackType == StackType.Ref)
-		{
-			// Convert between managed reference types.
-			// We can't do this by going through a pointer type because that would temporarily stop GC tracking.
-			// Instead, emit `ref Unsafe.As<T>(expr)`
-			return exprBuilder.CallUnsafeIntrinsic("As", [expr],
-						typeArguments: [
-							((ByReferenceType)expr.Type).ElementType,
-							((ByReferenceType)targetType).ElementType
-						],
-						returnType: targetType);
-		}
-		throw new NotSupportedException($"Conversion from {expr.Type} to {targetType} is not supported.");
 	}
 
 	/// <summary>
@@ -405,11 +372,11 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 					),
 					new SwitchExpressionSection(
 						new PrimitiveExpression(true),
-						new PrimitiveExpression(1)
+						ConvertInteger(LdcI4(1), targetType, kind)
 					),
 					new SwitchExpressionSection(
 						new PrimitiveExpression(false),
-						new PrimitiveExpression(0)
+						ConvertInteger(LdcI4(0), targetType, kind)
 					)
 				).WithRR(new ResolveResult(targetType));
 			}
@@ -447,7 +414,7 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 							new CastExpression(exprBuilder.ConvertType(targetType), new NullReferenceExpression())
 						),
 						new SwitchExpressionSection(
-							new PrimitiveExpression(0),
+							ConvertInteger(LdcI4(0), sourceUType),
 							new PrimitiveExpression(false)
 						),
 						new SwitchExpressionSection(
@@ -629,9 +596,10 @@ class AdjustmentBuilder(ExpressionBuilder exprBuilder)
 		int targetSize = targetUType.GetSize();
 		if (sourceSize > targetSize)
 			return true; // truncation: overflow definitely possible
-		if (targetUType.GetSign() == sourceUType.GetSign())
+		if (sourceUType.GetSign() == targetUType.GetSign())
 		{
-			return false; // same sign, smaller or equal size: no overflow possible
+			Debug.Assert(sourceSize <= targetSize);
+			return false; // same sign, larger or equal size: no overflow possible
 		}
 		else
 		{
