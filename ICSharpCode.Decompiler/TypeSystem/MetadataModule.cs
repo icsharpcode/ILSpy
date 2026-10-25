@@ -661,12 +661,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			SymbolKind symbolKind = SymbolKind.Method;
 			if (name == ".ctor" || name == ".cctor")
 				symbolKind = SymbolKind.Constructor;
-			var m = new FakeMethod(Compilation, symbolKind);
-			m.DeclaringType = declaringType;
-			m.Name = name;
-			m.ReturnType = signature.ReturnType;
-			m.IsStatic = !signature.Header.IsInstance;
-
+			var m = new FakeMethod(Compilation, symbolKind) {
+				DeclaringType = declaringType,
+				Name = name,
+				IsStatic = !signature.Header.IsInstance
+			};
 			TypeParameterSubstitution substitution = null;
 			if (signature.GenericParameterCount > 0)
 			{
@@ -682,28 +681,40 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			{
 				substitution = declaringType.GetSubstitution();
 			}
+
+			m.ReturnType = ApplyAttributesAndSubstitutionToType(signature.ReturnType, substitution);
+
 			var parameters = new List<IParameter>();
 			for (int i = 0; i < signature.RequiredParameterCount; i++)
 			{
-				var type = signature.ParameterTypes[i];
-				if (substitution != null)
-				{
-					// replace the dummy method type parameters with the owned instances we just created
-					type = type.AcceptVisitor(substitution);
-				}
+				var type = ApplyAttributesAndSubstitutionToType(signature.ParameterTypes[i], substitution);
 				parameters.Add(new DefaultParameter(type, ""));
 			}
 			m.Parameters = parameters;
 
-			GuessFakeMethodAccessor(declaringType, name, signature, m, parameters);
+			GuessFakeMethodAccessor(declaringType, m);
 
 			return m;
 		}
 
-		private void GuessFakeMethodAccessor(IType declaringType, string name, MethodSignature<IType> signature, FakeMethod m, List<IParameter> parameters)
+		private IType ApplyAttributesAndSubstitutionToType(IType type, TypeParameterSubstitution substitution = null)
 		{
-			if (signature.GenericParameterCount > 0)
+			type = ApplyAttributeTypeVisitor.ApplyAttributesToType(type, Compilation, null, metadata, options, Nullability.Oblivious);
+			if (substitution != null)
+			{
+				// replace the dummy method type parameters with the owned instances we just created
+				type = type.AcceptVisitor(substitution);
+			}
+			return type;
+		}
+
+		private void GuessFakeMethodAccessor(IType declaringType, FakeMethod m)
+		{
+			if (m.TypeParameters.Count > 0)
 				return;
+
+			string name = m.Name;
+			var parameters = m.Parameters;
 
 			var guessedGetter = name.StartsWith("get_", StringComparison.Ordinal);
 			var guessedSetter = name.StartsWith("set_", StringComparison.Ordinal);
@@ -719,13 +730,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				if (guessedGetter)
 				{
-					if (signature.ReturnType.Kind == TypeKind.Void)
+					if (m.ReturnType.Kind == TypeKind.Void)
 						return;
 
 					m.AccessorKind = MethodSemanticsAttributes.Getter;
 					m.AccessorOwner = fakeProperty;
 					fakeProperty.Getter = m;
-					fakeProperty.ReturnType = signature.ReturnType;
+					fakeProperty.ReturnType = m.ReturnType;
 					fakeProperty.IsIndexer = parameters.Count > 0;
 					fakeProperty.Parameters = parameters;
 					return;
@@ -733,7 +744,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				if (guessedSetter)
 				{
-					if (parameters.Count < 1 || signature.ReturnType.Kind != TypeKind.Void)
+					if (parameters.Count < 1 || m.ReturnType.Kind != TypeKind.Void)
 						return;
 
 					m.AccessorKind = MethodSemanticsAttributes.Setter;
@@ -866,13 +877,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
 			if (field == null)
 			{
-				// If it's a field in a generic type, we need to substitute the type arguments:
-				if (declaringType.TypeArguments.Count > 0)
-				{
-					signature = signature.AcceptVisitor(declaringType.GetSubstitution());
-				}
 				field = new FakeField(Compilation) {
-					ReturnType = signature,
+					ReturnType = ApplyAttributesAndSubstitutionToType(signature, declaringType.GetSubstitution()),
 					Name = name,
 					DeclaringType = declaringType,
 				};

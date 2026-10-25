@@ -146,6 +146,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
+		/// Retrieves the <see cref="IType"/> associated with this AstType, or null if no type
+		/// is associated with the node.
+		/// </summary>
+		public static IType? GetSymbol(this AstType node)
+		{
+			return node.Annotation<TypeResolveResult>()?.Type;
+		}
+
+		/// <summary>
 		/// Retrieves the <see cref="ResolveResult"/> associated with this <see cref="AstNode"/>,
 		/// or <see cref="ErrorResolveResult.UnknownError"/> if no resolve result is associated with the node.
 		/// </summary>
