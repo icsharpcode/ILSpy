@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -1115,9 +1116,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 				// skip return type parameter handle
 				if (p.SequenceNumber == 0)
 					continue;
+				// pi: the corresponding zero-based index of the parameter
+				int pi = p.SequenceNumber - 1;
+				// skip out-of-order or too-large parameter handles
+				if (pi < i || pi >= signature.RequiredParameterCount)
+					continue;
 
 				// fill gaps in parameter list
-				while (i < p.SequenceNumber - 1)
+				while (i < pi)
 				{
 					if (i > 0)
 					{
@@ -1129,6 +1135,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 					i++;
 				}
+				Debug.Assert(i == pi);
 
 				// separator
 				if (i > 0)
