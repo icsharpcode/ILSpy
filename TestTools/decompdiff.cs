@@ -279,14 +279,19 @@ var oldTotals = default(Metrics);
 var newTotals = default(Metrics);
 
 var results = new AsmResult[assemblies.Count];
+var progressLock = new object();
+int completedAssemblies = 0;
 Parallel.For(0, assemblies.Count, new ParallelOptions { MaxDegreeOfParallelism = jobs }, idx => {
 	results[idx] = ProcessAssembly(assemblies[idx]);
-	Console.WriteLine(results[idx].Log);
+	lock (progressLock)
+		RenderProgress(++completedAssemblies, assemblies.Count);
 });
+Console.WriteLine();
 
 // Merged in corpus order so the report does not depend on scheduling.
 foreach (var r in results)
 {
+	Console.WriteLine(r.Log);
 	if (r.Missing.Count > 0)
 		unresolvedRefs[r.Name] = r.Missing;
 	if (r.Skipped != null)
@@ -365,6 +370,14 @@ Report.WriteHtml(Path.Combine(reportDir, "index.html"), new ReportModel(
 Console.WriteLine();
 Console.Write(summary);
 return newErrors > 0 ? 1 : 0;
+
+void RenderProgress(int completed, int total)
+{
+	const int width = 30;
+	int filled = total == 0 ? width : completed * width / total;
+	string bar = new string('#', filled) + new string('-', width - filled);
+	Console.Write($"\rdecompiling [{bar}] {completed}/{total}");
+}
 
 AsmResult ProcessAssembly(string dll)
 {
