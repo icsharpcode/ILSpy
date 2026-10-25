@@ -137,6 +137,15 @@ namespace ICSharpCode.ILSpy.Views
 		void OnTreeDoubleTapped(object? sender, TappedEventArgs e)
 			=> (DataContext as DebugStepsPaneModel)?.ShowStateAfterCommand.Execute(null);
 
+		void OnILAstToggleClicked(object? sender, RoutedEventArgs e)
+			=> (DataContext as DebugStepsPaneModel)?.DisplayMode = DebugStepsDisplayMode.ILAst;
+
+		void OnCSharpToggleClicked(object? sender, RoutedEventArgs e)
+			=> (DataContext as DebugStepsPaneModel)?.DisplayMode = DebugStepsDisplayMode.CSharp;
+
+		void OnBothToggleClicked(object? sender, RoutedEventArgs e)
+			=> (DataContext as DebugStepsPaneModel)?.DisplayMode = DebugStepsDisplayMode.Both;
+
 		void OnTreeKeyDown(object? sender, KeyEventArgs e)
 		{
 			if (e.Key != Key.Enter && e.Key != Key.Return)

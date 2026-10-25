@@ -585,7 +585,7 @@ async Task<bool> TryFetchMissingRef(IAssemblyReference reference, Version? coreV
 	{
 		lock (dirs)
 		{
-			return dirs.Any(d => File.Exists(Path.Combine(d, reference.Name + ".dll")));
+			return AssemblyReferenceCompatibility.Find(dirs, reference) != null;
 		}
 	}
 	if (coreVersion != null
@@ -630,6 +630,52 @@ async Task<bool> TryFetchMissingRef(IAssemblyReference reference, Version? coreV
 		Console.WriteLine($"  ! undeclared dependency {reference.Name}: {ex.Message}");
 	}
 	return Satisfied();
+}
+
+async Task ExpandForwarderReferences(List<string> dirs, Version? coreVersion, NuGetFramework matchTarget)
+{
+	var scanned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+	for (bool expanded = true; expanded;)
+	{
+		expanded = false;
+		string[] files;
+		lock (dirs)
+		{
+			files = dirs.Where(Directory.Exists)
+				.SelectMany(d => Directory.EnumerateFiles(d, "*.dll"))
+				.ToArray();
+		}
+		foreach (var file in files)
+		{
+			if (!scanned.Add(file))
+				continue;
+			PEFile module;
+			try
+			{
+				module = new PEFile(file);
+			}
+			catch (Exception ex) when (ex is BadImageFormatException or MetadataFileNotSupportedException)
+			{
+				continue;
+			}
+			using (module)
+			{
+				foreach (var handle in module.Metadata.ExportedTypes)
+				{
+					var exportedType = module.Metadata.GetExportedType(handle);
+					if (exportedType.Implementation.Kind != HandleKind.AssemblyReference)
+						continue;
+					var reference = new ICSharpCode.Decompiler.Metadata.AssemblyReference(
+						module, (AssemblyReferenceHandle)exportedType.Implementation);
+					if (AssemblyReferenceCompatibility.Find(dirs, reference) != null)
+						continue;
+					var before = dirs.Count;
+					await TryFetchMissingRef(reference, coreVersion, matchTarget, dirs);
+					expanded |= dirs.Count != before;
+				}
+			}
+		}
+	}
 }
 
 // Adds the ref/<tfm> directory of a framework ref pack (WindowsDesktop, AspNetCore)
@@ -760,6 +806,9 @@ async Task DecompileAssembly(string pkg, string dllPath, List<string> searchDirs
 		// Last-resort only, for the same reason the ref packs are ordered as they are.
 		if (fallbackDir != null)
 			orderedDirs.Add(fallbackDir);
+		if (matchTarget.Framework == FrameworkConstants.FrameworkIdentifiers.NetStandard)
+			await AddRefPack(NetCoreRefPack, installedTfm.Version, orderedDirs);
+		await ExpandForwarderReferences(orderedDirs, coreVersion, matchTarget);
 		foreach (var d in orderedDirs)
 			resolver.AddSearchDirectory(d);
 		var fetchGate = new object();
@@ -1871,6 +1920,55 @@ class CollectAsserts(List<string> messages) : TraceListener
 // The wrapped UniversalAssemblyResolver consults the installed runtime BEFORE its search
 // directories, which lets runtime stub facades shadow ref-pack assemblies - hence the
 // directory probing happens here, in our order.
+static class AssemblyReferenceCompatibility
+{
+	public static string? Find(IEnumerable<string> dirs, IAssemblyReference reference)
+	{
+		foreach (var dir in dirs)
+		{
+			var path = Path.Combine(dir, reference.Name + ".dll");
+			if (!File.Exists(path))
+				continue;
+			try
+			{
+				using var file = new PEFile(path);
+				if (Matches(file, reference))
+					return path;
+			}
+			catch (Exception)
+			{
+				// Keep probing lower-priority directories after a corrupt candidate.
+			}
+		}
+		return null;
+	}
+
+	public static bool Matches(MetadataFile file, IAssemblyReference reference)
+	{
+		if (!file.IsAssembly)
+			return false;
+		var actual = AssemblyNameReference.Parse(file.FullName);
+		if (!string.Equals(actual.Name, reference.Name, StringComparison.OrdinalIgnoreCase))
+			return false;
+		if (reference.Version is { } requestedVersion
+			&& !IsZeroOrAllOnes(requestedVersion)
+			&& actual.Version != requestedVersion
+			&& !reference.IsRetargetable)
+		{
+			return false;
+		}
+		var requestedToken = reference.PublicKeyToken;
+		return requestedToken == null || requestedToken.Length == 0
+			|| requestedToken.SequenceEqual(actual.PublicKeyToken ?? Array.Empty<byte>());
+	}
+
+	static bool IsZeroOrAllOnes(Version version)
+		=> version.Major is 0 or -1
+			&& version.Minor is 0 or -1
+			&& version.Build is 0 or -1
+			&& version.Revision is 0 or -1;
+}
+
 class LoggingResolver(IAssemblyResolver inner, List<string> dirs, Func<IAssemblyReference, bool> onMiss) : IAssemblyResolver
 {
 	public readonly Dictionary<string, string?> Resolutions = new();
@@ -1880,12 +1978,18 @@ class LoggingResolver(IAssemblyResolver inner, List<string> dirs, Func<IAssembly
 
 	public MetadataFile? Resolve(IAssemblyReference reference)
 	{
-		var file = ResolveFromDirs(reference) ?? inner.Resolve(reference);
+		var file = ResolveFromDirs(reference);
+		if (file == null)
+		{
+			file = inner.Resolve(reference);
+			if (file != null && !AssemblyReferenceCompatibility.Matches(file, reference))
+				file = null;
+		}
 		if (file == null && onMiss(reference))
 		{
 			lock (loaded)
 			{
-				loaded.Remove(reference.Name);
+				loaded.Remove(reference.FullName);
 			}
 			file = ResolveFromDirs(reference);
 		}
@@ -1907,7 +2011,7 @@ class LoggingResolver(IAssemblyResolver inner, List<string> dirs, Func<IAssembly
 		}
 		lock (loaded)
 		{
-			if (loaded.TryGetValue(reference.Name, out var cached))
+			if (loaded.TryGetValue(reference.FullName, out var cached))
 				return cached;
 			MetadataFile? result = null;
 			foreach (var dir in snapshot)
@@ -1917,15 +2021,20 @@ class LoggingResolver(IAssemblyResolver inner, List<string> dirs, Func<IAssembly
 					continue;
 				try
 				{
-					result = new PEFile(path);
-					break;
+					var candidate = new PEFile(path);
+					if (AssemblyReferenceCompatibility.Matches(candidate, reference))
+					{
+						result = candidate;
+						break;
+					}
+					candidate.Dispose();
 				}
 				catch (Exception)
 				{
 					// unreadable candidate; keep probing lower-priority dirs
 				}
 			}
-			loaded[reference.Name] = result;
+			loaded[reference.FullName] = result;
 			return result;
 		}
 	}

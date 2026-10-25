@@ -19,6 +19,15 @@
 			         VerticalAlignment="Center" PlaceholderText="Filter steps"
 			         Text="{Binding FilterText}" />
 			<StackPanel Orientation="Horizontal">
+				<ToggleButton Margin="3" Content="ILAst"
+				              IsChecked="{Binding IsILAstSelected}"
+				              Click="OnILAstToggleClicked" />
+				<ToggleButton Margin="3" Content="C#"
+				              IsChecked="{Binding IsCSharpSelected}"
+				              Click="OnCSharpToggleClicked" />
+				<ToggleButton Margin="3" Content="Both"
+				              IsChecked="{Binding IsBothSelected}"
+				              Click="OnBothToggleClicked" />
 				<CheckBox Margin="3" Content="Field sugar"
 				          IsChecked="{Binding Options.UseFieldSugar, Mode=TwoWay}" />
 				<CheckBox Margin="3" Content="Logic operation sugar"
@@ -47,8 +56,8 @@
 					<StackPanel Orientation="Horizontal" Spacing="6">
 						<Border Background="{DynamicResource ThemeControlMidBrush}"
 								CornerRadius="3" Padding="4,0" VerticalAlignment="Center"
-								IsVisible="{Binding Phase, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-							<TextBlock Text="{Binding Phase}" FontSize="10" />
+								IsVisible="{Binding PhaseText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+							<TextBlock Text="{Binding PhaseText}" FontSize="10" />
 						</Border>
 						<TextBlock Text="{Binding Description}" />
 					</StackPanel>

@@ -29,6 +29,7 @@ using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.DebugSteps;
 using ICSharpCode.Decompiler.IL;
 
@@ -40,6 +41,13 @@ using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.ViewModels
 {
+	public enum DebugStepsDisplayMode
+	{
+		Both,
+		ILAst,
+		CSharp
+	}
+
 	/// <summary>
 	/// Bottom-aligned tool pane that surfaces the step tree the C# language records while decompiling:
 	/// the IL transforms of each member, the ILAst-to-C# seam, then the C# AST transforms. The
@@ -97,6 +105,7 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// selection state.
 		/// </summary>
 		IList<Stepper.Node>? stepsSource;
+		IReadOnlyList<StepNodeViewModel>? allSteps;
 
 		/// <summary>
 		/// True while the wrapper tree holds a pre-filter expansion snapshot, i.e. from the first
@@ -124,6 +133,13 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// </summary>
 		[ObservableProperty]
 		bool isAvailable;
+
+		[ObservableProperty]
+		DebugStepsDisplayMode displayMode = DebugStepsDisplayMode.Both;
+
+		public bool IsILAstSelected => DisplayMode == DebugStepsDisplayMode.ILAst;
+		public bool IsCSharpSelected => DisplayMode == DebugStepsDisplayMode.CSharp;
+		public bool IsBothSelected => DisplayMode == DebugStepsDisplayMode.Both;
 
 		/// <summary>
 		/// Free-text filter for the step tree; empty shows everything. Bound to the filter box in the
@@ -280,10 +296,33 @@ namespace ICSharpCode.ILSpy.ViewModels
 			if (ReferenceEquals(stepsSource, source))
 				return;
 			stepsSource = source;
+			allSteps = source == null ? null : StepNodeViewModel.Wrap(source);
 			filterSnapshotTaken = false;
-			Steps = source == null ? null : StepNodeViewModel.Wrap(source);
-			if (Steps != null && IsFiltering)
-				ApplyFilter();
+			RebuildDisplayedSteps();
+		}
+
+		partial void OnDisplayModeChanged(DebugStepsDisplayMode value)
+		{
+			OnPropertyChanged(nameof(IsILAstSelected));
+			OnPropertyChanged(nameof(IsCSharpSelected));
+			OnPropertyChanged(nameof(IsBothSelected));
+			filterSnapshotTaken = false;
+			RebuildDisplayedSteps();
+		}
+
+		void RebuildDisplayedSteps()
+		{
+			if (allSteps == null)
+			{
+				Steps = null;
+				return;
+			}
+			var visibleRoots = allSteps.Where(step => SubtreeMatches(step.Step, filter: null)).ToArray();
+			Steps = DisplayMode != DebugStepsDisplayMode.Both
+				&& visibleRoots.Length == 1
+				? visibleRoots[0].Children
+				: allSteps;
+			ApplyFilter();
 		}
 
 		partial void OnFilterTextChanged(string? value)
@@ -324,10 +363,17 @@ namespace ICSharpCode.ILSpy.ViewModels
 				filterSnapshotTaken = false;
 				foreach (var step in Steps)
 					RestoreExpansion(step);
+				foreach (var step in Steps)
+					ApplyFilterToNode(step, null);
 				for (var ancestor = SelectedStep?.Parent; ancestor != null; ancestor = ancestor.Parent)
 					ancestor.IsExpanded = true;
 				if (SelectedStep != null)
 					SelectionRevealRequested?.Invoke(this, System.EventArgs.Empty);
+			}
+			else
+			{
+				foreach (var step in Steps)
+					ApplyFilterToNode(step, null);
 			}
 		}
 
@@ -358,15 +404,15 @@ namespace ICSharpCode.ILSpy.ViewModels
 		/// descendant's — contains the filter (ordinal, case-insensitive), and a group with a
 		/// surviving descendant is expanded so the path to every match is open.
 		/// </summary>
-		static bool ApplyFilterToNode(StepNodeViewModel node, string filter)
+		bool ApplyFilterToNode(StepNodeViewModel node, string? filter)
 		{
-			bool selfMatches = Matches(node.Description, filter);
+			bool selfMatches = IsPhaseVisible(node.Step) && (filter == null || Matches(node.Description, filter));
 			// Ask the recorded steps, not the wrappers: a subtree with no match stays hidden, and
 			// wrapping it only to hide it would put a view-model on the UI thread for every step of a
 			// recorded type - tens of thousands of them, on the first keystroke.
 			bool descendantMatches = node.Step.Children.Any(step => SubtreeMatches(step, filter));
 			node.IsVisible = selfMatches || descendantMatches;
-			if (descendantMatches)
+			if (filter != null && descendantMatches)
 				node.IsExpanded = true;
 			// Descend into wrappers that exist either because the path is being revealed or because
 			// an earlier pass built them: those carry visibility state that has to be corrected.
@@ -378,10 +424,19 @@ namespace ICSharpCode.ILSpy.ViewModels
 			return selfMatches || descendantMatches;
 		}
 
-		static bool SubtreeMatches(Stepper.Node step, string filter)
+		bool SubtreeMatches(Stepper.Node step, string? filter)
 		{
-			return Matches(step.Description, filter)
+			return (IsPhaseVisible(step) && (filter == null || Matches(step.Description, filter)))
 				|| step.Children.Any(child => SubtreeMatches(child, filter));
+		}
+
+		bool IsPhaseVisible(Stepper.Node step)
+		{
+			if (DisplayMode == DebugStepsDisplayMode.Both)
+				return true;
+			return DisplayMode == DebugStepsDisplayMode.ILAst
+				? step.Phase == StepPhase.ILAst
+				: step.Phase == StepPhase.CSharp;
 		}
 
 		static bool Matches(string description, string filter)

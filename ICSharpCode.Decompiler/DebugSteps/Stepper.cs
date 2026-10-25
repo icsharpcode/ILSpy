@@ -23,10 +23,19 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.DebugSteps
 {
+	public enum StepPhase
+	{
+		None,
+		ILAst,
+		CSharp
+	}
+
 	/// <summary>
 	/// Exception thrown when a debug-step-enabled transform pipeline runs into the <see cref="Stepper.StepLimit"/>.
 	/// </summary>
@@ -89,6 +98,7 @@ namespace ICSharpCode.Decompiler.DebugSteps
 		public class Node
 		{
 			public string Description { get; }
+			public StepPhase Phase => GetPhase(this);
 			public object? Position { get; set; }
 			public object? ModifiedNode { get; set; }
 			/// <summary>
@@ -117,6 +127,24 @@ namespace ICSharpCode.Decompiler.DebugSteps
 			public int EndStep { get; set; }
 
 			public IList<Node> Children { get; } = new List<Node>();
+
+			static StepPhase GetPhase(Node node)
+			{
+				switch (node.Position)
+				{
+					case ILInstruction:
+						return StepPhase.ILAst;
+					case AstNode:
+						return StepPhase.CSharp;
+				}
+				foreach (var child in node.Children)
+				{
+					StepPhase phase = GetPhase(child);
+					if (phase != StepPhase.None)
+						return phase;
+				}
+				return StepPhase.None;
+			}
 
 			public Node(string description)
 			{
