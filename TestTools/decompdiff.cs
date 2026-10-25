@@ -167,7 +167,7 @@ if (packageList == null && corpus.Count == 1 && File.Exists(corpus[0])
 if (oldSpec == null && newSpec == null && packageList != null)
 {
 	newSpec = ".";
-	oldSpec = Side.GetMergeBase(newSpec);
+	oldSpec = Side.GetMergeBase("HEAD");
 }
 if (newSpec == null)
 {
@@ -279,14 +279,19 @@ var oldTotals = default(Metrics);
 var newTotals = default(Metrics);
 
 var results = new AsmResult[assemblies.Count];
+var progressLock = new object();
+int completedAssemblies = 0;
 Parallel.For(0, assemblies.Count, new ParallelOptions { MaxDegreeOfParallelism = jobs }, idx => {
 	results[idx] = ProcessAssembly(assemblies[idx]);
-	Console.WriteLine(results[idx].Log);
+	lock (progressLock)
+		RenderProgress(++completedAssemblies, assemblies.Count);
 });
+Console.WriteLine();
 
 // Merged in corpus order so the report does not depend on scheduling.
 foreach (var r in results)
 {
+	Console.WriteLine(r.Log);
 	if (r.Missing.Count > 0)
 		unresolvedRefs[r.Name] = r.Missing;
 	if (r.Skipped != null)
@@ -366,6 +371,14 @@ Console.WriteLine();
 Console.Write(summary);
 return newErrors > 0 ? 1 : 0;
 
+void RenderProgress(int completed, int total)
+{
+	const int width = 30;
+	int filled = total == 0 ? width : completed * width / total;
+	string bar = new string('#', filled) + new string('-', width - filled);
+	Console.Write($"\rdecompiling [{bar}] {completed}/{total}");
+}
+
 AsmResult ProcessAssembly(string dll)
 {
 	var asmName = Path.GetFileNameWithoutExtension(dll);
@@ -419,6 +432,27 @@ AsmResult ProcessAssembly(string dll)
 				DumpPair(dll, location, o.Code!, $"// ERROR: {n.Error}");
 			}
 			continue;
+		}
+		foreach (var method in o.MemberErrors.Keys.Union(n.MemberErrors.Keys).OrderBy(k => k))
+		{
+			var oldMemberError = o.MemberErrors.GetValueOrDefault(method);
+			var newMemberError = n.MemberErrors.GetValueOrDefault(method);
+			if (oldMemberError == null && newMemberError != null)
+			{
+				r.NewErrors++;
+				r.Transitions.Add($"NEW-ERROR (method) {location} / {method}: {newMemberError}");
+			}
+			else if (oldMemberError != null && newMemberError == null)
+			{
+				r.FixedErrors++;
+				r.Transitions.Add($"fixed-error (method) {location} / {method}: {oldMemberError}");
+			}
+			else if (oldMemberError != null && newMemberError != null)
+			{
+				r.BothErrors++;
+				if (oldMemberError != newMemberError)
+					r.Transitions.Add($"error-changed (method) {location} / {method}: {oldMemberError} -> {newMemberError}");
+			}
 		}
 		r.OldTotals += o.Metrics;
 		r.NewTotals += n.Metrics;
@@ -542,10 +576,12 @@ sealed class RefIndex
 			}
 			yield break;
 		}
-		// .NETFramework and .NETStandard both resolve against the classic reference assemblies,
-		// but only a .NETFramework version selects a pack: a .NETStandard version is not a net4x
-		// version, and feeding 2.0 to the picker would pick net45, whose Facades carry no
-		// netstandard.dll. netstandard targets take the newest pack, with the widest facade set.
+		// Do not bind .NETStandard assemblies to a .NET Framework reference pack. The classic
+		// mscorlib/System assemblies change type signatures such as Span<T> and introduce
+		// metadata that is not present when the assembly is opened normally by the runtime.
+		// The resolver can use the runtime and package references instead.
+		if (targetFramework.StartsWith(".NETStandard", StringComparison.OrdinalIgnoreCase))
+			yield break;
 		var netFxVersion = targetFramework.StartsWith(".NETFramework", StringComparison.OrdinalIgnoreCase)
 			? version : null;
 		foreach (var dir in EnumerateFrameworkRefPacks(nugetRoot, netFxVersion))
@@ -718,6 +754,7 @@ sealed class RefIndex
 		Link(dll, dir);
 		var missing = new List<string>();
 		var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+		bool isNetStandard = TargetFrameworkOf(dll)?.StartsWith(".NETStandard", StringComparison.OrdinalIgnoreCase) == true;
 		// The flag records whether a name was reached through a reference assembly, which
 		// decides whether its absence is worth reporting.
 		var queue = new Queue<(string Name, bool ViaRefPack)>();
@@ -726,6 +763,8 @@ sealed class RefIndex
 		while (queue.Count > 0)
 		{
 			var (name, viaRefPack) = queue.Dequeue();
+			if (isNetStandard && IsPlatformAssembly(name))
+				continue;
 			if (!seen.Add(name))
 				continue;
 			var staged = Path.Combine(dir, name + ".dll");
@@ -755,6 +794,17 @@ sealed class RefIndex
 		}
 		missing.Sort(StringComparer.OrdinalIgnoreCase);
 		return (Path.Combine(dir, Path.GetFileName(dll)), missing);
+	}
+
+	static bool IsPlatformAssembly(string name)
+	{
+		return name.Equals("mscorlib", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("netstandard", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("System", StringComparison.OrdinalIgnoreCase)
+			|| name.StartsWith("System.", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("Microsoft.CSharp", StringComparison.OrdinalIgnoreCase)
+			|| name.Equals("Microsoft.VisualBasic", StringComparison.OrdinalIgnoreCase)
+			|| name.StartsWith("Microsoft.Win32.", StringComparison.OrdinalIgnoreCase);
 	}
 
 	// Distinct per source path: two packages can ship the same assembly name with
@@ -1010,7 +1060,7 @@ record ReportModel(
 	List<string> Transitions, List<string> Skipped, SortedDictionary<string, List<string>> UnresolvedRefs,
 	Metrics OldTotals, Metrics NewTotals, int NewErrors, int FixedErrors, int BothErrors, string ReportDir);
 
-record TypeResult(string? Code, string? Error, Metrics Metrics);
+record TypeResult(string? Code, string? Error, Metrics Metrics, Dictionary<string, string> MemberErrors);
 
 class AsmResult(string name)
 {
@@ -1235,7 +1285,7 @@ class Side
 			{
 				decompiler.CancellationToken = cts.Token;
 				string code = decompiler.DecompileTypeAsString((dynamic)fullTypeName);
-				results[name] = new TypeResult(code, null, Metrics.Measure(code));
+				results[name] = new TypeResult(code, null, Metrics.Measure(code), GetMemberErrors(decompiler));
 			}
 			catch (Exception ex)
 			{
@@ -1243,10 +1293,21 @@ class Side
 				var error = inner is OperationCanceledException
 					? "timeout (60s)"
 					: $"{inner.GetType().Name}: {FirstLine(inner.Message)}";
-				results[name] = new TypeResult(null, error, default);
+				results[name] = new TypeResult(null, error, default, new Dictionary<string, string>());
 			}
 		}
 		return (results, null);
+	}
+
+	static Dictionary<string, string> GetMemberErrors(object decompiler)
+	{
+		var errors = new Dictionary<string, string>();
+		foreach (object error in (IEnumerable)GetProperty(decompiler, "Errors"))
+		{
+			var message = GetProperty(error, "Message").ToString()!;
+			errors[message] = error.ToString()!;
+		}
+		return errors;
 	}
 
 	static object GetProperty(object obj, string name)
