@@ -319,6 +319,7 @@
         <Style Selector="ContextMenu">
             <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />
             <Setter Property="Foreground" Value="{DynamicResource ILSpy.MenuForeground}" />
+            <Setter Property="Cursor" Value="Arrow" />
         </Style>
         <Style Selector="MenuFlyoutPresenter">
             <Setter Property="Background" Value="{DynamicResource ILSpy.MenuBackground}" />

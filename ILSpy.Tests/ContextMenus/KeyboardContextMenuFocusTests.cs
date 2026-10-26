@@ -32,6 +32,7 @@ using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.AssemblyTree;
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.ViewModels;
 using ICSharpCode.ILSpy.Views;
@@ -74,6 +75,8 @@ public class KeyboardContextMenuFocusTests
 		row.RaiseEvent(new ContextRequestedEventArgs());
 		await Waiters.WaitForIdleAsync();
 		grid.ContextMenu!.IsOpen.Should().BeTrue("the keyboard gesture must open the tree context menu");
+		grid.ContextMenu.Cursor!.ToString().Should().Be(DecompilerTextView.ArrowCursor.ToString(),
+			"context menus must use the default arrow cursor even when opened from an I-beam text area");
 		row.Classes.Should().Contain("contextTarget",
 			"a keyboard-invoked menu must show the transient target highlight on the selected row, like the mouse path");
 
