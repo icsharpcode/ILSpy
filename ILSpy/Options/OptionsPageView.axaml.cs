@@ -20,7 +20,9 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 
+using global::Avalonia;
 using global::Avalonia.Controls;
+using global::Avalonia.Controls.Documents;
 using global::Avalonia.Input;
 using global::Avalonia.Interactivity;
 using global::Avalonia.Threading;
@@ -30,6 +32,11 @@ namespace ICSharpCode.ILSpy.Options
 {
 	public partial class OptionsPageView : UserControl
 	{
+		static readonly AttachedProperty<string?> RenderedTextProperty =
+			AvaloniaProperty.RegisterAttached<OptionsPageView, TextBlock, string?>("RenderedText");
+		static readonly AttachedProperty<string?> RenderedSearchProperty =
+			AvaloniaProperty.RegisterAttached<OptionsPageView, TextBlock, string?>("RenderedSearch");
+
 		OptionsPageModel? model;
 		bool highlightQueued;
 		bool scrollToFirstHit;
@@ -89,10 +96,21 @@ namespace ICSharpCode.ILSpy.Options
 			// per-control-type rules are needed.
 			foreach (var label in PageTabs.GetVisualDescendants().OfType<TextBlock>())
 			{
-				bool hit = text.Length > 0 && OptionsPageModel.Contains(label.Text, text);
-				label.Classes.Set("search-hit", hit);
+				var labelText = label.GetValue(RenderedTextProperty) ?? label.Text;
+				bool hit = text.Length > 0 && OptionsPageModel.Contains(labelText, text);
 				if (hit)
+				{
+					HighlightLabel(label, labelText!, text);
 					firstHit ??= label;
+				}
+				else
+				{
+					label.Classes.Set("search-hit", false);
+					if (label.Inlines != null)
+						label.Inlines = null;
+					label.ClearValue(RenderedTextProperty);
+					label.ClearValue(RenderedSearchProperty);
+				}
 			}
 			// Scroll once per change, not after every layout pass, or it would fight the
 			// user's own scrolling.
@@ -101,6 +119,35 @@ namespace ICSharpCode.ILSpy.Options
 				scrollToFirstHit = false;
 				firstHit.BringIntoView();
 			}
+		}
+
+		static void HighlightLabel(TextBlock label, string labelText, string searchText)
+		{
+			if (label.GetValue(RenderedSearchProperty) == searchText && label.Inlines != null)
+				return;
+
+			var inlines = new InlineCollection();
+			int offset = 0;
+			while (offset < labelText.Length)
+			{
+				int match = labelText.IndexOf(searchText, offset, StringComparison.CurrentCultureIgnoreCase);
+				if (match < 0)
+				{
+					inlines.Add(new Run(labelText[offset..]));
+					break;
+				}
+				if (match > offset)
+					inlines.Add(new Run(labelText[offset..match]));
+				var hit = new Run(labelText.Substring(match, searchText.Length));
+				hit.Classes.Add("search-hit");
+				inlines.Add(hit);
+				offset = match + searchText.Length;
+			}
+
+			label.SetValue(RenderedTextProperty, labelText);
+			label.SetValue(RenderedSearchProperty, searchText);
+			label.Inlines = inlines;
+			label.Classes.Set("search-hit", false);
 		}
 
 		void OnSearchBoxKeyDown(object? sender, KeyEventArgs e)

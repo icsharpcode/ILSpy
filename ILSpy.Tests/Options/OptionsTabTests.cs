@@ -20,6 +20,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Controls.Presenters;
 using Avalonia.Headless.NUnit;
 using Avalonia.Media;
@@ -408,8 +409,8 @@ public class OptionsTabTests
 		// still reach them.
 		var usingLabel = window.GetVisualDescendants().OfType<TextBlock>()
 			.Single(t => t.Text == shown.First(s => s.Property.Name == nameof(ICSharpCode.Decompiler.DecompilerSettings.UsingDeclarations)).Description);
-		usingLabel.Classes.Should().Contain("search-hit", "narrowed Decompiler items must be highlighted too");
-		usingLabel.FontWeight.Should().Be(FontWeight.Bold, "the search-hit style must actually render");
+		var usingHighlight = usingLabel.Inlines!.OfType<Run>().Single(run => run.Classes.Contains("search-hit"));
+		usingHighlight.FontWeight.Should().Be(FontWeight.Bold, "the search-hit style must actually render");
 
 		// Reset while narrowed rebuilds the list but keeps the narrowing.
 		model.SelectedPage = decompilerPage;
@@ -450,8 +451,8 @@ public class OptionsTabTests
 
 		var labels = window.GetVisualDescendants().OfType<TextBlock>().ToList();
 		var showLineNumbers = labels.Single(t => t.Text == Resources.ShowLineNumbers);
-		showLineNumbers.Classes.Should().Contain("search-hit");
-		showLineNumbers.FontWeight.Should().Be(FontWeight.Bold, "the search-hit style must actually render");
+		var lineNumberHighlight = showLineNumbers.Inlines!.OfType<Run>().Single(run => run.Classes.Contains("search-hit"));
+		lineNumberHighlight.FontWeight.Should().Be(FontWeight.Bold, "the search-hit style must actually render");
 		labels.Single(t => t.Text == Resources.EnableWordWrap).Classes.Should().NotContain("search-hit");
 
 		model.SearchText = string.Empty;
@@ -459,8 +460,29 @@ public class OptionsTabTests
 		// Same TextBlock instance: clearing must not rebuild the panel, only drop the class.
 		TopLevel.GetTopLevel(showLineNumbers).Should().BeSameAs(window,
 			"clearing the search must leave the shown panel in place");
+		showLineNumbers.Inlines.Should().BeNull("clearing the search must remove the inline highlight");
 		showLineNumbers.Classes.Should().NotContain("search-hit",
 			"clearing the search must remove the highlight");
+	}
+
+	[AvaloniaTest]
+	public async Task Search_Highlights_Only_The_Matching_Substring()
+	{
+		var (model, window) = await OpenOptionsAsync();
+		model.SelectedPage = model.Pages.Single(page => page.Title == Resources.Decompiler);
+		await Waiters.WaitForIdleAsync();
+
+		model.SearchText = "loa";
+		await Waiters.WaitForIdleAsync();
+
+		var label = window.GetVisualDescendants().OfType<TextBlock>()
+			.Single(textBlock => textBlock.Text == Resources.DecompilerSettings_AutoLoadAssemblyReferences);
+		label.Inlines.Should().NotBeNull();
+		label.Inlines!.OfType<Run>().Select(run => run.Text).Should()
+			.Equal("Automatically ", "loa", "d assembly references");
+		label.Inlines.OfType<Run>().Single(run => run.Text == "loa").Classes.Should().Contain("search-hit");
+		label.Inlines.OfType<Run>().Single(run => run.Text == "loa").FontWeight.Should().Be(FontWeight.Bold);
+		label.Classes.Should().NotContain("search-hit", "the complete label must not be highlighted");
 	}
 
 	[AvaloniaTest]
