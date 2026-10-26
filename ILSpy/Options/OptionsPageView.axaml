@@ -9,11 +9,8 @@
              x:Class="ICSharpCode.ILSpy.Options.OptionsPageView"
              x:DataType="vm:OptionsPageModel">
 	<UserControl.Styles>
-		<!-- Applied by the code-behind to every label on the shown page that contains the
-		     search text. A plain TextBlock selector would miss CheckBox labels: their template
-		     renders string content as AccessText, a TextBlock subclass with its own style key,
-		     so :is() is needed to cover both. -->
-		<Style Selector=":is(TextBlock).search-hit">
+		<!-- Applied by the code-behind to the matching inline run in every label on the shown page. -->
+		<Style Selector=":is(Run).search-hit">
 			<Setter Property="FontWeight" Value="Bold" />
 			<Setter Property="Background" Value="{DynamicResource ILSpy.EditorSearchResultsBrush}" />
 		</Style>
