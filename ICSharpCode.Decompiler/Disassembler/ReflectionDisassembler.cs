@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -1115,9 +1116,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 				// skip return type parameter handle
 				if (p.SequenceNumber == 0)
 					continue;
+				// pi: the corresponding zero-based index of the parameter
+				int pi = p.SequenceNumber - 1;
+				// skip out-of-order or too-large parameter handles
+				if (pi < i || pi >= signature.RequiredParameterCount)
+					continue;
 
 				// fill gaps in parameter list
-				while (i < p.SequenceNumber - 1)
+				while (i < pi)
 				{
 					if (i > 0)
 					{
@@ -1129,6 +1135,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLocalReference("''", "param_" + (i + offset), isDefinition: true);
 					i++;
 				}
+				Debug.Assert(i == pi);
 
 				// separator
 				if (i > 0)
@@ -1453,26 +1460,36 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteFlags(propertyDefinition.Attributes, propertyAttributes, output);
 			var accessors = propertyDefinition.GetAccessors();
 			var declaringType = metadata.GetMethodDefinition(accessors.GetAny()).GetDeclaringType();
-			var signature = propertyDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(declaringType, module));
-
-			if (signature.Header.IsInstance)
-				output.Write("instance ");
-			signature.ReturnType(ILNameSyntax.Signature);
-			output.Write(' ');
-			output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
-
-			output.Write('(');
-			if (signature.ParameterTypes.Length > 0)
+			try
 			{
-				var parameters = metadata.GetMethodDefinition(accessors.GetAny()).GetParameters();
-				int parametersCount = accessors.Getter.IsNil ? parameters.Count - 1 : parameters.Count;
+				var signature = propertyDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(declaringType, module));
 
-				output.WriteLine();
-				output.Indent();
-				WriteParameters(metadata, parameters.Take(parametersCount), signature);
-				output.Unindent();
+				if (signature.Header.IsInstance)
+					output.Write("instance ");
+				signature.ReturnType(ILNameSyntax.Signature);
+				output.Write(' ');
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
+
+				output.Write('(');
+				if (signature.ParameterTypes.Length > 0)
+				{
+					var parameters = metadata.GetMethodDefinition(accessors.GetAny()).GetParameters();
+					int parametersCount = accessors.Getter.IsNil ? parameters.Count - 1 : parameters.Count;
+
+					output.WriteLine();
+					output.Indent();
+					WriteParameters(metadata, parameters.Take(parametersCount), signature);
+					output.Unindent();
+				}
+				output.Write(')');
 			}
-			output.Write(')');
+			catch (BadImageFormatException ex)
+			{
+				output.Write("Error in property ");
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
+				output.Write(": ");
+				output.Write(ex.Message);
+			}
 			return accessors;
 		}
 
