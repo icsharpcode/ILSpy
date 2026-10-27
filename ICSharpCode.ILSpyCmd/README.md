@@ -26,7 +26,11 @@ ICSharpCode.Decompiler: 11.0.0.9283
 
 dotnet tool for decompiling .NET assemblies and generating portable PDBs
 
-Usage: ilspycmd [options] <Assembly file name(s)>
+Usage: ilspycmd [command] [options] <Assembly file name(s)>
+
+Commands:
+  decompile                                Decompile assemblies. This is also the default command.
+  diagram                                  Generate an HTML diagrammer.
 
 Arguments:
   Assembly file name(s)                   The list of assemblies that is being decompiled. This argument is mandatory.
@@ -109,8 +113,12 @@ Options:
 
 Remarks:
   -o is valid with every option and required when using -p or -d.
+  The verbless command-line form is deprecated. Use 'ilspycmd decompile' instead.
 
 Examples:
+    Decompile assembly using the explicit command
+        ilspycmd decompile sample.dll
+
     Decompile assembly to console out.
         ilspycmd sample.dll
 
@@ -125,6 +133,9 @@ Examples:
         ilspycmd --nested-directories -p -o c:\decompiled sample.dll
 
     Generate a HTML diagrammer containing all type info into a folder next to the input assembly
+        ilspycmd diagram sample.dll
+
+    The legacy diagrammer option remains supported.
         ilspycmd sample.dll --generate-diagrammer
 
     Generate a HTML diagrammer containing filtered type info into a custom output folder
