@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[Test]
 		public async Task LegacyVerblessInvocationReportsDeprecationWarning()
 		{
-			var result = await RunAsync(testAssemblyPath, "--list", "class");
+			var result = await RunAsync("--list", "class", testAssemblyPath);
 
 			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
 			Assert.That(result.Error, Does.Contain("verbless command-line form"));

@@ -143,13 +143,9 @@ Examples:
 		static bool IsLegacyInvocation(string[] args)
 		{
 			int commandIndex = args.Length > 0 && args[0].Equals("--disable-updatecheck", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
-			if (args.Length <= commandIndex)
-				return false;
-
-			string firstArgument = args[commandIndex];
-			return !firstArgument.StartsWith("-", StringComparison.Ordinal) &&
-				!firstArgument.Equals("decompile", StringComparison.OrdinalIgnoreCase) &&
-				!firstArgument.Equals("diagram", StringComparison.OrdinalIgnoreCase);
+			return args.Length > commandIndex &&
+				!args[commandIndex].Equals("decompile", StringComparison.OrdinalIgnoreCase) &&
+				!args[commandIndex].Equals("diagram", StringComparison.OrdinalIgnoreCase);
 		}
 
 		static string[] NormalizeCommandArguments(string[] args)
