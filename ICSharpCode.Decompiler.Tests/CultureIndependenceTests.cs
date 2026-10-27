@@ -53,7 +53,10 @@ namespace ICSharpCode.Decompiler.Tests
 			// Without debug symbols the local is named after its type, "Instruction" -> "instruction".
 			// Turkish case mapping lowercases 'I' to the dotless 'ı' (U+0131), which must not leak
 			// into generated identifiers.
-			var settings = new DecompilerSettings { UseDebugSymbols = false };
+			var settings = new DecompilerSettings {
+				UseDebugSymbols = false,
+				ThrowOnAssemblyResolveErrors = false
+			};
 			var decompiler = new CSharpDecompiler(typeof(CultureIndependenceTests).Assembly.Location, settings);
 			var method = typeof(CultureIndependenceTests).GetMethod(nameof(SumOfInstruction), BindingFlags.NonPublic | BindingFlags.Static);
 			var handle = (MethodDefinitionHandle)MetadataTokens.EntityHandle(method.MetadataToken);

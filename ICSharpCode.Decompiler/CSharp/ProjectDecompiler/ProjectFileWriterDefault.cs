@@ -148,7 +148,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 				w.WriteEndElement(); // </PropertyGroup> (Release)
 
 				w.WriteStartElement("ItemGroup"); // References
-				foreach (var r in module.AssemblyReferences)
+				bool isWpf = module.AssemblyReferences.Any(r => r.Name == "PresentationFramework");
+				var references = isWpf
+					? ProjectFileWriterExtensions.GetWpfReferenceClosure(module, project)
+					: module.AssemblyReferences;
+				foreach (var r in references)
 				{
 					if (r.Name != "mscorlib")
 					{

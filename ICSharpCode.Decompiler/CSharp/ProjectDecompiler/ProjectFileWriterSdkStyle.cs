@@ -462,7 +462,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="module">The module for which to get the assembly references.</param>
 		/// <param name="project">The project information provider.</param>
 		/// <returns>An enumerable of assembly references.</returns>
-		protected virtual IEnumerable<AssemblyReference> GetReferences(MetadataFile module, IProjectInfoProvider project)
+		protected virtual IEnumerable<IAssemblyReference> GetReferences(MetadataFile module, IProjectInfoProvider project)
 		{
 			bool isNetCoreApp = TargetServices.DetectTargetFramework(module).Identifier == NetCoreAppIdentifier;
 			var projectType = GetProjectType(module);
@@ -480,7 +480,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 					targetPacks.Add("Microsoft.AspNetCore.All");
 				}
 			}
-			foreach (var reference in module.AssemblyReferences)
+			var references = projectType.HasFlag(ProjectType.Wpf)
+				? ProjectFileWriterExtensions.GetWpfReferenceClosure(module, project)
+				: module.AssemblyReferences;
+			foreach (var reference in references)
 			{
 				if (IsSuppliedBySdk(reference.Name, projectType))
 				{
@@ -522,7 +525,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <param name="xml">The XML writer used to write the project file.</param>
 		/// <param name="reference">The assembly reference to write.</param>
 		/// <param name="project">The project information provider.</param>
-		protected virtual void WriteReference(XmlTextWriter xml, AssemblyReference reference, IProjectInfoProvider project)
+		protected virtual void WriteReference(XmlTextWriter xml, IAssemblyReference reference, IProjectInfoProvider project)
 		{
 			xml.WriteStartElement("Reference");
 			xml.WriteAttributeString("Include", reference.Name);

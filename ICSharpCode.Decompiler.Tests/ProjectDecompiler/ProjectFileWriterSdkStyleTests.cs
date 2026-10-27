@@ -22,6 +22,7 @@ using System.IO;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.ProjectDecompiler;
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 using NUnit.Framework;
 
@@ -73,6 +74,7 @@ public sealed class ProjectFileWriterSdkStyleTests
 	{
 		public IAssemblyResolver AssemblyResolver { get; } = new UniversalAssemblyResolver(null, false, null);
 		public IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; } = new AssemblyReferenceClassifier();
+		public IDecompilerTypeSystem TypeSystem => null;
 		public LanguageVersion LanguageVersion => LanguageVersion.Latest;
 		public bool CheckForOverflowUnderflow => false;
 		public Guid ProjectGuid { get; } = Guid.NewGuid();

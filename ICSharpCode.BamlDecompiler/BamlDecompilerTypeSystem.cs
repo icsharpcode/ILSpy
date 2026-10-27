@@ -156,6 +156,7 @@ namespace ICSharpCode.BamlDecompiler
 			// name, so no stand-in is synthesized, and then every type BAML expects from it is
 			// missing. Drop it and let the stand-in below take its place.
 			referencedAssemblies.RemoveAll(file => !IsTheAssemblyItIsNamedAfter(file));
+			ReferenceClosure = referencedAssemblies;
 			var mainModuleWithOptions = mainModule.WithOptions(TypeSystemOptions.Default);
 			var referencedAssembliesWithOptions = referencedAssemblies.Select(file => file.WithOptions(TypeSystemOptions.Default));
 			// Substitute a synthetic stand-in for every well-known BAML assembly that could not be
@@ -203,5 +204,7 @@ namespace ICSharpCode.BamlDecompiler
 		}
 
 		public new MetadataModule MainModule { get; }
+
+		public IReadOnlyList<MetadataFile> ReferenceClosure { get; }
 	}
 }

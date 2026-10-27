@@ -18,6 +18,10 @@
 
 #nullable enable
 
+using System.Collections.Generic;
+
+using ICSharpCode.Decompiler.Metadata;
+
 namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
@@ -28,5 +32,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public interface IDecompilerTypeSystem : ICompilation
 	{
 		new MetadataModule MainModule { get; }
+
+		/// <summary>
+		/// Gets assemblies and modules discovered while walking the reference closure.
+		/// These are not necessarily compilation references.
+		/// </summary>
+		IReadOnlyList<MetadataFile> ReferenceClosure { get; }
 	}
 }
