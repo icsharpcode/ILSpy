@@ -479,7 +479,15 @@ namespace ICSharpCode.Decompiler
 			}
 			if (declaringTypeHandle.IsNil)
 			{
-				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
+				string @namespace;
+				try
+				{
+					@namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
+				}
+				catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+				{
+					@namespace = "";
+				}
 				return new FullTypeName(new TopLevelTypeName(@namespace, name, typeParameterCount));
 			}
 			else
