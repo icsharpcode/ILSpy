@@ -16,8 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System.Collections.Generic;
 using System.IO;
+using System;
 
 using ICSharpCode.Decompiler.Metadata;
 
@@ -50,6 +53,39 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			public static IProjectFileWriter FromSettings(DecompilerSettings settings)
 			{
 				return settings.UseSdkStyleProjectFormat ? ProjectFileWriterSdkStyle.Default : ProjectFileWriterDefault.Instance;
+			}
+		}
+
+		/// <summary>
+		/// Gets the WPF reference closure: direct assembly references together with app-local
+		/// assemblies resolved by the type system. Unresolved direct references are retained so the
+		/// generated project reports the same missing dependency as the original assembly.
+		/// </summary>
+		public static IEnumerable<IAssemblyReference> GetWpfReferenceClosure(MetadataFile module, IProjectInfoProvider project)
+		{
+			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			foreach (var reference in module.AssemblyReferences)
+			{
+				if (seen.Add(reference.Name))
+					yield return reference;
+			}
+
+			string? applicationDirectory = module.FileName is { Length: > 0 } fileName
+				? Path.GetDirectoryName(Path.GetFullPath(fileName))
+				: null;
+			if (project.TypeSystem == null || applicationDirectory == null)
+				yield break;
+
+			foreach (var referencedFile in project.TypeSystem.ReferenceClosure)
+			{
+				if (referencedFile == null || !referencedFile.IsAssembly || string.IsNullOrEmpty(referencedFile.FileName))
+					continue;
+				string directory = Path.GetDirectoryName(Path.GetFullPath(referencedFile.FileName)) ?? "";
+				if (!directory.Equals(applicationDirectory, StringComparison.OrdinalIgnoreCase)
+					&& !directory.StartsWith(applicationDirectory + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+					continue;
+				if (seen.Add(referencedFile.Name))
+					yield return AssemblyNameReference.Parse(referencedFile.Metadata.GetFullAssemblyName());
 			}
 		}
 	}

@@ -322,6 +322,29 @@ public sealed class WpfProjectExportTests
 		}
 	}
 
+	/// <summary>
+	/// A reference used only by a loaded assembly belongs to the export closure, but must not be
+	/// added to the compilation references.
+	/// </summary>
+	[Test]
+	public void TypeSystemSeparatesCompilationReferencesFromReferenceClosure()
+	{
+		string fixture = Compile("WpfTransitiveTypeSystemFixture",
+			AssemblyAttributes(".NETFramework,Version=v4.7.2", targetPlatform: null)
+			+ "public class UsesMiddle { public Stubs.TransitiveMiddle Middle; public Stubs.PresentationFramework Wpf; }",
+			OutputKind.DynamicallyLinkedLibrary, presentationFramework, MiddleReferencingLeaf());
+
+		var (module, typeSystem) = Load(fixture);
+		string project = WriteProjectFile(module, typeSystem);
+
+		using (Assert.EnterMultipleScope())
+		{
+			Assert.That(typeSystem.ReferencedModules.Select(m => m.Name), Does.Not.Contain("TransitiveLeaf"));
+			Assert.That(typeSystem.ReferenceClosure.Select(m => m.Name), Does.Contain("TransitiveLeaf"));
+			Assert.That(project, Does.Contain("TransitiveLeaf"));
+		}
+	}
+
 	static ITypeDefinition FindType(IDecompilerTypeSystem typeSystem, string fullTypeName)
 	{
 		var type = typeSystem.FindType(new FullTypeName(fullTypeName)).GetDefinition();
@@ -370,6 +393,19 @@ public sealed class WpfProjectExportTests
 			path = CompileTo(assemblyName + ".dll", assemblyName,
 				$"namespace Stubs {{ public class {MarkerTypeName(assemblyName)} {{ }} }}");
 			stubAssemblies.Add(assemblyName, path);
+		}
+		return path;
+	}
+
+	string MiddleReferencingLeaf()
+	{
+		if (!stubAssemblies.TryGetValue("TransitiveMiddle", out string path))
+		{
+			string leaf = Stub("TransitiveLeaf");
+			path = CompileTo("TransitiveMiddle.dll", "TransitiveMiddle",
+				"namespace Stubs { public class TransitiveMiddle { public TransitiveLeaf Leaf; } }",
+				OutputKind.DynamicallyLinkedLibrary, leaf);
+			stubAssemblies.Add("TransitiveMiddle", path);
 		}
 		return path;
 	}
@@ -432,15 +468,22 @@ public sealed class WpfProjectExportTests
 
 	string WriteProjectFile(string fileName)
 	{
+		var module = OpenModule(fileName);
+		return WriteProjectFile(module, null);
+	}
+
+	string WriteProjectFile(MetadataFile module, IDecompilerTypeSystem typeSystem)
+	{
 		StringWriter output = new();
-		ProjectFileWriterSdkStyle.Default.Write(output, new TestProjectInfoProvider(tempDirectory), Array.Empty<ProjectItemInfo>(), OpenModule(fileName));
+		ProjectFileWriterSdkStyle.Default.Write(output, new TestProjectInfoProvider(tempDirectory, typeSystem), Array.Empty<ProjectItemInfo>(), module);
 		return output.ToString();
 	}
 
-	sealed class TestProjectInfoProvider(string targetDirectory) : IProjectInfoProvider
+	sealed class TestProjectInfoProvider(string targetDirectory, IDecompilerTypeSystem typeSystem) : IProjectInfoProvider
 	{
 		public IAssemblyResolver AssemblyResolver { get; } = new UniversalAssemblyResolver(null, false, null);
 		public IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; } = new AssemblyReferenceClassifier();
+		public IDecompilerTypeSystem TypeSystem { get; } = typeSystem;
 		public CSharp.LanguageVersion LanguageVersion => CSharp.LanguageVersion.Latest;
 		public bool CheckForOverflowUnderflow => false;
 		public Guid ProjectGuid { get; } = Guid.NewGuid();

@@ -242,6 +242,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		private MetadataModule mainModule;
 		private TypeSystemOptions typeSystemOptions;
+		private IReadOnlyList<MetadataFile> referenceClosure = Array.Empty<MetadataFile>();
 
 		private DecompilerTypeSystem(TypeSystemOptions typeSystemOptions)
 		{
@@ -473,34 +474,15 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// Load referenced assemblies and type-forwarder references.
 			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<MetadataFile>();
+			var referenceClosure = new List<MetadataFile>();
 			var assemblyReferenceQueue = new Queue<(bool IsAssembly, MetadataFile MainModule, object Reference, Task<MetadataFile> ResolveTask)>();
 			var comparer = KeyComparer.Create(((bool IsAssembly, MetadataFile MainModule, object Reference) reference) =>
 				reference.IsAssembly ? "A:" + ((IAssemblyReference)reference.Reference).FullName :
-									   "M:" + reference.Reference);
+										"M:" + reference.Reference);
 			var assemblyReferencesInQueue = new HashSet<(bool IsAssembly, MetadataFile Parent, object Reference)>(comparer);
-			var mainMetadata = mainModule.Metadata;
 			var tfm = mainModule.DetectTargetFrameworkId();
 			var (identifier, version) = UniversalAssemblyResolver.ParseTargetFramework(tfm);
-			foreach (var h in mainMetadata.GetModuleReferences())
-			{
-				try
-				{
-					var moduleRef = mainMetadata.GetModuleReference(h);
-					var moduleName = mainMetadata.GetString(moduleRef.Name);
-					foreach (var fileHandle in mainMetadata.AssemblyFiles)
-					{
-						var file = mainMetadata.GetAssemblyFile(fileHandle);
-						if (mainMetadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata)
-						{
-							AddToQueue(false, mainModule, moduleName);
-							break;
-						}
-					}
-				}
-				catch (BadImageFormatException)
-				{
-				}
-			}
+			QueueModuleReferences(mainModule, moduleName => AddToQueue(false, mainModule, moduleName));
 			foreach (var refs in mainModule.AssemblyReferences)
 			{
 				AddToQueue(true, mainModule, refs);
@@ -550,6 +532,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 				}
 			}
+			referenceClosure.AddRange(referencedAssemblies);
+			await CollectReferenceClosure().ConfigureAwait(false);
 			// A chain of type forwarders is followed by assembly name, and every name is resolved
 			// relative to the assembly being decompiled - so a chain that leaves for another
 			// framework can be pulled straight back and end up at an assembly it already visited.
@@ -558,12 +542,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// resolved next to the assembly that forwards it, and whatever that turns up is added.
 			var repairedFiles = await RepairCyclicTypeForwardersAsync(referencedAssemblies, assemblyResolver)
 				.ConfigureAwait(false);
+			referenceClosure.AddRange(repairedFiles);
 			referencedAssemblies.AddRange(repairedFiles);
 
 			if (!(identifier == TargetFrameworkIdentifier.NET && version >= new Version(7, 0)))
 			{
 				typeSystemOptions &= ~TypeSystemOptions.NativeIntegersWithoutAttribute;
 			}
+			this.referenceClosure = referenceClosure;
 			var mainModuleWithOptions = mainModule.WithOptions(typeSystemOptions);
 			// create IModuleReferences for all references
 			var referencedAssembliesWithOptions = new List<IModuleReference>(referencedAssemblies.Count);
@@ -629,6 +615,82 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 
+			void QueueModuleReferences(MetadataFile module, Action<string> queueReference)
+			{
+				try
+				{
+					var metadata = module.Metadata;
+					foreach (var h in metadata.GetModuleReferences())
+					{
+						var moduleRef = metadata.GetModuleReference(h);
+						var moduleName = metadata.GetString(moduleRef.Name);
+						foreach (var fileHandle in metadata.AssemblyFiles)
+						{
+							var file = metadata.GetAssemblyFile(fileHandle);
+							if (metadata.StringComparer.Equals(file.Name, moduleName) && file.ContainsMetadata)
+							{
+								queueReference(moduleName);
+								break;
+							}
+						}
+					}
+				}
+				catch (BadImageFormatException)
+				{
+				}
+			}
+
+			async Task CollectReferenceClosure()
+			{
+				var closureQueue = new Queue<(MetadataFile MainModule, object Reference, Task<MetadataFile> ResolveTask)>();
+				var queuedReferences = new HashSet<(MetadataFile Parent, object Reference)>(KeyComparer.Create<(MetadataFile Parent, object Reference), string>(
+					reference => reference.Reference is IAssemblyReference assemblyReference
+					? "A:" + assemblyReference.FullName
+					: "M:" + reference.Reference));
+
+				foreach (var file in referenceClosure.ToArray())
+					QueueReferences(file);
+
+				while (closureQueue.Count > 0)
+				{
+					var reference = closureQueue.Dequeue();
+					MetadataFile file;
+					try
+					{
+						file = await reference.ResolveTask.ConfigureAwait(false);
+					}
+					catch (ResolutionException)
+					{
+						continue;
+					}
+					if (file != null && !referenceClosure.Contains(file))
+					{
+						referenceClosure.Add(file);
+						QueueReferences(file);
+					}
+				}
+
+				void QueueReferences(MetadataFile module)
+				{
+					try
+					{
+						foreach (var assemblyReference in module.AssemblyReferences)
+						{
+							if (queuedReferences.Add((module, assemblyReference)))
+								closureQueue.Enqueue((module, assemblyReference, assemblyResolver.ResolveAsync(assemblyReference)));
+						}
+
+						QueueModuleReferences(module, moduleName => {
+							if (queuedReferences.Add((module, moduleName)))
+								closureQueue.Enqueue((module, moduleName, assemblyResolver.ResolveModuleAsync(module, moduleName)));
+						});
+					}
+					catch (BadImageFormatException)
+					{
+					}
+				}
+			}
+
 			bool IsMissing(KnownTypeReference knownType)
 			{
 				var name = knownType.TypeName;
@@ -644,6 +706,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		public new MetadataModule MainModule => mainModule;
+
+		public IReadOnlyList<MetadataFile> ReferenceClosure => referenceClosure;
 
 		public override TypeSystemOptions TypeSystemOptions => typeSystemOptions;
 	}

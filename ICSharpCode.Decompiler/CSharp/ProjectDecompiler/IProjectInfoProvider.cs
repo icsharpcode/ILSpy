@@ -16,9 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+#nullable enable
+
 using System;
 
 using ICSharpCode.Decompiler.Metadata;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 {
@@ -33,6 +36,11 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		IAssemblyResolver AssemblyResolver { get; }
 
 		IAssemblyReferenceClassifier AssemblyReferenceClassifier { get; }
+
+		/// <summary>
+		/// Gets the type system used to decompile the project, when one is available.
+		/// </summary>
+		IDecompilerTypeSystem? TypeSystem { get; }
 
 		/// <summary>
 		/// Gets the C# language version of the project.
@@ -57,6 +65,6 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// <summary>
 		/// Gets the name of the key file being used for strong name signing. Can be null if no file is available.
 		/// </summary>
-		string StrongNameKeyFile { get; }
+		string? StrongNameKeyFile { get; }
 	}
 }
