@@ -179,18 +179,32 @@ namespace ICSharpCode.Decompiler.Metadata
 				foreach (var handle in Metadata.TypeDefinitions)
 				{
 					var td = Metadata.GetTypeDefinition(handle);
-					if (!td.GetDeclaringType().IsNil)
+					try
 					{
-						continue; // nested type
+						if (!td.GetDeclaringType().IsNil)
+						{
+							continue; // nested type
+						}
 					}
-					var nsHandle = td.Namespace;
-					string ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
+					catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+					{
+					}
+					string ns;
+					try
+					{
+						var nsHandle = td.Namespace;
+						ns = nsHandle.IsNil ? string.Empty : Metadata.GetString(nsHandle);
+					}
+					catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+					{
+						ns = string.Empty;
+					}
 					string name;
 					try
 					{
 						name = Metadata.GetString(td.Name);
 					}
-					catch (BadImageFormatException)
+					catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
 					{
 						name = $"TD{Metadata.GetToken(handle):x8}";
 					}

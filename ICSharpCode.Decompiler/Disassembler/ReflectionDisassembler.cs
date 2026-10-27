@@ -382,9 +382,28 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{
 				methodBodyDisassembler.Disassemble(module, handle);
 			}
-			var declaringType = metadata.GetTypeDefinition(methodDefinition.GetDeclaringType());
-			CloseBlock("end of method " + DisassemblerHelpers.Escape(metadata.GetString(declaringType.Name))
-				+ "::" + DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
+			var declaringTypeHandle = methodDefinition.GetDeclaringType();
+			var declaringType = metadata.GetTypeDefinition(declaringTypeHandle);
+			string declaringTypeName;
+			try
+			{
+				declaringTypeName = metadata.GetString(declaringType.Name);
+			}
+			catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+			{
+				declaringTypeName = declaringTypeHandle.GetFullTypeName(metadata).ToString();
+			}
+			string methodName;
+			try
+			{
+				methodName = metadata.GetString(methodDefinition.Name);
+			}
+			catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+			{
+				methodName = $"M{metadata.GetToken(handle):x8}";
+			}
+			CloseBlock("end of method " + DisassemblerHelpers.Escape(declaringTypeName)
+				+ "::" + DisassemblerHelpers.Escape(methodName));
 		}
 
 		#region Write Security Declarations

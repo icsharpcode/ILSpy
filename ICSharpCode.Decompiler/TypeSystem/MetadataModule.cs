@@ -92,7 +92,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			this.NullableContext = customAttrs.GetNullableContext(metadata) ?? Nullability.Oblivious;
 			this.minAccessibilityForNRT = FindMinimumAccessibilityForNRT(metadata, customAttrs);
 			this.UseUpdatedEscapeRules = HasRefSafetyRulesVersion(customAttrs, 11);
-			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, metadata.GetNamespaceDefinitionRoot());
+			NamespaceDefinition? rootNamespace;
+			try
+			{
+				rootNamespace = metadata.GetNamespaceDefinitionRoot();
+			}
+			catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+			{
+				rootNamespace = null;
+			}
+			this.rootNamespace = new MetadataNamespace(this, null, string.Empty, rootNamespace);
 
 			if (!options.HasFlag(TypeSystemOptions.Uncached))
 			{
