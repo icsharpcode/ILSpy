@@ -43,6 +43,42 @@ namespace ICSharpCode.Decompiler.Disassembler
 		bool isInType;   // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
 		MethodBodyDisassembler methodBodyDisassembler;
 
+		static bool IsMalformedMetadataException(Exception ex)
+		{
+			return ex is BadImageFormatException
+				or ArgumentOutOfRangeException
+				or IndexOutOfRangeException
+				or FormatException;
+		}
+
+		void WriteMetadataError(string memberKind, EntityHandle handle, Exception ex)
+		{
+			output.WriteLine($"// Error disassembling {memberKind} {MetadataTokens.GetToken(handle):X8}: {ex.Message}");
+		}
+
+		void WriteMetadataFallback(string description, Exception ex)
+		{
+			output.Write('<');
+			output.Write(description);
+			output.Write(": ");
+			output.Write(ex.Message);
+			output.Write('>');
+		}
+
+		void WriteMarshalInfoSafe(MetadataReader metadata, BlobHandle handle)
+		{
+			try
+			{
+				WriteMarshalInfo(metadata.GetBlobReader(handle));
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				output.Write("/* invalid marshaling: ");
+				output.Write(ex.Message);
+				output.Write(" */ ");
+			}
+		}
+
 		public bool DetectControlStructure {
 			get => methodBodyDisassembler.DetectControlStructure;
 			set => methodBodyDisassembler.DetectControlStructure = value;
@@ -153,21 +189,35 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleMethod(MetadataFile module, MethodDefinitionHandle handle)
 		{
-			var genericContext = new MetadataGenericContext(handle, module);
-			// write method header
-			output.WriteReference(module, handle, ".method", isDefinition: true);
-			output.Write(" ");
-			DisassembleMethodHeaderInternal(module, handle, genericContext);
-			DisassembleMethodBlock(module, handle, genericContext);
+			try
+			{
+				var genericContext = new MetadataGenericContext(handle, module);
+				// write method header
+				output.WriteReference(module, handle, ".method", isDefinition: true);
+				output.Write(" ");
+				DisassembleMethodHeaderInternal(module, handle, genericContext);
+				DisassembleMethodBlock(module, handle, genericContext);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("method", handle, ex);
+			}
 		}
 
 		public void DisassembleMethodHeader(MetadataFile module, MethodDefinitionHandle handle)
 		{
-			var genericContext = new MetadataGenericContext(handle, module);
-			// write method header
-			output.WriteReference(module, handle, ".method", isDefinition: true);
-			output.Write(" ");
-			DisassembleMethodHeaderInternal(module, handle, genericContext);
+			try
+			{
+				var genericContext = new MetadataGenericContext(handle, module);
+				// write method header
+				output.WriteReference(module, handle, ".method", isDefinition: true);
+				output.Write(" ");
+				DisassembleMethodHeaderInternal(module, handle, genericContext);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("method", handle, ex);
+			}
 		}
 
 		void DisassembleMethodHeaderInternal(MetadataFile module, MethodDefinitionHandle handle, MetadataGenericContext genericContext)
@@ -265,10 +315,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 				//return type
 				signature.Value.ReturnType(ILNameSyntax.Signature);
 			}
-			catch (BadImageFormatException)
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
 				signature = null;
-				output.Write("<bad signature>");
+				WriteMetadataFallback("bad signature", ex);
 			}
 			output.Write(' ');
 
@@ -281,7 +331,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					var marshallingDesc = firstParam.GetMarshallingDescriptor();
 					if (!marshallingDesc.IsNil)
 					{
-						WriteMarshalInfo(metadata.GetBlobReader(marshallingDesc));
+						WriteMarshalInfoSafe(metadata, marshallingDesc);
 					}
 				}
 			}
@@ -1175,7 +1225,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				var md = p.GetMarshallingDescriptor();
 				if (!md.IsNil)
 				{
-					WriteMarshalInfo(metadata.GetBlobReader(md));
+					WriteMarshalInfoSafe(metadata, md);
 				}
 				output.WriteLocalReference(DisassemblerHelpers.Escape(metadata.GetString(p.Name)), "param_" + (i + offset), isDefinition: true);
 				i++;
@@ -1313,6 +1363,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleField(MetadataFile module, FieldDefinitionHandle handle)
 		{
+			try
+			{
+				DisassembleFieldCore(module, handle);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("field", handle, ex);
+			}
+		}
+
+		void DisassembleFieldCore(MetadataFile module, FieldDefinitionHandle handle)
+		{
 			var metadata = module.Metadata;
 			var fieldDefinition = metadata.GetFieldDefinition(handle);
 			char sectionPrefix = DisassembleFieldHeaderInternal(module, handle, metadata, fieldDefinition);
@@ -1371,9 +1433,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleFieldHeader(MetadataFile module, FieldDefinitionHandle handle)
 		{
-			var metadata = module.Metadata;
-			var fieldDefinition = metadata.GetFieldDefinition(handle);
-			DisassembleFieldHeaderInternal(module, handle, metadata, fieldDefinition);
+			try
+			{
+				var metadata = module.Metadata;
+				var fieldDefinition = metadata.GetFieldDefinition(handle);
+				DisassembleFieldHeaderInternal(module, handle, metadata, fieldDefinition);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("field", handle, ex);
+			}
 		}
 
 		private char DisassembleFieldHeaderInternal(MetadataFile module, FieldDefinitionHandle handle, MetadataReader metadata, FieldDefinition fieldDefinition)
@@ -1390,15 +1459,24 @@ namespace ICSharpCode.Decompiler.Disassembler
 			const FieldAttributes hasXAttributes = FieldAttributes.HasDefault | FieldAttributes.HasFieldMarshal | FieldAttributes.HasFieldRVA;
 			WriteFlags(fieldDefinition.Attributes & ~(FieldAttributes.FieldAccessMask | hasXAttributes), fieldAttributes, output);
 
-			var signature = fieldDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(fieldDefinition.GetDeclaringType(), module));
+			Action<ILNameSyntax> signature = null;
+			try
+			{
+				signature = fieldDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(fieldDefinition.GetDeclaringType(), module));
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				signature = null;
+				WriteMetadataFallback("bad signature", ex);
+			}
 
 			var marshallingDescriptor = fieldDefinition.GetMarshallingDescriptor();
 			if (!marshallingDescriptor.IsNil)
 			{
-				WriteMarshalInfo(metadata.GetBlobReader(marshallingDescriptor));
+				WriteMarshalInfoSafe(metadata, marshallingDescriptor);
 			}
 
-			signature(ILNameSyntax.Signature);
+			signature?.Invoke(ILNameSyntax.Signature);
 			output.Write(' ');
 			var fieldName = metadata.GetString(fieldDefinition.Name);
 			output.Write(DisassemblerHelpers.Escape(fieldName));
@@ -1449,6 +1527,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleProperty(MetadataFile module, PropertyDefinitionHandle property)
 		{
+			try
+			{
+				DisassemblePropertyCore(module, property);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("property", property, ex);
+			}
+		}
+
+		void DisassemblePropertyCore(MetadataFile module, PropertyDefinitionHandle property)
+		{
 			var metadata = module.Metadata;
 			var propertyDefinition = metadata.GetPropertyDefinition(property);
 			PropertyAccessors accessors = DisassemblePropertyHeaderInternal(module, property, metadata, propertyDefinition);
@@ -1466,9 +1556,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassemblePropertyHeader(MetadataFile module, PropertyDefinitionHandle property)
 		{
-			var metadata = module.Metadata;
-			var propertyDefinition = metadata.GetPropertyDefinition(property);
-			DisassemblePropertyHeaderInternal(module, property, metadata, propertyDefinition);
+			try
+			{
+				var metadata = module.Metadata;
+				var propertyDefinition = metadata.GetPropertyDefinition(property);
+				DisassemblePropertyHeaderInternal(module, property, metadata, propertyDefinition);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("property", property, ex);
+			}
 		}
 
 		private PropertyAccessors DisassemblePropertyHeaderInternal(MetadataFile module, PropertyDefinitionHandle handle, MetadataReader metadata, PropertyDefinition propertyDefinition)
@@ -1479,36 +1576,41 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteFlags(propertyDefinition.Attributes, propertyAttributes, output);
 			var accessors = propertyDefinition.GetAccessors();
 			var declaringType = metadata.GetMethodDefinition(accessors.GetAny()).GetDeclaringType();
+			MethodSignature<Action<ILNameSyntax>>? signature;
 			try
 			{
-				var signature = propertyDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(declaringType, module));
-
-				if (signature.Header.IsInstance)
-					output.Write("instance ");
-				signature.ReturnType(ILNameSyntax.Signature);
-				output.Write(' ');
-				output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
-
-				output.Write('(');
-				if (signature.ParameterTypes.Length > 0)
-				{
-					var parameters = metadata.GetMethodDefinition(accessors.GetAny()).GetParameters();
-					int parametersCount = accessors.Getter.IsNil ? parameters.Count - 1 : parameters.Count;
-
-					output.WriteLine();
-					output.Indent();
-					WriteParameters(metadata, parameters.Take(parametersCount), signature);
-					output.Unindent();
-				}
-				output.Write(')');
+				signature = propertyDefinition.DecodeSignature(new DisassemblerSignatureTypeProvider(module, output), new MetadataGenericContext(declaringType, module));
 			}
-			catch (BadImageFormatException ex)
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
-				output.Write("Error in property ");
-				output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
-				output.Write(": ");
-				output.Write(ex.Message);
+				signature = null;
+				WriteMetadataFallback("bad signature", ex);
+				output.Write(' ');
 			}
+
+			if (signature.HasValue)
+			{
+				var propertySignature = signature.Value;
+				if (propertySignature.Header.IsInstance)
+					output.Write("instance ");
+				propertySignature.ReturnType(ILNameSyntax.Signature);
+			}
+			output.Write(' ');
+			output.Write(DisassemblerHelpers.Escape(metadata.GetString(propertyDefinition.Name)));
+
+			output.Write('(');
+			if (signature.HasValue && signature.Value.ParameterTypes.Length > 0)
+			{
+				var propertySignature = signature.Value;
+				var parameters = metadata.GetMethodDefinition(accessors.GetAny()).GetParameters();
+				int parametersCount = accessors.Getter.IsNil ? parameters.Count - 1 : parameters.Count;
+
+				output.WriteLine();
+				output.Indent();
+				WriteParameters(metadata, parameters.Take(Math.Max(0, parametersCount)), propertySignature);
+				output.Unindent();
+			}
+			output.Write(')');
 			return accessors;
 		}
 
@@ -1532,6 +1634,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleEvent(MetadataFile module, EventDefinitionHandle handle)
 		{
+			try
+			{
+				DisassembleEventCore(module, handle);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("event", handle, ex);
+			}
+		}
+
+		void DisassembleEventCore(MetadataFile module, EventDefinitionHandle handle)
+		{
 			var eventDefinition = module.Metadata.GetEventDefinition(handle);
 			var accessors = eventDefinition.GetAccessors();
 			DisassembleEventHeaderInternal(module, handle, eventDefinition, accessors);
@@ -1549,9 +1663,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleEventHeader(MetadataFile module, EventDefinitionHandle handle)
 		{
-			var eventDefinition = module.Metadata.GetEventDefinition(handle);
-			var accessors = eventDefinition.GetAccessors();
-			DisassembleEventHeaderInternal(module, handle, eventDefinition, accessors);
+			try
+			{
+				var eventDefinition = module.Metadata.GetEventDefinition(handle);
+				var accessors = eventDefinition.GetAccessors();
+				DisassembleEventHeaderInternal(module, handle, eventDefinition, accessors);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataError("event", handle, ex);
+			}
 		}
 
 		private void DisassembleEventHeaderInternal(MetadataFile module, EventDefinitionHandle handle, EventDefinition eventDefinition, EventAccessors accessors)
@@ -1789,6 +1910,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 		}
 
 		void WriteTypeParameters(ITextOutput output, MetadataFile module, MetadataGenericContext context, GenericParameterHandleCollection p)
+		{
+			try
+			{
+				WriteTypeParametersCore(output, module, context, p);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				WriteMetadataFallback("bad generic parameters", ex);
+			}
+		}
+
+		void WriteTypeParametersCore(ITextOutput output, MetadataFile module, MetadataGenericContext context, GenericParameterHandleCollection p)
 		{
 			if (p.Count > 0)
 			{
