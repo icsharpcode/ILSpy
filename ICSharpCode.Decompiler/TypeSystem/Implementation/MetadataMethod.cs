@@ -394,7 +394,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 						callingConvention = CallingConvention.Winapi;
 						break;
 					default:
-						throw new NotSupportedException("unknown calling convention");
+						Debug.WriteLine($"Unknown P/Invoke calling convention on: {this}");
+						callingConvention = 0;
+						break;
 				}
 				if (callingConvention != CallingConvention.Winapi)
 				{
