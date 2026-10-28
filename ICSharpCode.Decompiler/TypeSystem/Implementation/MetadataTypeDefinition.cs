@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			{
 				this.MetadataName = metadata.GetString(td.Name);
 			}
-			catch (BadImageFormatException)
+			catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
 			{
 				this.MetadataName = $"TD{metadata.GetToken(handle):x8}";
 			}

@@ -843,7 +843,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var h in visitor.RefStructTypes)
 			{
 				var td = metadata.GetTypeDefinition(h);
-				if (td.IsCompilerGenerated(metadata) && td.IsValueType(metadata) && td.HasGeneratedName(metadata))
+				if (td.IsCompilerGenerated(metadata) && h.IsValueType(metadata) && td.HasGeneratedName(metadata))
 					return true;
 			}
 			return false;

@@ -38,6 +38,13 @@ namespace ICSharpCode.Decompiler
 		internal const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
 		internal const MethodImplAttributes MethodImplAsync = (MethodImplAttributes)0x2000;
 
+		static bool IsMalformedMetadataException(Exception ex)
+		{
+			return ex is BadImageFormatException
+				or ArgumentOutOfRangeException
+				or IndexOutOfRangeException;
+		}
+
 		public static bool HasFlag(this TypeDefinition typeDefinition, TypeAttributes attribute)
 			=> (typeDefinition.Attributes & attribute) == attribute;
 		public static bool HasFlag(this MethodDefinition methodDefinition, MethodAttributes attribute)
@@ -61,21 +68,35 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsValueType(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
-			var typeDefinition = reader.GetTypeDefinition(handle);
-			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
-			if (baseType.IsNil)
+			try
+			{
+				var typeDefinition = reader.GetTypeDefinition(handle);
+				EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
+				if (baseType.IsNil)
+					return false;
+				if (baseType.IsKnownType(reader, KnownTypeCode.Enum))
+					return true;
+				if (!baseType.IsKnownType(reader, KnownTypeCode.ValueType))
+					return false;
+				var thisType = handle.GetFullTypeName(reader);
+				return !thisType.IsKnownType(KnownTypeCode.Enum);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
 				return false;
-			if (baseType.IsKnownType(reader, KnownTypeCode.Enum))
-				return true;
-			if (!baseType.IsKnownType(reader, KnownTypeCode.ValueType))
-				return false;
-			var thisType = handle.GetFullTypeName(reader);
-			return !thisType.IsKnownType(KnownTypeCode.Enum);
+			}
 		}
 
 		public static bool IsEnum(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
-			return reader.GetTypeDefinition(handle).IsEnum(reader);
+			try
+			{
+				return reader.GetTypeDefinition(handle).IsEnum(reader);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool IsEnum(this TypeDefinition typeDefinition, MetadataReader reader)
@@ -96,28 +117,43 @@ namespace ICSharpCode.Decompiler
 			out PrimitiveTypeCode underlyingType)
 		{
 			underlyingType = 0;
-			EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
-			if (baseType.IsNil)
-				return false;
-			if (!baseType.IsKnownType(reader, KnownTypeCode.Enum))
-				return false;
-			foreach (var handle in typeDefinition.GetFields())
+			try
 			{
-				var field = reader.GetFieldDefinition(handle);
-				if ((field.Attributes & FieldAttributes.Static) != 0)
-					continue;
-				var blob = reader.GetBlobReader(field.Signature);
-				if (blob.ReadSignatureHeader().Kind != SignatureKind.Field)
+				EntityHandle baseType = typeDefinition.GetBaseTypeOrNil();
+				if (baseType.IsNil)
 					return false;
-				underlyingType = (PrimitiveTypeCode)blob.ReadByte();
-				return true;
+				if (!baseType.IsKnownType(reader, KnownTypeCode.Enum))
+					return false;
+				foreach (var handle in typeDefinition.GetFields())
+				{
+					var field = reader.GetFieldDefinition(handle);
+					if ((field.Attributes & FieldAttributes.Static) != 0)
+						continue;
+					var blob = reader.GetBlobReader(field.Signature);
+					if (blob.ReadSignatureHeader().Kind != SignatureKind.Field)
+						return false;
+					underlyingType = (PrimitiveTypeCode)blob.ReadByte();
+					return true;
+				}
+				return false;
 			}
-			return false;
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				underlyingType = 0;
+				return false;
+			}
 		}
 
 		public static bool IsDelegate(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
-			return reader.GetTypeDefinition(handle).IsDelegate(reader);
+			try
+			{
+				return reader.GetTypeDefinition(handle).IsDelegate(reader);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool IsDelegate(this TypeDefinition typeDefinition, MetadataReader reader)
@@ -181,20 +217,27 @@ namespace ICSharpCode.Decompiler
 
 		public static EntityHandle GetGenericType(this in TypeSpecification ts, MetadataReader metadata)
 		{
-			if (ts.Signature.IsNil)
+			try
+			{
+				if (ts.Signature.IsNil)
+					return default;
+				// Do a quick scan using BlobReader
+				var signature = metadata.GetBlobReader(ts.Signature);
+				// When dealing with FSM implementations, we can safely assume that if it's a type spec,
+				// it must be a generic type instance.
+				if (signature.ReadByte() != (byte)SignatureTypeCode.GenericTypeInstance)
+					return default;
+				// Skip over the rawTypeKind: value type or class
+				var rawTypeKind = signature.ReadCompressedInteger();
+				if (rawTypeKind < 17 || rawTypeKind > 18)
+					return default;
+				// Only read the generic type, ignore the type arguments
+				return signature.ReadTypeHandle();
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
 				return default;
-			// Do a quick scan using BlobReader
-			var signature = metadata.GetBlobReader(ts.Signature);
-			// When dealing with FSM implementations, we can safely assume that if it's a type spec,
-			// it must be a generic type instance.
-			if (signature.ReadByte() != (byte)SignatureTypeCode.GenericTypeInstance)
-				return default;
-			// Skip over the rawTypeKind: value type or class
-			var rawTypeKind = signature.ReadCompressedInteger();
-			if (rawTypeKind < 17 || rawTypeKind > 18)
-				return default;
-			// Only read the generic type, ignore the type arguments
-			return signature.ReadTypeHandle();
+			}
 		}
 
 		public static EntityHandle GetDeclaringType(this EntityHandle entity, MetadataReader metadata)
@@ -221,10 +264,12 @@ namespace ICSharpCode.Decompiler
 					return mr.Parent;
 				case HandleKind.EventDefinition:
 					var ed = metadata.GetEventDefinition((EventDefinitionHandle)entity);
-					return metadata.GetMethodDefinition(ed.GetAccessors().GetAny()).GetDeclaringType();
+					var eventAccessor = ed.GetAccessors().GetAny();
+					return eventAccessor.IsNil ? default : metadata.GetMethodDefinition(eventAccessor).GetDeclaringType();
 				case HandleKind.PropertyDefinition:
 					var pd = metadata.GetPropertyDefinition((PropertyDefinitionHandle)entity);
-					return metadata.GetMethodDefinition(pd.GetAccessors().GetAny()).GetDeclaringType();
+					var propertyAccessor = pd.GetAccessors().GetAny();
+					return propertyAccessor.IsNil ? default : metadata.GetMethodDefinition(propertyAccessor).GetDeclaringType();
 				case HandleKind.MethodSpecification:
 					var ms = metadata.GetMethodSpecification((MethodSpecificationHandle)entity);
 					return ms.Method.GetDeclaringType(metadata);
@@ -310,25 +355,32 @@ namespace ICSharpCode.Decompiler
 				// ignore bad metadata when trying to resolve ResolutionScope et al.
 				return false;
 			}
-			if (knownType.TypeParameterCount == 0)
+			try
 			{
-				if (!reader.StringComparer.Equals(nameHandle, knownType.Name))
-					return false;
+				if (knownType.TypeParameterCount == 0)
+				{
+					if (!reader.StringComparer.Equals(nameHandle, knownType.Name))
+						return false;
+				}
+				else
+				{
+					string name = reader.GetString(nameHandle);
+					name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out int typeParameterCount);
+					if (typeParameterCount != knownType.TypeParameterCount || name != knownType.Name)
+						return false;
+				}
+				if (namespaceHandle.IsNil)
+				{
+					return knownType.Namespace.Length == 0;
+				}
+				else
+				{
+					return reader.StringComparer.Equals(namespaceHandle, knownType.Namespace);
+				}
 			}
-			else
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
-				string name = reader.GetString(nameHandle);
-				name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(name, out int typeParameterCount);
-				if (typeParameterCount != knownType.TypeParameterCount || name != knownType.Name)
-					return false;
-			}
-			if (namespaceHandle.IsNil)
-			{
-				return knownType.Namespace.Length == 0;
-			}
-			else
-			{
-				return reader.StringComparer.Equals(namespaceHandle, knownType.Namespace);
+				return false;
 			}
 		}
 
@@ -419,7 +471,7 @@ namespace ICSharpCode.Decompiler
 			{
 				name = reader.GetString(tr.Name);
 			}
-			catch (BadImageFormatException)
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
 				name = $"TR{reader.GetToken(handle):x8}";
 			}
@@ -430,7 +482,7 @@ namespace ICSharpCode.Decompiler
 			{
 				declaringTypeHandle = tr.GetDeclaringType();
 			}
-			catch (BadImageFormatException)
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
 				declaringTypeHandle = default;
 			}
@@ -463,7 +515,7 @@ namespace ICSharpCode.Decompiler
 			{
 				name = reader.GetString(td.Name);
 			}
-			catch (BadImageFormatException)
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
 				name = $"TD{reader.GetToken(handle):x8}";
 			}
@@ -473,7 +525,7 @@ namespace ICSharpCode.Decompiler
 			{
 				declaringTypeHandle = td.GetDeclaringType();
 			}
-			catch (BadImageFormatException)
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
 				declaringTypeHandle = default;
 			}
@@ -559,22 +611,50 @@ namespace ICSharpCode.Decompiler
 
 		public static bool HasGeneratedName(this MethodDefinitionHandle handle, MetadataReader metadata)
 		{
-			return metadata.GetMethodDefinition(handle).Name.IsGeneratedName(metadata);
+			try
+			{
+				return metadata.GetMethodDefinition(handle).Name.IsGeneratedName(metadata);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool HasGeneratedName(this TypeDefinitionHandle handle, MetadataReader metadata)
 		{
-			return metadata.GetTypeDefinition(handle).Name.IsGeneratedName(metadata);
+			try
+			{
+				return metadata.GetTypeDefinition(handle).Name.IsGeneratedName(metadata);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool HasGeneratedName(this TypeDefinition type, MetadataReader metadata)
 		{
-			return type.Name.IsGeneratedName(metadata);
+			try
+			{
+				return type.Name.IsGeneratedName(metadata);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool HasGeneratedName(this FieldDefinitionHandle handle, MetadataReader metadata)
 		{
-			return metadata.GetFieldDefinition(handle).Name.IsGeneratedName(metadata);
+			try
+			{
+				return metadata.GetFieldDefinition(handle).Name.IsGeneratedName(metadata);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		#endregion
@@ -583,7 +663,14 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsCompilerGenerated(this MethodDefinitionHandle handle, MetadataReader metadata)
 		{
-			return metadata.GetMethodDefinition(handle).IsCompilerGenerated(metadata);
+			try
+			{
+				return metadata.GetMethodDefinition(handle).IsCompilerGenerated(metadata);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool IsCompilerGeneratedOrIsInCompilerGeneratedClass(this MethodDefinitionHandle handle,
@@ -617,7 +704,14 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsCompilerGenerated(this FieldDefinitionHandle handle, MetadataReader metadata)
 		{
-			return metadata.GetFieldDefinition(handle).IsCompilerGenerated(metadata);
+			try
+			{
+				return metadata.GetFieldDefinition(handle).IsCompilerGenerated(metadata);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool IsCompilerGenerated(this FieldDefinition field, MetadataReader metadata)
@@ -627,7 +721,14 @@ namespace ICSharpCode.Decompiler
 
 		public static bool IsCompilerGenerated(this TypeDefinitionHandle handle, MetadataReader metadata)
 		{
-			return metadata.GetTypeDefinition(handle).IsCompilerGenerated(metadata);
+			try
+			{
+				return metadata.GetTypeDefinition(handle).IsCompilerGenerated(metadata);
+			}
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
+			{
+				return false;
+			}
 		}
 
 		public static bool IsCompilerGenerated(this TypeDefinition type, MetadataReader metadata)
@@ -812,7 +913,7 @@ namespace ICSharpCode.Decompiler
 			{
 				return definition.BaseType;
 			}
-			catch (BadImageFormatException)
+			catch (Exception ex) when (IsMalformedMetadataException(ex))
 			{
 				return default;
 			}
