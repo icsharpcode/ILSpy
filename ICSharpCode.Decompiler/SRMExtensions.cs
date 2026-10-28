@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler
 	{
 		internal const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
 		internal const MethodImplAttributes MethodImplAsync = (MethodImplAttributes)0x2000;
+		const int MaxTypeNameNesting = 1024;
 
 		static bool IsMalformedMetadataException(Exception ex)
 		{
@@ -463,8 +464,15 @@ namespace ICSharpCode.Decompiler
 
 		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader)
 		{
+			return GetFullTypeName(handle, reader, 0);
+		}
+
+		static FullTypeName GetFullTypeName(TypeReferenceHandle handle, MetadataReader reader, int nesting)
+		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
+			if (nesting >= MaxTypeNameNesting)
+				return new FullTypeName(new TopLevelTypeName("", $"TR{reader.GetToken(handle):x8}", 0));
 			var tr = reader.GetTypeReference(handle);
 			string name;
 			try
@@ -501,14 +509,21 @@ namespace ICSharpCode.Decompiler
 			}
 			else
 			{
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
+				return GetFullTypeName(declaringTypeHandle, reader, nesting + 1).NestedType(name, typeParameterCount);
 			}
 		}
 
 		public static FullTypeName GetFullTypeName(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
+			return GetFullTypeName(handle, reader, 0);
+		}
+
+		static FullTypeName GetFullTypeName(TypeDefinitionHandle handle, MetadataReader reader, int nesting)
+		{
 			if (handle.IsNil)
 				throw new ArgumentNullException(nameof(handle));
+			if (nesting >= MaxTypeNameNesting)
+				return new FullTypeName(new TopLevelTypeName("", $"TD{reader.GetToken(handle):x8}", 0));
 			TypeDefinition td = reader.GetTypeDefinition(handle);
 			string name;
 			try
@@ -544,18 +559,25 @@ namespace ICSharpCode.Decompiler
 			}
 			else
 			{
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(name, typeParameterCount);
+				return GetFullTypeName(declaringTypeHandle, reader, nesting + 1).NestedType(name, typeParameterCount);
 			}
 		}
 
 		public static FullTypeName GetFullTypeName(this ExportedType type, MetadataReader metadata)
 		{
+			return GetFullTypeName(type, metadata, 0);
+		}
+
+		static FullTypeName GetFullTypeName(ExportedType type, MetadataReader metadata, int nesting)
+		{
+			if (nesting >= MaxTypeNameNesting)
+				return new FullTypeName(new TopLevelTypeName("", "<cyclic exported type>", 0));
 			string name = ReflectionHelper.SplitTypeParameterCountFromReflectionName(
 				metadata.GetString(type.Name), out int typeParameterCount);
 			if (type.Implementation.Kind == HandleKind.ExportedType)
 			{
 				var outerType = metadata.GetExportedType((ExportedTypeHandle)type.Implementation);
-				return outerType.GetFullTypeName(metadata).NestedType(name, typeParameterCount);
+				return GetFullTypeName(outerType, metadata, nesting + 1).NestedType(name, typeParameterCount);
 			}
 			else
 			{
