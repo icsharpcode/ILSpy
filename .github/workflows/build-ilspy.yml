@@ -44,13 +44,13 @@ jobs:
     - run: mkdir -p $env:StagingDirectory
       
 
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
       with:
         submodules: true
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6
+    - uses: actions/setup-dotnet@v6.0.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -61,7 +61,7 @@ jobs:
         DOTNET_ROOT: ${{ runner.temp }}/.dotnet
 
     - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v3
+      uses: microsoft/setup-msbuild@v3.0.0
 
     - name: Install dotnet-format
       env:
@@ -113,14 +113,14 @@ jobs:
         --results-directory test-results/${{ matrix.configuration }}
 
     - name: Upload Test Logs
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       if: success() || failure()
       with:
         name: test-results-${{ matrix.configuration }}
         path: 'test-results/${{ matrix.configuration }}/*.trx'
 
     - name: Upload TestCases on test failure
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       if: failure() && steps.unit-tests.outcome == 'failure'
       with:
         name: testcases-${{ matrix.configuration }}
@@ -130,7 +130,7 @@ jobs:
     # The Windows build compiles the WPF XAML fixtures into this assembly as BAML resources.
     # Archiving it lets the BAML decompiler be exercised against real BAML on non-Windows hosts.
     - name: Upload BamlDecompiler test binaries
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       if: failure() && steps.unit-tests.outcome == 'failure'
       with:
         name: bamldecompiler-tests-${{ matrix.configuration }}
@@ -199,7 +199,7 @@ jobs:
     # https://github.com/actions/upload-artifact
     - name: Upload VSIX (VS 2022) release build artifacts
       if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy VS Addin for VS 2022 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.AddIn.VS2022\bin\${{ matrix.configuration }}\net472\*.vsix
@@ -207,7 +207,7 @@ jobs:
 
     - name: Upload Decompiler NuGet release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ICSharpCode.Decompiler NuGet Package (${{ matrix.configuration }})
         path: ICSharpCode.Decompiler\bin\Release\ICSharpCode.Decompiler*.nupkg
@@ -222,7 +222,7 @@ jobs:
 
     - name: Upload ILSpyX NuGet release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ICSharpCode.ILSpyX NuGet Package (${{ matrix.configuration }})
         path: ICSharpCode.ILSpyX\bin\Release\ICSharpCode.ILSpyX*.nupkg
@@ -237,7 +237,7 @@ jobs:
 
     - name: Upload BamlDecompiler NuGet release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ICSharpCode.BamlDecompiler NuGet Package (${{ matrix.configuration }})
         path: ICSharpCode.BamlDecompiler\bin\Release\ICSharpCode.BamlDecompiler*.nupkg
@@ -251,7 +251,7 @@ jobs:
           --source https://nuget.pkg.github.com/${{ github.repository_owner }}
 
     - name: Upload zip binaries build artifacts
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_binaries.zip
@@ -259,7 +259,7 @@ jobs:
 
     - name: Upload x64 self-contained zip (Release-only)
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy self-contained x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_selfcontained_x64.zip
@@ -267,7 +267,7 @@ jobs:
 
     - name: Upload arm64 framework-dependent zip (Release-only)
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy arm64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ${{ env.StagingDirectory }}\ILSpy_binaries_arm64.zip
@@ -275,7 +275,7 @@ jobs:
 
     - name: Upload x64 installer artifact
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy Installer x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.Installer\wix\*-x64.msi
@@ -283,7 +283,7 @@ jobs:
 
     - name: Upload arm64 installer artifact
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy Installer arm64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (${{ matrix.configuration }})
         path: ILSpy.Installer\wix\*-arm64.msi
@@ -291,7 +291,7 @@ jobs:
 
     - name: Upload ilspycmd release build artifacts
       if: matrix.configuration == 'release'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ilspycmd dotnet tool (${{ matrix.configuration }})
         path: ICSharpCode.ILSpyCmd\bin\Release\ilspycmd*.nupkg
@@ -327,13 +327,13 @@ jobs:
     steps:
     - run: mkdir -p $env:StagingDirectory
 
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
       with:
         submodules: true
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6
+    - uses: actions/setup-dotnet@v6.0.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -392,14 +392,14 @@ jobs:
         --results-directory test-results
 
     - name: Upload Test Logs
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       if: success() || failure()
       with:
         name: test-results-${{ matrix.platform }}
         path: 'test-results/*.trx'
 
     - name: Upload TestCases on test failure
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       if: failure() && steps.decompiler-tests.outcome == 'failure'
       with:
         name: testcases-${{ matrix.platform }}
@@ -421,7 +421,7 @@ jobs:
 
     - name: Upload zip build artifact (Linux)
       if: matrix.platform == 'linux'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy Linux x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ${{ env.StagingDirectory }}/ILSpy_linux-x64_*.zip
@@ -429,7 +429,7 @@ jobs:
 
     - name: Upload deb build artifact
       if: matrix.platform == 'linux'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy Linux x64 deb ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ${{ env.StagingDirectory }}/*.deb
@@ -437,7 +437,7 @@ jobs:
 
     - name: Upload rpm build artifact
       if: matrix.platform == 'linux'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy Linux x64 rpm ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ${{ env.StagingDirectory }}/*.rpm
@@ -445,7 +445,7 @@ jobs:
 
     - name: Upload app bundle build artifact (macOS)
       if: matrix.platform == 'macos'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ILSpy macOS arm64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ${{ env.StagingDirectory }}/ILSpy_macos-arm64_*.zip
@@ -480,12 +480,12 @@ jobs:
         shell: pwsh
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6
+    - uses: actions/setup-dotnet@v6.0.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -541,7 +541,7 @@ jobs:
         & $shim --version --disable-updatecheck
 
     - name: Upload RID packages
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: ilspycmd RID packages ${{ matrix.rid }} ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ridpackages/*.nupkg
@@ -570,12 +570,12 @@ jobs:
         shell: pwsh
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v7.0.1
       with:
         fetch-depth: 0
         persist-credentials: false
 
-    - uses: actions/setup-dotnet@v6
+    - uses: actions/setup-dotnet@v6.0.0
       with:
         dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
         dotnet-quality: ${{ env.DOTNET_SDK_QUALITY }}
@@ -633,7 +633,7 @@ jobs:
         }
 
     - name: Upload decompiled output on failure
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       if: failure()
       with:
         name: decompiler-aot-gate-output
