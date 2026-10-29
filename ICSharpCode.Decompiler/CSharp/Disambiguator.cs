@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var disambiguator = new Disambiguator(expressionBuilder, accessor,
 				accessor.AccessorOwner!.DeclaringType, target, requireTarget, AccessorSteps,
-				ReferenceTransformation.All, expectedTargetDetails) {
+				ReferenceTransformation.All, expectedTargetDetails, accessorSyntax: true) {
 				Arguments = argumentList,
 			};
 			if (argumentList.Length == 0)
@@ -229,6 +229,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// and a parameterized property's accessor is, despite being an accessor.
 		/// </summary>
 		readonly bool invocationSyntax;
+		/// <summary>Whether this is a property, indexer or event access rather than a method reference.</summary>
+		readonly bool accessorSyntax;
 		readonly bool isExtensionMethodReference;
 		/// <summary>The escalations this caller has room for; the rest are never offered.</summary>
 		readonly ReferenceTransformation allowed;
@@ -285,7 +287,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression target, bool requireTarget,
 			ReferenceTransformation[] steps, ReferenceTransformation allowed,
 			ExpectedTargetDetails expectedTargetDetails = default, bool invocationSyntax = false,
-			bool isExtensionMethodReference = false,
+			bool isExtensionMethodReference = false, bool accessorSyntax = false,
 			bool castingArgumentsDropsImplicitlyTypedOut = false, bool skipTargetCast = false)
 		{
 			this.expressionBuilder = expressionBuilder;
@@ -300,6 +302,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.expectedTargetDetails = expectedTargetDetails;
 			this.steps = steps;
 			this.invocationSyntax = invocationSyntax;
+			this.accessorSyntax = accessorSyntax;
 			this.isExtensionMethodReference = isExtensionMethodReference;
 			this.castingArgumentsDropsImplicitlyTypedOut = castingArgumentsDropsImplicitlyTypedOut;
 			this.skipTargetCast = skipTargetCast;
@@ -487,7 +490,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// call, so IsAccessor must not claim it.
 				case IMethod method when invocationSyntax:
 					return ProbeCall(method);
-				case IMethod { IsAccessor: true } accessor:
+				case IMethod { IsAccessor: true } accessor when accessorSyntax:
 					// The check can resolve a member and still reject it, so the result is
 					// what it returns, not whether it found something.
 					bool unambiguous = IsUnambiguousAccess(expectedTargetDetails,

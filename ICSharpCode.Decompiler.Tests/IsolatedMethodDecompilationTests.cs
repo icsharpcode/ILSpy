@@ -42,6 +42,27 @@ namespace ICSharpCode.Decompiler.Tests
 		static readonly string TestCasePath = Tester.TestCasePath + "/IsolatedDecompilation";
 
 		[Test]
+		public async Task PropertyAccessorUsedAsDelegateTarget()
+		{
+			var ilFile = Path.Combine(TestCasePath, "AccessorDelegateReference.il");
+			var assembly = await Tester.AssembleIL(ilFile, AssemblerOptions.Library).ConfigureAwait(false);
+			var settings = new DecompilerSettings();
+			using var file = new FileStream(assembly, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(assembly, file, PEStreamOptions.PrefetchEntireImage);
+			var targetFramework = module.Metadata.DetectTargetFrameworkId();
+			var resolver = new UniversalAssemblyResolver(assembly, false, targetFramework, null, PEStreamOptions.PrefetchMetadata);
+			resolver.AddSearchDirectory(Tester.RefAssembliesToolset.GetPath(targetFramework));
+			var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
+			var decompiler = new CSharpDecompiler(typeSystem, settings);
+			var method = typeSystem.MainModule.TypeDefinitions.Single(t => t.Name == "C")
+				.Methods.Single(m => m.Name == "GetGetter");
+
+			var code = decompiler.Decompile(method.MetadataToken).ToString();
+			Assert.That(code, Does.Contain("get_P"));
+			Assert.That(code, Does.Not.Contain("NullReferenceException"));
+		}
+
+		[Test]
 		public async Task StaticConstructorKeepsFieldInitializers()
 		{
 			var ilFile = Path.Combine(TestCasePath, "IsolatedStaticCtor.il");
