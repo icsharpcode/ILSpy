@@ -62,5 +62,15 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			Assert.That(result.Error, Does.Contain("--project"));
 			Assert.That(result.Error, Does.Contain("--outputdir"));
 		}
+
+		[Test]
+		public async Task LegacyVerblessInvocationReportsDeprecationWarning()
+		{
+			var result = await RunAsync("--list", "class", testAssemblyPath);
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			Assert.That(result.Error, Does.Contain("verbless command-line form"));
+			Assert.That(result.Error, Does.Contain("ilspycmd decompile"));
+		}
 	}
 }
