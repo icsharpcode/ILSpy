@@ -25,6 +25,7 @@ DecompilerTests.config.json
 report/
 # Claude Code local session/skills directory
 /.claude/
+/.agents/
 /.understand-anything
 # Written by runuitests.ps1 and the CI test steps.
 test-results/
