@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
@@ -44,46 +45,29 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public async Task PropertyAccessorUsedAsDelegateTarget()
 		{
-			var ilFile = Path.Combine(TestCasePath, "AccessorDelegateReference.il");
-			var assembly = await Tester.AssembleIL(ilFile, AssemblerOptions.Library).ConfigureAwait(false);
-			var settings = new DecompilerSettings();
-			using var file = new FileStream(assembly, FileMode.Open, FileAccess.Read);
-			var module = new PEFile(assembly, file, PEStreamOptions.PrefetchEntireImage);
-			var targetFramework = module.Metadata.DetectTargetFrameworkId();
-			var resolver = new UniversalAssemblyResolver(assembly, false, targetFramework, null, PEStreamOptions.PrefetchMetadata);
-			resolver.AddSearchDirectory(Tester.RefAssembliesToolset.GetPath(targetFramework));
-			var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
-			var decompiler = new CSharpDecompiler(typeSystem, settings);
-			var method = typeSystem.MainModule.TypeDefinitions.Single(t => t.Name == "C")
-				.Methods.Single(m => m.Name == "GetGetter");
+			using var context = await AssembleIL("AccessorDelegateReference.il").ConfigureAwait(false);
+			var method = context.Method("C", "GetGetter");
 
-			var code = decompiler.Decompile(method.MetadataToken).ToString();
+			var code = context.Decompile(method);
 			Assert.That(code, Does.Contain("get_P"));
 			Assert.That(code, Does.Not.Contain("NullReferenceException"));
+
+			var propertyCode = context.Decompile(context.Method("C", "GetProperty"));
+			Assert.That(propertyCode, Does.Contain(".P"));
+			Assert.That(propertyCode, Does.Not.Contain("get_P"));
 		}
 
 		[Test]
 		public async Task StaticConstructorKeepsFieldInitializers()
 		{
-			var ilFile = Path.Combine(TestCasePath, "IsolatedStaticCtor.il");
-			var assembly = await Tester.AssembleIL(ilFile, AssemblerOptions.Library).ConfigureAwait(false);
+			using var context = await AssembleIL("IsolatedStaticCtor.il").ConfigureAwait(false);
 
-			var settings = new DecompilerSettings();
-			using var file = new FileStream(assembly, FileMode.Open, FileAccess.Read);
-			var module = new PEFile(assembly, file, PEStreamOptions.PrefetchEntireImage);
-			var targetFramework = module.Metadata.DetectTargetFrameworkId();
-			var resolver = new UniversalAssemblyResolver(assembly, false, targetFramework, null, PEStreamOptions.PrefetchMetadata);
-			resolver.AddSearchDirectory(Tester.RefAssembliesToolset.GetPath(targetFramework));
-			var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
-			var decompiler = new CSharpDecompiler(typeSystem, settings);
-
-			var staticCtor = typeSystem.MainModule.TypeDefinitions
-				.Single(t => t.Name == "C")
+			var staticCtor = context.Type("C")
 				.Methods.Single(m => m.IsStatic && m.IsConstructor);
 
 			// Decompile just the .cctor handle: the type's field declarations are not part of the
 			// resulting syntax tree, so the static field initializers have nowhere to move to.
-			var code = decompiler.Decompile(staticCtor.MetadataToken).ToString();
+			var code = context.Decompile(staticCtor);
 
 			// They must therefore remain as assignments in the constructor body rather than being
 			// dropped (#3774).
@@ -113,21 +97,13 @@ namespace ICSharpCode.Decompiler.Tests
 			var compilation = await Tester.CompileCSharp(csFile, CompilerOptions.UseRoslynLatest | CompilerOptions.Optimize | CompilerOptions.Library).ConfigureAwait(false);
 			try
 			{
-				var settings = new DecompilerSettings();
-				using var file = new FileStream(compilation.PathToAssembly, FileMode.Open, FileAccess.Read);
-				var module = new PEFile(compilation.PathToAssembly, file, PEStreamOptions.PrefetchEntireImage);
-				var targetFramework = module.Metadata.DetectTargetFrameworkId();
-				var resolver = new UniversalAssemblyResolver(compilation.PathToAssembly, false, targetFramework, null, PEStreamOptions.PrefetchMetadata);
-				resolver.AddSearchDirectory(Tester.RefAssembliesToolset.GetPath(targetFramework));
-				var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
-				var decompiler = new CSharpDecompiler(typeSystem, settings);
+				using var context = Open(compilation.PathToAssembly);
 
-				var getMethod = typeSystem.MainModule.TypeDefinitions
-					.Single(t => t.Name == containerName)
+				var getMethod = context.Type(containerName)
 					.NestedTypes.Single(t => t.Name == "Nested")
 					.Methods.Single(m => m.Name == "Get");
 
-				var code = decompiler.Decompile(getMethod.MetadataToken).ToString();
+				var code = context.Decompile(getMethod);
 
 				Assert.That(code, Does.Contain("return 42;"));
 				// The nested type's method must not be rendered inside an extension block.
@@ -136,6 +112,64 @@ namespace ICSharpCode.Decompiler.Tests
 			finally
 			{
 				compilation.DeleteTempFiles();
+			}
+		}
+
+		static async Task<IsolatedDecompiler> AssembleIL(string fileName)
+		{
+			var ilFile = Path.Combine(TestCasePath, fileName);
+			var assembly = await Tester.AssembleIL(ilFile, AssemblerOptions.Library).ConfigureAwait(false);
+			return Open(assembly);
+		}
+
+		static IsolatedDecompiler Open(string assembly)
+		{
+			var settings = new DecompilerSettings();
+			var file = new FileStream(assembly, FileMode.Open, FileAccess.Read);
+			var module = new PEFile(assembly, file, PEStreamOptions.PrefetchEntireImage);
+			var targetFramework = module.Metadata.DetectTargetFrameworkId();
+			var resolver = new UniversalAssemblyResolver(assembly, false, targetFramework, null, PEStreamOptions.PrefetchMetadata);
+			resolver.AddSearchDirectory(Tester.RefAssembliesToolset.GetPath(targetFramework));
+			var typeSystem = new DecompilerTypeSystem(module, resolver, settings);
+			return new IsolatedDecompiler(file, module, typeSystem, new CSharpDecompiler(typeSystem, settings));
+		}
+
+		sealed class IsolatedDecompiler : IDisposable
+		{
+			readonly FileStream file;
+			readonly PEFile module;
+
+			public IsolatedDecompiler(FileStream file, PEFile module, DecompilerTypeSystem typeSystem, CSharpDecompiler decompiler)
+			{
+				this.file = file;
+				this.module = module;
+				TypeSystem = typeSystem;
+				Decompiler = decompiler;
+			}
+
+			public DecompilerTypeSystem TypeSystem { get; }
+
+			public CSharpDecompiler Decompiler { get; }
+
+			public ITypeDefinition Type(string name)
+			{
+				return TypeSystem.MainModule.TypeDefinitions.Single(t => t.Name == name);
+			}
+
+			public IMethod Method(string typeName, string methodName)
+			{
+				return Type(typeName).Methods.Single(m => m.Name == methodName);
+			}
+
+			public string Decompile(IMethod method)
+			{
+				return Decompiler.Decompile(method.MetadataToken).ToString();
+			}
+
+			public void Dispose()
+			{
+				module.Dispose();
+				file.Dispose();
 			}
 		}
 	}

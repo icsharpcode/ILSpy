@@ -39,4 +39,13 @@
         newobj instance void class [CORE_ASSEMBLY]System.Func`1<int32>::.ctor(object, native int)
         ret
     }
+
+    .method private hidebysig static int32 GetProperty () cil managed
+    {
+        .maxstack 1
+        newobj instance void C::.ctor()
+        call instance int32 C::get_P()
+        ret
+    }
+
 }

@@ -203,7 +203,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var disambiguator = new Disambiguator(expressionBuilder, accessor,
 				accessor.AccessorOwner!.DeclaringType, target, requireTarget, AccessorSteps,
-				ReferenceTransformation.All, expectedTargetDetails, accessorSyntax: true) {
+				ReferenceTransformation.All, expectedTargetDetails, invocationSyntax: true) {
 				Arguments = argumentList,
 			};
 			if (argumentList.Length == 0)
@@ -224,13 +224,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>The escalations open to this reference, in the order it prefers them.</summary>
 		readonly ReferenceTransformation[] steps;
 		/// <summary>
-		/// Whether the reference is written with invocation syntax. Nothing on an IMethod says
-		/// that: a method group is not, a property access is not even though it is a call in IL,
-		/// and a parameterized property's accessor is, despite being an accessor.
+		/// Whether the syntax represents a call or a property, indexer or event access rather than a
+		/// method reference. The metadata method alone cannot tell these cases apart: the compiler
+		/// implements property, indexer and event access with accessor methods, while a method
+		/// reference to the same accessor is written as a method group.
 		/// </summary>
 		readonly bool invocationSyntax;
-		/// <summary>Whether this is a property, indexer or event access rather than a method reference.</summary>
-		readonly bool accessorSyntax;
 		readonly bool isExtensionMethodReference;
 		/// <summary>The escalations this caller has room for; the rest are never offered.</summary>
 		readonly ReferenceTransformation allowed;
@@ -287,7 +286,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression target, bool requireTarget,
 			ReferenceTransformation[] steps, ReferenceTransformation allowed,
 			ExpectedTargetDetails expectedTargetDetails = default, bool invocationSyntax = false,
-			bool isExtensionMethodReference = false, bool accessorSyntax = false,
+			bool isExtensionMethodReference = false,
 			bool castingArgumentsDropsImplicitlyTypedOut = false, bool skipTargetCast = false)
 		{
 			this.expressionBuilder = expressionBuilder;
@@ -302,7 +301,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.expectedTargetDetails = expectedTargetDetails;
 			this.steps = steps;
 			this.invocationSyntax = invocationSyntax;
-			this.accessorSyntax = accessorSyntax;
 			this.isExtensionMethodReference = isExtensionMethodReference;
 			this.castingArgumentsDropsImplicitlyTypedOut = castingArgumentsDropsImplicitlyTypedOut;
 			this.skipTargetCast = skipTargetCast;
@@ -486,11 +484,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				case IField field:
 					return ProbeField(field);
-				// Invocation syntax first: a parameterized property's accessor is written as a
-				// call, so IsAccessor must not claim it.
-				case IMethod method when invocationSyntax:
-					return ProbeCall(method);
-				case IMethod { IsAccessor: true } accessor when accessorSyntax:
+				// Accessor syntax is not a method call, but it still needs the non-reference path.
+				case IMethod { IsAccessor: true } accessor when invocationSyntax:
 					// The check can resolve a member and still reject it, so the result is
 					// what it returns, not whether it found something.
 					bool unambiguous = IsUnambiguousAccess(expectedTargetDetails,
@@ -501,6 +496,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return unambiguous
 						? OverloadResolutionErrors.None
 						: OverloadResolutionErrors.AmbiguousMatch;
+				case IMethod method when invocationSyntax:
+					return ProbeCall(method);
 				case IMethod method:
 					return IsUnambiguousMethodReference(expectedTargetDetails, method, LookupTarget,
 						TypeArguments, isExtensionMethodReference, out Result)
