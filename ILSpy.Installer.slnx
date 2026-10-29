@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ICSharpCode.Decompiler/ICSharpCode.Decompiler.csproj" />
+  <Project Path="ILSpy.Installer/ILSpy.Installer.csproj" />
+</Solution>
