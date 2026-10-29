@@ -182,9 +182,9 @@ jobs:
     - name: Build Installer (x64 and arm64, framework-dependent)
       if: matrix.configuration == 'release'  
       run: |
-        dotnet msbuild ILSpy.Installer.sln /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
-        dotnet msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU"
-        dotnet msbuild ILSpy.Installer.sln /p:Configuration="Release" /p:Platform="Any CPU" /p:PlatformForInstaller="ARM64"
+        dotnet msbuild ILSpy.Installer.slnx /t:Restore /p:Configuration="Release" /p:Platform="Any CPU"
+        dotnet msbuild ILSpy.Installer.slnx /p:Configuration="Release" /p:Platform="Any CPU"
+        dotnet msbuild ILSpy.Installer.slnx /p:Configuration="Release" /p:Platform="Any CPU" /p:PlatformForInstaller="ARM64"
 
     - name: Build VS Extension (for VS 2022)
       if: matrix.configuration == 'release' && env.BuildAndPublishVsix == 'true'
