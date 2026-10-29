@@ -28,6 +28,8 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
         - 'github/codeql-action@v4.39.1'
         - 'ossf/scorecard-action@v2.5.0'
+    '.github/workflows/verify-lockfile.yml':
+        - 'actions/checkout@v7.0.1'
 dependencies:
     'actions/checkout@v7.0.1':
         ref: 'v7.0.1'
