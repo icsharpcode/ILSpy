@@ -258,6 +258,37 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void ImportScopes()
+		{
+			string outputBase = Path.Combine(TestCasePath, nameof(ImportScopes));
+			Tester.CompileCSharpWithPdb(outputBase, new Dictionary<string, string> {
+				{ "First.cs", "using System; using System.Collections.Generic; namespace FirstNamespace { public class First { public static int Count(List<int> values) => values.Count; } }" },
+				{ "Second.cs", "using System.Linq; namespace SecondNamespace { public class Second { public static int Sum(int[] values) => values.Sum(); } }" }
+			}, CompilerOptions.Library);
+
+			string peFileName = outputBase + ".dll";
+			var module = new PEFile(peFileName);
+			var resolver = new UniversalAssemblyResolver(peFileName, false,
+				module.Metadata.DetectTargetFrameworkId(), null, PEStreamOptions.PrefetchEntireImage);
+			var decompiler = new CSharpDecompiler(module, resolver, new DecompilerSettings());
+
+			using var generatedPdb = new MemoryStream();
+			new PortablePdbWriter { NoLogo = true }
+				.WritePdb(module, decompiler, new DecompilerSettings(), generatedPdb);
+
+			generatedPdb.Position = 0;
+			var reader = MetadataReaderProvider.FromPortablePdbStream(generatedPdb).GetMetadataReader();
+			var imports = reader.LocalScopes
+				.Select(scope => reader.GetImportScope(reader.GetLocalScope(scope).ImportScope).ImportsBlob)
+				.Where(imports => !imports.IsNil)
+				.ToArray();
+
+			Assert.That(reader.LocalScopes, Is.Not.Empty, "the fixture must produce local scopes");
+			Assert.That(imports, Has.Length.EqualTo(reader.LocalScopes.Count),
+				"every generated method scope must retain its source imports");
+		}
+
+		[Test]
 		public void EmbedSourceFiles_False_Omits_Embedded_Source()
 		{
 			// Generating a PDB alongside a project export (where the .cs are already on disk) should be

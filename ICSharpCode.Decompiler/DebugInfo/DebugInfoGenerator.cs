@@ -67,18 +67,25 @@ namespace ICSharpCode.Decompiler.DebugInfo
 			foreach (var scope in importScopes)
 			{
 				var blob = EncodeImports(metadata, scope);
-				scope.Handle = metadata.AddImportScope(scope.Parent == null ? globalImportScope : scope.Parent.Handle, blob);
+				var parent = scope.Parent == this.globalImportScope ? globalImportScope : scope.Parent.Handle;
+				scope.Handle = metadata.AddImportScope(parent, blob);
 			}
 		}
 
 		static BlobHandle EncodeImports(MetadataBuilder metadata, ImportScopeInfo scope)
 		{
 			var writer = new BlobBuilder();
+			var scopes = new Stack<ImportScopeInfo>();
+			for (var current = scope; current != null; current = current.Parent)
+				scopes.Push(current);
 
-			foreach (var import in scope.Imports)
+			while (scopes.Count > 0)
 			{
-				writer.WriteByte((byte)ImportDefinitionKind.ImportNamespace);
-				writer.WriteCompressedInteger(MetadataTokens.GetHeapOffset(metadata.GetOrAddBlobUTF8(import)));
+				foreach (var import in scopes.Pop().Imports)
+				{
+					writer.WriteByte((byte)ImportDefinitionKind.ImportNamespace);
+					writer.WriteCompressedInteger(MetadataTokens.GetHeapOffset(metadata.GetOrAddBlobUTF8(import)));
+				}
 			}
 
 			return metadata.GetOrAddBlob(writer);
