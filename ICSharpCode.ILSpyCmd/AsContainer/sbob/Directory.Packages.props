@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- The tools declare their package versions inline with #:package directives, which central
+         package management forbids. Opting out here keeps the repo's central versions untouched. -->
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

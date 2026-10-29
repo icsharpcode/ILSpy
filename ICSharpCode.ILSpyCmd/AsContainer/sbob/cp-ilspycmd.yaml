@@ -1,0 +1,799 @@
+apiVersion: spdx.softwarecomposition.kubescape.io/v1beta1
+kind: ContainerProfile
+metadata:
+  name: "ilspycmd"
+  namespace: "ilspycmd"
+  annotations:
+    kubescape.io/managed-by: User
+    sbob.io/spec-version: "0.0.4"
+spec:
+  architectures:
+  - amd64
+  imageID: "localhost/ilspycmd:111forautomation@a4e1cda8aa5b65ccda6bc7030fd69f0f9ff922eb2e0d94e5672dc55b638a6d07"
+  imageTag: "ilspycmd:111forautomation base=sha256:3a48280a9a7c6276c3eeaba1efa6a08820f18c84fb9e6274c187719ecfaf9fbc ilspycmd=11.1.0.9782"
+  capabilities: []
+  execs:
+  - path: "/home/ilspy/.dotnet/tools/ilspycmd"
+    args:
+    - "/home/ilspy/.dotnet/tools/ilspycmd"
+    - "⋯⋯"
+  - path: "/usr/bin/bash"
+    args:
+    - "/bin/bash"
+    - "⋯⋯"
+  - path: "/usr/bin/locale-check"
+    args:
+    - "/usr/bin/locale-check"
+    - "⋯⋯"
+  opens:
+  - path: "/dev/shm/⋯"
+    flags:
+    - O_CLOEXEC
+    - O_NOFOLLOW
+    - O_RDWR
+  - path: "/dev/tty"
+    flags:
+    - O_NONBLOCK
+    - O_RDWR
+  - path: "/dev/urandom"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/dotnet/install_location"
+    flags:
+    - O_RDONLY
+  - path: "/etc/dotnet/install_location_x64"
+    flags:
+    - O_RDONLY
+  - path: "/etc/gai.conf"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/host.conf"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/hosts"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/ld.so.cache"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/nsswitch.conf"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/passwd"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/profile"
+    flags:
+    - O_RDONLY
+  - path: "/etc/profile.d"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/etc/profile.d/01-locale-fix.sh"
+    flags:
+    - O_RDONLY
+  - path: "/etc/resolv.conf"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/etc/ssl/certs"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/etc/ssl/certs/ca-certificates.crt"
+    flags:
+    - O_RDONLY
+  - path: "/etc/ssl/openssl.cnf"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.bash_login"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.bash_profile"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.bashrc"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/ICSharpCode.BamlDecompiler.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/ICSharpCode.Decompiler.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/ICSharpCode.ILSpyX.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/K4os.Compression.LZ4.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/McMaster.Extensions.CommandLineUtils.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/McMaster.Extensions.Hosting.CommandLine.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Configuration.Abstractions.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Configuration.FileExtensions.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Configuration.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.DependencyInjection.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Diagnostics.Abstractions.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Diagnostics.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.FileProviders.Abstractions.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.FileProviders.Physical.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Hosting.Abstractions.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Hosting.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Logging.Abstractions.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Logging.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Options.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Microsoft.Extensions.Primitives.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/Newtonsoft.Json.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/NuGet.Common.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/NuGet.Configuration.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/NuGet.Frameworks.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/NuGet.Packaging.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/NuGet.Protocol.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/NuGet.Versioning.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/ilspycmd.deps.json"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/ilspycmd.dll"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/ilspycmd.pdb"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/ilspycmd.runtimeconfig.json"
+    flags:
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/libc"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/libc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/home/ilspy/.dotnet/tools/.store/ilspycmd/11.1.0.9782/ilspycmd/11.1.0.9782/tools/net10.0/any/liblibc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/home/ilspy/.local/share/NuGet/http-cache/⋯/list_ilspycmd.dat"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+    - O_RDWR
+  - path: "/home/ilspy/.local/share/NuGet/http-cache/⋯/list_ilspycmd.dat-new"
+    flags:
+    - O_CLOEXEC
+    - O_CREAT
+    - O_RDWR
+  - path: "/home/ilspy/.local/share/NuGet/http-cache/⋯/repository_signatures_5.0.0.dat"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+    - O_RDWR
+  - path: "/home/ilspy/.local/share/NuGet/http-cache/⋯/repository_signatures_5.0.0.dat-new"
+    flags:
+    - O_CLOEXEC
+    - O_CREAT
+    - O_RDWR
+  - path: "/home/ilspy/.local/share/NuGet/http-cache/⋯/service_index.dat"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+    - O_RDWR
+  - path: "/home/ilspy/.local/share/NuGet/http-cache/⋯/service_index.dat-new"
+    flags:
+    - O_CLOEXEC
+    - O_CREAT
+    - O_RDWR
+  - path: "/home/ilspy/.nuget/NuGet/NuGet.Config"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/home/ilspy/.profile"
+    flags:
+    - O_RDONLY
+  - path: "/infolder/*"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/glibc-hwcaps/x86-64-v2/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/glibc-hwcaps/x86-64-v3/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/glibc-hwcaps/x86-64-v4/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/libc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/liblibc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/liblttng-ust-tracepoint.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v2/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v3/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v4/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/x86_64-linux-gnu/libc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/x86_64-linux-gnu/liblibc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/x86_64-linux-gnu/liblttng-ust-tracepoint.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/lib/x86_64-linux-gnu/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/outfolder/*"
+    flags:
+    - O_CLOEXEC
+    - O_CREAT
+    - O_RDWR
+    - O_WRONLY
+  - path: "/proc/meminfo"
+    flags:
+    - O_RDONLY
+  - path: "/proc/sys/crypto/fips_enabled"
+    flags:
+    - O_RDONLY
+  - path: "/proc/sys/vm/overcommit_memory"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/proc/⋯/cgroup"
+    flags:
+    - O_RDONLY
+  - path: "/proc/⋯/maps"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/proc/⋯/mountinfo"
+    flags:
+    - O_RDONLY
+  - path: "/proc/⋯/stat"
+    flags:
+    - O_RDONLY
+  - path: "/proc/⋯/status"
+    flags:
+    - O_RDONLY
+  - path: "/proc/⋯/task/⋯/comm"
+    flags:
+    - O_RDWR
+  - path: "/sys/devices/system/cpu/cpu0/cache/index0/level"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index0/size"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index1/level"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index1/size"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index2/level"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index2/size"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index3/level"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index3/size"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/cpu0/cache/index4/size"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/online"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/sys/devices/system/cpu/possible"
+    flags:
+    - O_RDONLY
+  - path: "/sys/devices/system/node"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/sys/fs/cgroup/cpu.max"
+    flags:
+    - O_RDONLY
+  - path: "/sys/fs/cgroup/memory.max"
+    flags:
+    - O_RDONLY
+  - path: "/tmp/*"
+    flags:
+    - O_CLOEXEC
+    - O_CREAT
+    - O_RDONLY
+    - O_RDWR
+  - path: "/usr/lib/glibc-hwcaps/x86-64-v2/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/glibc-hwcaps/x86-64-v3/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/glibc-hwcaps/x86-64-v4/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/libc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/liblibc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/liblttng-ust-tracepoint.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v2/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v3/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/glibc-hwcaps/x86-64-v4/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libc.so.6"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libcrypto.so.3"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libdl.so.2"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/liblibc.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/liblttng-ust-tracepoint.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/liblttng-ust.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libm.so.6"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libpthread.so.0"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/librt.so.1"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libssl.so.3"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/lib/x86_64-linux-gnu/libtinfo.so.6.4"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/ca-certificates/mozilla/⋯"
+    flags:
+    - O_RDONLY
+  - path: "/usr/share/dotnet/host/fxr"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/usr/share/dotnet/host/fxr/⋯/libhostfxr.so"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.Abstractions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.Binder.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.CommandLine.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.FileExtensions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.Json.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.UserSecrets.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Configuration.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.DependencyInjection.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Diagnostics.Abstractions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Diagnostics.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.FileProviders.Abstractions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.FileProviders.Physical.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.FileSystemGlobbing.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Hosting.Abstractions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Hosting.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Logging.Abstractions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Logging.Configuration.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Logging.Console.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Logging.Debug.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Logging.EventLog.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Logging.EventSource.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Logging.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Options.ConfigurationExtensions.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Options.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/Microsoft.Extensions.Primitives.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.AspNetCore.App/⋯/System.Diagnostics.EventLog.dll"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.NETCore.App"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.NETCore.App/⋯"
+    flags:
+    - O_CLOEXEC
+    - O_DIRECTORY
+    - O_NONBLOCK
+    - O_RDONLY
+  - path: "/usr/share/dotnet/shared/Microsoft.NETCore.App/⋯/⋯"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  - path: "/usr/share/zoneinfo/Etc/UTC"
+    flags:
+    - O_CLOEXEC
+    - O_RDONLY
+  syscalls:
+  - access
+  - arch_prctl
+  - bind
+  - brk
+  - capset
+  - chdir
+  - chmod
+  - clock_nanosleep
+  - clone
+  - clone3
+  - close
+  - close_range
+  - connect
+  - dup2
+  - epoll_create1
+  - epoll_ctl
+  - epoll_wait
+  - execve
+  - exit
+  - exit_group
+  - faccessat2
+  - fallocate
+  - fchmod
+  - fchown
+  - fcntl
+  - flock
+  - fstat
+  - fstatfs
+  - ftruncate
+  - futex
+  - get_mempolicy
+  - getcwd
+  - getdents64
+  - getegid
+  - geteuid
+  - getgid
+  - getgroups
+  - getpeername
+  - getpgrp
+  - getpid
+  - getppid
+  - getrandom
+  - getrusage
+  - getsid
+  - getsockname
+  - getsockopt
+  - gettid
+  - getuid
+  - ioctl
+  - listen
+  - lseek
+  - lstat
+  - madvise
+  - membarrier
+  - memfd_create
+  - mkdir
+  - mknodat
+  - mmap
+  - mprotect
+  - munmap
+  - newfstatat
+  - openat
+  - pipe2
+  - poll
+  - prctl
+  - pread64
+  - prlimit64
+  - pwrite64
+  - read
+  - readlink
+  - recvfrom
+  - recvmsg
+  - rename
+  - rseq
+  - rt_sigaction
+  - rt_sigprocmask
+  - rt_sigreturn
+  - sched_get_priority_max
+  - sched_get_priority_min
+  - sched_getaffinity
+  - sched_getparam
+  - sched_getscheduler
+  - sched_setaffinity
+  - sched_setscheduler
+  - sched_yield
+  - seccomp
+  - sendmmsg
+  - sendto
+  - set_robust_list
+  - set_tid_address
+  - setgroups
+  - setns
+  - setresgid
+  - setresuid
+  - setsid
+  - setsockopt
+  - sigaltstack
+  - socket
+  - stat
+  - statfs
+  - statx
+  - sysinfo
+  - tgkill
+  - umask
+  - uname
+  - unlink
+  - wait4
+  - write
+  endpoints: []
+  ingress: []
+  egress:
+  - identifier: "658ecc26ddaf808707791fca2356f7534926072b5ff7aaa4d76f27689eb78a5e"
+    type: internal
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: kube-system
+    podSelector:
+      matchLabels:
+        k8s-app: kube-dns
+    ports:
+    - name: "UDP-53"
+      port: 53
+      protocol: "UDP"
+  - identifier: "6ea23e16b7309b867dcde463eece303620ac3c1d1cd3ab97b86f02644d87b893"
+    type: external
+    dnsNames:
+    - "api.nuget.org"
+    ports:
+    - name: "TCP-443"
+      port: 443
+      protocol: "TCP"
+  rulePolicies:
+    R0002:
+      processAllowed:
+      - "runc:[1:INIT]"
+      - "runc:[1:CHILD]"
+      - "runc:[2:INIT]"
+      - "runc:[3:INIT]"
+    R0004:
+      processAllowed:
+      - "runc:[1:INIT]"
+      - "runc:[1:CHILD]"
+      - "runc:[2:INIT]"
+      - "runc:[3:INIT]"
