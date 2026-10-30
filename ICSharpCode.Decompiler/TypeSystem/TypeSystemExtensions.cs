@@ -386,7 +386,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		public static IType GetInlineArrayElementType(this IType arrayType)
 		{
-			return arrayType?.GetFields(f => !f.IsStatic).SingleOrDefault()?.Type ?? SpecialType.UnknownType;
+			if (arrayType == null)
+				return SpecialType.UnknownType;
+			IType elementType = null;
+			foreach (var field in arrayType.GetFields(f => !f.IsStatic))
+			{
+				if (elementType != null)
+					return SpecialType.UnknownType;
+				elementType = field.Type;
+			}
+			return elementType ?? SpecialType.UnknownType;
 		}
 
 		/// <summary>
