@@ -45,244 +45,153 @@ using ICSharpCode.ILSpyX.MermaidDiagrammer;
 using ICSharpCode.ILSpyX.Metadata;
 using ICSharpCode.ILSpyX.PdbProvider;
 
-using McMaster.Extensions.CommandLineUtils;
-using McMaster.Extensions.CommandLineUtils.Abstractions;
-
-using Microsoft.Extensions.Hosting;
-
 namespace ICSharpCode.ILSpyCmd
 {
-	[Command(Name = "ilspycmd", Description = "dotnet tool for decompiling .NET assemblies and generating portable PDBs",
-		ExtendedHelpText = @"
-Remarks:
-  -o is valid with every option and required when using -p or -d.
-
-Examples:
-    Decompile assembly to console out.
-        ilspycmd sample.dll
-
-    Decompile assembly to destination directory (single C# file).
-        ilspycmd -o c:\decompiled sample.dll
-
-    Decompile assembly to destination directory, create a project file, one source file per type.
-        ilspycmd -p -o c:\decompiled sample.dll
-
-    Decompile assembly to destination directory, create a project file, one source file per type, 
-    into nicely nested directories.
-        ilspycmd --nested-directories -p -o c:\decompiled sample.dll
-
-    Generate a HTML diagrammer containing all type info into a folder next to the input assembly
-        ilspycmd sample.dll --generate-diagrammer
-
-    Generate a HTML diagrammer containing filtered type info into a custom output folder
-    (including types in the LightJson namespace while excluding types in nested LightJson.Serialization namespace)
-        ilspycmd sample.dll --generate-diagrammer -o c:\diagrammer --generate-diagrammer-include LightJson\\..+ --generate-diagrammer-exclude LightJson\\.Serialization\\..+
-
-    List all embedded resources in a WPF assembly (including BAML entries inside .g.resources containers).
-        ilspycmd sample.dll --list-resources
-
-    Extract a single resource. If the name ends with .baml, the output is decompiled XAML; otherwise raw bytes.
-        ilspycmd sample.dll --resource sample.g.resources/mainwindow.baml -o c:\decompiled
-
-    Decompile assembly as a compilable project. BAML resources become XAML Page items.
-        ilspycmd sample.dll -p -o c:\decompiled
-")]
-	[HelpOption("-h|--help")]
-	[OutputDirectoryRequiredValidation]
-	[VersionOptionFromMember("-v|--version", Description = "Show version of ICSharpCode.Decompiler used.",
-		MemberName = nameof(DecompilerVersion))]
+	/// <summary>
+	/// The engine behind the command line. Every option is a plain property; the parser-facing
+	/// definition of the verb-less command line (<see cref="LegacyCommand"/>) fills them in and
+	/// calls <see cref="RunAsync"/>, which validates the combination and carries out the request.
+	/// </summary>
 	class ILSpyCmdProgram
 	{
-		// https://natemcmaster.github.io/CommandLineUtils/docs/advanced/generic-host.html
-		// https://github.com/natemcmaster/CommandLineUtils/blob/main/docs/samples/dependency-injection/generic-host/Program.cs
-		public static async Task<int> Main(string[] args)
+		public static Task<int> Main(string[] args)
 		{
-			try
-			{
-				return await new HostBuilder().RunCommandLineApplicationAsync<ILSpyCmdProgram>(args, app => {
-					InstantiateValueParsers(app.ValueParsers);
-					// McMaster reports a failed validation (e.g. -p without -o, a missing input file) and
-					// returns 1; usage mistakes exit with EX_USAGE like every other usage error here.
-					var reportValidationError = app.ValidationErrorHandler;
-					app.ValidationErrorHandler = result => {
-						reportValidationError(result);
-						return ProgramExitCodes.EX_USAGE;
-					};
-				});
-			}
-			catch (CommandParsingException ex)
-			{
-				// An unknown option or an option value that does not parse. CommandLineApplication.Execute
-				// reports these as a usage error, but the generic host lets them escape.
-				Console.Error.WriteLine(ex.Message);
-				return ProgramExitCodes.EX_USAGE;
-			}
+			return LegacyCommand.InvokeAsync(args);
 		}
 
-		// McMaster looks up the value parser of every option type at runtime through MakeGenericMethod.
-		// Under Native AOT that only works for generic instantiations the compiler has generated, and
-		// it does not generate them for value types that nothing references statically. These direct
-		// calls cover the value-typed options of this class (the result is cached by the provider).
-		static void InstantiateValueParsers(ValueParserProvider parsers)
-		{
-			parsers.GetParser<(bool IsSet, string Value)>();
-			parsers.GetParser<LanguageVersion>();
-		}
+		public string[] InputAssemblyNames { get; set; } = Array.Empty<string>();
 
-		[FilesExist]
-		[Required]
-		[Argument(0, "Assembly file name(s)", "The list of assemblies that is being decompiled. This argument is mandatory.")]
-		public string[] InputAssemblyNames { get; }
+		public string OutputDirectory { get; set; }
 
-		[Option("-o|--outputdir <directory>", "The output directory, if omitted decompiler output is written to standard out.", CommandOptionType.SingleValue)]
-		public string OutputDirectory { get; }
+		public bool CreateCompilableProjectFlag { get; set; }
 
-		[Option("-p|--project", "Decompile assembly as compilable project. This requires the output directory option.", CommandOptionType.NoValue)]
-		public bool CreateCompilableProjectFlag { get; }
+		public string TypeName { get; set; }
 
-		[Option("-t|--type <type-name>", "The fully qualified name of the type to decompile.", CommandOptionType.SingleValue)]
-		public string TypeName { get; }
+		public string MemberIdString { get; set; }
 
-		[Option("-m|--member <doc-id-or-token>", "The single member to decompile: an XML documentation id string (e.g. \"M:System.String.Concat(System.String,System.String)\", as also accepted by the UI's --navigateto option) or a metadata token (e.g. 0x06000005).", CommandOptionType.SingleValue)]
-		public string MemberIdString { get; }
+		public bool ShowILCodeFlag { get; set; }
 
-		[Option("-il|--ilcode", "Show IL code.", CommandOptionType.NoValue)]
-		public bool ShowILCodeFlag { get; }
-
-		[Option("--il-sequence-points", "Show IL with sequence points. Implies -il.", CommandOptionType.NoValue)]
-		public bool ShowILSequencePointsFlag { get; }
+		public bool ShowILSequencePointsFlag { get; set; }
 
 #if DEBUG
 		// ILAst is the decompiler's own working representation: it exists to debug transforms
 		// while developing ILSpy, so - like the UI's Debug Steps pane - it ships in debug builds
 		// only and is absent from the released tool.
-		[Option("--ilast", "Show the decompiler's intermediate representation (ILAst) of method bodies, after the full IL transform pipeline. Select what to dump with --type or --member; without either, every method of the assembly is dumped.", CommandOptionType.NoValue)]
-		public bool ShowILAstFlag { get; }
+		public bool ShowILAstFlag { get; set; }
 
-		[Option("--after-transform <name-or-index>", "Stop the IL transform pipeline after the named transform (or after the transform at the given 1-based pipeline index) and show the ILAst at that point. Implies --ilast. Pass an unknown name to list the pipeline.", CommandOptionType.SingleValue)]
-		public string AfterTransformName { get; }
+		public string AfterTransformName { get; set; }
 #endif
 
-		[Option("-genpdb|--generate-pdb", "Generate PDB.", CommandOptionType.NoValue)]
-		public bool CreateDebugInfoFlag { get; }
+		public bool CreateDebugInfoFlag { get; set; }
 
-		[FileExistsOrNull]
-		[Option("-usepdb|--use-varnames-from-pdb", "Use variable names from PDB.", CommandOptionType.SingleOrNoValue)]
-		public (bool IsSet, string Value) InputPDBFile { get; }
+		/// <summary>
+		/// -usepdb alone means "the PDB next to the assembly" (IsSet, Value null);
+		/// -usepdb:file names the PDB to read.
+		/// </summary>
+		public (bool IsSet, string Value) InputPDBFile { get; set; }
 
-		[Option("-l|--list <entity-type(s)>", "Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)", CommandOptionType.MultipleValue)]
-		public string[] EntityTypes { get; } = Array.Empty<string>();
+		public string[] EntityTypes { get; set; } = Array.Empty<string>();
 
-		[Option("--list-resources", "Lists all embedded resources in the assembly. Entries inside .resources containers are listed individually as '<container>/<entry>'.", CommandOptionType.NoValue)]
-		public bool ListResourcesFlag { get; }
+		public bool ListResourcesFlag { get; set; }
 
-		[Option("--resource <name>", "Extract a single resource by name (as printed by --list-resources). Resources whose name ends with '.baml' are decompiled to XAML.", CommandOptionType.SingleValue)]
-		public string ResourceName { get; }
+		public string ResourceName { get; set; }
 
-		[Option("--decompile-baml", "Deprecated: -p decompiles BAML resources to XAML files (Page items) on its own. Accepted so that existing scripts keep working.", CommandOptionType.NoValue)]
-		public bool DecompileBamlFlag { get; }
+		public bool DecompileBamlFlag { get; set; }
 
-		[Option("--dump-table <table>", "Dump a metadata table: prints RID, token, names, heap offsets and coded indexes of every row. <table> is the ECMA-335 table name (e.g. TypeDef, Property, MethodSemantics; case-insensitive) or table number (decimal or 0x-prefixed hex, e.g. 0x17).", CommandOptionType.SingleValue)]
-		public string DumpTableName { get; }
+		public string DumpTableName { get; set; }
 
-		[Option("--dump-pdb", "Dump the debug information of the assembly's PDB: documents, per-method sequence points, the scope tree with its variables, constants and imports, and custom debug information. Reads both Portable and Windows PDBs. Use -usepdb:<file> to point at a PDB that is not next to the assembly.", CommandOptionType.NoValue)]
-		public bool DumpPdbFlag { get; }
+		public bool DumpPdbFlag { get; set; }
 
-		[Option("--json", "Output as JSON. Only supported together with --dump-table or --dump-pdb.", CommandOptionType.NoValue)]
-		public bool JsonOutputFlag { get; }
+		public bool JsonOutputFlag { get; set; }
 
-		public string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
+		public static string DecompilerVersion => "ilspycmd: " + typeof(ILSpyCmdProgram).Assembly.GetName().Version.ToString() +
 				Environment.NewLine
 				+ "ICSharpCode.Decompiler: " +
 				typeof(FullTypeName).Assembly.GetName().Version.ToString();
 
-		[Option("-lv|--languageversion <version>", "C# Language version: CSharp1, CSharp2, CSharp3, " +
-			"CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
-			"CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, Preview or Latest", CommandOptionType.SingleValue)]
-		public LanguageVersion LanguageVersion { get; } = LanguageVersion.Latest;
+		public LanguageVersion LanguageVersion { get; set; } = LanguageVersion.Latest;
 
-		[FileExists]
-		[Option("--ilspy-settingsfile <path>", "Path to an ILSpy settings file.", CommandOptionType.SingleValue)]
-		public string ILSpySettingsFile { get; }
+		public string ILSpySettingsFile { get; set; }
 
-		[Option("-ds|--decompiler-setting <name>=<value>", "Set a decompiler setting. Use multiple times to set multiple settings.", CommandOptionType.MultipleValue)]
 		public string[] DecompilerSettingOverrides { get; set; } = Array.Empty<string>();
 
-		[DirectoryExists]
-		[Option("-r|--referencepath <path>", "Path to a directory containing dependencies of the assembly that is being decompiled.", CommandOptionType.MultipleValue)]
-		public string[] ReferencePaths { get; }
+		public string[] ReferencePaths { get; set; }
 
-		[Option("--ignore-decompilation-errors", "Exit with success even when parts of the assembly could not be decompiled. " +
-			"The affected code carries the error text in the output and the failures are listed on stderr either way; " +
-			"only the exit status changes.", CommandOptionType.NoValue)]
-		public bool IgnoreDecompilationErrorsFlag { get; }
+		public bool IgnoreDecompilationErrorsFlag { get; set; }
 
-		[Option("--no-dead-code", "Remove dead code.", CommandOptionType.NoValue)]
-		public bool RemoveDeadCode { get; }
+		public bool RemoveDeadCode { get; set; }
 
-		[Option("--no-dead-stores", "Remove dead stores.", CommandOptionType.NoValue)]
-		public bool RemoveDeadStores { get; }
+		public bool RemoveDeadStores { get; set; }
 
-		[Option("-d|--dump-package", "Dump package assemblies into a folder. This requires the output directory option.", CommandOptionType.NoValue)]
-		public bool DumpPackageFlag { get; }
+		public bool DumpPackageFlag { get; set; }
 
-		[Option("--bundle-entry <name>", "The assembly inside a single-file bundle (or other package) to work on, as printed when such a file is passed without this option. Ignored for input files that are not packages.", CommandOptionType.SingleValue)]
-		public string BundleEntryName { get; }
+		public string BundleEntryName { get; set; }
 
-		[Option("--nested-directories", "Use nested directories for namespaces.", CommandOptionType.NoValue)]
-		public bool NestedDirectories { get; }
+		public bool NestedDirectories { get; set; }
 
-		[Option("--disable-updatecheck", "If using ilspycmd in a tight loop or fully automated scenario, you might want to disable the automatic update check.", CommandOptionType.NoValue)]
-		public bool DisableUpdateCheck { get; }
+		public bool DisableUpdateCheck { get; set; }
 
 		#region MermaidDiagrammer options
 
-		// reused or quoted commands
-		private const string generateDiagrammerCmd = "--generate-diagrammer",
-			exclude = generateDiagrammerCmd + "-exclude",
-			include = generateDiagrammerCmd + "-include";
+		public bool GenerateDiagrammer { get; set; }
 
-		[Option(generateDiagrammerCmd, "Generates an interactive HTML diagrammer app from selected types in the target assembly" +
-			" - to the --outputdir or in a 'diagrammer' folder next to to the assembly by default.", CommandOptionType.NoValue)]
-		public bool GenerateDiagrammer { get; }
-
-		[Option(include, "An optional regular expression matching Type.FullName used to whitelist types to include in the generated diagrammer.", CommandOptionType.SingleValue)]
 		public string Include { get; set; }
 
-		[Option(exclude, "An optional regular expression matching Type.FullName used to blacklist types to exclude from the generated diagrammer.", CommandOptionType.SingleValue)]
 		public string Exclude { get; set; }
 
-		[Option(generateDiagrammerCmd + "-report-excluded", "Outputs a report of types excluded from the generated diagrammer" +
-			$" - whether by default because compiler-generated, explicitly by '{exclude}' or implicitly by '{include}'." +
-			" You may find this useful to develop and debug your regular expressions.", CommandOptionType.NoValue)]
 		public bool ReportExcludedTypes { get; set; }
 
-		[Option(generateDiagrammerCmd + "-docs", "The path or file:// URI of the XML file containing the target assembly's documentation comments." +
-			" You only need to set this if a) you want your diagrams annotated with them and b) the file name differs from that of the assembly." +
-			" To enable XML documentation output for your assembly, see https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/xmldoc/#create-xml-documentation-output",
-			CommandOptionType.SingleValue)]
 		public string XmlDocs { get; set; }
 
 		/// <inheritdoc cref="ILSpyX.MermaidDiagrammer.GenerateHtmlDiagrammer.StrippedNamespaces" />
-		[Option(generateDiagrammerCmd + "-strip-namespaces", "Optional space-separated namespace names that are removed for brevity from XML documentation comments." +
-			" Note that the order matters: e.g. replace 'System.Collections' before 'System' to remove both of them completely.", CommandOptionType.MultipleValue)]
 		public string[] StrippedNamespaces { get; set; }
 
-		[Option(generateDiagrammerCmd + "-json-only",
-			"Whether to generate a model.json file instead of baking it into the HTML template." +
-			" This is useful for the HTML/JS/CSS development loop.", CommandOptionType.NoValue,
-			ShowInHelpText = false)] // developer option, output is really only useful in combination with the corresponding task in html/gulpfile.js
 		public bool JsonOnly { get; set; }
 		#endregion
 
-		private readonly IHostEnvironment _env;
-		public ILSpyCmdProgram(IHostEnvironment env)
+		/// <summary>
+		/// What the command line as a whole must satisfy before any work starts: the input files
+		/// and the paths named by options exist, and the options that write into a directory
+		/// have one. These are legacy semantics of the verb-less command line, not parsing, so
+		/// they live with the options rather than with the parser.
+		/// </summary>
+		/// <returns>The usage error to report, or null when the request is valid.</returns>
+		string ValidateUsage()
 		{
-			_env = env;
+			if (InputAssemblyNames.Length == 0)
+				return "The Assembly file name(s) argument is required.";
+			foreach (string file in InputAssemblyNames)
+			{
+				if (!File.Exists(file))
+					return $"File '{file}' does not exist!";
+			}
+			if (!string.IsNullOrEmpty(InputPDBFile.Value) && !File.Exists(InputPDBFile.Value))
+				return $"File '{InputPDBFile.Value}' does not exist!";
+			if (ILSpySettingsFile != null && !File.Exists(ILSpySettingsFile))
+				return $"File '{ILSpySettingsFile}' does not exist!";
+			foreach (string path in ReferencePaths ?? Array.Empty<string>())
+			{
+				if (!Directory.Exists(path))
+					return $"Directory '{path}' does not exist!";
+			}
+			if (string.IsNullOrEmpty(OutputDirectory))
+			{
+				if (CreateCompilableProjectFlag)
+					return "--project cannot be used unless --outputdir is also specified";
+				if (DumpPackageFlag)
+					return "--dump-package cannot be used unless --outputdir is also specified";
+			}
+			return null;
 		}
 
-		private async Task<int> OnExecuteAsync(CommandLineApplication app)
+		public async Task<int> RunAsync()
 		{
+			if (ValidateUsage() is { } usageError)
+			{
+				Console.Error.WriteLine(usageError);
+				return ProgramExitCodes.EX_USAGE;
+			}
+
 			Task<PackageCheckResult> updateCheckTask = null;
 			if (!DisableUpdateCheck)
 			{
@@ -299,7 +208,7 @@ Examples:
 
 			if (JsonOutputFlag && DumpTableName == null && !DumpPdbFlag)
 			{
-				app.Error.WriteLine("The --json option is only supported together with --dump-table or --dump-pdb.");
+				Console.Error.WriteLine("The --json option is only supported together with --dump-table or --dump-pdb.");
 				return ProgramExitCodes.EX_USAGE;
 			}
 
@@ -357,12 +266,12 @@ Examples:
 			}
 			catch (PackageEntryRequiredException ex)
 			{
-				app.Error.WriteLine(ex.Message);
+				Console.Error.WriteLine(ex.Message);
 				return ex.ExitCode;
 			}
 			catch (Exception ex)
 			{
-				app.Error.WriteLine(ex.ToString());
+				Console.Error.WriteLine(ex.ToString());
 				return ProgramExitCodes.EX_SOFTWARE;
 			}
 			finally
@@ -374,8 +283,8 @@ Examples:
 					var checkResult = await updateCheckTask;
 					if (null != checkResult && checkResult.UpdateRecommendation)
 					{
-						app.Error.WriteLine("You are not using the latest version of the tool, please update.");
-						app.Error.WriteLine($"Latest version is '{checkResult.LatestVersion}' (yours is '{checkResult.RunningVersion}')");
+						Console.Error.WriteLine("You are not using the latest version of the tool, please update.");
+						Console.Error.WriteLine($"Latest version is '{checkResult.LatestVersion}' (yours is '{checkResult.RunningVersion}')");
 					}
 				}
 			}
@@ -403,7 +312,7 @@ Examples:
 							(string.IsNullOrEmpty(TypeName) ? outputName : TypeName) + ".il"));
 					}
 
-					return ShowIL(fileName, output, app);
+					return ShowIL(fileName, output);
 				}
 #if DEBUG
 				else if (ShowILAstFlag || AfterTransformName != null)
@@ -415,10 +324,10 @@ Examples:
 						// but the last when dumping multiple assemblies
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
 						using var ilastOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + ".ilast");
-						return ShowILAst(fileName, ilastOutput, app);
+						return ShowILAst(fileName, ilastOutput);
 					}
 
-					return ShowILAst(fileName, output, app);
+					return ShowILAst(fileName, output);
 				}
 #endif
 				else if (CreateDebugInfoFlag)
@@ -434,11 +343,11 @@ Examples:
 						pdbFileName = Path.ChangeExtension(fileName, ".pdb");
 					}
 
-					return GeneratePdbForAssembly(fileName, pdbFileName, app);
+					return GeneratePdbForAssembly(fileName, pdbFileName);
 				}
 				else if (DumpPackageFlag)
 				{
-					return DumpPackageAssemblies(fileName, outputDirectory, app);
+					return DumpPackageAssemblies(fileName, outputDirectory);
 				}
 				else if (ListResourcesFlag)
 				{
@@ -452,14 +361,14 @@ Examples:
 				}
 				else if (ResourceName != null)
 				{
-					return ExtractResource(fileName, ResourceName, output, outputDirectory, app);
+					return ExtractResource(fileName, ResourceName, output, outputDirectory);
 				}
 				else if (DumpTableName != null)
 				{
 					if (!MetadataTableDumper.TryParseTableName(DumpTableName, out var table))
 					{
-						app.Error.WriteLine($"Unknown metadata table '{DumpTableName}'.");
-						app.Error.WriteLine($"Supported tables: {MetadataTableDumper.SupportedTableNames}");
+						Console.Error.WriteLine($"Unknown metadata table '{DumpTableName}'.");
+						Console.Error.WriteLine($"Supported tables: {MetadataTableDumper.SupportedTableNames}");
 						return ProgramExitCodes.EX_USAGE;
 					}
 
@@ -482,7 +391,7 @@ Examples:
 					}
 					catch (MetadataTableDumper.NoPortableDebugMetadataException ex)
 					{
-						app.Error.WriteLine(ex.Message);
+						Console.Error.WriteLine(ex.Message);
 						return ProgramExitCodes.EX_NOINPUT;
 					}
 				}
@@ -493,16 +402,16 @@ Examples:
 						// per-file writer, disposed here, for the same reason as in --dump-table
 						string outputName = Path.GetFileNameWithoutExtension(fileName);
 						using var pdbOutput = File.CreateText(Path.Combine(outputDirectory, outputName) + $".pdb.{(JsonOutputFlag ? "json" : "txt")}");
-						return DumpPdb(fileName, pdbOutput, app);
+						return DumpPdb(fileName, pdbOutput);
 					}
 
-					return DumpPdb(fileName, output, app);
+					return DumpPdb(fileName, output);
 				}
 				else
 				{
 					if (MemberIdString != null && TypeName != null)
 					{
-						app.Error.WriteLine("The --type and --member options are mutually exclusive.");
+						Console.Error.WriteLine("The --type and --member options are mutually exclusive.");
 						return ProgramExitCodes.EX_USAGE;
 					}
 
@@ -661,15 +570,15 @@ Examples:
 			return 0;
 		}
 
-		int ExtractResource(string assemblyFileName, string resourceName, TextWriter output, string outputDirectory, CommandLineApplication app)
+		int ExtractResource(string assemblyFileName, string resourceName, TextWriter output, string outputDirectory)
 		{
 			var module = LoadInputModule(assemblyFileName);
 			if (!ResourceExtensions.TryGetResource(module, resourceName, out object value))
 			{
-				app.Error.WriteLine($"Resource '{resourceName}' not found.");
-				app.Error.WriteLine("Available resources:");
+				Console.Error.WriteLine($"Resource '{resourceName}' not found.");
+				Console.Error.WriteLine("Available resources:");
 				foreach (var p in ResourceExtensions.EnumerateResourcePaths(module))
-					app.Error.WriteLine("  " + p);
+					Console.Error.WriteLine("  " + p);
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
@@ -734,11 +643,11 @@ Examples:
 		/// Disassembles the module, or the type (--type) or member(s) (--member) selected from it,
 		/// applying the same selection rules as the C# output.
 		/// </summary>
-		int ShowIL(string assemblyFileName, TextWriter output, CommandLineApplication app)
+		int ShowIL(string assemblyFileName, TextWriter output)
 		{
 			if (MemberIdString != null && TypeName != null)
 			{
-				app.Error.WriteLine("The --type and --member options are mutually exclusive.");
+				Console.Error.WriteLine("The --type and --member options are mutually exclusive.");
 				return ProgramExitCodes.EX_USAGE;
 			}
 
@@ -841,11 +750,11 @@ Examples:
 		}
 
 #if DEBUG
-		int ShowILAst(string assemblyFileName, TextWriter output, CommandLineApplication app)
+		int ShowILAst(string assemblyFileName, TextWriter output)
 		{
 			if (MemberIdString != null && TypeName != null)
 			{
-				app.Error.WriteLine("The --type and --member options are mutually exclusive.");
+				Console.Error.WriteLine("The --type and --member options are mutually exclusive.");
 				return ProgramExitCodes.EX_USAGE;
 			}
 
@@ -853,7 +762,7 @@ Examples:
 			if (AfterTransformName != null
 				&& !ILAstDumper.TryResolveTransformCount(AfterTransformName, out transformCount, out string transformError))
 			{
-				app.Error.WriteLine(transformError);
+				Console.Error.WriteLine(transformError);
 				return ProgramExitCodes.EX_USAGE;
 			}
 
@@ -1342,14 +1251,14 @@ Examples:
 			return i == value.Length;
 		}
 
-		int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName, CommandLineApplication app)
+		int GeneratePdbForAssembly(string assemblyFileName, string pdbFileName)
 		{
 			// PDB generation works on the metadata as it is stored, so no WinRT projections here.
 			var module = LoadInputModule(assemblyFileName, applyWinRTProjections: false);
 
 			if (!PortablePdbWriter.HasCodeViewDebugDirectoryEntry(module))
 			{
-				app.Error.WriteLine($"Cannot create PDB file for {assemblyFileName}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
+				Console.Error.WriteLine($"Cannot create PDB file for {assemblyFileName}, because it does not contain a PE Debug Directory Entry of type 'CodeView'.");
 				return ProgramExitCodes.EX_DATAERR;
 			}
 
@@ -1362,7 +1271,7 @@ Examples:
 			return 0;
 		}
 
-		int DumpPackageAssemblies(string packageFileName, string outputDirectory, CommandLineApplication app)
+		int DumpPackageAssemblies(string packageFileName, string outputDirectory)
 		{
 			using (var memoryMappedPackage = MemoryMappedFile.CreateFromFile(packageFileName, FileMode.Open, null, 0, MemoryMappedFileAccess.Read))
 			{
@@ -1370,7 +1279,7 @@ Examples:
 				{
 					if (!SingleFileBundle.IsBundle(packageView, out long bundleHeaderOffset))
 					{
-						app.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
+						Console.Error.WriteLine($"Cannot dump assembiles for {packageFileName}, because it is not a single file bundle.");
 						return ProgramExitCodes.EX_DATAERR;
 					}
 
@@ -1381,7 +1290,7 @@ Examples:
 
 						if (entry.RelativePath.Replace('\\', '/').Contains("../", StringComparison.Ordinal) || Path.IsPathRooted(entry.RelativePath))
 						{
-							app.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
+							Console.Error.WriteLine($"Skipping single-file entry '{entry.RelativePath}' because it might refer to a location outside of the bundle output directory.");
 							continue;
 						}
 
@@ -1400,7 +1309,7 @@ Examples:
 
 							if (decompressedStream.Length != entry.Size)
 							{
-								app.Error.WriteLine($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
+								Console.Error.WriteLine($"Corrupted single-file entry '{entry.RelativePath}'. Declared decompressed size '{entry.Size}' is not the same as actual decompressed size '{decompressedStream.Length}'.");
 								return ProgramExitCodes.EX_DATAERR;
 							}
 
@@ -1421,7 +1330,7 @@ Examples:
 			return 0;
 		}
 
-		int DumpPdb(string assemblyFileName, TextWriter output, CommandLineApplication app)
+		int DumpPdb(string assemblyFileName, TextWriter output)
 		{
 			try
 			{
@@ -1442,7 +1351,7 @@ Examples:
 			}
 			catch (PdbDumper.NoDebugSymbolsException ex)
 			{
-				app.Error.WriteLine(ex.Message);
+				Console.Error.WriteLine(ex.Message);
 				return ProgramExitCodes.EX_NOINPUT;
 			}
 			return 0;
