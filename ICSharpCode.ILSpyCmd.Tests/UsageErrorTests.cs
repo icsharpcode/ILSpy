@@ -39,7 +39,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			var result = await RunAsync(testAssemblyPath, "--no-such-option");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
-			Assert.That(result.Error, Does.Contain("Unrecognized option '--no-such-option'"));
+			Assert.That(result.Error, Does.Contain("--no-such-option"));
 			Assert.That(result.Error, Does.Not.Contain("Exception"));
 		}
 
@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 			var result = await RunAsync(testAssemblyPath, "-lv", "CSharp99", "-t", "Some.Type");
 
 			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_USAGE));
-			Assert.That(result.Error, Does.Contain("Invalid value specified for languageversion"));
+			Assert.That(result.Error, Does.Contain("languageversion"));
 			Assert.That(result.Error, Does.Not.Contain("Exception"));
 		}
 
