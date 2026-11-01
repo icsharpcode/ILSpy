@@ -87,6 +87,8 @@ namespace ICSharpCode.ILSpyX
 		readonly FileLoaderRegistry? fileLoaders;
 		readonly bool applyWinRTProjections;
 		readonly bool useDebugSymbols;
+		readonly PackageFolder? packageFolder;
+		readonly PackageEntry? packageEntry;
 
 		public LoadedAssembly? ParentBundle { get; }
 
@@ -95,7 +97,8 @@ namespace ICSharpCode.ILSpyX
 			FileLoaderRegistry? fileLoaders = null,
 			IAssemblyResolver? assemblyResolver = null,
 			string? pdbFileName = null,
-			bool applyWinRTProjections = false, bool useDebugSymbols = false)
+			bool applyWinRTProjections = false, bool useDebugSymbols = false,
+			PackageFolder? packageFolder = null, PackageEntry? packageEntry = null)
 		{
 			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			this.fileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
@@ -104,6 +107,8 @@ namespace ICSharpCode.ILSpyX
 			this.fileLoaders = fileLoaders;
 			this.applyWinRTProjections = applyWinRTProjections;
 			this.useDebugSymbols = useDebugSymbols;
+			this.packageFolder = packageFolder;
+			this.packageEntry = packageEntry;
 
 			// Lazy: the first GetLoadResultAsync / await / .Result kicks off the work. Lets
 			// callers (e.g. AssemblyListTreeNode) construct LoadedAssembly entries en masse
@@ -128,9 +133,10 @@ namespace ICSharpCode.ILSpyX
 		public LoadedAssembly(LoadedAssembly bundle, string fileName, Task<Stream?>? stream,
 			FileLoaderRegistry? fileLoaders = null,
 			IAssemblyResolver? assemblyResolver = null,
-			bool applyWinRTProjections = false, bool useDebugSymbols = false)
+			bool applyWinRTProjections = false, bool useDebugSymbols = false,
+			PackageFolder? packageFolder = null, PackageEntry? packageEntry = null)
 			: this(bundle.assemblyList, fileName, stream, fileLoaders, assemblyResolver, null,
-				  applyWinRTProjections, useDebugSymbols)
+				  applyWinRTProjections, useDebugSymbols, packageFolder, packageEntry)
 		{
 			this.ParentBundle = bundle;
 		}
@@ -295,6 +301,14 @@ namespace ICSharpCode.ILSpyX
 		public AssemblyList AssemblyList => assemblyList;
 
 		public string FileName => fileName;
+
+		/// <summary>
+		/// Finds a file next to this assembly inside its package, if this assembly was loaded from one.
+		/// </summary>
+		public PackageEntry? FindAssociatedPackageEntry(string extension)
+		{
+			return packageFolder?.FindAssociatedEntry(packageEntry?.Name ?? fileName, extension);
+		}
 
 		public string ShortName => shortName;
 
@@ -553,8 +567,18 @@ namespace ICSharpCode.ILSpyX
 			{
 				try
 				{
-					return (PdbFileName != null ? DebugInfoUtils.FromFile(module, PdbFileName) : null)
-						?? DebugInfoUtils.LoadSymbols(module);
+					if (PdbFileName != null)
+						return DebugInfoUtils.FromFile(module, PdbFileName)
+							?? DebugInfoUtils.LoadSymbols(module);
+
+					var packagePdb = FindAssociatedPackageEntry(".pdb");
+					if (packagePdb != null)
+					{
+						var packageProvider = DebugInfoUtils.FromStream(module, packagePdb.TryOpenStream(), packagePdb.FullName);
+						if (packageProvider != null)
+							return packageProvider;
+					}
+					return DebugInfoUtils.LoadSymbols(module);
 				}
 				catch (IOException)
 				{

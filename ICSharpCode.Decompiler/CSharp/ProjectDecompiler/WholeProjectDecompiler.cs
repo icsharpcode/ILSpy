@@ -33,6 +33,7 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Instrumentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Semantics;
@@ -95,6 +96,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		public IDecompilerTypeSystem? TypeSystem { get; private set; }
 
 		public IDebugInfoProvider? DebugInfoProvider { get; }
+
+		public IDocumentationProvider? DocumentationProvider { get; set; }
 
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
@@ -326,6 +329,7 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		{
 			var decompiler = new CSharpDecompiler(ts, Settings);
 			decompiler.DebugInfoProvider = DebugInfoProvider;
+			decompiler.DocumentationProvider = DocumentationProvider;
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;

@@ -21,6 +21,7 @@ using System.IO;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.DebugInfo;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -58,6 +59,26 @@ namespace ICSharpCode.ILSpyX
 		public static IDebugInfoProvider? GetDebugInfoOrNull(this MetadataFile file)
 		{
 			return GetLoadedAssembly(file).GetDebugInfoOrNull();
+		}
+
+		/// <summary>
+		/// Creates a documentation provider using a package-local XML sidecar when available, followed
+		/// by the ordinary filesystem and framework probing performed by <see cref="XmlDocLoader"/>.
+		/// </summary>
+		public static IDocumentationProvider? GetDocumentationProviderOrNull(this MetadataFile file)
+		{
+			var xml = GetLoadedAssemblyOrNull(file)?.FindAssociatedPackageEntry(".xml");
+			if (xml != null)
+			{
+				try
+				{
+					return new XmlDocumentationProvider(xml.FullName, _ => xml.TryOpenStream());
+				}
+				catch (System.Xml.XmlException)
+				{
+				}
+			}
+			return XmlDocLoader.LoadDocumentation(file);
 		}
 
 		public static ICompilation? GetTypeSystemOrNull(this MetadataFile file)
