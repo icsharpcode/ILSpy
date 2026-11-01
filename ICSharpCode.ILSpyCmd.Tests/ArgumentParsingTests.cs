@@ -86,6 +86,8 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[TestCase(new[] { Asm, "-lv", "CSharp8_0", "-t", sampleType }, "MemberOptionSample", TestName = "LanguageVersionCanonicalCase")]
 		[TestCase(new[] { Asm, "-usepdb", "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithoutValueUsesThePdbNextToTheAssembly")]
 		[TestCase(new[] { Asm, "-usepdb:" + Pdb, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithColonValue")]
+		[TestCase(new[] { "-usepdb", Asm, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithoutValueKeepsTheNextTokenPositional")]
+		[TestCase(new[] { "-r", AsmDir, Asm, "-t", sampleType }, "MemberOptionSample", TestName = "MultiValueOptionTakesOneValuePerOccurrence")]
 		[TestCase(new[] { Asm, "-ds", "RemoveDeadCode=true", "-ds", "RemoveDeadStores=true", "-t", sampleType }, "MemberOptionSample", TestName = "RepeatedDecompilerSettingOption")]
 		[TestCase(new[] { Asm, "-r", AsmDir, "-r", Temp, "-t", sampleType }, "MemberOptionSample", TestName = "RepeatedReferencePathOption")]
 		[TestCase(new[] { Asm, "--ignore-decompilation-errors", "--no-dead-code", "--no-dead-stores", "-t", sampleType }, "MemberOptionSample", TestName = "FlagsWithoutValuesCombine")]
@@ -223,6 +225,7 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[TestCase(new[] { Asm, "-r", Temp + "/no-such-reference-dir", "-t", sampleType }, "no-such-reference-dir", TestName = "MissingReferenceDirectory")]
 		[TestCase(new[] { Asm, "--ilspy-settingsfile", "missing.xml", "-t", sampleType }, "missing.xml", TestName = "MissingSettingsFile")]
 		[TestCase(new[] { Asm, "-i" }, "-i", TestName = "ShortAliasesAreNotBundled")]
+		[TestCase(new[] { Asm, "-pd" }, "-pd", TestName = "SingleLetterOptionsDoNotCombine")]
 		public async Task UsageMistakeExitsWithUsageErrorNamingTheToken(string[] args, string token)
 		{
 			var result = await RunAsync(Expand(args));
