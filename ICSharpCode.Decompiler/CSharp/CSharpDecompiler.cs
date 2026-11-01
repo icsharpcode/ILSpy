@@ -854,6 +854,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		IDocumentationProvider? CreateDefaultDocumentationProvider()
 		{
+			if (!settings.ShowXmlDocumentation)
+				return null;
 			try
 			{
 				return XmlDocLoader.LoadDocumentation(module.MetadataFile);

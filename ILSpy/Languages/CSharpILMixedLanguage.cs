@@ -77,7 +77,9 @@ namespace ICSharpCode.ILSpy.Languages
 		{
 			CSharpDecompiler decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(), options.DecompilerSettings);
 			decompiler.CancellationToken = options.CancellationToken;
-			decompiler.DocumentationProvider = module.GetDocumentationProviderOrNull();
+			decompiler.DocumentationProvider = options.DecompilerSettings.ShowXmlDocumentation
+				? module.GetDocumentationProviderOrNull()
+				: null;
 			return decompiler;
 		}
 

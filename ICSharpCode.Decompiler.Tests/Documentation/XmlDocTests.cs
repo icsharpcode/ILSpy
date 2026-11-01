@@ -21,6 +21,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -193,6 +194,19 @@ namespace ICSharpCode.Decompiler.Tests.Documentation
 				$"T:{NS}.GenericSample`2");
 			AssertIdStringRoundTrip(GetTypeDefinition($"{NS}.GenericSample`2+Nested`1"),
 				$"T:{NS}.GenericSample`2.Nested`1");
+		}
+
+		[Test]
+		public void DecompilationDoesNotReadDocumentationWhenDisabled()
+		{
+			string xmlFile = Path.ChangeExtension(results.PathToAssembly, ".xml");
+			using (FileStream lockedXml = new FileStream(xmlFile, FileMode.Open, FileAccess.Read, FileShare.None))
+			{
+				var decompiler = new CSharpDecompiler(results.PathToAssembly, new DecompilerSettings {
+					ShowXmlDocumentation = false
+				});
+				Assert.DoesNotThrow(() => decompiler.DecompileTypeAsString(new FullTypeName($"{NS}.Sample")));
+			}
 		}
 
 		[Test]
