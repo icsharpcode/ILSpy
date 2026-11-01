@@ -505,13 +505,13 @@ namespace ICSharpCode.ILSpy.TextView
 				{
 					if (element.Children.Count > 0)
 					{
-						AddLinkSpan(() => OpenExternalUri(uri), element.Children);
+						AddLinkSpan(() => OpenExternalUriAsync(uri).HandleExceptions(), element.Children);
 					}
 					else
 					{
 						var linkText = CreateLinkTextBlock();
 						linkText.Text = href;
-						AddInline(CreateLink(linkText, () => OpenExternalUri(uri)));
+						AddInline(CreateLink(linkText, () => OpenExternalUriAsync(uri).HandleExceptions()));
 					}
 				}
 			}
@@ -522,12 +522,18 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void OpenExternalUri(Uri uri)
+		async System.Threading.Tasks.Task OpenExternalUriAsync(Uri uri)
 		{
+			if (!await DocumentationLinkDialogs.ConfirmOpenAsync(uri))
+				return;
+
 			// The rendered view lives in a popup whose root is a TopLevel once shown, so
-			// the launcher is resolvable from any control of the tree.
-			if (TopLevel.GetTopLevel(rootStack) is { } topLevel)
-				topLevel.Launcher.LaunchUriAsync(uri).HandleExceptions();
+			// the launcher is normally resolvable from the control tree. Use the main window as a
+			// fallback because popup content can be detached while the confirmation dialog closes.
+			var launcher = TopLevel.GetTopLevel(rootStack)?.Launcher
+				?? AppEnv.UiContext.MainWindow?.Launcher;
+			if (launcher != null)
+				await launcher.LaunchUriAsync(uri);
 		}
 
 		public void AddInline(Inline inline)

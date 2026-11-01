@@ -243,6 +243,9 @@ Are you sure you want to continue?</value>
   <data name="ClearAssemblyList" xml:space="preserve">
     <value>Clear assembly list</value>
   </data>
+  <data name="ClearDocumentationLinkOrigins" xml:space="preserve">
+	  <value>Clear allowed documentation link hosts</value>
+	</data>
   <data name="Close" xml:space="preserve">
     <value>Close</value>
   </data>
@@ -689,6 +692,15 @@ Are you sure you want to continue?</value>
   </data>
   <data name="DisplaySettingsPanel_Theme" xml:space="preserve">
     <value>Theme:</value>
+  </data>
+  <data name="DocumentationLinkAllowOrigin" xml:space="preserve">
+    <value>Always allow links from this host</value>
+  </data>
+  <data name="DocumentationLinkConfirmationMessage" xml:space="preserve">
+    <value>This documentation link will be opened outside ILSpy. Continue?</value>
+  </data>
+  <data name="DocumentationLinkConfirmationTitle" xml:space="preserve">
+    <value>Open Documentation Link</value>
   </data>
   <data name="Download" xml:space="preserve">
     <value>Download</value>

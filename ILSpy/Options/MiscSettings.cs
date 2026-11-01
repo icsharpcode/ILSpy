@@ -16,6 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -37,12 +40,52 @@ namespace ICSharpCode.ILSpy.Options
 		[ObservableProperty]
 		bool loadPreviousAssemblies = true;
 
+		readonly HashSet<string> allowedDocumentationLinkOrigins = new(StringComparer.OrdinalIgnoreCase);
+
 		public XName SectionName => "MiscSettings";
+
+		public bool IsDocumentationLinkOriginAllowed(Uri uri)
+		{
+			return TryGetDocumentationLinkOrigin(uri) is { } origin
+				&& allowedDocumentationLinkOrigins.Contains(origin);
+		}
+
+		public void AllowDocumentationLinkOrigin(Uri uri)
+		{
+			if (TryGetDocumentationLinkOrigin(uri) is { } origin)
+				allowedDocumentationLinkOrigins.Add(origin);
+		}
+
+		public void ClearDocumentationLinkOrigins()
+		{
+			allowedDocumentationLinkOrigins.Clear();
+		}
+
+		static string? TryGetDocumentationLinkOrigin(Uri uri)
+		{
+			if (!uri.IsAbsoluteUri || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+				return null;
+
+			int defaultPort = uri.Scheme == Uri.UriSchemeHttp ? 80 : 443;
+			string host = uri.IdnHost.ToLowerInvariant();
+			if (host.Length == 0)
+				return null;
+			if (host.Contains(':'))
+				host = "[" + host + "]";
+			return uri.Scheme.ToLowerInvariant() + "://" + host
+				+ (uri.Port == defaultPort ? string.Empty : ":" + uri.Port);
+		}
 
 		public void LoadFromXml(XElement e)
 		{
 			AllowMultipleInstances = (bool?)e.Attribute(nameof(AllowMultipleInstances)) ?? false;
 			LoadPreviousAssemblies = (bool?)e.Attribute(nameof(LoadPreviousAssemblies)) ?? true;
+			allowedDocumentationLinkOrigins.Clear();
+			foreach (var origin in e.Elements("DocumentationLinkOrigin").Select(e => (string?)e.Attribute("Value")))
+			{
+				if (Uri.TryCreate(origin, UriKind.Absolute, out var uri) && TryGetDocumentationLinkOrigin(uri) is { } normalized)
+					allowedDocumentationLinkOrigins.Add(normalized);
+			}
 		}
 
 		public XElement SaveToXml()
@@ -50,6 +93,8 @@ namespace ICSharpCode.ILSpy.Options
 			var section = new XElement(SectionName);
 			section.SetAttributeValue(nameof(AllowMultipleInstances), AllowMultipleInstances);
 			section.SetAttributeValue(nameof(LoadPreviousAssemblies), LoadPreviousAssemblies);
+			foreach (var origin in allowedDocumentationLinkOrigins.OrderBy(origin => origin, StringComparer.OrdinalIgnoreCase))
+				section.Add(new XElement("DocumentationLinkOrigin", new XAttribute("Value", origin)));
 			return section;
 		}
 	}
