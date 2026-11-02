@@ -1837,10 +1837,7 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (entity.ParentModule?.MetadataFile is not { } metadata)
 					return;
-				// XmlDocLoader handles every layout the decompiler library knows about: .xml
-				// beside the .dll, .NET Framework reference-assemblies paths, and (recently)
-				// the modern .NET ref pack at dotnet/packs/Microsoft.NETCore.App.Ref/...
-				var provider = XmlDocLoader.LoadDocumentation(metadata);
+				var provider = metadata.GetDocumentationProviderOrNull();
 				var documentation = provider?.GetDocumentation(entity);
 				if (documentation == null && entity is IMethod { AccessorOwner: IProperty owner })
 				{

@@ -324,6 +324,9 @@ namespace ICSharpCode.ILSpy.Languages
 			var decompiler = new CSharpDecompiler(module, module.GetAssemblyResolver(options.DecompilerSettings.AutoLoadAssemblyReferences), options.DecompilerSettings) {
 				CancellationToken = options.CancellationToken,
 				DebugInfoProvider = module.GetDebugInfoOrNull(),
+				DocumentationProvider = options.DecompilerSettings.ShowXmlDocumentation
+					? module.GetDocumentationProviderOrNull()
+					: null,
 			};
 			decompiler.Stepper.StepLimit = options.StepLimit;
 			decompiler.Stepper.IsDebug = options.IsDebug;
@@ -518,6 +521,9 @@ namespace ICSharpCode.ILSpy.Languages
 
 			var decompiler = new CSharpDecompiler(typeSystem, options.DecompilerSettings) {
 				CancellationToken = options.CancellationToken,
+				DocumentationProvider = options.DecompilerSettings.ShowXmlDocumentation
+					? module.GetDocumentationProviderOrNull()
+					: null,
 			};
 			if (options.EscapeInvalidIdentifiers)
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
@@ -555,6 +561,9 @@ namespace ICSharpCode.ILSpy.Languages
 			if (!string.IsNullOrEmpty(options.StrongNameKeyFile))
 				decompiler.StrongNameKeyFile = options.StrongNameKeyFile;
 			decompiler.ProgressIndicator = options.ProgressIndicator;
+			decompiler.DocumentationProvider = options.DecompilerSettings.ShowXmlDocumentation
+				? module.GetDocumentationProviderOrNull()
+				: null;
 			var projectFileName = System.IO.Path.Combine(
 				targetDirectory,
 				WholeProjectDecompiler.CleanUpFileName(module.Name, ProjectFileExtension));

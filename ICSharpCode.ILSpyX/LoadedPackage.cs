@@ -402,6 +402,8 @@ namespace ICSharpCode.ILSpyX
 					package.LoadedAssembly, entry.FullName,
 					fileLoaders: package.LoadedAssembly.AssemblyList.LoaderRegistry,
 					assemblyResolver: this,
+					packageFolder: this,
+					packageEntry: entry,
 					stream: Task.Run(entry.TryOpenStream),
 					applyWinRTProjections: package.LoadedAssembly.AssemblyList.ApplyWinRTProjections,
 					useDebugSymbols: package.LoadedAssembly.AssemblyList.UseDebugSymbols
@@ -421,6 +423,23 @@ namespace ICSharpCode.ILSpyX
 			{
 				return assemblies.ContainsValue(assembly);
 			}
+		}
+
+		/// <summary>
+		/// Finds an associated file (e.g., XMLDoc or PDB) in this folder for an assembly entry.
+		/// The assembly name may be a package-relative path.
+		/// </summary>
+		public PackageEntry? FindAssociatedEntry(string assemblyName, string extension)
+		{
+			if (string.IsNullOrEmpty(assemblyName) || string.IsNullOrEmpty(extension) || extension[0] != '.')
+				return null;
+			string fileName = Path.GetFileName(assemblyName);
+			int dot = fileName.LastIndexOf('.');
+			if (dot <= 0)
+				return null;
+			string associatedFile = string.Concat(fileName.AsSpan(0, dot), extension);
+			return Entries.FirstOrDefault(e => string.Equals(e.Name, associatedFile, StringComparison.Ordinal))
+				?? Entries.FirstOrDefault(e => string.Equals(e.Name, associatedFile, StringComparison.OrdinalIgnoreCase));
 		}
 	}
 }

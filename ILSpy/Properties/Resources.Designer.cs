@@ -2247,6 +2247,42 @@ namespace ICSharpCode.ILSpy.Properties {
         /// <summary>
         ///   Looks up a localized string similar to ILSpy started from .
         /// </summary>
+        public static string DocumentationLinkAllowOrigin {
+            get {
+                return ResourceManager.GetString("DocumentationLinkAllowOrigin", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Clear allowed documentation link hosts.
+        /// </summary>
+        public static string ClearDocumentationLinkOrigins {
+            get {
+                return ResourceManager.GetString("ClearDocumentationLinkOrigins", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This documentation link will be opened outside ILSpy. Continue?.
+        /// </summary>
+        public static string DocumentationLinkConfirmationMessage {
+            get {
+                return ResourceManager.GetString("DocumentationLinkConfirmationMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Open Documentation Link.
+        /// </summary>
+        public static string DocumentationLinkConfirmationTitle {
+            get {
+                return ResourceManager.GetString("DocumentationLinkConfirmationTitle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ILSpy version .
+        /// </summary>
         public static string ILSpyStartedFrom {
             get {
                 return ResourceManager.GetString("ILSpyStartedFrom", resourceCulture);

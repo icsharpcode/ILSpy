@@ -12,5 +12,8 @@
 		          Content="{x:Static res:Resources.AllowMultipleInstances}" />
 		<CheckBox IsChecked="{Binding Settings.LoadPreviousAssemblies, Mode=TwoWay}"
 		          Content="{x:Static res:Resources.LoadPreviousAssembliesOnStartup}" />
+		<Button HorizontalAlignment="Left"
+		        Content="{x:Static res:Resources.ClearDocumentationLinkOrigins}"
+		        Command="{Binding ClearDocumentationLinkOriginsCommand}" />
 	</StackPanel>
 </UserControl>
