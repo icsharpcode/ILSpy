@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
 
 using AwesomeAssertions;
@@ -38,6 +39,15 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class FoldingsViewStateTests
 {
+	[Test]
+	public void Aligned_Folding_Text_Removes_Common_Indentation()
+	{
+		var document = new TextDocument("    first\n      second\n        third");
+
+		DecompilerTextView.GetAlignedFoldingText(document, 0, document.TextLength)
+			.Should().Be("first\n  second\n    third");
+	}
+
 	[Test]
 	public void Capture_Records_Offsets_Of_Expanded_Foldings_Only()
 	{
