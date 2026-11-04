@@ -88,8 +88,12 @@ Copy-PackagePayload $debRoot
 
 # Debian has no unversioned libicu package and the soname-versioned name differs per
 # release, so depend on an OR-chain covering the releases we care about (the leading
-# plain 'libicu' catches derivatives that do ship a virtual package).
-$icuVersions = 78, 77, 76, 74, 72, 71, 70, 69, 68, 67, 66, 65, 63
+# plain 'libicu' catches derivatives that do ship a virtual package). apt skips
+# alternatives that do not exist as packages, so the list deliberately runs several ICU
+# releases ahead of what any distro ships (ICU bumps its major twice a year; 78 is the
+# newest in Debian sid and Ubuntu devel as of late 2026) to stay installable on future
+# releases without an edit here. The .NET runtime itself loads any ICU version.
+$icuVersions = 84, 83, 82, 81, 80, 79, 78, 77, 76, 74, 72, 71, 70, 69, 68, 67, 66, 65, 63
 $icuDeps = (@('libicu') + ($icuVersions | ForEach-Object { "libicu$_" })) -join ' | '
 $installedSize = [int]((Get-ChildItem $debRoot -Recurse -File | Measure-Object Length -Sum).Sum / 1024)
 
