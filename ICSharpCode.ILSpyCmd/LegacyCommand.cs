@@ -74,7 +74,7 @@ Examples:
 		public static async Task<int> InvokeAsync(string[] args)
 		{
 			var command = new LegacyCommand();
-			ParseResult result = command.Parse(command.RewriteBareUsePdb(args), new ParserConfiguration {
+			ParseResult result = command.Parse(command.RewriteAttachedPdbFile(args), new ParserConfiguration {
 				// -il, -lv, -ds, -genpdb and -usepdb are aliases in their own right, and -pd is a
 				// mistake, not -p -d.
 				EnablePosixBundling = false,
@@ -115,17 +115,13 @@ Examples:
 			"Stop the IL transform pipeline after the named transform (or after the transform at the given 1-based pipeline index) and show the ILAst at that point. Implies --ilast. Pass an unknown name to list the pipeline.");
 #endif
 		readonly Option<bool> createDebugInfo = Flag("--generate-pdb", "-genpdb", "Generate PDB.");
-		readonly Option<string> inputPdbFile = new("--use-varnames-from-pdb", "-usepdb") {
-			Description = "Use variable names from PDB.",
-			HelpName = "file",
-			Arity = ArgumentArity.ZeroOrOne,
-		};
-		// System.CommandLine hands a zero-or-one option the next bare token as its value, so
-		// "-usepdb sample.dll" would read sample.dll as the PDB. On this command line a bare
-		// -usepdb means "the PDB next to the assembly" and sample.dll stays the input, which is
-		// what RewriteBareUsePdb preserves by routing the bare spelling to this flag.
-		readonly Option<bool> usePdbBesideAssembly = new("--use-pdb-beside-assembly") {
-			Arity = ArgumentArity.Zero,
+		readonly Option<bool> usePdb = Flag("--use-varnames-from-pdb", "-usepdb",
+			"Use variable names from the PDB next to the assembly, or from the file attached as -usepdb:<file> or --use-varnames-from-pdb=<file>. A following bare token is an input file, not the PDB.");
+		// The PDB file name is only ever attached with ':' or '='. Modelled as a zero-or-one value
+		// on the switch itself, System.CommandLine would also take the next bare token
+		// ("-usepdb sample.dll" would read the assembly as the PDB), so the switch is a flag and
+		// RewriteAttachedPdbFile routes the attached spellings to this option before parsing.
+		readonly Option<string> usePdbFile = new("--use-varnames-from-pdb-file") {
 			Hidden = true,
 		};
 		readonly Option<string[]> entityTypes = Values("--list", "-l", "entity-type(s)",
@@ -143,9 +139,7 @@ Examples:
 		readonly Option<bool> jsonOutput = Flag("--json", null,
 			"Output as JSON. Only supported together with --dump-table or --dump-pdb.");
 		readonly Option<Decompiler.CSharp.LanguageVersion> languageVersion = new("--languageversion", "-lv") {
-			Description = "C# Language version: CSharp1, CSharp2, CSharp3, " +
-				"CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, " +
-				"CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, Preview or Latest",
+			Description = "C# Language version: " + string.Join(", ", Enum.GetNames<Decompiler.CSharp.LanguageVersion>()),
 			HelpName = "version",
 			DefaultValueFactory = _ => Decompiler.CSharp.LanguageVersion.Latest,
 		};
@@ -217,7 +211,7 @@ Examples:
 #if DEBUG
 				showILAst, afterTransformName,
 #endif
-				createDebugInfo, inputPdbFile, usePdbBesideAssembly, entityTypes, listResources, resourceName,
+				createDebugInfo, usePdb, usePdbFile, entityTypes, listResources, resourceName,
 				decompileBaml, dumpTableName, dumpPdb, jsonOutput, languageVersion, ilspySettingsFile,
 				decompilerSettingOverrides, referencePaths, ignoreDecompilationErrors, removeDeadCode, removeDeadStores,
 				dumpPackage, bundleEntryName, nestedDirectories, disableUpdateCheck, generateDiagrammer,
@@ -248,15 +242,26 @@ Examples:
 			SetAction(RunAsync);
 		}
 
-		string[] RewriteBareUsePdb(string[] args)
+		/// <summary>
+		/// "-usepdb:file", "-usepdb=file" and the long spellings become the hidden file option, with
+		/// the delimiter kept. Every other token stays as it is, including a bare "-usepdb" that
+		/// follows an option taking a value: that is the option's value, as it always was.
+		/// </summary>
+		string[] RewriteAttachedPdbFile(string[] args)
 		{
-			return args.Select(arg => arg == inputPdbFile.Name || inputPdbFile.Aliases.Contains(arg)
-				? usePdbBesideAssembly.Name : arg).ToArray();
+			string[] spellings = [usePdb.Name, .. usePdb.Aliases];
+			return args.Select(arg => {
+				foreach (string spelling in spellings)
+				{
+					if (arg.Length > spelling.Length && arg.StartsWith(spelling, StringComparison.Ordinal) && arg[spelling.Length] is ':' or '=')
+						return usePdbFile.Name + arg[spelling.Length..];
+				}
+				return arg;
+			}).ToArray();
 		}
 
 		Task<int> RunAsync(ParseResult result, CancellationToken cancellationToken)
 		{
-			OptionResult pdb = result.GetResult(inputPdbFile);
 			var program = new ILSpyCmdProgram {
 				InputAssemblyNames = result.GetValue(inputAssemblyNames),
 				OutputDirectory = result.GetValue(outputDirectory),
@@ -270,7 +275,7 @@ Examples:
 				AfterTransformName = result.GetValue(afterTransformName),
 #endif
 				CreateDebugInfoFlag = result.GetValue(createDebugInfo),
-				InputPDBFile = (pdb != null || result.GetValue(usePdbBesideAssembly), pdb is { Tokens.Count: > 0 } ? pdb.Tokens[0].Value : null),
+				InputPDBFile = (result.GetValue(usePdb) || result.GetResult(usePdbFile) != null, result.GetValue(usePdbFile)),
 				EntityTypes = result.GetValue(entityTypes),
 				ListResourcesFlag = result.GetValue(listResources),
 				ResourceName = result.GetValue(resourceName),
