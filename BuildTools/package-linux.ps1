@@ -5,6 +5,7 @@
 #                                     Compress-Archive/7z, which drop unix mode bits)
 #   ilspy_<version>-1_<arch>.deb      built with dpkg-deb (amd64 / arm64)
 #   ilspy-<version>-1.<arch>.rpm      built with rpmbuild (x86_64 / aarch64)
+#   ILSpy-<version>-<arch>.AppImage   built with appimagetool (x86_64 / aarch64)
 # Must run on Linux. zip and dpkg-deb are preinstalled on GitHub's ubuntu runners;
 # locally: sudo apt-get install -y zip dpkg rpm
 param(
@@ -42,11 +43,24 @@ if (-not $Version) {
 
 # Per-RID names: dpkg and rpm each have their own architecture vocabulary.
 $arches = @{
-    'linux-x64'   = @{ deb = 'amd64'; rpm = 'x86_64' }
-    'linux-arm64' = @{ deb = 'arm64'; rpm = 'aarch64' }
+    'linux-x64'   = @{ deb = 'amd64'; rpm = 'x86_64'; appimage = 'x86_64' }
+    'linux-arm64' = @{ deb = 'arm64'; rpm = 'aarch64'; appimage = 'aarch64' }
 }
 
 $staging = New-Item -ItemType Directory -Force (Join-Path $repoRoot $StagingDirectory)
+
+# appimagetool and the type2 runtime it embeds are not apt packages; both come from pinned
+# GitHub releases. The tool runs with --appimage-extract-and-run so the host needs no FUSE,
+# and --runtime-file lets the x86_64 tool emit an aarch64 image.
+$appImageToolVersion = '1.9.1'
+$appImageRuntimeVersion = '20251108'
+$toolDir = Join-Path ([IO.Path]::GetTempPath()) 'ilspy-appimagetool'
+New-Item -ItemType Directory -Force $toolDir | Out-Null
+$appImageTool = Join-Path $toolDir 'appimagetool'
+if (-not (Test-Path $appImageTool)) {
+    curl -fsSL -o $appImageTool "https://github.com/AppImage/appimagetool/releases/download/$appImageToolVersion/appimagetool-$(uname -m).AppImage"
+    chmod +x $appImageTool
+}
 
 # Both dpkg and rpm reject '-' inside a version (it separates the package revision in deb
 # and is illegal in the rpm Version tag). '~' is legal in both and sorts *before* the
@@ -131,4 +145,33 @@ foreach ($rid in $arches.Keys | Sort-Object) {
     $rpm = Get-ChildItem (Join-Path $rpmTop 'RPMS') -Filter '*.rpm' -Recurse
     Move-Item $rpm.FullName $staging -Force
     Write-Host "created $(Join-Path $staging $rpm.Name)"
+
+    # ----- AppImage -----
+    # One relocatable file for distros that take neither deb nor rpm. The deb/rpm payload is
+    # not reused: its /opt paths and absolute symlink do not survive relocation. Layout is
+    # the minimal AppDir appimagetool accepts: the app under usr/bin, AppRun pointing at it,
+    # and the desktop file plus icon at the root.
+    $runtime = Join-Path $toolDir "runtime-$($arch.appimage)"
+    if (-not (Test-Path $runtime)) {
+        curl -fsSL -o $runtime "https://github.com/AppImage/type2-runtime/releases/download/$appImageRuntimeVersion/runtime-$($arch.appimage)"
+    }
+    $appDir = Join-Path ([IO.Path]::GetTempPath()) "ilspy-appdir-$rid"
+    Remove-Item -Recurse -Force $appDir -ErrorAction Ignore
+    New-Item -ItemType Directory -Force (Join-Path $appDir 'usr/bin') | Out-Null
+    Copy-Item "$publishDir/*" (Join-Path $appDir 'usr/bin') -Recurse
+    Get-ChildItem (Join-Path $appDir 'usr/bin') -Filter '*.pdb' -Recurse | Remove-Item
+    chmod 755 (Join-Path $appDir 'usr/bin/ILSpy')
+    ln -s usr/bin/ILSpy (Join-Path $appDir 'AppRun')
+    # Exec must be a bare command inside an AppImage; integration tools (appimaged, Gear
+    # Lever) rewrite it to the image's path when they register the desktop entry.
+    (Get-Content (Join-Path $resources 'ilspy.desktop')) -replace '^Exec=.*', 'Exec=ILSpy %F' |
+        Set-Content (Join-Path $appDir 'ilspy.desktop')
+    Copy-Item (Join-Path $resources 'ilspy.png') (Join-Path $appDir 'ilspy.png')
+    Copy-Item (Join-Path $resources 'ilspy.png') (Join-Path $appDir '.DirIcon')
+
+    $appImagePath = Join-Path $staging "ILSpy-$Version-$($arch.appimage).AppImage"
+    Remove-Item $appImagePath -ErrorAction Ignore
+    $env:ARCH = $arch.appimage
+    & $appImageTool --appimage-extract-and-run --runtime-file $runtime $appDir $appImagePath
+    Write-Host "created $appImagePath"
 }

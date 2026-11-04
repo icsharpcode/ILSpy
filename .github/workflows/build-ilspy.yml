@@ -443,6 +443,14 @@ jobs:
         path: ${{ env.StagingDirectory }}/*.rpm
         if-no-files-found: error
 
+    - name: Upload AppImage build artifact
+      if: matrix.platform == 'linux'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        name: ILSpy Linux AppImage ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
+        path: ${{ env.StagingDirectory }}/*.AppImage
+        if-no-files-found: error
+
     - name: Upload app bundle build artifact (macOS)
       if: matrix.platform == 'macos'
       uses: actions/upload-artifact@v7.0.2
