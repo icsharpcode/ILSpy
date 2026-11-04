@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -42,10 +43,13 @@ public class FoldingsViewStateTests
 	[Test]
 	public void Aligned_Folding_Text_Removes_Common_Indentation()
 	{
-		var document = new TextDocument("    first\n      second\n        third");
+		var document = new TextDocument(string.Join(Environment.NewLine,
+			"    first",
+			"      second",
+			"        third"));
 
 		DecompilerTextView.GetAlignedFoldingText(document, 0, document.TextLength)
-			.Should().Be("first\n  second\n    third");
+			.Should().Be(string.Join(Environment.NewLine, "first", "  second", "    third"));
 	}
 
 	[Test]
