@@ -87,6 +87,8 @@ namespace ICSharpCode.ILSpyCmd.Tests
 		[TestCase(new[] { Asm, "-usepdb", "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithoutValueUsesThePdbNextToTheAssembly")]
 		[TestCase(new[] { Asm, "-usepdb:" + Pdb, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithColonValue")]
 		[TestCase(new[] { "-usepdb", Asm, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbWithoutValueKeepsTheNextTokenPositional")]
+		[TestCase(new[] { "--use-varnames-from-pdb", Asm, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbLongNameWithoutValueKeepsTheNextTokenPositional")]
+		[TestCase(new[] { Asm, "--use-varnames-from-pdb=" + Pdb, "-t", sampleType }, "MemberOptionSample", TestName = "UsePdbLongNameWithEqualsValue")]
 		[TestCase(new[] { "-r", AsmDir, Asm, "-t", sampleType }, "MemberOptionSample", TestName = "MultiValueOptionTakesOneValuePerOccurrence")]
 		[TestCase(new[] { Asm, "-ds", "RemoveDeadCode=true", "-ds", "RemoveDeadStores=true", "-t", sampleType }, "MemberOptionSample", TestName = "RepeatedDecompilerSettingOption")]
 		[TestCase(new[] { Asm, "-r", AsmDir, "-r", Temp, "-t", sampleType }, "MemberOptionSample", TestName = "RepeatedReferencePathOption")]
@@ -217,6 +219,29 @@ namespace ICSharpCode.ILSpyCmd.Tests
 				Assert.That(result.Output, Does.Contain(name));
 			// a developer option, kept out of the help on purpose
 			Assert.That(result.Output, Does.Not.Contain("--generate-diagrammer-json-only"));
+		}
+
+		/// <summary>
+		/// The token after an option that takes a value is that value, whatever it looks like:
+		/// here "-usepdb" is the type name asked for, not the PDB switch.
+		/// </summary>
+		[Test]
+		public async Task OptionValueMayLookLikeAnOption()
+		{
+			var result = await RunAsync(testAssemblyPath, "-t", "-usepdb");
+
+			Assert.That(result.ExitCode, Is.EqualTo(ProgramExitCodes.EX_DATAERR), result.Error);
+			Assert.That(result.Error, Does.Contain("'-usepdb'"));
+		}
+
+		[Test]
+		public async Task HelpListsEveryLanguageVersion()
+		{
+			var result = await RunAsync("--help");
+
+			Assert.That(result.ExitCode, Is.EqualTo(0), result.Error);
+			foreach (string name in System.Enum.GetNames<ICSharpCode.Decompiler.CSharp.LanguageVersion>())
+				Assert.That(result.Output, Does.Contain(name), name);
 		}
 
 		[TestCase(new string[0], "Assembly file name", TestName = "NoArgumentsAtAll")]
