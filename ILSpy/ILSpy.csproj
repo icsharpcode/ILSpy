@@ -5,7 +5,7 @@
     <!-- RIDs we publish the app for. Declared here (not solution-wide) so the lock
          file stays in sync for these targets without forcing per-RID restore onto
          the ILSpyCmd tool (PackAsTool + GeneratePackageOnBuild) or the test projects. -->
-    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-arm64</RuntimeIdentifiers>
     <!-- Framework-dependent publishes target net10.0; roll forward to a newer major runtime when
          the exact one isn't installed so the app still starts on machines that only have a later
          .NET. -->

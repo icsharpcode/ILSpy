@@ -114,6 +114,7 @@
       }
     },
     ".NETStandard,Version=v2.0/any": {},
+    ".NETStandard,Version=v2.0/linux-arm64": {},
     ".NETStandard,Version=v2.0/linux-x64": {},
     ".NETStandard,Version=v2.0/osx-arm64": {},
     ".NETStandard,Version=v2.0/win-arm64": {},

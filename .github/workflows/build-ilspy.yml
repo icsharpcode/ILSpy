@@ -423,15 +423,15 @@ jobs:
       if: matrix.platform == 'linux'
       uses: actions/upload-artifact@v7.0.2
       with:
-        name: ILSpy Linux x64 ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
-        path: ${{ env.StagingDirectory }}/ILSpy_linux-x64_*.zip
+        name: ILSpy Linux ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
+        path: ${{ env.StagingDirectory }}/ILSpy_linux-*_*.zip
         if-no-files-found: error
 
     - name: Upload deb build artifact
       if: matrix.platform == 'linux'
       uses: actions/upload-artifact@v7.0.2
       with:
-        name: ILSpy Linux x64 deb ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
+        name: ILSpy Linux deb ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ${{ env.StagingDirectory }}/*.deb
         if-no-files-found: error
 
@@ -439,7 +439,7 @@ jobs:
       if: matrix.platform == 'linux'
       uses: actions/upload-artifact@v7.0.2
       with:
-        name: ILSpy Linux x64 rpm ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
+        name: ILSpy Linux rpm ${{ steps.version.outputs.ILSPY_VERSION_NUMBER }} (Release)
         path: ${{ env.StagingDirectory }}/*.rpm
         if-no-files-found: error
 
