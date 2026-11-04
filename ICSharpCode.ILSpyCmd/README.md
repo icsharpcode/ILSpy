@@ -21,8 +21,8 @@ read the pointer package.
 Help output (`ilspycmd --help`):
 
 ``` text
-ilspycmd: 11.2.0.10066
-ICSharpCode.Decompiler: 11.2.0.10066
+ilspycmd: 11.2.0.10068
+ICSharpCode.Decompiler: 11.2.0.10068
 
 Description:
   dotnet tool for decompiling .NET assemblies and generating portable PDBs
@@ -42,7 +42,7 @@ Options:
   -il, --ilcode                                       Show IL code.
   --il-sequence-points                                Show IL with sequence points. Implies -il.
   -genpdb, --generate-pdb                             Generate PDB.
-  -usepdb, --use-varnames-from-pdb <file>             Use variable names from PDB.
+  -usepdb, --use-varnames-from-pdb                    Use variable names from the PDB next to the assembly, or from the file attached as -usepdb:<file> or --use-varnames-from-pdb=<file>. A following bare token is an input file, not the PDB.
   -l, --list <entity-type(s)>                         Lists all entities of the specified type(s). Valid types: c(lass), i(nterface), s(truct), d(elegate), e(num)
   --list-resources                                    Lists all embedded resources in the assembly. Entries inside .resources containers are listed individually as '<container>/<entry>'.
   --resource <name>                                   Extract a single resource by name (as printed by --list-resources). Resources whose name ends with '.baml' are decompiled to XAML.
@@ -50,7 +50,7 @@ Options:
   --dump-table <table>                                Dump a metadata table: prints RID, token, names, heap offsets and coded indexes of every row. <table> is the ECMA-335 table name (e.g. TypeDef, Property, MethodSemantics; case-insensitive) or table number (decimal or 0x-prefixed hex, e.g. 0x17).
   --dump-pdb                                          Dump the debug information of the assembly's PDB: documents, per-method sequence points, the scope tree with its variables, constants and imports, and custom debug information. Reads both Portable and Windows PDBs. Use -usepdb:<file> to point at a PDB that is not next to the assembly.
   --json                                              Output as JSON. Only supported together with --dump-table or --dump-pdb.
-  -lv, --languageversion <version>                    C# Language version: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, Preview or Latest [default: Latest]
+  -lv, --languageversion <version>                    C# Language version: CSharp1, CSharp2, CSharp3, CSharp4, CSharp5, CSharp6, CSharp7, CSharp7_1, CSharp7_2, CSharp7_3, CSharp8_0, CSharp9_0, CSharp10_0, CSharp11_0, CSharp12_0, CSharp13_0, CSharp14_0, CSharp15_0, Preview, Latest [default: Latest]
   --ilspy-settingsfile <path>                         Path to an ILSpy settings file.
   -ds, --decompiler-setting <name=value>              Set a decompiler setting. Use multiple times to set multiple settings.
   -r, --referencepath <path>                          Path to a directory containing dependencies of the assembly that is being decompiled.
