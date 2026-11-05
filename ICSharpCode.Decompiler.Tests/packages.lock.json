@@ -406,6 +406,42 @@
         "contentHash": "Wz+IgL2xpg8KJ4i2VWj6uz1PmZNu4Q0Ljlwd73P9Vze5NcOBtctLii3itV0PB2MpOqwqDEGfB6RCdv94A4E5yQ=="
       }
     },
+    "net11.0/linux-arm64": {
+      "Microsoft.NETCore.ILAsm": {
+        "type": "Direct",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "27akD1aTK6v/nF4u7KDtliysUK9lbVXaUYGLi1/KBdu1dPGzH2cF7nGX846+yCW8wllzSBYxhMypcyycgRMzEA==",
+        "dependencies": {
+          "runtime.linux-arm64.Microsoft.NETCore.ILAsm": "10.0.14"
+        }
+      },
+      "Microsoft.NETCore.ILDAsm": {
+        "type": "Direct",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "Q8ADcarx4DHLBqGu7BEzCMLVTf6GRdEH0RZm08/x6YqlvbkotwwVmL1LfQcif3aNOqPxIyiHK2k4Wtr7iDHg6w==",
+        "dependencies": {
+          "runtime.linux-arm64.Microsoft.NETCore.ILDAsm": "10.0.14"
+        }
+      },
+      "runtime.linux-arm64.Microsoft.NETCore.ILAsm": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "ecw0nC07JVblf+7PlzDpAcGR0RpoI4rayY3R+v8p5yTGkR71SAJDv3OO/iAFa9q6FvwdSlFpu608zznJ3uWWxw=="
+      },
+      "runtime.linux-arm64.Microsoft.NETCore.ILDAsm": {
+        "type": "Transitive",
+        "resolved": "10.0.14",
+        "contentHash": "K4Gl+gLMfiUDAi8i7HgIl07Dl2gSNH2WPVNhHLIluJjM3FW23Gqj624h4x0hQ+sZEE/83s0rOOzcQG+MJRpftw=="
+      },
+      "System.Security.Cryptography.Pkcs": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.14, )",
+        "resolved": "10.0.14",
+        "contentHash": "Wz+IgL2xpg8KJ4i2VWj6uz1PmZNu4Q0Ljlwd73P9Vze5NcOBtctLii3itV0PB2MpOqwqDEGfB6RCdv94A4E5yQ=="
+      }
+    },
     "net11.0/linux-x64": {
       "Microsoft.NETCore.ILAsm": {
         "type": "Direct",

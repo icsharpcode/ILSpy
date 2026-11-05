@@ -18,7 +18,7 @@
     <!-- RID-complete lock so the committed packages.lock.json matches regardless of the host that
          restores it; the concrete RuntimeIdentifier gives BamlTestRunner the bin\...\<rid> layout
          it walks up from to find the .xaml sources. -->
-    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-arm64</RuntimeIdentifiers>
     <RuntimeIdentifier Condition="$(IsWindowsX64) == true">win-x64</RuntimeIdentifier>
     <RuntimeIdentifier Condition="$(IsWindowsARM64) == true">win-arm64</RuntimeIdentifier>
 

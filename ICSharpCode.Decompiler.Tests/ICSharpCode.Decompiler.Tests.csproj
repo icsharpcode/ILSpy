@@ -8,7 +8,7 @@
          Windows PDB tests need; the explicit RID list makes packages.lock.json carry every RID
          (host-independent), so the lock does not drift between Linux and Windows restores. -->
     <RuntimeIdentifier>$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
-    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;osx-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-arm64</RuntimeIdentifiers>
 
     <IsPackable>false</IsPackable>
 

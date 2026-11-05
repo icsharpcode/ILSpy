@@ -3,7 +3,8 @@
 #   ./publish.ps1 -Configuration <Debug|Release> -Platform <windows|linux|macos>
 # windows: win-x64 framework-dependent bundle for every configuration (the binaries zip);
 #          the win-arm64 framework-dependent and win-x64 self-contained bundles are Release-only.
-# linux:   linux-x64 self-contained bundle.
+# linux:   linux-x64 and linux-arm64 self-contained bundles (arm64 is cross-published from the
+#          x64 runner, like win-arm64 on Windows).
 # macos:   osx-arm64 self-contained bundle; the BuildMacAppBundle target in ILSpy.csproj
 #          assembles ILSpy.app next to the publish directory.
 param(
@@ -34,9 +35,11 @@ switch ($Platform) {
         }
     }
     'linux' {
-        $output = "$base/linux-x64/publish/selfcontained"
-        dotnet publish ./ILSpy/ILSpy.csproj -c $Configuration --no-restore --self-contained -r linux-x64 -o $output
-        dotnet publish ./ILSpy.ReadyToRun/ILSpy.ReadyToRun.csproj -c $Configuration --no-restore --self-contained -r linux-x64 -o $output
+        foreach ($rid in 'linux-x64', 'linux-arm64') {
+            $output = "$base/$rid/publish/selfcontained"
+            dotnet publish ./ILSpy/ILSpy.csproj -c $Configuration --no-restore --self-contained -r $rid -o $output
+            dotnet publish ./ILSpy.ReadyToRun/ILSpy.ReadyToRun.csproj -c $Configuration --no-restore --self-contained -r $rid -o $output
+        }
     }
     'macos' {
         $output = "$base/osx-arm64/publish/selfcontained"
