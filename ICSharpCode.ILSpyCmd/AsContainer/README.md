@@ -8,15 +8,15 @@ There are two dockerfiles available - one for interactive use of ilspycmd (explo
 
 ### Interactive 
 
-`docker build -t ilspycmd:111interactive . -f Dockerfile`
+`docker build -t ilspycmd:112interactive . -f Dockerfile`
 
-`docker run --rm -it -v ./:/docker ilspycmd:111interactive`
+`docker run --rm -it -v ./:/docker ilspycmd:112interactive`
 
 ### Automation
 
-`docker build -t ilspycmd:111forautomation . -f DockerfileForAutomation`
+`docker build -t ilspycmd:112forautomation . -f DockerfileForAutomation`
 
-`docker run --rm -v ./:/infolder -v ./out:/outfolder ilspycmd:111forautomation "/home/ilspy/.dotnet/tools/ilspycmd -p -o /outfolder /infolder/sample.dll"`
+`docker run --rm -v ./:/infolder -v ./out:/outfolder ilspycmd:112forautomation "/home/ilspy/.dotnet/tools/ilspycmd -p -o /outfolder /infolder/sample.dll"`
 
 ## Software Bill of Behavior (SBOB)
 
@@ -44,6 +44,7 @@ in a cluster, apply it before the workload and label the pod
 `kubescape.io/user-defined-profile: ilspycmd` (rename `metadata.namespace` to the pod's
 namespace first). Signing (`sign-object`, spec section 8) is not done here.
 
-Not covered by the recording: `-d`/`--bundle-entry` (no single-file bundle fixture), and the
-Native AOT `ilspycmd.linux-x64` package, which is not published yet and will run without the
-`dotnet` host, so its profile will be smaller.
+On linux-x64 `dotnet tool install` resolves to the Native AOT `ilspycmd.linux-x64` package, so the
+document describes a native executable. Other platforms get the framework-dependent
+`ilspycmd.any` build, whose profile would also carry the `dotnet` host and the shared framework.
+Not covered by the recording: `-d`/`--bundle-entry` (no single-file bundle fixture).

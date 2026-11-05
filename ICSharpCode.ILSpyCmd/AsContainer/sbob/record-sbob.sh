@@ -15,7 +15,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../../.." && pwd)
 WORK=${SBOB_WORK:-$HOME/ilspycmd-sbob}
-IMAGE=${SBOB_IMAGE:-ilspycmd:111forautomation}
+IMAGE=${SBOB_IMAGE:-ilspycmd:112forautomation}
 SOCK=${PODMAN_SOCK:-/run/user/$(id -u)/podman/podman.sock}
 IG=${IG:-ig}
 BOBCTL=${BOBCTL:-bobctl}
@@ -38,19 +38,14 @@ echo "== inputs -> $WORK"
 # Files the container user wrote belong to a subordinate uid of the rootless Podman user;
 # only that user namespace may delete them.
 [ -d "$WORK" ] && podman unshare rm -rf "$WORK"
-mkdir -p "$WORK/infolder/refs" "$WORK/outfolder" "$WORK/nugetcache" "$WORK/raw" "$WORK/cp"
+mkdir -p "$WORK/infolder/refs" "$WORK/outfolder" "$WORK/raw" "$WORK/cp"
 cp "$BIN/ilspycmd.dll" "$BIN/ilspycmd.pdb" "$BIN/ICSharpCode.Decompiler.dll" "$ROOT/ILSpy/bin/Debug/net10.0/ILSpy.dll" "$WORK/infolder/"
 cp "$BIN/ICSharpCode.Decompiler.dll" "$BIN/ICSharpCode.ILSpyX.dll" "$WORK/infolder/refs/"
-chmod -R a+rwX "$WORK/outfolder" "$WORK/nugetcache"
+chmod -R a+rwX "$WORK/outfolder"
 
 echo "== container"
 podman rm -f "$C" >/dev/null 2>&1 || true
-podman run -d --name "$C" --entrypoint /bin/sleep -v "$WORK/infolder:/infolder:ro" -v "$WORK/outfolder:/outfolder" \
-  -v "$WORK/nugetcache:/home/ilspy/.local/share/NuGet/http-cache" "$IMAGE" infinity >/dev/null
-# ilspycmd 11.1 runs its update check through NuGet.Protocol, whose http-cache the image build
-# already populated. Mounting an empty directory over it records the fetch path; aging the
-# entries later (from the host, so no extra process runs in the traced container) records the
-# rewrite path NuGet takes for entries older than 30 minutes.
+podman run -d --name "$C" --entrypoint /bin/sleep -v "$WORK/infolder:/infolder:ro" -v "$WORK/outfolder:/outfolder" "$IMAGE" infinity >/dev/null
 
 echo "== gadgets"
 gadget() { # name, output file, extra flags...
@@ -88,6 +83,7 @@ for u in "" "--disable-updatecheck"; do
   x $u --list-resources /infolder/ILSpy.dll
   x $u --resource ICSharpCode.ILSpy.Properties.Resources.resources/OpenFrom -o /outfolder/res /infolder/ILSpy.dll
   x $u --dump-table TypeDef --json $IN
+  x $u --dump-pdb --json $IN
   x $u -genpdb -o /outfolder/pdb $IN
   x $u -usepdb $IN
   x $u -r /infolder/refs -lv CSharp7_3 -ds AlwaysUseBraces=true $IN
@@ -97,8 +93,6 @@ for u in "" "--disable-updatecheck"; do
   x $u /infolder/does-not-exist.dll
   x $u --no-such-option $IN
 done
-podman unshare find "$WORK/nugetcache" -type f -exec touch -d "40 minutes ago" {} +
-x -l c $IN
 
 echo "== stop"
 # advise_seccomp prints the profile of a still-running container only when it is interrupted,
