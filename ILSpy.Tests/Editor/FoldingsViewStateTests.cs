@@ -16,9 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using AvaloniaEdit.Document;
 using AvaloniaEdit.Folding;
 
 using AwesomeAssertions;
@@ -38,6 +40,18 @@ namespace ICSharpCode.ILSpy.Tests;
 [TestFixture]
 public class FoldingsViewStateTests
 {
+	[Test]
+	public void Aligned_Folding_Text_Removes_Common_Indentation()
+	{
+		var document = new TextDocument(string.Join(Environment.NewLine,
+			"    first",
+			"      second",
+			"        third"));
+
+		DecompilerTextView.GetAlignedFoldingText(document, 0, document.TextLength)
+			.Should().Be(string.Join(Environment.NewLine, "first", "  second", "    third"));
+	}
+
 	[Test]
 	public void Capture_Records_Offsets_Of_Expanded_Foldings_Only()
 	{

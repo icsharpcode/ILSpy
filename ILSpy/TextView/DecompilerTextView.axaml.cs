@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
+using System.Text;
 using System.Xml;
 
 using Avalonia;
@@ -1584,7 +1585,7 @@ namespace ICSharpCode.ILSpy.TextView
 		AvaloniaEdit.TextViewPosition? GetPositionFromPointer(PointerEventArgs e)
 		{
 			var textView = Editor.TextArea.TextView;
-			var pos = textView.GetPosition(e.GetPosition(textView) + textView.ScrollOffset);
+			var pos = textView.GetPositionFloor(e.GetPosition(textView) + textView.ScrollOffset);
 			if (pos == null)
 				return null;
 			var lineLength = Editor.Document.GetLineByNumber(pos.Value.Line).Length + 1;
@@ -1602,6 +1603,11 @@ namespace ICSharpCode.ILSpy.TextView
 				return;
 			if (DataContext is not DecompilerTabPageModel model)
 				return;
+			if (TryBuildCollapsedFoldingTooltip(e, out var foldingTooltip))
+			{
+				OpenPlainTooltip(foldingTooltip);
+				return;
+			}
 			var segment = GetReferenceSegmentAtPointer(e);
 			if (segment?.Reference == null)
 				return;
@@ -1614,6 +1620,130 @@ namespace ICSharpCode.ILSpy.TextView
 			else
 				OpenPlainTooltip(content.Value.Control);
 		}
+
+		bool TryBuildCollapsedFoldingTooltip(PointerEventArgs e, out Control tooltip)
+		{
+			tooltip = null!;
+			if (activeFoldingManager is not { } manager)
+				return false;
+			var position = GetPositionFromPointer(e);
+			if (position is not { } textPosition)
+				return false;
+			int offset = Editor.Document.GetOffset(textPosition.Line, textPosition.Column);
+			var folding = manager.GetFoldingsAt(offset).FirstOrDefault(folding => folding.IsFolded);
+			if (folding == null)
+				return false;
+
+			var richText = CreateFoldingRichText(folding.StartOffset, folding.EndOffset);
+			var inlines = new InlineCollection();
+			DocumentationRenderer.AppendRichText(inlines, richText);
+			tooltip = new SelectableTextBlock {
+				FontFamily = new FontFamily("Consolas, Menlo, Monospace"),
+				FontSize = 12,
+				MaxWidth = 600,
+				TextWrapping = TextWrapping.Wrap,
+				Inlines = inlines,
+			};
+			return true;
+		}
+
+		RichText CreateFoldingRichText(int startOffset, int endOffset)
+		{
+			var foldedText = BuildFoldingTooltipText(Editor.Document, startOffset, endOffset);
+			var model = CreateLexicalHighlightingModel(foldedText.Text);
+			if (boundModel?.HighlightingModel is not { } sourceModel)
+				return new RichText(foldedText.Text, model);
+			foreach (var section in sourceModel.GetHighlightedSections(startOffset, endOffset - startOffset))
+			{
+				int sectionStart = Math.Max(section.Offset, startOffset);
+				int sectionEnd = Math.Min(section.Offset + section.Length, endOffset);
+				if (sectionEnd <= sectionStart || section.Color == null)
+					continue;
+				foreach (var mapping in foldedText.Mappings)
+				{
+					int mappedStart = Math.Max(sectionStart, mapping.SourceOffset);
+					int mappedEnd = Math.Min(sectionEnd, mapping.SourceOffset + mapping.Length);
+					if (mappedEnd > mappedStart)
+						model.ApplyHighlighting(mapping.OutputOffset + mappedStart - mapping.SourceOffset,
+							mappedEnd - mappedStart, section.Color);
+				}
+			}
+			return new RichText(foldedText.Text, model);
+		}
+
+		RichTextModel CreateLexicalHighlightingModel(string text)
+		{
+			var model = new RichTextModel();
+			if (Editor.SyntaxHighlighting is not { } definition)
+				return model;
+			var document = new TextDocument(text);
+			using var highlighter = new DocumentHighlighter(document, definition);
+			var colorizer = new ThemeAwareHighlightingColorizer(definition);
+			for (int lineNumber = 1; lineNumber <= document.LineCount; lineNumber++)
+			{
+				foreach (var section in highlighter.HighlightLine(lineNumber).Sections)
+					model.ApplyHighlighting(section.Offset, section.Length, colorizer.GetEffectiveColor(section.Color));
+			}
+			return model;
+		}
+
+		internal static string GetAlignedFoldingText(TextDocument document, int startOffset, int endOffset, int maxLineCount = 15)
+			=> BuildFoldingTooltipText(document, startOffset, endOffset, maxLineCount).Text;
+
+		static FoldingTooltipText BuildFoldingTooltipText(TextDocument document, int startOffset, int endOffset, int maxLineCount = 15)
+		{
+			if (maxLineCount < 1)
+				maxLineCount = int.MaxValue;
+			var startLine = document.GetLineByOffset(startOffset);
+			var endLine = document.GetLineByOffset(endOffset);
+			int startIndent = CountLeadingWhitespace(document, startLine.Offset, startLine.Length);
+			var builder = new StringBuilder();
+			var mappings = new List<(int SourceOffset, int OutputOffset, int Length)>();
+			int lineCount = 0;
+			for (var line = startLine; line != null && line.LineNumber <= endLine.LineNumber && lineCount < maxLineCount; line = line.NextLine)
+			{
+				int lineStart = Math.Max(startOffset, line.Offset);
+				int lineEnd = Math.Min(endOffset, line.EndOffset);
+				if (lineEnd > lineStart)
+				{
+					int indent = CountLeadingWhitespace(document, line.Offset, line.Length);
+					int contentStart;
+					if (line == startLine)
+					{
+						contentStart = lineStart;
+						while (contentStart < lineEnd && document.GetCharAt(contentStart) is ' ' or '\t')
+							contentStart++;
+					}
+					else
+					{
+						int trim = Math.Min(startIndent, indent);
+						trim = Math.Min(trim, lineEnd - line.Offset);
+						contentStart = line.Offset + trim;
+					}
+					if (contentStart < lineEnd)
+					{
+						mappings.Add((contentStart, builder.Length, lineEnd - contentStart));
+						builder.Append(document.GetText(contentStart, lineEnd - contentStart));
+					}
+					if (line != endLine)
+						builder.AppendLine();
+				}
+				lineCount++;
+			}
+			if (lineCount <= endLine.LineNumber - startLine.LineNumber && lineCount >= maxLineCount)
+				builder.Append("...");
+			return new FoldingTooltipText(builder.ToString(), mappings);
+
+			static int CountLeadingWhitespace(TextDocument document, int offset, int length)
+			{
+				int count = 0;
+				while (count < length && document.GetCharAt(offset + count) is ' ' or '\t')
+					count++;
+				return count;
+			}
+		}
+
+		readonly record struct FoldingTooltipText(string Text, List<(int SourceOffset, int OutputOffset, int Length)> Mappings);
 
 		// Closes any open tooltip / rich popup before a new hover takes over. Returns false
 		// when a rich popup wants to stay open — at which point the caller should bail
