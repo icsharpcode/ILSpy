@@ -71,8 +71,15 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			var metadata = module.metadata;
 			var td = metadata.GetTypeDefinition(handle);
 			this.attributes = td.Attributes;
-			this.fullTypeName = td.GetFullTypeName(metadata);
-			this.MetadataName = metadata.GetString(td.Name);
+			this.fullTypeName = handle.GetFullTypeName(metadata);
+			try
+			{
+				this.MetadataName = metadata.GetString(td.Name);
+			}
+			catch (Exception ex) when (ex is BadImageFormatException or ArgumentOutOfRangeException)
+			{
+				this.MetadataName = $"TD{metadata.GetToken(handle):x8}";
+			}
 			// Find DeclaringType + KnownTypeCode:
 			if (fullTypeName.IsNested)
 			{
@@ -111,7 +118,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				this.Kind = TypeKind.Enum;
 				this.EnumUnderlyingType = module.Compilation.FindType(underlyingType.ToKnownTypeCode());
 			}
-			else if (td.IsValueType(metadata))
+			else if (handle.IsValueType(metadata))
 			{
 				if (KnownTypeCode == KnownTypeCode.Void)
 				{
