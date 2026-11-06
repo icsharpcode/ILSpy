@@ -19,7 +19,9 @@ URL: https://github.com/icsharpcode/ILSpy
 # would generate requires for every bundled shared object, so dependencies are listed
 # manually instead.
 AutoReqProv: no
-Requires: libX11, libSM, libICE, fontconfig, libicu
+# The bundled .NET runtime only loads libssl 3 (Fedora 45+ ships OpenSSL 4 as its main
+# package); depending on the soname lets each distro resolve its own compat package.
+Requires: libX11, libSM, libICE, fontconfig, libicu, libssl.so.3()(64bit)
 
 %description
 ILSpy is the open-source .NET assembly browser and decompiler,

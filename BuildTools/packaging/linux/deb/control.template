@@ -4,7 +4,7 @@ Priority: optional
 Section: devel
 Architecture: @ARCH@
 Installed-Size: @INSTALLED_SIZE@
-Depends: libx11-6, libice6, libsm6, libfontconfig1, @ICU_DEPS@, xdg-utils
+Depends: libx11-6, libice6, libsm6, libfontconfig1, @ICU_DEPS@, libssl3t64 | libssl3, xdg-utils
 Maintainer: ICSharpCode Team <https://github.com/icsharpcode>
 Homepage: https://github.com/icsharpcode/ILSpy
 Description: .NET assembly browser and decompiler
