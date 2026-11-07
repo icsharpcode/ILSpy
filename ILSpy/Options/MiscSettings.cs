@@ -23,6 +23,7 @@ using System.Xml.Linq;
 
 using CommunityToolkit.Mvvm.ComponentModel;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpyX.Settings;
 
 namespace ICSharpCode.ILSpy.Options
@@ -46,8 +47,11 @@ namespace ICSharpCode.ILSpy.Options
 
 		public bool IsDocumentationLinkOriginAllowed(Uri uri)
 		{
-			return TryGetDocumentationLinkOrigin(uri) is { } origin
-				&& allowedDocumentationLinkOrigins.Contains(origin);
+			string? origin = TryGetDocumentationLinkOrigin(uri);
+			bool allowed = origin != null && allowedDocumentationLinkOrigins.Contains(origin);
+			AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+				$"Link check settings={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this)} uri={uri.AbsoluteUri} origin={origin ?? "<none>"} allowed={allowed}");
+			return allowed;
 		}
 
 		public void AllowDocumentationLinkOrigin(Uri uri)
@@ -58,7 +62,10 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void ClearDocumentationLinkOrigins()
 		{
+			int count = allowedDocumentationLinkOrigins.Count;
 			allowedDocumentationLinkOrigins.Clear();
+			AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+				$"Cleared link origins settings={System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(this)} previousCount={count}");
 		}
 
 		static string? TryGetDocumentationLinkOrigin(Uri uri)

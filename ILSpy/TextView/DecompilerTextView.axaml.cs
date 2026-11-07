@@ -322,7 +322,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (Math.Abs(delta.X) >= MinimumDragDistance || Math.Abs(delta.Y) >= MinimumDragDistance)
 				return;
 
-			var segment = GetReferenceSegmentAtPointer(e);
+			var segment = GetReferenceSegmentAtPointer(e.GetCurrentPoint(Editor.TextArea.TextView).Position);
 			if (segment?.Reference == null)
 				return;
 			// AvaloniaEdit's own release handler has already reset its selection mode and released
@@ -838,7 +838,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (!e.GetCurrentPoint(Editor.TextArea.TextView).Properties.IsRightButtonPressed)
 				return;
-			var pos = GetPositionFromPointer(e);
+			var pos = GetPositionFromPointer(e.GetCurrentPoint(Editor.TextArea.TextView).Position);
 			if (pos == null)
 			{
 				lastRightClickedSegment = null;
@@ -1388,17 +1388,38 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void OnHyperlinkOpenUri(object? sender, AvaloniaEdit.Rendering.OpenUriRoutedEventArgs e)
+		async void OnHyperlinkOpenUri(object? sender, AvaloniaEdit.Rendering.OpenUriRoutedEventArgs e)
 		{
 			if (DataContext is DecompilerTabPageModel model && model.RaiseOpenUriRequested(e.Uri))
+			{
 				e.Handled = true;
+				return;
+			}
+
+			e.Handled = true;
+			AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+				$"Source link clicked uri={e.Uri.AbsoluteUri}");
+			if (e.Uri.Scheme != Uri.UriSchemeHttp && e.Uri.Scheme != Uri.UriSchemeHttps)
+			{
+				AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+					$"Source link blocked uri={e.Uri.AbsoluteUri}");
+				return;
+			}
+
+			if (!await DocumentationLinkDialogs.ConfirmOpenAsync(e.Uri))
+				return;
+
+			var launcher = TopLevel.GetTopLevel(this)?.Launcher
+				?? AppEnv.UiContext.MainWindow?.Launcher;
+			if (launcher != null)
+				await launcher.LaunchUriAsync(e.Uri);
 		}
 
-		ReferenceSegment? GetReferenceSegmentAtPointer(PointerEventArgs e)
+		ReferenceSegment? GetReferenceSegmentAtPointer(Point point)
 		{
 			if (DataContext is not DecompilerTabPageModel model || model.References == null)
 				return null;
-			var pos = GetPositionFromPointer(e);
+			var pos = GetPositionFromPointer(point);
 			if (pos == null)
 				return null;
 			var offset = Editor.Document.GetOffset(pos.Value.Line, pos.Value.Column);
@@ -1407,6 +1428,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		InputElement? cursorQueryElement;
 		ReferenceSegment? cursorQuerySegment;
+		Point? latestPointerPosition;
 
 		void OnReferenceQueryCursor(InputElement element, ReferenceSegment segment, KeyModifiers modifiers)
 		{
@@ -1582,10 +1604,13 @@ namespace ICSharpCode.ILSpy.TextView
 		// Live cursor + full ScrollOffset, queried at hover-event time. Returns null if the
 		// pointer is past the end of the line so we don't snap back to the last visual
 		// column when the user is hovering empty trailing space.
-		AvaloniaEdit.TextViewPosition? GetPositionFromPointer(PointerEventArgs e)
+		AvaloniaEdit.TextViewPosition? GetPositionFromPointer(Point point)
 		{
 			var textView = Editor.TextArea.TextView;
-			var pos = textView.GetPositionFloor(e.GetPosition(textView) + textView.ScrollOffset);
+			var visualTop = point.Y + textView.ScrollOffset.Y;
+			if (textView.GetVisualLineFromVisualTop(visualTop) == null)
+				return null;
+			var pos = textView.GetPositionFloor(point + textView.ScrollOffset);
 			if (pos == null)
 				return null;
 			var lineLength = Editor.Document.GetLineByNumber(pos.Value.Line).Length + 1;
@@ -1596,6 +1621,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextViewPointerHover(object? sender, PointerEventArgs e)
 		{
+			var point = latestPointerPosition ?? e.GetCurrentPoint(Editor.TextArea.TextView).Position;
 			// The existing popup gets a veto (it can refuse to be replaced if it's
 			// interacting with the user), then we resolve a fresh segment under the live
 			// pointer.
@@ -1603,12 +1629,12 @@ namespace ICSharpCode.ILSpy.TextView
 				return;
 			if (DataContext is not DecompilerTabPageModel model)
 				return;
-			if (TryBuildCollapsedFoldingTooltip(e, out var foldingTooltip))
+			if (TryBuildCollapsedFoldingTooltip(point, out var foldingTooltip))
 			{
 				OpenPlainTooltip(foldingTooltip);
 				return;
 			}
-			var segment = GetReferenceSegmentAtPointer(e);
+			var segment = GetReferenceSegmentAtPointer(point);
 			if (segment?.Reference == null)
 				return;
 
@@ -1621,12 +1647,12 @@ namespace ICSharpCode.ILSpy.TextView
 				OpenPlainTooltip(content.Value.Control);
 		}
 
-		bool TryBuildCollapsedFoldingTooltip(PointerEventArgs e, out Control tooltip)
+		bool TryBuildCollapsedFoldingTooltip(Point point, out Control tooltip)
 		{
 			tooltip = null!;
 			if (activeFoldingManager is not { } manager)
 				return false;
-			var position = GetPositionFromPointer(e);
+			var position = GetPositionFromPointer(point);
 			if (position is not { } textPosition)
 				return false;
 			int offset = Editor.Document.GetOffset(textPosition.Line, textPosition.Column);
@@ -1778,6 +1804,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextViewPointerMoved(object? sender, PointerEventArgs e)
 		{
+			latestPointerPosition = e.GetPosition(Editor.TextArea.TextView);
 			// The reference elements report QueryCursor only while the pointer is over them;
 			// once it moves elsewhere inside the text view, drop the cached query so Ctrl
 			// transitions cannot repaint a reference the pointer has already left.
@@ -1788,7 +1815,10 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 
 			if (!richPopup.IsOpen)
+			{
+				CloseTooltip();
 				return;
+			}
 			// While the rich popup is open, PointerMoved drives the WPF "distance corridor" —
 			// the popup stays as long as the pointer doesn't move further from its edges than
 			// the shrinking limit allows.
@@ -1801,6 +1831,7 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void OnTextViewPointerExited(object? sender, PointerEventArgs e)
 		{
+			latestPointerPosition = null;
 			// The pointer is no longer over a reference, so Ctrl transitions must not
 			// repaint the last hovered element's cursor.
 			cursorQueryElement = null;
@@ -1874,7 +1905,9 @@ namespace ICSharpCode.ILSpy.TextView
 
 		void CloseTooltip()
 		{
-			ToolTip.SetIsOpen(Editor.TextArea.TextView, false);
+			var textView = Editor.TextArea.TextView;
+			ToolTip.SetIsOpen(textView, false);
+			ToolTip.SetTip(textView, null);
 		}
 
 		void CloseRichPopup()

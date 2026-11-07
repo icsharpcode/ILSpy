@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
@@ -37,6 +38,7 @@ using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.Output;
 using ICSharpCode.Decompiler.TypeSystem;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Util;
 
 namespace ICSharpCode.ILSpy.TextView
@@ -486,9 +488,11 @@ namespace ICSharpCode.ILSpy.TextView
 			{
 				if (element.Children.Count > 0)
 				{
-					AddLinkSpan(
-						() => MessageBus.Send(this, new NavigateToReferenceEventArgs(referencedEntity)),
-						element.Children);
+					AddLinkSpan(() => {
+						AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+							$"Internal documentation link clicked entity={referencedEntity.FullName}");
+						MessageBus.Send(this, new NavigateToReferenceEventArgs(referencedEntity));
+					}, element.Children);
 				}
 				else
 				{
@@ -501,8 +505,10 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			else if (element.GetAttribute("href") is { } href)
 			{
-				if (Uri.TryCreate(href, UriKind.Absolute, out var uri))
+				if (IsWebLink(href, out var uri))
 				{
+					AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+						$"Rendered external link href={href} uri={uri.AbsoluteUri}");
 					if (element.Children.Count > 0)
 					{
 						AddLinkSpan(() => OpenExternalUriAsync(uri).HandleExceptions(), element.Children);
@@ -514,6 +520,15 @@ namespace ICSharpCode.ILSpy.TextView
 						AddInline(CreateLink(linkText, () => OpenExternalUriAsync(uri).HandleExceptions()));
 					}
 				}
+				else if (element.Children.Count > 0)
+				{
+					foreach (var child in element.Children)
+						AddDocumentationElement(child);
+				}
+				else
+				{
+					AddText(href);
+				}
 			}
 			else
 			{
@@ -522,8 +537,16 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
+		static bool IsWebLink(string href, [NotNullWhen(true)] out Uri? uri)
+		{
+			return Uri.TryCreate(href, UriKind.Absolute, out uri)
+				&& (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+		}
+
 		async System.Threading.Tasks.Task OpenExternalUriAsync(Uri uri)
 		{
+			AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+				$"External link clicked uri={uri.AbsoluteUri}");
 			if (!await DocumentationLinkDialogs.ConfirmOpenAsync(uri))
 				return;
 
@@ -715,8 +738,45 @@ namespace ICSharpCode.ILSpy.TextView
 				return;
 			string text = addedText.ToString();
 			addedText.Length = 0;
-			AddInline(new Run(text));
+			AddPlainTextWithLinks(text);
 			ignoreWhitespace = trim;
+		}
+
+		void AddPlainTextWithLinks(string text)
+		{
+			int outputPosition = 0;
+			int searchPosition = 0;
+			while (searchPosition < text.Length)
+			{
+				int start = text.IndexOf("http", searchPosition, StringComparison.OrdinalIgnoreCase);
+				if (start < 0)
+					break;
+				if (start > 0 && !char.IsWhiteSpace(text[start - 1]))
+				{
+					searchPosition = start + 4;
+					continue;
+				}
+				int end = start;
+				while (end < text.Length && !char.IsWhiteSpace(text[end]))
+					end++;
+				string candidate = text[start..end].TrimEnd('.', ',', ';', ':', '!', '?', ')', ']', '}');
+				if (!Uri.TryCreate(candidate, UriKind.Absolute, out var uri)
+					|| (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+				{
+					searchPosition = start + 4;
+					continue;
+				}
+
+				if (start > outputPosition)
+					inlineCollection!.Add(new Run(text[outputPosition..start]));
+				var linkText = CreateLinkTextBlock();
+				linkText.Text = candidate;
+				inlineCollection!.Add(CreateLink(linkText, () => OpenExternalUriAsync(uri).HandleExceptions()));
+				outputPosition = start + candidate.Length;
+				searchPosition = end;
+			}
+			if (outputPosition < text.Length)
+				inlineCollection!.Add(new Run(text[outputPosition..]));
 		}
 	}
 }
