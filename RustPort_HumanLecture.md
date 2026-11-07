@@ -690,6 +690,26 @@ Only the opcodes the reader produces are modeled in step 5; each later step adds
 its transform creates, together with their materializer cases, so the Rust model never holds
 an instruction kind that no gate exercises.
 
+### 3.19 The ILAst arena (item 5b)
+
+`il/ast.rs` holds one `Function` per method: a vector of nodes addressed by `NodeId`, each
+with its instruction, parent, child index and IL range, and a vector of variables addressed
+by `VarId`. Instructions are an enum whose variants name their children by `NodeId`; the
+operations the reader and the block builder need (adding a node adopts its children,
+`replace`, inserting into and truncating block, container and argument lists, a post-order
+snapshot of descendants) keep parent links and child indices consistent.
+
+Each kind's result type, flags and inferred type follow the generated `Instructions.cs` and
+the hand-written partial classes, including the asymmetries the reader relies on: the end
+point of an `if` is unreachable only if both arms' are; a container's only if no `leave`
+targets it; a checked conversion may throw although that is not one of its direct flags.
+Flags are computed on demand rather than cached, which is enough for the reader; caching with
+invalidation arrives when a transform makes it worth having. Method, field and type operands
+keep the metadata token they were read from next to their resolution, so the materializer
+can resolve them again in the function's generic context and get the managed objects
+directly. These are checked by Rust unit tests here and, from 5c on, against the managed
+reader through the materializer.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

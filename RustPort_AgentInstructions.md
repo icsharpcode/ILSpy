@@ -295,7 +295,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
       `StackType`, `PrimitiveType`, `Sign` and their conversions, `IType.GetStackType()` /
       `ToPrimitiveType()` on the type system (printed per field and return type in the
       type listing), `Interval`, `LongInterval` and `LongSet` with their managed unit tests.
-    - [ ] **5b. ILAst arena.** The instruction kinds the IL reader produces, with result
+    - [x] **5b. ILAst arena.** Subject: `Add the ILAst arena to the Rust engine`. The instruction kinds the IL reader produces, with result
       types, flags and `InferType`; the editing operations; Rust unit tests.
     - [ ] **5c. IL reader, wire v1, materializer.** `ILReader`, `BlockBuilder`, topological
       block order; the wire writer and `IlAstMaterializer.cs`; `IlAstReadEquality` without
