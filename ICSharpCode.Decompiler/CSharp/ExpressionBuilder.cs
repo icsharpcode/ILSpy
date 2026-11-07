@@ -1118,7 +1118,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 
-
 		TranslatedExpression TryUniteEqualityOperandType(TranslatedExpression left, TranslatedExpression right)
 		{
 			if (left.ResolveResult.IsCompileTimeConstant &&
@@ -2678,8 +2677,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				foreach (var p in ame.Parameters)
 				{
+					// 'params' has no legal spelling below C# 12 ([ParamArray] is rejected with CS0674).
 					p.IsParams = false;
-					p.DefaultExpression?.Detach();
+					var defaultExpression = p.DefaultExpression;
+					if (defaultExpression is null)
+						continue;
+					defaultExpression.Detach();
+					// C# 10 lambdas can carry the attributes the compiler would emit for a default value.
+					if (isLambda && p.Type is not null)
+					{
+						var optionalType = typeSystem.FindType(KnownAttribute.Optional);
+						var defaultValueType = typeSystem.FindType(KnownAttribute.DefaultParameterValue);
+						if (optionalType.Kind != TypeKind.Unknown && defaultValueType.Kind != TypeKind.Unknown)
+						{
+							var defaultValueAttribute = new Syntax.Attribute {
+								Type = astBuilder.ConvertAttributeType(defaultValueType)
+							};
+							defaultValueAttribute.Arguments.Add(defaultExpression);
+							p.Attributes.Add(new AttributeSection(new Syntax.Attribute {
+								Type = astBuilder.ConvertAttributeType(optionalType)
+							}));
+							p.Attributes.Add(new AttributeSection(defaultValueAttribute));
+						}
+					}
 				}
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the parameters are not used in the method body
