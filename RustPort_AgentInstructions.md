@@ -290,6 +290,21 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     assembly, `WriteTo()` of the materialized function equals `WriteTo()` of the managed
     `ILReader` output, with and without debug symbols (the `get_debug_info` callback bridges
     the link-compiled `IDebugInfoProvider`).
+  - Split into 4 commits like step 4, each with its gate:
+    - [x] **5a. IL value model.** Subject: `Add the IL value model to the Rust engine`.
+      `StackType`, `PrimitiveType`, `Sign` and their conversions, `IType.GetStackType()` /
+      `ToPrimitiveType()` on the type system (printed per field and return type in the
+      type listing), `Interval`, `LongInterval` and `LongSet` with their managed unit tests.
+    - [ ] **5b. ILAst arena.** The instruction kinds the IL reader produces, with result
+      types, flags and `InferType`; the editing operations; Rust unit tests.
+    - [ ] **5c. IL reader, wire v1, materializer.** `ILReader`, `BlockBuilder`, topological
+      block order; the wire writer and `IlAstMaterializer.cs`; `IlAstReadEquality` without
+      debug symbols, every method body.
+    - [ ] **5d. Debug symbols and runtime async.** The `get_debug_info` callback and
+      `IlAstReadEquality` with debug symbols; runtime async in the reader.
+  - The `Inst` enum covers the opcodes the reader produces; each later step adds the opcodes
+    its transform creates, with their materializer cases, so no opcode exists in Rust before
+    a gate exercises it.
 
 - [ ] **6. Seam 1 at N = 0, ratchet, strict mode.** Size S. Subject: `Wire seam 1 of the shim to the Rust engine`.
   - In the shim's `CSharpDecompiler.cs` seam 1 block: ask the engine for the ILAst after the

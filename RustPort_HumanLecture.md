@@ -674,6 +674,22 @@ annotation case. Measured at item 4k: `TypeSystemListingEquality` under `None` a
 pass for the 3,442 images; all 137 active loader tests and 44 reflection tests pass in Rust,
 completing step 4.
 
+### 3.18 The IL value model (item 5a)
+
+Step 5 (the IL reader and the ILAst) is split like step 4. Its first piece is the vocabulary
+the reader reasons in: `StackType` (whose declaration order decides which type wins when two
+branches meet with different stack types), `PrimitiveType` (carrying SRM's primitive codes),
+`Sign`, and `IType.GetStackType()` / `ToPrimitiveType()`. The latter two follow the managed
+kind rules, including that a parameterized or annotated type takes its definition's kind: a
+generic type whose definition is unresolved is `Unknown`, not a value type. Both are printed
+per field and return type in the type listing, so the corpus checks them. `Interval`,
+`LongInterval` and `LongSet` (switch labels, IL ranges) are ported with their managed unit
+tests and keep the managed trick of a wrapping exclusive end to include the maximum value.
+
+Only the opcodes the reader produces are modeled in step 5; each later step adds the opcodes
+its transform creates, together with their materializer cases, so the Rust model never holds
+an instruction kind that no gate exercises.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

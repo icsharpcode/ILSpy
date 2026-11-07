@@ -732,8 +732,10 @@ fn field_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Result
         }
     }
     let constant = ts.field_constant(module, row);
+    let stack = ts.stack_type(ty).name();
+    let primitive = ts.primitive_type(ty) as u8;
     Ok(format!(
-        "F {} decl={} name={name} access={} mods={mods} type={} value={} retro={}",
+        "F {} decl={} name={name} access={} mods={mods} type={} value={} retro={} st={stack} pt={primitive}",
         tok(token(TableId::Field, row)),
         decl_name(ts, module, declaring),
         field_accessibility(f.flags),
@@ -781,8 +783,10 @@ fn method_line(ts: &mut TypeSystem<'_, '_>, m: MethodDefId) -> Result<String> {
     );
     let owners = vec![TypeParamOwner::Method(m); tps.len()];
     let tparams = type_params(ts, &tps, &owners);
+    let stack = ts.stack_type(ret).name();
+    let primitive = ts.primitive_type(ret) as u8;
     Ok(format!(
-        "M {} decl={} name={name} kind={} access={} mods={mods} accessor={accessor} ret={} params={} tparams={} ext={} thisro={} retro={} init={} thisscope={} {inheritance}",
+        "M {} decl={} name={name} kind={} access={} mods={mods} accessor={accessor} ret={} params={} tparams={} ext={} thisro={} retro={} init={} thisscope={} {inheritance} st={stack} pt={primitive}",
         tok(token(TableId::MethodDef, m.row)),
         decl_name(ts, m.module, declaring),
         kind.name(),

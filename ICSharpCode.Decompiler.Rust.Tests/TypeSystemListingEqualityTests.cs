@@ -204,7 +204,7 @@ public class TypeSystemListingEqualityTests
 		{
 			Append(Line("F", h, () => {
 				var f = module.GetDefinition(h);
-				return $"F {Tok(h)} decl={f.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={f.Name} access={f.Accessibility} mods={Mods((f.IsStatic, 's'), (f.IsReadOnly, 'r'), (f.IsVolatile, 'v'), (f.IsConst, 'c'))} type={Describe(f.Type)} value={Value(f.GetConstantValue(throwOnInvalidMetadata: false))} retro={(f.ReturnTypeIsRefReadOnly ? 1 : 0)}";
+				return $"F {Tok(h)} decl={f.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={f.Name} access={f.Accessibility} mods={Mods((f.IsStatic, 's'), (f.IsReadOnly, 'r'), (f.IsVolatile, 'v'), (f.IsConst, 'c'))} type={Describe(f.Type)} value={Value(f.GetConstantValue(throwOnInvalidMetadata: false))} retro={(f.ReturnTypeIsRefReadOnly ? 1 : 0)} st={f.Type.GetStackType()} pt={(int)f.Type.ToPrimitiveType()}";
 			}));
 		}
 		foreach (var h in metadata.MethodDefinitions)
@@ -212,7 +212,7 @@ public class TypeSystemListingEqualityTests
 			Append(Line("M", h, () => {
 				var m = module.GetDefinition(h);
 				string accessor = m.AccessorOwner == null ? "-" : $"{Tok(m.AccessorOwner.MetadataToken)}:{(int)m.AccessorKind}";
-				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Describe(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)} ext={(m.IsExtensionMethod ? 1 : 0)} thisro={(m.ThisIsRefReadOnly ? 1 : 0)} retro={(m.ReturnTypeIsRefReadOnly ? 1 : 0)} init={(m.IsInitOnly ? 1 : 0)} thisscope={m.GetThisParameterScope()} {Inheritance(m)}";
+				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Describe(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)} ext={(m.IsExtensionMethod ? 1 : 0)} thisro={(m.ThisIsRefReadOnly ? 1 : 0)} retro={(m.ReturnTypeIsRefReadOnly ? 1 : 0)} init={(m.IsInitOnly ? 1 : 0)} thisscope={m.GetThisParameterScope()} {Inheritance(m)} st={m.ReturnType.GetStackType()} pt={(int)m.ReturnType.ToPrimitiveType()}";
 			}));
 		}
 		foreach (var h in metadata.PropertyDefinitions)
