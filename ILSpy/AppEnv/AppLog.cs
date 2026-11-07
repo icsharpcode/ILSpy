@@ -75,6 +75,9 @@ namespace ICSharpCode.ILSpy.AppEnv
 			/// document tab; opt in with <c>ILSPY_LOG=Composition</c> to also log them to file.
 			/// </summary>
 			public const string Composition = "Composition";
+
+			/// <summary>Documentation-link allowlist decisions and resets.</summary>
+			public const string DocumentationLinks = "DocumentationLinks";
 		}
 
 		static readonly Stopwatch sw = Stopwatch.StartNew();
@@ -150,6 +153,7 @@ namespace ICSharpCode.ILSpy.AppEnv
 		static void EmitLine(string line)
 		{
 			Debug.WriteLine(line);
+			Console.WriteLine(line);
 			lock (fileLock)
 			{
 				try

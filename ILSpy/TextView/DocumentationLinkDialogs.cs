@@ -22,6 +22,7 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Layout;
 
+using ICSharpCode.ILSpy.AppEnv;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Properties;
 
@@ -32,7 +33,10 @@ static class DocumentationLinkDialogs
 	public static async Task<bool> ConfirmOpenAsync(Uri uri)
 	{
 		var settings = AppEnv.AppComposition.TryGetExport<SettingsService>();
-		if (settings?.MiscSettings.IsDocumentationLinkOriginAllowed(uri) == true)
+		bool allowed = settings?.MiscSettings.IsDocumentationLinkOriginAllowed(uri) == true;
+		AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+			$"Link click uri={uri.AbsoluteUri} service={(settings == null ? "<none>" : System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(settings).ToString())} allowed={allowed}");
+		if (allowed)
 			return true;
 
 		var owner = AppEnv.UiContext.MainWindow;

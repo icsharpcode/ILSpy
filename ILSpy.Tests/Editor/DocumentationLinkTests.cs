@@ -176,6 +176,75 @@ public class DocumentationLinkTests
 	}
 
 	[AvaloniaTest]
+	public void Http_Href_Renders_As_A_Link()
+	{
+		var renderer = new DocumentationRenderer(
+			new CSharpAmbience(),
+			new FontFamily("Consolas, Menlo, Monospace"),
+			12);
+		renderer.AddXmlDocumentation(
+			"""<summary>See the <see href="https://example.com/docs">reference</see>.</summary>""",
+			declaringEntity: null,
+			resolver: _ => null);
+
+		var window = new Window { Content = renderer.CreateView() };
+		window.Show();
+		window.UpdateLayout();
+
+		window.GetVisualDescendants().OfType<TextBlock>()
+			.Should().Contain(tb => tb.Classes.Contains("doc-link"),
+				"an HTTP(S) href should remain a clickable documentation link");
+	}
+
+	[AvaloniaTest]
+	public void Plain_Http_Url_Renders_As_A_Link()
+	{
+		var renderer = new DocumentationRenderer(
+			new CSharpAmbience(),
+			new FontFamily("Consolas, Menlo, Monospace"),
+			12);
+		renderer.AddXmlDocumentation(
+			"<summary>Read https://example.com/docs for details.</summary>",
+			declaringEntity: null,
+			resolver: _ => null);
+
+		var window = new Window { Content = renderer.CreateView() };
+		window.Show();
+		window.UpdateLayout();
+
+		window.GetVisualDescendants().OfType<TextBlock>()
+			.Should().Contain(tb => tb.Classes.Contains("doc-link"),
+				"a plain HTTP(S) URL in documentation should be clickable");
+	}
+
+	[TestCase("file:///tmp/secret.txt")]
+	[TestCase("ms-settings:windowsupdate")]
+	[TestCase("relative/page.html")]
+	[AvaloniaTest]
+	public void Non_Http_Href_Renders_As_Plain_Text(string href)
+	{
+		var renderer = new DocumentationRenderer(
+			new CSharpAmbience(),
+			new FontFamily("Consolas, Menlo, Monospace"),
+			12);
+		renderer.AddXmlDocumentation(
+			$"<summary>See the <see href=\"{href}\">reference documentation</see>.</summary>",
+			declaringEntity: null,
+			resolver: _ => null);
+
+		var window = new Window { Content = renderer.CreateView() };
+		window.Show();
+		window.UpdateLayout();
+
+		window.GetVisualDescendants().OfType<TextBlock>()
+			.Should().NotContain(tb => tb.Classes.Contains("doc-link"),
+				"only HTTP(S) hrefs should be handed to the operating system launcher");
+		window.GetVisualDescendants().OfType<SelectableTextBlock>().First()
+			.Inlines!.Text.Should().Contain("reference documentation",
+				"a blocked href should remain readable as plain text");
+	}
+
+	[AvaloniaTest]
 	public async Task FindEntityInRelevantAssemblies_Resolves_A_Type_IdString()
 	{
 		var (_, vm) = await TestHarness.BootAsync();

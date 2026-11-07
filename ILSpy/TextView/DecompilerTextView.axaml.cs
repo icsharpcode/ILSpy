@@ -1388,10 +1388,31 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 
-		void OnHyperlinkOpenUri(object? sender, AvaloniaEdit.Rendering.OpenUriRoutedEventArgs e)
+		async void OnHyperlinkOpenUri(object? sender, AvaloniaEdit.Rendering.OpenUriRoutedEventArgs e)
 		{
 			if (DataContext is DecompilerTabPageModel model && model.RaiseOpenUriRequested(e.Uri))
+			{
 				e.Handled = true;
+				return;
+			}
+
+			e.Handled = true;
+			AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+				$"Source link clicked uri={e.Uri.AbsoluteUri}");
+			if (e.Uri.Scheme != Uri.UriSchemeHttp && e.Uri.Scheme != Uri.UriSchemeHttps)
+			{
+				AppLog.Write(AppLog.Category.DocumentationLinks, () =>
+					$"Source link blocked uri={e.Uri.AbsoluteUri}");
+				return;
+			}
+
+			if (!await DocumentationLinkDialogs.ConfirmOpenAsync(e.Uri))
+				return;
+
+			var launcher = TopLevel.GetTopLevel(this)?.Launcher
+				?? AppEnv.UiContext.MainWindow?.Launcher;
+			if (launcher != null)
+				await launcher.LaunchUriAsync(e.Uri);
 		}
 
 		ReferenceSegment? GetReferenceSegmentAtPointer(PointerEventArgs e)
