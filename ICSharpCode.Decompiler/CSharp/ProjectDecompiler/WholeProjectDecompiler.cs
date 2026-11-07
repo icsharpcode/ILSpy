@@ -715,6 +715,38 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			return candidate;
 		}
 
+		static bool IsReadByBuildTools(string fileName)
+		{
+			string[] segments = fileName.Split(Path.DirectorySeparatorChar);
+			if (segments.Length > 1 && segments[0].TrimEnd('.').Equals("obj", StringComparison.OrdinalIgnoreCase))
+				return true;
+			string name = segments[segments.Length - 1].TrimEnd('.');
+			if (name.Equals("global.json", StringComparison.OrdinalIgnoreCase)
+				|| name.Equals("nuget.config", StringComparison.OrdinalIgnoreCase)
+				|| name.Equals("omnisharp.json", StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+			string extension = Path.GetExtension(name);
+			return extension.Equals(".props", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".rsp", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".sln", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".slnf", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".targets", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".user", StringComparison.OrdinalIgnoreCase)
+				|| extension.EndsWith("proj", StringComparison.OrdinalIgnoreCase);
+		}
+
+		static string AppendInertExtension(string fileName)
+		{
+			const string extension = ".bin";
+			int overflow = SegmentLength(Path.GetFileName(fileName)) + SegmentLength(extension) - maxSegmentLength;
+			if (overflow > 0)
+				fileName = fileName.Substring(0, fileName.Length - overflow);
+			return fileName + extension;
+		}
+
 		/// <summary>
 		/// Inserts "_<paramref name="suffix"/>" before the extension, trimming the name if the segment
 		/// would otherwise outgrow what the file system takes - a name already at the limit is an
@@ -1017,7 +1049,8 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 
 		public static string SanitizeFileName(string fileName)
 		{
-			return CleanUpName(fileName, separateAtDots: false, treatAsFileName: true, treatAsPath: true);
+			fileName = CleanUpName(fileName, separateAtDots: false, treatAsFileName: true, treatAsPath: true);
+			return IsReadByBuildTools(fileName) ? AppendInertExtension(fileName) : fileName;
 		}
 
 		/// <summary>
