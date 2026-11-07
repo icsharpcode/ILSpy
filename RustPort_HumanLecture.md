@@ -232,10 +232,19 @@ Hand-written `extern "C"` in `ilspy-decompiler-ffi`, classic `[DllImport]` on th
 shim, callbacks as `[UnmanagedFunctionPointer(Cdecl)]` delegates kept alive in the session
 object. No binding generator: nine declarations do not justify a toolchain.
 
-Exports: `ilspy_version`, `ilspy_session_new(host_callbacks*, ctx)`, `ilspy_session_free`,
+Exports: `ilspy_version`, `ilspy_session_new(ctx)`, `ilspy_session_free`,
 `ilspy_session_add_module(session, image_ptr, image_len, name) -> module_id`,
 `ilspy_decompile(session, request_ptr, request_len, out Buf) -> Status`, `ilspy_buf_free`,
-`ilspy_cancel(session, request_id)`, `ilspy_last_error(session)`, `ilspy_stats(session)`.
+`ilspy_cancel(session, request_id)`, `ilspy_last_error()`, `ilspy_stats(session)`.
+
+As built in item 2: `ilspy_session_new` takes only `ctx`; the host-callback table is added
+by the item that first calls back (item 4 for `resolve_assembly`, item 5 for
+`get_debug_info`), so its layout is fixed when its first user exists instead of guessed now.
+`ilspy_last_error` reads a thread-local slot and takes no session: a failed
+`ilspy_session_new` has no session to store the message in, and concurrent requests on one
+`Send + Sync` session would overwrite each other's message in a per-session slot. The pointer
+stays valid until the next export call on the same thread. The shim wraps the session in a
+`SafeHandle` (`Interop/RustSession.cs`) so it is freed exactly once, also on finalization.
 
 Host callbacks: `resolve_assembly(ctx, module_id, assemblyref_row, out module_id)` returns
 image bytes, not a path, because ILSpyX images come from bundles and streams; the shim passes

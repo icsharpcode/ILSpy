@@ -127,7 +127,11 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - Gate: G-dotnet. Everything still runs on managed code; this commit proves the
     link-compile and the reference switch alone keep the whole repository green.
 
-- [ ] **2. Rust workspace and FFI handshake.** Size S. Subject: `Add the Rust engine workspace and the FFI handshake`.
+- [x] **2. Rust workspace and FFI handshake.** Size S. Subject: `Add the Rust engine workspace and the FFI handshake`.
+  Done as: toolchain pinned to `1.99.1`; `unsafe_code = "deny"` as a workspace lint, allowed
+  only in the ffi crate; `ilspy_session_new(ctx)` without a callbacks pointer and
+  `ilspy_last_error()` thread-local without a session argument (lecture 3.4); the cdylib is a
+  `None` item declared at evaluation time and cargo runs with `--locked`.
   - `rust/Cargo.toml` workspace with `ilspy-decompiler` (lib) and `ilspy-decompiler-ffi`
     (`crate-type = ["cdylib"]`, `[lib] name = "ilspy_decompiler_ffi"`), `rust/Cargo.lock`
     committed, repo-root `rust-toolchain.toml` (pinned stable, components rustfmt and

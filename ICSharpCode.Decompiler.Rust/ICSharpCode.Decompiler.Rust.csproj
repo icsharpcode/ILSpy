@@ -104,6 +104,43 @@
     <Compile Include="..\ICSharpCode.Decompiler\Properties\DecompilerVersionInfo.cs" Link="Original\Properties\DecompilerVersionInfo.cs" />
   </ItemGroup>
 
+  <!-- The Rust engine (rust/ilspy-decompiler-ffi). Debug builds cargo profile "release" (optimized,
+       with debug assertions and overflow checks), Release builds profile "ship". An empty or "any"
+       RuntimeIdentifier builds for the host. -->
+  <PropertyGroup>
+    <RustWorkspaceDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..', 'rust'))</RustWorkspaceDir>
+    <RustProfile Condition="'$(Configuration)' == 'Release'">ship</RustProfile>
+    <RustProfile Condition="'$(RustProfile)' == ''">release</RustProfile>
+    <RustTarget Condition="'$(RuntimeIdentifier)' == 'win-x64'">x86_64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(RuntimeIdentifier)' == 'win-arm64'">aarch64-pc-windows-msvc</RustTarget>
+    <RustTarget Condition="'$(RuntimeIdentifier)' == 'linux-x64'">x86_64-unknown-linux-gnu</RustTarget>
+    <RustTarget Condition="'$(RuntimeIdentifier)' == 'linux-arm64'">aarch64-unknown-linux-gnu</RustTarget>
+    <RustTarget Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">aarch64-apple-darwin</RustTarget>
+    <RustTargetArg Condition="'$(RustTarget)' != ''">--target $(RustTarget)</RustTargetArg>
+    <RustOutDir Condition="'$(RustTarget)' != ''">$(RustWorkspaceDir)target\$(RustTarget)\$(RustProfile)\</RustOutDir>
+    <RustOutDir Condition="'$(RustTarget)' == ''">$(RustWorkspaceDir)target\$(RustProfile)\</RustOutDir>
+    <RustTargetOs Condition="'$(RustTarget)' == '' and $([MSBuild]::IsOSPlatform('Windows'))">windows</RustTargetOs>
+    <RustTargetOs Condition="'$(RustTarget)' == '' and $([MSBuild]::IsOSPlatform('OSX'))">macos</RustTargetOs>
+    <RustTargetOs Condition="$(RustTarget.Contains('windows'))">windows</RustTargetOs>
+    <RustTargetOs Condition="$(RustTarget.Contains('apple'))">macos</RustTargetOs>
+    <RustLibName Condition="'$(RustTargetOs)' == 'windows'">ilspy_decompiler_ffi.dll</RustLibName>
+    <RustLibName Condition="'$(RustTargetOs)' == 'macos'">libilspy_decompiler_ffi.dylib</RustLibName>
+    <RustLibName Condition="'$(RustLibName)' == ''">libilspy_decompiler_ffi.so</RustLibName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Declared at evaluation time (the file need not exist yet) so every consumer's output and
+         publish directory picks it up through the ordinary copy-local item flow. -->
+    <None Include="$(RustOutDir)$(RustLibName)" Link="$(RustLibName)" Visible="false"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="BuildRustEngine" BeforeTargets="BeforeBuild">
+    <Exec Command="cargo build --locked --manifest-path &quot;$(RustWorkspaceDir)Cargo.toml&quot; -p ilspy-decompiler-ffi --profile $(RustProfile) $(RustTargetArg)"
+          WorkingDirectory="$(RustWorkspaceDir)" />
+    <Error Condition="!Exists('$(RustOutDir)$(RustLibName)')" Text="cargo did not produce $(RustOutDir)$(RustLibName)" />
+  </Target>
+
   <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">
     <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
       <Output TaskParameter="Lines" PropertyName="PackageVersion" />

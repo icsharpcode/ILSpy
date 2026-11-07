@@ -1,0 +1,28 @@
+[workspace]
+resolver = "3"
+members = ["ilspy-decompiler", "ilspy-decompiler-ffi"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/icsharpcode/ILSpy"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[profile.dev]
+panic = "unwind"
+
+# Used for the Debug .NET configuration: optimized, but with the checks the managed Debug build
+# has too (CheckForOverflowUnderflow, Debug.Assert).
+[profile.release]
+debug-assertions = true
+overflow-checks = true
+panic = "unwind"
+
+# Used for the Release .NET configuration and shipped builds.
+[profile.ship]
+inherits = "release"
+debug-assertions = false
+overflow-checks = false

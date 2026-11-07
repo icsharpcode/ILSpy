@@ -32,3 +32,6 @@ test-results/
 # Written by nugetfuzz / decompdiff
 decompdiff-report/
 nugetfuzz-report.html
+
+# Rust engine build output
+rust/target/
