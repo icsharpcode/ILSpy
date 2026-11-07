@@ -14,6 +14,7 @@ use ilspy_decompiler::typesystem::attrvalue::ArgValue;
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
 use ilspy_decompiler::typesystem::flags::ScopedKind;
 use ilspy_decompiler::typesystem::inheritance::{MemberDef, MemberRef, Modifiers};
+use ilspy_decompiler::typesystem::known::KnownTypeCode;
 use ilspy_decompiler::typesystem::lookup::MemberOptions;
 use ilspy_decompiler::typesystem::members::{
     ConstValue, MethodDefId, ParamInfo, RefKind, SymbolKind, has_body, method_accessibility,
@@ -2827,4 +2828,133 @@ fn constraints_on_override_are_inherited() {
             "System.Object"
         ]
     );
+}
+
+// Specialized members have no identity of their own in the Rust type system: their type
+// parameters are the definition's (`TypeParamOwner::Method` of the MethodDef), where the
+// managed tests check `Owner` with `Is.SameAs` against the specialized method.
+
+fn get_index_definition(ts: &mut TypeSystem<'_, '_>) -> (MethodDefId, ResolvedMethod) {
+    let def = test_type(ts, "GenericClass`2");
+    let id = method_named(ts, def, "GetIndex");
+    (id, ts.method_definition(id).unwrap())
+}
+
+fn assert_get_index_type_parameter(
+    ts: &mut TypeSystem<'_, '_>,
+    id: MethodDefId,
+    m: &ResolvedMethod,
+) {
+    let tps = ts.method_type_parameters(m).unwrap();
+    assert_eq!(tps[0].name, "T");
+    let t = type_param(ts, TypeParamOwner::Method(id), 0);
+    assert_eq!(m.type_args[0], t);
+    let TypeData::Inst { generic, args } = ts.data(tps[0].constraints[0]).clone() else {
+        panic!("constraint is not parameterized");
+    };
+    let generic = ts.definition(generic).expect("IEquatable`1");
+    assert_eq!(
+        ts.comp.type_def(generic).unwrap().full_name.name(),
+        "IEquatable"
+    );
+    assert_eq!(ts.comp.type_def(generic).unwrap().type_parameter_count, 1);
+    assert_eq!(&args[..], [t]);
+    assert_eq!(m.params().unwrap()[0], t);
+}
+
+#[test]
+fn get_index_specialized_type_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (id, definition) = get_index_definition(&mut ts);
+    let int16 = ts.known_type(KnownTypeCode::Int16);
+    let int32 = ts.known_type(KnownTypeCode::Int32);
+    let m = ts
+        .specialize_method(&definition, &(Some(vec![int16, int32]), None))
+        .unwrap();
+    assert_get_index_type_parameter(&mut ts, id, &m);
+}
+
+#[test]
+fn get_index_double_specialization() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "GenericClass`2");
+    let (_, definition) = get_index_definition(&mut ts);
+    let a = type_param(&mut ts, TypeParamOwner::Type(def), 0);
+    let b = type_param(&mut ts, TypeParamOwner::Type(def), 1);
+    let int32 = ts.known_type(KnownTypeCode::Int32);
+    let string = ts.known_type(KnownTypeCode::String);
+    // GenericClass<B, A>.GetIndex<A>
+    let m1 = ts
+        .specialize_method(&definition, &(Some(vec![b, a]), Some(vec![a])))
+        .unwrap();
+    // GenericClass<string, int>.GetIndex<int>
+    let m2 = ts
+        .specialize_method(&m1, &(Some(vec![int32, string]), None))
+        .unwrap();
+    let m12 = ts
+        .specialize_method(&definition, &(Some(vec![string, int32]), Some(vec![int32])))
+        .unwrap();
+    assert!(ts.same_method(&m2, &m12), "{m2:?} != {m12:?}");
+}
+
+fn generic_class_get_index(
+    ts: &mut TypeSystem<'_, '_>,
+    method_args: Option<&[TypeId]>,
+) -> ResolvedMethod {
+    let t = test_find(ts, "GenericClass`2[[System.String],[System.Object]]");
+    single(
+        ts.get_methods(t, method_args, MemberOptions::default())
+            .unwrap()
+            .into_iter()
+            .filter(|m| m.name == "GetIndex")
+            .collect(),
+        "GetIndex",
+    )
+}
+
+#[test]
+fn specialized_get_index_to_member_reference() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (id, _) = get_index_definition(&mut ts);
+    let method = generic_class_get_index(&mut ts, None);
+    assert!(method.class_args.is_some(), "not specialized");
+    assert_get_index_type_parameter(&mut ts, id, &method);
+    let own: Vec<TypeId> = (0..ts.method_type_parameters(&method).unwrap().len() as u32)
+        .map(|i| type_param(&mut ts, TypeParamOwner::Method(id), i))
+        .collect();
+    assert_eq!(method.type_args, own);
+}
+
+#[test]
+fn specialized_get_index_specialize_with_identity_has_no_effect() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (id, _) = get_index_definition(&mut ts);
+    let dummy = type_param(&mut ts, TypeParamOwner::DummyMethod, 0);
+    // GenericClass<string, object>.GetIndex<!!0>()
+    let method = generic_class_get_index(&mut ts, Some(&[dummy]));
+    let own = type_param(&mut ts, TypeParamOwner::Method(id), 0);
+    assert_ne!(method.type_args[0], own);
+    assert_eq!(method.type_args[0], dummy);
+    let method2 = ts.specialize_method(&method, &(None, None)).unwrap();
+    assert_ne!(method2.type_args[0], own);
+    assert_eq!(method2.type_args[0], dummy);
+    assert!(ts.same_method(&method2, &method));
+}
+
+#[test]
+fn generic_delegate_reference_type_constraints() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "GenericDelegate`2");
+    let tps = class_type_params(&mut ts, def);
+    assert!(!tps[0].reference_type);
+    assert!(tps[1].reference_type);
+    let t0 = type_param(&mut ts, TypeParamOwner::Type(def), 0);
+    let t1 = type_param(&mut ts, TypeParamOwner::Type(def), 1);
+    assert_eq!(ts.is_reference_type(t0), None);
+    assert_eq!(ts.is_reference_type(t1), Some(true));
 }

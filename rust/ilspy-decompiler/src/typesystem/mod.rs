@@ -16,5 +16,6 @@ pub mod names;
 pub mod options;
 pub mod reflection;
 pub mod resolve;
+pub mod specialize;
 pub mod typename;
 pub mod types;

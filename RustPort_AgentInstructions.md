@@ -170,7 +170,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     run `./restore.ps1` again before `./build.ps1 -Configuration Debug --no-restore`, or the
     Debug build fails with CS1061 `WithDeveloperTools`.
 
-- **4. Type system.** Size L, split into 4a-4k (one commit each, each with its own gate) so
+- [x] **4. Type system.** Size L, split into 4a-4k (one commit each, each with its own gate) so
   the week of work lands in reviewable pieces. Scope for all of them: interned `TypeId`,
   `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`, `EventId`, `ModuleId`; `TypeData` enum;
   lazy per-`TypeDef` decoding; substitution; base types and inheritance; known types;
@@ -261,12 +261,16 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     types), `GetDelegateInvokeMethod`; a lookup line per type in the listing; the loader tests
     on them and the remaining ones the API already expresses (type parameters, constants,
     nested generic types).
-  - [ ] **4k. Specialization API.** `Specialize` with composed substitutions, specialized type
-    parameters owned by the specialized method, member equality, `IsReferenceType` of type
-    parameters from their constraints; the remaining loader tests (`GetIndexSpecializedTypeParameter`,
+  - [x] **4k. Specialization API.** Subject: `Add the specialization API to the Rust type system`.
+    `Specialize` with composed substitutions, a specialized method's type parameters (the
+    definition's, constraints seen through the class substitution; specialized members have
+    no identity of their own, so the managed `Owner` `Is.SameAs` checks become owner-kind
+    checks), member equality, `IsReferenceType` of type parameters from their effective base
+    class; the remaining loader tests (`GetIndexSpecializedTypeParameter`,
     `GetIndexDoubleSpecialization`, `Specialized_GetIndex_ToMemberReference`,
     `Specialized_GetIndex_SpecializeWithIdentityHasNoEffect`,
-    `GenericDelegate_ReferenceTypeConstraints`).
+    `GenericDelegate_ReferenceTypeConstraints`). With it all 137 active loader tests are ported
+    (`ExtensionEverything` moves to step 68 with `ExtensionInfo`).
 
 ### Phase 2: ILAst in Rust, seam 1
 

@@ -544,29 +544,29 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
     }
 
     /// `IType.IsReferenceType`.
-    pub fn is_reference_type(&self, id: TypeId) -> Option<bool> {
-        match self.data(id) {
+    pub fn is_reference_type(&mut self, id: TypeId) -> Option<bool> {
+        match self.data(id).clone() {
             TypeData::Def(def) => Some(!matches!(
-                self.comp.type_def(*def).ok()?.kind,
+                self.comp.type_def(def).ok()?.kind,
                 TypeKind::Struct | TypeKind::Enum | TypeKind::Void
             )),
             TypeData::Unknown {
                 is_reference_type, ..
-            } => *is_reference_type,
-            TypeData::Inst { generic, .. } => self.is_reference_type(*generic),
+            } => is_reference_type,
+            TypeData::Inst { generic, .. } => self.is_reference_type(generic),
             TypeData::Annotated { inner, .. } | TypeData::Modified { inner, .. } => {
-                self.is_reference_type(*inner)
+                self.is_reference_type(inner)
             }
             TypeData::Array { .. } | TypeData::Dynamic => Some(true),
-            TypeData::Pinned(e) => self.is_reference_type(*e),
+            TypeData::Pinned(e) => self.is_reference_type(e),
             TypeData::Tuple { .. } | TypeData::NInt | TypeData::NUInt | TypeData::FnPtr(_) => {
                 Some(false)
             }
             TypeData::Pointer(_) | TypeData::ByRef(_) => Some(false),
-            TypeData::TypeParam { .. }
-            | TypeData::UnknownSpecial
-            | TypeData::Unbound
-            | TypeData::ArgList => None,
+            TypeData::TypeParam { owner, index } => {
+                self.type_parameter_is_reference_type(owner, index)
+            }
+            TypeData::UnknownSpecial | TypeData::Unbound | TypeData::ArgList => None,
         }
     }
 

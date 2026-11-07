@@ -125,7 +125,7 @@ public class TypeSystemListingEqualityTests
 
 	static string TypeParams(IEnumerable<ITypeParameter> tps)
 		=> "[" + string.Join("|", tps.Select(tp =>
-			$"{tp.Name}:{tp.Variance}:{Mods((tp.HasDefaultConstructorConstraint, 'n'), (tp.HasReferenceTypeConstraint, 'r'), (tp.HasValueTypeConstraint, 'v'), (tp.AllowsRefLikeType, 'l'), (tp.HasUnmanagedConstraint, 'u'))}:{(int)tp.NullabilityConstraint}:{{{string.Join(";", tp.TypeConstraints.Select(c => Describe(c.Type)))}}}")) + "]";
+			$"{tp.Name}:{tp.Variance}:{Mods((tp.HasDefaultConstructorConstraint, 'n'), (tp.HasReferenceTypeConstraint, 'r'), (tp.HasValueTypeConstraint, 'v'), (tp.AllowsRefLikeType, 'l'), (tp.HasUnmanagedConstraint, 'u'))}:{(int)tp.NullabilityConstraint}:{(tp.IsReferenceType == null ? "-" : tp.IsReferenceType.Value.ToString())}:{{{string.Join(";", tp.TypeConstraints.Select(c => Describe(c.Type)))}}}")) + "]";
 
 	static string Origin(IMember member)
 		=> member.MemberDefinition.MetadataToken.IsNil ? "fake" : Tok(member.MemberDefinition.MetadataToken);
@@ -339,6 +339,9 @@ public class TypeSystemListingEqualityTests
 		foreach (string name in wanted)
 			Assert.That(lines, Has.Some.StartsWith("L").And.Contains("." + name + "@"), name);
 		Assert.That(lines, Has.Some.StartsWith("LT ").And.Contains("StructLayoutAttribute@System.Private.CoreLib(").And.Contains("named=[F:CharSet:"));
+		// IsReferenceType of type parameters, known from constraints either way.
+		Assert.That(lines, Has.Some.StartsWith("G ").And.Contains(":True:{"));
+		Assert.That(lines, Has.Some.StartsWith("G ").And.Contains(":False:{"));
 		Assert.That(lines, Has.None.Contains("!bad"));
 	}
 

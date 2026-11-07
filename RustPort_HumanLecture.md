@@ -649,6 +649,31 @@ properties, fields, events and the delegate `Invoke`. Measured at item 4j:
 `TypeSystemListingEquality` under `None` and `Default` pass for the 3,442 images; 132 loader
 tests pass in Rust.
 
+### 3.17 Specialization (item 4k)
+
+`typesystem/specialize.rs` completes the member model. Specializing an already specialized
+method composes the substitutions as `TypeParameterSubstitution.Compose` does (the existing
+argument lists with the new substitution applied, a missing list taken from the new one) and
+applies the result to the definition, so `def<B, A>.M<A>` specialized by `<int, string>` equals
+`def<string, int>.M<int>`, and the identity substitution changes nothing. Methods compare equal
+when definition and substitution do.
+
+One managed behavior is deliberately not reproduced: a specialized method in the managed type
+system owns fresh `SpecializedTypeParameter`s, so its parameters are not its definition's. In
+Rust a specialized method has no identity to own anything, so its type parameters are the
+definition's, with constraints seen through the class substitution. What the decompiler
+observes of that difference, the dropped `T!` annotation, is already handled at the
+substitution (section 3.11), and the ported tests check owner kinds where the managed ones
+check object identity.
+
+`IsReferenceType` of a type parameter now follows its constraints: value-type and class
+constraints decide directly, otherwise the effective base class does (class constraints,
+including other type parameters' effective base classes through nullability annotations, the
+derived-most one winning). The listing prints it per type parameter, which found the
+annotation case. Measured at item 4k: `TypeSystemListingEquality` under `None` and `Default`
+pass for the 3,442 images; all 137 active loader tests and 44 reflection tests pass in Rust,
+completing step 4.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

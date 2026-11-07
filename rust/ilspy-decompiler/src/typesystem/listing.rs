@@ -71,9 +71,12 @@ pub fn listing(comp: &Compilation<'_>) -> String {
             Ok(info) => {
                 line(type_line(&mut ts, def, info));
                 if info.type_parameter_count > 0 {
-                    let tps = ts
-                        .type_parameters(main, TableId::TypeDef, row)
-                        .map(|tps| type_params(&ts, &tps));
+                    let tps = ts.type_parameters(main, TableId::TypeDef, row).map(|tps| {
+                        let owners: Vec<TypeParamOwner> = (0..tps.len() as u32)
+                            .map(|i| ts.class_param_owner(def, i))
+                            .collect();
+                        type_params(&mut ts, &tps, &owners)
+                    });
                     line(format!(
                         "G {} {}",
                         info.full_name.reflection_name(),
@@ -667,10 +670,25 @@ fn params(ts: &TypeSystem<'_, '_>, params: &[ParamInfo]) -> String {
     format!("[{}]", list.join("|"))
 }
 
-fn type_params(ts: &TypeSystem<'_, '_>, tps: &[TypeParamInfo]) -> String {
+fn type_params(
+    ts: &mut TypeSystem<'_, '_>,
+    tps: &[TypeParamInfo],
+    owners: &[TypeParamOwner],
+) -> String {
     let list: Vec<String> = tps
         .iter()
-        .map(|tp| {
+        .zip(owners)
+        .enumerate()
+        .map(|(index, (tp, &owner))| {
+            let t = ts.intern(TypeData::TypeParam {
+                owner,
+                index: index as u32,
+            });
+            let reference = match ts.is_reference_type(t) {
+                Some(true) => "True",
+                Some(false) => "False",
+                None => "-",
+            };
             let mut flags = String::new();
             for (set, letter) in [
                 (tp.default_ctor, 'n'),
@@ -685,7 +703,7 @@ fn type_params(ts: &TypeSystem<'_, '_>, tps: &[TypeParamInfo]) -> String {
             }
             let constraints: Vec<String> = tp.constraints.iter().map(|c| located(ts, *c)).collect();
             format!(
-                "{}:{}:{flags}:{}:{{{}}}",
+                "{}:{}:{flags}:{}:{reference}:{{{}}}",
                 tp.name,
                 tp.variance,
                 tp.nullability as u8,
@@ -761,6 +779,8 @@ fn method_line(ts: &mut TypeSystem<'_, '_>, m: MethodDefId) -> Result<String> {
         ts.is_explicit_interface_implementation(m)?,
         method_refs(ts, &impls),
     );
+    let owners = vec![TypeParamOwner::Method(m); tps.len()];
+    let tparams = type_params(ts, &tps, &owners);
     Ok(format!(
         "M {} decl={} name={name} kind={} access={} mods={mods} accessor={accessor} ret={} params={} tparams={} ext={} thisro={} retro={} init={} thisscope={} {inheritance}",
         tok(token(TableId::MethodDef, m.row)),
@@ -769,7 +789,7 @@ fn method_line(ts: &mut TypeSystem<'_, '_>, m: MethodDefId) -> Result<String> {
         method_accessibility(def.flags),
         located(ts, ret),
         params(ts, &ps),
-        type_params(ts, &tps),
+        tparams,
         u8::from(mf.extension),
         u8::from(mf.this_read_only),
         u8::from(mf.return_read_only),
