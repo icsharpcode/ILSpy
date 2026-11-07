@@ -10,10 +10,11 @@ use crate::metadata::signature::{self, MethodSig};
 use crate::metadata::tables::{TableId, rows};
 use crate::metadata::{Error, Result};
 
+use super::attrs::AttributeSource;
 use super::compilation::{ModuleId, TypeDefId, TypeKind};
 use super::known::KnownTypeCode;
 use super::members::{MethodDefId, SymbolKind};
-use super::types::{GenericContext, TypeData, TypeId, TypeParamOwner, TypeSystem};
+use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
 
 /// What a resolved method is an instance of.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -150,7 +151,14 @@ impl TypeSystem<'_, '_> {
         class: Option<Vec<TypeId>>,
         method: Option<Vec<TypeId>>,
     ) -> ResolvedMethod {
-        let (c, me) = (class.as_deref(), method.as_deref());
+        // A generic method specialized only by its class gets specialized type parameters of
+        // its own (`SpecializedTypeParameter`); substituting them drops `T!` annotations.
+        let own_type_params =
+            (method.is_none() && !m.type_args.is_empty()).then(|| m.type_args.clone());
+        let (c, me) = (
+            class.as_deref(),
+            method.as_deref().or(own_type_params.as_deref()),
+        );
         m.declaring = m.declaring.map(|d| match self.data(d).clone() {
             TypeData::Def(def)
                 if self
@@ -381,6 +389,7 @@ impl TypeSystem<'_, '_> {
     /// `MetadataModule.CreateFakeMethod` plus `GuessFakeMethodAccessor`.
     fn fake_method(
         &mut self,
+        module: ModuleId,
         declaring: TypeId,
         name: &str,
         sig: &MethodSig,
@@ -405,8 +414,22 @@ impl TypeSystem<'_, '_> {
         } else {
             (None, None)
         };
-        let apply =
-            |ts: &mut Self, t: TypeId| ts.substitute(t, class.as_deref(), method.as_deref());
+        // ApplyAttributesAndSubstitutionToType: attribute semantics without attributes, then the
+        // substitution.
+        let options = self.options();
+        let apply = |ts: &mut Self, t: TypeId| {
+            let t = ts
+                .apply_attributes(
+                    t,
+                    module,
+                    AttributeSource::None,
+                    options,
+                    Nullability::Oblivious,
+                    false,
+                )
+                .unwrap_or(t);
+            ts.substitute(t, class.as_deref(), method.as_deref())
+        };
         let ret = apply(self, ret);
         let base_params: Vec<TypeId> = params[..sig.required_params]
             .iter()
@@ -493,14 +516,14 @@ impl TypeSystem<'_, '_> {
                 let params = sig
                     .params
                     .iter()
-                    .map(|p| self.from_sig(module, p, ctx))
+                    .map(|p| self.from_sig_raw(module, p, ctx))
                     .collect::<Result<Vec<_>>>()?;
-                self.from_sig(module, &sig.ret, ctx)?;
+                self.from_sig_raw(module, &sig.ret, ctx)?;
                 (method, params)
             }
             _ => {
                 let parent = mr.class.token()?;
-                let declaring = self.resolve_token(module, parent, ctx)?;
+                let declaring = self.resolve_declaring_type(module, parent, ctx)?;
                 let declaring_def = self.definition(declaring);
                 let args = self.type_arguments(declaring);
                 if !args.is_empty() {
@@ -508,11 +531,11 @@ impl TypeSystem<'_, '_> {
                 }
                 let name = md.string(mr.name)?.into_owned();
                 let sig_ctx = self.type_context(declaring_def);
-                let ret = self.from_sig(module, &sig.ret, sig_ctx)?;
+                let ret = self.from_sig_raw(module, &sig.ret, sig_ctx)?;
                 let params = sig
                     .params
                     .iter()
-                    .map(|p| self.from_sig(module, p, sig_ctx))
+                    .map(|p| self.from_sig_raw(module, p, sig_ctx))
                     .collect::<Result<Vec<_>>>()?;
                 let found = match declaring_def {
                     Some(def) => self.find_method(def, &name, &sig, ret, &params)?,
@@ -520,7 +543,7 @@ impl TypeSystem<'_, '_> {
                 };
                 let method = match found {
                     Some(m) => m,
-                    None => self.fake_method(declaring, &name, &sig, ret, &params),
+                    None => self.fake_method(module, declaring, &name, &sig, ret, &params),
                 };
                 (method, params)
             }
@@ -593,11 +616,11 @@ impl TypeSystem<'_, '_> {
         let comp = self.comp;
         let md = &comp.module(module).md;
         let mr = md.get::<rows::MemberRef>(row)?;
-        let declaring = self.resolve_token(module, mr.class.token()?, ctx)?;
+        let declaring = self.resolve_declaring_type(module, mr.class.token()?, ctx)?;
         let declaring_def = self.definition(declaring);
         let name = md.string(mr.name)?.into_owned();
         let sig = signature::decode_field(&mut Bytes::new(md.blob(mr.signature)?))?;
-        let field_type = self.from_sig(module, &sig, self.type_context(declaring_def))?;
+        let field_type = self.from_sig_raw(module, &sig, self.type_context(declaring_def))?;
         let class = match self.data(declaring) {
             TypeData::Inst { args, .. } => Some(args.to_vec()),
             _ => None,
@@ -634,7 +657,16 @@ impl TypeSystem<'_, '_> {
                 }
             }
         }
-        let ty = self.substitute(field_type, class.as_deref(), None);
+        let options = self.options();
+        let ty = self.apply_attributes(
+            field_type,
+            module,
+            AttributeSource::None,
+            options,
+            Nullability::Oblivious,
+            false,
+        )?;
+        let ty = self.substitute(ty, class.as_deref(), None);
         Ok(ResolvedField {
             origin: FieldOrigin::Fake,
             declaring: Some(declaring),

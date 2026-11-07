@@ -5,7 +5,10 @@
 //! format from the link-compiled `DecompilerTypeSystem` (`TypeSystemOptions.None`);
 //! `TypeSystemListingEquality` diffs the two. Any change here must be mirrored there.
 //!
-//! Types print as `<reflection name>@<defining assembly or ?>`, tokens as 8 hex digits, `-`
+//! Types print structurally (`describe` in the C# test): parameterized types as
+//! `<generic>[<args>]`, tuples as `(<t>:<name>,...)`, nullability as a trailing `?` or `!`,
+//! function pointers as `delegate*[<conv>;<custom>;<ret>[ ro];<p>:<ref kind>,...]@<asm>`, and
+//! everything else as `<reflection name>@<defining assembly or ?>`. Tokens print as 8 hex digits, `-`
 //! for none. Lines, in this order:
 //! - per TypeDef row: `T <name> kind=<kind> known=<code> decl=<name|-> tparams=<n>
 //!   enum=<type|-> base=[a|b]`, followed by `G <name> [<tp>|<tp>]` when it has type parameters;
@@ -36,7 +39,7 @@ use super::members::{
     method_accessibility, method_modifiers,
 };
 use super::resolve::{FieldOrigin, MethodOrigin, ResolvedMethod};
-use super::types::{GenericContext, TypeData, TypeId, TypeSystem};
+use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeSystem};
 use crate::metadata::Result;
 use crate::metadata::tables::{TableId, rows, token};
 
@@ -195,10 +198,77 @@ fn opt_tok(table: TableId, row: u32) -> String {
 
 /// `name@assembly` of the defining module, `name@?` when the type resolved to nothing.
 fn located(ts: &TypeSystem<'_, '_>, t: TypeId) -> String {
-    let module = ts
-        .definition(t)
-        .map_or("?", |def| ts.comp.module(def.module).assembly_name.as_str());
-    format!("{}@{module}", ts.reflection_name(t))
+    match ts.data(t) {
+        TypeData::Tuple {
+            elements, names, ..
+        } => {
+            let parts: Vec<String> = elements
+                .iter()
+                .zip(names.iter())
+                .map(|(e, n)| match n {
+                    Some(n) => format!("{}:{n}", located(ts, *e)),
+                    None => located(ts, *e),
+                })
+                .collect();
+            format!("({})", parts.join(","))
+        }
+        TypeData::Annotated { inner, nullability } => {
+            format!("{}{}", located(ts, *inner), mark(*nullability))
+        }
+        TypeData::Inst { generic, args } => {
+            let args: Vec<String> = args.iter().map(|a| located(ts, *a)).collect();
+            format!("{}[{}]", located(ts, *generic), args.join(","))
+        }
+        TypeData::Array {
+            elem,
+            rank,
+            nullability,
+        } => format!(
+            "{}[{}]{}",
+            located(ts, *elem),
+            ",".repeat(rank.saturating_sub(1) as usize),
+            mark(*nullability)
+        ),
+        TypeData::Pointer(e) => format!("{}*", located(ts, *e)),
+        TypeData::ByRef(e) => format!("{}&", located(ts, *e)),
+        TypeData::Pinned(e) => format!("{} pinned", located(ts, *e)),
+        TypeData::FnPtr(f) => {
+            let custom: Vec<String> = f
+                .custom_conventions
+                .iter()
+                .map(|c| located(ts, *c))
+                .collect();
+            let params: Vec<String> = f
+                .params
+                .iter()
+                .zip(f.ref_kinds.iter())
+                .map(|(p, k)| format!("{}:{k}", located(ts, *p)))
+                .collect();
+            format!(
+                "delegate*[{};{};{}{};{}]@{}",
+                f.calling_convention,
+                custom.join(","),
+                located(ts, f.ret),
+                if f.ret_ref_readonly { " ro" } else { "" },
+                params.join(","),
+                defining_assembly(ts, t)
+            )
+        }
+        _ => format!("{}@{}", ts.reflection_name(t), defining_assembly(ts, t)),
+    }
+}
+
+fn defining_assembly<'x>(ts: &'x TypeSystem<'_, '_>, t: TypeId) -> &'x str {
+    ts.definition(t)
+        .map_or("?", |def| ts.comp.module(def.module).assembly_name.as_str())
+}
+
+fn mark(n: Nullability) -> &'static str {
+    match n {
+        Nullability::Oblivious => "",
+        Nullability::NotNullable => "!",
+        Nullability::Nullable => "?",
+    }
 }
 
 fn decl_name(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> String {
@@ -317,7 +387,7 @@ fn field_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Result
         (f.flags & 0x0010 != 0, 's'),
         (f.flags & 0x0020 != 0, 'r'),
         (volatile, 'v'),
-        (f.flags & 0x0040 != 0, 'c'),
+        (ts.field_is_const(module, row), 'c'),
     ] {
         if set {
             mods.push(letter);

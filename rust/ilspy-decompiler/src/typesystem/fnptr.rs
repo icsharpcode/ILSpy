@@ -1,12 +1,12 @@
-//! Function pointer types (`FunctionPointerType.FromSignature`) and the type normalization
-//! member lookup compares signatures under.
+//! Function pointer types (`FunctionPointerType.FromSignature`), the type normalization member
+//! lookup compares signatures under, and type parameter substitution.
 
 use crate::metadata::Result;
-use crate::metadata::signature::{MethodSig, SigType};
+use crate::metadata::signature::MethodSig;
 
 use super::compilation::ModuleId;
 use super::known::KnownTypeCode;
-use super::types::{GenericContext, TypeData, TypeId, TypeParamOwner, TypeSystem};
+use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
 
 /// `ReferenceKind` values of function pointer parameters.
 pub const REF_NONE: u8 = 0;
@@ -62,32 +62,34 @@ impl TypeSystem<'_, '_> {
             })
     }
 
+    /// `TypeProvider.GetFunctionPointerType`: the parts are decoded raw; recognized modifiers
+    /// become the calling convention, ref-readonly return and parameter ref kinds.
     pub(super) fn function_pointer(
         &mut self,
         module: ModuleId,
         sig: &MethodSig,
         ctx: GenericContext,
     ) -> Result<TypeId> {
+        let mut ret = self.from_sig_raw(module, &sig.ret, ctx)?;
+        let raw_params = sig
+            .params
+            .iter()
+            .map(|p| self.from_sig_raw(module, p, ctx))
+            .collect::<Result<Vec<_>>>()?;
         if sig.header & 0x20 != 0 {
-            // Pointers to instance methods are typed as IntPtr; the signature is still decoded.
-            self.from_sig(module, &sig.ret, ctx)?;
-            for p in &sig.params {
-                self.from_sig(module, p, ctx)?;
-            }
+            // Pointers to instance methods are typed as IntPtr.
             return Ok(self.known_type(KnownTypeCode::IntPtr));
         }
         let mut convention = calling_convention(sig.header);
         let mut custom = Vec::new();
         let mut ret_ref_readonly = false;
-        let mut ret = &sig.ret;
-        while let SigType::Modified {
+        while let TypeData::Modified {
             modifier, inner, ..
-        } = ret
+        } = self.data(ret).clone()
         {
-            let m = self.from_sig(module, modifier, ctx)?;
-            if self.defines(m, INTEROP_SERVICES, "InAttribute") {
+            if self.defines(modifier, INTEROP_SERVICES, "InAttribute") {
                 ret_ref_readonly = true;
-            } else if let Some((name, ns)) = self.name_and_namespace(m)
+            } else if let Some((name, ns)) = self.name_and_namespace(modifier)
                 && name.starts_with("CallConv")
                 && ns == COMPILER_SERVICES
             {
@@ -96,37 +98,34 @@ impl TypeSystem<'_, '_> {
                     (9, "CallConvFastcall") => convention = 4,
                     (9, "CallConvStdcall") => convention = 2,
                     (9, "CallConvThiscall") => convention = 3,
-                    _ => custom.push(m),
+                    _ => custom.push(modifier),
                 }
             } else {
                 break;
             }
             ret = inner;
         }
-        let ret = self.from_sig(module, ret, ctx)?;
-        let mut params = Vec::with_capacity(sig.params.len());
-        let mut ref_kinds = Vec::with_capacity(sig.params.len());
-        for p in &sig.params {
-            let (mut kind, rest, unrecognized) = match p {
-                SigType::Modified {
+        let mut params = Vec::with_capacity(raw_params.len());
+        let mut ref_kinds = Vec::with_capacity(raw_params.len());
+        for p in raw_params {
+            let (mut kind, ty) = match self.data(p).clone() {
+                TypeData::Modified {
                     modifier, inner, ..
                 } => {
-                    let m = self.from_sig(module, modifier, ctx)?;
-                    if self.defines(m, INTEROP_SERVICES, "InAttribute") {
-                        (REF_IN, &**inner, false)
-                    } else if self.defines(m, INTEROP_SERVICES, "OutAttribute") {
-                        (REF_OUT, &**inner, false)
-                    } else if self.defines(m, COMPILER_SERVICES, "RequiresLocationAttribute") {
-                        (REF_READONLY, &**inner, false)
+                    if self.defines(modifier, INTEROP_SERVICES, "InAttribute") {
+                        (REF_IN, inner)
+                    } else if self.defines(modifier, INTEROP_SERVICES, "OutAttribute") {
+                        (REF_OUT, inner)
+                    } else if self.defines(modifier, COMPILER_SERVICES, "RequiresLocationAttribute")
+                    {
+                        (REF_READONLY, inner)
                     } else {
-                        (REF_NONE, p, true)
+                        (REF_NONE, p)
                     }
                 }
-                _ => (REF_NONE, p, false),
+                _ => (REF_NONE, p),
             };
-            let ty = self.from_sig(module, rest, ctx)?;
-            // An unrecognized outer modifier hides the by-ref from the kind check.
-            if !unrecognized && matches!(self.data(ty), TypeData::ByRef(_)) {
+            if matches!(self.data(ty), TypeData::ByRef(_)) {
                 if kind == REF_NONE {
                     kind = REF_REF;
                 }
@@ -148,8 +147,9 @@ impl TypeSystem<'_, '_> {
     }
 
     /// The `NormalizeTypeVisitor` member lookup uses: type parameters become dummies of their
-    /// owner kind and unknown types forget whether they are reference types. (Under
-    /// `TypeSystemOptions.None` there is no dynamic, nint, tuple or nullability to erase.)
+    /// owner kind, unknown types forget whether they are reference types, modifiers,
+    /// nullability and tuple names go, `object` becomes `dynamic` and `IntPtr`/`UIntPtr`
+    /// become `nint`/`nuint`.
     pub fn normalize(&mut self, t: TypeId) -> TypeId {
         let data = self.data(t).clone();
         let normalized = match data {
@@ -165,13 +165,24 @@ impl TypeSystem<'_, '_> {
                 name,
                 is_reference_type: None,
             },
+            TypeData::Def(def) => match self.comp.type_def(def).map(|i| i.known) {
+                Ok(KnownTypeCode::Object) => TypeData::Dynamic,
+                Ok(KnownTypeCode::IntPtr) => TypeData::NInt,
+                Ok(KnownTypeCode::UIntPtr) => TypeData::NUInt,
+                _ => return t,
+            },
+            TypeData::Modified { inner, .. } | TypeData::Annotated { inner, .. } => {
+                return self.normalize(inner);
+            }
+            TypeData::Tuple { underlying, .. } => return self.normalize(underlying),
             TypeData::Inst { generic, args } => TypeData::Inst {
                 generic: self.normalize(generic),
                 args: args.iter().map(|a| self.normalize(*a)).collect(),
             },
-            TypeData::Array { elem, rank } => TypeData::Array {
+            TypeData::Array { elem, rank, .. } => TypeData::Array {
                 elem: self.normalize(elem),
                 rank,
+                nullability: Nullability::Oblivious,
             },
             TypeData::Pointer(e) => TypeData::Pointer(self.normalize(e)),
             TypeData::ByRef(e) => TypeData::ByRef(self.normalize(e)),
@@ -185,6 +196,17 @@ impl TypeSystem<'_, '_> {
             other => other,
         };
         self.intern(normalized)
+    }
+
+    /// `IType.Nullability`.
+    pub fn nullability_of(&self, t: TypeId) -> Nullability {
+        match self.data(t) {
+            TypeData::Annotated { nullability, .. } | TypeData::Array { nullability, .. } => {
+                *nullability
+            }
+            TypeData::Inst { generic, .. } => self.nullability_of(*generic),
+            _ => Nullability::Oblivious,
+        }
     }
 
     /// `TypeParameterSubstitution` applied to a type: class and method type parameters are
@@ -207,6 +229,39 @@ impl TypeSystem<'_, '_> {
                 }
                 return t;
             }
+            TypeData::Annotated { inner, nullability } => {
+                if let TypeData::TypeParam { owner, .. } = *self.data(inner) {
+                    // NullabilityAnnotatedTypeParameter: a substitution for the parameter's
+                    // owner kind replaces it (even by an identical parameter) and keeps only `?`.
+                    let applies = if owner.is_method() {
+                        method.is_some()
+                    } else {
+                        class.is_some()
+                    };
+                    if !applies {
+                        return t;
+                    }
+                    let s = self.substitute(inner, class, method);
+                    return if nullability == Nullability::Nullable {
+                        self.change_nullability(s, Nullability::Nullable)
+                    } else {
+                        s
+                    };
+                }
+                let s = self.substitute(inner, class, method);
+                if s == inner {
+                    return t;
+                }
+                if self.nullability_of(s) == Nullability::Nullable {
+                    return s;
+                }
+                if matches!(self.data(s), TypeData::TypeParam { .. })
+                    || self.is_reference_type(s) == Some(true)
+                {
+                    return self.change_nullability(s, nullability);
+                }
+                return s;
+            }
             TypeData::Inst { generic, args } => TypeData::Inst {
                 generic: self.substitute(generic, class, method),
                 args: args
@@ -214,13 +269,42 @@ impl TypeSystem<'_, '_> {
                     .map(|a| self.substitute(*a, class, method))
                     .collect(),
             },
-            TypeData::Array { elem, rank } => TypeData::Array {
+            TypeData::Tuple {
+                elements, names, ..
+            } => {
+                let elements: Vec<TypeId> = elements
+                    .iter()
+                    .map(|e| self.substitute(*e, class, method))
+                    .collect();
+                let assembly = self.definition(t).map(|d| d.module);
+                let underlying = self.tuple_underlying(&elements, assembly);
+                TypeData::Tuple {
+                    underlying,
+                    elements: elements.into(),
+                    names,
+                }
+            }
+            TypeData::Array {
+                elem,
+                rank,
+                nullability,
+            } => TypeData::Array {
                 elem: self.substitute(elem, class, method),
                 rank,
+                nullability,
             },
             TypeData::Pointer(e) => TypeData::Pointer(self.substitute(e, class, method)),
             TypeData::ByRef(e) => TypeData::ByRef(self.substitute(e, class, method)),
             TypeData::Pinned(e) => TypeData::Pinned(self.substitute(e, class, method)),
+            TypeData::Modified {
+                modifier,
+                inner,
+                required,
+            } => TypeData::Modified {
+                modifier: self.substitute(modifier, class, method),
+                inner: self.substitute(inner, class, method),
+                required,
+            },
             TypeData::FnPtr(f) => {
                 let mut f = *f;
                 f.ret = self.substitute(f.ret, class, method);

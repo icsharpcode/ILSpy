@@ -84,6 +84,8 @@ pub struct Module<'a> {
 
 pub struct Compilation<'a> {
     modules: Vec<Module<'a>>,
+    /// `TypeSystemOptions` of every module (the host applies them uniformly).
+    pub options: u32,
 }
 
 const TYPE_ATTR_INTERFACE: u32 = 0x20;
@@ -92,7 +94,7 @@ const FIELD_ATTR_STATIC: u16 = 0x10;
 
 impl<'a> Compilation<'a> {
     /// Module 0 is the main module.
-    pub fn new(inputs: Vec<ModuleInput<'a>>) -> Result<Self> {
+    pub fn new(inputs: Vec<ModuleInput<'a>>, options: u32) -> Result<Self> {
         let modules = inputs
             .into_iter()
             .map(|input| {
@@ -108,7 +110,7 @@ impl<'a> Compilation<'a> {
                 })
             })
             .collect::<Result<_>>()?;
-        Ok(Self { modules })
+        Ok(Self { modules, options })
     }
 
     pub fn module(&self, id: ModuleId) -> &Module<'a> {

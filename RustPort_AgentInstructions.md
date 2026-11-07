@@ -170,7 +170,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     run `./restore.ps1` again before `./build.ps1 -Configuration Debug --no-restore`, or the
     Debug build fails with CS1061 `WithDeveloperTools`.
 
-- **4. Type system.** Size L, split into 4a-4f (one commit each, each with its own gate) so
+- **4. Type system.** Size L, split into 4a-4g (one commit each, each with its own gate) so
   the week of work lands in reviewable pieces. Scope for all of them: interned `TypeId`,
   `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`, `EventId`, `ModuleId`; `TypeData` enum;
   lazy per-`TypeDef` decoding; substitution; base types and inheritance; known types;
@@ -202,15 +202,25 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     interned `(definition, substitution)` pairs, `TypeParameterSubstitution`. Listing: one
     line per MemberRef and MethodSpec row of the main module (resolved member, declaring type,
     substituted signature). The IL reader (step 5) depends on this.
-  - [ ] **4d. Attribute semantics.** Everything `TypeSystemOptions.Default` adds (dynamic,
-    tuples, nullability, native integers, ref structs, readonly/in/ref readonly, scoped,
-    unmanaged constraints, extension methods and members, params collections, decimal
-    constants, function pointers, first-class spans, runtime async). Listing run under
-    `Default`.
-  - [ ] **4e. Custom attribute values.** `metadata::custom_attribute` with a type-system
+  - [x] **4d. Type attribute semantics.** Subject: `Apply type attributes in the Rust type system`.
+    `ApplyAttributeTypeVisitor` (dynamic, tuple element names, nullability, native integers
+    with and without the attribute, modifier removal) at every site the managed code runs
+    it, with nullable contexts and `NullablePublicOnly` per entity; signatures decode raw
+    first (`from_sig_raw`, modifiers kept) because the dynamic index counts modifiers.
+    Function pointer identity and kind, `in` / `ref readonly` parameters and decimal
+    constants also follow the options. The host passes the module's final
+    `TypeSystemOptions` (it strips `NativeIntegersWithoutAttribute` below net7). Listing:
+    types print structurally (tuples, nullability, function pointer signatures) and run
+    under both `None` and `Default`.
+  - [ ] **4e. Entity flags under Default.** `IsByRefLike`, readonly structs,
+    `ThisIsRefReadOnly`, `ReturnTypeIsRefReadOnly`, `IsParams` (arrays and params
+    collections), parameter lifetimes (`scoped`, `UnscopedRef`), unmanaged and nullability
+    constraints, `HasExtensions` / `IsExtensionMethod`, extension members (`ExtensionInfo`),
+    runtime async, `IsInitOnly`. Listing extended with these flags under `Default`.
+  - [ ] **4f. Custom attribute values.** `metadata::custom_attribute` with a type-system
     resolver; decoded values equal SRM's `DecodeValue` (via the managed type provider) for
-    every attribute of every corpus image.
-  - [ ] **4f. Ported unit suites.** `TypeSystemLoaderTests` (144) and `ReflectionHelperTests`
+    every attribute of every corpus image; then `CoClassAttribute` constructors (4c).
+  - [ ] **4g. Ported unit suites.** `TypeSystemLoaderTests` (144) and `ReflectionHelperTests`
     (46) as `cargo test` against the same fixture assemblies (the compiled
     `ICSharpCode.Decompiler.Tests.dll` and the legacy reference `mscorlib`).
 

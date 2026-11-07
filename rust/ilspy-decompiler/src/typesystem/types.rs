@@ -2,6 +2,10 @@
 //!
 //! `TypeId`s are indices into one `TypeSystem`'s interner, so structural equality is `==`.
 //! A `TypeSystem` belongs to one request and borrows the shared `Compilation`.
+//!
+//! Signatures decode in two stages, like the managed type system: `from_sig_raw` is
+//! `TypeProvider` (modifiers kept, no attribute semantics) and `attrs::apply_attributes` is
+//! `ApplyAttributeTypeVisitor`, run where the managed code runs it.
 
 use std::collections::HashMap;
 
@@ -10,10 +14,12 @@ use crate::metadata::signature::{self, SigType};
 use crate::metadata::tables::{TableId, rows};
 use crate::metadata::{Error, Result};
 
+use super::attrs::AttributeSource;
 use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind, type_ref_full_name};
 pub use super::fnptr::FnPtrType;
 use super::known::KnownTypeCode;
-use super::names::FullTypeName;
+use super::names::{FullTypeName, TopLevelTypeName};
+use super::options;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct TypeId(u32);
@@ -34,6 +40,25 @@ impl TypeParamOwner {
             self,
             TypeParamOwner::Method(_) | TypeParamOwner::DummyMethod
         )
+    }
+}
+
+/// `Nullability`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum Nullability {
+    Oblivious = 0,
+    NotNullable = 1,
+    Nullable = 2,
+}
+
+impl Nullability {
+    pub fn from_byte(b: u8) -> Option<Self> {
+        match b {
+            0 => Some(Nullability::Oblivious),
+            1 => Some(Nullability::NotNullable),
+            2 => Some(Nullability::Nullable),
+            _ => None,
+        }
     }
 }
 
@@ -58,6 +83,7 @@ pub enum TypeData {
     Array {
         elem: TypeId,
         rank: u32,
+        nullability: Nullability,
     },
     Pointer(TypeId),
     ByRef(TypeId),
@@ -65,6 +91,26 @@ pub enum TypeData {
     FnPtr(Box<FnPtrType>),
     /// `SpecialType.ArgList`, the trailing parameter of a varargs method.
     ArgList,
+    /// A custom modifier, before `ApplyAttributeTypeVisitor` removes it.
+    Modified {
+        modifier: TypeId,
+        inner: TypeId,
+        required: bool,
+    },
+    Dynamic,
+    NInt,
+    NUInt,
+    /// `TupleType`: element types with optional names over a `System.ValueTuple` instance.
+    Tuple {
+        underlying: TypeId,
+        elements: Box<[TypeId]>,
+        names: Box<[Option<Box<str>>]>,
+    },
+    /// `NullabilityAnnotatedType` (and its type parameter variant).
+    Annotated {
+        inner: TypeId,
+        nullability: Nullability,
+    },
 }
 
 /// The type parameters in scope, as `(owner, count)`.
@@ -94,6 +140,11 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         }
     }
 
+    /// The compilation's `TypeSystemOptions`.
+    pub fn options(&self) -> u32 {
+        self.comp.options
+    }
+
     pub fn intern(&mut self, data: TypeData) -> TypeId {
         if let Some(&id) = self.map.get(&data) {
             return id;
@@ -108,32 +159,36 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         &self.data[id.0 as usize]
     }
 
-    /// `ICompilation.FindType(KnownTypeCode)`: the first module defining the name wins.
+    /// `ICompilation.FindType(TopLevelTypeName)`: the first module defining the name wins.
+    pub fn find_top_level(&mut self, top: TopLevelTypeName) -> TypeId {
+        let name = FullTypeName::top_level(top);
+        let comp = self.comp;
+        let data = comp
+            .module_ids()
+            .find_map(|m| {
+                comp.find_type_definition(m, &name, &mut Vec::new())
+                    .ok()
+                    .flatten()
+            })
+            .map_or_else(
+                || TypeData::Unknown {
+                    name: Box::new(name.clone()),
+                    is_reference_type: None,
+                },
+                TypeData::Def,
+            );
+        self.intern(data)
+    }
+
+    /// `ICompilation.FindType(KnownTypeCode)`.
     pub fn known_type(&mut self, code: KnownTypeCode) -> TypeId {
         if let Some(&id) = self.known.get(&code) {
             return id;
         }
-        let data = match code.top_level_name() {
-            None => TypeData::UnknownSpecial,
-            Some(top) => {
-                let name = FullTypeName::top_level(top);
-                let comp = self.comp;
-                comp.module_ids()
-                    .find_map(|m| {
-                        comp.find_type_definition(m, &name, &mut Vec::new())
-                            .ok()
-                            .flatten()
-                    })
-                    .map_or_else(
-                        || TypeData::Unknown {
-                            name: Box::new(name.clone()),
-                            is_reference_type: None,
-                        },
-                        TypeData::Def,
-                    )
-            }
+        let id = match code.top_level_name() {
+            None => self.intern(TypeData::UnknownSpecial),
+            Some(top) => self.find_top_level(top),
         };
-        let id = self.intern(data);
         self.known.insert(code, id);
         id
     }
@@ -145,6 +200,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 .type_def(*def)
                 .map_or(0, |i| i.type_parameter_count),
             TypeData::Unknown { name, .. } => name.type_parameter_count(),
+            TypeData::Annotated { inner, .. } => self.type_parameter_count(*inner),
             _ => 0,
         }
     }
@@ -192,48 +248,111 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         let md = &self.comp.module(module).md;
         let spec = md.get::<rows::TypeSpec>(row)?;
         let sig = signature::decode_type(&mut Bytes::new(md.blob(spec.signature)?))?;
-        self.from_sig(module, &sig, ctx)
+        self.from_sig_raw(module, &sig, ctx)
     }
 
-    /// `MetadataModule.ResolveType` for a TypeDef, TypeRef or TypeSpec token, with the
-    /// modifiers stripped (`TypeSystemOptions.None`).
-    pub fn resolve_token(
+    /// The `TypeProvider` result for a TypeDef, TypeRef, TypeSpec or ExportedType token,
+    /// before attribute semantics.
+    pub fn resolve_token_raw(
         &mut self,
         module: ModuleId,
         token: u32,
         ctx: GenericContext,
     ) -> Result<TypeId> {
         let row = token & 0x00FF_FFFF;
-        if row == 0 {
-            return Ok(self.intern(TypeData::UnknownSpecial));
-        }
         match token >> 24 {
             0x02 => self.type_from_def(module, row),
             0x01 => self.type_from_ref(module, row, 0),
             0x1B => self.type_from_spec(module, row, ctx),
-            0x27 => {
-                let def = self.comp.resolve_forwarded(module, row, &mut Vec::new())?;
-                Ok(match def {
-                    Some(def) => self.intern(TypeData::Def(def)),
-                    None => {
-                        let name = super::compilation::exported_full_name(
-                            &self.comp.module(module).md,
-                            row,
-                        )?;
-                        self.intern(TypeData::Unknown {
-                            name: Box::new(name),
-                            is_reference_type: None,
-                        })
-                    }
-                })
-            }
             _ => Err(Error::Malformed("not a type handle")),
         }
     }
 
-    /// The type a decoded signature denotes, as `TypeProvider` builds it, with modifiers
-    /// stripped.
-    pub fn from_sig(
+    /// `MetadataModule.ResolveType(handle, context, options, typeAttributes, nullableContext)`.
+    pub fn resolve_token_with(
+        &mut self,
+        module: ModuleId,
+        token: u32,
+        ctx: GenericContext,
+        attributes: AttributeSource,
+        options: u32,
+        nullable_context: Nullability,
+    ) -> Result<TypeId> {
+        let row = token & 0x00FF_FFFF;
+        if row == 0 {
+            return Ok(self.intern(TypeData::UnknownSpecial));
+        }
+        if token >> 24 == 0x27 {
+            let def = self.comp.resolve_forwarded(module, row, &mut Vec::new())?;
+            return Ok(match def {
+                Some(def) => self.intern(TypeData::Def(def)),
+                None => {
+                    let name =
+                        super::compilation::exported_full_name(&self.comp.module(module).md, row)?;
+                    self.intern(TypeData::Unknown {
+                        name: Box::new(name),
+                        is_reference_type: None,
+                    })
+                }
+            });
+        }
+        let raw = self.resolve_token_raw(module, token, ctx)?;
+        self.apply_attributes(raw, module, attributes, options, nullable_context, false)
+    }
+
+    /// `ResolveType` with the module's options and no attributes.
+    pub fn resolve_token(
+        &mut self,
+        module: ModuleId,
+        token: u32,
+        ctx: GenericContext,
+    ) -> Result<TypeId> {
+        let options = self.options();
+        self.resolve_token_with(
+            module,
+            token,
+            ctx,
+            AttributeSource::None,
+            options,
+            Nullability::Oblivious,
+        )
+    }
+
+    /// `MetadataModule.ResolveDeclaringType`: resolved without dynamic, tuple, nullability and
+    /// native integer semantics, then with tuples (and the rest) applied to type arguments only.
+    pub fn resolve_declaring_type(
+        &mut self,
+        module: ModuleId,
+        token: u32,
+        ctx: GenericContext,
+    ) -> Result<TypeId> {
+        let options = self.options();
+        let removed = options::DYNAMIC
+            | options::TUPLE
+            | options::NULLABILITY
+            | options::NATIVE_INTEGERS
+            | options::NATIVE_INTEGERS_WITHOUT_ATTRIBUTE;
+        let t = self.resolve_token_with(
+            module,
+            token,
+            ctx,
+            AttributeSource::None,
+            options & !removed,
+            Nullability::Oblivious,
+        )?;
+        self.apply_attributes(
+            t,
+            module,
+            AttributeSource::None,
+            options,
+            Nullability::Oblivious,
+            true,
+        )
+    }
+
+    /// The type a decoded signature denotes, as `TypeProvider` builds it: modifiers kept,
+    /// no attribute semantics.
+    pub fn from_sig_raw(
         &mut self,
         module: ModuleId,
         sig: &SigType,
@@ -258,10 +377,10 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 }
             }
             SigType::GenericInst { generic, args } => {
-                let generic = self.from_sig(module, generic, ctx)?;
+                let generic = self.from_sig_raw(module, generic, ctx)?;
                 let args = args
                     .iter()
-                    .map(|a| self.from_sig(module, a, ctx))
+                    .map(|a| self.from_sig_raw(module, a, ctx))
                     .collect::<Result<Box<[_]>>>()?;
                 let tpc = self.type_parameter_count(generic);
                 if tpc == 0 || tpc as usize != args.len() {
@@ -291,36 +410,68 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 })
             }
             SigType::Pointer(t) => {
-                let t = self.from_sig(module, t, ctx)?;
+                let t = self.from_sig_raw(module, t, ctx)?;
                 self.intern(TypeData::Pointer(t))
             }
             SigType::ByRef(t) => {
-                let t = self.from_sig(module, t, ctx)?;
+                let t = self.from_sig_raw(module, t, ctx)?;
                 self.intern(TypeData::ByRef(t))
             }
             SigType::Pinned(t) => {
-                let t = self.from_sig(module, t, ctx)?;
+                let t = self.from_sig_raw(module, t, ctx)?;
                 self.intern(TypeData::Pinned(t))
             }
             SigType::SzArray(t) => {
-                let elem = self.from_sig(module, t, ctx)?;
-                self.intern(TypeData::Array { elem, rank: 1 })
+                let elem = self.from_sig_raw(module, t, ctx)?;
+                self.intern(TypeData::Array {
+                    elem,
+                    rank: 1,
+                    nullability: Nullability::Oblivious,
+                })
             }
             SigType::Array { elem, shape } => {
-                let elem = self.from_sig(module, elem, ctx)?;
+                let elem = self.from_sig_raw(module, elem, ctx)?;
                 self.intern(TypeData::Array {
                     elem,
                     rank: shape.rank,
+                    nullability: Nullability::Oblivious,
                 })
             }
             SigType::FnPtr(sig) => self.function_pointer(module, sig, ctx)?,
             SigType::Modified {
-                modifier, inner, ..
+                modifier,
+                inner,
+                required,
             } => {
-                self.from_sig(module, modifier, ctx)?;
-                self.from_sig(module, inner, ctx)?
+                let modifier = self.from_sig_raw(module, modifier, ctx)?;
+                let inner = self.from_sig_raw(module, inner, ctx)?;
+                self.intern(TypeData::Modified {
+                    modifier,
+                    inner,
+                    required: *required,
+                })
             }
         })
+    }
+
+    /// A signature type with attribute semantics but no attributes
+    /// (`ApplyAttributesToType(type, null, options, Oblivious)`), e.g. `IntroduceTupleTypes`.
+    pub fn from_sig(
+        &mut self,
+        module: ModuleId,
+        sig: &SigType,
+        ctx: GenericContext,
+    ) -> Result<TypeId> {
+        let raw = self.from_sig_raw(module, sig, ctx)?;
+        let options = self.options();
+        self.apply_attributes(
+            raw,
+            module,
+            AttributeSource::None,
+            options,
+            Nullability::Oblivious,
+            false,
+        )
     }
 
     /// `ITypeDefinition.DirectBaseTypes`.
@@ -329,13 +480,21 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         let md = &comp.module(def.module).md;
         let info = comp.type_def(def)?;
         let ctx = self.type_context(Some(def));
+        let options = self.options();
         let t = md.get::<rows::TypeDef>(def.row)?;
         let mut bases = Vec::new();
         let base = match t.extends.token() {
             Ok(token) if token & 0x00FF_FFFF == 0 => None,
             Ok(token) => Some(
-                self.resolve_token(def.module, token, ctx)
-                    .unwrap_or_else(|_| self.intern(TypeData::UnknownSpecial)),
+                self.resolve_token_with(
+                    def.module,
+                    token,
+                    ctx,
+                    AttributeSource::Entity(TableId::TypeDef, def.row),
+                    options,
+                    Nullability::Oblivious,
+                )
+                .unwrap_or_else(|_| self.intern(TypeData::UnknownSpecial)),
             ),
             Err(_) => Some(self.intern(TypeData::UnknownSpecial)),
         };
@@ -348,7 +507,14 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         }
         for row in md.type_interface_impls(def.row) {
             let iface = md.get::<rows::InterfaceImpl>(row)?.interface.token()?;
-            bases.push(self.resolve_token(def.module, iface, ctx)?);
+            bases.push(self.resolve_token_with(
+                def.module,
+                iface,
+                ctx,
+                AttributeSource::Entity(TableId::InterfaceImpl, row),
+                options,
+                Nullability::Oblivious,
+            )?);
         }
         Ok(bases)
     }
@@ -358,13 +524,77 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         match self.data(id) {
             TypeData::Def(def) => Some(*def),
             TypeData::Inst { generic, .. } => self.definition(*generic),
+            TypeData::Annotated { inner, .. } => self.definition(*inner),
+            TypeData::Tuple { underlying, .. } => self.definition(*underlying),
             // Without TypeSystemOptions.FunctionPointers a function pointer acts as an alias
-            // for UIntPtr; from_sig resolves UIntPtr whenever it creates one.
-            TypeData::FnPtr(_) => self
+            // for UIntPtr; function_pointer resolves UIntPtr whenever it creates one.
+            TypeData::FnPtr(_) if self.options() & options::FUNCTION_POINTERS == 0 => self
                 .known
                 .get(&KnownTypeCode::UIntPtr)
                 .and_then(|&t| self.definition(t)),
             _ => None,
+        }
+    }
+
+    /// `IType.IsReferenceType`.
+    pub fn is_reference_type(&self, id: TypeId) -> Option<bool> {
+        match self.data(id) {
+            TypeData::Def(def) => Some(!matches!(
+                self.comp.type_def(*def).ok()?.kind,
+                TypeKind::Struct | TypeKind::Enum | TypeKind::Void
+            )),
+            TypeData::Unknown {
+                is_reference_type, ..
+            } => *is_reference_type,
+            TypeData::Inst { generic, .. } => self.is_reference_type(*generic),
+            TypeData::Annotated { inner, .. } | TypeData::Modified { inner, .. } => {
+                self.is_reference_type(*inner)
+            }
+            TypeData::Array { .. } | TypeData::Dynamic => Some(true),
+            TypeData::Pinned(e) => self.is_reference_type(*e),
+            TypeData::Tuple { .. } | TypeData::NInt | TypeData::NUInt | TypeData::FnPtr(_) => {
+                Some(false)
+            }
+            TypeData::Pointer(_) | TypeData::ByRef(_) => Some(false),
+            TypeData::TypeParam { .. } | TypeData::UnknownSpecial | TypeData::ArgList => None,
+        }
+    }
+
+    /// `IType.FullName`.
+    pub fn full_name(&self, id: TypeId) -> String {
+        match self.data(id) {
+            TypeData::Def(def) => self.def_full_name(*def),
+            TypeData::Unknown { name, .. } => {
+                let mut s = format!("{}.{}", name.top.ns, name.top.name);
+                for (n, _) in &name.nested {
+                    s.push('.');
+                    s.push_str(n);
+                }
+                s
+            }
+            TypeData::Inst { generic, .. } | TypeData::Annotated { inner: generic, .. } => {
+                self.full_name(*generic)
+            }
+            _ => self.reflection_name(id),
+        }
+    }
+
+    /// `MetadataTypeDefinition.FullName`: enclosing types joined with `.`.
+    fn def_full_name(&self, def: TypeDefId) -> String {
+        let Ok(info) = self.comp.type_def(def) else {
+            return "!bad".to_owned();
+        };
+        let name = info.full_name.name();
+        if info.declaring != 0 {
+            let outer = TypeDefId {
+                module: def.module,
+                row: info.declaring,
+            };
+            format!("{}.{name}", self.def_full_name(outer))
+        } else if !info.full_name.top.ns.is_empty() {
+            format!("{}.{name}", info.full_name.top.ns)
+        } else {
+            name.to_owned()
         }
     }
 
@@ -387,16 +617,33 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     .collect();
                 format!("{}[{}]", self.reflection_name(*generic), args.join(","))
             }
-            TypeData::Array { elem, rank } => format!(
-                "{}[{}]",
-                self.reflection_name(*elem),
-                ",".repeat(rank.saturating_sub(1) as usize)
-            ),
+            TypeData::Array { elem, rank, .. } => {
+                format!(
+                    "{}[{}]",
+                    self.reflection_name(*elem),
+                    ",".repeat(rank.saturating_sub(1) as usize)
+                )
+            }
             TypeData::Pointer(t) => format!("{}*", self.reflection_name(*t)),
             TypeData::ByRef(t) => format!("{}&", self.reflection_name(*t)),
             TypeData::Pinned(t) => format!("{} pinned", self.reflection_name(*t)),
             TypeData::FnPtr(_) => "delegate*".to_owned(),
             TypeData::ArgList => "__arglist".to_owned(),
+            TypeData::Modified {
+                modifier,
+                inner,
+                required,
+            } => format!(
+                "{} {}({})",
+                self.reflection_name(*inner),
+                if *required { "modreq" } else { "modopt" },
+                self.full_name(*modifier)
+            ),
+            TypeData::Dynamic => "dynamic".to_owned(),
+            TypeData::NInt => "nint".to_owned(),
+            TypeData::NUInt => "nuint".to_owned(),
+            TypeData::Tuple { underlying, .. } => self.reflection_name(*underlying),
+            TypeData::Annotated { inner, .. } => self.reflection_name(*inner),
         }
     }
 }

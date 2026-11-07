@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 	{
 		readonly List<GCHandle> pins = new();
 		readonly RustModule[] modules;
+		readonly uint options;
 
 		public RustModuleTable(ICompilation compilation)
 		{
@@ -48,6 +49,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			var metadataModules = compilation.Modules.OfType<MetadataModule>()
 				.Where(m => m.MetadataFile is PEFile).ToList();
 			int IndexOf(IModule? m) => m is MetadataModule mm ? metadataModules.IndexOf(mm) : -1;
+			options = (uint)((MetadataModule)compilation.MainModule).TypeSystemOptions;
 			modules = new RustModule[metadataModules.Count];
 			for (int i = 0; i < metadataModules.Count; i++)
 			{
@@ -91,7 +93,7 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 			RustStatus status;
 			RustBuffer buffer;
 			fixed (RustModule* p = modules)
-				status = NativeMethods.ilspy_debug_type_listing(p, (UIntPtr)modules.Length, out buffer);
+				status = NativeMethods.ilspy_debug_type_listing(p, (UIntPtr)modules.Length, options, out buffer);
 			byte[] bytes = NativeMethods.TakeBuffer(buffer);
 			if (status != RustStatus.Ok)
 				throw new InvalidOperationException($"ilspy_debug_type_listing: {status}: {NativeMethods.LastError}");

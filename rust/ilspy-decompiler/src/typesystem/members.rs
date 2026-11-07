@@ -4,13 +4,17 @@
 
 use crate::metadata::bytes::Bytes;
 use crate::metadata::custom_attribute::{self, ModuleResolver, Value};
-use crate::metadata::signature::{self, SigType};
+use crate::metadata::signature;
 use crate::metadata::tables::{TableId, rows};
 use crate::metadata::{Error, Metadata, Result};
 
+use super::attrs::{AttributeSource, accessibility_value, nullable_context, type_accessibility};
 use super::compilation::{ModuleId, TypeDefId, TypeKind, is_known_type_name};
 use super::known::KnownTypeCode;
-use super::types::{GenericContext, TypeData, TypeId, TypeParamOwner, TypeSystem};
+use super::options;
+use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
+
+const COMPILER_SERVICES: &str = "System.Runtime.CompilerServices";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct MethodDefId {
@@ -44,6 +48,8 @@ pub enum RefKind {
     None,
     Out,
     Ref,
+    In,
+    RefReadOnly,
 }
 
 impl RefKind {
@@ -52,6 +58,8 @@ impl RefKind {
             RefKind::None => "None",
             RefKind::Out => "Out",
             RefKind::Ref => "Ref",
+            RefKind::In => "In",
+            RefKind::RefReadOnly => "RefReadOnly",
         }
     }
 }
@@ -326,12 +334,56 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         Ok(ctx)
     }
 
-    /// The type kind as `IType.Kind` reports it, for the interface test on constraints.
+    /// `IType.Kind == TypeKind.Interface`.
     pub fn is_interface(&self, t: TypeId) -> bool {
-        self.definition(t)
-            .and_then(|d| self.comp.type_def(d).ok())
-            .is_some_and(|i| i.kind == TypeKind::Interface)
-            && matches!(self.data(t), TypeData::Def(_) | TypeData::Inst { .. })
+        match self.data(t) {
+            TypeData::Def(_) | TypeData::Inst { .. } | TypeData::Annotated { .. } => self
+                .definition(t)
+                .and_then(|d| self.comp.type_def(d).ok())
+                .is_some_and(|i| i.kind == TypeKind::Interface),
+            _ => false,
+        }
+    }
+
+    /// `MetadataMethod.NullableContext`: the method's own, else its declaring type's.
+    pub fn method_nullable_context(&self, m: MethodDefId) -> Result<Nullability> {
+        let md = &self.comp.module(m.module).md;
+        if let Some(n) = nullable_context(md, TableId::MethodDef, m.row) {
+            return Ok(n);
+        }
+        match self.method_declaring(m)? {
+            Some(def) => Ok(self.type_nullable_context(def)),
+            None => Err(Error::Unsupported("method without declaring type")),
+        }
+    }
+
+    /// `OptionsForEntity` of a method or field (`accessibility` from its flags).
+    fn member_options(
+        &self,
+        module: ModuleId,
+        accessibility: &str,
+        declaring: Option<TypeDefId>,
+    ) -> u32 {
+        let effective = self.effective_accessibility(accessibility_value(accessibility), declaring);
+        self.options_for_entity(module, Some(effective))
+    }
+
+    /// `OptionsForEntity` of a type definition (`None` for a null entity).
+    fn type_options(&self, module: ModuleId, def: Option<TypeDefId>) -> u32 {
+        match def {
+            None => self.options_for_entity(module, None),
+            Some(def) => {
+                let Ok(info) = self.comp.type_def(def) else {
+                    return self.options();
+                };
+                let outer = (info.declaring != 0).then_some(TypeDefId {
+                    module: def.module,
+                    row: info.declaring,
+                });
+                let effective = self.effective_accessibility(type_accessibility(info.flags), outer);
+                self.options_for_entity(module, Some(effective))
+            }
+        }
     }
 
     /// Type parameters of a TypeDef (`owner_table` TypeDef) or MethodDef.
@@ -370,11 +422,17 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 )
             };
             let gp = md.get::<rows::GenericParam>(source_row)?;
-            let ctx = match owner {
-                TypeParamOwner::Type(def) => self.type_context(Some(def)),
-                TypeParamOwner::Method(m) => self.method_context(m)?,
-                _ => GenericContext::default(),
+            let (ctx, nullable) = match owner {
+                TypeParamOwner::Type(def) => (
+                    self.type_context(Some(def)),
+                    self.type_nullable_context(def),
+                ),
+                TypeParamOwner::Method(m) => {
+                    (self.method_context(m)?, self.method_nullable_context(m)?)
+                }
+                _ => (GenericContext::default(), Nullability::Oblivious),
             };
+            let options = self.options();
             let mut constraints = Vec::new();
             let mut has_non_interface = false;
             for c in md.generic_param_constraints(source_row) {
@@ -382,7 +440,14 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     .get::<rows::GenericParamConstraint>(c)?
                     .constraint
                     .token()?;
-                let t = self.resolve_token(module, token, ctx)?;
+                let t = self.resolve_token_with(
+                    module,
+                    token,
+                    ctx,
+                    AttributeSource::Entity(TableId::GenericParamConstraint, c),
+                    options,
+                    nullable,
+                )?;
                 has_non_interface |= !self.is_interface(t);
                 constraints.push(t);
             }
@@ -411,27 +476,91 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
 
     /// `MetadataMethod.DecodeSignature(...)` shared by methods and properties: parameters
     /// paired with their Param rows (gaps get unnamed parameters), plus `__arglist` for
-    /// varargs.
+    /// varargs; attribute semantics applied per parameter and to the return type.
+    #[allow(clippy::too_many_arguments)]
     fn decode_parameters(
         &mut self,
         module: ModuleId,
         sig: &signature::MethodSig,
         ctx: GenericContext,
         param_rows: Option<Vec<u32>>,
+        options: u32,
+        nullable: Nullability,
+        additional_return_attributes: Option<(TableId, u32)>,
     ) -> Result<(TypeId, Vec<ParamInfo>)> {
         let comp = self.comp;
         let md = &comp.module(module).md;
-        let ret = self.from_sig(module, &sig.ret, ctx)?;
+        let raw_ret = self.from_sig_raw(module, &sig.ret, ctx)?;
         let types = sig
             .params
             .iter()
-            .map(|p| self.from_sig(module, p, ctx))
+            .map(|p| self.from_sig_raw(module, p, ctx))
             .collect::<Result<Vec<_>>>()?;
         let required = sig.required_params;
-        let unnamed = |ts: &Self, ty: TypeId| ParamInfo {
+        let mut params = Vec::with_capacity(required + 1);
+        let mut return_attributes = None;
+        for row in param_rows.unwrap_or_default() {
+            let p = md.get::<rows::Param>(row)?;
+            let seq = usize::from(p.sequence);
+            if seq == 0 {
+                return_attributes = Some((TableId::Param, row));
+                continue;
+            }
+            if !(params.len() < seq && seq <= required) {
+                continue;
+            }
+            while params.len() < seq - 1 {
+                let ty = self.apply_attributes(
+                    types[params.len()],
+                    module,
+                    AttributeSource::None,
+                    options,
+                    nullable,
+                    false,
+                )?;
+                params.push(self.unnamed_parameter(ty));
+            }
+            let ty = self.apply_attributes(
+                types[params.len()],
+                module,
+                AttributeSource::Entity(TableId::Param, row),
+                options,
+                nullable,
+                false,
+            )?;
+            params.push(self.parameter(md, row, &p, ty)?);
+        }
+        while params.len() < required {
+            let ty = self.apply_attributes(
+                types[params.len()],
+                module,
+                AttributeSource::None,
+                options,
+                nullable,
+                false,
+            )?;
+            params.push(self.unnamed_parameter(ty));
+        }
+        if sig.header & 0x0F == 0x05 {
+            let arglist = self.intern(TypeData::ArgList);
+            params.push(self.unnamed_parameter(arglist));
+        }
+        let source = match additional_return_attributes {
+            Some(extra) => AttributeSource::WithAdditional(return_attributes, extra),
+            None => match return_attributes {
+                Some((t, r)) => AttributeSource::Entity(t, r),
+                None => AttributeSource::None,
+            },
+        };
+        let ret = self.apply_attributes(raw_ret, module, source, options, nullable, false)?;
+        Ok((ret, params))
+    }
+
+    fn unnamed_parameter(&self, ty: TypeId) -> ParamInfo {
+        ParamInfo {
             ty,
             name: String::new(),
-            ref_kind: if matches!(ts.data(ty), TypeData::ByRef(_)) {
+            ref_kind: if matches!(self.data(ty), TypeData::ByRef(_)) {
                 RefKind::Ref
             } else {
                 RefKind::None
@@ -439,33 +568,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             optional: false,
             has_constant_in_signature: false,
             value: ConstValue::Null,
-        };
-        let mut params = Vec::with_capacity(required + 1);
-        for row in param_rows.unwrap_or_default() {
-            let p = md.get::<rows::Param>(row)?;
-            let seq = usize::from(p.sequence);
-            if seq == 0 || !(params.len() < seq && seq <= required) {
-                continue;
-            }
-            while params.len() < seq - 1 {
-                let ty = types[params.len()];
-                params.push(unnamed(self, ty));
-            }
-            let ty = types[params.len()];
-            params.push(self.parameter(md, row, &p, ty)?);
         }
-        while params.len() < required {
-            let ty = types[params.len()];
-            params.push(unnamed(self, ty));
-        }
-        if sig.header & 0x0F == 0x05 {
-            let arglist = self.intern(TypeData::ArgList);
-            params.push(ParamInfo {
-                ty: arglist,
-                ..unnamed(self, arglist)
-            });
-        }
-        Ok((ret, params))
     }
 
     fn parameter(
@@ -475,10 +578,22 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         p: &rows::Param,
         ty: TypeId,
     ) -> Result<ParamInfo> {
+        let options = self.options();
+        let has =
+            |name: &str| has_known_attribute(md, TableId::Param, row, COMPILER_SERVICES, name);
         let ref_kind = if !matches!(self.data(ty), TypeData::ByRef(_)) {
             RefKind::None
         } else if p.flags & (PARAM_IN | PARAM_OUT) == PARAM_OUT {
             RefKind::Out
+        } else if options & options::READ_ONLY_STRUCTS_AND_PARAMETERS != 0
+            && has("IsReadOnlyAttribute")
+        {
+            RefKind::In
+        } else if options & options::REF_READ_ONLY_PARAMETERS != 0
+            && p.flags & (PARAM_IN | PARAM_OUT) == PARAM_IN
+            && has("RequiresLocationAttribute")
+        {
+            RefKind::RefReadOnly
         } else {
             RefKind::Ref
         };
@@ -499,12 +614,17 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         } else {
             read_constant(md, constant).unwrap_or(ConstValue::Null)
         };
+        let has_constant_in_signature = if is_decimal {
+            options & options::DECIMAL_CONSTANTS != 0
+        } else {
+            constant != 0
+        };
         Ok(ParamInfo {
             ty,
             name: md.string(p.name)?.into_owned(),
             ref_kind,
             optional,
-            has_constant_in_signature: !is_decimal && constant != 0,
+            has_constant_in_signature,
             value,
         })
     }
@@ -517,7 +637,13 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             let sig = signature::decode_method(&mut Bytes::new(md.blob(def.signature)?))?;
             let ctx = self.method_context(m)?;
             let rows = md.method_params(m.row)?;
-            self.decode_parameters(m.module, &sig, ctx, Some(rows))
+            let nullable = self.method_nullable_context(m)?;
+            let options = self.member_options(
+                m.module,
+                method_accessibility(def.flags),
+                self.method_declaring(m)?,
+            );
+            self.decode_parameters(m.module, &sig, ctx, Some(rows), options, nullable, None)
         })();
         result.unwrap_or_else(|_| (self.intern(TypeData::UnknownSpecial), Vec::new()))
     }
@@ -604,6 +730,14 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         })
     }
 
+    fn field_declaring(&self, module: ModuleId, row: u32) -> Result<Option<TypeDefId>> {
+        let declaring = self.comp.module(module).md.field_declaring_type(row)?;
+        Ok((declaring != 0).then_some(TypeDefId {
+            module,
+            row: declaring,
+        }))
+    }
+
     /// A field's type (`?` when the signature is bad) and whether its outermost modifier is
     /// `modreq(IsVolatile)`.
     pub fn field_type(&mut self, module: ModuleId, row: u32) -> (TypeId, bool) {
@@ -611,29 +745,64 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             let md = &self.comp.module(module).md;
             let f = md.get::<rows::Field>(row)?;
             let sig = signature::decode_field(&mut Bytes::new(md.blob(f.signature)?))?;
-            let declaring = md.field_declaring_type(row)?;
-            let ctx = self.type_context((declaring != 0).then_some(TypeDefId {
-                module,
-                row: declaring,
-            }));
-            let ty = self.from_sig(module, &sig, ctx)?;
-            let volatile = match &sig {
-                SigType::Modified { modifier, .. } => {
-                    let m = self.from_sig(module, modifier, ctx)?;
-                    self.name_and_namespace(m).is_some_and(|(n, ns)| {
-                        n == "IsVolatile" && ns == "System.Runtime.CompilerServices"
-                    })
-                }
+            let declaring = self.field_declaring(module, row)?;
+            let ctx = self.type_context(declaring);
+            let raw = self.from_sig_raw(module, &sig, ctx)?;
+            let volatile = match self.data(raw).clone() {
+                TypeData::Modified { modifier, .. } => self
+                    .name_and_namespace(modifier)
+                    .is_some_and(|(n, ns)| n == "IsVolatile" && ns == COMPILER_SERVICES),
                 _ => false,
             };
+            let options = self.member_options(module, field_accessibility(f.flags), declaring);
+            let nullable =
+                declaring.map_or(Nullability::Oblivious, |d| self.type_nullable_context(d));
+            let ty = self.apply_attributes(
+                raw,
+                module,
+                AttributeSource::Entity(TableId::Field, row),
+                options,
+                nullable,
+                false,
+            )?;
             Ok::<_, Error>((ty, volatile))
         })();
         result.unwrap_or_else(|_| (self.intern(TypeData::UnknownSpecial), false))
     }
 
+    /// `MetadataField.IsDecimalConstant` together with `AllowsDecimalConstants`.
+    fn field_decimal_constant(&self, module: ModuleId, row: u32) -> bool {
+        let md = &self.comp.module(module).md;
+        self.options() & options::DECIMAL_CONSTANTS != 0
+            && md
+                .get::<rows::Field>(row)
+                .is_ok_and(|f| f.flags & 0x0030 == 0x0030)
+            && has_known_attribute(
+                md,
+                TableId::Field,
+                row,
+                DECIMAL_CONSTANT.0,
+                DECIMAL_CONSTANT.1,
+            )
+    }
+
+    /// `IField.IsConst`.
+    pub fn field_is_const(&self, module: ModuleId, row: u32) -> bool {
+        let literal = self
+            .comp
+            .module(module)
+            .md
+            .get::<rows::Field>(row)
+            .is_ok_and(|f| f.flags & 0x0040 != 0);
+        literal || self.field_decimal_constant(module, row)
+    }
+
     /// The field's constant (`GetConstantValue(throwOnInvalidMetadata: false)`).
     pub fn field_constant(&self, module: ModuleId, row: u32) -> ConstValue {
         let md = &self.comp.module(module).md;
+        if self.field_decimal_constant(module, row) {
+            return decimal_constant(md, TableId::Field, row).unwrap_or(ConstValue::Null);
+        }
         match md.default_value(TableId::Field, row) {
             0 => ConstValue::Null,
             c => read_constant(md, c).unwrap_or(ConstValue::Null),
@@ -660,15 +829,27 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 "property accessor without declaring type",
             ));
         }
-        let ctx = self.type_context(Some(TypeDefId {
+        let declaring = TypeDefId {
             module,
             row: declaring,
-        }));
+        };
+        let ctx = self.type_context(Some(declaring));
+        let nullable = nullable_context(md, TableId::MethodDef, any)
+            .unwrap_or_else(|| self.type_nullable_context(declaring));
+        let options = self.type_options(module, Some(declaring));
         let result = (|| {
             let p = md.get::<rows::Property>(row)?;
             let sig = signature::decode_method(&mut Bytes::new(md.blob(p.signature)?))?;
             let rows = md.method_params(any)?;
-            self.decode_parameters(module, &sig, ctx, Some(rows))
+            self.decode_parameters(
+                module,
+                &sig,
+                ctx,
+                Some(rows),
+                options,
+                nullable,
+                Some((TableId::Property, row)),
+            )
         })();
         Ok(result.unwrap_or_else(|_| (self.intern(TypeData::UnknownSpecial), Vec::new())))
     }
@@ -686,11 +867,21 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         } else {
             md.method_declaring_type(any)?
         };
-        let ctx = self.type_context((declaring != 0).then_some(TypeDefId {
+        let declaring = (declaring != 0).then_some(TypeDefId {
             module,
             row: declaring,
-        }));
+        });
+        let ctx = self.type_context(declaring);
+        let nullable = declaring.map_or(Nullability::Oblivious, |d| self.type_nullable_context(d));
+        let options = self.type_options(module, declaring);
         let token = md.get::<rows::Event>(row)?.event_type.token()?;
-        self.resolve_token(module, token, ctx)
+        self.resolve_token_with(
+            module,
+            token,
+            ctx,
+            AttributeSource::Entity(TableId::Event, row),
+            options,
+            nullable,
+        )
     }
 }

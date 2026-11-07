@@ -28,6 +28,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.Rust.Interop;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 using NUnit.Framework;
 
@@ -66,11 +67,35 @@ public class TypeSystemListingEqualityTests
 	/// parameterized type); <c>?</c> when it resolved to nothing or only to a module without
 	/// metadata, which the engine is not given.
 	/// </summary>
-	static string Located(IType type)
+	static string Located(IType type) => type.ReflectionName + "@" + Assembly(type);
+
+	static string Assembly(IType type)
 	{
 		var module = type.GetDefinition()?.ParentModule as MetadataModule;
-		return type.ReflectionName + "@" + (module?.MetadataFile is PEFile ? module.AssemblyName : "?");
+		return module?.MetadataFile is PEFile ? module.AssemblyName : "?";
 	}
+
+	static string Mark(Nullability n) => n switch {
+		Nullability.NotNullable => "!",
+		Nullability.Nullable => "?",
+		_ => "",
+	};
+
+	/// <summary>
+	/// A type with the structure ReflectionName hides: tuple element names, nullability and
+	/// function pointer signatures (format in rust/ilspy-decompiler/src/typesystem/listing.rs).
+	/// </summary>
+	static string Describe(IType t) => t switch {
+		TupleType tt => "(" + string.Join(",", tt.ElementTypes.Select((e, i) => Describe(e) + (tt.ElementNames[i] is string n ? ":" + n : ""))) + ")",
+		NullabilityAnnotatedType nat => Describe(nat.TypeWithoutAnnotation) + Mark(nat.Nullability),
+		ParameterizedType pt => Describe(pt.GenericType) + "[" + string.Join(",", pt.TypeArguments.Select(Describe)) + "]",
+		ArrayType at => Describe(at.ElementType) + "[" + new string(',', at.Dimensions - 1) + "]" + Mark(at.Nullability),
+		PointerType p => Describe(p.ElementType) + "*",
+		ByReferenceType b => Describe(b.ElementType) + "&",
+		PinnedType p => Describe(p.ElementType) + " pinned",
+		FunctionPointerType f => $"delegate*[{(int)f.CallingConvention};{string.Join(",", f.CustomCallingConventions.Select(Describe))};{Describe(f.ReturnType)}{(f.ReturnIsRefReadOnly ? " ro" : "")};{string.Join(",", f.ParameterTypes.Zip(f.ParameterReferenceKinds, (p, k) => Describe(p) + ":" + (int)k))}]@{Assembly(f)}",
+		_ => Located(t),
+	};
 
 	static string Tok(EntityHandle h) => MetadataTokens.GetToken(h).ToString("x8");
 
@@ -94,22 +119,22 @@ public class TypeSystemListingEqualityTests
 
 	static string Params(IEnumerable<IParameter> parameters)
 		=> "[" + string.Join("|", parameters.Select(p =>
-			$"{Located(p.Type)},{p.Name},{p.ReferenceKind},{(p.IsOptional ? 1 : 0)},{(p.HasConstantValueInSignature ? 1 : 0)},{Value(p.GetConstantValue(throwOnInvalidMetadata: false))}")) + "]";
+			$"{Describe(p.Type)},{p.Name},{p.ReferenceKind},{(p.IsOptional ? 1 : 0)},{(p.HasConstantValueInSignature ? 1 : 0)},{Value(p.GetConstantValue(throwOnInvalidMetadata: false))}")) + "]";
 
 	static string TypeParams(IEnumerable<ITypeParameter> tps)
 		=> "[" + string.Join("|", tps.Select(tp =>
-			$"{tp.Name}:{tp.Variance}:{Mods((tp.HasDefaultConstructorConstraint, 'n'), (tp.HasReferenceTypeConstraint, 'r'), (tp.HasValueTypeConstraint, 'v'), (tp.AllowsRefLikeType, 'l'))}:{{{string.Join(";", tp.TypeConstraints.Select(c => Located(c.Type)))}}}")) + "]";
+			$"{tp.Name}:{tp.Variance}:{Mods((tp.HasDefaultConstructorConstraint, 'n'), (tp.HasReferenceTypeConstraint, 'r'), (tp.HasValueTypeConstraint, 'v'), (tp.AllowsRefLikeType, 'l'))}:{{{string.Join(";", tp.TypeConstraints.Select(c => Describe(c.Type)))}}}")) + "]";
 
 	static string Origin(IMember member)
 		=> member.MemberDefinition.MetadataToken.IsNil ? "fake" : Tok(member.MemberDefinition.MetadataToken);
 
-	static string Types(IEnumerable<IType> types) => "[" + string.Join("|", types.Select(Located)) + "]";
+	static string Types(IEnumerable<IType> types) => "[" + string.Join("|", types.Select(Describe)) + "]";
 
 	static string MethodRef(IMethod m)
-		=> $"method={Origin(m)} decl={(m.DeclaringType == null ? "-" : Located(m.DeclaringType))} name={m.Name} static={(m.IsStatic ? 1 : 0)} targs={Types(m.TypeArguments)} ret={Located(m.ReturnType)} params={Types(m.Parameters.Select(p => p.Type))} accessor={(int)m.AccessorKind}";
+		=> $"method={Origin(m)} decl={(m.DeclaringType == null ? "-" : Describe(m.DeclaringType))} name={m.Name} static={(m.IsStatic ? 1 : 0)} targs={Types(m.TypeArguments)} ret={Describe(m.ReturnType)} params={Types(m.Parameters.Select(p => p.Type))} accessor={(int)m.AccessorKind}";
 
 	static string FieldRef(IField f)
-		=> $"field={Origin(f)} decl={(f.DeclaringType == null ? "-" : Located(f.DeclaringType))} name={f.Name} type={Located(f.ReturnType)}";
+		=> $"field={Origin(f)} decl={(f.DeclaringType == null ? "-" : Describe(f.DeclaringType))} name={f.Name} type={Describe(f.ReturnType)}";
 
 	static string Line(string kind, EntityHandle h, Func<string> f)
 	{
@@ -126,8 +151,8 @@ public class TypeSystemListingEqualityTests
 		foreach (var td in module.TypeDefinitions)
 		{
 			string line = S(() => {
-				string enumType = td.Kind == TypeKind.Enum ? Located(td.EnumUnderlyingType!) : "-";
-				string bases = S(() => "[" + string.Join("|", td.DirectBaseTypes.Select(Located)) + "]");
+				string enumType = td.Kind == TypeKind.Enum ? Describe(td.EnumUnderlyingType!) : "-";
+				string bases = S(() => "[" + string.Join("|", td.DirectBaseTypes.Select(Describe)) + "]");
 				return $"T {td.ReflectionName} kind={td.Kind} known={td.KnownTypeCode} decl={td.DeclaringTypeDefinition?.ReflectionName ?? "-"} tparams={td.TypeParameterCount} enum={enumType} base={bases}";
 			});
 			Append(line == "!bad" ? "T !bad" : line);
@@ -138,7 +163,7 @@ public class TypeSystemListingEqualityTests
 		{
 			Append(Line("F", h, () => {
 				var f = module.GetDefinition(h);
-				return $"F {Tok(h)} decl={f.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={f.Name} access={f.Accessibility} mods={Mods((f.IsStatic, 's'), (f.IsReadOnly, 'r'), (f.IsVolatile, 'v'), (f.IsConst, 'c'))} type={Located(f.Type)} value={Value(f.GetConstantValue(throwOnInvalidMetadata: false))}";
+				return $"F {Tok(h)} decl={f.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={f.Name} access={f.Accessibility} mods={Mods((f.IsStatic, 's'), (f.IsReadOnly, 'r'), (f.IsVolatile, 'v'), (f.IsConst, 'c'))} type={Describe(f.Type)} value={Value(f.GetConstantValue(throwOnInvalidMetadata: false))}";
 			}));
 		}
 		foreach (var h in metadata.MethodDefinitions)
@@ -146,21 +171,21 @@ public class TypeSystemListingEqualityTests
 			Append(Line("M", h, () => {
 				var m = module.GetDefinition(h);
 				string accessor = m.AccessorOwner == null ? "-" : $"{Tok(m.AccessorOwner.MetadataToken)}:{(int)m.AccessorKind}";
-				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Located(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)}";
+				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Describe(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)}";
 			}));
 		}
 		foreach (var h in metadata.PropertyDefinitions)
 		{
 			Append(Line("P", h, () => {
 				var p = module.GetDefinition(h);
-				return $"P {Tok(h)} decl={p.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={p.Name} get={OptTok(p.Getter)} set={OptTok(p.Setter)} ret={Located(p.ReturnType)} params={Params(p.Parameters)}";
+				return $"P {Tok(h)} decl={p.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={p.Name} get={OptTok(p.Getter)} set={OptTok(p.Setter)} ret={Describe(p.ReturnType)} params={Params(p.Parameters)}";
 			}));
 		}
 		foreach (var h in metadata.EventDefinitions)
 		{
 			Append(Line("E", h, () => {
 				var e = module.GetDefinition(h);
-				return $"E {Tok(h)} decl={e.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={e.Name} add={OptTok(e.AddAccessor)} remove={OptTok(e.RemoveAccessor)} invoke={OptTok(e.InvokeAccessor)} type={Located(e.ReturnType)}";
+				return $"E {Tok(h)} decl={e.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={e.Name} add={OptTok(e.AddAccessor)} remove={OptTok(e.RemoveAccessor)} invoke={OptTok(e.InvokeAccessor)} type={Describe(e.ReturnType)}";
 			}));
 		}
 		foreach (var h in metadata.MemberReferences)
@@ -188,6 +213,31 @@ public class TypeSystemListingEqualityTests
 		Assert.That(Corpus.FirstDifference(ManagedListing(ts), table.DebugTypeListing()), Is.Null);
 	}
 
+	/// <summary>
+	/// The same under TypeSystemOptions.Default: dynamic, tuples, nullability, native integers,
+	/// function pointers, in/ref readonly parameters and decimal constants.
+	/// </summary>
+	[TestCaseSource(typeof(Corpus), nameof(Corpus.ManagedImages))]
+	public void TypeSystemListingEqualityDefault(string path)
+	{
+		var ts = Load(path, TypeSystemOptions.Default);
+		using var table = new RustModuleTable(ts);
+		Assert.That(Corpus.FirstDifference(ManagedListing(ts), table.DebugTypeListing()), Is.Null);
+	}
+
+	[Test]
+	public void DefaultListingCoversAttributeSemantics()
+	{
+		var ts = Load(typeof(CSharpDecompiler).Assembly.Location, TypeSystemOptions.Default);
+		using var table = new RustModuleTable(ts);
+		string[] lines = table.DebugTypeListing().Split('\n');
+		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains("@System.Private.CoreLib?"));
+		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains("@System.Private.CoreLib!"));
+		Assert.That(lines, Has.Some.StartsWith("M ").And.Matches(@"\(\S+:\w+,"));
+		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(",In,"));
+		Assert.That(lines, Has.None.Contains("!bad"));
+	}
+
 	[Test]
 	public void ListingCoversNestedGenericAndInterfaceTypes()
 	{
@@ -198,7 +248,7 @@ public class TypeSystemListingEqualityTests
 		Assert.That(lines, Has.Some.Contains("kind=Interface").And.Contains("base=[System.Object"));
 		Assert.That(lines, Has.Some.Contains("+").And.Contains("decl=ICSharpCode."));
 		Assert.That(lines, Has.Some.Contains("kind=Enum").And.Contains("enum=System.Int32"));
-		Assert.That(lines, Has.Some.Contains("`1[[").And.StartsWith("T "));
+		Assert.That(lines, Has.Some.StartsWith("T ").And.Contains("`1@System.Private.CoreLib["));
 		Assert.That(lines, Has.None.Contains("!bad"));
 		// Resolution across the closure, including netstandard's forwarders into the runtime.
 		Assert.That(lines, Has.Some.Matches(@"base=\[System\.Object@[^?|\]]"));
@@ -206,7 +256,7 @@ public class TypeSystemListingEqualityTests
 		Assert.That(typeLines.Count(l => l[l.IndexOf(" base=")..].Contains("@?")), Is.LessThan(typeLines.Count / 10));
 		Assert.That(lines, Has.Some.StartsWith("R ").And.Contains(" method=06"));
 		Assert.That(lines, Has.Some.StartsWith("R ").And.Contains(" field=04"));
-		Assert.That(lines, Has.Some.StartsWith("R ").And.Contains("`1[[").And.Contains("@System."));
+		Assert.That(lines, Has.Some.StartsWith("R ").And.Contains("`1@").And.Contains("[System."));
 		Assert.That(lines, Has.Some.StartsWith("S ").And.Not.Contains("targs=[]"));
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(" kind=Constructor "));
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(" kind=Accessor "));

@@ -487,10 +487,45 @@ Upstream behavior mirrored deliberately, because the oracle decides:
 
 Not ported yet: constructors of `ComImport` interfaces, which the managed code takes from the
 `CoClassAttribute` type; the engine reports `Unsupported` there. No corpus image reaches it;
-item 4e (custom attribute values) provides what it needs.
+item 4f (custom attribute values) provides what it needs.
 
 Measured at item 4c: the same 3,442 images pass with one more line per MemberRef and per
 MethodSpec row.
+
+### 3.11 Type attribute semantics (item 4d)
+
+`typesystem/attrs.rs` ports `ApplyAttributeTypeVisitor`. The design point that forced a
+restructuring: the dynamic attribute's index counts custom modifiers, so modifiers must still
+be present when the visitor runs. Decoding is therefore two-stage like the managed code:
+`from_sig_raw` is `TypeProvider` (modifiers kept as `TypeData::Modified`), and the visitor
+runs only where the managed code calls `ApplyAttributesToType`, with the same attribute
+source, options and nullable context at each site: base types and interface implementations
+(the type's or the InterfaceImpl's attributes, oblivious context), fields, method parameters
+and return types (return parameter attributes, then a property's own attributes overriding
+them), events, constraints, declaring types of member references (no dynamic, tuple, nullable
+or native-int semantics on the type itself, but applied to its type arguments), fake members
+and method specification arguments (no attributes). Member lookup still compares the raw
+signature, normalized. The vararg types of a call site stay raw, modifiers included, as in
+`VarArgInstanceMethod`.
+
+Per entity, `OptionsForEntity` drops nullability below the module's `NullablePublicOnly`
+threshold using effective accessibility (intersected through enclosing types); properties and
+events use their declaring type, as the managed code does to avoid recursion. Nullable
+contexts follow `NullableContextAttribute` from method to type to enclosing type to module.
+
+The effective `TypeSystemOptions` come from the host: `DecompilerTypeSystem` removes
+`NativeIntegersWithoutAttribute` below net7 after detecting the target framework, which is
+host policy like the reference closure (section 3.8).
+
+Two specialization details that only nullability makes visible: a generic method specialized
+by its class alone gets fresh type parameters of its own, and substituting a `T!` by such a
+parameter drops the `!` (only `T?` survives), because `TypeParameterSubstitution` always
+replaces an annotated type parameter whose owner kind it covers.
+
+The listing now prints types structurally (tuple element names, nullability marks, function
+pointer calling convention, custom conventions, ref-readonly return and parameter ref kinds)
+and runs twice. Measured at item 4d: `TypeSystemListingEquality` under `None` and under
+`Default` both pass for the 3,442 images.
 
 ## 4. Alternatives evaluated
 

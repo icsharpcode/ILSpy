@@ -219,7 +219,8 @@ fn targets(raw: &[i32]) -> Vec<Option<ModuleId>> {
 }
 
 /// Debug export for the shim's `TypeSystemListingEquality` test: the type-system listing
-/// (`typesystem::listing`) of module 0 of the given compilation, as UTF-8 in `*out`.
+/// (`typesystem::listing`) of module 0 of the given compilation under `TypeSystemOptions`
+/// `options`, as UTF-8 in `*out`.
 ///
 /// # Safety
 /// `modules` must point to `count` valid `FfiModule`s whose pointers are valid for the call;
@@ -228,6 +229,7 @@ fn targets(raw: &[i32]) -> Vec<Option<ModuleId>> {
 pub unsafe extern "C" fn ilspy_debug_type_listing(
     modules: *const FfiModule,
     count: usize,
+    options: u32,
     out: *mut Buf,
 ) -> Status {
     // SAFETY: the caller guarantees `out` is writable.
@@ -249,7 +251,7 @@ pub unsafe extern "C" fn ilspy_debug_type_listing(
                 }
             })
             .collect();
-        let comp = Compilation::new(inputs).map_err(|e| e.to_string())?;
+        let comp = Compilation::new(inputs, options).map_err(|e| e.to_string())?;
         Ok(ilspy_decompiler::typesystem::listing::listing(&comp).into_bytes())
     }) {
         Ok(bytes) => {
