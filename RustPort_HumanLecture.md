@@ -554,6 +554,31 @@ The listing gains one line per CustomAttribute row with the fixed and named argu
 Measured at item 4f: `TypeSystemListingEquality` under `None` and `Default` pass for the 3,442
 images, and the CoClass fixture equals the managed listing.
 
+### 3.13 Ported unit suites and options per module (item 4g)
+
+The managed `TypeSystemLoaderTests` and `ReflectionHelperTests` move to `cargo test`, so the
+Rust type system has unit coverage that runs without .NET. They read the same fixtures: the
+legacy reference assemblies from the `ILSpy-tests` submodule and the compiled
+`ICSharpCode.Decompiler.Tests.dll`, located by `tests/common` (environment overrides, then the
+default paths, failing with the path when a fixture is missing). `typeof(X)` becomes the
+reflection name of `X`.
+
+The loader fixture gives the test assembly `TypeSystemOptions.Default` and `mscorlib`
+`Default | OnlyPublicAPI`, so options are per module now, as on `MetadataModule`: every read
+names the module of the entity it serves. `OnlyPublicAPI` filters a type's fields, methods,
+properties (by a visible accessor) and events (by a visible adder), which also changes what
+member references resolve to. The FFI still applies one value to every module, as
+`DecompilerTypeSystem` does. One read keeps the main module's options: whether a function
+pointer type acts as `UIntPtr` depends on the module that created it, which the interned
+type does not record.
+
+The loader suite asserts much more than the listing covers: attribute lists with
+pseudo-attributes, virtual/override modifiers and explicit implementations, member lookup
+through base and parameterized types, and the specialization API with specialized type
+parameters. It is therefore ported alongside those features (4h-4k), and each adds its facts
+to the listing so the corpus checks them as well. At item 4g: 44 reflection tests and the
+first 12 loader tests pass.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

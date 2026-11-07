@@ -32,6 +32,8 @@ pub struct ModuleInput<'a> {
     pub assembly_refs: Vec<Option<ModuleId>>,
     /// For each ModuleRef row, the module it resolves to.
     pub module_refs: Vec<Option<ModuleId>>,
+    /// The module's `TypeSystemOptions`.
+    pub options: u32,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -76,6 +78,7 @@ pub struct Module<'a> {
     pub assembly_name: String,
     assembly_refs: Vec<Option<ModuleId>>,
     module_refs: Vec<Option<ModuleId>>,
+    pub options: u32,
     type_defs: OnceLock<Vec<Result<TypeDefInfo>>>,
     top_level: OnceLock<HashMap<TopLevelTypeName, u32>>,
     forwarders: OnceLock<HashMap<FullTypeName, u32>>,
@@ -84,8 +87,6 @@ pub struct Module<'a> {
 
 pub struct Compilation<'a> {
     modules: Vec<Module<'a>>,
-    /// `TypeSystemOptions` of every module (the host applies them uniformly).
-    pub options: u32,
 }
 
 const TYPE_ATTR_INTERFACE: u32 = 0x20;
@@ -94,7 +95,7 @@ const FIELD_ATTR_STATIC: u16 = 0x10;
 
 impl<'a> Compilation<'a> {
     /// Module 0 is the main module.
-    pub fn new(inputs: Vec<ModuleInput<'a>>, options: u32) -> Result<Self> {
+    pub fn new(inputs: Vec<ModuleInput<'a>>) -> Result<Self> {
         let modules = inputs
             .into_iter()
             .map(|input| {
@@ -103,6 +104,7 @@ impl<'a> Compilation<'a> {
                     assembly_name: input.assembly_name,
                     assembly_refs: input.assembly_refs,
                     module_refs: input.module_refs,
+                    options: input.options,
                     type_defs: OnceLock::new(),
                     top_level: OnceLock::new(),
                     forwarders: OnceLock::new(),
@@ -110,7 +112,14 @@ impl<'a> Compilation<'a> {
                 })
             })
             .collect::<Result<_>>()?;
-        Ok(Self { modules, options })
+        Ok(Self { modules })
+    }
+
+    /// `MetadataModule.IsVisible`: everything, or with `OnlyPublicAPI` only public, protected
+    /// and protected-internal members (`access` is the member access mask of the flags).
+    pub fn is_visible(&self, module: ModuleId, access: u16) -> bool {
+        self.module(module).options & super::options::ONLY_PUBLIC_API == 0
+            || matches!(access & 0x7, 4..=6)
     }
 
     pub fn module(&self, id: ModuleId) -> &Module<'a> {
@@ -174,6 +183,52 @@ impl<'a> Compilation<'a> {
                 })
                 .collect()
         })
+    }
+
+    /// Whether a MethodDef row passes the `ITypeDefinition.Methods` visibility filter
+    /// (accessors are excluded separately).
+    pub fn is_visible_method(&self, module: ModuleId, row: u32) -> bool {
+        row != 0
+            && self
+                .module(module)
+                .md
+                .get::<rows::MethodDef>(row)
+                .is_ok_and(|m| self.is_visible(module, m.flags))
+    }
+
+    /// The Field rows of `ITypeDefinition.Fields`.
+    pub fn visible_fields(&self, def: TypeDefId) -> Result<Vec<u32>> {
+        let md = &self.module(def.module).md;
+        let mut result = Vec::new();
+        for row in md.type_fields(def.row)? {
+            if self.is_visible(def.module, md.get::<rows::Field>(row)?.flags) {
+                result.push(row);
+            }
+        }
+        Ok(result)
+    }
+
+    /// The Property rows of `ITypeDefinition.Properties`: those with a visible accessor.
+    pub fn visible_properties(&self, def: TypeDefId) -> Result<Vec<u32>> {
+        let md = &self.module(def.module).md;
+        Ok(md
+            .type_properties(def.row)?
+            .into_iter()
+            .filter(|&p| {
+                let (get, set, _) = md.property_accessors(p);
+                self.is_visible_method(def.module, get) || self.is_visible_method(def.module, set)
+            })
+            .collect())
+    }
+
+    /// The Event rows of `ITypeDefinition.Events`: those with a visible adder.
+    pub fn visible_events(&self, def: TypeDefId) -> Result<Vec<u32>> {
+        let md = &self.module(def.module).md;
+        Ok(md
+            .type_events(def.row)?
+            .into_iter()
+            .filter(|&e| self.is_visible_method(def.module, md.event_accessors(e).0))
+            .collect())
     }
 
     /// The first module whose simple assembly name equals `name`, ignoring case. The host

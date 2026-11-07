@@ -140,9 +140,9 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         }
     }
 
-    /// The compilation's `TypeSystemOptions`.
-    pub fn options(&self) -> u32 {
-        self.comp.options
+    /// The `TypeSystemOptions` of `module`.
+    pub fn options(&self, module: ModuleId) -> u32 {
+        self.comp.module(module).options
     }
 
     pub fn intern(&mut self, data: TypeData) -> TypeId {
@@ -307,7 +307,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         token: u32,
         ctx: GenericContext,
     ) -> Result<TypeId> {
-        let options = self.options();
+        let options = self.options(module);
         self.resolve_token_with(
             module,
             token,
@@ -326,7 +326,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         token: u32,
         ctx: GenericContext,
     ) -> Result<TypeId> {
-        let options = self.options();
+        let options = self.options(module);
         let removed = options::DYNAMIC
             | options::TUPLE
             | options::NULLABILITY
@@ -463,7 +463,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         ctx: GenericContext,
     ) -> Result<TypeId> {
         let raw = self.from_sig_raw(module, sig, ctx)?;
-        let options = self.options();
+        let options = self.options(module);
         self.apply_attributes(
             raw,
             module,
@@ -480,7 +480,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         let md = &comp.module(def.module).md;
         let info = comp.type_def(def)?;
         let ctx = self.type_context(Some(def));
-        let options = self.options();
+        let options = self.options(def.module);
         let t = md.get::<rows::TypeDef>(def.row)?;
         let mut bases = Vec::new();
         let base = match t.extends.token() {
@@ -528,10 +528,14 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::Tuple { underlying, .. } => self.definition(*underlying),
             // Without TypeSystemOptions.FunctionPointers a function pointer acts as an alias
             // for UIntPtr; function_pointer resolves UIntPtr whenever it creates one.
-            TypeData::FnPtr(_) if self.options() & options::FUNCTION_POINTERS == 0 => self
-                .known
-                .get(&KnownTypeCode::UIntPtr)
-                .and_then(|&t| self.definition(t)),
+            // shortcut: reads the main module's options where the managed type reads those of
+            // the module that created it; upgrade if modules ever get different
+            // FunctionPointers settings outside tests.
+            TypeData::FnPtr(_) if self.options(ModuleId(0)) & options::FUNCTION_POINTERS == 0 => {
+                self.known
+                    .get(&KnownTypeCode::UIntPtr)
+                    .and_then(|&t| self.definition(t))
+            }
             _ => None,
         }
     }

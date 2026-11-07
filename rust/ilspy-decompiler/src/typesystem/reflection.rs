@@ -1,11 +1,12 @@
-//! `ReflectionHelper.ParseReflectionName`: a serialized type name resolved in a module's
-//! context (no current type or member, so `` `0 `` and ``` ``0 ``` are dummy parameters).
+//! `ReflectionHelper.ParseReflectionName`: a serialized type name resolved in a resolve context.
+//! `` `n `` and ``` ``n ``` name the current type's or method's type parameters, and dummy
+//! parameters outside them.
 
 use crate::metadata::{Error, Result};
 
 use super::names::{FullTypeName, TopLevelTypeName, split_type_parameter_count};
 use super::typename::{self, TypeName};
-use super::types::{Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
+use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
 
 /// `new TopLevelTypeName(reflectionName)`.
 pub fn top_level_from_reflection(name: &str) -> TopLevelTypeName {
@@ -50,13 +51,19 @@ fn parse_int(s: &str) -> Option<i64> {
 impl TypeSystem<'_, '_> {
     /// `ReflectionHelper.ParseReflectionName(name, new SimpleTypeResolveContext(module))`.
     pub fn parse_reflection_name(&mut self, name: &str) -> Result<TypeId> {
-        let parsed = typename::parse(name).ok_or(Error::Malformed("invalid type name"))?;
-        self.resolve_type_name(&parsed)
+        self.parse_reflection_name_in(name, GenericContext::default())
     }
 
-    fn resolve_type_name(&mut self, t: &TypeName) -> Result<TypeId> {
+    /// `ReflectionHelper.ParseReflectionName` with the current type definition and method of
+    /// `ctx` (`new SimpleTypeResolveContext(entity)`).
+    pub fn parse_reflection_name_in(&mut self, name: &str, ctx: GenericContext) -> Result<TypeId> {
+        let parsed = typename::parse(name).ok_or(Error::Malformed("invalid type name"))?;
+        self.resolve_type_name(&parsed, ctx)
+    }
+
+    fn resolve_type_name(&mut self, t: &TypeName, ctx: GenericContext) -> Result<TypeId> {
         if t.is_array() {
-            let elem = self.resolve_type_name(t.element_type())?;
+            let elem = self.resolve_type_name(t.element_type(), ctx)?;
             return Ok(self.intern(TypeData::Array {
                 elem,
                 rank: t.array_rank(),
@@ -64,11 +71,11 @@ impl TypeSystem<'_, '_> {
             }));
         }
         if t.is_by_ref() {
-            let e = self.resolve_type_name(t.element_type())?;
+            let e = self.resolve_type_name(t.element_type(), ctx)?;
             return Ok(self.intern(TypeData::ByRef(e)));
         }
         if t.is_constructed_generic() {
-            let generic = self.resolve_type_name(t.generic_definition())?;
+            let generic = self.resolve_type_name(t.generic_definition(), ctx)?;
             let tpc = self.type_parameter_count(generic) as usize;
             if tpc == 0 {
                 return Ok(generic);
@@ -79,12 +86,12 @@ impl TypeSystem<'_, '_> {
             let args = t
                 .generic_args()
                 .iter()
-                .map(|a| self.resolve_type_name(a))
+                .map(|a| self.resolve_type_name(a, ctx))
                 .collect::<Result<Box<[_]>>>()?;
             return Ok(self.intern(TypeData::Inst { generic, args }));
         }
         if t.is_nested() {
-            let declaring = self.resolve_type_name(t.declaring_type())?;
+            let declaring = self.resolve_type_name(t.declaring_type(), ctx)?;
             let name = t.name();
             let (plain, tpc) = split_type_parameter_count(&name);
             if let Some(decl) = self.definition(declaring) {
@@ -104,19 +111,24 @@ impl TypeSystem<'_, '_> {
             }));
         }
         if t.is_pointer() {
-            let e = self.resolve_type_name(t.element_type())?;
+            let e = self.resolve_type_name(t.element_type(), ctx)?;
             return Ok(self.intern(TypeData::Pointer(e)));
         }
         let full = t.full_name();
         if full.len() > 1 && full.starts_with('`') {
-            let (owner, digits) = if full.len() > 2 && full[1..].starts_with('`') {
-                (TypeParamOwner::DummyMethod, &full[2..])
-            } else {
-                (TypeParamOwner::DummyType, &full[1..])
-            };
+            let is_method = full.len() > 2 && full[1..].starts_with('`');
+            let digits = if is_method { &full[2..] } else { &full[1..] };
             if let Some(index) = parse_int(digits) {
                 let index = u32::try_from(index)
                     .map_err(|_| Error::Malformed("negative type parameter index"))?;
+                let owner = match (is_method, ctx.class, ctx.method) {
+                    (true, _, Some((m, count))) if index < count => TypeParamOwner::Method(m),
+                    (true, _, _) => TypeParamOwner::DummyMethod,
+                    (false, Some((def, count)), _) if index < count => {
+                        self.class_param_owner(def, index)
+                    }
+                    (false, _, _) => TypeParamOwner::DummyType,
+                };
                 return Ok(self.intern(TypeData::TypeParam { owner, index }));
             }
         }

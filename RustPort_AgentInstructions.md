@@ -170,7 +170,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     run `./restore.ps1` again before `./build.ps1 -Configuration Debug --no-restore`, or the
     Debug build fails with CS1061 `WithDeveloperTools`.
 
-- **4. Type system.** Size L, split into 4a-4g (one commit each, each with its own gate) so
+- **4. Type system.** Size L, split into 4a-4k (one commit each, each with its own gate) so
   the week of work lands in reviewable pieces. Scope for all of them: interned `TypeId`,
   `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`, `EventId`, `ModuleId`; `TypeData` enum;
   lazy per-`TypeDef` decoding; substitution; base types and inheritance; known types;
@@ -228,9 +228,31 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     decoded values equal SRM's `DecodeValue` (via the managed type provider) for every
     attribute of every corpus image; then `CoClassAttribute` constructors (4c), tested on a
     `MetadataBuilder` fixture because no compiler emits such a reference.
-  - [ ] **4g. Ported unit suites.** `TypeSystemLoaderTests` (144) and `ReflectionHelperTests`
-    (46) as `cargo test` against the same fixture assemblies (the compiled
-    `ICSharpCode.Decompiler.Tests.dll` and the legacy reference `mscorlib`).
+  - The unit suites `TypeSystemLoaderTests` (143 tests, against the compiled
+    `ICSharpCode.Decompiler.Tests.dll` with the legacy `mscorlib`) and `ReflectionHelperTests`
+    (45) are ported to `cargo test` (`rust/ilspy-decompiler/tests/`). The loader suite asserts
+    facts beyond the listing (attribute lists, inheritance, member lookup on parameterized
+    types), so it lands with the features in 4g-4k; each of those adds its facts to the
+    listing as well, so the corpus equality covers them too.
+  - [x] **4g. Fixture harness, options per module, ReflectionHelperTests.** Subject: `Port ReflectionHelperTests to the Rust type system`.
+    `TypeSystemOptions` per module (the loader fixture gives `mscorlib` `OnlyPublicAPI`),
+    the `OnlyPublicAPI` member filter, parse contexts for `` `n `` / ``` ``n ```, the
+    cargo fixture harness (`tests/common`), `ReflectionHelperTests` (all but the null-input
+    test, which a `&str` cannot express) and the loader tests the current API expresses.
+  - [ ] **4h. Attribute lists.** `AttributeListBuilder` with the pseudo-attributes
+    (Serializable, ComImport, SpecialName, StructLayout, DllImport, PreserveSig, MethodImpl,
+    FieldOffset, NonSerialized, MarshalAs, In/Out, ...), the option-dependent ignore list,
+    `HasAttribute`/`GetAttribute(KnownAttribute)`, return-type, parameter and type parameter
+    attributes; listing line per entity; the loader tests on attributes.
+  - [ ] **4i. Member modifiers and inheritance.** `IsVirtual`/`IsOverride`/`IsOverridable`/
+    `IsSealed`/`IsAbstract` for methods, properties and events, property and event
+    accessibility, indexers (`DefaultMemberAttribute`), explicit interface implementations
+    (MethodImpl table), `GetAllBaseTypes`; listing; the loader tests on them.
+  - [ ] **4j. Member lookup.** `GetMembersHelper` (`GetMethods`/`GetProperties`/`GetFields`/
+    `GetEvents`/`GetNestedTypes`/`GetConstructors` on definitions and parameterized types,
+    through base types), `GetDelegateInvokeMethod`; the loader tests on them.
+  - [ ] **4k. Specialization API.** `Specialize` with composed substitutions, specialized type
+    parameters owned by the specialized method, member equality; the remaining loader tests.
 
 ### Phase 2: ILAst in Rust, seam 1
 
@@ -360,7 +382,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     Namespace, Operator, Dynamic*, Lambda, Tuple, ByReference, This); entity references as
     `(module id, token, generic argument list)`; a `TypeRef` tree.
   - Also from 4e: `ExtensionInfo` (C# 14 extension blocks, `TypeSystemOptions.ExtensionMembers`),
-    which the AST builders consult.
+    which the AST builders consult, with its loader test `ExtensionEverything`.
   - Shim: `Interop/AstMaterializer.cs` resolves entity references through
     `MetadataModule.ResolveEntity` and `Specialize`, builds the link-compiled `SyntaxTree`.
   - Seam 2 block: request-level; caller transforms positioned before the built-in list are

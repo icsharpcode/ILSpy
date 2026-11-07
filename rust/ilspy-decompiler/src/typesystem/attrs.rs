@@ -548,7 +548,7 @@ impl TypeSystem<'_, '_> {
     /// `MetadataModule.OptionsForEntity`: nullability is dropped for entities less accessible
     /// than the module's `NullablePublicOnly` threshold. `None` stands for a null entity.
     pub fn options_for_entity(&self, module: ModuleId, effective_accessibility: Option<u8>) -> u32 {
-        let options = self.options();
+        let options = self.options(module);
         if options & options::NULLABILITY == 0 {
             return options;
         }

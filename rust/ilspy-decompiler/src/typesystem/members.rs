@@ -384,7 +384,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             None => self.options_for_entity(module, None),
             Some(def) => {
                 let Ok(info) = self.comp.type_def(def) else {
-                    return self.options();
+                    return self.options(module);
                 };
                 let outer = (info.declaring != 0).then_some(TypeDefId {
                     module: def.module,
@@ -442,7 +442,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 }
                 _ => (GenericContext::default(), Nullability::Oblivious),
             };
-            let options = self.options();
+            let options = self.options(module);
             let mut constraints = Vec::new();
             let mut has_non_interface = false;
             for c in md.generic_param_constraints(source_row) {
@@ -546,7 +546,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 nullable,
                 false,
             )?;
-            params.push(self.parameter(md, row, &p, ty)?);
+            params.push(self.parameter(module, md, row, &p, ty)?);
         }
         while params.len() < required {
             let ty = self.apply_attributes(
@@ -595,12 +595,13 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
 
     fn parameter(
         &self,
+        module: ModuleId,
         md: &Metadata<'_>,
         row: u32,
         p: &rows::Param,
         ty: TypeId,
     ) -> Result<ParamInfo> {
-        let options = self.options();
+        let options = self.options(module);
         let has =
             |name: &str| has_known_attribute(md, TableId::Param, row, COMPILER_SERVICES, name);
         let ref_kind = if !matches!(self.data(ty), TypeData::ByRef(_)) {
@@ -837,7 +838,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
     /// `MetadataField.IsDecimalConstant` together with `AllowsDecimalConstants`.
     fn field_decimal_constant(&self, module: ModuleId, row: u32) -> bool {
         let md = &self.comp.module(module).md;
-        self.options() & options::DECIMAL_CONSTANTS != 0
+        self.options(module) & options::DECIMAL_CONSTANTS != 0
             && md
                 .get::<rows::Field>(row)
                 .is_ok_and(|f| f.flags & 0x0030 == 0x0030)
@@ -961,7 +962,7 @@ impl TypeSystem<'_, '_> {
         let md = &self.comp.module(m.module).md;
         let (Ok(def), Ok(declaring)) = (md.get::<rows::MethodDef>(m.row), self.method_declaring(m))
         else {
-            return self.options();
+            return self.options(m.module);
         };
         self.member_options(m.module, method_accessibility(def.flags), declaring)
     }

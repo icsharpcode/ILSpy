@@ -248,10 +248,11 @@ pub unsafe extern "C" fn ilspy_debug_type_listing(
                     .into_owned(),
                     assembly_refs: targets(slice(m.assembly_refs, m.assembly_ref_count)),
                     module_refs: targets(slice(m.module_refs, m.module_ref_count)),
+                    options,
                 }
             })
             .collect();
-        let comp = Compilation::new(inputs, options).map_err(|e| e.to_string())?;
+        let comp = Compilation::new(inputs).map_err(|e| e.to_string())?;
         Ok(ilspy_decompiler::typesystem::listing::listing(&comp).into_bytes())
     }) {
         Ok(bytes) => {

@@ -94,7 +94,7 @@ impl TypeSystem<'_, '_> {
         let Ok(info) = self.comp.type_def(def) else {
             return TypeFlags::default();
         };
-        let opts = self.options();
+        let opts = self.options(def.module);
         let is_static = info.flags & 0x0180 == 0x0180;
         let is_struct = info.kind == TypeKind::Struct;
         TypeFlags {
@@ -153,7 +153,7 @@ impl TypeSystem<'_, '_> {
     pub fn method_flags(&mut self, m: MethodDefId, accessor_owner: Option<u32>) -> MethodFlags {
         let comp = self.comp;
         let md = &comp.module(m.module).md;
-        let opts = self.options();
+        let opts = self.options(m.module);
         let Ok(def) = md.get::<rows::MethodDef>(m.row) else {
             return MethodFlags {
                 extension: false,
@@ -244,7 +244,7 @@ impl TypeSystem<'_, '_> {
         let owner_options = match owner {
             TypeParamOwner::Type(def) => self.type_options_of(def),
             TypeParamOwner::Method(m) => self.method_options_of(m),
-            _ => self.options(),
+            _ => self.options(module),
         };
         if owner_options & options::NULLABILITY == 0 {
             return Nullability::Oblivious;

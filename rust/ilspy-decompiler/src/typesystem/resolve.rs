@@ -210,7 +210,10 @@ impl TypeSystem<'_, '_> {
 
     /// `TypeDefinition.Methods`: non-accessor methods in row order, plus the implicit
     /// constructor of a struct or enum without a parameterless one.
-    fn definition_methods(&mut self, def: TypeDefId) -> Result<Vec<(ResolvedMethod, SymbolKind)>> {
+    pub fn definition_methods(
+        &mut self,
+        def: TypeDefId,
+    ) -> Result<Vec<(ResolvedMethod, SymbolKind)>> {
         let md = &self.comp.module(def.module).md;
         let info = self.comp.type_def(def)?;
         let kind = info.kind;
@@ -221,7 +224,7 @@ impl TypeSystem<'_, '_> {
                 module: def.module,
                 row,
             };
-            if self.accessor_owner(m).is_some() {
+            if self.accessor_owner(m).is_some() || !self.comp.is_visible_method(def.module, row) {
                 continue;
             }
             let symbol = self.method_symbol_kind(m, None)?;
@@ -277,11 +280,8 @@ impl TypeSystem<'_, '_> {
                     .and_then(|m| ts.comp.module(def.module).md.string(m.name))
                     .is_ok_and(|n| n == name)
         };
-        for p in md.type_properties(def.row)? {
+        for p in self.comp.visible_properties(def)? {
             let (get, set, _) = md.property_accessors(p);
-            if get == 0 && set == 0 {
-                continue;
-            }
             for row in [get, set] {
                 if named(self, row) {
                     result.push(Some(self.method_definition(MethodDefId {
@@ -291,11 +291,8 @@ impl TypeSystem<'_, '_> {
                 }
             }
         }
-        for e in md.type_events(def.row)? {
+        for e in self.comp.visible_events(def)? {
             let (add, remove, raise, _) = md.event_accessors(e);
-            if add == 0 {
-                continue;
-            }
             for row in [add, remove] {
                 if named(self, row) {
                     result.push(Some(self.method_definition(MethodDefId {
@@ -322,7 +319,12 @@ impl TypeSystem<'_, '_> {
     }
 
     /// `ITypeDefinition.GetConstructors()`: instance constructors; for a ComImport interface,
-    /// those of its CoClass re-declared by the interface (`busy` guards CoClass cycles).
+    /// those of its CoClass re-declared by the interface.
+    pub fn definition_constructors(&mut self, def: TypeDefId) -> Result<Vec<ResolvedMethod>> {
+        self.constructors(def, &mut Vec::new())
+    }
+
+    /// `definition_constructors`, with `busy` guarding CoClass cycles.
     fn constructors(
         &mut self,
         def: TypeDefId,
@@ -412,7 +414,7 @@ impl TypeSystem<'_, '_> {
             return Ok(None);
         }
         let candidates: Vec<Option<ResolvedMethod>> = if name == ".ctor" {
-            self.constructors(def, &mut Vec::new())?
+            self.definition_constructors(def)?
                 .into_iter()
                 .map(Some)
                 .collect()
@@ -491,7 +493,7 @@ impl TypeSystem<'_, '_> {
         };
         // ApplyAttributesAndSubstitutionToType: attribute semantics without attributes, then the
         // substitution.
-        let options = self.options();
+        let options = self.options(module);
         let apply = |ts: &mut Self, t: TypeId| {
             let t = ts
                 .apply_attributes(
@@ -704,7 +706,7 @@ impl TypeSystem<'_, '_> {
             && self.comp.type_def(def)?.kind != TypeKind::Void
         {
             let fmd = &comp.module(def.module).md;
-            for f in fmd.type_fields(def.row)? {
+            for f in comp.visible_fields(def)? {
                 let frow = fmd.get::<rows::Field>(f)?;
                 if fmd.string(frow.name)? != name {
                     continue;
@@ -732,7 +734,7 @@ impl TypeSystem<'_, '_> {
                 }
             }
         }
-        let options = self.options();
+        let options = self.options(module);
         let ty = self.apply_attributes(
             field_type,
             module,
@@ -750,7 +752,7 @@ impl TypeSystem<'_, '_> {
         })
     }
 
-    fn intern_def(&mut self, def: TypeDefId) -> TypeId {
+    pub fn intern_def(&mut self, def: TypeDefId) -> TypeId {
         self.intern(TypeData::Def(def))
     }
 }
