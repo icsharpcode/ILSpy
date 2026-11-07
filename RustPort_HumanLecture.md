@@ -1,0 +1,521 @@
+# Porting ICSharpCode.Decompiler to Rust: architecture and plan
+
+Audience: senior developers who know ILSpy's decompiler pipeline and are comfortable with
+Rust. This document records what was found when the port was planned, which instructions of
+the original brief survived contact with the code base, the decisions taken, the architecture
+that follows from them, and the plan. `RustPort_AgentInstructions.md` holds the executable
+checklist. Both files are living documents: the agent performing the port updates them with
+every step.
+
+## 1. The brief, and what the code base says about it
+
+The brief asked for:
+
+1. an idiomatic Rust port of `ICSharpCode.Decompiler`;
+2. a C# shim project that keeps the public surface and namespaces so that callers only switch
+   a project reference;
+3. `ICSharpCode.Decompiler.Tests` as the oracle, with ideally only its project reference
+   changed;
+4. no edits to `ICSharpCode.Decompiler`, `ICSharpCode.ILSpyCmd`,
+   `ICSharpCode.Decompiler.PowerShell`, `ILSpy.AddIn.VS2022`;
+5. the UI chain re-pointed to the shim so ILSpy runs on the port at the end;
+6. Rust-idiomatic data structures, with algorithm changes allowed;
+7. every instruction challenged.
+
+Instruction 7 was taken literally. Instructions 2, 3 and 4 do not survive unchanged.
+
+### 1.1 Size and shape of the library
+
+| Area | Lines | Notes |
+|---|---|---|
+| IL/Transforms | 26,040 | about 60 transforms in 39 top-level pipeline entries |
+| CSharp (ExpressionBuilder, StatementBuilder, CallBuilder, CSharpDecompiler) | 17,544 | IL AST to C# AST |
+| CSharp/Syntax | 15,717 | 138 node kinds, generator-emitted match/visitor/slot code |
+| IL (reader, variables, generated Instructions.cs) | 14,259 | 108 ILAst instruction kinds from a T4 template |
+| IL/ControlFlow | 11,418 | loops, conditions, switches, state machines |
+| TypeSystem + Implementation | 20,311 | the type system the UI browses with |
+| CSharp/Resolver | 9,524 | conversions, overload resolution, type inference |
+| IL/Instructions (hand-written halves) | 9,149 | |
+| CSharp/Transforms | 7,509 | 16 AST transforms |
+| CSharp/OutputVisitor | 7,308 | printing, token writers |
+| Util, Metadata (+LightJson), Disassembler, Semantics, ProjectDecompiler, Documentation, FlowAnalysis, DebugInfo, Output, Solution, Humanizer, DebugSteps | about 33,000 | |
+| **Total** | **174,763** | 583 files, netstandard2.0, about 760 public types |
+
+The library's only runtime dependencies are `System.Reflection.Metadata` (SRM) and
+`System.Collections.Immutable`. SRM is not an implementation detail: `MetadataFile.Metadata`
+returns a `MetadataReader`, `PEFile.Reader` a `PEReader`, `IEntity.MetadataToken` an
+`EntityHandle`, and `MetadataModule.Resolve*` take handles. Any "same public surface" promise
+therefore includes SRM objects.
+
+### 1.2 How the oracle uses the API
+
+`ICSharpCode.Decompiler.Tests` has two very different halves.
+
+About 308 test cases are **text oracles**: Pretty (132), ILPretty (73), Correctness (45), Ugly
+(19), VBPretty (18), Disassembler (7), Roundtrip (14). All of them go through
+`Helpers/Tester.cs` (`DecompileCSharp`, line 1048): `new PEFile`, `UniversalAssemblyResolver`,
+`new DecompilerTypeSystem(module, resolver, settings)`, `new CSharpDecompiler(typeSystem,
+settings)`, three test-defined `IAstTransform`s inserted at index 0 of `AstTransforms`,
+`DecompileWholeModuleAsSingleFile(sortTypes: true)`, then `CSharpOutputVisitor`. PdbGen (37)
+adds `PortablePdbWriter` on top of the same path.
+
+About 1,550 test cases are **API tests** on the object model: `TypeSystemLoaderTests` (144),
+`ReflectionHelperTests` (46), the Semantics suites on `CSharpResolver` and `CSharpConversions`
+(285), `IdStringProviderTests` (239), `CSharpAmbience` and `ILAmbience` (210),
+`InsertParenthesesVisitor`, `PatternMatching` (20), Trivia, `DataFlowTest` (builds an
+`ILFunction` by hand), `DebugStepRecordingTests` (custom `IILTransform`, `Stepper`),
+ProjectDecompiler (82), Metadata (35), Util (73). The library grants `InternalsVisibleTo` to
+this test project and to `ILSpy.Tests`. The tests also reference `ICSharpCode.ILSpyX` for
+`DebugInfoUtils`.
+
+So "only change the project reference" is only true for the text half if the shim exposes the
+full, internals-visible object model. It is true for the whole suite only if that object model
+is the real C# one.
+
+### 1.3 How the UI uses the API
+
+Every consumer walks and extends the object model:
+
+- `Output/TextTokenWriter.cs` (line 120 on) reads `GetSymbol()`, `ResolveResult` annotations,
+  `NewObj` and `DynamicInvokeConstructorInstruction` annotations off AST nodes to emit
+  navigable references. The UI's `CSharpHighlightingTokenWriter` and
+  `BookmarkDebugInfoCollector` subclass `DecoratingTokenWriter`; the latter reads
+  `ILInstruction` annotations and walks to the owning `ILFunction`.
+- `ILSpy/Languages/CSharpLanguage.cs` implements `IAstTransform` twice (select a single
+  constructor or field out of a decompiled type) and subclasses `WholeProjectDecompiler`.
+- `SequencePointBuilder` and `DebugInfo/PortablePdbWriter.cs` read `BlockContainer`
+  annotations, `ILFunction.Method`, `MoveNextMethod`, variables and their state machine fields.
+- The Debug Steps pane uses `Stepper`, `RecordSteps`, `StepLimit` and ILAst text dumps.
+- `ICSharpCode.ILSpyX.LoadedAssembly` implements `IAssemblyResolver`; images come from
+  bundles, packages and streams, not only from files. `PortableDebugInfoProvider` and
+  `MonoCecilDebugInfoProvider` implement `IDebugInfoProvider`.
+- `ICSharpCode.BamlDecompiler` implements `IDecompilerTypeSystem`, `IModule` and
+  `ITypeDefinition` synthetically and runs
+  `function.RunTransforms(CSharpDecompiler.GetILTransforms(), context)` on its own
+  `ILFunction` (`Rewrite/ConnectionIdRewritePass.cs:191`).
+- `ILSpy/Options/DecompilerSettingsViewModel.cs:49` reflects over `DecompilerSettings`
+  properties and their `[Description]`/`[Category]` attributes.
+- `MetadataFile` appears in 95 UI files and 44 ILSpyX files; analyzers and search strategies
+  are written against `ITypeDefinition` and `IMethod`.
+
+### 1.4 The cliff hidden in instruction 4
+
+`ICSharpCode.ILSpyCmd/ICSharpCode.ILSpyCmd.csproj` (lines 95-97) references `ICSharpCode.ILSpyX`,
+`ICSharpCode.Decompiler` and `ICSharpCode.BamlDecompiler` directly. If ILSpyX or BamlDecompiler
+switch to a shim that defines the same namespaces, ilspycmd sees every decompiler type twice and
+fails with CS0433. "Do not touch ilspycmd" and "re-point ILSpyX" cannot both hold.
+
+### 1.5 Rust ecosystem
+
+There is no Rust IL-to-C# decompiler to build on. ECMA-335 readers exist only as pre-1.0 crates
+(`dotnetdll`, `clrmeta`, `windows-metadata`); none carries signature semantics, generic
+instantiation, attribute semantics or portable PDB support at the level the decompiler needs.
+Binding generators (`csbindgen`, `interoptopus`, `uniffi-bindgen-cs`) exist but the C ABI
+surface here is nine functions. The NuGet convention for native assets is
+`runtimes/<rid>/native/`.
+
+## 2. Challenges to the brief and the decisions taken
+
+| Instruction | Finding | Decision |
+|---|---|---|
+| Shim keeps the public surface | A proxy over FFI would have to reproduce about 760 types with identity semantics, mutable trees, callbacks in both directions, SRM handles and internals visible to tests. That is a second implementation, not a shim. | The shim **link-compiles the original sources** (no copies, no edits) and forks exactly one file, `CSharp/CSharpDecompiler.cs`, to insert two seams. The public surface is kept because it is the original code. |
+| Only switch the test project reference | True once the shim is the original code plus seams. The API half of the suite then tests the link-compiled C# layers, not Rust. | Accept and say so. The Rust crate gets `cargo test` ports of the semantic suites (type system loader, reflection helper, conversions, type inference, overload resolution). The text half is the oracle for the engine. |
+| Do not touch ilspycmd | Impossible together with re-pointing ILSpyX (CS0433). Alternatives: link-compiled twin projects `ICSharpCode.ILSpyX.Rust` / `ICSharpCode.BamlDecompiler.Rust` with distinct assembly names, or relaxing the guardrail. | **Human decision: relax the guardrail.** Only the three `ProjectReference` lines in ilspycmd's csproj change. ilspycmd, its tests and its RID packages then run on the engine too, which adds `ICSharpCode.ILSpyCmd.Tests` as a second oracle. PowerShell and the AOT gate stay on the original. |
+| Port ICSharpCode.Decompiler (all of it) | The UI is a .NET application; it needs a managed metadata reader and type system for tree nodes, analyzers, search and the metadata tables view regardless. Everything downstream of the AST (output visitor, token writers, PDB writer, project and solution writers, Debug Steps, BamlDecompiler's IL pass) walks managed objects. Porting those buys the UI nothing and forces an FFI object model. | **Human decision: engine only.** Rust owns IL reader, ILAst, IL transforms, semantics, C# AST construction and AST transforms, with its own internal metadata reader and type system. The browsing layers, output visitor, PDB, project/solution writers, documentation, Debug Steps, disassembler and BamlDecompiler's IL pass stay C#. |
+| Progress visible per commit | A big-bang port keeps the .NET suite unchanged for months. | **Human decision: incremental two-seam fallback** with a committed ratchet, one transform per commit, the full suite green at every commit. |
+| Names: `libicsdecompiler`, `ICSharpCode.DecompilerLib` | Cargo adds the `lib` prefix itself; crate names are kebab-case; the engine's NuGet title is "ILSpy Decompiler Engine". | **Human decision:** crates `ilspy-decompiler` and `ilspy-decompiler-ffi` (cdylib `ilspy_decompiler_ffi`), shim `ICSharpCode.Decompiler.Rust`, tests `ICSharpCode.Decompiler.Rust.Tests`. |
+| Rust-idiomatic data structures, algorithms may change | Agreed, with one constraint: the pipeline shape (ordered transforms, block driver, statement driver with rerun) is what the transforms assume and what the differential oracle keys on. | Idiomatic internals, same pipeline shape. Algorithm divergences are allowed when the text oracle passes and are recorded in an allowlist. |
+
+## 3. Architecture
+
+### 3.1 The shim: link-compiled original plus one forked file
+
+`ICSharpCode.Decompiler.Rust.csproj` is a clone of the original csproj (netstandard2.0,
+generator analyzer reference, strong-name key, `ReferenceAssemblyAnnotator` plus the
+`Microsoft.NETCore.App.Ref` download for nullability, `STEP` and overflow checks in Debug,
+`WarningsAsErrors=nullable`, same `RuntimeIdentifiers`, locked restore) whose compile items are
+`..\ICSharpCode.Decompiler\**\*.cs` minus `bin`, `obj`, `CSharp\CSharpDecompiler.cs`,
+`Properties\AssemblyInfo.cs` (its attributes name the original) and the version-info template.
+`Properties\DecompilerVersionInfo.cs` is generated into the original's folder by its build and
+is gitignored; the shim links it and takes a `ProjectReference` with
+`ReferenceOutputAssembly="false"` on the original purely for build ordering.
+
+Why netstandard2.0 and not net10: the sources define `System.Index` and several
+`System.Diagnostics.CodeAnalysis` attributes unguarded (`Util/Index.cs`, `NRTAttributes.cs`,
+`TrimAttributes.cs`). On a .NET Core target those are CS0436 and, with warnings as errors,
+fatal.
+
+`CSharp/CSharpDecompiler.cs` is the only diverging copy. It is `public class`, not partial, and
+the original must not change, so the shim carries its own copy with two marked blocks:
+`RUST-SEAM-1` around `function.RunTransforms(...)` (line 2440 of the original) and
+`RUST-SEAM-2` around the AST transform loop. A shim test strips the marked blocks and asserts
+byte equality with the original file, so upstream changes to `CSharpDecompiler.cs` show up as
+a red test rather than a silent fork.
+
+Consequence to accept: the shim assembly carries the same namespaces as the original. Nothing
+in the repository loads both into one process after the reference switch, but a third-party
+ILSpy plugin compiled against the `ICSharpCode.Decompiler` NuGet would load a second identity
+into the UI and its `IAstTransform` or `ITextOutput` implementations would fail with an
+invalid cast. This is documented and accepted; the alternative (type forwarding) fails with
+CS0433 as soon as the original is on the same reference path.
+
+### 3.2 Two seams and an honest fallback
+
+The managed pipeline per method is: `ILReader` -> `ILFunction` -> `RunTransforms(IL
+transforms)` -> `StatementBuilder.ConvertAsBlock` -> C# AST; then per request: AST transforms
+-> caller transforms -> output visitor. The engine replaces this from the front, prefix by
+prefix.
+
+**Seam 1 (per method body).** The shim asks the engine for the ILAst of a method after the
+first `N` IL transforms, materializes it into link-compiled `ILFunction` objects, and runs
+the managed transforms from `N` on. IL transforms are effectively pure in the method and its
+module (the only `DecompileRun` use in `IL/` is a pass-through in `YieldReturnDecompiler`, plus
+`UsingScope` for name lookup), so a prefix handover is sound. A per-method `Unsupported`
+answer falls back to the managed reader and transforms for that method and is counted. An
+`Error` or `Panic` answer lands in the existing per-member error path, so the output shows the
+usual `Error decompiling @06000xxx ...` comment with the Rust message and backtrace.
+
+**Seam 2 (per request).** After the statement builder, the engine returns the C# AST after the
+first `K` AST transforms; the shim materializes it and runs managed transforms `K+1..16`, then
+the caller's transforms, then whatever the caller does with the `SyntaxTree`. AST transforms
+need the whole annotated tree, so member-level mixing is impossible here and fallback is per
+`Decompile*` call. One ordering hazard: `Tester.cs` inserts its three transforms at index 0,
+before `IntroduceUsingDeclarations`; running them after the engine's built-ins changes the
+`using` output. Rule: early caller transforms are matched by type name against a small
+recognized set that becomes engine flags; any other early transform forces managed fallback
+for the request. Requests with `RecordSteps` set (the Debug Steps pane) always run managed.
+
+**Ratchet.** `rust/port-status.json` records `il_prefix`, `ast_prefix` and the share of
+methods the engine served in the last oracle run. A shim test fails when a run measures less
+than the committed values. `ILSPY_RUST_STRICT=1` disables fallback entirely; the final state
+runs strict by default.
+
+### 3.3 Wire format and materializers
+
+The decision that shapes everything: **the engine does not return text.** A token stream was
+considered and rejected because every public entry point returns a `SyntaxTree` and every
+consumer walks it (section 1.3). The payload is (i) the ILAst of a function and (ii) the C#
+AST with its annotations. The shim materializes both into the link-compiled object model, and
+everything downstream (output visitor, UI token writers, bookmarks, sequence points, PDB
+writer, caller transforms) runs unchanged. `CSharpOutputVisitor` is therefore not ported: a
+Rust printer would have no consumer, since the UI needs `TokenWriter` callbacks with
+`AstNode` arguments.
+
+Format: hand-rolled length-prefixed binary with varints, a string table and a version header.
+Not FlatBuffers (a third toolchain on CI), not JSON (whole-module ASTs are tens of megabytes).
+Version 1 carries `ILFunction`, variables and all node kinds. Version 2 adds the AST, the
+`ResolveResult` variants that the AST transforms and `TextTokenWriter` consult (Member,
+Invocation, Local, Conversion, MethodGroup, Constant, Type, Namespace, Operator, the dynamic
+variants, Lambda, Tuple, ByReference, This; everything else collapses to a typed result),
+annotations (IL node id, variable id, let-identifier, implicit return, initializer markers),
+entity references as `(module id, metadata token, generic argument list)` and a small `TypeRef`
+tree (Def, Inst, Array, Pointer, ByRef, FnPtr, TypeParam, Tuple, Modified, Special). The
+materializer resolves entity references through `MetadataModule.ResolveEntity` and
+`Specialize(TypeParameterSubstitution)`. Two hand-maintained kind enumerations (Rust and C#)
+with a test asserting the lists match.
+
+### 3.4 FFI contract
+
+Hand-written `extern "C"` in `ilspy-decompiler-ffi`, classic `[DllImport]` on the netstandard2.0
+shim, callbacks as `[UnmanagedFunctionPointer(Cdecl)]` delegates kept alive in the session
+object. No binding generator: nine declarations do not justify a toolchain.
+
+Exports: `ilspy_version`, `ilspy_session_new(host_callbacks*, ctx)`, `ilspy_session_free`,
+`ilspy_session_add_module(session, image_ptr, image_len, name) -> module_id`,
+`ilspy_decompile(session, request_ptr, request_len, out Buf) -> Status`, `ilspy_buf_free`,
+`ilspy_cancel(session, request_id)`, `ilspy_last_error(session)`, `ilspy_stats(session)`.
+
+Host callbacks: `resolve_assembly(ctx, module_id, assemblyref_row, out module_id)` returns
+image bytes, not a path, because ILSpyX images come from bundles and streams; the shim passes
+`PEReader.GetEntireImage()` pointer and length (zero copy, the `MetadataFile` keeps the image
+alive, the engine never frees inputs). `get_debug_info(ctx, module_id, method_token, kind,
+out Buf)` bridges the five-member `IDebugInfoProvider`, so the engine needs no PDB reader and
+ILSpyX's Mono.Cecil provider for Windows PDBs keeps working.
+
+Threading and cancellation: `Session: Send + Sync`, immutable module data behind a read lock,
+per-request arenas, an `Arc<AtomicBool>` per request polled where the managed code calls
+`ThrowIfCancellationRequested`, wired to `CancellationToken.Register`.
+
+Memory: engine-allocated output buffers that the shim copies into a `byte[]` and frees
+immediately; callback outputs pinned by the shim for the duration of the call and copied by
+the engine.
+
+Errors: `catch_unwind` in every export, `panic = "unwind"`, a panic hook that captures a
+backtrace. `Status { Ok, Unsupported, Cancelled, Error, Panic }` maps to fallback,
+`OperationCanceledException`, and `DecompilerException` wrapping a `RustEngineException`, so
+`CSharpDecompiler.GetErrorHeadline` keeps its format.
+
+Settings: the shim reflects over `DecompilerSettings` into name/value pairs; the engine rejects
+unknown names so a new setting cannot be silently ignored.
+
+### 3.5 Rust internals
+
+```
+rust/
+  Cargo.toml  Cargo.lock  (rust-toolchain.toml lives at the repository root)
+  ilspy-decompiler/src/
+    metadata/    pe, tables, heaps, coded_index, signature, custom_attribute, il_body
+    typesystem/  types, entities, resolve, known, substitution, inheritance, attributes
+    il/          reader, ast, variable, slot, flags, visit, write
+                 control_flow/ (cfg, dominance, loop_detection, condition_detection, switch_*, exits)
+                 transforms/   (one file per transform)
+    semantics/   resolve_result, conversions, overload_resolution, type_inference, member_lookup
+    csharp/      ast/, expression_builder, call_builder, statement_builder, translated_expression,
+                 transforms/ (one file per transform), decompiler, settings
+    wire/        writer, ilast, ast, request
+    session.rs
+  ilspy-decompiler-ffi/src/lib.rs
+```
+
+**Metadata reader.** Own implementation of tables, heaps, coded indices, signature and custom
+attribute blobs, method bodies with exception handlers and the minimal PE needed to find them.
+Pre-decoding in C# and shipping a decoded type system across the boundary was weighed and
+rejected: that serializer would be larger than the reader, and the engine needs lazy access to
+attributes, nested types, constraints and overload sets across all referenced assemblies.
+
+**Type system.** Interned ids (`TypeId`, `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`,
+`EventId`, `ModuleId`) so that structural `IType.Equals` becomes `==` and ids are `Copy`.
+
+```rust
+pub enum TypeData {
+    Def(TypeDefId),
+    Param { owner: TypeParamOwner, index: u16 },
+    Inst { generic: TypeId, args: Box<[TypeId]> },
+    Array { elem: TypeId, rank: u8 }, Pointer(TypeId), ByRef(TypeId),
+    FnPtr(Box<FnPtrSig>), Modified { ty: TypeId, modifier: TypeId, required: bool },
+    Tuple { elems: Box<[TypeId]>, names: Option<Box<[Option<Arc<str>>]>> },
+    Nullable { ty: TypeId, nullability: Nullability },
+    Special(SpecialType),
+}
+```
+
+Members of a `TypeDef` are decoded lazily once (`OnceLock`); specialized members are interned
+`(definition, substitution)` pairs, the counterpart of `SpecializedMethod`.
+
+**ILAst.** One arena per top-level method; nested lambdas and local functions are ordinary
+nodes in the same arena, because `DelegateConstruction` and `LocalFunctionDecompiler` move
+instructions between functions and that must be a parent update, not a cross-arena copy.
+
+```rust
+pub struct Function { nodes: Vec<Node>, vars: Vec<Variable>, root: NodeId, method: MethodId, generation: u32 }
+pub struct Node { inst: Inst, parent: Option<NodeId>, slot: SlotId, index: u32, il_range: Interval, flags: Cell<Option<Flags>> }
+pub enum Inst { /* 108 variants generated by a declarative macro from one table */ }
+
+impl Function {
+    pub fn alloc(&mut self, inst: Inst) -> NodeId;
+    pub fn replace(&mut self, old: NodeId, new: NodeId);        // ILInstruction.ReplaceWith
+    pub fn set_child(&mut self, parent: NodeId, slot: SlotId, index: u32, child: NodeId);
+    pub fn detach(&mut self, id: NodeId);
+    pub fn insert_in_block(&mut self, block: NodeId, pos: usize, inst: NodeId);
+    pub fn remove_from_block(&mut self, block: NodeId, pos: usize) -> NodeId;
+    pub fn descendants_post(&self, id: NodeId) -> Vec<NodeId>;   // snapshot, like Descendants
+    pub fn flags(&self, id: NodeId) -> Flags;                    // cached, generation-invalidated
+}
+```
+
+Variable load, store and address counts are maintained centrally in `set_child` and `detach`,
+which is where the C# code does it (`SetChildInstruction` to `ILVariable.AddLoadInstruction`).
+Pattern helpers are free functions (`match_stloc(f, id) -> Option<(VarId, NodeId)>`). The
+pipeline shape is preserved: `IlTransform`, a post-order `BlockTransform` driver over a CFG
+indexed by block id, and a `StatementTransform` driver with rerun. `context.Step(...)` becomes
+a `tracing` event or nothing; `Stepper` is not ported.
+
+**C# AST.** Same arena idea with roles, one struct per node kind, child ids, a generic
+`children()` for the serializer, annotations in a side table. `CSharp/Syntax/PatternMatching`
+(Backreference, Choice, Repeat) is not ported; `PatternStatementTransform` gets hand-written
+matchers, and the 20 pattern-matching tests keep running against the link-compiled C#.
+
+**Semantics.** `ResolveResult` is an immutable enum. Conversions, overload resolution and type
+inference are pure specification algorithms over the type system and port 1:1.
+
+**Where plain trees are fine.** Decoded signatures before interning, `LongSet`, `Interval`,
+switch labels, `Conversion`, `ResolveResult`, custom attribute values and `FullTypeName` are
+ordinary `Box` or `Rc` values. `Rc<RefCell>` only for per-request caches, never inside the two
+trees.
+
+### 3.6 Oracle and differential tooling
+
+- The text half of `ICSharpCode.Decompiler.Tests` runs unchanged through the shim (reference
+  switch only). `ICSharpCode.ILSpyCmd.Tests` becomes a second text oracle once ilspycmd is
+  re-pointed.
+- ILAst equality per transform prefix needs no Rust printer: the shim materializes the engine's
+  ILAst and calls the link-compiled `ILFunction.WriteTo` on both sides, one printer, no format
+  drift. `ilspycmd --ilast --after-transform` cannot stop inside the `BlockILTransform` and
+  `StatementTransform` groups, so the shim's harness builds truncated group instances to give
+  nested transforms their own prefix index.
+- Where the engine legitimately diverges (allowed by the brief), the divergence goes into
+  `rust/ilast-divergence-allowlist.json` with transform, fixture, method and reason; the text
+  oracle decides. Dump diffing stops once the IL phase runs strict; after that only the text
+  oracle and the `decompdiff` corpus matter.
+- API-level tests keep running against the link-compiled C#. They are honest about what they
+  test. The engine gets `cargo test` ports of the type system loader, reflection helper,
+  conversion, type inference and overload resolution suites.
+
+## 4. Alternatives evaluated
+
+| Option | Pros | Cons | Outcome |
+|---|---|---|---|
+| Full public-API proxy over FFI | Literal reading of the brief | about 760 types; identity and mutability; callbacks both ways; SRM handles in signatures; internals visible to tests; chatty FFI | Rejected |
+| Engine returns text or a token stream | Smallest FFI payload; no materializer | Every entry point returns `SyntaxTree`; `TextTokenWriter`, bookmarks, PDB writer, caller transforms all walk the tree | Rejected |
+| Type-forwarding shim over the original | No duplicated code | CS0433 as soon as the original and the shim meet on one reference path (ilspycmd) | Rejected |
+| Link-compiled shim with one forked file | No copies, no edits, full surface, internals, red test on drift | Same namespaces as the original; plugin identity hazard | **Chosen** |
+| Twin projects for ILSpyX and BamlDecompiler | Guardrail intact, no process loads both | Two more csproj files; ilspycmd never sees the engine | Rejected by the human in favor of relaxing the guardrail |
+| Big-bang port, flip at the end | Simpler shim, no intermediate materializers | .NET suite unchanged for months; progress visible only in Rust test counts | Rejected |
+| Incremental two-seam fallback with ratchet | Suite green at every commit; per-transform gates; honest metric | Materializers needed early; one forked file to keep in sync | **Chosen** |
+| Pre-1.0 Rust metadata crates | Less code | No signature semantics, generics, attributes, PDB; unmaintained risk | Rejected, own reader |
+| Pre-decode metadata in C#, ship to Rust | Smaller Rust scope | Serializer larger than a reader; lazy cross-assembly access impossible | Rejected |
+| Portable PDB reader in Rust | Self-contained engine | about 1k lines for nothing the UI cannot already provide; Windows PDBs via Mono.Cecil would be lost | Rejected, callback |
+| Binding generators (csbindgen, interoptopus, uniffi) | Less typing | Toolchain for nine functions; uniffi brings its own runtime | Rejected |
+| FlatBuffers or JSON wire format | Tooling | Third toolchain on CI; JSON too large for whole-module ASTs | Rejected, hand-rolled binary |
+| net10 shim | Modern target | Unguarded polyfills in the sources become CS0436 under warnings-as-errors | Rejected, netstandard2.0 |
+
+## 5. Plan and sizes
+
+The checklist in `RustPort_AgentInstructions.md` has 89 items in five phases. Sizes are
+relative (S under a day of agent work, M a few days, L about a week, the IL transform phase
+as a whole is multi-week).
+
+1. **Scaffolding** (items 1-2): shim, reference switch, Rust workspace, FFI handshake. The
+   first commit alone proves that link-compiling and the reference switch keep the whole
+   repository green on managed code.
+2. **Metadata and type system** (3-4): own reader, interned type system, ported unit tests.
+3. **ILAst and seam 1** (5-66): IL reader, wire v1, materializer, seam at `N = 0`, then one
+   transform per commit in pipeline order with ILAst prefix equality plus the text oracle as
+   gate, a human review of accepted divergences after `ConditionDetection`, strict mode at
+   the end.
+4. **Semantics, AST and seam 2** (67-85): resolver and conversions, AST builders, wire v2,
+   materializer, seam at `K = 0`, one AST transform per commit, strict mode at the end.
+5. **UI, CI, performance** (86-89): UI smoke pass, CI and packaging, measurements, and a
+   human decision on the optional tail (disassembler, output visitor, Rust PDB reader and
+   resolver, project decompiler).
+
+Things that stay managed on purpose: the browsing type system and metadata layer, output
+visitor and token writers, disassembler, PDB reader and writer, project and solution writers,
+documentation, Debug Steps, BamlDecompiler's connection-id pass, `AddXmlDocumentationTransform`.
+
+## 6. Bonus: performance comparison methodology
+
+Goal: CPU and memory of `ICSharpCode.Decompiler` versus `ICSharpCode.Decompiler.Rust` on the
+same inputs, with the engine's own cost separated from marshaling and materialization.
+
+- **Two-build harness.** `TestTools/decompdiff.cs` already loads two decompiler builds in
+  separate `AssemblyLoadContext`s and drives `CSharpDecompiler(string, DecompilerSettings)`
+  plus `DecompileTypeAsString` by full type name, so it works with `--new
+  <path>\ICSharpCode.Decompiler.Rust.dll` as is (always pass the dll path; its checkout mode
+  only knows the original csproj). Native library probing from an ALC-loaded assembly is
+  unverified; if default probing fails, add a `LoadUnmanagedDll` override in its load context.
+  Extend it with `--perf` (per-type `Stopwatch`, `GC.GetTotalAllocatedBytes(precise: true)`
+  delta, `Process.PeakWorkingSet64` per side, written to `perf.json` and a column in the
+  report) and `--side old|new` so each side runs in its own process (JIT warm-up and GC
+  interference otherwise poison the numbers). Warm up on the first assembly and discard it,
+  run with `-j 1` for timing.
+- **Rust heap.** Managed allocation counters do not see the Rust heap, so peak RSS is the
+  memory number that matters, plus a counting global allocator in the ffi crate exposed via
+  `ilspy_stats` (bytes allocated, peak live).
+- **Marshaling cost.** The response header carries `rust_elapsed_ns`; the shim measures wall
+  clock around `ilspy_decompile` plus materialization and reports the difference as marshaling
+  and materialization, with bytes per request. If that exceeds roughly 20 percent of end to
+  end, it is the first thing to optimize (string table reuse, pre-sized node lists).
+- **Allocation attribution.** `TestTools/allocview.cs` works unchanged (its area table keys on
+  the `ICSharpCode.Decompiler.*` namespace prefixes the shim keeps); add a prefix for the
+  shim's interop namespace so materializer allocations get their own area.
+- **Engine-side.** `criterion` benches under `rust/ilspy-decompiler/benches/` per stage
+  (metadata load, type system warm-up, IL read, each transform, expression building,
+  serialization) over the three inputs the AOT gate uses (`ICSharpCode.Decompiler.dll`,
+  `System.Reflection.Metadata.dll` 9.0.0, one net10 assembly); baselines committed as numbers
+  in this document, not as files.
+- **Report.** CPU as P50, P95 and total per corpus; memory as peak RSS and Rust peak live;
+  three runs, median; inputs: the three reference assemblies and the top-200 NuGet corpus from
+  `TestTools/nuget-top.ps1`.
+
+Results (to be filled in by item 88):
+
+| Input | Managed CPU total | Engine CPU total | Marshaling share | Managed peak RSS | Engine peak RSS | Rust peak live |
+|---|---|---|---|---|---|---|
+| ICSharpCode.Decompiler.dll | | | | | | |
+| System.Reflection.Metadata.dll | | | | | | |
+| net10 reference assembly | | | | | | |
+| top-200 NuGet corpus | | | | | | |
+
+## 7. Bonus: CI so the main build action passes
+
+Minimal changes to `.github/workflows/build-ilspy.yml` (and nothing else in CI):
+
+- `rust-toolchain.toml` at the repository root, not under `rust/`: rustup resolves it upward
+  from the working directory, and the MSBuild `Exec` runs from the shim's directory. Pinned
+  stable channel, components `rustfmt` and `clippy`. Targets are added per job.
+- After `setup-dotnet` in every job: `actions-rust-lang/setup-rust-toolchain@v1` (reads the
+  toolchain file, wraps `rust-cache` keyed on `rust/Cargo.lock`, `cache-workspaces: rust`)
+  with targets: Windows `x86_64-pc-windows-msvc` and `aarch64-pc-windows-msvc` (ARM64 MSVC
+  linking on the `windows-2025-vs2026` image is unverified; if absent, the VS ARM64 build tools
+  component is needed for the win-arm64 cross publish); Linux `x86_64-unknown-linux-gnu` and
+  `aarch64-unknown-linux-gnu` with `gcc-aarch64-linux-gnu` installed and
+  `rust/.cargo/config.toml` naming `aarch64-linux-gnu-gcc` as linker; macOS
+  `aarch64-apple-darwin` (host). Then `cargo fmt --check`, `cargo clippy --all-targets --
+  -D warnings`, `cargo test` in `rust/` before `dotnet build`, so Rust failures fail fast.
+- MSBuild: the shim's `BuildRustEngine` target maps `$(RuntimeIdentifier)` to a triple (empty
+  means host), builds with profile `release` for Debug and `ship` for Release, copies the
+  cdylib to `$(OutDir)` and registers it as `None` with `CopyToOutputDirectory` and
+  `CopyToPublishDirectory`, so `publish.ps1`'s `dotnet publish -r <rid>` directories carry it
+  and the zip, WiX harvest (`ILSpy.Installer/setup.cs` harvests `*.dll` from the publish
+  folder), deb, rpm, AppImage and the macOS bundle target pick it up unchanged. Whether the RID
+  global property reaches the shim through a `ProjectReference` on `dotnet publish -r` is
+  unverified; test locally with `-r win-arm64` during item 87. The macOS dylib may need code
+  signing alongside the app bundle.
+- `BuildTools/ILSpy-x64.msi.filelist` lines 43-45 (`ICSharpCode.BamlDecompiler.dll`,
+  `ICSharpCode.Decompiler.dll`, `ICSharpCode.ILSpyX.dll`) change: the decompiler entry becomes
+  the shim and `ilspy_decompiler_ffi.dll` joins the list. Regenerate with
+  `BuildTools/create-filelists.ps1`; the Debug job gates on `git diff --exit-code`. The VSIX
+  file list may change too because the VSIX embeds the ILSpy distribution; unverified, check
+  the first CI run.
+- `.gitignore` gets `rust/target/`; `rust/Cargo.lock` is committed (this builds a binary
+  artifact). The unanchored `bin/` pattern would hide a Rust `src/bin/` directory; the engine
+  has none.
+- The pre-commit hook runs `dotnet format whitespace` over `ILSpy.slnx`; it is C#-only and
+  unaffected, and it covers the shim's own `.cs` files because the shim is in the solution.
+- `dotnet test --solution ILSpy.slnx` picks the shim test project up automatically; the Linux
+  job's explicit `dotnet test --project` lines need one more line for it.
+- Because the human relaxed the ilspycmd guardrail, the `IlspyCmdRidPackages` job and the
+  `Pack NuGets` step (ILSpyX and BamlDecompiler now depend on the shim package) must carry the
+  native assets under `runtimes/<rid>/native/`. The `DecompilerAotGate` stays on the original
+  and is unchanged. The PowerShell cmdlets stay on the original and are unchanged.
+
+## 8. Risks
+
+- **Materializer fidelity is load-bearing.** The whole incremental plan rests on the ILAst and
+  AST materializers reaching full annotation fidelity. If that stalls, member-level mixing
+  collapses to request-level fallback and the ratchet stops moving. Mitigation: the equality
+  harnesses (`WriteTo` for ILAst, end-to-end output for AST) are built before any transform is
+  ported and run over every fixture method.
+- **Allowed divergence can hide drift.** The allowlist makes algorithm changes legal; the human
+  review after `ConditionDetection` (item 32) is there to keep it from becoming a dumping
+  ground.
+- **One forked file.** `CSharpDecompiler.cs` in the shim must track upstream; the drift test
+  turns that into a visible failure, but someone has to merge.
+- **Plugin identity.** Third-party plugins built against the `ICSharpCode.Decompiler` package
+  load a second identity into the UI.
+- **Unverified build facts**: ARM64 MSVC linker on the CI image, RID flow into the shim on
+  `dotnet publish -r`, native probing for ALC-loaded assemblies in `decompdiff`, the VSIX file
+  list, macOS code signing of the dylib.
+- **Scale.** About 140k of the 175k lines describe behavior that is in scope for Rust (IL, control flow, transforms,
+  builders, syntax, resolver, semantics, metadata, type system). The per-transform cadence is
+  what keeps that reviewable.
+
+## 9. Sources
+
+- Repository facts: `ICSharpCode.Decompiler/CSharp/CSharpDecompiler.cs` (pipelines at lines
+  89 and 271, seams at 2440 and 2457), `ICSharpCode.Decompiler/Output/TextTokenWriter.cs`,
+  `ICSharpCode.Decompiler/IL/Instructions/ILInstruction.cs`,
+  `ICSharpCode.Decompiler.Tests/Helpers/Tester.cs`,
+  `ICSharpCode.ILSpyCmd/ICSharpCode.ILSpyCmd.csproj`, `.github/workflows/build-ilspy.yml`,
+  `BuildTools/ILSpy-x64.msi.filelist`, `TestTools/README.md`,
+  `ICSharpCode.Decompiler.AotTest/README.md`.
+- Rust ECMA-335 crates: https://docs.rs/dotnetdll/latest/dotnetdll/ ,
+  https://github.com/coconutbird/clrmeta , https://crates.io/crates/windows-metadata
+- C# binding generators: https://docs.rs/crate/interoptopus_csharp/latest ,
+  https://github.com/mozilla/cbindgen/issues/846 (csbindgen discussion)
+- Native NuGet packaging pattern (`runtimes/<rid>/native` from a cargo matrix build):
+  https://docs.rs/crate/rustwright-core/latest/source/.github/workflows/release-nuget.yml ,
+  https://www.nuget.org/packages/ManifoldRust
+- Existing Rust wrapper that hosts the managed decompiler rather than porting it:
+  https://www.skills.sh/akiselev/ghidra-cli/ilspy-cli
