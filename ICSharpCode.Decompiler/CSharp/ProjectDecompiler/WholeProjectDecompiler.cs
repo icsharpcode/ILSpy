@@ -696,6 +696,10 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 		/// </summary>
 		string ReserveResourceFileName(string fileName)
 		{
+			// Keep exported resources from being treated as build inputs merely because of their names.
+			if (IsReadByBuildTools(fileName))
+				fileName = AppendInertExtension(fileName);
+
 			if (!resourceFileNames.TryGetValue(fileName, out int lastSuffix))
 			{
 				resourceFileNames.Add(fileName, 1);
@@ -713,6 +717,48 @@ namespace ICSharpCode.Decompiler.CSharp.ProjectDecompiler
 			resourceFileNames[fileName] = lastSuffix;
 			resourceFileNames.Add(candidate, 1);
 			return candidate;
+		}
+
+		static bool IsReadByBuildTools(string fileName)
+		{
+			try
+			{
+				fileName = fileName.Normalize(NormalizationForm.FormKC);
+			}
+			catch (ArgumentException)
+			{
+				// Do not let malformed Unicode bypass the build-file protection.
+				return true;
+			}
+			string[] segments = fileName.Split(Path.DirectorySeparatorChar);
+			if (segments.Length > 1 && segments[0].TrimEnd('.').Equals("obj", StringComparison.OrdinalIgnoreCase))
+				return true;
+			string name = segments[segments.Length - 1].TrimEnd('.');
+			if (name.Equals("global.json", StringComparison.OrdinalIgnoreCase)
+				|| name.Equals("nuget.config", StringComparison.OrdinalIgnoreCase)
+				|| name.Equals("omnisharp.json", StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+			string extension = Path.GetExtension(name);
+			return extension.Equals(".props", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".rsp", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".sln", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".slnf", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".slnx", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".targets", StringComparison.OrdinalIgnoreCase)
+				|| extension.Equals(".user", StringComparison.OrdinalIgnoreCase)
+				|| extension.EndsWith("proj", StringComparison.OrdinalIgnoreCase);
+		}
+
+		static string AppendInertExtension(string fileName)
+		{
+			const string extension = ".bin";
+			fileName = fileName.TrimEnd('.');
+			int overflow = SegmentLength(Path.GetFileName(fileName)) + SegmentLength(extension) - maxSegmentLength;
+			if (overflow > 0)
+				fileName = fileName.Substring(0, fileName.Length - overflow);
+			return fileName + extension;
 		}
 
 		/// <summary>
