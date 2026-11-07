@@ -11,10 +11,14 @@ use crate::metadata::tables::{TableId, rows};
 use crate::metadata::{Error, Result};
 
 use super::attrs::AttributeSource;
-use super::compilation::{ModuleId, TypeDefId, TypeKind};
+use super::attrvalue::ArgValue;
+use super::compilation::{ModuleId, TypeDefId, TypeKind, is_known_type_name};
 use super::known::KnownTypeCode;
 use super::members::{MethodDefId, SymbolKind};
 use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
+
+/// `TypeAttributes.Import`.
+const TYPE_ATTR_IMPORT: u32 = 0x1000;
 
 /// What a resolved method is an instance of.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -317,6 +321,83 @@ impl TypeSystem<'_, '_> {
         self.normalize(a) == self.normalize(b)
     }
 
+    /// `ITypeDefinition.GetConstructors()`: instance constructors; for a ComImport interface,
+    /// those of its CoClass re-declared by the interface (`busy` guards CoClass cycles).
+    fn constructors(
+        &mut self,
+        def: TypeDefId,
+        busy: &mut Vec<TypeDefId>,
+    ) -> Result<Vec<ResolvedMethod>> {
+        let info = self.comp.type_def(def)?;
+        if info.kind == TypeKind::Void {
+            return Ok(Vec::new());
+        }
+        if info.kind != TypeKind::Interface || info.flags & TYPE_ATTR_IMPORT == 0 {
+            return Ok(self
+                .definition_methods(def)?
+                .into_iter()
+                .filter(|(m, k)| *k == SymbolKind::Constructor && !m.is_static)
+                .map(|(m, _)| m)
+                .collect());
+        }
+        if busy.contains(&def) {
+            return Ok(Vec::new());
+        }
+        busy.push(def);
+        let coclass = self.coclass(def);
+        let ctors = match coclass.map(|t| self.data(t).clone()) {
+            Some(TypeData::Def(c)) => self.constructors(c, busy),
+            Some(TypeData::Inst { generic, args }) => match self.definition(generic) {
+                Some(c) => self.constructors(c, busy).map(|ctors| {
+                    ctors
+                        .into_iter()
+                        .map(|m| self.specialize(m, Some(args.to_vec()), None))
+                        .collect()
+                }),
+                None => Ok(Vec::new()),
+            },
+            // Unknown, array and other types have no constructors.
+            _ => Ok(Vec::new()),
+        };
+        busy.pop();
+        let declaring = self.intern(TypeData::Def(def));
+        Ok(ctors?
+            .into_iter()
+            .map(|mut m| {
+                m.declaring = Some(declaring);
+                m
+            })
+            .collect())
+    }
+
+    /// `ComHelper.GetCoClass`: the `Type` argument of the first `[CoClass]` on the type, `None`
+    /// when it is missing or cannot be decoded.
+    fn coclass(&mut self, def: TypeDefId) -> Option<TypeId> {
+        let md = &self.comp.module(def.module).md;
+        let row = md
+            .custom_attributes(TableId::TypeDef, def.row)
+            .into_iter()
+            .find(|&ca| {
+                md.attribute_type(ca).is_ok_and(|t| {
+                    is_known_type_name(
+                        md,
+                        t,
+                        "System.Runtime.InteropServices",
+                        "CoClassAttribute",
+                        0,
+                    )
+                })
+            })?;
+        let value = self.decode_attribute(def.module, row).ok()?;
+        match value.fixed.as_slice() {
+            [arg] => match arg.value {
+                ArgValue::Type(t) => Some(t),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     /// `MetadataModule.FindMethod` on a type definition.
     fn find_method(
         &mut self,
@@ -331,15 +412,9 @@ impl TypeSystem<'_, '_> {
             return Ok(None);
         }
         let candidates: Vec<Option<ResolvedMethod>> = if name == ".ctor" {
-            if info.kind == TypeKind::Interface && info.flags & 0x1000 != 0 {
-                return Err(Error::Unsupported(
-                    "constructors of a ComImport interface (CoClass)",
-                ));
-            }
-            self.definition_methods(def)?
+            self.constructors(def, &mut Vec::new())?
                 .into_iter()
-                .filter(|(m, k)| *k == SymbolKind::Constructor && !m.is_static)
-                .map(|(m, _)| Some(m))
+                .map(Some)
                 .collect()
         } else if name == ".cctor" {
             self.definition_methods(def)?

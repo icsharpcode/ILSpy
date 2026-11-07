@@ -527,6 +527,33 @@ pointer calling convention, custom conventions, ref-readonly return and paramete
 and runs twice. Measured at item 4d: `TypeSystemListingEquality` under `None` and under
 `Default` both pass for the 3,442 images.
 
+### 3.12 Custom attribute values (item 4f)
+
+The step 3 decoder (`metadata::custom_attribute`) resolves argument types by name, which is
+enough for metadata-level questions such as `RefSafetyRules(11)`. The decompiler's values come
+from `CustomAttribute.DecodeValue(module.TypeProvider)`, where the provider decides what an
+argument is: `System.Type` is recognized by its resolved definition, an enum argument's wire
+format is the primitive behind the resolved enum (`GetUnderlyingEnumType`, which throws when
+the enum cannot be resolved), and serialized type names go through
+`ReflectionHelper.ParseReflectionName`. `typesystem/attrvalue.rs` is therefore a second, exact
+port of SRM's `CustomAttributeDecoder` over `TypeId`s, including its quirks: `CLASS` and
+`VALUETYPE` read as a type handle, a generic attribute's type parameters are read from the
+parent `TypeSpec` (with `SkipType`'s recursive `CLASS` handling), tagged objects carry their
+actual type, and a count of -1 is a null array. `typename.rs` ports `TypeName.TryParse` (the
+SRM parser `ParseReflectionName` uses, node limit included) and `reflection.rs` the
+resolution: assembly-qualified names look in that module only, others in compilation order,
+with type forwarders followed and `` `n `` / ``` ``n ``` as dummy type parameters.
+
+`CoClassAttribute` constructors close the gap left in 4c: `new IFoo()` on a ComImport
+interface resolves to the constructors of the CoClass, re-declared by the interface, with a
+busy guard for an interface that names itself (or a cycle) as its CoClass. Compilers emit
+`newobj` on the CoClass directly, so the test builds its fixture with `MetadataBuilder`: a
+constructor reference whose parent is the interface.
+
+The listing gains one line per CustomAttribute row with the fixed and named arguments.
+Measured at item 4f: `TypeSystemListingEquality` under `None` and `Default` pass for the 3,442
+images, and the CoClass fixture equals the managed listing.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

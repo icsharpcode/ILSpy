@@ -163,6 +163,26 @@ impl<'a> Compilation<'a> {
         Ok(Some(def))
     }
 
+    /// `ITypeDefinition.NestedTypes`, in NestedClass table order.
+    pub fn nested_types(&self, outer: TypeDefId) -> Vec<TypeDefId> {
+        let m = self.module(outer.module);
+        m.nested().get(&outer.row).map_or_else(Vec::new, |rows| {
+            rows.iter()
+                .map(|&row| TypeDefId {
+                    module: outer.module,
+                    row,
+                })
+                .collect()
+        })
+    }
+
+    /// The first module whose simple assembly name equals `name`, ignoring case. The host
+    /// keeps one module per simple name, so this is also what full-name matching finds.
+    pub fn module_by_short_name(&self, name: &str) -> Option<ModuleId> {
+        self.module_ids()
+            .find(|&id| eq_ignore_case(&self.module(id).assembly_name, name))
+    }
+
     fn find_nested(&self, outer: TypeDefId, name: &str, tpc: u32) -> Result<Option<TypeDefId>> {
         let m = self.module(outer.module);
         for &row in m.nested().get(&outer.row).map_or(&[][..], Vec::as_slice) {

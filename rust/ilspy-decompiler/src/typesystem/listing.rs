@@ -26,6 +26,10 @@
 //!   fields through `ResolveEntity`). A method prints `method=<def tok|fake> decl=<type|->
 //!   name=<n> static=<0|1> targs=[...] ret=<type> params=[...] accessor=<semantics>`, a field
 //!   `field=<def tok|fake> decl=<type|-> name=<n> type=<type>`.
+//! - per CustomAttribute row: `A <tok> fixed=[<arg>|...] named=[<F|P>:<name>:<arg>|...]`, the
+//!   value `CustomAttribute.DecodeValue(module.TypeProvider)` returns; `<arg>` is
+//!   `<type>=<v>`, `<type>=T:<type>` for a `System.Type` value or `<type>=[<arg>|...]` for an
+//!   array.
 //!
 //! `<p>` is `<type>,<name>,<ref kind>,<optional 0|1>,<constant in signature 0|1>,<v>,
 //! <params 0|1>,<declared scope>,<unscoped ref 0|1>,<effective scope>`;
@@ -35,6 +39,7 @@
 
 use std::fmt::Write;
 
+use super::attrvalue::{ArgValue, AttributeValue, TypedArg};
 use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
 use super::flags::has_compiler_attribute;
 use super::members::{
@@ -122,6 +127,13 @@ pub fn listing(comp: &Compilation<'_>) -> String {
             resolved.map(|m| format!("S {} {m}", tok(t))),
         ));
     }
+    for row in 1..=md.tables.rows(TableId::CustomAttribute) {
+        let t = token(TableId::CustomAttribute, row);
+        let decoded = ts
+            .decode_attribute(main, row)
+            .map(|v| attribute_line(&ts, t, &v));
+        line(with_bad("A", t, decoded));
+    }
     out
 }
 
@@ -177,6 +189,50 @@ fn member_ref_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> R
         }
         _ => Err(crate::metadata::Error::Malformed("member reference kind")),
     }
+}
+
+fn attribute_line(ts: &TypeSystem<'_, '_>, t: u32, v: &AttributeValue) -> String {
+    let fixed: Vec<String> = v.fixed.iter().map(|a| attribute_argument(ts, a)).collect();
+    let named: Vec<String> = v
+        .named
+        .iter()
+        .map(|n| {
+            let kind = if n.is_field { 'F' } else { 'P' };
+            let name = n.name.as_deref().unwrap_or("");
+            format!("{kind}:{name}:{}", attribute_argument(ts, &n.arg))
+        })
+        .collect();
+    format!(
+        "A {} fixed=[{}] named=[{}]",
+        tok(t),
+        fixed.join("|"),
+        named.join("|")
+    )
+}
+
+fn attribute_argument(ts: &TypeSystem<'_, '_>, a: &TypedArg) -> String {
+    let v = match &a.value {
+        ArgValue::Null => "null".to_owned(),
+        ArgValue::Bool(b) => value(&ConstValue::Boolean(*b)),
+        ArgValue::Char(c) => value(&ConstValue::Char(*c)),
+        ArgValue::SByte(x) => value(&ConstValue::SByte(*x)),
+        ArgValue::Byte(x) => value(&ConstValue::Byte(*x)),
+        ArgValue::Int16(x) => value(&ConstValue::Int16(*x)),
+        ArgValue::UInt16(x) => value(&ConstValue::UInt16(*x)),
+        ArgValue::Int32(x) => value(&ConstValue::Int32(*x)),
+        ArgValue::UInt32(x) => value(&ConstValue::UInt32(*x)),
+        ArgValue::Int64(x) => value(&ConstValue::Int64(*x)),
+        ArgValue::UInt64(x) => value(&ConstValue::UInt64(*x)),
+        ArgValue::Single(bits) => value(&ConstValue::Single(*bits)),
+        ArgValue::Double(bits) => value(&ConstValue::Double(*bits)),
+        ArgValue::String(units) => value(&ConstValue::String(units.clone())),
+        ArgValue::Type(t) => format!("T:{}", located(ts, *t)),
+        ArgValue::Array(items) => {
+            let items: Vec<String> = items.iter().map(|i| attribute_argument(ts, i)).collect();
+            format!("[{}]", items.join("|"))
+        }
+    };
+    format!("{}={v}", located(ts, a.ty))
 }
 
 fn with_bad(kind: &str, t: u32, r: Result<String>) -> String {

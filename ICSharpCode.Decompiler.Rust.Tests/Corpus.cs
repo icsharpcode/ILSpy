@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Rust.Tests;
 /// </summary>
 static class Corpus
 {
-	static string TestCasesDirectory([CallerFilePath] string thisFile = "")
+	internal static string TestCasesDirectory([CallerFilePath] string thisFile = "")
 		=> Path.GetFullPath(Path.Combine(Path.GetDirectoryName(thisFile)!, "..", "ICSharpCode.Decompiler.Tests", "TestCases"));
 
 	static IEnumerable<string> Assemblies(string directory, SearchOption option)

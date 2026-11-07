@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
@@ -136,6 +138,13 @@ public class TypeSystemListingEqualityTests
 	static string FieldRef(IField f)
 		=> $"field={Origin(f)} decl={(f.DeclaringType == null ? "-" : Describe(f.DeclaringType))} name={f.Name} type={Describe(f.ReturnType)}";
 
+	static string AttributeArgument(IType type, object? value) => Describe(type) + "=" + value switch {
+		IType t => "T:" + Describe(t),
+		ImmutableArray<CustomAttributeTypedArgument<IType>> items
+			=> "[" + string.Join("|", items.Select(a => AttributeArgument(a.Type, a.Value))) + "]",
+		_ => Value(value),
+	};
+
 	static string Line(string kind, EntityHandle h, Func<string> f)
 	{
 		string line = S(f);
@@ -202,6 +211,15 @@ public class TypeSystemListingEqualityTests
 			var h = MetadataTokens.MethodSpecificationHandle(row);
 			Append(Line("S", h, () => $"S {Tok(h)} {MethodRef(module.ResolveMethod(h, default))}"));
 		}
+		for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.CustomAttribute); row++)
+		{
+			var h = MetadataTokens.CustomAttributeHandle(row);
+			Append(Line("A", h, () => {
+				var value = metadata.GetCustomAttribute(h).DecodeValue(module.TypeProvider);
+				var named = value.NamedArguments.Select(n => $"{(n.Kind == CustomAttributeNamedArgumentKind.Field ? "F" : "P")}:{n.Name}:{AttributeArgument(n.Type, n.Value)}");
+				return $"A {Tok(h)} fixed=[{string.Join("|", value.FixedArguments.Select(a => AttributeArgument(a.Type, a.Value)))}] named=[{string.Join("|", named)}]";
+			}));
+		}
 		return sb.ToString();
 	}
 
@@ -237,6 +255,23 @@ public class TypeSystemListingEqualityTests
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(",In,"));
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(" ext=1 "));
 		Assert.That(lines, Has.Some.StartsWith("T ").And.Matches(@"tflags=\S*x"));
+		Assert.That(lines, Has.None.Contains("!bad"));
+	}
+
+	[Test]
+	public void ListingCoversAttributeValues()
+	{
+		string path = Path.Combine(Corpus.TestCasesDirectory(), "Pretty", "CustomAttributes.roslyn4.dll");
+		var ts = Load(path, TypeSystemOptions.Default);
+		using var table = new RustModuleTable(ts);
+		string[] lines = table.DebugTypeListing().Split('\n');
+		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("=T:System.Int32@System.Private.CoreLib[,][,,,]]"));
+		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("=T:CustomAttributes.CustomAttributes+SomeType`2@CustomAttributes.roslyn4[CustomAttributes.CustomAttributes+SomeType`1@"));
+		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("System.Object@System.Private.CoreLib[]=[System.Int32@System.Private.CoreLib=Int32:1|System.UInt32@"));
+		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("+ULongEnum@CustomAttributes.roslyn4=UInt64:18446744073709551615"));
+		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("named=[P:AllowMultiple:System.Boolean@System.Private.CoreLib=Boolean:True]"));
+		Assert.That(lines, Has.Some.StartsWith("A ").And.EndsWith("fixed=[System.String@System.Private.CoreLib=String:00480069] named=[]"));
+		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("fixed=[System.Type@System.Private.CoreLib=null]"));
 		Assert.That(lines, Has.None.Contains("!bad"));
 	}
 

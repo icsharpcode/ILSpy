@@ -221,9 +221,13 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     Moved to their consumers: `ExtensionInfo` (C# 14 extension blocks) to step 68, where the
     AST builder uses it; runtime async (`MethodImplAsync` handling) to step 5, where the IL
     reader uses it.
-  - [ ] **4f. Custom attribute values.** `metadata::custom_attribute` with a type-system
-    resolver; decoded values equal SRM's `DecodeValue` (via the managed type provider) for
-    every attribute of every corpus image; then `CoClassAttribute` constructors (4c).
+  - [x] **4f. Custom attribute values.** Subject: `Decode custom attribute values in the Rust type system`.
+    `typesystem::attrvalue` (a port of SRM's `CustomAttributeDecoder` over type-system types,
+    since its argument types come from the type provider rather than from a name resolver) plus
+    `typename`/`reflection` (`TypeName.TryParse` and `ReflectionHelper.ParseReflectionName`);
+    decoded values equal SRM's `DecodeValue` (via the managed type provider) for every
+    attribute of every corpus image; then `CoClassAttribute` constructors (4c), tested on a
+    `MetadataBuilder` fixture because no compiler emits such a reference.
   - [ ] **4g. Ported unit suites.** `TypeSystemLoaderTests` (144) and `ReflectionHelperTests`
     (46) as `cargo test` against the same fixture assemblies (the compiled
     `ICSharpCode.Decompiler.Tests.dll` and the legacy reference `mscorlib`).
