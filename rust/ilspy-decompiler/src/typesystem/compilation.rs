@@ -450,9 +450,12 @@ pub fn exported_full_name(md: &Metadata<'_>, row: u32) -> Result<FullTypeName> {
 /// `EntityHandle.IsKnownType`: a metadata-only name check of a TypeDef, TypeRef or TypeSpec
 /// token. Bad metadata answers `false`.
 pub fn is_known_type(md: &Metadata<'_>, token: u32, code: KnownTypeCode) -> bool {
-    let Some((ns, name, tpc)) = code.type_name() else {
-        return false;
-    };
+    code.type_name()
+        .is_some_and(|(ns, name, tpc)| is_known_type_name(md, token, ns, name, tpc))
+}
+
+/// `IsKnownType` against a top-level name (namespace, name, type parameter count).
+pub fn is_known_type_name(md: &Metadata<'_>, token: u32, ns: &str, name: &str, tpc: u32) -> bool {
     let row = token & 0x00FF_FFFF;
     if row == 0 {
         return false;
@@ -471,7 +474,9 @@ pub fn is_known_type(md: &Metadata<'_>, token: u32, code: KnownTypeCode) -> bool
             return md
                 .get::<rows::TypeSpec>(row)
                 .and_then(|s| md.blob(s.signature))
-                .is_ok_and(|blob| signature_is_known_type(md, &mut Bytes::new(blob), code));
+                .is_ok_and(|blob| {
+                    signature_is_known_type(md, &mut Bytes::new(blob), (ns, name, tpc))
+                });
         }
         _ => None,
     };
@@ -489,18 +494,25 @@ pub fn is_known_type(md: &Metadata<'_>, token: u32, code: KnownTypeCode) -> bool
     name_matches && actual_ns == ns
 }
 
-fn signature_is_known_type(md: &Metadata<'_>, b: &mut Bytes<'_>, code: KnownTypeCode) -> bool {
+fn signature_is_known_type(
+    md: &Metadata<'_>,
+    b: &mut Bytes<'_>,
+    target: (&str, &str, u32),
+) -> bool {
     let Ok(type_code) = b.compressed_u32() else {
         return false;
     };
     match type_code {
-        0x01..=0x0E | 0x16 | 0x18 | 0x19 | 0x1C => primitive_code_to_known(type_code as u8) == code,
-        0x1F | 0x20 => b.compressed_u32().is_ok() && signature_is_known_type(md, b, code),
-        0x15 => signature_is_known_type(md, b, code),
+        0x01..=0x0E | 0x16 | 0x18 | 0x19 | 0x1C => {
+            primitive_code_to_known(type_code as u8).type_name() == Some(target)
+        }
+        0x1F | 0x20 => b.compressed_u32().is_ok() && signature_is_known_type(md, b, target),
+        0x15 => signature_is_known_type(md, b, target),
         0x11 | 0x12 => match b.compressed_u32() {
             Ok(raw) => {
                 let table = [0x02u32, 0x01, 0x1B, 0][(raw & 3) as usize];
-                table != 0 && is_known_type(md, table << 24 | raw >> 2, code)
+                table != 0
+                    && is_known_type_name(md, table << 24 | raw >> 2, target.0, target.1, target.2)
             }
             Err(_) => false,
         },

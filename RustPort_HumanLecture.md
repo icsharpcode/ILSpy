@@ -441,6 +441,28 @@ images (each loaded with `UniversalAssemblyResolver` and its full closure), comp
 TypeDef the reflection name, kind, known type code, declaring type, type parameter count,
 enum underlying type and the direct base types with their defining assembly.
 
+### 3.9 Member definitions (item 4b)
+
+Members follow `MetadataMethod`, `MetadataField`, `MetadataParameter`, `MetadataProperty`,
+`MetadataEvent` and `MetadataTypeParameter` rule for rule. Facts worth knowing because they
+are not what one would guess:
+
+- A member's declaring type is SRM's `BinarySearchForSlot` over the TypeDef list columns (the
+  last of several TypeDefs sharing a list start wins), not a range lookup.
+- Nested types do not own their leading type parameters: indices below the enclosing type's
+  count are the enclosing type's parameter objects, so `TypeParamOwner` points there.
+- Decimal constants on optional parameters are decoded from `DecimalConstantAttribute` even
+  under `TypeSystemOptions.None`; only fields gate them on the option.
+- Raisers are not C# accessors (`MethodSemanticsLookup` filters them out), so a raiser's
+  symbol kind is `Method`.
+- Without `TypeSystemOptions.FunctionPointers`, `delegate*` keeps its own type but
+  `GetDefinition()` answers `UIntPtr`'s definition.
+- A property whose accessor has no declaring type throws a `NullReferenceException` in the
+  managed code; both listings print `!bad` for it.
+
+Measured at item 4b: `TypeSystemListingEquality` passes for the same 3,442 images with one
+line per TypeDef, Field, MethodDef, Property and Event row and per type parameter list.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

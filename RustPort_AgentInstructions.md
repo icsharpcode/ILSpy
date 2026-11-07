@@ -170,7 +170,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     run `./restore.ps1` again before `./build.ps1 -Configuration Debug --no-restore`, or the
     Debug build fails with CS1061 `WithDeveloperTools`.
 
-- **4. Type system.** Size L, split into 4a-4e (one commit each, each with its own gate) so
+- **4. Type system.** Size L, split into 4a-4f (one commit each, each with its own gate) so
   the week of work lands in reviewable pieces. Scope for all of them: interned `TypeId`,
   `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`, `EventId`, `ModuleId`; `TypeData` enum;
   lazy per-`TypeDef` decoding; substitution; base types and inheritance; known types;
@@ -187,18 +187,30 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     interned types from signatures with modifiers stripped, `DirectBaseTypes`. Listing
     (`typesystem/listing.rs`): one line per main-module TypeDef with base and enum types as
     `ReflectionName@DefiningAssembly`, under `TypeSystemOptions.None`.
-  - [ ] **4b. Members.** Fields, methods (with type parameters and constraints), properties,
-    events, parameters; resolved signature types; accessibility and modifiers; accessors;
-    specialized members. Listing extended per member, still `TypeSystemOptions.None`.
-  - [ ] **4c. Attribute semantics.** Everything `TypeSystemOptions.Default` adds (dynamic,
+  - [x] **4b. Member definitions.** Subject: `Add member definitions to the Rust type system`.
+    Fields, methods (symbol kind, accessibility, modifiers, body, accessor owner), parameters
+    (gaps, `__arglist`, ref kind, optional, constants including decimal constants), type
+    parameters with owners (nested types share the outer ones) and constraints, properties
+    and events with their accessors. Listing: one line per Field, MethodDef, Property and
+    Event row plus type parameter lines, still `TypeSystemOptions.None`. Facts that need later
+    steps stay out of the listing until then: property symbol kind and accessibility
+    (indexers need `DefaultMemberAttribute`, explicit implementations need 4c, accessibility
+    needs base members), attributes, `IsInitOnly`, explicit interface implementations.
+  - [ ] **4c. Member references and specialization.** `MetadataModule.ResolveEntity` /
+    `ResolveMethod` / `ResolveField` for MemberRef, MethodSpec and TypeSpec parents:
+    signature-based member lookup in the declaring type, varargs, specialized members as
+    interned `(definition, substitution)` pairs, `TypeParameterSubstitution`. Listing: one
+    line per MemberRef and MethodSpec row of the main module (resolved member, declaring type,
+    substituted signature). The IL reader (step 5) depends on this.
+  - [ ] **4d. Attribute semantics.** Everything `TypeSystemOptions.Default` adds (dynamic,
     tuples, nullability, native integers, ref structs, readonly/in/ref readonly, scoped,
     unmanaged constraints, extension methods and members, params collections, decimal
     constants, function pointers, first-class spans, runtime async). Listing run under
     `Default`.
-  - [ ] **4d. Custom attribute values.** `metadata::custom_attribute` with a type-system
+  - [ ] **4e. Custom attribute values.** `metadata::custom_attribute` with a type-system
     resolver; decoded values equal SRM's `DecodeValue` (via the managed type provider) for
     every attribute of every corpus image.
-  - [ ] **4e. Ported unit suites.** `TypeSystemLoaderTests` (144) and `ReflectionHelperTests`
+  - [ ] **4f. Ported unit suites.** `TypeSystemLoaderTests` (144) and `ReflectionHelperTests`
     (46) as `cargo test` against the same fixture assemblies (the compiled
     `ICSharpCode.Decompiler.Tests.dll` and the legacy reference `mscorlib`).
 

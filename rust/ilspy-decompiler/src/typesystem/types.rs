@@ -22,13 +22,17 @@ pub struct TypeId(u32);
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum TypeParamOwner {
     Type(TypeDefId),
+    Method(super::members::MethodDefId),
     DummyType,
     DummyMethod,
 }
 
 impl TypeParamOwner {
     fn is_method(self) -> bool {
-        matches!(self, TypeParamOwner::DummyMethod)
+        matches!(
+            self,
+            TypeParamOwner::Method(_) | TypeParamOwner::DummyMethod
+        )
     }
 }
 
@@ -61,12 +65,15 @@ pub enum TypeData {
         ret: TypeId,
         params: Box<[TypeId]>,
     },
+    /// `SpecialType.ArgList`, the trailing parameter of a varargs method.
+    ArgList,
 }
 
-/// The class type parameters in scope; method type parameters arrive with members.
+/// The type parameters in scope, as `(owner, count)`.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct GenericContext {
     pub class: Option<(TypeDefId, u32)>,
+    pub method: Option<(super::members::MethodDefId, u32)>,
 }
 
 pub struct TypeSystem<'c, 'a> {
@@ -74,6 +81,8 @@ pub struct TypeSystem<'c, 'a> {
     data: Vec<TypeData>,
     map: HashMap<TypeData, TypeId>,
     known: HashMap<KnownTypeCode, TypeId>,
+    /// Per module: method row to `(owner token, semantics)` of C# accessors.
+    pub(super) accessor_owners: HashMap<ModuleId, HashMap<u32, (u32, u16)>>,
 }
 
 impl<'c, 'a> TypeSystem<'c, 'a> {
@@ -83,6 +92,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             data: Vec::new(),
             map: HashMap::new(),
             known: HashMap::new(),
+            accessor_owners: HashMap::new(),
         }
     }
 
@@ -264,7 +274,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             }
             SigType::TypeParam(index) => {
                 let owner = match ctx.class {
-                    Some((def, count)) if *index < count => TypeParamOwner::Type(def),
+                    Some((def, count)) if *index < count => self.class_param_owner(def, *index),
                     _ => TypeParamOwner::DummyType,
                 };
                 self.intern(TypeData::TypeParam {
@@ -272,10 +282,16 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     index: *index,
                 })
             }
-            SigType::MethodParam(index) => self.intern(TypeData::TypeParam {
-                owner: TypeParamOwner::DummyMethod,
-                index: *index,
-            }),
+            SigType::MethodParam(index) => {
+                let owner = match ctx.method {
+                    Some((m, count)) if *index < count => TypeParamOwner::Method(m),
+                    _ => TypeParamOwner::DummyMethod,
+                };
+                self.intern(TypeData::TypeParam {
+                    owner,
+                    index: *index,
+                })
+            }
             SigType::Pointer(t) => {
                 let t = self.from_sig(module, t, ctx)?;
                 self.intern(TypeData::Pointer(t))
@@ -310,6 +326,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     // Pointers to instance methods are typed as IntPtr.
                     self.known_type(KnownTypeCode::IntPtr)
                 } else {
+                    self.known_type(KnownTypeCode::UIntPtr);
                     self.intern(TypeData::FnPtr { ret, params })
                 }
             }
@@ -327,9 +344,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         let comp = self.comp;
         let md = &comp.module(def.module).md;
         let info = comp.type_def(def)?;
-        let ctx = GenericContext {
-            class: Some((def, info.type_parameter_count)),
-        };
+        let ctx = self.type_context(Some(def));
         let t = md.get::<rows::TypeDef>(def.row)?;
         let mut bases = Vec::new();
         let base = match t.extends.token() {
@@ -359,6 +374,12 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         match self.data(id) {
             TypeData::Def(def) => Some(*def),
             TypeData::Inst { generic, .. } => self.definition(*generic),
+            // Without TypeSystemOptions.FunctionPointers a function pointer acts as an alias
+            // for UIntPtr; from_sig resolves UIntPtr whenever it creates one.
+            TypeData::FnPtr { .. } => self
+                .known
+                .get(&KnownTypeCode::UIntPtr)
+                .and_then(|&t| self.definition(t)),
             _ => None,
         }
     }
@@ -391,6 +412,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::ByRef(t) => format!("{}&", self.reflection_name(*t)),
             TypeData::Pinned(t) => format!("{} pinned", self.reflection_name(*t)),
             TypeData::FnPtr { .. } => "delegate*".to_owned(),
+            TypeData::ArgList => "__arglist".to_owned(),
         }
     }
 }

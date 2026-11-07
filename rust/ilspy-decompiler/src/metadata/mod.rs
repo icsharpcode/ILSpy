@@ -287,6 +287,166 @@ impl<'a> Metadata<'a> {
             .binary_search_range(TableId::MethodSemantics, 2, key)
     }
 
+    /// The TypeDef row declaring a MethodDef row, 0 if none (SRM's `GetDeclaringType`).
+    pub fn method_declaring_type(&self, method: u32) -> Result<u32> {
+        let key = self.list_position(TableId::MethodPtr, method)?;
+        self.find_owner_by_list(
+            TableId::TypeDef,
+            5,
+            key,
+            self.tables.rows(TableId::MethodDef),
+        )
+    }
+
+    /// The TypeDef row declaring a Field row, 0 if none.
+    pub fn field_declaring_type(&self, field: u32) -> Result<u32> {
+        let key = self.list_position(TableId::FieldPtr, field)?;
+        self.find_owner_by_list(TableId::TypeDef, 4, key, self.tables.rows(TableId::Field))
+    }
+
+    /// The position of `row` in a member list: through the pointer table if one is present.
+    fn list_position(&self, ptr: TableId, row: u32) -> Result<u32> {
+        if self.tables.rows(ptr) == 0 {
+            return Ok(row);
+        }
+        for p in 1..=self.tables.rows(ptr) {
+            if self.tables.cell(ptr, p, 0)? == row {
+                return Ok(p);
+            }
+        }
+        Ok(0)
+    }
+
+    /// `TypeDefTableReader.FindTypeContaining{Method,Field}`: the last owner row whose list
+    /// starts at or before `key`, found with SRM's slot search.
+    fn find_owner_by_list(
+        &self,
+        owner: TableId,
+        column: usize,
+        key: u32,
+        members: u32,
+    ) -> Result<u32> {
+        let rows = self.tables.rows(owner);
+        if rows == 0 {
+            return Ok(0);
+        }
+        let start = |r: u32| self.tables.cell(owner, r, column);
+        let slot = self.slot_search(owner, column, key)? + 1;
+        if slot == 0 {
+            return Ok(0);
+        }
+        let mut slot = slot as u32;
+        if slot > rows {
+            return Ok(if key <= members { rows } else { 0 });
+        }
+        if start(slot)? == key {
+            while slot < rows && start(slot + 1)? == key {
+                slot += 1;
+            }
+        }
+        Ok(slot)
+    }
+
+    /// `MemoryBlock.BinarySearchForSlot` over a sorted list column; returns a 0-based index
+    /// (possibly -1 or `rows`).
+    fn slot_search(&self, table: TableId, column: usize, key: u32) -> Result<i64> {
+        let rows = i64::from(self.tables.rows(table));
+        let at = |i: i64| self.tables.cell(table, i as u32 + 1, column);
+        let (mut lo, mut hi) = (0i64, rows - 1);
+        let (mut lo_value, mut hi_value) = (at(lo)?, at(hi)?);
+        if hi == 1 {
+            return Ok(if key >= hi_value { hi } else { lo });
+        }
+        while hi - lo > 1 {
+            if key <= lo_value {
+                return Ok(if key != lo_value { lo - 1 } else { lo });
+            }
+            if key >= hi_value {
+                return Ok(if key != hi_value { hi + 1 } else { hi });
+            }
+            let mid = (lo + hi) / 2;
+            let mid_value = at(mid)?;
+            if key > mid_value {
+                lo = mid;
+                lo_value = mid_value;
+            } else if key < mid_value {
+                hi = mid;
+                hi_value = mid_value;
+            } else {
+                return Ok(mid);
+            }
+        }
+        Ok(lo)
+    }
+
+    /// `PropertyDefinition.GetAccessors()`: `(getter, setter, others)`, the last row of each
+    /// kind winning.
+    pub fn property_accessors(&self, property: u32) -> (u32, u32, Vec<u32>) {
+        let (mut get, mut set, mut other) = (0, 0, Vec::new());
+        for (semantics, method) in self.semantic_methods(TableId::Property, property) {
+            match semantics {
+                0x02 => get = method,
+                0x01 => set = method,
+                0x04 => other.push(method),
+                _ => {}
+            }
+        }
+        (get, set, other)
+    }
+
+    /// `EventDefinition.GetAccessors()`: `(adder, remover, raiser, others)`.
+    pub fn event_accessors(&self, event: u32) -> (u32, u32, u32, Vec<u32>) {
+        let (mut add, mut remove, mut raise, mut other) = (0, 0, 0, Vec::new());
+        for (semantics, method) in self.semantic_methods(TableId::Event, event) {
+            match semantics {
+                0x08 => add = method,
+                0x10 => remove = method,
+                0x20 => raise = method,
+                0x04 => other.push(method),
+                _ => {}
+            }
+        }
+        (add, remove, raise, other)
+    }
+
+    fn semantic_methods(&self, table: TableId, row: u32) -> Vec<(u16, u32)> {
+        self.semantics(table, row)
+            .filter_map(|r| self.get::<rows::MethodSemantics>(r).ok())
+            .map(|s| (s.semantics, s.method))
+            .collect()
+    }
+
+    /// CustomAttribute rows whose parent is `table`/`row`, in table order. Like SRM, a table
+    /// marked sorted is searched by range; an unsorted one is scanned.
+    pub fn custom_attributes(&self, table: TableId, row: u32) -> Vec<u32> {
+        let Some(key) = CodedKind::HasCustomAttribute.encode(table, row) else {
+            return Vec::new();
+        };
+        if self.tables.sorted & (1 << TableId::CustomAttribute as u32) != 0 {
+            return self
+                .tables
+                .binary_search_range(TableId::CustomAttribute, 0, key)
+                .collect();
+        }
+        (1..=self.tables.rows(TableId::CustomAttribute))
+            .filter(|&r| self.tables.cell(TableId::CustomAttribute, r, 0) == Ok(key))
+            .collect()
+    }
+
+    /// The token of the type declaring an attribute's constructor
+    /// (`CustomAttribute.GetAttributeType`).
+    pub fn attribute_type(&self, attribute: u32) -> Result<u32> {
+        let ca = self.get::<rows::CustomAttribute>(attribute)?;
+        match ca.constructor.decode()? {
+            (TableId::MethodDef, row) => Ok(tables::token(
+                TableId::TypeDef,
+                self.method_declaring_type(row)?,
+            )),
+            (TableId::MemberRef, row) => self.get::<rows::MemberRef>(row)?.class.token(),
+            _ => Err(Error::Malformed("attribute constructor kind")),
+        }
+    }
+
     /// GenericParam rows of a TypeDef or MethodDef.
     pub fn generic_params(&self, table: TableId, row: u32) -> std::ops::Range<u32> {
         let key = Self::coded_parent(CodedKind::TypeOrMethodDef, table, row);

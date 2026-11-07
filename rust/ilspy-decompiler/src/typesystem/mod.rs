@@ -4,5 +4,6 @@
 pub mod compilation;
 pub mod known;
 pub mod listing;
+pub mod members;
 pub mod names;
 pub mod types;
