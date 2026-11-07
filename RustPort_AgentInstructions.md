@@ -170,20 +170,37 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     run `./restore.ps1` again before `./build.ps1 -Configuration Debug --no-restore`, or the
     Debug build fails with CS1061 `WithDeveloperTools`.
 
-- [ ] **4. Type system.** Size L. Subject: `Add the Rust type system`.
-  - Interned `TypeId`, `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`, `EventId`,
-    `ModuleId`; `TypeData` enum (Def, Param, Inst, Array, Pointer, ByRef, FnPtr, Modified,
-    Tuple, Nullable, Special); lazy per-`TypeDef` member decoding; substitution; base types
-    and inheritance; known types; attribute semantics (nullable, dynamic, tuple names, native
-    int, readonly, scoped, extension, compiler-generated, `in`/`ref readonly`); specialized
-    members as interned `(definition, substitution)` pairs.
-  - Assembly references resolve through the host callback `resolve_assembly`, which returns
-    image bytes (see lecture, "FFI contract").
-  - Gate: G-rust with `TypeSystemLoaderTests` (144) and `ReflectionHelperTests` (46) ported
-    as `cargo test` against the same fixture assemblies; a second listing diff against the
-    link-compiled `MetadataModule` with resolved base types, parameter types and return types
-    at 100%; decoded custom attribute values (`metadata::custom_attribute` with a type-system
-    resolver) equal SRM's `DecodeValue` for every fixture attribute.
+- **4. Type system.** Size L, split into 4a-4e (one commit each, each with its own gate) so
+  the week of work lands in reviewable pieces. Scope for all of them: interned `TypeId`,
+  `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`, `EventId`, `ModuleId`; `TypeData` enum;
+  lazy per-`TypeDef` decoding; substitution; base types and inheritance; known types;
+  attribute semantics (nullable, dynamic, tuple names, native int, readonly, scoped,
+  extension, compiler-generated, `in`/`ref readonly`); specialized members as interned
+  `(definition, substitution)` pairs. The reference closure is computed by the host and
+  passed as an ordered module table with per-AssemblyRef/ModuleRef targets (lecture 3.8);
+  there is no `resolve_assembly` callback.
+  Every gate below includes G-rust and a `TypeSystemListingEquality` run (shim test) over the
+  corpus (`Corpus.ManagedImages`) against the link-compiled `DecompilerTypeSystem`.
+  - [x] **4a. Compilation and type definitions.** Subject: `Add the Rust type system: compilation and type definitions`.
+    Module table, name lookup with forwarders and the cycle guard, `TypeDefInfo` (full name,
+    kind, known type code, declaring type, type parameter count, enum underlying type),
+    interned types from signatures with modifiers stripped, `DirectBaseTypes`. Listing
+    (`typesystem/listing.rs`): one line per main-module TypeDef with base and enum types as
+    `ReflectionName@DefiningAssembly`, under `TypeSystemOptions.None`.
+  - [ ] **4b. Members.** Fields, methods (with type parameters and constraints), properties,
+    events, parameters; resolved signature types; accessibility and modifiers; accessors;
+    specialized members. Listing extended per member, still `TypeSystemOptions.None`.
+  - [ ] **4c. Attribute semantics.** Everything `TypeSystemOptions.Default` adds (dynamic,
+    tuples, nullability, native integers, ref structs, readonly/in/ref readonly, scoped,
+    unmanaged constraints, extension methods and members, params collections, decimal
+    constants, function pointers, first-class spans, runtime async). Listing run under
+    `Default`.
+  - [ ] **4d. Custom attribute values.** `metadata::custom_attribute` with a type-system
+    resolver; decoded values equal SRM's `DecodeValue` (via the managed type provider) for
+    every attribute of every corpus image.
+  - [ ] **4e. Ported unit suites.** `TypeSystemLoaderTests` (144) and `ReflectionHelperTests`
+    (46) as `cargo test` against the same fixture assemblies (the compiled
+    `ICSharpCode.Decompiler.Tests.dll` and the legacy reference `mscorlib`).
 
 ### Phase 2: ILAst in Rust, seam 1
 

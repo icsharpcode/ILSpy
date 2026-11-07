@@ -43,6 +43,20 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 		public UIntPtr Capacity;
 	}
 
+	/// <summary>Mirrors <c>FfiModule</c> in rust/ilspy-decompiler-ffi/src/lib.rs.</summary>
+	[StructLayout(LayoutKind.Sequential)]
+	internal unsafe struct RustModule
+	{
+		public byte* Image;
+		public UIntPtr ImageLength;
+		public byte* AssemblyName;
+		public UIntPtr AssemblyNameLength;
+		public int* AssemblyRefs;
+		public UIntPtr AssemblyRefCount;
+		public int* ModuleRefs;
+		public UIntPtr ModuleRefCount;
+	}
+
 	/// <summary>
 	/// The C ABI exported by rust/ilspy-decompiler-ffi. Keep in sync with its src/lib.rs.
 	/// </summary>
@@ -67,6 +81,9 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		static extern unsafe RustStatus ilspy_debug_list_members(byte* image, UIntPtr length, out RustBuffer listing);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern unsafe RustStatus ilspy_debug_type_listing(RustModule* modules, UIntPtr count, out RustBuffer listing);
 
 		/// <summary>Copies an engine buffer into managed memory and frees it.</summary>
 		internal static unsafe byte[] TakeBuffer(RustBuffer buffer)

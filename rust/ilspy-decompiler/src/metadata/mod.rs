@@ -287,6 +287,13 @@ impl<'a> Metadata<'a> {
             .binary_search_range(TableId::MethodSemantics, 2, key)
     }
 
+    /// GenericParam rows of a TypeDef or MethodDef.
+    pub fn generic_params(&self, table: TableId, row: u32) -> std::ops::Range<u32> {
+        let key = Self::coded_parent(CodedKind::TypeOrMethodDef, table, row);
+        self.tables
+            .binary_search_range(TableId::GenericParam, 2, key)
+    }
+
     /// GenericParamConstraint rows of a generic parameter.
     pub fn generic_param_constraints(&self, generic_param: u32) -> std::ops::Range<u32> {
         self.tables

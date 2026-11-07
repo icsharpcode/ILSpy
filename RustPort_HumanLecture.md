@@ -246,10 +246,10 @@ by the item that first calls back (item 4 for `resolve_assembly`, item 5 for
 stays valid until the next export call on the same thread. The shim wraps the session in a
 `SafeHandle` (`Interop/RustSession.cs`) so it is freed exactly once, also on finalization.
 
-Host callbacks: `resolve_assembly(ctx, module_id, assemblyref_row, out module_id)` returns
-image bytes, not a path, because ILSpyX images come from bundles and streams; the shim passes
-`PEReader.GetEntireImage()` pointer and length (zero copy, the `MetadataFile` keeps the image
-alive, the engine never frees inputs). `get_debug_info(ctx, module_id, method_token, kind,
+Modules: superseded in item 4a (section 3.8). Instead of a `resolve_assembly` callback the
+host passes the whole module table, each image as the `PEReader.GetEntireImage()` pointer and
+length (zero copy, the `MetadataFile` keeps the image alive, the engine never frees inputs)
+plus per-reference target indices. `get_debug_info(ctx, module_id, method_token, kind,
 out Buf)` bridges the five-member `IDebugInfoProvider`, so the engine needs no PDB reader and
 ILSpyX's Mono.Cecil provider for Windows PDBs keeps working.
 
@@ -411,6 +411,35 @@ custom attributes; 18,565 of them need an enum type from another assembly and ar
 failed, until item 4 resolves them. One real-world quirk surfaced: older F# compilers store a
 field signature in StandAloneSig (`FSharp.Core.dll`, row 1, `06 08`); SRM rejects it, the
 listing prints `!bad` on both sides, and the corpus test accepts exactly that case.
+
+### 3.8 The compilation is a host-built module table (item 4a)
+
+The plan had the engine ask the host to resolve each assembly reference
+(`resolve_assembly` returning image bytes). Reading `DecompilerTypeSystem.InitializeCoreAsync`
+showed how much policy that would push into Rust: the reference closure walks exported types
+and module references, adds implicit references by target framework, repairs cyclic type
+forwarders by re-resolving next to the forwarding assembly, keeps the highest version per
+assembly name (a repaired file wins outright), and adds a `MinimalCorlib` for missing known
+types. `FindModuleByReference` then matches full assembly names (public-key tokens from SHA-1,
+retargetable flags) before falling back to short names. All of that is resolver behavior the
+UI already configures (bundles, packages, `ILSpyX.LoadedAssembly`).
+
+Decision: the host computes the closure with the link-compiled code and passes the outcome.
+`Interop/RustModuleTable.cs` describes every metadata module of a managed `ICompilation` in
+compilation order, with the module each AssemblyRef and ModuleRef row resolves to. The engine
+only resolves names inside that table: `GetDeclaringModule` per TypeRef, top-level lookup
+(last row wins, as in `MetadataFile.GetTypeDefinition`), forwarders keyed by full name,
+nested types first-match by name and total type parameter count, forwarder chains matched
+case-insensitively by short name with the managed busy-guard semantics, and the
+first-module-wins search when a scope resolves to nothing. Agreement on the closure is then
+true by construction, and the equality test isolates name resolution. `MinimalCorlib` has no
+image; names that only it defines stay unknown in the engine, which the listing marks as
+`@?` on both sides.
+
+Measured at item 4a (Windows, Debug): `TypeSystemListingEquality` passes for 3,442 managed
+images (each loaded with `UniversalAssemblyResolver` and its full closure), comparing per
+TypeDef the reflection name, kind, known type code, declaring type, type parameter count,
+enum underlying type and the direct base types with their defining assembly.
 
 ## 4. Alternatives evaluated
 

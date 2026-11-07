@@ -1,0 +1,428 @@
+//! Interned types and their construction from metadata.
+//!
+//! `TypeId`s are indices into one `TypeSystem`'s interner, so structural equality is `==`.
+//! A `TypeSystem` belongs to one request and borrows the shared `Compilation`.
+
+use std::collections::HashMap;
+
+use crate::metadata::bytes::Bytes;
+use crate::metadata::signature::{self, SigType};
+use crate::metadata::tables::{TableId, rows};
+use crate::metadata::{Error, Result};
+
+use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind, type_ref_full_name};
+use super::known::KnownTypeCode;
+use super::names::FullTypeName;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct TypeId(u32);
+
+/// Who declares a type parameter. Dummy parameters stand in for indices outside the generic
+/// context, like the managed `DummyTypeParameter`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum TypeParamOwner {
+    Type(TypeDefId),
+    DummyType,
+    DummyMethod,
+}
+
+impl TypeParamOwner {
+    fn is_method(self) -> bool {
+        matches!(self, TypeParamOwner::DummyMethod)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum TypeData {
+    Def(TypeDefId),
+    /// A reference that resolved to nothing; `is_reference_type` comes from the signature.
+    Unknown {
+        name: Box<FullTypeName>,
+        is_reference_type: Option<bool>,
+    },
+    /// `SpecialType.UnknownType` (`?`).
+    UnknownSpecial,
+    TypeParam {
+        owner: TypeParamOwner,
+        index: u32,
+    },
+    Inst {
+        generic: TypeId,
+        args: Box<[TypeId]>,
+    },
+    Array {
+        elem: TypeId,
+        rank: u32,
+    },
+    Pointer(TypeId),
+    ByRef(TypeId),
+    Pinned(TypeId),
+    FnPtr {
+        ret: TypeId,
+        params: Box<[TypeId]>,
+    },
+}
+
+/// The class type parameters in scope; method type parameters arrive with members.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct GenericContext {
+    pub class: Option<(TypeDefId, u32)>,
+}
+
+pub struct TypeSystem<'c, 'a> {
+    pub comp: &'c Compilation<'a>,
+    data: Vec<TypeData>,
+    map: HashMap<TypeData, TypeId>,
+    known: HashMap<KnownTypeCode, TypeId>,
+}
+
+impl<'c, 'a> TypeSystem<'c, 'a> {
+    pub fn new(comp: &'c Compilation<'a>) -> Self {
+        Self {
+            comp,
+            data: Vec::new(),
+            map: HashMap::new(),
+            known: HashMap::new(),
+        }
+    }
+
+    pub fn intern(&mut self, data: TypeData) -> TypeId {
+        if let Some(&id) = self.map.get(&data) {
+            return id;
+        }
+        let id = TypeId(self.data.len() as u32);
+        self.data.push(data.clone());
+        self.map.insert(data, id);
+        id
+    }
+
+    pub fn data(&self, id: TypeId) -> &TypeData {
+        &self.data[id.0 as usize]
+    }
+
+    /// `ICompilation.FindType(KnownTypeCode)`: the first module defining the name wins.
+    pub fn known_type(&mut self, code: KnownTypeCode) -> TypeId {
+        if let Some(&id) = self.known.get(&code) {
+            return id;
+        }
+        let data = match code.top_level_name() {
+            None => TypeData::UnknownSpecial,
+            Some(top) => {
+                let name = FullTypeName::top_level(top);
+                let comp = self.comp;
+                comp.module_ids()
+                    .find_map(|m| {
+                        comp.find_type_definition(m, &name, &mut Vec::new())
+                            .ok()
+                            .flatten()
+                    })
+                    .map_or_else(
+                        || TypeData::Unknown {
+                            name: Box::new(name.clone()),
+                            is_reference_type: None,
+                        },
+                        TypeData::Def,
+                    )
+            }
+        };
+        let id = self.intern(data);
+        self.known.insert(code, id);
+        id
+    }
+
+    pub fn type_parameter_count(&self, id: TypeId) -> u32 {
+        match self.data(id) {
+            TypeData::Def(def) => self
+                .comp
+                .type_def(*def)
+                .map_or(0, |i| i.type_parameter_count),
+            TypeData::Unknown { name, .. } => name.type_parameter_count(),
+            _ => 0,
+        }
+    }
+
+    /// `TypeProvider.GetTypeFromReference`.
+    fn type_from_ref(&mut self, module: ModuleId, row: u32, raw_kind: u8) -> Result<TypeId> {
+        let comp = self.comp;
+        let declaring = comp.declaring_module(module, row)?;
+        let name = type_ref_full_name(&comp.module(module).md, row)?;
+        let found = match declaring {
+            Some(m) => comp.find_type_definition(m, &name, &mut Vec::new())?,
+            None => {
+                let mut found = None;
+                for m in comp.module_ids() {
+                    if let Some(def) = comp.find_type_definition(m, &name, &mut Vec::new())? {
+                        found = Some(def);
+                        break;
+                    }
+                }
+                found
+            }
+        };
+        Ok(self.intern(match found {
+            Some(def) => TypeData::Def(def),
+            None => TypeData::Unknown {
+                name: Box::new(name),
+                is_reference_type: is_reference_type(raw_kind),
+            },
+        }))
+    }
+
+    fn type_from_def(&mut self, module: ModuleId, row: u32) -> Result<TypeId> {
+        if row == 0 || row > self.comp.module(module).md.tables.rows(TableId::TypeDef) {
+            return Err(Error::Malformed("TypeDef handle out of range"));
+        }
+        Ok(self.intern(TypeData::Def(TypeDefId { module, row })))
+    }
+
+    fn type_from_spec(
+        &mut self,
+        module: ModuleId,
+        row: u32,
+        ctx: GenericContext,
+    ) -> Result<TypeId> {
+        let md = &self.comp.module(module).md;
+        let spec = md.get::<rows::TypeSpec>(row)?;
+        let sig = signature::decode_type(&mut Bytes::new(md.blob(spec.signature)?))?;
+        self.from_sig(module, &sig, ctx)
+    }
+
+    /// `MetadataModule.ResolveType` for a TypeDef, TypeRef or TypeSpec token, with the
+    /// modifiers stripped (`TypeSystemOptions.None`).
+    pub fn resolve_token(
+        &mut self,
+        module: ModuleId,
+        token: u32,
+        ctx: GenericContext,
+    ) -> Result<TypeId> {
+        let row = token & 0x00FF_FFFF;
+        if row == 0 {
+            return Ok(self.intern(TypeData::UnknownSpecial));
+        }
+        match token >> 24 {
+            0x02 => self.type_from_def(module, row),
+            0x01 => self.type_from_ref(module, row, 0),
+            0x1B => self.type_from_spec(module, row, ctx),
+            0x27 => {
+                let def = self.comp.resolve_forwarded(module, row, &mut Vec::new())?;
+                Ok(match def {
+                    Some(def) => self.intern(TypeData::Def(def)),
+                    None => {
+                        let name = super::compilation::exported_full_name(
+                            &self.comp.module(module).md,
+                            row,
+                        )?;
+                        self.intern(TypeData::Unknown {
+                            name: Box::new(name),
+                            is_reference_type: None,
+                        })
+                    }
+                })
+            }
+            _ => Err(Error::Malformed("not a type handle")),
+        }
+    }
+
+    /// The type a decoded signature denotes, as `TypeProvider` builds it, with modifiers
+    /// stripped.
+    pub fn from_sig(
+        &mut self,
+        module: ModuleId,
+        sig: &SigType,
+        ctx: GenericContext,
+    ) -> Result<TypeId> {
+        Ok(match sig {
+            SigType::Primitive(p) => {
+                let code = super::compilation::primitive_code_to_known(primitive_byte(*p));
+                self.known_type(code)
+            }
+            SigType::Handle { token, kind } => {
+                let raw_kind = match kind {
+                    signature::HandleKind::Class => 0x12,
+                    signature::HandleKind::ValueType => 0x11,
+                    signature::HandleKind::Unspecified => 0,
+                };
+                let row = token & 0x00FF_FFFF;
+                match token >> 24 {
+                    0x02 => self.type_from_def(module, row)?,
+                    0x01 => self.type_from_ref(module, row, raw_kind)?,
+                    _ => self.type_from_spec(module, row, ctx)?,
+                }
+            }
+            SigType::GenericInst { generic, args } => {
+                let generic = self.from_sig(module, generic, ctx)?;
+                let args = args
+                    .iter()
+                    .map(|a| self.from_sig(module, a, ctx))
+                    .collect::<Result<Box<[_]>>>()?;
+                let tpc = self.type_parameter_count(generic);
+                if tpc == 0 || tpc as usize != args.len() {
+                    generic
+                } else {
+                    self.intern(TypeData::Inst { generic, args })
+                }
+            }
+            SigType::TypeParam(index) => {
+                let owner = match ctx.class {
+                    Some((def, count)) if *index < count => TypeParamOwner::Type(def),
+                    _ => TypeParamOwner::DummyType,
+                };
+                self.intern(TypeData::TypeParam {
+                    owner,
+                    index: *index,
+                })
+            }
+            SigType::MethodParam(index) => self.intern(TypeData::TypeParam {
+                owner: TypeParamOwner::DummyMethod,
+                index: *index,
+            }),
+            SigType::Pointer(t) => {
+                let t = self.from_sig(module, t, ctx)?;
+                self.intern(TypeData::Pointer(t))
+            }
+            SigType::ByRef(t) => {
+                let t = self.from_sig(module, t, ctx)?;
+                self.intern(TypeData::ByRef(t))
+            }
+            SigType::Pinned(t) => {
+                let t = self.from_sig(module, t, ctx)?;
+                self.intern(TypeData::Pinned(t))
+            }
+            SigType::SzArray(t) => {
+                let elem = self.from_sig(module, t, ctx)?;
+                self.intern(TypeData::Array { elem, rank: 1 })
+            }
+            SigType::Array { elem, shape } => {
+                let elem = self.from_sig(module, elem, ctx)?;
+                self.intern(TypeData::Array {
+                    elem,
+                    rank: shape.rank,
+                })
+            }
+            SigType::FnPtr(sig) => {
+                let ret = self.from_sig(module, &sig.ret, ctx)?;
+                let params = sig
+                    .params
+                    .iter()
+                    .map(|p| self.from_sig(module, p, ctx))
+                    .collect::<Result<Box<[_]>>>()?;
+                if sig.header & 0x20 != 0 {
+                    // Pointers to instance methods are typed as IntPtr.
+                    self.known_type(KnownTypeCode::IntPtr)
+                } else {
+                    self.intern(TypeData::FnPtr { ret, params })
+                }
+            }
+            SigType::Modified {
+                modifier, inner, ..
+            } => {
+                self.from_sig(module, modifier, ctx)?;
+                self.from_sig(module, inner, ctx)?
+            }
+        })
+    }
+
+    /// `ITypeDefinition.DirectBaseTypes`.
+    pub fn direct_base_types(&mut self, def: TypeDefId) -> Result<Vec<TypeId>> {
+        let comp = self.comp;
+        let md = &comp.module(def.module).md;
+        let info = comp.type_def(def)?;
+        let ctx = GenericContext {
+            class: Some((def, info.type_parameter_count)),
+        };
+        let t = md.get::<rows::TypeDef>(def.row)?;
+        let mut bases = Vec::new();
+        let base = match t.extends.token() {
+            Ok(token) if token & 0x00FF_FFFF == 0 => None,
+            Ok(token) => Some(
+                self.resolve_token(def.module, token, ctx)
+                    .unwrap_or_else(|_| self.intern(TypeData::UnknownSpecial)),
+            ),
+            Err(_) => Some(self.intern(TypeData::UnknownSpecial)),
+        };
+        match base {
+            Some(b) => bases.push(b),
+            None if info.kind == TypeKind::Interface => {
+                bases.push(self.known_type(KnownTypeCode::Object))
+            }
+            None => {}
+        }
+        for row in md.type_interface_impls(def.row) {
+            let iface = md.get::<rows::InterfaceImpl>(row)?.interface.token()?;
+            bases.push(self.resolve_token(def.module, iface, ctx)?);
+        }
+        Ok(bases)
+    }
+
+    /// `IType.GetDefinition()`: the definition of a type or of a parameterized type's generic.
+    pub fn definition(&self, id: TypeId) -> Option<TypeDefId> {
+        match self.data(id) {
+            TypeData::Def(def) => Some(*def),
+            TypeData::Inst { generic, .. } => self.definition(*generic),
+            _ => None,
+        }
+    }
+
+    /// `IType.ReflectionName`.
+    pub fn reflection_name(&self, id: TypeId) -> String {
+        match self.data(id) {
+            TypeData::Def(def) => self
+                .comp
+                .type_def(*def)
+                .map_or_else(|_| "!bad".to_owned(), |i| i.full_name.reflection_name()),
+            TypeData::Unknown { name, .. } => name.reflection_name(),
+            TypeData::UnknownSpecial => "?".to_owned(),
+            TypeData::TypeParam { owner, index } => {
+                format!("{}{index}", if owner.is_method() { "``" } else { "`" })
+            }
+            TypeData::Inst { generic, args } => {
+                let args: Vec<String> = args
+                    .iter()
+                    .map(|a| format!("[{}]", self.reflection_name(*a)))
+                    .collect();
+                format!("{}[{}]", self.reflection_name(*generic), args.join(","))
+            }
+            TypeData::Array { elem, rank } => format!(
+                "{}[{}]",
+                self.reflection_name(*elem),
+                ",".repeat(rank.saturating_sub(1) as usize)
+            ),
+            TypeData::Pointer(t) => format!("{}*", self.reflection_name(*t)),
+            TypeData::ByRef(t) => format!("{}&", self.reflection_name(*t)),
+            TypeData::Pinned(t) => format!("{} pinned", self.reflection_name(*t)),
+            TypeData::FnPtr { .. } => "delegate*".to_owned(),
+        }
+    }
+}
+
+fn is_reference_type(raw_kind: u8) -> Option<bool> {
+    match raw_kind {
+        0x11 => Some(false),
+        0x12 => Some(true),
+        _ => None,
+    }
+}
+
+fn primitive_byte(p: signature::Primitive) -> u8 {
+    use signature::Primitive::*;
+    match p {
+        Void => 0x01,
+        Boolean => 0x02,
+        Char => 0x03,
+        SByte => 0x04,
+        Byte => 0x05,
+        Int16 => 0x06,
+        UInt16 => 0x07,
+        Int32 => 0x08,
+        UInt32 => 0x09,
+        Int64 => 0x0A,
+        UInt64 => 0x0B,
+        Single => 0x0C,
+        Double => 0x0D,
+        String => 0x0E,
+        TypedReference => 0x16,
+        IntPtr => 0x18,
+        UIntPtr => 0x19,
+        Object => 0x1C,
+    }
+}

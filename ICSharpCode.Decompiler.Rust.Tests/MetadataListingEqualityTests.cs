@@ -16,11 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Rust.Interop;
@@ -30,40 +27,18 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Rust.Tests;
 
 /// <summary>
-/// The Rust metadata reader's listing of an assembly equals System.Reflection.Metadata's,
-/// for the decompiler itself, every assembly of the running shared framework and, when a run of
-/// ICSharpCode.Decompiler.Tests has compiled them, every test case fixture.
+/// The Rust metadata reader's listing of an image equals System.Reflection.Metadata's.
 /// </summary>
 [TestFixture]
 public class MetadataListingEqualityTests
 {
-	static string TestCasesDirectory([CallerFilePath] string thisFile = "")
-		=> Path.GetFullPath(Path.Combine(Path.GetDirectoryName(thisFile)!, "..", "ICSharpCode.Decompiler.Tests", "TestCases"));
-
-	static IEnumerable<string> Assemblies(string directory, SearchOption option)
-		=> Directory.Exists(directory)
-			? Directory.EnumerateFiles(directory, "*.*", option)
-				.Where(f => f.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-			: [];
-
-	public static IEnumerable<TestCaseData> Images()
-	{
-		yield return new TestCaseData(typeof(CSharpDecompiler).Assembly.Location).SetArgDisplayNames("ICSharpCode.Decompiler.dll");
-		string runtime = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
-		foreach (var file in Assemblies(runtime, SearchOption.TopDirectoryOnly).Order())
-			yield return new TestCaseData(file).SetArgDisplayNames("runtime/" + Path.GetFileName(file));
-		string fixtures = TestCasesDirectory();
-		foreach (var file in Assemblies(fixtures, SearchOption.AllDirectories).Order())
-			yield return new TestCaseData(file).SetArgDisplayNames(Path.GetRelativePath(fixtures, file).Replace('\\', '/'));
-	}
-
-	[TestCaseSource(nameof(Images))]
+	[TestCaseSource(typeof(Corpus), nameof(Corpus.AllImages))]
 	public void MetadataListingEquality(string path)
 	{
 		byte[] image = File.ReadAllBytes(path);
 		string expected = MetadataListing.Create(image);
 		string actual = NativeMethods.DebugListMembers(image);
-		Assert.That(FirstDifference(expected, actual), Is.Null);
+		Assert.That(Corpus.FirstDifference(expected, actual), Is.Null);
 	}
 
 	[Test]
@@ -77,16 +52,5 @@ public class MetadataListingEqualityTests
 		Assert.That(lines, Has.Some.StartsWith("METHOD ").And.Contains("System.Collections.Generic.List`1<"));
 		Assert.That(lines.Count(l => l.StartsWith("TYPEDEF ")), Is.GreaterThan(500));
 		Assert.That(listing, Does.Not.Contain("!bad"));
-	}
-
-	static string? FirstDifference(string expected, string actual)
-	{
-		string[] e = expected.Split('\n'), a = actual.Split('\n');
-		int i = 0;
-		while (i < e.Length && i < a.Length && e[i] == a[i])
-			i++;
-		if (i == e.Length && i == a.Length)
-			return null;
-		return $"line {i + 1}:\n  SRM:  {(i < e.Length ? e[i] : "<end>")}\n  Rust: {(i < a.Length ? a[i] : "<end>")}";
 	}
 }

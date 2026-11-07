@@ -4,6 +4,7 @@
 //! crate. See `RustPort_HumanLecture.md` at the repository root for the architecture.
 
 pub mod metadata;
+pub mod typesystem;
 
 /// The engine version, as declared in the workspace manifest.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

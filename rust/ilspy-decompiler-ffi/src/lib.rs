@@ -14,6 +14,7 @@ use std::ptr;
 use std::sync::Once;
 
 use ilspy_decompiler::Session;
+use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, ModuleInput};
 
 static VERSION_C: &str = concat!(env!("CARGO_PKG_VERSION"), "\0");
 
@@ -184,6 +185,80 @@ pub unsafe extern "C" fn ilspy_session_free(session: *mut FfiSession) {
 #[unsafe(no_mangle)]
 pub extern "C" fn ilspy_last_error() -> *const c_char {
     LAST_ERROR.with(|slot| slot.borrow().as_ref().map_or(ptr::null(), |s| s.as_ptr()))
+}
+
+/// One module of a compilation as the host passes it. Reference tables hold, per AssemblyRef
+/// or ModuleRef row, the index of the module it resolves to, or -1.
+#[repr(C)]
+pub struct FfiModule {
+    pub image: *const u8,
+    pub image_len: usize,
+    pub assembly_name: *const u8,
+    pub assembly_name_len: usize,
+    pub assembly_refs: *const i32,
+    pub assembly_ref_count: usize,
+    pub module_refs: *const i32,
+    pub module_ref_count: usize,
+}
+
+/// # Safety
+/// `ptr` must point to `len` readable items, or `len` must be 0.
+unsafe fn slice<'a, T>(ptr: *const T, len: usize) -> &'a [T] {
+    if len == 0 {
+        &[]
+    } else {
+        // SAFETY: guaranteed by the caller.
+        unsafe { std::slice::from_raw_parts(ptr, len) }
+    }
+}
+
+fn targets(raw: &[i32]) -> Vec<Option<ModuleId>> {
+    raw.iter()
+        .map(|&i| u32::try_from(i).ok().map(ModuleId))
+        .collect()
+}
+
+/// Debug export for the shim's `TypeSystemListingEquality` test: the type-system listing
+/// (`typesystem::listing`) of module 0 of the given compilation, as UTF-8 in `*out`.
+///
+/// # Safety
+/// `modules` must point to `count` valid `FfiModule`s whose pointers are valid for the call;
+/// `out` must be writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_debug_type_listing(
+    modules: *const FfiModule,
+    count: usize,
+    out: *mut Buf,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    match run(|| {
+        // SAFETY: the caller guarantees the module array and everything it points to.
+        let inputs = unsafe { slice(modules, count) }
+            .iter()
+            .map(|m| unsafe {
+                ModuleInput {
+                    image: slice(m.image, m.image_len),
+                    assembly_name: String::from_utf8_lossy(slice(
+                        m.assembly_name,
+                        m.assembly_name_len,
+                    ))
+                    .into_owned(),
+                    assembly_refs: targets(slice(m.assembly_refs, m.assembly_ref_count)),
+                    module_refs: targets(slice(m.module_refs, m.module_ref_count)),
+                }
+            })
+            .collect();
+        let comp = Compilation::new(inputs).map_err(|e| e.to_string())?;
+        Ok(ilspy_decompiler::typesystem::listing::listing(&comp).into_bytes())
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
+    }
 }
 
 /// The session as the host sees it: an opaque pointer.
