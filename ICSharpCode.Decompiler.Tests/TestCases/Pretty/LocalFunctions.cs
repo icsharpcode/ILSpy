@@ -25,6 +25,46 @@ using System.Threading.Tasks;
 
 namespace LocalFunctions
 {
+	internal class ClosureTest<T> where T : class
+	{
+		private class Service
+		{
+			public void Invoke(Action action)
+			{
+			}
+		}
+
+		private Service _service;
+		private List<T> _items;
+		private object _lock;
+
+		private void Filter(Action<T[]> value)
+		{
+		}
+
+		public void Test()
+		{
+			List<T> itemList = new List<T>();
+			Filter((T[] items) => {
+				_service.Invoke(() => {
+					OnResults(items);
+				});
+			});
+			void OnResults(T[] items)
+			{
+				itemList.Add(items[0]);
+				SetItems();
+			}
+			void SetItems()
+			{
+				lock (_lock)
+				{
+					_items = itemList;
+				}
+			}
+		}
+	}
+
 	internal class LocalFunctions
 	{
 		[AttributeUsage(AttributeTargets.All)]
