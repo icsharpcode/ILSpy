@@ -372,6 +372,46 @@ trees.
   test. The engine gets `cargo test` ports of the type system loader, reflection helper,
   conversion, type inference and overload resolution suites.
 
+### 3.7 The metadata reader and its oracle (item 3)
+
+The plan's gate compared a listing of types, members and signatures against the
+link-compiled `MetadataModule`. That comparison would test the type system rather than the
+reader: `MetadataModule` turns signatures into tuples, `dynamic`, `nint`, nullable reference
+types and strips modifiers unless `KeepModifiers` is set, all of which is item 4's scope. The
+exact managed counterpart of a metadata reader is System.Reflection.Metadata (SRM), so the
+item-3 oracle is SRM; `MetadataModule` becomes the oracle in item 4.
+
+The reader therefore reproduces SRM's observable behavior, including its edge cases, verified
+by decompiling the net11 shared-framework `System.Reflection.Metadata.dll` with this repo's
+`ilspycmd`:
+
+- Section data for an RVA is `min(VirtualSize, SizeOfRawData)` bytes of the containing
+  section; method bodies read only the first extra data section.
+- Coded indices keep their table when the row is 0 (`02000000`, not `00000000`); an invalid tag
+  fails only the column that holds it.
+- Lookups use SRM's own algorithms on the raw column: binary search (and range expansion
+  around the hit) for NestedClass, ClassLayout, FieldLayout, FieldRVA, FieldMarshal, Constant,
+  ImplMap, MethodSemantics, InterfaceImpl and GenericParamConstraint; linear search for
+  EventMap and PropertyMap. Unsorted tables thus give the same answer SRM gives. Only
+  CustomAttribute is re-sorted by SRM, and the listing enumerates that table by row.
+- Signature kinds 0-5 and 9 all mean "method"; type sequences (locals, method specs, generic
+  arguments) must not be empty; `CLASS`/`VALUETYPE` may not name a TypeSpec, modifiers may.
+- The `#Strings` heap is trimmed to one trailing NUL before its size is reported.
+
+The listing (`rust/ilspy-decompiler/src/metadata/listing.rs`, mirrored in
+`ICSharpCode.Decompiler.Rust.Tests/MetadataListing.cs`) prints table and heap sizes, every
+row of every table with every column, decoded signatures, member ranges through the pointer
+tables, the lookups above, and method bodies with exception clauses and an FNV-1a hash of the
+IL. A column SRM rejects prints `!bad` on both sides.
+
+Measured at item 3 (Windows, Debug): `MetadataListingEquality` passes for 3,455 images (the
+decompiler itself, every file of the net11 shared framework, 3,260 compiled test case
+fixtures). The Rust corpus test reads the same fixtures cell by cell and decodes 142,066
+custom attributes; 18,565 of them need an enum type from another assembly and are counted, not
+failed, until item 4 resolves them. One real-world quirk surfaced: older F# compilers store a
+field signature in StandAloneSig (`FSharp.Core.dll`, row 1, `06 08`); SRM rejects it, the
+listing prints `!bad` on both sides, and the corpus test accepts exactly that case.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

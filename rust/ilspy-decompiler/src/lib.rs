@@ -3,6 +3,8 @@
 //! Hosted by the C# shim `ICSharpCode.Decompiler.Rust` through the `ilspy-decompiler-ffi`
 //! crate. See `RustPort_HumanLecture.md` at the repository root for the architecture.
 
+pub mod metadata;
+
 /// The engine version, as declared in the workspace manifest.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

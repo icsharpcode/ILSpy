@@ -38,22 +38,111 @@ fn install_panic_hook() {
     });
 }
 
-/// Runs `f`, turning an `Err` or a panic into `fallback` plus a last-error message.
-fn guard<T>(fallback: T, f: impl FnOnce() -> Result<T, String>) -> T {
+/// Result of an export that does work. The host maps it to fallback, cancellation or an
+/// exception (see the lecture, "FFI contract").
+#[repr(i32)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Status {
+    Ok = 0,
+    Unsupported = 1,
+    Cancelled = 2,
+    Error = 3,
+    Panic = 4,
+}
+
+/// Runs `f`; an `Err` or a panic becomes `Status::Error` / `Status::Panic` plus a last-error
+/// message.
+fn run<T>(f: impl FnOnce() -> Result<T, String>) -> Result<T, Status> {
     install_panic_hook();
     match panic::catch_unwind(AssertUnwindSafe(f)) {
-        Ok(Ok(value)) => value,
+        Ok(Ok(value)) => Ok(value),
         Ok(Err(message)) => {
             set_last_error(message);
-            fallback
+            Err(Status::Error)
         }
         Err(_) => {
             let report = PANIC_REPORT
                 .with(|slot| slot.borrow_mut().take())
                 .unwrap_or_else(|| "panic in the decompiler engine".to_owned());
             set_last_error(format!("panic: {report}"));
-            fallback
+            Err(Status::Panic)
         }
+    }
+}
+
+/// Runs `f`, turning an `Err` or a panic into `fallback` plus a last-error message.
+fn guard<T>(fallback: T, f: impl FnOnce() -> Result<T, String>) -> T {
+    run(f).unwrap_or(fallback)
+}
+
+/// An engine-allocated byte buffer handed to the host, which copies it and then calls
+/// `ilspy_buf_free` exactly once.
+#[repr(C)]
+pub struct Buf {
+    pub ptr: *mut u8,
+    pub len: usize,
+    pub cap: usize,
+}
+
+impl Buf {
+    const EMPTY: Buf = Buf {
+        ptr: ptr::null_mut(),
+        len: 0,
+        cap: 0,
+    };
+
+    fn from_vec(v: Vec<u8>) -> Buf {
+        let mut v = std::mem::ManuallyDrop::new(v);
+        Buf {
+            ptr: v.as_mut_ptr(),
+            len: v.len(),
+            cap: v.capacity(),
+        }
+    }
+}
+
+/// Frees a buffer returned by the engine. A null buffer is ignored.
+///
+/// # Safety
+/// `buf` must come from the engine and not have been freed yet.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_buf_free(buf: Buf) {
+    guard((), || {
+        if !buf.ptr.is_null() {
+            // SAFETY: `buf` was produced by `Buf::from_vec` and is freed once.
+            drop(unsafe { Vec::from_raw_parts(buf.ptr, buf.len, buf.cap) });
+        }
+        Ok(())
+    })
+}
+
+/// Debug export for the shim's `MetadataListingEquality` test: the canonical metadata listing
+/// (`metadata::listing`) of a PE image, as UTF-8 in `*out`.
+///
+/// # Safety
+/// `image` must point to `len` readable bytes; `out` must be writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn ilspy_debug_list_members(
+    image: *const u8,
+    len: usize,
+    out: *mut Buf,
+) -> Status {
+    // SAFETY: the caller guarantees `out` is writable.
+    unsafe { out.write(Buf::EMPTY) };
+    match run(|| {
+        if image.is_null() {
+            return Err("null image".to_owned());
+        }
+        // SAFETY: the caller guarantees `image` points to `len` bytes for this call.
+        let image = unsafe { std::slice::from_raw_parts(image, len) };
+        Ok(ilspy_decompiler::metadata::listing::listing(image).into_bytes())
+    }) {
+        Ok(bytes) => {
+            // SAFETY: as above.
+            unsafe { out.write(Buf::from_vec(bytes)) };
+            Status::Ok
+        }
+        Err(status) => status,
     }
 }
 
@@ -140,5 +229,24 @@ mod tests {
         let report = last_error().unwrap();
         assert!(report.starts_with("panic: "), "{report}");
         assert!(report.contains("boom"), "{report}");
+    }
+}
+
+#[cfg(test)]
+mod buffer_tests {
+    use super::*;
+
+    #[test]
+    fn listing_of_a_non_pe_is_returned_and_freed() {
+        let mut buf = Buf::EMPTY;
+        let image = b"not a PE";
+        // SAFETY: `image` and `buf` are valid for the call.
+        let status = unsafe { ilspy_debug_list_members(image.as_ptr(), image.len(), &mut buf) };
+        assert_eq!(status, Status::Ok);
+        // SAFETY: the engine wrote `len` initialized bytes.
+        let text = unsafe { std::slice::from_raw_parts(buf.ptr, buf.len) };
+        assert_eq!(text, b"BAD IMAGE\n");
+        // SAFETY: freed once.
+        unsafe { ilspy_buf_free(buf) };
     }
 }

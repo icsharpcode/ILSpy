@@ -150,16 +150,25 @@ the reasons. This file holds only the ordered steps, their gates and their rules
 
 ### Phase 1: metadata and type system in Rust
 
-- [ ] **3. ECMA-335 metadata reader.** Size M. Subject: `Add the Rust ECMA-335 metadata reader`.
+- [x] **3. ECMA-335 metadata reader.** Size M. Subject: `Add the Rust ECMA-335 metadata reader`.
   - `ilspy-decompiler/src/metadata/`: PE headers and sections (enough to find the CLI header
     and resolve RVAs), metadata root and streams, all tables with correct row sizes and coded
     indices, heaps, signature blobs (field, method, property, local, method spec, type spec),
     custom attribute blobs, method bodies with exception handlers. No PDB reading.
   - Gate: G-rust with tests that decode every row of every table of every fixture assembly
-    (env `ILSPY_FIXTURE_DIR`, defaulting to the test cases' output directory), plus a shim
-    test `MetadataListingEquality` that calls a debug export `ilspy_debug_list_members` and
-    diffs the full reflection-name listing of types, members and signatures against the
-    link-compiled `MetadataModule`.
+    (env `ILSPY_FIXTURE_DIR`, defaulting to the test cases' output directory plus the newest
+    shared framework of the `dotnet` on `PATH`), plus a shim test `MetadataListingEquality`
+    that calls a debug export `ilspy_debug_list_members` and diffs a canonical listing of
+    every table row, decoded signature, cross-table lookup and method body against the same
+    listing produced from System.Reflection.Metadata (not `MetadataModule`; lecture 3.7).
+  - Done as: format defined in `rust/ilspy-decompiler/src/metadata/listing.rs`, mirrored in
+    `ICSharpCode.Decompiler.Rust.Tests/MetadataListing.cs`. Custom attribute values are
+    decoded in Rust (with a resolver for enum types) but compared with SRM only in step 4,
+    when cross-assembly enum resolution exists.
+  - Practical note: the `AvaloniaUI.DiagnosticsSupport` assets in `ILSpy.csproj` depend on the
+    configuration at restore time. After `./build.ps1 -Configuration Release` (which restores),
+    run `./restore.ps1` again before `./build.ps1 -Configuration Debug --no-restore`, or the
+    Debug build fails with CS1061 `WithDeveloperTools`.
 
 - [ ] **4. Type system.** Size L. Subject: `Add the Rust type system`.
   - Interned `TypeId`, `TypeDefId`, `MethodId`, `FieldId`, `PropertyId`, `EventId`,
@@ -171,8 +180,10 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - Assembly references resolve through the host callback `resolve_assembly`, which returns
     image bytes (see lecture, "FFI contract").
   - Gate: G-rust with `TypeSystemLoaderTests` (144) and `ReflectionHelperTests` (46) ported
-    as `cargo test` against the same fixture assemblies; the step 3 listing diff extended
-    with resolved base types, parameter types and return types at 100%.
+    as `cargo test` against the same fixture assemblies; a second listing diff against the
+    link-compiled `MetadataModule` with resolved base types, parameter types and return types
+    at 100%; decoded custom attribute values (`metadata::custom_attribute` with a type-system
+    resolver) equal SRM's `DecodeValue` for every fixture attribute.
 
 ### Phase 2: ILAst in Rust, seam 1
 

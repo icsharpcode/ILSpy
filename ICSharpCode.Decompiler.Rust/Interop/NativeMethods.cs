@@ -24,6 +24,25 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler.Rust.Interop
 {
+	/// <summary>Mirrors <c>Status</c> in rust/ilspy-decompiler-ffi/src/lib.rs.</summary>
+	internal enum RustStatus
+	{
+		Ok = 0,
+		Unsupported = 1,
+		Cancelled = 2,
+		Error = 3,
+		Panic = 4,
+	}
+
+	/// <summary>Mirrors <c>Buf</c> in rust/ilspy-decompiler-ffi/src/lib.rs.</summary>
+	[StructLayout(LayoutKind.Sequential)]
+	internal struct RustBuffer
+	{
+		public IntPtr Pointer;
+		public UIntPtr Length;
+		public UIntPtr Capacity;
+	}
+
 	/// <summary>
 	/// The C ABI exported by rust/ilspy-decompiler-ffi. Keep in sync with its src/lib.rs.
 	/// </summary>
@@ -42,6 +61,44 @@ namespace ICSharpCode.Decompiler.Rust.Interop
 
 		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 		internal static extern IntPtr ilspy_last_error();
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		internal static extern void ilspy_buf_free(RustBuffer buffer);
+
+		[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+		static extern unsafe RustStatus ilspy_debug_list_members(byte* image, UIntPtr length, out RustBuffer listing);
+
+		/// <summary>Copies an engine buffer into managed memory and frees it.</summary>
+		internal static unsafe byte[] TakeBuffer(RustBuffer buffer)
+		{
+			try
+			{
+				var bytes = new byte[checked((int)(ulong)buffer.Length)];
+				if (bytes.Length > 0)
+					Marshal.Copy(buffer.Pointer, bytes, 0, bytes.Length);
+				return bytes;
+			}
+			finally
+			{
+				ilspy_buf_free(buffer);
+			}
+		}
+
+		/// <summary>
+		/// The engine's canonical metadata listing of a PE image (rust/ilspy-decompiler/src/metadata/listing.rs).
+		/// Test support only.
+		/// </summary>
+		internal static unsafe string DebugListMembers(byte[] image)
+		{
+			RustStatus status;
+			RustBuffer buffer;
+			fixed (byte* p = image)
+				status = ilspy_debug_list_members(p, (UIntPtr)image.Length, out buffer);
+			byte[] bytes = TakeBuffer(buffer);
+			if (status != RustStatus.Ok)
+				throw new InvalidOperationException($"ilspy_debug_list_members: {status}: {LastError}");
+			return Encoding.UTF8.GetString(bytes);
+		}
 
 		/// <summary>Decodes a NUL-terminated UTF-8 string owned by the engine.</summary>
 		internal static unsafe string? FromUtf8(IntPtr p)
