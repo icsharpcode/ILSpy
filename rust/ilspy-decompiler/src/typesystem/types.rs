@@ -72,6 +72,9 @@ pub enum TypeData {
     },
     /// `SpecialType.UnknownType` (`?`).
     UnknownSpecial,
+    /// `SpecialType.UnboundTypeArgument`: the missing arguments of a nested type found through an
+    /// outer type.
+    Unbound,
     TypeParam {
         owner: TypeParamOwner,
         index: u32,
@@ -560,7 +563,10 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 Some(false)
             }
             TypeData::Pointer(_) | TypeData::ByRef(_) => Some(false),
-            TypeData::TypeParam { .. } | TypeData::UnknownSpecial | TypeData::ArgList => None,
+            TypeData::TypeParam { .. }
+            | TypeData::UnknownSpecial
+            | TypeData::Unbound
+            | TypeData::ArgList => None,
         }
     }
 
@@ -611,6 +617,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 .map_or_else(|_| "!bad".to_owned(), |i| i.full_name.reflection_name()),
             TypeData::Unknown { name, .. } => name.reflection_name(),
             TypeData::UnknownSpecial => "?".to_owned(),
+            TypeData::Unbound => String::new(),
             TypeData::TypeParam { owner, index } => {
                 format!("{}{index}", if owner.is_method() { "``" } else { "`" })
             }

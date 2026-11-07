@@ -631,6 +631,24 @@ return, parameter and type parameter lists), field, property (with parameters) a
 and the assembly and module lists. Measured at item 4i: `TypeSystemListingEquality` under
 `None` and `Default` pass for the 3,442 images; 98 loader tests pass in Rust.
 
+### 3.16 Member lookup (item 4j)
+
+`typesystem/lookup.rs` ports `GetMembersHelper`. A lookup visits the type itself, or its
+non-interface base types in base-first order (so `object`'s methods come first), and returns
+each one's declared members; through a parameterized type, methods, constructors and
+accessors are specialized by its arguments, and properties, fields and events are reported
+with the parameterized type as their declaring type. Method lookups with type arguments keep
+only methods with that many type parameters and specialize them by those as well. Nested
+types found through a type take its arguments, or its own type parameters, followed by
+explicit arguments or `UnboundTypeArgument`s (a new type variant). Two managed asymmetries are
+kept: on `void` every member lookup is empty, but nested types still come from its base
+types; and a definition's own nested types are definitions, not parameterized.
+
+The listing gains a lookup line per type: inherited nested types, constructors, methods,
+properties, fields, events and the delegate `Invoke`. Measured at item 4j:
+`TypeSystemListingEquality` under `None` and `Default` pass for the 3,442 images; 132 loader
+tests pass in Rust.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

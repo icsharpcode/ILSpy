@@ -45,6 +45,7 @@ use super::attrvalue::{ArgValue, AttributeValue, TypedArg};
 use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
 use super::flags::has_compiler_attribute;
 use super::inheritance::{MemberDef, MemberRef, Modifiers};
+use super::lookup::MemberOptions;
 use super::members::{
     ConstValue, MethodDefId, ParamInfo, TypeParamInfo, field_accessibility, has_body,
     method_accessibility, method_modifiers,
@@ -84,6 +85,12 @@ pub fn listing(comp: &Compilation<'_>) -> String {
                     "B {} {}",
                     info.full_name.reflection_name(),
                     or_bad(bases)
+                ));
+                let lookup = lookup_line(&mut ts, def);
+                line(format!(
+                    "K {} {}",
+                    info.full_name.reflection_name(),
+                    or_bad(lookup)
                 ));
             }
         }
@@ -359,6 +366,29 @@ fn base_type_line(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> Result<String>
         types(ts, &all),
         types(ts, &non_interface),
         dmn.as_deref().unwrap_or("-")
+    ))
+}
+
+fn lookup_line(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> Result<String> {
+    let t = ts.intern_def(def);
+    let all = MemberOptions::default();
+    let nested = ts.get_nested_types(t, None, all)?;
+    let ctors = ts.get_constructors(t, MemberOptions::DECLARED)?;
+    let methods = ts.get_methods(t, None, all)?;
+    let props = ts.get_properties(t, all)?;
+    let fields = ts.get_fields(t, all)?;
+    let events = ts.get_events(t, all)?;
+    let invoke = ts
+        .get_delegate_invoke_method(t)?
+        .map_or_else(|| "-".to_owned(), |m| method_refs(ts, &[m]));
+    Ok(format!(
+        "nested={} ctors={} methods={} props={} fields={} events={} invoke={invoke}",
+        types(ts, &nested),
+        method_refs(ts, &ctors),
+        method_refs(ts, &methods),
+        member_refs(ts, &props),
+        member_refs(ts, &fields),
+        member_refs(ts, &events)
     ))
 }
 

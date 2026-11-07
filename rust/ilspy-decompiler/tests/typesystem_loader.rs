@@ -14,12 +14,13 @@ use ilspy_decompiler::typesystem::attrvalue::ArgValue;
 use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
 use ilspy_decompiler::typesystem::flags::ScopedKind;
 use ilspy_decompiler::typesystem::inheritance::{MemberDef, MemberRef, Modifiers};
+use ilspy_decompiler::typesystem::lookup::MemberOptions;
 use ilspy_decompiler::typesystem::members::{
     ConstValue, MethodDefId, ParamInfo, RefKind, SymbolKind, has_body, method_accessibility,
 };
 use ilspy_decompiler::typesystem::options;
 use ilspy_decompiler::typesystem::resolve::{MethodOrigin, ResolvedMethod};
-use ilspy_decompiler::typesystem::types::{TypeData, TypeId, TypeSystem};
+use ilspy_decompiler::typesystem::types::{TypeData, TypeId, TypeParamOwner, TypeSystem};
 
 const NS: &str = "ICSharpCode.Decompiler.Tests.TypeSystem";
 
@@ -2158,4 +2159,672 @@ fn constant_fields_size_of() {
     ] {
         assert_constant_field(&mut ts, def, field, ConstValue::Int32(size));
     }
+}
+
+fn find(ts: &mut TypeSystem<'_, '_>, reflection_name: &str) -> TypeId {
+    ts.parse_reflection_name(reflection_name)
+        .unwrap_or_else(|_| panic!("{reflection_name} does not parse"))
+}
+
+fn test_find(ts: &mut TypeSystem<'_, '_>, name: &str) -> TypeId {
+    find(ts, &format!("{NS}.{name}"))
+}
+
+fn resolved_accessibility(ts: &TypeSystem<'_, '_>, m: &ResolvedMethod) -> &'static str {
+    match m.origin {
+        MethodOrigin::Def(id) => accessibility_name(ts.method_accessibility_of(id).unwrap()),
+        // The implicit constructor of a struct is public.
+        MethodOrigin::DummyConstructor(_) => "Public",
+        MethodOrigin::Fake => panic!("unresolved method"),
+    }
+}
+
+fn nested_names(ts: &mut TypeSystem<'_, '_>, t: TypeId) -> Vec<String> {
+    ts.get_nested_types(t, None, MemberOptions::default())
+        .unwrap()
+        .into_iter()
+        .map(|n| ts.reflection_name(n))
+        .collect()
+}
+
+#[test]
+fn get_nested_types_from_base_class_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let d = test_type(&mut ts, "Derived`2");
+    let base = single(ts.direct_base_types(d).unwrap(), "base type");
+    assert_eq!(ts.reflection_name(base), format!("{NS}.Base`1[[`1]]"));
+    let expected = [format!("{NS}.Base`1+Nested`1[[`1],[]]")];
+    assert_eq!(nested_names(&mut ts, base), expected);
+    let derived = ts.intern_def(d);
+    assert_eq!(nested_names(&mut ts, derived), expected);
+}
+
+#[test]
+fn parameterized_type_get_nested_types_from_base_class_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let d = test_find(&mut ts, "Derived`2[[System.String],[System.Int32]]");
+    assert_eq!(
+        nested_names(&mut ts, d),
+        [format!("{NS}.Base`1+Nested`1[[System.Int32],[]]")]
+    );
+}
+
+fn constructors_of(ts: &mut TypeSystem<'_, '_>, name: &str) -> Vec<ResolvedMethod> {
+    let t = test_find(ts, name);
+    ts.get_constructors(t, MemberOptions::DECLARED).unwrap()
+}
+
+#[test]
+fn default_constructor_added_to_struct() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let ctors = constructors_of(&mut ts, "MyStructWithCtor");
+    assert_eq!(ctors.len(), 2);
+    for c in &ctors {
+        assert!(!c.is_static);
+        assert_eq!(ts.reflection_name(c.ret), "System.Void");
+        assert_eq!(resolved_accessibility(&ts, c), "Public");
+    }
+}
+
+#[test]
+fn no_default_constructor_added_to_struct() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let ctors = constructors_of(&mut ts, "MyStructWithDefaultCtor");
+    assert_eq!(ctors.len(), 1);
+    for c in &ctors {
+        assert!(!c.is_static);
+        assert_eq!(ts.reflection_name(c.ret), "System.Void");
+        assert_eq!(resolved_accessibility(&ts, c), "Public");
+    }
+}
+
+#[test]
+fn no_default_constructor_added_to_class() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let ctor = single(constructors_of(&mut ts, "MyClassWithCtor"), "constructor");
+    assert_eq!(resolved_accessibility(&ts, &ctor), "Private");
+    assert_eq!(ctor.params().unwrap().len(), 1);
+}
+
+#[test]
+fn default_constructor_on_abstract_class_is_protected() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let ctor = single(constructors_of(&mut ts, "AbstractClass"), "constructor");
+    assert!(ctor.params().unwrap().is_empty());
+    assert_eq!(resolved_accessibility(&ts, &ctor), "Protected");
+}
+
+#[test]
+fn generic_property_getter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let t = test_find(&mut ts, "GenericClass`2[[System.String],[System.Object]]");
+    let prop = single(
+        ts.get_properties(t, MemberOptions::default())
+            .unwrap()
+            .into_iter()
+            .filter(|p| name(&ts, p.def) == "Property")
+            .collect(),
+        "Property",
+    );
+    let getter_def = method_id(getter(&ts, prop.def));
+    let get = single(
+        ts.get_accessors(t, MemberOptions::default())
+            .unwrap()
+            .into_iter()
+            .flatten()
+            .filter(|m| m.origin == MethodOrigin::Def(getter_def))
+            .collect(),
+        "getter",
+    );
+    assert_eq!(ts.reflection_name(get.ret), "System.String");
+    assert_ne!(get.accessor_kind, 0);
+    let MemberDef::Property(_, row) = prop.def else {
+        unreachable!()
+    };
+    assert_eq!(
+        ts.accessor_owner(getter_def).map(|(o, _)| o),
+        Some(0x1700_0000 | row)
+    );
+    assert_eq!(get.declaring, Some(prop.declaring));
+}
+
+#[test]
+fn generic_delegate_get_invoke_method() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let t = test_find(
+        &mut ts,
+        "GenericDelegate`2[[System.String],[System.Object]]",
+    );
+    let m = ts.get_delegate_invoke_method(t).unwrap().expect("Invoke");
+    assert_eq!(m.name, "Invoke");
+    assert_eq!(ts.full_name(m.ret), "System.Object");
+    assert_eq!(ts.full_name(m.params().unwrap()[0]), "System.String");
+}
+
+#[test]
+fn specialized_method_accessor_owner() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let t = test_find(&mut ts, "GenericClass`2[[System.String],[System.Object]]");
+    let method = single(
+        ts.get_methods(t, None, MemberOptions::default())
+            .unwrap()
+            .into_iter()
+            .filter(|m| m.name == "GetIndex")
+            .collect(),
+        "GetIndex",
+    );
+    assert_eq!(method.accessor_kind, 0);
+}
+
+#[test]
+fn explicit_implementation_of_unified_methods() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let t = test_find(
+        &mut ts,
+        "ExplicitGenericInterfaceImplementationWithUnifiableMethods`2[[System.Int32],[System.Int32]]",
+    );
+    let TypeData::Inst { args, .. } = ts.data(t).clone() else {
+        unreachable!()
+    };
+    let mut explicit_methods = Vec::new();
+    for m in ts.get_methods(t, None, MemberOptions::default()).unwrap() {
+        if let MethodOrigin::Def(id) = m.origin
+            && ts.is_explicit_interface_implementation(id).unwrap()
+        {
+            explicit_methods.push((m, id));
+        }
+    }
+    assert_eq!(explicit_methods.len(), 2);
+    for (method, id) in explicit_methods {
+        // A specialized method's implemented members are the definition's, specialized alike.
+        let implemented = ts.explicit_implementations(id).unwrap();
+        let interface_definition = single(implemented, "implemented method");
+        let interface_method =
+            ts.specialize(interface_definition.clone(), Some(args.to_vec()), None);
+        assert_eq!(
+            ts.reflection_name(single(method.params().unwrap(), "parameter")),
+            "System.Int32"
+        );
+        assert_eq!(
+            ts.reflection_name(single(interface_method.params().unwrap(), "parameter")),
+            "System.Int32"
+        );
+        let generic_param = single(ts.method_signature(id).1, "parameter").ty;
+        let MethodOrigin::Def(interface_id) = interface_definition.origin else {
+            panic!("unresolved interface method");
+        };
+        let interface_generic_param = single(ts.method_signature(interface_id).1, "parameter").ty;
+        assert!(matches!(ts.data(generic_param), TypeData::TypeParam { .. }));
+        assert!(matches!(
+            ts.data(interface_generic_param),
+            TypeData::TypeParam { .. }
+        ));
+        assert_eq!(
+            ts.reflection_name(interface_generic_param),
+            ts.reflection_name(generic_param)
+        );
+    }
+}
+
+#[test]
+fn marshal_tests() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let t = test_find(&mut ts, "IMarshalAsTests");
+    let count = ts
+        .get_methods(t, None, MemberOptions::default())
+        .unwrap()
+        .into_iter()
+        .filter(|m| m.name == "GetCollectionByQuery2")
+        .count();
+    assert_eq!(count, 1);
+}
+
+#[test]
+fn nested_class_in_generic_class_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let value_collection = type_def(
+        &mut ts,
+        "System.Collections.Generic.Dictionary`2+ValueCollection",
+    );
+    let dictionary = find(
+        &mut ts,
+        "System.Collections.Generic.Dictionary`2[[System.String],[System.Int32]]",
+    );
+    let values = single(
+        ts.get_properties(dictionary, MemberOptions::default())
+            .unwrap()
+            .into_iter()
+            .filter(|p| name(&ts, p.def) == "Values")
+            .collect(),
+        "Values",
+    );
+    let MemberDef::Property(module, row) = values.def else {
+        unreachable!()
+    };
+    let TypeData::Inst { args, .. } = ts.data(values.declaring).clone() else {
+        panic!("not seen through Dictionary<string, int>");
+    };
+    let (ret, _) = ts.property_signature(module, row).unwrap();
+    let ret = ts.substitute(ret, Some(&args), None);
+    assert_eq!(
+        ts.reflection_name(ret),
+        "System.Collections.Generic.Dictionary`2+ValueCollection[[System.String],[System.Int32]]"
+    );
+    assert_eq!(ts.definition(ret), Some(value_collection));
+}
+
+#[test]
+fn test_nullable_default_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let t = test_find(&mut ts, "ClassWithMethodThatHasNullableDefaultParameter");
+    let foo = single(
+        ts.get_methods(t, None, MemberOptions::default())
+            .unwrap()
+            .into_iter()
+            .filter(|m| m.name == "Foo")
+            .collect(),
+        "Foo",
+    );
+    let MethodOrigin::Def(id) = foo.origin else {
+        panic!("unresolved Foo");
+    };
+    assert_eq!(single_param(&mut ts, id).value, ConstValue::Int32(42));
+}
+
+#[test]
+fn void_has_no_members() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let void = type_def(&mut ts, "System.Void");
+    assert_eq!(comp.type_def(void).unwrap().kind, TypeKind::Void);
+    let t = ts.intern_def(void);
+    let all = MemberOptions::default();
+    assert!(ts.get_methods(t, None, all).unwrap().is_empty());
+    assert!(ts.get_properties(t, all).unwrap().is_empty());
+    assert!(ts.get_events(t, all).unwrap().is_empty());
+    assert!(ts.get_fields(t, all).unwrap().is_empty());
+}
+
+fn type_params(
+    ts: &mut TypeSystem<'_, '_>,
+    owner: MemberDef,
+) -> Vec<ilspy_decompiler::typesystem::members::TypeParamInfo> {
+    use ilspy_decompiler::metadata::tables::TableId;
+    match owner {
+        MemberDef::Method(id) => ts.type_parameters(id.module, TableId::MethodDef, id.row),
+        _ => panic!("not a method"),
+    }
+    .unwrap()
+}
+
+fn class_type_params(
+    ts: &mut TypeSystem<'_, '_>,
+    def: TypeDefId,
+) -> Vec<ilspy_decompiler::typesystem::members::TypeParamInfo> {
+    ts.type_parameters(
+        def.module,
+        ilspy_decompiler::metadata::tables::TableId::TypeDef,
+        def.row,
+    )
+    .unwrap()
+}
+
+fn type_param(ts: &mut TypeSystem<'_, '_>, owner: TypeParamOwner, index: u32) -> TypeId {
+    ts.intern(TypeData::TypeParam { owner, index })
+}
+
+#[test]
+fn test_class_type_parameters() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "GenericClass`2");
+    let tps = class_type_params(&mut ts, def);
+    assert_eq!(ts.class_param_owner(def, 0), TypeParamOwner::Type(def));
+    assert_eq!(ts.class_param_owner(def, 1), TypeParamOwner::Type(def));
+    let second = type_param(&mut ts, TypeParamOwner::Type(def), 1);
+    assert_eq!(tps[0].constraints[0], second);
+}
+
+#[test]
+fn test_method() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "GenericClass`2");
+    let m = method_named(&mut ts, def, "TestMethod");
+    let tps = type_params(&mut ts, MemberDef::Method(m));
+    assert_eq!(tps[0].name, "K");
+    assert_eq!(tps[1].name, "V");
+    assert_eq!(
+        ts.reflection_name(tps[0].constraints[0]),
+        "System.IComparable`1[[``1]]"
+    );
+    let first = type_param(&mut ts, TypeParamOwner::Method(m), 0);
+    assert_eq!(tps[1].constraints[0], first);
+}
+
+#[test]
+fn get_index() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "GenericClass`2");
+    let m = method_named(&mut ts, def, "GetIndex");
+    let tps = type_params(&mut ts, MemberDef::Method(m));
+    assert_eq!(tps[0].name, "T");
+    let t = type_param(&mut ts, TypeParamOwner::Method(m), 0);
+    let constraint = tps[0].constraints[0];
+    let TypeData::Inst { generic, args } = ts.data(constraint).clone() else {
+        panic!("constraint is not parameterized");
+    };
+    let generic = ts.definition(generic).expect("IEquatable`1");
+    assert_eq!(
+        comp.type_def(generic).unwrap().full_name.name(),
+        "IEquatable"
+    );
+    assert_eq!(comp.type_def(generic).unwrap().type_parameter_count, 1);
+    assert_eq!(&args[..], [t]);
+    assert_eq!(ts.method_signature(m).1[0].ty, t);
+}
+
+#[test]
+fn generic_enum() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "GenericClass`2+NestedEnum");
+    assert_eq!(comp.type_def(def).unwrap().type_parameter_count, 2);
+}
+
+fn self_parameterized(
+    ts: &mut TypeSystem<'_, '_>,
+    generic: TypeDefId,
+    params_of: TypeDefId,
+) -> TypeId {
+    let count = ts.comp.type_def(params_of).unwrap().type_parameter_count;
+    let args: Vec<TypeId> = (0..count)
+        .map(|i| {
+            let owner = ts.class_param_owner(params_of, i);
+            type_param(ts, owner, i)
+        })
+        .collect();
+    let generic = ts.intern_def(generic);
+    ts.intern(TypeData::Inst {
+        generic,
+        args: args.into(),
+    })
+}
+
+#[test]
+fn field_in_generic_class_with_nested_enum_type() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let class = test_type(&mut ts, "GenericClass`2");
+    let enum_class = test_type(&mut ts, "GenericClass`2+NestedEnum");
+    let MemberDef::Field(module, row) = field_named(&ts, class, "EnumField") else {
+        unreachable!()
+    };
+    let expected = self_parameterized(&mut ts, enum_class, class);
+    assert_eq!(ts.field_type(module, row).0, expected);
+}
+
+#[test]
+fn generic_enum_member_return_type() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let enum_class = test_type(&mut ts, "GenericClass`2+NestedEnum");
+    let MemberDef::Field(module, row) = field_named(&ts, enum_class, "EnumMember") else {
+        unreachable!()
+    };
+    let expected = self_parameterized(&mut ts, enum_class, enum_class);
+    assert_eq!(ts.field_type(module, row).0, expected);
+}
+
+#[test]
+fn enum_fields_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let e = test_type(&mut ts, "MyEnum");
+    let rows = comp.visible_fields(e).unwrap();
+    let md = &comp.module(e.module).md;
+    let flags = |row: u32| md.get::<rows::Field>(row).unwrap().flags;
+    let value_field = rows[0];
+    let fields = &rows[1..];
+    assert_eq!(fields.len(), 5);
+    assert_eq!(
+        name(&ts, MemberDef::Field(e.module, value_field)),
+        "value__"
+    );
+    let int16 = type_def(&mut ts, "System.Int16");
+    let int16 = ts.intern_def(int16);
+    assert_eq!(ts.field_type(e.module, value_field).0, int16);
+    assert_eq!(
+        access(&mut ts, MemberDef::Field(e.module, value_field)),
+        "Public"
+    );
+    assert_eq!(ts.field_constant(e.module, value_field), ConstValue::Null);
+    assert!(!ts.field_is_const(e.module, value_field));
+    assert_eq!(flags(value_field) & 0x10, 0);
+    let enum_type = ts.intern_def(e);
+    for &f in fields {
+        assert_ne!(flags(f) & 0x10, 0);
+        assert!(ts.field_is_const(e.module, f));
+        assert_eq!(access(&mut ts, MemberDef::Field(e.module, f)), "Public");
+        assert_eq!(ts.field_type(e.module, f).0, enum_type);
+        assert!(matches!(
+            ts.field_constant(e.module, f),
+            ConstValue::Int16(_)
+        ));
+    }
+    let expected = [
+        ("First", 0),
+        ("Second", 1),
+        ("Flag1", 0x10),
+        ("Flag2", 0x20),
+        ("CombinedFlags", 0x30),
+    ];
+    for (&f, (n, v)) in fields.iter().zip(expected) {
+        assert_eq!(name(&ts, MemberDef::Field(e.module, f)), n);
+        assert_eq!(ts.field_constant(e.module, f), ConstValue::Int16(v));
+    }
+}
+
+fn constant_of(ts: &mut TypeSystem<'_, '_>, field: &str) -> ConstValue {
+    let def = test_type(ts, "ConstantFieldTest");
+    let MemberDef::Field(module, row) = field_named(ts, def, field) else {
+        unreachable!()
+    };
+    assert!(ts.field_is_const(module, row), "{field}");
+    ts.field_constant(module, row)
+}
+
+#[test]
+fn constant_enum_from_this_assembly() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    assert_eq!(
+        constant_of(&mut ts, "EnumFromThisAssembly"),
+        ConstValue::Int16(1)
+    );
+}
+
+#[test]
+fn constant_enum_from_another_assembly() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    // StringComparison.OrdinalIgnoreCase
+    assert_eq!(
+        constant_of(&mut ts, "EnumFromAnotherAssembly"),
+        ConstValue::Int32(5)
+    );
+}
+
+#[test]
+fn default_of_enum() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    assert_eq!(constant_of(&mut ts, "DefaultOfEnum"), ConstValue::Int16(0));
+}
+
+#[test]
+fn generic_delegate_variance() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "GenericDelegate`2");
+    let tps = class_type_params(&mut ts, def);
+    assert_eq!(tps[0].variance, "Contravariant");
+    assert_eq!(tps[1].variance, "Covariant");
+    let second = type_param(&mut ts, TypeParamOwner::Type(def), 1);
+    assert_eq!(tps[0].constraints.first(), Some(&second));
+}
+
+#[test]
+fn inner_class_in_generic_class_is_referenced_using_parameterized_type() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "OuterGeneric`1");
+    let inner = format!("{NS}.OuterGeneric`1+Inner[[`0]]");
+    for (field, expected) in [
+        ("Field1", inner.clone()),
+        ("Field2", inner.clone()),
+        ("Field3", format!("{NS}.OuterGeneric`1+Inner[[{inner}]]")),
+    ] {
+        let MemberDef::Field(module, row) = field_named(&ts, def, field) else {
+            unreachable!()
+        };
+        let ty = ts.field_type(module, row).0;
+        assert_eq!(ts.reflection_name(ty), expected, "{field}");
+    }
+}
+
+#[test]
+fn inner_class_in_generic_class_type_parameter_owner() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let outer = test_type(&mut ts, "OuterGeneric`1");
+    let inner = test_type(&mut ts, "OuterGeneric`1+Inner");
+    assert_eq!(ts.class_param_owner(inner, 0), TypeParamOwner::Type(outer));
+}
+
+#[test]
+fn inner_class_in_generic_class_references_the_outer_class_field() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let inner = test_type(&mut ts, "OuterGeneric`1+Inner");
+    let fields = comp.visible_fields(inner).unwrap();
+    let f = single(fields, "field");
+    let ty = ts.field_type(inner.module, f).0;
+    assert_eq!(ts.reflection_name(ty), format!("{NS}.OuterGeneric`1[[`0]]"));
+}
+
+#[test]
+fn inner_class_in_generic_class_references_the_outer_class_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let inner = test_type(&mut ts, "OuterGeneric`1+Inner");
+    let ctor = single(ts.definition_constructors(inner).unwrap(), "constructor");
+    let ty = single(ctor.params().unwrap(), "parameter");
+    assert_eq!(ts.reflection_name(ty), format!("{NS}.OuterGeneric`1[[`0]]"));
+}
+
+#[test]
+fn pointer_type_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = type_def(&mut ts, "System.IntPtr");
+    let m = method_named(&mut ts, def, "ToPointer");
+    let ret = ts.method_signature(m).0;
+    assert_eq!(ts.reflection_name(ret), "System.Void*");
+    let TypeData::Pointer(elem) = *ts.data(ret) else {
+        panic!("not a pointer");
+    };
+    assert_eq!(ts.full_name(elem), "System.Void");
+}
+
+#[test]
+fn generic_property_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = type_def(&mut ts, "System.Collections.Generic.Comparer`1");
+    let MemberDef::Property(module, row) = named(&ts, properties(&ts, def), "Default") else {
+        unreachable!()
+    };
+    let (ret, _) = ts.property_signature(module, row).unwrap();
+    let TypeData::Inst { args, .. } = ts.data(ret).clone() else {
+        panic!("not parameterized");
+    };
+    assert_eq!(ts.full_name(ret), "System.Collections.Generic.Comparer");
+    let t = type_param(&mut ts, TypeParamOwner::Type(def), 0);
+    assert_eq!(args[0], t);
+}
+
+#[test]
+fn inner_class_reference_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = type_def(&mut ts, "System.Environment");
+    let get_folder_path = methods(&mut ts, def)
+        .into_iter()
+        .find_map(|(m, _)| match m.origin {
+            MethodOrigin::Def(id) if m.name == "GetFolderPath" => Some(id),
+            _ => None,
+        })
+        .expect("GetFolderPath");
+    let rt = ts.method_signature(get_folder_path).1[0].ty;
+    let special_folder = single(
+        comp.nested_types(def)
+            .into_iter()
+            .filter(|&n| comp.type_def(n).unwrap().full_name.name() == "SpecialFolder")
+            .collect(),
+        "SpecialFolder",
+    );
+    assert_eq!(ts.definition(rt), Some(special_folder));
+    assert!(matches!(ts.data(rt), TypeData::Def(_)));
+}
+
+#[test]
+fn extension_method_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "StaticClass");
+    let m = method_named(&mut ts, def, "Extension");
+    assert!(mods(&ts, MemberDef::Method(m)).is_static);
+    assert!(ts.method_flags(m, None).extension);
+    // `ReducedFrom` is null on a definition; the Rust type system has no reduced forms.
+    assert!(ts.type_flags(def).has_extensions);
+}
+
+#[test]
+fn constraints_on_override_are_inherited() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "Derived`2");
+    let m = method_named(&mut ts, def, "GenericMethodWithConstraints");
+    let tp = single(type_params(&mut ts, MemberDef::Method(m)), "type parameter");
+    assert_eq!(tp.name, "Y");
+    assert!(!tp.value_type);
+    assert!(!tp.reference_type);
+    assert!(tp.default_ctor);
+    let names: Vec<String> = tp
+        .constraints
+        .iter()
+        .map(|&c| ts.reflection_name(c))
+        .collect();
+    assert_eq!(
+        names,
+        [
+            "System.Collections.Generic.IComparer`1[[`1]]",
+            "System.Object"
+        ]
+    );
 }

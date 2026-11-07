@@ -10,6 +10,7 @@ pub mod fnptr;
 pub mod inheritance;
 pub mod known;
 pub mod listing;
+pub mod lookup;
 pub mod members;
 pub mod names;
 pub mod options;

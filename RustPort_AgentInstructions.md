@@ -255,11 +255,18 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     option-dependent ignore list, `HasAttribute`/`GetAttribute(KnownAttribute)`, return-type,
     parameter and type parameter attributes, the constructor of built-in attributes; listing
     line per entity; the loader tests on attributes.
-  - [ ] **4j. Member lookup.** `GetMembersHelper` (`GetMethods`/`GetProperties`/`GetFields`/
-    `GetEvents`/`GetNestedTypes`/`GetConstructors` on definitions and parameterized types,
-    through base types), `GetDelegateInvokeMethod`; the loader tests on them.
+  - [x] **4j. Member lookup.** Subject: `Add member lookup to the Rust type system`.
+    `GetMembersHelper` (`GetMethods`/`GetProperties`/`GetFields`/`GetEvents`/`GetAccessors`/
+    `GetNestedTypes`/`GetConstructors` on definitions and parameterized types, through base
+    types), `GetDelegateInvokeMethod`; a lookup line per type in the listing; the loader tests
+    on them and the remaining ones the API already expresses (type parameters, constants,
+    nested generic types).
   - [ ] **4k. Specialization API.** `Specialize` with composed substitutions, specialized type
-    parameters owned by the specialized method, member equality; the remaining loader tests.
+    parameters owned by the specialized method, member equality, `IsReferenceType` of type
+    parameters from their constraints; the remaining loader tests (`GetIndexSpecializedTypeParameter`,
+    `GetIndexDoubleSpecialization`, `Specialized_GetIndex_ToMemberReference`,
+    `Specialized_GetIndex_SpecializeWithIdentityHasNoEffect`,
+    `GenericDelegate_ReferenceTypeConstraints`).
 
 ### Phase 2: ILAst in Rust, seam 1
 

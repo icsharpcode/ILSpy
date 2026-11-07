@@ -141,6 +141,12 @@ public class TypeSystemListingEqualityTests
 	static string Members(IEnumerable<IMember> members)
 		=> "[" + string.Join("|", members.Select(m => Origin(m) + ":" + (m.DeclaringType == null ? "-" : Describe(m.DeclaringType)))) + "]";
 
+	static string Lookup(ITypeDefinition td)
+	{
+		var invoke = td.GetDelegateInvokeMethod();
+		return $"nested={Types(td.GetNestedTypes())} ctors={Members(td.GetConstructors())} methods={Members(td.GetMethods())} props={Members(td.GetProperties())} fields={Members(td.GetFields())} events={Members(td.GetEvents())} invoke={(invoke == null ? "-" : Members([invoke]))}";
+	}
+
 	static string Inheritance(IMember m)
 		=> $"ovr={(m.IsOverridable ? 1 : 0)} eii={(m.IsExplicitInterfaceImplementation ? 1 : 0)} impls={Members(m.ExplicitlyImplementedInterfaceMembers)}";
 
@@ -189,7 +195,10 @@ public class TypeSystemListingEqualityTests
 			if (line != "!bad" && td.TypeParameterCount > 0)
 				Append($"G {td.ReflectionName} {S(() => TypeParams(td.TypeParameters))}");
 			if (line != "!bad")
+			{
 				Append($"B {td.ReflectionName} {S(() => $"all={Types(td.GetAllBaseTypes())} nonif={Types(td.GetNonInterfaceBaseTypes())} dmn={((MetadataTypeDefinition)td).DefaultMemberName ?? "-"}")}");
+				Append($"K {td.ReflectionName} {S(() => Lookup(td))}");
+			}
 		}
 		foreach (var h in metadata.FieldDefinitions)
 		{
@@ -330,6 +339,19 @@ public class TypeSystemListingEqualityTests
 		foreach (string name in wanted)
 			Assert.That(lines, Has.Some.StartsWith("L").And.Contains("." + name + "@"), name);
 		Assert.That(lines, Has.Some.StartsWith("LT ").And.Contains("StructLayoutAttribute@System.Private.CoreLib(").And.Contains("named=[F:CharSet:"));
+		Assert.That(lines, Has.None.Contains("!bad"));
+	}
+
+	[Test]
+	public void ListingCoversMemberLookup()
+	{
+		var ts = Load(typeof(CSharpDecompiler).Assembly.Location, TypeSystemOptions.Default);
+		using var table = new RustModuleTable(ts);
+		string[] lines = table.DebugTypeListing().Split('\n');
+		Assert.That(lines, Has.Some.StartsWith("K ").And.Contains(" invoke=[06"));
+		Assert.That(lines, Has.Some.StartsWith("K ").And.Contains(":System.IEquatable`1@System.Private.CoreLib[ICSharpCode."));
+		Assert.That(lines, Has.Some.StartsWith("K ").And.Contains("@ICSharpCode.Decompiler[@?,@?]"));
+		Assert.That(lines, Has.Some.StartsWith("K ").And.Contains("+Enumerator@ICSharpCode.Decompiler[`0@?]"));
 		Assert.That(lines, Has.None.Contains("!bad"));
 	}
 

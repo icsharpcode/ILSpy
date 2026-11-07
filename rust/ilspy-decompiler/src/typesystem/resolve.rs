@@ -262,23 +262,24 @@ impl TypeSystem<'_, '_> {
 
     /// `GetFilteredAccessors`: getters and setters of visible properties, then adders and
     /// removers of events with an adder. When an event's invoker matches, its remover is
-    /// yielded (as the managed code does).
-    fn definition_accessors(
+    /// yielded (as the managed code does). `name` filters by accessor name.
+    pub fn definition_accessors(
         &mut self,
         def: TypeDefId,
-        name: &str,
+        name: Option<&str>,
     ) -> Result<Vec<Option<ResolvedMethod>>> {
         let md = &self.comp.module(def.module).md;
         let mut result = Vec::new();
         let named = |ts: &Self, row: u32| {
             row != 0
-                && ts
-                    .comp
-                    .module(def.module)
-                    .md
-                    .get::<rows::MethodDef>(row)
-                    .and_then(|m| ts.comp.module(def.module).md.string(m.name))
-                    .is_ok_and(|n| n == name)
+                && name.is_none_or(|name| {
+                    ts.comp
+                        .module(def.module)
+                        .md
+                        .get::<rows::MethodDef>(row)
+                        .and_then(|m| ts.comp.module(def.module).md.string(m.name))
+                        .is_ok_and(|n| n == name)
+                })
         };
         for p in self.comp.visible_properties(def)? {
             let (get, set, _) = md.property_accessors(p);
@@ -431,7 +432,7 @@ impl TypeSystem<'_, '_> {
                 .filter(|(m, k)| *k != SymbolKind::Constructor && m.name == name)
                 .map(|(m, _)| Some(m))
                 .collect();
-            c.extend(self.definition_accessors(def, name)?);
+            c.extend(self.definition_accessors(def, Some(name))?);
             c
         };
         let mut expected = params.to_vec();
