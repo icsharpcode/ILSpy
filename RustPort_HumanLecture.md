@@ -579,6 +579,32 @@ parameters. It is therefore ported alongside those features (4h-4k), and each ad
 to the listing so the corpus checks them as well. At item 4g: 44 reflection tests and the
 first 12 loader tests pass.
 
+### 3.14 Member modifiers and inheritance (item 4h)
+
+`typesystem/inheritance.rs` ports what the decompiler asks about a member's place in the type
+hierarchy. Modifiers come from MethodAttributes as on `MetadataMethod` (an IL-sealed
+interface implementation is not "sealed" in C# terms), and a property or event takes those
+of its first accessor. Explicit implementations are the MethodImpl rows of the declaring
+type, found by SRM's class-range search and resolved in the type's own generic context; a
+property's or event's are the accessor owners of its accessor's. A property is an indexer
+when it is the type's `DefaultMember` with parameters; an explicitly implemented one takes
+the kind of the property it implements.
+
+One rule reaches across the hierarchy: a property that overrides only one accessor copies
+the accessibility of the nearest non-override base property, so `GetBaseMembers` comes with
+it. It walks the non-interface base types derived-first (`BaseTypeCollector`'s post-order,
+with its cycle guard), takes the same-named non-private members of each base seen through
+its type arguments, and compares signatures as `SignatureComparer.Ordinal` does: symbol kind,
+name, method type parameter count, and parameter types normalized with method type
+parameters as dummies but class type parameters kept.
+
+Attribute lists were planned first but depend on this work: a property's `IndexerName`
+pseudo-attribute needs indexers and explicit implementations, so the order of 4h and 4i is
+swapped. The listing now prints, per type, all base types, the non-interface ones and the
+default member name, and per member the modifiers, explicit implementations and (for
+properties) base members. Measured at item 4h: `TypeSystemListingEquality` under `None` and
+`Default` pass for the 3,442 images; 45 loader tests pass in Rust.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

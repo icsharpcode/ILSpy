@@ -239,15 +239,22 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     the `OnlyPublicAPI` member filter, parse contexts for `` `n `` / ``` ``n ```, the
     cargo fixture harness (`tests/common`), `ReflectionHelperTests` (all but the null-input
     test, which a `&str` cannot express) and the loader tests the current API expresses.
-  - [ ] **4h. Attribute lists.** `AttributeListBuilder` with the pseudo-attributes
+  - [x] **4h. Member modifiers and inheritance.** Subject: `Add member modifiers and inheritance to the Rust type system`.
+    `IsVirtual`/`IsOverride`/`IsOverridable`/`IsSealed`/`IsAbstract` for methods, properties
+    and events, property and event accessibility (partial overrides take the base
+    property's), property symbol kind (indexers by `DefaultMemberAttribute`, explicit
+    implementations by the implemented property), explicit interface implementations
+    (MethodImpl rows), `DirectBaseTypes` of every type, `GetAllBaseTypes` /
+    `GetNonInterfaceBaseTypes`, `InheritanceHelper.GetBaseMembers`; listing; the loader tests
+    on them. Comes before attributes because property attributes need indexers and explicit
+    implementations, and parameter attributes the closure-parameter check.
+  - [ ] **4i. Attribute lists.** `AttributeListBuilder` with the pseudo-attributes
     (Serializable, ComImport, SpecialName, StructLayout, DllImport, PreserveSig, MethodImpl,
-    FieldOffset, NonSerialized, MarshalAs, In/Out, ...), the option-dependent ignore list,
-    `HasAttribute`/`GetAttribute(KnownAttribute)`, return-type, parameter and type parameter
-    attributes; listing line per entity; the loader tests on attributes.
-  - [ ] **4i. Member modifiers and inheritance.** `IsVirtual`/`IsOverride`/`IsOverridable`/
-    `IsSealed`/`IsAbstract` for methods, properties and events, property and event
-    accessibility, indexers (`DefaultMemberAttribute`), explicit interface implementations
-    (MethodImpl table), `GetAllBaseTypes`; listing; the loader tests on them.
+    FieldOffset, NonSerialized, MarshalAs, In/Out, Optional, DefaultParameterValue,
+    IndexerName, security declarations, TypeForwardedTo, AssemblyVersion), the
+    option-dependent ignore list, `HasAttribute`/`GetAttribute(KnownAttribute)`, return-type,
+    parameter and type parameter attributes, the constructor of built-in attributes; listing
+    line per entity; the loader tests on attributes.
   - [ ] **4j. Member lookup.** `GetMembersHelper` (`GetMethods`/`GetProperties`/`GetFields`/
     `GetEvents`/`GetNestedTypes`/`GetConstructors` on definitions and parameterized types,
     through base types), `GetDelegateInvokeMethod`; the loader tests on them.

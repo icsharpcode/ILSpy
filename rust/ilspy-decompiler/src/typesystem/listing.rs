@@ -39,9 +39,11 @@
 
 use std::fmt::Write;
 
+use super::attrs::accessibility_name;
 use super::attrvalue::{ArgValue, AttributeValue, TypedArg};
 use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
 use super::flags::has_compiler_attribute;
+use super::inheritance::{MemberDef, MemberRef, Modifiers};
 use super::members::{
     ConstValue, MethodDefId, ParamInfo, TypeParamInfo, field_accessibility, has_body,
     method_accessibility, method_modifiers,
@@ -76,6 +78,12 @@ pub fn listing(comp: &Compilation<'_>) -> String {
                         or_bad(tps)
                     ));
                 }
+                let bases = base_type_line(&mut ts, def);
+                line(format!(
+                    "B {} {}",
+                    info.full_name.reflection_name(),
+                    or_bad(bases)
+                ));
             }
         }
     }
@@ -142,11 +150,75 @@ fn types(ts: &TypeSystem<'_, '_>, list: &[TypeId]) -> String {
     format!("[{}]", names.join("|"))
 }
 
-fn method_ref(ts: &TypeSystem<'_, '_>, m: &ResolvedMethod) -> Result<String> {
-    let origin = match m.origin {
+fn method_origin(m: &ResolvedMethod) -> String {
+    match m.origin {
         MethodOrigin::Def(d) => tok(token(TableId::MethodDef, d.row)),
         MethodOrigin::DummyConstructor(_) | MethodOrigin::Fake => "fake".to_owned(),
-    };
+    }
+}
+
+fn method_refs(ts: &TypeSystem<'_, '_>, list: &[ResolvedMethod]) -> String {
+    let refs: Vec<String> = list
+        .iter()
+        .map(|m| {
+            let decl = m
+                .declaring
+                .map_or_else(|| "-".to_owned(), |d| located(ts, d));
+            format!("{}:{decl}", method_origin(m))
+        })
+        .collect();
+    format!("[{}]", refs.join("|"))
+}
+
+fn member_refs(ts: &TypeSystem<'_, '_>, list: &[MemberRef]) -> String {
+    let refs: Vec<String> = list
+        .iter()
+        .map(|m| {
+            let t = match m.def {
+                MemberDef::Field(_, row) => token(TableId::Field, row),
+                MemberDef::Method(id) => token(TableId::MethodDef, id.row),
+                MemberDef::Property(_, row) => token(TableId::Property, row),
+                MemberDef::Event(_, row) => token(TableId::Event, row),
+            };
+            format!("{}:{}", tok(t), located(ts, m.declaring))
+        })
+        .collect();
+    format!("[{}]", refs.join("|"))
+}
+
+fn inheritance(overridable: bool, explicit: bool, impls: String) -> String {
+    format!(
+        "ovr={} eii={} impls={impls}",
+        u8::from(overridable),
+        u8::from(explicit)
+    )
+}
+
+fn modifier_letters(m: &Modifiers) -> String {
+    letters(&[
+        (m.is_static, 's'),
+        (m.is_abstract, 'a'),
+        (m.is_sealed, 'e'),
+        (m.is_virtual, 'v'),
+        (m.is_override, 'o'),
+    ])
+}
+
+fn base_type_line(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> Result<String> {
+    let t = ts.intern_def(def);
+    let all = ts.all_base_types(t)?;
+    let non_interface = ts.non_interface_base_types(t)?;
+    let dmn = ts.default_member_name(def)?;
+    Ok(format!(
+        "all={} nonif={} dmn={}",
+        types(ts, &all),
+        types(ts, &non_interface),
+        dmn.as_deref().unwrap_or("-")
+    ))
+}
+
+fn method_ref(ts: &TypeSystem<'_, '_>, m: &ResolvedMethod) -> Result<String> {
+    let origin = method_origin(m);
     Ok(format!(
         "method={origin} decl={} name={} static={} targs={} ret={} params={} accessor={}",
         m.declaring
@@ -507,8 +579,14 @@ fn method_line(ts: &mut TypeSystem<'_, '_>, m: MethodDefId) -> Result<String> {
     }
     let mf = ts.method_flags(m, accessor.map(|(t, _)| t));
     let accessor = accessor.map_or_else(|| "-".to_owned(), |(t, sem)| format!("{}:{sem}", tok(t)));
+    let impls = ts.explicit_implementations(m)?;
+    let inheritance = inheritance(
+        Modifiers::of_method_flags(def.flags).is_overridable,
+        ts.is_explicit_interface_implementation(m)?,
+        method_refs(ts, &impls),
+    );
     Ok(format!(
-        "M {} decl={} name={name} kind={} access={} mods={mods} accessor={accessor} ret={} params={} tparams={} ext={} thisro={} retro={} init={} thisscope={}",
+        "M {} decl={} name={name} kind={} access={} mods={mods} accessor={accessor} ret={} params={} tparams={} ext={} thisro={} retro={} init={} thisscope={} {inheritance}",
         tok(token(TableId::MethodDef, m.row)),
         decl_name(ts, m.module, declaring),
         kind.name(),
@@ -536,8 +614,26 @@ fn property_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Res
         md.method_declaring_type(any)?
     };
     let (ret, ps) = ts.property_signature(module, row)?;
+    let member = MemberDef::Property(module, row);
+    let kind = ts.property_symbol_kind(module, row)?;
+    let access = ts.member_accessibility(member)?;
+    let mods = ts.member_modifiers(member)?;
+    let explicit = match ts.property_any_accessor(module, row) {
+        Some(a) => ts.is_explicit_interface_implementation(a)?,
+        None => false,
+    };
+    let impls = ts.property_explicit_implementations(module, row)?;
+    let bases = ts.base_members(member, false)?;
+    let extra = format!(
+        "kind={} access={} mods={} {} bases={}",
+        kind.name(),
+        accessibility_name(access),
+        modifier_letters(&mods),
+        inheritance(mods.is_overridable, explicit, member_refs(ts, &impls)),
+        member_refs(ts, &bases)
+    );
     Ok(format!(
-        "P {} decl={} name={name} get={} set={} ret={} params={} retro={}",
+        "P {} decl={} name={name} get={} set={} ret={} params={} retro={} {extra}",
         tok(token(TableId::Property, row)),
         decl_name(ts, module, declaring),
         opt_tok(TableId::MethodDef, get),
@@ -568,14 +664,25 @@ fn event_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Result
         md.method_declaring_type(any)?
     };
     let ty = ts.event_type(module, row)?;
+    let member = MemberDef::Event(module, row);
+    let access = ts.member_accessibility(member)?;
+    let mods = ts.member_modifiers(member)?;
+    let explicit = match ts.event_any_accessor(module, row) {
+        Some(a) => ts.is_explicit_interface_implementation(a)?,
+        None => false,
+    };
+    let impls = ts.event_explicit_implementations(module, row)?;
     Ok(format!(
-        "E {} decl={} name={name} add={} remove={} invoke={} type={}",
+        "E {} decl={} name={name} add={} remove={} invoke={} type={} access={} mods={} {}",
         tok(token(TableId::Event, row)),
         decl_name(ts, module, declaring),
         opt_tok(TableId::MethodDef, add),
         opt_tok(TableId::MethodDef, remove),
         opt_tok(TableId::MethodDef, raise),
-        located(ts, ty)
+        located(ts, ty),
+        accessibility_name(access),
+        modifier_letters(&mods),
+        inheritance(mods.is_overridable, explicit, member_refs(ts, &impls))
     ))
 }
 

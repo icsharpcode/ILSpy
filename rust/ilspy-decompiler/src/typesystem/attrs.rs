@@ -687,3 +687,16 @@ fn min_accessibility_for_nrt(md: &Metadata<'_>) -> u8 {
     }
     ACC_NONE
 }
+
+/// The managed `Accessibility` name of a value.
+pub fn accessibility_name(value: u8) -> &'static str {
+    match value {
+        ACC_PRIVATE => "Private",
+        ACC_PROTECTED_AND_INTERNAL => "ProtectedAndInternal",
+        ACC_PROTECTED => "Protected",
+        ACC_INTERNAL => "Internal",
+        ACC_PROTECTED_OR_INTERNAL => "ProtectedOrInternal",
+        ACC_PUBLIC => "Public",
+        _ => "None",
+    }
+}

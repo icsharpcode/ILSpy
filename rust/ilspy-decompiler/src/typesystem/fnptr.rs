@@ -151,8 +151,18 @@ impl TypeSystem<'_, '_> {
     /// nullability and tuple names go, `object` becomes `dynamic` and `IntPtr`/`UIntPtr`
     /// become `nint`/`nuint`.
     pub fn normalize(&mut self, t: TypeId) -> TypeId {
+        self.normalize_with(t, true)
+    }
+
+    /// The `ParameterListComparer` visitor: as `normalize`, but class type parameters stay.
+    pub fn normalize_parameter(&mut self, t: TypeId) -> TypeId {
+        self.normalize_with(t, false)
+    }
+
+    fn normalize_with(&mut self, t: TypeId, class_dummy: bool) -> TypeId {
         let data = self.data(t).clone();
         let normalized = match data {
+            TypeData::TypeParam { owner, .. } if !owner.is_method() && !class_dummy => return t,
             TypeData::TypeParam { owner, index } => TypeData::TypeParam {
                 owner: if owner.is_method() {
                     TypeParamOwner::DummyMethod
@@ -172,25 +182,34 @@ impl TypeSystem<'_, '_> {
                 _ => return t,
             },
             TypeData::Modified { inner, .. } | TypeData::Annotated { inner, .. } => {
-                return self.normalize(inner);
+                return self.normalize_with(inner, class_dummy);
             }
-            TypeData::Tuple { underlying, .. } => return self.normalize(underlying),
+            TypeData::Tuple { underlying, .. } => {
+                return self.normalize_with(underlying, class_dummy);
+            }
             TypeData::Inst { generic, args } => TypeData::Inst {
-                generic: self.normalize(generic),
-                args: args.iter().map(|a| self.normalize(*a)).collect(),
+                generic: self.normalize_with(generic, class_dummy),
+                args: args
+                    .iter()
+                    .map(|a| self.normalize_with(*a, class_dummy))
+                    .collect(),
             },
             TypeData::Array { elem, rank, .. } => TypeData::Array {
-                elem: self.normalize(elem),
+                elem: self.normalize_with(elem, class_dummy),
                 rank,
                 nullability: Nullability::Oblivious,
             },
-            TypeData::Pointer(e) => TypeData::Pointer(self.normalize(e)),
-            TypeData::ByRef(e) => TypeData::ByRef(self.normalize(e)),
-            TypeData::Pinned(e) => TypeData::Pinned(self.normalize(e)),
+            TypeData::Pointer(e) => TypeData::Pointer(self.normalize_with(e, class_dummy)),
+            TypeData::ByRef(e) => TypeData::ByRef(self.normalize_with(e, class_dummy)),
+            TypeData::Pinned(e) => TypeData::Pinned(self.normalize_with(e, class_dummy)),
             TypeData::FnPtr(f) => {
                 let mut f = *f;
-                f.ret = self.normalize(f.ret);
-                f.params = f.params.iter().map(|p| self.normalize(*p)).collect();
+                f.ret = self.normalize_with(f.ret, class_dummy);
+                f.params = f
+                    .params
+                    .iter()
+                    .map(|p| self.normalize_with(*p, class_dummy))
+                    .collect();
                 TypeData::FnPtr(Box::new(f))
             }
             other => other,

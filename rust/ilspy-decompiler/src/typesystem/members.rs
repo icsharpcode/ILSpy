@@ -32,6 +32,10 @@ pub enum SymbolKind {
     Destructor,
     Operator,
     Accessor,
+    Field,
+    Property,
+    Indexer,
+    Event,
 }
 
 impl SymbolKind {
@@ -42,6 +46,10 @@ impl SymbolKind {
             SymbolKind::Destructor => "Destructor",
             SymbolKind::Operator => "Operator",
             SymbolKind::Accessor => "Accessor",
+            SymbolKind::Field => "Field",
+            SymbolKind::Property => "Property",
+            SymbolKind::Indexer => "Indexer",
+            SymbolKind::Event => "Event",
         }
     }
 }
@@ -329,7 +337,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         }
     }
 
-    fn method_declaring(&self, m: MethodDefId) -> Result<Option<TypeDefId>> {
+    pub fn method_declaring(&self, m: MethodDefId) -> Result<Option<TypeDefId>> {
         let row = self.comp.module(m.module).md.method_declaring_type(m.row)?;
         Ok((row != 0).then_some(TypeDefId {
             module: m.module,

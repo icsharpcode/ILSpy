@@ -6,6 +6,7 @@ pub mod attrvalue;
 pub mod compilation;
 pub mod flags;
 pub mod fnptr;
+pub mod inheritance;
 pub mod known;
 pub mod listing;
 pub mod members;

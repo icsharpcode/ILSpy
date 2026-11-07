@@ -416,6 +416,14 @@ impl<'a> Metadata<'a> {
             .collect()
     }
 
+    /// MethodImpl rows of a TypeDef (`TypeDefinition.GetMethodImplementations`): SRM searches
+    /// the class column by range whether or not the table is marked sorted.
+    pub fn type_method_impls(&self, type_def: u32) -> Vec<u32> {
+        self.tables
+            .binary_search_range(TableId::MethodImpl, 0, type_def)
+            .collect()
+    }
+
     /// CustomAttribute rows whose parent is `table`/`row`, in table order. Like SRM, a table
     /// marked sorted is searched by range; an unsorted one is scanned.
     pub fn custom_attributes(&self, table: TableId, row: u32) -> Vec<u32> {

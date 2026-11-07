@@ -138,6 +138,12 @@ public class TypeSystemListingEqualityTests
 	static string FieldRef(IField f)
 		=> $"field={Origin(f)} decl={(f.DeclaringType == null ? "-" : Describe(f.DeclaringType))} name={f.Name} type={Describe(f.ReturnType)}";
 
+	static string Members(IEnumerable<IMember> members)
+		=> "[" + string.Join("|", members.Select(m => Origin(m) + ":" + (m.DeclaringType == null ? "-" : Describe(m.DeclaringType)))) + "]";
+
+	static string Inheritance(IMember m)
+		=> $"ovr={(m.IsOverridable ? 1 : 0)} eii={(m.IsExplicitInterfaceImplementation ? 1 : 0)} impls={Members(m.ExplicitlyImplementedInterfaceMembers)}";
+
 	static string AttributeArgument(IType type, object? value) => Describe(type) + "=" + value switch {
 		IType t => "T:" + Describe(t),
 		ImmutableArray<CustomAttributeTypedArgument<IType>> items
@@ -167,6 +173,8 @@ public class TypeSystemListingEqualityTests
 			Append(line == "!bad" ? "T !bad" : line);
 			if (line != "!bad" && td.TypeParameterCount > 0)
 				Append($"G {td.ReflectionName} {S(() => TypeParams(td.TypeParameters))}");
+			if (line != "!bad")
+				Append($"B {td.ReflectionName} {S(() => $"all={Types(td.GetAllBaseTypes())} nonif={Types(td.GetNonInterfaceBaseTypes())} dmn={((MetadataTypeDefinition)td).DefaultMemberName ?? "-"}")}");
 		}
 		foreach (var h in metadata.FieldDefinitions)
 		{
@@ -180,21 +188,21 @@ public class TypeSystemListingEqualityTests
 			Append(Line("M", h, () => {
 				var m = module.GetDefinition(h);
 				string accessor = m.AccessorOwner == null ? "-" : $"{Tok(m.AccessorOwner.MetadataToken)}:{(int)m.AccessorKind}";
-				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Describe(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)} ext={(m.IsExtensionMethod ? 1 : 0)} thisro={(m.ThisIsRefReadOnly ? 1 : 0)} retro={(m.ReturnTypeIsRefReadOnly ? 1 : 0)} init={(m.IsInitOnly ? 1 : 0)} thisscope={m.GetThisParameterScope()}";
+				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Describe(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)} ext={(m.IsExtensionMethod ? 1 : 0)} thisro={(m.ThisIsRefReadOnly ? 1 : 0)} retro={(m.ReturnTypeIsRefReadOnly ? 1 : 0)} init={(m.IsInitOnly ? 1 : 0)} thisscope={m.GetThisParameterScope()} {Inheritance(m)}";
 			}));
 		}
 		foreach (var h in metadata.PropertyDefinitions)
 		{
 			Append(Line("P", h, () => {
 				var p = module.GetDefinition(h);
-				return $"P {Tok(h)} decl={p.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={p.Name} get={OptTok(p.Getter)} set={OptTok(p.Setter)} ret={Describe(p.ReturnType)} params={Params(p.Parameters)} retro={(p.ReturnTypeIsRefReadOnly ? 1 : 0)}";
+				return $"P {Tok(h)} decl={p.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={p.Name} get={OptTok(p.Getter)} set={OptTok(p.Setter)} ret={Describe(p.ReturnType)} params={Params(p.Parameters)} retro={(p.ReturnTypeIsRefReadOnly ? 1 : 0)} kind={p.SymbolKind} access={p.Accessibility} mods={Mods((p.IsStatic, 's'), (p.IsAbstract, 'a'), (p.IsSealed, 'e'), (p.IsVirtual, 'v'), (p.IsOverride, 'o'))} {Inheritance(p)} bases={Members(InheritanceHelper.GetBaseMembers(p, false))}";
 			}));
 		}
 		foreach (var h in metadata.EventDefinitions)
 		{
 			Append(Line("E", h, () => {
 				var e = module.GetDefinition(h);
-				return $"E {Tok(h)} decl={e.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={e.Name} add={OptTok(e.AddAccessor)} remove={OptTok(e.RemoveAccessor)} invoke={OptTok(e.InvokeAccessor)} type={Describe(e.ReturnType)}";
+				return $"E {Tok(h)} decl={e.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={e.Name} add={OptTok(e.AddAccessor)} remove={OptTok(e.RemoveAccessor)} invoke={OptTok(e.InvokeAccessor)} type={Describe(e.ReturnType)} access={e.Accessibility} mods={Mods((e.IsStatic, 's'), (e.IsAbstract, 'a'), (e.IsSealed, 'e'), (e.IsVirtual, 'v'), (e.IsOverride, 'o'))} {Inheritance(e)}";
 			}));
 		}
 		foreach (var h in metadata.MemberReferences)
@@ -272,6 +280,19 @@ public class TypeSystemListingEqualityTests
 		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("named=[P:AllowMultiple:System.Boolean@System.Private.CoreLib=Boolean:True]"));
 		Assert.That(lines, Has.Some.StartsWith("A ").And.EndsWith("fixed=[System.String@System.Private.CoreLib=String:00480069] named=[]"));
 		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("fixed=[System.Type@System.Private.CoreLib=null]"));
+		Assert.That(lines, Has.None.Contains("!bad"));
+	}
+
+	[Test]
+	public void ListingCoversInheritance()
+	{
+		var ts = Load(typeof(CSharpDecompiler).Assembly.Location, TypeSystemOptions.Default);
+		using var table = new RustModuleTable(ts);
+		string[] lines = table.DebugTypeListing().Split('\n');
+		Assert.That(lines, Has.Some.StartsWith("P ").And.Contains(" kind=Indexer ").And.Contains(" eii=1 impls=[1700"));
+		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(" eii=1 impls=[0600"));
+		Assert.That(lines, Has.Some.StartsWith("P ").And.Contains(" mods=o ovr=1 ").And.Contains("bases=[1700"));
+		Assert.That(lines, Has.Some.StartsWith("B ").And.Contains("|System.Collections.IEnumerable@System.Private.CoreLib|").And.EndsWith(" dmn=Item"));
 		Assert.That(lines, Has.None.Contains("!bad"));
 	}
 
