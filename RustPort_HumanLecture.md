@@ -463,6 +463,35 @@ are not what one would guess:
 Measured at item 4b: `TypeSystemListingEquality` passes for the same 3,442 images with one
 line per TypeDef, Field, MethodDef, Property and Event row and per type parameter list.
 
+### 3.10 Member references (item 4c)
+
+`typesystem/resolve.rs` ports `ResolveMethod`, `ResolveMethodReference`,
+`ResolveMethodSpecification`, `ResolveFieldReference`, `FindMethod`, `CreateFakeMethod` with
+`GuessFakeMethodAccessor`, `SpecializedMember.DeclaringType`, `TypeParameterSubstitution` and
+`VarArgInstanceMethod`. A resolved member is its origin (definition, implicit struct
+constructor or fake) plus the substitution, with the substituted signature computed once:
+the plan's "interned `(definition, substitution)` pair" as a value, which is all the IL reader
+needs. Signatures are matched after `NormalizeTypeVisitor` (type parameters become dummies of
+their owner kind, unknown types forget reference-type knowledge); function pointers carry
+their full identity (calling convention, custom conventions, ref-readonly return, parameter
+ref kinds) because `FunctionPointerType.Equals` compares all of it.
+
+Upstream behavior mirrored deliberately, because the oracle decides:
+
+- `GetFilteredAccessors` yields an event's remover when its invoker matches the name, so a
+  lookup can land on the remover, or fail with a null candidate when there is none.
+- `VarArgInstanceMethod` drops the last parameter of the method it wraps even when that is not
+  `__arglist` (a fake method has no `__arglist`), and fails on a method without parameters.
+- A parent that is a generic type definition yields a specialization by its own type
+  parameters, so the declaring type prints as `G`1[[`0]]` rather than `G`1`.
+
+Not ported yet: constructors of `ComImport` interfaces, which the managed code takes from the
+`CoClassAttribute` type; the engine reports `Unsupported` there. No corpus image reaches it;
+item 4e (custom attribute values) provides what it needs.
+
+Measured at item 4c: the same 3,442 images pass with one more line per MemberRef and per
+MethodSpec row.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

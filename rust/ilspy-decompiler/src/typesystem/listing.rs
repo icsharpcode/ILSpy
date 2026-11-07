@@ -17,6 +17,11 @@
 //!   params=[...]`;
 //! - per Event row: `E <tok> decl=<name|-> name=<n> add=<tok|-> remove=<tok|-> invoke=<tok|->
 //!   type=<type>`.
+//! - per MemberRef row: `R <tok> <member>`, per MethodSpec row: `S <tok> <member>`, resolved
+//!   in an empty generic context as the IL reader would (`ResolveMethod`, varargs expanded;
+//!   fields through `ResolveEntity`). A method prints `method=<def tok|fake> decl=<type|->
+//!   name=<n> static=<0|1> targs=[...] ret=<type> params=[...] accessor=<semantics>`, a field
+//!   `field=<def tok|fake> decl=<type|-> name=<n> type=<type>`.
 //!
 //! `<p>` is `<type>,<name>,<ref kind>,<optional 0|1>,<constant in signature 0|1>,<v>`;
 //! `<tp>` is `<name>:<variance>:<constraint flags nrvl>:{<type>;<type>}`; `<v>` is `null` or
@@ -30,7 +35,8 @@ use super::members::{
     ConstValue, MethodDefId, ParamInfo, TypeParamInfo, field_accessibility, has_body,
     method_accessibility, method_modifiers,
 };
-use super::types::{TypeData, TypeId, TypeSystem};
+use super::resolve::{FieldOrigin, MethodOrigin, ResolvedMethod};
+use super::types::{GenericContext, TypeData, TypeId, TypeSystem};
 use crate::metadata::Result;
 use crate::metadata::tables::{TableId, rows, token};
 
@@ -91,7 +97,80 @@ pub fn listing(comp: &Compilation<'_>) -> String {
             event_line(&mut ts, main, row),
         ));
     }
+    for row in 1..=md.tables.rows(TableId::MemberRef) {
+        let t = token(TableId::MemberRef, row);
+        line(with_bad(
+            "R",
+            t,
+            member_ref_line(&mut ts, main, row).map(|m| format!("R {} {m}", tok(t))),
+        ));
+    }
+    for row in 1..=md.tables.rows(TableId::MethodSpec) {
+        let t = token(TableId::MethodSpec, row);
+        let resolved = ts
+            .resolve_method(main, t, GenericContext::default())
+            .and_then(|m| method_ref(&ts, &m));
+        line(with_bad(
+            "S",
+            t,
+            resolved.map(|m| format!("S {} {m}", tok(t))),
+        ));
+    }
     out
+}
+
+fn types(ts: &TypeSystem<'_, '_>, list: &[TypeId]) -> String {
+    let names: Vec<String> = list.iter().map(|t| located(ts, *t)).collect();
+    format!("[{}]", names.join("|"))
+}
+
+fn method_ref(ts: &TypeSystem<'_, '_>, m: &ResolvedMethod) -> Result<String> {
+    let origin = match m.origin {
+        MethodOrigin::Def(d) => tok(token(TableId::MethodDef, d.row)),
+        MethodOrigin::DummyConstructor(_) | MethodOrigin::Fake => "fake".to_owned(),
+    };
+    Ok(format!(
+        "method={origin} decl={} name={} static={} targs={} ret={} params={} accessor={}",
+        m.declaring
+            .map_or_else(|| "-".to_owned(), |d| located(ts, d)),
+        m.name,
+        u8::from(m.is_static),
+        types(ts, &m.type_args),
+        located(ts, m.ret),
+        types(ts, &m.params()?),
+        m.accessor_kind
+    ))
+}
+
+fn member_ref_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Result<String> {
+    let md = &ts.comp.module(module).md;
+    let mr = md.get::<rows::MemberRef>(row)?;
+    let header = *md
+        .blob(mr.signature)?
+        .first()
+        .ok_or(crate::metadata::Error::Truncated)?;
+    let ctx = GenericContext::default();
+    match crate::metadata::signature::header_kind(header) {
+        crate::metadata::signature::HEADER_KIND_FIELD => {
+            let f = ts.resolve_field_ref(module, row, ctx)?;
+            let origin = match f.origin {
+                FieldOrigin::Def { row, .. } => tok(token(TableId::Field, row)),
+                FieldOrigin::Fake => "fake".to_owned(),
+            };
+            Ok(format!(
+                "field={origin} decl={} name={} type={}",
+                f.declaring
+                    .map_or_else(|| "-".to_owned(), |d| located(ts, d)),
+                f.name,
+                located(ts, f.ty)
+            ))
+        }
+        crate::metadata::signature::HEADER_KIND_METHOD => {
+            let m = ts.resolve_method(module, token(TableId::MemberRef, row), ctx)?;
+            method_ref(ts, &m)
+        }
+        _ => Err(crate::metadata::Error::Malformed("member reference kind")),
+    }
 }
 
 fn with_bad(kind: &str, t: u32, r: Result<String>) -> String {

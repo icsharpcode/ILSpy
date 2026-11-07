@@ -2,8 +2,10 @@
 //! interned types built from signatures.
 
 pub mod compilation;
+pub mod fnptr;
 pub mod known;
 pub mod listing;
 pub mod members;
 pub mod names;
+pub mod resolve;
 pub mod types;

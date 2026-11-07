@@ -100,6 +100,17 @@ public class TypeSystemListingEqualityTests
 		=> "[" + string.Join("|", tps.Select(tp =>
 			$"{tp.Name}:{tp.Variance}:{Mods((tp.HasDefaultConstructorConstraint, 'n'), (tp.HasReferenceTypeConstraint, 'r'), (tp.HasValueTypeConstraint, 'v'), (tp.AllowsRefLikeType, 'l'))}:{{{string.Join(";", tp.TypeConstraints.Select(c => Located(c.Type)))}}}")) + "]";
 
+	static string Origin(IMember member)
+		=> member.MemberDefinition.MetadataToken.IsNil ? "fake" : Tok(member.MemberDefinition.MetadataToken);
+
+	static string Types(IEnumerable<IType> types) => "[" + string.Join("|", types.Select(Located)) + "]";
+
+	static string MethodRef(IMethod m)
+		=> $"method={Origin(m)} decl={(m.DeclaringType == null ? "-" : Located(m.DeclaringType))} name={m.Name} static={(m.IsStatic ? 1 : 0)} targs={Types(m.TypeArguments)} ret={Located(m.ReturnType)} params={Types(m.Parameters.Select(p => p.Type))} accessor={(int)m.AccessorKind}";
+
+	static string FieldRef(IField f)
+		=> $"field={Origin(f)} decl={(f.DeclaringType == null ? "-" : Located(f.DeclaringType))} name={f.Name} type={Located(f.ReturnType)}";
+
 	static string Line(string kind, EntityHandle h, Func<string> f)
 	{
 		string line = S(f);
@@ -152,6 +163,20 @@ public class TypeSystemListingEqualityTests
 				return $"E {Tok(h)} decl={e.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={e.Name} add={OptTok(e.AddAccessor)} remove={OptTok(e.RemoveAccessor)} invoke={OptTok(e.InvokeAccessor)} type={Located(e.ReturnType)}";
 			}));
 		}
+		foreach (var h in metadata.MemberReferences)
+		{
+			Append(Line("R", h, () => {
+				string member = metadata.GetMemberReference(h).GetKind() == MemberReferenceKind.Field
+					? FieldRef((IField)module.ResolveEntity(h)!)
+					: MethodRef(module.ResolveMethod(h, default));
+				return $"R {Tok(h)} {member}";
+			}));
+		}
+		for (int row = 1; row <= metadata.GetTableRowCount(TableIndex.MethodSpec); row++)
+		{
+			var h = MetadataTokens.MethodSpecificationHandle(row);
+			Append(Line("S", h, () => $"S {Tok(h)} {MethodRef(module.ResolveMethod(h, default))}"));
+		}
 		return sb.ToString();
 	}
 
@@ -177,7 +202,12 @@ public class TypeSystemListingEqualityTests
 		Assert.That(lines, Has.None.Contains("!bad"));
 		// Resolution across the closure, including netstandard's forwarders into the runtime.
 		Assert.That(lines, Has.Some.Matches(@"base=\[System\.Object@[^?|\]]"));
-		Assert.That(lines.Count(l => l.Contains("@?")), Is.LessThan(lines.Length / 10));
+		var typeLines = lines.Where(l => l.StartsWith("T ")).ToList();
+		Assert.That(typeLines.Count(l => l[l.IndexOf(" base=")..].Contains("@?")), Is.LessThan(typeLines.Count / 10));
+		Assert.That(lines, Has.Some.StartsWith("R ").And.Contains(" method=06"));
+		Assert.That(lines, Has.Some.StartsWith("R ").And.Contains(" field=04"));
+		Assert.That(lines, Has.Some.StartsWith("R ").And.Contains("`1[[").And.Contains("@System."));
+		Assert.That(lines, Has.Some.StartsWith("S ").And.Not.Contains("targs=[]"));
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(" kind=Constructor "));
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(" kind=Accessor "));
 		Assert.That(lines, Has.Some.StartsWith("F ").And.Contains(" mods=sc").And.Contains("value=Int32:"));

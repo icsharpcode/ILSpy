@@ -334,17 +334,6 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             && matches!(self.data(t), TypeData::Def(_) | TypeData::Inst { .. })
     }
 
-    /// `IType.Name` and `IType.Namespace` of a resolved type, for modifier checks.
-    fn name_and_namespace(&self, t: TypeId) -> Option<(String, String)> {
-        let name = match self.data(t) {
-            TypeData::Def(def) => self.comp.type_def(*def).ok()?.full_name.clone(),
-            TypeData::Unknown { name, .. } => (**name).clone(),
-            TypeData::Inst { generic, .. } => return self.name_and_namespace(*generic),
-            _ => return None,
-        };
-        Some((name.name().to_owned(), name.top.ns))
-    }
-
     /// Type parameters of a TypeDef (`owner_table` TypeDef) or MethodDef.
     pub fn type_parameters(
         &mut self,

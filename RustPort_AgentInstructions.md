@@ -196,7 +196,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     steps stay out of the listing until then: property symbol kind and accessibility
     (indexers need `DefaultMemberAttribute`, explicit implementations need 4c, accessibility
     needs base members), attributes, `IsInitOnly`, explicit interface implementations.
-  - [ ] **4c. Member references and specialization.** `MetadataModule.ResolveEntity` /
+  - [x] **4c. Member references and specialization.** Subject: `Resolve member references in the Rust type system`. `MetadataModule.ResolveEntity` /
     `ResolveMethod` / `ResolveField` for MemberRef, MethodSpec and TypeSpec parents:
     signature-based member lookup in the declaring type, varargs, specialized members as
     interned `(definition, substitution)` pairs, `TypeParameterSubstitution`. Listing: one

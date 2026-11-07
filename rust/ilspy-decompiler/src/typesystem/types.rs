@@ -11,6 +11,7 @@ use crate::metadata::tables::{TableId, rows};
 use crate::metadata::{Error, Result};
 
 use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind, type_ref_full_name};
+pub use super::fnptr::FnPtrType;
 use super::known::KnownTypeCode;
 use super::names::FullTypeName;
 
@@ -28,7 +29,7 @@ pub enum TypeParamOwner {
 }
 
 impl TypeParamOwner {
-    fn is_method(self) -> bool {
+    pub fn is_method(self) -> bool {
         matches!(
             self,
             TypeParamOwner::Method(_) | TypeParamOwner::DummyMethod
@@ -61,10 +62,7 @@ pub enum TypeData {
     Pointer(TypeId),
     ByRef(TypeId),
     Pinned(TypeId),
-    FnPtr {
-        ret: TypeId,
-        params: Box<[TypeId]>,
-    },
+    FnPtr(Box<FnPtrType>),
     /// `SpecialType.ArgList`, the trailing parameter of a varargs method.
     ArgList,
 }
@@ -315,21 +313,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                     rank: shape.rank,
                 })
             }
-            SigType::FnPtr(sig) => {
-                let ret = self.from_sig(module, &sig.ret, ctx)?;
-                let params = sig
-                    .params
-                    .iter()
-                    .map(|p| self.from_sig(module, p, ctx))
-                    .collect::<Result<Box<[_]>>>()?;
-                if sig.header & 0x20 != 0 {
-                    // Pointers to instance methods are typed as IntPtr.
-                    self.known_type(KnownTypeCode::IntPtr)
-                } else {
-                    self.known_type(KnownTypeCode::UIntPtr);
-                    self.intern(TypeData::FnPtr { ret, params })
-                }
-            }
+            SigType::FnPtr(sig) => self.function_pointer(module, sig, ctx)?,
             SigType::Modified {
                 modifier, inner, ..
             } => {
@@ -376,7 +360,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::Inst { generic, .. } => self.definition(*generic),
             // Without TypeSystemOptions.FunctionPointers a function pointer acts as an alias
             // for UIntPtr; from_sig resolves UIntPtr whenever it creates one.
-            TypeData::FnPtr { .. } => self
+            TypeData::FnPtr(_) => self
                 .known
                 .get(&KnownTypeCode::UIntPtr)
                 .and_then(|&t| self.definition(t)),
@@ -411,7 +395,7 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             TypeData::Pointer(t) => format!("{}*", self.reflection_name(*t)),
             TypeData::ByRef(t) => format!("{}&", self.reflection_name(*t)),
             TypeData::Pinned(t) => format!("{} pinned", self.reflection_name(*t)),
-            TypeData::FnPtr { .. } => "delegate*".to_owned(),
+            TypeData::FnPtr(_) => "delegate*".to_owned(),
             TypeData::ArgList => "__arglist".to_owned(),
         }
     }
