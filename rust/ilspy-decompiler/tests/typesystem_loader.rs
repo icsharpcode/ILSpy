@@ -8,11 +8,14 @@
 mod common;
 
 use ilspy_decompiler::metadata::tables::rows;
+use ilspy_decompiler::typesystem::attributes::Attribute;
 use ilspy_decompiler::typesystem::attrs::{accessibility_name, type_accessibility};
-use ilspy_decompiler::typesystem::compilation::{Compilation, TypeDefId, TypeKind};
+use ilspy_decompiler::typesystem::attrvalue::ArgValue;
+use ilspy_decompiler::typesystem::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
+use ilspy_decompiler::typesystem::flags::ScopedKind;
 use ilspy_decompiler::typesystem::inheritance::{MemberDef, MemberRef, Modifiers};
 use ilspy_decompiler::typesystem::members::{
-    MethodDefId, SymbolKind, has_body, method_accessibility,
+    ConstValue, MethodDefId, ParamInfo, RefKind, SymbolKind, has_body, method_accessibility,
 };
 use ilspy_decompiler::typesystem::options;
 use ilspy_decompiler::typesystem::resolve::{MethodOrigin, ResolvedMethod};
@@ -1024,5 +1027,1135 @@ fn explicit_implementation() {
                 accessors(&ts, imember)[which].unwrap()
             );
         }
+    }
+}
+
+fn attr_names(ts: &TypeSystem<'_, '_>, attrs: &[Attribute]) -> Vec<String> {
+    attrs.iter().map(|a| ts.full_name(a.ty)).collect()
+}
+
+fn has_attr(ts: &TypeSystem<'_, '_>, attrs: &[Attribute], full_name: &str) -> bool {
+    attr_names(ts, attrs).iter().any(|n| n == full_name)
+}
+
+const SPECIAL_NAME: &str = "System.Runtime.CompilerServices.SpecialNameAttribute";
+
+fn member_attrs(ts: &mut TypeSystem<'_, '_>, m: MemberDef) -> Vec<Attribute> {
+    match m {
+        MemberDef::Method(id) => ts.method_attributes(id),
+        MemberDef::Property(module, row) => ts.property_attributes(module, row),
+        MemberDef::Event(module, row) => ts.event_attributes(module, row),
+        MemberDef::Field(module, row) => ts.field_attributes(module, row),
+    }
+    .unwrap()
+}
+
+/// `IParameter.GetAttributes()` of parameter `index` of a method.
+fn param_attrs(ts: &mut TypeSystem<'_, '_>, m: MethodDefId, index: usize) -> Vec<Attribute> {
+    let params = ts.method_signature(m).1;
+    let declaring = ts.method_declaring(m).unwrap();
+    ts.parameter_attributes(m.module, &params, index, declaring)
+        .unwrap()
+}
+
+fn single_param(ts: &mut TypeSystem<'_, '_>, m: MethodDefId) -> ParamInfo {
+    single(ts.method_signature(m).1, "parameter")
+}
+
+fn field_named(ts: &TypeSystem<'_, '_>, def: TypeDefId, wanted: &str) -> MemberDef {
+    let fields = ts
+        .comp
+        .visible_fields(def)
+        .unwrap()
+        .into_iter()
+        .map(|r| MemberDef::Field(def.module, r))
+        .collect();
+    named(ts, fields, wanted)
+}
+
+fn string(s: &str) -> ArgValue {
+    ArgValue::String(s.encode_utf16().collect())
+}
+
+fn assert_no_special_name_and_body(
+    ts: &mut TypeSystem<'_, '_>,
+    m: MemberDef,
+    attribute_count: usize,
+) {
+    let attrs = member_attrs(ts, m);
+    assert_eq!(attrs.len(), attribute_count, "{:?}", attr_names(ts, &attrs));
+    assert!(!has_attr(ts, &attrs, SPECIAL_NAME));
+    assert!(body(ts, m));
+    assert_eq!(ts.accessor_owner(method_id(m)), None);
+}
+
+#[test]
+fn simple_public_class_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "SimplePublicClass");
+    let t = ts.intern_def(def);
+    assert_eq!(
+        comp.type_def(def).unwrap().full_name.name(),
+        "SimplePublicClass"
+    );
+    assert_eq!(ts.full_name(t), format!("{NS}.SimplePublicClass"));
+    assert_eq!(comp.type_def(def).unwrap().full_name.top.ns, NS);
+    assert_eq!(ts.reflection_name(t), format!("{NS}.SimplePublicClass"));
+    assert_eq!(type_accessibility_of(&ts, def), "Public");
+    assert!(!is_abstract(&ts, def));
+    assert!(!is_sealed(&ts, def));
+    assert!(!ts.type_flags(def).is_static);
+    let attrs = ts.type_attributes(def).unwrap();
+    assert!(!has_attr(&ts, &attrs, SPECIAL_NAME));
+}
+
+#[test]
+fn simple_public_class_method_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "SimplePublicClass");
+    let m = method_named(&mut ts, def, "Method");
+    let member = MemberDef::Method(m);
+    assert_eq!(ts.method_declaring(m).unwrap(), Some(def));
+    assert_eq!(access(&mut ts, member), "Public");
+    assert_eq!(symbol(&mut ts, member), SymbolKind::Method);
+    assert!(!mods(&ts, member).is_virtual);
+    assert!(!mods(&ts, member).is_static);
+    assert!(ts.method_signature(m).1.is_empty());
+    assert_no_special_name_and_body(&mut ts, member, 0);
+}
+
+#[test]
+fn simple_public_class_ctor_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "SimplePublicClass");
+    let m = single(
+        methods(&mut ts, def)
+            .into_iter()
+            .filter(|(_, k)| *k == SymbolKind::Constructor)
+            .filter_map(|(m, _)| match m.origin {
+                MethodOrigin::Def(id) => Some(id),
+                _ => None,
+            })
+            .collect(),
+        "constructor",
+    );
+    let member = MemberDef::Method(m);
+    assert_eq!(name(&ts, member), ".ctor");
+    assert_eq!(access(&mut ts, member), "Public");
+    assert!(!mods(&ts, member).is_virtual);
+    assert!(!mods(&ts, member).is_static);
+    assert!(ts.method_signature(m).1.is_empty());
+    assert_no_special_name_and_body(&mut ts, member, 0);
+}
+
+fn destructor_of(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> MethodDefId {
+    single(
+        methods(ts, def)
+            .into_iter()
+            .filter(|(_, k)| *k == SymbolKind::Destructor)
+            .filter_map(|(m, _)| match m.origin {
+                MethodOrigin::Def(id) => Some(id),
+                _ => None,
+            })
+            .collect(),
+        "destructor",
+    )
+}
+
+#[test]
+fn simple_public_class_dtor_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "SimplePublicClass");
+    let m = destructor_of(&mut ts, def);
+    let member = MemberDef::Method(m);
+    assert_eq!(name(&ts, member), "Finalize");
+    assert_eq!(access(&mut ts, member), "Protected");
+    assert!(!mods(&ts, member).is_virtual);
+    assert!(!mods(&ts, member).is_static);
+    assert!(ts.method_signature(m).1.is_empty());
+    assert_no_special_name_and_body(&mut ts, member, 1);
+}
+
+#[test]
+fn dtor_in_derived_class() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "Derived`2");
+    let m = destructor_of(&mut ts, def);
+    let member = MemberDef::Method(m);
+    assert_eq!(name(&ts, member), "Finalize");
+    assert_eq!(ts.method_declaring(m).unwrap(), Some(def));
+    assert_eq!(access(&mut ts, member), "Protected");
+    assert!(!mods(&ts, member).is_virtual);
+    assert!(!mods(&ts, member).is_static);
+    assert!(ts.method_signature(m).1.is_empty());
+    assert_no_special_name_and_body(&mut ts, member, 0);
+}
+
+#[test]
+fn private_finalize_method_is_not_a_dtor() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "TypeTestAttribute");
+    let m = method_named(&mut ts, def, "Finalize");
+    let member = MemberDef::Method(m);
+    assert_eq!(access(&mut ts, member), "Private");
+    assert_eq!(symbol(&mut ts, member), SymbolKind::Method);
+    assert!(!mods(&ts, member).is_virtual);
+    assert!(!mods(&ts, member).is_static);
+    assert!(ts.method_signature(m).1.is_empty());
+    assert_no_special_name_and_body(&mut ts, member, 0);
+}
+
+#[test]
+fn dynamic_type() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "DynamicTest");
+    let MemberDef::Field(module, row) = field_named(&ts, def, "DynamicField") else {
+        unreachable!()
+    };
+    let (field_type, _) = ts.field_type(module, row);
+    assert!(matches!(ts.data(field_type), TypeData::Dynamic));
+    let p = single(properties(&ts, def), "property");
+    let MemberDef::Property(module, row) = p else {
+        unreachable!()
+    };
+    let (ret, _) = ts.property_signature(module, row).unwrap();
+    assert!(matches!(ts.data(ret), TypeData::Dynamic));
+    assert!(member_attrs(&mut ts, p).is_empty());
+}
+
+#[test]
+fn dynamic_type_in_generics() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "DynamicTest");
+    let m1 = method_named(&mut ts, def, "DynamicGenerics1");
+    let (ret, params) = ts.method_signature(m1);
+    assert_eq!(
+        ts.reflection_name(ret),
+        "System.Collections.Generic.List`1[[dynamic]]"
+    );
+    assert_eq!(
+        ts.reflection_name(params[0].ty),
+        "System.Action`3[[System.Object],[dynamic[]],[System.Object]]"
+    );
+    for (method, expected) in [
+        (
+            "DynamicGenerics2",
+            "System.Action`3[[System.Object],[dynamic],[System.Object]]",
+        ),
+        (
+            "DynamicGenerics3",
+            "System.Action`3[[System.Int32],[dynamic],[System.Object]]",
+        ),
+        (
+            "DynamicGenerics4",
+            "System.Action`3[[System.Int32[]],[dynamic],[System.Object]]",
+        ),
+        (
+            "DynamicGenerics5",
+            "System.Action`3[[System.Int32*[]],[dynamic],[System.Object]]",
+        ),
+        (
+            "DynamicGenerics6",
+            "System.Action`3[[System.Object],[dynamic],[System.Object]]&",
+        ),
+        (
+            "DynamicGenerics7",
+            "System.Action`3[[System.Int32[][,]],[dynamic],[System.Object]]",
+        ),
+    ] {
+        let m = method_named(&mut ts, def, method);
+        let p = ts.method_signature(m).1[0].ty;
+        assert_eq!(ts.reflection_name(p), expected, "{method}");
+    }
+}
+
+#[test]
+fn dynamic_parameter_has_no_attributes() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "DynamicTest");
+    let m = method_named(&mut ts, def, "DynamicGenerics1");
+    assert!(param_attrs(&mut ts, m, 0).is_empty());
+}
+
+#[test]
+fn lifetime_annotations() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "LifetimeAnnotationTests");
+    let p = |ts: &mut TypeSystem<'_, '_>, m: &str| {
+        let id = method_named(ts, def, m);
+        single_param(ts, id)
+    };
+    let explicit_ref = p(&mut ts, "ExplicitScopedRef");
+    assert_eq!(explicit_ref.declared_scope, ScopedKind::ScopedRef);
+    assert_eq!(explicit_ref.effective_scope, ScopedKind::ScopedRef);
+    assert!(!explicit_ref.unscoped_ref);
+    let explicit_value = p(&mut ts, "ExplicitScopedValue");
+    assert_eq!(explicit_value.declared_scope, ScopedKind::ScopedValue);
+    assert_eq!(explicit_value.effective_scope, ScopedKind::ScopedValue);
+    assert!(!explicit_value.unscoped_ref);
+    let implicit_ref = p(&mut ts, "ImplicitScopedRef");
+    assert_eq!(implicit_ref.declared_scope, ScopedKind::None);
+    assert_eq!(implicit_ref.effective_scope, ScopedKind::ScopedRef);
+    assert!(!implicit_ref.unscoped_ref);
+    let unscoped_method = method_named(&mut ts, def, "UnscopedRef");
+    let unscoped = single_param(&mut ts, unscoped_method);
+    assert_eq!(unscoped.declared_scope, ScopedKind::None);
+    assert_eq!(unscoped.effective_scope, ScopedKind::None);
+    assert!(unscoped.unscoped_ref);
+    let attrs = param_attrs(&mut ts, unscoped_method, 0);
+    assert!(has_attr(
+        &ts,
+        &attrs,
+        "System.Diagnostics.CodeAnalysis.UnscopedRefAttribute"
+    ));
+
+    // A params parameter of a ref struct type is implicitly scoped (the rule
+    // `new DefaultParameter(type, "values", isParams: true)` exercises).
+    let ty = ts.intern_def(def);
+    assert!(ts.is_ref_like_or_allows(ty));
+
+    const UNSCOPED_REF: &str = "System.Diagnostics.CodeAnalysis.UnscopedRefAttribute";
+    let instance = method_named(&mut ts, def, "InstanceMethod");
+    assert_eq!(
+        ts.method_flags(instance, None).this_scope,
+        ScopedKind::ScopedRef
+    );
+    let attrs = member_attrs(&mut ts, MemberDef::Method(instance));
+    assert!(!has_attr(&ts, &attrs, UNSCOPED_REF));
+    let unscoped_method = method_named(&mut ts, def, "UnscopedMethod");
+    assert_eq!(
+        ts.method_flags(unscoped_method, None).this_scope,
+        ScopedKind::None
+    );
+    let attrs = member_attrs(&mut ts, MemberDef::Method(unscoped_method));
+    assert!(has_attr(&ts, &attrs, UNSCOPED_REF));
+
+    let prop = named(&ts, properties(&ts, def), "UnscopedProperty");
+    let get = method_id(getter(&ts, prop));
+    let owner = ts.accessor_owner(get).map(|(o, _)| o);
+    assert_eq!(ts.method_flags(get, owner).this_scope, ScopedKind::None);
+    let attrs = member_attrs(&mut ts, prop);
+    assert!(has_attr(&ts, &attrs, UNSCOPED_REF));
+    let prop = named(&ts, properties(&ts, def), "AccessorUnscopedProperty");
+    let get = method_id(getter(&ts, prop));
+    let owner = ts.accessor_owner(get).map(|(o, _)| o);
+    assert_eq!(ts.method_flags(get, owner).this_scope, ScopedKind::None);
+    let attrs = member_attrs(&mut ts, MemberDef::Method(get));
+    assert!(has_attr(&ts, &attrs, UNSCOPED_REF));
+
+    let static_method = method_named(&mut ts, def, "ExplicitScopedRef");
+    assert_eq!(
+        ts.method_flags(static_method, None).this_scope,
+        ScopedKind::None
+    );
+    let class = test_type(&mut ts, "SimplePublicClass");
+    let class_method = method_named(&mut ts, class, "Method");
+    assert_eq!(
+        ts.method_flags(class_method, None).this_scope,
+        ScopedKind::None
+    );
+
+    // The legacy mscorlib has no RefSafetyRulesAttribute, so out is not implicitly scoped.
+    let int32 = type_def(&mut ts, "System.Int32");
+    let try_parse = methods(&mut ts, int32)
+        .into_iter()
+        .filter_map(|(m, _)| match m.origin {
+            MethodOrigin::Def(id) if m.name == "TryParse" => Some(id),
+            _ => None,
+        })
+        .filter(|&id| {
+            let params = ts.method_signature(id).1;
+            params.len() == 2 && params[1].ref_kind == RefKind::Out
+        })
+        .collect();
+    let try_parse = single(try_parse, "TryParse(string, out int)");
+    assert_eq!(
+        ts.method_signature(try_parse).1[1].effective_scope,
+        ScopedKind::None
+    );
+}
+
+#[test]
+fn lifetime_annotations_can_be_disabled() {
+    let comp = common::compilation(&[
+        (
+            common::test_assembly(),
+            options::DEFAULT & !options::SCOPED_REF,
+        ),
+        (
+            common::mscorlib(),
+            options::DEFAULT | options::ONLY_PUBLIC_API,
+        ),
+    ]);
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "LifetimeAnnotationTests");
+    let m = method_named(&mut ts, def, "ExplicitScopedRef");
+    let p = single_param(&mut ts, m);
+    assert_eq!(p.declared_scope, ScopedKind::None);
+    assert_eq!(p.effective_scope, ScopedKind::None);
+    let attrs = param_attrs(&mut ts, m, 0);
+    assert!(has_attr(
+        &ts,
+        &attrs,
+        "System.Runtime.CompilerServices.ScopedRefAttribute"
+    ));
+    let instance = method_named(&mut ts, def, "InstanceMethod");
+    assert_eq!(ts.method_flags(instance, None).this_scope, ScopedKind::None);
+}
+
+fn main_assembly_attributes(ts: &mut TypeSystem<'_, '_>) -> Vec<Attribute> {
+    ts.assembly_attributes(ModuleId(0)).unwrap()
+}
+
+#[test]
+fn assembly_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let attrs = main_assembly_attributes(&mut ts);
+    let type_test = single(
+        attrs
+            .into_iter()
+            .filter(|a| ts.full_name(a.ty) == format!("{NS}.TypeTestAttribute"))
+            .collect(),
+        "TypeTestAttribute",
+    );
+    assert_eq!(type_test.fixed.len(), 3);
+    assert_eq!(type_test.fixed[0].value, ArgValue::Int32(42));
+    let ArgValue::Type(ty) = type_test.fixed[1].value else {
+        panic!("typeof(Action<>) is not a type");
+    };
+    assert!(!matches!(ts.data(ty), TypeData::Inst { .. }));
+    assert_eq!(ts.full_name(ty), "System.Action");
+    assert_eq!(ts.type_parameter_count(ty), 1);
+    let ArgValue::Type(crt) = type_test.fixed[2].value else {
+        panic!("typeof(IDictionary<,>) is not a type");
+    };
+    let TypeData::Inst { args, .. } = ts.data(crt).clone() else {
+        panic!("not a parameterized type");
+    };
+    assert_eq!(ts.full_name(crt), "System.Collections.Generic.IDictionary");
+    assert_eq!(ts.full_name(args[0]), "System.String");
+    assert_eq!(ts.full_name(args[1]), "System.Collections.Generic.IList");
+    let TypeData::Inst { args: inner, .. } = ts.data(args[1]).clone() else {
+        panic!("IList<TestAttribute> is not parameterized");
+    };
+    let test_attribute = single(inner.to_vec(), "type argument");
+    let TypeData::Unknown { name, .. } = ts.data(test_attribute) else {
+        panic!("TestAttribute is not an unknown type");
+    };
+    assert_eq!(name.name(), "TestAttribute");
+}
+
+#[test]
+fn type_forwarded_to_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let attrs = main_assembly_attributes(&mut ts);
+    let forward = single(
+        attrs
+            .into_iter()
+            .filter(|a| {
+                ts.full_name(a.ty) == "System.Runtime.CompilerServices.TypeForwardedToAttribute"
+            })
+            .collect(),
+        "TypeForwardedToAttribute",
+    );
+    let arg = single(forward.fixed, "argument");
+    let ArgValue::Type(rt) = arg.value else {
+        panic!("not a type");
+    };
+    assert_eq!(ts.reflection_name(rt), "System.Func`2");
+}
+
+#[test]
+fn property_with_private_setter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "PropertyTest");
+    let p = named(&ts, properties(&ts, def), "PropertyWithPrivateSetter");
+    let [get, set] = accessors(&ts, p).map(|a| a.expect("both accessors"));
+    assert_eq!(access(&mut ts, p), "Public");
+    assert_eq!(access(&mut ts, get), "Public");
+    assert_eq!(access(&mut ts, set), "Private");
+    assert!(body(&ts, get));
+    for m in [p, get, set] {
+        let attrs = member_attrs(&mut ts, m);
+        assert!(!has_attr(&ts, &attrs, SPECIAL_NAME));
+    }
+}
+
+#[test]
+fn serializable_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "NonCustomAttributes");
+    let attrs = ts.type_attributes(def).unwrap();
+    assert_eq!(attr_names(&ts, &attrs), ["System.SerializableAttribute"]);
+}
+
+#[test]
+fn non_serialized_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "NonCustomAttributes");
+    let f = field_named(&ts, def, "NonSerializedField");
+    let attrs = member_attrs(&mut ts, f);
+    assert_eq!(attr_names(&ts, &attrs), ["System.NonSerializedAttribute"]);
+}
+
+#[test]
+fn explicit_struct_layout_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ExplicitFieldLayoutStruct");
+    let attr = single(ts.type_attributes(def).unwrap(), "attribute");
+    assert_eq!(
+        ts.full_name(attr.ty),
+        "System.Runtime.InteropServices.StructLayoutAttribute"
+    );
+    let arg = single(attr.fixed, "fixed argument");
+    assert_eq!(
+        ts.full_name(arg.ty),
+        "System.Runtime.InteropServices.LayoutKind"
+    );
+    assert_eq!(arg.value, ArgValue::Int32(2));
+    let char_set = &attr.named[0];
+    assert_eq!(char_set.name.as_deref(), Some("CharSet"));
+    assert_eq!(
+        ts.full_name(char_set.arg.ty),
+        "System.Runtime.InteropServices.CharSet"
+    );
+    assert_eq!(char_set.arg.value, ArgValue::Int32(3));
+    let pack = &attr.named[1];
+    assert_eq!(pack.name.as_deref(), Some("Pack"));
+    assert_eq!(ts.full_name(pack.arg.ty), "System.Int32");
+    assert_eq!(pack.arg.value, ArgValue::Int32(8));
+}
+
+#[test]
+fn field_offset_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ExplicitFieldLayoutStruct");
+    for (field, offset) in [("Field0", 0), ("Field100", 100)] {
+        let f = field_named(&ts, def, field);
+        let attr = single(member_attrs(&mut ts, f), "attribute");
+        assert_eq!(
+            ts.full_name(attr.ty),
+            "System.Runtime.InteropServices.FieldOffsetAttribute"
+        );
+        let arg = single(attr.fixed, "argument");
+        assert_eq!(ts.full_name(arg.ty), "System.Int32");
+        assert_eq!(arg.value, ArgValue::Int32(offset));
+    }
+}
+
+fn dll_import(ts: &mut TypeSystem<'_, '_>, method: &str) -> Attribute {
+    let def = test_type(ts, "NonCustomAttributes");
+    let m = method_named(ts, def, method);
+    let attr = single(member_attrs(ts, MemberDef::Method(m)), "attribute");
+    assert_eq!(
+        ts.full_name(attr.ty),
+        "System.Runtime.InteropServices.DllImportAttribute"
+    );
+    assert_eq!(attr.fixed[0].value, string("unmanaged.dll"));
+    attr
+}
+
+#[test]
+fn dll_import_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let attr = dll_import(&mut ts, "DllMethod");
+    assert_eq!(
+        single(attr.named, "named argument").arg.value,
+        ArgValue::Int32(3)
+    );
+}
+
+#[test]
+fn dll_import_attribute_with_preserve_sig_false() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let attr = dll_import(&mut ts, "DoNotPreserveSig");
+    assert_eq!(
+        single(attr.named, "named argument").arg.value,
+        ArgValue::Bool(false)
+    );
+}
+
+#[test]
+fn preserve_sig_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "NonCustomAttributes");
+    let m = method_named(&mut ts, def, "PreserveSigAsAttribute");
+    let attr = single(member_attrs(&mut ts, MemberDef::Method(m)), "attribute");
+    assert_eq!(
+        ts.full_name(attr.ty),
+        "System.Runtime.InteropServices.PreserveSigAttribute"
+    );
+    assert!(attr.fixed.is_empty());
+    assert!(attr.named.is_empty());
+}
+
+#[test]
+fn in_out_parameters_on_ref_method() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "NonCustomAttributes");
+    let m = method_named(&mut ts, def, "DllMethod");
+    let p = single_param(&mut ts, m);
+    assert_eq!(p.ref_kind, RefKind::Ref);
+    let attrs = param_attrs(&mut ts, m, 0);
+    assert_eq!(
+        attr_names(&ts, &attrs),
+        [
+            "System.Runtime.InteropServices.InAttribute",
+            "System.Runtime.InteropServices.OutAttribute"
+        ]
+    );
+}
+
+#[test]
+fn marshal_as_attribute_on_method() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "NonCustomAttributes");
+    let m = method_named(&mut ts, def, "DllMethod");
+    let attr = single(ts.return_type_attributes(m).unwrap(), "return attribute");
+    assert_eq!(single(attr.fixed, "argument").value, ArgValue::Int32(2));
+}
+
+/// The single parameter of `ParameterTests.<method>`, with its attributes.
+fn parameter_test(ts: &mut TypeSystem<'_, '_>, method: &str) -> (ParamInfo, Vec<Attribute>) {
+    let def = test_type(ts, "ParameterTests");
+    let m = method_named(ts, def, method);
+    let p = single_param(ts, m);
+    let attrs = param_attrs(ts, m, 0);
+    (p, attrs)
+}
+
+#[test]
+fn method_with_out_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, attrs) = parameter_test(&mut ts, "MethodWithOutParameter");
+    assert!(!p.optional);
+    assert_eq!(p.ref_kind, RefKind::Out);
+    assert!(attrs.is_empty());
+    assert!(is_by_ref(&ts, p.ty));
+}
+
+#[test]
+fn method_with_ref_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, attrs) = parameter_test(&mut ts, "MethodWithRefParameter");
+    assert!(!p.optional);
+    assert_eq!(p.ref_kind, RefKind::Ref);
+    assert!(attrs.is_empty());
+    assert!(is_by_ref(&ts, p.ty));
+}
+
+#[test]
+fn method_with_in_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, attrs) = parameter_test(&mut ts, "MethodWithInParameter");
+    assert!(!p.optional);
+    assert_eq!(p.ref_kind, RefKind::In);
+    assert!(attrs.is_empty());
+    assert!(is_by_ref(&ts, p.ty));
+}
+
+#[test]
+fn method_with_params_array() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, attrs) = parameter_test(&mut ts, "MethodWithParamsArray");
+    assert!(!p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(p.is_params);
+    assert!(attrs.is_empty());
+    assert!(matches!(ts.data(p.ty), TypeData::Array { .. }));
+}
+
+#[test]
+fn method_with_optional_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, attrs) = parameter_test(&mut ts, "MethodWithOptionalParameter");
+    assert!(p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(p.has_constant_in_signature);
+    assert!(attrs.is_empty());
+    assert_eq!(p.value, ConstValue::Int32(4));
+}
+
+#[test]
+fn method_with_explicit_optional_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, _) = parameter_test(&mut ts, "MethodWithExplicitOptionalParameter");
+    assert!(p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(!p.has_constant_in_signature);
+}
+
+#[test]
+fn method_with_enum_optional_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, attrs) = parameter_test(&mut ts, "MethodWithEnumOptionalParameter");
+    assert!(p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(p.has_constant_in_signature);
+    assert!(attrs.is_empty());
+    // StringComparison.OrdinalIgnoreCase
+    assert_eq!(p.value, ConstValue::Int32(5));
+}
+
+#[test]
+fn method_with_optional_nullable_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, attrs) = parameter_test(&mut ts, "MethodWithOptionalNullableParameter");
+    assert!(p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(p.has_constant_in_signature);
+    assert!(attrs.is_empty());
+    assert_eq!(p.value, ConstValue::Null);
+}
+
+#[test]
+fn method_with_optional_long_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, _) = parameter_test(&mut ts, "MethodWithOptionalLongParameter");
+    assert!(p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(p.has_constant_in_signature);
+    assert_eq!(p.value, ConstValue::Int64(1));
+}
+
+#[test]
+fn method_with_optional_nullable_long_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, _) = parameter_test(&mut ts, "MethodWithOptionalNullableLongParameter");
+    assert!(p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(p.has_constant_in_signature);
+    assert_eq!(p.value, ConstValue::Int64(1));
+}
+
+#[test]
+fn method_with_optional_decimal_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let (p, _) = parameter_test(&mut ts, "MethodWithOptionalDecimalParameter");
+    assert!(p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(p.has_constant_in_signature);
+    // 1M: lo 1, mid 0, hi 0, scale 0, positive
+    assert_eq!(p.value, ConstValue::Decimal([1, 0, 0, 0]));
+}
+
+fn assert_arglist_parameter(ts: &TypeSystem<'_, '_>, p: &ParamInfo) {
+    assert!(!p.optional);
+    assert_eq!(p.ref_kind, RefKind::None);
+    assert!(!p.is_params);
+    assert!(matches!(ts.data(p.ty), TypeData::ArgList));
+    assert_eq!(p.name, "");
+}
+
+#[test]
+fn var_args_method() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ParameterTests");
+    let m = method_named(&mut ts, def, "VarArgsMethod");
+    let p = single_param(&mut ts, m);
+    assert_arglist_parameter(&ts, &p);
+}
+
+#[test]
+fn var_args_ctor() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "VarArgsCtor");
+    let ctor = single(ts.definition_constructors(def).unwrap(), "constructor");
+    let MethodOrigin::Def(id) = ctor.origin else {
+        panic!("implicit constructor");
+    };
+    let p = single_param(&mut ts, id);
+    assert_arglist_parameter(&ts, &p);
+}
+
+#[test]
+fn com_interface_test() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "IAssemblyEnum");
+    let attrs = ts.type_attributes(def).unwrap();
+    let com_import = attr_names(&ts, &attrs)
+        .into_iter()
+        .filter(|n| n == "System.Runtime.InteropServices.ComImportAttribute")
+        .count();
+    assert_eq!(com_import, 1);
+    let m = single(method_members(&mut ts, def, true), "method");
+    assert_eq!(name(&ts, m), "GetNextAssembly");
+    assert_eq!(access(&mut ts, m), "Public");
+    let mods = mods(&ts, m);
+    assert!(mods.is_abstract);
+    assert!(!mods.is_virtual);
+    assert!(!mods.is_sealed);
+}
+
+fn params_attribute_argument(index: usize) -> (String, ArgValue) {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ParamsAttribute");
+    let attr = single(ts.type_attributes(def).unwrap(), "attribute");
+    let ArgValue::Array(items) = single(attr.fixed, "argument").value else {
+        panic!("not an array");
+    };
+    assert_eq!(items.len(), 5);
+    let item = items[index].clone();
+    (ts.full_name(item.ty), item.value)
+}
+
+#[test]
+fn params_attribute_integer() {
+    assert_eq!(
+        params_attribute_argument(0),
+        ("System.Int32".to_owned(), ArgValue::Int32(1))
+    );
+}
+
+#[test]
+fn params_attribute_enum() {
+    // StringComparison.CurrentCulture
+    assert_eq!(
+        params_attribute_argument(1),
+        ("System.StringComparison".to_owned(), ArgValue::Int32(0))
+    );
+}
+
+#[test]
+fn params_attribute_null_reference() {
+    assert_eq!(params_attribute_argument(2).1, ArgValue::Null);
+}
+
+#[test]
+fn params_attribute_double() {
+    assert_eq!(
+        params_attribute_argument(3),
+        (
+            "System.Double".to_owned(),
+            ArgValue::Double(4.0f64.to_bits())
+        )
+    );
+}
+
+#[test]
+fn params_attribute_string() {
+    assert_eq!(
+        params_attribute_argument(4),
+        ("System.String".to_owned(), string("Test"))
+    );
+}
+
+#[test]
+fn params_attribute_property() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ParamsAttribute");
+    let prop = named(&ts, properties(&ts, def), "Property");
+    let attr = single(member_attrs(&mut ts, prop), "attribute");
+    assert_eq!(ts.definition(attr.ty), Some(def));
+    let ArgValue::Array(elements) = single(attr.fixed, "argument").value else {
+        panic!("not an array");
+    };
+    assert!(elements.is_empty());
+    let named_arg = single(attr.named, "named argument");
+    assert_eq!(named_arg.name, Some(name(&ts, prop)));
+    let ArgValue::Array(items) = named_arg.arg.value else {
+        panic!("not an array");
+    };
+    assert_eq!(items.len(), 2);
+}
+
+#[test]
+fn params_attribute_getter_return_type() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ParamsAttribute");
+    let prop = named(&ts, properties(&ts, def), "Property");
+    let get = getter(&ts, prop);
+    assert!(member_attrs(&mut ts, get).is_empty());
+    assert_eq!(ts.return_type_attributes(method_id(get)).unwrap().len(), 1);
+}
+
+#[test]
+fn double_attribute_implicit_numeric_conversion() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "DoubleAttribute");
+    let attr = single(ts.type_attributes(def).unwrap(), "attribute");
+    let arg = single(attr.fixed, "argument");
+    assert_eq!(ts.reflection_name(arg.ty), "System.Double");
+    assert_eq!(arg.value, ArgValue::Double(1.0f64.to_bits()));
+}
+
+#[test]
+fn attributes_using_nested_members() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ClassWithAttributesUsingNestedMembers");
+    let nested = |ts: &TypeSystem<'_, '_>, outer: TypeDefId, wanted: &str| {
+        let found = comp
+            .nested_types(outer)
+            .into_iter()
+            .filter(|&n| ts.comp.type_def(n).unwrap().full_name.name() == wanted)
+            .collect();
+        single(found, wanted)
+    };
+    let inner = nested(&ts, def, "Inner");
+    let my_attribute = nested(&ts, def, "MyAttribute");
+    let check = |ts: &mut TypeSystem<'_, '_>,
+                 attrs: Vec<Attribute>,
+                 number: i32,
+                 inner: TypeDefId,
+                 my_attribute: TypeDefId| {
+        let by_name = |ts: &TypeSystem<'_, '_>, wanted: &str| {
+            let found = attrs
+                .iter()
+                .filter(|a| {
+                    ts.definition(a.ty)
+                        .is_some_and(|d| ts.comp.type_def(d).unwrap().full_name.name() == wanted)
+                })
+                .cloned()
+                .collect();
+            single(found, wanted)
+        };
+        let type_test = by_name(ts, "TypeTestAttribute");
+        assert_eq!(type_test.fixed[0].value, ArgValue::Int32(number));
+        let ArgValue::Type(t) = type_test.fixed[1].value else {
+            panic!("not a type");
+        };
+        assert_eq!(ts.definition(t), Some(inner));
+        assert_eq!(
+            ts.definition(by_name(ts, "MyAttribute").ty),
+            Some(my_attribute)
+        );
+    };
+    let attrs = ts.type_attributes(def).unwrap();
+    check(&mut ts, attrs, 42, inner, my_attribute);
+    let prop = named(&ts, properties(&ts, def), "P");
+    let attrs = member_attrs(&mut ts, prop);
+    check(&mut ts, attrs, 42, inner, my_attribute);
+    let attributed_inner = nested(&ts, def, "AttributedInner");
+    let attrs = ts.type_attributes(attributed_inner).unwrap();
+    check(&mut ts, attrs, 42, inner, my_attribute);
+    let attributed_inner2 = nested(&ts, def, "AttributedInner2");
+    let inner2 = nested(&ts, attributed_inner2, "Inner");
+    let my_attribute2 = nested(&ts, attributed_inner2, "MyAttribute");
+    let attrs = ts.type_attributes(attributed_inner2).unwrap();
+    check(&mut ts, attrs, 43, inner2, my_attribute2);
+}
+
+#[test]
+fn class_with_attribute_on_type_parameter() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ClassWithAttributeOnTypeParameter`1");
+    let gp = single(
+        comp.module(def.module)
+            .md
+            .generic_params(
+                ilspy_decompiler::metadata::tables::TableId::TypeDef,
+                def.row,
+            )
+            .collect(),
+        "type parameter",
+    );
+    let attr = single(
+        ts.type_parameter_attributes(def.module, gp).unwrap(),
+        "attribute",
+    );
+    let attr_def = ts.definition(attr.ty).expect("attribute type");
+    assert_eq!(
+        comp.type_def(attr_def).unwrap().full_name.name(),
+        "DoubleAttribute"
+    );
+}
+
+fn void_attribute(ts: &mut TypeSystem<'_, '_>, full_name: &str) -> Attribute {
+    let void = type_def(ts, "System.Void");
+    let attrs = ts.type_attributes(void).unwrap();
+    single(
+        attrs
+            .into_iter()
+            .filter(|a| ts.full_name(a.ty) == full_name)
+            .collect(),
+        full_name,
+    )
+}
+
+fn constructor_parameter_count(ts: &mut TypeSystem<'_, '_>, a: &Attribute) -> usize {
+    let ctor = match &a.ctor {
+        Some(c) => c.clone(),
+        None => ts.builtin_constructor(a).unwrap().expect("constructor"),
+    };
+    ctor.params().unwrap().len()
+}
+
+#[test]
+fn void_serializable_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let attr = void_attribute(&mut ts, "System.SerializableAttribute");
+    assert_eq!(constructor_parameter_count(&mut ts, &attr), 0);
+    assert!(attr.fixed.is_empty());
+    assert!(attr.named.is_empty());
+}
+
+#[test]
+fn void_struct_layout_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let attr = void_attribute(
+        &mut ts,
+        "System.Runtime.InteropServices.StructLayoutAttribute",
+    );
+    assert_eq!(constructor_parameter_count(&mut ts, &attr), 1);
+    assert_eq!(
+        single(attr.fixed.clone(), "argument").value,
+        ArgValue::Int32(0)
+    );
+    let size = single(attr.named, "named argument");
+    assert_eq!(size.name.as_deref(), Some("Size"));
+    assert_eq!(size.arg.value, ArgValue::Int32(1));
+}
+
+#[test]
+fn void_com_visible_attribute() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let attr = void_attribute(
+        &mut ts,
+        "System.Runtime.InteropServices.ComVisibleAttribute",
+    );
+    assert_eq!(constructor_parameter_count(&mut ts, &attr), 1);
+    assert_eq!(
+        single(attr.fixed.clone(), "argument").value,
+        ArgValue::Bool(true)
+    );
+    assert!(attr.named.is_empty());
+}
+
+#[test]
+fn has_special_name() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "NonCustomAttributes");
+    let method = MemberDef::Method(method_named(&mut ts, def, "SpecialNameMethod"));
+    let property = named(&ts, properties(&ts, def), "SpecialNameProperty");
+    let event = named(&ts, events(&ts, def), "SpecialNameEvent");
+    let field = field_named(&ts, def, "SpecialNameField");
+    for m in [method, property, event, field] {
+        let attrs = member_attrs(&mut ts, m);
+        assert!(has_attr(&ts, &attrs, SPECIAL_NAME), "{}", name(&ts, m));
+    }
+    for nested in ["SpecialNameClass", "SpecialNameStruct"] {
+        let found = comp
+            .nested_types(def)
+            .into_iter()
+            .filter(|&n| comp.type_def(n).unwrap().full_name.name() == nested)
+            .collect();
+        let t = single(found, nested);
+        let attrs = ts.type_attributes(t).unwrap();
+        assert!(has_attr(&ts, &attrs, SPECIAL_NAME), "{nested}");
+    }
+}
+
+fn assert_constant_field(
+    ts: &mut TypeSystem<'_, '_>,
+    def: TypeDefId,
+    field: &str,
+    expected: ConstValue,
+) {
+    let f = field_named(ts, def, field);
+    let MemberDef::Field(module, row) = f else {
+        unreachable!()
+    };
+    assert!(ts.field_is_const(module, row), "{field}");
+    assert_eq!(ts.field_constant(module, row), expected, "{field}");
+    assert!(member_attrs(ts, f).is_empty(), "{field}");
+}
+
+#[test]
+fn constant_fields_created_with_new() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ConstantFieldTest");
+    for (field, value) in [
+        ("CNewb", ConstValue::Byte(0)),
+        ("CNewsb", ConstValue::SByte(0)),
+        ("CNewc", ConstValue::Char(0)),
+        ("CNews", ConstValue::Int16(0)),
+        ("CNewus", ConstValue::UInt16(0)),
+        ("CNewi", ConstValue::Int32(0)),
+        ("CNewui", ConstValue::UInt32(0)),
+        ("CNewl", ConstValue::Int64(0)),
+        ("CNewul", ConstValue::UInt64(0)),
+        ("CNewd", ConstValue::Double(0f64.to_bits())),
+        ("CNewf", ConstValue::Single(0f32.to_bits())),
+        ("CNewm", ConstValue::Decimal([0, 0, 0, 0])),
+    ] {
+        assert_constant_field(&mut ts, def, field, value);
+    }
+}
+
+#[test]
+fn constant_fields_size_of() {
+    let comp = loader();
+    let mut ts = TypeSystem::new(&comp);
+    let def = test_type(&mut ts, "ConstantFieldTest");
+    for (field, size) in [
+        ("SOsb", 1),
+        ("SOb", 1),
+        ("SOs", 2),
+        ("SOus", 2),
+        ("SOi", 4),
+        ("SOui", 4),
+        ("SOl", 8),
+        ("SOul", 8),
+        ("SOc", 2),
+        ("SOf", 4),
+        ("SOd", 8),
+        ("SObl", 1),
+        ("SOe", 2),
+    ] {
+        assert_constant_field(&mut ts, def, field, ConstValue::Int32(size));
     }
 }

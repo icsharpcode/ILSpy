@@ -34,6 +34,8 @@ pub enum ArgValue {
     String(Vec<u16>),
     Type(TypeId),
     Array(Vec<TypedArg>),
+    /// A `decimal` (`decimal.GetBits`), only as a `DefaultParameterValue` argument.
+    Decimal([u32; 4]),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -64,7 +66,7 @@ struct ArgInfo {
 }
 
 /// `ReadCompressedIntegerOrInvalid`: `None` without consuming anything.
-fn try_compressed(b: &mut Bytes<'_>) -> Option<u32> {
+pub(crate) fn try_compressed(b: &mut Bytes<'_>) -> Option<u32> {
     let mut peek = *b;
     let value = peek.compressed_u32().ok()?;
     *b = peek;
@@ -89,7 +91,7 @@ fn serialization_type_code(b: &mut Bytes<'_>) -> u32 {
 }
 
 /// `ReadSerializedString`.
-fn serialized_string(b: &mut Bytes<'_>) -> Result<Option<String>> {
+pub(crate) fn serialized_string(b: &mut Bytes<'_>) -> Result<Option<String>> {
     if let Some(len) = try_compressed(b) {
         return Ok(Some(
             String::from_utf8_lossy(b.take(len as usize)?).into_owned(),
@@ -435,23 +437,33 @@ impl TypeSystem<'_, '_> {
             fixed.push(self.argument(&mut value, info)?);
         }
         let named_count = value.u16()?;
-        let mut named = Vec::with_capacity(usize::from(named_count));
-        for _ in 0..named_count {
-            let is_field = match serialization_type_code(&mut value) {
+        let named = self.decode_named_arguments(&mut value, u32::from(named_count))?;
+        Ok(AttributeValue { fixed, named })
+    }
+
+    /// `CustomAttributeDecoder.DecodeNamedArguments`.
+    pub fn decode_named_arguments(
+        &mut self,
+        value: &mut Bytes<'_>,
+        count: u32,
+    ) -> Result<Vec<NamedArg>> {
+        let mut named = Vec::new();
+        for _ in 0..count {
+            let is_field = match serialization_type_code(value) {
                 0x53 => true,
                 0x54 => false,
                 _ => return Err(Error::Malformed("named argument kind")),
             };
-            let info = self.named_argument_type(&mut value, false)?;
-            let name = serialized_string(&mut value)?;
-            let arg = self.argument(&mut value, info)?;
+            let info = self.named_argument_type(value, false)?;
+            let name = serialized_string(value)?;
+            let arg = self.argument(value, info)?;
             named.push(NamedArg {
                 is_field,
                 name,
                 arg,
             });
         }
-        Ok(AttributeValue { fixed, named })
+        Ok(named)
     }
 }
 

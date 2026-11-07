@@ -39,6 +39,7 @@
 
 use std::fmt::Write;
 
+use super::attributes::Attribute;
 use super::attrs::accessibility_name;
 use super::attrvalue::{ArgValue, AttributeValue, TypedArg};
 use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
@@ -49,7 +50,7 @@ use super::members::{
     method_accessibility, method_modifiers,
 };
 use super::resolve::{FieldOrigin, MethodOrigin, ResolvedMethod};
-use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeSystem};
+use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
 use crate::metadata::Result;
 use crate::metadata::tables::{TableId, rows, token};
 
@@ -142,7 +143,151 @@ pub fn listing(comp: &Compilation<'_>) -> String {
             .map(|v| attribute_line(&ts, t, &v));
         line(with_bad("A", t, decoded));
     }
+    for row in 1..=md.tables.rows(TableId::TypeDef) {
+        let def = TypeDefId { module: main, row };
+        let name = comp
+            .type_def(def)
+            .map_or_else(|_| "!bad".to_owned(), |i| i.full_name.reflection_name());
+        line(format!(
+            "LT {name} {}",
+            or_bad(type_attribute_line(&mut ts, def))
+        ));
+    }
+    for row in 1..=md.tables.rows(TableId::MethodDef) {
+        let m = MethodDefId { module: main, row };
+        let t = token(TableId::MethodDef, row);
+        let l = method_attribute_line(&mut ts, m).map(|l| format!("LM {} {l}", tok(t)));
+        line(with_bad("LM", t, l));
+    }
+    for row in 1..=md.tables.rows(TableId::Field) {
+        let t = token(TableId::Field, row);
+        let l = ts
+            .field_attributes(main, row)
+            .map(|a| format!("LF {} {}", tok(t), attribute_list(&mut ts, &a)));
+        line(with_bad("LF", t, l));
+    }
+    for row in 1..=md.tables.rows(TableId::Property) {
+        let t = token(TableId::Property, row);
+        let l = property_attribute_line(&mut ts, main, row).map(|l| format!("LP {} {l}", tok(t)));
+        line(with_bad("LP", t, l));
+    }
+    for row in 1..=md.tables.rows(TableId::Event) {
+        let t = token(TableId::Event, row);
+        let l = ts
+            .event_attributes(main, row)
+            .map(|a| format!("LE {} {}", tok(t), attribute_list(&mut ts, &a)));
+        line(with_bad("LE", t, l));
+    }
+    let assembly = ts
+        .assembly_attributes(main)
+        .map(|a| attribute_list(&mut ts, &a));
+    line(format!("LA {}", or_bad(assembly)));
+    let module = ts
+        .module_attributes(main)
+        .map(|a| attribute_list(&mut ts, &a));
+    line(format!("LO {}", or_bad(module)));
     out
+}
+
+/// One attribute: `<type>(<constructor>) fixed=[...] named=[...] err=<0|1>`.
+fn attribute_entry(ts: &mut TypeSystem<'_, '_>, a: &Attribute) -> String {
+    let ctor = match &a.ctor {
+        Some(c) => method_origin(c),
+        None => match ts.builtin_constructor(a) {
+            Ok(Some(c)) => method_origin(&c),
+            Ok(None) => "-".to_owned(),
+            Err(_) => "!bad".to_owned(),
+        },
+    };
+    let value = AttributeValue {
+        fixed: a.fixed.clone(),
+        named: a.named.clone(),
+    };
+    let args = attribute_line(ts, 0, &value);
+    let args = args.strip_prefix("A 00000000 ").unwrap_or(&args);
+    format!(
+        "{}({ctor}) {args} err={}",
+        located(ts, a.ty),
+        u8::from(a.has_decode_errors)
+    )
+}
+
+fn attribute_list(ts: &mut TypeSystem<'_, '_>, list: &[Attribute]) -> String {
+    let entries: Vec<String> = list.iter().map(|a| attribute_entry(ts, a)).collect();
+    format!("[{}]", entries.join("|"))
+}
+
+fn type_parameter_attributes(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    table: TableId,
+    row: u32,
+) -> Result<String> {
+    let md = &ts.comp.module(module).md;
+    let rows = md.generic_params(table, row);
+    let mut lists = Vec::new();
+    for (index, mut gp) in rows.into_iter().enumerate() {
+        // A nested type shares the type parameters of the types enclosing it.
+        if table == TableId::TypeDef
+            && let TypeParamOwner::Type(owner) =
+                ts.class_param_owner(TypeDefId { module, row }, index as u32)
+            && let Some(outer) = md.generic_params(TableId::TypeDef, owner.row).nth(index)
+        {
+            gp = outer;
+        }
+        let attrs = ts.type_parameter_attributes(module, gp)?;
+        lists.push(attribute_list(ts, &attrs));
+    }
+    Ok(format!("[{}]", lists.join(",")))
+}
+
+fn parameter_attribute_lists(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    params: &[ParamInfo],
+    declaring: Option<TypeDefId>,
+) -> Result<String> {
+    let mut lists = Vec::new();
+    for i in 0..params.len() {
+        let attrs = ts.parameter_attributes(module, params, i, declaring)?;
+        lists.push(attribute_list(ts, &attrs));
+    }
+    Ok(format!("[{}]", lists.join(",")))
+}
+
+fn type_attribute_line(ts: &mut TypeSystem<'_, '_>, def: TypeDefId) -> Result<String> {
+    let attrs = ts.type_attributes(def)?;
+    let tps = type_parameter_attributes(ts, def.module, TableId::TypeDef, def.row)?;
+    Ok(format!("{} tparams={tps}", attribute_list(ts, &attrs)))
+}
+
+fn method_attribute_line(ts: &mut TypeSystem<'_, '_>, m: MethodDefId) -> Result<String> {
+    let attrs = ts.method_attributes(m)?;
+    let ret = ts.return_type_attributes(m)?;
+    let (_, params) = ts.method_signature(m);
+    let declaring = ts.method_declaring(m)?;
+    let params = parameter_attribute_lists(ts, m.module, &params, declaring)?;
+    let tps = type_parameter_attributes(ts, m.module, TableId::MethodDef, m.row)?;
+    Ok(format!(
+        "{} ret={} params={params} tparams={tps}",
+        attribute_list(ts, &attrs),
+        attribute_list(ts, &ret)
+    ))
+}
+
+fn property_attribute_line(
+    ts: &mut TypeSystem<'_, '_>,
+    module: ModuleId,
+    row: u32,
+) -> Result<String> {
+    let attrs = ts.property_attributes(module, row)?;
+    let (_, params) = ts.property_signature(module, row)?;
+    let declaring = match ts.property_any_accessor(module, row) {
+        Some(a) => ts.method_declaring(a)?,
+        None => None,
+    };
+    let params = parameter_attribute_lists(ts, module, &params, declaring)?;
+    Ok(format!("{} params={params}", attribute_list(ts, &attrs)))
 }
 
 fn types(ts: &TypeSystem<'_, '_>, list: &[TypeId]) -> String {
@@ -298,6 +443,7 @@ fn attribute_argument(ts: &TypeSystem<'_, '_>, a: &TypedArg) -> String {
         ArgValue::Single(bits) => value(&ConstValue::Single(*bits)),
         ArgValue::Double(bits) => value(&ConstValue::Double(*bits)),
         ArgValue::String(units) => value(&ConstValue::String(units.clone())),
+        ArgValue::Decimal(words) => value(&ConstValue::Decimal(*words)),
         ArgValue::Type(t) => format!("T:{}", located(ts, *t)),
         ArgValue::Array(items) => {
             let items: Vec<String> = items.iter().map(|i| attribute_argument(ts, i)).collect();

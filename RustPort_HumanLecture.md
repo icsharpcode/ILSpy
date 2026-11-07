@@ -605,6 +605,32 @@ default member name, and per member the modifiers, explicit implementations and 
 properties) base members. Measured at item 4h: `TypeSystemListingEquality` under `None` and
 `Default` pass for the 3,442 images; 45 loader tests pass in Rust.
 
+### 3.15 Attribute lists (item 4i)
+
+`typesystem/attributes.rs` returns what `GetAttributes()` returns on each entity, in the same
+order: first the pseudo-attributes the managed type system synthesizes from metadata
+(Serializable, ComImport and SpecialName from flags, StructLayout from layout flags and
+ClassLayout, DllImport from ImplMap, PreserveSig and MethodImpl from implementation flags,
+FieldOffset, NonSerialized, MarshalAs from the marshalling descriptor, Optional,
+DefaultParameterValue, In and Out on parameters, IndexerName on renamed indexers,
+AssemblyVersion and TypeForwardedTo on the assembly), then the custom attributes that the
+type system options do not already consume (`IgnoreAttribute`: dynamic, tuple names,
+nullability, `ref readonly`, `scoped` and so on), then the security declarations. Built-in
+attributes find their constructor by exact parameter types, as `DefaultAttribute` does, and
+name their arguments field or property by looking for a field on the attribute type.
+
+Two details cross into the decompiler proper. Whether a parameter's default value becomes
+`DefaultParameterValue` depends on the later parameters, skipping closure parameters of
+local functions, so `IsClosureParameter` and `IsPotentialClosure` are ported here. And a
+nested type's type parameters are its outer type's objects in the managed type system, so
+their attributes come from the outer type's GenericParam rows, which the corpus found in
+C# 14 extension blocks.
+
+The listing gains an attribute-list line per type (with its type parameters), method (with
+return, parameter and type parameter lists), field, property (with parameters) and event,
+and the assembly and module lists. Measured at item 4i: `TypeSystemListingEquality` under
+`None` and `Default` pass for the 3,442 images; 98 loader tests pass in Rust.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

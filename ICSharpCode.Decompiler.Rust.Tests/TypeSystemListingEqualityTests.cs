@@ -144,6 +144,21 @@ public class TypeSystemListingEqualityTests
 	static string Inheritance(IMember m)
 		=> $"ovr={(m.IsOverridable ? 1 : 0)} eii={(m.IsExplicitInterfaceImplementation ? 1 : 0)} impls={Members(m.ExplicitlyImplementedInterfaceMembers)}";
 
+	static string AttributeEntry(IAttribute a)
+	{
+		string ctor = a.Constructor == null ? "-" : Origin(a.Constructor);
+		var named = a.NamedArguments.Select(n => $"{(n.Kind == CustomAttributeNamedArgumentKind.Field ? "F" : "P")}:{n.Name}:{AttributeArgument(n.Type, n.Value)}");
+		return $"{Describe(a.AttributeType)}({ctor}) fixed=[{string.Join("|", a.FixedArguments.Select(x => AttributeArgument(x.Type, x.Value)))}] named=[{string.Join("|", named)}] err={(a.HasDecodeErrors ? 1 : 0)}";
+	}
+
+	static string Attributes(IEnumerable<IAttribute> list) => "[" + string.Join("|", list.Select(AttributeEntry)) + "]";
+
+	static string ParameterAttributes(IEnumerable<IParameter> parameters)
+		=> "[" + string.Join(",", parameters.Select(p => Attributes(p.GetAttributes()))) + "]";
+
+	static string TypeParameterAttributes(IEnumerable<ITypeParameter> typeParameters)
+		=> "[" + string.Join(",", typeParameters.Select(tp => Attributes(tp.GetAttributes()))) + "]";
+
 	static string AttributeArgument(IType type, object? value) => Describe(type) + "=" + value switch {
 		IType t => "T:" + Describe(t),
 		ImmutableArray<CustomAttributeTypedArgument<IType>> items
@@ -228,6 +243,28 @@ public class TypeSystemListingEqualityTests
 				return $"A {Tok(h)} fixed=[{string.Join("|", value.FixedArguments.Select(a => AttributeArgument(a.Type, a.Value)))}] named=[{string.Join("|", named)}]";
 			}));
 		}
+		foreach (var td in module.TypeDefinitions)
+			Append($"LT {td.ReflectionName} {S(() => $"{Attributes(td.GetAttributes())} tparams={TypeParameterAttributes(td.TypeParameters)}")}");
+		foreach (var h in metadata.MethodDefinitions)
+		{
+			Append(Line("LM", h, () => {
+				var m = module.GetDefinition(h);
+				return $"LM {Tok(h)} {Attributes(m.GetAttributes())} ret={Attributes(m.GetReturnTypeAttributes())} params={ParameterAttributes(m.Parameters)} tparams={TypeParameterAttributes(m.TypeParameters)}";
+			}));
+		}
+		foreach (var h in metadata.FieldDefinitions)
+			Append(Line("LF", h, () => $"LF {Tok(h)} {Attributes(module.GetDefinition(h).GetAttributes())}"));
+		foreach (var h in metadata.PropertyDefinitions)
+		{
+			Append(Line("LP", h, () => {
+				var p = module.GetDefinition(h);
+				return $"LP {Tok(h)} {Attributes(p.GetAttributes())} params={ParameterAttributes(p.Parameters)}";
+			}));
+		}
+		foreach (var h in metadata.EventDefinitions)
+			Append(Line("LE", h, () => $"LE {Tok(h)} {Attributes(module.GetDefinition(h).GetAttributes())}"));
+		Append($"LA {S(() => Attributes(module.GetAssemblyAttributes()))}");
+		Append($"LO {S(() => Attributes(module.GetModuleAttributes()))}");
 		return sb.ToString();
 	}
 
@@ -280,6 +317,19 @@ public class TypeSystemListingEqualityTests
 		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("named=[P:AllowMultiple:System.Boolean@System.Private.CoreLib=Boolean:True]"));
 		Assert.That(lines, Has.Some.StartsWith("A ").And.EndsWith("fixed=[System.String@System.Private.CoreLib=String:00480069] named=[]"));
 		Assert.That(lines, Has.Some.StartsWith("A ").And.Contains("fixed=[System.Type@System.Private.CoreLib=null]"));
+		Assert.That(lines, Has.None.Contains("!bad"));
+	}
+
+	[Test]
+	public void ListingCoversPseudoAttributes()
+	{
+		var ts = Load(typeof(object).Assembly.Location, TypeSystemOptions.Default);
+		using var table = new RustModuleTable(ts);
+		string[] lines = table.DebugTypeListing().Split('\n');
+		string[] wanted = ["StructLayoutAttribute", "DllImportAttribute", "MethodImplAttribute", "MarshalAsAttribute", "FieldOffsetAttribute", "SerializableAttribute", "PreserveSigAttribute", "SpecialNameAttribute", "AssemblyVersionAttribute", "InAttribute", "OutAttribute", "IndexerNameAttribute", "NonSerializedAttribute"];
+		foreach (string name in wanted)
+			Assert.That(lines, Has.Some.StartsWith("L").And.Contains("." + name + "@"), name);
+		Assert.That(lines, Has.Some.StartsWith("LT ").And.Contains("StructLayoutAttribute@System.Private.CoreLib(").And.Contains("named=[F:CharSet:"));
 		Assert.That(lines, Has.None.Contains("!bad"));
 	}
 

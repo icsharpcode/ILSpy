@@ -248,7 +248,7 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `GetNonInterfaceBaseTypes`, `InheritanceHelper.GetBaseMembers`; listing; the loader tests
     on them. Comes before attributes because property attributes need indexers and explicit
     implementations, and parameter attributes the closure-parameter check.
-  - [ ] **4i. Attribute lists.** `AttributeListBuilder` with the pseudo-attributes
+  - [x] **4i. Attribute lists.** Subject: `Add attribute lists to the Rust type system`. `AttributeListBuilder` with the pseudo-attributes
     (Serializable, ComImport, SpecialName, StructLayout, DllImport, PreserveSig, MethodImpl,
     FieldOffset, NonSerialized, MarshalAs, In/Out, Optional, DefaultParameterValue,
     IndexerName, security declarations, TypeForwardedTo, AssemblyVersion), the

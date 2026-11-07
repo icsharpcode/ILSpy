@@ -109,6 +109,12 @@ pub struct ParamInfo {
     pub unscoped_ref: bool,
     /// `GetEffectiveScope`.
     pub effective_scope: ScopedKind,
+    /// The Param row, 0 for a parameter without one.
+    pub row: u32,
+    /// ParameterAttributes of the Param row.
+    pub flags: u16,
+    /// Whether the value comes from a `[DecimalConstant]` (`MetadataParameter.IsDecimalConstant`).
+    pub is_decimal_constant: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -598,6 +604,9 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             declared_scope: ScopedKind::None,
             unscoped_ref: false,
             effective_scope: ScopedKind::None,
+            row: 0,
+            flags: 0,
+            is_decimal_constant: false,
         }
     }
 
@@ -699,6 +708,9 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             declared_scope,
             unscoped_ref,
             effective_scope,
+            row,
+            flags: p.flags,
+            is_decimal_constant: is_decimal,
         })
     }
 
