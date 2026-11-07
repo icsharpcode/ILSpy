@@ -119,11 +119,11 @@ public class TypeSystemListingEqualityTests
 
 	static string Params(IEnumerable<IParameter> parameters)
 		=> "[" + string.Join("|", parameters.Select(p =>
-			$"{Describe(p.Type)},{p.Name},{p.ReferenceKind},{(p.IsOptional ? 1 : 0)},{(p.HasConstantValueInSignature ? 1 : 0)},{Value(p.GetConstantValue(throwOnInvalidMetadata: false))}")) + "]";
+			$"{Describe(p.Type)},{p.Name},{p.ReferenceKind},{(p.IsOptional ? 1 : 0)},{(p.HasConstantValueInSignature ? 1 : 0)},{Value(p.GetConstantValue(throwOnInvalidMetadata: false))},{(p.IsParams ? 1 : 0)},{p.Lifetime.DeclaredScope},{(p.Lifetime.HasUnscopedRefAttribute ? 1 : 0)},{p.GetEffectiveScope()}")) + "]";
 
 	static string TypeParams(IEnumerable<ITypeParameter> tps)
 		=> "[" + string.Join("|", tps.Select(tp =>
-			$"{tp.Name}:{tp.Variance}:{Mods((tp.HasDefaultConstructorConstraint, 'n'), (tp.HasReferenceTypeConstraint, 'r'), (tp.HasValueTypeConstraint, 'v'), (tp.AllowsRefLikeType, 'l'))}:{{{string.Join(";", tp.TypeConstraints.Select(c => Describe(c.Type)))}}}")) + "]";
+			$"{tp.Name}:{tp.Variance}:{Mods((tp.HasDefaultConstructorConstraint, 'n'), (tp.HasReferenceTypeConstraint, 'r'), (tp.HasValueTypeConstraint, 'v'), (tp.AllowsRefLikeType, 'l'), (tp.HasUnmanagedConstraint, 'u'))}:{(int)tp.NullabilityConstraint}:{{{string.Join(";", tp.TypeConstraints.Select(c => Describe(c.Type)))}}}")) + "]";
 
 	static string Origin(IMember member)
 		=> member.MemberDefinition.MetadataToken.IsNil ? "fake" : Tok(member.MemberDefinition.MetadataToken);
@@ -153,7 +153,7 @@ public class TypeSystemListingEqualityTests
 			string line = S(() => {
 				string enumType = td.Kind == TypeKind.Enum ? Describe(td.EnumUnderlyingType!) : "-";
 				string bases = S(() => "[" + string.Join("|", td.DirectBaseTypes.Select(Describe)) + "]");
-				return $"T {td.ReflectionName} kind={td.Kind} known={td.KnownTypeCode} decl={td.DeclaringTypeDefinition?.ReflectionName ?? "-"} tparams={td.TypeParameterCount} enum={enumType} base={bases}";
+				return $"T {td.ReflectionName} kind={td.Kind} known={td.KnownTypeCode} decl={td.DeclaringTypeDefinition?.ReflectionName ?? "-"} tparams={td.TypeParameterCount} enum={enumType} base={bases} tflags={Mods((td.IsByRefLike, 'b'), (td.IsReadOnly, 'r'), (td.HasExtensions, 'x'), (td.IsStatic, 's'))}";
 			});
 			Append(line == "!bad" ? "T !bad" : line);
 			if (line != "!bad" && td.TypeParameterCount > 0)
@@ -163,7 +163,7 @@ public class TypeSystemListingEqualityTests
 		{
 			Append(Line("F", h, () => {
 				var f = module.GetDefinition(h);
-				return $"F {Tok(h)} decl={f.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={f.Name} access={f.Accessibility} mods={Mods((f.IsStatic, 's'), (f.IsReadOnly, 'r'), (f.IsVolatile, 'v'), (f.IsConst, 'c'))} type={Describe(f.Type)} value={Value(f.GetConstantValue(throwOnInvalidMetadata: false))}";
+				return $"F {Tok(h)} decl={f.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={f.Name} access={f.Accessibility} mods={Mods((f.IsStatic, 's'), (f.IsReadOnly, 'r'), (f.IsVolatile, 'v'), (f.IsConst, 'c'))} type={Describe(f.Type)} value={Value(f.GetConstantValue(throwOnInvalidMetadata: false))} retro={(f.ReturnTypeIsRefReadOnly ? 1 : 0)}";
 			}));
 		}
 		foreach (var h in metadata.MethodDefinitions)
@@ -171,14 +171,14 @@ public class TypeSystemListingEqualityTests
 			Append(Line("M", h, () => {
 				var m = module.GetDefinition(h);
 				string accessor = m.AccessorOwner == null ? "-" : $"{Tok(m.AccessorOwner.MetadataToken)}:{(int)m.AccessorKind}";
-				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Describe(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)}";
+				return $"M {Tok(h)} decl={m.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={m.Name} kind={m.SymbolKind} access={m.Accessibility} mods={Mods((m.IsStatic, 's'), (m.IsAbstract, 'a'), (m.IsSealed, 'e'), (m.IsVirtual, 'v'), (m.IsOverride, 'o'), (m.HasBody, 'b'))} accessor={accessor} ret={Describe(m.ReturnType)} params={Params(m.Parameters)} tparams={TypeParams(m.TypeParameters)} ext={(m.IsExtensionMethod ? 1 : 0)} thisro={(m.ThisIsRefReadOnly ? 1 : 0)} retro={(m.ReturnTypeIsRefReadOnly ? 1 : 0)} init={(m.IsInitOnly ? 1 : 0)} thisscope={m.GetThisParameterScope()}";
 			}));
 		}
 		foreach (var h in metadata.PropertyDefinitions)
 		{
 			Append(Line("P", h, () => {
 				var p = module.GetDefinition(h);
-				return $"P {Tok(h)} decl={p.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={p.Name} get={OptTok(p.Getter)} set={OptTok(p.Setter)} ret={Describe(p.ReturnType)} params={Params(p.Parameters)}";
+				return $"P {Tok(h)} decl={p.DeclaringTypeDefinition?.ReflectionName ?? "-"} name={p.Name} get={OptTok(p.Getter)} set={OptTok(p.Setter)} ret={Describe(p.ReturnType)} params={Params(p.Parameters)} retro={(p.ReturnTypeIsRefReadOnly ? 1 : 0)}";
 			}));
 		}
 		foreach (var h in metadata.EventDefinitions)
@@ -235,6 +235,8 @@ public class TypeSystemListingEqualityTests
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains("@System.Private.CoreLib!"));
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Matches(@"\(\S+:\w+,"));
 		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(",In,"));
+		Assert.That(lines, Has.Some.StartsWith("M ").And.Contains(" ext=1 "));
+		Assert.That(lines, Has.Some.StartsWith("T ").And.Matches(@"tflags=\S*x"));
 		Assert.That(lines, Has.None.Contains("!bad"));
 	}
 

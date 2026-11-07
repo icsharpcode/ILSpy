@@ -3,6 +3,7 @@
 
 pub mod attrs;
 pub mod compilation;
+pub mod flags;
 pub mod fnptr;
 pub mod known;
 pub mod listing;

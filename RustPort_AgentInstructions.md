@@ -212,11 +212,15 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `TypeSystemOptions` (it strips `NativeIntegersWithoutAttribute` below net7). Listing:
     types print structurally (tuples, nullability, function pointer signatures) and run
     under both `None` and `Default`.
-  - [ ] **4e. Entity flags under Default.** `IsByRefLike`, readonly structs,
-    `ThisIsRefReadOnly`, `ReturnTypeIsRefReadOnly`, `IsParams` (arrays and params
-    collections), parameter lifetimes (`scoped`, `UnscopedRef`), unmanaged and nullability
-    constraints, `HasExtensions` / `IsExtensionMethod`, extension members (`ExtensionInfo`),
-    runtime async, `IsInitOnly`. Listing extended with these flags under `Default`.
+  - [x] **4e. Entity flags under Default.** Subject: `Add option-dependent entity flags to the Rust type system`.
+    `IsByRefLike`, readonly structs, `HasExtensions`, `IsStatic`, `IsExtensionMethod`,
+    `ThisIsRefReadOnly`, `ReturnTypeIsRefReadOnly` (methods, fields, properties), `IsInitOnly`,
+    `GetThisParameterScope`, `IsParams` (arrays and params collections), parameter lifetimes
+    and `GetEffectiveScope` (`scoped`, `UnscopedRef`, `RefSafetyRules(11)`), unmanaged and
+    nullability constraints. Listing extended with these flags, run under `None` and `Default`.
+    Moved to their consumers: `ExtensionInfo` (C# 14 extension blocks) to step 68, where the
+    AST builder uses it; runtime async (`MethodImplAsync` handling) to step 5, where the IL
+    reader uses it.
   - [ ] **4f. Custom attribute values.** `metadata::custom_attribute` with a type-system
     resolver; decoded values equal SRM's `DecodeValue` (via the managed type provider) for
     every attribute of every corpus image; then `CoClassAttribute` constructors (4c).
@@ -236,6 +240,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
   - `wire/` writer: length-prefixed binary, varints, string table, version header; v1 carries
     `ILFunction`, variables and all node kinds.
   - Shim: `Interop/IlAstMaterializer.cs` builds link-compiled `ILFunction` objects from v1.
+  - Also from 4e: runtime async (`TypeSystemOptions.RuntimeAsync`, `MethodImplAsync`), which
+    the IL reader consults.
   - Gate: G-rust; shim test `IlAstReadEquality`: for every method body in every fixture
     assembly, `WriteTo()` of the materialized function equals `WriteTo()` of the managed
     `ILReader` output, with and without debug symbols (the `get_debug_info` callback bridges
@@ -349,6 +355,8 @@ the reasons. This file holds only the ordered steps, their gates and their rules
     `TextTokenWriter` (Member, Invocation, Local, Conversion, MethodGroup, Constant, Type,
     Namespace, Operator, Dynamic*, Lambda, Tuple, ByReference, This); entity references as
     `(module id, token, generic argument list)`; a `TypeRef` tree.
+  - Also from 4e: `ExtensionInfo` (C# 14 extension blocks, `TypeSystemOptions.ExtensionMembers`),
+    which the AST builders consult.
   - Shim: `Interop/AstMaterializer.cs` resolves entity references through
     `MetadataModule.ResolveEntity` and `Specialize`, builds the link-compiled `SyntaxTree`.
   - Seam 2 block: request-level; caller transforms positioned before the built-in list are

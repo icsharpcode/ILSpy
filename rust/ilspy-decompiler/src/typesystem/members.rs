@@ -10,6 +10,9 @@ use crate::metadata::{Error, Metadata, Result};
 
 use super::attrs::{AttributeSource, accessibility_value, nullable_context, type_accessibility};
 use super::compilation::{ModuleId, TypeDefId, TypeKind, is_known_type_name};
+use super::flags::{
+    ScopedKind, has_attribute, has_compiler_attribute, has_unscoped_ref, uses_updated_escape_rules,
+};
 use super::known::KnownTypeCode;
 use super::options;
 use super::types::{GenericContext, Nullability, TypeData, TypeId, TypeParamOwner, TypeSystem};
@@ -93,6 +96,11 @@ pub struct ParamInfo {
     pub optional: bool,
     pub has_constant_in_signature: bool,
     pub value: ConstValue,
+    pub is_params: bool,
+    pub declared_scope: ScopedKind,
+    pub unscoped_ref: bool,
+    /// `GetEffectiveScope`.
+    pub effective_scope: ScopedKind,
 }
 
 #[derive(Clone, Debug)]
@@ -104,6 +112,8 @@ pub struct TypeParamInfo {
     pub value_type: bool,
     pub allows_ref_like: bool,
     pub constraints: Vec<TypeId>,
+    pub unmanaged: bool,
+    pub nullability: Nullability,
 }
 
 const METHOD_STATIC: u16 = 0x0010;
@@ -469,6 +479,14 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
                 value_type,
                 allows_ref_like: gp.flags & 0x0020 != 0,
                 constraints,
+                unmanaged: options & options::UNMANAGED_CONSTRAINTS != 0
+                    && has_compiler_attribute(
+                        md,
+                        TableId::GenericParam,
+                        source_row,
+                        "IsUnmanagedAttribute",
+                    ),
+                nullability: self.nullability_constraint(owner, source_row, module),
             });
         }
         Ok(result)
@@ -568,6 +586,10 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             optional: false,
             has_constant_in_signature: false,
             value: ConstValue::Null,
+            is_params: false,
+            declared_scope: ScopedKind::None,
+            unscoped_ref: false,
+            effective_scope: ScopedKind::None,
         }
     }
 
@@ -619,6 +641,44 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
         } else {
             constant != 0
         };
+        let is_array = matches!(self.data(ty), TypeData::Array { .. });
+        let is_params_collection =
+            options & options::PARAMS_COLLECTIONS != 0 && has("ParamCollectionAttribute");
+        let is_params = if is_array {
+            has_attribute(md, TableId::Param, row, "System", "ParamArrayAttribute")
+        } else {
+            is_params_collection
+        };
+        let (declared_scope, unscoped_ref) = if options & options::SCOPED_REF == 0 {
+            (ScopedKind::None, false)
+        } else {
+            let unscoped = has_unscoped_ref(md, TableId::Param, row);
+            let scope = if !unscoped && !is_params_collection && has("ScopedRefAttribute") {
+                if ref_kind != RefKind::None {
+                    ScopedKind::ScopedRef
+                } else if self.is_ref_like_or_allows(ty) {
+                    ScopedKind::ScopedValue
+                } else {
+                    ScopedKind::None
+                }
+            } else {
+                ScopedKind::None
+            };
+            (scope, unscoped)
+        };
+        let effective_scope = if unscoped_ref {
+            ScopedKind::None
+        } else if declared_scope != ScopedKind::None {
+            declared_scope
+        } else if options & options::SCOPED_REF == 0 {
+            ScopedKind::None
+        } else if ref_kind == RefKind::Out && uses_updated_escape_rules(md) {
+            ScopedKind::ScopedRef
+        } else if is_params && self.is_ref_like_or_allows(ty) {
+            ScopedKind::ScopedValue
+        } else {
+            ScopedKind::None
+        };
         Ok(ParamInfo {
             ty,
             name: md.string(p.name)?.into_owned(),
@@ -626,6 +686,10 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             optional,
             has_constant_in_signature,
             value,
+            is_params,
+            declared_scope,
+            unscoped_ref,
+            effective_scope,
         })
     }
 
@@ -883,5 +947,22 @@ impl<'c, 'a> TypeSystem<'c, 'a> {
             options,
             nullable,
         )
+    }
+}
+
+impl TypeSystem<'_, '_> {
+    /// `OptionsForEntity` of a type definition.
+    pub fn type_options_of(&self, def: TypeDefId) -> u32 {
+        self.type_options(def.module, Some(def))
+    }
+
+    /// `OptionsForEntity` of a method definition.
+    pub fn method_options_of(&self, m: MethodDefId) -> u32 {
+        let md = &self.comp.module(m.module).md;
+        let (Ok(def), Ok(declaring)) = (md.get::<rows::MethodDef>(m.row), self.method_declaring(m))
+        else {
+            return self.options();
+        };
+        self.member_options(m.module, method_accessibility(def.flags), declaring)
     }
 }

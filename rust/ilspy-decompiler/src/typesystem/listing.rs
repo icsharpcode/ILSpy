@@ -11,13 +11,14 @@
 //! everything else as `<reflection name>@<defining assembly or ?>`. Tokens print as 8 hex digits, `-`
 //! for none. Lines, in this order:
 //! - per TypeDef row: `T <name> kind=<kind> known=<code> decl=<name|-> tparams=<n>
-//!   enum=<type|-> base=[a|b]`, followed by `G <name> [<tp>|<tp>]` when it has type parameters;
+//!   enum=<type|-> base=[a|b] tflags=<brxs>`, followed by `G <name> [<tp>|<tp>]` when it has type parameters;
 //! - per Field row: `F <tok> decl=<name|-> name=<n> access=<a> mods=<srvc> type=<type>
-//!   value=<v>`;
+//!   value=<v> retro=<0|1>`;
 //! - per MethodDef row: `M <tok> decl=<name|-> name=<n> kind=<k> access=<a> mods=<saevob>
-//!   accessor=<tok>:<semantics>|- ret=<type> params=[<p>|<p>] tparams=[<tp>|<tp>]`;
+//!   accessor=<tok>:<semantics>|- ret=<type> params=[<p>|<p>] tparams=[<tp>|<tp>]
+//!   ext= thisro= retro= init=<0|1> thisscope=<scope>`;
 //! - per Property row: `P <tok> decl=<name|-> name=<n> get=<tok|-> set=<tok|-> ret=<type>
-//!   params=[...]`;
+//!   params=[...] retro=<0|1>`;
 //! - per Event row: `E <tok> decl=<name|-> name=<n> add=<tok|-> remove=<tok|-> invoke=<tok|->
 //!   type=<type>`.
 //! - per MemberRef row: `R <tok> <member>`, per MethodSpec row: `S <tok> <member>`, resolved
@@ -26,14 +27,16 @@
 //!   name=<n> static=<0|1> targs=[...] ret=<type> params=[...] accessor=<semantics>`, a field
 //!   `field=<def tok|fake> decl=<type|-> name=<n> type=<type>`.
 //!
-//! `<p>` is `<type>,<name>,<ref kind>,<optional 0|1>,<constant in signature 0|1>,<v>`;
-//! `<tp>` is `<name>:<variance>:<constraint flags nrvl>:{<type>;<type>}`; `<v>` is `null` or
+//! `<p>` is `<type>,<name>,<ref kind>,<optional 0|1>,<constant in signature 0|1>,<v>,
+//! <params 0|1>,<declared scope>,<unscoped ref 0|1>,<effective scope>`;
+//! `<tp>` is `<name>:<variance>:<constraint flags nrvlu>:<nullability>:{<type>;<type>}`; `<v>` is `null` or
 //! `<CLR type name>:<value>` with floats as bit patterns, strings and decimals as hex words.
 //! A line that cannot be produced prints `<kind letter> <tok> !bad`.
 
 use std::fmt::Write;
 
 use super::compilation::{Compilation, ModuleId, TypeDefId, TypeKind};
+use super::flags::has_compiler_attribute;
 use super::members::{
     ConstValue, MethodDefId, ParamInfo, TypeParamInfo, field_accessibility, has_body,
     method_accessibility, method_modifiers,
@@ -296,8 +299,15 @@ fn type_line(
         let names: Vec<String> = bases.iter().map(|b| located(ts, *b)).collect();
         format!("[{}]", names.join("|"))
     }));
+    let f = ts.type_flags(def);
+    let tflags = letters(&[
+        (f.by_ref_like, 'b'),
+        (f.read_only, 'r'),
+        (f.has_extensions, 'x'),
+        (f.is_static, 's'),
+    ]);
     format!(
-        "T {} kind={} known={} decl={decl} tparams={} enum={underlying} base={bases}",
+        "T {} kind={} known={} decl={decl} tparams={} enum={underlying} base={bases} tflags={tflags}",
         info.full_name.reflection_name(),
         info.kind.name(),
         info.known.name(),
@@ -336,13 +346,17 @@ fn params(ts: &TypeSystem<'_, '_>, params: &[ParamInfo]) -> String {
         .iter()
         .map(|p| {
             format!(
-                "{},{},{},{},{},{}",
+                "{},{},{},{},{},{},{},{},{},{}",
                 located(ts, p.ty),
                 p.name,
                 p.ref_kind.name(),
                 u8::from(p.optional),
                 u8::from(p.has_constant_in_signature),
-                value(&p.value)
+                value(&p.value),
+                u8::from(p.is_params),
+                p.declared_scope.name(),
+                u8::from(p.unscoped_ref),
+                p.effective_scope.name()
             )
         })
         .collect();
@@ -359,6 +373,7 @@ fn type_params(ts: &TypeSystem<'_, '_>, tps: &[TypeParamInfo]) -> String {
                 (tp.reference_type, 'r'),
                 (tp.value_type, 'v'),
                 (tp.allows_ref_like, 'l'),
+                (tp.unmanaged, 'u'),
             ] {
                 if set {
                     flags.push(letter);
@@ -366,9 +381,10 @@ fn type_params(ts: &TypeSystem<'_, '_>, tps: &[TypeParamInfo]) -> String {
             }
             let constraints: Vec<String> = tp.constraints.iter().map(|c| located(ts, *c)).collect();
             format!(
-                "{}:{}:{flags}:{{{}}}",
+                "{}:{}:{flags}:{}:{{{}}}",
                 tp.name,
                 tp.variance,
+                tp.nullability as u8,
                 constraints.join(";")
             )
         })
@@ -395,12 +411,18 @@ fn field_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Result
     }
     let constant = ts.field_constant(module, row);
     Ok(format!(
-        "F {} decl={} name={name} access={} mods={mods} type={} value={}",
+        "F {} decl={} name={name} access={} mods={mods} type={} value={} retro={}",
         tok(token(TableId::Field, row)),
         decl_name(ts, module, declaring),
         field_accessibility(f.flags),
         located(ts, ty),
-        value(&constant)
+        value(&constant),
+        u8::from(has_compiler_attribute(
+            md,
+            TableId::Field,
+            row,
+            "IsReadOnlyAttribute"
+        ))
     ))
 }
 
@@ -427,16 +449,22 @@ fn method_line(ts: &mut TypeSystem<'_, '_>, m: MethodDefId) -> Result<String> {
             mods.push(letter);
         }
     }
+    let mf = ts.method_flags(m, accessor.map(|(t, _)| t));
     let accessor = accessor.map_or_else(|| "-".to_owned(), |(t, sem)| format!("{}:{sem}", tok(t)));
     Ok(format!(
-        "M {} decl={} name={name} kind={} access={} mods={mods} accessor={accessor} ret={} params={} tparams={}",
+        "M {} decl={} name={name} kind={} access={} mods={mods} accessor={accessor} ret={} params={} tparams={} ext={} thisro={} retro={} init={} thisscope={}",
         tok(token(TableId::MethodDef, m.row)),
         decl_name(ts, m.module, declaring),
         kind.name(),
         method_accessibility(def.flags),
         located(ts, ret),
         params(ts, &ps),
-        type_params(ts, &tps)
+        type_params(ts, &tps),
+        u8::from(mf.extension),
+        u8::from(mf.this_read_only),
+        u8::from(mf.return_read_only),
+        u8::from(mf.init_only),
+        mf.this_scope.name()
     ))
 }
 
@@ -453,13 +481,19 @@ fn property_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Res
     };
     let (ret, ps) = ts.property_signature(module, row)?;
     Ok(format!(
-        "P {} decl={} name={name} get={} set={} ret={} params={}",
+        "P {} decl={} name={name} get={} set={} ret={} params={} retro={}",
         tok(token(TableId::Property, row)),
         decl_name(ts, module, declaring),
         opt_tok(TableId::MethodDef, get),
         opt_tok(TableId::MethodDef, set),
         located(ts, ret),
-        params(ts, &ps)
+        params(ts, &ps),
+        u8::from(has_compiler_attribute(
+            md,
+            TableId::Property,
+            row,
+            "IsReadOnlyAttribute"
+        ))
     ))
 }
 
@@ -487,4 +521,12 @@ fn event_line(ts: &mut TypeSystem<'_, '_>, module: ModuleId, row: u32) -> Result
         opt_tok(TableId::MethodDef, raise),
         located(ts, ty)
     ))
+}
+
+fn letters(flags: &[(bool, char)]) -> String {
+    flags
+        .iter()
+        .filter(|(set, _)| *set)
+        .map(|(_, c)| *c)
+        .collect()
 }
