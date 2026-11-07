@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The decompiler engine backed by the Rust port. It compiles the sources of
+       ICSharpCode.Decompiler unchanged (linked, not copied) plus its own CSharp/CSharpDecompiler.cs,
+       which adds the engine seams. The assembly keeps the name, key and version of the original so
+       consumers, plugins and tests that bind to "ICSharpCode.Decompiler" see the same identity; only
+       the package id differs. See RustPort_HumanLecture.md. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>ICSharpCode.Decompiler</AssemblyName>
+    <RootNamespace>ICSharpCode.Decompiler</RootNamespace>
+    <!-- Same list as the original: consumers publish with these RIDs in locked restore mode. -->
+    <RuntimeIdentifiers>win-x64;win-arm64;linux-x64;linux-arm64;osx-arm64;any</RuntimeIdentifiers>
+
+    <IsPackable>true</IsPackable>
+    <PackageId>ICSharpCode.Decompiler.Rust</PackageId>
+    <PackageVersion>8.0.0.0-noversion</PackageVersion>
+    <Title>ILSpy Decompiler Engine (Rust)</Title>
+    <Authors>ILSpy Contributors</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/icsharpcode/ILSpy/</PackageProjectUrl>
+    <Description>ICSharpCode.Decompiler.Rust is the ILSpy decompiler engine backed by its Rust port.</Description>
+    <Company>ic#code</Company>
+    <Product>ILSpy</Product>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/icsharpcode/ILSpy.git</RepositoryUrl>
+    <PackageIcon>DecompilerNuGetPackageIcon.png</PackageIcon>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright 2011-$([System.DateTime]::Now.Year) AlphaSierraPapa</Copyright>
+    <PackageTags>C# Decompiler ILSpy</PackageTags>
+
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
+
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <LangVersion>14</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+    <NoWarn>$(NoWarn);1701;1702;1591;1573</NoWarn>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RestoreLockedMode>true</RestoreLockedMode>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
+    <DefineConstants>$(DefineConstants);STEP</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\ICSharpCode.Decompiler\PackageReadme.md" Pack="true" PackagePath="\" />
+    <None Include="..\ICSharpCode.Decompiler\DecompilerNuGetPackageIcon.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <PropertyGroup>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="IsTrimmable" Value="True" />
+    <AssemblyMetadata Include="IsAotCompatible" Value="True" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+    <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.403">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="10.0.403">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="TunnelVisionLabs.ReferenceAssemblyAnnotator" Version="1.0.0-alpha.160" PrivateAssets="all" />
+    <PackageDownload Include="Microsoft.NETCore.App.Ref" Version="[8.0.0]" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICSharpCode.Decompiler.Generators\ICSharpCode.Decompiler.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <!-- Build ordering only: the original's build generates Properties/DecompilerVersionInfo.cs and
+         ..\VERSION. Its assembly is neither referenced, copied nor a package dependency. -->
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" ReferenceOutputAssembly="false" Private="false" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ICSharpCode.Decompiler\**\*.cs"
+             Exclude="..\ICSharpCode.Decompiler\bin\**;..\ICSharpCode.Decompiler\obj\**;..\ICSharpCode.Decompiler\CSharp\CSharpDecompiler.cs;..\ICSharpCode.Decompiler\Properties\AssemblyInfo.cs;..\ICSharpCode.Decompiler\Properties\DecompilerVersionInfo.cs;..\ICSharpCode.Decompiler\Properties\DecompilerVersionInfo.template.cs"
+             Link="Original\%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- Generated by the original's build; absent when the glob is evaluated on a clean checkout. -->
+    <Compile Include="..\ICSharpCode.Decompiler\Properties\DecompilerVersionInfo.cs" Link="Original\Properties\DecompilerVersionInfo.cs" />
+  </ItemGroup>
+
+  <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">
+    <ReadLinesFromFile ContinueOnError="true" File="..\VERSION">
+      <Output TaskParameter="Lines" PropertyName="PackageVersion" />
+    </ReadLinesFromFile>
+  </Target>
+
+</Project>

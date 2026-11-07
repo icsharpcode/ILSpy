@@ -339,10 +339,10 @@
       "icsharpcode.bamldecompiler": {
         "type": "Project",
         "dependencies": {
-          "ICSharpCode.Decompiler": "[8.0.0-noversion, )"
+          "ICSharpCode.Decompiler.Rust": "[8.0.0-noversion, )"
         }
       },
-      "icsharpcode.decompiler": {
+      "icsharpcode.decompiler.rust": {
         "type": "Project",
         "dependencies": {
           "System.Collections.Immutable": "[9.0.0, )",
@@ -352,7 +352,7 @@
       "icsharpcode.ilspyx": {
         "type": "Project",
         "dependencies": {
-          "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
+          "ICSharpCode.Decompiler.Rust": "[8.0.0-noversion, )",
           "K4os.Compression.LZ4": "[1.3.8, )",
           "Mono.Cecil": "[0.11.6, )",
           "System.Composition.AttributedModel": "[10.0.14, )",
@@ -364,7 +364,7 @@
         "type": "Project",
         "dependencies": {
           "ICSharpCode.BamlDecompiler": "[10.0.0-noversion, )",
-          "ICSharpCode.Decompiler": "[8.0.0-noversion, )",
+          "ICSharpCode.Decompiler.Rust": "[8.0.0-noversion, )",
           "ICSharpCode.ILSpyX": "[8.0.0-noversion, )",
           "McMaster.Extensions.Hosting.CommandLine": "[5.1.0, )",
           "Microsoft.Extensions.Hosting": "[10.0.14, )",

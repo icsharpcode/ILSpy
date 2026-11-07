@@ -183,10 +183,10 @@
       "icsharpcode.bamldecompiler": {
         "type": "Project",
         "dependencies": {
-          "ICSharpCode.Decompiler": "[8.0.0-noversion, )"
+          "ICSharpCode.Decompiler.Rust": "[8.0.0-noversion, )"
         }
       },
-      "icsharpcode.decompiler": {
+      "icsharpcode.decompiler.rust": {
         "type": "Project",
         "dependencies": {
           "System.Collections.Immutable": "[9.0.0, )",

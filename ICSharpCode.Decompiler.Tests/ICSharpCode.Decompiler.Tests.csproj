@@ -95,7 +95,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.ILSpyX\ICSharpCode.ILSpyX.csproj" />
-    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler.Rust\ICSharpCode.Decompiler.Rust.csproj" />
   </ItemGroup>
 
   <ItemGroup>

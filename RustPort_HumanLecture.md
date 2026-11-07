@@ -152,12 +152,24 @@ the original must not change, so the shim carries its own copy with two marked b
 byte equality with the original file, so upstream changes to `CSharpDecompiler.cs` show up as
 a red test rather than a silent fork.
 
-Consequence to accept: the shim assembly carries the same namespaces as the original. Nothing
-in the repository loads both into one process after the reference switch, but a third-party
-ILSpy plugin compiled against the `ICSharpCode.Decompiler` NuGet would load a second identity
-into the UI and its `IAstTransform` or `ITextOutput` implementations would fail with an
-invalid cast. This is documented and accepted; the alternative (type forwarding) fails with
-CS0433 as soon as the original is on the same reference path.
+**Assembly identity (decided in item 1).** The shim's `AssemblyName` is `ICSharpCode.Decompiler`
+with the original's key and version; only the package id (`ICSharpCode.Decompiler.Rust`) and
+the project name differ. The plan first assumed an assembly named after the project. Item 1
+found that the oracle forbids it: `StepperTesting`, `ProjectFileWriter*Tests` and
+`WholeProjectDecompilerTests` open `ICSharpCode.Decompiler.dll` from the test output directory,
+and `ILSpy.BamlDecompiler.Tests/TransitiveReferenceTests` asserts a reference named
+`ICSharpCode.Decompiler`; none of them may be edited. Keeping the identity has two good side
+effects: third-party plugins compiled against the `ICSharpCode.Decompiler` NuGet bind to the
+shim with no second identity in the process, and `BuildTools/ILSpy-x64.msi.filelist` keeps its
+decompiler line. Consequence to accept: the original and the shim must never meet on one
+reference path or in one output directory, because they are indistinguishable by name. The
+shim's build-ordering `ProjectReference` to the original therefore carries
+`ReferenceOutputAssembly="false" Private="false" PrivateAssets="all"`; the lock files of every
+consumer confirm the original is gone from their graphs, and a hash check of
+`ICSharpCode.Decompiler.dll` in `ILSpy/bin`, `ICSharpCode.ILSpyCmd/bin` and
+`ICSharpCode.Decompiler.Tests/bin` shows the shim's build (PowerShell keeps the original's).
+The type-forwarding alternative still fails with CS0433 as soon as the original is on the same
+reference path.
 
 ### 3.2 Two seams and an honest fallback
 
@@ -358,7 +370,7 @@ trees.
 | Full public-API proxy over FFI | Literal reading of the brief | about 760 types; identity and mutability; callbacks both ways; SRM handles in signatures; internals visible to tests; chatty FFI | Rejected |
 | Engine returns text or a token stream | Smallest FFI payload; no materializer | Every entry point returns `SyntaxTree`; `TextTokenWriter`, bookmarks, PDB writer, caller transforms all walk the tree | Rejected |
 | Type-forwarding shim over the original | No duplicated code | CS0433 as soon as the original and the shim meet on one reference path (ilspycmd) | Rejected |
-| Link-compiled shim with one forked file | No copies, no edits, full surface, internals, red test on drift | Same namespaces as the original; plugin identity hazard | **Chosen** |
+| Link-compiled shim with one forked file | No copies, no edits, full surface, internals, red test on drift | Same assembly identity as the original, so the two must never share a reference path or output directory | **Chosen** |
 | Twin projects for ILSpyX and BamlDecompiler | Guardrail intact, no process loads both | Two more csproj files; ilspycmd never sees the engine | Rejected by the human in favor of relaxing the guardrail |
 | Big-bang port, flip at the end | Simpler shim, no intermediate materializers | .NET suite unchanged for months; progress visible only in Rust test counts | Rejected |
 | Incremental two-seam fallback with ratchet | Suite green at every commit; per-transform gates; honest metric | Materializers needed early; one forked file to keep in sync | **Chosen** |
@@ -463,8 +475,8 @@ Minimal changes to `.github/workflows/build-ilspy.yml` (and nothing else in CI):
   unverified; test locally with `-r win-arm64` during item 87. The macOS dylib may need code
   signing alongside the app bundle.
 - `BuildTools/ILSpy-x64.msi.filelist` lines 43-45 (`ICSharpCode.BamlDecompiler.dll`,
-  `ICSharpCode.Decompiler.dll`, `ICSharpCode.ILSpyX.dll`) change: the decompiler entry becomes
-  the shim and `ilspy_decompiler_ffi.dll` joins the list. Regenerate with
+  `ICSharpCode.Decompiler.dll`, `ICSharpCode.ILSpyX.dll`) stay as they are (the shim keeps the
+  assembly name, lecture 3.1) and `ilspy_decompiler_ffi.dll` joins the list. Regenerate with
   `BuildTools/create-filelists.ps1`; the Debug job gates on `git diff --exit-code`. The VSIX
   file list may change too because the VSIX embeds the ILSpy distribution; unverified, check
   the first CI run.
@@ -492,8 +504,14 @@ Minimal changes to `.github/workflows/build-ilspy.yml` (and nothing else in CI):
   ground.
 - **One forked file.** `CSharpDecompiler.cs` in the shim must track upstream; the drift test
   turns that into a visible failure, but someone has to merge.
-- **Plugin identity.** Third-party plugins built against the `ICSharpCode.Decompiler` package
-  load a second identity into the UI.
+- **Indistinguishable twins.** The shim and the original share assembly name, key and version
+  (lecture 3.1). A project that ends up with both on its reference path gets whichever MSBuild
+  copies last, silently. Only the `PrivateAssets="all"` build-ordering reference keeps them apart.
+- **Known baseline hang (found in item 1).** `ILSpy.Tests`
+  `SwitchListAndDeleteAllTests.Ctrl_A_Then_Delete_Drops_The_Selection_History_And_Tab` hangs
+  on this Windows machine at the plan's base commit 11fa859ef as well, so it is not caused by
+  the port. G-ui runs exclude `FullyQualifiedName~SwitchListAndDeleteAllTests` until it is
+  fixed upstream; re-check at every G-ui gate whether the exclusion is still needed.
 - **Unverified build facts**: ARM64 MSVC linker on the CI image, RID flow into the shim on
   `dotnet publish -r`, native probing for ALC-loaded assemblies in `decompdiff`, the VSIX file
   list, macOS code signing of the dylib.

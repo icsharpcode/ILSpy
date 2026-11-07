@@ -85,25 +85,30 @@ the reasons. This file holds only the ordered steps, their gates and their rules
 
 ### Phase 0: scaffolding
 
-- [ ] **0. FORK (taken).** The human has decided: relax the ilspycmd guardrail to its three
+- [x] **0. FORK (taken).** The human has decided: relax the ilspycmd guardrail to its three
   `ProjectReference` lines; engine-only end state; incremental two-seam fallback; names
   `ilspy-decompiler` / `ilspy-decompiler-ffi` / `ICSharpCode.Decompiler.Rust`. These are
   recorded in the lecture. No commit for this item.
 
-- [ ] **1. Shim scaffold and reference switch.** Size S. Subject: `Add ICSharpCode.Decompiler.Rust shim and switch consumers to it`.
+- [x] **1. Shim scaffold and reference switch.** Size S. Subject: `Add ICSharpCode.Decompiler.Rust shim and switch consumers to it`.
   - Create `ICSharpCode.Decompiler.Rust/ICSharpCode.Decompiler.Rust.csproj`: netstandard2.0,
     cloned from the original csproj (generator analyzer reference, `ICSharpCode.Decompiler.snk`,
     `ReferenceAssemblyAnnotator` plus the `Microsoft.NETCore.App.Ref` `PackageDownload`,
     `STEP` and `CheckForOverflowUnderflow` for Debug, `WarningsAsErrors=nullable`,
     `AllowUnsafeBlocks`, the same `RuntimeIdentifiers`, `RestoreLockedMode`), `IsPackable`
-    true with `PackageId` `ICSharpCode.Decompiler.Rust`.
+    true with `PackageId` `ICSharpCode.Decompiler.Rust` and **`AssemblyName`
+    `ICSharpCode.Decompiler`** (tests open `ICSharpCode.Decompiler.dll` from their output
+    directory and `TransitiveReferenceTests` asserts the reference name; see the lecture, 3.1).
     `<Compile Include="..\ICSharpCode.Decompiler\**\*.cs" Exclude="..\ICSharpCode.Decompiler\bin\**;..\ICSharpCode.Decompiler\obj\**;..\ICSharpCode.Decompiler\CSharp\CSharpDecompiler.cs;..\ICSharpCode.Decompiler\Properties\DecompilerVersionInfo.template.cs" />`
-    and a `ProjectReference` to the original with `ReferenceOutputAssembly="false"` so
-    `Properties/DecompilerVersionInfo.cs` is generated before the shim compiles.
-  - Add `ICSharpCode.Decompiler.Rust/Properties/InternalsVisibleTo.cs` granting
+    and a `ProjectReference` to the original with `ReferenceOutputAssembly="false"`,
+    `Private="false"` and `PrivateAssets="all"` so `Properties/DecompilerVersionInfo.cs` is
+    generated before the shim compiles while the original stays out of every consumer's
+    transitive graph and out of the shim's nuspec.
+  - Add `ICSharpCode.Decompiler.Rust/Properties/AssemblyInfo.cs` mirroring the original's
+    attributes (version, COM visibility) and granting `InternalsVisibleTo` to
     `ICSharpCode.Decompiler.Tests`, `ILSpy.Tests` and `ICSharpCode.Decompiler.Rust.Tests` with
-    the same public key as the original's `Properties/AssemblyInfo.cs` (the original's
-    `AssemblyInfo.cs` is excluded from the link glob because its attributes name the original).
+    the same public key (the original's `AssemblyInfo.cs` is excluded from the link glob
+    because it lives in the original's project).
   - Copy `CSharp/CSharpDecompiler.cs` to `ICSharpCode.Decompiler.Rust/CSharp/CSharpDecompiler.cs`
     unchanged except two marked blocks `// RUST-SEAM-1 BEGIN/END` (around the
     `function.RunTransforms(...)` call) and `// RUST-SEAM-2 BEGIN/END` (around the AST

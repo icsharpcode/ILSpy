@@ -106,7 +106,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler.Rust\ICSharpCode.Decompiler.Rust.csproj" />
   </ItemGroup>
 
   <Target Name="ILSpyUpdateAssemblyInfo" AfterTargets="ResolveProjectReferences">

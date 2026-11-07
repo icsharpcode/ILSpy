@@ -21,6 +21,8 @@
   <Project Path="ICSharpCode.Decompiler.PowerShell/ICSharpCode.Decompiler.PowerShell.csproj" />
   <Project Path="ICSharpCode.Decompiler.TestRunner/ICSharpCode.Decompiler.TestRunner.csproj" />
   <Project Path="ICSharpCode.Decompiler.Tests/ICSharpCode.Decompiler.Tests.csproj" />
+  <Project Path="ICSharpCode.Decompiler.Rust.Tests/ICSharpCode.Decompiler.Rust.Tests.csproj" />
+  <Project Path="ICSharpCode.Decompiler.Rust/ICSharpCode.Decompiler.Rust.csproj" />
   <Project Path="ICSharpCode.Decompiler/ICSharpCode.Decompiler.csproj" />
   <Project Path="ICSharpCode.ILSpyCmd.Tests/ICSharpCode.ILSpyCmd.Tests.csproj" />
   <Project Path="ICSharpCode.ILSpyCmd/ICSharpCode.ILSpyCmd.csproj" />

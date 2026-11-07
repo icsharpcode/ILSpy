@@ -6,6 +6,8 @@
 			"ICSharpCode.Decompiler.TestRunner\\ICSharpCode.Decompiler.TestRunner.csproj",
 			"ICSharpCode.Decompiler.Tests\\ICSharpCode.Decompiler.Tests.csproj",
 			"ICSharpCode.ILSpyCmd.Tests\\ICSharpCode.ILSpyCmd.Tests.csproj",
+			"ICSharpCode.Decompiler.Rust.Tests\\ICSharpCode.Decompiler.Rust.Tests.csproj",
+			"ICSharpCode.Decompiler.Rust\\ICSharpCode.Decompiler.Rust.csproj",
 			"ICSharpCode.Decompiler\\ICSharpCode.Decompiler.csproj",
 			"ICSharpCode.ILSpyX\\ICSharpCode.ILSpyX.csproj",
 			"ILSpy.BamlDecompiler.Tests\\ILSpy.BamlDecompiler.Tests.csproj",
