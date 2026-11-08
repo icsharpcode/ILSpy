@@ -1136,6 +1136,25 @@ code. `set_body` also clears the body's parent link, because the function is not
 The transform needed nothing new from the arena, the wire or the materializer, and the gate
 passed on the first run.
 
+### 3.32 DetectExitPoints (item 16, IL prefix 10)
+
+**What it does.** A jump out of a container to the instruction after the container becomes a
+`leave` of the container. When the container ends its block, the exit is chosen from the jumps
+out of it, the first one that does not leave the function, and is appended after the
+container.
+
+**Port notes.**
+- The managed `ILVisitor` walks blocks by index while the parent block can grow, because a
+  chosen exit is appended there and is then visited too. The port walks the live lists the
+  same way.
+- The managed sentinels `ExitNotYetDetermined` and `NoExit` are an `Exit` enum.
+- An exit that an inner container already replaced reaches the outer containers as a stale
+  node. The managed code would then replace whatever now sits in its old slot. The port skips
+  it; this case did not occur in the corpus.
+
+The no-op red run failed 1,069 of 3,550 equality cases; the port passed all of them on its
+first run.
+
 ## 4. Alternatives evaluated
 
 | Option | Pros | Cons | Outcome |

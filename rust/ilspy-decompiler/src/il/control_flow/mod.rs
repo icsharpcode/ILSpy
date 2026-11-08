@@ -6,6 +6,7 @@ pub mod await_in_finally_transform;
 pub mod control_flow_graph;
 pub mod control_flow_simplification;
 pub mod detect_pinned_regions;
+pub mod exit_points;
 pub mod runtime_async;
 pub mod state_range_analysis;
 pub mod switch_analysis;

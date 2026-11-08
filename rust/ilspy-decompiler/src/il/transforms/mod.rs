@@ -81,6 +81,7 @@ const PIPELINE: &[fn(&mut ReadFunction, &mut Context<'_, '_, '_>)] = &[
     super::control_flow::yield_return_decompiler::run,
     super::control_flow::async_await_decompiler::run,
     detect_catch_when_condition_blocks::run,
+    super::control_flow::exit_points::run,
 ];
 
 /// Runs the first `prefix` leaves of the pipeline.
