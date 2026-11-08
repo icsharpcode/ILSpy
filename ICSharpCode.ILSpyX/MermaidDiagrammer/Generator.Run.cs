@@ -21,8 +21,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.ILSpyX.MermaidDiagrammer.Extensions;
@@ -31,6 +33,18 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 {
 	partial class GenerateHtmlDiagrammer
 	{
+		internal static string RenderTemplate(string template, ClassDiagrammer model, string modelJson)
+		{
+			return Regex.Replace(template, @"\{\{(?:SourceAssemblyName|SourceAssemblyVersion|BuilderVersion|RepoUrl|Model)\}\}", match => match.Value switch {
+				"{{SourceAssemblyName}}" => WebUtility.HtmlEncode(model.SourceAssemblyName),
+				"{{SourceAssemblyVersion}}" => WebUtility.HtmlEncode(model.SourceAssemblyVersion),
+				"{{BuilderVersion}}" => DecompilerVersionInfo.FullVersionWithCommitHash,
+				"{{RepoUrl}}" => RepoUrl,
+				"{{Model}}" => modelJson,
+				_ => match.Value
+			});
+		}
+
 		public void Run()
 		{
 			var assemblyPath = Assembly;
@@ -116,12 +130,7 @@ namespace ICSharpCode.ILSpyX.MermaidDiagrammer
 			{
 				var htmlTemplate = EmbeddedResource.ReadText("template.html");
 
-				var html = htmlTemplate
-					.Replace("{{SourceAssemblyName}}", model.SourceAssemblyName)
-					.Replace("{{SourceAssemblyVersion}}", model.SourceAssemblyVersion)
-					.Replace("{{BuilderVersion}}", DecompilerVersionInfo.FullVersionWithCommitHash)
-					.Replace("{{RepoUrl}}", RepoUrl)
-					.Replace("{{Model}}", modelJson);
+				var html = RenderTemplate(htmlTemplate, model, modelJson);
 
 				File.WriteAllText(Path.Combine(outputFolder, "index.html"), html);
 
