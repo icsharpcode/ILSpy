@@ -24,6 +24,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 
 using ICSharpCode.ILSpy.Properties;
+using ICSharpCode.ILSpy.Util;
 using ICSharpCode.ILSpyX.TreeView;
 
 using ICSharpCode.ILSpy.TreeNodes;
@@ -104,7 +105,9 @@ namespace ICSharpCode.ILSpy.Commands
 					{
 						try
 						{
-							Process.Start(new ProcessStartInfo(term) {
+							if (ShellHelper.LocateProgram(term) is not string executable)
+								continue;
+							Process.Start(new ProcessStartInfo(executable) {
 								WorkingDirectory = directory,
 								UseShellExecute = false,
 							});
